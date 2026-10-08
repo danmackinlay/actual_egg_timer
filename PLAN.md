@@ -13,7 +13,7 @@ the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 389 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 28 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 16 on a simulator, each
+Chrome and `npm run ios:e2e` the iOS app through 31 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 155 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
@@ -54,9 +54,9 @@ These counts are the only ones in the documents. If you want a number, run
    on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
    and red-teamed as built (`design/running-cook-review.md`): core's, the
    web's and iOS's findings fixed, before the one screen; certainty in words is the `certainty` draft (93, D1),
-   for the owner on a phone. The web's one screen is built (C3, the
-   `onescreen` draft, for the owner on a phone); next is iOS's, reusing its
-   words. `0.4.x` is merged in as it moves.
+   for the owner on a phone. The one screen is built in both apps (C3,
+   the `onescreen` draft and iOS's `onescreen_ios`, for the owner on a
+   phone). `0.4.x` is merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -216,7 +216,9 @@ The one queue. Nothing else in the documents waits on the owner.
     guess a change of setup makes surer: on the model a fresh install
     never gets it (`UI.md` §8).
 17. **The `onescreen` draft and the one screen, on a phone** (8 October
-    2026, `DECISIONS.md` 91, 96 to 98; `SHIP-0.5.md` C3), the web for now.
+    2026, `DECISIONS.md` 91, 96 to 98; `SHIP-0.5.md` C3), in both apps: the
+    web, and iOS with the same words (`onescreen_ios`, which also retires
+    the line under iOS's running sentence, `cook.summary`).
     One layout from setup to Done: start an egg and change anything - the
     start clause (boiling to cold, your case), the egg, the slider,
     Settings' water - and watch it re-plan; hold the slider and the egg
@@ -229,7 +231,9 @@ The one queue. Nothing else in the documents waits on the owner.
     §3 the screen. Things to judge with it: the clock keeps its idle size
     while the egg cooks (nothing moves at the start); at Done the
     questions are below the slider and sentence, scrolled to; after the
-    pull the slider only previews and springs back.
+    pull the slider only previews and springs back. On iOS also: while "Are
+    the eggs still in the water?" is open the Lock Screen card shows the
+    pull, "now", with its line naming the cooling (`UI.md` §9).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

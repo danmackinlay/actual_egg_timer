@@ -29,6 +29,16 @@ import EggTimerCore
 ///   says when pressed.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
+/// - `-uiScrollAnchor 0.7`: open the egg's page scrolled that far down, for
+///   a screenshot of what the largest text sizes push off the screen.
+/// - `-uiDo eggsIn@launch+1,set:size=3@30,drag:0.3/0.1@pull-60,release@pull-58`:
+///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
+///   from the launch), `set:<control>=<value>` (a control changed as a tap
+///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
+///   `water`, `eggs`, `altitude`), `drag:<levels>` and `release` (the
+///   slider held and moved, then let go), `start:+3` (the start's + or −
+///   pressed so many times), `stillIn` and `stillOut` (the two answers to
+///   "still in the water?"), `open:settings` or `open:clause-start`.
 /// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
 ///   many seconds on in the cook as planned, the pull and its grace included;
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
@@ -115,6 +125,10 @@ enum Screenshots {
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
+    static var scrollAnchor: Double? {
+        UserDefaults.standard.object(forKey: "uiScrollAnchor") == nil
+            ? nil : UserDefaults.standard.double(forKey: "uiScrollAnchor")
+    }
     static var seedEggs: [SeedAnswer] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
@@ -151,7 +165,10 @@ extension Screenshots {
         let afterS: Double
 
         /// The moment it is due, epoch s, cook time; nil until it can be.
-        func due(_ cook: RunningCook, _ plan: CookPlan) -> Double? {
+        /// `launch` is the clock at this launch, before any cook.
+        func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
+            if anchor == "launch" { return Screenshots.launchedAtS + afterS }
+            guard let cook, let plan else { return nil }
             let base: Double?
             switch anchor {
             case "start": base = cook.startedAtS
@@ -197,14 +214,14 @@ extension Screenshots {
     static func drive(_ model: AppModel) {
         let all = actions
         guard !all.isEmpty else { return }
+        // Read now, at the launch, for `launch`.
+        _ = launchedAtS
         Task { @MainActor in
             var left = all.map { (action: $0, due: Double?.none) }
             while !left.isEmpty {
                 try? await AppClock.sleep(0.25)
-                if let running = model.cook.running, let plan = model.cook.plan {
-                    for i in left.indices {
-                        if let due = left[i].action.due(running, plan) { left[i].due = due }
-                    }
+                for i in left.indices {
+                    if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
                 let now = AppClock.now.timeIntervalSince1970
                 guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
@@ -215,9 +232,17 @@ extension Screenshots {
         }
     }
 
+    /// `open:settings` pushes Settings, `open:clause-start` opens a
+    /// clause's choice, as a press on its link would (set by the screen).
+    @MainActor static var open: ((String) -> Void)?
+
+    /// The clock at this launch, cook time: what `launch` counts from.
+    static let launchedAtS = AppClock.now.timeIntervalSince1970
+
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
         switch action.name {
+        case "eggsIn": model.eggsIn()
         case "boil": model.cook.boil()
         case "out": model.cook.pulledOut()
         case "cancel": model.cancel()
@@ -227,7 +252,52 @@ extension Screenshots {
             model.answer(
                 yolk: YolkWord(rawValue: parts[0]), white: parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil
             )
+        case "set": set(action.arg ?? "", model.planner)
+        case "drag":
+            // The finger down on the slider and moved through each level,
+            // a twentieth of a second apart; it stays down (`release`).
+            let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
+            model.edits.fingerDown(.level, slider: true)
+            Task { @MainActor in
+                for level in levels {
+                    model.planner.doneness = level
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
+            }
+        case "release": model.edits.fingerUp()
+        case "start":
+            // `start:+3`: the start's + pressed three times, or − for a
+            // minus; each a tap, so the correction settles.
+            let n = Int(action.arg ?? "") ?? 0
+            for _ in 0..<abs(n) { model.edits.stepStart(up: n > 0) }
+        case "stillIn": model.stillIn()
+        case "stillOut": model.stillOut()
+        case "open": open?(action.arg ?? "")
         default: log("action unknown \(action.name)")
+        }
+    }
+
+    /// `set:<control>=<value>`: one control changed as a tap on it would,
+    /// through the planner, so a change while a cook runs is a correction in
+    /// hand that settles before it is committed.
+    @MainActor
+    private static func set(_ arg: String, _ planner: Planner) {
+        let parts = arg.split(separator: "=", maxSplits: 1).map(String.init)
+        guard parts.count == 2 else { return log("action unknown set:\(arg)") }
+        let value = parts[1]
+        let number = Double(value) ?? .nan
+        switch parts[0] {
+        case "level": planner.doneness = number
+        case "size": planner.chooseSize(Int(number))
+        case "mass": planner.weigh(number)
+        case "from": if let v = EggFrom(rawValue: value) { planner.startTemp = v }
+        case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
+        case "cooling": if let v = Cooling(rawValue: value) { planner.cooling = v }
+        case "heatOff": planner.heatOff = value == "1"
+        case "water": planner.waterLitres = number
+        case "eggs": planner.eggCount = Int(number)
+        case "altitude": planner.altitudeM = number
+        default: log("action unknown set:\(arg)")
         }
     }
 }

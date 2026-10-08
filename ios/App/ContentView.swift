@@ -9,30 +9,28 @@ enum Route: Hashable {
     case help(HelpSection?)
 }
 
-/// The egg: the web's layout (UI.md sections 3 and 8), and the phase machine
-/// that runs it.
+/// The egg: the web's one screen (UI.md section 3, design/one-screen.md
+/// section 2), and the phase machine that runs it.
 ///
-/// While idle, two controls and a sentence: the time, with the line under it;
-/// the doneness slider; the setup sentence, whose clauses open their choices
-/// in place; one slot for the longer line; and Start. Settings and Help are
-/// rare visits, so they sit in the bar at the top, out of the thumb's way.
-///
-/// The controls disappear once a cook starts. Mid-cook they would be a lie -
-/// the egg is already in the water and the answer is already fixed - and the
-/// screen is better spent on the one number that matters.
+/// One layout from idle to Done, top to bottom: the time, with the line
+/// under it and how sure I am; the doneness slider; the egg in cross-section
+/// beside the setup sentence, whose clauses open their choices in place under
+/// both; one slot for the longer line; and the action. At the start nothing
+/// moves and nothing goes: only the readout's words and the buttons change.
+/// Settings and Help are rare visits, so they sit in the bar at the top, out
+/// of the thumb's way.
 struct ContentView: View {
     @State private var model = AppModel()
     @State private var path: [Route] = []
     /// The clause whose choice is open under the sentence, if any. One at a
     /// time.
     @State private var openClause: Clause?
-    /// Half the slider's thumb, pt, as the slider reports it. Kept here rather
-    /// than in the control, which leaves the screen while a cook runs, so the
-    /// control comes back with the inset it had.
+    /// Half the slider's thumb, pt, as the slider reports it.
     @State private var thumbInset: CGFloat = 14
     /// Whether the certainty line under the time is open.
     @State private var certaintyOpen = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -64,7 +62,8 @@ struct ContentView: View {
         return NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: 22) {
-                    if outerPhase == .idle && period { titlePage }
+                    // In every phase, so nothing moves at the start.
+                    if period { titlePage }
                     // The readout and the action are functions of the CLOCK,
                     // not of any stored property, so nothing the observation
                     // system watches ever changes while a cook counts down.
@@ -81,28 +80,11 @@ struct ContentView: View {
                         )
                     }
                     .id(tick)
-                    if outerPhase == .idle {
-                        DonenessControl(planner: planner, thumbInset: $thumbInset)
-                        setup
-                    } else if let running = cook.running, let plan = cook.plan {
-                        // The cook in the pan, where the controls were: the
-                        // first thing under the time, and never pushed down
-                        // by the probe offer or the two questions at Done.
-                        // Beside it the egg in cross-section, which costs no
-                        // height of its own (DECISIONS.md 52), on the clock
-                        // as the readout is.
-                        HStack(alignment: .center, spacing: 14) {
-                            TimelineView(.periodic(from: AppClock.system, by: every)) { context in
-                                EggSectionView(
-                                    running: running, plan: plan,
-                                    calibration: planner.calibration, now: AppClock.app(context.date)
-                                )
-                            }
-                            .id(tick)
-                            .frame(width: 120, height: 156)
-                            CookSentence(running: running, plan: plan, planner: planner)
-                        }
-                    }
+                    DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
+                        #if DEBUG
+                        .logTop("slider")
+                        #endif
+                    setup(phase: outerPhase, every: every, tick: tick)
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = AppClock.app(context.date)
                         let phase = cook.phase(at: now)
@@ -122,26 +104,44 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
+            #if DEBUG
+            // `-uiScrollAnchor 0.7`: open scrolled that far down the page,
+            // for a screenshot at the largest text sizes.
+            .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
+            #endif
             .navigationTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // A running cook is always the egg, as on the web.
-                if outerPhase == .idle {
-                    ToolbarItem(placement: .topBarLeading) {
-                        NavigationLink(value: Route.settings) { Text(tr("controls.settings")) }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(value: Route.help(nil)) { Text(tr("help.link")) }
-                    }
+                // In every phase: Settings' pot rows correct a running cook.
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(value: Route.settings) { Text(tr("controls.settings")) }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(value: Route.help(nil)) { Text(tr("help.link")) }
                 }
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .settings: SettingsView(planner: planner)
+                case .settings: SettingsView(planner: planner, cooking: cook.running != nil)
                 case .help(let section): HelpView(planner: planner, start: section)
                 }
             }
         }
+        // A − or + held while a cook runs is a correction committed on
+        // release, one tapped after its settle (`Edits`), here and in
+        // Settings.
+        .environment(\.editGesture, EditGesture { field, down in
+            if down { model.edits.fingerDown(field) } else { model.edits.fingerUp() }
+        })
+        // The pull brings the egg's page back, from Settings or Help.
+        .onChange(of: outerPhase == .pull) { _, pull in
+            if pull { path = [] }
+        }
+        #if DEBUG
+        .onChange(of: path) { _, now in
+            Screenshots.log("view \(now.last.map { "\($0)" } ?? "egg")")
+        }
+        #endif
         // 1750 is set in its period face, as on the web (`PeriodFace`):
         // here for whatever sets no style of its own, and through
         // `appFont` for whatever does. The clock keeps its own face.
@@ -173,6 +173,13 @@ struct ContentView: View {
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
         // The taps a script asked for, as each comes due.
+        Screenshots.open = { what in
+            if what == "settings" { path = [.settings] }
+            if what.hasPrefix("clause-"), let clause = Clause(rawValue: String(what.dropFirst(7))) {
+                model.edits.touchedElsewhere()
+                openClause = clause
+            }
+        }
         Screenshots.drive(model)
         // A cook restored at Done, answered as soon as asked: before its
         // pot's surface is built again, with `-uiAnswerAfter 0`.
@@ -239,16 +246,40 @@ struct ContentView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: - The setup sentence
+    // MARK: - The egg and the setup sentence
 
-    /// The setup sentence, and under it the choice of the clause that is open.
-    /// A clause the sentence no longer has - sous-vide drops two - closes with
-    /// it.
-    private var setup: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SetupSentence(planner: planner, open: $openClause)
+    /// The egg in cross-section and the setup sentence beside it, from the
+    /// top, in every phase (DECISIONS.md 52, 91): the egg on the left costs
+    /// the column no height of its own. Under both, the choice of the clause
+    /// that is open. A clause the sentence no longer has - sous-vide drops
+    /// two - closes with it. Sous-vide draws no egg: it starts no cook.
+    private func setup(phase: Phase, every: TimeInterval, tick: TimeInterval) -> some View {
+        let running = phase == .idle ? nil : cook.running
+        let size = eggSize
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 14) {
+                if running != nil || !planner.isSousVide {
+                    TimelineView(.periodic(from: AppClock.system, by: every)) { context in
+                        let now = AppClock.app(context.date)
+                        EggSectionView(model: model, phase: cook.phase(at: now), now: now)
+                    }
+                    .id(tick)
+                    .frame(width: size.width, height: size.height)
+                    #if DEBUG
+                    .logTop("egg")
+                    #endif
+                }
+                SetupSentence(
+                    planner: planner, open: $openClause,
+                    startedAt: running.flatMap { _ in model.edits.shownStart }.map { Date(timeIntervalSince1970: $0) },
+                    onTap: { model.edits.touchedElsewhere() }
+                )
+                #if DEBUG
+                .logTop("sentence")
+                #endif
+            }
             if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
-                ClausePanel(planner: planner, clause: clause) {
+                ClausePanel(planner: planner, clause: clause, edits: running == nil ? nil : model.edits) {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(clause)
@@ -256,7 +287,29 @@ struct ContentView: View {
             }
         }
     }
+
+    /// The egg's drawing: 120 by 156 pt, a little smaller at the
+    /// accessibility text sizes, so the sentence beside it keeps a column
+    /// wide enough for its words.
+    private var eggSize: CGSize {
+        dynamicTypeSize.isAccessibilitySize ? CGSize(width: 84, height: 109) : CGSize(width: 120, height: 156)
+    }
 }
+
+#if DEBUG
+extension View {
+    /// The view's top in the window, pt, to the debug log whenever it moves
+    /// ("layout slider 312.0"): what the scripted checks read to see that
+    /// nothing moves at the start.
+    func logTop(_ name: String) -> some View {
+        onGeometryChange(for: Double.self) { proxy in
+            (proxy.frame(in: .global).minY * 2).rounded() / 2
+        } action: { y in
+            Screenshots.log("layout \(name) \(y)")
+        }
+    }
+}
+#endif
 
 #Preview {
     ContentView()

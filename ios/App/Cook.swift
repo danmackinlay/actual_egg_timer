@@ -51,6 +51,12 @@ final class Cook {
     /// pot's surface is built, so a boil tap does not blank it for the second
     /// that takes.
     private(set) var outcome: Outcome?
+    /// How sure I am of the plan's time, and its pot's odds at every level
+    /// (the slider's shading), on its pot's surface: the last read on one,
+    /// held while a new pot's is built (the boil tapped, a correction), as
+    /// the web holds them, rather than blanking for the second that takes.
+    private(set) var heldCertainty: CertaintyReading?
+    private(set) var heldProfile: OddsProfile?
     /// The last lean decided on a surface, s: the interim while a surface is
     /// built again after a relaunch. A cache, never truth.
     private var leanHintS: Double = 0
@@ -221,7 +227,16 @@ final class Cook {
     /// (`AppModel.answer`), and the plan that lands calls `planTaken`.
     var recordWaitsForSurface: Bool {
         guard let running, let plan else { return false }
-        return Self.record(running, plan, yolk: nil, white: nil, probe: nil).refused == .noSurface
+        return Self.record(running, plan, yolk: nil, white: nil, probe: nil).refused != nil
+    }
+
+    /// This egg's record from a cook and a plan of it, as core makes it, or
+    /// nil when core refuses: what a correction after the pull logs in place
+    /// of the egg's record (`AppModel.refreshAsRan`).
+    static func recordOf(
+        _ cook: RunningCook, _ plan: CookPlan, yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?
+    ) -> EggRecord? {
+        record(cook, plan, yolk: yolk, white: white, probe: probe).record
     }
 
     /// Called whenever a plan is taken: what an answer held for the surface
@@ -279,6 +294,22 @@ final class Cook {
     static func unansweredRecord(_ u: Unanswered) async -> EggRecord? {
         let first = record(u.cook, u.plan, yolk: nil, white: nil, probe: nil)
         if let made = first.record { return made }
+        if first.refused == .stale {
+            // Corrected after the pull, and not yet planned as it ran: on the
+            // calibration as it stands, which has not learned from this egg,
+            // since nobody answered about it.
+            guard let inputs = replan(u.cook, u.calibration, surface: nil, leanHintS: 0, nowS: u.nowS).inputs else {
+                return nil
+            }
+            let grid = await DecisionGrids.shared.grid(inputs)
+            let profile = await DecisionGrids.shared.profile(inputs, u.calibration)
+            let surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
+            guard let ran = asRanCorrected(u.cook, before: u.calibration, surface: surface, nowS: u.nowS) else {
+                return nil
+            }
+            let plan = replan(ran, u.calibration, surface: surface, leanHintS: 0, nowS: u.nowS)
+            return record(ran, plan, yolk: nil, white: nil, probe: nil).record
+        }
         guard first.refused == .noSurface, let inputs = u.plan.inputs else { return nil }
         let grid = await DecisionGrids.shared.grid(inputs)
         let profile = await DecisionGrids.shared.cachedProfile(inputs, u.calibration)
@@ -417,6 +448,67 @@ final class Cook {
         change(to: next)
     }
 
+    /// A correction committed (`Edits`; DECISIONS.md 96 to 98): the start
+    /// (when the eggs went in) and the choices replaced (`startCorrected`,
+    /// `corrected`), and the cook planned again from its start, stored, and
+    /// drawn. Overdue is decided by the plan of the corrected cook: a pull
+    /// now in the past is the moment of the correction, and rings now
+    /// (`ringIfDue`). A correction that puts the pull back in the future
+    /// before the egg was seen to come out - changed back within the grace -
+    /// cancels it (`adopt`): nothing was observed. The alarms and the card
+    /// follow the plan, as they follow any.
+    func correct(choices: CookChoices, startedAtS: Double?) {
+        guard var c = running else { return }
+        let now = AppClock.now.timeIntervalSince1970
+        if let s = startedAtS, s != c.startedAtS { c = startCorrected(c, startedAtS: s, nowS: now) ?? c }
+        if choices != c.choices { c = corrected(c, choices: choices, nowS: now) }
+        guard c != running else { return }
+        change(to: c)
+    }
+
+    /// "Are the eggs still in the water?" Yes: the pull the clock assumed is
+    /// dropped, and the cook planned again as told now; a pull already past
+    /// is now, and rings, as if the egg had never been taken out (`stillIn`).
+    func answerStillIn() {
+        guard let running, plan?.askIfStillIn == true else { return }
+        rung = [:]
+        change(to: stillIn(running, nowS: AppClock.now.timeIntervalSince1970))
+    }
+
+    /// No: the egg came out when the clock assumed. The pull stands,
+    /// confirmed, the correction applies to the record, and the plan does
+    /// not ask again (`pullStands`).
+    func answerOut() {
+        guard let running, plan?.askIfStillIn == true else { return }
+        Ringer.shared.stop()
+        change(to: pullStands(running))
+    }
+
+    /// The plan as it ran, made again for a correction after the pull on the
+    /// calibration before this egg (`asRanCorrected`), kept with the cook if
+    /// it is still the cook it was made for.
+    func keepCorrectedAsRan(_ next: RunningCook) {
+        guard var c = running, c.idMs == next.idMs, c.correctedAtS == next.correctedAtS,
+              c.asRan != next.asRan else { return }
+        c.asRan = next.asRan
+        running = c
+        persist()
+        replanSoon()
+    }
+
+    /// A plan of `hand`, the cook as a change in hand would make it, for its
+    /// preview: on the plan's surface when it is the same pot, else on the
+    /// interim time, as a plan with no surface is. Stores nothing and rings
+    /// nothing.
+    func previewPlan(_ hand: RunningCook, nowS: Double) async -> CookPlan {
+        let input = PlanInput(
+            cook: hand, calibration: calibration(), surface: surface, leanHintS: leanHintS, nowS: nowS
+        )
+        return await Task.detached(priority: .userInitiated) {
+            replan(input.cook, input.calibration, surface: input.surface, leanHintS: input.leanHintS, nowS: input.nowS)
+        }.value
+    }
+
     /// The cook replaced by what it now is: stored, and planned again.
     private func change(to next: RunningCook) {
         running = next
@@ -492,6 +584,8 @@ final class Cook {
         plan = nil
         plannedFor = nil
         outcome = nil
+        heldCertainty = nil
+        heldProfile = nil
         leanHintS = 0
         surface = nil
         surfaceAsked = nil
@@ -609,10 +703,20 @@ final class Cook {
             "plan pull \(next.deadlines.cookEndS) cooled \(next.deadlines.coolEndS.map { String($0) } ?? "-")"
                 + " lengthened \(next.lengthened) surface \(next.decided != nil)"
                 + " next \(next.slowHobAtS.map { String($0) } ?? "-")"
+                + " asking \(next.askIfStillIn) overdue \(next.overdue)"
+        )
+        Screenshots.log(
+            "verdict \(next.answer.verdict.kind) white sets \(next.solution.whiteSets) cook \(next.cookTimeS)"
         )
         #endif
+        let wasAsking = plan?.askIfStillIn
         plan = next
         plannedFor = cook
+        // A pull made overdue by a correction and changed back within the
+        // grace is cancelled: nothing rings for it. Nor while the plan asks
+        // whether the egg is still in the water.
+        let phaseNow = phase(at: AppClock.now)
+        if phaseNow == .heating || phaseNow == .cooking || next.askIfStillIn { Ringer.shared.stop() }
         #if DEBUG
         // What Done shows: the peak as it ran once kept, else this plan's.
         Screenshots.log(String(
@@ -621,11 +725,16 @@ final class Cook {
         ))
         #endif
         if let o = made.outcome { outcome = o }
+        if next.decided != nil {
+            heldCertainty = next.certainty
+            // This pot's own, or none until it lands after the surface.
+            heldProfile = surface.flatMap { $0.inputs == next.inputs ? $0.profile : nil }
+        }
         if next.decided != nil, next.leanS != leanHintS {
             leanHintS = next.leanS
             persist()
         }
-        if let before, Self.moved(before, next.deadlines) {
+        if let before, Self.moved(before, next.deadlines) || wasAsking != next.askIfStillIn {
             // A deadline rung for and since moved rings again at its new time.
             rung = rung.filter { Self.same($0.value, Self.at($0.key, next.deadlines)) }
             if alarmAuthorized == true {
@@ -1050,6 +1159,7 @@ final class Cook {
         Screenshots.log(
             "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
                 + " up \(s.countsUp == true)"
+                + " cook \(s.cook?.doneness ?? "-")|\(s.cook?.peakYolk ?? "-")|\(s.cook?.eggMass ?? "-")|\(s.cook?.cooling ?? "-")"
         )
     }
     #endif
@@ -1096,6 +1206,17 @@ final class Cook {
         let start = Date(timeIntervalSince1970: running.startedAtS)
         let pull = Date(timeIntervalSince1970: d.cookEndS)
         let cook = Self.description(running, plan)
+        // While the plan asks whether the eggs are still in the water, the
+        // card shows the pull, "now", with the pull's line naming the
+        // cooling, not a cooling's countdown that may not be running: if
+        // they are still in, that is what to do. Until the question is
+        // answered, or the cook is too old.
+        if plan.askIfStillIn, phase(at: now) != .idle {
+            return .init(
+                stage: .pull, began: pull, ends: Date(timeIntervalSince1970: plan.tooOldAtS), provisional: false,
+                cook: cook
+            )
+        }
         switch phase(at: now) {
         case .idle, .done:
             return nil

@@ -869,6 +869,35 @@ commit each):
     `SettingsView.swift`; `Screenshots.swift` launch arguments for a
     correction mid-cook.
 
+    *As built (iOS, 8 October 2026; `SHIP-0.5.md` C3, `LOGBOOK.md`).* Step
+    10 as listed, in six commits after core's, each checked by new `npm run ios:e2e`
+    scenarios, the web's where iOS can drive them (15 new, 31 in all, the
+    same seconds as the web's: the owner's case 213 s later, a heavier egg
+    +34.1 s, a lighter -44.6 s). Where it departs from the web's notes
+    above, or chose where they were silent:
+    - **Core** names the start clause's `*At` keys (`clauseKeys`'
+      `startedAt`), which the web had chosen in `sentence.ts`, so both
+      apps choose them alike, fixtured.
+    - **The controls are the planner**: while a cook runs `Planner.onEdit`
+      sends every change to `Edits` (`ios/App/Edits.swift`) instead of
+      saving and solving; a relaunch sets them to the cook's choices
+      (`Planner.adopt`). A correction is the fields changed against the
+      controls as last committed, laid over the cook's choices, and only
+      those settings are written (`SettingsStore.save(_:fields:level:)`).
+    - **The gesture** is told by the slider (`YolkSlider.onTouch`) and by
+      each − and + (`onEditingChanged`, through the environment's
+      `editGesture`); a segmented choice or a menu tells only its change.
+    - **The record corrected after the pull** is planned on the calibration
+      before this egg (`Planner.calibrationBefore`: the copy held when this
+      process folded it, else the log replayed up to it), and the logged
+      egg is replaced and folded again (`replaceLogged`); an answer refused
+      as stale is held until it lands, and an unanswered egg ended stale is
+      planned so at Start again (`Cook.unansweredRecord`).
+    - **"Still in the water?"**: the Lock Screen card shows the pull while it
+      is open (`UI.md` §9).
+    - **`cook.summary`** is retired (`onescreen_ios`): the slider's heading
+      says the peak.
+
 **Then the words.** D1's `certainty` and the `onescreen` draft, both apps,
 1750 and en-US twins, fitted to `test/data/surfaces.json`; `UI.md`
 rewritten as built.
@@ -901,7 +930,8 @@ rewritten as built.
 
 *As built (web, 8 October 2026).* The drawing names its reading
 (`data-egg`: `aim`, `live`, `ran`); at Done it is the egg as it ran, eaten,
-not the live egg's last frame (step 7's notes, above).
+not the live egg's last frame (step 7's notes, above). *iOS, the same day*:
+the same three readings, named in the debug log (`EggSectionView`).
 
 ## 6. Certainty on the screen
 

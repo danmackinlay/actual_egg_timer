@@ -382,7 +382,6 @@
     "more.expanded": { "text": "Opened" },
     "more.collapsed": { "text": "Closed" },
     "controls.units.more.ios": { "text": "I begin with what is customary where your phone says you are." },
-    "cook.summary": { "text": "{doneness} · the yolk rising to {yolk}" },
 
     "activity.stage.heating": { "text": "Upon the fire" },
     "activity.stage.cooking": { "text": "In the water" },

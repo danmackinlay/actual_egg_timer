@@ -6,6 +6,12 @@ extension Planner {
 
     func changed() {
         guard !applying else { return }
+        // While a cook runs the controls are its own: a change is a
+        // correction in hand (`Edits`), neither saved nor solved for here.
+        if let onEdit {
+            onEdit()
+            return
+        }
         #if DEBUG
         Perf.input()
         #endif
@@ -319,6 +325,11 @@ extension Planner {
     private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
         #if DEBUG
         Perf.landed(question: question, interim: !snap, chosen: answer.decision != nil, odds: answer.profile != nil, cookS: answer.solution.result.cookTimeS)
+        // What the idle screen shows, for the scripted checks: the time, and
+        // whether it is decided on this pot's surface.
+        Screenshots.log(
+            "answer \(answer.solution.result.cookTimeS) decided \(answer.decision != nil) odds \(answer.profile != nil)"
+        )
         #endif
         solution = answer.solution
         answered = question

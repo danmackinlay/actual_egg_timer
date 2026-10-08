@@ -489,6 +489,11 @@ on `b314a4c`; its header has the 1750 twins ("set in cold water at {time}
 and brought to the boil", "The eggs put in at", "Are the eggs yet in the
 water?"). Proved with `copyLiterals --since b314a4c onescreen` and the
 snapshot compared with `--draft onescreen` (`LOGBOOK.md`, 8 October 2026).
+The same day `onescreen_ios` (`tools/drafts/onescreen_ios.ts`, on
+`ee5ffda`) gave iOS the rows below but `spoken.stillIn` (iOS speaks no
+`spoken.*` key), unchanged, and retired `cook.summary` from iOS too, its
+1750 twin with it; core's `clauseKeys` now chooses the `*At` start
+clauses. Proved with `copyLiterals --since ee5ffda onescreen_ios`.
 
 | key | before | after |
 |---|---|---|

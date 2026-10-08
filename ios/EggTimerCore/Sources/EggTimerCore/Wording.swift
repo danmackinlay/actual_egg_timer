@@ -240,21 +240,31 @@ public struct ClauseFacts: Sendable {
     public var sousVide: Bool
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
+    /// A cook is running, so the start clause says when the eggs went in
+    /// ("into cold water at 7:42"), the time its panel corrects
+    /// (design/one-screen.md section 7, 20): the app supplies `time`. False
+    /// while idle. Sous-vide starts no cook, and has none.
+    public var startedAt: Bool
 
-    public init(eggFrom: EggFrom, startMode: StartMode, sousVide: Bool, afterBoil: HeatAfterBoil, cooling: Cooling) {
+    public init(
+        eggFrom: EggFrom, startMode: StartMode, sousVide: Bool, afterBoil: HeatAfterBoil, cooling: Cooling,
+        startedAt: Bool = false
+    ) {
         self.eggFrom = eggFrom
         self.startMode = startMode
         self.sousVide = sousVide
         self.afterBoil = afterBoil
         self.cooling = cooling
+        self.startedAt = startedAt
     }
 }
 
 /// The setup sentence's keys. The start clause carries the boil, and the
 /// standing when the heat goes off: "into cold water" alone reads as if the
-/// eggs never boil.
+/// eggs never boil. While a cook runs it carries when the eggs went in.
 public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
     let standing = f.afterBoil == .off
+    let at = f.startedAt
     let from: ClauseKeys = switch f.eggFrom {
     case .fridge: ClauseKeys(text: "setup.from.fridge", label: "controls.eggFrom", value: "controls.eggFrom.fridge")
     case .room: ClauseKeys(text: "setup.from.room", label: "controls.eggFrom", value: "controls.eggFrom.room")
@@ -264,12 +274,16 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
         ClauseKeys(text: "setup.start.sous", label: "controls.start", value: "controls.start.sousVide")
     } else if f.startMode == .cold {
         ClauseKeys(
-            text: standing ? "setup.start.coldStanding" : "setup.start.cold",
+            text: standing
+                ? at ? "setup.start.coldStandingAt" : "setup.start.coldStanding"
+                : at ? "setup.start.coldAt" : "setup.start.cold",
             label: "controls.start", value: "controls.start.cold"
         )
     } else {
         ClauseKeys(
-            text: standing ? "setup.start.hotStanding" : "setup.start.hot",
+            text: standing
+                ? at ? "setup.start.hotStandingAt" : "setup.start.hotStanding"
+                : at ? "setup.start.hotAt" : "setup.start.hot",
             label: "controls.start", value: "controls.start.hot"
         )
     }

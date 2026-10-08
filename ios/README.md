@@ -198,13 +198,17 @@ three are the model refusing to lie:
   allows, and says why in a sentence. Ask for anything at all with the heat off
   in too little water and the start button goes dead, because that pan never
   sets the white.
-- **The method is always on screen.** Which cooking method a running timer is
-  for is the one thing you cannot check once the controls are hidden, and a hob
-  instruction like "keep it boiling" does not answer it. While a cook runs, the
-  setup sentence it was started with stays under the time, with nothing to tap,
-  over the doneness and peak yolk. Beside it, `EggSectionView.swift` draws the
-  egg in cross-section, how set each layer is as the clock moves
-  (`EggSection` in core; `DECISIONS.md` 52), the web's egg drawn the same way.
+- **One screen, open to correction.** Setting up and boiling are one layout
+  (`UI.md` §3; `DECISIONS.md` 91, 96 to 98): the slider and the setup
+  sentence stay on screen while the egg cooks, showing the cook's own
+  choices, and every clause, the slider and Settings' pot rows correct it -
+  "it was always like this", the cook planned again from its start, the
+  alarms and the Lock Screen card following. `Edits.swift` decides when a
+  change is committed (on release of a drag or a held − or +, after a 1.5-s
+  settle of a tap). Beside the sentence, `EggSectionView.swift` draws the egg
+  in cross-section (`EggSection` in core; `DECISIONS.md` 52): the egg aimed
+  for while idle and while a change is in hand, the live egg while it cooks,
+  and the egg as it ran at Done, the web's egg drawn the same way.
   `-sectionAhead <s>` on a debug build draws it that far on, for a screenshot
   of a cook part done (`Screenshots.swift`).
 - **A cold start is provisional until you tap the boil.** The countdown says so.
@@ -445,18 +449,25 @@ nothing, and a record made under it carries ` (debug clock)` after its
 everything.
 
 ```sh
-npm run ios:e2e                    # every scenario, about three and a half minutes
+npm run ios:e2e                    # every scenario, about five and a half minutes
 npm run ios:e2e -- relaunch-*      # some; --list names them
 ```
 
 `tools/iosE2e.mjs` builds Debug, makes a simulator of its own, and for each
 scenario installs afresh, drives the app by launch argument (`-uiScreen
 heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
-`App/Screenshots.swift`, never screen coordinates), terminates and relaunches
-it, and asserts on the debug log (`Library/Caches/aet.log`: phases, plans,
-the stored cook, the egg log, alarms scheduled, read back and delivered,
-rings, cards, and `settled` when the cook has nothing under way) and on the
-prefs plist through plistlib. It deletes the device at the end.
+`App/Screenshots.swift`, never screen coordinates, the one screen's among
+them: `eggsIn@launch+1`, `set:size=3@30`, `drag:0.3/0.1@pull-60` and
+`release`, `start:+3`, `stillIn`, `stillOut`, `open:settings`), terminates
+and relaunches it, and asserts on the debug log (`Library/Caches/aet.log`:
+phases, plans, the stored cook, the egg log, alarms scheduled, read back and
+delivered, rings, cards with their description, and `settled` when the cook
+has nothing under way; for the one screen also where the slider, the
+sentence and the egg sit, which egg is drawn, each change in hand and each
+correction committed, what the readout and the slot say) and on the prefs
+plist through plistlib. It deletes the device at the end. A tap's settle is
+the host's 1.5 s, as a finger's would be; the cook's clock stays frozen
+through it.
 
 The clock is frozen at every moment a scenario checks, and stepped from one
 to the next: launched 14 s into the pull's 20-s grace, the app is 14 s into

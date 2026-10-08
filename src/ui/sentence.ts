@@ -75,16 +75,6 @@ export function liveSetupFacts(
   };
 }
 
-/** The start clause while a cook runs: the same words with when the eggs
- *  went in ("into cold water at 7:42"), the time the panel corrects
- *  (design/one-screen.md section 7, 20). */
-const START_AT: Record<string, string> = {
-  'setup.start.cold': 'setup.start.coldAt',
-  'setup.start.coldStanding': 'setup.start.coldStandingAt',
-  'setup.start.hot': 'setup.start.hotAt',
-  'setup.start.hotStanding': 'setup.start.hotStandingAt',
-};
-
 /** What each clause says, and what a screen reader hears for it: its heading
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
 function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
@@ -95,16 +85,17 @@ function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: strin
   const keys = clauseKeys({
     eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
     afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling,
+    // While a cook runs, the start clause says when the eggs went in ("into
+    // cold water at 7:42"), the time its panel corrects.
+    startedAt: f.startedAt !== null,
   });
   const words = (k: ClauseKeys, own: string) => ({
     text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),
   });
-  const start = f.startedAt !== null && START_AT[keys.start.text] !== undefined
-    ? { ...keys.start, text: START_AT[keys.start.text] } : keys.start;
   return {
     egg: words(keys.egg, args.mass),
     from: words(keys.from, args.temp),
-    start: words(start, ''),
+    start: words(keys.start, ''),
     cooling: words(keys.cooling, ''),
   };
 }

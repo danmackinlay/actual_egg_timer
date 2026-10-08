@@ -48,12 +48,11 @@ them out differently.
 
 ## 3. The screens
 
-**The one screen** (the web since 8 October 2026; `DECISIONS.md` 91, 96 to
-98; `design/one-screen.md`). Setting up and boiling are one layout, from
+**The one screen** (both apps since 8 October 2026; `DECISIONS.md` 91, 96
+to 98; `design/one-screen.md`). Setting up and boiling are one layout, from
 idle to Done: at the start nothing moves and nothing goes, and only the
-readout's words, its colours and the buttons change. iOS still has a setup
-screen and a timer screen (§9) until its own step. Top to bottom, in every
-phase:
+readout's words, its colours and the buttons change. Top to bottom, in every
+phase (the 1750 title page, when it is shown, above it all):
 
 - Settings and Help at the top (web: links; iOS: the navigation bar, left and
   right), in every phase. The web's mute is at the top right. While a cook
@@ -104,7 +103,8 @@ ovoid with a round yolk, drawn ring by ring, showing how set each layer is:
 the yolk in the slider track's colours, the white from a clear, faintly
 blue raw white to opaque. It is a picture of what the sentence and the time
 already say, so it has no words and a screen reader passes over it. It has
-two readings, which the web names on the drawing (`data-egg`):
+two readings, which the web names on the drawing (`data-egg`) and iOS in
+its debug log (`egg aim|live|ran`):
 
 - **the egg aimed for** (`aim`): the egg the settings on screen aim for, as
   eaten at the end of the cooling (`previewSection`), so the yolk reads the
@@ -115,7 +115,8 @@ two readings, which the web names on the drawing (`data-egg`):
   cook is corrected, through the cooling. At Done, **the egg as it ran**
   (`ran`), eaten, with the parameters it ran under.
 
-**Corrections** (`DECISIONS.md` 96 to 98; web `src/ui/edit.ts`). After
+**Corrections** (`DECISIONS.md` 96 to 98; web `src/ui/edit.ts`, iOS
+`ios/App/Edits.swift`). After
 Start every clause of the sentence, the slider and Settings' pot rows stay
 open, showing the cook's own choices, never the settings (another tab's
 settings touch only the units, the language and the sound while a cook
@@ -190,7 +191,7 @@ cannot disagree:
 | Pull | `readout.phase.pull` | `readout.sub.pull` | `action.hint.pull`, none on the counter | the pull button, naming the cooling (`pulledKey`) |
 | Cooling (ice, tap) | `readout.phase.coolingIce` / `coolingTap` | `readout.sub.coolingPeak` / `coolingProbe` | none | none |
 | Done | `readout.phase.done` | `readout.sub.doneCold` / `doneHot` | none | `action.startAgain`; the two questions, and under them the probe reading |
-| Still in? (web) | `ask.stillIn` | `readout.sub.stillIn` | none | `ask.stillIn.yes`, and `ask.stillIn.no` under it |
+| Still in? | `ask.stillIn` | `readout.sub.stillIn` | none | `ask.stillIn.yes`, and `ask.stillIn.no` under it |
 
 Cancel is under every running phase. A counter rest has no cooling phase:
 the pull runs out into Done. The cooling counts down to the yolk's peak.
@@ -453,9 +454,27 @@ the thumb when the finger lifts; the web's thumb moves at once.
 - **The open clause** has a solid accent fill on the web and an accent wash on
   iOS, where a link's text takes the tint. VoiceOver focus does not return to
   the clause after Done on iOS.
-- **The one screen** is the web's (8 October 2026); iOS keeps a setup
-  screen and a timer screen, the running sentence plain with `cook.summary`
-  under it, until its own step reuses the `onescreen` words.
+- **The one screen on iOS** (8 October 2026) is the web's, but:
+  - *"Another control touched"* is what iOS can see: a finger down on the
+    slider or on a − or + (its `onEditingChanged`), a clause pressed, a
+    button that moves the cook on, or a change landing from another control.
+    A segmented choice or a menu reports no touch of its own, only its
+    change, so a change in hand from another control is committed when that
+    change lands, without it (the web commits it with it).
+  - *The controls are the planner's own*, set to the cook's choices at a
+    relaunch (`Planner.adopt`); iOS has no second tab, so a correction
+    writes only the settings it changed, as the web does, and nothing else
+    can write them while a cook runs.
+  - *While "still in the water?" is open* the Lock Screen card shows the
+    pull, "now", with the pull's line naming the cooling, not a cooling's
+    countdown that may not be running; no alarm is pending. VoiceOver reads
+    the question, the time and the line as shown: iOS speaks no `spoken.*`
+    key, so `spoken.stillIn` stays the web's.
+  - *At the accessibility text sizes* the egg is drawn smaller (84 by 109 pt)
+    so the sentence keeps a column, and the slider's five words stop
+    growing at the largest standard size, since each sits under its level.
+  - *Settings* is the navigation bar's in every phase; the pull pops it, and
+    Help, back to the egg's page.
 - **The action bar** on the web is opaque, fading in over its top 20 px, and
   stuck to the bottom of the page's column rather than fixed over it, so what
   scrolls under it is hidden and the last line always scrolls clear; at Done

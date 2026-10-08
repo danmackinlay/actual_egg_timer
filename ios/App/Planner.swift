@@ -380,6 +380,35 @@ final class Planner {
     var applying = false
     var boilMemory: BoilMemory = [:]
     private var loaded = false
+    /// Set while a cook runs: a change to a control is then a correction in
+    /// hand (`Edits.controlsChanged`), and is neither saved nor solved for.
+    @ObservationIgnored var onEdit: (() -> Void)?
+
+    /// The controls set to a running cook's own choices, as they stood when
+    /// it was stored (a relaunch): what the controls show while it runs
+    /// (design/one-screen.md section 4, review 2.5). Neither saved nor
+    /// solved for: a correction writes the settings it changes. The room is
+    /// left as it is, since the choices hold only the room in use.
+    func adopt(_ c: CookChoices) {
+        applying = true
+        defer { applying = false }
+        doneness = c.level
+        if c.massFrom == .sizeClass,
+           let i = sizeClasses.firstIndex(where: { abs($0.massKg - c.massKg) < 1e-12 }) {
+            sizeIndex = i
+        } else {
+            weighedMassG = c.massKg * 1000
+            sizeIndex = -1
+        }
+        startTemp = c.eggFrom
+        customStartC = c.customStartC
+        start = c.startMode == .cold ? .cold : .hot
+        heatOff = c.afterBoil == .off
+        cooling = c.cooling
+        waterLitres = c.waterLitres
+        eggCount = Int(c.eggCount.rounded())
+        altitudeM = c.altitudeM
+    }
 
     /// Read what was stored and solve for it.
     ///

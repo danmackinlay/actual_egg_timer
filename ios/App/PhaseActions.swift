@@ -34,7 +34,20 @@ struct PhaseActions: View {
     /// line and goes under whichever is there.
     @ViewBuilder
     private var slot: some View {
-        if phase == .idle {
+        if phase == .heating || phase == .cooking, let line = runningWarning, !line.isEmpty {
+            // While a cook runs, until the pull: what its plan says of the
+            // level, as the idle screen says it (design/one-screen.md
+            // section 3: a correction that leaves the white unset gets the
+            // longest time this pan can give, and the slot says so).
+            Text(line)
+                .foregroundStyle(.orange)
+                .appFont(.footnote)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                #if DEBUG
+                .onChange(of: line, initial: true) { _, said in Screenshots.log("slot \(said)") }
+                #endif
+        } else if phase == .idle {
             VStack(spacing: 10) {
                 if let sousVide {
                     Text(sousVide.warn)
@@ -68,6 +81,42 @@ struct PhaseActions: View {
 
     @ViewBuilder
     private var action: some View {
+        if phase != .idle, cook.plan?.askIfStillIn == true {
+            asking
+        } else {
+            phaseAction
+        }
+    }
+
+    /// "Are the eggs still in the water?" (`ReadoutView`): the two answers as
+    /// buttons a cook can press without reading the question again, yes the
+    /// primary; then Cancel. Nothing past the question is shown.
+    private var asking: some View {
+        VStack(spacing: 10) {
+            Button {
+                model.stillIn()
+            } label: {
+                Text(tr("ask.stillIn.yes")).frame(maxWidth: .infinity).onAccent()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            Button {
+                model.stillOut()
+            } label: {
+                Text(tr("ask.stillIn.no")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            Button(tr("action.cancel"), role: .destructive) {
+                model.cancel()
+            }
+            .buttonStyle(.bordered)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var phaseAction: some View {
         switch phase {
         case .idle where sousVide != nil:
             VStack(spacing: 8) {
@@ -121,7 +170,7 @@ struct PhaseActions: View {
                 // Invariant 6: tapping at first bubbles under-measures the boil
                 // by 15-25%, so the button names the thing to wait for.
                 Button {
-                    cook.boil()
+                    model.boil()
                 } label: {
                     Text(tr(model.keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
@@ -152,7 +201,7 @@ struct PhaseActions: View {
                 // ever know, and the record calls it a measured pull. Without it
                 // the grace runs out and the pull is only assumed.
                 Button {
-                    cook.pulledOut()
+                    model.pulledOut()
                 } label: {
                     Text(tr(model.keys(.pull).action ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
                 }
@@ -200,6 +249,17 @@ struct PhaseActions: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    /// The running plan's warning: a refusal, or a wild guess at the
+    /// level, in its own pot's words.
+    private var runningWarning: String? {
+        guard let plan = cook.plan else { return nil }
+        let a = plan.answer
+        return warningText(
+            a.verdict, lowOdds: a.lowOdds, level: a.level, setup: plan.setup,
+            water: planner.show(.water, plan.setup.waterLitres)
+        )
     }
 
     /// What Start is about to ask of the cook, above the button.

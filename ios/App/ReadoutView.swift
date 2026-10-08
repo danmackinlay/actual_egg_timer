@@ -21,9 +21,6 @@ struct ReadoutView: View {
     @Binding var certaintyOpen: Bool
     /// Whether the Learning mark's (i) is open.
     @State private var learningOpen = false
-    /// The running cook's certainty as last read, held while a new pot's
-    /// surface is built (the boil tapped), as the web holds it.
-    @State private var heldRunning: CertaintyReading?
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -46,7 +43,7 @@ struct ReadoutView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             } else {
-                Text(tr(model.keys(phase).label))
+                Text(asking ? tr("ask.stillIn") : tr(model.keys(phase).label))
                     .appFont(.caption, smallCaps: true)
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
@@ -62,14 +59,14 @@ struct ReadoutView: View {
                     .animation(.snappy, value: bigTime)
 
                 sublineLine
+                    #if DEBUG
+                    // What the readout says, for the scripted checks.
+                    .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
+                        Screenshots.log("readout \(said)")
+                    }
+                    #endif
                 certaintyLine
             }
-        }
-        .onChange(of: cook.plan?.certainty) { _, now in
-            if let now { heldRunning = now }
-        }
-        .onChange(of: phase == .idle) { _, idle in
-            if idle { heldRunning = nil }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
@@ -151,15 +148,15 @@ struct ReadoutView: View {
         let o = idle ? planner.heldOutcome : cook.outcome
         let sure: CertaintyReading? = switch phase {
         case .idle: planner.heldCertainty
-        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? (cook.plan?.certainty ?? heldRunning) : nil
+        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? cook.heldCertainty : nil
         case .pull, .cooling, .done: nil
         }
         VStack(spacing: 2) {
             ZStack {
-                // Two lines' room while idle, the word and "most likely".
-                if idle {
-                    Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
-                }
+                // Two lines' room in every phase, the word and "most
+                // likely", so nothing under it moves when they come or go,
+                // nor at the start.
+                Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 if let sure {
                     VStack(spacing: 2) {
                         Button {
@@ -239,12 +236,21 @@ struct ReadoutView: View {
         return lines
     }
 
+    /// The grace ran out unanswered, so I assumed the eggs came out, and a
+    /// correction since would cook them longer: the plan asks whether they
+    /// are still in the water (DECISIONS.md 98), the question in the phase
+    /// label's place, the time since they were due out under it, and
+    /// nothing past the question - not the cooling, nor Done - until it is
+    /// answered (`PhaseActions`).
+    private var asking: Bool { phase != .idle && cook.plan?.askIfStillIn == true }
+
     /// The web's clock face in every phase: the countdown (the time heated,
     /// counting up, once the slow hob has lengthened the guess), how late the
     /// pull is running while the eggs wait to come out, and at the end the
     /// time the egg was in the water.
     private var bigTime: String {
-        switch phase {
+        if asking { return "+" + clockString(max(0, now.timeIntervalSince(cook.pullAt ?? now))) }
+        return switch phase {
         case .idle: planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         // Once the slow hob has lengthened the guess, the pull is a guess
         // that keeps moving and would read 0:00 while the water still heats
@@ -260,6 +266,7 @@ struct ReadoutView: View {
 
     /// The line under the clock: core's key, with this phase's arguments.
     private var subline: String {
+        if asking { return tr("readout.sub.stillIn") }
         let key = model.keys(phase).subline
         return switch phase {
         case .idle:

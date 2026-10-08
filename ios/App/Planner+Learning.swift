@@ -86,6 +86,64 @@ extension Planner {
         recompute()
     }
 
+    /// The calibration before the egg at `index` in the log, for a
+    /// correction made after its pull (design/one-screen.md section 4,
+    /// "Never from its own outcome"; core `asRanCorrected`): a plan made for
+    /// that cook on a posterior that has folded its own answer would score
+    /// the model against what it already learned from it. The web's
+    /// `calibrationBefore`.
+    ///
+    /// - Not in the log (nil), or not folded yet: the calibration as it
+    ///   stands, which has learned nothing from it.
+    /// - Folded in this process: the calibration held before folding it
+    ///   (`folded.before`), as a second answer refolds from.
+    /// - Otherwise (folded before a relaunch): the log replayed up to it, a
+    ///   surface per egg, off the main actor.
+    func calibrationBefore(_ index: Int?) async -> Calibration {
+        guard let index, index < kept.folded else { return kept.calibration }
+        if let done = folded, done.index == index { return done.before }
+        var c = Calibrations.start(kept.base)
+        for egg in kept.log[..<index] where recordTeaches(egg) {
+            let request = gridRequestFor(c, egg)
+            let grid = await Task.detached(priority: .userInitiated) { buildRequestedGrid(request) }.value
+            foldRecord(&c, egg, grid: grid)
+        }
+        return c
+    }
+
+    /// The egg at `index` made again from its cook as corrected after the
+    /// pull, its answers kept: the log keeps the last-corrected record of the
+    /// egg (review 2.5), and the posterior is folded again from before it -
+    /// from the calibration held before its fold when this process folded
+    /// it, else from where the log's replay starts.
+    func replaceLogged(_ index: Int, _ record: EggRecord) {
+        guard kept.log.indices.contains(index) else { return }
+        let had = kept.log[index]
+        var next = record
+        next.yolk = had.yolk
+        next.yolkWord = had.yolkWord
+        next.white = had.white
+        next.probe = had.probe
+        guard next != had else { return }
+        kept.log[index] = next
+        if index < kept.folded {
+            // Whatever is mid-fold lands on nothing.
+            generation &+= 1
+            if let done = folded, done.index == index {
+                kept.calibration = done.before
+                kept.folded = index
+            } else {
+                kept.calibration = Calibrations.start(kept.base)
+                kept.folded = 0
+            }
+            folded = nil
+            resumedIndex = nil
+            liveIndex = index
+        }
+        Calibrations.save(kept)
+        Task { await drain() }
+    }
+
     /// The cook has moved on: the next answers are about the next egg.
     func endEgg() {
         answers = nil

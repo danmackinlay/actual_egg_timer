@@ -1193,15 +1193,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "cook.summary",
-      "args": {
-        "doneness": "jammy",
-        "yolk": "149 °F"
-      },
-      "text": "jammy · the yolk rising to 149 °F"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "sousvide.subline",
       "args": {
         "clock": "8:47 AM",
@@ -2881,15 +2872,6 @@
         "high": "179.1 °F"
       },
       "text": "That’s not what I’d expect from the middle of this egg, which should read 117.7 °F to 179.1 °F. Is the tip in the yolk?"
-    },
-    {
-      "locale": "en",
-      "key": "cook.summary",
-      "args": {
-        "doneness": "jammy",
-        "yolk": "149 °F"
-      },
-      "text": "jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",
