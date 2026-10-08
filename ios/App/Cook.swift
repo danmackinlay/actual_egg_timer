@@ -973,6 +973,13 @@ final class Cook {
         switch phase(at: now) {
         case .idle, .done:
             return nil
+        case .heating where plan.lengthened:
+            // The time heated, counting up to when the guess gives out, not
+            // down to a pull that keeps moving (running-cook review 3).
+            return .init(
+                stage: .heating, began: start, ends: Date(timeIntervalSince1970: plan.tooOldAtS), provisional: true,
+                countsUp: true, cook: cook
+            )
         case .heating:
             return .init(stage: .heating, began: start, ends: pull, provisional: true, cook: cook)
         case .cooking:

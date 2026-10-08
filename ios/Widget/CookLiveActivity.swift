@@ -147,13 +147,14 @@ struct CookLiveActivity: Widget {
         return s >= 3600 ? "0:00:00" : s >= 600 ? "00:00" : "0:00"
     }
 
-    /// The countdown itself. `timerInterval` hands the range to the system,
+    /// The countdown itself, or the time heated counting up once the slow
+    /// hob has lengthened the guess (`countsUp`). `timerInterval` hands the range to the system,
     /// which draws and ticks it on the Lock Screen with no process of ours
     /// running - the same trick as scheduling the alarm at an absolute date.
     @ViewBuilder
     private func countdown(_ state: CookActivity.ContentState, lang: String?) -> some View {
         if state.stage.countsDown {
-            Text(timerInterval: state.began...state.ends, countsDown: true)
+            Text(timerInterval: state.began...state.ends, countsDown: state.countsUp != true)
                 .multilineTextAlignment(.trailing)
         } else {
             Text(tr("activity.now", in: lang))

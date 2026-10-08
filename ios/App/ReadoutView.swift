@@ -239,12 +239,18 @@ struct ReadoutView: View {
         return lines
     }
 
-    /// The web's clock face in every phase: the countdown, how late the pull
-    /// is running while the eggs wait to come out, and at the end the time
-    /// the egg was in the water.
+    /// The web's clock face in every phase: the countdown (the time heated,
+    /// counting up, once the slow hob has lengthened the guess), how late the
+    /// pull is running while the eggs wait to come out, and at the end the
+    /// time the egg was in the water.
     private var bigTime: String {
         switch phase {
         case .idle: planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
+        // Once the slow hob has lengthened the guess, the pull is a guess
+        // that keeps moving and would read 0:00 while the water still heats
+        // (running-cook review 3): the time heated, counting up, instead.
+        case .heating where cook.plan?.lengthened == true:
+            clockString(now.timeIntervalSince(cook.startedAt ?? now))
         case .heating, .cooking: clockString(cook.secondsToPull)
         case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
         case .cooling: clockString(cook.secondsToCoolDone)
