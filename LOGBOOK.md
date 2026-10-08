@@ -5766,3 +5766,70 @@ slack. `continue-on-error` until it has passed there, so a first failure
 cannot hold up a release; then that line goes. It builds Debug again rather
 than take `apple`'s, since an artifact between jobs drops the bundle's file
 modes.
+
+## 8 October 2026: iOS's one screen (SHIP-0.5 C3)
+
+iOS's setup and timer screens are one, as the web's (`DECISIONS.md` 91,
+96 to 98; `design/one-screen.md` step 10, "As built (iOS)"; `UI.md` §3,
+§9), in seven commits, `4d865f0..213e020`, each checked by new `npm run
+ios:e2e` scenarios before the next: 31 scenarios now, 15 of them new, all
+passing in about five minutes on this machine; `npm run verify` and `npm
+run ios:build` passing at each.
+
+**Core** gained one thing: `clauseKeys` chooses the start clause's `*At`
+key while a cook runs (`ClauseFacts.startedAt`), which the web chose in
+`src/ui/sentence.ts`, fixtured both ways; the web calls it and renders as
+before (`npm run e2e -- start-time one-layout`).
+
+**What was driven**, by the scenarios, the web's where iOS can drive them
+and with the same numbers: the slider, the sentence and the egg at the
+same place idle and at Heating, to the half point, and in every phase to
+Done; the egg aimed for at idle (runny, jammy, hard drawn apart: yolk
+0.29, 0.57, 0.98), raw at the start, as it ran at Done (0.58); the owner's
+case (boiling corrected to cold a minute in: Heating again, the pull 213 s
+later, the setting for the next cook, the card updated in place from
+Cooking to Heating, the same after a relaunch); cold to boiling after the
+tap (the tap kept, -125 s); heavier and lighter (+34.1 s, -44.6 s, back to
+the pull exactly, the alarm and the card with it); overdue (Pull and a
+ring at once) and back 5 s later (Cooking, nothing written, the alarm set
+again); a drag through runny held two seconds (no ring, no correction,
+the aim drawn), released where it began (nothing), released at runny
+(rung); the start corrected three times (stopped at now, at the boil
+pressed, two hours back); Settings' water mid-cook (the cook's and the
+next cook's, only that setting written, the egg's page back at the pull);
+a correction at Done after Runny (the egg corrected, a new forecast, the
+answer kept) and back (the first record to the bit, Done's peak as
+before); the slider after the pull (the aim, no correction, the record as
+it was, the egg as it ran again); "still in the water?" both ways (no
+alarm and the card at the pull while it is open, the cooling's end passing
+under it with nothing written; yes: Heating again; no: the pull
+confirmed, the plan as it ran for cold water); the slow hob counting up
+after a late correction to cold ("16:00", the card counting up); the
+slot's refusal for a correction the white never sets in.
+
+**Choices made**, each in `design/one-screen.md` and `UI.md` §9: the
+controls are the planner's, sent to `Edits` while a cook runs and set to
+the cook's choices at a relaunch; a segmented choice or a menu tells only
+its change, so "another control touched" commits a change in hand when
+another control's change lands; the card shows the pull while the
+question is open; `cook.summary` is retired; the egg is drawn smaller at
+the accessibility sizes, and the slider's words stop growing there (they
+overlapped before the one screen too).
+
+**The words**: `onescreen_ios` (`tools/drafts/onescreen_ios.ts`), the
+web's keys gaining iOS unchanged but `spoken.stillIn` (iOS speaks no
+`spoken.*` key), and `cook.summary` retired with its 1750 twin.
+`copyLiterals --since ee5ffda onescreen_ios` passes: 14 keys, each as
+drafted. No web word changed, so the web's snapshot proof was not run.
+
+**Things that cost time.** A `-uiDo` tap anchored on the pull follows the
+pull a correction moves, so the second tap of a pair fired at once:
+`overdue-and-back` relaunches on the stored cook with the taps' moments
+from its start (which also checks that a relaunch takes the controls up
+again). The app writes a record's keys in no fixed order, so the checks
+compare records with their keys sorted. A debug line that starts `plan `
+broke the scripts' reading of the plan's.
+
+**Left**: screenshots of each phase in both Englishes and at the largest
+text size are for the owner on a phone. While the question is open the
+white's line and the slider read the corrected plan, as the web's do.

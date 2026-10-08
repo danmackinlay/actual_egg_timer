@@ -279,7 +279,7 @@ core's exports.
       the ×60 suite failed one. CI runs it after the iOS build, the
       `ios-e2e` job, not blocking until it has passed on GitHub's runners
       (`bfc7311`). Not in `verify`.
-- [ ] **C3. Both apps**, screen by screen, checked by driving them;
+- [x] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
   - [x] *The web's one screen* (8 October 2026; `design/one-screen.md` steps
         6 and 7, "As built"; `UI.md`): one layout from idle to Done, the
@@ -297,7 +297,24 @@ core's exports.
         the eggs still in the water?" (`ab34416`); the slot's warning from
         the running plan (`1dd279f`). Words: the `onescreen` draft, web only
         for now. `npm run e2e`: 28 scenarios, 15 of them new.
-  - [ ] *iOS's one screen*, reusing the `onescreen` words: steps 8 to 10.
+  - [x] *iOS's one screen*, reusing the `onescreen` words (8 October 2026;
+        `design/one-screen.md` step 10, "As built (iOS)"; `UI.md` §3, §9):
+        the start clause's time chosen in core, `clauseKeys`' `startedAt`
+        (`4d865f0`); one layout from idle to Done, nothing moved at the
+        start, the slider reading the running plan, `cook.summary` retired
+        (`03bf540`); the egg aimed for at idle, live from raw, as it ran at
+        Done (`6502753`); every clause, the slider and Settings' pot rows
+        correcting the running cook, committed on release or after the
+        settle, overdue rung at once and undone within the grace, the start
+        in its clause with its limits, the record corrected after the pull
+        on the calibration before this egg, the slider there only previewing,
+        the alarms and the card following each correction (`559a71d`);
+        "Are the eggs still in the water?", the card showing the pull while
+        it is open (`7f5ec53`); the slot's refusal from the running plan
+        (`6fb4c66`). Words: `onescreen_ios`, the web's keys gaining iOS
+        with no change, `cook.summary` retired. `npm run ios:e2e`: 31
+        scenarios, 15 of them new, the web's where iOS can drive them, all
+        passing.
 
 ## D. Certainty in words, on screen (`DECISIONS.md` 93, with C)
 
