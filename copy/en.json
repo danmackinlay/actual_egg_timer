@@ -331,8 +331,6 @@
     "probe.save": { "surface": "button", "apps": ["web", "ios"], "text": "Use this reading" },
     "probe.refused": { "surface": "body", "apps": ["web", "ios"], "text": "That’s not what I’d expect from the middle of this egg, which should read {low} to {high}. Is the tip in the yolk?", "example": { "low": "117.7 °F", "high": "179.1 °F" } },
 
-    "cook.summary": { "surface": "body", "apps": ["ios"], "note": "iOS, under the setup sentence while a cook runs (the web's one screen keeps the slider, whose heading says it): what the sentence does not say, the doneness and the peak yolk the cook was started with. {doneness} is a doneness word, lower-cased by the app.", "text": "{doneness} · peak yolk {yolk}", "example": { "doneness": "jammy", "yolk": "149 °F" } },
-
     "sousvide.subline": { "surface": "body", "apps": ["web", "ios"], "note": "{clock} is a time of day, in the locale’s own clock.", "text": "at {clock}, for {duration} at {bath}, to eat now", "example": { "clock": "8:47\u202fAM", "duration": "22 h 43 min", "bath": "136 °F" } },
     "sousvide.note.whiteBound": { "surface": "body", "apps": ["web", "ios"], "text": "white only just set, yolk firmer than you asked" },
     "sousvide.note.yolkBound": { "surface": "body", "apps": ["web", "ios"], "text": "yolk as you asked, white set" },

@@ -443,6 +443,72 @@ async function relaunched(run, at, args = [], opts = {}) {
   return { restore: restore.text, plan: lastPlan(before(lines, /^pending /)), lines };
 }
 
+/// Where each part of the screen last sat, pt from the window's top
+/// (`layout <name> <y>`, ContentView.logTop).
+function layoutOf(lines) {
+  const out = {};
+  for (const l of lines) {
+    const m = l.text.match(/^layout (\S+) (\S+)$/);
+    if (m) out[m[1]] = Number(m[2]);
+  }
+  return out;
+}
+
+/// Wait until the lines starting `prefix` have stopped coming for a second of
+/// the host's, a view's redraws being the system's to time: the lines then.
+async function quiet(run, prefix) {
+  const end = Date.now() + WAIT_S * 1000;
+  let count = -1;
+  let since = Date.now();
+  while (Date.now() < end) {
+    const lines = run.lines();
+    const n = lines.filter((l) => l.text.startsWith(prefix)).length;
+    if (n !== count) {
+      count = n;
+      since = Date.now();
+    } else if (Date.now() - since >= 1000) {
+      return lines;
+    }
+    await sleep(100);
+  }
+  throw new Error(`"${prefix}" never stopped`);
+}
+
+/// Wait until the screen has stopped moving: no `layout` line for a second.
+/// The layout then.
+async function stillLayout(run) {
+  return layoutOf(await quiet(run, 'layout '));
+}
+
+/// Launch idle on a fresh install and wait for the time decided on its pot's
+/// surface and its odds, and the screen still.
+async function idle(run, args = []) {
+  run.launch(args);
+  await run.until(/^answer \S+ decided true odds true$/, { from: run.launched, what: 'the idle time decided' });
+  return stillLayout(run);
+}
+
+scenario('one-layout', 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
+  const before = await idle(run, ['-uiDo', `eggsIn@launch+1,${TO_DONE}`]);
+  for (const part of ['slider', 'sentence', 'egg']) run.check(part in before, `idle: no ${part}`);
+  let i = await run.step(run.t0 + 1);
+  const heating = await run.until(/^phase HEATING$/, { from: i, what: 'phase HEATING' });
+  await run.settled(heating.i);
+  const after = await stillLayout(run);
+  for (const part of ['slider', 'sentence', 'egg']) {
+    run.check(near(after[part], before[part], 2), `${part} moved at the start: ${before[part]} -> ${after[part]}`);
+  }
+  // Boiled at 5:00 (from the start, a second after the launch), out 3 s
+  // into the pull, and on to Done: the three parts in every phase.
+  run.t0 += 1;
+  await toDone(run);
+  const done = await stillLayout(run);
+  for (const part of ['slider', 'sentence', 'egg']) run.check(part in done, `Done: no ${part}`);
+  const phasesSeen = phases(run.lines());
+  run.check(same(phasesSeen, ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phasesSeen}`);
+  run.note(`slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
+});
+
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {
   const cook = await started(run, ['-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
   const start = startOf(cook);

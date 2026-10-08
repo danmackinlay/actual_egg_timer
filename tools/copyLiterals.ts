@@ -211,6 +211,14 @@ const NOT_COPY: Record<string, string> = {
   'activity end done': 'debug log (Screenshots.log), never shown',
   'action {}': 'debug log (Screenshots.log), never shown',
   'action unknown {}': 'debug log (Screenshots.log), never shown',
+  // the one screen's checks (tools/iosE2e.mjs): where each part sits, and
+  // what the idle screen shows
+  slider: 'debug log name of a part of the screen, never shown',
+  egg: 'debug log name of a part of the screen, never shown',
+  sentence: 'debug log name of a part of the screen, never shown',
+  'layout {} {}': 'debug log (Screenshots.log), never shown',
+  'answer {} decided {} odds {}': 'debug log (Screenshots.log), never shown',
+  eggsIn: 'debug launch argument value',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',
   IM_FELL_English_Italic: 'font name',

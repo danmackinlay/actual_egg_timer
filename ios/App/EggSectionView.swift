@@ -61,6 +61,19 @@ struct EggSectionView: View {
     }
 }
 
+/// An egg in cross-section drawn as given, or the shell alone for none.
+struct EggDrawing: View {
+    let view: SectionView?
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        Canvas { context, size in
+            EggOutline.draw(view, in: context, size: size, scheme: scheme)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// The section carried forward between ticks, so each second costs two steps
 /// rather than a replay. A new egg, water or start - the boil tapped, a slow
 /// hob, a restore - replays it from t = 0, since the water it has been in

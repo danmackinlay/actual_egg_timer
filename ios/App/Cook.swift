@@ -51,6 +51,12 @@ final class Cook {
     /// pot's surface is built, so a boil tap does not blank it for the second
     /// that takes.
     private(set) var outcome: Outcome?
+    /// How sure I am of the plan's time, and its pot's odds at every level
+    /// (the slider's shading), on its pot's surface: the last read on one,
+    /// held while a new pot's is built (the boil tapped, a correction), as
+    /// the web holds them, rather than blanking for the second that takes.
+    private(set) var heldCertainty: CertaintyReading?
+    private(set) var heldProfile: OddsProfile?
     /// The last lean decided on a surface, s: the interim while a surface is
     /// built again after a relaunch. A cache, never truth.
     private var leanHintS: Double = 0
@@ -492,6 +498,8 @@ final class Cook {
         plan = nil
         plannedFor = nil
         outcome = nil
+        heldCertainty = nil
+        heldProfile = nil
         leanHintS = 0
         surface = nil
         surfaceAsked = nil
@@ -621,6 +629,11 @@ final class Cook {
         ))
         #endif
         if let o = made.outcome { outcome = o }
+        if next.decided != nil {
+            heldCertainty = next.certainty
+            // This pot's own, or none until it lands after the surface.
+            heldProfile = surface.flatMap { $0.inputs == next.inputs ? $0.profile : nil }
+        }
         if next.decided != nil, next.leanS != leanHintS {
             leanHintS = next.leanS
             persist()

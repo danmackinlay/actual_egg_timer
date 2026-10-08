@@ -21,13 +21,19 @@ import EggTimerCopy
 struct SetupSentence: View {
     let planner: Planner
     @Binding var open: Clause?
+    /// When the eggs went in, while a cook runs: the start clause says it
+    /// ("into cold water at 7:42"), and its panel corrects it. Nil while
+    /// idle.
+    var startedAt: Date? = nil
+    /// Whether a clause opens its choice.
+    var editable = true
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The scheme a clause's link uses. Never leaves the app.
     private static let scheme = "eggtimer-clause"
 
     var body: some View {
-        let texts = clauseTexts(planner)
+        let texts = clauseTexts(SetupFacts(planner, startedAt: startedAt))
         let shown = clauses
         Text(attributed(texts, shown: shown))
             .appFont(.title3)
@@ -39,6 +45,7 @@ struct SetupSentence: View {
                 guard url.scheme == Self.scheme, let clause = Clause(rawValue: url.host() ?? "") else {
                     return .systemAction
                 }
+                guard editable else { return .handled }
                 withAnimation(.snappy) { open = open == clause ? nil : clause }
                 return .handled
             })
@@ -131,9 +138,14 @@ struct SetupFacts {
     var heatOff: Bool
     var cooling: Cooling
     var units: UnitSystem
+    /// When the eggs went in, as a time of day, while a cook runs: the start
+    /// clause says it. Nil while idle.
+    var startedAt: String?
 
-    /// The setup on the controls.
-    @MainActor init(_ planner: Planner) {
+    /// The setup on the controls: the settings while idle, a running cook's
+    /// own choices while one runs (`AppModel`'s edits), with when its eggs
+    /// went in.
+    @MainActor init(_ planner: Planner, startedAt: Date? = nil) {
         units = planner.units
         mass = planner.sizeClasses.indices.contains(planner.sizeIndex)
             ? classMass(planner.sizeClasses[planner.sizeIndex], units: units)
@@ -143,26 +155,7 @@ struct SetupFacts {
         start = planner.start
         heatOff = planner.heatOff
         cooling = planner.cooling
-    }
-
-    /// The setup of the cook in the pan, from its choices and not the
-    /// controls: what the cook promised, in the units they set it up in. A
-    /// class egg is named as its class's mass, as the size menu names it,
-    /// when the carton still has a class of that mass; otherwise it is the
-    /// egg's own.
-    @MainActor init(_ cook: RunningCook, plan: CookPlan, planner: Planner) {
-        let system = cook.units
-        units = system
-        let grams = plan.egg.massKg * 1000
-        let byClass = cook.choices.massFrom == .sizeClass
-            ? planner.sizeClasses.first { abs($0.massKg * 1000 - grams) < 1e-9 }
-            : nil
-        mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, grams)
-        from = cook.choices.eggFrom
-        customC = plan.setup.eggStartC
-        start = cook.choices.startMode == .cold ? .cold : .hot
-        heatOff = cook.choices.afterBoil == .off
-        cooling = cook.choices.cooling
+        self.startedAt = startedAt.map { timeOfDay($0) }
     }
 }
 
@@ -172,11 +165,6 @@ private func classMass(_ c: SizeClass, units: UnitSystem) -> String {
     return tr(label.mass.key, ["value": .fixed(label.mass.value)])
 }
 
-@MainActor
-func clauseTexts(_ planner: Planner) -> [Clause: ClauseText] {
-    clauseTexts(SetupFacts(planner))
-}
-
 /// The clauses' words: core's `clauseKeys`, with this app's arguments. The
 /// web's `clauseTexts`.
 func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
@@ -184,10 +172,11 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
         "mass": .text(f.mass),
         "temp": .text(showIn(f.units, .eggTemp, f.customC)),
         "bath": .text(showIn(f.units, .temperature, sousVideBathC)),
+        "time": .text(f.startedAt ?? ""),
     ]
     let keys = clauseKeys(ClauseFacts(
         eggFrom: f.from, startMode: f.start == .cold ? .cold : .hot, sousVide: f.start == .sousVide,
-        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling
+        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling, startedAt: f.startedAt != nil
     ))
     /// A nil value is the argument itself: the mass, or the cook's own
     /// temperature.
@@ -198,47 +187,6 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
             text: tr(k.text, args), label: tr(k.label),
             value: k.value.map { tr($0, args) } ?? own[clause] ?? ""
         )
-    }
-}
-
-// MARK: - The cook in the pan
-
-/// The cook in the pan, once the controls are gone: the
-/// setup sentence it was started with, so a forgetful cook can see what they
-/// promised, and under it what the sentence does not say, the doneness and
-/// the peak yolk. From the cook and its plan (as it ran, once the egg is
-/// out), never the controls. Plain prose: nothing in
-/// it can change a cook under way, so nothing in it is a link. Sous-vide never
-/// runs a cook, so it never shows this.
-struct CookSentence: View {
-    let running: RunningCook
-    let plan: CookPlan
-    let planner: Planner
-
-    var body: some View {
-        let facts = SetupFacts(running, plan: plan, planner: planner)
-        let texts = clauseTexts(facts)
-        // Once the egg is out, the cook as it ran (`asRanShown`).
-        let ran = asRanShown(running, plan: plan)
-        VStack(alignment: .leading, spacing: 6) {
-            Text(tr("setup.sentence", [
-                "egg": .text(texts[.egg]?.text ?? ""), "from": .text(texts[.from]?.text ?? ""),
-                "start": .text(texts[.start]?.text ?? ""), "cooling": .text(texts[.cooling]?.text ?? ""),
-            ]))
-            .appFont(.title3)
-            .lineSpacing(4)
-            .fixedSize(horizontal: false, vertical: true)
-            // In the system the egg was set up in, which the controls cannot
-            // have changed since.
-            Text(tr("cook.summary", [
-                "doneness": .text(midSentence(tr(anchorNear(ran?.level ?? plan.level).key), locale: Copy.activeLocale)),
-                "yolk": .text(showIn(facts.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC)),
-            ]))
-            .appFont(.footnote)
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 }
 

@@ -7,6 +7,11 @@
  *  - The start clause says when the eggs went in while a cook runs, and its
  *    panel corrects it: the four `*At` start clauses, which core's
  *    `clauseKeys` now names (`startedAt`), so both apps choose them alike.
+ *  - The sentence and the slider stay on screen while the egg cooks, and
+ *    the slider's heading says the peak yolk, so the line under the running
+ *    cook's sentence (`cook.summary`), iOS's alone since `onescreen`, is
+ *    retired, its 1750 twin with it ("{doneness} · the yolk rising to
+ *    {yolk}").
  *
  * What a draft is, and how the proofs read it: ../copyDraft.ts.
  */
@@ -23,6 +28,12 @@ const ONESCREEN_IOS_DRAFT: Drafted[] = [
   shared('setup.start.coldStandingAt', 'start clause while a cook runs', 'into cold water at {time}, to the boil, heat off, lid on'),
   shared('setup.start.hotAt', 'start clause while a cook runs', 'into boiling water at {time}'),
   shared('setup.start.hotStandingAt', 'start clause while a cook runs', 'into boiling water at {time}, heat off and lid on'),
+  {
+    key: 'cook.summary', row: 'under the sentence while a cook runs (retired: the slider stays)',
+    before: { text: '{doneness} · peak yolk {yolk}' },
+    after: null,
+    appsBefore: ['ios'], appsAfter: [],
+  },
 ];
 
 export const onescreen_ios: Draft = {

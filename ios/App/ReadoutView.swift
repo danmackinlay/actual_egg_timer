@@ -21,9 +21,6 @@ struct ReadoutView: View {
     @Binding var certaintyOpen: Bool
     /// Whether the Learning mark's (i) is open.
     @State private var learningOpen = false
-    /// The running cook's certainty as last read, held while a new pot's
-    /// surface is built (the boil tapped), as the web holds it.
-    @State private var heldRunning: CertaintyReading?
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -64,12 +61,6 @@ struct ReadoutView: View {
                 sublineLine
                 certaintyLine
             }
-        }
-        .onChange(of: cook.plan?.certainty) { _, now in
-            if let now { heldRunning = now }
-        }
-        .onChange(of: phase == .idle) { _, idle in
-            if idle { heldRunning = nil }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
@@ -151,15 +142,15 @@ struct ReadoutView: View {
         let o = idle ? planner.heldOutcome : cook.outcome
         let sure: CertaintyReading? = switch phase {
         case .idle: planner.heldCertainty
-        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? (cook.plan?.certainty ?? heldRunning) : nil
+        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? cook.heldCertainty : nil
         case .pull, .cooling, .done: nil
         }
         VStack(spacing: 2) {
             ZStack {
-                // Two lines' room while idle, the word and "most likely".
-                if idle {
-                    Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
-                }
+                // Two lines' room in every phase, the word and "most
+                // likely", so nothing under it moves when they come or go,
+                // nor at the start.
+                Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 if let sure {
                     VStack(spacing: 2) {
                         Button {

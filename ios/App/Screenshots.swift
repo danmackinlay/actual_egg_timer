@@ -151,7 +151,10 @@ extension Screenshots {
         let afterS: Double
 
         /// The moment it is due, epoch s, cook time; nil until it can be.
-        func due(_ cook: RunningCook, _ plan: CookPlan) -> Double? {
+        /// `launch` is the clock at this launch, before any cook.
+        func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
+            if anchor == "launch" { return Screenshots.launchedAtS + afterS }
+            guard let cook, let plan else { return nil }
             let base: Double?
             switch anchor {
             case "start": base = cook.startedAtS
@@ -197,14 +200,14 @@ extension Screenshots {
     static func drive(_ model: AppModel) {
         let all = actions
         guard !all.isEmpty else { return }
+        // Read now, at the launch, for `launch`.
+        _ = launchedAtS
         Task { @MainActor in
             var left = all.map { (action: $0, due: Double?.none) }
             while !left.isEmpty {
                 try? await AppClock.sleep(0.25)
-                if let running = model.cook.running, let plan = model.cook.plan {
-                    for i in left.indices {
-                        if let due = left[i].action.due(running, plan) { left[i].due = due }
-                    }
+                for i in left.indices {
+                    if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
                 let now = AppClock.now.timeIntervalSince1970
                 guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
@@ -215,9 +218,13 @@ extension Screenshots {
         }
     }
 
+    /// The clock at this launch, cook time: what `launch` counts from.
+    static let launchedAtS = AppClock.now.timeIntervalSince1970
+
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
         switch action.name {
+        case "eggsIn": model.eggsIn()
         case "boil": model.cook.boil()
         case "out": model.cook.pulledOut()
         case "cancel": model.cancel()
