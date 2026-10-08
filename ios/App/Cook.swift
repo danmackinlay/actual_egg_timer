@@ -737,12 +737,18 @@ final class Cook {
         // stored, with the results (DECISIONS.md 81, 97), not converted, and
         // the key deleted, so it is read once. Its notifications and its card
         // are left alone: they are still right for the egg in the pot, and
-        // nothing else times it now (design/one-screen-review.md 2.6).
+        // nothing else times it now (design/one-screen-review.md 2.6). Its
+        // card is ended, though, to go at its own end: nothing will update it
+        // again, so it would otherwise sit there stale for the system's eight
+        // hours (running-cook review 3).
+        var keptOld = false
         for key in Self.oldKeys {
             guard let old = defaults.data(forKey: key) else { continue }
             Calibrations.keepUnreadCook(old)
             defaults.removeObject(forKey: key)
+            keptOld = true
         }
+        if keptOld { activity { await LiveActivity.endAtTheirEnds() } }
         guard let data = defaults.data(forKey: Self.savedKey) else { return nil }
         // A cook this build cannot read whole is not patched; it is kept
         // aside, as stored, and exported with the results (DECISIONS.md 81).
