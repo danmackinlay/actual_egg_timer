@@ -39,10 +39,15 @@ import EggTimerCore
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
-/// - `-clockSpeed 60`, `-clockOffset -900`, `-clockEpoch 1791234567`: the
-///   app's clock run fast, shifted, or both (`AppClock`), so a whole cook
-///   takes seconds; passed again at every launch, the same three carry the
-///   clock on through a relaunch. Sharing sends nothing under it.
+/// - `-clockAt 1791234567 -clockSpeed 0`: the app's clock at that moment and
+///   frozen there (`AppClock`); `-clockSpeed 60` runs it fast. A clock so
+///   launched is stepped from outside: a line `<n> <at> <speed>` written to
+///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
+///   it on at `speed`, and the log says `clock <n> …` once it has. The
+///   scripted checks freeze it at each moment they check. The older
+///   `-clockSpeed 60 -clockOffset -900 -clockEpoch 1791234567`, passed again
+///   at every launch, carries one fast clock on through a relaunch. Sharing
+///   sends nothing under any of them.
 /// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
 ///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
 ///   past its guesses, or a cook about to be too old, on screen. The cook
@@ -60,8 +65,10 @@ import EggTimerCore
 ///   rolling boil), `out` (the egg out at the pull), `cancel`, `again`
 ///   (Start again), `answer:jammy/tender` (as `-uiAnswer`). The moment is
 ///   seconds after the start, or after `boil` (the boil tapped), `pull` or
-///   `cooled` (the plan's deadlines), the cook as restored included. What
-///   the scripted checks tap with, in place of the screen's layout.
+///   `cooled` (the plan's deadlines), the cook as restored included; a
+///   moment once known is kept, so a tap still comes after the cook has
+///   ended. What the scripted checks tap with, in place of the screen's
+///   layout.
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -182,21 +189,26 @@ extension Screenshots {
         }
     }
 
-    /// Tap `-uiDo`'s taps as each comes due, on the cook's clock.
+    /// Tap `-uiDo`'s taps as each comes due, on the cook's clock. A tap's
+    /// moment follows the plan while a cook runs; once known, it is kept, so
+    /// a tap still comes at it after the cook has ended, as a finger would
+    /// (an answer after the egg's hour).
     @MainActor
     static func drive(_ model: AppModel) {
         let all = actions
         guard !all.isEmpty else { return }
         Task { @MainActor in
-            var left = all
+            var left = all.map { (action: $0, due: Double?.none) }
             while !left.isEmpty {
                 try? await AppClock.sleep(0.25)
-                guard let running = model.cook.running, let plan = model.cook.plan else { continue }
-                let now = AppClock.now.timeIntervalSince1970
-                guard let i = left.firstIndex(where: { $0.due(running, plan).map { now >= $0 } ?? false }) else {
-                    continue
+                if let running = model.cook.running, let plan = model.cook.plan {
+                    for i in left.indices {
+                        if let due = left[i].action.due(running, plan) { left[i].due = due }
+                    }
                 }
-                let action = left.remove(at: i)
+                let now = AppClock.now.timeIntervalSince1970
+                guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
+                let action = left.remove(at: i).action
                 log("action \(action.raw)")
                 tap(action, model)
             }

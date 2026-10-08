@@ -1,9 +1,13 @@
 // `npm run ios:e2e`: the checks agents kept doing by hand on the simulator,
 // scripted. A Debug build on a simulator of the script's own, the app's clock
-// run fast (`-clockSpeed`, ios/App/AppClock.swift), taps by launch argument
-// (`-uiDo`, ios/App/Screenshots.swift), and what happened read from the app's
-// debug log (`Library/Caches/aet.log`) and its stored state (the prefs plist,
-// through plistlib). The device is deleted at the end.
+// frozen at each moment a scenario checks and stepped from one to the next
+// (`-clockAt`, `-clockSpeed 0`, `Library/Caches/aet.clock`;
+// ios/App/AppClock.swift), taps by launch argument (`-uiDo`,
+// ios/App/Screenshots.swift), and what happened read from the app's debug log
+// (`Library/Caches/aet.log`) and its stored state (the prefs plist, through
+// plistlib). Nothing is timed against the host's clock but one notification
+// left to the system (`asleep`), so a slow or loaded machine takes longer
+// and checks the same. The device is deleted at the end.
 //
 //   npm run ios:e2e                      every scenario
 //   npm run ios:e2e -- cold relaunch-*   those named (a trailing * matches)
@@ -11,15 +15,23 @@
 //   --no-build    use the last build in ios/build/e2e
 //   --device <udid>, --keep              a device already booted; keep it
 //
+// AET_E2E_WAIT=<s> how long a wait for the app gives up after (default 60);
+// AET_E2E_LOG=1 prints a failing scenario's log.
+//
 // Needs Xcode, xcodegen and python3; not in `npm run verify`.
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';
 const APP = `ios/${DERIVED}/Build/Products/Debug-iphonesimulator/Actual Egg Timer.app`;
-/// Cook seconds per second: an eleven-minute cook in about eleven seconds.
-const SPEED = 60;
+/// How long a wait for the app gives up after, the host's s: only how long
+/// a broken build takes to fail, never what a check means.
+const WAIT_S = Number(process.env.AET_E2E_WAIT ?? 60);
+/// How long the system is given to deliver the one notification a scenario
+/// waits for, past its moment, the host's s.
+const DELIVERY_SLACK_S = 15;
 
 const argv = process.argv.slice(2);
 const flag = (name) => {
@@ -73,7 +85,13 @@ function createDevice() {
     .sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true }))
     .at(-1);
   if (!runtime) throw new Error('no iOS simulator runtime installed');
-  const types = list.devicetypes.filter((t) => t.productFamily === 'iPhone');
+  // The iPhones that runtime runs, where simctl says (a runner has device
+  // types newer than its runtimes, or the other way round).
+  const supported = runtime.supportedDeviceTypes?.map((t) => t.identifier);
+  const types = list.devicetypes.filter(
+    (t) => t.productFamily === 'iPhone' && (!supported || supported.includes(t.identifier)),
+  );
+  if (types.length === 0) throw new Error(`no iPhone for iOS ${runtime.version}`);
   const type = types.find((t) => t.name === 'iPhone 17 Pro') ?? types.at(-1);
   const id = simctl('create', `AET e2e ${process.pid}`, type.identifier, runtime.identifier);
   console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version})`);
@@ -85,21 +103,25 @@ function createDevice() {
 // ------------------------------------------------------------- the app's run
 
 /// One scenario's run of the app: its clock, its launches, its log.
+///
+/// The clock is frozen at each moment a scenario checks: launched there
+/// (`-clockAt`, `-clockSpeed 0`) and stepped from one to the next while the
+/// app runs (`step`, through `Library/Caches/aet.clock`). What the app does
+/// at a moment is then the same on any machine, however slow or loaded: the
+/// script waits for the log to say it has happened, never for a span of the
+/// host's time to pass. A wait's timeout only says when to give up.
 class Run {
   constructor(name) {
     this.name = name;
     this.failures = [];
     this.notes = [];
-    // The clock every launch of this run passes: cook time is
-    // epoch + SPEED * (now - epoch) + offset.
-    this.epoch = Date.now() / 1000;
-    this.offset = 0;
-    this.speed = SPEED;
-  }
-
-  /// Now in cook time, epoch s.
-  appNow() {
-    return this.epoch + this.speed * (Date.now() / 1000 - this.epoch) + this.offset;
+    // Cook time at the first launch, a whole second: each moment checked is
+    // this, a span on, or a deadline the app planned.
+    this.t0 = Math.floor(Date.now() / 1000);
+    // Where the clock stands, cook time, epoch s.
+    this.at = this.t0;
+    this.steps = 0;
+    this.launched = 0;
   }
 
   /// A fresh install, nothing stored.
@@ -110,19 +132,40 @@ class Run {
     this.data = simctl('get_app_container', udid, BUNDLE, 'data');
   }
 
-  /// Launch with the run's clock and these arguments; quiet notifications
-  /// granted with no prompt unless asked otherwise.
-  launch(args = [], { alarms = true } = {}) {
-    const clock = [
-      '-clockSpeed', String(this.speed), '-clockEpoch', String(this.epoch), '-clockOffset', String(this.offset),
-    ];
+  get stepFile() {
+    return `${this.data}/Library/Caches/aet.clock`;
+  }
+
+  /// Launch with the clock at `at`, cook time, frozen there unless `speed`
+  /// says otherwise; quiet notifications granted with no prompt unless asked
+  /// otherwise.
+  launch(args = [], { alarms = true, at = this.at, speed = 0 } = {}) {
+    this.at = at;
+    rmSync(this.stepFile, { force: true });
     const prompt = alarms ? ['-provisionalAlarms', 'YES'] : ['-noAlarmPrompt', 'YES'];
     this.launched = this.lines().length;
-    simctl('launch', udid, BUNDLE, ...clock, ...prompt, ...args);
+    simctl('launch', udid, BUNDLE, '-clockAt', String(at), '-clockSpeed', String(speed), ...prompt, ...args);
   }
 
   terminate() {
     quietly(() => simctl('terminate', udid, BUNDLE));
+  }
+
+  /// Move the running app's clock to `at`, frozen there unless `speed` says
+  /// otherwise, as a phone asleep or set would be; once the app says it has,
+  /// the index of the line that says so.
+  async step(at, speed = 0) {
+    this.steps += 1;
+    const n = this.steps;
+    const path = this.stepFile;
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(`${path}.new`, `${n} ${at} ${speed}\n`);
+    renameSync(`${path}.new`, path);
+    const ack = await this.until(new RegExp(`^clock ${n} at `), {
+      from: this.launched, what: `the clock at +${(at - this.t0).toFixed(3)} s`,
+    });
+    this.at = at;
+    return ack.i;
   }
 
   /// The debug log so far: { t (cook time, s), text }.
@@ -133,7 +176,7 @@ class Run {
       .split('\n')
       .filter((l) => l.startsWith('AET '))
       .map((l) => {
-        const m = l.match(/^AET (\d+) (.*)$/);
+        const m = l.match(/^AET (-?\d+) (.*)$/);
         return { t: Number(m[1]), text: m[2] };
       });
   }
@@ -143,12 +186,15 @@ class Run {
     return this.lines().slice(this.launched);
   }
 
-  /// Wait for a line matching `re` (after `from`, a line count), or fail.
-  async until(re, { timeoutS = 30, from = 0, what = String(re) } = {}) {
+  /// Wait for a line matching `re` from line `from` on: the line, with its
+  /// index `i`; or fail after `timeoutS` of the host's seconds.
+  async until(re, { timeoutS = WAIT_S, from = 0, what = String(re) } = {}) {
     const end = Date.now() + timeoutS * 1000;
     while (Date.now() < end) {
-      const hit = this.lines().slice(from).find((l) => re.test(l.text));
-      if (hit) return hit;
+      const lines = this.lines();
+      for (let i = from; i < lines.length; i += 1) {
+        if (re.test(lines[i].text)) return { ...lines[i], i };
+      }
       await sleep(100);
     }
     throw new Error(`timed out waiting for ${what}`);
@@ -159,30 +205,17 @@ class Run {
     return this.until(new RegExp(`^phase ${name}$`), { from: this.launched, what: `phase ${name}`, ...opts });
   }
 
-  /// Run the clock at another speed from now on, carrying on from the cook
-  /// time it reads now. Takes effect at the next launch.
-  setSpeed(speed) {
-    const now = Date.now() / 1000;
-    this.offset = this.appNow() - now;
-    this.epoch = now;
-    this.speed = speed;
-  }
-
-  /// Move the clock on by `s` of cook time, as a phone asleep that long.
-  /// Takes effect at the next launch.
-  jump(s) {
-    this.offset += s;
-  }
-
-  /// Wait until cook time reaches `t`.
-  async untilApp(t) {
-    const wait = ((t - this.appNow()) / this.speed) * 1000;
-    if (wait > 0) await sleep(wait);
+  /// Wait until the cook has nothing under way after line `from`: no plan
+  /// being made, no surface being built, no start, restore or read-back of
+  /// the alarms (`settled`, Cook.swift). Only after a line that set some of
+  /// that going: a tap, a phase, a restore.
+  settled(from) {
+    return this.until(/^settled$/, { from, what: 'the cook settled' });
   }
 
   /// The prefs plist as JSON, each data value that is JSON parsed; waits
   /// until `ready(prefs)` holds, since the file lags the app by seconds.
-  async prefs(ready = () => true, timeoutS = 15) {
+  async prefs(ready = () => true, timeoutS = WAIT_S) {
     const path = `${this.data}/Library/Preferences/${BUNDLE}.plist`;
     const end = Date.now() + timeoutS * 1000;
     let last = null;
@@ -241,14 +274,17 @@ with open(path, 'wb') as f:
 
 // ----------------------------------------------------------- reading the log
 
-/// The last plan logged in these lines: { pull, cooled, lengthened, surface }.
+const num = (x) => (x === '-' ? null : Number(x));
+
+/// The last plan logged in these lines: { pull, cooled, lengthened,
+/// surface, next (when the slow hob lengthens it next) }, epoch s, exact.
 function lastPlan(lines) {
   const l = lines.filter((x) => x.text.startsWith('plan ')).at(-1);
   if (!l) return null;
-  const m = l.text.match(/^plan pull (\d+) cooled (\d+|-) lengthened (\w+) surface (\w+)$/);
+  const m = l.text.match(/^plan pull (\S+) cooled (\S+) lengthened (\w+) surface (\w+) next (\S+)$/);
   return {
-    pull: Number(m[1]), cooled: m[2] === '-' ? null : Number(m[2]),
-    lengthened: m[3] === 'true', surface: m[4] === 'true', t: l.t,
+    pull: Number(m[1]), cooled: num(m[2]), lengthened: m[3] === 'true', surface: m[4] === 'true',
+    next: num(m[5]), t: l.t,
   };
 }
 
@@ -261,12 +297,12 @@ function lastStored(lines) {
 }
 
 /// The notifications as last scheduled, cancelled and scheduled again:
-/// { 'cook.pull': t, 'cook.cool': t } in cook time.
+/// { 'cook.pull': t, 'cook.cool': t } in cook time, exact.
 function scheduled(lines) {
   let now = {};
   for (const l of lines) {
     if (l.text === 'alarms cancelled') now = {};
-    const m = l.text.match(/^scheduled (\S+) at (\d+)/);
+    const m = l.text.match(/^scheduled (\S+) at (\S+)/);
     if (m) now[m[1]] = Number(m[2]);
   }
   return now;
@@ -291,6 +327,14 @@ function pending(lines) {
   return reads.at(-1) ?? null;
 }
 
+/// The ids the last read-back found delivered and still shown.
+function delivered(lines) {
+  const l = lines.filter((x) => x.text.startsWith('delivered [')).at(-1);
+  if (!l) return null;
+  const ids = l.text.slice('delivered ['.length, -1);
+  return ids === '' ? [] : ids.split(',');
+}
+
 /// The egg log as last written: { count, last }.
 function eggLog(lines) {
   const l = lines.filter((x) => x.text.startsWith('log ')).at(-1);
@@ -299,7 +343,15 @@ function eggLog(lines) {
   return { count: Number(m[1]), folded: Number(m[2]), last: m[3] === '-' ? null : JSON.parse(m[3]), t: l.t };
 }
 
-const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= tol;
+/// Tolerances, s. A moment the clock was frozen at, or a tap a span after a
+/// deadline, is exact: to a millisecond, for the decimal round trip. A
+/// deadline planned again at a relaunch, against the one planned before it,
+/// to the second (the plan is remade from the stored cook, at another
+/// moment, before its surface is built again). Neither depends on the
+/// machine: the clock does not move while the app works.
+const EXACT = 1e-3;
+const REPLAN = 1;
+const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
 const has = (lines, re) => lines.some((l) => re.test(l.text));
 
 /// A record made with its forecast, as the fit needs it.
@@ -309,14 +361,6 @@ const forecastOk = (r) => Array.isArray(r?.forecast?.yolk) && r.forecast.yolk.le
 
 const scenarios = [];
 const scenario = (name, about, body) => scenarios.push({ name, about, body });
-
-/// Start a cook and wait for its first plan on its surface; the cook as
-/// stored then.
-async function started(run, args = [], opts = {}) {
-  run.launch(['-uiScreen', 'heating', ...args], opts);
-  await run.until(/^stored /, { from: run.launched, what: 'a cook stored' });
-  return lastStored(run.sinceLaunch());
-}
 
 /// Every phase of a cook logged in these lines, in order: not IDLE, which
 /// the tick may log once more as a cook ends.
@@ -342,13 +386,59 @@ const TO_DONE = 'boil@300,out@pull+3';
 /// The cook's start, epoch s, cook time.
 const startOf = (stored) => stored.cook.startedAt_s;
 
-/// Launch again: the restore line, the restored plan, and the lines once the
-/// alarms have been scheduled and read back.
-async function relaunched(run, args = [], opts = {}) {
-  run.launch(args, opts);
+/// Start a cook at the run's first moment, frozen, and wait until it has
+/// its first phase, its plan on its surface and its alarms: the cook as
+/// stored.
+async function started(run, args = [], opts = {}) {
+  run.launch(['-uiScreen', 'heating', ...args], opts);
+  const first = await run.until(/^phase (HEATING|COOKING)$/, { from: run.launched, what: 'the cook started' });
+  await run.settled(first.i);
+  return lastStored(run.sinceLaunch());
+}
+
+/// Step to 5:00, where `-uiDo boil@300` taps Full rolling boil: the plan
+/// once cooking.
+async function boiled(run) {
+  const i = await run.step(run.t0 + 300);
+  const tap = await run.until(/^action boil/, { from: i, what: 'the boil tapped' });
+  const cooking = await run.until(/^phase COOKING$/, { from: tap.i, what: 'phase COOKING' });
+  await run.settled(cooking.i);
+  return lastPlan(run.lines());
+}
+
+/// Step a second into the pull, then to `-uiDo`'s `out@pull+<after>`: the
+/// plan once cooling.
+async function toCooling(run, after) {
+  const plan = lastPlan(run.lines());
+  let i = await run.step(plan.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  i = await run.step(plan.pull + after);
+  const tap = await run.until(/^action out/, { from: i, what: 'the tap out' });
+  const cooling = await run.until(/^phase COOLING$/, { from: tap.i, what: 'phase COOLING' });
+  await run.settled(cooling.i);
+  return lastPlan(run.lines());
+}
+
+/// A cold cook started with TO_DONE's taps, stepped to a second past the
+/// cooling's end: the plan at Done.
+async function toDone(run) {
+  await boiled(run);
+  const cooling = await toCooling(run, 3);
+  const i = await run.step(cooling.cooled + 1);
+  const done = await run.until(/^phase DONE$/, { from: i, what: 'phase DONE' });
+  await run.settled(done.i);
+  return lastPlan(run.lines());
+}
+
+/// Launch again with the clock at `at`: the restore line, the restored
+/// plan, and the lines once the alarms and the card are set again and the
+/// cook has settled.
+async function relaunched(run, at, args = [], opts = {}) {
+  run.launch(args, { ...opts, at });
   const restore = await run.until(/^restore /, { from: run.launched, what: 'the restore' });
-  await run.until(/^pending /, { from: run.launched, what: 'the alarms read back', timeoutS: 15 });
-  await sleep(300);
+  const restored = await run.until(/^restored$/, { from: restore.i, what: 'the alarms and the card set again' });
+  const phase = await run.until(/^phase /, { from: restore.i, what: 'the first tick' });
+  await run.settled(Math.max(restored.i, phase.i));
   const lines = run.sinceLaunch();
   return { restore: restore.text, plan: lastPlan(before(lines, /^pending /)), lines };
 }
@@ -356,21 +446,26 @@ async function relaunched(run, args = [], opts = {}) {
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {
   const cook = await started(run, ['-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
   const start = startOf(cook);
-  await run.until(/^stored none$/, { timeoutS: 60, what: 'Start again' });
-  await run.until(/^log 1 folded 1 /, { timeoutS: 20, what: 'the fold' });
+  run.check(start === run.t0, `started at +${start - run.t0} s`);
+  const done = await toDone(run);
+  let i = await run.step(done.cooled + 20);
+  await run.until(/^action answer/, { from: i, what: 'the answer' });
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'the fold' });
+  i = await run.step(done.cooled + 40);
+  await run.until(/^stored none$/, { from: i, what: 'Start again' });
   const lines = run.lines();
   run.check(same(phases(lines), ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phases(lines)}`);
   const last = lastStored(before(lines, /^stored none$/)).cook;
-  run.check(near(last.events.boilAt_s, start + 300, 3), `boil at ${last.events.boilAt_s - start}`);
+  run.check(near(last.events.boilAt_s, start + 300, EXACT), `boil at ${last.events.boilAt_s - start}`);
   run.check(last.events.pulled?.by === 'cook', `pulled by ${last.events.pulled?.by}`);
-  run.check(near(last.events.pulled.out_s - last.events.pulled.due_s, 3, 2), 'out 3 s into the pull');
+  run.check(near(last.events.pulled.out_s - last.events.pulled.due_s, 3, EXACT), 'out 3 s into the pull');
   run.check(last.events.cooledAt_s !== null, 'the cooling ended');
   // The alarms set when the boil was tapped are that plan's.
   const cooking = before(lines, /^phase PULL$/);
   const plan = lastPlan(cooking);
   const alarms = scheduled(cooking);
   run.check(
-    near(alarms['cook.pull'], plan.pull, 1) && near(alarms['cook.cool'], plan.cooled, 1),
+    near(alarms['cook.pull'], plan.pull, EXACT) && near(alarms['cook.cool'], plan.cooled, EXACT),
     `alarms ${JSON.stringify(alarms)} for the plan ${plan.pull}, ${plan.cooled}`,
   );
   run.check(same(sorted(pending(cooking)), ['cook.cool', 'cook.pull']), `pending ${pending(cooking)}`);
@@ -392,7 +487,11 @@ scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again
 scenario('hot', 'a hot start to Done; Start again logs it unanswered', async (run) => {
   const cook = await started(run, [...HOT, '-uiDo', 'out@pull+2,again@cooled+5']);
   run.check(cook.cook.choices.startMode === 'hot', `start mode ${cook.cook.choices.startMode}`);
-  await run.until(/^stored none$/, { timeoutS: 60, what: 'Start again' });
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'phase DONE' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^stored none$/, { from: i, what: 'Start again' });
   const lines = run.lines();
   run.check(same(phases(lines), ['COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phases(lines)}`);
   const egg = eggLog(lines);
@@ -403,15 +502,17 @@ scenario('hot', 'a hot start to Done; Start again logs it unanswered', async (ru
 
 scenario('cancel', 'Cancel while heating: nothing stored, the alarms and the card gone', async (run) => {
   await started(run, ['-uiDo', 'cancel@120']);
-  await run.until(/^cook ended$/, { what: 'the cancel' });
-  await sleep(500);
+  const i = await run.step(run.t0 + 120);
+  const ended = await run.until(/^cook ended$/, { from: i, what: 'the cancel' });
+  await run.until(/^alarms cancelled$/, { from: ended.i, what: 'the alarms cancelled' });
+  await run.until(/^stored none$/, { from: ended.i, what: 'the cook cleared' });
   const lines = run.lines();
-  run.check(has(lines.slice(index(lines, /^cook ended$/)), /^alarms cancelled$/), 'the alarms cancelled');
   run.check(lastStored(lines) === null, 'nothing stored');
   run.check((eggLog(lines)?.count ?? 0) === 0, 'no egg logged');
   run.terminate();
   run.launch();
-  await run.until(/^pending /, { from: run.launched, what: 'the alarms read back', timeoutS: 10 });
+  // The launch's own read-back, three seconds on (AppModel.appear).
+  await run.until(/^delivered /, { from: run.launched, what: 'the alarms read back' });
   const after = run.sinceLaunch();
   run.check(!has(after, /^restore /), 'idle at the relaunch');
   run.check(!has(after, /activity/), 'no card');
@@ -420,117 +521,132 @@ scenario('cancel', 'Cancel while heating: nothing stored, the alarms and the car
 
 scenario('relaunch-heating', 'a relaunch while heating: the same deadlines and alarms', async (run) => {
   const start = startOf(await started(run));
-  await run.until(/^pending /, { what: 'the alarms' });
-  await run.untilApp(start + 120);
+  await run.step(start + 120);
   const was = lastPlan(run.lines());
   run.terminate();
-  const r = await relaunched(run);
+  const r = await relaunched(run, start + 120);
   run.check(r.restore.startsWith('restore HEATING'), r.restore);
   run.check(
-    near(r.plan.pull, was.pull, 1) && near(r.plan.cooled, was.cooled, 1),
+    near(r.plan.pull, was.pull, REPLAN) && near(r.plan.cooled, was.cooled, REPLAN),
     `deadlines ${r.plan.pull}, ${r.plan.cooled} for ${was.pull}, ${was.cooled}`,
   );
-  run.check(near(scheduled(r.lines)['cook.pull'], was.pull, 1), 'the pull scheduled again, at the same time');
+  const plan = lastPlan(r.lines);
+  run.check(near(scheduled(r.lines)['cook.pull'], plan.pull, EXACT), 'the pull scheduled again, at the plan’s time');
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
   run.check(has(r.lines, /^activity start heating/), 'the card again');
 });
 
 scenario('relaunch-cooking', 'a relaunch while cooking: the same deadlines and alarms', async (run) => {
   await started(run, ['-uiDo', 'boil@300']);
-  const cooking = await run.phase('COOKING');
-  await run.untilApp(cooking.t + 60);
-  const was = lastPlan(run.lines());
+  const was = await boiled(run);
   const boil = lastStored(run.lines()).cook.events.boilAt_s;
+  run.check(boil === run.t0 + 300, `boiled at +${boil - run.t0} s`);
+  await run.step(run.t0 + 360);
   run.terminate();
-  const r = await relaunched(run);
+  const r = await relaunched(run, run.t0 + 360);
   run.check(r.restore.startsWith('restore COOKING'), r.restore);
   run.check(
-    near(r.plan.pull, was.pull, 1) && near(r.plan.cooled, was.cooled, 1),
+    near(r.plan.pull, was.pull, REPLAN) && near(r.plan.cooled, was.cooled, REPLAN),
     `deadlines ${r.plan.pull}, ${r.plan.cooled} for ${was.pull}, ${was.cooled}`,
   );
   run.check(lastStored(r.lines)?.cook.events.boilAt_s === boil, 'the boil kept to the bit');
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
 });
 
-scenario('relaunch-pull', 'killed in the pull and relaunched in it (×10 there): out after', async (run) => {
+scenario('relaunch-pull', 'into the pull, killed 4 s in, relaunched 14 s in: out after', async (run) => {
   await started(run, ['-uiDo', 'boil@300']);
-  await run.phase('COOKING');
-  const was = lastPlan(run.lines());
-  await run.untilApp(was.pull - 30);
-  // The 20-s pull is a third of a second at ×60: on from here at ×10.
+  const was = await boiled(run);
   run.terminate();
-  run.setSpeed(10);
-  run.launch();
-  await run.phase('PULL', { timeoutS: 10 });
-  await run.untilApp(was.pull + 4);
+  // Again half a minute before the pull, and on into it.
+  const r = await relaunched(run, was.pull - 30);
+  run.check(r.restore.startsWith('restore COOKING'), r.restore);
+  let i = await run.step(was.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  await run.step(was.pull + 4);
+  run.check(!has(run.sinceLaunch(), /^ring /), 'no ring in the pull: the notification holds it');
   run.terminate();
-  const r = await relaunched(run, ['-uiDo', 'out@pull+15']);
-  run.check(r.restore.startsWith('restore PULL'), r.restore);
-  run.check(near(r.plan.pull, was.pull, 1), `the pull ${r.plan.pull} for ${was.pull}`);
-  await run.until(/^action out/, { from: run.launched, what: 'the tap out' });
-  await run.phase('COOLING', { timeoutS: 10 });
+  const again = await relaunched(run, was.pull + 14, ['-uiDo', 'out@pull+15']);
+  run.check(again.restore.startsWith('restore PULL'), again.restore);
+  const plan = lastPlan(again.lines);
+  run.check(near(plan.pull, was.pull, REPLAN), `the pull ${plan.pull} for ${was.pull}`);
+  i = await run.step(plan.pull + 15);
+  const tap = await run.until(/^action out/, { from: i, what: 'the tap out' });
+  await run.until(/^phase COOLING$/, { from: tap.i, what: 'phase COOLING' });
   const after = run.sinceLaunch();
   const out = lastStored(after).cook.events.pulled;
   run.check(out?.by === 'cook', `pulled by ${out?.by}`);
+  run.check(near(out?.out_s - out?.due_s, 15, EXACT), `out ${out?.out_s - out?.due_s} s into the pull`);
   run.check(!has(after, /^ring pull/), 'the pull not rung again');
-  run.note(`relaunched ${r.lines[0].t - was.pull} s into the pull`);
+  run.note(`relaunched ${(was.pull + 14 - plan.pull).toFixed(3)} s into the pull`);
 });
 
 scenario('relaunch-cooling', 'a relaunch while cooling: the same end, one alarm left', async (run) => {
   await started(run, ['-uiDo', TO_DONE]);
-  const cooling = await run.phase('COOLING', { timeoutS: 40 });
-  await run.untilApp(cooling.t + 60);
-  const was = lastPlan(run.lines());
+  await boiled(run);
+  const was = await toCooling(run, 3);
+  const at = lastStored(run.lines()).cook.events.pulled.out_s + 60;
+  await run.step(at);
   run.terminate();
-  const r = await relaunched(run);
+  const r = await relaunched(run, at);
   run.check(r.restore.startsWith('restore COOLING'), r.restore);
-  run.check(near(r.plan.cooled, was.cooled, 1), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
+  run.check(near(r.plan.cooled, was.cooled, REPLAN), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
   run.check(same(pending(r.lines), ['cook.cool']), `pending ${pending(r.lines)}`);
   run.check(has(r.lines, /^activity start cooling/), 'the card again');
 });
 
 scenario('relaunch-done', 'a relaunch at Done: Done again, nothing pending, no card', async (run) => {
   await started(run, ['-uiDo', TO_DONE]);
-  const done = await run.phase('DONE', { timeoutS: 50 });
-  const was = lastPlan(run.lines());
-  await run.untilApp(done.t + 30);
+  const was = await toDone(run);
+  await run.step(was.cooled + 30);
   run.terminate();
-  const r = await relaunched(run);
+  const r = await relaunched(run, was.cooled + 30);
   run.check(r.restore.startsWith('restore DONE'), r.restore);
-  run.check(near(r.plan.cooled, was.cooled, 1), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
+  run.check(near(r.plan.cooled, was.cooled, REPLAN), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
   run.check(same(pending(r.lines), []), `pending ${pending(r.lines)}`);
   run.check(!has(r.lines, /^activity start/), 'no card started');
+  // A minute on at Done, and the ticks of a second of the host's: nothing
+  // to wait for, since nothing should happen (a slow host ticks less).
+  await run.step(was.cooled + 90);
   await sleep(1000);
   run.check(!has(run.sinceLaunch(), /^ring /), 'nothing rung again');
 });
 
-scenario('asleep', 'the app not running through the pull, relaunched past it', async (run) => {
+scenario('asleep', 'killed before the pull, its notification delivered; relaunched past it', async (run) => {
   await started(run, ['-uiDo', 'boil@300']);
-  await run.phase('COOKING');
-  await run.until(/^pending cook/, { from: index(run.lines(), /^phase COOKING$/), what: 'the alarms' });
-  const was = lastPlan(run.lines());
-  await run.untilApp(was.pull - 60);
+  const was = await boiled(run);
   run.terminate();
-  await run.untilApp(was.pull + 60);
-  const r = await relaunched(run);
-  run.check(r.restore === 'restore COOLING events written true', r.restore);
-  const cook = lastStored(r.lines)?.cook;
+  // The one span on the system's clock, and the one wait for the system:
+  // launched 20 s of cook before the pull at ×1, so the restore schedules
+  // the pull at most 20 s ahead; killed; the notification left to the
+  // system, with DELIVERY_SLACK_S for it to arrive.
+  const lead = 20;
+  const r = await relaunched(run, was.pull - lead, [], { speed: 1 });
+  const seen = Date.now();
+  run.check(r.restore.startsWith('restore COOKING'), r.restore);
+  run.check('cook.pull' in scheduled(r.lines), 'the pull scheduled');
+  run.terminate();
+  await sleep(Math.max(0, seen + (lead + DELIVERY_SLACK_S) * 1000 - Date.now()));
+  const after = await relaunched(run, was.pull + 60);
+  run.check(after.restore === 'restore COOLING events written true', after.restore);
+  const cook = lastStored(after.lines)?.cook;
+  const plan = lastPlan(after.lines);
   run.check(cook?.events.pulled?.by === 'timeout', `pulled by ${cook?.events.pulled?.by}`);
-  run.check(near(cook?.events.pulled?.out_s, was.pull + 20, 1), "out at the grace's end");
-  run.check(same(pending(r.lines), ['cook.cool']), `pending ${pending(r.lines)} (the pull's was delivered)`);
-  await run.phase('DONE', { timeoutS: 30 });
+  run.check(near(cook?.events.pulled?.out_s, plan.pull + 20, EXACT), "out at the grace's end");
+  run.check(same(delivered(after.lines), ['cook.pull']), `delivered ${delivered(after.lines)}`);
+  run.check(same(pending(after.lines), ['cook.cool']), `pending ${pending(after.lines)}`);
+  const i = await run.step(plan.cooled + 1);
+  const done = await run.until(/^phase DONE$/, { from: i, what: 'phase DONE' });
+  await run.settled(done.i);
   run.check(!has(run.sinceLaunch(), /^ring /), 'nothing rung by the app: the notifications rang');
 });
 
 scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
   await started(run);
-  await run.until(/^pending cook/, { what: 'the alarms' });
   run.terminate();
-  run.jump(3 * 3600);
-  run.launch();
-  await run.until(/^restore /, { from: run.launched, what: 'the restore' });
-  // The launch's own read-back, three seconds on.
-  await sleep(4000);
+  run.launch([], { at: run.t0 + 3 * 3600 });
+  const restore = await run.until(/^restore /, { from: run.launched, what: 'the restore' });
+  // The launch's own read-back, three seconds on (AppModel.appear).
+  await run.until(/^delivered /, { from: restore.i, what: 'the launch’s read-back' });
   const lines = run.sinceLaunch();
   run.check(has(lines, /^restore too old$/), 'dropped as too old');
   run.check(has(lines, /^alarms cancelled$/), 'its alarms cancelled');
@@ -543,94 +659,112 @@ scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone 
 
 scenario('final-egg', 'Done, relaunched near the hour: ended at it, a later answer not taken (2.3)', async (run) => {
   await started(run, ['-uiDo', TO_DONE]);
-  await run.phase('DONE', { timeoutS: 50 });
-  const was = lastPlan(run.lines());
+  const was = await toDone(run);
   run.terminate();
-  // A launch takes about half a second, half a minute at ×60: a minute
-  // short of the hour, and the answer two seconds after, a minute past it.
-  run.jump(was.cooled + 3540 - run.appNow());
-  run.launch(['-uiAnswer', 'runny', '-uiAnswerAfter', '2']);
-  await run.until(/^restore /, { from: run.launched, what: 'the restore' });
-  await run.until(/^cook ended$/, { from: run.launched, what: 'the end at the hour', timeoutS: 10 });
-  await sleep(2500);
+  // A minute short of the egg's hour; the answer a second past it.
+  const r = await relaunched(run, was.cooled + 3540, ['-uiDo', 'answer:runny@cooled+3601']);
+  run.check(r.restore.startsWith('restore DONE'), r.restore);
+  run.check(!has(r.lines, /^cook ended$/), 'still open a minute short of the hour');
+  const plan = lastPlan(r.lines);
+  const i = await run.step(plan.cooled + 3601);
+  await run.until(/^cook ended$/, { from: i, what: 'the end at the hour' });
+  const tap = await run.until(/^action answer/, { from: i, what: 'the answer after the hour' });
+  await run.until(/^log 1 /, { from: run.launched, what: 'the egg logged' });
   const lines = run.sinceLaunch();
-  run.check(has(lines, /^restore DONE/), 'restored at Done');
   const egg = eggLog(run.lines());
   run.check(egg?.count === 1, `one egg logged, not ${egg?.count}`);
   run.check(egg?.last.yolkWord === null, `logged unanswered: ${egg?.last.yolkWord}`);
   run.check(forecastOk(egg?.last), 'with its forecast');
-  run.check(!lines.some((l) => /^log /.test(l.text) && /"yolkWord":"runny"/.test(l.text)), 'the Runny not taken');
+  // An answer taken is stored with the cook at once (`recordFeedbackGiven`).
+  const afterTap = run.lines().slice(tap.i);
+  run.check(!has(afterTap, /^stored .*"feedbackGiven":true/), 'the Runny not stored');
+  run.check(!lines.some((l) => /^log /.test(l.text) && /"yolkWord":"runny"/.test(l.text)), 'the Runny not logged');
 });
 
 scenario('done-as-ran', 'answered at Done, relaunched: Done shows the cook as it ran (2.4)', async (run) => {
   await started(run, ['-uiDo', `${TO_DONE},answer:runny@cooled+5`]);
-  await run.until(/^log 1 folded 1 /, { timeoutS: 60, what: 'the answer folded' });
+  const done = await toDone(run);
+  const i = await run.step(done.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'the answer folded' });
   const was = shown(run.lines()).at(-1);
   run.terminate();
-  run.launch();
-  await run.until(/^restore DONE/, { from: run.launched, what: 'the restore at Done' });
-  await run.until(/^plan .* surface true$/, { from: run.launched, what: 'a plan on the surface', timeoutS: 20 });
-  await sleep(500);
-  const lines = run.sinceLaunch();
-  const peaks = shown(lines);
+  const r = await relaunched(run, done.cooled + 60);
+  run.check(r.restore.startsWith('restore DONE'), r.restore);
+  run.check(has(r.lines, /^plan .* surface true /), 'a plan on the surface');
+  const peaks = shown(r.lines);
   run.check(peaks.length > 0 && peaks.every((p) => Math.abs(p - was) < 0.01), `shown ${peaks} for ${was}`);
-  const planned = lines.map((l) => l.text.match(/planned peak ([\d.]+)/)).filter(Boolean).map((m) => Number(m[1]));
+  const planned = r.lines.map((l) => l.text.match(/planned peak ([\d.]+)/)).filter(Boolean).map((m) => Number(m[1]));
   run.note(`shown ${was} °C; planned again on the folded posterior ${planned.at(-1)} °C`);
 });
 
 scenario('slow-hob', 'never boiled: the guess lengthens, the time heated counts up, ended at two hours', async (run) => {
   const start = startOf(await started(run));
-  const first = await run.until(/^plan .* lengthened true/, { timeoutS: 40, what: 'a lengthened plan' });
-  await run.untilApp(start + 1100);
+  // A millisecond past each moment the plan says it lengthens next, as a
+  // clock running through them would be: core lengthens once the time
+  // heated is past it, and the tick plans again from the moment itself, so
+  // a clock frozen on it would plan the same plan at every tick. First
+  // where the guess gives out.
+  const first = lastPlan(run.lines()).next;
+  let i = await run.step(first + 0.001);
+  const lengthened = await run.until(/^plan .* lengthened true/, { from: i, what: 'a lengthened plan' });
+  await run.settled(lengthened.i);
+  // Then from 1,000 s through 1,100 s.
+  i = await run.step(start + 1000);
+  await run.settled((await run.until(/^plan /, { from: i, what: 'a plan at 1,000 s' })).i);
+  for (let plan = lastPlan(run.lines()); plan.next !== null && plan.next <= start + 1100;) {
+    i = await run.step(plan.next + 0.001);
+    await run.settled((await run.until(/^plan /, { from: i, what: 'the next plan' })).i);
+    const next = lastPlan(run.lines());
+    if (next.next !== null && next.next <= plan.next) throw new Error(`the slow hob stuck at ${plan.next - start}`);
+    plan = next;
+  }
   const lines = run.lines();
-  const card = lines.slice(index(lines, /lengthened true/)).find((l) => /^activity update heating/.test(l.text));
+  const card = lines.slice(lengthened.i).find((l) => /^activity update heating/.test(l.text));
   run.check(card && / up true$/.test(card.text), `the card counts up: ${card?.text}`);
   const ends = Number(card?.text.match(/ends (\d+)/)?.[1]);
-  run.check(near(ends, start + 7200, 2), `the card counts to two hours: ${ends - start}`);
+  run.check(near(ends, start + 7200, 1), `the card counts to two hours: ${ends - start}`);
   const creeping = lines.filter((l) => l.text.startsWith('plan ') && l.t >= start + 1000 && l.t <= start + 1100);
   run.check(creeping.length >= 5 && creeping.length <= 15, `${creeping.length} plans in 100 s, creeping`);
-  run.note(`lengthened from ${Math.round(first.t - start)} s`);
+  run.note(`lengthened from ${Math.round(first - start)} s; ${creeping.length} plans in 100 s`);
   run.terminate();
-  run.jump(start + 7150 - run.appNow());
-  run.launch();
-  await run.until(/^restore HEATING/, { from: run.launched, what: 'the restore' });
-  await run.until(/^cook ended$/, { from: run.launched, what: 'the end at two hours', timeoutS: 10 });
-  const after = run.sinceLaunch();
-  run.check(has(after.slice(index(after, /^cook ended$/)), /^alarms cancelled$/), 'its alarms cancelled');
-  run.check(lastStored(after) === null, 'nothing stored');
+  const r = await relaunched(run, start + 7150);
+  run.check(r.restore.startsWith('restore HEATING'), r.restore);
+  run.check(!has(r.lines, /^cook ended$/), 'still heating 50 s short of two hours');
+  i = await run.step(start + 7201);
+  const ended = await run.until(/^cook ended$/, { from: i, what: 'the end at two hours' });
+  await run.until(/^alarms cancelled$/, { from: ended.i, what: 'its alarms cancelled' });
+  await run.until(/^stored none$/, { from: ended.i, what: 'the cook cleared' });
+  run.check(lastStored(run.sinceLaunch()) === null, 'nothing stored');
 });
 
 scenario('reschedule', 'relaunched while heating past the guess: the pending pull moves (1.4)', async (run) => {
   const start = startOf(await started(run));
-  await run.until(/^pending cook/, { what: 'the alarms' });
   const was = scheduled(run.lines())['cook.pull'];
   run.terminate();
-  run.jump(start + 652 - run.appNow());
-  const r = await relaunched(run);
+  const r = await relaunched(run, start + 652);
   run.check(r.restore.startsWith('restore HEATING'), r.restore);
   run.check(
     r.plan.lengthened && r.plan.pull > was + 30,
     `the restored pull at ${r.plan.pull - start} s for ${was - start}`,
   );
-  run.check(near(scheduled(r.lines)['cook.pull'], r.plan.pull, 1), "the pending pull is the restored plan's");
+  const plan = lastPlan(r.lines);
+  run.check(near(scheduled(r.lines)['cook.pull'], plan.pull, EXACT), "the pending pull is the restored plan's");
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
 });
 
 scenario('upgrade', "an earlier build's cook (cookInProgress) kept aside, its alarms left", async (run) => {
-  // At ×10, so its alarms are still pending after the seconds the plist
-  // takes to catch up.
-  run.speed = 10;
   await started(run);
-  await run.until(/^pending cook/, { what: 'the alarms' });
   run.terminate();
   const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook);
   run.check(stored['cookInProgress.v3'], 'the cook in the plist');
   // What 0.3 and 0.4 wrote, under the key they wrote: this build's cook
-  // stands in for theirs, with the same alarm ids pending.
+  // stands in for theirs, with the same alarm ids pending (a day out, on a
+  // frozen clock: still pending however long the plist takes).
   run.renameKey('cookInProgress.v3', 'cookInProgress');
   run.launch();
-  await run.until(/^restore kept aside cookInProgress$/, { from: run.launched, what: 'the old key kept aside' });
-  await run.until(/^pending /, { from: run.launched, timeoutS: 10, what: 'the alarms read back' });
+  const kept = await run.until(/^restore kept aside cookInProgress$/, { from: run.launched, what: 'the old key kept aside' });
+  // The launch's own read-back, three seconds on (AppModel.appear).
+  await run.until(/^delivered /, { from: kept.i, what: 'the alarms read back' });
   const lines = run.sinceLaunch();
   run.check(!has(lines, /^alarms cancelled$/), 'its alarms not cancelled');
   run.check(same(sorted(pending(lines)), ['cook.cool', 'cook.pull']), `pending ${pending(lines)}`);
@@ -642,7 +776,9 @@ scenario('upgrade', "an earlier build's cook (cookInProgress) kept aside, its al
 
 scenario('again-logs', 'Start again logs the unanswered egg before it clears the cook', async (run) => {
   await started(run, ['-uiDo', `${TO_DONE},again@cooled+5`]);
-  await run.until(/^action again/, { timeoutS: 60, what: 'Start again' });
+  const done = await toDone(run);
+  const i = await run.step(done.cooled + 5);
+  await run.until(/^stored none$/, { from: i, what: 'Start again' });
   run.terminate();
   const lines = run.lines();
   const logged = index(lines, /^log 1 /);
@@ -655,6 +791,25 @@ scenario('again-logs', 'Start again logs the unanswered egg before it clears the
 });
 
 // ------------------------------------------------------------------- main
+
+/// A new device's first launches are many seconds slow while the system
+/// settles, and its notifications refused ("Source is not authorized"), or,
+/// on a loaded machine, the request for them never answered: cooks started
+/// until one has its alarms pending, each given two minutes, nothing
+/// checked.
+async function warmUp() {
+  for (let attempt = 1; ; attempt += 1) {
+    const warm = new Run('warm-up');
+    warm.install();
+    warm.launch(['-uiScreen', 'heating']);
+    const hit = await warm
+      .until(/^(pending cook|not scheduled)/, { timeoutS: 120, what: 'the alarms' })
+      .catch(() => null);
+    warm.terminate();
+    if (hit?.text.startsWith('pending')) return;
+    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
+  }
+}
 
 async function main() {
   if (listOnly) {
@@ -670,15 +825,9 @@ async function main() {
   if (!noBuild || !existsSync(APP)) build();
   const built = Date.now();
   if (!udid) udid = createDevice();
-  // A new device's first launch is seconds slow while the system settles,
-  // minutes of cook at ×60: one launch first, nothing checked.
-  const warm = new Run('warm-up');
-  warm.install();
-  warm.launch();
-  await warm.until(/^pending /, { timeoutS: 60 }).catch(() => null);
-  warm.terminate();
   let failed = 0;
   try {
+    await warmUp();
     for (const s of chosen) {
       const run = new Run(s.name);
       const t0 = Date.now();

@@ -77,6 +77,12 @@ What was cleaned up, so nobody re-introduces it:
 
 ## Things that cost an hour to find out
 
+- **A new simulator's notification centre stops answering when every core
+  is busy.** With a CPU hog per core, `requestAuthorization` and
+  `pendingNotificationRequests` never return, relaunch or not, and its
+  daemons sit idle; half the cores busy is fine. Unloaded, a new device's
+  first request comes back "not authorized" after about 20 s. Warm a new
+  device up with a cook until its alarms are pending (`tools/iosE2e.mjs`).
 - **A quick synthetic tap does not flip a SwiftUI `Toggle` in the
   simulator; a held one (0.15 s) does.** Like the `Slider` that ignores
   synthetic drags, but with a cure. The screenshots also lag a tap by a
@@ -5695,3 +5701,68 @@ it is current, so the second was taken as already made and the record never
 came back. No cook makes two at one moment; the harness now steps the clock
 a few seconds between a person's taps (`later`), and `corrected` refuses
 two at one moment by name.
+
+## 8 October 2026: iOS's scripted checks step to their moments (SHIP-0.5 C2)
+
+`npm run ios:e2e` ran the debug clock at ×60 and raced it: a relaunch aimed
+4 s into the pull's 20-s grace landed 11 s in on this machine, unloaded, and
+a slower one would land past it and fail for no fault of the app. Each
+scenario now sets the moment it means (`7545503`).
+
+**The clock.** A Debug build takes `-clockAt <epoch s>` and `-clockSpeed 0`
+(frozen), and, launched with any clock argument, reads
+`Library/Caches/aet.clock` twenty times a second: `<n> <at> <speed>` with a
+new `n` moves cook time to `at` and runs it on at `speed`, and the log says
+`clock <n> …`. A file in the container, which the host writes with a rename,
+rather than `-uiDo` (a launch argument cannot move a running app) or a Darwin
+notification (which carries no value). Under a frozen clock the
+notifications are scheduled a day late, so they stay pending and cover their
+deadlines; the card's dates count at ×1 from where it froze; the app's waits
+are capped at a quarter second so a step is seen at once. The log gained
+`settled` (no plan, surface, start, restore or read-back under way: what the
+script waits for before it moves the clock), `restored`, `delivered [...]`,
+and the plan's and alarms' moments to the bit, with the slow hob's next.
+`-uiDo` keeps a tap's moment once known, so an answer still comes after the
+cook has ended. Built Release for the simulator: no `clockAt`, `aet.clock`,
+`uiDo`, `settled` or `debug clock` in the binary; the Debug dylib has them.
+
+**The scenarios** keep every check, and those about time are now exact to a
+millisecond where the clock was stepped (the boil at 300 s, out 3 s and 15 s
+into the pull, the timeout's out at the grace's end, the alarms against the
+plan), and to a second for a deadline planned again at a relaunch. The pull's
+relaunch is 14.000 s in; final-egg is relaunched a minute short of the hour,
+checked still open, and stepped a second past it, where the Runny tapped
+after it is not taken; slow-hob steps from each lengthening to the next (632
+s, then 11 plans in 100 s); upgrade no longer needs ×10. `asleep` is the one
+wait on the system: at ×1 from 20 s before the pull, killed, 15 s of slack,
+then `delivered [cook.pull]` read at the relaunch.
+
+**Results.** 16 of 16 in 205 s here (scenarios 157 s; the ×60 suite took
+303 s); 272 s under nine CPU hogs and 291 s under fourteen (`yes`, default
+priority, on 18 cores), each with a second simulator booted and the script
+niced, all 16 passing. The ×60 suite at the last commit, under the same
+fourteen: 15 of 16, `cold` failing (no phases, no alarms: the cook ran
+past while the first launch was slow).
+
+**Found.** At exactly `slowHobAt_s` the tick plans again (`now >= at`) but
+core lengthens only once the time heated is past it (`heated > fire`), so a
+clock frozen on that moment plans the same plan at every tick. On a running
+clock the moment passes at once; not changed (the web's tick has the same
+`>=`), and the script steps a millisecond past. Under eighteen or more hogs
+a new simulator's notification centre stopped answering at all
+(`requestAuthorization` and `pendingNotificationRequests` never returned,
+its daemons idle), relaunches or not, so no suite can run there; once the
+load went, its first request came back "not authorized", as an unloaded new
+device's does. The warm-up now starts cooks until one has its alarms
+pending, five tries of two minutes.
+
+**CI** (`bfc7311`): `ios-e2e` after `apple`, on `macos-latest`, 45 minutes
+at most, waits of 180 s. Not tried: it runs only once the owner pushes. What
+could not be checked here: the runner's Xcode and simulator runtimes (the
+script takes the newest iOS runtime and an iPhone that runtime lists, and
+the job prints both), how long a new simulator takes to answer for its
+notifications there, and whether `asleep`'s delivery comes within its
+slack. `continue-on-error` until it has passed there, so a first failure
+cannot hold up a release; then that line goes. It builds Debug again rather
+than take `apple`'s, since an artifact between jobs drops the bundle's file
+modes.

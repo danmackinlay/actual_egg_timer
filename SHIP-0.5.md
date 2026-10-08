@@ -270,7 +270,15 @@ core's exports.
       cases among them (`fdc4dee`; `ios/README.md`, "The fast clock and the
       scripted checks"). They found a cook just started ended as no longer
       open when the app became active before its first plan (`85f92f0`).
-      Not in `verify` or CI.
+      Then each scenario steps to its moments rather than racing a fast
+      clock: launched with the clock frozen where it means (14 s into the
+      pull's grace is 14.000 s in) and stepped from one moment to the next
+      through a file in the container, the notifications checked as
+      scheduled and one left to the system (`7545503`); 16 of 16 in about
+      three and a half minutes, the same under fourteen CPU hogs, where
+      the ×60 suite failed one. CI runs it after the iOS build, the
+      `ios-e2e` job, not blocking until it has passed on GitHub's runners
+      (`bfc7311`). Not in `verify`.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
   - [x] *The web's one screen* (8 October 2026; `design/one-screen.md` steps
