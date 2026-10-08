@@ -41,6 +41,7 @@ import { loadBoilMemory, loadSettings } from './store.js';
 import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, forgetAll, recompute, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
+import { wireEdits } from './edit.js';
 import { nowMs } from './now.js';
 
 export function boot(): void {
@@ -70,6 +71,8 @@ export function boot(): void {
     form.addEventListener('submit', (event) => event.preventDefault());
   }
 
+  // Corrections mid-cook: when a change in hand is committed (edit.ts).
+  wireEdits();
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
   page().mute.addEventListener('click', onToggleMute);

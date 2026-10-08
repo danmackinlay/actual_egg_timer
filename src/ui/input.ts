@@ -14,6 +14,7 @@ import { setMuted } from './clock.js';
 import { applyUnitsToDom, labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
 import { renderMute } from './render.js';
+import { cookControlsChanged } from './edit.js';
 import { liveSetupFacts, renderSentence } from './sentence.js';
 import { renderDonenessReading } from './slider.js';
 import { boilingPoint_C, currentEgg, isSousVide, sizeClasses, state } from './state.js';
@@ -121,7 +122,9 @@ function readInputs(source: EventTarget | null): void {
   page().customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
   labelMeasuredOption();
-  scheduleSave();
+  // While a cook runs the controls are its correction in hand, written to
+  // the settings when it is committed (edit.ts), not before.
+  if (state.cook === null) scheduleSave();
 }
 
 /** Every input and change on the egg's controls, its sentence and the
@@ -150,5 +153,8 @@ export function onInput(event: Event): void {
   page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
   page().body.dataset['start'] = shown.startMode;
   renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg()));
-  scheduleSolve();
+  // A running cook is corrected, in time (edit.ts); the idle screen is solved
+  // again.
+  if (state.cook !== null) cookControlsChanged(target);
+  else scheduleSolve();
 }

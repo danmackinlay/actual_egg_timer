@@ -159,7 +159,6 @@ export function render(now_ms: number): void {
   // The sentence, in every phase: the controls' (the settings, or the
   // running cook's own choices).
   renderSentence(liveSetupFacts(state.controls, sizeClasses, currentEgg()));
-  page().controls.inert = state.cook !== null;
   if (state.cook === null) renderIdle(now_ms);
   else renderRunning(now_ms);
 }
@@ -216,9 +215,13 @@ function renderRunning(now_ms: number): void {
   const sol = plan.solution;
   const shown = cookShown(cook, plan);
   const reading = runningReading(now_ms);
-  page().statBoil.textContent = show('boilingPoint', plan.setup.boiling_C);
-  page().note.textContent = textureNote(sol);
-  renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
+  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  // A correction in hand (edit.ts) has the slider's reading of its own,
+  // from a plan of the cook as it would be.
+  const aim = state.aim;
+  page().note.textContent = textureNote(aim?.solution ?? sol);
+  if (aim !== null) renderDonenessReading(aim.level, { peakYolk_C: aim.peakYolk_C });
+  else renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
   renderDonenessScale(sol, sol.whiteSets ? reading.profile : null, sol.whiteSets ? reading.sure?.words ?? null : null);
   // The warning line carries a restored cook's warning while it runs - the
   // opposite of a refusal, it only exists mid-cook. Only while the cook is

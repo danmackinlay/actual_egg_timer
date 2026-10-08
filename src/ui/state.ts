@@ -86,6 +86,11 @@ interface PageState {
    *  carries while its pot's surface is being built (`carriedSolution`). A
    *  cache, stored with the cook, never truth. */
   leanHint_s: number;
+  /** While a correction is in hand mid-cook (edit.ts), the slider's reading
+   *  for it, from a plan of the cook as it would be, which stores nothing
+   *  and rings nothing: the level, its peak yolk and the solve, null until
+   *  that plan is made. Null when no correction is in hand. */
+  aim: { level: number; peakYolk_C: number; solution: Solution | null } | null;
 }
 
 /** The page's state. The first three are read from storage by `boot()`
@@ -104,6 +109,7 @@ export const state: PageState = {
   cook: null,
   plan: null,
   leanHint_s: 0,
+  aim: null,
 };
 
 /* --------------------------------------------------------------- physics */

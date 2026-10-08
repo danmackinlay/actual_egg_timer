@@ -986,6 +986,8 @@ button.secondary {
    colours and the button change. The phase label is the instruction, so it
    reads in the foreground colour while a cook runs. */
 body:not([data-phase="IDLE"]) #phaseLabel { color: var(--fg); font-weight: 600; }
+/* Sous-vide starts no cook, so a running one cannot be corrected to it. */
+body:not([data-phase="IDLE"]) :is(#startSous, #startSousLabel) { display: none; }
 
 /* A control is shown when the answer depends on it.
  *

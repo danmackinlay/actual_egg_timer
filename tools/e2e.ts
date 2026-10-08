@@ -373,6 +373,32 @@ async function setSlider(tab: Tab, level: number, release = true): Promise<void>
     } })()`);
 }
 
+/** The slider dragged through `levels` as a finger does: pressed (unless
+ *  `press` is false, the finger already down), moved, and let go if
+ *  `release`. */
+async function drag(tab: Tab, levels: number[], release = false, press = true): Promise<void> {
+  await tab.eval(`(() => { const e = document.getElementById('doneness');
+    const p = (type) => e.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
+    if (${press}) p('pointerdown');
+    for (const v of ${JSON.stringify(levels)}) { e.value = String(v); e.dispatchEvent(new Event('input', { bubbles: true })); }
+    if (${release}) { p('pointerup'); e.dispatchEvent(new Event('change', { bubbles: true })); } })()`);
+}
+
+/** A menu's option chosen, as a tap does (no finger held: it settles). */
+async function pick(tab: Tab, selector: string, value: string): Promise<void> {
+  await tab.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
+    e.value = ${JSON.stringify(value)}; e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+}
+
+/** Wait for a correction to be committed: the stored cook's
+ *  `correctedAt_s` moved on from `before`, and planned. */
+async function corrected(tab: Tab, before: number | null, ms = 6000): Promise<Snap> {
+  await tab.until(`await (async () => { const s = await window.__e2e.snap(); const c = s.stored === null ? null : JSON.parse(s.stored).cook;
+    return c !== null && c.correctedAt_s !== ${JSON.stringify(before)} && s.cook.correctedAt_s === c.correctedAt_s; })()`,
+  'a correction committed', ms);
+  return tab.snap();
+}
+
 function storedCook(s: Snap): Cook | null {
   return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
 }
@@ -519,7 +545,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       })()`);
       const at = async (level: number): Promise<{ reading: string; fill: string }> => {
         await setSlider(tab, level);
-        await tab.until(`(async () => { const st = (await window.__e2e.ui('state')).state;
+        await tab.until(`await (async () => { const st = (await window.__e2e.ui('state')).state;
           return st.chosen !== null && st.chosen.level === st.settings.doneness
             && Math.abs(st.settings.doneness - ${level}) < 0.1; })()`, `level ${level} decided`);
         await sleep(200);
@@ -549,6 +575,143 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const ran = await centre();
       check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
       return `idle runny ${runny.fill}, hard ${hard.fill}; start ${live.fill}; Done ${ran.fill}`;
+    },
+  },
+
+  'owner-case': {
+    what: 'C3 step 3: boiling corrected to cold after Start, as the owner needed: back to Heating, the pull later, the settings follow',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.shift(60);
+      await tab.click('#sentence .clause[aria-controls="panelStart"]');
+      await tab.click('#startCold');
+      s = await corrected(tab, null);
+      check(s.phase === 'HEATING', `back to ${s.phase}`);
+      check(s.primary === (await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('action.fullBoil'))()")),
+        `the button: ${s.primary}`);
+      const pull1 = deadlines(s).cookEnd_s;
+      check(pull1 > pull0 + 60, `the pull later: ${(pull1 - pull0).toFixed(0)} s`);
+      check(storedCook(s)?.choices.startMode === 'cold', 'the stored cook says cold');
+      const settings = JSON.parse((await tab.storage('aet.settings.v1')) ?? '{}') as { startMode?: string };
+      check(settings.startMode === 'cold', `the next cook's setting: ${settings.startMode}`);
+      return `Heating again; the pull ${(pull1 - pull0).toFixed(0)} s later; settings say cold`;
+    },
+  },
+
+  'cold-to-hot-after-tap': {
+    what: 'C3 step 3: cold corrected to boiling after the boil was pressed: the tap kept, unread, the pot a boiling start',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      await start(tab, 'cold');
+      await tab.shift(300);
+      let s = await boil(tab);
+      const pull0 = deadlines(s).cookEnd_s;
+      const tap = storedCook(s)?.events.boilAt_s;
+      await tab.shift(60);
+      await tab.click('#startHot');
+      s = await corrected(tab, null);
+      const c = storedCook(s);
+      check(c?.events.boilAt_s === tap, `the tap kept: ${c?.events.boilAt_s} (was ${tap})`);
+      check(c?.choices.startMode === 'hot', 'the stored cook says boiling');
+      const pull1 = deadlines(s).cookEnd_s;
+      check(pull1 < pull0, `a boiling start pulls sooner: ${(pull1 - pull0).toFixed(0)} s`);
+      check(s.phase === 'COOKING' || s.phase === 'PULL', `in the water: ${s.phase}`);
+      return `the tap kept; the pull ${(pull1 - pull0).toFixed(0)} s, ${s.phase}`;
+    },
+  },
+
+  'heavier-lighter': {
+    what: 'C3 step 3: a heavier egg mid-cook pulls later, a lighter one sooner; each a correction, committed after the settle',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.shift(30);
+      await pick(tab, '#size', '3');
+      // Nothing yet: a tap settles first.
+      s = await tab.snap();
+      check(s.cook?.correctedAt_s === null, 'committed before the settle');
+      s = await corrected(tab, null);
+      const heavier = deadlines(s).cookEnd_s;
+      check(heavier > pull0, `heavier, later: ${(heavier - pull0).toFixed(1)} s`);
+      await pick(tab, '#size', '1');
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      const lighter = deadlines(s).cookEnd_s;
+      check(lighter < pull0, `lighter, sooner: ${(lighter - pull0).toFixed(1)} s`);
+      await pick(tab, '#size', '2');
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      await tab.until('(await window.__e2e.snap()).decided', 'planned on its pot');
+      s = await tab.snap();
+      check(near(deadlines(s).cookEnd_s, pull0, 1e-6), `back gives back: ${(deadlines(s).cookEnd_s - pull0).toFixed(6)} s`);
+      return `heavier +${(heavier - pull0).toFixed(1)} s, lighter ${(lighter - pull0).toFixed(1)} s, back to the pull exactly`;
+    },
+  },
+
+  'overdue-and-back': {
+    what: 'C3 step 3: a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.shiftTo(pull0 - 40);
+      let base = (await tab.osc()).length;
+      await pick(tab, '#size', '0');
+      let s = await corrected(tab, null);
+      s = await tab.phase('PULL');
+      await sleep(300);
+      let osc = (await tab.osc()).slice(base);
+      check(osc.length === 75 && (osc[0].at ?? 0) - osc[0].made < 0.1, `rang at once: ${osc.length}`);
+      await tab.shift(5);
+      await pick(tab, '#size', '2');
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await tab.phase('COOKING');
+      const ev = storedCook(s)?.events;
+      check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
+      check(near(deadlines(s).cookEnd_s, pull0, 1), `the pull back where it was: ${(deadlines(s).cookEnd_s - pull0).toFixed(1)} s`);
+      base = (await tab.osc()).length;
+      await tab.shiftTo(deadlines(s).cookEnd_s + 1);
+      await tab.phase('PULL');
+      await sleep(300);
+      osc = (await tab.osc()).slice(base);
+      check(osc.length === 75, `the pull rings again at its time: ${osc.length}`);
+      return 'overdue: Pull and 75 at once; back within the grace: Cooking, nothing written; the pull rang again';
+    },
+  },
+
+  'drag-no-ring': {
+    what: 'C3 step 3: a drag through an overdue level rings nothing before release; the egg shows the aim while held',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      const level = s.cook?.choices.level ?? 0.41;
+      const pull0 = deadlines(s).cookEnd_s;
+      await tab.shiftTo(pull0 - 60);
+      const base = (await tab.osc()).length;
+      await drag(tab, [0.3, 0.1, 0]);
+      await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
+      await sleep(2000);
+      s = await tab.snap();
+      check(s.phase === 'COOKING' && s.cook?.correctedAt_s === null, `held: ${s.phase}, corrected ${s.cook?.correctedAt_s}`);
+      check((await tab.osc()).length === base, 'nothing rang while held');
+      await drag(tab, [0.2, level], true, false);
+      await sleep(300);
+      s = await tab.snap();
+      check(s.phase === 'COOKING' && s.cook?.correctedAt_s === null, `released at the level it had: ${s.phase}`);
+      check((await tab.osc()).length === base, 'nothing rang on release');
+      await tab.until("document.getElementById('eggSection').dataset.egg === 'live'", 'the live egg again', 4000);
+      // Released at an overdue level: it rings then.
+      await drag(tab, [0], true);
+      s = await corrected(tab, null, 3000);
+      s = await tab.phase('PULL');
+      check((await tab.osc()).length >= base + 75, 'rang on release');
+      return 'held through runny: no ring, the aim drawn; back and released: nothing; released runny: Pull, rang';
     },
   },
 

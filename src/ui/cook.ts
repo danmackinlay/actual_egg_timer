@@ -19,8 +19,8 @@
 import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, eventsDue, keepAsRan, replan, startCook,
-  withBoil, withOut,
+  CookChoices, CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, corrected, eventsDue,
+  keepAsRan, replan, sameChoices, startCook, withBoil, withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { learn, logEgg } from './calibration.js';
@@ -30,6 +30,7 @@ import {
   stopAlarm,
 } from './clock.js';
 import { applySettingsToDom } from './controls.js';
+import { commitEdit, endEdits, startEdits } from './edit.js';
 import { activeLocale } from './copy.js';
 import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
@@ -214,15 +215,63 @@ function takeUp(cook: RunningCook, plan: CookPlan): void {
   // none while the time to boil is a guess (the plan reads Heating whatever
   // it says), once the egg is out or the pull has rung here, or while the
   // plan asks whether the egg is still in.
-  const d = plan.deadlines;
-  const pullDue = !d.provisional && state.cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
-  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
+  armPullFor(state.cook, plan);
   if (JSON.stringify(state.cook) !== written.cook) {
     persistCook();
   } else if (leanMoved && !written.closed) {
     saveLeanHint(state.cook.id_ms, lean);
     written.text = storedCookText();
   }
+}
+
+/** The pull's beeps, ahead on the audio clock, for the pull `plan` sets:
+ *  none while the time to boil is a guess (the plan reads Heating whatever it
+ *  says), once the egg is out or the pull has rung here, or while the plan
+ *  asks whether the egg is still in. */
+function armPullFor(cook: RunningCook, plan: CookPlan): void {
+  const d = plan.deadlines;
+  const pullDue = !d.provisional && cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
+  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
+}
+
+/**
+ * A correction committed (edit.ts; DECISIONS.md 96 to 98): the cook's choices
+ * replaced (`corrected`), and the cook planned again from its start, written
+ * down, and drawn. Overdue is decided here, by the plan of the corrected cook:
+ * a pull now in the past is the moment of the correction, and rings now
+ * (`notice`). A correction that puts the pull back in the future before the
+ * egg was seen to come out - changed back within the grace - cancels it:
+ * nothing was observed, so the alarm stops, and the new pull will ring.
+ */
+export function correctCook(choices: CookChoices): void {
+  if (state.cook === null || written.closed) return;
+  const now = nowMs();
+  const now_s = now / 1000;
+  takeUpStored();
+  const cook = state.cook;
+  if (sameChoices(choices, cook.choices)) return;
+  state.cook = corrected(cook, choices, now_s);
+  afterCorrection(now);
+}
+
+/** The cook was corrected: plan it, ring or stop as its pull says, and keep
+ *  the clock going if it is not Done. */
+function afterCorrection(now: number): void {
+  const cook = state.cook;
+  if (cook === null) return;
+  planNow(now / 1000);
+  const phase = phaseNow(now);
+  if ((phase === 'HEATING' || phase === 'COOKING') && clock.pullRung) {
+    clock.pullRung = false;
+    stopAlarm();
+    if (state.cook !== null && state.plan !== null) armPullFor(state.cook, state.plan);
+  }
+  notice(now);
+  if (phase !== 'DONE' && clock.ticker === null) {
+    keepScreenAwake();
+    startTicking();
+  }
+  render(now);
 }
 
 /** Plan the running cook again, now, with what another tab saw of it. */
@@ -406,10 +455,12 @@ function showCookControls(): void {
   if (state.cook === null) return;
   state.controls = settingsOfChoices(state.settings, state.cook.choices, sizeClasses);
   applySettingsToDom();
+  startEdits();
 }
 
 /** Cancel, and "Start again" at DONE. */
 export function reset(): void {
+  endEdits();
   stopAlarm();
   stopTicking();
   releaseScreen();
@@ -439,6 +490,9 @@ export function reset(): void {
 }
 
 export function onPrimary(): void {
+  // A correction still settling is committed first: the button acts on the
+  // cook as the controls say it is.
+  if (state.cook !== null) commitEdit();
   const now = nowMs();
   const now_s = now / 1000;
   stopAlarm();
