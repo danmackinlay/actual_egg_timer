@@ -19,18 +19,17 @@ import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './contr
 import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { cachedOddsProfile } from './decisionGrids.js';
 import { page } from './dom.js';
-import { answeredElsewhere } from './feedback.js';
 import { labelInfoButtons } from './info.js';
 import { renderCalibNote, renderLearned } from './learned.js';
 import { forgetDrawnWords, render, renderMute, renderVersion } from './render.js';
 import { forgetShare, shareState, shareStoredElsewhere } from './share.js';
 import { renderShare } from './shareView.js';
 import { labelTicks } from './slider.js';
-import { isSousVide, learning, phaseNow, state, timeToBoil_s } from './state.js';
+import { isSousVide, learning, state, timeToBoil_s } from './state.js';
 import { labelSteppers } from './stepper.js';
 import {
-  Settings, boilStoredElsewhere, clearBoilMemory, cookStoredElsewhere, saveSettings, settingsStoredElsewhere,
-  storedCook, storedCookAnswered, storedCookText,
+  Settings, boilStoredElsewhere, clearBoilMemory, saveSettings, settingsStoredElsewhere, storedCook,
+  storedCookText,
 } from './store.js';
 import { setMuted } from './clock.js';
 import { show, useUnits } from './units.js';
@@ -276,13 +275,7 @@ export function drawShare(): void {
  * not folded them, and the time on screen moves with what was learned.
  */
 export function storedElsewhere(key: string | null): void {
-  // The egg on screen answered about in another tab showing the same cook:
-  // that tab wrote it down, so this one asks no more about it.
-  if (cookStoredElsewhere(key) && state.cook !== null && phaseNow(Date.now()) === 'DONE'
-    && storedCookAnswered(state.cook.id_ms)
-    && answeredElsewhere()) {
-    render(Date.now());
-  }
+  // The cook in progress is cook.ts's (`cookElsewhere`).
   const nextSettings = settingsStoredElsewhere(key, state.settings);
   if (nextSettings !== null) takeUpSettings(nextSettings);
   // The pans: another tab's measured boil, or its "Forget everything".

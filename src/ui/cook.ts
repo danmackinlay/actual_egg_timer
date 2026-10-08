@@ -31,14 +31,14 @@ import { activeLocale } from './copy.js';
 import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
 import {
-  answersNow, forgetAnswers, heldAnswers, keptAnswers, putAway, resumeAnswers, retryHeld,
+  answeredElsewhere, answersNow, forgetAnswers, heldAnswers, keptAnswers, putAway, resumeAnswers, retryHeld,
 } from './feedback.js';
 import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
 import {
-  clearCook, cookStoredElsewhere, dropStoredCook, loadCook, rememberTimeToBoil, saveCook, storedCookText,
-  takeOldCooks,
+  clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
+  saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
@@ -50,28 +50,73 @@ const clock = {
   phase: 'IDLE' as Phase,
 };
 
-/** This tab's cook as written down: whether it is closed - final, by the
- *  clock or because another tab ended it or stored another - after which
- *  nothing more is written or logged for it (running-cook review 2.3); and
- *  whether a write reads back, which storage that is off or full does not,
- *  so the stored cook can say nothing about this one. */
+/**
+ * This tab's cook as written down (running-cook review 1.2, 2.3).
+ *
+ * - `text`: the stored cook's text as this tab last read or wrote it; any
+ *   other text there is another tab's write, taken up before this tab plans
+ *   or writes (`takeUpStored`).
+ * - `cook`: this cook as stored then, as JSON. A tab writes its cook only
+ *   when it differs - something this cook was told or saw: a tap, an event
+ *   the clock decided, the plan as it ran kept, an answer - never after a
+ *   plan alone (a surface landing, the slow hob's moment), which would write
+ *   a copy lacking what another tab on the same cook saw since.
+ * - `closed`: the egg is final - by the clock, or another tab ended it or
+ *   stored another - and nothing more is written or logged for it (2.3).
+ * - `works`: whether a write reads back, which storage that is off or full
+ *   does not, so the stored cook can say nothing about this one.
+ */
 const written = {
+  text: null as string | null,
+  cook: null as string | null,
   closed: false,
   works: true,
 };
 
-/** Write the cook down as it is now. Never once it is closed. */
+/** Write the cook down as it is now, after taking up what another tab wrote
+ *  for it since, so nothing it saw is written over. Never once it is closed. */
 export function persistCook(): void {
   if (state.cook === null || written.closed) return;
+  // Taken up here too: a write from the answers comes between plans. The
+  // plan follows at once.
+  if (takeUpStored()) queueMicrotask(replanCook);
   saveCook(state.cook, keptAnswers(), state.leanHint_s);
-  written.works = storedCookText() !== null;
+  written.text = storedCookText();
+  written.cook = JSON.stringify(state.cook);
+  written.works = written.text !== null;
 }
 
 /** This tab's own cook again, written down from scratch: a cook started, or
- *  one picked back up. */
-function freshWrites(): void {
+ *  one picked back up, `text` as stored with `cook` read from it. */
+function freshWrites(text: string | null, cook: RunningCook | null): void {
+  written.text = text;
+  written.cook = cook === null ? null : JSON.stringify(cook);
   written.closed = false;
   written.works = true;
+}
+
+/**
+ * What another tab wrote for this cook since this tab last read or wrote it,
+ * taken up (`takeUpEvents`, review 1.2): the boil it saw tapped, the egg out,
+ * the cooling ended, the plan as it ran, and an answer that logged the egg
+ * (`beforeReload` never goes back to `none`). Another cook, or none, is left
+ * alone (DECISIONS.md 97). Whether this tab's cook changed, to be planned again.
+ */
+function takeUpStored(): boolean {
+  const cook = state.cook;
+  if (cook === null || written.closed) return false;
+  const text = storedCookText();
+  if (text === written.text) return false;
+  written.text = text;
+  const stored = readStoredCook(text);
+  if (stored === null || stored.cook.id_ms !== cook.id_ms) return false;
+  written.cook = JSON.stringify(stored.cook);
+  // That tab wrote the egg down with an answer: this one asks no more.
+  if (stored.answers === 'beforeReload') answeredElsewhere();
+  const next = takeUpEvents(cook, stored.cook);
+  if (next === cook) return false;
+  state.cook = next;
+  return true;
 }
 
 /**
@@ -94,11 +139,21 @@ export function cookOpen(): boolean {
 }
 
 /** Another tab changed storage (the `storage` event; a null key cleared it
- *  all). At DONE, whether this egg is still open: if not, its questions go. */
+ *  all). At DONE, whether this egg is still open: if not, its questions go.
+ *  Otherwise what that tab saw of this cook is taken up at once, so a tab
+ *  leaves Heating when another taps the boil (review 1.2). */
 export function cookElsewhere(key: string | null): void {
   if (!cookStoredElsewhere(key) || state.cook === null) return;
   const now = Date.now();
-  if (phaseNow(now) === 'DONE' && !written.closed && !cookOpen()) render(now);
+  if (phaseNow(now) === 'DONE' && !written.closed && !cookOpen()) {
+    render(now);
+    return;
+  }
+  if (takeUpStored()) {
+    planNow(now / 1000);
+    notice(now);
+  }
+  render(now);
 }
 
 /**
@@ -138,20 +193,29 @@ function plannedWithEvents(
  *  on the pot's surface once the egg is out (`keepAsRan`, running-cook review
  *  1.3, 2.4), which the record and Done read from then on; the lean it
  *  decided, kept as the interim for the next pot; the surface it wants and
- *  has not got, asked for; and the cook written down. */
+ *  has not got, asked for; and the cook written down if it changed, or else
+ *  only the lean beside it (`written`). */
 function takeUp(cook: RunningCook, plan: CookPlan): void {
   state.cook = keepAsRan(cook, plan);
   state.plan = plan;
-  if (plan.decided !== null) state.leanHint_s = plan.lean_s;
+  const lean = plan.decided !== null ? plan.lean_s : state.leanHint_s;
+  const leanMoved = lean !== state.leanHint_s;
+  state.leanHint_s = lean;
   if (plan.inputs !== null && (plan.decided === null || surfaceFor(plan.inputs)?.profile === null)) {
     askForCookSurface(plan.inputs);
   }
-  persistCook();
+  if (JSON.stringify(state.cook) !== written.cook) {
+    persistCook();
+  } else if (leanMoved && !written.closed) {
+    saveLeanHint(state.cook.id_ms, lean);
+    written.text = storedCookText();
+  }
 }
 
-/** Plan the running cook again, now. */
+/** Plan the running cook again, now, with what another tab saw of it. */
 function planNow(now_s: number): void {
   if (state.cook === null) return;
+  takeUpStored();
   const next = plannedWithEvents(state.cook, state.leanHint_s, now_s, state.plan);
   takeUp(next.cook, next.plan);
 }
@@ -185,12 +249,15 @@ function notice(now_ms: number): void {
 function onTick(): void {
   const now = Date.now();
   const now_s = now / 1000;
-  const cook = state.cook;
   const plan = state.plan;
-  if (cook !== null && plan !== null) {
-    // The slow hob's moment, or an event the clock has decided: plan again.
+  if (state.cook !== null && plan !== null) {
+    // What another tab saw of this cook, if its storage event has not come
+    // (a tab woken from a freeze), the slow hob's moment, or an event the
+    // clock has decided: plan again.
+    const theirs = takeUpStored();
+    const cook = state.cook;
     const slow = plan.slowHobAt_s !== null && now_s >= plan.slowHobAt_s;
-    if (slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
+    if (theirs || slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
     // Too old to pick back up (a pan heated for two hours and never tapped,
     // or an hour past the end): it ends as Cancel ends it, with its events
     // written first, as a reload would (running-cook review 2.2).
@@ -349,7 +416,7 @@ export function onPrimary(): void {
     const chosen = decided(answer, boil);
     // A cook started here is this tab's own, whatever happened before it.
     forgetAnswers();
-    freshWrites();
+    freshWrites(null, null);
     state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
@@ -430,7 +497,7 @@ export function restoreCook(): void {
   }
   state.leanHint_s = stored.leanHint_s;
   resumeAnswers(stored.answers);
-  freshWrites();
+  freshWrites(text, stored.cook);
   takeUp(back.cook, back.plan);
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {
