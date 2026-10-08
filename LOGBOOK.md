@@ -5466,3 +5466,15 @@ uninstall and needs a `simctl shutdown`/`boot`; always pass
 hence the log in the container. A pending interval notification's
 `nextTriggerDate()` is now plus the interval, so it drifts by the seconds
 since it was scheduled.
+
+## 8 October 2026: iOS logs an unanswered egg before Start again clears it
+
+Left by the iOS review fixes: Start again cleared the stored cook while the
+unanswered egg's record was still being made in a task, so the app killed in
+that second lost the egg (the web keeps its stored cook until it has logged).
+Now the record is made at once whenever it can be (`Cook.unansweredRecordNow`,
+from the plan as it ran, the usual case) and logged before the cook goes;
+only an egg whose pot's surface must still be built waits, as before. Driven
+on a simulator of its own (deleted after): `-uiScreen done -noAlarmPrompt
+YES`, Start again, the app terminated a second later: the log held the egg,
+unanswered, its forecast [0.391, 0.227, 0.382], and no stored cook.

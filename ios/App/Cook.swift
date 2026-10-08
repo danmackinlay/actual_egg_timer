@@ -264,6 +264,13 @@ final class Cook {
         )
     }
 
+    /// An unanswered egg's record if it can be made now, without building a
+    /// surface: from the plan as it ran, the usual case. Start again logs it
+    /// before the stored cook is cleared, so no kill in between can lose it.
+    static func unansweredRecordNow(_ u: Unanswered) -> EggRecord? {
+        record(u.cook, u.plan, yolk: nil, white: nil, probe: nil).record
+    }
+
     /// An unanswered egg's record, never one with no forecast (running-cook
     /// review 1.3): from the plan as it ran when kept, else from its plan on
     /// its pot's surface, which is built here when the plan has none (a

@@ -243,6 +243,15 @@ final class AppModel {
     /// Log a finished egg nobody answered about, made on its pot's surface
     /// when it must be (`Cook.unansweredRecord`), and send what is final.
     private func logUnanswered(_ egg: Cook.Unanswered) {
+        // Logged before the stored cook goes whenever the record can be made
+        // at once; only an egg whose surface must still be built waits.
+        if let record = Cook.unansweredRecordNow(egg) {
+            planner.logUnanswered(record)
+            // Sent once final: at a relaunch now; at Start again, by its own
+            // send once the stored cook is gone (this one skips it as open).
+            Sharing.shared.sendFinal()
+            return
+        }
         Task {
             guard let record = await Cook.unansweredRecord(egg) else { return }
             planner.logUnanswered(record)
