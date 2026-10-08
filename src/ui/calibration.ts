@@ -39,7 +39,7 @@ import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
 import { Job, runJob } from './runJob.js';
 import { activePopulation } from './population.js';
-import { readStorage, writeStorage, removeStorage } from './store.js';
+import { readStorage, writeStorage, removeStorage, storageReadOnly } from './store.js';
 
 export type { Calibration } from '../core/record.js';
 
@@ -768,11 +768,15 @@ export function keptState(): Kept {
 
 /** Write one egg down, before anything is learned from it: a reload between the
  *  answer and the fold then refolds it on load rather than losing it or folding
- *  it twice. Returns its index in the log. An egg already written down - the
+ *  it twice. Returns its index in the log, or -1 while a newer build's stores
+ *  are left alone. An egg already written down - the
  *  same cook, by `id`, from another tab or from this one - is not written
  *  again: its index is returned, and an answer given with it is a later
  *  answer to that egg (`recordSecondAnswer`). */
 export function logEgg(r: EggRecord): number {
+  // A newer build has run here (store.ts): no egg is written down, so none
+  // is learned from either, and -1 says there is none to answer about.
+  if (storageReadOnly()) return -1;
   const at = eggLogged(idOf(r));
   if (at >= 0) return at;
   kept.log.push(r);
@@ -898,6 +902,7 @@ function assign(into: Calibration, from: Calibration): void {
 export async function recordSecondAnswer(
   index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
 ): Promise<boolean> {
+  if (storageReadOnly()) return false;
   const had = kept.log[index];
   // Another tab's store first: the answer is written only to the egg it was
   // given for, and only if no other egg has been logged since.

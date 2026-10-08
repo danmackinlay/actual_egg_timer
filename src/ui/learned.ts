@@ -7,7 +7,7 @@ import { BoilMemory } from '../core/policy.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import { showInfo } from './info.js';
-import { estimateTimeToBoil, hasBoilMemory } from './store.js';
+import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.js';
 import { formatClock } from './countdown.js';
 import { show } from './units.js';
 
@@ -53,10 +53,13 @@ export function renderLearned(l: Learning): void {
   if (page().forgetConfirm.hidden) showForget(true);
 }
 
-/** Forget and its (i) come and go together. */
+/** Forget and its (i) come and go together, and both go while a newer
+ *  build's results are left alone (store.ts): there is nothing this page
+ *  may forget. */
 function showForget(visible: boolean): void {
-  page().forget.hidden = !visible;
-  showInfo(page().forgetInfo, visible);
+  const shown = visible && !storageReadOnly();
+  page().forget.hidden = !shown;
+  showInfo(page().forgetInfo, shown);
 }
 
 /** Forget asks first, in place, as iOS does: the button gives way to the

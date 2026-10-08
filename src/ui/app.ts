@@ -47,6 +47,7 @@ import {
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
   boilStoredElsewhere, cookStoredElsewhere, loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
   settingsStoredElsewhere, storedCookAnswered, storedCookText,
+  claimStorage, newerStoredElsewhere, storageReadOnly,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, warningKey, whiteAtRisk } from '../core/wording.js';
@@ -673,7 +674,9 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
+  // Nor while a newer build's results are left alone (store.ts): no answer
+  // could be kept.
+  page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload' || storageReadOnly();
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(machine, ticket);
   if (!page().feedback.hidden) renderTarget(ticket, machine.targetLevel);
@@ -972,6 +975,10 @@ function drawShare(): void {
  * not folded them, and the time on screen moves with what was learned.
  */
 function storedElsewhere(key: string | null): void {
+  // A newer build's tab has run: this page writes nothing from now on
+  // (`claimStorage`), and takes up nothing more either.
+  newerStoredElsewhere(key);
+  if (storageReadOnly()) return;
   // The egg on screen answered about in another tab showing the same cook:
   // that tab wrote it down, so this one asks no more about it.
   if (cookStoredElsewhere(key) && machine.phase === 'DONE' && storedCookAnswered(machine.startedAt_ms)
@@ -1402,6 +1409,9 @@ function applySettingsToDom(): void {
 
 export function boot(): void {
   bindDom();
+  // Before anything is written: whether a newer build has run here, and the
+  // mark brought up to this one if not (DECISIONS.md 100).
+  claimStorage(APP_VERSION, leaveStoresAlone);
   settings = loadSettings(sizeClasses);
   useUnits(settings.unitsChosen);
   boilMemory = loadBoilMemory();
@@ -1479,6 +1489,23 @@ export function boot(): void {
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(() => machine.phase === 'IDLE');
+  booted = true;
+}
+
+/** Whether `boot` has drawn the page, so a redraw has something to draw. */
+let booted = false;
+
+/**
+ * A newer build has run in this browser, found at boot or told of later:
+ * what this page stores is left alone from now on (store.ts). The timer runs
+ * as before; the questions after an egg, sharing and "Start learning again"
+ * go, since nothing they do could be kept.
+ */
+function leaveStoresAlone(): void {
+  if (!booted) return;
+  render(Date.now());
+  drawShare();
+  renderCalibNote(learning());
 }
 
 /**

@@ -7,6 +7,7 @@
 import { t } from './copy.js';
 import { page } from './dom.js';
 import { deleteSent, setSharing, shareState } from './share.js';
+import { storageReadOnly } from './store.js';
 
 /** Set once a deletion this page asked for has been confirmed, so the note
  *  can say so until the page goes. */
@@ -20,6 +21,10 @@ let deletedHere = false;
 export function renderShare(waiting: number): void {
   const s = shareState();
   page().shareSetting.checked = s.on;
+  // While a newer build's results are left alone (store.ts) nothing is sent
+  // or deleted, so the switch cannot be moved.
+  const frozen = storageReadOnly();
+  page().shareSetting.disabled = frozen;
   let note = '';
   if (s.deleting.length > 0) {
     note = t('share.deleting');
@@ -36,7 +41,7 @@ export function renderShare(waiting: number): void {
   page().shareId.hidden = s.uid === null;
   page().shareUid.textContent = s.uid ?? '';
   // Not while the confirmation is up: it stands in the button's place.
-  if (page().shareConfirm.hidden) page().shareDelete.hidden = s.uids.length === 0;
+  if (page().shareConfirm.hidden) page().shareDelete.hidden = s.uids.length === 0 || frozen;
 }
 
 /** Wire the switch and the deletion. Once, at boot; `redraw` draws the

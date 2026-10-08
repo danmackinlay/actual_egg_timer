@@ -38,7 +38,7 @@
 
 import { shareGivesUp, shareReply } from '../core/policy.js';
 import { EggRecord, sharedRecord } from '../core/record.js';
-import { readStorage, writeStorage } from './store.js';
+import { readStorage, storageReadOnly, writeStorage } from './store.js';
 
 const KEY = 'aet.share.v1';
 
@@ -281,7 +281,7 @@ export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () =
 
 /** Sharing on or off. On sends the log so far; the promise is that run. */
 export function setSharing(on: boolean): Promise<void> {
-  if (on === current().on) return Promise.resolve();
+  if (storageReadOnly() || on === current().on) return Promise.resolve();
   generation += 1;
   save(on ? turnedOn(state) : turnedOff(state));
   return on ? sendFinal() : Promise.resolve();
@@ -319,7 +319,8 @@ async function sendRun(): Promise<void> {
 /** The next final egg, if there is one and sharing is on: whether to go on. */
 async function sendOne(): Promise<boolean> {
   const h = host;
-  if (h === null) return false;
+  // Nothing is sent while a newer build's results are left alone (store.ts).
+  if (h === null || storageReadOnly()) return false;
   const s = current();
   const log = h.log();
   const final = Math.min(h.finalCount(), log.length);
@@ -346,6 +347,7 @@ async function sendOne(): Promise<boolean> {
  *  any egg already on its way has landed, so that it cannot arrive after the
  *  deletion and outlive it. */
 export async function deleteSent(): Promise<void> {
+  if (storageReadOnly()) return;
   generation += 1;
   save(deletionAsked(current()));
   if (pumping !== null) await pumping;
@@ -355,6 +357,7 @@ export async function deleteSent(): Promise<void> {
 /** Ask the server to delete every id it has not yet confirmed. At every
  *  load, and after the cook asks. */
 export function retryDeletes(): Promise<void> {
+  if (storageReadOnly()) return Promise.resolve();
   return exclusive(async () => {
     for (const uid of [...current().deleting]) {
       let status: number;
