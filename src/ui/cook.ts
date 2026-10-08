@@ -143,9 +143,27 @@ function onTick(): void {
     // The slow hob's moment, or an event the clock has decided: plan again.
     const slow = plan.slowHobAt_s !== null && now_s >= plan.slowHobAt_s;
     if (slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
+    // Too old to pick back up (a pan heated for two hours and never tapped,
+    // or an hour past the end): it ends as Cancel ends it, with its events
+    // written first, as a reload would (running-cook review 2.2).
+    if (endIfTooOld(now_s)) return;
   }
   notice(now);
   render(now);
+}
+
+/** End the cook on screen as Cancel does if it is too old (`cookTooOld`), by
+ *  the plan the page holds; whether it did. */
+function endIfTooOld(now_s: number): boolean {
+  if (state.plan === null || !cookTooOld(state.plan, now_s)) return false;
+  reset();
+  return true;
+}
+
+/** The page is looked at again (shown, focused): the ticker, which stops at
+ *  DONE, is not there to see a cook at DONE become too old. */
+export function lookAgain(): void {
+  endIfTooOld(Date.now() / 1000);
 }
 
 function startTicking(): void {
