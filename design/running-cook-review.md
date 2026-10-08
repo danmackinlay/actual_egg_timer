@@ -66,6 +66,8 @@ and what `clock.ts` already claims: schedule the pull's beeps ahead on the
 audio clock whenever a plan sets the deadline, and cancel them on the next
 plan, so a throttled desktop tab rings on time.
 
+Actioned, on the web: both. Every plan sets the pull's urgent beeps ahead on the audio clock (`clock.ts` `setPullAlarm`), scheduled again only when the deadline moves, and none for a guessed boil, once the egg is out, or while the plan asks whether it is still in; `notice` rings the pull on any move from Heating or Cooking to Pull, Cooling or Done this tab has not rung, unless those beeps are already sounding or the cook tapped the egg out, and a jump straight to Done rings the pull rather than Done. Driven with the call above: after the tap, 75 oscillators scheduled 454 s ahead (the pull); 25 s past the pull, 75 more at once and Cooling (0 before); a jump past the cooling, 75 (the pull) and Done; Done in its turn, 50. `0baa2bc`.
+
 ### 1.2 A second tab on the same cook writes over what the first observed (web)
 
 Confirmed, on the real clock. Tab A started a cold cook. Tab B was opened
@@ -108,6 +110,8 @@ cooling ended, and an answer kept (`beforeReload` never goes back to
 `none`). The same on a `storage` event for its id, so B leaves Heating
 when A taps.
 
+Actioned, on the web, as written: a tab writes its cook only when it differs from what this tab last wrote or read (a tap, an event the clock decided, `keepAsRan`, an answer), and the lean, a cache, beside the stored cook without it (`saveLeanHint`). Before planning, before writing, on each tick and on a `storage` event it takes up what another tab wrote for the same id (`store.ts` `takeUpEvents`, tested both ways round: the first tap, the cook's pull over the clock's, the cooling's end of the pull kept, a ring only under the boil kept, the plan as it ran of the pull kept, and `beforeReload`). Another cook is never taken up (`DECISIONS.md` 97). Driven with the call above: B went to Cooking within the storage event, the stored `boilAt_s` stayed, A reloaded to Cooking (Heating, before); A's tap out at the pull stood when B woke 30 s past it (no `timeout` written). `9c9b51a`.
+
 ### 1.3 An egg logged at a reload has no forecast (both apps)
 
 Confirmed in core and in the simulator. iOS: a cook at Done, unanswered,
@@ -138,6 +142,8 @@ takes). Or keep the forecast in the stored cook as a cache, as
 `leanHint_s` is.
 
 Actioned, in core: a running cook keeps the plan as it ran (`asRan`: level, cook time, nudge, forecast, peak yolk, probe moment, the model's parameters) from the first plan on the pot's surface made once it is pulled (`keepAsRan`), and `cookFactsFor` takes the record's level, time, nudge and forecast from it, or from a plan on its surface, and otherwise refuses (`'noSurface'`, or `'stale'` after a correction) rather than write `forecast: null`; the call above, relaunched three hours on with no surface, logs the forecast kept (`test/running.test.ts` 26, `running.json`); the stored cook is `aet.cook.v4` and `cookInProgress.v3`, `64c74ad`. The apps' part (keep it on every plan, hold an answer until the surface lands, plan the too-old cook on its surface) is theirs.
+
+Actioned, on the web: every plan taken up passes through `keepAsRan` and is written if it changed (`7a35bf3`). An answer refused for want of the surface is held, its row settled and "learning…" shown, and made when the cook is planned on the surface; a finished, unanswered egg ended before its surface is in (Start again, or a cook dropped as too old at a reload) asks the worker for the surface, plans on it, keeps the plan as it ran and logs, and the stored cook is forgotten only then (`527fc91`). Driven: a cook at Done moved back three hours and reloaded logged its egg with its forecast (`cook_s` 461.4, `pulledBy: timeout`), where the build before logged nothing; Runny pressed 163 ms after a reload at Done was held and logged with its forecast when the surface landed.
 
 ### 1.4 A relaunch while heating keeps the old alarms (iOS)
 
@@ -198,6 +204,8 @@ step-by-step one at 199 moments). Then one solve per plan, as 0.4.
 
 Actioned, in core: `replan`'s optional `hint`, the last plan's `slowHob` (the last lengthening that did not creep, and the start, choices, remembered time, lean and nudge, and calibration parameters and white target it was made under), taken only when `slowHobHintFits` finds each the same to the bit and the clock past it. The plan is the same to the bit at all 199 moments and at each of the 634 plans of the two-hour cook; a creeping plan makes one solve instead of eight or nine, 320 ms to 85 ms a plan (Node, 1,000 particles), 202 s to 52 s of CPU for the two hours (`test/running.test.ts` 23, 24, `running.json`), `94c2f69`. The apps pass `plan.slowHob` to their next plan.
 
+Actioned, on the web: `planFor` passes the last plan's `slowHob`, `80044ea`. Driven: a creeping tick 44 to 45 ms in the in-app browser, where it was 300 to 395 ms.
+
 ### 2.2 A cook too old runs on, and its card with it (both apps)
 
 - **The web never ends it in the tab that runs it.** Confirmed. A cold
@@ -224,6 +232,8 @@ would; iOS's too-old branch also calls `Alarm.shared.cancel()` and
 card kept aside).
 
 Actioned, the core part: `cookTooOld(plan, now_s)` is the tick's call, of the plan the tick holds (its `tooOldAt_s` moves only when the cook tells the plan something), documented so; the call above is too old at 7,200 s from a plan made at the start as from a fresh one (`test/running.test.ts` 27), `81b590a`. The apps' ticks and iOS's too-old branch are theirs.
+
+Actioned, on the web: the tick writes the events due, then asks `cookTooOld` of its plan and ends the cook as Cancel does; at Done, where the ticker has stopped, the page asks when it is next shown or focused. Driven with the call above: Heating to 7,100 s, idle at 7,210 s with nothing stored (Heating at 4 h, before). `b9741c0`.
 
 ### 2.3 An egg becomes final while its screen still takes answers (both apps)
 
@@ -255,6 +265,8 @@ before any answer.
 
 Actioned, the core part: `openEggId` needs the stored cook's plan; `cookStillOpen(cook, plan, storedId_ms, now_s)` asks it of the screen's own cook and plan, with the stored cook's id (null when none is stored): false once another tab's Start again cleared it, another cook is stored, or it is too old (`test/running.test.ts` 27, `running.json`), `81b590a`. Putting the questions away is the apps'.
 
+Actioned, on the web: before any answer or reading, and on a `storage` event at Done, `cookStillOpen` with the stored cook's id; once false the questions go, nothing held is made, and nothing more is written or logged for that egg (where storage does not read back, the stored cook says nothing and the egg stays open). Driven with the call above: Tender three hours on was not taken (`white` stayed null) and the questions went; a focus then ended the cook (2.2). Another tab's Start again on the same cook put this tab's questions away at once, and a Jammy pressed after it logged nothing. `783adf7`.
+
 ### 2.4 Done after an answer shows the egg re-planned on that answer (both apps)
 
 Confirmed in the simulator; known and left by both apps' LOGBOOK entries
@@ -280,6 +292,8 @@ planned again; the peak shown is stored with the cook, beside
 `leanHint_s`, so a relaunch shows the same.
 
 Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown(cook, plan)`: the plan as it ran, kept, whatever a later plan reads; null only before it is kept (no surface yet) or after a correction not yet planned on the calibration before this egg (`asRanCorrected(cook, before, surface, now_s)`, DECISIONS.md 98's rule, the apps supplying that calibration). The call above, answered runny and folded: the plan on the new posterior moves the peak, `asRanShown` and the record do not (`test/running.test.ts` 26b), `64c74ad`. Drawing Done from it is the apps'.
+
+Actioned, on the web: "You asked for", the summary under the sentence, the probe's field and its placeholder, and the egg in cross-section's parameters read `asRanShown(cook, plan)`, else the plan (`feedback.ts` `cookShown`). Driven: Runny answered at Done and the page reloaded, "jammy · peak yolk 65 °C" stayed (58 °C before). `7a35bf3`.
 
 ## 3. Minor, parity, and for C3
 
@@ -307,6 +321,10 @@ Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown
   past, and the web's readout. The LOGBOOK saw it on the web; §4 says no
   time left may be shown from that plan. While `plan.lengthened`, show the
   time heated, counting up, on the screen and the card.
+  Actioned, on the web: while `plan.lengthened` the big clock shows the
+  time heated, and a screen reader hears the line under it ("15:03 so far
+  · about 15:53 to boil", an existing key, so no draft); the cooling's
+  countdown never goes below 0:00 (`test/phaseView.test.ts`), `f214855`.
 - **The upgrade is from 0.3, not 0.4.** `main` (0.3.4, live) writes the
   same keys, `aet.cook.v2` and `cookInProgress`, and the same alarm ids, so
   the cook kept aside will in practice be a 0.3 cook. It holds on iOS from
@@ -326,6 +344,9 @@ Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown
   At the upgrade the slot is empty in practice (0.3 dropped a damaged cook
   rather than keeping it), so this costs nothing yet; a list, as the
   calibration's unread copies are, would keep every one.
+  Actioned, on the web: `aet.cook.unread` is a list, each text once, an
+  earlier build's single text read as the first, all exported
+  (`test/record.test.ts` 3a5), `450236c`.
 - **Parity.** A probe reading on the web is scored against the record made
   from the plan now (`src/ui/feedback.ts:271`), on iOS against the record
   logged (`00f3b51`); the cook time is pinned at the pull, so the reading
@@ -334,6 +355,9 @@ Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown
   from the cook without them, the web writes the events first: the records
   differ by 1.2e-7 s. Everything else above is the same on both apps but
   1.1 and 1.2 (the web's alone) and 1.4 (iOS's alone).
+  Actioned, on the web: a reading after an answer is scored against the
+  logged record, and bounded by the parameters the cook ran under,
+  `0174dcd`.
 
 ## 4. What holds
 

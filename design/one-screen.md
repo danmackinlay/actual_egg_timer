@@ -602,6 +602,21 @@ costs at most one egg.
   it should keep the last-corrected record for an id instead, replacing
   the one logged (the refold of §4's record section). *Which eggs are
   final* is the stored cook's id, not the tab's (below).
+
+  *As built, after the running-cook review (web, 8 October 2026).* Two
+  tabs on one id wrote over each other's events (review 1.2), so a tab
+  now writes its cook only when its own cook changed (a tap, an event it
+  wrote, the plan as it ran kept, an answer, and in C3 a correction),
+  never after a plan alone, and the lean beside the stored cook without
+  it. Before it plans or writes, on each tick and on a `storage` event,
+  it takes up what another tab wrote for the same id (`takeUpEvents`):
+  the first boil tap, the cook's pull over the clock's, the cooling's end
+  of the pull kept, the plan as it ran, and an answer that logged the
+  egg. These are what was seen in the one pan, not corrections, so "a
+  reload restores whichever tab wrote it last" now loses nothing either
+  tab saw; a different cook is still never taken up (§7, 23). A tab whose
+  egg is no longer the open one at Done (`cookStillOpen`) puts its
+  questions away and writes and logs nothing more for it (review 2.3).
 - **iOS notifications.** On any plan whose deadlines moved,
   `Alarm.schedule` cancels and re-adds the pull and cooled alarms (the
   pull's line names the cooling, so a change of cooling moves it too), and
@@ -705,6 +720,14 @@ commit each):
      reads the phase. The alarm rings on entering Pull, however it was
      entered (`notice`). The boil is remembered at Cancel, Start again, and
      a stored cook dropped as too old, from `cookEnding`.
+     *After the running-cook review:* each plan passes the last one's
+     `slowHob` and keeps the plan as it ran (`keepAsRan`); the pull's beeps
+     are scheduled ahead on the audio clock by each plan, and the tick
+     rings the pull on any move past it this tab has not rung, straight to
+     Cooling or Done included (review 1.1); the tick ends a cook too old as
+     Cancel does (2.2); and a finished egg ended before its pot's surface is
+     in is logged once the surface is built, the stored cook kept until
+     then, while an answer given then is held until it lands (1.3).
    - **Cancel and Start again forget the stored cook only if it is this
      tab's** (`clearCook(id_ms)`): another tab's, written since, stays the
      open egg.
@@ -723,7 +746,12 @@ commit each):
      plan's level and the peak of the time that ran, on the calibration as
      it stands (a reload after an answer can show a peak a degree off the
      one shown before it). `tools/copy-snapshot.html` reads the deadlines
-     from the app's plan, since they are no longer stored.
+     from the app's plan, since they are no longer stored. *After the
+     running-cook review:* once the egg is out they, the probe's field and
+     the egg's parameters read the plan as it ran (`asRanShown`), so a
+     reload after an answer shows the peak shown before it (2.4); while the
+     slow hob's guess is lengthened the clock shows the time heated,
+     counting up (review 3).
 6. One layout: `index.html` (`#cookSetup` folded into `#setup`), `styles.css`
    (no phase hides the controls), `render.ts` (one render path),
    `eggSection.ts` (the two readings).
