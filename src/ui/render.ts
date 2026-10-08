@@ -11,7 +11,7 @@
  */
 
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
-import { Solution } from '../core/solve.js';
+import { ModelParams, Solution } from '../core/solve.js';
 import { textureFor, textureNoteKeys } from '../core/policy.js';
 import { decisionInputs } from '../core/decide.js';
 import { OddsProfile, pricedChanges, protocolAdvice } from '../core/reach.js';
@@ -23,7 +23,9 @@ import {
 } from '../core/wording.js';
 import { asRanShown } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
-import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
+import { EggSection, SectionView, advanceSection, createSection, previewSection, sectionView } from '../core/section.js';
+import { Egg } from '../core/geometry.js';
+import { CookSetup } from '../core/protocol.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
 import { askForProfile, currentInputs, surfaceFor } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
@@ -49,6 +51,7 @@ import {
 import { estimateTimeToBoil, hasBoilMemory } from './store.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
+import { nowMs } from './now.js';
 
 /** What was last drawn, so the page draws only what changed. */
 const drawn = {
@@ -230,58 +233,126 @@ function renderRunning(now_ms: number): void {
   page().welcome.hidden = true;
 }
 
-/** The egg in cross-section, as it is now: carried forward to the clock, in
- *  the water until the cook said it was out (or the grace ran out), and on
- *  through the carryover after. At the posterior mean, the same egg the
- *  countdown times, in the pot its plan has now. */
+/* -------------------------------------------- the egg in cross-section */
+
+/**
+ * The egg in cross-section has two readings (design/one-screen.md section 5;
+ * DECISIONS.md 97, 19, and 98), named on the drawing as `data-egg`:
+ *
+ * - `aim`: the egg the settings on screen aim for, at the end of the cooling,
+ *   the egg as eaten (`previewSection`): at idle, the controls' egg at the time
+ *   on screen; during a cook, while a control is held and for a moment after
+ *   (`heldAim`, edit.ts), the egg the correction in hand would cook.
+ * - `live`: the egg in the water now, carried forward a tick at a time
+ *   (`advanceSection`) and replayed from raw when the cook's pot or start
+ *   changes, on through the cooling.
+ * - `ran`: at Done, the egg as it ran, eaten: the time that ran, to the egg
+ *   out, with the model's parameters it ran under.
+ *
+ * A preview is one solve's worth of steps, so each is worked out only when
+ * what it is of changes.
+ */
+const egg = {
+  /** The rings the drawing has, as built (`buildEggSection`). */
+  built: '',
+  /** The live egg, and what it was started from. */
+  live: null as EggSection | null,
+  liveFor: '',
+  /** The last preview worked out, and what it was of. */
+  preview: null as SectionView | null,
+  previewFor: '',
+  /** What is painted now, so a tick paints only what moved. */
+  painted: '',
+  /** A preview another module holds on the drawing: the egg a correction in
+   *  hand aims for, while a control is held (edit.ts). */
+  held: null as SectionView | null,
+};
+
+/** Paint `view` on the drawing as `reading`. */
+function paintSection(view: SectionView, reading: 'aim' | 'live' | 'ran'): void {
+  const svg = page().eggSection;
+  const rings = JSON.stringify(view.outer);
+  if (rings !== egg.built) {
+    buildEggSection(svg, view.outer);
+    egg.built = rings;
+  }
+  paintEggSection(svg, ringFills(view, readPalette(page().body)));
+  svg.dataset['egg'] = reading;
+}
+
+/** The egg as eaten for a pot, a time in the water and a level
+ *  (`previewSection`), worked out once for each. */
+export function aimedEgg(
+  e: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, level: number,
+): SectionView {
+  const white = calibrationDoneness(state.calib, level).whiteDose_min;
+  const key = JSON.stringify([e, setup, params, cookTime_s, white]);
+  if (egg.preview === null || egg.previewFor !== key) {
+    egg.preview = previewSection(e, setup, params, cookTime_s, white);
+    egg.previewFor = key;
+  }
+  return egg.preview;
+}
+
+/** Hold a preview on the drawing (a control held mid-cook), or let it go
+ *  back to its own reading (null); drawn at once. */
+export function holdAim(view: SectionView | null): void {
+  egg.held = view;
+  egg.painted = '';
+  if (view !== null) paintSection(view, 'aim');
+  else render(nowMs());
+}
+
+/** The egg in cross-section while a cook runs: a preview held, or the egg
+ *  as it ran at Done, or the live egg. At the posterior mean, the same egg
+ *  the countdown times, in the pot its plan has now; once the egg is out,
+ *  with the model's parameters it ran under, so a fold of this egg's own
+ *  answer does not redraw it (review 2.4). */
 function renderSection(now_ms: number): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null) return;
-  // Once the egg is out, with the model's parameters it ran under, so a fold
-  // of this egg's own answer does not redraw it (review 2.4).
-  const params = cookShown(cook, plan)?.params ?? calibrationParams(state.calib);
-  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
-  if (section.live === null || section.liveFor !== key) {
-    section.live = createSection(plan.egg, plan.setup, params);
-    section.liveFor = key;
-    buildEggSection(page().eggSection, section.live.outer);
-  }
-  const live = section.live;
+  if (egg.held !== null) return;
+  const shown = cookShown(cook, plan);
+  const params = shown?.params ?? calibrationParams(state.calib);
+  const level = shown?.level ?? plan.level;
   const pulled = cook.events.pulled;
   const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
+  if (out_s !== null && phaseNow(now_ms) === 'DONE') {
+    const ran = aimedEgg(plan.egg, plan.setup, params, out_s, level);
+    const key = `ran|${egg.previewFor}`;
+    if (egg.painted !== key) {
+      paintSection(ran, 'ran');
+      egg.painted = key;
+    }
+    return;
+  }
+  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
+  if (egg.live === null || egg.liveFor !== key) {
+    egg.live = createSection(plan.egg, plan.setup, params);
+    egg.liveFor = key;
+  }
   const now_s = now_ms / 1000 - cook.startedAt_s;
   advanceSection(
-    live, plan.egg, plan.setup, params,
+    egg.live, plan.egg, plan.setup, params,
     out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
   );
-  const view = sectionView(live, calibrationDoneness(state.calib, plan.level).whiteDose_min);
-  paintEggSection(page().eggSection, ringFills(view, readPalette(page().body)));
+  egg.painted = 'live';
+  paintSection(sectionView(egg.live, calibrationDoneness(state.calib, level).whiteDose_min), 'live');
 }
 
-/** The egg in cross-section while idle: the egg on the controls, raw, as
- *  it goes into the water. */
+/** The egg in cross-section while idle: the egg the controls aim for, at
+ *  the time on screen, as eaten (DECISIONS.md 91, 97 and 98). */
 function renderIdleSection(sol: Solution): void {
+  if (egg.held !== null) return;
   const pot = idlePot(timeToBoil_s());
-  const params = calibrationParams(state.calib);
-  const key = JSON.stringify(['idle', pot.egg, pot.setup, params, sol.result.cookTime_s]);
-  if (section.liveFor === key) return;
-  section.live = createSection(pot.egg, pot.setup, params);
-  section.liveFor = key;
-  buildEggSection(page().eggSection, section.live.outer);
-  const view = sectionView(section.live, calibrationDoneness(state.calib, state.settings.doneness).whiteDose_min);
-  paintEggSection(page().eggSection, ringFills(view, readPalette(page().body)));
+  const level = state.chosen?.level ?? state.settings.doneness;
+  const view = aimedEgg(pot.egg, pot.setup, calibrationParams(state.calib), sol.result.cookTime_s, level);
+  const key = `aim|${egg.previewFor}`;
+  if (egg.painted === key) return;
+  paintSection(view, 'aim');
+  egg.painted = key;
 }
-
-/** The egg in cross-section (src/core/section.ts): carried forward each tick
- *  under a running cook, and the cook, egg and pot it was started from: a new
- *  one - a start, a boil tapped, a slow hob, a reload - replays it from
- *  t = 0, since the water it has been in has changed. Idle, the controls'
- *  egg as it goes in. */
-const section = {
-  live: null as EggSection | null,
-  liveFor: '',
-};
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
  *  and the warning line with `warning` in it. */

@@ -361,6 +361,18 @@ async function layout(tab: Tab): Promise<Layout> {
   })()`);
 }
 
+/** The slider moved to `level` as a finger does: pressed, moved, and (unless
+ *  `release` is false) let go. */
+async function setSlider(tab: Tab, level: number, release = true): Promise<void> {
+  await tab.eval(`(() => { const e = document.getElementById('doneness');
+    e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
+    e.value = String(${level}); e.dispatchEvent(new Event('input', { bubbles: true }));
+    if (${release}) {
+      e.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
+      e.dispatchEvent(new Event('change', { bubbles: true }));
+    } })()`);
+}
+
 function storedCook(s: Snap): Cook | null {
   return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
 }
@@ -494,6 +506,49 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
         notes.push(`${want} ✓`);
       }
       return notes.join(', ');
+    },
+  },
+
+  'egg-readings': {
+    what: 'C3 step 2: the egg aimed for at idle (softer and firmer differ), the live egg from raw at the start, the egg as it ran at Done',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      const centre = async (): Promise<{ reading: string; fill: string }> => tab.eval(`(() => {
+        const svg = document.getElementById('eggSection');
+        return { reading: svg.dataset.egg ?? '', fill: svg.querySelector('path[data-ring="0"]')?.getAttribute('fill') ?? '' };
+      })()`);
+      const at = async (level: number): Promise<{ reading: string; fill: string }> => {
+        await setSlider(tab, level);
+        await tab.until(`(async () => { const st = (await window.__e2e.ui('state')).state;
+          return st.chosen !== null && st.chosen.level === st.settings.doneness
+            && Math.abs(st.settings.doneness - ${level}) < 0.1; })()`, `level ${level} decided`);
+        await sleep(200);
+        return centre();
+      };
+      const runny = await at(0.1);
+      const hard = await at(0.95);
+      check(runny.reading === 'aim' && hard.reading === 'aim', `idle reads the aim: ${runny.reading}, ${hard.reading}`);
+      check(runny.fill !== hard.fill, `a runny and a hard yolk drawn alike: ${runny.fill}`);
+      await at(0.41);
+      const aimed = await centre();
+      let s = await start(tab, 'hot');
+      await sleep(300);
+      const live = await centre();
+      check(live.reading === 'live', `the cook reads live: ${live.reading}`);
+      check(live.fill !== aimed.fill, `the live egg starts raw, not as aimed: ${live.fill}`);
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      check((await centre()).reading === 'live', 'cooling reads live');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await sleep(300);
+      const ran = await centre();
+      check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
+      return `idle runny ${runny.fill}, hard ${hard.fill}; start ${live.fill}; Done ${ran.fill}`;
     },
   },
 
