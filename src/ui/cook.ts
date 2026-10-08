@@ -46,6 +46,7 @@ import {
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
+import { showEgg } from './views.js';
 import { nowMs } from './now.js';
 
 /** The ticker, while a cook runs, and the phase it last saw, so the alarm
@@ -325,6 +326,8 @@ function notice(now_ms: number): void {
     // Already sounding if it was scheduled ahead and its time has come on
     // the audio clock; otherwise now.
     if (!pullSounding()) ringAlarm(true);
+    // The button that answers it is on the egg's page.
+    showEgg();
   }
   // Done rings too, unless the pull has only just: the egg may still be in.
   if (phase === 'DONE') finishCook(!rang);

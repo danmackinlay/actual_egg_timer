@@ -763,6 +763,67 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'settings-mid-cook': {
+    what: 'C3 step 3: Settings is open while a cook runs; its water corrects the cook; the pull brings the egg back',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.click('#settingsLink');
+      await tab.until("document.body.dataset.view === 'settings' && document.getElementById('litres').offsetParent !== null", 'Settings open');
+      const learned = await tab.eval<boolean>("document.getElementById('learned').offsetParent === null");
+      check(learned, 'what I have learned waits for the cook to end');
+      for (let i = 0; i < 4; i++) await press(tab, 'button.step[data-for="litres"][data-up="0"]');
+      s = await corrected(tab, null);
+      const water = storedCook(s)?.choices.waterLitres;
+      check(water === 1, `the cook's water: ${water}`);
+      const pull1 = deadlines(s).cookEnd_s;
+      check(pull1 !== pull0, `the pull moved: ${(pull1 - pull0).toFixed(1)} s`);
+      const saved = JSON.parse((await tab.storage('aet.settings.v1')) ?? '{}') as { waterLitres?: number };
+      check(saved.waterLitres === 1, `the next cook's water: ${saved.waterLitres}`);
+      await tab.shiftTo(pull1 + 1);
+      await tab.phase('PULL');
+      await tab.until("document.body.dataset.view === 'egg'", 'the egg\'s page at the pull');
+      return `water 2 → 1 L: the pull ${(pull1 - pull0).toFixed(1)} s; the egg's page at the pull`;
+    },
+  },
+
+  'two-tabs-own-cooks': {
+    what: 'review 2.5: a correction in one tab leaves another tab\'s cook and its controls alone (real clock)',
+    run: async (h) => {
+      const a = await h.ctx.open('/');
+      await start(a, 'hot');
+      const b = await h.ctx.open('/');
+      await b.phase('COOKING');
+      // B puts A's cook down and starts its own: two tabs, two cooks.
+      await b.click('#secondary');
+      await b.phase('IDLE');
+      let sb = await start(b, 'hot');
+      const idB = sb.cook?.id_ms;
+      await b.until('(await window.__e2e.snap()).decided', 'B planned');
+      sb = await b.snap();
+      const pullB = deadlines(sb).cookEnd_s;
+      await pick(a, '#size', '3');
+      const sa = await corrected(a, null);
+      check(sa.cook?.choices.mass_kg !== sb.cook?.choices.mass_kg, 'A corrected its egg');
+      await b.until('JSON.parse(localStorage.getItem(\'aet.settings.v1\')).sizeIndex === 3', 'A\'s correction in the settings');
+      await sleep(500);
+      sb = await b.snap();
+      check(sb.cook?.id_ms === idB, 'B runs its own cook');
+      check(sb.cook?.choices.mass_kg === 0.068 && near(deadlines(sb).cookEnd_s, pullB, 1e-6), 'B\'s cook untouched');
+      const shown = await b.eval<string>("document.getElementById('size').value");
+      check(shown === '2', `B's controls show B's egg: ${shown}`);
+      const next = await b.eval<number>("(async () => (await window.__e2e.ui('state')).state.settings.sizeIndex)()");
+      check(next === 3, `B's next cook takes A's correction: ${next}`);
+      await b.click('#secondary');
+      await b.phase('IDLE');
+      const after = await b.eval<string>("document.getElementById('size').value");
+      check(after === '3', `B, idle, shows the settings: ${after}`);
+      return 'A corrected to size 3; B\'s cook and controls kept size 2; B idle shows 3';
+    },
+  },
+
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {

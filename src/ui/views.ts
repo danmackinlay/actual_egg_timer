@@ -19,8 +19,8 @@ export function viewFromHash(address: string): { view: View; target: string | nu
 
 /**
  * Show the view the address names. Settings and Help are hash routes, so
- * the phone's back button leaves them the way it came; a running cook is
- * always shown as the egg whatever the address says (styles.css).
+ * the phone's back button leaves them the way it came. Both are reachable
+ * while a cook runs (design/one-screen.md section 2).
  */
 function route(focus: boolean): void {
   const before = page().body.dataset['view'];
@@ -78,4 +78,11 @@ export function wireViews(): void {
   // hashchange too whenever the hash differs: one listener routes once.
   window.addEventListener('popstate', () => route(true));
   route(false);
+}
+
+/** Back to the egg, from Settings or Help: the pull has rung, and the
+ *  button that answers it is on the egg's page. */
+export function showEgg(): void {
+  if (page().body.dataset['view'] === 'egg') return;
+  goBack();
 }

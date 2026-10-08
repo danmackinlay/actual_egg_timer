@@ -847,23 +847,25 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 /* ---------------------------------------------------------------- views */
 
 /* Settings and Help are pages of their own; the egg's parts, and the
-   button at the bottom, step aside while one is open. A running cook is
-   always the egg: the app never leaves the clock for a settings page. */
+   button at the bottom, step aside while one is open. In every phase
+   (design/one-screen.md section 2): while a cook runs, Settings' pot rows
+   correct it as the sentence does, and what does not belong to the cook -
+   what I have learned, and sharing - waits for it to end. */
 .page { display: none; }
-body[data-phase="IDLE"][data-view="settings"] #settings,
-body[data-phase="IDLE"][data-view="help"] #help { display: block; }
-body[data-phase="IDLE"]:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
-body[data-phase="IDLE"]:not([data-view="egg"]) main {
+body[data-view="settings"] #settings,
+body[data-view="help"] #help { display: block; }
+body:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
+body:not([data-view="egg"]) main {
   display: block;
   min-height: 0;
   padding-bottom: calc(32px + env(safe-area-inset-bottom));
 }
+body:not([data-phase="IDLE"]) :is(#learned, #share) { display: none; }
 
 #navBack { display: none; }
-body[data-phase="IDLE"]:not([data-view="egg"]) #navBack { display: inline-flex; }
-body[data-phase="IDLE"]:not([data-view="egg"]) #settingsLink,
-body[data-view="help"] #helpLink,
-body:not([data-phase="IDLE"]) :is(#settingsLink, #helpLink) { display: none; }
+body:not([data-view="egg"]) #navBack { display: inline-flex; }
+body:not([data-view="egg"]) #settingsLink,
+body[data-view="help"] #helpLink { display: none; }
 
 /* -------------------------------------------------------- the privacy page */
 

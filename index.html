@@ -46,8 +46,8 @@
      Three views, one page (UI.md): the egg, Settings and Help. The hash
      picks one (#settings, #help, #help-<section>), so the phone's back button
      works; src/ui/views.ts sets data-view from it (#kitchen, the old
-     address, still opens Settings). While a cook is running only
-     the egg is shown, whatever the hash says.
+     address, still opens Settings), in every phase: while a cook runs,
+     Settings' pot rows correct it.
 
      Every (i) is a button.info with aria-controls naming the paragraph it
      opens, which sits right after the line the (i) is on. data-label names

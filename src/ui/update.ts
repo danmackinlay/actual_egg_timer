@@ -141,15 +141,28 @@ export function writeSettings(): void {
 /** Settings another tab changed, taken up: the units, the sound and the
  *  words follow, and an idle page's controls follow and it is solved again.
  *  A cook under way is described by its own choices, never by the settings
- *  (DECISIONS.md 97): while one runs, the controls are left as they are, and
- *  show the settings again when it ends (`reset`). */
+ *  (DECISIONS.md 97; review 2.5): while one runs, the settings are taken up
+ *  for the next cook, but its controls (`state.controls`) take only what the
+ *  cook does not hold - the units, the language and the sound - and show the
+ *  settings again when it ends (`reset`). */
 function takeUpSettings(next: Settings): void {
   const settings = state.settings;
   const before = effectiveLanguage(settings.language);
+  const unitsBefore = settings.unitsChosen;
   Object.assign(settings, next);
   useUnits(settings.unitsChosen);
   setMuted(settings.muted);
-  if (state.cook === null) applySettingsToDom();
+  if (state.cook === null) {
+    applySettingsToDom();
+  } else {
+    state.controls.unitsChosen = settings.unitsChosen;
+    state.controls.language = settings.language;
+    state.controls.muted = settings.muted;
+    if (settings.unitsChosen !== unitsBefore) {
+      applyUnitsToDom();
+      render(nowMs());
+    }
+  }
   renderMute();
   const tag = effectiveLanguage(settings.language);
   if (tag !== before || tag !== activeLocale()) {
@@ -177,7 +190,8 @@ export function saveNow(): void {
  * Take up a new language state: store it, and if the catalogue on screen
  * changes, fetch the new one and redraw every word in place. Nothing about the
  * egg changes, and the units are never touched from here: that rule runs one
- * way (LANGUAGE.md section 6). Only reachable while idle, since Settings is.
+ * way (LANGUAGE.md section 6). Settings is reachable in every phase, so it
+ * may come while a cook runs: its words are drawn again with the rest.
  */
 export function setLanguage(next: LanguageState): void {
   const before = effectiveLanguage(state.settings.language);
