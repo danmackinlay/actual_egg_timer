@@ -5872,3 +5872,15 @@ and the system's alerts. The bar's buttons are already in the face. The
 bar's title and the size menu's button could take the face only through
 views of the app's own in their place, not through an appearance, which
 the bar, made once, would not take until a relaunch: for the owner.
+
+## 9 October 2026: the scripted checks are silent
+
+The owner heard the checks: headless Chrome played the alarm's beeps and
+the simulator the in-app ring and notification sounds, through the Mac's
+speakers. Now `tools/chrome.ts` starts Chrome with `--mute-audio` (the
+AudioContext still runs, so the e2e's counts of scheduled beeps are as
+before; the copy snapshot shares the flag), and a Debug build takes
+`-muteAudio YES`, which `tools/iosE2e.mjs` always passes: the ring plays at
+no volume (its engine, timing and stop are unchanged) and notifications
+carry no sound. Checked: `npm run e2e` 28 of 28, `npm run ios:e2e` 31 of 31,
+`npm run verify`, `npm run ios:build`.

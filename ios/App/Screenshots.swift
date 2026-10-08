@@ -80,6 +80,8 @@ import EggTimerCore
 ///   moment once known is kept, so a tap still comes after the cook has
 ///   ended. What the scripted checks tap with, in place of the screen's
 ///   layout.
+/// - `-muteAudio YES`: the ring at no volume and notifications without
+///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -108,6 +110,10 @@ enum Screenshots {
     }
 
     static var provisionalAlarms: Bool { UserDefaults.standard.bool(forKey: "provisionalAlarms") }
+    /// `-muteAudio YES`: the in-app ring plays at no volume and notifications
+    /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
+    /// Mac's speakers; everything else about the ring and the alarms is as is.
+    static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
     static var doneAgo: Double {
