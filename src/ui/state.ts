@@ -52,7 +52,8 @@ interface PageState {
    *  setup's decision surface has been built, and on the sous-vide screen. */
   decision: Decision | null;
   /** What the egg at the chosen time will be like (src/core/outcome.ts): the
-   *  white's line and the bracket under the slider; how sure I am is `chosen`'s.
+   *  white's line; how sure I am, and the bracket under the slider drawn from
+   *  it, are `chosen`'s.
    *  Read at the decided time on the same surface, whenever `decision` is, and
    *  null whenever it is. */
   outcome: Outcome | null;

@@ -14,7 +14,7 @@
 import { CopyRef } from './copy.js';
 import { CERTAINTY_MASS, Certainty, WordCertainty } from './certainty.js';
 import { Outcome, WHITE_RISK } from './outcome.js';
-import { Phase, Verdict, anchorNear } from './policy.js';
+import { Phase, Verdict } from './policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { EggFrom } from './record.js';
 import { DONENESS_ANCHORS } from './solve.js';
@@ -136,9 +136,12 @@ export function mostLikelyOpened(w: WordCertainty): boolean {
  * is the width of the prior, which is wide so the filter can learn and not
  * because anyone believes it (decide.ts, "not before the first egg").
  *
- * THE RANGE. `levelLow` and `levelHigh` as the nearest doneness words, for a
- * screen reader: the bracket under the slider is drawn, and this is what it
- * says. The words stand alone after a colon (LANGUAGE.md section 5).
+ * THE RANGE. The bracket under the slider, for a screen reader: it is
+ * drawn from the certainty's 90% interval (`wordBracket`), so it says that
+ * interval's first and last words, the ones "9 times in 10" names. The
+ * words stand alone after a colon (LANGUAGE.md section 5). Until 8 October
+ * 2026 it said the outcome's level range, the egg without the cook's taste,
+ * as the nearest words, and could name others.
  *
  * The direction ("Probably just right. If not, a little firm.") and its lean
  * retired with the `certainty` draft (DECISIONS.md 97): the yolk is answered
@@ -151,14 +154,13 @@ export function whiteAtRisk(o: Outcome): boolean {
   return o.pWhiteRunny >= WHITE_RISK;
 }
 
-/** The range in the slider's words: a key and its arguments, each argument
- *  itself a doneness key for the caller to render. One word when both ends
- *  are nearest the same one. */
-export function rangeWords(o: Outcome): { key: string; args: Record<string, string> } {
-  const low = anchorNear(o.levelLow).key;
-  const high = anchorNear(o.levelHigh).key;
-  if (low === high) return { key: 'outcome.range.one', args: { level: low } };
-  return { key: 'outcome.range', args: { low: low, high: high } };
+/** The bracket in the slider's words: a key and its arguments, each argument
+ *  itself a doneness key for the caller to render: the 90% interval's first
+ *  and last words, or its one word. */
+export function rangeWords(w: WordCertainty): { key: string; args: Record<string, string> } {
+  const low = DONENESS_ANCHORS[w.from].key;
+  if (w.from === w.to) return { key: 'outcome.range.one', args: { level: low } };
+  return { key: 'outcome.range', args: { low: low, high: DONENESS_ANCHORS[w.to].key } };
 }
 
 /* -------------------------------------------------------------- the phase */

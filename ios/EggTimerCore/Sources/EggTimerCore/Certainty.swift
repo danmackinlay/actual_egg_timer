@@ -111,6 +111,32 @@ public func wordCertainty(_ p: [Double], asked: Int) -> WordCertainty {
     )
 }
 
+/// Where the bracket under the slider is drawn, as slider levels: from `low`
+/// to `high`, with a mark at `mark` (certainty.ts, "THE BRACKET").
+public struct WordBracket: Sendable, Equatable {
+    public let low: Double
+    public let mark: Double
+    public let high: Double
+}
+
+/// The lower edge of word `k`'s band on the slider: the midpoint between its
+/// anchor and the one below, or 0 for the softest.
+public func wordBandLow(_ k: Int) -> Double {
+    k > 0 ? 0.5 * (donenessAnchors[k - 1].level + donenessAnchors[k].level) : 0.0
+}
+
+/// The upper edge of word `k`'s band: the midpoint between its anchor and the
+/// one above, or 1 for the firmest.
+public func wordBandHigh(_ k: Int) -> Double {
+    k < donenessAnchors.count - 1 ? 0.5 * (donenessAnchors[k].level + donenessAnchors[k + 1].level) : 1.0
+}
+
+/// The bracket for an interval: the outer edges of its first and last words'
+/// bands, and the most likely word's anchor.
+public func wordBracket(_ w: WordCertainty) -> WordBracket {
+    WordBracket(low: wordBandLow(w.from), mark: donenessAnchors[w.mostLikely].level, high: wordBandHigh(w.to))
+}
+
 /// The likely time range for a cook aiming at a nominal yolk dose of
 /// 10^`logNominalTarget`: the right cook time's 90% interval.
 public func likelyTimeRange(_ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double) -> TimeRange {

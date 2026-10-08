@@ -36,8 +36,8 @@ import { Solution, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
-  ADVICE_BELOW_TENTHS, AdviceFacts, LevelOdds, OddsProfile, adviceWanted, envelopeBounds, lowOddsAt, oddsAtLevel,
-  oddsNear, answerAt, decideAnswer, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
+  ADVICE_GAIN, AdviceFacts, LevelOdds, OddsProfile, adviceWanted, askedNear, envelopeBounds, lowOddsAt, oddsAtLevel,
+  answerAt, decideAnswer, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.js';
 import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.js';
 import { predictOutcome } from '../src/core/outcome.js';
@@ -283,15 +283,11 @@ test('7. the shading is the chance of the word asked, relative to the best level
   }
 });
 
-test('8. advice: when it is offered, and what it says for which setup', () => {
-  const p: OddsProfile = {
-    points: [], best: 0.8, bestAsked: 0.8, physicalSoftest: 0, physicalHardest: 1, softest: 0.1, hardest: 1,
-  };
-  assert.equal(adviceWanted(ADVICE_BELOW_TENTHS - 1, null), true);
-  assert.equal(adviceWanted(5, null), false);
-  assert.equal(adviceWanted(5, p), true, '5/10 against a best of 8/10 is a clear margin');
-  assert.equal(adviceWanted(6, p), false);
-  assert.equal(adviceWanted(8, p), false);
+test('8. advice: when it is looked for, and what it says for which setup', () => {
+  // Looked for at a wild guess only.
+  assert.equal(adviceWanted('wildGuess'), true);
+  assert.equal(adviceWanted('ballpark'), false);
+  assert.equal(adviceWanted('veryCertain'), false);
 
   const facts = (eggFromClass: boolean, startAssumed: boolean): AdviceFacts => ({ eggFromClass, startAssumed });
   // What the model cannot price: the inputs it takes as exact.
@@ -312,33 +308,81 @@ test('8. advice: when it is offered, and what it says for which setup', () => {
   assert.deepEqual(pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 8 }))[0].setup.waterLitres, 12);
   assert.deepEqual(pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 12 })), [], 'no more water to add');
 
-  // Kept only where the change's own profile raises this level's odds.
+  // The chance of the word asked under a change, read between its points
+  // that ask the same word: Soft is 0.11 to 0.315, so 0.25 reads 0.15 and
+  // 0.30, and 0.1 (Runny) reads 0.05 alone, not Soft's 0.15.
   const ice: OddsProfile = {
-    points: [point(0, 300, 0.5), point(0.5, 400, 0.7), point(1, 500, 0.3)],
-    best: 0.7, bestAsked: 0.5, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
+    points: [point(0.05, 300, 0.5, 0.3), point(0.15, 320, 0.5, 0.4), point(0.3, 360, 0.7, 0.6), point(0.35, 380, 0.7, 0.9), point(1, 500, 0.3, 0.5)],
+    best: 0.7, bestAsked: 0.9, physicalSoftest: 0.05, physicalHardest: 1, softest: 0, hardest: 1,
   };
-  assert.equal(oddsNear(ice, 0.25), 0.6);
-  assert.equal(oddsNear(ice, 1), 0.3);
-  assert.equal(oddsNear({ ...ice, points: ice.points.slice(1) }, 0.25), 0, 'a level that pot cannot deliver');
+  assert.ok(Math.abs(askedNear(ice, 0.25) - (0.4 + 0.2 * (0.1 / 0.15))) < 1e-12);
+  assert.equal(askedNear(ice, 0.1), 0.3, 'Runny reads Runny\'s point, not Soft\'s');
+  assert.equal(askedNear(ice, 0.12), 0.4, 'one side only: the nearest that asks Soft');
+  assert.equal(askedNear(ice, 0.3), 0.6);
+  assert.equal(askedNear(ice, 0.02), 0, 'a level that pot cannot deliver');
+  assert.equal(askedNear({ ...ice, points: [] }, 0.25), 0);
+
+  // Kept, and the link shown, only where the change raises that chance by
+  // ADVICE_GAIN over the chance on screen.
   const priced = [{ key: 'advice.ice', profile: ice }];
-  assert.deepEqual(protocolAdvice(COUNTER, facts(true, false), 0.25, 0.2, priced), ['advice.weigh', 'advice.ice']);
-  assert.deepEqual(protocolAdvice(COUNTER, facts(true, false), 0.25, 0.56, priced), ['advice.weigh'], 'under half a tenth');
-  assert.deepEqual(protocolAdvice(COUNTER, facts(false, false), 1, 0.3, priced), [], 'no help at hard');
+  const at25 = askedNear(ice, 0.25);
+  assert.deepEqual(protocolAdvice(COUNTER, facts(true, false), 0.25, 0.2, priced), { keys: ['advice.weigh', 'advice.ice'], surer: true });
+  assert.deepEqual(
+    protocolAdvice(COUNTER, facts(true, false), 0.25, at25 - ADVICE_GAIN + 0.001, priced),
+    { keys: ['advice.weigh'], surer: false }, 'under a twentieth: the weighing is said, but there is no link for it',
+  );
+  assert.deepEqual(protocolAdvice(COUNTER, facts(false, false), 1, 0.5, priced), { keys: [], surer: false }, 'no help at hard');
 });
 
-test('9. on the model, ice helps a counter rest where the carryover binds, and not at hard', () => {
-  const c = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.1 });
-  const counter = oddsProfile(c, EGG, COUNTER, gridFor(c, EGG, COUNTER));
-  const change = pricedChanges(COUNTER)[0];
-  const ice = oddsProfile(c, EGG, change.setup, gridFor(c, EGG, change.setup));
-  const at = (level: number): string[] => protocolAdvice(
-    COUNTER, { eggFromClass: false, startAssumed: false }, level, oddsNear(counter, level),
-    [{ key: change.key, profile: ice }],
-  );
-  const lowest = counter.softest as number;
-  console.log(`# counter vs ice at ${lowest}: ${oddsNear(counter, lowest).toFixed(2)} vs ${oddsNear(ice, lowest).toFixed(2)}; at 1: ${oddsNear(counter, 1).toFixed(2)} vs ${oddsNear(ice, 1).toFixed(2)}`);
-  assert.deepEqual(at(lowest), ['advice.ice']);
-  assert.deepEqual(at(1), []);
+/** A cook who has cooked `n` eggs at jammy on `setup`, at the times the app
+ *  gave, and called each `word`: a posterior the filter learned, not one
+ *  written down. */
+function cookedAt(setup: CookSetup, egg: Egg, n: number, word: 'runny' | 'soft' | 'jammy' | 'fudgy' | 'hard'): Calibration {
+  const post = createPrior(PARTICLES, CALIBRATION_SEED);
+  const c: Calibration = { posterior: post, eggsLogged: 0 };
+  for (let k = 0; k < n; k++) {
+    const grid = gridFor(c, egg, setup);
+    const a = answerAt(c, egg, setup, 0.41, null, true);
+    const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, null, 0);
+    updatePosterior(post, grid, d.decision.cookTime_s, logYolkTarget(0.41), null, 'tender', null, word);
+    c.eggsLogged += 1;
+  }
+  return c;
+}
+
+test('9. on the model, ice makes a counter rest surer once it has bitten, and not before', () => {
+  const egg = eggFromMass(0.058);
+  const at = (c: Calibration, level: number) => {
+    const grid = gridFor(c, egg, COUNTER);
+    const p = oddsProfile(c, egg, COUNTER, grid);
+    const change = pricedChanges(COUNTER)[0];
+    const ice = oddsProfile(c, egg, change.setup, gridFor(c, egg, change.setup));
+    const a = answerAt(c, egg, COUNTER, level, p, true);
+    const d = decideAnswer(c, egg, COUNTER, grid, a.solution, a.level, p, 0);
+    const advice = protocolAdvice(
+      COUNTER, { eggFromClass: false, startAssumed: false }, d.level, d.certainty.words.pAsked,
+      [{ key: change.key, profile: ice }],
+    );
+    console.log(`#   at ${d.level}: ${d.certainty.words.certainty}, the word asked ${d.certainty.words.pAsked.toFixed(2)} on the counter, ${askedNear(ice, d.level).toFixed(2)} with ice; ${advice.keys}`);
+    return { d: d, advice: advice };
+  };
+  // A fresh install asking for soft rests at the counter's softest: a wild
+  // guess, but the prior's width, not the carryover, makes it one, and ice
+  // makes it no surer. No link.
+  console.log('# fresh, counter, soft asked:');
+  const fresh = at(FRESH, 0.22);
+  assert.equal(fresh.d.certainty.words.certainty, 'wildGuess');
+  assert.equal(fresh.d.adviceWanted, true);
+  assert.deepEqual(fresh.advice, { keys: [], surer: false });
+  // One egg on the counter called runny when jammy was asked: the carryover
+  // is the doubt now, and ice settles it. The link shows.
+  console.log('# one egg called runny, counter, soft asked:');
+  const bitten = at(cookedAt(COUNTER, egg, 1, 'runny'), 0.22);
+  assert.equal(bitten.d.certainty.words.certainty, 'wildGuess');
+  assert.equal(bitten.d.adviceWanted, true);
+  assert.deepEqual(bitten.advice, { keys: ['advice.ice'], surer: true });
+  // At hard it is surer than a wild guess, and nothing is looked for.
+  assert.equal(at(cookedAt(COUNTER, egg, 1, 'runny'), 1).d.adviceWanted, false);
 });
 
 test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
@@ -527,14 +571,14 @@ test('14. one decided answer for both apps: the soft yolk chosen again and held 
   assert.ok(d.decision.cookTime_s <= dj.decision.cookTime_s, `${d.decision.cookTime_s} against ${dj.decision.cookTime_s}`);
   // Without the profile, the level keeps its own choice.
   assert.equal(decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, null, 0).decision.cookTime_s, own.cookTime_s);
-  // The solve and the outcome are at the time given; the advice is wanted
-  // as the odds there say.
+  // The solve and the outcome are at the time given; advice is looked for
+  // as the certainty there says: a ballpark, so not.
   assert.equal(d.nudge_s, 0);
   assert.equal(d.solution.result.cookTime_s, d.decision.cookTime_s);
   assert.equal(d.solution.whiteSets, soft.solution.whiteSets);
   assert.deepEqual(d.outcome, predictOutcome(c.posterior, grid, d.decision.cookTime_s, logYolkTarget(0.22)));
-  assert.equal(d.adviceWanted, adviceWanted(d.decision.oddsTenths, p));
-  assert.equal(d.adviceWanted, true, `${d.decision.oddsTenths}/10 at soft`);
+  assert.equal(d.adviceWanted, adviceWanted(d.certainty.words.certainty));
+  assert.equal(d.adviceWanted, false, `${d.certainty.words.certainty} at soft`);
   // Nudged: the decision is the same, and the time shown, the solve and the
   // outcome move with the nudge.
   const n = decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, p, -7);

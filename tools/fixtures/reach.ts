@@ -12,8 +12,8 @@ import { decide, decisionInputs } from '../../src/core/decide.js';
 import { DoseGrid } from '../../src/core/doseGrid.js';
 import { logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 import {
-  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, LevelOdds, OddsProfile, PROFILE_STEP,
-  SHADE_BEST_MIN, adviceWanted, answerAt, decideAnswer, envelopeBounds, lowOddsAt, oddsNear, oddsProfile,
+  ADVICE_GAIN, LevelOdds, OddsProfile, PROFILE_STEP,
+  SHADE_BEST_MIN, adviceWanted, answerAt, askedNear, decideAnswer, envelopeBounds, lowOddsAt, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';
 
@@ -107,7 +107,11 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     grid: { tauAirScale: g.tauAirScale, ...g.spec },
     profile: profile,
     shading: shadingOf(profile),
-    near: [0, 0.13, 0.41, 0.625, 0.99, 1].map((level) => ({ level: level, odds: oddsNear(profile, level) })),
+    // The chance of the word asked between points: either side of each cut
+    // between words, at a point, between two, and outside the profile.
+    near: [0, 0.1, 0.12, 0.13, 0.3, 0.33, 0.41, 0.5, 0.53, 0.625, 0.8, 0.82, 0.99, 1].map((level) => ({
+      level: level, pAsked: askedNear(profile, level),
+    })),
     // The envelope (DECISIONS.md 84): the bounds at a level - at a point,
     // between two, outside them all, a hundredth not held exactly - and the
     // time the app gives there, its answer decided within them. No bound
@@ -205,23 +209,26 @@ const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: bo
   { setup: referenceSetup({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
   { setup: referenceSetup({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
 ];
-/** A point made by hand: the odds the advice reads, and a chance of the word
- *  asked and a class it does not. */
+/** A point made by hand: the chance of the word asked, which the advice
+ *  reads, and odds and a class it does not. */
 function handPoint(level: number, cookTime_s: number, odds: number, pAsked: number): LevelOdds {
   return { level: level, cookTime_s: cookTime_s, odds: odds, pAsked: pAsked, certainty: 'ballpark' };
 }
 
+/** A point in every word's band, and two in Soft's, so the advice is read
+ *  between points that ask one word, beside one alone, and outside. */
 const ADVICE_PROFILE: OddsProfile = {
-  points: [handPoint(0, 300, 0.5, 0.6), handPoint(0.5, 400, 0.7, 0.9), handPoint(1, 500, 0.3, 0.5)],
-  best: 0.7, bestAsked: 0.9, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
+  points: [
+    handPoint(0.05, 300, 0.5, 0.3), handPoint(0.15, 320, 0.5, 0.4), handPoint(0.3, 360, 0.7, 0.6),
+    handPoint(0.4, 400, 0.7, 0.9), handPoint(0.6, 450, 0.6, 0.7), handPoint(0.95, 500, 0.3, 0.5),
+  ],
+  best: 0.7, bestAsked: 0.9, physicalSoftest: 0.05, physicalHardest: 0.95, softest: 0.05, hardest: 0.95,
 };
 
 export const reachFixture = {
   about: 'The odds and the certainty at every level, the range that is not a wild guess, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
   constants: {
     profileStep: PROFILE_STEP,
-    adviceBelowTenths: ADVICE_BELOW_TENTHS,
-    adviceMarginTenths: ADVICE_MARGIN_TENTHS,
     adviceGain: ADVICE_GAIN,
     shadeBestMin: SHADE_BEST_MIN,
   },
@@ -240,10 +247,7 @@ export const reachFixture = {
   }),
   answers: reachAnswers,
   lowOdds: reachLowOdds,
-  adviceWanted: [0, 3, 4, 5, 6, 7, 8].flatMap((tenths) => [null, 0.62, 0.8, 0.84].map((best) => ({
-    tenths: tenths, best: best,
-    wanted: adviceWanted(tenths, best === null ? null : { ...ADVICE_PROFILE, best: best }),
-  }))),
+  adviceWanted: (['veryCertain', 'ballpark', 'wildGuess'] as const).map((c) => ({ certainty: c, wanted: adviceWanted(c) })),
   advice: ADVICE_SETUPS.map((a) => {
     const facts = { eggFromClass: a.eggFromClass, startAssumed: a.startAssumed };
     const priced = pricedChanges(a.setup);
@@ -251,9 +255,9 @@ export const reachFixture = {
       setup: a.setup, ...facts,
       unpriced: unpricedAdvice(a.setup, facts),
       priced: priced,
-      shown: [0.25, 0.9].map((level) => [0.2, 0.62].map((odds) => ({
-        level: level, odds: odds,
-        keys: protocolAdvice(a.setup, facts, level, odds, priced.map((c) => ({ key: c.key, profile: ADVICE_PROFILE }))),
+      shown: [0.02, 0.1, 0.25, 0.9].map((level) => [0.2, 0.47, 0.5].map((pAsked) => ({
+        level: level, pAsked: pAsked,
+        advice: protocolAdvice(a.setup, facts, level, pAsked, priced.map((c) => ({ key: c.key, profile: ADVICE_PROFILE }))),
       }))).flat(),
     };
   }),

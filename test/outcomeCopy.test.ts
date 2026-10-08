@@ -78,16 +78,20 @@ test('the white gets its line from one in five, and not below', () => {
   assert.ok('outcome.whiteRunny' in MESSAGES);
 });
 
-test('the range is said with the nearest doneness words, once when both ends share one', () => {
-  assert.deepEqual(rangeWords(outcome({ levelLow: 0.14, levelMedian: 0.42, levelHigh: 0.72 })),
+test('the bracket says the certainty\'s interval: its first and last words, once when it is one', () => {
+  const words = (p: number[], asked: number) => rangeWords(wordCertainty(p, asked));
+  assert.deepEqual(words([0.05, 0.25, 0.4, 0.25, 0.05], 2),
     { key: 'outcome.range', args: { low: 'doneness.soft', high: 'doneness.fudgy' } });
-  assert.deepEqual(rangeWords(outcome({ levelLow: 0.35, levelMedian: 0.43, levelHigh: 0.51 })),
+  assert.deepEqual(words([0.025, 0.025, 0.9, 0.025, 0.025], 2),
     { key: 'outcome.range.one', args: { level: 'doneness.jammy' } });
-  // The clamps are the slider's ends, and read as its end words.
-  assert.deepEqual(rangeWords(outcome({ levelLow: 0, levelMedian: 0.06, levelHigh: 0.3 })),
+  // The ends of the slider are its end words.
+  assert.deepEqual(words([0.5, 0.42, 0.06, 0.01, 0.01], 0),
     { key: 'outcome.range', args: { low: 'doneness.runny', high: 'doneness.soft' } });
-  assert.deepEqual(rangeWords(outcome({ levelLow: 0.73, levelMedian: 1, levelHigh: 1 })),
+  assert.deepEqual(words([0.01, 0.01, 0.06, 0.42, 0.5], 4),
     { key: 'outcome.range', args: { low: 'doneness.fudgy', high: 'doneness.hard' } });
+  // Whatever the word asked: these are the words, not the slider.
+  assert.deepEqual(words([0.01, 0.02, 0.45, 0.5, 0.02], 1),
+    { key: 'outcome.range', args: { low: 'doneness.jammy', high: 'doneness.fudgy' } });
   for (const key of ['outcome.range', 'outcome.range.one']) assert.ok(key in MESSAGES);
 });
 

@@ -79,11 +79,13 @@ import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
  *  outcome leans that way: three misses in five. See the header. */
 export const LEAN_RATIO = 1.5;
 
-/** The quantiles the level range is read at: a 90% interval, the one the
- *  certainty's words state (`CERTAINTY_MASS`, certainty.ts), so the bracket
- *  under the slider and "9 times in 10" are the same nine eggs in ten
- *  (DECISIONS.md 97; design/one-screen.md section 7, 14). It was 80% until
- *  the `certainty` draft. */
+/** The quantiles the level range is read at: a 90% interval, the mass the
+ *  certainty's words are read at (`CERTAINTY_MASS`, certainty.ts). It was
+ *  80% until the `certainty` draft. No screen draws the range since 8
+ *  October 2026: the bracket under the slider is the words' own interval
+ *  (`wordBracket`, certainty.ts), the cook's taste included, so that the two
+ *  agree (DECISIONS.md 97, question 14). The range is kept as the egg
+ *  itself, without the taste, which `npm run decide -- outcome` measures. */
 export const LEVEL_LOW_Q = 0.05;
 export const LEVEL_HIGH_Q = 0.95;
 
@@ -118,7 +120,8 @@ export interface Outcome {
    *  cook carried from a build before them (the web's `restoreOutcome`). */
   pYolkWord: number[] | null;
   /** The 5%, 50% and 95% points of the delivered yolk doneness, on the
-   *  slider's scale, clamped to [0, 1]. No taste offset: see the header. */
+   *  slider's scale, clamped to [0, 1]. No taste offset: see the header. Not
+   *  the bracket under the slider, which is `wordBracket`'s. */
   levelLow: number;
   levelMedian: number;
   levelHigh: number;

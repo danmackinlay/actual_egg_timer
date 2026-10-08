@@ -3,8 +3,9 @@ import Foundation
 @testable import EggTimerCore
 
 /// How sure the timer is, in words, against `fixtures/certainty.json`: the
-/// word asked at every slider position, the class and the interval from
-/// spreads written to hit every edge, and the whole reading from real
+/// word asked at every slider position, each word's band on the slider, the
+/// class, the interval and the bracket from spreads written to hit every
+/// edge, and the whole reading and its bracket from real
 /// posteriors at the time decided. The surface and three posteriors are
 /// decide.json's; the fourth is outcome.json's.
 
@@ -17,6 +18,12 @@ private func expectWords(_ w: WordCertainty, _ json: [String: Any], _ label: Str
     #expect(try w.to == Int(json.num("to")), "\(label) to")
     try expectClose(w.pInterval, json.num("pInterval"), "\(label) pInterval")
     #expect(try w.mostLikely == Int(json.num("mostLikely")), "\(label) most likely")
+}
+
+private func expectBracket(_ b: WordBracket, _ json: [String: Any], _ label: String) throws {
+    #expect(try b.low == json.num("low"), "\(label) bracket low")
+    #expect(try b.mark == json.num("mark"), "\(label) bracket mark")
+    #expect(try b.high == json.num("high"), "\(label) bracket high")
 }
 
 @Suite("Certainty")
@@ -37,11 +44,22 @@ struct CertaintyConformance {
         }
     }
 
-    @Test("the class, the interval and the most likely word, at every edge")
+    @Test("each word's band on the slider")
+    func bands() throws {
+        for row in try Fixtures.list("certainty.json", "bands") {
+            let k = try Int(row.num("word"))
+            #expect(try wordBandLow(k) == row.num("low"), "word \(k) low")
+            #expect(try wordBandHigh(k) == row.num("high"), "word \(k) high")
+        }
+    }
+
+    @Test("the class, the interval, the most likely word and the bracket, at every edge")
     func spreads() throws {
         for row in try Fixtures.list("certainty.json", "spreads") {
             let w = try wordCertainty(row.numbers("p"), asked: Int(row.num("asked")))
-            try expectWords(w, row.object("words"), try row.str("note"))
+            let note = try row.str("note")
+            try expectWords(w, row.object("words"), note)
+            try expectBracket(wordBracket(w), row.object("bracket"), note)
         }
     }
 
@@ -61,6 +79,7 @@ struct CertaintyConformance {
             let r = try certaintyAt(post, grid, row.num("cookTime_s"), level: row.num("level"))
             let expected = try row.object("reading")
             try expectWords(r.words, expected.object("words"), label)
+            try expectBracket(wordBracket(r.words), row.object("bracket"), label)
             let time = try expected.object("time")
             try expectClose(r.time.lowS, time.num("low_s"), "\(label) time low")
             try expectClose(r.time.highS, time.num("high_s"), "\(label) time high")

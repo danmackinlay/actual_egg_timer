@@ -5206,3 +5206,45 @@ times in 10 because the time is held to jammy's, so it is no longer
 dotted or warned; "Most likely: Jammy." says where the yolk will land.
 The advice link under low odds still reads the odds of "just right",
 which nothing shows.
+
+## 8 October 2026: one interval for the bracket and the words, and the advice by the words (the `certainty` draft's follow-up)
+
+Two loose ends of the entry above. **The bracket** under the slider was
+still the outcome's level range, the egg without the cook's taste, while
+the words include it, so a fresh jammy egg drew "Soft to Fudgy" and said
+"Runny to Fudgy", and a screen reader heard both (`DECISIONS.md` 97, 14:
+"the bracket draws the 90% the words say"). Core's `wordBracket` now draws
+the words' own interval: each word's band on the slider runs between the
+anchors' midpoints (0, 0.11, 0.315, 0.515, 0.81, 1), and the bracket from
+the outer edge of the interval's first word's band to the outer edge of its
+last's, marked at the most likely word's anchor, which is always inside
+it. `rangeWords` says the same interval. The level range stays in core for
+`npm run decide -- outcome`, the only reader left besides the tests; the
+white's line and the warning never read it. `f8ad320`; fixtures moved:
+`certainty` (the bands, each bracket), `wording` (the range rows).
+
+**The advice link** showed under 5/10 odds of "just right", which nothing
+shows now. It shows at a wild guess (`certaintyAt`'s class) where a change
+the model prices raises the chance of the word asked at the level by 0.05
+on that change's profile (`protocolAdvice`'s `surer`; `askedNear` reads
+the chance between profile points that ask the same word, as `oddsNear`
+read the odds). The chance and not the class, because only the chance can
+be read between points. Found on the way: on the model a fresh install's
+wild guesses are never helped by a change, because they are the prior's
+width; on a fresh counter rest ice makes the word asked 0.06 less likely.
+So the link now comes only once an egg has taught something: one egg on
+the counter called runny makes ice worth 0.28 at the soft end. Advice
+strings quote no odds, so no draft. `73efbb4`; fixtures moved: `reach`
+(the advice rows, `near`) and `running` (four plans' `adviceWanted`, the
+flag only). `running.ts` and both apps' cook code untouched.
+
+**Driven** on my own dev server (port 8931, 390 px) and a simulator of my
+own (iPhone 17 Pro, iOS 27.0, deleted after): a fresh jammy egg ("A wild
+guess", "Runny to Fudgy", the bracket 0 to 0.81 marked at Jammy), opened
+and closed; four eggs called jammy at fudgy ("Very certain", "Fudgy", the
+bracket 0.515 to 0.81); two eggs on the counter called runny, soft asked
+(landed at 0.50-0.51, a wild guess, "Jammy to Hard", the link, Help
+listing the scale and ice); a fresh install into boiling water on the
+counter, soft asked (a wild guess, "Soft to Fudgy", no link). Seen: the
+bracket is not clamped to what the pan delivers, so on a counter rest its
+soft end lies over the stripes.

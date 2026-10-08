@@ -28,10 +28,10 @@ struct PhaseActions: View {
     // MARK: - The slot
 
     /// The one place for a longer line (UI.md section 2). While idle: the
-    /// refusal or the level's low odds, or the sous-vide warning, or, before
-    /// anything is learned, the
-    /// first-egg welcome; and under low odds, the way to Help, which is one
-    /// short line and goes under whichever is there.
+    /// refusal or that the level is a wild guess, or the sous-vide warning,
+    /// or, before anything is learned, the first-egg welcome; and under a wild
+    /// guess a change would make surer, the way to Help, which is one short
+    /// line and goes under whichever is there.
     @ViewBuilder
     private var slot: some View {
         if phase == .idle {
@@ -46,8 +46,8 @@ struct PhaseActions: View {
                     Text(tr("idle.welcome"))
                         .foregroundStyle(.secondary)
                 }
-                // The low-odds link (reach.ts).
-                if planner.shownAdviceWanted {
+                // The way to Help's advice (reach.ts, "when to advise").
+                if planner.shownAdvice {
                     NavigationLink(value: Route.help(.reliable)) {
                         HStack(spacing: 4) {
                             Text(tr("advice.toggle"))

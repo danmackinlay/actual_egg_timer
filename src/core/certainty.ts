@@ -42,6 +42,20 @@
  * the word asked: a cook asking for Soft on a pan that runs firm can be told
  * "between Jammy and Fudgy".
  *
+ * THE BRACKET. Under the slider the same interval is drawn
+ * (`wordBracket`; DECISIONS.md 97, question 14: "the bracket draws the 90%
+ * the words say, so the two agree"). Each word has a band on the slider:
+ * the levels whose nearest anchor it is, from the midpoint with the anchor
+ * below to the midpoint with the anchor above, 0 and 1 at the ends - the
+ * same edges `anchorNear` and `YOLK_WORD_CUTS` have. The bracket runs from
+ * the outer edge of the interval's first word's band to the outer edge of
+ * its last's, so its ends are inside the track by construction, and its
+ * mark sits at the most likely word's anchor, where that word's tick is.
+ * The most likely word is always inside the interval: a word outside a run
+ * holding 0.9 holds at most 0.1, and the five cannot all be that small.
+ * Until 8 October 2026 the bracket was the outcome's level range, the egg
+ * without the cook's taste, and could name other words than these.
+ *
  * THE TIME RANGE. The 90% credible interval of the right cook time for the
  * level asked: `predictCookTime` at the 5% and 95% points, the same per-
  * particle right time (the later of the yolk's centre and the white's
@@ -99,6 +113,14 @@ export interface CertaintyReading {
   time: TimeRange;
 }
 
+/** Where the bracket under the slider is drawn, as slider levels: from
+ *  `low` to `high`, with a mark at `mark`. See the header. */
+export interface WordBracket {
+  low: number;
+  mark: number;
+  high: number;
+}
+
 /** The word asked at a slider level: the place of `anchorNear(level)`. */
 export function askedWord(level: number): number {
   const key = anchorNear(level).key;
@@ -151,6 +173,24 @@ export function wordCertainty(p: number[], asked: number): WordCertainty {
     asked: asked, certainty: certainty, pAsked: pAsked, pNear: pNear,
     from: from, to: to, pInterval: pInterval, mostLikely: mostLikely,
   };
+}
+
+/** The lower edge of word `k`'s band on the slider: the midpoint between
+ *  its anchor and the one below, or 0 for the softest. */
+export function wordBandLow(k: number): number {
+  return k > 0 ? 0.5 * (DONENESS_ANCHORS[k - 1].level + DONENESS_ANCHORS[k].level) : 0.0;
+}
+
+/** The upper edge of word `k`'s band: the midpoint between its anchor and
+ *  the one above, or 1 for the firmest. */
+export function wordBandHigh(k: number): number {
+  return k < DONENESS_ANCHORS.length - 1 ? 0.5 * (DONENESS_ANCHORS[k].level + DONENESS_ANCHORS[k + 1].level) : 1.0;
+}
+
+/** The bracket for an interval: the outer edges of its first and last
+ *  words' bands, and the most likely word's anchor. See the header. */
+export function wordBracket(w: WordCertainty): WordBracket {
+  return { low: wordBandLow(w.from), mark: DONENESS_ANCHORS[w.mostLikely].level, high: wordBandHigh(w.to) };
 }
 
 /** The likely time range for a cook aiming at a nominal yolk dose of

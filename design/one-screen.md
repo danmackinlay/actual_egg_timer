@@ -761,7 +761,12 @@ and the track's shading are restated in the same terms (§7, 13-17).
 
 As built in today's layout, the `certainty` draft (8 October 2026,
 `SHIP-0.5.md` D1): the words, the interval, "Most likely" and the time
-range are `UI.md` §8; the one screen (C3) keeps them where they are.
+range are `UI.md` §8; the one screen (C3) keeps them where they are. Its
+follow-up the same day made question 14's "one interval" exact: the
+bracket is the words' interval drawn (core's `wordBracket`, whole words
+wide, marked at the most likely word), not the egg's own range without the
+taste, and the advice link reads the words too (a wild guess that a priced
+change makes surer), since nothing on screen shows the odds it read.
 
 ## 7. Questions for the owner
 

@@ -79,6 +79,7 @@ extension Planner {
             certainty = nil
             oddsProfile = nil
             advice = []
+            adviceShown = false
             held = Held()
             return
         }
@@ -156,7 +157,8 @@ extension Planner {
     }
 
     /// The answer, with its time decided by core (`decideAnswer`, Reach.swift),
-    /// and what to say if the odds there are low. Off the main actor, like the
+    /// and, where the word asked is a wild guess there, what to say and
+    /// whether a change the model prices makes it surer (`protocolAdvice`). Off the main actor, like the
     /// solve: a decision is a few thousand probits. Profiles not yet worked
     /// out - this pot's, and those of the changes the advice would price - are
     /// listed in `missing`. Once this pot's profile is in, the time is held by
@@ -193,9 +195,11 @@ extension Planner {
                 chosen.missing.append(changed)
             }
         }
-        chosen.advice = protocolAdvice(
-            answer.setup, facts: snapshot.facts, level: d.level, odds: d.decision.odds, priced: priced
+        let advice = protocolAdvice(
+            answer.setup, facts: snapshot.facts, level: d.level, pAsked: d.certainty.words.pAsked, priced: priced
         )
+        chosen.advice = advice.keys
+        chosen.adviceShown = advice.surer
         return chosen
     }
 
@@ -324,6 +328,7 @@ extension Planner {
         appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
         oddsProfile = answer.profile
         advice = answer.advice
+        adviceShown = answer.decision != nil && answer.adviceShown
         warning = warningText(
             answer.verdict, lowOdds: answer.lowOdds, level: answer.level, setup: answer.setup,
             water: show(.water, answer.setup.waterLitres)
@@ -363,8 +368,11 @@ extension Planner {
         /// once worked out: the warning reads its range, and the track is
         /// shaded and dotted by it.
         var profile: OddsProfile? = nil
-        /// What to say under low odds, as catalogue keys; empty for nothing.
+        /// What to say under a wild guess, as catalogue keys; empty for nothing.
         var advice: [String] = []
+        /// Whether the way to it shows: a wild guess that a priced change
+        /// makes surer (`ProtocolAdvice.surer`).
+        var adviceShown = false
         /// Profiles this answer would have used and that are not worked out
         /// yet: asked for once it is applied.
         var missing: [DecisionInputs] = []

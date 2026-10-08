@@ -30,8 +30,6 @@ struct ReachConformance {
     func constants() throws {
         let c = try Fixtures.object("reach.json", "constants")
         #expect(try profileStep == Int(c.num("profileStep")))
-        #expect(try adviceBelowTenths == Int(c.num("adviceBelowTenths")))
-        #expect(try adviceMarginTenths == Int(c.num("adviceMarginTenths")))
         #expect(try adviceGain == c.num("adviceGain"))
         #expect(try shadeBestMin == c.num("shadeBestMin"))
     }
@@ -90,7 +88,7 @@ struct ReachConformance {
             }
             for near in try row.rows("near") {
                 let level = try near.num("level")
-                try expectClose(oddsNear(p, level: level), near.num("odds"), "\(label) near \(level)")
+                try expectClose(askedNear(p, level: level), near.num("pAsked"), "\(label) near \(level)")
             }
             // The envelope: the bounds at a level, and the time the app gives
             // there, decided within them. No bound above is null in JSON.
@@ -242,24 +240,13 @@ struct ReachConformance {
         }
     }
 
-    @Test("when advice is offered, and which")
+    @Test("when advice is looked for, which is said, and when the link shows")
     func advice() throws {
         let file = try Fixtures.load("reach.json")
         let adviceProfile = try profileOf(file.object("adviceProfile"))
         for row in try file.rows("adviceWanted") {
-            let best = try row.optionalNum("best")
-            let tenths = try row.num("tenths")
-            let profile = best.map {
-                OddsProfile(
-                    points: adviceProfile.points, best: $0, physicalSoftest: adviceProfile.physicalSoftest,
-                    physicalHardest: adviceProfile.physicalHardest, softest: adviceProfile.softest,
-                    hardest: adviceProfile.hardest
-                )
-            }
-            #expect(
-                try adviceWanted(Int(tenths), profile: profile) == row.flag("wanted"),
-                "\(tenths) against \(String(describing: best))"
-            )
+            let c = try row.value(Certainty.self, "certainty")
+            #expect(try adviceWanted(c) == row.flag("wanted"), "\(c)")
         }
         for row in try file.rows("advice") {
             let setup = try cookSetup(row.object("setup"))
@@ -274,11 +261,13 @@ struct ReachConformance {
                 #expect(try a.setup == cookSetup(b.object("setup")), "priced setup \(a.key)")
             }
             for shown in try row.rows("shown") {
-                let keys = try protocolAdvice(
-                    setup, facts: facts, level: shown.num("level"), odds: shown.num("odds"),
+                let advice = try protocolAdvice(
+                    setup, facts: facts, level: shown.num("level"), pAsked: shown.num("pAsked"),
                     priced: priced.map { (key: $0.key, profile: adviceProfile) }
                 )
-                #expect(keys == (shown["keys"] as? [String]), "shown \(shown)")
+                let expected = try shown.object("advice")
+                #expect(advice.keys == (expected["keys"] as? [String]), "shown \(shown)")
+                #expect(try advice.surer == expected.flag("surer"), "surer \(shown)")
             }
         }
     }
