@@ -114,6 +114,7 @@ interface Snap {
 interface Cook {
   id_ms: number;
   startedAt_s: number;
+  choices: { level: number; startMode: string; mass_kg: number; massFrom: string; waterLitres: number; cooling: string };
   firstHotAt_s: number | null;
   coldSince_s: number | null;
   correctedAt_s: number | null;
@@ -339,6 +340,27 @@ function deadlines(s: Snap): { cookEnd_s: number; coolEnd_s: number } {
   return { cookEnd_s: d.cookEnd_s, coolEnd_s: d.coolEnd_s ?? NaN };
 }
 
+/** What the one screen shows: whether each of its parts is on screen, where
+ *  the slider, the sentence and the egg are, and the slider's value. */
+interface Layout {
+  shown: { id: string; visible: boolean }[];
+  top: Record<'doneness' | 'sentence' | 'eggSection', number>;
+  level: string;
+}
+
+async function layout(tab: Tab): Promise<Layout> {
+  return tab.eval<Layout>(`(() => {
+    const on = (id) => { const e = document.getElementById(id); const r = e.getBoundingClientRect();
+      return { id: id, visible: r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' }; };
+    const top = (id) => document.getElementById(id).getBoundingClientRect().top + window.scrollY;
+    return {
+      shown: ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'].map(on),
+      top: { doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
+      level: document.getElementById('doneness').value,
+    };
+  })()`);
+}
+
 function storedCook(s: Snap): Cook | null {
   return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
 }
@@ -439,6 +461,39 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const cooked_s = (s.now_ms - (cook?.startedAt_s ?? 0) * 1000) / 1000;
       return `${(cooked_s / 60).toFixed(1)} min of cook in ${((Date.now() - real0) / 1000).toFixed(1)} s; `
         + `recommended ${rec.recommended_s.toFixed(1)} s, pan ${JSON.stringify(pans)}`;
+    },
+  },
+
+  'one-layout': {
+    what: 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+      const idle = await layout(tab);
+      check(idle.shown.every((x) => x.visible), `idle: ${JSON.stringify(idle.shown)}`);
+      let s = await start(tab, 'cold');
+      await tab.until('(await window.__e2e.snap()).deadlines !== null', 'planned');
+      await sleep(300);
+      const heating = await layout(tab);
+      check(heating.shown.every((x) => x.visible), `Heating: ${JSON.stringify(heating.shown)}`);
+      check(heating.level === String(s.cook?.choices.level), `the slider at the cook's level: ${heating.level}`);
+      // Nothing moves at the start: the slider and the sentence stay put.
+      for (const id of ['doneness', 'sentence', 'eggSection'] as const) {
+        check(near(idle.top[id], heating.top[id], 2), `${id} moved at the start: ${idle.top[id]} -> ${heating.top[id]}`);
+      }
+      const notes = [`idle→Heating: sentence at ${heating.top.sentence.toFixed(0)} px`];
+      await tab.shift(300);
+      s = await boil(tab);
+      for (const want of ['COOKING', 'PULL', 'COOLING', 'DONE']) {
+        if (want === 'PULL') await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+        if (want === 'COOLING') await tab.click('#primary');
+        if (want === 'DONE') await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+        s = await tab.phase(want);
+        const l = await layout(tab);
+        check(l.shown.every((x) => x.visible), `${want}: ${JSON.stringify(l.shown)}`);
+        notes.push(`${want} ✓`);
+      }
+      return notes.join(', ');
     },
   },
 
@@ -674,10 +729,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       s = await tab.phase('DONE');
       await tab.until('(await window.__e2e.snap()).target !== ""', 'what was asked for');
-      const summary = "document.getElementById('cookDoneness').textContent";
+      // The slider's heading, the cook's peak yolk (the one screen keeps the
+      // slider where the summary under the sentence was).
+      const summary = "document.getElementById('donenessPeak').textContent";
       const before = await tab.eval<string>(summary);
       const asked = (await tab.snap()).target;
-      check(asked.includes(before.split(' ')[0]), `"${asked}" and "${before}" agree`);
+      check(asked.includes(before), `"${asked}" and "${before}" agree`);
       await tab.click('.fb[data-yolk="runny"]');
       await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
       await tab.reload();

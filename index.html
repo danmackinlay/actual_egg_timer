@@ -108,23 +108,10 @@
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
   </section>
 
-  <!-- While a cook runs, the cook in the pan (src/ui/sentence.ts,
-       renderCookSetup): the setup sentence it was started with, as plain
-       prose with nothing to tap, and under it the doneness and the peak
-       yolk. From the cook's ticket, not the controls, which are put away. -->
-  <section id="cookSetup" hidden>
-    <!-- Beside it, the egg in cross-section (src/ui/eggSection.ts): how set
-         each layer is, or a tap away its temperature. A prototype, with no
-         words yet, so hidden from a screen reader. -->
-    <svg id="eggSection" class="egg-section" aria-hidden="true" focusable="false"></svg>
-    <div class="cook-setup__words">
-      <p id="cookSentence"></p>
-      <p id="cookDoneness"></p>
-    </div>
-  </section>
-
   <!-- ----------------------------------------------------------- the egg -->
-  <!-- Two controls and a sentence (UI.md section 3). Numeric bounds, steps,
+  <!-- Two controls and a sentence (UI.md section 3), the same in every phase
+       (design/one-screen.md section 2): while idle they are the settings,
+       and while a cook runs, its own choices. Numeric bounds, steps,
        units and the preset temperatures are filled in at boot from
        src/core/policy.ts and src/core/units.ts, in the cook's units, so the
        markup cannot disagree with the model. -->
@@ -163,8 +150,12 @@
     </div>
 
     <!-- The setup sentence. Its clauses are buttons, built by the app from
-         setup.* in the catalogue; each opens its choice below, in place. -->
+         setup.* in the catalogue; each opens its choice below, in place.
+         Beside it, the egg in cross-section (src/ui/eggSection.ts, UI.md
+         section 3): how set each layer is. A picture of what the sentence
+         and the time say, with no words, so hidden from a screen reader. -->
     <div id="setup">
+      <svg id="eggSection" class="egg-section pan-only" aria-hidden="true" focusable="false"></svg>
       <p id="sentence"></p>
 
       <div class="panel" id="panelEgg" role="group" aria-labelledby="lblEgg" hidden>

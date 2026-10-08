@@ -38,7 +38,7 @@ import {
 } from './feedback.js';
 import { render } from './render.js';
 import { sendFinal } from './share.js';
-import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
+import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
 import {
   clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
   saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
@@ -399,6 +399,15 @@ function forgetEnded(id_ms: number): void {
   });
 }
 
+/** The controls show the running cook's own choices, never the settings
+ *  (review 2.5): at the start, where they are the same, and after a reload,
+ *  where another tab may have changed the settings since. */
+function showCookControls(): void {
+  if (state.cook === null) return;
+  state.controls = settingsOfChoices(state.settings, state.cook.choices, sizeClasses);
+  applySettingsToDom();
+}
+
 /** Cancel, and "Start again" at DONE. */
 export function reset(): void {
   stopAlarm();
@@ -417,8 +426,9 @@ export function reset(): void {
   clock.phase = 'IDLE';
   clock.pullRung = false;
   setPullAlarm(null);
-  // The controls were left alone while the cook ran (another tab may have
-  // changed the settings meanwhile): they show the settings again.
+  // The controls showed the cook's own choices while it ran (another tab may
+  // have changed the settings meanwhile): they show the settings again.
+  state.controls = state.settings;
   applySettingsToDom();
   // A new cook, a new nudge.
   drawNudge();
@@ -451,6 +461,7 @@ export function onPrimary(): void {
     freshWrites(null, null);
     clock.pullRung = false;
     state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
+    showCookControls();
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
     state.leanHint_s = chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s;
@@ -533,6 +544,7 @@ export function restoreCook(): void {
   freshWrites(text, stored.cook);
   clock.pullRung = false;
   takeUp(back.cook, back.plan);
+  showCookControls();
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {
     keepScreenAwake();

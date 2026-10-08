@@ -1,19 +1,17 @@
 /**
  * The setup sentence: the egg's setup as one line of prose whose clauses are
- * the buttons that open its choices, and, once a cook is running, the same
- * sentence as plain prose from the cook's own choices.
+ * the buttons that open its choices, in every phase (design/one-screen.md
+ * section 2): the settings' while idle, a running cook's own choices while
+ * one runs (`state.controls`).
  */
 
 import { Egg, SizeClass } from '../core/geometry.js';
 import { Cooling } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
 import { sizeClassLabel } from '../core/units.js';
-import { anchorNear } from '../core/policy.js';
 import { EggFrom } from '../core/record.js';
-import { CookPlan, RunningCook } from '../core/running.js';
 import { Clause, ClauseKeys, clauseKeys } from '../core/wording.js';
-import { midSentence } from '../core/copy.js';
-import { activeLocale, t } from './copy.js';
+import { t } from './copy.js';
 import { el, page } from './dom.js';
 import { Settings, UiStartMode } from './store.js';
 import { show, unitSystem } from './units.js';
@@ -22,9 +20,13 @@ const CLAUSE_PANELS: Record<Clause, string> = {
   egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
 };
 
-/** The four clause buttons, made once and kept, so re-rendering the sentence
- *  around a new answer never takes the focus off the one being used. */
-const clauses = {} as Record<Clause, HTMLButtonElement>;
+/** The four clauses, made once and kept, so re-rendering the sentence around
+ *  a new answer never takes the focus off the one being used. Each is a span
+ *  that is a button (`role`, `tabindex`, Enter and Space), not a <button>:
+ *  a button is drawn as an inline block, so a clause that wraps beside the
+ *  egg would push the punctuation after it to the far end of its last line,
+ *  where a span wraps as the words around it do. */
+const clauses = {} as Record<Clause, HTMLElement>;
 let sentenceShown = '';
 let openClause: Clause | null = null;
 
@@ -32,8 +34,8 @@ function panelFor(clause: Clause): HTMLElement {
   return el<HTMLElement>(CLAUSE_PANELS[clause]);
 }
 
-/** What the sentence says, whichever cook it is about: the one on the
- *  controls (`liveSetupFacts`), or the one in the pan (`runningSetupFacts`). */
+/** What the sentence says: the cook the controls describe
+ *  (`liveSetupFacts`). */
 export interface SetupFacts {
   /** The egg's mass as the size menu or the scale says it, with its unit. */
   mass: string;
@@ -53,8 +55,8 @@ function classMass(classes: SizeClass[], index: number): string {
   return t(label.mass.key, { value: label.mass.value });
 }
 
-/** The setup on the controls: `settings` read against this page's carton,
- *  with `egg` the egg they describe. */
+/** The setup on the controls: `settings` (the controls', `state.controls`)
+ *  read against this page's carton, with `egg` the egg they describe. */
 export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Egg): SetupFacts {
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
   return {
@@ -64,23 +66,6 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
     startMode: settings.startMode,
     standing: settings.afterBoil === 'off',
     cooling: settings.cooling,
-  };
-}
-
-/** The setup of the cook under way, from its own choices and not the
- *  controls: what the cook said, whatever the controls say later. A class egg
- *  is named as its class's mass, as the size menu names it, when this page's
- *  carton still has a class of that mass; otherwise it is the egg's own. */
-function runningSetupFacts(cook: RunningCook, plan: CookPlan, classes: SizeClass[]): SetupFacts {
-  const ch = cook.choices;
-  const index = ch.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === ch.mass_kg) : -1;
-  return {
-    mass: index >= 0 ? classMass(classes, index) : show('mass', plan.egg.mass_kg * 1000),
-    eggFrom: ch.eggFrom,
-    customStart_C: plan.setup.eggStart_C,
-    startMode: ch.startMode,
-    standing: ch.afterBoil === 'off',
-    cooling: ch.cooling,
   };
 }
 
@@ -168,30 +153,6 @@ export function redrawSentence(): void {
   sentenceShown = '';
 }
 
-/** The cook in the pan, once the controls are gone: its setup sentence, so a
- *  forgetful cook can see what they said, as plain prose - nothing in it can
- *  change a cook under way yet, so nothing in it is a button - and under it
- *  what the sentence does not say, the doneness the cook runs at and the peak
- *  yolk of its time. From the cook and its plan, never the controls; both are
- *  null while idle, which hides it. The doneness and the peak are `shown`'s,
- *  the cook as it ran once the egg is out (feedback.ts, `cookShown`). Sous-vide
- *  never runs a cook, so it never shows this. */
-export function renderCookSetup(
-  cook: RunningCook | null, plan: CookPlan | null, classes: SizeClass[],
-  shown: { level: number; peakYolk_C: number } | null = null,
-): void {
-  page().cookSetup.hidden = cook === null || plan === null;
-  if (cook === null || plan === null) return;
-  const texts = clauseTexts(runningSetupFacts(cook, plan, classes));
-  page().cookSentence.textContent = t('setup.sentence', {
-    egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
-  });
-  page().cookDoneness.textContent = t('cook.summary', {
-    doneness: midSentence(t(anchorNear(shown?.level ?? plan.level).key), activeLocale()),
-    yolk: show('temperature', shown?.peakYolk_C ?? plan.solution.result.peakYolk_C),
-  });
-}
-
 /** Open one clause's choice under the sentence, or none. One at a time. */
 function setOpenClause(next: Clause | null): void {
   openClause = next;
@@ -202,15 +163,21 @@ function setOpenClause(next: Clause | null): void {
   }
 }
 
-/** The four clause buttons, and each panel's Done. Once, at boot. */
+/** The four clauses, and each panel's Done. Once, at boot. */
 export function buildClauses(): void {
   for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
-    const button = document.createElement('button');
-    button.type = 'button';
+    const button = document.createElement('span');
     button.className = 'clause';
+    button.setAttribute('role', 'button');
+    button.tabIndex = 0;
     button.setAttribute('aria-controls', CLAUSE_PANELS[clause]);
     button.setAttribute('aria-expanded', 'false');
     button.addEventListener('click', () => setOpenClause(openClause === clause ? null : clause));
+    button.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      button.click();
+    });
     clauses[clause] = button;
     // The panel's own Done puts the focus back where the cook came from.
     const close = panelFor(clause).querySelector<HTMLButtonElement>('button.panel__close');

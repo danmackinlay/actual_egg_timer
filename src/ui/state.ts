@@ -15,7 +15,7 @@
  * (DECISIONS.md 97).
  */
 
-import { Egg, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
+import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Solution } from '../core/solve.js';
 import { BoilMemory, Phase, phaseAt, roomInUse } from '../core/policy.js';
@@ -40,6 +40,11 @@ export const sizeClasses = sizeClassesFor(REGION);
  *  and the answer on screen. */
 interface PageState {
   settings: Settings;
+  /** What the controls show and write (design/one-screen.md section 4,
+   *  review 2.5): the settings themselves while idle, the same object; while
+   *  a cook runs, its own choices over a copy of them (`settingsOfChoices`),
+   *  never the settings, which another tab may have changed since. */
+  controls: Settings;
   boilMemory: BoilMemory;
   /** Posterior over the model's uncertain constants, learned from how the
    *  user's own eggs actually turn out. Before any feedback this is the prior
@@ -87,6 +92,7 @@ interface PageState {
  *  (app.ts), not when this module is imported, so a test can import it. */
 export const state: PageState = {
   settings: null!,
+  controls: null!,
   boilMemory: null!,
   calib: null!,
   solution: null,
@@ -128,9 +134,45 @@ export function choicesOf(settings: Settings, region: string | null): CookChoice
   };
 }
 
-/** The cook the controls describe, as core's choices. */
+/** The cook the settings describe, as core's choices: the idle screen's,
+ *  and the next cook's. */
 export function idleChoices(): CookChoices {
   return choicesOf(state.settings, REGION);
+}
+
+/** The cook the controls on screen describe: the settings' while idle, a
+ *  running cook's own (or a correction to it in hand) otherwise. */
+export function controlsChoices(): CookChoices {
+  return choicesOf(state.controls, REGION);
+}
+
+/**
+ * `settings` with a cook's choices over them, as the controls show them: the
+ * egg's class by its mass in `classes` (this page's carton), else the egg
+ * measured, its width from its mass; the rest field by field. What the
+ * choices do not hold - the units, the language, the sound, the probe - is
+ * the settings'. A room the choices count makes the probe on. Pure.
+ */
+export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: SizeClass[]): Settings {
+  const index = ch.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === ch.mass_kg) : -1;
+  const byClass = index >= 0;
+  return {
+    ...settings,
+    sizeIndex: index,
+    customMinor_mm: byClass ? settings.customMinor_mm : eggFromMass(ch.mass_kg).minorDiameter_m * 1000,
+    measuredBy: byClass || ch.massFrom === 'class' ? settings.measuredBy : ch.massFrom,
+    startTempMode: ch.eggFrom,
+    customStart_C: ch.customStart_C,
+    startMode: ch.startMode,
+    afterBoil: ch.afterBoil,
+    cooling: ch.cooling,
+    waterLitres: ch.waterLitres,
+    eggCount: ch.eggCount,
+    altitude_m: ch.altitude_m,
+    doneness: ch.level,
+    probe: ch.room_C !== null ? true : settings.probe,
+    room_C: ch.room_C !== null ? ch.room_C : settings.probe ? null : settings.room_C,
+  };
 }
 
 /** The egg and the pot the controls describe, for a time to a rolling boil:
@@ -141,7 +183,7 @@ export function idlePot(timeToBoil_s: number): CookPot {
 
 /** The egg the controls describe. */
 export function currentEgg(): Egg {
-  return idlePot(timeToBoil_s()).egg;
+  return cookSetupOf(controlsChoices(), timeToBoil_s()).egg;
 }
 
 /** Which input the egg on screen came from: the size class, or whichever of the
@@ -153,17 +195,19 @@ export function massFrom(): MassFrom {
 }
 
 /** The room as the cook measured it, while it counts, or null to assume one
- *  (`roomInUse`: only with the probe on). */
+ *  (`roomInUse`: only with the probe on), as the controls say. */
 export function room_C(): number | null {
-  return roomInUse(state.settings.probe, state.settings.room_C);
+  return roomInUse(state.controls.probe, state.controls.room_C);
 }
 
 export function boilingPoint_C(): number {
-  return boilingPointAtAltitude(state.settings.altitude_m);
+  return boilingPointAtAltitude(state.controls.altitude_m);
 }
 
+/** Sous-vide on the idle screen: it starts no cook, so a running one never
+ *  is. */
 export function isSousVide(): boolean {
-  return state.settings.startMode === 'sous';
+  return state.cook === null && state.settings.startMode === 'sous';
 }
 
 /** Time to a rolling boil on the controls' pot, remembered or guessed, s: the

@@ -66,8 +66,10 @@ export function onToggleMute(): void {
   renderMute();
 }
 
+/** The controls read back into what they show (`state.controls`): the
+ *  settings while idle; while a cook runs, its correction in hand. */
 function readInputs(source: EventTarget | null): void {
-  const settings = state.settings;
+  const settings = state.controls;
   const sizeIndex = Number(page().size.value);
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
@@ -143,9 +145,10 @@ export function onInput(event: Event): void {
   // Instant feedback on what the eye is on while dragging or choosing - the
   // reading under the slider, the sentence, the boiling point beside the
   // altitude; the full solve (tens of milliseconds) follows and corrects them.
-  renderDonenessReading(state.settings.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(state.settings.doneness) });
+  const shown = state.controls;
+  renderDonenessReading(shown.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(shown.doneness) });
   page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  page().body.dataset['start'] = state.settings.startMode;
-  renderSentence(liveSetupFacts(state.settings, sizeClasses, currentEgg()));
+  page().body.dataset['start'] = shown.startMode;
+  renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg()));
   scheduleSolve();
 }

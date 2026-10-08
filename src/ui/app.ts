@@ -46,6 +46,7 @@ import { nowMs } from './now.js';
 export function boot(): void {
   bindDom();
   state.settings = loadSettings(sizeClasses);
+  state.controls = state.settings;
   useUnits(state.settings.unitsChosen);
   state.boilMemory = loadBoilMemory();
   state.calib = loadCalibration();
