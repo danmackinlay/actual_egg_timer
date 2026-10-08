@@ -101,14 +101,13 @@ public func whiteAtRisk(_ o: Outcome) -> Bool {
     o.pWhiteRunny >= whiteRisk
 }
 
-/// The range in the slider's words: a key and its arguments, each argument
-/// itself a doneness key for the caller to render. One word when both ends are
-/// nearest the same one.
-public func rangeWords(_ o: Outcome) -> (key: String, args: [String: String]) {
-    let low = anchorNear(o.levelLow).key
-    let high = anchorNear(o.levelHigh).key
-    if low == high { return ("outcome.range.one", ["level": low]) }
-    return ("outcome.range", ["low": low, "high": high])
+/// The bracket in the slider's words: a key and its arguments, each argument
+/// itself a doneness key for the caller to render: the certainty's 90%
+/// interval's first and last words, or its one word (`wordBracket` draws it).
+public func rangeWords(_ w: WordCertainty) -> (key: String, args: [String: String]) {
+    let low = donenessAnchors[w.from].key
+    if w.from == w.to { return ("outcome.range.one", ["level": low]) }
+    return ("outcome.range", ["low": low, "high": donenessAnchors[w.to].key])
 }
 
 // MARK: - The phase

@@ -243,11 +243,12 @@ final class Planner {
     /// until then the physical limits are the whole rule.
     var oddsProfile: OddsProfile?
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
-    /// the decided time on the decision's own surface): the white's line and
-    /// the bracket. Nil whenever `decision` is.
+    /// the decided time on the decision's own surface): the white's line. Nil
+    /// whenever `decision` is.
     var outcome: Outcome?
     /// How sure I am of the time on screen (`certaintyAt`, read with the
-    /// outcome): the line under the time and what pressing it opens. Nil
+    /// outcome): the line under the time, what pressing it opens, and the
+    /// bracket under the slider (`wordBracket`). Nil
     /// whenever `decision` is.
     var certainty: CertaintyReading?
     /// This launch's nudge (E8, DECISIONS.md 61): a whole number of seconds
@@ -263,7 +264,7 @@ final class Planner {
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     var advice: [String] = []
-    /// What the white's line and the bracket are about, and what a cook
+    /// What the white's line is about, and what a cook
     /// started now is timed by: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
     /// never sets, and in sous-vide.
@@ -315,10 +316,10 @@ final class Planner {
 
     /// The track's shading: this pot's odds, or the last shown until they land.
     var shownProfile: OddsProfile? { oddsProfile ?? (holding ? held.profile : nil) }
-    /// The white's line and the bracket: this pot's, or the last shown until
-    /// its surface lands.
+    /// The white's line: this pot's, or the last shown until its surface
+    /// lands.
     var heldOutcome: Outcome? { decision != nil ? shownOutcome : (holding ? held.outcome : nil) }
-    /// The line under the time, likewise.
+    /// The line under the time and the bracket, likewise.
     var heldCertainty: CertaintyReading? { decision != nil ? shownCertainty : (holding ? held.certainty : nil) }
     /// The low-odds link, likewise.
     var shownAdviceWanted: Bool { decision != nil ? adviceWanted : (holding && held.adviceWanted) }

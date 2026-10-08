@@ -3,7 +3,8 @@
  */
 
 import {
-  CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordCertainty,
+  CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordBandHigh, wordBandLow,
+  wordBracket, wordCertainty,
 } from '../../src/core/certainty.js';
 import { decideAt, decisionApplies } from '../../src/core/decide.js';
 import { logYolkTarget } from '../../src/core/solve.js';
@@ -11,8 +12,10 @@ import { logYolkTarget } from '../../src/core/solve.js';
 import { DECIDE_GRID, meanSolve } from './decide.js';
 import { outcomePosteriors } from './outcome.js';
 
-/* Three parts. The word asked at every slider position, and at each place
- * the word changes. The class, the interval and the most likely word from
+/* Four parts. The word asked at every slider position, and at each place
+ * the word changes. Each word's band on the slider, whose edges the bracket
+ * is drawn to. The class, the interval, the most likely word and the
+ * bracket from
  * spreads written by hand, so that every edge is hit exactly: each class's
  * boundary from both sides, the ends (Runny and Hard have one neighbour),
  * the interval's tie-breaks, and a spread no run short of all five holds.
@@ -59,22 +62,28 @@ const CASES: { posterior: string; level: number; note: string }[] = [
 ];
 
 export const certaintyFixture = {
-  about: 'How sure the timer is, in words: the word asked, the class, the 90% interval and the time range. src/core/certainty.ts. Surface and posteriors are decide.json\'s, and outcome.json\'s consistent.',
+  about: 'How sure the timer is, in words: the word asked, the class, the 90% interval, the bracket drawn from it and the time range. src/core/certainty.ts. Surface and posteriors are decide.json\'s, and outcome.json\'s consistent.',
   constants: { certaintyMass: CERTAINTY_MASS, timeRangeLowQ: TIME_RANGE_LOW_Q, timeRangeHighQ: TIME_RANGE_HIGH_Q },
   asked: LEVELS.map((level) => ({ level: level, asked: askedWord(level) })),
-  spreads: SPREADS.map((s) => ({ ...s, words: wordCertainty(s.p, s.asked) })),
+  bands: [0, 1, 2, 3, 4].map((k) => ({ word: k, low: wordBandLow(k), high: wordBandHigh(k) })),
+  spreads: SPREADS.map((s) => {
+    const words = wordCertainty(s.p, s.asked);
+    return { ...s, words: words, bracket: wordBracket(words) };
+  }),
   cases: CASES.map((c) => {
     const pz = outcomePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
     const target = logYolkTarget(c.level);
     const sol = meanSolve(pz, c.level);
     const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, sol.result.cookTime_s, decisionApplies(sol), target);
+    const reading = certaintyAt(pz.post, DECIDE_GRID, d.cookTime_s, c.level);
     return {
       posterior: c.posterior,
       note: c.note,
       level: c.level,
       cookTime_s: d.cookTime_s,
-      reading: certaintyAt(pz.post, DECIDE_GRID, d.cookTime_s, c.level),
+      reading: reading,
+      bracket: wordBracket(reading.words),
     };
   }),
 };

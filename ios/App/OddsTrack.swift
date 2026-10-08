@@ -109,21 +109,23 @@ struct OddsTrack: View {
     }
 }
 
-/// The bracket under the track (UI.md section 8): the yolk's likely range,
-/// from the outcome's 5% point to its 95%, the 90% the certainty's words
-/// state, open at the top so it cups the
-/// track, with a short mark at its median. The foreground at 70%, not the
-/// accent and not the yolk, so it reads in both schemes and never covers the
-/// shading. Inset as the track is. VoiceOver reads it as `outcome.range`.
+/// The bracket under the track (UI.md section 8): the certainty's 90%
+/// interval in words, drawn from the outer edge of its first word's band on
+/// the slider to the outer edge of its last's, open at the top so it cups the
+/// track, with a short mark at the most likely word (core's `wordBracket`).
+/// The foreground at 70%, not the accent and not the yolk, so it reads in
+/// both schemes and never covers the shading. Inset as the track is.
+/// VoiceOver reads it as `outcome.range`: the same words.
 struct YolkBracket: View {
-    let outcome: Outcome
+    let words: WordCertainty
 
     var body: some View {
         Canvas { context, size in
             let w = size.width
+            let b = wordBracket(words)
             func x(_ level: Double) -> CGFloat { CGFloat(min(1, max(0, level))) * w }
-            let low = x(outcome.levelLow)
-            let high = max(x(outcome.levelHigh), low + 2)
+            let low = x(b.low)
+            let high = max(x(b.high), low + 2)
             let depth: CGFloat = 7
             var cup = Path()
             cup.move(to: CGPoint(x: low + 1, y: 0))
@@ -134,20 +136,19 @@ struct YolkBracket: View {
             cup.addLine(to: CGPoint(x: high - 1, y: 0))
             let ink = Color.primary.opacity(0.7)
             context.stroke(cup, with: .color(ink), style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round))
-            let span = outcome.levelHigh - outcome.levelLow
-            let middle = span > 0 ? (outcome.levelMedian - outcome.levelLow) / span : 0.5
-            let mid = low + (high - low) * CGFloat(min(1, max(0, middle)))
+            // The mark, kept inside the cup's walls at the track's ends.
+            let mid = min(max(x(b.mark), low + 1), high - 1)
             context.fill(Path(CGRect(x: mid - 1, y: 0, width: 2, height: depth + 2)), with: .color(ink))
         }
         .frame(height: 9)
         .accessibilityElement()
-        .accessibilityLabel(rangeText(outcome))
+        .accessibilityLabel(rangeText(words))
     }
 }
 
 /// The bracket in words, for VoiceOver: "Likely yolk: Soft to Fudgy", or one
-/// word when both ends are nearest the same one (core's `rangeWords`).
-private func rangeText(_ o: Outcome) -> String {
-    let r = rangeWords(o)
+/// word when the interval is one (core's `rangeWords`).
+private func rangeText(_ w: WordCertainty) -> String {
+    let r = rangeWords(w)
     return tr(r.key, r.args.mapValues { .text(tr($0)) })
 }

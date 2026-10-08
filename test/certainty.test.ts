@@ -4,7 +4,9 @@
  * What is checked here is the definition: the word asked is the slider's
  * word and the band its nominal dose falls in; the classes are what they say
  * at their edges; the interval is the narrowest run holding 0.9, with its
- * tie-breaks; the reading is read off the model's own predictive and
+ * tie-breaks; the bracket under the slider is that interval, from the outer
+ * edge of its first word's band to the outer edge of its last's, marked at
+ * the most likely word; the reading is read off the model's own predictive and
  * `predictCookTime`, not computed again. `fixtures/certainty.json` pins the
  * arithmetic for the Swift port; `npm run decide -- certainty` prints what a
  * cook is told and how well calibrated it is.
@@ -16,7 +18,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordCertainty,
+  CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordBandHigh, wordBandLow,
+  wordBracket, wordCertainty,
 } from '../src/core/certainty.js';
 import { buildDoseGrid } from '../src/core/doseGrid.js';
 import {
@@ -113,6 +116,36 @@ test('the interval: the narrowest run holding 0.9, then the most mass, then the 
     // Very certain is a one-word interval on the word asked.
     if (w.certainty === 'veryCertain') assert.deepEqual([w.from, w.to], [asked, asked]);
     assert.ok(p.every((x) => x <= p[w.mostLikely]));
+  }
+});
+
+test('the bracket is the interval: its words\' outer edges on the slider, marked at the most likely', () => {
+  // The bands tile the track, and their edges are where the slider's word
+  // changes: the anchors' midpoints, as anchorNear has them.
+  assert.equal(wordBandLow(0), 0);
+  assert.equal(wordBandHigh(DONENESS_ANCHORS.length - 1), 1);
+  for (let k = 1; k < DONENESS_ANCHORS.length; k++) {
+    assert.equal(wordBandLow(k), wordBandHigh(k - 1));
+    assert.equal(askedWord(wordBandLow(k) + 1e-6), k);
+    assert.equal(askedWord(wordBandLow(k) - 1e-6), k - 1);
+  }
+  assert.deepEqual([1, 2, 3, 4].map(wordBandLow), [0.11, 0.315, 0.515, 0.81]);
+  // Soft to Fudgy, Jammy most likely.
+  assert.deepEqual(wordBracket(wordCertainty([0.05, 0.25, 0.4, 0.25, 0.05], 2)), { low: 0.11, mark: 0.41, high: 0.81 });
+  // One word: its own band.
+  assert.deepEqual(wordBracket(wordCertainty([0.025, 0.025, 0.9, 0.025, 0.025], 2)), { low: 0.315, mark: 0.41, high: 0.515 });
+  // The ends run to the track's ends, and the mark can sit on one.
+  assert.deepEqual(wordBracket(wordCertainty([0.5, 0.42, 0.06, 0.01, 0.01], 0)), { low: 0, mark: 0, high: 0.315 });
+  assert.deepEqual(wordBracket(wordCertainty([0.01, 0.01, 0.06, 0.42, 0.5], 4)), { low: 0.515, mark: 1, high: 1 });
+  // The most likely word is always inside the interval, whatever is asked.
+  const draw = rng(97);
+  for (let n = 0; n < 2000; n++) {
+    const raw = [draw(), draw(), draw(), draw(), draw()].map((x) => x ** 3);
+    const sum = raw.reduce((a, b) => a + b, 0);
+    const w = wordCertainty(raw.map((x) => x / sum), Math.floor(draw() * 5));
+    const b = wordBracket(w);
+    assert.ok(w.from <= w.mostLikely && w.mostLikely <= w.to, `${raw}`);
+    assert.ok(b.low <= b.mark && b.mark <= b.high && b.low < b.high);
   }
 });
 

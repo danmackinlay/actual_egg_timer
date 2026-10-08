@@ -188,7 +188,7 @@ function renderIdle(now_ms: number): void {
   // control the user cannot reach.
   const warning = state.idleWarning;
   renderDonenessReading(state.settings.doneness, { peakYolk_C: sol.result.peakYolk_C });
-  renderDonenessScale(sol, sol.whiteSets ? state.profile : null, sol.whiteSets ? state.outcome : null);
+  renderDonenessScale(sol, sol.whiteSets ? state.profile : null, sol.whiteSets ? state.chosen?.certainty.words ?? null : null);
   renderReadout(now_ms, sol, warning);
   // "Based on history" has an (i) that says what history.
   showInfo(page().sublineInfo, state.settings.startMode === 'cold' && hasBoilMemory(state.boilMemory));

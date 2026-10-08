@@ -32,22 +32,27 @@ struct WordingConformance {
         }
     }
 
-    @Test("the outcome's white line and range")
+    @Test("the outcome's white line")
     func outcome() throws {
         for row in try Fixtures.list("wording.json", "outcome") {
             let o = try Outcome(
                 pTooSoft: 0, pJustRight: 0, pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
                 pWhiteTender: 1 - row.num("pWhiteRunny"), pWhiteFirm: 0, pYolkWord: nil,
-                levelLow: row.num("levelLow"), levelMedian: row.num("levelLow"), levelHigh: row.num("levelHigh"),
-                lean: .balanced
+                levelLow: 0.2, levelMedian: 0.2, levelHigh: 0.7, lean: .balanced
             )
-            let label = "\(o.pWhiteRunny) \(o.levelLow)"
-            #expect(try whiteAtRisk(o) == row.flag("whiteAtRisk"), "\(label) white")
+            #expect(try whiteAtRisk(o) == row.flag("whiteAtRisk"), "\(o.pWhiteRunny) white")
+        }
+    }
+
+    @Test("the bracket in words: the certainty's interval")
+    func range() throws {
+        for row in try Fixtures.list("wording.json", "range") {
+            let w = try wordCertainty(row.numbers("p"), asked: Int(row.num("asked")))
             let range = try row.object("range")
             let args = try #require(range["args"] as? [String: String], "range \(row)")
-            let r = rangeWords(o)
-            #expect(try r.key == range.str("key"), "\(label) range key")
-            #expect(r.args == args, "\(label) range args")
+            let r = rangeWords(w)
+            #expect(try r.key == range.str("key"), "\(w.from)-\(w.to) range key")
+            #expect(r.args == args, "\(w.from)-\(w.to) range args")
         }
     }
 

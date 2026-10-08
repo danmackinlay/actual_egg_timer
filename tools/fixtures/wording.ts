@@ -57,21 +57,29 @@ export function wordingFixture(): Record<string, unknown> {
     }),
   )));
 
-  const outcome = [0, WHITE_RISK - 1e-9, WHITE_RISK].flatMap((pWhiteRunny) => [[0.1, 0.12], [0.2, 0.7]].map(
-    ([levelLow, levelHigh]) => {
-      const o: Outcome = {
-        pTooSoft: 0, pJustRight: 0, pTooFirm: 0,
-        pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0, pYolkWord: null,
-        levelLow: levelLow, levelMedian: levelLow, levelHigh: levelHigh, lean: 'balanced',
-      };
-      const range = rangeWords(o);
-      known(range.key);
-      return {
-        pWhiteRunny: pWhiteRunny, levelLow: levelLow, levelHigh: levelHigh,
-        whiteAtRisk: whiteAtRisk(o), range: range,
-      };
-    },
-  ));
+  const outcome = [0, WHITE_RISK - 1e-9, WHITE_RISK].map((pWhiteRunny) => {
+    const o: Outcome = {
+      pTooSoft: 0, pJustRight: 0, pTooFirm: 0,
+      pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0, pYolkWord: null,
+      levelLow: 0.2, levelMedian: 0.2, levelHigh: 0.7, lean: 'balanced',
+    };
+    return { pWhiteRunny: pWhiteRunny, whiteAtRisk: whiteAtRisk(o) };
+  });
+
+  // The bracket in words: the certainty's interval, from five spreads that
+  // give one word, two, three at the soft end and the firm, and an interval
+  // away from the word asked.
+  const range = [
+    { p: [0.025, 0.025, 0.9, 0.025, 0.025], asked: 2 },
+    { p: [0.01, 0.02, 0.45, 0.5, 0.02], asked: 1 },
+    { p: [0.5, 0.42, 0.06, 0.01, 0.01], asked: 0 },
+    { p: [0.05, 0.25, 0.4, 0.25, 0.05], asked: 2 },
+    { p: [0.01, 0.01, 0.06, 0.42, 0.5], asked: 4 },
+  ].map((row) => {
+    const r = rangeWords(wordCertainty(row.p, row.asked));
+    known(r.key);
+    return { ...row, range: r };
+  });
 
   // The line under the time, and what pressing it opens: the class's key,
   // the interval and the most likely word, and whether "most likely" shows
@@ -129,6 +137,7 @@ export function wordingFixture(): Record<string, unknown> {
     constants: { whiteRisk: WHITE_RISK },
     warning: warning,
     outcome: outcome,
+    range: range,
     certainty: certainty,
     phase: phase,
     clauses: clauses,
