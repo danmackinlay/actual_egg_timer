@@ -305,7 +305,7 @@ Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown
 
 Actioned, on the web: "You asked for", the summary under the sentence, the probe's field and its placeholder, and the egg in cross-section's parameters read `asRanShown(cook, plan)`, else the plan (`feedback.ts` `cookShown`). Driven: Runny answered at Done and the page reloaded, "jammy · peak yolk 65 °C" stayed (58 °C before). `7a35bf3`.
 
-Actioned, on iOS: "You asked for", the sentence's level and peak, the probe's offer and its starting degree, the Live Activity's peak, the egg in cross-section's parameters and level, and the line about a runny white read `asRanShown`, else the plan (`Cook.asRan`). Driven: Runny answered at `-uiScreen done`, killed and relaunched: "jammy · peak yolk 65 °C", the egg as drawn and no runny-white line, and the white's question still open, since the record now matches (before: 58 °C, the egg redder, the runny-white line, and only "Thanks"). `e7e993e`.
+Actioned, on iOS: "You asked for", the sentence's level and peak, the probe's offer and its starting degree, the Live Activity's peak, the egg in cross-section's parameters and level, and the line about a runny white (core's `forecastWhiteAtRisk` of the forecast as it ran, `bf49570`'s merge) read `asRanShown`, else the plan (`Cook.asRan`). Runny yolk and white answered, relaunched: no white line, 65 °C, both answers shown. Driven: Runny answered at `-uiScreen done`, killed and relaunched: "jammy · peak yolk 65 °C", the egg as drawn and no runny-white line, and the white's question still open, since the record now matches (before: 58 °C, the egg redder, the runny-white line, and only "Thanks"). `e7e993e`.
 
 ## 3. Minor, parity, and for C3
 

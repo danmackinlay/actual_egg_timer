@@ -215,7 +215,7 @@ struct ReadoutView: View {
     /// forecast as it ran (`Cook.asRan`), not a plan made since on a
     /// posterior that has learned from this egg.
     private func whiteRunny(_ o: Outcome?) -> Bool {
-        if phase != .idle, let ran = cook.asRan { return ran.forecast.white[0] >= whiteRisk }
+        if phase != .idle, let ran = cook.asRan { return forecastWhiteAtRisk(ran.forecast) }
         return o.map(whiteAtRisk) ?? false
     }
 
