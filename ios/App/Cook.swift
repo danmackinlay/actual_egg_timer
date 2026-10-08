@@ -422,6 +422,9 @@ final class Cook {
         let surface: CookSurface?
         let leanHintS: Double
         let nowS: Double
+        /// The last plan's slow hob, where its rule got to (running-cook
+        /// review 2.1): core takes it only when it fits this cook.
+        var hint: SlowHobHint?
     }
 
     private struct Made: Sendable {
@@ -433,7 +436,7 @@ final class Cook {
         guard let running else { return nil }
         return PlanInput(
             cook: running, calibration: calibration(), surface: surface, leanHintS: leanHintS,
-            nowS: Date.now.timeIntervalSince1970
+            nowS: Date.now.timeIntervalSince1970, hint: plan?.slowHob
         )
     }
 
@@ -441,7 +444,9 @@ final class Cook {
     /// surface: the decided outcome when the plan keeps the decided time,
     /// otherwise the one at the plan's time.
     private nonisolated static func made(_ i: PlanInput) -> Made {
-        let p = replan(i.cook, i.calibration, surface: i.surface, leanHintS: i.leanHintS, nowS: i.nowS)
+        let p = replan(
+            i.cook, i.calibration, surface: i.surface, leanHintS: i.leanHintS, nowS: i.nowS, hint: i.hint
+        )
         var outcome: Outcome?
         if let d = p.decided, let s = i.surface {
             outcome = p.cookTimeS == d.solution.result.cookTimeS
@@ -480,10 +485,19 @@ final class Cook {
         await planning?.value
     }
 
-    /// A new plan taken: the alarms follow its deadlines when they moved, the
-    /// surface it wants is asked for, and the card is told.
-    private func adopt(_ made: Made, for cook: RunningCook) {
+    /// A new plan taken: the cook keeps the plan as it ran once it is pulled
+    /// and this plan is on its surface (`keepAsRan`, stored when it is new),
+    /// the alarms follow its deadlines when they moved, the surface it wants
+    /// is asked for, and the card is told.
+    private func adopt(_ made: Made, for planned: RunningCook) {
         let next = made.plan
+        // The plan as it ran is not something a plan reads, so the plan is
+        // still the cook's with it kept.
+        let cook = keepAsRan(planned, plan: next)
+        if cook != planned {
+            running = cook
+            persist()
+        }
         let before = plan?.deadlines
         #if DEBUG
         Screenshots.log(
