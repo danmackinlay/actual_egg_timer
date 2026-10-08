@@ -147,9 +147,13 @@ struct ContentView: View {
             showScreenshotScene()
             #endif
         }
-        // Back in the foreground: whatever sharing owes, the web's "online".
+        // Back in the foreground: a cook no longer open is ended first, so
+        // its egg is final before sharing sends what it owes, the web's
+        // "online".
         .onChange(of: scenePhase) { _, now in
-            if now == .active { Sharing.shared.resume() }
+            guard now == .active else { return }
+            model.endIfNoLongerOpen()
+            Sharing.shared.resume()
         }
     }
 

@@ -306,6 +306,23 @@ final class Cook {
         feedbackGiven && openEggId(running, plan: plan, nowS: now.timeIntervalSince1970) != nil
     }
 
+    /// Whether the cook on screen is still the egg open to correction
+    /// (`cookStillOpen`): the stored cook is this one, and it is not too old
+    /// by the plan held. When it is not, its egg is final: the model ends it
+    /// as Start again does, and nothing more is logged for it (running-cook
+    /// review 2.3). False when there is no cook.
+    func stillOpen(at now: Date = .now) -> Bool {
+        guard let running, let plan else { return false }
+        let stored = UserDefaults.standard.data(forKey: Self.savedKey)
+            .flatMap { try? JSONDecoder().decode(Stored.self, from: $0) }
+        return cookStillOpen(running, plan: plan, storedIdMs: stored?.cook.idMs, nowS: now.timeIntervalSince1970)
+    }
+
+    /// Called when the tick finds the cook too old to pick back up (an
+    /// abandoned heat two hours on, or Done an hour past its end): the model
+    /// ends it as Start again does (running-cook review 2.2).
+    var tooOld: (() -> Void)?
+
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a
     /// timestamp.
     private static func day(_ date: Date) -> String {
@@ -751,6 +768,11 @@ final class Cook {
         // have logged it, and a pan timed is still remembered.
         if cookTooOld(made.plan, nowS: now) {
             defaults.removeObject(forKey: Self.savedKey)
+            // Always this build's own cook, so its alarms and its card are
+            // this cook's, and there is nothing left for them to time
+            // (running-cook review 2.2).
+            Alarm.shared.cancel()
+            activity { await LiveActivity.endAll() }
             let ending = cookEnding(cook, plan: made.plan, nowS: now)
             // Its record is made on its pot's surface, which this plan,
             // made at launch, has not got (running-cook review 1.3).
@@ -866,18 +888,27 @@ final class Cook {
         ticker?.cancel()
         ticker = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(250))
+                // At Done only the hour that keeps the egg open is left to
+                // watch for, so the tick slows down.
+                let done = self?.phase == .done
+                try? await Task.sleep(for: done ? .seconds(5) : .milliseconds(250))
                 guard let self else { return }
                 self.tick()
-                if self.phase == .done { return }
             }
         }
     }
 
-    /// One tick: the events the clock has decided, written the first time
-    /// they are past, from the plan of the cook as it stands; the slow hob's
-    /// next lengthening; the card; and the ring.
+    /// One tick: whether the cook is too old; the events the clock has
+    /// decided, written the first time they are past, from the plan of the
+    /// cook as it stands; the slow hob's next lengthening; the card; and the
+    /// ring.
     private func tick() {
+        // Too old to pick back up, by the plan held: ended as Start again
+        // ends it, here as at a relaunch (running-cook review 2.2).
+        if running != nil, let plan, cookTooOld(plan, nowS: Date.now.timeIntervalSince1970) {
+            tooOld?()
+            return
+        }
         guard let running, let plan, plannedFor == running else {
             pushActivity()
             ringIfDue()

@@ -38,6 +38,7 @@ final class AppModel {
         Task {
             try? await Task.sleep(for: .seconds(3))
             LiveActivity.logAll("launch+3s")
+            _ = await Alarm.shared.pendingDeadlines()
         }
         #endif
         // After the calibration is loaded, which the restored cook's plan
@@ -50,6 +51,8 @@ final class AppModel {
         }
         // An answer held for the pot's surface is made when a plan lands.
         cook.planTaken = { [weak self] in self?.answerHeld() }
+        // A cook the tick finds too old is ended as Start again ends it.
+        cook.tooOld = { [weak self] in self?.endIfNoLongerOpen() }
         // Sharing, if the cook turned it on (Sharing.swift): every egg in the
         // log is final but the stored cook's, until Start again or until it is
         // too old to pick back up (`openEggId`), so the server never has an
@@ -151,6 +154,17 @@ final class AppModel {
         Sharing.shared.sendFinal()
     }
 
+    /// Back in the foreground, or about to take an answer: a cook that is no
+    /// longer the egg open to correction (`Cook.stillOpen`: too old, or no
+    /// longer the stored cook) is ended as Start again ends it, so its
+    /// questions go and nothing more is logged for it; an unanswered egg
+    /// cooked through is logged as Start again logs it (running-cook review
+    /// 2.2, 2.3).
+    func endIfNoLongerOpen() {
+        guard cook.running != nil, !cook.stillOpen() else { return }
+        startAgain()
+    }
+
     /// This egg's record, for scoring a probe reading against: once it has
     /// been answered, the record written then, the log's last (nothing is
     /// logged while a cook is stored), and never one made again from a
@@ -171,6 +185,11 @@ final class AppModel {
     /// forecast), is held and made when the plan on the surface lands
     /// (`answerHeld`), a second or so later (running-cook review 1.3).
     func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) {
+        // An egg already final takes no more answers (running-cook review 2.3).
+        guard cook.stillOpen() else {
+            endIfNoLongerOpen()
+            return
+        }
         if planner.answers != nil {
             Task { await planner.secondAnswer(yolk: yolk, white: white, probe: probe) }
             return
@@ -203,6 +222,10 @@ final class AppModel {
     /// A plan has landed: the held answer, if the record can be made now.
     private func answerHeld() {
         guard let h = held else { return }
+        guard cook.stillOpen() else {
+            held = nil
+            return
+        }
         if let egg = cook.eggRecord(yolk: h.yolk, white: h.white, probe: h.probe) {
             held = nil
             guard !cook.feedbackGiven else { return }
