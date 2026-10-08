@@ -839,6 +839,13 @@ final class Cook {
 
     private func scheduleAlarms() {
         guard let pullAt, let running else { return }
+        // While the plan asks whether the egg is still in the water, nothing
+        // past the question is timed (running-cook review 3): the deadlines
+        // wait on the answer. No correction in this build can ask yet.
+        if plan?.askIfStillIn == true {
+            Alarm.shared.cancel()
+            return
+        }
         Alarm.shared.schedule(
             pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe, cooling: running.choices.cooling
         )
