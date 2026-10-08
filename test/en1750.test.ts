@@ -24,7 +24,7 @@ import {
 import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
-import { knowing } from '../tools/common.js';
+import { gridFor, knowing } from '../tools/common.js';
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
@@ -266,7 +266,13 @@ test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () =
   const C = knowing({ particles: 50, eggsLogged: 0 });
   const recorded = (lang: string) => {
     const cook = startCook(1_750_000_000_000, choices, 0, {}, 'imperial', lang);
-    return eggRecordFor(cook, replan(cook, C, null, 0, 1_750_000_500), 'soft');
+    // On its pot's surface: no record is made from a plan with none.
+    const inputs = replan(cook, C, null, 0, 1_750_000_500).inputs;
+    assert.ok(inputs !== null);
+    const surface = { inputs: inputs, grid: gridFor(C, inputs.egg, inputs.setup), profile: null };
+    const r = eggRecordFor(cook, replan(cook, C, surface, 0, 1_750_000_500), 'soft');
+    assert.ok(r !== null);
+    return r;
   };
   const period = recorded(PERIOD_LANGUAGE);
   assert.equal(period.lang, PERIOD_LANGUAGE);

@@ -12,13 +12,18 @@ import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import {
-  LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, coolingSecondsFor, phaseAt,
+  LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, calibrationGrid, coolingSecondsFor, phaseAt,
 } from '../src/core/policy.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 import { decisionInputs } from '../src/core/decide.js';
-import { recordFor } from '../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, boilToRemember, cookEnding,
+  CookFacts, ProbeReading, copyCalibration, foldRecord, gridRequestFor, recordFor,
+} from '../src/core/record.js';
+import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
+import { WhiteReport, YolkWord } from '../src/core/infer.js';
+import {
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, asRanCorrected, asRanCurrent,
+  asRanShown, keepAsRan, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
   readRunningCook, replan, slowHobHintFits, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
@@ -143,6 +148,25 @@ function surfaceFor(plan: CookPlan): CookSurface {
 function planned(cook: RunningCook, now_s: number, hint = 0): CookPlan {
   const first = replan(cook, C, null, hint, now_s);
   return first.inputs === null ? first : replan(cook, C, surfaceFor(first), hint, now_s);
+}
+
+/** The facts, which core must not refuse here. */
+function factsOf(
+  cook: RunningCook, plan: CookPlan, ctx: RecordContext, yolk: YolkWord | null, white: WhiteReport | null,
+  probe: ProbeReading | null,
+): CookFacts {
+  const made = cookFactsFor(cook, plan, ctx, yolk, white, probe);
+  assert.ok(made.facts !== null && made.refused === null, `refused: ${made.refused}`);
+  return made.facts;
+}
+
+/** A correction after the pull, planned again on the calibration before this
+ *  egg (here, the one calibration), on that calibration's surface. */
+function asRanAgain(cook: RunningCook, now_s: number): RunningCook {
+  assert.equal(asRanCorrected(cook, C, null, now_s), null, 'not without the surface');
+  const again = asRanCorrected(cook, C, surfaceFor(replan(cook, C, null, 0, now_s)), now_s);
+  assert.ok(again !== null);
+  return again;
 }
 
 test('6. with nothing corrected, a plan is the cook it started: its time decided on its own surface', () => {
@@ -270,11 +294,17 @@ test('13. the record is the cook as last corrected, at the time that ran', () =>
   const tapped = withBoil(cookOf({}, 5), S + 500);
   const p = planned(tapped, S + 600);
   const end = p.deadlines.cookEnd_s;
-  const out = withOut(tapped, p, end + 6);
-  const cooled = { ...out, events: eventsDue(out, planned(out, end + 6), end + 1000) };
-  const firmer = corrected(cooled, { ...CHOICES, level: 0.62 }, end + 1000);
-  const q = planned(firmer, end + 1000);
-  const r = recordFor(cookFactsFor(firmer, q, ctx, 'fudgy', 'firm', null));
+  const tappedOut = withOut(tapped, p, end + 6);
+  const outPlan = planned(tappedOut, end + 6);
+  const out = keepAsRan(tappedOut, outPlan);
+  const cooled = { ...out, events: eventsDue(out, outPlan, end + 1000) };
+  const stale = corrected(cooled, { ...CHOICES, level: 0.62 }, end + 1000);
+  const q = planned(stale, end + 1000);
+  // The plan as it ran, kept at the tap out, is the uncorrected cook's: no
+  // facts until the correction is planned on the calibration before this egg.
+  assert.deepEqual(cookFactsFor(stale, q, ctx, 'fudgy', 'firm', null), { facts: null, refused: 'stale' });
+  const firmer = asRanAgain(stale, end + 1000);
+  const r = recordFor(factsOf(firmer, q, ctx, 'fudgy', 'firm', null));
   assert.equal(r.level, 0.41, 'the level the egg was pulled at: after the pull the slider only previews');
   assert.equal(r.setup.cooling, 'ice');
   assert.ok(Math.abs(r.recommended_s + r.nudge_s - (end - S)) < 1e-6, 'the time that ran, not re-solved');
@@ -286,7 +316,7 @@ test('13. the record is the cook as last corrected, at the time that ran', () =>
   assert.equal(r.cooled_s, (cooled.events.cooledAt_s as number) - (end + 6));
   assert.equal(r.id, START_MS);
   // On iOS, no id.
-  assert.equal('id' in recordFor(cookFactsFor(firmer, q, { ...ctx, app: 'ios', id: null }, null, null, null)), false);
+  assert.equal('id' in recordFor(factsOf(firmer, q, { ...ctx, app: 'ios', id: null }, null, null, null)), false);
   // Ended: the boil it measured, and an egg to log.
   assert.deepEqual(cookEnding(firmer, q, end + 1000), { boil: { litres: 2, seconds: 500 }, finished: true });
   assert.equal(cookEnding(tapped, p, S + 600).finished, false, 'cancelled while it cooks');
@@ -358,10 +388,10 @@ test('16. review 2.3: after the pull the level corrects nothing, and a cooling c
   const due = p.deadlines.cookEnd_s;
   const out = withOut(hot, p, due + 5);
   const done = { ...out, events: eventsDue(out, planned(out, due + 10), due + 1000) };
-  const before = cookFactsFor(done, planned(done, due + 1010), CTX, null, null, null);
-  const softer = corrected(done, { ...CHOICES, startMode: 'hot', level: 0.1 }, due + 1010);
+  const before = factsOf(done, planned(done, due + 1010), CTX, null, null, null);
+  const softer = asRanAgain(corrected(done, { ...CHOICES, startMode: 'hot', level: 0.1 }, due + 1010), due + 1010);
   assert.equal(softer.choices.level, 0.41);
-  assert.deepEqual(cookFactsFor(softer, planned(softer, due + 1010), CTX, null, null, null), before, 'the record as it was');
+  assert.deepEqual(factsOf(softer, planned(softer, due + 1010), CTX, null, null, null), before, 'the record as it was');
   const early = corrected(hot, { ...CHOICES, startMode: 'hot', level: 0.1 }, S + 60);
   assert.equal(early.choices.level, 0.1, 'before the pull, a correction');
   // The counter corrected to ice ten minutes after the pull: the counted cooling, ended long ago.
@@ -606,4 +636,84 @@ test('25. review 3: nothing passes an open question about the pull', () => {
   const l = planned(late, due + 901);
   assert.deepEqual([l.askIfStillIn, phaseAt(l.deadlines, due + 901), cookEnding(late, l, due + 901).finished], [true, 'COOLING', false]);
   assert.equal(l.tooOldAt_s, due + 900 + RESTORE_WINDOW_S);
+});
+
+test('26. review 1.3: a record is never made from a plan with no surface; the cook as it ran is kept from the pull', () => {
+  const hot = cookOf({ startMode: 'hot' });
+  // The pull rang and its grace ran out on the interim plan, the surface not
+  // yet in (a phone asleep through the pull, a reload in the grace).
+  const interim = replan(hot, C, null, 0, S + 1);
+  const due = interim.deadlines.cookEnd_s;
+  const out = { ...hot, events: eventsDue(hot, interim, due + PULL_GRACE_SECONDS) };
+  const bare = replan(out, C, null, 0, due + 30);
+  assert.equal(keepAsRan(out, bare), out, 'no surface: nothing kept');
+  assert.deepEqual(cookFactsFor(out, bare, CTX, null, null, null), { facts: null, refused: 'noSurface' });
+  assert.equal(asRanShown(out, bare), null, 'Done shows the plan until the surface is in');
+  // The surface lands: kept, from that plan, and only once.
+  const onIt = planned(out, due + 30);
+  const kept = keepAsRan(out, onIt);
+  const ran = kept.asRan;
+  assert.ok(ran !== null && asRanCurrent(kept));
+  assert.deepEqual(
+    [ran.level, ran.cook_s, ran.nudge_s, ran.forecast, ran.peakYolk_C, ran.probeMoment, ran.correctedAt_s],
+    [onIt.level, onIt.cookTime_s, onIt.nudge_s, onIt.forecast, onIt.solution.result.peakYolk_C, onIt.probeMoment, null],
+  );
+  assert.equal(keepAsRan(kept, planned(kept, due + 40)), kept, 'once');
+  assert.deepEqual(readRunningCook(JSON.parse(JSON.stringify(kept))), kept, 'stored and read back');
+  // The review's call: relaunched three hours on, the cook too old, planned
+  // with no surface as both apps do. The egg logged keeps its forecast.
+  const now = S + 3 * 3600;
+  const relaunched = replan(kept, C, null, 0, now);
+  assert.equal(cookTooOld(relaunched, now), true);
+  const r = recordFor(factsOf(kept, relaunched, CTX, null, null, null));
+  assert.deepEqual(r.forecast, ran.forecast, 'not null');
+  assert.deepEqual(r.forecast, recordFor(factsOf(kept, onIt, CTX, null, null, null)).forecast);
+  // After the cook's own tap out, from the plan after it: not the one that
+  // rang, whose cook time is the pull's but for the last bits.
+  const p = planned(hot, S + 1);
+  const tapped = withOut(hot, p, p.deadlines.cookEnd_s + 5);
+  assert.equal(tapped.asRan, null);
+  assert.equal(keepAsRan(tapped, p).asRan, null, 'the plan that rang');
+  assert.ok(keepAsRan(tapped, planned(tapped, p.deadlines.cookEnd_s + 6)).asRan !== null);
+  // Not from a plan of another pull, and dropped with the pull it was of.
+  assert.equal(keepAsRan(out, p).asRan, null, 'another pull');
+  const asked = corrected(kept, CHOICES, due + 60);
+  assert.equal(stillIn(asked, due + 61).asRan, null);
+});
+
+test('26b. review 2.4: Done and the record show the cook as it ran, whatever a later posterior plans', () => {
+  // At Done, answered runny, and that answer folded: the plan made again on
+  // the new posterior (a relaunch, a surface landing) moves the peak; what
+  // Done shows and what the record keeps do not.
+  const hot = cookOf({ startMode: 'hot' });
+  const p = planned(hot, S + 1);
+  const due = p.deadlines.cookEnd_s;
+  const out = withOut(hot, p, due + 5);
+  const cooling = planned(out, due + 6);
+  const kept = keepAsRan(out, cooling);
+  const done = { ...kept, events: eventsDue(kept, cooling, due + 1000) };
+  const ran = done.asRan;
+  assert.ok(ran !== null);
+  const answered = recordFor(factsOf(done, planned(done, due + 1000), CTX, 'runny', null, null));
+  const folded = copyCalibration(C);
+  const coarse = (alpha: number, t: number): GridSpec => ({ ...calibrationGrid(alpha, t), alphaCount: 9, timeCount: 12 });
+  foldRecord(folded, answered, buildRequestedGrid(gridRequestFor(folded, answered, coarse)));
+  const first = replan(done, folded, null, 0, due + 1100);
+  assert.ok(first.inputs !== null);
+  const after = replan(done, folded, { inputs: first.inputs, grid: gridFor(folded, first.inputs.egg, first.inputs.setup), profile: null }, 0, due + 1100);
+  assert.notEqual(after.solution.result.peakYolk_C, ran.peakYolk_C, 'the plan on the new posterior moved');
+  assert.deepEqual(asRanShown(done, after), ran, 'Done shows the cook as it ran');
+  assert.deepEqual(asRanShown(done, first), ran, 'with no surface too');
+  const again = factsOf(done, after, CTX, 'runny', null, null);
+  assert.deepEqual([again.level, again.cook_s, again.nudge_s, again.forecast], [ran.level, ran.cook_s, ran.nudge_s, ran.forecast]);
+  // A correction at Done: stale until planned on the posterior before this
+  // egg (here `C`, the fold's starting point), never on the folded one.
+  const corr = corrected(done, { ...CHOICES, startMode: 'hot', mass_kg: 0.062 }, due + 1200);
+  assert.equal(asRanCurrent(corr), false);
+  assert.equal(asRanShown(corr, after), null);
+  assert.equal(cookFactsFor(corr, after, CTX, 'runny', null, null).refused, 'stale');
+  const fixed = asRanAgain(corr, due + 1200);
+  assert.equal(asRanCurrent(fixed), true);
+  assert.deepEqual(fixed.asRan, keepAsRan({ ...corr, asRan: null }, planned(corr, due + 1200)).asRan, 'planned on C');
+  assert.notEqual(fixed.asRan?.peakYolk_C, ran.peakYolk_C, 'a lighter egg peaks lower');
 });

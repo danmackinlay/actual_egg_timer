@@ -47,7 +47,7 @@ import { predictOutcome } from './outcome.js';
 import { WhiteReport, YolkWord } from './infer.js';
 import {
   AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationDoneness,
-  calibrationParams, forecastOf,
+  calibrationParams, forecastOf, parseForecast,
 } from './record.js';
 
 /* ------------------------------------------------------------- the types */
@@ -112,6 +112,38 @@ export interface CookEvents {
 /** A cook with nothing observed yet. */
 export const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
 
+/**
+ * The plan as the cook ran (running-cook review 1.3, 2.4): what the record
+ * says was said for this egg, and what Done shows, kept with the cook so that
+ * no later plan moves them - a reload with no surface yet, or a posterior that
+ * has since folded this egg's own answer. Taken from the first plan on the
+ * pot's surface made once the egg is pulled (`keepAsRan`), and replaced only
+ * by a correction, planned on the calibration
+ * before this egg (`asRanCorrected`, DECISIONS.md 98). Never taken from a plan
+ * with no surface. The rest of the record (the pot, the pull, the cooling)
+ * does not depend on the calibration once the egg is out, and is the plan's.
+ */
+export interface CookAsRan {
+  /** The cook's `correctedAt_s` when it was taken: one taken before the last
+   *  correction, of the start or the choices, is stale (`asRanCurrent`). */
+  correctedAt_s: number | null;
+  /** The level it ran at, its cook time and the nudge in it, and what the
+   *  app said for it: the record's `level`, `recommended_s`, `nudge_s` and
+   *  `forecast`. */
+  level: number;
+  cook_s: number;
+  nudge_s: number;
+  forecast: Forecast;
+  /** The peak yolk shown ("You asked for: jammy, peak yolk 65 C"), and
+   *  whether the cooling ends at it, which offers the probe at Done. */
+  peakYolk_C: number;
+  probeMoment: boolean;
+  /** The model's parameters it was planned under, so Done draws the egg, and
+   *  bounds a probe reading, as it ran (`createSection`,
+   *  `plausibleProbeRange_C`). */
+  params: ModelParams;
+}
+
 export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
    *  web. Never corrected, so a cook logged from two tabs is one egg. */
@@ -151,6 +183,9 @@ export interface RunningCook {
    *  the egg overdue makes the pull then, and a plan made again later - a
    *  reload, a surface landing - puts it there again, not at its own now. */
   correctedAt_s: number | null;
+  /** The plan as it ran, from the pull on; null before it, and until a plan
+   *  on the pot's surface has been made since (`keepAsRan`). */
+  asRan: CookAsRan | null;
 }
 
 /* ----------------------------------------------------- the egg and the pot */
@@ -214,6 +249,7 @@ export function startCook(
     coldSince_s: choices.startMode === 'cold' ? start : null,
     firstHotAt_s: choices.startMode === 'hot' ? start : null,
     correctedAt_s: null,
+    asRan: null,
   };
 }
 
@@ -283,13 +319,16 @@ export function startCorrected(cook: RunningCook, startedAt_s: number, now_s: nu
 
 /** The cook's answer when a plan asks (`askIfStillIn`), at `now_s`: the egg
  *  is still in the water. The pull the clock assumed is dropped, with the
- *  cooling it began, and the cook planned again as told now: a pull already
- *  past is now, and rings. Otherwise - no pull the clock assumed, or one the
- *  cook said stands - the cook as it was. */
+ *  cooling it began and the plan as it ran, and the cook planned again as
+ *  told now: a pull already past is now, and rings. Otherwise - no pull the
+ *  clock assumed, or one the cook said stands - the cook as it was. */
 export function stillIn(cook: RunningCook, now_s: number): RunningCook {
   const p = cook.events.pulled;
   if (p === null || p.by !== 'timeout' || p.confirmed) return cook;
-  return { ...cook, events: { ...cook.events, pulled: null, cooledAt_s: null, rangAt_s: null }, correctedAt_s: now_s };
+  return {
+    ...cook, events: { ...cook.events, pulled: null, cooledAt_s: null, rangAt_s: null }, correctedAt_s: now_s,
+    asRan: null,
+  };
 }
 
 /** The other answer: the egg came out when the clock assumed. The pull
@@ -388,6 +427,31 @@ function readBoilMemory(raw: unknown): BoilMemory | null {
   return out;
 }
 
+/** The plan as it ran, or null if any field is missing or out of kind. */
+function readAsRan(raw: unknown, start_s: number): CookAsRan | null {
+  if (!isObject(raw)) return null;
+  const at = raw['correctedAt_s'];
+  const level = raw['level'];
+  const cook = raw['cook_s'];
+  const nudge = raw['nudge_s'];
+  const forecast = parseForecast(raw['forecast']);
+  const peak = raw['peakYolk_C'];
+  const probe = raw['probeMoment'];
+  const params = raw['params'];
+  if (at !== null && (!isNumber(at) || at < start_s)) return null;
+  if (!isNumber(level) || level < 0 || level > 1) return null;
+  if (!isNumber(cook) || !(cook > 0) || !isNumber(nudge)) return null;
+  if (forecast === null || !isNumber(peak) || typeof probe !== 'boolean') return null;
+  if (!isObject(params)) return null;
+  const alpha = params['alpha_m2s'];
+  const tau = params['tauAirScale'];
+  if (!isNumber(alpha) || !(alpha > 0) || !isNumber(tau) || !(tau > 0)) return null;
+  return {
+    correctedAt_s: at, level: level, cook_s: cook, nudge_s: nudge, forecast: forecast, peakYolk_C: peak,
+    probeMoment: probe, params: { alpha_m2s: alpha, tauAirScale: tau },
+  };
+}
+
 /**
  * A stored cook, read defensively: whole, or null. A cook is what the
  * calibration learns from and what the alarms ring for, so a shape this build
@@ -420,10 +484,15 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   if (since !== null && !isNumber(since)) return null;
   if (firstHot !== null && !isNumber(firstHot)) return null;
   if (correctedAt !== null && (!isNumber(correctedAt) || correctedAt < start)) return null;
+  // The plan as it ran: present, null or whole, and only once pulled.
+  const ranRaw = raw['asRan'];
+  if (ranRaw === undefined) return null;
+  const asRan = ranRaw === null ? null : readAsRan(ranRaw, start);
+  if (ranRaw !== null && (asRan === null || events.pulled === null)) return null;
   return {
     id_ms: id, startedAt_s: start, choices: choices, events: events, nudge_s: nudge, boilMemory: memory,
     units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, firstHotAt_s: firstHot,
-    correctedAt_s: correctedAt,
+    correctedAt_s: correctedAt, asRan: asRan,
   };
 }
 
@@ -935,7 +1004,84 @@ export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): Coo
   return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
 }
 
+/* --------------------------------------------------- the cook as it ran */
+
+/** The plan as it ran, from `plan`: null unless the cook is pulled, `plan`
+ *  is on its pot's surface (`decided`), and it is a plan of the cook as
+ *  pulled, its cook time the pull's to the bit - as every plan made after the
+ *  pull is, and the one that rang, made before it, is not quite. */
+function asRanOf(cook: RunningCook, plan: CookPlan): CookAsRan | null {
+  const pulled = cook.events.pulled;
+  if (pulled === null || plan.decided === null || plan.forecast === null || plan.inputs === null) return null;
+  if (plan.cookTime_s !== pulled.due_s - cook.startedAt_s) return null;
+  return {
+    correctedAt_s: cook.correctedAt_s, level: plan.level, cook_s: plan.cookTime_s, nudge_s: plan.nudge_s,
+    forecast: plan.forecast, peakYolk_C: plan.solution.result.peakYolk_C, probeMoment: plan.probeMoment,
+    params: plan.inputs.params,
+  };
+}
+
+/**
+ * The cook with the plan as it ran kept (running-cook review 1.3, 2.4): taken
+ * from `plan` the first time the cook is pulled and `plan`, a plan of the cook
+ * as pulled, is on the pot's surface. The app passes every plan it takes up
+ * through this (the plan after `eventsDue` or the cook's tap writes the pull,
+ * after a surface lands, at a reload) and writes the cook down when it comes
+ * back changed (a new object). Otherwise - not pulled, no surface yet, or already kept - the cook
+ * as it was: a kept one is replaced only by `asRanCorrected`.
+ *
+ * Kept before any answer is folded, it is planned on the calibration before
+ * this egg; an app must not keep one, or make a record, from a plan made
+ * after this egg's own answer was folded (design/one-screen.md section 4,
+ * "Never from its own outcome"): it holds the answer until the surface lands.
+ */
+export function keepAsRan(cook: RunningCook, plan: CookPlan): RunningCook {
+  if (cook.asRan !== null || cook.events.pulled === null) return cook;
+  const asRan = asRanOf(cook, plan);
+  return asRan === null ? cook : { ...cook, asRan: asRan };
+}
+
+/** Whether the cook's plan as it ran is kept and still its own: taken since
+ *  the last correction of its start or choices (each stamps `correctedAt_s`
+ *  with its own moment). */
+export function asRanCurrent(cook: RunningCook): boolean {
+  return cook.asRan !== null && cook.events.pulled !== null && cook.asRan.correctedAt_s === cook.correctedAt_s;
+}
+
+/**
+ * What Done shows for the cook (review 2.4): the plan as it ran, kept with
+ * the cook, so a relaunch, a surface landing or this egg's own answer folded
+ * never moves "You asked for", the peak yolk, the egg drawn or the probe's
+ * field; until it is kept, the same from `plan` when that is on its surface;
+ * otherwise null, and Done shows `plan` as it is - no surface yet, or a
+ * correction since, until `asRanCorrected` has planned it.
+ */
+export function asRanShown(cook: RunningCook, plan: CookPlan): CookAsRan | null {
+  if (cook.asRan !== null) return asRanCurrent(cook) ? cook.asRan : null;
+  return asRanOf(cook, plan);
+}
+
+/**
+ * A correction after the pull, as it ran (DECISIONS.md 98; design/one-screen.md
+ * section 4, "Never from its own outcome"): the corrected cook planned on
+ * `before`, the calibration before this egg - the fold's own starting point
+ * once the egg is answered, the calibration as it stands while it is not -
+ * on `surface`, that calibration's surface for the corrected pot, and its
+ * plan as it ran kept in place of the stale one. Null while `surface` is not
+ * that pot's: the app plans `replan(cook, before, null, 0, now_s)`, builds
+ * the surface its `inputs` ask for on `before`, and asks again. Before the
+ * pull, the cook as it was: nothing has run yet.
+ */
+export function asRanCorrected(
+  cook: RunningCook, before: Calibration, surface: CookSurface | null, now_s: number,
+): RunningCook | null {
+  if (cook.events.pulled === null) return cook;
+  const asRan = asRanOf(cook, replan(cook, before, surface, 0, now_s));
+  return asRan === null ? null : { ...cook, asRan: asRan };
+}
+
 /* ------------------------------------------------- the record, the memory */
+
 
 /** What an app adds to a cook's facts: which app and build wrote the
  *  record, the population the prior came from, the local day the cook
@@ -949,6 +1095,25 @@ export interface RecordContext {
   id: number | null;
 }
 
+/** Why `cookFactsFor` made no facts:
+ *  - 'noSurface': no plan as it ran is kept and `plan` is not on its pot's
+ *    surface, so nothing says what the app said for this egg. The app plans
+ *    on the surface `plan.inputs` asks for - building it if it must, as at a
+ *    reload, or for a cook dropped too old before its pull ever planned on
+ *    one - passes that plan through `keepAsRan`, and asks again; an answer
+ *    is held meanwhile. `plan.inputs` is null only for a guess the slow hob
+ *    lengthened, a cook still heating, which is never logged.
+ *  - 'stale': the plan as it ran was kept before a correction since: the app
+ *    plans the corrected cook on the calibration before this egg
+ *    (`asRanCorrected`) and asks again. */
+export type FactsRefused = 'noSurface' | 'stale';
+
+/** The facts, or why there are none: exactly one of the two is null. */
+export interface CookFactsResult {
+  facts: CookFacts | null;
+  refused: FactsRefused | null;
+}
+
 /**
  * The facts `recordFor` makes the record of, from the cook as last corrected
  * and its plan, with whichever answers have been given (DECISIONS.md 97, 8):
@@ -956,36 +1121,64 @@ export interface RecordContext {
  * cook time that ran and the nudge in it, the pull the cook tapped, the
  * cooling as it ran, and what the app said for that cook at that time. The
  * format does not change (DECISIONS.md 81).
+ *
+ * The level, cook time, nudge and forecast are the plan as it ran when the
+ * cook keeps one (`asRan`), whatever `plan` reads now; otherwise `plan`'s,
+ * when it is on its pot's surface. Never from a plan with no surface: no
+ * record is made with no forecast (running-cook review 1.3), and the result
+ * says why (`FactsRefused`) for the app to put right and ask again.
  */
 export function cookFactsFor(
   cook: RunningCook, plan: CookPlan, ctx: RecordContext, yolkWord: YolkWord | null, white: WhiteReport | null,
   probe: ProbeReading | null,
-): CookFacts {
+): CookFactsResult {
+  const kept = cook.asRan;
+  if (kept !== null && !asRanCurrent(cook)) return { facts: null, refused: 'stale' };
+  let level: number;
+  let cook_s: number;
+  let nudge_s: number;
+  let forecast: Forecast;
+  if (kept !== null) {
+    level = kept.level;
+    cook_s = kept.cook_s;
+    nudge_s = kept.nudge_s;
+    forecast = kept.forecast;
+  } else if (plan.decided !== null && plan.forecast !== null) {
+    level = plan.level;
+    cook_s = plan.cookTime_s;
+    nudge_s = plan.nudge_s;
+    forecast = plan.forecast;
+  } else {
+    return { facts: null, refused: 'noSurface' };
+  }
   const pulled = cook.events.pulled;
   return {
-    app: ctx.app,
-    appVersion: ctx.appVersion,
-    prior: ctx.prior,
-    day: ctx.day,
-    id: ctx.id,
-    mass_kg: plan.egg.mass_kg,
-    massFrom: cook.choices.massFrom,
-    sizeTable: cook.choices.sizeTable,
-    setup: plan.setup,
-    eggFrom: cook.choices.eggFrom,
-    boilRemembered: cook.boilRemembered,
-    boilTapped: cook.events.boilAt_s !== null && !(cook.boilRemembered && tappedAfterLateCold(cook)),
-    level: plan.level,
-    cook_s: plan.cookTime_s,
-    nudge_s: plan.nudge_s,
-    out_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s - cook.startedAt_s : null,
-    cool_s: plan.cool_s,
-    yolkWord: yolkWord,
-    white: white,
-    probe: probe,
-    forecast: plan.forecast,
-    lang: cook.lang,
-    units: cook.units,
+    facts: {
+      app: ctx.app,
+      appVersion: ctx.appVersion,
+      prior: ctx.prior,
+      day: ctx.day,
+      id: ctx.id,
+      mass_kg: plan.egg.mass_kg,
+      massFrom: cook.choices.massFrom,
+      sizeTable: cook.choices.sizeTable,
+      setup: plan.setup,
+      eggFrom: cook.choices.eggFrom,
+      boilRemembered: cook.boilRemembered,
+      boilTapped: cook.events.boilAt_s !== null && !(cook.boilRemembered && tappedAfterLateCold(cook)),
+      level: level,
+      cook_s: cook_s,
+      nudge_s: nudge_s,
+      out_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s - cook.startedAt_s : null,
+      cool_s: plan.cool_s,
+      yolkWord: yolkWord,
+      white: white,
+      probe: probe,
+      forecast: forecast,
+      lang: cook.lang,
+      units: cook.units,
+    },
+    refused: null,
   };
 }
 

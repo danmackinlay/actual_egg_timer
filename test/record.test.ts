@@ -705,20 +705,38 @@ function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory
   return startCook(T0, { ...CHOICES, ...over }, nudge_s, memory, 'metric', 'en');
 }
 
+/** The plan on its pot's surface, as an app makes it once the surface is in:
+ *  a record is never made from a plan with no surface (review 1.3). */
+function onSurface(cook: RunningCook, now_s: number): CookPlan {
+  const first = replan(cook, C4, null, 0, now_s);
+  const inputs = first.inputs;
+  if (inputs === null) return first;
+  return replan(cook, C4, { inputs: inputs, grid: gridFor(C4, inputs.egg, inputs.setup), profile: null }, 0, now_s);
+}
+
+/** The record, which a plan on its surface always makes. */
+function rec(
+  cook: RunningCook, plan: CookPlan, yolk: YolkWord | null, white: WhiteReport | null = null,
+): EggRecord {
+  const r = eggRecordFor(cook, plan, yolk, white);
+  assert.ok(r !== null, 'a record');
+  return r;
+}
+
 /** The cook planned at `now_s`, with what the clock decided by then. */
 function ranTo(cook: RunningCook, now_s: number): { cook: RunningCook; plan: CookPlan } {
-  const plan = replan(cook, C4, null, 0, now_s);
+  const plan = onSurface(cook, now_s);
   const next = { ...cook, events: eventsDue(cook, plan, now_s) };
-  return { cook: next, plan: replan(next, C4, null, 0, now_s) };
+  return { cook: next, plan: onSurface(next, now_s) };
 }
 
 test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   const cook = cookOf();
-  const plan = replan(cook, C4, null, 0, S0);
+  const plan = onSurface(cook, S0);
   const pull = plan.deadlines.cookEnd_s;
   const tapped = withOut(cook, plan, pull + 9.5);
   assert.equal(tapped.events.pulled?.by, 'cook');
-  const r = eggRecordFor(tapped, replan(tapped, C4, null, 0, pull + 9.5), 'jammy');
+  const r = rec(tapped, onSurface(tapped, pull + 9.5), 'jammy');
   assert.ok(Math.abs(r.pulled_s - (plan.cookTime_s + 9.5)) < 1e-6);
   assert.equal(r.pulledBy, 'cook');
   assert.ok(Math.abs(r.recommended_s - plan.cookTime_s) < 0.06);
@@ -731,10 +749,10 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
 
 test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time', () => {
   const cook = cookOf({ cooling: 'counter', level: 0.6 });
-  const plan = replan(cook, C4, null, 0, S0);
+  const plan = onSurface(cook, S0);
   const after = ranTo(cook, plan.deadlines.cookEnd_s + PULL_GRACE_SECONDS);
   assert.equal(phaseAt(after.plan.deadlines, plan.deadlines.cookEnd_s + PULL_GRACE_SECONDS), 'DONE');
-  const r = eggRecordFor(after.cook, after.plan, null);
+  const r = rec(after.cook, after.plan, null);
   assert.equal(r.pulledBy, 'timeout');
   assert.ok(Math.abs(r.pulled_s - plan.cookTime_s) < 0.06);
   assert.equal(r.cooled_s, 0);
@@ -742,23 +760,23 @@ test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time'
 
 test('4b2. a class names its carton, and a weighed egg names none', () => {
   const us = cookOf({ mass_kg: 0.0602, massFrom: 'class', sizeTable: 'us' });
-  const r = eggRecordFor(us, replan(us, C4, null, 0, S0), 'jammy');
+  const r = rec(us, onSurface(us, S0), 'jammy');
   assert.equal(r.egg.sizeTable, 'us');
   assert.equal(r.egg.mass_g, 60.2);
   assert.notEqual(parseRecord(r), null);
   const weighed = cookOf({ sizeTable: 'us' });
-  assert.equal(eggRecordFor(weighed, replan(weighed, C4, null, 0, S0), 'jammy').egg.sizeTable, null,
+  assert.equal(rec(weighed, onSurface(weighed, S0), 'jammy').egg.sizeTable, null,
     'a scale has no carton, whatever the region');
   assert.equal(parseRecord({ ...r, egg: { ...r.egg, sizeTable: null } }), null);
 });
 
 test('4b3. the time to boil says whether this cook measured it', () => {
   const plain = cookOf();
-  assert.equal(eggRecordFor(plain, replan(plain, C4, null, 0, S0), 'jammy').setup.timeToBoilFrom, 'default');
+  assert.equal(rec(plain, onSurface(plain, S0), 'jammy').setup.timeToBoilFrom, 'default');
   const known = cookOf({}, 0, { '2.0': 450 });
-  assert.equal(eggRecordFor(known, replan(known, C4, null, 0, S0), 'jammy').setup.timeToBoilFrom, 'remembered');
+  assert.equal(rec(known, onSurface(known, S0), 'jammy').setup.timeToBoilFrom, 'remembered');
   const cold = withBoil(cookOf({ startMode: 'cold' }), S0 + 431.5);
-  const r = eggRecordFor(cold, replan(cold, C4, null, 0, S0 + 431.5), 'jammy');
+  const r = rec(cold, onSurface(cold, S0 + 431.5), 'jammy');
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
@@ -767,8 +785,8 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
   // The plan runs the nudged time; the record splits it, and scores an egg
   // nobody pulled at the time that actually ran.
   const cook = cookOf({}, -7);
-  const plan = replan(cook, C4, null, 0, S0);
-  const r = eggRecordFor(cook, plan, 'jammy');
+  const plan = onSurface(cook, S0);
+  const r = rec(cook, plan, 'jammy');
   assert.equal(r.nudge_s, -7);
   assert.ok(Math.abs(recordCookTime_s(r) - plan.cookTime_s) < 0.06);
   assert.ok(Math.abs(r.recommended_s - (plan.cookTime_s + 7)) < 0.06);
@@ -778,14 +796,12 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
 test('4b4. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
   const cook = cookOf();
   const interim = replan(cook, C4, null, 0, S0);
-  const before = eggRecordFor(cook, interim, 'jammy');
-  assert.equal(before.forecast, null, 'no surface in, nothing said');
-  assert.notEqual(parseRecord(before), null);
+  assert.equal(eggRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record (review 1.3)');
   const inputs = interim.inputs;
   assert.ok(inputs !== null);
   const surface = { inputs: inputs, grid: gridFor(C4, inputs.egg, inputs.setup), profile: null };
   const plan = replan(cook, C4, surface, 0, S0);
-  const r = eggRecordFor(cook, plan, 'jammy');
+  const r = rec(cook, plan, 'jammy');
   assert.ok(plan.forecast !== null);
   assert.deepEqual(r.forecast, plan.forecast);
   assert.equal(r.model, MODEL_ID);
@@ -794,13 +810,13 @@ test('4b4. the record keeps what the app said for the cook that ran, and names t
 
 test('4c. a stored cook keeps who pulled it: read back, the same record', () => {
   const cook = cookOf();
-  const plan = replan(cook, C4, null, 0, S0);
+  const plan = onSurface(cook, S0);
   const out = withOut(cook, plan, plan.deadlines.cookEnd_s + 5);
   const back = readRunningCook(JSON.parse(JSON.stringify(out)));
   assert.ok(back !== null);
   const later = plan.deadlines.cookEnd_s + 60;
   assert.deepEqual(
-    eggRecordFor(back, replan(back, C4, null, 0, later), null), eggRecordFor(out, replan(out, C4, null, 0, later), null),
+    rec(back, onSurface(back, later), null), rec(out, onSurface(out, later), null),
   );
 });
 
@@ -809,7 +825,7 @@ test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the
   const stale = ranTo(cookOf(), later);
   assert.equal(cookTooOld(stale.plan, later), true, 'not picked back up');
   assert.equal(cookEnding(stale.cook, stale.plan, later).finished, true);
-  const r = eggRecordFor(stale.cook, stale.plan, null);
+  const r = rec(stale.cook, stale.plan, null);
   assert.equal(r.pulledBy, 'timeout');
   assert.ok(Math.abs(r.pulled_s - stale.plan.cookTime_s) < 0.06);
   assert.equal(r.yolk, null);
@@ -824,12 +840,12 @@ test('4e. the same egg logged again keeps its facts as last corrected, and the a
   storage.clear();
   loadCalibration();
   const cook = cookOf();
-  const plan = replan(cook, C4, null, 0, S0);
-  const first = eggRecordFor(cook, plan, 'jammy');
+  const plan = onSurface(cook, S0);
+  const first = rec(cook, plan, 'jammy');
   assert.equal(logEgg(first), 0);
   // The same cook, its record made again from another tab's plan: another
   // forecast, no answer. The answer stays; the rest is the newer record.
-  const again = { ...eggRecordFor(cook, plan, null), cooled_s: first.cooled_s + 10 };
+  const again = { ...rec(cook, plan, null), cooled_s: first.cooled_s + 10 };
   assert.equal(logEgg(again), 0);
   const kept = keptState().log;
   assert.equal(kept.length, 1);

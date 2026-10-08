@@ -223,7 +223,7 @@ struct RunningConformance {
             let probe = try (answers["probe"] as? [String: Any]).map {
                 ProbeReading(centreC: try $0.num("centre_C"), afterS: try $0.optionalNum("after_s"))
             }
-            let record = try recordFor(cookFactsFor(
+            let made = try cookFactsFor(
                 cook, plan: plan,
                 context: RecordContext(
                     app: ctx.value(AppName.self, "app"), appVersion: ctx.str("appVersion"), prior: ctx.str("prior"),
@@ -231,9 +231,29 @@ struct RunningConformance {
                 ),
                 yolkWord: answers.optionalValue(YolkWord.self, "yolkWord"),
                 white: answers.optionalValue(WhiteReport.self, "white"), probe: probe
-            ))
-            let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(record))
-            #expect(sameJSON(written, row["record"], relative: conformanceTolerance), "\(note): the record")
+            )
+            if row["record"] is [String: Any] {
+                let facts = try #require(made.facts, "\(note): refused \(String(describing: made.refused))")
+                #expect(made.refused == nil, "\(note): refused")
+                let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(recordFor(facts)))
+                #expect(sameJSON(written, row["record"], relative: conformanceTolerance), "\(note): the record")
+            } else {
+                #expect(made.facts == nil, "\(note): a record from a plan core refuses")
+                #expect(try made.refused?.rawValue == row.str("refused"), "\(note): why refused")
+            }
+            // The cook as it ran: current, kept, shown, and planned again on
+            // the plan's calibration and surface.
+            let ran = try row.object("asRan")
+            #expect(try asRanCurrent(cook) == ran.flag("current"), "\(note): as it ran, current")
+            expectAsRan(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept")
+            expectAsRan(asRanShown(cook, plan: plan), ran["shown"], "\(note): as it ran, shown")
+            let again = asRanCorrected(cook, before: c, surface: surface, nowS: now)
+            if let j = ran["corrected"] as? [String: Any] {
+                let a = try #require(again, "\(note): planned again")
+                expectAsRan(a.asRan, j["asRan"], "\(note): as it ran, planned again")
+            } else {
+                #expect(again == nil, "\(note): planned again without the surface")
+            }
             try expectBoil(boilToRemember(cook), row["boil"], "\(note): the boil remembered")
             let ending = cookEnding(cook, plan: plan, nowS: now)
             let expectedEnding = try row.object("ending")
@@ -261,6 +281,11 @@ private func expectBoil(_ b: BoilToRemember?, _ json: Any?, _ what: String) thro
     } else {
         #expect(b == nil, "\(what): remembered")
     }
+}
+
+/// The plan as it ran against the fixture's, nil and JSON's null alike.
+private func expectAsRan(_ a: CookAsRan?, _ json: Any?, _ what: String) {
+    #expect(sameJSON(a?.jsonObject, json, relative: conformanceTolerance), "\(what)")
 }
 
 /// The slow hob's hint as the fixtures write one.

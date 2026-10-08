@@ -33,7 +33,7 @@ import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
 import {
-  clearCook, dropStoredCook, loadCook, rememberTimeToBoil, saveCook, storedCookText, takeOldCook,
+  clearCook, dropStoredCook, loadCook, rememberTimeToBoil, saveCook, storedCookText, takeOldCooks,
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
@@ -168,8 +168,14 @@ function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boo
   // An egg finished and never answered about is still an egg: the cook, the
   // recommendation and the pull are data for the fit. It folds nothing.
   if (ending.finished && !answered) {
-    logEgg(eggRecordFor(cook, plan, null));
-    void learn();
+    // Null when nothing says what the app said for it (`cookFactsFor`
+    // refused: no surface yet): nothing is logged rather than an egg with no
+    // forecast (running-cook review 1.3).
+    const record = eggRecordFor(cook, plan, null);
+    if (record !== null) {
+      logEgg(record);
+      void learn();
+    }
   }
 }
 
@@ -267,15 +273,15 @@ export function onPrimary(): void {
  * says so rather than letting someone walk away trusting a noise that will
  * not happen.
  *
- * A cook 0.4 wrote (`aet.cook.v2`) is a shape this build does not read: it is
- * kept aside as stored and its key deleted, and the page opens idle
+ * A cook 0.3 or 0.4 wrote (`aet.cook.v2`), or an earlier 0.5 build without
+ * the plan as it ran (`aet.cook.v3`), is a shape this build does not read: it
+ * is kept aside as stored and its key deleted, and the page opens idle
  * (DECISIONS.md 81, 97). So is a cook under the current key that does not
  * read. One too old to pick back up (`cookTooOld`) ends as Start again would
  * end it, and the page opens idle.
  */
 export function restoreCook(): void {
-  const old = takeOldCook();
-  if (old !== null) keepUnreadCook(old);
+  for (const old of takeOldCooks()) keepUnreadCook(old);
   const text = storedCookText();
   const stored = loadCook();
   if (stored === null) {

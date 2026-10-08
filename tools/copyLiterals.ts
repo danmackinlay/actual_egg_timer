@@ -98,6 +98,7 @@ const NOT_COPY: Record<string, string> = {
   'cookInProgress.unread': 'UserDefaults key',
   // the running cook as stored (Cook.swift; design/one-screen.md section 4)
   'cookInProgress.v2': 'UserDefaults key',
+  'cookInProgress.v3': 'UserDefaults key',
   leanHint_s: 'stored cook field name',
   // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
@@ -250,6 +251,7 @@ const NOT_COPY: Record<string, string> = {
   '%.{}f': 'number format, never shown',
   afterBoil: 'stored running cook field (Running.swift)',
   altitude_m: 'stored running cook field (Running.swift)',
+  asRan: 'stored running cook field (Running.swift)',
   boilAt_s: 'stored running cook field (Running.swift)',
   boilRemembered: 'stored running cook field (Running.swift)',
   by: 'stored running cook field (Running.swift)',
@@ -263,19 +265,27 @@ const NOT_COPY: Record<string, string> = {
   eggFrom: 'stored running cook field (Running.swift)',
   events: 'stored running cook field (Running.swift)',
   firstHotAt_s: 'stored running cook field (Running.swift)',
+  forecast: 'stored running cook field (Running.swift)',
   id_ms: 'stored running cook field (Running.swift)',
   lang: 'stored running cook field (Running.swift)',
   level: 'stored running cook field (Running.swift)',
   massFrom: 'stored running cook field (Running.swift)',
   mass_kg: 'stored running cook field (Running.swift)',
   out_s: 'stored running cook field (Running.swift)',
+  params: 'stored running cook field (Running.swift)',
+  peakYolk_C: 'stored running cook field (Running.swift)',
+  probeMoment: 'stored running cook field (Running.swift)',
   pulled: 'stored running cook field (Running.swift)',
   rangAt_s: 'stored running cook field (Running.swift)',
   room_C: 'stored running cook field (Running.swift)',
   sizeTable: 'stored running cook field (Running.swift)',
   startMode: 'stored running cook field (Running.swift)',
   startedAt_s: 'stored running cook field (Running.swift)',
+  tauAirScale: 'stored running cook field (Running.swift)',
   units: 'stored running cook field (Running.swift)',
+  white: 'stored running cook field (Running.swift)',
+  yolk: 'stored running cook field (Running.swift)',
+  yolkWord: 'stored running cook field (Running.swift)',
 };
 
 /** Old literals that were grammar in code, what each became, and the strings

@@ -173,6 +173,13 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   const a = answers;
   if (a.kind !== 'live') {
     const record = eggRecordFor(cooked, plan, yolk, white, probe);
+    // Refused (`cookFactsFor`): nothing says yet what the app said for this
+    // egg. The answer is not taken, and the row can be pressed again.
+    if (record === null) {
+      page().calibNote.textContent = '';
+      resetRows();
+      return;
+    }
     // Another tab showing this cook may have written it down first: then
     // this is a later answer to that egg, not a second egg.
     const earlier = eggLogged(record.id ?? null);
@@ -269,6 +276,8 @@ function onProbeSave(): void {
   if (typed === '') return;
   const reading_C = parse(measure('probeTemp'), Number(typed));
   const record = eggRecordFor(cooked, plan, null);
+  // Refused (`cookFactsFor`): not scored until the egg can be recorded.
+  if (record === null) return;
   const [low, high] = plausibleProbeRange_C(
     plan.egg, plan.setup, calibrationParams(host.calib()), recordCookTime_s(record),
   );

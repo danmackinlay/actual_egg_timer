@@ -48,7 +48,7 @@ These counts are the only ones in the documents. If you want a number, run
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4),
+   on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
    and red-teamed as built (`design/running-cook-review.md`), whose §1 and
    §2 come first; certainty in words is the `certainty` draft (93, D1),
    for the owner on a phone: next is the one screen in both (C3). `0.4.x` is
@@ -407,7 +407,7 @@ checked, fixed or deleted. Start the QA pass here.
   the iOS simulator, not yet on a phone or on Netlify.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
-  (`aet.settings.v1`, `aet.cook.v3`, `aet.calibration.v4`, `aet.boil.v1`,
+  (`aet.settings.v1`, `aet.cook.v4`, `aet.calibration.v4`, `aet.boil.v1`,
   `aet.share.v1`; iOS's `sharing.v1` and `sharing.attest.v1`; record v1) may
   change without a migration; bump the key's version so an old value is
   dropped rather than misread. Back-compat starts when the owner says the app

@@ -21,10 +21,12 @@ export type { Limit } from '../core/policy.js';
 export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v3';
-/** The cook as 0.4 stores it, a machine and a ticket: read once, kept aside
- *  as stored and deleted (`takeOldCook`), never converted (DECISIONS.md 97). */
-const OLD_COOK_KEY = 'aet.cook.v2';
+const COOK_KEY = 'aet.cook.v4';
+/** Cooks in shapes this build does not read, each read once, kept aside as
+ *  stored and deleted (`takeOldCooks`), never converted (DECISIONS.md 48, 97):
+ *  0.3's and 0.4's machine and ticket (`aet.cook.v2`), and a running cook
+ *  without the plan as it ran (`aet.cook.v3`, running-cook review 1.3). */
+const OLD_COOK_KEYS = ['aet.cook.v2', 'aet.cook.v3'];
 /** The cook as the live site of 19 September stores it: a shape the ticket
  *  does not read. Dropped, not migrated. */
 const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
@@ -416,13 +418,18 @@ export function dropStoredCook(): void {
   removeStorage(COOK_KEY);
 }
 
-/** The cook as 0.4 wrote it (`aet.cook.v2`), as stored, or null: read once
- *  and deleted, so the caller keeps it aside (DECISIONS.md 81, 97; review
- *  2.6). Nothing else reads that key. */
-export function takeOldCook(): string | null {
-  const text = readStorage(OLD_COOK_KEY);
-  removeStorage(OLD_COOK_KEY);
-  return text;
+/** The cooks earlier builds wrote under the old keys (`aet.cook.v2`,
+ *  `aet.cook.v3`), as stored, oldest key first: each read once and deleted,
+ *  so the caller keeps them aside (DECISIONS.md 81, 97; review 2.6). Nothing
+ *  else reads those keys. */
+export function takeOldCooks(): string[] {
+  const out: string[] = [];
+  for (const key of OLD_COOK_KEYS) {
+    const text = readStorage(key);
+    removeStorage(key);
+    if (text !== null) out.push(text);
+  }
+  return out;
 }
 
 /** Whether a change of storage (the page's `storage` event; a null key is
