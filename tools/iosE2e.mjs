@@ -1398,6 +1398,28 @@ scenario('certainty-mid-cook', 'onescreen review 2.3: once cooking, the range op
   run.note(`"${hot?.time}"; 16:00 "${a?.time}"; 20:00 "${b?.time}"`);
 });
 
+
+scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
+  await hotStarted(run, 'drag:0.3@30');
+  let t = await tapAt(run, run.t0 + 30, 'drag');
+  await run.until(/^edit level$/, { from: t.i, what: 'the change in hand' });
+  // Another app over it, as the app switcher or a call would.
+  simctl('launch', udid, 'com.apple.Preferences');
+  const c = await run.until(/^edit committed level /, { from: t.i, what: 'committed on leaving', timeoutS: 15 });
+  await run.until(/^stored .*"level":0\.3[,}]/, { from: c.i, what: 'the cook stored' });
+  const prefs = await run.prefs((p) => p.doneness === 0.3, 10);
+  run.check(prefs.doneness === 0.3, `the setting written: ${prefs.doneness}`);
+  run.terminate();
+  const r = await relaunched(run, run.t0 + 40, ['-uiDo', 'set:size=3@50,set:water=1@50']);
+  run.check(lastStored(r.lines)?.cook.choices.level === 0.3, 'relaunched with the change');
+  t = await tapAt(run, run.t0 + 50, 'set');
+  const first = await run.until(/^edit committed /, { from: t.i, what: 'the first change committed' });
+  const second = await run.until(/^edit committed /, { from: first.i + 1, what: 'the second change committed' });
+  run.check(/^edit committed mass /.test(first.text) && /^edit committed water /.test(second.text),
+    `two commits: "${first.text}", "${second.text}"`);
+  run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

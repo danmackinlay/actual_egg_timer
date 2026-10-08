@@ -310,6 +310,18 @@ final class Edits {
         if pending { commit() }
     }
 
+    /// The app leaves the screen (`scenePhase` no longer active): what is in
+    /// hand is committed now, so a kill from the app switcher inside the
+    /// settle loses nothing (onescreen review 3); a finger down then is gone.
+    func leaving() {
+        down = nil
+        guard pending else { return }
+        #if DEBUG
+        Screenshots.log("edit leaving")
+        #endif
+        commit()
+    }
+
     private func settleThenCommit() {
         settleTask?.cancel()
         let gen = generation
