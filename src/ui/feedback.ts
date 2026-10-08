@@ -9,7 +9,8 @@
  */
 
 import { Phase, anchorNear, plausibleProbeRange_C } from '../core/policy.js';
-import { CookPlan, RunningCook } from '../core/running.js';
+import { CookPlan, RunningCook, asRanShown } from '../core/running.js';
+import { ModelParams } from '../core/solve.js';
 import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
@@ -214,12 +215,38 @@ export function answeredElsewhere(): boolean {
 
 /* ------------------------------------------------------------ thermometer */
 
+/**
+ * What the screen shows of the cook it was cooked for (running-cook review
+ * 2.4): the level, the peak yolk, whether the cooling ends at the peak (so a
+ * probe reading is asked for), and the model's parameters the egg is drawn
+ * with and a reading is bounded by. Once the egg is out, the plan as it ran
+ * (`asRanShown`), kept with the cook, so neither a reload, a surface landing
+ * nor this egg's own answer folded moves "You asked for"; until then, or
+ * with no surface yet, the plan as it is, on the calibration as it stands
+ * (`params` null).
+ */
+export interface CookShown {
+  level: number;
+  peakYolk_C: number;
+  probeMoment: boolean;
+  params: ModelParams | null;
+}
+
+export function cookShown(cook: RunningCook | null, plan: CookPlan | null): CookShown | null {
+  if (cook === null || plan === null) return null;
+  const ran = asRanShown(cook, plan);
+  if (ran !== null) {
+    return { level: ran.level, peakYolk_C: ran.peakYolk_C, probeMoment: ran.probeMoment, params: ran.params };
+  }
+  return { level: plan.level, peakYolk_C: plan.solution.result.peakYolk_C, probeMoment: plan.probeMoment, params: null };
+}
+
 /** Whether this cook will ask for a probe reading when its cooling ends - the
  *  "have the probe ready" line and the spoken prompt: `probeOn` is the
  *  cook's setting. The field itself is there whatever the setting
  *  (`probeOffered`). */
-export function probeWanted(probeOn: boolean, plan: CookPlan | null): boolean {
-  return probeOn && plan !== null && plan.probeMoment;
+export function probeWanted(probeOn: boolean, shown: CookShown | null): boolean {
+  return probeOn && shown !== null && shown.probeMoment;
 }
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
@@ -231,33 +258,33 @@ export function probePending(phase: Phase, wanted: boolean): boolean {
 /** Whether the reading's field is under the questions: whenever the cook has
  *  a moment to probe, the cooling having ended at the yolk's peak, with the
  *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-function probeOffered(plan: CookPlan | null): boolean {
-  return plan !== null && plan.probeMoment;
+function probeOffered(shown: CookShown | null): boolean {
+  return shown !== null && shown.probeMoment;
 }
 
 /** The reading's field at DONE, under the two questions, whenever this cook
  *  had a moment to probe; it shows what was given once it is. */
-export function renderProbe(phase: Phase, plan: CookPlan | null): void {
-  const visible = phase === 'DONE' && probeOffered(plan);
+export function renderProbe(phase: Phase, shown: CookShown | null): void {
+  const visible = phase === 'DONE' && probeOffered(shown);
   page().probeEntry.hidden = !visible;
   // The − and + start from the peak of the cook that ran, shown greyed in
   // the empty field: a suggestion, never taken as a reading until stepped or
   // typed. Plain digits, as the field holds them.
-  if (visible && plan !== null) {
-    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), plan.solution.result.peakYolk_C));
+  if (visible && shown !== null) {
+    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), shown.peakYolk_C));
   }
 }
 
 /** What the cook on screen was cooked for, over the yolk question, so the
  *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
- *  From the plan - the level the cook ran at, and the peak of the time that
- *  ran - never the slider now. */
-export function renderTarget(plan: CookPlan | null): void {
-  page().feedbackTarget.hidden = plan === null;
-  if (plan === null) return;
+ *  The cook as it ran (`cookShown`) - the level it ran at, and the peak of
+ *  the time that ran - never the slider now, nor a plan made since. */
+export function renderTarget(shown: CookShown | null): void {
+  page().feedbackTarget.hidden = shown === null;
+  if (shown === null) return;
   page().feedbackTarget.textContent = t('feedback.target', {
-    doneness: midSentence(t(anchorNear(plan.level).key), activeLocale()),
-    yolk: show('temperature', plan.solution.result.peakYolk_C),
+    doneness: midSentence(t(anchorNear(shown.level).key), activeLocale()),
+    yolk: show('temperature', shown.peakYolk_C),
   });
 }
 

@@ -173,9 +173,13 @@ export function redrawSentence(): void {
  *  change a cook under way yet, so nothing in it is a button - and under it
  *  what the sentence does not say, the doneness the cook runs at and the peak
  *  yolk of its time. From the cook and its plan, never the controls; both are
- *  null while idle, which hides it. Sous-vide never runs a cook, so it never
- *  shows this. */
-export function renderCookSetup(cook: RunningCook | null, plan: CookPlan | null, classes: SizeClass[]): void {
+ *  null while idle, which hides it. The doneness and the peak are `shown`'s,
+ *  the cook as it ran once the egg is out (feedback.ts, `cookShown`). Sous-vide
+ *  never runs a cook, so it never shows this. */
+export function renderCookSetup(
+  cook: RunningCook | null, plan: CookPlan | null, classes: SizeClass[],
+  shown: { level: number; peakYolk_C: number } | null = null,
+): void {
   page().cookSetup.hidden = cook === null || plan === null;
   if (cook === null || plan === null) return;
   const texts = clauseTexts(runningSetupFacts(cook, plan, classes));
@@ -183,8 +187,8 @@ export function renderCookSetup(cook: RunningCook | null, plan: CookPlan | null,
     egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
   });
   page().cookDoneness.textContent = t('cook.summary', {
-    doneness: midSentence(t(anchorNear(plan.level).key), activeLocale()),
-    yolk: show('temperature', plan.solution.result.peakYolk_C),
+    doneness: midSentence(t(anchorNear(shown?.level ?? plan.level).key), activeLocale()),
+    yolk: show('temperature', shown?.peakYolk_C ?? plan.solution.result.peakYolk_C),
   });
 }
 

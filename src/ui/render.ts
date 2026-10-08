@@ -29,7 +29,7 @@ import { formatClock } from './countdown.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 import {
-  answersNow, pickedUpAfterReload, probePending, probeWanted, renderProbe, renderTarget,
+  answersNow, cookShown, pickedUpAfterReload, probePending, probeWanted, renderProbe, renderTarget,
 } from './feedback.js';
 import { showInfo } from './info.js';
 import { renderCalibNote } from './learned.js';
@@ -206,7 +206,7 @@ function renderIdle(now_ms: number): void {
  *  controls. */
 function renderRunning(now_ms: number): void {
   const plan = state.plan;
-  renderCookSetup(state.cook, plan, sizeClasses);
+  renderCookSetup(state.cook, plan, sizeClasses, cookShown(state.cook, plan));
   if (plan === null) return;
   // The warning line carries a restored cook's warning while it runs - the
   // opposite of a refusal, it only exists mid-cook. Only while the cook is
@@ -229,8 +229,10 @@ function renderSection(now_ms: number): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null) return;
-  const params = calibrationParams(state.calib);
-  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup]);
+  // Once the egg is out, with the model's parameters it ran under, so a fold
+  // of this egg's own answer does not redraw it (review 2.4).
+  const params = cookShown(cook, plan)?.params ?? calibrationParams(state.calib);
+  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
   if (drawn.section === null || drawn.sectionFor !== key) {
     drawn.section = createSection(plan.egg, plan.setup, params);
     drawn.sectionFor = key;
@@ -258,7 +260,8 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   page().warn.textContent = warning;
   page().warn.hidden = warning === '';
 
-  const wanted = probeWanted(settings.probe, plan);
+  const shown = cookShown(cook, plan);
+  const wanted = probeWanted(settings.probe, shown);
   const pending = probePending(phase, wanted);
   const view = phaseView(cook, plan, now_ms, {
     cookTime_s: sol.result.cookTime_s,
@@ -284,8 +287,8 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   const said = answersNow().kind;
   page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload';
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
-  renderProbe(phase, plan);
-  if (!page().feedback.hidden) renderTarget(plan);
+  renderProbe(phase, shown);
+  if (!page().feedback.hidden) renderTarget(shown);
 
   page().phaseLabel.textContent = view.label;
   page().digits.textContent = view.digits;

@@ -16,7 +16,8 @@
 
 import { Phase } from '../core/policy.js';
 import {
-  CookEvents, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, replan, startCook, withBoil, withOut,
+  CookEvents, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, keepAsRan, replan, startCook, withBoil,
+  withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { learn, logEgg } from './calibration.js';
@@ -84,11 +85,13 @@ function plannedWithEvents(
   return { cook: next, plan: planFor(next, leanHint_s, now_s, plan) };
 }
 
-/** Take up a cook and its plan: the lean it decided, kept as the interim for
- *  the next pot; the surface it wants and has not got, asked for; and the
- *  cook written down. */
+/** Take up a cook and its plan: the plan as it ran kept, from the first plan
+ *  on the pot's surface once the egg is out (`keepAsRan`, running-cook review
+ *  1.3, 2.4), which the record and Done read from then on; the lean it
+ *  decided, kept as the interim for the next pot; the surface it wants and
+ *  has not got, asked for; and the cook written down. */
 function takeUp(cook: RunningCook, plan: CookPlan): void {
-  state.cook = cook;
+  state.cook = keepAsRan(cook, plan);
   state.plan = plan;
   if (plan.decided !== null) state.leanHint_s = plan.lean_s;
   if (plan.inputs !== null && (plan.decided === null || surfaceFor(plan.inputs)?.profile === null)) {
