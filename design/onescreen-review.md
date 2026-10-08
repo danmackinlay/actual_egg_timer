@@ -56,6 +56,8 @@ a copy with the same start and choices (the same `correctedAt_s`, or
 `sameChoices` and the same `startedAt_s`). Keep taking the boil tap and the
 cook's pull from any copy. A test in `test/store.test.ts`, both ways round.
 
+Actioned, on the web: `takeUpEvents` takes from a copy with another start or other choices only the boil tap and a pull the cook tapped, and a tab whose copy was corrected less recently than the stored one writes what it saw into the stored copy instead of over it (`correctedLater`, `persistCook`), so a reload restores the latest correction; tested both ways round (`test/store.test.ts`). Driven (`two-tabs-correction`, the call above): B timed out into Cooling; A stayed in Heating, nothing taken up, nothing rung, and reloaded to Heating, cold. `5399c64`.
+
 ### 1.2 A correction at Done, then Start again, leaves the record uncorrected and sends it (both apps)
 
 Confirmed on both. At Done, answered Jammy (logged and folded), the egg is
@@ -84,6 +86,10 @@ cook and send. That is the path `logFinished` already takes for an
 unanswered egg. The web's too-old path at a reload (`restoreCook` calls
 `endCook` before `refreshAsRan`) needs the same.
 
+Actioned, in core: `cookEnding(...).remake`, true for a cook corrected after the pull whose plan as it ran is not yet planned again, so both apps know to make the record first (`running.json`, `test/running.test.ts` 26b), `2e7c70e`.
+
+Actioned, on the web: `endCook` (Start again, the reload's too-old path, the tick's) makes an answered egg's stale record again on the calibration before it, logs it in place of the logged egg with its answers, folds again, and only then forgets the cook; left stored for the next load if it cannot. Driven (`start-again-corrected`, the call above, Start again pressed while the change settled): the log's egg 68 g became 76 g, Jammy kept, then forgotten. `038f5dc`.
+
 ## 2. Correct before building on it
 
 ### 2.1 Done goes back to Cooling after an answer (both apps)
@@ -106,6 +112,10 @@ correction to ice counts the cooling from the out and finds its end ahead.
 counted end, capped at the correction), as a cooling whose end has passed
 already does. Fixture it in `running.json`.
 
+Actioned, in core: `corrected` ends the cooling a correction from the counter brings after the pull at the correction (`cooledAt_s`); `replan` takes the counted end if it is sooner and `eventsDue` writes it down, so Done stays Done and the record's cooling is never longer than till the correction (`running.json`, `test/running.test.ts` 28), `2e7c70e`.
+
+Actioned, on the web: with core's rule the call above keeps Done, its questions and its silence; and an answered egg's pull the clock assumed is confirmed by a correction (`pullStands`), so a correction after an answer never asks "still in the water?" behind the questions. Driven (`done-stays-done`): Done, the questions, no beeps, the record's ice bath 65 s (was Cooling, 50 beeps, 214 s); and a timeout pull answered then corrected to cold: Done, the pull confirmed (it asked). `2e7c70e`, `1695522`.
+
 ### 2.2 Done's texture note reads a plan that knows this egg's answer (both apps)
 
 Confirmed on both. The web: at Done, Runny answered, then the page reloaded.
@@ -122,6 +132,10 @@ heading, the sentence and the egg onto `asRanShown`, but not this line.
 peak white in `CookAsRan` beside `peakYolk_C`, or solve the as-ran level at
 the as-ran cook time on its parameters.
 
+Actioned, in core: `solutionAsRan(plan, ran)`, the plan's pot at the time that ran on the parameters it ran under (the plan's own solve when those are the plan's), so the stored cook's shape does not change (`running.json`), `2e7c70e`.
+
+Actioned, on the web: the note reads it once the egg is out; every other Done line already read the cook as it ran or nothing a fold moves. Driven (`done-note-as-ran`): "white set, yolk jammy" kept across the reload after Runny (was "yolk liquid"). `1695522`.
+
 ### 2.3 The certainty line's time range contradicts the clock mid-cook (both apps)
 
 Confirmed on the web; iOS by reading (`ReadoutView.swift:151`, the same held
@@ -136,6 +150,10 @@ surface and the reading is kept until a decided plan replaces it
 say the range as clock times ("between 7:48 and 7:51"), or leave it out
 after the start (the owner's to choose, A7).
 
+Actioned, in core: `timeRangeWords(sure, running)` (`wording.ts`, twinned, `wording.json`): idle, whole times (`certainty.time`); once a cook runs, the times of day to take the eggs out (`certainty.timeOut`), and a reading held over a plan it was not read on keeps its range about the plan's time now, so it moves with a lengthened guess (the reading carries `at_s`, the time it was read at). Kept rather than dropped while lengthened (the brief's "keep it current").
+
+Actioned, on the web, with the `tighten2` draft: "I think the right time to take the eggs out is between 8:25 and 8:28." five minutes into a hot cook (was "between 6:24 and 9:21" under 2:44 to go); at 16:00 and 17:05 heated, the times move with the guess (`certainty-mid-cook`). `d0aa1a2`.
+
 ## 3. Minor and parity
 
 - **A change in hand is lost to a reload or a kill within the settle.**
@@ -143,20 +161,38 @@ after the start (the owner's to choose, A7).
   inside 1.5 s, comes back uncorrected, and the settings are unwritten. There
   is no commit on `pagehide`, `visibilitychange` or `scenePhase` leaving
   `.active`. Commit there.
+  Actioned, on the web: committed on `pagehide` and on the page hidden;
+  driven (`change-kept-on-hide`): reloaded at once, 76 g and settings size
+  3. `dbcc5d8`.
 - **Two changes, two commits (parity).** Confirmed. On iOS a second
   control's change commits the first without it and lets the second settle
   (`edit committed mass`, then `edit committed water`). On the web, with no
   pointer (the keyboard), the first commit already includes the second
   (`src/ui/edit.ts:145`), so the second skips its settle. Nothing is lost
   or doubled on either.
+  Actioned, on the web: another control's change with no finger down
+  commits the change in hand as it was before it, and the new one settles:
+  two writes, the first with the size alone (`change-kept-on-hide`).
+  `dbcc5d8`.
 - **A correction in the grace restarts the grace.** Confirmed on both. A
   lighter egg 15 s into the Pull makes the pull "now" again, so the grace
   runs to +35 s. iOS rings again; the web does not, and its beeps end at
   about +20 s, leaving "Eggs out now" silent for 15 s.
+  Actioned, in core: a correction keeps `rangAt_s`; while the corrected
+  pull is still due at the correction the plan holds the ring (the grace
+  ends where it began, nothing rings again); one that puts the pull later
+  than the correction, or back to heating, undoes it and `eventsDue`
+  clears it, so the new pull rings in its turn; overdue from Cooking rings
+  once, as before (`running.json`, `test/running.test.ts` 17). The web
+  needed nothing more. Driven (`grace-correction`): a lighter egg at +15 s
+  stays in Pull with the pull and its grace, no new beeps, Cooling at +21 s
+  due at the pull that rang. `2e7c70e`.
 - **The question shows the white's line.** Confirmed on both: "The white
   might still be runny." under "Are the eggs still in the water?", a caveat
   about a pull the question doubts. The web's notes say "nothing past it is
   shown".
+  Actioned, on the web: hidden while the question is open
+  (`still-in-water`). `1695522`.
 - **iOS's start limit is silent to VoiceOver** (by reading,
   `SetupSentence.swift:304`). The web's line is `aria-live`, but iOS posts no
   announcement, and at the limit a press changes no value. iOS reads none of
@@ -170,6 +206,8 @@ after the start (the owner's to choose, A7).
   standing clauses differ in form for one fact, and the first is a clipped
   list of the kind `LANGUAGE.md` §3 strikes. 1750 twins are present for
   every new key.
+  Actioned, both apps' words (the `tighten2` draft): "into cold water at
+  {time}, heat off and lid on once it boils". `d0aa1a2`.
 
 ## 4. What holds
 

@@ -510,6 +510,38 @@ The functions, all pure and fixtured:
   call too, of the plan it holds; `cookStillOpen(cook, plan, storedId_ms,
   now_s)` tells a screen its egg is no longer open with no second plan.
 
+*As built, after the one screen's review* (`design/onescreen-review.md`,
+9 October 2026; core, for both apps, with the web's part):
+- **Done keeps Done** (2.1). A correction once the cook is Done corrects
+  only the record. On the counter the egg is Done at the out, so a
+  correction from the counter to a counted cooling after the pull ends that
+  cooling at the correction at the latest (`corrected` writes `cooledAt_s`);
+  `replan` takes the counted end when it is sooner and `eventsDue` writes it
+  down. The cooling never starts again behind an answer, and nothing rings.
+  The apps add: an egg answered about came out, so a correction then
+  confirms a pull the clock assumed (`pullStands`) and never asks "still in
+  the water?" behind the questions.
+- **A correction in the grace** (3). `corrected` and `startCorrected` keep
+  `rangAt_s`. While the corrected pull is still due at the correction the
+  plan holds the ring: the grace ends where it began and nothing rings
+  again. One that puts the pull after the correction, or back to heating,
+  undoes it (`replan`), `eventsDue` clears it, and the new pull rings in its
+  turn; one that makes the egg overdue from Cooking rings once, as before.
+- **What Done says, as it ran** (2.2): `solutionAsRan(plan, ran)`, for the
+  texture note beside the peak, the plan's pot at the time that ran on the
+  parameters it ran under.
+- **An ending makes its record first** (1.2): `cookEnding(...).remake`
+  when the cook was corrected after the pull and its plan as it ran is not
+  yet planned again. The app makes it (`asRanCorrected` on the calibration
+  before this egg), logs it in place of the egg logged, and only then
+  forgets the cook, so the egg that becomes final and is sent is the
+  corrected one.
+- **The time range in the clock's terms** (2.3): `timeRangeWords(sure,
+  running)` in `wording.ts`: idle, whole times; once a cook runs, the times
+  of day to take the eggs out, and a reading held over a plan it was not
+  read on (`CertaintyReading.at_s`) keeps its range about the plan's time
+  now, so it moves with a slow hob's guess.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 
@@ -625,6 +657,18 @@ keys at one launch lose nothing.
   tab saw; a different cook is still never taken up (§7, 23). A tab whose
   egg is no longer the open one at Done (`cookStillOpen`) puts its
   questions away and writes and logs nothing more for it (review 2.3).
+
+  *As built, after the one screen's review (1.1, 9 October 2026).* What a
+  tab takes up from another copy of its cook depends on whether the two
+  were told the same. From a copy with the same start and choices it takes
+  all of the above. From one with another start or other choices it takes
+  only what the cook saw in the pan, the boil tap and a pull the cook
+  tapped, never what that copy's clock decided from a plan this tab has
+  corrected away from: its ring, a pull it assumed when the grace ran out,
+  a cooling's end. And a copy corrected less recently than the one stored
+  is not written over it: the tab writes what it saw into the stored copy
+  (`correctedLater`, `persistCook`), so a reload restores the latest
+  correction, while each tab still runs its own cook (`DECISIONS.md` 97).
 - **iOS notifications.** On any plan whose deadlines moved,
   `Alarm.schedule` cancels and re-adds the pull and cooled alarms (the
   pull's line names the cooling, so a change of cooling moves it too), and

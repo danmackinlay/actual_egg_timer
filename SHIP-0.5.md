@@ -315,6 +315,17 @@ core's exports.
         with no change, `cook.summary` retired. `npm run ios:e2e`: 31
         scenarios, 15 of them new, the web's where iOS can drive them, all
         passing.
+  - [x] *Red-teamed as built* (`design/onescreen-review.md`), core's and
+        the web's findings fixed (9 October 2026): core's rules for a
+        correction after Done (Done kept) and in the grace (the ring kept
+        while still due), the cook as it ran for Done's note, an ending
+        that makes its stale record first, and the time range in the
+        clock's terms (`2e7c70e`, `d0aa1a2`); the web's second tab
+        (`5399c64`), Start again after a correction (`038f5dc`), Done's
+        lines (`1695522`), a change in hand on leaving and two changes two
+        commits (`dbcc5d8`); the `tighten2` draft and the time's two lines
+        closer (`DECISIONS.md` 99; `d0aa1a2`, `bf227b3`). `npm run e2e`: 35
+        scenarios, 7 of them new. iOS's part follows, on the same core.
 
 ## D. Certainty in words, on screen (`DECISIONS.md` 93, with C)
 
