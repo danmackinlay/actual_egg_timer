@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// A clause of the setup sentence: each opens its own choice.
 /// The setup as one line of prose, each clause of it tappable (UI.md section

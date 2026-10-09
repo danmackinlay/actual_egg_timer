@@ -355,7 +355,7 @@ under a new key, `aet.calibration.v5` on the web and `calibration.v5` on
 iOS, holding only today's record, and never reads 0.3's `v4`. At its first
 launch on a device it deletes `v4` with every other key the apps no longer
 use (the boot sweep, `RETIRED_KEYS` in `src/ui/store.ts` and `retiredKeys` in
-`ios/App/Store.swift`). So:
+`ios/EggTimerCore/Sources/EggTimerApp/Store.swift`). So:
 
 - **Export before installing 0.5** to keep your own eggs: Settings, What
   I've learned, Export my results, on the build you have now. `npm run eggs

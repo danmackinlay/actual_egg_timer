@@ -1,5 +1,7 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerApp
+import EggTimerShared
 
 /// The small controls the setup sentence's panels and Settings share: a stored
 /// SI value on a stepper or in a typed field, in the cook's units.

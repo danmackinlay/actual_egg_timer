@@ -6916,6 +6916,72 @@ writes the key's numbers as text for Swift's `inputsKey` check.
 **For PLAN's map at merge:** `fixtures/step.json` wants a row, beside
 `running.json`; the status line's test and check counts move.
 
+## 10 October 2026: the app's logic in the package, and tested there (REFACTOR-0.5 1.2)
+
+The iOS app's logic is a library, `EggTimerApp`, in
+`ios/EggTimerCore/Package.swift`, which the app links, and `swift test`
+(in `npm run verify`) drives it on a Mac, no simulator (`55e690b`,
+`4344ba9`).
+
+**What moved.** The six the worklist named (Cook, AppModel, the Planner
+and its two extensions, Store, DecisionGrids, AppClock), and what they
+needed and could take with them: Calibration (less `ResultsExport`, the
+share sheet's `Transferable`, which stays), Edits (its VoiceOver
+announcement through `Services.announce`), Presentation, SousVide,
+LanguageChoice, AlarmSoundChoice, Screenshots (the page's foreground
+through `Screenshots.appActive`) and Perf. `Copy` and `CookActivity`, which
+the widget compiled from `ios/Shared`, are a second library,
+`EggTimerShared`, which the widget links instead, still without the
+physics; `CookActivity` is an `ActivityAttributes` on iOS only. `Shared/`
+is gone. Everything in the two libraries is `public`, by a script that
+marked every declaration at file or type scope; narrowing it to what the
+screens use belongs with 3.9.
+
+**What did not.** Alarm (UserNotifications), Ringer (AVFoundation, UIKit),
+Sharing (App Attest), LiveActivity (ActivityKit), ResultsExport and the
+views. The logic reaches each through a protocol in `Services`
+(`AlarmScheduling`, `AlarmRinging`, `ResultSharing`, `LockScreenCard`),
+which `ActualEggTimerApp.init` fills first; the three singletons that moved
+have one too (`DecisionSurfaces`, `LanguageChoosing`,
+`AlarmSoundChoosing`), so a test can replace them. Until filled, each does
+nothing. Cook time is `AppClock.source`, a `CookClock`: the launch's clock
+(`LaunchClock`, the old code), or a test's. The store is `Stores.store`, a
+`KeyValueStore`: UserDefaults' reads, and writes that need a `Stores.Pass`,
+which only Store.swift can make, so no code can write the store except
+through `Stores`; the lint (`test/iosStores.test.ts`) still checks that
+nothing writes UserDefaults itself, over the new directories. Launch
+arguments are still read from UserDefaults directly: they are not the
+store.
+
+**The tests** (`Tests/EggTimerAppTests`, serialized, about 3 s): a cold
+start from Eggs in to Done through `Cook` (the boil tapped, the pull covered
+by the alarm and not rung, out at the pull, Done written by the tick, the
+card ended); no notifications allowed, the app rings the pull; a relaunch
+past the pull's grace picking the stored cook up with the assumed pull
+written at once and its alarms and card set again; Start again at Done
+logging the unanswered egg, written to the store before the stored cook is
+removed, then sent as final; under a newer mark nothing written, the egg
+still timed; and a whole cook through Start again whose every write to the
+store is one `Stores` logged, with UserDefaults itself untouched (the
+lint's runtime twin). Two mutations checked they bite: the guard taken out
+of `Stores.set` fails the newer-mark test, and the unanswered egg not
+logged fails Start again's. The fakes keep the debug log off the Mac's own
+Caches (`Screenshots.output`), and the words are read from the
+repository's copy/ (`Copy.folder`).
+
+**Behaviour unchanged.** `npm run ios:build`; `npm run ios:e2e`, all 48
+scenarios, passed after each commit (545 s and 530 s, muted). Built Release for the simulator: no `clockAt`,
+`clockSpeed`, `aet.clock`, `uiDo`, `settled`, `debug clock`, `aet.log`,
+`seedEggs` or `perfProbe` in the binary, which has the library's
+`cookInProgress.v3` and `newestVersion` (it is linked statically); the
+Debug build's e2e relies on all of them, so the package's targets do get
+`DEBUG` from Xcode's Debug configuration.
+
+**Left.** `CLAUDE.md` still names `ios/Shared` in the rule for
+`npm run ios:build`, and `ios/App/Screenshots.swift` for the launch
+arguments: both are now under `ios/EggTimerCore/Sources`, and the rule
+should cover `EggTimerApp` and `EggTimerShared`.
+
 ## 10 October 2026: the web's running cook on core's `step` (REFACTOR-0.5 3.7)
 
 The web now runs the cook as core's state machine. Branch

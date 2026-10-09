@@ -998,7 +998,7 @@ commit each):
    `cookTooOld` (and goes on every 5 s at Done, for the hour), becoming
    active and every answer ask `cookStillOpen`, and a cook no longer open
    is ended as Start again ends it (2.2, 2.3).
-9. `ios/Shared/CookActivity.swift`, `LiveActivity.swift`,
+9. `ios/EggTimerCore/Sources/EggTimerShared/CookActivity.swift`, `LiveActivity.swift`,
    `ios/Widget/CookLiveActivity.swift`: the description into the state.
    `npm run ios:build`.
 10. One layout and edits: `ContentView.swift` (one branch),
@@ -1018,7 +1018,7 @@ commit each):
       apps choose them alike, fixtured. (Retired with the keys by
       `DECISIONS.md` 108: the clause no longer says the time.)
     - **The controls are the planner**: while a cook runs `Planner.onEdit`
-      sends every change to `Edits` (`ios/App/Edits.swift`) instead of
+      sends every change to `Edits` (`ios/EggTimerCore/Sources/EggTimerApp/Edits.swift`) instead of
       saving and solving; a relaunch sets them to the cook's choices
       (`Planner.adopt`). A correction is the fields changed against the
       controls as last committed, laid over the cook's choices, and only

@@ -45,13 +45,15 @@ targets:
   ActualEggTimer:
     type: application
     platform: iOS
+    # The screens and what needs an iPhone (notifications, sound, the Lock
+    # Screen, App Attest). The logic under them is the package's EggTimerApp,
+    # which the tests there drive (ios/README.md, "The app's logic").
     sources:
       - path: App
-      - path: Shared
       # The words: copy/<locale>.json from the repo root, the same files the
       # web app fetches, as a folder in the bundle (Bundle.main, "copy/en.json").
       # A folder reference rather than a group, so a new language is a new file
-      # and not a project change. Rendered by EggTimerCopy - see Shared/Copy.swift.
+      # and not a project change. Rendered by EggTimerCopy - see EggTimerShared's Copy.swift.
       # All of it ships, so copy/ holds only catalogues: the review queue's
       # state is in test/data/copy-review (en1750.test.ts 1a).
       - path: ../copy
@@ -66,6 +68,10 @@ targets:
         product: EggTimerCore
       - package: EggTimerCore
         product: EggTimerCopy
+      - package: EggTimerCore
+        product: EggTimerShared
+      - package: EggTimerCore
+        product: EggTimerApp
       - target: EggTimerWidget
     # A shared scheme, so xcodebuild (and anything driving it) can find the
     # target without Xcode having opened the project first and invented one.
@@ -123,20 +129,23 @@ targets:
   # EggTimerCore - the physics has already run in the app by the time anything
   # here is asked to draw, and an extension that cannot solve cannot be wrong.
   # It does need the words, so it links EggTimerCopy, the catalogue renderer,
-  # which is a separate library for exactly this reason, and bundles its own
-  # copy of the catalogue: an extension's Bundle.main is not the app's.
+  # which is a separate library for exactly this reason, and EggTimerShared,
+  # the catalogue as loaded and the card's contract (CookActivity), and
+  # bundles its own copy of the catalogue: an extension's Bundle.main is not
+  # the app's.
   EggTimerWidget:
     type: app-extension
     platform: iOS
     sources:
       - path: Widget
-      - path: Shared
       - path: ../copy
         type: folder
         buildPhase: resources
     dependencies:
       - package: EggTimerCore
         product: EggTimerCopy
+      - package: EggTimerCore
+        product: EggTimerShared
     # An extension needs a real Info.plist: NSExtension is a nested dictionary,
     # and the INFOPLIST_KEY_* build settings that generate a plist can only
     # express flat values - the key is silently dropped, and the result is an

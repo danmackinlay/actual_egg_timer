@@ -2,7 +2,6 @@
 import EggTimerCore
 import Foundation
 import Observation
-import UIKit
 
 /// Launch arguments that put a debug build on a given screen, so screenshots
 /// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
@@ -98,8 +97,8 @@ import UIKit
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
 /// `Codable` writes them, in the order of their names, a field with no value
 /// left out.
-enum Screenshots {
-    static func log(_ event: Event) {
+public enum Screenshots {
+    public static func log(_ event: Event) {
         let encoder = JSONEncoder()
         // The same event the same line, every time, to read and to diff.
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
@@ -114,9 +113,15 @@ enum Screenshots {
         let fields = json[json.index(after: colon)...].dropFirst().dropLast(2)
         let t = String(format: "%.3f", AppClock.now.timeIntervalSince1970)
         let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
+        output(event, text)
+    }
+
+    /// Where a line goes: standard error, and appended to
+    /// Library/Caches/aet.log in the app's container, which a simulator's
+    /// host reads (`simctl get_app_container … data`). The tests take the
+    /// events instead, and write nothing to the Mac's own Caches.
+    nonisolated(unsafe) public static var output: (Event, Data) -> Void = { _, text in
         FileHandle.standardError.write(text)
-        // And appended to Library/Caches/aet.log in the app's container, which
-        // a simulator's host reads (`simctl get_app_container … data`).
         guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
         let url = dir.appendingPathComponent("aet.log")
         if let handle = try? FileHandle(forWritingTo: url) {
@@ -128,42 +133,46 @@ enum Screenshots {
         }
     }
 
-    static var provisionalAlarms: Bool { UserDefaults.standard.bool(forKey: "provisionalAlarms") }
+    /// Whether the app is in the foreground, where the page is drawn
+    /// (`idle(after:)`): UIApplication's, set by the app.
+    @MainActor public static var appActive: () -> Bool = { true }
+
+    public static var provisionalAlarms: Bool { UserDefaults.standard.bool(forKey: "provisionalAlarms") }
     /// `-muteAudio YES`: the in-app ring plays at no volume and notifications
     /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
     /// Mac's speakers; everything else about the ring and the alarms is as is.
-    static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
+    public static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
     /// `-uiHoldAsRan YES`: a correction after the pull never has its record
     /// made again in this launch (`AppModel.refreshAsRan`), as if the app were
     /// killed before it landed, so a script can find the stale cook stored
     /// at the next launch.
-    static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
+    public static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
     /// `-uiFailRemake YES`: every try at an ended cook's record made again
     /// comes back with none (`AppModel.remakeThenEnd`).
-    static var failRemake: Bool { UserDefaults.standard.bool(forKey: "uiFailRemake") }
-    static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
-    static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
-    static var doneAgo: Double {
+    public static var failRemake: Bool { UserDefaults.standard.bool(forKey: "uiFailRemake") }
+    public static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
+    public static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
+    public static var doneAgo: Double {
         UserDefaults.standard.object(forKey: "doneAgo") == nil ? 2 : UserDefaults.standard.double(forKey: "doneAgo")
     }
-    static var answerAfter: Double {
+    public static var answerAfter: Double {
         UserDefaults.standard.object(forKey: "uiAnswerAfter") == nil
             ? 3 : UserDefaults.standard.double(forKey: "uiAnswerAfter")
     }
     /// `-uiAnswer`'s yolk and white, either possibly nil; nil when not given.
-    static var answer: (yolk: YolkWord?, white: WhiteReport?)? {
+    public static var answer: (yolk: YolkWord?, white: WhiteReport?)? {
         guard let raw = UserDefaults.standard.string(forKey: "uiAnswer") else { return nil }
         let parts = raw.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
         return (YolkWord(rawValue: parts[0]), parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil)
     }
-    static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
-    static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
-    static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
-    static var scrollAnchor: Double? {
+    public static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
+    public static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
+    public static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
+    public static var scrollAnchor: Double? {
         UserDefaults.standard.object(forKey: "uiScrollAnchor") == nil
             ? nil : UserDefaults.standard.double(forKey: "uiScrollAnchor")
     }
-    static var seedEggs: [SeedAnswer] {
+    public static var seedEggs: [SeedAnswer] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             // Split at the dash and the slash, or at anything else that is
@@ -183,7 +192,7 @@ extension Screenshots {
     /// What the debug log says, one case an event, its values the line's
     /// fields (`log`). Times are epoch s in cook time unless said; a value
     /// that is none is left out of the line.
-    enum Event: Encodable, Equatable {
+    public enum Event: Encodable, Equatable {
         // The clock and the taps.
         /// The clock stepped from outside (`AppClock.takeStep`): step `n`,
         /// to `at`, running on at `speed` (0 frozen).
@@ -297,35 +306,40 @@ extension Screenshots {
     }
 
     /// A value the app stores as JSON, written into a line as it encodes.
-    struct Encoded: Encodable, Equatable {
-        let value: any Encodable
+    public struct Encoded: Encodable, Equatable {
+        public let value: any Encodable
 
-        func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+        public func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
 
-        static func == (a: Encoded, b: Encoded) -> Bool {
+        public static func == (a: Encoded, b: Encoded) -> Bool {
             (try? JSONEncoder().encode(a)) == (try? JSONEncoder().encode(b))
         }
     }
 
-    struct PendingAlarm: Encodable, Equatable {
-        let id: String
+    public struct PendingAlarm: Encodable, Equatable {
+        public let id: String
         /// When it fires, cook time, whole s; none without an interval trigger.
-        let at: Int?
+        public let at: Int?
+
+        public init(id: String, at: Int?) {
+            self.id = id
+            self.at = at
+        }
     }
 }
 
 extension Screenshots {
     /// One tap of `-uiDo`: what, with its argument, and when.
-    struct Action {
-        let raw: String
-        let name: String
-        let arg: String?
-        let anchor: String
-        let afterS: Double
+    public struct Action {
+        public let raw: String
+        public let name: String
+        public let arg: String?
+        public let anchor: String
+        public let afterS: Double
 
         /// The moment it is due, epoch s, cook time; nil until it can be.
         /// `launch` is the clock at this launch, before any cook.
-        func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
+        public func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
             if anchor == "launch" { return Screenshots.launchedAtS + afterS }
             guard let cook, let plan else { return nil }
             let base: Double?
@@ -341,7 +355,7 @@ extension Screenshots {
     }
 
     /// `-uiDo`'s taps, in order; one that does not read is left out.
-    static var actions: [Action] {
+    public static var actions: [Action] {
         guard let list = UserDefaults.standard.string(forKey: "uiDo") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             let parts = entry.split(separator: "@", maxSplits: 1).map(String.init)
@@ -370,7 +384,7 @@ extension Screenshots {
     /// a tap still comes at it after the cook has ended, as a finger would
     /// (an answer after the egg's hour).
     @MainActor
-    static func drive(_ model: AppModel) {
+    public static func drive(_ model: AppModel) {
         self.model = model
         let all = actions
         guard !all.isEmpty else { return }
@@ -408,10 +422,10 @@ extension Screenshots {
 
     /// `open:settings` pushes Settings, `open:clause-start` opens a
     /// clause's choice, as a press on its link would (set by the screen).
-    @MainActor static var open: ((String) -> Void)?
+    @MainActor public static var open: ((String) -> Void)?
 
     /// The clock at this launch, cook time: what `launch` counts from.
-    static let launchedAtS = AppClock.now.timeIntervalSince1970
+    public static let launchedAtS = AppClock.now.timeIntervalSince1970
 
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
@@ -473,7 +487,7 @@ extension Screenshots {
         case "water": planner.waterLitres = number
         case "eggs": planner.eggCount = Int(number)
         case "altitude": planner.altitudeM = number
-        case "language": LanguageChoice.shared.pick(value)
+        case "language": Services.language.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
     }
@@ -485,17 +499,17 @@ extension Screenshots {
     /// the clock's new moment, a frozen clock's timelines otherwise waiting
     /// up to a second of the system's.
     @Observable @MainActor
-    final class Probe {
-        var drawn = 0
+    public final class Probe {
+        public var drawn = 0
     }
 
-    @MainActor static let probe = Probe()
+    @MainActor public static let probe = Probe()
     /// The app's model, for what `idle(after:)` waits on (`drive`).
-    @MainActor static weak var model: AppModel?
+    @MainActor public static weak var model: AppModel?
     @MainActor private static var drawing: [CheckedContinuation<Void, Never>] = []
 
     /// Step `n` taken (`AppClock.takeStep`, off the main actor).
-    static func stepped(_ n: Int) {
+    public static func stepped(_ n: Int) {
         Task { @MainActor in await idle(after: n) }
     }
 
@@ -516,7 +530,7 @@ extension Screenshots {
         while true {
             while underWay(model, ticks: ticks, looks: looks) { try? await Task.sleep(for: .milliseconds(20)) }
             // In the background the page is not drawn, and nothing waits for it.
-            if UIApplication.shared.applicationState == .active { await draw() }
+            if appActive() { await draw() }
             if !underWay(model, ticks: ticks, looks: looks) { break }
         }
         log(.idle(step: n))
@@ -544,7 +558,7 @@ extension Screenshots {
 
     /// The page has drawn `probe` again (ContentView): resumed once that
     /// pass of the screen is over, with what it logged.
-    @MainActor static func drawn() {
+    @MainActor public static func drawn() {
         Task { @MainActor in
             let waiting = drawing
             drawing = []
@@ -555,8 +569,8 @@ extension Screenshots {
 
 /// One seeded egg's answers: the yolk the cook got in the five words, and
 /// the white, if given.
-struct SeedAnswer {
-    var yolkWord: YolkWord?
-    var white: WhiteReport?
+public struct SeedAnswer {
+    public var yolkWord: YolkWord?
+    public var white: WhiteReport?
 }
 #endif
