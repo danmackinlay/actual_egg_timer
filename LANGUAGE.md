@@ -881,12 +881,16 @@ every visitor.
   the clock does.
 - **On iOS, the segmented controls are in the face too** (since 9
   October), at UIKit's own 13 pt, which does not grow with Dynamic Type
-  for any face; they change face with the language, in place. **What else
-  UIKit draws keeps the system face**: the navigation bar's title, the egg
-  size's menu (its button and its list), the menu the bar's buttons fold
-  into at the largest text sizes, the share sheet, and the system's
-  alerts. So does the Live Activity, read at a glance across a kitchen
-  beside the system's clock; the widget bundles no font.
+  for any face; they change face with the language, in place. So, since 9
+  October too, are the navigation bar's title, at the bar's own 17 pt, and
+  the egg size's menu, its button and its list: in 1750 these are views of
+  the app's own in place of UIKit's, the list a popover drawn as the
+  system's menu is (`barTitle`, `MenuChoice`); in modern English they are
+  UIKit's, as before. **What else UIKit draws keeps the system face**: the
+  menu the bar's buttons fold into at the largest text sizes, the share
+  sheet, and the system's alerts (the app raises none of its own). So does
+  the Live Activity, read at a glance across a kitchen beside the system's
+  clock; the widget bundles no font.
   `ios/App/PeriodFace.swift` has the rest.
 
 ## 7. Order

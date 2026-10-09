@@ -6166,3 +6166,63 @@ what was missing was a record of what the owner had read.
 Checked: `npm run verify`, `npm run e2e` 37 of 37, `npm run build:site` (no sidecar in
 `_site/copy/`), and with one 1750 twin deleted by hand, `npm test`
 passed and the queue listed it as missing.
+
+## 9 October 2026: iOS's last system-font words in 1750, and "Most likely" at the largest text
+
+Three small iOS fixes on `0.5.x`; nothing in core or the web changed.
+
+**The bar's title and the egg size's menu in the face of 1750.** Both were
+UIKit's, in the system face. UIKit takes a bar's title font only through an
+appearance it reads when the bar is made, and a menu's list takes no font
+at all (`UIAction` has no attributed title), so in 1750 both are views of
+the app's own: the title a `.principal` toolbar item at the bar's 17 pt,
+which Dynamic Type does not change (`barTitle`), and the menu a button over
+a popover laid out as the system's menu is, a tick at the one chosen, wider
+and scrolling at the accessibility sizes (`MenuChoice`). Both switch with
+the language in place, the title on Settings as the picker is pressed. In
+modern English both are UIKit's, as before. Looked for the rest: Settings
+has no section headers, the alarm sound's picker is segmented, and the app
+raises no alert of its own. **Still the system face in 1750**, each UIKit's
+own with no font to give it: the menu the bar's buttons fold into at the
+accessibility sizes (it holds "Preface"), the share sheet, and the system's
+alerts (notifications' permission).
+
+**The size's name at the accessibility sizes.** Found on the way, in both
+Englishes: beside a menu that does not wrap, the size's name got a column
+a letter wide in 1750, and in modern English no room at all. At those
+sizes it now stands over the menu.
+
+**"Most likely" moves nothing at the largest text** (`UI.md` §8). The
+certainty line's two lines' room was not enough there; it now also holds
+the tallest the line can be, hidden, from idle to the pull. Measured on an
+iPhone 17 Pro, the slider folded with "Most likely" off and on: default
+size 358.5 and 358.5 pt before and after (446.5 in 1750); largest, modern
+English, 511.5 moving to 560 or 566 before, 618 still after; largest,
+1750, 1255.5 moving to 1369.5 or 1307.5 before, 1369.5 still after.
+`likely-still` and `likely-still-largest` in `npm run ios:e2e` check it;
+the second fails without the room.
+
+**The slow hob's moment.** iOS's tick planned again when `now >= slowHobAtS`
+while core lengthens only once the time heated is past the moment, so a
+clock frozen on it planned the same plan every tick. The tick now plans
+again only past it (`now > at`), matching core's `>`; `slow-hob` checks
+that nothing is planned in eight ticks on the moment itself (it found nine
+plans there with `>=`). Core's own rule, `slowHobDue` (`c32294d`, the same
+strict comparison, on the other session's branch), had not reached this
+branch; once both are merged the tick should call it in place of its own
+`>`.
+
+**Things that cost time.**
+- **DECISIONS 104 landed mid-task**: `PLAN.md` is now updated at merge, so
+  the scenario count (42) is the merging session's to write.
+- **A `LabeledContent`'s value is secondary**, and a popover from inside it
+  inherits that: the list was grey until it set its own primary.
+- **The first simulated tap after a launch can be lost**; tap again rather
+  than read anything into it.
+
+Checked before each commit: `npm run verify` (403 tests, `swift test` 160
+in 39 suites), `npm run ios:build`, `npm run ios:e2e`, 42 of 42 on the
+last (once 41: `newer-version` timed out stepping the clock while this
+session built and drove a second simulator, and passed alone).
+Screenshots before and after in both Englishes, default and largest
+text, were taken on a simulator; the owner judges them on a phone.

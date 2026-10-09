@@ -177,7 +177,7 @@ struct SettingsView: View {
                     .textSelection(.enabled)
             }
         }
-        .navigationTitle(tr("controls.settings"))
+        .barTitle(tr("controls.settings"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

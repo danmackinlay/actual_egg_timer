@@ -209,6 +209,7 @@ struct ClausePanel: View {
     var edits: Edits? = nil
     let done: () -> Void
     @State private var more = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -314,22 +315,21 @@ struct ClausePanel: View {
     /// the class, and choosing a class moves the weight to that class's mass.
     private var egg: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LabeledContent(tr("controls.size")) {
-                Picker(tr("controls.size"), selection: Binding(
-                    get: { planner.sizeIndex },
-                    set: { planner.chooseSize($0) }
-                )) {
-                    ForEach(planner.sizeClasses.indices, id: \.self) { i in
-                        Text(sizeLabel(planner.sizeClasses[i])).tag(i)
-                    }
-                    Text(tr("controls.size.measured", [
-                        "mass": .text(planner.show(.mass, planner.weighedMassG)),
-                    ])).tag(-1)
+            // At the accessibility sizes the size's name over its menu: side
+            // by side, the menu, which does not wrap, left the name a column
+            // a letter wide, or nothing.
+            // "Extra large — 76 g" otherwise wraps onto two lines, and
+            // UIKit's button then cuts the second off.
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(tr("controls.size"))
+                        .accessibilityHidden(true)
+                    sizeMenu.fixedSize()
                 }
-                .pickerStyle(.menu)
-                .labelsHidden()
-                // "Extra large — 76 g" otherwise wraps onto two lines.
-                .fixedSize()
+            } else {
+                LabeledContent(tr("controls.size")) {
+                    sizeMenu.fixedSize()
+                }
             }
             MeasureField(
                 label: tr("controls.measure.weight"), measure: planner.measure(.mass),
@@ -337,6 +337,19 @@ struct ClausePanel: View {
             )
         }
         .appFont(.subheadline)
+    }
+
+    /// The size classes, and the weight as measured: in the face of 1750
+    /// there, the button and its list (`MenuChoice`).
+    private var sizeMenu: some View {
+        MenuChoice(
+            label: tr("controls.size"),
+            choices: planner.sizeClasses.indices.map { (sizeLabel(planner.sizeClasses[$0]), $0) } + [(
+                tr("controls.size.measured", ["mass": .text(planner.show(.mass, planner.weighedMassG))]),
+                -1
+            )],
+            selection: Binding(get: { planner.sizeIndex }, set: { planner.chooseSize($0) })
+        )
     }
 
     /// Fridge, room, or the cook's own number. The presets' temperatures are

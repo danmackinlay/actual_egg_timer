@@ -160,8 +160,9 @@ struct ReadoutView: View {
     ///
     /// While idle it is the choice on screen's, and blank until this pot's
     /// surface lands; the line holds two lines' room, the word and "most
-    /// likely", so a drag that brings "most likely" or takes it away does not
-    /// move the slider. Once a cook is running it is its plan's, on its pot's
+    /// likely", or until the pull the room of the tallest of them (`tallest`)
+    /// where that is more, so a drag that brings "most likely" or takes it
+    /// away does not move the slider at any text size. Once a cook is running it is its plan's, on its pot's
     /// surface (held while a new pot's is built), until the pull, when the
     /// time it was about has passed (design/one-screen.md section 7, 12); the
     /// white's line stays to the end. Never where the white never sets: there
@@ -185,6 +186,13 @@ struct ReadoutView: View {
                 // boil line (DECISIONS.md 99); the second line hanging its
                 // x-height into the panel's foot (`hang`).
                 Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
+                // Wherever "most likely" can show, the room the line takes
+                // with it, whichever words they are: at the largest text
+                // sizes either wraps to two lines, more than the two lines
+                // above, and it would move the slider as it came and went.
+                if canSay(phase) {
+                    tallest.hidden().accessibilityHidden(true)
+                }
                 if let sure {
                     VStack(spacing: 2) {
                         Button {
@@ -245,7 +253,38 @@ struct ReadoutView: View {
         .onChange(of: whiteRunny(o), initial: true) { _, shown in
             Screenshots.log("white \(shown)")
         }
+        // Whether "Most likely" shows under the word, unpressed.
+        .onChange(of: sure.map { mostLikelyShown($0.words) } ?? false, initial: true) { _, shown in
+            Screenshots.log("likely \(shown)")
+        }
         #endif
+    }
+
+    /// Whether the line can say how sure I am in this phase, and so "most
+    /// likely" under it: until the pull.
+    private func canSay(_ phase: Phase) -> Bool {
+        phase == .idle || phase == .heating || phase == .cooking
+    }
+
+    /// The line at its tallest, at this text size and width: the tallest of
+    /// the three words over the tallest "most likely", laid out as the line
+    /// lays them out, so the room it keeps is the room it takes, which only
+    /// at the largest sizes is more than its two lines'.
+    private var tallest: some View {
+        VStack(spacing: 2) {
+            ZStack {
+                ForEach([Certainty.veryCertain, .ballpark, .wildGuess], id: \.self) { c in
+                    Text(tr(certaintyKey(c))).appFont(.subheadline, weight: .semibold)
+                }
+            }
+            .padding(.vertical, 4)
+            ZStack {
+                ForEach(donenessAnchors.indices, id: \.self) { i in
+                    Text(tr("certainty.mostLikely", ["word": .text(tr(donenessAnchors[i].key))]))
+                        .appFont(.footnote)
+                }
+            }
+        }
     }
 
     /// Whether to say the white might still be runny: the choice on screen's
