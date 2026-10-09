@@ -69,14 +69,13 @@ public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
 public struct GridRequest: Sendable {
     public let egg: Egg
     public let setup: CookSetup
-    public let tauAirScale: Double
     public let spec: GridSpec
 }
 
 /// Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
-/// the default 21 x 32. Rebuild only when the egg, setup or tauAirScale change,
-/// never on every keystroke.
-public func buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: Double, spec: GridSpec) -> DoseGrid {
+/// the default 21 x 32. Rebuild only when the egg or setup change, never on
+/// every keystroke.
+public func buildDoseGrid(egg: Egg, setup: CookSetup, spec: GridSpec) -> DoseGrid {
     let (alphaMin, alphaMax, alphaCount) = (spec.alphaMin, spec.alphaMax, spec.alphaCount)
     let (timeMinS, timeMaxS, timeCount) = (spec.timeMinS, spec.timeMaxS, spec.timeCount)
     let logAlphaMin = log(alphaMin)
@@ -92,7 +91,7 @@ public func buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: Double, spec:
             let cook = timeMinS + timeStep * Double(ti)
             let r = simulate(
                 egg: egg, setup: setup,
-                params: ModelParams(alphaM2s: alpha, tauAirScale: tauAirScale),
+                params: ModelParams(alphaM2s: alpha),
                 cookTimeS: cook
             )
             logYolk[ai * timeCount + ti] = safeLog10(r.yolkDoseMin)
@@ -108,7 +107,7 @@ public func buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: Double, spec:
 }
 
 public func buildRequestedGrid(_ q: GridRequest) -> DoseGrid {
-    buildDoseGrid(egg: q.egg, setup: q.setup, tauAirScale: q.tauAirScale, spec: q.spec)
+    buildDoseGrid(egg: q.egg, setup: q.setup, spec: q.spec)
 }
 
 private func interpolate(

@@ -143,7 +143,7 @@ struct ProbeConformance {
             let at = plausibleProbeRangeC(egg: egg, setup: s, params: .default, cookTimeS: cook)
             expectClose(at.low, range[0], "\(label): lowest reading taken")
             expectClose(at.high, range[1], "\(label): highest reading taken")
-            let params = try ModelParams(alphaM2s: moved.num("alpha_m2s"), tauAirScale: moved.num("tauAirScale"))
+            let params = try ModelParams(alphaM2s: moved.num("alpha_m2s"))
             let movedAt = plausibleProbeRangeC(egg: egg, setup: s, params: params, cookTimeS: cook)
             expectClose(movedAt.low, rangeMoved[0], "\(label): lowest, moved")
             expectClose(movedAt.high, rangeMoved[1], "\(label): highest, moved")

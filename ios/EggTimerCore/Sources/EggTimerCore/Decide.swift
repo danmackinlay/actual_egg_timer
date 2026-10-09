@@ -77,10 +77,7 @@ public func decisionGridSpec(_ inputs: DecisionInputs) -> GridSpec {
 }
 
 func decisionGridRequest(_ inputs: DecisionInputs) -> GridRequest {
-    GridRequest(
-        egg: inputs.egg, setup: inputs.setup, tauAirScale: inputs.params.tauAirScale,
-        spec: decisionGridSpec(inputs)
-    )
+    GridRequest(egg: inputs.egg, setup: inputs.setup, spec: decisionGridSpec(inputs))
 }
 
 public func buildDecisionGrid(_ inputs: DecisionInputs) -> DoseGrid {

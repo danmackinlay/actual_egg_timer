@@ -35,9 +35,7 @@ struct SectionConformance {
         let file = try Fixtures.load("section.json")
         let egg = try Geometry.eggFromMass(file.object("egg").num("mass_kg"))
         let paramsJSON = try file.object("params")
-        let params = try ModelParams(
-            alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
-        )
+        let params = try ModelParams(alphaM2s: paramsJSON.num("alpha_m2s"))
         let targets = try file.numbers("whiteTargets")
         for c in try file.rows("cases") {
             let name = try c.str("name")
@@ -46,7 +44,7 @@ struct SectionConformance {
             for tick in try c.rows("ticks") {
                 let at = "\(name) at \(try tick.num("to_s")) s"
                 section.advance(
-                    egg: egg, setup: setup, params: params,
+                    egg: egg, setup: setup,
                     toS: try tick.num("to_s"), outAtS: try tick.optionalNum("givenOut_s")
                 )
                 expectClose(section.tS, try tick.num("t_s"), "t, \(at)")
@@ -79,9 +77,7 @@ struct SectionConformance {
         let file = try Fixtures.load("section.json")
         let egg = try Geometry.eggFromMass(file.object("egg").num("mass_kg"))
         let paramsJSON = try file.object("params")
-        let params = try ModelParams(
-            alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
-        )
+        let params = try ModelParams(alphaM2s: paramsJSON.num("alpha_m2s"))
         let rows = try file.rows("previews")
         #expect(rows.count >= 4)
         for p in rows {

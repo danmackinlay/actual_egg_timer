@@ -107,7 +107,7 @@ export function probeFixture(): Record<string, unknown> {
       const egg = eggFromMass(s.mass_kg);
       const setup: CookSetup = { ...CALIB_SETUP, afterBoil: 'hold', ...s.over };
       const r = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result;
-      const moved = { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * 1.07, tauAirScale: 0.9 };
+      const moved = { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * 1.07 };
       solved.push({
         mass_kg: s.mass_kg, setup: setup, level: level,
         cookTime_s: r.cookTime_s, peakYolkTime_s: r.peakYolkTime_s, peakYolk_C: r.peakYolk_C,
@@ -134,7 +134,7 @@ export function probeFixture(): Record<string, unknown> {
     },
     egg: { mass_kg: CALIB_EGG.mass_kg },
     setup: CALIB_SETUP,
-    grid: { ...CALIB_GRID_SPEC, tauAirScale: 1.0, peakYolk_C: grid.peakYolk_C },
+    grid: { ...CALIB_GRID_SPEC, peakYolk_C: grid.peakYolk_C },
     lookups: lookups,
     density: density,
     likelihood: likelihood,

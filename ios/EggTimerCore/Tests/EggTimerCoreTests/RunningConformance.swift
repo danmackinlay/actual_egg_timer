@@ -329,7 +329,7 @@ private func slowHobHintOf(_ json: [String: Any]) throws -> SlowHobHint {
     return try SlowHobHint(
         startedAtS: json.num("startedAt_s"), choices: choicesOf(json.object("choices")),
         fromRampS: json.num("fromRamp_s"), carryS: json.num("carry_s"),
-        params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
+        params: ModelParams(alphaM2s: params.num("alpha_m2s")),
         whiteDoseMin: json.num("whiteDose_min"), steps: Int(json.num("steps")), lastS: json.num("last_s"),
         rampS: json.num("ramp_s"), carriedS: json.optionalNum("carried_s")
     )

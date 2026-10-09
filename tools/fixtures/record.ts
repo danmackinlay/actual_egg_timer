@@ -148,7 +148,7 @@ const REPLAY_LOG: EggRecord[] = [
     over: { eggStart_C: 8, cooling: 'tap' },
     level: 0.4, pulledBy: 'cook', late_s: 31.5, yolkWord: 'fudgy', white: null,
   }),
-  // Rested on the counter, the only cook that reaches tauAirScale.
+  // Rested on the counter, the only cook that reaches the carryover.
   recordOf({
     app: 'ios', mass_g: 67.3, massFrom: 'class', sizeTable: 'us', eggFrom: 'room',
     over: { eggStart_C: 20, cooling: 'counter' },

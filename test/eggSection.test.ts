@@ -77,7 +77,7 @@ test('a raw egg is runny yolk and clear white; a hard one is the other ends', ()
   const raw = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(raw[0], '#ff0000');
   assert.equal(raw[raw.length - 1], '#0a0a0a');
-  advanceSection(s, eggFromMass(0.060), setup, DEFAULT_PARAMS, 1800, null);
+  advanceSection(s, eggFromMass(0.060), setup, 1800, null);
   const hard = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(hard[0], '#0000ff');
   assert.equal(hard[hard.length - 1], '#fafafa');

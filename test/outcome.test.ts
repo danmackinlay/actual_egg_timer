@@ -32,7 +32,7 @@ import { appSetup, draw, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
 const SETUP = appSetup();
-const GRID = buildDoseGrid(EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
+const GRID = buildDoseGrid(EGG, SETUP, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
 const JAMMY = logYolkTarget(0.41);
 
 function learned(): Posterior {

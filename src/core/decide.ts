@@ -37,8 +37,7 @@
  * THE SURFACE. The loss needs the delivered log doses at every particle's
  * time-scale for every candidate time, for the setup on screen. The offsets
  * and the noise are additive in log dose, so only the time-scale needs the
- * physics: a dose grid over (alpha, time) for the current egg and pot, with
- * `tauAirScale` at 1.0, where the apps hold it (DECISIONS.md 95).
+ * physics: a dose grid over (alpha, time) for the current egg and pot.
  * The grid does not depend on the slider. It spans every level this pot can
  * deliver, from a little before the white sets to a little past the hardest
  * yolk, so a cook dragging the slider is answered from one grid, with no
@@ -161,7 +160,6 @@ export function decisionGridRequest(inputs: DecisionInputs): GridRequest {
   return {
     egg: inputs.egg,
     setup: inputs.setup,
-    tauAirScale: inputs.params.tauAirScale,
     spec: decisionGridSpec(inputs),
   };
 }

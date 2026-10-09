@@ -57,7 +57,7 @@ struct DecideConformance {
             let spec = try decisionGridSpec(DecisionInputs(
                 egg: Geometry.eggFromMass(inputs.object("egg").num("mass_kg")),
                 setup: cookSetup(inputs.object("setup")),
-                params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
+                params: ModelParams(alphaM2s: params.num("alpha_m2s")),
                 whiteDoseMin: inputs.num("whiteDose_min")
             ))
             let expected = try row.object("spec")

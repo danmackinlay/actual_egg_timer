@@ -278,7 +278,6 @@ const REFUSED: { note: string; path: string[]; value: unknown }[] = [
   { note: 'the plan as it ran, no peak yolk', path: ['asRan', 'peakYolk_C'], value: undefined },
   { note: 'the plan as it ran, the probe moment a number', path: ['asRan', 'probeMoment'], value: 1 },
   { note: 'the plan as it ran, a diffusivity of zero', path: ['asRan', 'params', 'alpha_m2s'], value: 0 },
-  { note: 'the plan as it ran, no carryover scale', path: ['asRan', 'params', 'tauAirScale'], value: undefined },
   { note: 'the plan as it ran, corrected before the start', path: ['asRan', 'correctedAt_s'], value: START_S - 1 },
 ];
 
@@ -408,7 +407,7 @@ function plan(pc: PlanCase): CookPlan {
     leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: hint,
     surface: surface === null || g === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
-      grid: { tauAirScale: g.tauAirScale, ...g.spec },
+      grid: g.spec,
       profile: surface.profile,
     },
     plan: planJson(p),

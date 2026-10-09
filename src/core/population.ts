@@ -13,8 +13,7 @@
  * (`tauAirScale`), which is ignored like the rest.
  *
  * BEFORE ANY EGG the app solves at the population's own centre: its median
- * time-scale and its mean white offset (`PriorStart`), with the counter's
- * carryover at the physics, as always (DECISIONS.md 95).
+ * time-scale and its mean white offset (`PriorStart`).
  * For the literature that is exactly the literature's values, as it always
  * was; for a fitted population it is where everyone's eggs put a new cook,
  * which is the point of pooling them. A calibration carries it from the

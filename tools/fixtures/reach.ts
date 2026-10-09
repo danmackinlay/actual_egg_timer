@@ -102,7 +102,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     eggsLogged: pz.eggsLogged,
     egg: { mass_kg: DECIDE_EGG.mass_kg },
     setup: rc.setup,
-    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    grid: g.spec,
     profile: profile,
     shading: shadingOf(profile),
     // The chance of the word asked between points: either side of each cut
@@ -153,7 +153,7 @@ const ownerDecided = (() => {
     posterior: { name: 'owner', weights: post.weights, particles: particleRows(post) },
     egg: { mass_kg: OWNER_EGG.mass_kg },
     setup: DECIDE_SETUP,
-    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    grid: g.spec,
     profile: profile,
     decided: levels.map((level) => decidedRow(c, OWNER_EGG, DECIDE_SETUP, g.grid, profile, level, true, 0)),
   };
@@ -174,7 +174,7 @@ const neverSets = (() => {
     eggsLogged: pz.eggsLogged,
     egg: { mass_kg: DECIDE_EGG.mass_kg },
     setup: NEVER_SETS_SETUP,
-    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    grid: g.spec,
     profile: profile,
     decided: [0, 0.41, 1].flatMap((level) => DECIDED_VARIANTS.map((v) => decidedRow(
       c, DECIDE_EGG, NEVER_SETS_SETUP, g.grid, profile, level, v.withOdds, v.nudge_s,

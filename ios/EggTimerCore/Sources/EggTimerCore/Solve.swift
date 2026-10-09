@@ -8,12 +8,9 @@ public struct ModelParams: Sendable, Codable, Equatable {
     /// Thermal diffusivity, m^2/s. Absorbs all geometry and property error,
     /// since only tau = R^2/alpha is identifiable.
     public var alphaM2s: Double
-    /// Multiplier on the still-air cooling time constant.
-    public var tauAirScale: Double
 
-    public init(alphaM2s: Double = Constants.alphaDefault, tauAirScale: Double = 1.0) {
+    public init(alphaM2s: Double = Constants.alphaDefault) {
         self.alphaM2s = alphaM2s
-        self.tauAirScale = tauAirScale
     }
 
     public static let `default` = ModelParams()
@@ -122,7 +119,7 @@ public func simulate(
             if !pullRecorded { waterAtPull = sphere.surfaceC }
             next = Protocols.coolingTemperature(
                 sphere: sphere, egg: egg, setup: setup, elapsedSincePullS: tNext - cookTimeS,
-                dtS: Constants.dtSim, waterAtPullC: waterAtPull, tauAirScale: params.tauAirScale
+                dtS: Constants.dtSim, waterAtPullC: waterAtPull
             )
         }
         sphere.step(dtS: Constants.dtSim, nextSurfaceC: next)

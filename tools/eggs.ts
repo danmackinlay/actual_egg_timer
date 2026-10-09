@@ -36,7 +36,7 @@
  * 17 time-scales from -4 to +4 literature sds, `alpha = ALPHA_DEFAULT *
  * exp(ALPHA_REL_SD * z)`, which is uniform in log alpha, as the app's grids
  * are. Carryover and size scaling stay at the physics (INFERENCE.md section
- * 2): tauAirScale is 1, and the egg is the size the record says.
+ * 2): the egg is the size the record says.
  */
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -256,7 +256,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       const solved = solveCookTime(egg, kitchen.setup, DEFAULT_PARAMS, donenessFromSlider(level));
       const nudge = nudgeSeconds(u());
       const time = solved.result.cookTime_s + nudge;
-      const truly = simulate(egg, kitchen.setup, { alpha_m2s: alpha, tauAirScale: 1 }, time);
+      const truly = simulate(egg, kitchen.setup, { alpha_m2s: alpha }, time);
       const target = logYolkTarget(level);
       const latent = Math.log10(truly.yolkDose_min) - (target + c.taste);
       const yp = [normalCdf((-FEEDBACK_BAND - latent) / c.noise), 0, normalCdf((latent - FEEDBACK_BAND) / c.noise)];
@@ -370,7 +370,7 @@ function emulate(input: string, out: string): void {
     const q = gridRequestFor(start, r, () => ({
       alphaMin: alphaMin, alphaMax: alphaMax, alphaCount: Z_GRID.length, timeMin_s: t, timeMax_s: t + 1, timeCount: 2,
     }));
-    const g = buildDoseGrid(q.egg, q.setup, 1, q.spec);
+    const g = buildDoseGrid(q.egg, q.setup, q.spec);
     const column = (table: number[]): number[] => Z_GRID.map((_, i) => table[i * 2]);
     if (checks.length < CHECKED_EGGS) {
       const target = logYolkTarget(r.level);

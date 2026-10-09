@@ -132,7 +132,7 @@ public struct CookAsRan: Sendable, Equatable {
                 "yolkWord": forecast.yolkWord ?? NSNull(),
             ] as [String: Any],
             "peakYolk_C": peakYolkC, "probeMoment": probeMoment,
-            "params": ["alpha_m2s": params.alphaM2s, "tauAirScale": params.tauAirScale] as [String: Any],
+            "params": ["alpha_m2s": params.alphaM2s] as [String: Any],
         ]
     }
 }
@@ -490,12 +490,11 @@ private func readAsRan(_ raw: Any?, startS: Double) -> CookAsRan? {
           let peak = finite(r["peakYolk_C"]),
           isJSONBool(r["probeMoment"]), let probe = r["probeMoment"] as? Bool,
           let params = r["params"] as? [String: Any],
-          let alpha = finite(params["alpha_m2s"]), alpha > 0,
-          let tau = finite(params["tauAirScale"]), tau > 0 else { return nil }
+          let alpha = finite(params["alpha_m2s"]), alpha > 0 else { return nil }
     if let a = at, a < startS { return nil }
     return CookAsRan(
         correctedAtS: at, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
-        probeMoment: probe, params: ModelParams(alphaM2s: alpha, tauAirScale: tau)
+        probeMoment: probe, params: ModelParams(alphaM2s: alpha)
     )
 }
 
@@ -623,7 +622,7 @@ extension CookAsRan: Codable {
     }
 
     private enum ParamsKeys: String, CodingKey {
-        case alphaM2s = "alpha_m2s", tauAirScale
+        case alphaM2s = "alpha_m2s"
     }
 
     public init(from decoder: Decoder) throws {
@@ -637,10 +636,7 @@ extension CookAsRan: Codable {
             forecast: try c.decode(Forecast.self, forKey: .forecast),
             peakYolkC: try c.decode(Double.self, forKey: .peakYolkC),
             probeMoment: try c.decode(Bool.self, forKey: .probeMoment),
-            params: ModelParams(
-                alphaM2s: try p.decode(Double.self, forKey: .alphaM2s),
-                tauAirScale: try p.decode(Double.self, forKey: .tauAirScale)
-            )
+            params: ModelParams(alphaM2s: try p.decode(Double.self, forKey: .alphaM2s))
         )
     }
 
@@ -655,7 +651,6 @@ extension CookAsRan: Codable {
         try c.encode(probeMoment, forKey: .probeMoment)
         var p = c.nestedContainer(keyedBy: ParamsKeys.self, forKey: .params)
         try p.encode(params.alphaM2s, forKey: .alphaM2s)
-        try p.encode(params.tauAirScale, forKey: .tauAirScale)
     }
 }
 
@@ -802,7 +797,7 @@ public func slowHobHintFits(
     guard hint.fromRampS == estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) else { return false }
     guard hint.carryS == leanHintS + cook.nudgeS else { return false }
     let p = calibrationParams(c)
-    guard hint.params.alphaM2s == p.alphaM2s, hint.params.tauAirScale == p.tauAirScale else { return false }
+    guard hint.params.alphaM2s == p.alphaM2s else { return false }
     guard hint.whiteDoseMin == calibrationDoneness(c, level: 1.0).whiteDoseMin else { return false }
     return hint.steps == 0 || nowS > cook.startedAtS + hint.lastS
 }
@@ -1144,8 +1139,7 @@ public func asRanShown(_ cook: RunningCook, plan: CookPlan) -> CookAsRan? {
 /// posterior that has folded this egg's answer never moves it. `plan.solution`
 /// itself when the plan is on those parameters at that time.
 public func solutionAsRan(_ plan: CookPlan, ran: CookAsRan) -> Solution {
-    if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, p.tauAirScale == ran.params.tauAirScale,
-       plan.cookTimeS == ran.cookS {
+    if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, plan.cookTimeS == ran.cookS {
         return plan.solution
     }
     let sol = plan.solution

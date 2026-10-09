@@ -50,7 +50,7 @@ test('2. a fitted population moves the prior and where a new cook starts', () =>
   const c = freshCalibration(4000, 11, SHIFTED);
   assert.deepEqual(c.start, priorStart(SHIFTED));
   // The carryover stays at the physics whatever the population (DECISIONS.md 95).
-  assert.deepEqual(calibrationParams(c), { alpha_m2s: 1.81e-7, tauAirScale: 1.0 });
+  assert.deepEqual(calibrationParams(c), { alpha_m2s: 1.81e-7 });
   assert.equal(calibrationDoneness(c, 0.22).whiteDose_min, WHITE_DOSE_TARGET * 10 ** 0.21);
   // The particles are drawn from it: the medians and spreads come back.
   const logs = c.posterior.particles.map((p) => Math.log(p.alpha_m2s));

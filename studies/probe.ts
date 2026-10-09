@@ -80,8 +80,8 @@ interface Protocol { label: string; cooling: Cooling; after_s: number; lateCooli
 
 // "At the pull" is read in air whatever the cook does next: the egg is in
 // somebody's hand with a probe in it, not in the ice.
-const peakIce = simulate(eggFromMass(MASS), setupFor('ice'), { alpha_m2s: ALPHA_DEFAULT, tauAirScale: 1 }, COOK_S);
-const peakCounter = simulate(eggFromMass(MASS), setupFor('counter'), { alpha_m2s: ALPHA_DEFAULT, tauAirScale: 1 }, COOK_S);
+const peakIce = simulate(eggFromMass(MASS), setupFor('ice'), { alpha_m2s: ALPHA_DEFAULT }, COOK_S);
+const peakCounter = simulate(eggFromMass(MASS), setupFor('counter'), { alpha_m2s: ALPHA_DEFAULT }, COOK_S);
 const protocols: Protocol[] = [
   { label: 'at the pull', cooling: 'counter', after_s: 0, lateCooling: 'counter' },
   { label: `ice bath, at its peak (+${(peakIce.peakYolkTime_s - COOK_S).toFixed(0)} s)`, cooling: 'ice', after_s: peakIce.peakYolkTime_s - COOK_S, lateCooling: 'ice' },
@@ -126,7 +126,7 @@ const fast = reading('counter', { ...THETA0, logTauAir: -TAU_SD }, 0, peakAfter)
 const byTau = (slow - fast) / 2;
 const byAlpha = signal('counter', 0, peakAfter) * 100 * ALPHA_REL_SD;
 console.log('what moves the counter reading, per prior sd:');
-console.log(`  the carryover constant (tauAirScale)   ${byTau.toFixed(2)} C`);
+console.log(`  the carryover constant                 ${byTau.toFixed(2)} C`);
 console.log(`  the time-scale (alpha)                 ${byAlpha.toFixed(2)} C`);
 console.log('  So one rested egg mostly re-measures the time-scale. The carryover constant wants');
 console.log('  an ice-bath reading first to pin that, and even then a degree of thermometer');

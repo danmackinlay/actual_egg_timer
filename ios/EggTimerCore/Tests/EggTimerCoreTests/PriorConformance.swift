@@ -32,7 +32,6 @@ struct PriorConformance {
             let c = freshCalibration(count: count, seed: seed, population: pop)
             let params = try row.object("params")
             #expect(try calibrationParams(c).alphaM2s == params.num("alpha_m2s"), "\(name) params")
-            #expect(try calibrationParams(c).tauAirScale == params.num("tauAirScale"), "\(name) params")
             try expectClose(calibrationDoneness(c, level: 0.22).whiteDoseMin, row.num("whiteDoseAtSoft"), "\(name) white dose")
             #expect(try c.posterior.rng == Int32(row.num("rng")), "\(name) rng")
             let rows = try row.rows("particles")

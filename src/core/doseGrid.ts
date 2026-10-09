@@ -57,7 +57,6 @@ export type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
 export interface GridRequest {
   egg: Egg;
   setup: CookSetup;
-  tauAirScale: number;
   spec: GridSpec;
 }
 
@@ -68,9 +67,9 @@ function safeLog10(v: number): number {
 }
 
 /** Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
- *  the default 21 x 32. Rebuild only when the egg, setup or tauAirScale change,
- *  never on every keystroke. */
-export function buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: number, spec: GridSpec): DoseGrid {
+ *  the default 21 x 32. Rebuild only when the egg or setup change, never on
+ *  every keystroke. */
+export function buildDoseGrid(egg: Egg, setup: CookSetup, spec: GridSpec): DoseGrid {
   const { alphaMin, alphaMax, alphaCount, timeMin_s, timeMax_s, timeCount } = spec;
   const logAlphaMin = Math.log(alphaMin);
   const logAlphaStep = (Math.log(alphaMax) - logAlphaMin) / (alphaCount - 1);
@@ -83,7 +82,7 @@ export function buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: number, s
     const alpha = Math.exp(logAlphaMin + logAlphaStep * ai);
     for (let ti = 0; ti < timeCount; ti++) {
       const cook = timeMin_s + timeStep * ti;
-      const r = simulate(egg, setup, { alpha_m2s: alpha, tauAirScale: tauAirScale }, cook);
+      const r = simulate(egg, setup, { alpha_m2s: alpha }, cook);
       logYolk[ai * timeCount + ti] = safeLog10(r.yolkDose_min);
       logWhite[ai * timeCount + ti] = safeLog10(r.whiteDose_min);
       peakYolk[ai * timeCount + ti] = r.peakYolk_C;
@@ -97,7 +96,7 @@ export function buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: number, s
 }
 
 export function buildRequestedGrid(q: GridRequest): DoseGrid {
-  return buildDoseGrid(q.egg, q.setup, q.tauAirScale, q.spec);
+  return buildDoseGrid(q.egg, q.setup, q.spec);
 }
 
 function interpolate(

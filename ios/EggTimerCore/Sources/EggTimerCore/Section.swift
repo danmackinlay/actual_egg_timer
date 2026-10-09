@@ -77,7 +77,7 @@ public struct EggSection: Sendable {
     /// in. `outAtS` is nil while the egg is still in the water, however late;
     /// once a step has crossed it, the section keeps the first value given.
     public mutating func advance(
-        egg: Egg, setup: CookSetup, params: ModelParams, toS: Double, outAtS given: Double?
+        egg: Egg, setup: CookSetup, toS: Double, outAtS given: Double?
     ) {
         while tS + Constants.dtSim <= toS {
             let tNext = tS + Constants.dtSim
@@ -90,7 +90,7 @@ public struct EggSection: Sendable {
                 }
                 next = Protocols.coolingTemperature(
                     sphere: sphere, egg: egg, setup: setup, elapsedSincePullS: tNext - out,
-                    dtS: Constants.dtSim, waterAtPullC: waterAtPullC, tauAirScale: params.tauAirScale
+                    dtS: Constants.dtSim, waterAtPullC: waterAtPullC
                 )
             } else {
                 next = Protocols.bathTemperature(egg, setup, tS: tNext)
@@ -142,6 +142,6 @@ public func previewSection(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
 ) -> SectionView {
     var s = EggSection(egg: egg, setup: setup, params: params)
-    s.advance(egg: egg, setup: setup, params: params, toS: cookTimeS + Constants.carryoverWindow, outAtS: cookTimeS)
+    s.advance(egg: egg, setup: setup, toS: cookTimeS + Constants.carryoverWindow, outAtS: cookTimeS)
     return s.view(whiteTargetMin: whiteTargetMin)
 }
