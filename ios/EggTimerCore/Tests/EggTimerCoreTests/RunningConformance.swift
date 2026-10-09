@@ -513,3 +513,57 @@ private struct SplitMix {
         return Double(z >> 11) / Double(UInt64(1) << 53)
     }
 }
+
+@Suite("The phase rule matches the reference implementation")
+struct PhaseConformance {
+    /// The counter-rest timeline matters most: with no cooling deadline, an
+    /// app that fell from COOKING straight to DONE would never show "Out of
+    /// the water — now" or run the 20 s grace, while the pull notification
+    /// still fired at a screen that already said Done. Sampled either side of
+    /// every boundary.
+    @Test("every boundary, with and without a cooling step")
+    func timelines() throws {
+        for timeline in try Fixtures.list("running.json", "phase.timelines") {
+            let name = try timeline.str("name")
+            let cookEndS = try timeline.num("cookEnd_s")
+            let coolEndS = try timeline.optionalNum("coolEnd_s")
+            let outAtS = try timeline.optionalNum("outAt_s")
+            for sample in try timeline.rows("samples") {
+                let nowS = try sample.num("now_s")
+                let phase = try sample.str("phase")
+                let provisional = try sample.str("provisional")
+                let running = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false, outAtS: outAtS),
+                    nowS: nowS
+                )
+                #expect(
+                    running.rawValue == phase,
+                    "\(name) at \(nowS) s: expected \(phase), got \(running.rawValue)"
+                )
+                let guessing = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: true, outAtS: outAtS),
+                    nowS: nowS
+                )
+                let what = "\(name) at \(nowS) s, boil not yet tapped:"
+                    + " expected \(provisional), got \(guessing.rawValue)"
+                #expect(guessing.rawValue == provisional, "\(what)")
+                let asking = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false, outAtS: outAtS, asking: true),
+                    nowS: nowS
+                )
+                #expect(try asking.rawValue == sample.str("asking"), "\(name) at \(nowS) s, asking")
+            }
+        }
+    }
+
+    @Test("the cooling step and the pull grace are the same lengths")
+    func constants() throws {
+        let phase = try Fixtures.object("running.json", "phase")
+        try expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
+        try expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
+        let slowHob = try phase.object("slowHob")
+        try expectClose(slowHobWhenLeftS, slowHob.num("whenLeft_s"), "slowHobWhenLeftS")
+        try expectClose(slowHobExtraS, slowHob.num("extra_s"), "slowHobExtraS")
+        try expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
+    }
+}

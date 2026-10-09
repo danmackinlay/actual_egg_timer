@@ -23,8 +23,8 @@
 
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
-import { BoilMemory, Phase } from '../../core/policy.js';
-import { RunningCook, guessLengthened } from '../../core/running.js';
+import { BoilMemory } from '../../core/boil.js';
+import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
 import { eggsBehind, keptState } from '../calibration.js';
 import { t, timeOfDay } from '../copy.js';

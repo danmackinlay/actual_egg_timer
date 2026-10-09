@@ -11,9 +11,10 @@
  * Swift by `fixtures/step.json`, a readout for every step of every trace.
  */
 
-import { Deadlines, Phase, PULL_GRACE_SECONDS, phaseAt } from './policy.js';
 import { Cooling } from './protocol.js';
-import { CookPlan, RunningCook, asksIfStillIn, guessLengthened } from './running.js';
+import {
+  CookPlan, Deadlines, PULL_GRACE_SECONDS, Phase, RunningCook, asksIfStillIn, guessLengthened, phaseAt,
+} from './running.js';
 import { phaseKeys } from './wording.js';
 
 /** One line of words: a key, and the numbers it takes by name. `time`,

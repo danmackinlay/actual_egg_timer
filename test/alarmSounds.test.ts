@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import {
   ALARM_SOUNDS, AlarmMoment, NOTIFICATION_SOUND_MAX_S, alarmPeriod_s, notificationRepeats,
-} from '../src/core/policy.js';
+} from '../src/core/sounds.js';
 import { PEAK, RECORDINGS, beepsPeriod, loudness, recordedPeriod, synthPeriod } from '../src/ui/alarmSounds.js';
 
 const MOMENTS: AlarmMoment[] = ['pull', 'cooled'];

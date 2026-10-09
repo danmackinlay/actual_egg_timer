@@ -13,8 +13,8 @@ import {
   sendFinal, setSharing, shareState, shareStoredElsewhere,
 } from '../src/ui/share.js';
 import {
-  FRESH_SHARE, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, forgotten, isUid, nextToSend,
-  reconciled, turnedOff, turnedOn,
+  FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone,
+  forgotten, isUid, nextToSend, reconciled, shareGivesUp, shareReply, turnedOff, turnedOn,
 } from '../src/core/share.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
@@ -287,4 +287,17 @@ test('10. a request the server never answers is given up, so the lock it holds i
   // One that answers in time is answered, and its timer is cleared.
   const quick = async (): Promise<Response> => new Response(null, { status: 201 });
   assert.equal((await fetchWithin('/api/eggs', {}, 5, quick)).status, 201);
+});
+
+test('11. a sender waits only on a busy server, and not for good', () => {
+  assert.deepEqual([200, 201].map(shareReply), ['kept', 'kept']);
+  // The way to the server - down, limited, a bad deploy, a firewall - may be
+  // put right: wait, within the bound.
+  assert.deepEqual([403, 404, 408, 429, 500, 502, 503, 504].map(shareReply), Array(8).fill('busy'));
+  // The request itself: asking again changes nothing.
+  assert.deepEqual([400, 401, 405, 409, 413, 415, 422, 204, 302].map(shareReply), Array(9).fill('refused'));
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES, SHARE_WAIT_S), true);
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES - 1, 10 * SHARE_WAIT_S), false, 'a phone opened once in days tries again');
+  assert.equal(shareGivesUp(100, SHARE_WAIT_S - 1), false, 'a busy afternoon is waited out');
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES, -60), true, 'a clock set back: the tries decide');
 });

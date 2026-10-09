@@ -31,13 +31,12 @@
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
 import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
-import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
+import { DoseGrid, GridPolicy, GridRequest, GridSpec, buildRequestedGrid } from './doseGrid.js';
 import {
   LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
   createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.js';
 import { PriorStart, priorStart } from './population.js';
-import { calibrationGrid } from './policy.js';
 import { Outcome } from './outcome.js';
 import { registerOf } from './language.js';
 
@@ -639,6 +638,41 @@ export function parseLog(raw: unknown): EggRecord[] | null {
     out[i] = r;
   }
   return out;
+}
+
+/* ------------------------------------------------------- the calibration */
+
+/** Particles in the filter, and the seed they start from. Both apps must agree
+ *  or two identical kitchens learn two different things from the same egg. */
+export const PARTICLE_COUNT = 1000;
+export const CALIBRATION_SEED = 0x5eed1e;
+
+/** The calibration grid's alpha bounds, as factors of the posterior's centre. */
+export const CALIBRATION_ALPHA_LOW = 0.55;
+export const CALIBRATION_ALPHA_HIGH = 1.8;
+
+/**
+ * Where to build the dose surface for one logged outcome.
+ *
+ * The most consequential choice in the calibration. The grid is handed
+ * to `buildDoseGrid` by the CALLER, so its bounds decide what the particle
+ * filter can see and therefore what the posterior becomes: two apps with
+ * different grids learn different things from the same egg. It was duplicated
+ * by hand in both apps, agreeing only by luck of maintenance.
+ *
+ * The bounds bracket the plausible answer rather than the whole domain: alpha
+ * within a factor of ~2 of where the posterior currently sits, and cook times
+ * from a third of what was cooked to a bit over double it.
+ */
+export function calibrationGrid(alphaCentre: number, cookTime_s: number): GridSpec {
+  return {
+    alphaMin: alphaCentre * CALIBRATION_ALPHA_LOW,
+    alphaMax: alphaCentre * CALIBRATION_ALPHA_HIGH,
+    alphaCount: 21,
+    timeMin_s: Math.max(60, cookTime_s * 0.35),
+    timeMax_s: cookTime_s * 2.4,
+    timeCount: 32,
+  };
 }
 
 /* ------------------------------------------------------------------- fold */

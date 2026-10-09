@@ -15,7 +15,7 @@
  * The hen's recordings are decoded by afconvert, from the same mp3s the web
  * fetches (`RECORDINGS`). Generated files, like the fixtures: never edited
  * by hand. Run this again after a change to alarmSounds.ts, to a recording
- * or to the timing in policy.ts.
+ * or to the timing in src/core/sounds.ts.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -24,7 +24,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   ALARM_SOUNDS, AlarmMoment, NOTIFICATION_SOUND_MAX_S, alarmPeriod_s, notificationRepeats,
-} from '../src/core/policy.js';
+} from '../src/core/sounds.js';
 import { RECORDINGS, loudness, recordedPeriod, synthPeriod } from '../src/ui/alarmSounds.js';
 
 const RATE = 22050;

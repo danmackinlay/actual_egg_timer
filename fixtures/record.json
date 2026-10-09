@@ -10234,6 +10234,56 @@
       }
     ]
   },
+  "calibrationGrid": {
+    "alphaLow": 0.55,
+    "alphaHigh": 1.8,
+    "cases": [
+      {
+        "alphaCentre": 1.4e-7,
+        "cookTime_s": 441,
+        "alphaMin": 7.700000000000001e-8,
+        "alphaMax": 2.5200000000000003e-7,
+        "alphaCount": 21,
+        "timeMin_s": 154.35,
+        "timeMax_s": 1058.3999999999999,
+        "timeCount": 32
+      },
+      {
+        "alphaCentre": 1.4e-7,
+        "cookTime_s": 60,
+        "alphaMin": 7.700000000000001e-8,
+        "alphaMax": 2.5200000000000003e-7,
+        "alphaCount": 21,
+        "timeMin_s": 60,
+        "timeMax_s": 144,
+        "timeCount": 32
+      },
+      {
+        "alphaCentre": 1.4e-7,
+        "cookTime_s": 120,
+        "alphaMin": 7.700000000000001e-8,
+        "alphaMax": 2.5200000000000003e-7,
+        "alphaCount": 21,
+        "timeMin_s": 60,
+        "timeMax_s": 288,
+        "timeCount": 32
+      },
+      {
+        "alphaCentre": 2e-7,
+        "cookTime_s": 800,
+        "alphaMin": 1.1e-7,
+        "alphaMax": 3.6e-7,
+        "alphaCount": 21,
+        "timeMin_s": 280,
+        "timeMax_s": 1920,
+        "timeCount": 32
+      }
+    ]
+  },
+  "calibration": {
+    "particles": 1000,
+    "seed": 6221086
+  },
   "replay": {
     "grid": {
       "alphaCount": 7,

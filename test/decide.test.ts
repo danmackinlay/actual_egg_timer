@@ -37,12 +37,10 @@ import { eggFromMass } from '../src/core/geometry.js';
 import {
   DEFAULT_PARAMS, Solution, donenessFromSlider, logYolkTarget, solveCookTime,
 } from '../src/core/solve.js';
+import { verdictFor } from '../src/core/slider.js';
 import {
-  CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid, verdictFor,
-} from '../src/core/policy.js';
-import {
-  Calibration, EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
-  freshCalibration, gridRequestFor, replay,
+  CALIBRATION_SEED, Calibration, EggRecord, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
+  copyCalibration, foldRecord, freshCalibration, gridRequestFor, replay,
 } from '../src/core/record.js';
 import { answerAt } from '../src/core/reach.js';
 import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';

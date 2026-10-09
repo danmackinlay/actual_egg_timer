@@ -39,7 +39,7 @@ Each is settled here unless §6 lists it as the owner's.
     only if new, so a retry is harmless and nothing is overwritten (append
     only). 201 stored, 200 already had it, 400 refused, 413 too big, 415
     not JSON, 429 rate-limited. What a sender makes of an answer is
-    `shareReply` in `src/core/policy.ts`: it waits on no answer, and on an
+    `shareReply` in `src/core/share.ts`: it waits on no answer, and on an
     answer about the way to the server (403, 404, 408, 429, a 5xx) for at
     most five tries and three days (`shareGivesUp`); an answer about the
     request itself (400, 409, 413, 415, any other 4xx) skips the egg.

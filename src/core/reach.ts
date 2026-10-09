@@ -117,9 +117,8 @@ import { yolkWordProbabilities } from './infer.js';
 import { Outcome, predictOutcome } from './outcome.js';
 import { Certainty, CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
-import {
-  LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, snapDown, snapUp, verdictFor,
-} from './policy.js';
+import { LIMITS, START_TEMP_PRESETS_C } from './inputs.js';
+import { SLIDER_STEPS, Verdict, snapDown, snapUp, verdictFor } from './slider.js';
 
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the

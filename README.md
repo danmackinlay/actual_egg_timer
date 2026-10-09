@@ -1362,9 +1362,9 @@ answers are recorded here rather than deleted, because each one was a plausible 
   E8's nudge may need it back.
 - **Little of either app is tested above the shared layer.** What both apps decide —
   snapping, refusals, texture bands, the calibration grid, the phase timeline — lives in
-  `src/core/policy.ts` and is conformance-tested, which is where all three of the
-  real-egg bugs in `LOGBOOK.md` ("Three things a real egg found that the simulator did
-  not") would have been caught. Above it, the web's phase machine,
+  `src/core/` (`slider.ts`, `texture.ts`, `record.ts`, `running.ts`) and is
+  conformance-tested, which is where all three of the real-egg bugs in `LOGBOOK.md`
+  ("Three things a real egg found that the simulator did not") would have been caught. Above it, the web's phase machine,
   store and formatting have tests (`test/machine.test.ts`, `test/store.test.ts`,
   `test/format.test.ts`), and iOS's decision to ring is `deadlineToRing` in the core, under `swift
   test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the

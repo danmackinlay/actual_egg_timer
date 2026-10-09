@@ -18,12 +18,13 @@
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Solution } from '../core/solve.js';
-import { BoilMemory, Phase, phaseAt, roomInUse } from '../core/policy.js';
+import { BoilMemory } from '../core/boil.js';
+import { roomInUse } from '../core/inputs.js';
 import { Decision } from '../core/decide.js';
 import { DecidedAnswer, OddsProfile } from '../core/reach.js';
 import { MassFrom } from '../core/record.js';
 import { Outcome } from '../core/outcome.js';
-import { CookChoices, CookPlan, CookPot, RunningCook, cookSetupOf } from '../core/running.js';
+import { CookChoices, CookPlan, CookPot, Phase, RunningCook, cookSetupOf, phaseAt } from '../core/running.js';
 import { Calibration } from './calibration.js';
 import { Learning } from './learned.js';
 import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';

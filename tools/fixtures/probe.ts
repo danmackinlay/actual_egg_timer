@@ -24,9 +24,9 @@ import {
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../../src/core/infer.js';
 import {
-  COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor,
-  plausibleProbeRange_C, probeMomentFor,
-} from '../../src/core/policy.js';
+  COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor, plausibleProbeRange_C,
+  probeMomentFor,
+} from '../../src/core/running.js';
 
 import {
   CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, PARTICLE_COUNT, PRIOR_SEED,
@@ -121,7 +121,7 @@ export function probeFixture(): Record<string, unknown> {
   }
 
   return {
-    about: 'The thermometer (E4): the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, policy.ts.',
+    about: 'The thermometer (E4): the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, running.ts.',
     constants: {
       instrumentSd_C: PROBE_INSTRUMENT_SD_C,
       handlingMean_C: PROBE_HANDLING_MEAN_C,

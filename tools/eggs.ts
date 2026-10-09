@@ -56,7 +56,7 @@ import {
   recordMass_g, recordProbe_C, recordTeaches,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.js';
-import { coolingSecondsFor } from '../src/core/policy.js';
+import { coolingSecondsFor } from '../src/core/running.js';
 import { normalCdf } from '../src/core/sphere.js';
 import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
 import { countedTier, keyKey } from '../server/eggs.js';

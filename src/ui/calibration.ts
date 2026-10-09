@@ -22,11 +22,10 @@
 import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
-import { calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggRecord, MODEL_ID, ProbeReading,
-  calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
-  gridRequestFor, recordTeaches, resultsFile, resultsFileName,
+  Calibration, EggRecord, MODEL_ID, ProbeReading, calibrationDoneness as donenessOf, calibrationGrid,
+  calibrationParams as paramsOf, copyCalibration, foldRecord, gridRequestFor, recordTeaches, resultsFile,
+  resultsFileName,
 } from '../core/record.js';
 import { Decoded, Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
 import { localDay } from './eggRecord.js';

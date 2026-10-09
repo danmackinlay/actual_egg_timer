@@ -16,10 +16,9 @@
  * this tab has not rung (`notice`).
  */
 
-import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookChoices, CookPlan, RunningCook, asRanCorrected, asRanCurrent, asksIfStillIn, cookEnding, cookStillOpen,
+  CookChoices, CookPlan, Phase, RunningCook, asRanCorrected, asRanCurrent, asksIfStillIn, cookEnding, cookStillOpen,
   cookTooOld, corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, sameEvents, slowHobDue, startCook,
   startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../core/running.js';

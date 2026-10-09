@@ -31,7 +31,7 @@
  * need more is left that much quieter.
  */
 
-import { AlarmMoment, AlarmSound, alarmPeriod_s } from '../core/policy.js';
+import { AlarmMoment, AlarmSound, alarmPeriod_s } from '../core/sounds.js';
 
 /** The hen's recordings, relative to the page (and to `assets/` in the
  *  repository for `npm run sounds`). */

@@ -31,7 +31,7 @@ import { CookSetup, Cooling } from '../src/core/protocol.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { simulate } from '../src/core/solve.js';
 import { ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/policy.js';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
 import { Theta, THETA0, runPerturbed } from './perturbed.js';
 
 const MASS = DEFAULT_EGG_MASS_KG;
