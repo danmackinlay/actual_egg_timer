@@ -38,7 +38,7 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
   // particles): expected calibration error 2.2%, every egg within 1-3 points
   // (INFERENCE.md section 8). This smaller run has the same shape, and the
   // bounds below allow it.
-  const grid = buildDoseGrid(EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
+  const grid = buildDoseGrid(EGG, SETUP, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
   const levels = [0.22, 0.41, 0.62];
   const random = rng(20260928);
   const truths = createPrior(150, 4242).particles;

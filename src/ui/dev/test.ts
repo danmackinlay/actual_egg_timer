@@ -23,7 +23,7 @@
 
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
-import { Phase } from '../../core/policy.js';
+import { BoilMemory, Phase } from '../../core/policy.js';
 import { RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
 import { eggsBehind, keptState } from '../calibration.js';
@@ -52,6 +52,8 @@ export interface Snapshot {
   /** The phases' labels as this page words them. */
   labels: Record<'heating' | 'pull' | 'done' | 'coolingIce' | 'cookingBoiling', string>;
   settings: Settings;
+  /** The pans remembered: litres to the time to boil, s. */
+  boilMemory: BoilMemory;
   /** The level decided for at idle; null until a time is decided. */
   chosen: { level: number } | null;
   /** The running cook, and what its plan says. */
@@ -101,6 +103,7 @@ function snapshot(): Snapshot {
       coolingIce: t('readout.phase.coolingIce'), cookingBoiling: t('readout.phase.cookingBoiling'),
     },
     settings: state.settings,
+    boilMemory: state.boilMemory,
     chosen: state.chosen === null ? null : { level: state.chosen.level },
     cook: state.cook,
     deadlines: plan === null ? null : plan.deadlines,

@@ -15,9 +15,9 @@
 # which `swift test` does not reach.
 #
 # ios-e2e, on macOS, once apple has passed: `npm run ios:e2e`, the app driven
-# through its 16 scenarios on a simulator of the script's own, its clock
+# through its scenarios on a simulator of the script's own, its clock
 # frozen at each moment checked and stepped between them, so a slow runner
-# takes longer and checks the same (tools/iosE2e.mjs; ios/README.md). It
+# takes longer and checks the same (tools/iosE2e.ts; ios/README.md). It
 # builds the Debug app again rather than taking apple's: an artifact
 # between jobs is a zip, which drops the bundle's file modes, and apple's
 # build is to another derived-data path. New on GitHub's runners and not

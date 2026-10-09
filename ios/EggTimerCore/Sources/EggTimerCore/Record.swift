@@ -643,12 +643,11 @@ public func freshCalibration(count: Int, seed: Int32, population: Population = l
 
 /// Parameters to solve with: the prior's centre until an egg has taught
 /// anything - the literature values, for the literature - and the posterior
-/// mean after. The counter's carryover is the physics' throughout
-/// (DECISIONS.md 95).
+/// mean after.
 public func calibrationParams(_ c: Calibration) -> ModelParams {
     if c.eggsLogged == 0 {
         guard let start = c.start else { return .default }
-        return ModelParams(alphaM2s: start.alphaM2s, tauAirScale: ModelParams.default.tauAirScale)
+        return ModelParams(alphaM2s: start.alphaM2s)
     }
     return posteriorParams(c.posterior)
 }
@@ -705,8 +704,7 @@ public func gridRequestFor(
 ) -> GridRequest {
     let params = calibrationParams(c)
     return GridRequest(
-        egg: recordEggOf(r), setup: recordSetupOf(r), tauAirScale: params.tauAirScale,
-        spec: grid(params.alphaM2s, recordCookTimeS(r))
+        egg: recordEggOf(r), setup: recordSetupOf(r), spec: grid(params.alphaM2s, recordCookTimeS(r))
     )
 }
 

@@ -73,7 +73,7 @@ public func inputsKey(_ inputs: DecisionInputs) -> String {
     let numbers = [
         e.radiusM, e.minorDiameterM, e.massKg, e.volumeM3,
         s.eggStartC, s.ambientC, s.boilingC, s.timeToBoilS, s.waterLitres, s.eggCount,
-        p.alphaM2s, p.tauAirScale, inputs.whiteDoseMin,
+        p.alphaM2s, inputs.whiteDoseMin,
     ]
     var key = "\(s.startMode.rawValue)|\(s.afterBoil.rawValue)|\(s.cooling.rawValue)"
     for n in numbers { key += "|" + numberKey(n) }
@@ -104,10 +104,7 @@ public func decisionGridSpec(_ inputs: DecisionInputs) -> GridSpec {
 }
 
 func decisionGridRequest(_ inputs: DecisionInputs) -> GridRequest {
-    GridRequest(
-        egg: inputs.egg, setup: inputs.setup, tauAirScale: inputs.params.tauAirScale,
-        spec: decisionGridSpec(inputs)
-    )
+    GridRequest(egg: inputs.egg, setup: inputs.setup, spec: decisionGridSpec(inputs))
 }
 
 public func buildDecisionGrid(_ inputs: DecisionInputs) -> DoseGrid {

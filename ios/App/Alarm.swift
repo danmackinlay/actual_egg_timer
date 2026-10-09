@@ -107,7 +107,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
 
     func cancel() {
         #if DEBUG
-        Screenshots.log("alarms cancelled")
+        Screenshots.log(.alarmsCancelled)
         #endif
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
@@ -126,15 +126,14 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // Its moment in cook time, though a pending interval trigger's
         // `nextTriggerDate()` is now plus the interval, so it drifts by the
         // time since it was scheduled: `scheduled` says when it fires.
-        for r in pending {
+        Screenshots.log(.pending(alarms: pending.map { r in
             let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate().map(AppClock.app)
-            Screenshots.log("pending \(r.identifier) at \(at.map { String(Int($0.timeIntervalSince1970)) } ?? "-")")
-        }
-        if pending.isEmpty { Screenshots.log("pending none") }
+            return Screenshots.PendingAlarm(id: r.identifier, at: at.map { Int($0.timeIntervalSince1970) })
+        }))
         // And those the system has delivered and still shows, which the
         // scripted checks read to see one fire.
         let delivered = await centre.deliveredNotifications().map(\.request.identifier).filter { ours[$0] != nil }
-        Screenshots.log("delivered [\(delivered.sorted().joined(separator: ","))]")
+        Screenshots.log(.delivered(ids: delivered.sorted()))
         #endif
         return Set(pending.compactMap { ours[$0.identifier] })
     }
@@ -145,7 +144,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
         #if DEBUG
-        Screenshots.log("scheduled \(id) at \(date.timeIntervalSince1970) in \(String(format: "%.2f", seconds))")
+        Screenshots.log(.scheduled(id: id, at: date.timeIntervalSince1970, inS: seconds))
         #endif
 
         let content = UNMutableNotificationContent()
@@ -175,7 +174,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
         #if DEBUG
         centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
-            if let error { Screenshots.log("not scheduled \(id): \(error.localizedDescription)") }
+            if let error { Screenshots.log(.notScheduled(id: id, error: error.localizedDescription)) }
         }
         #else
         centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))

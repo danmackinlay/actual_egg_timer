@@ -150,7 +150,7 @@ public struct CookAsRan: Sendable, Equatable {
                 "yolkWord": forecast.yolkWord ?? NSNull(),
             ] as [String: Any],
             "peakYolk_C": peakYolkC, "probeMoment": probeMoment,
-            "params": ["alpha_m2s": params.alphaM2s, "tauAirScale": params.tauAirScale] as [String: Any],
+            "params": ["alpha_m2s": params.alphaM2s] as [String: Any],
         ]
     }
 }
@@ -752,11 +752,10 @@ private func readAsRan(_ raw: Any?) -> CookAsRan? {
           let peak = finite(r["peakYolk_C"]),
           isJSONBool(r["probeMoment"]), let probe = r["probeMoment"] as? Bool,
           let params = r["params"] as? [String: Any],
-          let alpha = finite(params["alpha_m2s"]), alpha > 0,
-          let tau = finite(params["tauAirScale"]), tau > 0 else { return nil }
+          let alpha = finite(params["alpha_m2s"]), alpha > 0 else { return nil }
     return CookAsRan(
         correctedAtS: at, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
-        probeMoment: probe, params: ModelParams(alphaM2s: alpha, tauAirScale: tau)
+        probeMoment: probe, params: ModelParams(alphaM2s: alpha)
     )
 }
 
@@ -1032,7 +1031,7 @@ private func slowHobKey(_ cook: RunningCook, _ c: Calibration, leanHintS: Double
     return [
         numberKey(cook.startedAtS), choicesKey(cook.choices),
         numberKey(estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)),
-        numberKey(leanHintS + cook.nudgeS), numberKey(p.alphaM2s), numberKey(p.tauAirScale),
+        numberKey(leanHintS + cook.nudgeS), numberKey(p.alphaM2s),
         numberKey(calibrationDoneness(c, level: 1.0).whiteDoseMin),
     ].joined(separator: "/")
 }
@@ -1358,8 +1357,7 @@ public func asRanShown(_ cook: RunningCook, plan: CookPlan) -> CookAsRan? {
 
 /// The solve as the cook ran, for the texture note beside the peak.
 public func solutionAsRan(_ plan: CookPlan, ran: CookAsRan) -> Solution {
-    if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, p.tauAirScale == ran.params.tauAirScale,
-       plan.cookTimeS == ran.cookS {
+    if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, plan.cookTimeS == ran.cookS {
         return plan.solution
     }
     let sol = plan.solution

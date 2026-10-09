@@ -86,15 +86,16 @@ struct ReadoutView: View {
                     sublineLine
                         #if DEBUG
                         // What the readout says, for the scripted checks.
-                        .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
-                            Screenshots.log("readout \(said)")
+                        .onChange(of: Screenshots.Event.readout(phase: phase.rawValue, big: bigTime, sub: subline),
+                                  initial: true) { _, said in
+                            Screenshots.log(said)
                         }
                         // One frame whole: the moment it was drawn for, to
                         // the millisecond, with the time, the line under it
                         // and the certainty's time range it drew, so a check
                         // can see that all of them are of that one moment.
                         .onChange(of: frame, initial: true) { _, said in
-                            Screenshots.log("frame \(said)")
+                            Screenshots.log(said)
                         }
                         #endif
                     certaintyLine
@@ -249,16 +250,17 @@ struct ReadoutView: View {
         // What the line says, and what a press would open last (the time
         // range), whether open or not; and whether the white's line shows:
         // for the scripted checks.
-        .onChange(of: sure.map { "\(tr(certaintyKey($0.words.certainty))) | \(opened($0).last ?? "")" } ?? "none",
-                  initial: true) { _, said in
-            Screenshots.log("certainty \(said)")
+        .onChange(of: Screenshots.Event.certainty(
+            word: sure.map { tr(certaintyKey($0.words.certainty)) }, time: sure.map { opened($0).last ?? "" }
+        ), initial: true) { _, said in
+            Screenshots.log(said)
         }
         .onChange(of: whiteRunny(o), initial: true) { _, shown in
-            Screenshots.log("white \(shown)")
+            Screenshots.log(.white(shown: shown))
         }
         // Whether "Most likely" shows under the word, unpressed.
         .onChange(of: sure.map { mostLikelyShown($0.words) } ?? false, initial: true) { _, shown in
-            Screenshots.log("likely \(shown)")
+            Screenshots.log(.likely(shown: shown))
         }
         #endif
     }
@@ -371,9 +373,11 @@ struct ReadoutView: View {
     #if DEBUG
     /// This frame as the debug log says it: its moment, epoch s, the phase,
     /// the time, the line under it, and the certainty's time range.
-    private var frame: String {
-        let range = certainty.map { opened($0).last ?? "" } ?? "none"
-        return String(format: "%.3f", now.timeIntervalSince1970) + " \(phase.rawValue) \(bigTime) | \(subline) | \(range)"
+    private var frame: Screenshots.Event {
+        .frame(
+            at: now.timeIntervalSince1970, phase: phase.rawValue, big: bigTime, sub: subline,
+            range: certainty.map { opened($0).last ?? "" }
+        )
     }
     #endif
 

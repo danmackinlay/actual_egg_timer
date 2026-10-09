@@ -45,17 +45,18 @@ struct EggSectionView: View {
         .accessibilityHidden(true)
         #if DEBUG
         .onChange(of: Self.summary(view, reading), initial: true) { _, said in
-            Screenshots.log("egg \(said)")
+            Screenshots.log(said)
         }
         #endif
     }
 
     #if DEBUG
     /// The reading and how set the yolk is, its rings' mean, for the log.
-    private static func summary(_ view: SectionView?, _ reading: EggReading) -> String {
-        guard let view else { return "\(reading.rawValue) none" }
+    private static func summary(_ view: SectionView?, _ reading: EggReading) -> Screenshots.Event {
+        guard let view else { return .egg(reading: reading.rawValue, yolk: nil) }
         let yolk = view.set.indices.filter { view.yolk[$0] }.map { view.set[$0] }
-        return String(format: "%@ yolk %.3f", reading.rawValue, yolk.isEmpty ? 0 : yolk.reduce(0, +) / Double(yolk.count))
+        let mean = yolk.isEmpty ? 0 : yolk.reduce(0, +) / Double(yolk.count)
+        return .egg(reading: reading.rawValue, yolk: (mean * 1000).rounded() / 1000)
     }
     #endif
 
@@ -132,7 +133,7 @@ final class SectionCache {
             section = EggSection(egg: egg, setup: setup, params: params)
             key = k
         }
-        section!.advance(egg: egg, setup: setup, params: params, toS: toS, outAtS: outAtS)
+        section!.advance(egg: egg, setup: setup, toS: toS, outAtS: outAtS)
         return section!.view(whiteTargetMin: whiteTargetMin)
     }
 

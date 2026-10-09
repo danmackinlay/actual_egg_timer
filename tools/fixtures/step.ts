@@ -435,7 +435,7 @@ function build(c: Calibration, inputs: DecisionInputs, profile: boolean): { surf
   const p = profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null;
   return {
     surface: { inputs: inputs, grid: g.grid, profile: p },
-    json: { grid: { tauAirScale: g.tauAirScale, ...g.spec }, profile: p },
+    json: { grid: g.spec, profile: p },
   };
 }
 

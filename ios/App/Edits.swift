@@ -173,6 +173,14 @@ final class Edits {
     /// dropped.
     @ObservationIgnored private var generation = 0
 
+    #if DEBUG
+    /// Previews being planned.
+    @ObservationIgnored private var previewing = 0
+    /// Whether a change is settling, being previewed, or letting its aimed-for
+    /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
+    var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
+    #endif
+
     /// When the eggs went in as the start's panel says, while a cook runs:
     /// the cook's own, or a correction of it in hand. Nil while idle.
     private(set) var startInHand: Double?
@@ -266,7 +274,7 @@ final class Edits {
         releaseTask?.cancel()
         releaseTask = nil
         #if DEBUG
-        Screenshots.log("edit \(group.map { "\($0)" } ?? "-")")
+        Screenshots.log(.edit(group: group.map { "\($0)" }))
         #endif
         // At once, the slider's own reading; the plan's follows.
         aim = (planner.doneness, targetPeakYolkC(planner.doneness), nil)
@@ -276,6 +284,10 @@ final class Edits {
                 try? await Task.sleep(for: Self.previewDelay)
                 guard let self, gen == self.generation else { return }
                 self.previewTask = nil
+                #if DEBUG
+                self.previewing += 1
+                defer { self.previewing -= 1 }
+                #endif
                 await self.preview()
             }
         }
@@ -319,7 +331,7 @@ final class Edits {
         down = nil
         guard pending else { return }
         #if DEBUG
-        Screenshots.log("edit leaving")
+        Screenshots.log(.editLeaving)
         #endif
         commit()
     }
@@ -412,7 +424,7 @@ final class Edits {
         }
         let start = startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
         #if DEBUG
-        Screenshots.log("edit committed \(touched.map { "\($0)" }.joined(separator: ",")) start \(start.map { String($0) } ?? "-")")
+        Screenshots.log(.editCommitted(fields: touched.map { "\($0)" }, start: start))
         #endif
         if start != nil || choices != running.choices { model.correct(choices, startedAtS: start) }
         // The start as the cook now has it: a correction refused leaves the
@@ -485,7 +497,7 @@ final class Edits {
         }
         startLimit = limit
         #if DEBUG
-        if let limit { Screenshots.log("start limit \(limit.kind) \(limit.atS)") }
+        if let limit { Screenshots.log(.startLimit(kind: "\(limit.kind)", at: limit.atS)) }
         #endif
         // The line under the start says why it went no further; VoiceOver
         // says it too, at each press it stops (the web's line is
@@ -494,7 +506,7 @@ final class Edits {
             let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
             UIAccessibility.post(notification: .announcement, argument: said)
             #if DEBUG
-            Screenshots.log("announce \(said)")
+            Screenshots.log(.announce(text: said))
             #endif
         }
         guard next != from else { return false }

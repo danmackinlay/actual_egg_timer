@@ -137,12 +137,18 @@ gate could catch it.
       `main.ts` imports on localhost only; `build:site` leaves `src/ui/dev/`
       out, and `devServer.ts` serves it beside the site from `dist/`.
       `now.ts` keeps `nowMs()` and a hook for the clock.
-- [ ] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
+- [x] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
       happened** (`iosE2e.mjs:684, 692, 824, …`) pass vacuously on a slow
       runner: step, wait for settled, then assert. Emit the debug log as
       JSON lines, not free text matched by 106 regexes. Convert the file to
-      TS. M.
-- [ ] **1.9 One web harness, and an app that says when it is idle.** The
+      TS. M. *Done* (`630f5e0`, `599fdb4`, `2e0bf86`, `79e31da`, `55a45f5`,
+      `b439636`): `Screenshots.Event`, one JSON object a line; every step
+      waits for the app's `idle` (cook, planner, change in hand, taps, a
+      redraw), and the nine sleeps and the quiet-second reads became steps
+      and ticks; the plist read after the app says it wrote; `tools/iosE2e.ts`.
+      Under load it found two checks that had passed by luck (LOGBOOK, 10
+      October 2026).
+- [x] **1.9 One web harness, and an app that says when it is idle.** The
       copy snapshot (`tools/copy-snapshot.html`) is a third harness with its
       own scenarios, its own frozen clock, and since `8da5b76` its own copy
       of the e2e's settle wait (`__busy`, timers ≤ 2 s; `tools/e2e.ts`'s
@@ -251,10 +257,15 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       0.5.0 are equal to it. OWNER (amends 81). M.
 - [x] **2.9 Stop writing the `t` column.** It buys nothing: 0.3 rewrites
       the log from the fields it knows either way. OWNER (81). S.
-- [ ] **2.10 `tauAirScale`** (D95 holds it at 1.0): 27 occurrences in TS
+- [x] **2.10 `tauAirScale`** (D95 holds it at 1.0): 27 occurrences in TS
       core, 25 in Swift, compared bit-for-bit, stored in the running cook's
       `asRan`. A constant, out of `ModelParams` and `asRan`; bump the cook key.
-      M.
+      M. *Done (`f4898be`):* out of `ModelParams`, `GridRequest`,
+      `buildDoseGrid`, `coolingTemperature` and `asRan`, both apps; every
+      fixture number bit for bit as before. The cook key is not bumped: a
+      stored cook with the field still reads, so a cook running at the
+      upgrade is kept. `npm run probe` and `rank` vary it through
+      `studies/perturbed.ts`, unchanged in what they print.
 - [x] **2.11 One sweep of old keys at boot**, after the guard says this
       build may write: delete any `aet.*` key not on the current list (iOS: a
       retired-keys list, including the orphaned `probeAsked`). It replaces
@@ -312,7 +323,10 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       made it, `sw.js` included. Left: `index.html` at `app/` (the repo
       root, served as it is, loads `dist/`) and netlify.toml's comments,
       which change the site's bytes (`precache.mjs` hashes netlify.toml
-      into the build's name), so each is its own change.
+      into the build's name), so each is its own change. *Both done:*
+      `index.html` asks for `app/` and `sitePaths.mjs` is folded into
+      `buildSite.mjs` (`b2496bc`; `npm run serve`, the repo root, goes,
+      since the page no longer loads there); netlify.toml's comments (`2345aee`).
 
 ## 3. Restructure
 
@@ -388,10 +402,13 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       simulation; 10 direct `render` and 13 `recompute` calls; ~10 boot-time
       callback registrations; `now.ts` booting on import. About 2.5k lines
       reshaped. L, after 1.1 and 3.1.
-- [ ] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
+- [x] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
       times today (settings, boil, calibration, share, cook) with its own
       "seen" copy each; `takeUpEvents` (domain logic in `store.ts`) into
-      core. M.
+      core. M. *Done:* `syncedKey` in `store.ts`, each store on it with
+      its own policy; e2e `two-tabs-settings`, `-pans`, `-log`,
+      `-sharing`, `-cook`. `takeUpEvents` is still in `store.ts`, to go
+      into core with the running cook's rework.
 - [ ] **3.9 iOS: `Cook` as a value `CookState` and a pure step**, with a
       thin `@Observable` shell running effects. It ends the god object
       (state, restore, plan loop, alarms, ringing, Live Activity, debug clock,
@@ -448,14 +465,14 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ## 4. Process
 
-- [ ] **4.1 PLAN updated at merge, by the merging session**, not in each
+- [x] **4.1 PLAN updated at merge, by the merging session**, not in each
       working commit: it is touched by 25% of commits and is a merge hotspot
       across worktrees and the QA agent. `DECISIONS.md` 104; in CLAUDE.md at
       `f7b8a34`.
 - [ ] **4.2 LOGBOOK frozen per version** (`LOGBOOK-0.4.md`); its "Things that
       cost an hour" (twice, at :78 and :6059, and inline three more times)
       into one edited `GOTCHAS.md`. S.
-- [ ] **4.3 Fewer version lines.** 0.4 hasn't shipped and 0.5 forked from
+- [x] **4.3 Fewer version lines.** 0.4 hasn't shipped and 0.5 forked from
       it, so `0.4.x` and `0.5.x` are one line in practice, and each fix is
       built per line (`0.4.x-newer-version-guard`, `0.5.x-…`). `DECISIONS.md` 102:
       ship 0.5 as the next release and retire `0.4.x`. The branch rule
@@ -464,12 +481,16 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       `0.4.x` into `0.5.x` and deletes it. 0.4 never ships
       (the owner, 9 October 2026: 0.3 is still in Apple's review and 0.5
       will be done first), so the only formats on users' devices are 0.3's.
-- [ ] **4.4 Counts out of comments**: verify.yml says 16 iOS scenarios
-      (40), PLAN says web 37 (35). S.
-- [ ] **4.5 The guard's sharp edges in RELEASING**: a Netlify rollback to
+- [x] **4.4 Counts out of comments**: verify.yml says 16 iOS scenarios
+      (40), PLAN says web 37 (35). S. *Done:* verify.yml and README's e2e
+      count (`e0f4de2`); no other comment counts scenarios or tests. PLAN's status
+      line is the merging session's.
+- [x] **4.5 The guard's sharp edges in RELEASING**: a Netlify rollback to
       an older *0.5* alpha freezes every browser that ran the newer one;
       `devServer`'s fixed port shares one localStorage across worktrees. S.
-- [ ] **4.6 The 1750 English may lag**: `DECISIONS.md` 103. Today
+      *Done (`46be264`):* `ios/RELEASING.md`, Rolling back: roll forward instead, and a
+      port per worktree.
+- [x] **4.6 The 1750 English may lag**: `DECISIONS.md` 103. Today
       no key is missing (370 of 371; `app.name` is the same in both), and
       core's catalogue already falls back to `en` for a missing key
       (`src/core/copy.ts:137`). What changes is the rule and its test: a

@@ -9,8 +9,7 @@ import Foundation
 /// in the file is the fit's own record and ignored. Before any egg the app
 /// solves at the population's centre (`PriorStart`), which for the literature
 /// is exactly the literature's values. A file from before 0.5 has a spread for
-/// the carryover too (`tauAirScale`), which is ignored like the rest
-/// (DECISIONS.md 95).
+/// the carryover too (`tauAirScale`), which is ignored like the rest.
 
 /// Where a calibration that has learned nothing solves: the population's
 /// centre.

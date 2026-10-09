@@ -92,14 +92,14 @@ struct RunningConformance {
             // their text to the bit: the same key as the web's, character for
             // character.
             let n = try #require(row["keyNumbers"] as? [String], "\(label): no key numbers").compactMap(Double.init)
-            #expect(n.count == 13, "\(label): key numbers")
-            guard n.count == 13 else { continue }
+            #expect(n.count == 12, "\(label): key numbers")
+            guard n.count == 12 else { continue }
             var setup = expected
             (setup.eggStartC, setup.ambientC, setup.boilingC, setup.timeToBoilS) = (n[4], n[5], n[6], n[7])
             (setup.waterLitres, setup.eggCount) = (n[8], n[9])
             let inputs = DecisionInputs(
                 egg: Egg(radiusM: n[0], minorDiameterM: n[1], massKg: n[2], volumeM3: n[3]), setup: setup,
-                params: ModelParams(alphaM2s: n[10], tauAirScale: n[11]), whiteDoseMin: n[12]
+                params: ModelParams(alphaM2s: n[10]), whiteDoseMin: n[11]
             )
             #expect(try inputsKey(inputs) == row.str("inputsKey"), "\(label) inputs key \(inputsKey(inputs))")
         }

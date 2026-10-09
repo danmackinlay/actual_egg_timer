@@ -87,7 +87,7 @@ const setups = setupChoices.map((choices, i) => {
     keyNumbers: [
       pot.egg.radius_m, pot.egg.minorDiameter_m, pot.egg.mass_kg, pot.egg.volume_m3, pot.setup.eggStart_C,
       pot.setup.ambient_C, pot.setup.boiling_C, pot.setup.timeToBoil_s, pot.setup.waterLitres, pot.setup.eggCount,
-      inputs.params.alpha_m2s, inputs.params.tauAirScale, inputs.whiteDose_min,
+      inputs.params.alpha_m2s, inputs.whiteDose_min,
     ].map(String),
     inputsKey: inputsKey(inputs),
   };
@@ -299,7 +299,6 @@ const REFUSED: { note: string; from: string; path: string[]; value: unknown }[] 
   { note: 'the plan as it ran, no peak yolk', from: 'kept', path: ['log', '3', 'asRan', 'peakYolk_C'], value: undefined },
   { note: 'the plan as it ran, the probe moment a number', from: 'kept', path: ['log', '3', 'asRan', 'probeMoment'], value: 1 },
   { note: 'the plan as it ran, a diffusivity of zero', from: 'kept', path: ['log', '3', 'asRan', 'params', 'alpha_m2s'], value: 0 },
-  { note: 'the plan as it ran, no carryover scale', from: 'kept', path: ['log', '3', 'asRan', 'params', 'tauAirScale'], value: undefined },
   { note: 'the plan as it ran, corrected before the start', from: 'kept', path: ['log', '3', 'asRan', 'correctedAt_s'], value: START_S - 1 },
 ];
 
@@ -438,7 +437,7 @@ function plan(pc: PlanCase): CookPlan {
     leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: memoJson(hint),
     surface: surface === null || g === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
-      grid: { tauAirScale: g.tauAirScale, ...g.spec },
+      grid: g.spec,
       profile: surface.profile,
     },
     plan: planJson(p),

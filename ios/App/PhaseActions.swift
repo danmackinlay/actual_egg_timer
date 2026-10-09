@@ -45,7 +45,7 @@ struct PhaseActions: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
                 #if DEBUG
-                .onChange(of: line, initial: true) { _, said in Screenshots.log("slot \(said)") }
+                .onChange(of: line, initial: true) { _, said in Screenshots.log(.slot(text: said)) }
                 #endif
         } else if phase == .idle {
             VStack(spacing: 10) {

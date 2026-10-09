@@ -526,14 +526,13 @@ private func resample(_ post: inout Posterior) {
 
 // MARK: - Readout
 
-/// The parameters to solve with: the posterior mean time-scale, and the
-/// counter's carryover at the physics (DECISIONS.md 95).
+/// The parameters to solve with: the posterior mean time-scale.
 public func posteriorParams(_ post: Posterior) -> ModelParams {
     var alpha = 0.0
     for i in 0..<post.particles.count {
         alpha += post.weights[i] * post.particles[i].alphaM2s
     }
-    return ModelParams(alphaM2s: alpha, tauAirScale: ModelParams.default.tauAirScale)
+    return ModelParams(alphaM2s: alpha)
 }
 
 /// The posterior mean of the white offset: where the runny | tender cutpoint

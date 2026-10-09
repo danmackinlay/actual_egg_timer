@@ -16,7 +16,7 @@ import {
   parseLog,
 } from '../core/record.js';
 import { activePopulation } from './population.js';
-import { readStorage, writeStorage, removeStorage } from './store.js';
+import { SyncedKey, syncedKey } from './store.js';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
  *  and records of today's shape only. v5: the log started fresh in 0.5, and
@@ -239,22 +239,13 @@ function decodeParts(raw: string | null, pop: Population, model: string): Decode
 
 /* ------------------------------------------------------------- the storage */
 
-/** The store's text as it is now, or null when there is none. */
-export function readKeptText(): string | null {
-  return readStorage(KEY);
-}
-
-export function writeKeptText(text: string): void {
-  writeStorage(KEY, text);
-}
-
-/** Whether a change to storage under `key` (the `storage` event's, null
- *  when a tab cleared it all) can have touched the store. */
-export function touchesKept(key: string | null): boolean {
-  return key === null || key === KEY;
-}
-
-/** The store, gone. */
-export function removeEverything(): void {
-  removeStorage(KEY);
+/** The store, kept across the tabs (store.ts), read as a load reads it
+ *  (`decodeKept`) under the model `model()` names. A store taken up that
+ *  this page would not have written as it is - another build's, folded
+ *  under another model or drawn from another population, or one another
+ *  tab emptied - is not written back as this page folds it, only with this
+ *  page's own next change, so that two builds open in two tabs never answer
+ *  each other's every write with one of their own. */
+export function keptStore(model: () => string): SyncedKey<Decoded> {
+  return syncedKey(KEY, (text) => decodeKept(text, activePopulation(), model()), (d) => d.path === 'loaded');
 }

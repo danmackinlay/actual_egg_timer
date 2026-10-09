@@ -33,7 +33,7 @@ import { timeRangeWords } from '../src/core/wording.js';
 import { appSetup, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
-const GRID = buildDoseGrid(EGG, appSetup(), 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
+const GRID = buildDoseGrid(EGG, appSetup(), { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
 
 test('the word asked is the slider\'s word, and the band its nominal dose falls in', () => {
   for (let k = 0; k <= 100; k++) {

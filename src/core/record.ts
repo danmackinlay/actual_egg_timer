@@ -687,12 +687,11 @@ export function copyCalibration(c: Calibration): Calibration {
 
 /** Parameters to solve with. Before any egg this is the prior's centre - the
  *  population's median time-scale, which for the literature is the
- *  literature value - so calibration is purely additive. The counter's
- *  carryover is the physics' throughout (DECISIONS.md 95). */
+ *  literature value - so calibration is purely additive. */
 export function calibrationParams(c: Calibration): ModelParams {
   if (c.eggsLogged === 0) {
     if (c.start === undefined) return DEFAULT_PARAMS;
-    return { alpha_m2s: c.start.alpha_m2s, tauAirScale: DEFAULT_PARAMS.tauAirScale };
+    return { alpha_m2s: c.start.alpha_m2s };
   }
   return posteriorParams(c.posterior);
 }
@@ -762,7 +761,6 @@ export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): 
   return {
     egg: recordEggOf(r),
     setup: recordSetupOf(r),
-    tauAirScale: params.tauAirScale,
     spec: grid(params.alpha_m2s, recordCookTime_s(r)),
   };
 }

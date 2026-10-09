@@ -91,7 +91,7 @@ function scenarios(): Scenario[] {
         cooling, waterLitres: 1.5, eggCount: 2,
       };
       const sol = solveCookTime(
-        eggFromMass(mass_kg), setup, { alpha_m2s: ALPHA_DEFAULT, tauAirScale: 1.0 },
+        eggFromMass(mass_kg), setup, { alpha_m2s: ALPHA_DEFAULT },
         donenessFromSlider(level),
       );
       // An unreachable level is never cooked, so it never generates an answer.
@@ -109,7 +109,7 @@ function crossCheck(all: Scenario[]): number {
     const sc = all[i];
     const mine = runPerturbed(sc.mass_kg, sc.setup, THETA0, sc.cook_s, NO_PROBE);
     const theirs = simulate(
-      eggFromMass(sc.mass_kg), sc.setup, { alpha_m2s: ALPHA_DEFAULT, tauAirScale: 1.0 }, sc.cook_s,
+      eggFromMass(sc.mass_kg), sc.setup, { alpha_m2s: ALPHA_DEFAULT }, sc.cook_s,
     );
     worst = Math.max(
       worst,

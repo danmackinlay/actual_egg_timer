@@ -23,7 +23,6 @@
         "eggCount": 2
       },
       "grid": {
-        "tauAirScale": 1,
         "alphaMin": 1.0199999999999999e-7,
         "alphaMax": 2.8049999999999995e-7,
         "alphaCount": 7,
@@ -1866,7 +1865,6 @@
         "eggCount": 2
       },
       "grid": {
-        "tauAirScale": 1,
         "alphaMin": 1.0188370752240256e-7,
         "alphaMax": 2.8018019568660706e-7,
         "alphaCount": 7,
@@ -3731,7 +3729,6 @@
         "eggCount": 2
       },
       "grid": {
-        "tauAirScale": 1,
         "alphaMin": 1.0188370752240256e-7,
         "alphaMax": 2.8018019568660706e-7,
         "alphaCount": 7,
@@ -5871,7 +5868,6 @@
       "eggCount": 2
     },
     "grid": {
-      "tauAirScale": 1,
       "alphaMin": 9.85181670091823e-8,
       "alphaMax": 2.7092495927525133e-7,
       "alphaCount": 7,
@@ -9304,7 +9300,6 @@
       "afterBoil": "off"
     },
     "grid": {
-      "tauAirScale": 1,
       "alphaMin": 1.0188370752240256e-7,
       "alphaMax": 2.8018019568660706e-7,
       "alphaCount": 7,

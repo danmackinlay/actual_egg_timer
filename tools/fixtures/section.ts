@@ -80,7 +80,7 @@ export const sectionFixture = {
         // The time out is known only once the clock has reached it, as on a
         // screen: before then the egg is still in the water.
         const out = c.out_s !== null && tick >= c.out_s ? c.out_s : null;
-        advanceSection(s, EGG, c.setup, DEFAULT_PARAMS, tick, out);
+        advanceSection(s, EGG, c.setup, tick, out);
         return {
           to_s: tick,
           givenOut_s: out,

@@ -25,7 +25,7 @@
           "waterLitres": 2,
           "eggCount": 2
         },
-        "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.7e-7 },
         "whiteDose_min": 0.05
       },
       "spec": {
@@ -52,7 +52,7 @@
           "waterLitres": 2,
           "eggCount": 2
         },
-        "params": { "alpha_m2s": 1.62e-7, "tauAirScale": 1.08 },
+        "params": { "alpha_m2s": 1.62e-7 },
         "whiteDose_min": 0.11
       },
       "spec": {
@@ -79,7 +79,7 @@
           "waterLitres": 2,
           "eggCount": 4
         },
-        "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.7e-7 },
         "whiteDose_min": 0.05
       },
       "spec": {
@@ -106,7 +106,7 @@
           "waterLitres": 2,
           "eggCount": 4
         },
-        "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.7e-7 },
         "whiteDose_min": 0.05
       },
       "spec": {
@@ -134,7 +134,7 @@
           "eggCount": 4,
           "afterBoil": "off"
         },
-        "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.7e-7 },
         "whiteDose_min": 0.05
       },
       "spec": {
@@ -161,7 +161,6 @@
       "waterLitres": 2,
       "eggCount": 2
     },
-    "tauAirScale": 1,
     "alphaMin": 1.0199999999999999e-7,
     "alphaMax": 2.8049999999999995e-7,
     "alphaCount": 7,

@@ -189,19 +189,16 @@ export function wetShellDrop_C(egg: Egg): number {
  * The water on the shell evaporates in seconds and takes its latent heat
  * (wetShellDrop_C) out of the egg on the way, withdrawn over TAU_PLUNGE so the
  * drive stays continuous.
- *
- * `tauAirScale` is the kitchen's multiplier on the time constant: a draught,
- * an egg cup, a stone counter - whatever is not still air on a counter.
  */
 export function coolingTemperature(
   sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePull_s: number, dt_s: number,
-  waterAtPull_C: number, tauAirScale: number,
+  waterAtPull_C: number,
 ): number {
   if (setup.cooling === 'counter') {
     const before = elapsedSincePull_s > dt_s ? elapsedSincePull_s - dt_s : 0.0;
     const drying = wetShellDrop_C(egg)
       * (Math.exp(-before / TAU_PLUNGE) - Math.exp(-elapsedSincePull_s / TAU_PLUNGE));
-    const tau = airTimeConstant(egg) * tauAirScale;
+    const tau = airTimeConstant(egg);
     if (elapsedSincePull_s >= dt_s) return robinSurface(sphere, dt_s, setup.ambient_C, tau, drying);
     // The step that straddles the pull spends only `out` of itself on the
     // counter and the rest in the water. The heat a step moves is linear in the

@@ -40,10 +40,7 @@ import {
 import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
-import {
-  clearCook, cookStoredElsewhere, correctedLater, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
-  saveLeanHint, storedCookText, takeUpEvents,
-} from './store.js';
+import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, takeUpEvents } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
 import { showEgg } from './views.js';
@@ -59,23 +56,22 @@ const clock = {
 };
 
 /**
- * This tab's cook as written down (running-cook review 1.2, 2.3).
+ * This tab's cook as written down (running-cook review 1.2, 2.3). Another
+ * tab's write of it is taken up before this tab plans or writes
+ * (`takeUpStored`).
  *
- * - `text`: the stored cook's text as this tab last read or wrote it; any
- *   other text there is another tab's write, taken up before this tab plans
- *   or writes (`takeUpStored`).
- * - `cook`: this cook as stored then, as JSON. A tab writes its cook only
- *   when it differs - something this cook was told or saw: a tap, an event
- *   the clock decided, the plan as it ran kept, an answer - never after a
- *   plan alone (a surface landing, the slow hob's moment), which would write
- *   a copy lacking what another tab on the same cook saw since.
+ * - `cook`: this cook as this tab last read or wrote it, as JSON. A tab
+ *   writes its cook only when it differs - something this cook was told or
+ *   saw: a tap, an event the clock decided, the plan as it ran kept, an
+ *   answer - never after a plan alone (a surface landing, the slow hob's
+ *   moment), which would write a copy lacking what another tab on the same
+ *   cook saw since.
  * - `closed`: the egg is final - by the clock, or another tab ended it or
  *   stored another - and nothing more is written or logged for it (2.3).
  * - `works`: whether a write reads back, which storage that is off or full
  *   does not, so the stored cook can say nothing about this one.
  */
 const written = {
-  text: null as string | null,
   cook: null as string | null,
   closed: false,
   works: true,
@@ -92,22 +88,22 @@ export function persistCook(): void {
   // Taken up here too: a write from the answers comes between plans. The
   // plan follows at once.
   if (takeUpStored()) queueMicrotask(replanCook);
-  const stored = readStoredCook(storedCookText());
+  const stored = cookStore.peek();
+  let text: string | null;
   if (stored !== null && stored.cook.id_ms === state.cook.id_ms && correctedLater(stored.cook, state.cook)) {
     const answers = stored.answers === 'beforeReload' ? stored.answers : keptAnswers();
-    saveCook(takeUpEvents(stored.cook, state.cook), answers, stored.leanHint_s);
+    text = saveCook(takeUpEvents(stored.cook, state.cook), answers, stored.leanHint_s);
   } else {
-    saveCook(state.cook, keptAnswers(), state.leanHint_s);
+    text = saveCook(state.cook, keptAnswers(), state.leanHint_s);
   }
-  written.text = storedCookText();
   written.cook = JSON.stringify(state.cook);
-  written.works = written.text !== null;
+  written.works = text !== null;
 }
 
-/** This tab's own cook again, written down from scratch: a cook started, or
- *  one picked back up, `text` as stored with `cook` read from it. */
-function freshWrites(text: string | null, cook: RunningCook | null): void {
-  written.text = text;
+/** This tab's own cook again, written down from scratch: a cook started
+ *  (`cook` null), or one picked back up, read from what is stored now. */
+function freshWrites(cook: RunningCook | null): void {
+  cookStore.load();
   written.cook = cook === null ? null : JSON.stringify(cook);
   written.closed = false;
   written.works = true;
@@ -123,10 +119,7 @@ function freshWrites(text: string | null, cook: RunningCook | null): void {
 function takeUpStored(): boolean {
   const cook = state.cook;
   if (cook === null || written.closed) return false;
-  const text = storedCookText();
-  if (text === written.text) return false;
-  written.text = text;
-  const stored = readStoredCook(text);
+  const stored = cookStore.takeUp()?.theirs ?? null;
   if (stored === null || stored.cook.id_ms !== cook.id_ms) return false;
   written.cook = JSON.stringify(stored.cook);
   // That tab wrote the egg down with an answer: this one asks no more.
@@ -149,7 +142,7 @@ export function cookOpen(): boolean {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null || written.closed) return false;
-  const storedId = written.works ? (loadCook()?.cook.id_ms ?? null) : cook.id_ms;
+  const storedId = written.works ? (cookStore.peek()?.cook.id_ms ?? null) : cook.id_ms;
   if (cookStillOpen(cook, plan, storedId, nowMs() / 1000)) return true;
   written.closed = true;
   putAway();
@@ -161,7 +154,7 @@ export function cookOpen(): boolean {
  *  Otherwise what that tab saw of this cook is taken up at once, so a tab
  *  leaves Heating when another taps the boil (review 1.2). */
 export function cookElsewhere(key: string | null): void {
-  if (!cookStoredElsewhere(key) || state.cook === null) return;
+  if (!cookStore.touches(key) || state.cook === null) return;
   const now = nowMs();
   if (phaseNow(now) === 'DONE' && !written.closed && !cookOpen()) {
     render(now);
@@ -231,7 +224,6 @@ function takeUp(cook: RunningCook, plan: CookPlan): void {
     persistCook();
   } else if (leanMoved && !written.closed) {
     saveLeanHint(state.cook.id_ms, lean);
-    written.text = storedCookText();
   }
 }
 
@@ -626,7 +618,7 @@ export function onPrimary(): void {
     const chosen = decided(answer, boil);
     // A cook started here is this tab's own, whatever happened before it.
     forgetAnswers();
-    freshWrites(null, null);
+    freshWrites(null);
     clock.pullRung = false;
     state.cook = startCook(now_s, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
     showCookControls();
@@ -692,10 +684,9 @@ export function onPrimary(): void {
  * would end it, and the page opens idle.
  */
 export function restoreCook(): void {
-  const text = storedCookText();
-  const stored = loadCook();
+  const stored = cookStore.peek();
   if (stored === null) {
-    if (text !== null) dropStoredCook();
+    if (cookStore.text() !== null) cookStore.remove();
     return;
   }
 
@@ -711,7 +702,7 @@ export function restoreCook(): void {
   }
   state.leanHint_s = stored.leanHint_s;
   resumeAnswers(stored.answers);
-  freshWrites(text, stored.cook);
+  freshWrites(stored.cook);
   clock.pullRung = false;
   takeUp(back.cook, back.plan);
   showCookControls();

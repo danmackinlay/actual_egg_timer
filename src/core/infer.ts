@@ -53,10 +53,9 @@
  *    records. Scored against a FIXED target it would push that error into
  *    alpha; with the white offset, whatever the white does that alpha cannot
  *    explain has somewhere to go.
- *  - The counter's carryover (`tauAirScale`, the multiplier on its time
- *    constant) is not learned: it is held at 1.0 (DECISIONS.md 95). Only
- *    counter-rested cooks could inform it, every dose grid is built at one
- *    value of it, and their answers mostly teach alpha and the taste offset.
+ *  - The counter's carryover (the egg's time constant in still air) is not
+ *    learned (DECISIONS.md 95). Only counter-rested cooks could inform it,
+ *    and their answers mostly teach alpha and the taste offset.
  *  - The noise scale is learned from how consistent a cook's answers are, which
  *    takes many eggs. Until then it sits near its prior, which is chosen (see
  *    NOISE_MEDIAN) so that one answer near the band carries what a hard
@@ -64,7 +63,7 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import { DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET } from './solve.js';
+import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc, normalCdf } from './sphere.js';
 import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
@@ -716,14 +715,13 @@ function resample(post: Posterior): void {
 
 /* ---- readout ---- */
 
-/** The parameters to solve with: the posterior mean time-scale, and the
- *  counter's carryover at the physics (DECISIONS.md 95). */
+/** The parameters to solve with: the posterior mean time-scale. */
 export function posteriorParams(post: Posterior): ModelParams {
   let alpha = 0.0;
   for (let i = 0; i < post.particles.length; i++) {
     alpha += post.weights[i] * post.particles[i].alpha_m2s;
   }
-  return { alpha_m2s: alpha, tauAirScale: DEFAULT_PARAMS.tauAirScale };
+  return { alpha_m2s: alpha };
 }
 
 export function posteriorMeanOffset(post: Posterior): number {

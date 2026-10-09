@@ -6664,6 +6664,198 @@ go; `design/running-cook-review.md` and `design/onescreen-review.md`
 become `archive/design/…`, and the status lines at PLAN.md 34, 53, 55, 59
 and 224 cite `archive/`. `studies/` wants a row.
 
+## 10 October 2026: one `syncedKey` for the stores kept across tabs (REFACTOR-0.5 3.8)
+
+`8e4b54c` (the key), `2000e38` (the scenarios).
+
+**The key.** The settings, the pans, the log, sharing and the cook each
+kept the text this page last read or wrote, read back after a write, and
+matched the `storage` event's key, five times over. `syncedKey<T>(key,
+parse, writesBack?)` in `src/ui/store.ts` does it once: `load` (what is
+stored, as this page's own), `peek` and `text` (nothing taken up),
+`takeUp` (another tab's write since, with the base it replaced, read
+lazily), `elsewhere(eventKey)`, `touches`, `write` (through the
+newer-build guard, read back) and `remove`, and `owns`: false after taking
+up a store `writesBack` refuses, until this page's own next load, write or
+removal. What each store does with another tab's write stays its own: the
+settings merged field by field against the base; the pans replaced, or
+blended into on this page's next boil; the log adopted, and not written
+back as it folds while it is another build's or another population's
+(`writesBack` is `path === 'loaded'`, which was calibration.ts's `ours`);
+sharing reconciled with the log, a new generation on a new id; the cook
+taken up only for this tab's own id (`takeUpStored`, `takeUpEvents`).
+`app.ts`'s one listener is unchanged. `takeUpEvents` stays in `store.ts`:
+core's running cook is being reworked on another branch, and it moves
+there with that.
+
+Two readings differ from before, neither reachable as a difference: a
+removal reads back rather than assuming null (they differ only under the
+guard, which refuses the removal and stops the take-up too); a cook
+started marks what is stored as seen, rather than nothing (another tab's
+cook, another id, was never taken up either way). The five files went
+from 2,832 lines to 2,856: the key is 87 with its comment, the uses 63
+fewer.
+
+**The scenarios.** `two-tabs-settings`, `-pans`, `-log`, `-sharing` and
+`-cook`: a second tab writes as a cook would (a size picked, a boil timed
+then Cancel, an egg to Jammy and folded, sharing on, the boil tapped), the
+first shows it, and once both settle has written nothing of that store
+(the cook: no copy of its own, only the lean beside the other's). All
+five passed against `560fa62` with only the snapshot's new `boilMemory`
+added, so they hold the behaviour as it was. One run of `two-tabs-sharing`
+there waited 60 s on a worker job in the hidden tab; it passed in 3 s on
+every run since, and 83 of 83 passed on the branch.
+
+## 10 October 2026: tauAirScale out, the page at app/, and the red team's small items (REFACTOR-0.5 2.10, 2.18, 4.4, 4.5)
+
+One commit each, each through `verify` and `build:site`; `e2e` (78 of 78)
+and `ios:build` after each that changed the site or the code, and
+`ios:e2e` (48 of 48) after the one that touched Swift.
+
+- **2.10, `tauAirScale`** (`f4898be`). Out of `ModelParams`,
+  `GridRequest`, `buildDoseGrid`, `coolingTemperature` and the running
+  cook's `asRan`, in core, Swift, the fixtures' tools and the tests;
+  `advanceSection` loses the params it then never read. Regenerated, every
+  fixture number is bit for bit what it was: the diff is the keys gone and
+  running.json's read row "no carryover scale". The cook key is not
+  bumped, against the worklist's line: a stored cook carrying the field
+  reads as before, so a cook running at the upgrade is kept, and an older
+  alpha that drops a newer cook is what a bump would have done anyway.
+  `npm run probe` and `rank` vary it by restating the counter's surface in
+  `studies/perturbed.ts`, which rank cross-checks against `simulate`;
+  both print what they printed. `fit/` carried no scale. Two lines each in
+  `running.ts` and `Running.swift`, which another branch is restructuring.
+- **2.18's remainder** (`b2496bc`, `2345aee`). `index.html` asks for
+  `app/src/ui/main.js`; the copy into `_site/app` is in `buildSite.mjs`
+  and `sitePaths.mjs` is gone. The repo root no longer runs the page, so
+  `npm run serve` went; the tool pages still load from it. `_site/` was
+  unchanged but for comments and `sw.js`'s hash; the site from
+  `npm run serve:site` loads (its one 404 is the development tools, left
+  out of the site, as before). netlify.toml's comments describe that build.
+- **4.4** (`e0f4de2`): verify.yml's "16 scenarios" and README's "78
+  scenarios" out; no other comment counts tests.
+- **4.5** (`46be264`): RELEASING's Rolling back says a web rollback to an
+  older 0.5 alpha leaves every browser that ran the newer one writing
+  nothing, so roll forward; and that worktrees served on one port share a
+  localStorage, so a port each.
+
+**A flake, not this branch's:** `certainty-mid-cook` fails about one run
+in four ("waited 60 s for the range to move"), at `560fa62` as here: the
+range is to the minute and the clock starts at the real time of day, so
+whether 65 s moves it depends on when the run starts.
+
+**For PLAN at merge:** the status line's web e2e count (39) is 78 with the
+copy scenarios.
+
+## 10 October 2026: the iOS checks wait for the app, read JSON, and are TypeScript (REFACTOR-0.5 1.8)
+
+`npm run ios:e2e` asserted that nothing happened (no ring, no plan,
+nothing committed, nothing stored) by stepping the clock and sleeping a
+second or two of the host's before looking, and read what the screen said
+once no line of its kind had come for a second. On a slow runner the app
+may not have begun by then, and such a check passes for nothing. It read
+the debug log, free text, with about a hundred regular expressions.
+
+**The log is JSON lines.** `Screenshots.log` takes a `Screenshots.Event`,
+an enum whose cases are the events and whose labelled values are their
+fields, and writes one object a line:
+`{"t":1791550463.004,"ev":"plan","asking":false,"cooled":…,"pull":…}`,
+`t` the cook time to the millisecond, `ev` the case, the fields as
+`Codable` writes them, sorted by name (`JSONEncoder` otherwise orders a
+dictionary's keys differently line to line), a field with no value left
+out. The stored cook and the egg's record go in as the app encodes them,
+not as JSON inside text, and a read-back's pending alarms are one event,
+not a line each. The field names are Swift identifiers, not literals, so
+the copy lint's NOT_COPY list lost 60 debug-log templates. `Stores` logs
+each write (`wrote`, with the value when it is a number or a text).
+
+**After every step the script waits for `idle`.** `AppClock` tells
+`Screenshots.idle(after:)` of each step, which logs `idle` with the step's
+number once the cook has ticked at the new moment and since the last tap,
+`-uiDo` has looked and found nothing more due and is moving no slider
+(its drags set their levels 50 ms apart, on a task of their own), nothing
+is under way in the cook (`settled`'s own test), the planner (its solve,
+its surface's settle, a profile asked for, a fold), a change in hand
+(settling, being previewed, letting its aimed-for egg go) or a record
+made again, and the page has been drawn since. A check that something
+did not happen steps, or steps to where the clock stands (`tick`), and
+looks; where a sleep stood for a number of ticks (slow-hob's two seconds,
+eight ticks; relaunch-done's one, four) as many ticks are taken. What the
+screen says is read after a `tick`, not after a quiet second.
+
+**A frozen clock's timelines redraw once a second of the system's**
+(`AppClock.period`), so the readout, the egg and the slot showed a
+step's moment up to a second after it. The page's timelines read a probe
+that `idle` bumps (`ContentView.moment`), so the page is drawn at the new
+moment before `idle` is logged; a frozen clock reads the same moment from
+any date.
+
+**What the plist says is read once the app has said it.** The prefs file
+is the system's to write, seconds after the app: change-kept-on-hide
+gave it ten seconds and, under load on `0.5.x`, once found the level not
+there yet. It now waits for `wrote` doneness 0.3, terminates the app, and
+gives the file the usual minute. again-not-remade (five seconds) checks
+in the log that the cook was not cleared, then reads the file after the
+app has gone. newer-version gave the file five seconds to show nothing:
+it now waits for the next launch's mark to reach the file, which the
+system writes whole, and checks that it holds only what that launch wrote
+and no cook or egg.
+
+**Under load the conversion found two checks that had passed by luck.**
+Eighteen CPU hogs on the eighteen cores, besides other agents' work (load
+average 185): slow-hob counted a plan on the moment the guess gives out,
+an identical one, made when the pot's profile landed late, which the old
+two seconds would have counted too; it now ticks the cook idle before it
+steps there. And again-not-remade's five seconds (above).
+
+**What does not wait.** start-again-corrected must press Start again
+while the correction it made still settles (the host's 1.5 s, as a
+finger's), so its first tap's step waits only for the clock; it was and is
+a race with that settle, and says so when it loses. asleep still leaves
+one notification to the system and waits for it.
+
+**The warm-up under the hogs.** With eighteen hogs from the start, the
+new device's first cooks never started in five tries of two minutes: no
+phase, nothing scheduled, the authorization asked for and not answered
+(the warm-up now says what a failed try got to). So the load run starts
+its hogs once the warm-up and the first scenario are done.
+
+**TypeScript.** `tools/iosE2e.ts`, compiled with the other tools; the
+events are a union on `ev` as `Screenshots.Event` declares them, the
+stored cook and the record core's `RunningCook` and `EggRecord`.
+`npm run ios:e2e` runs `tools/build.mjs` first.
+
+**Times**, 48 scenarios each, the build incremental (1-8 s), the machine
+shared with other agents (load average 10-250): before, 607 s; the JSON
+log alone, 603 s; with `idle`, 588 s; in TypeScript, 614 s; merged with
+`0.5.x`, 570 and 559 s in a row. The last commit: 541 s and 549 s in a
+row, and 661 s with the eighteen hogs (load average 207), AET_E2E_WAIT
+180 as CI sets it. The idle screen's scenarios lost their quiet seconds
+(likely-still 14 s to 7 s); a step now costs a tick and a look of
+`-uiDo`, up to half a second of the host's.
+
+## 10 October 2026: `certainty-mid-cook` failed when the cook began late in a minute
+
+The web scenario failed about one run in five, waiting 60 s for the likely
+time range to move. Nothing in the app read the real clock. The stopped
+development clock starts at the real time, so the cold cook began at the
+real clock's second; the range is said as times of day to the minute, and
+the scenario stepped 65 s from 16:00, in which the slow hob's guess moved
+about 38 s. Whether either end crossed a minute hung on that second: with
+the clock pinned (`?at=`), starts 18-28 s into a minute failed every time
+and the rest passed every time. The wait was for "a tick after the clock
+moves", but the step's `focus` already plans the slow hob's moment; the
+tick was never what it waited on.
+
+The scenario now steps to 20:00, four minutes on, as the iOS
+`certainty-mid-cook` does, settles, and checks the guess (the provisional
+pull) moved a minute or more before checking the line moved: a change in
+the physics that slows the guess fails there, saying so, rather than
+flaking. Every second from 0 to 55 s passed pinned; 30 of 30 alone, 10 of
+10 throttled six times, 12 of 12 four at once; 83 of 83 in the suite.
+No other web scenario asserts that a time of day said to the minute
+changes across a step shorter than a minute. The iOS scenario steps four
+minutes, so it never had the fault.
 ## 10 October 2026: the running cook as a log and one state machine, in core (REFACTOR-0.5 3.1 to 3.6, 3.16)
 
 Core only, for both apps; the apps still call the pieces, and move onto

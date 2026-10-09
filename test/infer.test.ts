@@ -48,7 +48,7 @@ function cookAt(level: number): { grid: DoseGrid; cookTime_s: number; logNominal
   const setup = appSetup();
   const t = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   const grid = buildDoseGrid(
-    EGG, setup, 1.0, {
+    EGG, setup, {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
       alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
       alphaCount: 9,
@@ -334,7 +334,7 @@ test('3. an injected alpha and taste are recovered in a few eggs, to a band\'s e
   // egg 2, settled 17.5 s short, sd 3.3%. A word is a wider band than "just
   // right" was, so a noiseless cook who keeps naming the same word pins the
   // time less finely.
-  const truth: ModelParams = { alpha_m2s: 1.535e-7, tauAirScale: 1 };
+  const truth: ModelParams = { alpha_m2s: 1.535e-7 };
   const TASTE = 0.2;
   const setup = appSetup();
   const d = donenessFromSlider(0.41);
@@ -345,11 +345,11 @@ test('3. an injected alpha and taste are recovered in a few eggs, to a band\'s e
   for (let k = 0; k < 6; k++) {
     const alpha = k === 0 ? DEFAULT_PARAMS.alpha_m2s : posteriorParams(post).alpha_m2s;
     const taste = k === 0 ? 0 : posteriorMeanOffset(post);
-    const t = solveCookTime(EGG, setup, { alpha_m2s: alpha, tauAirScale: 1 },
+    const t = solveCookTime(EGG, setup, { alpha_m2s: alpha },
       { ...d, yolkDose_min: d.yolkDose_min * 10 ** taste }).result.cookTime_s;
     errors.push(t - optimum);
     const g = calibrationGrid(alpha, t);
-    const grid = buildDoseGrid(EGG, setup, 1, g);
+    const grid = buildDoseGrid(EGG, setup, g);
     const latent = Math.log10(simulate(EGG, setup, truth, t).yolkDose_min) - TASTE;
     let band = 0;
     while (band < YOLK_WORD_CUTS.length && latent > YOLK_WORD_CUTS[band]) band++;
@@ -385,7 +385,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
   const levels = [0.1, 0.22, 0.3, 0.41, 0.5, 0.62, 0.75];
   const times = levels.map((l) => solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(l)).result.cookTime_s);
   const grid = buildDoseGrid(
-    EGG, setup, 1, {
+    EGG, setup, {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
       alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
       alphaCount: 21,

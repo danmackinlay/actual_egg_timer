@@ -26,9 +26,7 @@ private func loadScenarios() throws -> (egg: Egg, params: ModelParams, cases: [S
     // geometry is exercised here too: if eggFromMass drifts, every scenario
     // moves and this is where it shows.
     let egg = try Geometry.eggFromMass(eggJSON.num("mass_kg"))
-    let params = try ModelParams(
-        alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
-    )
+    let params = try ModelParams(alphaM2s: paramsJSON.num("alpha_m2s"))
 
     let cases = try file.rows("cases").map { c -> Scenario in
         let setup = try cookSetup(c.object("setup"))

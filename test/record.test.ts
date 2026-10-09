@@ -278,7 +278,6 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   const r = solvedRecord(0.4, 'jammy');
   const q = gridRequestFor(freshCalibration(64, 7), r, calibrationGrid);
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
-  assert.equal(q.tauAirScale, DEFAULT_PARAMS.tauAirScale);
 });
 
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {

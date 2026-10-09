@@ -538,12 +538,12 @@ public func plausibleProbeRangeC(
     let spread = exp(probeAlphaSds * Constants.alphaRelSD)
     let slow = simulate(
         egg: egg, setup: setup,
-        params: ModelParams(alphaM2s: params.alphaM2s / spread, tauAirScale: params.tauAirScale),
+        params: ModelParams(alphaM2s: params.alphaM2s / spread),
         cookTimeS: cookTimeS
     )
     let fast = simulate(
         egg: egg, setup: setup,
-        params: ModelParams(alphaM2s: params.alphaM2s * spread, tauAirScale: params.tauAirScale),
+        params: ModelParams(alphaM2s: params.alphaM2s * spread),
         cookTimeS: cookTimeS
     )
     let bath = coolingMediumC(setup.cooling, ambientC: setup.ambientC)
