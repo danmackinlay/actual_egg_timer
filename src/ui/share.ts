@@ -214,7 +214,7 @@ async function sendRun(): Promise<void> {
 async function sendOne(): Promise<boolean> {
   const h = host;
   // Never an egg cooked on the development clock, which runs only on this
-  // machine (now.ts): nothing goes from a log that may hold one. Nor
+  // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
   // anything while a newer build's results are left alone (store.ts).
   if (h === null || devClockUsed() || storageReadOnly()) return false;
   const s = current();

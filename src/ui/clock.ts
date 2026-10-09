@@ -18,7 +18,7 @@ import { clockSpeed, nowMs, onClockChange } from './now.js';
 const TICK_MS = 200;
 
 /** The tick, real ms: 200 on the real clock. On the development clock
- *  (now.ts) it is 0.2 s of the cook's time, never under 16 ms, so at x60 a
+ *  (dev/clock.ts) it is 0.2 s of the cook's time, never under 16 ms, so at x60 a
  *  tick is about a second of the cook and still sees the 20-s pull. */
 function tickMs(): number {
   return Math.max(16, TICK_MS / clockSpeed());

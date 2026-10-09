@@ -121,11 +121,16 @@ gate could catch it.
 - [x] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
       PLAN as if it were a gate. S. *Done:* in `verify` and CI's web job;
       it takes about 4 s.
-- [ ] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
+- [x] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
       imports live app modules 25 times and reads `state` directly, so the
       refactor it should protect breaks it. Load the dev clock (`now.ts`,
       `window.aetClock`) by a dynamic import on localhost only, not in every
-      build. S-M.
+      build. S-M. *Done:* `window.aetTest` (`src/ui/dev/test.ts`:
+      `snapshot()`, `whenIdle()`, `t()`, `timeOfDay()`); the harness imports
+      no app module. The development clock is `src/ui/dev/clock.ts`, which
+      `main.ts` imports on localhost only; `build:site` leaves `src/ui/dev/`
+      out, and `devServer.ts` serves it beside the site from `dist/`.
+      `now.ts` keeps `nowMs()` and a hook for the clock.
 - [ ] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
       happened** (`iosE2e.mjs:684, 692, 824, …`) pass vacuously on a slow
       runner: step, wait for settled, then assert. Emit the debug log as

@@ -949,8 +949,9 @@ to port to Swift essentially unchanged.
 `npm run e2e` builds the site, serves it with the sharing endpoint on a store
 in memory (`tools/devServer.ts`), and drives it in headless Chrome over the
 DevTools protocol, with nothing installed beyond Chrome itself
-(`tools/e2e.ts`, `tools/chrome.ts`, which finds Chrome where macOS and
-Linux put it; `CHROME` names another binary). Each scenario runs in a browser context of its
+(`tools/e2e.ts`, its scenarios, over `tools/harness.ts` and
+`tools/chrome.ts`, which finds Chrome where macOS and Linux put it; `CHROME`
+names another binary). Each scenario runs in a browser context of its
 own and asserts on the page and on what it stored: a cold cook at sixty
 times speed, a hot start, Cancel, a reload at every phase, a tab woken past
 the pull, two tabs on one cook, a cook too old, an egg made final, Done
@@ -962,13 +963,29 @@ to cold, overdue and back, a drag that rings only on release, the start's
 time and its limits, Settings' water, two tabs' own cooks), a correction at
 Done and the slider there, and "still in the water?". `npm run e2e -- reload two-tabs` runs
 those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
-the page's text when one fails. The whole suite takes about two minutes, so
+the page's text when one fails.
+
+The harness reads the app through what it shows, what it stores, and a
+test API, `window.aetTest` (`src/ui/dev/test.ts`): `snapshot()`, the page's
+state as plain data, `whenIdle()`, `t(key)` and `timeOfDay(ms)`; never by
+importing the app's modules, so the app can be reshaped under it, and a
+build from another checkout can be driven by today's scenarios (`npm run
+e2e -- --tree <dir>`, for a commit that has the test API; `tools/harness.ts`
+says how). Beyond it the harness watches the platform: the sounds scheduled
+on the audio clock, the writes to localStorage, and the requests, read off
+DevTools' network events. The whole suite takes about two minutes, so
 it is not in `npm run verify`; CI runs it as a job of its own on Linux
 (`.github/workflows/verify.yml`, `e2e`), not yet failing the workflow.
 
-What makes it take seconds is the development clock (`src/ui/now.ts`),
-through which every read of the time in `src/ui/` goes. On a page served
-from `localhost` or `127.0.0.1`, and nowhere else, `?clock=60` runs it sixty
+What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
+Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
+`Date.now()` unless the development clock has put itself there. On a page
+served from `localhost` or `127.0.0.1`, and nowhere else, `src/ui/main.ts`
+loads the development tools (`src/ui/dev/`: the clock and the test API) by a
+dynamic import before the app boots; `npm run build:site` leaves them out
+of the site, so the site that ships does not carry them, and the harness's
+server (`tools/devServer.ts`, as `npm run serve:dev` runs it) serves them
+beside it from the build. There, `?clock=60` runs it sixty
 times fast, `?clock=0` stops it, `?at=+7m40s` or `?at=-15m` sets it ahead or
 behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
 back; it is kept for the tab across a reload, a red mark in the corner shows
@@ -977,7 +994,8 @@ it, and `aetClock.shift('+20m')`, `aetClock.set(moment)` and
 ahead on the audio clock, follow it. While it is on, and in that browser
 until Forget everything, sharing sends nothing, so no egg cooked on it
 reaches a server. On the live site the clock is `Date.now()`
-(`test/now.test.ts`).
+(`test/now.test.ts`), and the development tools are never asked for (the
+`inert-off-localhost` scenario).
 
 What makes it independent of the machine's speed is that the clock is
 stopped. A scenario steps it to the moment it means, tells the page to look
@@ -990,9 +1008,11 @@ run: the last second before the cold cook's pull, at the real clock's
 speed, to see the beeps scheduled ahead sounding as the tick reaches the
 pull; the grace is its margin for a slow machine. A person's timers (a
 control's 1.5-s settle, a held key) stay real, and a scenario waits for the
-page to settle - no such timer pending, no worker job, no request - rather
-than for a fixed time; a wait for something that will come gives up after
-a minute, which is failure detection, not a measure. Two scenarios run off
+page to say it is idle (`aetTest.whenIdle()`: the app sets those timers,
+sends its worker jobs and makes its requests through `src/ui/idle.ts`, which
+counts them, so nothing is patched) rather than for a fixed time; a wait for
+something that will come gives up after a minute, which is failure
+detection, not a measure. Two scenarios run off
 the stopped clock: the address check, and sharing, which sends nothing on
 the development clock and is checked on the real one. `E2E_CPU_THROTTLE=6`
 slows every page six times (DevTools' CPU throttling); with every core

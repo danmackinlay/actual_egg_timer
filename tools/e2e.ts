@@ -1,423 +1,51 @@
 /**
  * The web app driven end to end, in seconds: the checks that were done by
  * hand (design/running-cook-review.md, the LOGBOOK of 6 to 8 October), each
- * a named scenario with assertions on the page and on what it stored.
+ * a named scenario with assertions on the page and on what it stored, and
+ * the copy capture's states (tools/copyScenarios.ts), each a scenario too.
  *
  *   npm run e2e                      # build the site, then every scenario
  *   npm run e2e -- reload two-tabs   # only those named (after a build)
+ *   npm run e2e -- copy/             # those whose names start so
+ *   npm run e2e -- --tree <dir>      # another checkout's build (harness.ts)
  *   node dist/tools/e2e.js --list
  *
- * It serves `_site/` with the sharing endpoint on a store in memory
- * (tools/devServer.ts), starts headless Chrome on a profile of its own
- * (tools/chrome.ts; CHROME names the binary) and opens each scenario in a
- * fresh browser context, so no scenario sees another's storage.
+ * The harness is tools/harness.ts: the site served, Chrome, a context per
+ * scenario, and the page read through its test API (`window.aetTest`,
+ * src/ui/dev/test.ts), never by importing the app's modules.
  *
- * Time is the development clock (src/ui/now.ts), stopped (`?clock=0`): a
- * scenario steps it to the moment it means (`aetClock.shift`, `.set`), tells
- * the page to look again with a `focus` event, as a tab coming back does, and
- * asserts. So what it sees does not depend on how fast the machine is: a
- * step past the pull lands where it was aimed whether the page took a
- * millisecond or a second to get there. The one span run is the last second
- * before a pull at the real clock's speed, to see the ring scheduled ahead
- * sound as the tick reaches the pull; the 20-s grace after it is that span's
- * margin for a slow machine. The timers that are a person's, not the cook's
- * (a control's settle, a held key), stay real: a scenario waits for the page
- * to settle (`settle`: no timer of up to 5 s pending, no worker job, no
- * request) rather than for a fixed time. Sharing is checked on the real clock,
- * with the stored cook moved into the past, since nothing is sent while the
- * development clock is on.
+ * Time is the development clock, stopped (`?clock=0`): a scenario steps it
+ * to the moment it means (`aetClock.shift`, `.set`), tells the page to look
+ * again with a `focus` event, as a tab coming back does, and asserts. So
+ * what it sees does not depend on how fast the machine is: a step past the
+ * pull lands where it was aimed whether the page took a millisecond or a
+ * second to get there. The one span run is the last second before a pull at
+ * the real clock's speed, to see the ring scheduled ahead sound as the tick
+ * reaches the pull; the 20-s grace after it is that span's margin for a slow
+ * machine. The timers that are a person's, not the cook's (a control's
+ * settle, a held key), stay real: a scenario waits for the page to have
+ * nothing in hand (`aetTest.whenIdle`: no such timer, no worker job, no
+ * request) rather than for a fixed time. Sharing is checked on the real
+ * clock, with the stored cook moved into the past, since nothing is sent
+ * while the development clock is on.
  *
- * Each page gets, before the app runs, a count of the sounds made, each
- * ring (one looped buffer, DECISIONS.md 101) and each blip (an oscillator),
- * and when each is set to start on the audio clock (`__osc`), of what it wrote to
- * localStorage (`__writes`), of the requests it made (`__fetches`), and of
- * what is pending (`__pending`). The alarm is checked by what was scheduled
- * and for when, never by waiting for it to play. An exception thrown in a
- * page fails its scenario.
- *
- * E2E_CPU_THROTTLE=<rate> slows every page's CPU that many times (DevTools'
- * `Emulation.setCPUThrottlingRate`), to show the suite does not depend on
- * the machine's speed; E2E_DEBUG=1 prints the page's text when one fails.
+ * The alarm is checked by what was scheduled on the audio clock and for
+ * when, never by waiting for it to play.
  */
 
-import { ChildProcess, spawn } from 'node:child_process';
-
-import { Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
-
-const SITE_PORT = 9100 + Math.floor(Math.random() * 400);
-const DEBUG_PORT = SITE_PORT + 1000;
-const ORIGIN = `http://127.0.0.1:${SITE_PORT}`;
+import { sleep } from './chrome.js';
+import {
+  Cook, Failure, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
+} from './harness.js';
 
 /** Every page but those checking the address or sharing: the clock stopped. */
 const STOPPED = '/?clock=0';
-
-/** How long to wait for something that will come, real ms: failure
- *  detection only, never a measure of anything, so long enough for a page
- *  slowed six times on a loaded machine. */
-const WAIT_MS = 60_000;
-
-const THROTTLE = Number(process.env['E2E_CPU_THROTTLE'] ?? '1');
-
-/* ------------------------------------------------------------- the page */
-
-/** Run in every page before the app: what the harness counts. */
-const INSTRUMENT = `(() => {
-  const osc = [];
-  window.__osc = osc;
-  const B = window.BaseAudioContext || window.AudioContext;
-  if (B) {
-    const counted = (name, kind) => {
-      const make = B.prototype[name];
-      B.prototype[name] = function () {
-        const o = make.call(this);
-        const r = { kind: kind, made: this.currentTime, at: null, page: window.aetClock ? window.aetClock.now() : Date.now() };
-        osc.push(r);
-        const start = o.start;
-        o.start = function (t) {
-          r.at = t === undefined ? this.context.currentTime : t;
-          // A ring's sound, as a number: the pull's and Done's differ.
-          if (this.buffer) {
-            const x = this.buffer.getChannelData(0);
-            let m = 0;
-            for (let i = 0; i < x.length; i++) m += Math.abs(x[i]);
-            r.mark = Math.round(m);
-          }
-          return start.apply(this, arguments);
-        };
-        return o;
-      };
-    };
-    counted('createOscillator', 'blip');
-    counted('createBufferSource', 'ring');
-  }
-  // What is pending: timers of up to 5 s (a person's: a settle, a solve
-  // coalesced, a repeat; not a request's timeout), worker jobs, requests.
-  const pending = { timeouts: new Set(), workers: 0, fetches: 0 };
-  window.__pending = pending;
-  const setT = window.setTimeout;
-  const clearT = window.clearTimeout;
-  window.setTimeout = function (f, ms, ...rest) {
-    if (typeof f !== 'function' || (ms ?? 0) > 5000) return setT.call(window, f, ms, ...rest);
-    const id = setT.call(window, function () { pending.timeouts.delete(id); return f.apply(this, arguments); }, ms, ...rest);
-    pending.timeouts.add(id);
-    return id;
-  };
-  window.clearTimeout = function (id) { pending.timeouts.delete(id); return clearT.call(window, id); };
-  const W = window.Worker;
-  if (W) {
-    window.Worker = class extends W {
-      constructor(...a) {
-        super(...a);
-        this.__n = 0;
-        this.addEventListener('message', () => { if (this.__n > 0) { this.__n -= 1; pending.workers -= 1; } });
-        this.addEventListener('error', () => { pending.workers -= this.__n; this.__n = 0; });
-      }
-      postMessage(...a) { this.__n += 1; pending.workers += 1; return super.postMessage(...a); }
-    };
-  }
-  const fetches = [];
-  window.__fetches = fetches;
-  const fetch0 = window.fetch;
-  window.fetch = function (input, init) {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    fetches.push({ url: url, method: (init && init.method) || (typeof input === 'object' && input.method) || 'GET' });
-    pending.fetches += 1;
-    return fetch0.apply(window, arguments).finally(() => { pending.fetches -= 1; });
-  };
-  const writes = [];
-  window.__writes = writes;
-  const set = Storage.prototype.setItem;
-  Storage.prototype.setItem = function (k, v) {
-    if (this === window.localStorage) writes.push({ key: k, value: v });
-    return set.call(this, k, v);
-  };
-  const ui = (name) => import('/app/src/ui/' + name + '.js');
-  window.__e2e = {
-    ui: ui,
-    async snap() {
-      const [st, now, cal, copy] = await Promise.all([ui('state'), ui('now'), ui('calibration'), ui('copy')]);
-      const s = st.state;
-      const t = now.nowMs();
-      const el = (id) => document.getElementById(id);
-      return {
-        now_ms: t,
-        phase: st.phaseNow(t),
-        label: el('phaseLabel').textContent,
-        digits: el('digits').textContent,
-        subline: el('sublineText').textContent,
-        primary: el('primary').hidden ? null : el('primary').textContent,
-        feedback: !el('feedback').hidden,
-        target: el('feedbackTarget').textContent,
-        cook: s.cook,
-        decided: s.plan !== null && s.plan.decided !== null,
-        lengthened: s.plan !== null && s.plan.lengthened,
-        deadlines: s.plan === null ? null : s.plan.deadlines,
-        stored: localStorage.getItem('aet.cook.v4'),
-        log: cal.keptState().log,
-        eggsLogged: s.calib.eggsLogged,
-        osc: window.__osc.length,
-        labels: {
-          heating: copy.t('readout.phase.heating'), pull: copy.t('readout.phase.pull'),
-          done: copy.t('readout.phase.done'), coolingIce: copy.t('readout.phase.coolingIce'),
-          cookingBoiling: copy.t('readout.phase.cookingBoiling'),
-        },
-      };
-    },
-  };
-})();`;
-
-interface Snap {
-  now_ms: number;
-  phase: string;
-  label: string;
-  digits: string;
-  subline: string;
-  primary: string | null;
-  feedback: boolean;
-  target: string;
-  cook: Cook | null;
-  decided: boolean;
-  lengthened: boolean;
-  deadlines: { cookEnd_s: number; coolEnd_s: number | null; provisional: boolean; outAt_s: number | null } | null;
-  stored: string | null;
-  log: Rec[];
-  eggsLogged: number;
-  osc: number;
-  labels: Record<string, string>;
-}
-
-interface Cook {
-  id_ms: number;
-  startedAt_s: number;
-  choices: { level: number; startMode: string; mass_kg: number; massFrom: string; waterLitres: number; cooling: string };
-  firstHotAt_s: number | null;
-  coldSince_s: number | null;
-  correctedAt_s: number | null;
-  events: {
-    boilAt_s: number | null;
-    pulled: { due_s: number; out_s: number; by: string; confirmed: boolean } | null;
-    cooledAt_s: number | null;
-    rangAt_s: number | null;
-  };
-  asRan: unknown;
-}
-
-interface Rec {
-  id?: number | null;
-  egg: unknown;
-  level: number;
-  recommended_s: number;
-  pulledBy: string;
-  yolkWord: string | null;
-  white: string | null;
-  forecast: unknown;
-}
-
-/** A sound made, a ring or a blip: when on the audio clock and on the
- *  page's clock, and when on the audio clock it is set to start. */
-interface Osc { kind: 'ring' | 'blip'; made: number; at: number | null; page: number; mark?: number }
 
 /** The rings among sounds made. */
 const rings = (os: Osc[]): Osc[] => os.filter((o) => o.kind === 'ring');
 
 /** The alarm's ring scheduled ahead, not rung now (nor a blip). */
 const scheduledAhead = (o: Osc): boolean => o.kind === 'ring' && o.at !== null && o.at - o.made > 1;
-
-class Failure extends Error {}
-
-function check(cond: boolean, what: string): void {
-  if (!cond) throw new Failure(what);
-}
-
-/** One page, attached on the browser's socket. */
-class Tab {
-  readonly errors: string[] = [];
-
-  private cdp: Cdp;
-  readonly session: string;
-  readonly targetId: string;
-
-  private constructor(cdp: Cdp, session: string, targetId: string) {
-    this.cdp = cdp;
-    this.session = session;
-    this.targetId = targetId;
-  }
-
-  static async open(cdp: Cdp, contextId: string, url: string): Promise<Tab> {
-    const { targetId } = await cdp.send('Target.createTarget', {
-      url: 'about:blank', browserContextId: contextId,
-    }) as { targetId: string };
-    const { sessionId } = await cdp.send('Target.attachToTarget', { targetId: targetId, flatten: true }) as {
-      sessionId: string;
-    };
-    const tab = new Tab(cdp, sessionId, targetId);
-    cdp.on((method, params, session) => {
-      if (session !== sessionId || method !== 'Runtime.exceptionThrown') return;
-      const d = (params as { exceptionDetails: { text: string; exception?: { description?: string } } }).exceptionDetails;
-      tab.errors.push(d.exception?.description ?? d.text);
-    });
-    await cdp.send('Runtime.enable', {}, sessionId);
-    await cdp.send('Page.enable', {}, sessionId);
-    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: INSTRUMENT }, sessionId);
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-      width: 390, height: 844, deviceScaleFactor: 1, mobile: false,
-    }, sessionId);
-    if (THROTTLE > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE }, sessionId);
-    await tab.goto(url);
-    return tab;
-  }
-
-  /** An expression's value in the page, awaited, as a user's gesture (so a
-   *  click primes the audio, as the Start tap does). */
-  async eval<T>(expression: string): Promise<T> {
-    const r = await this.cdp.send('Runtime.evaluate', {
-      expression: expression, awaitPromise: true, returnByValue: true, userGesture: true,
-    }, this.session) as { result: { value?: unknown }; exceptionDetails?: { text: string; exception?: { description?: string } } };
-    if (r.exceptionDetails !== undefined) {
-      throw new Error(`in the page: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}`);
-    }
-    return r.result.value as T;
-  }
-
-  /** Wait for an expression to be truthy. */
-  async until(expression: string, what: string, ms = WAIT_MS): Promise<void> {
-    const end = Date.now() + ms;
-    let last = '';
-    while (Date.now() < end) {
-      try {
-        if (await this.eval<boolean>(`(async () => !!(${expression}))()`)) return;
-      } catch (e) {
-        // The page between documents, most likely.
-        last = e instanceof Error ? e.message : String(e);
-      }
-      await sleep(40);
-    }
-    throw new Failure(`waited ${ms / 1000} s for ${what}${last === '' ? '' : ` (${last})`}`);
-  }
-
-  async goto(url: string): Promise<void> {
-    await this.eval('window.__left = true').catch(() => undefined);
-    await this.cdp.send('Page.navigate', { url: url }, this.session);
-    await this.booted();
-  }
-
-  async reload(): Promise<void> {
-    await this.eval('window.__left = true');
-    await this.cdp.send('Page.reload', {}, this.session);
-    await this.booted();
-  }
-
-  private async booted(): Promise<void> {
-    await this.until("!window.__left && document.readyState === 'complete' && window.__e2e"
-      + " && document.getElementById('phaseLabel')?.textContent !== ''", 'the page to boot');
-  }
-
-  snap(): Promise<Snap> {
-    return this.eval<Snap>('window.__e2e.snap()');
-  }
-
-  async click(selector: string): Promise<void> {
-    await this.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
-      if (e === null) throw new Error('no ${selector.replace(/'/g, '')}'); e.click(); })()`);
-  }
-
-  /** The page looked at again, as a tab coming back is. */
-  async look(): Promise<void> {
-    await this.eval("window.dispatchEvent(new Event('focus'))");
-  }
-
-  /** Wait for the page to have done what it will: no timer of up to 5 s
-   *  pending, no worker job, no request, three looks running. What a fixed
-   *  sleep did, whatever the machine's speed. */
-  async settle(): Promise<void> {
-    const end = Date.now() + WAIT_MS;
-    let quiet = 0;
-    while (Date.now() < end) {
-      const busy = await this.eval<boolean>(
-        '(() => { const p = window.__pending; return p.timeouts.size + p.workers + p.fetches > 0; })()');
-      quiet = busy ? 0 : quiet + 1;
-      if (quiet >= 3) return;
-      await sleep(40);
-    }
-    const p = await this.eval<string>('JSON.stringify({ ...window.__pending, timeouts: window.__pending.timeouts.size })');
-    throw new Failure(`waited ${WAIT_MS / 1000} s for the page to settle: ${p}`);
-  }
-
-  /** The development clock moved by `s` seconds, and the page told. */
-  async shift(s: number): Promise<void> {
-    await this.eval(`window.aetClock.shift(${s})`);
-    await this.look();
-  }
-
-  /** The development clock set to `at_s`, a clock time, and the page told. */
-  async shiftTo(at_s: number): Promise<void> {
-    await this.eval(`window.aetClock.set(${at_s * 1000})`);
-    await this.look();
-  }
-
-  /** The page's time, ms. */
-  now(): Promise<number> {
-    return this.eval<number>('window.aetClock.now()');
-  }
-
-  /** The requests to the sharing endpoint this page has made. */
-  async sends(): Promise<number> {
-    return this.eval<number>("window.__fetches.filter((f) => f.url.includes('/api/eggs') && f.method !== 'GET').length");
-  }
-
-  /** Wait for the phase, and for the page to say it (a tick behind the
-   *  clock at most); the label is checked against the phase's words. */
-  async phase(want: string, ms = WAIT_MS): Promise<Snap> {
-    await this.until(`await (async () => { const s = await window.__e2e.snap();
-      return s.phase === ${JSON.stringify(want)} && (${LABEL_SAYS})(s); })()`, `phase ${want}`, ms);
-    const s = await this.snap();
-    labelSays(s);
-    return s;
-  }
-
-  osc(): Promise<Osc[]> {
-    return this.eval<Osc[]>('window.__osc');
-  }
-
-  writes(): Promise<{ key: string; value: string }[]> {
-    return this.eval('window.__writes');
-  }
-
-  storage(key: string): Promise<string | null> {
-    return this.eval(`localStorage.getItem(${JSON.stringify(key)})`);
-  }
-
-  async close(): Promise<void> {
-    await this.cdp.send('Target.closeTarget', { targetId: this.targetId }).catch(() => undefined);
-  }
-}
-
-/** One scenario's browser context: its own storage, its tabs. */
-class Ctx {
-  readonly tabs: Tab[] = [];
-  readonly cdp: Cdp;
-  readonly id: string;
-
-  private constructor(cdp: Cdp, id: string) {
-    this.cdp = cdp;
-    this.id = id;
-  }
-
-  static async create(cdp: Cdp): Promise<Ctx> {
-    const { browserContextId } = await cdp.send('Target.createBrowserContext', {}) as { browserContextId: string };
-    return new Ctx(cdp, browserContextId);
-  }
-
-  async open(path: string, origin = ORIGIN): Promise<Tab> {
-    const tab = await Tab.open(this.cdp, this.id, origin + path);
-    this.tabs.push(tab);
-    return tab;
-  }
-
-  async dispose(): Promise<void> {
-    await this.cdp.send('Target.disposeBrowserContext', { browserContextId: this.id }).catch(() => undefined);
-  }
-}
 
 /* ------------------------------------------------------------- the cook */
 
@@ -427,9 +55,9 @@ const near = (a: number, b: number, tol: number): boolean => Math.abs(a - b) <= 
 async function start(tab: Tab, mode: 'cold' | 'hot'): Promise<Snap> {
   if (mode === 'hot') {
     await tab.click('#startHot');
-    await tab.until("(await window.__e2e.ui('state')).state.settings.startMode === 'hot'", 'a hot start chosen');
+    await tab.until("__snap().settings.startMode === 'hot'", 'a hot start chosen');
   }
-  await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+  await tab.until("__snap().chosen !== null", 'the time decided');
   await tab.click('#primary');
   return tab.phase(mode === 'cold' ? 'HEATING' : 'COOKING');
 }
@@ -438,7 +66,7 @@ async function start(tab: Tab, mode: 'cold' | 'hot'): Promise<Snap> {
 async function boil(tab: Tab): Promise<Snap> {
   await tab.click('#primary');
   await tab.phase('COOKING');
-  await tab.until('(await window.__e2e.snap()).decided', 'the measured pot planned');
+  await tab.until('__snap().decided', 'the measured pot planned');
   return tab.snap();
 }
 
@@ -515,7 +143,7 @@ async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Promise<Sn
   if (was !== null && was === (await tab.now()) / 1000) {
     throw new Failure('two corrections at one moment: no cook makes them; step the clock between them');
   }
-  await tab.until(`await (async () => { const s = await window.__e2e.snap(); const c = s.stored === null ? null : JSON.parse(s.stored).cook;
+  await tab.until(`await (async () => { const s = __snap(); const c = s.stored === null ? null : JSON.parse(s.stored).cook;
     return c !== null && c.correctedAt_s !== ${JSON.stringify(was)} && s.cook.correctedAt_s === c.correctedAt_s; })()`,
   'a correction committed', ms);
   return tab.snap();
@@ -529,7 +157,7 @@ async function panelStart(tab: Tab): Promise<string> {
 
 /** A moment, epoch s, as the page says a time of day. */
 async function clockAt(tab: Tab, at_s: number): Promise<string> {
-  return tab.eval<string>(`(async () => (await window.__e2e.ui('copy')).timeOfDay(${at_s * 1000}))()`);
+  return tab.timeOfDay(at_s * 1000);
 }
 
 /** The setup sentence's words, and its start clause's. */
@@ -547,48 +175,28 @@ function storedCook(s: Snap): Cook | null {
   return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
 }
 
-/** Whether the label the page shows is the phase's own words (the cooks
- *  here hold the boil and cool in ice), as a function for the page. */
-const LABEL_SAYS = `(s) => {
-  const want = { HEATING: s.labels.heating, PULL: s.labels.pull, DONE: s.labels.done,
-    COOLING: s.labels.coolingIce, COOKING: s.labels.cookingBoiling };
-  return want[s.phase] === undefined || want[s.phase] === s.label;
-}`;
-
-function labelSays(s: Snap): void {
-  const says = (new Function(`return ${LABEL_SAYS}`) as () => (s: Snap) => boolean)();
-  check(says(s), `${s.phase} labelled "${s.label}"`);
-}
-
 /* ------------------------------------------------------------ scenarios */
 
-interface Harness {
-  ctx: Ctx;
-  posts(): string[];
-}
-
-type Scenario = (h: Harness) => Promise<string>;
-
-const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
+const SCENARIOS: Record<string, Scenario> = {
   'inert-off-localhost': {
     what: 'the development clock is off on any host but this machine',
     run: async (h) => {
-      const away = await h.ctx.open('/?clock=60&at=+1h', `http://eggs.test:${SITE_PORT}`);
-      const a = await away.eval<{ mark: boolean; handle: boolean; skew: number; speed: number; search: string }>(`(async () => {
-        const n = await window.__e2e.ui('now');
-        return { mark: document.getElementById('devClock') !== null, handle: 'aetClock' in window,
-          skew: n.nowMs() - Date.now(), speed: n.clockSpeed(), search: location.search };
-      })()`);
-      check(!a.mark && !a.handle && Math.abs(a.skew) < 50 && a.speed === 1, `eggs.test: ${JSON.stringify(a)}`);
+      // Off this machine the development tools are not even asked for: the
+      // page is the shipped one.
+      const away = await h.ctx.open('/?clock=60&at=+1h', `http://eggs.test:${h.port}`);
+      const a = await away.eval<{ mark: boolean; handles: boolean; search: string }>(`(() => ({
+        mark: document.getElementById('devClock') !== null, handles: 'aetClock' in window || 'aetTest' in window,
+        search: location.search }))()`);
+      check(!a.mark && !a.handles, `eggs.test: ${JSON.stringify(a)}`);
       check(a.search === '?clock=60&at=+1h', 'the address left alone off this machine');
+      const asked = away.requests.filter((r) => r.url.includes('/dev/'));
+      check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
       const home = await h.ctx.open('/?clock=60&at=+1h');
-      const b = await home.eval<{ mark: string | null; skew: number; search: string }>(`(async () => {
-        const n = await window.__e2e.ui('now');
-        return { mark: document.getElementById('devClock')?.textContent ?? null,
-          skew: n.nowMs() - Date.now(), search: location.search };
-      })()`);
+      const b = await home.eval<{ mark: string | null; skew: number; search: string }>(`(() => ({
+        mark: document.getElementById('devClock')?.textContent ?? null,
+        skew: window.aetTest.snapshot().now_ms - Date.now(), search: location.search }))()`);
       check(b.mark !== null && b.skew > 3_590_000 && b.search === '', `127.0.0.1: ${JSON.stringify(b)}`);
-      return `eggs.test: Date.now, no mark, no handle; 127.0.0.1: mark "${b.mark}"`;
+      return `eggs.test: no development tools asked for, no mark, no handle; 127.0.0.1: mark "${b.mark}"`;
     },
   },
 
@@ -649,7 +257,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(s.feedback, 'the questions at Done');
       const cook = storedCook(s);
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).log.length === 1', 'the egg logged');
+      await tab.until('__snap().log.length === 1', 'the egg logged');
       s = await tab.snap();
       const rec = s.log[0];
       check(rec.id === cook?.id_ms, 'the record is the cook');
@@ -671,12 +279,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     what: 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+      await tab.until("__snap().chosen !== null", 'the time decided');
       await tab.settle();
       const idle = await layout(tab);
       check(idle.shown.every((x) => x.visible), `idle: ${JSON.stringify(idle.shown)}`);
       let s = await start(tab, 'cold');
-      await tab.until('(await window.__e2e.snap()).deadlines !== null', 'planned');
+      await tab.until('__snap().deadlines !== null', 'planned');
       await tab.settle();
       const heating = await layout(tab);
       check(heating.shown.every((x) => x.visible), `Heating: ${JSON.stringify(heating.shown)}`);
@@ -711,7 +319,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       })()`);
       const at = async (level: number): Promise<{ reading: string; fill: string }> => {
         await setSlider(tab, level);
-        await tab.until(`await (async () => { const st = (await window.__e2e.ui('state')).state;
+        await tab.until(`await (async () => { const st = __snap();
           return st.chosen !== null && st.chosen.level === st.settings.doneness
             && Math.abs(st.settings.doneness - ${level}) < 0.1; })()`, `level ${level} decided`);
         await tab.settle();
@@ -728,7 +336,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const live = await centre();
       check(live.reading === 'live', `the cook reads live: ${live.reading}`);
       check(live.fill !== aimed.fill, `the live egg starts raw, not as aimed: ${live.fill}`);
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -749,14 +357,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.shift(60);
       await tab.click('#sentence .clause[aria-controls="panelStart"]');
       await tab.click('#startCold');
       s = await corrected(tab, null);
       check(s.phase === 'HEATING', `back to ${s.phase}`);
-      check(s.primary === (await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('action.fullBoil'))()")),
+      check(s.primary === (await tab.words('action.fullBoil')),
         `the button: ${s.primary}`);
       const pull1 = deadlines(s).cookEnd_s;
       check(pull1 > pull0 + 60, `the pull later: ${(pull1 - pull0).toFixed(0)} s`);
@@ -798,14 +406,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.shift(30);
       // Nothing yet: a tap settles first. Read in the same task as the tap,
       // so no timer can run between them, however slow the page.
-      const atTap = await tab.eval<number | null>(`(async () => { const st = (await window.__e2e.ui('state')).state;
+      const atTap = await tab.eval<number | null>(`(() => {
         const e = document.querySelector('#size'); e.value = '3'; e.dispatchEvent(new Event('change', { bubbles: true }));
-        return st.cook.correctedAt_s; })()`);
+        return __snap().cook.correctedAt_s; })()`);
       check(atTap === null, 'committed before the settle');
       s = await corrected(tab, null);
       const heavier = deadlines(s).cookEnd_s;
@@ -818,7 +426,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await later(tab);
       await pick(tab, '#size', '2');
       s = await corrected(tab, s);
-      await tab.until('(await window.__e2e.snap()).decided', 'planned on its pot');
+      await tab.until('__snap().decided', 'planned on its pot');
       s = await tab.snap();
       check(near(deadlines(s).cookEnd_s, pull0, 1e-6), `back gives back: ${(deadlines(s).cookEnd_s - pull0).toFixed(6)} s`);
       return `heavier +${(heavier - pull0).toFixed(1)} s, lighter ${(lighter - pull0).toFixed(1)} s, back to the pull exactly`;
@@ -830,7 +438,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.shiftTo(pull0 - 40);
       let base = (await tab.osc()).length;
@@ -862,7 +470,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       const level = s.cook?.choices.level ?? 0.41;
       const pull0 = deadlines(s).cookEnd_s;
@@ -907,7 +515,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       // + three times, a tap each: the third goes no further than now.
       for (let i = 0; i < 3; i++) await press(tab, '#startedAtMore');
       const limit = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
-      const now = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('controls.startedAt.latestNow'))()");
+      const now = await tab.words('controls.startedAt.latestNow');
       check(limit === now, `the reason at now: "${limit}"`);
       s = await corrected(tab, null);
       const late = (s.cook?.startedAt_s ?? 0) - start0;
@@ -921,7 +529,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shift(60);
       for (let i = 0; i < 5; i++) await press(tab, '#startedAtMore');
       const atBoil = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
-      check(atBoil.includes(await tab.eval<string>(`(async () => (await window.__e2e.ui('copy')).timeOfDay(${tap * 1000}))()`)),
+      check(atBoil.includes(await tab.timeOfDay(tap * 1000)),
         `the reason at the boil names its time: "${atBoil}"`);
       s = await corrected(tab, s);
       check(s.cook?.startedAt_s === tap, `in at the press: ${(s.cook?.startedAt_s ?? 0) - tap}`);
@@ -940,10 +548,10 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     what: "DECISIONS 108: the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does",
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+      await tab.until("__snap().chosen !== null", 'the time decided');
       await tab.settle();
       const idle = await sentenceSays(tab);
-      const cold = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('setup.start.cold'))()");
+      const cold = await tab.words('setup.start.cold');
       const noTime = (where: string, said: { sentence: string; clause: string }, clause: string): void => {
         check(!/\d:\d\d/.test(said.sentence), `${where}: a time in the sentence: "${said.sentence}"`);
         check(said.clause === clause, `${where}: the start clause "${said.clause}", not "${clause}"`);
@@ -971,7 +579,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.settle();
       const standing = await sentenceSays(tab);
       noTime('the heat off', standing,
-        await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('setup.start.coldStanding'))()"));
+        await tab.words('setup.start.coldStanding'));
       return `"${cooking.sentence}"; the panel "${clock}"; "${standing.clause}"`;
     },
   },
@@ -981,7 +589,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.click('#settingsLink');
       await tab.until("document.body.dataset.view === 'settings' && document.getElementById('litres').offsetParent !== null", 'Settings open');
@@ -1014,7 +622,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await b.phase('IDLE');
       let sb = await start(b, 'hot');
       const idB = sb.cook?.id_ms;
-      await b.until('(await window.__e2e.snap()).decided', 'B planned');
+      await b.until('__snap().decided', 'B planned');
       sb = await b.snap();
       const pullB = deadlines(sb).cookEnd_s;
       await pick(a, '#size', '3');
@@ -1027,7 +635,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(sb.cook?.choices.mass_kg === 0.068 && near(deadlines(sb).cookEnd_s, pullB, 1e-6), 'B\'s cook untouched');
       const shown = await b.eval<string>("document.getElementById('size').value");
       check(shown === '2', `B's controls show B's egg: ${shown}`);
-      const next = await b.eval<number>("(async () => (await window.__e2e.ui('state')).state.settings.sizeIndex)()");
+      const next = await b.eval<number>('__snap().settings.sizeIndex');
       check(next === 3, `B's next cook takes A's correction: ${next}`);
       await b.click('#secondary');
       await b.phase('IDLE');
@@ -1042,7 +650,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -1051,12 +659,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="runny"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      await tab.until('__snap().eggsLogged === 1', 'Runny folded');
       const first = (await tab.snap()).log[0];
       const peak0 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
       await pick(tab, '#size', '3');
       s = await corrected(tab, null);
-      await tab.until(`JSON.stringify((await window.__e2e.snap()).log[0].egg) !== ${JSON.stringify(JSON.stringify(first.egg))}`,
+      await tab.until(`JSON.stringify(__snap().log[0].egg) !== ${JSON.stringify(JSON.stringify(first.egg))}`,
         'the record corrected');
       const heavier = (await tab.snap()).log[0];
       check(heavier.yolkWord === 'runny', `the answer kept: ${heavier.yolkWord}`);
@@ -1065,9 +673,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await later(tab);
       await pick(tab, '#size', '2');
       s = await corrected(tab, s);
-      await tab.until(`JSON.stringify((await window.__e2e.snap()).log[0].egg) === ${JSON.stringify(JSON.stringify(first.egg))}`,
+      await tab.until(`JSON.stringify(__snap().log[0].egg) === ${JSON.stringify(JSON.stringify(first.egg))}`,
         'the record back');
-      await tab.until("(await window.__e2e.snap()).eggsLogged === 1 && (await window.__e2e.ui('calibration')).eggsBehind() === 0",
+      await tab.until("__snap().eggsLogged === 1 && __snap().eggsBehind === 0",
         'folded again');
       const back = (await tab.snap()).log[0];
       check(JSON.stringify(back.forecast) === JSON.stringify(first.forecast),
@@ -1084,7 +692,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       const level = String(s.cook?.choices.level);
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
@@ -1094,7 +702,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      await tab.until('__snap().eggsLogged === 1', 'Jammy folded');
       const first = JSON.stringify((await tab.snap()).log[0]);
       await drag(tab, [0.6, 0.9]);
       await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
@@ -1115,21 +723,20 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     what: 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it rings or shows; each answer',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      const words = async (key: string): Promise<string> => tab.eval<string>(
-        `(async () => (await window.__e2e.ui('copy')).t(${JSON.stringify(key)}))()`);
+      const words = (key: string): Promise<string> => tab.words(key);
       const ask = await words('ask.stillIn');
       // The alarm rang and its grace ran out, unanswered: the clock assumed
       // the egg came out. Then the cook says it went into cold water.
       const asked = async (): Promise<Snap> => {
         let s = await start(tab, 'hot');
-        await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+        await tab.until('__snap().decided', 'the pot planned');
         s = await tab.snap();
         await tab.shiftTo(deadlines(s).cookEnd_s + 25);
         s = await tab.phase('COOLING');
         check(storedCook(s)?.events.pulled?.by === 'timeout', 'the clock assumed the pull');
         await tab.click('#startCold');
         await corrected(tab, null);
-        await tab.until(`(await window.__e2e.snap()).label === ${JSON.stringify(ask)}`, 'the question');
+        await tab.until(`__snap().label === ${JSON.stringify(ask)}`, 'the question');
         return tab.snap();
       };
       let s = await asked();
@@ -1157,12 +764,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.click('#startHot');
       s = await asked();
       await tab.click('#stillOut');
-      await tab.until(`(await window.__e2e.snap()).label !== ${JSON.stringify(ask)}`, 'the question answered');
+      await tab.until(`__snap().label !== ${JSON.stringify(ask)}`, 'the question answered');
       s = await tab.snap();
       const pulled = storedCook(s)?.events.pulled;
       check(pulled?.by === 'timeout' && pulled.confirmed, `out: the pull stands, confirmed: ${JSON.stringify(pulled)}`);
       check(s.phase === 'COOLING' || s.phase === 'DONE', `out: ${s.phase}`);
-      await tab.until('(await window.__e2e.snap()).cook.asRan?.correctedAt_s === (await window.__e2e.snap()).cook.correctedAt_s',
+      await tab.until('__snap().cook.asRan?.correctedAt_s === __snap().cook.correctedAt_s',
         'the record made again for cold water');
       return `${yes}; out: ${s.phase}, the pull confirmed, the record corrected`;
     },
@@ -1173,7 +780,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const start_s = s.cook?.startedAt_s ?? 0;
       await tab.shift(300);
       await tab.click('#startCold');
@@ -1208,7 +815,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.settle();
       const warn = await tab.eval<{ hidden: boolean; text: string }>(
         "(() => { const w = document.getElementById('warn'); return { hidden: w.hidden, text: w.textContent }; })()");
-      const never = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('refusal.whiteNeverSets'))()");
+      const never = await tab.words('refusal.whiteNeverSets');
       check(!warn.hidden && warn.text === never, `the slot: "${warn.text}"`);
       return `${slow}; heat off, 0.5 L, one small egg: "${warn.text}"`;
     },
@@ -1219,12 +826,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'hot');
-      await a.until('(await window.__e2e.snap()).decided', 'A planned');
+      await a.until('__snap().decided', 'A planned');
       const pull0 = deadlines(await a.snap()).cookEnd_s;
       // B opened on the site, as a second visit: it takes up A's cook.
       const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       await b.phase('COOKING');
-      await b.until('(await window.__e2e.snap()).decided', 'B planned');
+      await b.until('__snap().decided', 'B planned');
       await a.shift(60);
       await b.shift(60);
       // A minute in, A corrects the start to cold water (the owner's case).
@@ -1257,7 +864,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -1266,13 +873,13 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      await tab.until('__snap().eggsLogged === 1', 'Jammy folded');
       const first = JSON.stringify((await tab.snap()).log[0].egg);
       await later(tab);
       // A clause tapped, then Start again while the change is still settling.
       await pick(tab, '#size', '3');
       await tab.click('#primary');
-      await tab.until(`await (async () => { const s = await window.__e2e.snap(); return s.phase === 'IDLE' && s.stored === null
+      await tab.until(`await (async () => { const s = __snap(); return s.phase === 'IDLE' && s.stored === null
         && s.log.length === 1 && JSON.stringify(s.log[0].egg) !== ${JSON.stringify(first)}; })()`,
       'the corrected egg logged, then the cook forgotten');
       s = await tab.snap();
@@ -1286,9 +893,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.click('#coolCounter');
-      await tab.until("(await window.__e2e.ui('state')).state.settings.cooling === 'counter'", 'the counter chosen');
+      await tab.until("__snap().settings.cooling === 'counter'", 'the counter chosen');
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -1297,7 +904,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const out_s = storedCook(s)?.events.pulled?.out_s ?? 0;
       await tab.shift(60);
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      await tab.until('__snap().eggsLogged === 1', 'Jammy folded');
       await tab.settle();
       const osc0 = (await tab.osc()).length;
       await tab.shift(5);
@@ -1309,7 +916,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check((await tab.osc()).length === osc0, `nothing rang: ${(await tab.osc()).length - osc0}`);
       const cooled = storedCook(s)?.events.cooledAt_s ?? null;
       check(cooled !== null && cooled - out_s <= 65 + 1e-6, `the cooling ended by the correction: ${cooled === null ? null : cooled - out_s}`);
-      await tab.until('(await window.__e2e.snap()).log[0].cooled_s > 0', 'the record corrected');
+      await tab.until('__snap().log[0].cooled_s > 0', 'the record corrected');
       const rec = (await tab.snap()).log[0] as Rec & { cooled_s: number };
       check(rec.cooled_s <= 65 + 1e-6, `the record's ice bath no longer than till the correction: ${rec.cooled_s}`);
       // The alarm's grace ran out, the cooling ended, Jammy answered; then
@@ -1319,14 +926,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.phase('IDLE');
       await tab.click('#coolIce');
       s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 25);
       s = await tab.phase('COOLING');
       await tab.shiftTo(deadlines(s).coolEnd_s + 5);
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 2', 'Jammy folded');
+      await tab.until('__snap().eggsLogged === 2', 'Jammy folded');
       await tab.shift(5);
       await tab.click('#startCold');
       s = await corrected(tab, null);
@@ -1344,7 +951,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -1356,9 +963,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const note = "document.getElementById('note').textContent";
       const before = await tab.eval<string>(note);
       await tab.click('.fb[data-yolk="runny"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      await tab.until('__snap().eggsLogged === 1', 'Runny folded');
       await tab.reload();
-      await tab.until('(await window.__e2e.snap()).decided', 'planned on the new posterior');
+      await tab.until('__snap().decided', 'planned on the new posterior');
       await tab.settle();
       const after = await tab.eval<string>(note);
       check(after === before, `"${before}" became "${after}"`);
@@ -1371,15 +978,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       await tab.shift(300);
       await tab.click('#certaintyWord');
       await tab.settle();
       const line = "document.getElementById('certaintyTime').textContent";
       // The times of day the eggs come out between, from this plan's range.
-      const want = await tab.eval<string>(`(async () => { const st = (await window.__e2e.ui('state')).state;
-        const copy = await window.__e2e.ui('copy'); const r = st.plan.certainty.time; const t0 = st.cook.startedAt_s;
-        return copy.t('certainty.timeOut', { low: copy.timeOfDay((t0 + r.low_s) * 1000), high: copy.timeOfDay((t0 + r.high_s) * 1000) }); })()`);
+      const want = await tab.eval<string>(`(() => { const s = __snap(); const r = s.certainty.time; const t0 = s.cook.startedAt_s;
+        return aetTest.t('certainty.timeOut', { low: aetTest.timeOfDay((t0 + r.low_s) * 1000), high: aetTest.timeOfDay((t0 + r.high_s) * 1000) }); })()`);
       const cooking = await tab.eval<string>(line);
       check(cooking === want, `cooking, ${(await tab.snap()).digits} left: "${cooking}", want "${want}"`);
       await tab.click('#secondary');
@@ -1387,7 +993,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       // Cold and never tapped: the slow hob lengthens the guess.
       await tab.click('#startCold');
       s = await start(tab, 'cold');
-      await tab.until('(await window.__e2e.snap()).decided', 'the guessed pot planned');
+      await tab.until('__snap().decided', 'the guessed pot planned');
       const start_s = s.cook?.startedAt_s ?? 0;
       await tab.shiftTo(start_s + 16 * 60);
       await tab.settle();
@@ -1409,7 +1015,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.shiftTo(pull0 + 15);
       let s = await tab.phase('PULL');
@@ -1435,7 +1041,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       await tab.shift(30);
       await pick(tab, '#size', '3');
       await tab.reload();
@@ -1464,7 +1070,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       labelSays(s);
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       const d = deadlines(s);
       check(!s.deadlines?.provisional, 'a hot start knows its pull');
@@ -1477,7 +1083,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.phase('DONE');
       const cook = storedCook(s);
       await tab.click('#primary');
-      await tab.until('(await window.__e2e.snap()).log.length === 1', 'the unanswered egg logged');
+      await tab.until('__snap().log.length === 1', 'the unanswered egg logged');
       s = await tab.phase('IDLE');
       const rec = s.log[0];
       check(rec.id === cook?.id_ms && rec.yolkWord === null && rec.forecast !== null,
@@ -1515,11 +1121,11 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await start(tab, 'cold');
       const notes: string[] = [];
       const again = async (where: string): Promise<Snap> => {
-        await tab.until('(await window.__e2e.snap()).decided || (await window.__e2e.snap()).deadlines.provisional',
+        await tab.until('__snap().decided || __snap().deadlines.provisional',
           'the plan before');
         const before = await tab.snap();
         await tab.reload();
-        await tab.until('(await window.__e2e.snap()).decided || (await window.__e2e.snap()).deadlines.provisional',
+        await tab.until('__snap().decided || __snap().deadlines.provisional',
           'the plan after');
         const after = await tab.snap();
         check(after.phase === before.phase, `${where}: ${before.phase} became ${after.phase}`);
@@ -1610,13 +1216,13 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       let sb = await b.phase('HEATING');
       check(storedCook(sb)?.id_ms === (await a.snap()).cook?.id_ms, 'B took up A\'s cook');
-      await b.until('(await window.__e2e.snap()).deadlines !== null', 'B planned');
+      await b.until('__snap().deadlines !== null', 'B planned');
       await a.click('#primary');
       await a.phase('COOKING');
       sb = await b.phase('COOKING');
       // Both tabs' surfaces in, then all B would write written.
-      await a.until('(await window.__e2e.snap()).decided', 'A planned on the measured pot');
-      await b.until('(await window.__e2e.snap()).decided', 'B planned on the measured pot');
+      await a.until('__snap().decided', 'A planned on the measured pot');
+      await b.until('__snap().decided', 'B planned on the measured pot');
       await a.settle();
       await b.settle();
       const stored = storedCook(await a.snap());
@@ -1653,18 +1259,18 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 25);
       s = await tab.phase('COOLING');
       await tab.shiftTo(deadlines(s).coolEnd_s + 5);
       s = await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).log.length === 1', 'Jammy logged');
-      const final0 = await tab.eval<number>("window.__e2e.ui('update').then((m) => m.finalEggs())");
+      await tab.until('__snap().log.length === 1', 'Jammy logged');
+      const final0 = await tab.eval<number>('__snap().finalEggs');
       check(final0 === 0, `open at Done: ${final0} final`);
       await tab.eval('window.aetClock.shift(3 * 3600)');
-      const final1 = await tab.eval<number>("window.__e2e.ui('update').then((m) => m.finalEggs())");
+      const final1 = await tab.eval<number>('__snap().finalEggs');
       check(final1 === 1, `three hours on: ${final1} final`);
       await tab.click('.wb[data-white="tender"]');
       await tab.settle();
@@ -1683,7 +1289,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       await tab.phase('PULL');
@@ -1691,7 +1297,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.phase('COOLING');
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       s = await tab.phase('DONE');
-      await tab.until('(await window.__e2e.snap()).target !== ""', 'what was asked for');
+      await tab.until('__snap().target !== ""', 'what was asked for');
       // The slider's heading, the cook's peak yolk (the one screen keeps the
       // slider where the summary under the sentence was).
       const summary = "document.getElementById('donenessPeak').textContent";
@@ -1699,15 +1305,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const asked = (await tab.snap()).target;
       check(asked.includes(before), `"${asked}" and "${before}" agree`);
       await tab.click('.fb[data-yolk="runny"]');
-      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      await tab.until('__snap().eggsLogged === 1', 'Runny folded');
       await tab.reload();
-      await tab.until('(await window.__e2e.snap()).decided', 'planned on the new posterior');
+      await tab.until('__snap().decided', 'planned on the new posterior');
       s = await tab.snap();
       check(s.phase === 'DONE', `reloaded to ${s.phase}`);
       const after = await tab.eval<string>(summary);
       // What the plan made now, on the posterior that has folded Runny, says.
-      const now_C = await tab.eval<number>(`(async () => {
-        const st = (await window.__e2e.ui('state')).state; return st.plan.solution.result.peakYolk_C; })()`);
+      const now_C = (await tab.snap()).peakYolk_C ?? NaN;
       check(after === before, `"${before}" became "${after}"`);
       return `"${after}" kept (the plan now: peak yolk ${now_C.toFixed(1)} °C)`;
     },
@@ -1781,12 +1386,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open('/');
       await tab.click('#shareSetting');
-      await tab.until("(await window.__e2e.ui('share')).shareState().on", 'sharing on');
+      await tab.until("__snap().share.on", 'sharing on');
       const posts0 = h.posts().length;
       await start(tab, 'hot');
       // The cook begun 20 minutes ago: every clock time in it moved back.
       const D = 20 * 60;
-      await tab.goto(`${ORIGIN}/privacy/`);
+      await tab.goto(`${h.origin}/privacy/`, false);
       await tab.eval(`(() => {
         const o = JSON.parse(localStorage.getItem('aet.cook.v4'));
         const c = o.cook;
@@ -1794,16 +1399,16 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
         for (const k of ['startedAt_s', 'firstHotAt_s', 'coldSince_s', 'correctedAt_s']) if (c[k] !== null) c[k] -= ${D};
         localStorage.setItem('aet.cook.v4', JSON.stringify(o));
       })()`).catch(() => undefined);
-      await tab.goto(`${ORIGIN}/`);
+      await tab.goto(`${h.origin}/`);
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
-      await tab.until('(await window.__e2e.snap()).log.length === 1', 'Jammy logged');
+      await tab.until('__snap().log.length === 1', 'Jammy logged');
       await tab.settle();
       check((await tab.sends()) === 0, `nothing sent while the egg is open: ${await tab.sends()} requests`);
       check(h.posts().length === posts0, `nothing sent while the egg is open: ${h.posts().slice(posts0).join('; ')}`);
       await tab.click('#primary');
       await tab.phase('IDLE');
-      await tab.until("(await window.__e2e.ui('share')).shareState().sent === 1", 'the egg sent');
+      await tab.until("__snap().share.sent === 1", 'the egg sent');
       const sent = h.posts().slice(posts0);
       check(sent.length === 1 && sent[0].includes('201'), `one egg sent: ${sent.join('; ')}`);
       return `at Done: 0 sent; Start again: ${sent[0]}`;
@@ -1815,17 +1420,17 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(`${STOPPED}&at=-1m`);
       await tab.click('#shareSetting');
-      await tab.until("(await window.__e2e.ui('share')).shareState().on", 'sharing on');
+      await tab.until("__snap().share.on", 'sharing on');
       const posts0 = h.posts().length;
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 25);
       s = await tab.phase('COOLING');
       await tab.shiftTo(deadlines(s).coolEnd_s + 5);
       await tab.phase('DONE');
       await tab.click('#primary');
-      await tab.until('(await window.__e2e.snap()).log.length === 1', 'the egg logged');
+      await tab.until('__snap().log.length === 1', 'the egg logged');
       await tab.settle();
       const before = await tab.sends();
       await tab.eval('window.aetClock.off()');
@@ -1860,12 +1465,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const line = await tab.eval<{ shown: boolean; text: string; want: string }>(`(async () => {
         const el = document.getElementById('newerNote');
         return { shown: !el.hidden && el.offsetHeight > 0, text: el.textContent,
-          want: (await window.__e2e.ui('copy')).t('newer.note') };
+          want: aetTest.t('newer.note') };
       })()`);
       check(line.shown && line.text === line.want && line.text !== '', `the line: ${JSON.stringify(line)}`);
       // The timer still works, to Done; no questions; Start again.
       let s = await start(tab, 'hot');
-      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.until('__snap().decided', 'the pot planned');
       s = await tab.snap();
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       s = await tab.phase('PULL');
@@ -1911,62 +1516,19 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  const all: Record<string, Scenario> = SCENARIOS;
   if (args.includes('--list')) {
-    for (const [name, s] of Object.entries(SCENARIOS)) console.log(`${name.padEnd(26)} ${s.what}`);
+    for (const [name, s] of Object.entries(all)) console.log(`${name.padEnd(26)} ${s.what}`);
     return;
   }
-  const names = args.length > 0 ? args : Object.keys(SCENARIOS);
-  for (const n of names) if (!(n in SCENARIOS)) throw new Error(`no scenario ${n}; --list lists them`);
-
-  const lines: string[] = [];
-  const server: ChildProcess = spawn(process.execPath, ['dist/tools/devServer.js'], {
-    env: { ...process.env, PORT: String(SITE_PORT) }, stdio: ['ignore', 'pipe', 'inherit'],
-  });
-  server.stdout?.on('data', (b: Buffer) => { lines.push(...String(b).split('\n').filter((l) => l !== '')); });
-  let chrome: Browser | null = null;
-  let failed = 0;
-  const t0 = Date.now();
-  try {
-    await waitForHttp(`${ORIGIN}/index.html`);
-    chrome = await launchChrome([
-      '--autoplay-policy=no-user-gesture-required', '--lang=en-GB',
-      `--host-resolver-rules=MAP eggs.test 127.0.0.1`, 'about:blank',
-    ], DEBUG_PORT);
-    const cdp = await Cdp.open(await chrome.socket());
-    for (const name of names) {
-      const ctx = await Ctx.create(cdp);
-      const t = Date.now();
-      let note = '';
-      let error: string | null = null;
-      try {
-        note = await SCENARIOS[name].run({ ctx: ctx, posts: () => lines.filter((l) => l.startsWith('POST /api/eggs')) });
-        const thrown = ctx.tabs.flatMap((tab) => tab.errors);
-        if (thrown.length > 0) error = `the page threw: ${thrown.join(' | ')}`;
-      } catch (e) {
-        error = e instanceof Error ? (e instanceof Failure ? e.message : e.stack ?? e.message) : String(e);
-        if (process.env['E2E_DEBUG'] !== undefined) {
-          for (const tab of ctx.tabs) {
-            console.log(await tab.eval('JSON.stringify({ url: location.href, text: document.body.innerText.slice(0, 1500) })')
-              .catch((x: unknown) => String(x)));
-          }
-        }
-      }
-      await ctx.dispose();
-      const secs = ((Date.now() - t) / 1000).toFixed(1);
-      if (error === null) {
-        console.log(`ok    ${name.padEnd(26)} ${secs.padStart(5)} s  ${note}`);
-      } else {
-        failed += 1;
-        console.log(`FAIL  ${name.padEnd(26)} ${secs.padStart(5)} s  ${error}`);
-      }
-    }
-    cdp.close();
-  } finally {
-    server.kill();
-    if (chrome !== null) await chrome.close();
+  const tree = treeArg(args);
+  const names: string[] = [];
+  for (const a of args.length > 0 ? args : Object.keys(all)) {
+    const matched = a.endsWith('/') ? Object.keys(all).filter((n) => n.startsWith(a)) : a in all ? [a] : [];
+    if (matched.length === 0) throw new Error(`no scenario ${a}; --list lists them`);
+    names.push(...matched);
   }
-  console.log(`${names.length - failed} of ${names.length} passed in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-  if (failed > 0) process.exitCode = 1;
+  if (await runScenarios(all, names, tree) > 0) process.exitCode = 1;
 }
 
 await main();

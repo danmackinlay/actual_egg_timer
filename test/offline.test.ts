@@ -143,7 +143,7 @@ function memoryStorage(): Storage {
 }
 
 test('5. the hourly look for a new build goes by the real clock, never the development one', async () => {
-  // A page on localhost with the development clock stopped (now.ts): the
+  // A page on localhost with the development clock stopped (dev/clock.ts): the
   // cook's time moves only when a script moves it.
   let real_ms = 1_790_000_000_000;
   const realDateNow = Date.now;
@@ -159,7 +159,8 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
     g['sessionStorage'] = memoryStorage();
     g['localStorage'] = memoryStorage();
     const now = await import('../src/ui/now.js');
-    const clock = (g['window'] as { aetClock: import('../src/ui/now.js').ClockHandle }).aetClock;
+    (await import('../src/ui/dev/clock.js')).installDevClock();
+    const clock = (g['window'] as { aetClock: import('../src/ui/dev/clock.js').ClockHandle }).aetClock;
     assert.equal(clock.state()?.speed, 0);
 
     const onDocument = new Map<string, (() => void)[]>();

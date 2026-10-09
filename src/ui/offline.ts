@@ -73,7 +73,7 @@ export function startOffline(noCookRunning: () => boolean): void {
       });
     });
     // An hour on the wall, not of the cook: a development clock run fast or
-    // shifted (now.ts) would look at every return to the page, or never.
+    // shifted (dev/clock.ts) would look at every return to the page, or never.
     let looked_ms = realMs();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && realMs() - looked_ms > LOOK_EVERY_MS) {
