@@ -405,7 +405,7 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ### Each app as an effect runner over it
 
-- [x] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
+- [ ] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
       `view(model, now)`** as pure structs (extending `phaseView`) plus a
       DOM writer once per animation frame. It ends: `state` written from
       five modules; `controls` that *is* `settings` while idle (an alias
