@@ -1,6 +1,8 @@
 #if DEBUG
-import Foundation
 import EggTimerCore
+import Foundation
+import Observation
+import UIKit
 
 /// Launch arguments that put a debug build on a given screen, so screenshots
 /// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
@@ -51,7 +53,7 @@ import EggTimerCore
 ///   frozen there (`AppClock`); `-clockSpeed 60` runs it fast. A clock so
 ///   launched is stepped from outside: a line `<n> <at> <speed>` written to
 ///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
-///   it on at `speed`, and the log says `clock <n> …` once it has. The
+///   it on at `speed`, and the log says `clock` with its `n` once it has. The
 ///   scripted checks freeze it at each moment they check. Sharing sends
 ///   nothing under either.
 /// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
@@ -87,15 +89,31 @@ import EggTimerCore
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
 ///
-/// `log` writes a line with the clock in epoch seconds, cook time, to
-/// standard error and to `Library/Caches/aet.log` in the app's container:
-/// the phases, each plan, the stored cook and the log as written, the
-/// alarms scheduled, cancelled and read back, the rings, the Live
-/// Activities pushed and seen, and the taps of `-uiDo`, which the scripted
-/// checks read (`tools/iosE2e.mjs`).
+/// `log` writes one event as a line of JSON, to standard error and to
+/// `Library/Caches/aet.log` in the app's container: the phases, each plan,
+/// the stored cook and the log as written, the alarms scheduled, cancelled
+/// and read back, the rings, the Live Activities pushed and seen, the taps
+/// of `-uiDo`, and what the screen says, which the scripted checks read
+/// (`tools/iosE2e.ts`). A line is `{"t":<cook time, epoch s>,"ev":"<the
+/// event>",<its fields>}`: `Event`'s case and its labelled values, as
+/// `Codable` writes them, in the order of their names, a field with no value
+/// left out.
 enum Screenshots {
-    static func log(_ line: String) {
-        let text = Data("AET \(Int(AppClock.now.timeIntervalSince1970)) \(line)\n".utf8)
+    static func log(_ event: Event) {
+        let encoder = JSONEncoder()
+        // The same event the same line, every time, to read and to diff.
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        encoder.nonConformingFloatEncodingStrategy = .convertToString(
+            positiveInfinity: "inf", negativeInfinity: "-inf", nan: "nan"
+        )
+        // `{"<case>":{<fields>}}`, as `Codable` writes an enum's case, made
+        // one object with the moment.
+        guard let data = try? encoder.encode(event), let json = String(data: data, encoding: .utf8),
+              let colon = json.firstIndex(of: ":") else { return }
+        let name = json[json.index(json.startIndex, offsetBy: 2)..<json.index(before: colon)]
+        let fields = json[json.index(after: colon)...].dropFirst().dropLast(2)
+        let t = String(format: "%.3f", AppClock.now.timeIntervalSince1970)
+        let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
         FileHandle.standardError.write(text)
         // And appended to Library/Caches/aet.log in the app's container, which
         // a simulator's host reads (`simctl get_app_container … data`).
@@ -162,6 +180,141 @@ enum Screenshots {
 }
 
 extension Screenshots {
+    /// What the debug log says, one case an event, its values the line's
+    /// fields (`log`). Times are epoch s in cook time unless said; a value
+    /// that is none is left out of the line.
+    enum Event: Encodable, Equatable {
+        // The clock and the taps.
+        /// The clock stepped from outside (`AppClock.takeStep`): step `n`,
+        /// to `at`, running on at `speed` (0 frozen).
+        case clock(n: Int, at: Double, speed: Double)
+        /// After step `step`, the app caught up with it: nothing under way
+        /// and the screen drawn (`idle(after:)`). What a script waits for
+        /// after every step.
+        case idle(step: Int)
+        /// A tap of `-uiDo` (`name`, as `boil`, `set`), as given (`raw`).
+        case action(name: String, raw: String)
+        case actionUnknown(raw: String)
+
+        // The cook.
+        case phase(phase: String)
+        /// The cook has nothing under way (`Cook.logIfSettled`).
+        case settled
+        /// A plan taken: its deadlines, whether the slow hob lengthened it,
+        /// whether it is on its pot's surface, when the slow hob lengthens it
+        /// next, whether it asks if the eggs are still in, and whether the
+        /// egg is overdue.
+        case plan(
+            pull: Double, cooled: Double?, lengthened: Bool, surface: Bool, next: Double?, asking: Bool,
+            overdue: Bool
+        )
+        case verdict(kind: String, whiteSets: Bool, cookS: Double)
+        /// What Done shows, the peak yolk as it ran once kept (°C), and the
+        /// plan's own.
+        case shown(peak: Double?, level: Double?, plannedPeak: Double)
+        /// The cook as stored, as the store holds it; none when cleared.
+        case stored(value: Encoded?)
+        /// A cook picked back up at launch, in this phase, and whether the
+        /// clock wrote events it found past.
+        case restore(phase: String, eventsWritten: Bool)
+        case restoreTooOld
+        case restoreUnreadable
+        /// A cook picked back up has its alarms and its card again.
+        case restored
+        case cookEnded
+        case ring(deadline: String)
+        /// A card pushed (`what`: `start`, `update`): its stage, its end,
+        /// whether it counts up, and what it says of the cook.
+        case activity(what: String, stage: String, ends: Int, up: Bool, cook: [String?])
+        case activityEnd
+        /// A card the system holds, read at launch (`when`: `launch`,
+        /// `launch+3s`).
+        case activitySeen(when: String, state: String, stage: String, ends: Int)
+
+        // The alarms.
+        /// An alarm asked for, for `at`, `inS` of the system's seconds on.
+        case scheduled(id: String, at: Double, inS: Double)
+        case notScheduled(id: String, error: String)
+        case alarmsCancelled
+        /// The alarms a read-back found pending, each with its moment.
+        case pending(alarms: [PendingAlarm])
+        /// Those it found delivered and still shown.
+        case delivered(ids: [String])
+
+        // The results log and the record.
+        /// The log as written: how many eggs, how many folded, and the last.
+        case log(count: Int, folded: Int, last: Encoded?)
+        case asRanCorrected
+        case asRanRemade
+        case asRanNotRemade
+        case answerHeld
+        case answerHeldMade
+
+        // The stores (`Stores.claim`).
+        case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
+        case swept(key: String)
+        /// A key written to the store (`Stores`), and its value if it is a
+        /// number or a text.
+        case wrote(key: String, number: Double?, text: String?)
+
+        // The idle screen.
+        /// An answer on screen: its time, whether it is decided on its pot's
+        /// surface, and whether it has its odds.
+        case answer(cookS: Double, decided: Bool, odds: Bool)
+
+        // Corrections while a cook runs (`Edits`).
+        /// A change in hand, on this group of controls.
+        case edit(group: String?)
+        case editLeaving
+        /// The change in hand committed: the fields it changed, and the start
+        /// if it moved it.
+        case editCommitted(fields: [String], start: Double?)
+        case startLimit(kind: String, at: Double)
+        case announce(text: String)
+
+        // The screen.
+        /// The page on top (`egg` for none pushed).
+        case view(page: String)
+        /// Where a part of the screen sits, pt from the window's top.
+        case layout(part: String, y: Double)
+        case newerNote
+        case sentence(text: String)
+        case panelStart(at: Double)
+        case readout(phase: String, big: String, sub: String)
+        /// One frame of the readout: the moment it was drawn for, and what
+        /// it drew, the certainty's time range none with no certainty.
+        case frame(at: Double, phase: String, big: String, sub: String, range: String?)
+        /// The certainty line's word and the time range it opens; none with
+        /// no line.
+        case certainty(word: String?, time: String?)
+        case white(shown: Bool)
+        case likely(shown: Bool)
+        /// The egg in cross-section: its reading (`aim`, `live`, `ran`) and
+        /// how set its yolk is, to a thousandth; no yolk with no egg drawn.
+        case egg(reading: String, yolk: Double?)
+        case slot(text: String)
+        case note(text: String)
+    }
+
+    /// A value the app stores as JSON, written into a line as it encodes.
+    struct Encoded: Encodable, Equatable {
+        let value: any Encodable
+
+        func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+
+        static func == (a: Encoded, b: Encoded) -> Bool {
+            (try? JSONEncoder().encode(a)) == (try? JSONEncoder().encode(b))
+        }
+    }
+
+    struct PendingAlarm: Encodable, Equatable {
+        let id: String
+        /// When it fires, cook time, whole s; none without an interval trigger.
+        let at: Int?
+    }
+}
+
+extension Screenshots {
     /// One tap of `-uiDo`: what, with its argument, and when.
     struct Action {
         let raw: String
@@ -218,10 +371,12 @@ extension Screenshots {
     /// (an answer after the egg's hour).
     @MainActor
     static func drive(_ model: AppModel) {
+        self.model = model
         let all = actions
         guard !all.isEmpty else { return }
         // Read now, at the launch, for `launch`.
         _ = launchedAtS
+        driving = true
         Task { @MainActor in
             var left = all.map { (action: $0, due: Double?.none) }
             while !left.isEmpty {
@@ -230,13 +385,26 @@ extension Screenshots {
                     if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
                 let now = AppClock.now.timeIntervalSince1970
-                guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
+                guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else {
+                    nothingDue &+= 1
+                    continue
+                }
                 let action = left.remove(at: i).action
-                log("action \(action.raw)")
+                log(.action(name: action.name, raw: action.raw))
+                tappedAtTick = model.cook.ticks
                 tap(action, model)
             }
+            driving = false
         }
     }
+
+    /// Whether `-uiDo` has taps still to come; how many of its looks found
+    /// none due; and the cook's ticks at its last tap: for `idle(after:)`.
+    @MainActor private static var driving = false
+    @MainActor private static var nothingDue = 0
+    @MainActor private static var tappedAtTick = 0
+    /// Drags of `-uiDo` still moving the slider.
+    @MainActor private static var dragging = 0
 
     /// `open:settings` pushes Settings, `open:clause-start` opens a
     /// clause's choice, as a press on its link would (set by the screen).
@@ -264,11 +432,13 @@ extension Screenshots {
             // a twentieth of a second apart; it stays down (`release`).
             let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
             model.edits.fingerDown(.level, slider: true)
+            dragging += 1
             Task { @MainActor in
                 for level in levels {
                     model.planner.doneness = level
                     try? await Task.sleep(for: .milliseconds(50))
                 }
+                dragging -= 1
             }
         case "release": model.edits.fingerUp()
         case "start":
@@ -279,7 +449,7 @@ extension Screenshots {
         case "stillIn": model.stillIn()
         case "stillOut": model.stillOut()
         case "open": open?(action.arg ?? "")
-        default: log("action unknown \(action.name)")
+        default: log(.actionUnknown(raw: action.raw))
         }
     }
 
@@ -289,7 +459,7 @@ extension Screenshots {
     @MainActor
     private static func set(_ arg: String, _ planner: Planner) {
         let parts = arg.split(separator: "=", maxSplits: 1).map(String.init)
-        guard parts.count == 2 else { return log("action unknown set:\(arg)") }
+        guard parts.count == 2 else { return log(.actionUnknown(raw: "set:\(arg)")) }
         let value = parts[1]
         let number = Double(value) ?? .nan
         switch parts[0] {
@@ -304,7 +474,81 @@ extension Screenshots {
         case "eggs": planner.eggCount = Int(number)
         case "altitude": planner.altitudeM = number
         case "language": LanguageChoice.shared.pick(value)
-        default: log("action unknown set:\(arg)")
+        default: log(.actionUnknown(raw: "set:\(arg)"))
+        }
+    }
+}
+
+extension Screenshots {
+    /// What the screen draws again for after a step: read by the page and
+    /// by its timelines (ContentView), so that a change of it draws them at
+    /// the clock's new moment, a frozen clock's timelines otherwise waiting
+    /// up to a second of the system's.
+    @Observable @MainActor
+    final class Probe {
+        var drawn = 0
+    }
+
+    @MainActor static let probe = Probe()
+    /// The app's model, for what `idle(after:)` waits on (`drive`).
+    @MainActor static weak var model: AppModel?
+    @MainActor private static var drawing: [CheckedContinuation<Void, Never>] = []
+
+    /// Step `n` taken (`AppClock.takeStep`, off the main actor).
+    static func stepped(_ n: Int) {
+        Task { @MainActor in await idle(after: n) }
+    }
+
+    /// Once the app has caught up with step `n`, `idle`: the cook has
+    /// ticked at the new moment, and after the last tap; `-uiDo` has looked
+    /// and found nothing more due, and is moving no slider; nothing is under
+    /// way in the cook, the planner, a change in hand or a record made
+    /// again; and the page has been drawn since, at the new moment. A script
+    /// waits for it after every step, so that what it checks next, that
+    /// something did not happen as much as that it did, is checked once the
+    /// app is done however slow the machine, never after a span of the
+    /// system's time.
+    @MainActor private static func idle(after n: Int) async {
+        while model == nil { try? await Task.sleep(for: .milliseconds(20)) }
+        guard let model else { return }
+        let ticks = model.cook.ticks
+        let looks = nothingDue
+        while true {
+            while underWay(model, ticks: ticks, looks: looks) { try? await Task.sleep(for: .milliseconds(20)) }
+            // In the background the page is not drawn, and nothing waits for it.
+            if UIApplication.shared.applicationState == .active { await draw() }
+            if !underWay(model, ticks: ticks, looks: looks) { break }
+        }
+        log(.idle(step: n))
+    }
+
+    /// Whether the app is still at work on a step taken when the cook had
+    /// ticked `ticks` times and `-uiDo` had looked `looks` times.
+    @MainActor private static func underWay(_ model: AppModel, ticks: Int, looks: Int) -> Bool {
+        let planner = model.planner
+        return (model.cook.ticking && model.cook.ticks <= max(ticks, tappedAtTick))
+            || (driving && nothingDue <= looks) || dragging > 0
+            || !model.cook.isSettled
+            || model.edits.underWay
+            || planner.task != nil || planner.settleTask != nil || !planner.profilesAsked.isEmpty || planner.draining
+            || model.remaking > 0
+    }
+
+    /// The page drawn again: once a pass of the screen has followed.
+    @MainActor private static func draw() async {
+        await withCheckedContinuation { c in
+            drawing.append(c)
+            probe.drawn &+= 1
+        }
+    }
+
+    /// The page has drawn `probe` again (ContentView): resumed once that
+    /// pass of the screen is over, with what it logged.
+    @MainActor static func drawn() {
+        Task { @MainActor in
+            let waiting = drawing
+            drawing = []
+            for c in waiting { c.resume() }
         }
     }
 }

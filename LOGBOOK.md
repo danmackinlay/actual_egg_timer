@@ -6746,3 +6746,90 @@ whether 65 s moves it depends on when the run starts.
 
 **For PLAN at merge:** the status line's web e2e count (39) is 78 with the
 copy scenarios.
+
+## 10 October 2026: the iOS checks wait for the app, read JSON, and are TypeScript (REFACTOR-0.5 1.8)
+
+`npm run ios:e2e` asserted that nothing happened (no ring, no plan,
+nothing committed, nothing stored) by stepping the clock and sleeping a
+second or two of the host's before looking, and read what the screen said
+once no line of its kind had come for a second. On a slow runner the app
+may not have begun by then, and such a check passes for nothing. It read
+the debug log, free text, with about a hundred regular expressions.
+
+**The log is JSON lines.** `Screenshots.log` takes a `Screenshots.Event`,
+an enum whose cases are the events and whose labelled values are their
+fields, and writes one object a line:
+`{"t":1791550463.004,"ev":"plan","asking":false,"cooled":…,"pull":…}`,
+`t` the cook time to the millisecond, `ev` the case, the fields as
+`Codable` writes them, sorted by name (`JSONEncoder` otherwise orders a
+dictionary's keys differently line to line), a field with no value left
+out. The stored cook and the egg's record go in as the app encodes them,
+not as JSON inside text, and a read-back's pending alarms are one event,
+not a line each. The field names are Swift identifiers, not literals, so
+the copy lint's NOT_COPY list lost 60 debug-log templates. `Stores` logs
+each write (`wrote`, with the value when it is a number or a text).
+
+**After every step the script waits for `idle`.** `AppClock` tells
+`Screenshots.idle(after:)` of each step, which logs `idle` with the step's
+number once the cook has ticked at the new moment and since the last tap,
+`-uiDo` has looked and found nothing more due and is moving no slider
+(its drags set their levels 50 ms apart, on a task of their own), nothing
+is under way in the cook (`settled`'s own test), the planner (its solve,
+its surface's settle, a profile asked for, a fold), a change in hand
+(settling, being previewed, letting its aimed-for egg go) or a record
+made again, and the page has been drawn since. A check that something
+did not happen steps, or steps to where the clock stands (`tick`), and
+looks; where a sleep stood for a number of ticks (slow-hob's two seconds,
+eight ticks; relaunch-done's one, four) as many ticks are taken. What the
+screen says is read after a `tick`, not after a quiet second.
+
+**A frozen clock's timelines redraw once a second of the system's**
+(`AppClock.period`), so the readout, the egg and the slot showed a
+step's moment up to a second after it. The page's timelines read a probe
+that `idle` bumps (`ContentView.moment`), so the page is drawn at the new
+moment before `idle` is logged; a frozen clock reads the same moment from
+any date.
+
+**What the plist says is read once the app has said it.** The prefs file
+is the system's to write, seconds after the app: change-kept-on-hide
+gave it ten seconds and, under load on `0.5.x`, once found the level not
+there yet. It now waits for `wrote` doneness 0.3, terminates the app, and
+gives the file the usual minute. again-not-remade (five seconds) checks
+in the log that the cook was not cleared, then reads the file after the
+app has gone. newer-version gave the file five seconds to show nothing:
+it now waits for the next launch's mark to reach the file, which the
+system writes whole, and checks that it holds only what that launch wrote
+and no cook or egg.
+
+**Under load the conversion found two checks that had passed by luck.**
+Eighteen CPU hogs on the eighteen cores, besides other agents' work (load
+average 185): slow-hob counted a plan on the moment the guess gives out,
+an identical one, made when the pot's profile landed late, which the old
+two seconds would have counted too; it now ticks the cook idle before it
+steps there. And again-not-remade's five seconds (above).
+
+**What does not wait.** start-again-corrected must press Start again
+while the correction it made still settles (the host's 1.5 s, as a
+finger's), so its first tap's step waits only for the clock; it was and is
+a race with that settle, and says so when it loses. asleep still leaves
+one notification to the system and waits for it.
+
+**The warm-up under the hogs.** With eighteen hogs from the start, the
+new device's first cooks never started in five tries of two minutes: no
+phase, nothing scheduled, the authorization asked for and not answered
+(the warm-up now says what a failed try got to). So the load run starts
+its hogs once the warm-up and the first scenario are done.
+
+**TypeScript.** `tools/iosE2e.ts`, compiled with the other tools; the
+events are a union on `ev` as `Screenshots.Event` declares them, the
+stored cook and the record core's `RunningCook` and `EggRecord`.
+`npm run ios:e2e` runs `tools/build.mjs` first.
+
+**Times**, 48 scenarios each, the build incremental (1-8 s), the machine
+shared with other agents (load average 10-250): before, 607 s; the JSON
+log alone, 603 s; with `idle`, 588 s; in TypeScript, 614 s; merged with
+`0.5.x`, 570 and 559 s in a row. The last commit: 541 s and 549 s in a
+row, and 661 s with the eighteen hogs (load average 207), AET_E2E_WAIT
+180 as CI sets it. The idle screen's scenarios lost their quiet seconds
+(likely-still 14 s to 7 s); a step now costs a tick and a look of
+`-uiDo`, up to half a second of the host's.

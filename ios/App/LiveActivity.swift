@@ -73,9 +73,10 @@ enum LiveActivity {
     static func logAll(_ when: String) {
         for activity in Activity<CookActivity>.activities {
             let s = activity.content.state
-            Screenshots.log(
-                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
-            )
+            Screenshots.log(.activitySeen(
+                when: when, state: "\(activity.activityState)", stage: s.stage.rawValue,
+                ends: Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded())
+            ))
         }
     }
     #endif

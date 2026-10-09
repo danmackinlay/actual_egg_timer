@@ -201,8 +201,7 @@ enum Calibrations {
             Stores.set(data, forKey: key)
         }
         #if DEBUG
-        let last = k.log.last.flatMap { try? JSONEncoder().encode($0) }.map { String(decoding: $0, as: UTF8.self) }
-        Screenshots.log("log \(k.log.count) folded \(k.folded) last \(last ?? "-")")
+        Screenshots.log(.log(count: k.log.count, folded: k.folded, last: k.log.last.map(Screenshots.Encoded.init)))
         #endif
     }
 
