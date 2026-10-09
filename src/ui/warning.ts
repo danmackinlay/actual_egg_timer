@@ -1,6 +1,6 @@
 /**
  * The warning line, in words: drawn by render.ts for a running cook and
- * taken up by update.ts for the idle page. It imports neither, so neither
+ * taken up by view.ts for the idle page. It imports neither, so neither
  * imports the other for it.
  */
 

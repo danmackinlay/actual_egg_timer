@@ -32,7 +32,7 @@ import { inHand } from '../idle.js';
 import { isDevHost, nowMs, useRandom } from '../now.js';
 import { phaseNow, state } from '../state.js';
 import { Settings } from '../store.js';
-import { finalEggs } from '../update.js';
+import { finalEggs } from '../effects.js';
 
 /** The page as a script sees it. */
 export interface Snapshot {

@@ -49,7 +49,7 @@ import {
   CookStore, KeptAnswers, PansStore, SettingsStore, correctedLater, storageReadOnly, takeUpEvents,
 } from './store.js';
 import { unitSystem, useUnits } from './units.js';
-import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
+import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './effects.js';
 import { showEgg } from './views.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
 

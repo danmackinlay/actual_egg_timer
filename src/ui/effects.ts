@@ -1,6 +1,6 @@
 /**
- * The page's effects that are not the cook's, as cook.ts carries them out
- * for `update` (model.ts): the settings written, coalesced or at once, with
+ * The page's effects that are not the cook's, as the runner (cook.ts)
+ * carries them out for `update` (model.ts): the settings written, coalesced or at once, with
  * whatever another tab wrote since taken up; the idle page solved again once
  * the controls settle; the words in a new language; everything forgotten;
  * what another tab wrote, taken up as messages; and the sharing section, with

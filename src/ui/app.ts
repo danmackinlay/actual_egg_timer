@@ -14,7 +14,7 @@
  *   settings written; what the page waits for built), the ticker, a cook
  *   picked back up after a reload, and the page drawn; send.ts, the way in
  *   for the modules under it;
- * - update.ts: the page's own effects - the settings written, the solve
+ * - effects.ts: the page's own effects - the settings written, the solve
  *   coalesced, a new language, everything forgotten, another tab's writes
  *   taken up as messages;
  * - render.ts: the egg page drawn from the state;
@@ -46,7 +46,7 @@ import { setStepRule, wireSteppers } from './stepper.js';
 import { claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
-import { drawShare, finalEggs, learnBehind, storedElsewhere } from './update.js';
+import { drawShare, finalEggs, learnBehind, storedElsewhere } from './effects.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
 import { markDevClockUse, random } from './now.js';
