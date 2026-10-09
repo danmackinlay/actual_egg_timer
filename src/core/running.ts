@@ -916,14 +916,15 @@ function timeOrNull(v: unknown): { value: number | null } | null {
   return isNumber(v) ? { value: v } : null;
 }
 
-/** A probe reading as the log keeps one, or undefined if it is not one. */
-function readProbe(raw: unknown): ProbeReading | null | undefined {
-  if (raw === null) return null;
-  if (!isObject(raw)) return undefined;
+/** A probe reading as the log keeps one, or none (JSON's null), as `.value`;
+ *  null if it is neither. */
+function readProbe(raw: unknown): { value: ProbeReading | null } | null {
+  if (raw === null) return { value: null };
+  if (!isObject(raw)) return null;
   const centre = raw['centre_C'];
   const after = raw['after_s'];
-  if (!isNumber(centre) || (after !== null && !isNumber(after))) return undefined;
-  return { centre_C: centre, after_s: after };
+  if (!isNumber(centre) || (after !== null && !isNumber(after))) return null;
+  return { value: { centre_C: centre, after_s: after } };
 }
 
 /** One entry of a stored log, or null if it is not one. */
@@ -965,10 +966,10 @@ function readEntry(raw: unknown, start_s: number): CookEntry | null {
       const yolk = raw['yolkWord'];
       const white = raw['white'];
       const probe = readProbe(raw['probe']);
-      if (!isNumber(at) || probe === undefined) return null;
+      if (!isNumber(at) || probe === null) return null;
       if (yolk !== null && !YOLK_WORDS.some((w) => w === yolk)) return null;
       if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
-      return { kind: 'answered', at_s: at, yolkWord: yolk as YolkWord | null, white: white, probe: probe };
+      return { kind: 'answered', at_s: at, yolkWord: yolk as YolkWord | null, white: white, probe: probe.value };
     }
     default:
       return null;

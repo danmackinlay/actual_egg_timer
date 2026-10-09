@@ -794,12 +794,17 @@ private func isNull(_ v: Any?) -> Bool {
     v is NSNull
 }
 
-/// A finite number or JSON's null, as `.some(nil)`; anything else, or a
-/// missing key, `nil`.
-private func numberOrNull(_ v: Any?) -> Double?? {
-    if isNull(v) { return .some(nil) }
+/// A value read where JSON's null is allowed: `value` is nil for the null.
+private struct OrNull<T> {
+    let value: T?
+}
+
+/// A finite number or JSON's null, as `.value`; anything else, or a missing
+/// key, nil.
+private func numberOrNull(_ v: Any?) -> OrNull<Double>? {
+    if isNull(v) { return OrNull(value: nil) }
     guard let d = finite(v) else { return nil }
-    return .some(d)
+    return OrNull(value: d)
 }
 
 private func readChoices(_ raw: Any?) -> CookChoices? {
@@ -824,7 +829,7 @@ private func readChoices(_ raw: Any?) -> CookChoices? {
           let altitude = finite(r["altitude_m"]),
           let level = finite(r["level"]), level >= 0, level <= 1 else { return nil }
     return CookChoices(
-        massKg: mass, massFrom: massFrom, sizeTable: table, eggFrom: eggFrom, customStartC: custom, roomC: room,
+        massKg: mass, massFrom: massFrom, sizeTable: table, eggFrom: eggFrom, customStartC: custom, roomC: room.value,
         startMode: start, afterBoil: after, cooling: cooling, waterLitres: water, eggCount: count,
         altitudeM: altitude, level: level
     )
@@ -888,18 +893,18 @@ private func readAsRan(_ raw: Any?) -> CookAsRan? {
           let params = r["params"] as? [String: Any],
           let alpha = finite(params["alpha_m2s"]), alpha > 0 else { return nil }
     return CookAsRan(
-        correctedAtS: at, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
+        correctedAtS: at.value, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
         probeMoment: probe, params: ModelParams(alphaM2s: alpha)
     )
 }
 
-/// A probe reading as the log keeps one: `.some(nil)` for JSON's null, nil if
-/// it is not one.
-private func readProbe(_ raw: Any?) -> ProbeReading?? {
-    if isNull(raw) { return .some(nil) }
+/// A probe reading as the log keeps one, or none (JSON's null), as `.value`;
+/// nil if it is neither.
+private func readProbe(_ raw: Any?) -> OrNull<ProbeReading>? {
+    if isNull(raw) { return OrNull(value: nil) }
     guard let r = raw as? [String: Any], let centre = finite(r["centre_C"]),
           let after = numberOrNull(r["after_s"]) else { return nil }
-    return .some(ProbeReading(centreC: centre, afterS: after))
+    return OrNull(value: ProbeReading(centreC: centre, afterS: after.value))
 }
 
 /// One entry of a stored log, or nil if it is not one.
@@ -921,8 +926,8 @@ private func readEntry(_ raw: Any?) -> CookEntry? {
         if isNull(r["pulled"]) { return .pulled(nil) }
         return readPulled(r["pulled"]).map { .pulled($0) }
     case "stands": return .stands
-    case "cooled": return numberOrNull(r["at_s"]).map { .cooled(atS: $0) }
-    case "rang": return numberOrNull(r["at_s"]).map { .rang(atS: $0) }
+    case "cooled": return numberOrNull(r["at_s"]).map { .cooled(atS: $0.value) }
+    case "rang": return numberOrNull(r["at_s"]).map { .rang(atS: $0.value) }
     case "ran":
         if isNull(r["asRan"]) { return .ran(nil) }
         return readAsRan(r["asRan"]).map { .ran($0) }
@@ -938,7 +943,7 @@ private func readEntry(_ raw: Any?) -> CookEntry? {
             guard let w = (r["white"] as? String).flatMap(WhiteReport.init(rawValue:)) else { return nil }
             white = w
         }
-        return .answered(atS: at, yolkWord: yolk, white: white, probe: probe)
+        return .answered(atS: at, yolkWord: yolk, white: white, probe: probe.value)
     default:
         return nil
     }
