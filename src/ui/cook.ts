@@ -45,7 +45,9 @@ import { draw, drawnNothing, forgetDrawnWords } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import { deleteSent, sendFinal, setSharing, shareState } from './share.js';
-import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, storageReadOnly, takeUpEvents } from './store.js';
+import {
+  KeptAnswers, clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, storageReadOnly, takeUpEvents,
+} from './store.js';
 import { unitSystem, useUnits } from './units.js';
 import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
 import { showEgg } from './views.js';
@@ -111,7 +113,7 @@ function storedId(): number | null {
 /** The messages about the running cook, before which another tab's write
  *  for it is taken up. */
 const ABOUT_THE_COOK = new Set<Msg['kind']>([
-  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'answered', 'probe', 'restore',
+  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'before', 'answered', 'probe', 'restore',
 ]);
 
 /** Take up what `msg` did, and do what it asks: the runner's view of its
@@ -178,7 +180,13 @@ function perform(effects: Effect[]): void {
   for (const e of effects) {
     switch (e.kind) {
       case 'persist':
-        persist(e.cook, e.leanHint_s, e.onScreen);
+        persist(e.cook, e.answers, e.leanHint_s);
+        break;
+      case 'persistLean':
+        saveLeanHint(e.id_ms, e.leanHint_s);
+        break;
+      case 'persistEnded':
+        if (cookStore.peek()?.cook.id_ms === e.cook.id_ms) saveCook(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
         break;
       case 'ring':
         if (e.moment === 'pull') {
@@ -311,43 +319,23 @@ function perform(effects: Effect[]): void {
   setPullAlarm(plan === null || plan.deadlines.provisional || state.pull_s === null ? null : state.pull_s * 1000);
 }
 
-/** Whether the egg is in the log as an answer would put it, as the stored
- *  cook keeps it: answered, or its questions put away. */
-function keptAnswers(): 'none' | 'beforeReload' {
-  return state.questions === 'away' || (state.cook !== null && answered(state.cook)) ? 'beforeReload' : 'none';
-}
-
 /**
- * Write a cook down. The one on screen only when it changed - something it
- * was told or saw, never a plan alone, which would write a copy lacking
- * what another tab on the same cook saw since: then only the lean beside it.
- * A copy of this cook another tab corrected later stays the copy stored
- * (onescreen review 1.1), so a reload restores the latest correction: what
- * this tab saw in the pan is written into it instead (`takeUpEvents`), and
- * this tab runs on as it is (DECISIONS.md 97). A cook ended, waiting on its
- * record, is written over its own copy only.
+ * Write the cook on screen down. A copy of this cook another tab corrected
+ * later stays the copy stored (onescreen review 1.1), so a reload restores
+ * the latest correction: what this tab saw in the pan is written into it
+ * instead (`takeUpEvents`), and this tab runs on as it is (DECISIONS.md 97).
+ * The page is told when whether a write reads back changes.
  */
-function persist(cook: RunningCook, leanHint_s: number, onScreen: boolean): void {
+function persist(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): void {
   const stored = cookStore.peek();
-  const same = stored !== null && stored.cook.id_ms === cook.id_ms;
-  if (!onScreen) {
-    if (same) saveCook(cook, answered(cook) ? 'beforeReload' : 'none', leanHint_s);
-    return;
-  }
-  const text = JSON.stringify(cook);
-  if (text === state.written) {
-    saveLeanHint(cook.id_ms, leanHint_s);
-    return;
-  }
   let written: string | null;
-  if (same && correctedLater(stored.cook, cook)) {
-    const answers = stored.answers === 'beforeReload' ? stored.answers : keptAnswers();
-    written = saveCook(takeUpEvents(stored.cook, cook), answers, stored.leanHint_s);
+  if (stored !== null && stored.cook.id_ms === cook.id_ms && correctedLater(stored.cook, cook)) {
+    const kept = stored.answers === 'beforeReload' ? stored.answers : answers;
+    written = saveCook(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
   } else {
-    written = saveCook(cook, keptAnswers(), leanHint_s);
+    written = saveCook(cook, answers, leanHint_s);
   }
-  state.written = text;
-  state.works = written !== null;
+  if ((written !== null) !== state.works) send({ kind: 'persisted', works: written !== null });
 }
 
 /** The egg's record kept and learned from (`keepRecord`), and the page
@@ -457,9 +445,7 @@ function askBefore(id: number): void {
   building.add(key);
   calibrationBefore(id).then((calibration) => {
     building.delete(key);
-    if (!waitsOn(id)) return;
-    state.before = [...state.before.filter((b) => b.id_ms !== id), { id_ms: id, before: { calibration: calibration, surfaces: [] } }];
-    dispatch({ kind: 'landed' });
+    dispatch({ kind: 'before', id_ms: id, calibration: calibration, surface: null });
   }, (error: unknown) => {
     building.delete(key);
     console.warn('the calibration before an egg failed', error);
@@ -478,21 +464,11 @@ function askBeforeSurface(id: number, inputs: DecisionInputs): void {
   const calibration = held.before.calibration;
   Promise.all([decisionGrid(inputs), oddsProfileFor(inputs, calibration)]).then(([grid, profile]) => {
     building.delete(key);
-    const now = state.before.find((b) => b.id_ms === id);
-    if (now === undefined || now.before.calibration !== calibration) return;
-    const surface = { inputs: inputs, grid: grid, profile: profile };
-    state.before = state.before.map((b) => (b !== now ? b
-      : { id_ms: id, before: { calibration: calibration, surfaces: [...now.before.surfaces, surface] } }));
-    dispatch({ kind: 'landed' });
+    dispatch({ kind: 'before', id_ms: id, calibration: calibration, surface: { inputs: inputs, grid: grid, profile: profile } });
   }, (error: unknown) => {
     building.delete(key);
     console.warn('the corrected egg’s surface failed', error);
   });
-}
-
-/** Whether a cook started at `id` is still on screen or waiting. */
-function waitsOn(id: number): boolean {
-  return state.cook?.id_ms === id || state.ending.some((e) => e.cook?.id_ms === id);
 }
 
 /** The ticker and the screen kept awake while the running cook is short of

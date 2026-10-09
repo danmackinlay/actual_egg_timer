@@ -61,7 +61,7 @@ import { effectiveLanguage, languageAfterFlip } from '../core/language.js';
 import { PotOdds, nudgeNow, solveIdle } from './answer.js';
 import { inputsKey } from '../core/decide.js';
 import { NO_NEED, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
-import type { Settings, StoredCook } from './store.js';
+import type { KeptAnswers, Settings, StoredCook } from './store.js';
 import { REGIONAL_UNITS } from './units.js';
 
 export { NO_NEED } from './state.js';
@@ -174,9 +174,10 @@ export interface Model extends CookState {
   pull_s: number | null;
 
   /** This tab's cook as written down: as this tab last read or wrote it
-   *  (JSON), so it is written only when it changed; whether a write reads
-   *  back; and whether the egg is final here (`closed`): nothing more is
-   *  written or logged for it. */
+   *  (JSON), so it is written only when it changed (`update` sets it with
+   *  each write it asks for); whether the last write read back, as the
+   *  runner says (`persisted`); and whether the egg is final here
+   *  (`closed`): nothing more is written or logged for it. */
   written: string | null;
   works: boolean;
   closed: boolean;
@@ -201,6 +202,11 @@ export type Msg =
   | { kind: 'correct'; choices: CookChoices; startedAt_s: number | null }
   | { kind: 'tick' }
   | { kind: 'landed' }
+  /** The calibration before the egg of the cook `id_ms`, built; or, with
+   *  `surface`, a surface on it, built for that calibration. */
+  | { kind: 'before'; id_ms: number; calibration: Calibration; surface: CookSurface | null }
+  /** A write of the cook on screen: whether it read back. */
+  | { kind: 'persisted'; works: boolean }
   | { kind: 'answered'; yolkWord: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null }
   | { kind: 'elsewhere'; theirs: StoredCook | null }
   /** A probe reading typed at Done, C; null for what is not a number. */
@@ -262,7 +268,13 @@ export type Msg =
 /** What the page must do: core's effects, each with the cook it is for, and
  *  the page's. */
 export type Effect =
-  | { kind: 'persist'; cook: RunningCook; leanHint_s: number; onScreen: boolean }
+  /** The cook on screen written down, changed: with whether its egg is in
+   *  the log as an answer would put it (`answers`). Unchanged, only the lean
+   *  beside it (`persistLean`). A cook ended, waiting on its record, over
+   *  its own copy only (`persistEnded`). */
+  | { kind: 'persist'; cook: RunningCook; leanHint_s: number; answers: KeptAnswers }
+  | { kind: 'persistLean'; id_ms: number; leanHint_s: number }
+  | { kind: 'persistEnded'; cook: RunningCook; leanHint_s: number }
   | { kind: 'ring'; moment: AlarmMoment }
   | { kind: 'silence' }
   | { kind: 'rememberBoil'; boil: BoilToRemember }
@@ -357,14 +369,22 @@ function idle(m: Model): Model {
 }
 
 /** Core's effects for a step of `was`, the cook it was for: a write only
- *  while the egg is not final here, nor a record; `forget` with its id. */
-function effectsOf(was: RunningCook, s: CookStep, closed: boolean): Effect[] {
+ *  while the egg is not final here (`closed`), nor a record; `forget` with
+ *  its id. `questions`: the page's, for whether the egg is kept as
+ *  answered. */
+function effectsOf(was: RunningCook, s: CookStep, closed: boolean, questions: Model['questions']): Effect[] {
   const out: Effect[] = [];
   for (const e of s.effects) {
     switch (e.kind) {
       case 'persist':
-        if (!closed && s.cook !== null) {
-          out.push({ kind: 'persist', cook: s.cook, leanHint_s: s.leanHint_s, onScreen: endedAt_s(s.cook) === null });
+        if (closed || s.cook === null) break;
+        if (endedAt_s(s.cook) !== null) {
+          out.push({ kind: 'persistEnded', cook: s.cook, leanHint_s: s.leanHint_s });
+        } else {
+          // In the log as an answer would put it: answered, or its questions
+          // put away.
+          const answers = questions === 'away' || answered(s.cook) ? 'beforeReload' : 'none';
+          out.push({ kind: 'persist', cook: s.cook, leanHint_s: s.leanHint_s, answers: answers });
         }
         break;
       case 'log':
@@ -397,7 +417,7 @@ function stepCook(m: Model, event: CookEvent, now_s: number, state: CookState = 
   const was = state.cook;
   if (was === null) return [m, []];
   const s = step(state, event, envFor(m, was, now_s));
-  const effects = effectsOf(was, s, m.closed);
+  const effects = effectsOf(was, s, m.closed, m.questions);
   if (s.cook === null) return [idle(m), effects];
   if (endedAt_s(s.cook) !== null) {
     const waiting: Ending[] = m.closed ? [] : [{ cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need }];
@@ -414,10 +434,25 @@ function stepEnding(m: Model, now_s: number): [Model, Effect[]] {
   for (const e of m.ending) {
     if (e.cook === null) continue;
     const s = step(e, { kind: 'surfaceLanded', now_s: now_s }, envFor(m, e.cook, now_s));
-    effects.push(...effectsOf(e.cook, s, false));
+    effects.push(...effectsOf(e.cook, s, false, 'open'));
     if (s.cook !== null) left.push({ cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need });
   }
   return [{ ...m, ending: left }, effects];
+}
+
+/** A calibration before an egg, or a surface on it, taken in: the
+ *  calibration only while its cook is on screen or waiting; the surface
+ *  only on the calibration it was built for. */
+function withBefore(m: Model, b: Extract<Msg, { kind: 'before' }>): Model {
+  const id = b.id_ms;
+  if (b.surface === null) {
+    if (m.cook?.id_ms !== id && !m.ending.some((e) => e.cook?.id_ms === id)) return m;
+    return { ...m, before: [...m.before.filter((x) => x.id_ms !== id), { id_ms: id, before: { calibration: b.calibration, surfaces: [] } }] };
+  }
+  const held = m.before.find((x) => x.id_ms === id);
+  if (held === undefined || held.before.calibration !== b.calibration) return m;
+  const surfaces = [...held.before.surfaces, b.surface];
+  return { ...m, before: m.before.map((x) => (x !== held ? x : { id_ms: id, before: { calibration: b.calibration, surfaces: surfaces } })) };
 }
 
 /** The calibrations before an egg still wanted: a cook's whose plan as it
@@ -519,13 +554,35 @@ function close(m: Model): Model {
 /** What `msg` does to the model at `now_ms`, and what the page must do. */
 export function update(m: Model, msg: Msg, now_ms: number): [Model, Effect[]] {
   const now_s = now_ms / 1000;
-  const [next, effects] = updateAny(m, msg, now_s);
+  const [next, effects] = written(...updateAny(m, msg, now_s));
   return [shown(next, now_s), effects];
+}
+
+/**
+ * The cook on screen written only when it changed - something it was told
+ * or saw, never a plan alone, which would write a copy lacking what another
+ * tab on the same cook saw since: otherwise only the lean beside it. What it
+ * is written as is what this tab has seen (`written`).
+ */
+function written(m: Model, effects: Effect[]): [Model, Effect[]] {
+  let text = m.written;
+  const out = effects.map((e): Effect => {
+    if (e.kind !== 'persist') return e;
+    const json = JSON.stringify(e.cook);
+    if (json === text) return { kind: 'persistLean', id_ms: e.cook.id_ms, leanHint_s: e.leanHint_s };
+    text = json;
+    return e;
+  });
+  return [text === m.written ? m : { ...m, written: text }, out];
 }
 
 function updateAny(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
   const page = updatePage(m, msg, now_s);
   if (page !== null) return page;
+  if (msg.kind === 'before') {
+    const next = withBefore(m, msg);
+    return next === m ? [m, []] : updateAny(next, { kind: 'landed' }, now_s);
+  }
   let [next, effects] = updateCook(m, msg, now_s);
   if (msg.kind === 'landed') {
     const [after, more] = stepEnding(next, now_s);
@@ -769,6 +826,8 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       return solved(m, [{ kind: 'wordsForgotten' }, { kind: 'notesDrawn' }]);
     case 'startInHand':
       return [{ ...m, controlsStart_s: msg.at_s }, []];
+    case 'persisted':
+      return [{ ...m, works: msg.works }, []];
     case 'stores':
       return solved(m, [{ kind: 'notesDrawn' }, { kind: 'shareDrawn' }]);
     case 'forget':
@@ -820,7 +879,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       }, envFor(m, null, now_s));
       if (s.cook === null) return [m, []];
       const next: Model = { ...fresh, cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need, pull_s: pullOf(s, null) };
-      return [next, [...effectsOf(s.cook, s, false), { kind: 'blip' }]];
+      return [next, [...effectsOf(s.cook, s, false, fresh.questions), { kind: 'blip' }]];
     }
     case 'restore': {
       const stored = msg.stored;
