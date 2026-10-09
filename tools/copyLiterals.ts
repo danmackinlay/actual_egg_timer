@@ -258,6 +258,7 @@ const NOT_COPY: Record<string, string> = {
   'certainty {}': 'debug log (Screenshots.log), never shown',
   '{} | {}': 'debug log of the certainty line (Screenshots.log), never shown',
   'white {}': 'debug log (Screenshots.log), never shown',
+  'likely {}': 'debug log (Screenshots.log), never shown',
   'note {}': 'debug log (Screenshots.log), never shown',
   'as ran remade': 'debug log (Screenshots.log), never shown',
   uiHoldAsRan: 'debug launch argument',

@@ -427,7 +427,9 @@ the follow-up it showed when the odds of "just right" were under 5/10 or
 
 **Nothing jumps.** While idle the certainty line keeps two lines' room, the
 word and "Most likely", with the word at its top, so a drag that brings
-"Most likely" or takes it away moves neither the word nor the slider. While a new pot's surface is on its way, the readout keeps its
+"Most likely" or takes it away moves neither the word nor the slider (on
+iOS, at the largest text sizes, the room is the tallest the two can take:
+below). While a new pot's surface is on its way, the readout keeps its
 last height. The time can move once more when the pot's odds profile lands
 after the surface, where it holds a soft level's time under a firmer one's. The white's line can still appear mid-drag near the soft end.
 
@@ -478,8 +480,25 @@ what opens and the white's line; fixed at every text size, as the panel's
 iPhone 17 the slider moved from 366.5 to 358.5 pt folded (in 1750 from
 454.5 to 446.5; at the largest text size from 519.5 to 511.5) and stays at
 477.5 pt open (569.5 in 1750). At the largest text size "Most likely:
-Fudgy." wraps to two lines, more than the room, and moves the slider 48.5
-pt, as it did before.
+Fudgy." wraps to two lines, more than the room, and moved the slider 48.5
+pt; it no longer does (below).
+
+**"Most likely" moves nothing at any text size on iOS** (9 October 2026).
+At the accessibility sizes the certainty word and "Most likely" each wrap
+("A ballpark figure" to two lines, "Most likely: Fudgy." to two, and
+more in 1750's face), so the two lines' room was not
+enough, and the slider moved as it came and went: on an iPhone 17 Pro at
+the largest size by 48.5 or 54.5 pt in modern English and 52 or 114 pt in
+1750. Now, from idle to the pull, the line's room is also the tallest it
+can take there (`ReadoutView.tallest`): the tallest of the three words,
+over the tallest of the five "Most likely"s, laid out at the line's width
+and text size, hidden. At the default size that is no more than the two
+lines' room, so nothing changes there (the slider at 358.5 pt, 446.5 in
+1750); at the largest it costs empty room under a word with nothing below
+it (the slider from 511.5 to 618 pt in modern English, 1255.5 to 1369.5 in
+1750), and holds it still. `npm run ios:e2e`'s `likely-still` and
+`likely-still-largest` move the level between showing it and not, a wild
+guess and a ballpark, and check the slider does not move.
 
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is

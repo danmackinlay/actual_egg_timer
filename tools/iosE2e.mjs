@@ -565,6 +565,41 @@ scenario('egg-readings', 'C3 step 2: the egg aimed for at idle (softer and firme
   run.note(`idle aim yolk runny ${runny.yolk}, jammy ${jammy.yolk}, hard ${hard.yolk}; start ${live.yolk}; Done ${ran.yolk}`);
 });
 
+/// The level moved, idle, from one where "Most likely" shows under the
+/// certainty word to one where it does not and back, a word asked very
+/// certain to a ballpark: the slider never moves (UI.md section 8, "Nothing
+/// jumps"). On a fresh install 0.5 and 0.8 show it, 0.6 and 0.9 do not.
+async function likelyStill(run, args) {
+  const levels = [0.5, 0.6, 0.8, 0.9];
+  const uiDo = levels.map((l, k) => `set:level=${l}@launch+${k + 1}`).join(',');
+  const first = await idle(run, [...args, '-doneness', '0.6', '-uiDo', uiDo]);
+  const seen = [];
+  for (let k = 0; k < levels.length; k += 1) {
+    const i = await run.step(run.t0 + k + 1);
+    const set = await run.until(/^action set/, { from: i, what: `the level set to ${levels[k]}` });
+    await run.until(/^answer \S+ decided true odds true$/, { from: set.i, what: 'decided' });
+    const lines = await quiet(run, 'likely ');
+    const likely = lines.filter((l) => l.text.startsWith('likely ')).at(-1)?.text === 'likely true';
+    seen.push({ level: levels[k], likely, slider: layoutOf(await quiet(run, 'layout ')).slider });
+  }
+  run.check(seen.some((s) => s.likely) && seen.some((s) => !s.likely),
+    `"Most likely" never came and went: ${seen.map((s) => `${s.level} ${s.likely}`).join(', ')}`);
+  for (const s of seen) {
+    run.check(near(s.slider, first.slider, 0.5), `the slider moved at ${s.level} (likely ${s.likely}): ${first.slider} -> ${s.slider}`);
+  }
+  run.note(`slider ${first.slider} pt; ${seen.map((s) => `${s.level} ${s.likely ? 'likely' : '-'} ${s.slider}`).join(', ')}`);
+}
+
+scenario('likely-still', 'UI.md 8: "Most likely" comes and goes under the certainty word without moving the slider', async (run) => {
+  await likelyStill(run, []);
+});
+
+scenario('likely-still-largest', 'UI.md 8: the same at the largest text size, in 1750, where "Most probably" wraps', async (run) => {
+  await likelyStill(run, [
+    '-UIPreferredContentSizeCategoryName', 'UICTContentSizeCategoryAccessibilityXXXL', '-uiLanguage', 'en-x-1750',
+  ]);
+});
+
 /// A correction committed (`edit committed`, after a tap's settle or on
 /// release) from line `from`: the cook as stored then, its plan once the
 /// cook has settled, and the lines since.
