@@ -13,11 +13,12 @@ import EggTimerCore
 ///
 /// An older build writes what it stores whole, from the fields it knows, and
 /// drops what a newer build added there. So the mark holds the newest
-/// `MARKETING_VERSION` that has run, and a build that finds a newer one
-/// writes nothing at all until it is quit: no setting, pan, cook, result,
-/// copy kept aside, language or sharing state. It still times the egg, and
-/// says so at the top of the screen and in Settings. Whether it may write is
-/// core's `writerCheck`.
+/// `MARKETING_VERSION` that has run, with its build number (`CFBundleVersion`)
+/// beside it, since every TestFlight build of one version shares the version;
+/// and a build that finds a newer one writes nothing at all until it is
+/// quit: no setting, pan, cook, result, language or sharing state. It still
+/// times the egg, and says so at the top of the screen and in Settings.
+/// Whether it may write is core's `writerCheckBuilt`.
 ///
 /// Every write the app makes to UserDefaults goes through `set` and
 /// `remove`, so the guard holds for all of them; reads go straight to
@@ -27,6 +28,9 @@ import EggTimerCore
 enum Stores {
     /// Under its own key, never changed: a newer build must find it.
     static let markKey = "newestVersion"
+    /// The build number of the build that wrote the mark. A build from
+    /// before it was kept reads only the mark, and leaves this alone.
+    static let buildKey = "newestBuild"
 
     /// Set once, at launch, before the first view; read on the main actor.
     nonisolated(unsafe) private(set) static var readOnly = false
@@ -37,18 +41,29 @@ enum Stores {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
     }
 
-    /// Compare the mark with this build, and bring it up to this build if
-    /// this build may write. Says whether it may.
+    /// This build's number, which tells two builds of one version apart.
+    static var myBuild: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+    }
+
+    /// Compare the mark and its build with this build, and bring them up to
+    /// this build if this build may write. Says whether it may.
     @discardableResult
-    static func claim(_ version: String = mine, in defaults: UserDefaults = .standard) -> WriterVerdict {
+    static func claim(
+        _ version: String = mine, build: String = myBuild, in defaults: UserDefaults = .standard
+    ) -> WriterVerdict {
         let mark = defaults.string(forKey: markKey)
-        let verdict = writerCheck(mark, version)
+        let markBuild = defaults.string(forKey: buildKey)
+        let verdict = writerCheckBuilt(mark, markBuild, version, build)
         readOnly = verdict == .readOnly
-        if verdict == .write, mark != version, parseVersion(version) != nil {
-            defaults.set(version, forKey: markKey)
+        if verdict == .write, parseVersion(version) != nil {
+            if mark != version { defaults.set(version, forKey: markKey) }
+            if markBuild != build, parseBuild(build) != nil { defaults.set(build, forKey: buildKey) }
         }
         #if DEBUG
-        Screenshots.log("stores \(verdict.rawValue) mark \(mark ?? "none") mine \(version)")
+        Screenshots.log(
+            "stores \(verdict.rawValue) mark \(mark ?? "none") build \(markBuild ?? "none") mine \(version) build \(build)"
+        )
         #endif
         return verdict
     }

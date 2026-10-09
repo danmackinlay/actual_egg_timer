@@ -1454,6 +1454,32 @@ scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg
   run.note(`the line shown; Done, answered, started again; nothing stored; then marked ${marked.newestVersion}`);
 });
 
+scenario('newer-build', 'a later build of the same version has run: read-only, as for a newer version; the same build writes', async (run) => {
+  // Marked by this build first, with its version and its build number.
+  run.launch();
+  const claimed = await run.until(/^stores /, { from: run.launched, what: 'the claim' });
+  const m = /^stores write mark none build none mine (\S+) build (\d+)$/.exec(claimed.text);
+  run.check(m !== null, `the first claim: ${claimed.text}`);
+  if (m === null) return;
+  const [, version, build] = m;
+  const marked = await run.prefs((p) => p.newestBuild === build);
+  run.check(marked.newestVersion === version && marked.newestBuild === build, `marked ${marked.newestVersion} build ${marked.newestBuild}`);
+  run.terminate();
+  // A later build of this version, as a launch argument (see newer-version).
+  const later = String(Number(build) + 1);
+  run.launch(['-newestVersion', version, '-newestBuild', later]);
+  const guarded = await run.until(/^stores /, { from: run.launched, what: 'the claim under a later build' });
+  run.check(guarded.text.startsWith(`stores readOnly mark ${version} build ${later} `), `the claim: ${guarded.text}`);
+  await run.until(/^newer note$/, { from: run.launched, what: 'the line shown' });
+  run.terminate();
+  // This build's own number again: it writes.
+  run.launch(['-newestVersion', version, '-newestBuild', build]);
+  const own = await run.until(/^stores /, { from: run.launched, what: 'the claim under its own build' });
+  run.check(own.text.startsWith('stores write '), `the claim: ${own.text}`);
+  run.check(!has(run.sinceLaunch(), /^newer note$/), 'no line');
+  run.note(`${version} build ${build}: read-only under build ${later}, writing under its own`);
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

@@ -46,4 +46,30 @@ struct NewerConformance {
             #expect(try writerCheck(mark, mine).rawValue == c.str("verdict"), "\(String(describing: mark)) against \(mine)")
         }
     }
+
+    @Test("build numbers order the same")
+    func builds() throws {
+        for c in try Fixtures.list("newer.json", "builds") {
+            let a = try c.str("a")
+            let b = try c.str("b")
+            let want = (c["order"] as? NSNumber).map { $0.intValue }
+            #expect(compareBuilds(a, b) == want, "build \(a) against \(b)")
+        }
+    }
+
+    @Test("the iPhone app's verdict on a stored mark and build")
+    func checkBuilt() throws {
+        let rows = try Fixtures.list("newer.json", "checkBuilt")
+        #expect(rows.count >= 50)
+        for c in rows {
+            let mark = c["mark"] as? String
+            let build = c["build"] as? String
+            let mine = try c.str("mine")
+            let myBuild = try c.str("myBuild")
+            #expect(
+                try writerCheckBuilt(mark, build, mine, myBuild).rawValue == c.str("verdict"),
+                "\(String(describing: mark)) build \(String(describing: build)) against \(mine) build \(myBuild)"
+            )
+        }
+    }
 }
