@@ -22,7 +22,7 @@
     "sbc": "node tools/build.mjs && node dist/tools/posterior.js sbc",
     "sounds": "node tools/build.mjs && node dist/tools/sounds.js",
     "copy:literals": "node tools/build.mjs && node dist/tools/copyLiterals.js",
-    "copy:snapshot": "node tools/build.mjs && node dist/tools/copySnapshot.js",
+    "copy:snapshot": "npm run build:site && node tools/build.mjs && node dist/tools/copySnapshot.js",
     "copy:queue": "node tools/build.mjs && node dist/tools/copyQueue.js queue",
     "copy:approve": "node tools/build.mjs && node dist/tools/copyQueue.js approve",
     "copy:review": "node tools/build.mjs && node dist/tools/copyReview.js",
@@ -35,7 +35,7 @@
     "ios:release":"node tools/iosArchive.mjs && node tools/iosUpload.mjs",
     "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
     "serve": "python3 -m http.server 8080",
-    "build:site": "rm -rf _site && node tools/build.mjs tsconfig.app.json && mkdir _site && cp index.html styles.css site.webmanifest _site/ && node tools/sitePaths.mjs && rm -rf _site/assets _site/copy _site/privacy && cp -R assets _site/assets && cp -R copy _site/copy && cp -R privacy _site/privacy && mkdir -p _site/fixtures && cp fixtures/population.json _site/fixtures/population.json && node tools/precache.mjs",
+    "build:site": "node tools/buildSite.mjs",
     "serve:site": "python3 -m http.server 8080 --directory _site",
     "serve:dev": "npm run build:site && node tools/build.mjs && node dist/tools/devServer.js",
     "e2e": "npm run build:site && node tools/build.mjs && node dist/tools/e2e.js"

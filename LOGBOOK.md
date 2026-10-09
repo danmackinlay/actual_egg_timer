@@ -6536,3 +6536,91 @@ Swift tolerance changed.
 **CI**: `fixtures:check` moved to the Linux `web` job; the macOS `apple`
 job runs `swift test` on the committed fixtures, which it never
 regenerated, and the iOS build.
+
+## 10 October 2026: one web harness, an app that says when it is idle, and the development clock out of the site (REFACTOR-0.5 1.7, 1.9, 2.18)
+
+`291eabd` (2.18), `b301777` (the app's counts), `34076ae` (1.7), `b7693a6`
+(1.9), `8d9fa1a` (a request counted per document).
+
+**The test API.** `tools/e2e.ts` imported the app's modules 25 times and
+read `state`; now the e2e and the copy capture read the app through what it
+shows, what it stores and `window.aetTest` (`src/ui/dev/test.ts`):
+`snapshot()`, the page's state as plain data (the phase and what the readout
+says, the settings, the decided level, the cook, its deadlines and
+certainty, the stored cook, the log and how much of it is folded or final,
+sharing's on and sent); `whenIdle()`; `t(key, args)` and `timeOfDay(ms)`. The
+harness is `tools/harness.ts` (Chrome, the server, a context per scenario,
+`Tab`); `tools/e2e.ts` keeps the scenarios. It still watches the platform:
+the sounds started on the audio clock and the localStorage writes, by
+patching `AudioContext` and `Storage` before the app runs, and now the
+requests off DevTools' network events rather than a patched `fetch`.
+
+**The development clock leaves the site.** It moved from `now.ts` to
+`src/ui/dev/clock.ts`; `now.ts` keeps `nowMs()` and a hook it puts itself in
+(`useClock`). `main.ts` imports `src/ui/dev/index.ts` dynamically, on
+localhost and 127.0.0.1 only, before the app boots; `build:site` leaves
+`src/ui/dev/` out (`sitePaths.mjs`), and `devServer.ts` serves it beside the
+site from `dist/`. Where it is missing (`serve:site` on localhost) the import
+fails and the page boots without it. `inert-off-localhost` now checks that a
+page on another host does not even ask for it. The shipped `_site/` has no
+`aetClock`, `aetTest`, `parseSpan`, `devClockAt`, `aet.devClock` or
+`whenIdle` in it (grep); 2,060,681 bytes in 90 files before, 2,055,425 in 91
+after (`app/` 679,886 to 674,538): the clock out, `idle.js` in.
+
+**Idle.** Both harnesses patched `setTimeout`, `Worker` and `fetch` and
+counted what was pending by a threshold (the e2e timers of 5 s or less, the
+capture 2 s). Now the app says it: a person's timers (a control's settle and
+preview, a solve or a write coalesced, a held key's repeat, the decision's
+settle, the sounds' render), the worker's jobs and the requests go through
+`src/ui/idle.ts`, which counts them, and `whenIdle()` resolves after three
+looks 40 ms apart with nothing in hand. A request's 20-s timeout and a
+download's cleanup stay plain timers, as the thresholds left them. The
+nudge draws from `now.ts`'s `random()`, which `?seed=` seeds for the tab,
+and is drawn at boot rather than as `answer.ts` loads, so the seed is in
+place for it.
+
+**The copy capture as e2e scenarios.** `tools/copy-snapshot.html`, the third
+harness, is gone. Its 39 scenarios are `tools/copyScenarios.ts`, e2e
+scenarios named `copy/…`; `copySnapshot.js capture` runs them and writes
+the 172 states in the same format, and `compare` is unchanged. Where the
+frame had `Date.now` frozen at 7:30 local time, a scenario opens on the
+development clock stopped at 07:30 in London with the zone pinned (DevTools'
+`setTimezoneOverride`), and the carton's region comes from DevTools' locale
+override rather than a patched `navigator.language`. The settings are
+planted from `/privacy/`, a page of the site with no app on it. The
+development clock's corner mark is left out of what is captured.
+
+**Proof.** A capture of the new build (`b7693a6`) is byte for byte the old
+harness's capture of the build before any of this (`14603cd`): 172 states,
+47,063 strings, sha256 `16df6805…`. So the new harness reaches the same
+states, and the app's changes moved no rendered string. Two more captures
+of the new build, quiet (load 67 to 186 from other agents) and under 18
+`yes` hogs on 18 cores with the page throttled six times, are the same
+bytes.
+
+**One harness, any build.** `--tree <dir>` (E2E_TREE) serves another
+checkout's `_site/` and `dist/src/ui/dev/` to today's harness, for the e2e
+and the capture. It works for a commit from `34076ae` on, which has the test
+API and the counts. An older commit has neither; driving it would need the
+patching back, as a second harness, which is what this removes. For the
+words, the old harness's captures of older commits stand (the one above
+matched the new harness's to the byte).
+
+**2.18.** `build:site` is `tools/buildSite.mjs`, the same steps in the same
+order; `_site/` was byte for byte the one-liner's, `sw.js` included (`diff
+-r`). Left from the item: `index.html` pointed at `app/`, which would break
+the repo root served as it is, and netlify.toml's stale comments, which
+change the site's build name (`precache.mjs` hashes netlify.toml).
+
+**Times.** `npm run e2e` was 39 scenarios in 209 and 204 s (load 10 to 20);
+it is 78 (39 and the capture's 39) in 388 and 383 s at load 13 to 104,
+and 640 s under 18 hogs with the page throttled six times (load to 255).
+A capture was 205 s on the old harness; 180 and 178 s now, 289 s loaded.
+
+Things that cost an hour: a request counted across a reload. The newer
+build's scenario plants a deletion still to ask for, then reloads; under
+load the page it was planted under, which has no reason to leave stores
+alone, sent the deletion before the reload landed. The patched `fetch` had
+been counted per document, since the patch ran again in each; DevTools'
+events are per tab, so the harness now counts a request against the
+document that made it (its loader).

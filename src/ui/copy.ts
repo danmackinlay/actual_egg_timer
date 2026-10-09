@@ -16,6 +16,7 @@ import {
 } from '../core/copy.js';
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
 import { DEFAULT_LANGUAGE } from '../core/language.js';
+import { request } from './idle.js';
 
 /** The language on screen, and the catalogues that render it. */
 let active: { language: string; catalogue: Catalogue } | null = null;
@@ -25,7 +26,7 @@ let active: { language: string; catalogue: Catalogue } | null = null;
 const fetched = new Map<string, Promise<Catalogue>>();
 
 async function fetchCatalogue(locale: string, fallback: Catalogue | null): Promise<Catalogue> {
-  const response = await fetch(`copy/${locale}.json`);
+  const response = await request(`copy/${locale}.json`);
   if (!response.ok) throw new Error(`copy/${locale}.json: ${response.status}`);
   return parseCatalogue(await response.json(), fallback);
 }

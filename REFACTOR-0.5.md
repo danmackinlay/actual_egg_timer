@@ -127,11 +127,16 @@ gate could catch it.
 - [x] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
       PLAN as if it were a gate. S. *Done:* in `verify` and CI's web job;
       it takes about 4 s.
-- [ ] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
+- [x] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
       imports live app modules 25 times and reads `state` directly, so the
       refactor it should protect breaks it. Load the dev clock (`now.ts`,
       `window.aetClock`) by a dynamic import on localhost only, not in every
-      build. S-M.
+      build. S-M. *Done:* `window.aetTest` (`src/ui/dev/test.ts`:
+      `snapshot()`, `whenIdle()`, `t()`, `timeOfDay()`); the harness imports
+      no app module. The development clock is `src/ui/dev/clock.ts`, which
+      `main.ts` imports on localhost only; `build:site` leaves `src/ui/dev/`
+      out, and `devServer.ts` serves it beside the site from `dist/`.
+      `now.ts` keeps `nowMs()` and a hook for the clock.
 - [ ] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
       happened** (`iosE2e.mjs:684, 692, 824, …`) pass vacuously on a slow
       runner: step, wait for settled, then assert. Emit the debug log as
@@ -150,7 +155,16 @@ gate could catch it.
       `whenIdle()` and an injected clock and random source (the nudge draws
       `Math.random()`, `answer.ts:93`), run the copy capture as e2e
       scenarios, and serve the harness from HEAD against any commit's
-      build. M.
+      build. M. *Done:* the app sets a person's timers, sends its worker
+      jobs and makes its requests through `src/ui/idle.ts`, and
+      `aetTest.whenIdle()` waits on its counts; the nudge draws from
+      `now.ts`'s `random()`, seeded by `?seed=`; the clock is the
+      development clock, stopped. `tools/copy-snapshot.html` is gone: its
+      39 scenarios are `copy/…` in `npm run e2e` (`tools/copyScenarios.ts`),
+      and `copySnapshot.js capture` writes their 172 states in the same
+      format. `--tree <dir>` serves another checkout's build to today's
+      harness, for any commit from this one on; a commit before it has no
+      test API and no counts, and would need the patching back.
 
 ## 2. Delete
 
@@ -277,9 +291,14 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 - [x] **2.17 38 worktrees, 45 branches, 42 of them merged.** Pruned by the
       owner, 9 October 2026: 30 merged, clean worktrees and their branches;
       13 worktrees and 25 branches left.
-- [ ] **2.18 Web build**: `build:site`'s 11-step one-liner into
+- [x] **2.18 Web build**: `build:site`'s 11-step one-liner into
       `tools/buildSite.mjs`; point `index.html` at `app/` everywhere so
       `sitePaths.mjs` can go; fix netlify.toml's stale comments. S.
+      *Done in part:* the script, `_site/` byte for byte as the one-liner
+      made it, `sw.js` included. Left: `index.html` at `app/` (the repo
+      root, served as it is, loads `dist/`) and netlify.toml's comments,
+      which change the site's bytes (`precache.mjs` hashes netlify.toml
+      into the build's name), so each is its own change.
 
 ## 3. Restructure
 

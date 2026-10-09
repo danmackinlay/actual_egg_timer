@@ -11,15 +11,26 @@
  * which the simulator reaches as localhost. Every egg kept, and every
  * deletion, is printed; nothing is written to disk, and everything goes with
  * the process.
+ *
+ * The site that ships has no development tools (src/ui/dev/: the development
+ * clock and the test API, which a page served from this machine loads,
+ * main.ts), so this serves them beside it from the build, at the path the
+ * page asks for them by (/app/src/ui/dev/). TREE names the checkout whose
+ * `_site/` and `dist/` are served (this one): `npm run e2e -- --tree <dir>`
+ * (tools/harness.ts).
  */
 
 import { IncomingMessage, ServerResponse, createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, relative } from 'node:path';
 import { handle } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
 
-const ROOT = '_site';
+const TREE = process.env['TREE'] ?? '.';
+const ROOT = join(TREE, '_site');
+/** Where the page asks for the development tools, and where they are built. */
+const DEV_PATH = join('app', 'src', 'ui', 'dev');
+const DEV_BUILD = join(TREE, 'dist', 'src', 'ui', 'dev');
 const PORT = Number(process.env['PORT'] ?? 8888);
 const store = new MemoryStore();
 
@@ -39,7 +50,8 @@ async function staticFile(path: string): Promise<{ body: Buffer; type: string } 
   const clean = normalize(decoded).replace(/^(\.\.[/\\])+/, '');
   for (const candidate of [clean, join(clean, 'index.html')]) {
     try {
-      const body = await readFile(join(ROOT, candidate));
+      const dev = relative(DEV_PATH, candidate.replace(/^[/\\]+/, ''));
+      const body = await readFile(dev.startsWith('..') ? join(ROOT, candidate) : join(DEV_BUILD, dev));
       return { body: body, type: TYPES[extname(candidate)] ?? 'application/octet-stream' };
     } catch {
       continue;
