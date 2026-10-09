@@ -3,10 +3,12 @@
  *
  * Run: npm run rank
  *
+ * Quoted by INFERENCE.md (what feedback can move) and README 11.5.
+ *
  * This exists because a plan to pool feedback across many cooks proposed ten
  * global parameters, and the objection to it - that most of them cash out in the
  * same predictive, so the list claims more than the data can update - is a
- * measurable claim rather than a matter of taste. `tools/identifiability.ts`
+ * measurable claim rather than a matter of taste. `studies/identifiability.ts`
  * asked it of one pair (alpha, h) at one cook. This asks it of ten candidates
  * over the cooks a population would actually send in.
  *
@@ -229,6 +231,6 @@ console.log();
 report('every protocol', rows, []);
 // The slider's dose scale is definitional, so a global yolk offset is not a
 // fact about eggs: it is the mean of everybody's taste, and only a thermometer
-// can tell those apart (tools/probe.ts).
+// can tell those apart (studies/probe.ts).
 report('yolk offset fixed by convention', rows, ['yolkOffset']);
 report('water-cooled cooks only - what most people do', rows.filter((r) => r.cooling !== 'counter'), ['yolkOffset']);

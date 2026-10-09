@@ -887,10 +887,11 @@ npm run verify     # the gate: build, test, validate, copy:literals, fixtures:ch
 npm run validate   # prints the validation table in §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
-npm run decide     # measures the choice of cook time (tools/decide.ts)
+npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (§11.2)
 npm run rank       # how many parameters can feedback move? (§11.5)
 npm run probe      # is a probe thermometer worth an egg? (§11.3)
+                   # (these four, and studies/shape-study, are in studies/: outside `npm run build`)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
@@ -1178,7 +1179,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
    larger than §8 used to claim. The honest fix is a Robin boundary condition (§11.4).
 
    Two things about this were assertions until September 2026 and are now measured
-   (`npm run identifiability`, `tools/identifiability.ts`):
+   (`npm run identifiability`, `studies/identifiability.ts`):
 
    - **`H_EFF` is not in the simulation path at all.** `sphere.ts` imports `MODE_COUNT`
      and `K_EGG` and nothing else; the surface is clamped. The constant appears only in
@@ -1275,7 +1276,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
   feedback, so adding it as another calibrated parameter would add a dimension the data
   cannot move. The reason to do this is that Dirichlet under-predicts cook time and that
   bias currently sits inside `ALPHA_DEFAULT` — not that anyone will ever fit `h` from
-  eating eggs. `tools/identifiability.ts` already carries working Robin eigenmodes,
+  eating eggs. `studies/identifiability.ts` already carries working Robin eigenmodes,
   cross-checked against `seriesTheta` to 3e-7, so the hard part of the maths is done.
 - **Convection in the liquid white during the ramp** (§8). Not tractable in this
   architecture; the practical mitigation is to keep `ALPHA_DEFAULT` calibrated against

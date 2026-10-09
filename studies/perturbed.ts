@@ -1,7 +1,7 @@
 /**
  * One cook, with the constants the repo holds fixed made movable.
  *
- * Shared by `tools/rank.ts` and `tools/probe.ts`. Both ask what a quantity the
+ * Shared by `studies/rank.ts` and `studies/probe.ts`. Both ask what a quantity the
  * model treats as a constant would do to something a cook can observe, and
  * `simulate` cannot answer that: Z_YOLK, Z_WHITE and YOLK_RADIUS_FRAC are module
  * constants, read inside its loop. So the loop is restated here with every one

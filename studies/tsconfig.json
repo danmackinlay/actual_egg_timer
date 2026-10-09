@@ -1,0 +1,8 @@
+// The studies: measurements quoted in the documents, run by hand, never
+// by a gate. Out of the default build (`npm run build` builds tsconfig.json);
+// each npm script builds this project first, over core and the tools.
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["*.ts"],
+  "references": [{ "path": "../tsconfig.json" }]
+}

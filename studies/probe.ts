@@ -3,6 +3,8 @@
  *
  * Run: npm run probe
  *
+ * Quoted by INFERENCE.md (the probe's section) and README 11.3.
+ *
  * Some cooks own a meat thermometer with a probe on the end. The obvious way to
  * use it - push it to a known depth the moment the egg comes out - turns out to
  * be the worst of the three available, and this tool exists to say so with

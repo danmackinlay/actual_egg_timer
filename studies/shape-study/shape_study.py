@@ -27,9 +27,9 @@ Checks: the FE sphere against the series the app integrates
 app's own 40-mode series, against the app's solveCookTime
 (app_reference.mjs) - to within its 1 s bisection tolerance.
 
-    python3 tools/shape-study/shape_study.py [--quick] [--app-core DIR]
+    python3 studies/shape-study/shape_study.py [--quick] [--app-core DIR]
 
-Needs numpy and scipy. Writes tools/shape-study/results.json.
+Needs numpy and scipy. Writes studies/shape-study/results.json.
 """
 
 import json

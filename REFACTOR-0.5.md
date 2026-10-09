@@ -276,10 +276,12 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       reviews in `archive/`. SHIP-0.4 stays: its open release items (the
       privacy page's OWNER marks, App Privacy, App Attest) are 0.5's now.
       PLAN's map is the merging session's (DECISIONS 104).*
-- [ ] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
+- [x] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
       perturbed, decide (INFERENCE §8's numbers), shape-study, into
       `studies/` with their own tsconfig, out of the default build, each
-      with a line saying which document quotes it. S.
+      with a line saying which document quotes it. S. *`studies/tsconfig.json`
+      references the root project, since `decide.ts` uses `tools/common.ts`;
+      `posterior.ts`, which the tests import, stays in `tools/`.*
 - [x] **2.17 38 worktrees, 45 branches, 42 of them merged.** Pruned by the
       owner, 9 October 2026: 30 merged, clean worktrees and their branches;
       13 worktrees and 25 branches left.
