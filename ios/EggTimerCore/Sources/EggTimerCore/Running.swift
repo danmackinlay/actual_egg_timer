@@ -739,6 +739,8 @@ public struct CookPlan: Sendable {
     public let coolS: Double
     public let probeMoment: Bool
     public let deadlines: Deadlines
+    /// While provisional, when the slow hob's rule next lengthens the guess:
+    /// the app plans again once the clock is past it (`slowHobDue`).
     public let slowHobAtS: Double?
     /// While provisional, where the slow hob's rule got to, for the next plan
     /// to start from (`replan`'s `hint`); nil otherwise.
@@ -802,7 +804,16 @@ public func slowHobHintFits(
     let p = calibrationParams(c)
     guard hint.params.alphaM2s == p.alphaM2s, hint.params.tauAirScale == p.tauAirScale else { return false }
     guard hint.whiteDoseMin == calibrationDoneness(c, level: 1.0).whiteDoseMin else { return false }
-    return hint.steps == 0 || nowS - cook.startedAtS > hint.lastS
+    return hint.steps == 0 || nowS > cook.startedAtS + hint.lastS
+}
+
+/// Whether the slow hob's moment has come at `nowS`, so the app plans again
+/// (both apps' tick): strictly past `slowHobAtS`, the one comparison
+/// `replan` lengthens by. At the moment itself the plan is the one the app
+/// holds, so a clock stopped exactly there plans nothing at every tick.
+public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
+    guard let at = plan.slowHobAtS else { return false }
+    return nowS > at
 }
 
 /// Whether two decision surfaces' inputs are the same pot, egg and posterior:
@@ -913,7 +924,9 @@ public func replan(
             let due = t - slowHobWhenLeftS
             let creeping = !(due > next)
             let fire = creeping ? next : due
-            if !(heated > fire) || step >= slowHobMaxSteps {
+            // Lengthened only once the clock is strictly past the moment, as
+            // the plan states it (`slowHobAtS`, `slowHobDue`).
+            if !(nowS > start + fire) || step >= slowHobMaxSteps {
                 slowHobAt = start + fire
                 break
             }

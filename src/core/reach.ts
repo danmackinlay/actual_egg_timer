@@ -495,8 +495,8 @@ export interface PricedChange {
  * The changes the model can price, for this setup, in the order they are
  * shown: into ice water instead of resting on the counter, and with the heat
  * off, twice the water (up to the most the controls take). Each is kept only
- * where its profile says it raises the odds at the level on screen
- * (`protocolAdvice`).
+ * where its profile raises the chance of the word asked at the level on
+ * screen by ADVICE_GAIN or more (`protocolAdvice`).
  *
  * A cold tap is not here. On the model it does what ice does, to the tenth,
  * at every level and after any number of eggs (`npm run decide -- advice`):

@@ -31628,6 +31628,368 @@
         "finished": false,
         "remake": false
       }
+    },
+    {
+      "note": "cold, heating: the slow hob's moment not yet come, then past",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 6,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
+        "correctedAt_s": null,
+        "asRan": null
+      },
+      "leanHint_s": 0,
+      "now_s": 1791363660,
+      "hint": null,
+      "surface": null,
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": true,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 686.76171875,
+          "peakYolk_C": 65.15777231332514,
+          "peakYolkTime_s": 869.5
+        },
+        "decided": null,
+        "lean_s": 0,
+        "nudge_s": 6,
+        "cookTime_s": 686.76171875,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 183,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364286.7617188,
+          "coolEnd_s": 1791364489.7617188,
+          "provisional": true,
+          "outAt_s": null,
+          "asking": false
+        },
+        "slowHobAt_s": 1791364241.7617188,
+        "slowHob": {
+          "startedAt_s": 1791363600,
+          "choices": {
+            "mass_kg": 0.068,
+            "massFrom": "class",
+            "sizeTable": "eu",
+            "eggFrom": "fridge",
+            "customStart_C": 12,
+            "room_C": null,
+            "startMode": "cold",
+            "afterBoil": "hold",
+            "cooling": "ice",
+            "waterLitres": 2,
+            "eggCount": 2,
+            "altitude_m": 0,
+            "level": 0.41
+          },
+          "fromRamp_s": 480,
+          "carry_s": 6,
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569,
+          "steps": 0,
+          "last_s": 0,
+          "ramp_s": 480,
+          "carried_s": 686.76171875
+        },
+        "tooOldAt_s": 1791370800,
+        "certainty": null,
+        "forecast": null
+      },
+      "outs": [],
+      "dues": [],
+      "hobDue": [
+        {
+          "now_s": 1791363661,
+          "due": false
+        },
+        {
+          "now_s": 1791364241.2617188,
+          "due": false
+        },
+        {
+          "now_s": 1791364242.2617188,
+          "due": true
+        },
+        {
+          "now_s": 1791367241.7617188,
+          "due": true
+        }
+      ],
+      "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
+      "asRan": {
+        "current": false,
+        "kept": null,
+        "shown": null,
+        "corrected": {
+          "asRan": null
+        },
+        "solution": null
+      },
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": null,
+      "refused": "noSurface",
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false,
+        "remake": false
+      }
+    },
+    {
+      "note": "cold, heating, a second past the slow hob's moment: lengthened, and its next moment not yet come, then past",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 6,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
+        "correctedAt_s": null,
+        "asRan": null
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364242.7617188,
+      "hint": null,
+      "surface": null,
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 701.76171875,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": true,
+        "lengthened": true,
+        "inputs": null,
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 798.7548828125
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 804.7548828125,
+          "peakYolk_C": 65.13694692583204,
+          "peakYolkTime_s": 985.5
+        },
+        "decided": null,
+        "lean_s": 0,
+        "nudge_s": 6,
+        "cookTime_s": 804.7548828125,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 181,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364404.7548828,
+          "coolEnd_s": 1791364605.7548828,
+          "provisional": true,
+          "outAt_s": null,
+          "asking": false
+        },
+        "slowHobAt_s": 1791364359.7548828,
+        "slowHob": {
+          "startedAt_s": 1791363600,
+          "choices": {
+            "mass_kg": 0.068,
+            "massFrom": "class",
+            "sizeTable": "eu",
+            "eggFrom": "fridge",
+            "customStart_C": 12,
+            "room_C": null,
+            "startMode": "cold",
+            "afterBoil": "hold",
+            "cooling": "ice",
+            "waterLitres": 2,
+            "eggCount": 2,
+            "altitude_m": 0,
+            "level": 0.41
+          },
+          "fromRamp_s": 480,
+          "carry_s": 6,
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569,
+          "steps": 1,
+          "last_s": 641.76171875,
+          "ramp_s": 701.76171875,
+          "carried_s": 804.7548828125
+        },
+        "tooOldAt_s": 1791370800,
+        "certainty": null,
+        "forecast": null
+      },
+      "outs": [],
+      "dues": [],
+      "hobDue": [
+        {
+          "now_s": 1791364242.7617188,
+          "due": false
+        },
+        {
+          "now_s": 1791364359.2548828,
+          "due": false
+        },
+        {
+          "now_s": 1791364360.2548828,
+          "due": true
+        }
+      ],
+      "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
+      "asRan": {
+        "current": false,
+        "kept": null,
+        "shown": null,
+        "corrected": {
+          "asRan": null
+        },
+        "solution": null
+      },
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": null,
+      "refused": "noSurface",
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false,
+        "remake": false
+      }
     }
   ],
   "remembers": [

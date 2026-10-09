@@ -567,8 +567,9 @@ export interface CookPlan {
   /** What `phaseAt` reads. */
   deadlines: Deadlines;
   /** While provisional, when the slow hob's rule next lengthens the guess:
-   *  the app plans again then. Null otherwise, and once the guess is the
-   *  most the app takes for a time to boil. */
+   *  the app plans again once the clock is past it (`slowHobDue`). Null
+   *  otherwise, and once the guess is the most the app takes for a time to
+   *  boil. */
   slowHobAt_s: number | null;
   /** While provisional, where the slow hob's rule got to, for the next plan
    *  to start from (`replan`'s `hint`); null otherwise. */
@@ -655,7 +656,17 @@ export function slowHobHintFits(
   const p = calibrationParams(c);
   if (hint.params.alpha_m2s !== p.alpha_m2s || hint.params.tauAirScale !== p.tauAirScale) return false;
   if (hint.whiteDose_min !== calibrationDoneness(c, 1.0).whiteDose_min) return false;
-  return hint.steps === 0 || now_s - cook.startedAt_s > hint.last_s;
+  return hint.steps === 0 || now_s > cook.startedAt_s + hint.last_s;
+}
+
+/**
+ * Whether the slow hob's moment has come at `now_s`, so the app plans again
+ * (both apps' tick): strictly past `slowHobAt_s`, the one comparison
+ * `replan` lengthens by. At the moment itself the plan is the one the app
+ * holds, so a clock stopped exactly there plans nothing at every tick.
+ */
+export function slowHobDue(plan: CookPlan, now_s: number): boolean {
+  return plan.slowHobAt_s !== null && now_s > plan.slowHobAt_s;
 }
 
 /** Whether two decision surfaces' inputs are the same pot, egg and
@@ -866,7 +877,11 @@ export function replan(
       const due = t - SLOW_HOB_WHEN_LEFT_S;
       const creeping = !(due > next);
       const fire = creeping ? next : due;
-      if (!(heated > fire) || step >= SLOW_HOB_MAX_STEPS) {
+      // Lengthened only once the clock is strictly past the moment, read as
+      // the plan states it (`slowHobAt_s`, `slowHobDue`), so a plan made at
+      // that very moment is the plan already made, and the app plans again
+      // only after it.
+      if (!(now_s > start + fire) || step >= SLOW_HOB_MAX_STEPS) {
         slowHobAt = start + fire;
         break;
       }

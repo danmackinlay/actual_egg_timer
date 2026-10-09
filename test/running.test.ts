@@ -25,7 +25,7 @@ import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, asRanCorrected, asRanCurrent,
   asRanShown, keepAsRan, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
-  readRunningCook, replan, slowHobHintFits, solutionAsRan, startCook, startCorrected, stillIn, withBoil, withOut,
+  readRunningCook, replan, slowHobDue, slowHobHintFits, solutionAsRan, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -793,4 +793,39 @@ test('28. onescreen review 2.1: a correction after Done keeps it Done, and corre
   const lp = planned(lighter, (cooling.deadlines.coolEnd_s ?? 0) + 30);
   assert.equal(phaseAt(lp.deadlines, (cooling.deadlines.coolEnd_s ?? 0) + 30), 'DONE');
   assert.equal(lp.deadlines.coolEnd_s, done.events.cooledAt_s);
+});
+
+test("29. the slow hob's one comparison: due strictly past its moment, and a plan made at the moment is the plan already made", () => {
+  // As the tick plans (`slowHobDue`), on a slow hob and on a small runny
+  // egg's creeping guess, over their first sixteen minutes and at forty:
+  // at each plan's own moment it is not due, and a plan made then -
+  // from the start, or from the hint - has the same moment, so a clock
+  // stopped there plans nothing more; a millisecond past it is due, and the
+  // plan made then moves the moment on.
+  const check = (cook: RunningCook, plan: CookPlan): CookPlan => {
+    const at = plan.slowHobAt_s as number;
+    assert.equal(slowHobDue(plan, at), false, `due at its own moment, ${at - S} s`);
+    assert.equal(slowHobDue(plan, at - 0.001), false);
+    for (const again of [replan(cook, C, null, 0, at), replan(cook, C, null, 0, at, plan.slowHob)]) {
+      assert.equal(again.slowHobAt_s, at, `planned again at its moment, ${at - S} s`);
+      assert.equal(again.setup.timeToBoil_s, plan.setup.timeToBoil_s);
+    }
+    assert.equal(slowHobDue(plan, at + 0.001), true);
+    const next = replan(cook, C, null, 0, at + 0.001, plan.slowHob);
+    assert.ok(next.slowHobAt_s === null || next.slowHobAt_s > at, `moved on past ${at - S} s`);
+    return next;
+  };
+  for (const cook of [cookOf(), cookOf({ mass_kg: 0.048, level: 0 })]) {
+    let plan = replan(cook, C, null, 0, S + 1);
+    let moments = 0;
+    while (plan.slowHobAt_s !== null && plan.slowHobAt_s < S + 16 * 60) {
+      plan = check(cook, plan);
+      moments++;
+    }
+    assert.ok(moments >= 3, `${moments} moments`);
+    for (const minutes of [40]) check(cook, replan(cook, C, null, 0, S + minutes * 60));
+    const most = replan(cook, C, null, 0, S + 7300);
+    assert.equal(slowHobDue(most, S + 99999), false, 'never once the guess is the most');
+  }
+  assert.equal(slowHobDue(replan(cookOf({ startMode: 'hot' }), C, null, 0, S + 60), S + 3000), false);
 });
