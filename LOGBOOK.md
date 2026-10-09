@@ -6038,3 +6038,42 @@ wraps to two lines, more than the room kept for it, so it moves the slider
 
 Checked: `npm run verify` (`swift test` 159 in 39 suites), `npm run e2e`
 37 of 37, `npm run ios:build`, `npm run ios:e2e` 40 of 40.
+
+## 9 October 2026: the copy snapshot waits for the app to settle
+
+Two captures of one commit (`e6da9e1`) differed in 8 strings, so a plain
+`copySnapshot.js compare` of them threw "innerText differs" and
+`compare --draft` called the difference "new, and not drafted". The
+harness (`tools/copy-snapshot.html`) froze `Date.now`, so the development
+clock was not it (the frame is served from 127.0.0.1, but no `?clock=` is
+given and nothing is kept, so `nowMs()` is `Date.now()`). It was the
+worker. Each step slept a fixed time - 60 ms after a tap - and snapped,
+whatever the app still had in hand. In "cold cook, twice" the second Start
+is tapped 60 ms after the first cook's answers are folded in; the
+decision's surface for the new calibration is 300 ms of settle and about a
+second of the worker's time. So the second cook started on the mean
+solve's time (4:58, peak yolk 64 °C) on one run and on the decided one
+(5:13, 65 °C, with "9 times in 10: Jammy to Fudgy.") on the other, or
+started on the first and was moved to the second when the surface landed
+mid-cook, and the third cook's calibration followed from whichever egg was
+recorded.
+
+Now the harness counts what the app has in hand - short timers (2 s or
+less: the solve's and the settings' coalescing, the decision's settle, a
+job on this thread), the grid worker's jobs and requests out - and after
+the boot and after every step waits until all three are none for three
+looks in a row, failing after a minute rather than snapping whatever is
+there. It seeds `Math.random` too, for the nudge (`answer.ts`), which
+moves the time only while sharing is on, as it never is in the harness.
+Three captures of `0.5.x` (`0287662`), two of them run side by side to
+load the machine, compare identical: 172 states, 46031 strings.
+
+**What the old captures missed.** Settled, 152 of the 172 states differ
+from an old capture of the same build: the old harness snapped every idle
+screen before its odds profile landed, so the certainty lines ("A wild
+guess", "9 times in 10: Runny to Fudgy.", "Likely yolk: …", the
+weigh-the-egg advice) were in hardly any capture, and a draft touching
+them was not proved by one. A capture is slower for it, about 3½ minutes
+where it was 1¼. Both sides of a comparison must be captured by the fixed
+harness: the harness is served from the tree being captured, so a "before"
+taken on a commit without this one is the old, racing capture.
