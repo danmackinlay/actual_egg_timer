@@ -270,9 +270,16 @@ private func logRecord(_ w: inout Work, _ env: CookEnv, nowS: Double, unanswered
     return true
 }
 
+/// Whether `b` is the cook `a` was: a cook moves only by an entry appended to
+/// its log (`appendEntry`), so the same log length is the same cook, and a
+/// move that changes nothing appends nothing.
+private func sameCook(_ a: RunningCook?, _ b: RunningCook) -> Bool {
+    a.map { $0.log.count == b.log.count } ?? false
+}
+
 /// Plan the cook, write what the clock decided, keep the plan as it ran.
 private func settle(_ w: inout Work, _ env: CookEnv, nowS: Double, last: CookPlan?) {
-    var plan = w.plannedFor == w.cook
+    var plan = sameCook(w.plannedFor, w.cook)
         ? w.plan : planOn(w.cook, env.calibration, env.surfaces, lean: w.lean, nowS: nowS, last: last)
     if endedAtS(w.cook) == nil {
         let due = eventsDue(w.cook, plan: plan, nowS: nowS)
@@ -363,12 +370,12 @@ public func step(_ state: CookState, _ event: CookEvent, _ env: CookEnv) -> Cook
     case let .correctStart(_, startedAtS):
         if !ended, startedAtS != held.startedAtS {
             w.cook = startCorrected(held, startedAtS: startedAtS, nowS: nowS) ?? held
-            if w.cook != held, answered(held) { w.cook = pullStands(w.cook) }
+            if !sameCook(held, w.cook), answered(held) { w.cook = pullStands(w.cook) }
         }
     case .out:
         if !ended {
             w.cook = withOut(held, plan: plan, nowS: nowS)
-            if w.cook != held { w.effects.append(.silence) }
+            if !sameCook(held, w.cook) { w.effects.append(.silence) }
         }
     case .stillIn:
         if !ended, asking { w.cook = stillIn(held, nowS: nowS) }

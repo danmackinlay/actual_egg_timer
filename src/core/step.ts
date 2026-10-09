@@ -308,10 +308,17 @@ function logRecord(w: Work, env: CookEnv, now_s: number, unanswered: boolean): b
   return true;
 }
 
+/** Whether `b` is the cook `a` was: a cook moves only by an entry appended
+ *  to its log (`appendEntry`), so the same log length is the same cook, and a
+ *  move that changes nothing appends nothing. */
+function sameCook(a: RunningCook | null, b: RunningCook): boolean {
+  return a !== null && a.log.length === b.log.length;
+}
+
 /** Plan the cook at `now_s`, write what the clock decided, keep the plan as
  *  it ran, and carry the lean it decided. */
 function settle(w: Work, env: CookEnv, now_s: number, last: CookPlan | null): void {
-  let plan = w.plannedFor === w.cook ? w.plan : planOn(w.cook, env.calibration, env.surfaces, w.lean, now_s, last);
+  let plan = sameCook(w.plannedFor, w.cook) ? w.plan : planOn(w.cook, env.calibration, env.surfaces, w.lean, now_s, last);
   if (endedAt_s(w.cook) === null) {
     const due = eventsDue(w.cook, plan, now_s);
     if (!sameEvents(due, w.cook.events)) {
@@ -423,13 +430,13 @@ export function step(state: CookState, event: CookEvent, env: CookEnv): CookStep
     case 'correctStart':
       if (!ended && event.startedAt_s !== held.startedAt_s) {
         w.cook = startCorrected(held, event.startedAt_s, now_s) ?? held;
-        if (w.cook !== held && answered(held)) w.cook = pullStands(w.cook);
+        if (!sameCook(held, w.cook) && answered(held)) w.cook = pullStands(w.cook);
       }
       break;
     case 'out':
       if (!ended) {
         w.cook = withOut(held, plan, now_s);
-        if (w.cook !== held) w.effects.push({ kind: 'silence' });
+        if (!sameCook(held, w.cook)) w.effects.push({ kind: 'silence' });
       }
       break;
     case 'stillIn':

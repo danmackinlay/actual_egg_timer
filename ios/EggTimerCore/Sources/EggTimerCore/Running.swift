@@ -381,7 +381,7 @@ public struct Deadlines: Sendable {
     /// they do. The tap ends the pull, and the cooling (whose deadline the app
     /// then times from the tap) starts there.
     public let outAtS: Double?
-    /// The plan asks whether the egg is still in the water (`askIfStillIn`):
+    /// The plan asks whether the egg is still in the water (`asksIfStillIn`):
     /// nothing past the question, so the phase that would be Done reads
     /// Cooling until it is answered.
     public let asking: Bool
