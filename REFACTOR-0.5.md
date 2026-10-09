@@ -394,7 +394,7 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ### Each app as an effect runner over it
 
-- [ ] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
+- [x] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
       `view(model, now)`** as pure structs (extending `phaseView`) plus a
       DOM writer once per animation frame. It ends: `state` written from
       five modules; `controls` that *is* `settings` while idle (an alias
@@ -402,6 +402,16 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       simulation; 10 direct `render` and 13 `recompute` calls; ~10 boot-time
       callback registrations; `now.ts` booting on import. About 2.5k lines
       reshaped. L, after 1.1 and 3.1.
+      *Done for the running cook* (10 October 2026, `83ba983`): `Model`
+      (`src/ui/model.ts`) extends core's `CookState`; `update` is pure and
+      steps core's `step`; cook.ts runs its effects and builds its `need`
+      (the wake at Done included, e2e `done-wakes`); `takeUpStored`,
+      `endCook`, `refreshAsRan`, the held answers, the web's plan loop and
+      record making went. *Not done:* the idle page (`recompute`, settings,
+      language) is not messages yet; no `view` structs or once-a-frame DOM
+      writer (`render` still asks for profiles); `controls` is still
+      `settings` while idle; render's, edit's and the stores' module state
+      stay theirs (caches, the gesture, storage).
 - [x] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
       times today (settings, boil, calibration, share, cook) with its own
       "seen" copy each; `takeUpEvents` (domain logic in `store.ts`) into
