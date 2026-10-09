@@ -1,7 +1,8 @@
 /**
  * What the page has in hand: the timers of a person's span (a control's
  * settle, a solve or a write coalesced, a held key's repeat, a decision's
- * settle), the jobs sent off the main thread, and the requests out. The app
+ * settle) and the page's next frame, the jobs sent off the main thread, and
+ * the requests out. The app
  * sets those timers and makes those requests through here, so a script can
  * wait for the page to have done what it will (src/ui/dev/test.ts)
  * rather than for a fixed time, whatever the machine's speed. A timer that
@@ -12,6 +13,7 @@
  */
 
 const timers = new Set<number>();
+let frames = 0;
 let jobs = 0;
 let requests = 0;
 
@@ -32,6 +34,24 @@ export function cancelSoon(handle: number): void {
   window.clearTimeout(handle);
 }
 
+/** `f` at the next animation frame, counted until it has run: or a tenth
+ *  of a second on, whichever comes first, for a page the browser is not
+ *  painting (a tab behind another). */
+export function nextFrame(f: () => void): void {
+  frames += 1;
+  let done = false;
+  const run = (): void => {
+    if (done) return;
+    done = true;
+    frames -= 1;
+    cancelAnimationFrame(painted);
+    window.clearTimeout(late);
+    f();
+  };
+  const painted = requestAnimationFrame(run);
+  const late = window.setTimeout(run, 100);
+}
+
 /** A job off the main thread (offThread.ts), counted until it is answered. */
 export function job<T>(p: Promise<T>): Promise<T> {
   jobs += 1;
@@ -46,5 +66,5 @@ export function request(input: string, init?: RequestInit): Promise<Response> {
 
 /** What is in hand now. */
 export function inHand(): { timers: number; jobs: number; requests: number } {
-  return { timers: timers.size, jobs: jobs, requests: requests };
+  return { timers: timers.size + frames, jobs: jobs, requests: requests };
 }

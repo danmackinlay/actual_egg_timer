@@ -23,7 +23,7 @@
  *   a reload or a closed tab inside the settle loses nothing.
  *
  * Overdue is decided only on commit, by the plan of the committed cook
- * (cook.ts, `correctCook`). The aimed-for egg stays for a settle after the
+ * (model.ts, `correct`). The aimed-for egg stays for a settle after the
  * last change, then the live egg comes back.
  *
  * A running cook's controls read its own choices (review 2.5): what they show
@@ -39,18 +39,18 @@ import {
   startCorrected,
 } from '../core/running.js';
 import { targetPeakYolk_C } from '../core/slider.js';
-import { surfaceFor } from './answer.js';
-import { calibrationParams } from './calibration.js';
+import { surfaceFor } from './decisionGrids.js';
+import { calibrationDoneness, calibrationParams } from './calibration.js';
+import { previewSection } from '../core/section.js';
 import { t, timeOfDay } from './copy.js';
 import { cookShown } from './feedback.js';
 import { page } from './dom.js';
 import { cancelSoon, soon } from './idle.js';
 import { nowMs } from './now.js';
-import { aimedEgg, holdAim } from './render.js';
 import { choicesOf, state } from './state.js';
 import { Settings } from './store.js';
 import { REGION } from './units.js';
-import { saveNow } from './update.js';
+import { send } from './send.js';
 import { pressAndHold } from './stepper.js';
 
 /** How long a tap's change settles before it is committed, and how long the
@@ -108,9 +108,6 @@ const edit = {
   settle: 0,
   preview: 0,
   release: 0,
-  /** Corrects the running cook (cook.ts, `correctCook`), handed in by
-   *  `wireEdits`: cook.ts imports this module, so this one cannot import it. */
-  correct: null as ((choices: CookChoices, startedAt_s: number | null) => void) | null,
 };
 
 /** The cook's controls are drawn from it afresh (a start, a reload, a
@@ -119,7 +116,6 @@ export function startEdits(): void {
   clearTimers();
   edit.previewedLevel = false;
   edit.base = { ...state.controls };
-  state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
   showStartLimit(null);
   edit.pending = false;
   edit.group = null;
@@ -132,7 +128,6 @@ export function endEdits(): void {
   clearTimers();
   edit.previewedLevel = false;
   edit.base = null;
-  state.controlsStart_s = null;
   showStartLimit(null);
   edit.pending = false;
   edit.group = null;
@@ -173,7 +168,10 @@ export function cookControlsChanged(source: EventTarget | null): void {
   edit.release = 0;
   // At once, the slider's own reading; the plan's follows.
   const level = state.controls.doneness;
-  state.aim = { level: level, peakYolk_C: targetPeakYolk_C(level), solution: null };
+  send({
+    kind: 'aim', level: null,
+    aim: { level: level, peakYolk_C: targetPeakYolk_C(level), solution: null, section: state.aim?.section ?? null },
+  });
   if (edit.preview === 0) edit.preview = soon(previewNow, PREVIEW_MS);
   if (edit.down === null) settleThenCommit();
 }
@@ -224,18 +222,23 @@ function previewNow(): void {
   if (cook === null || base === null || !(edit.pending || edit.down !== null)) return;
   const now_s = nowMs() / 1000;
   const hand = cookInHand(cook, choicesInHand(cook, base).choices, now_s);
-  const plan = replan(hand, state.calib, surfaceFor(state.plan?.inputs ?? null), state.leanHint_s, now_s);
+  const plan = replan(hand, state.calib, surfaceFor(state.plan?.inputs ?? null, state.calib), state.leanHint_s, now_s);
   const pulled = hand.events.pulled;
   const params = pulled !== null && state.plan !== null
     ? cookShown(cook, state.plan)?.params ?? calibrationParams(state.calib)
     : calibrationParams(state.calib);
   const time_s = pulled === null ? plan.cookTime_s : pulled.out_s - hand.startedAt_s;
-  state.aim = { level: plan.answer.level, peakYolk_C: plan.solution.result.peakYolk_C, solution: plan.solution };
-  holdAim(aimedEgg(plan.egg, plan.setup, params, time_s, plan.answer.level));
+  const white = calibrationDoneness(state.calib, plan.answer.level).whiteDose_min;
+  send({
+    kind: 'aim', level: null, aim: {
+      level: plan.answer.level, peakYolk_C: plan.solution.result.peakYolk_C, solution: plan.solution,
+      section: previewSection(plan.egg, plan.setup, params, time_s, white),
+    },
+  });
 }
 
 /**
- * Commit the change in hand: the cook corrected (`correctCook`), and the
+ * Commit the change in hand: the cook corrected (a `correct` message), and the
  * fields it changed written to the settings for the next cook. After the
  * pull the level is not corrected (DECISIONS.md 98): the slider only
  * previewed, and goes back to the level the egg was pulled at; nothing is
@@ -264,16 +267,16 @@ export function commitEdit(upTo: InHand | null = null): void {
     edit.previewedLevel = true;
   }
   const start = startInHand !== null && startInHand !== cook.startedAt_s ? startInHand : null;
-  if (start !== null || !sameChoices(choices, cook.choices)) edit.correct?.(choices, start);
+  if (start !== null || !sameChoices(choices, cook.choices)) send({ kind: 'correct', choices: choices, startedAt_s: start });
   // The start as the cook now has it: a correction refused leaves the cook's.
   // Unless the change come since is the start's own.
   if (upTo === null || state.controlsStart_s === upTo.start) {
-    state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
+    send({ kind: 'startInHand', at_s: state.cook === null ? null : state.cook.startedAt_s });
   }
   if (touched.length > 0) {
-    const settings = state.settings as unknown as Record<string, unknown>;
-    for (const k of touched) settings[k] = controls[k];
-    saveNow();
+    const fields: Record<string, unknown> = {};
+    for (const k of touched) fields[k] = controls[k];
+    send({ kind: 'touched', fields: fields as Partial<Settings> });
   }
   letAimGo();
 }
@@ -293,14 +296,12 @@ function letAimGo(): void {
 /** The aimed-for egg goes, and a level the slider only previewed after the
  *  pull goes back to the cook's. */
 function dropAim(): void {
+  let level: number | null = null;
   if (edit.previewedLevel && edit.base !== null && !edit.pending) {
     edit.previewedLevel = false;
-    state.controls.doneness = edit.base.doneness;
-    page().doneness.value = String(edit.base.doneness);
+    level = edit.base.doneness;
   }
-  if (state.aim === null) return;
-  state.aim = null;
-  holdAim(null);
+  if (state.aim !== null || level !== null) send({ kind: 'aim', aim: null, level: level });
 }
 
 /** Where a finger comes down: another control than the one with a change in
@@ -325,11 +326,8 @@ function onPointerUp(): void {
 }
 
 /** The gestures, watched on the whole page, once at boot; and the page
- *  going, which commits a change still settling (onescreen review 3).
- *  `correct` is what a commit calls to correct the cook (cook.ts,
- *  `correctCook`). */
-export function wireEdits(correct: (choices: CookChoices, startedAt_s: number | null) => void): void {
-  edit.correct = correct;
+ *  going, which commits a change still settling (onescreen review 3). */
+export function wireEdits(): void {
   document.addEventListener('pointerdown', onPointerDown, true);
   window.addEventListener('pointerup', onPointerUp, true);
   window.addEventListener('pointercancel', onPointerUp, true);
@@ -390,8 +388,7 @@ function stepStart(up: boolean): boolean {
   }
   showStartLimit(limit);
   if (next === from) return false;
-  state.controlsStart_s = next;
-  page().startedAt.textContent = timeOfDay(next * 1000);
+  send({ kind: 'startInHand', at_s: next });
   cookControlsChanged(page().startedAt);
   return true;
 }

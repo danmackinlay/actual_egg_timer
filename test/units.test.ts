@@ -23,10 +23,9 @@ import {
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
-import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { parseRecord } from '../src/core/record.js';
 import { replan, startCook } from '../src/core/running.js';
-import { gridFor, knowing } from '../tools/common.js';
+import { gridFor, knowing, webRecordFor } from '../tools/common.js';
 
 /** The units' definitions, written out here rather than imported, so the
  *  conversions are checked against them. */
@@ -313,7 +312,7 @@ test('5b. the record says which system the cook was reading, and stays SI', () =
   const inputs = replan(cook, c, null, 0, 1_750_000_500).inputs;
   assert.ok(inputs !== null);
   const surface = { inputs: inputs, grid: gridFor(c, inputs.egg, inputs.setup), profile: null };
-  const r = eggRecordFor(cook, replan(cook, c, surface, 0, 1_750_000_500), 'jammy');
+  const r = webRecordFor(cook, replan(cook, c, surface, 0, 1_750_000_500), 'jammy');
   assert.ok(r !== null);
   assert.equal(r.units, 'imperial');
   assert.equal(r.egg.mass_g, 68);

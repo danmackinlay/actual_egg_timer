@@ -9,40 +9,39 @@
  * Asking once per egg is what closes that gap.
  */
 
-import { anchorNear } from '../core/slider.js';
 import {
-  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown, plausibleProbeRange_C,
+  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown,
 } from '../core/running.js';
 import { ModelParams } from '../core/solve.js';
-import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
-import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
-import { nudgeFrom, parse, stepPast } from '../core/units.js';
-import { calibrationParams, eggLogged, keptState } from './calibration.js';
-import { eggRecordFor } from './eggRecord.js';
-import { activeLocale, t } from './copy.js';
+import { ProbeReading } from '../core/record.js';
+import { parse, stepPast } from '../core/units.js';
+import { t } from './copy.js';
 import { page } from './dom.js';
+import type { Model } from './model.js';
 import { state } from './state.js';
 import { disableSteppers, setStepRule } from './stepper.js';
 import { measure, show } from './units.js';
 
 /** Whether the questions are on offer for the cook on screen, and something
  *  has been said on this page: they stay, settled, until it moves on. */
-export function answeredHere(): boolean {
-  return state.cook !== null && state.questions === 'open' && answered(state.cook);
+export function answeredHere(m: Model): boolean {
+  return m.cook !== null && m.questions === 'open' && answered(m.cook);
 }
 
 /** Whether the cook on screen was picked back up after a reload, which a
  *  running cook says on screen: its alarm died with the old page. */
-export function pickedUpAfterReload(): boolean {
-  return state.questions === 'away' || (state.reloaded && !answeredHere());
+export function pickedUpAfterReload(m: Model): boolean {
+  return m.questions === 'away' || (m.reloaded && !answeredHere(m));
 }
 
 /** What the questions need of the page: an answer stepped into the cook
  *  (cook.ts), and whether it was taken - not if the egg is final, or the
- *  question was answered already. */
+ *  question was answered already; and a probe reading, scored and stepped
+ *  in by `update` (model.ts). */
 export interface FeedbackHost {
   answer(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): boolean;
+  probe(reading_C: number | null): void;
 }
 
 let host: FeedbackHost | null = null;
@@ -126,86 +125,34 @@ export function probeWanted(probeOn: boolean, shown: CookShown | null): boolean 
 }
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
-export function probePending(phase: Phase, wanted: boolean): boolean {
-  const cook = state.cook;
-  return phase === 'DONE' && wanted && state.questions === 'open' && (cook === null || answersOf(cook).probe === null);
-}
-
-/** Whether the reading's field is under the questions: whenever the cook has
- *  a moment to probe, the cooling having ended at the yolk's peak, with the
- *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-function probeOffered(shown: CookShown | null): boolean {
-  return shown !== null && shown.probeMoment;
-}
-
-/** The reading's field at DONE, under the two questions, whenever this cook
- *  had a moment to probe; it shows what was given once it is. */
-export function renderProbe(phase: Phase, shown: CookShown | null): void {
-  const visible = phase === 'DONE' && probeOffered(shown);
-  page().probeEntry.hidden = !visible;
-  // The − and + start from the peak of the cook that ran, shown greyed in
-  // the empty field: a suggestion, never taken as a reading until stepped or
-  // typed. Plain digits, as the field holds them.
-  if (visible && shown !== null) {
-    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), shown.peakYolk_C));
-  }
-}
-
-/** What the cook on screen was cooked for, over the yolk question, so the
- *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
- *  The cook as it ran (`cookShown`) - the level it ran at, and the peak of
- *  the time that ran - never the slider now, nor a plan made since. */
-export function renderTarget(shown: CookShown | null): void {
-  page().feedbackTarget.hidden = shown === null;
-  if (shown === null) return;
-  page().feedbackTarget.textContent = t('feedback.target', {
-    doneness: midSentence(t(anchorNear(shown.level).key), activeLocale()),
-    yolk: show('temperature', shown.peakYolk_C),
-  });
+export function probePending(m: Model, phase: Phase, wanted: boolean): boolean {
+  const cook = m.cook;
+  return phase === 'DONE' && wanted && m.questions === 'open' && (cook === null || answersOf(cook).probe === null);
 }
 
 /**
- * A reading typed at DONE, in the cook's units. Refused, with the range it
- * should be in, when no believable kitchen could have made it for this cook
- * (`plausibleProbeRange_C`); otherwise stepped into the cook with whatever
- * else has been said about it.
- *
- * The reading is scored against the egg's record: as logged once an answer
- * has logged it, as iOS does (running-cook review 3), and otherwise the
- * record made now. When that cannot be made yet (`cookFactsFor` refuses:
- * no surface), the reading stays in its field and is read again when a
- * surface lands (`retryProbe`).
+ * A reading typed at DONE, in the cook's units, handed to the cook: scored
+ * and stepped in by `update` (model.ts), which says whether it was refused
+ * (`probeRefused`) or taken (`probeTaken`). When the egg's record cannot be
+ * made yet (no surface), the reading stays in its field and is read again
+ * when a surface lands (`retryProbe`).
  */
 function onProbeSave(): void {
   const cooked = state.cook;
-  const plan = state.plan;
-  if (host === null || cooked === null || plan === null || page().probeReading.disabled) return;
+  if (host === null || cooked === null || page().probeReading.disabled) return;
   if (answersOf(cooked).probe !== null) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
-  const reading_C = parse(measure('probeTemp'), Number(typed));
-  const logged = eggLogged(cooked.id_ms);
-  const record = logged >= 0 ? keptState().log[logged] : eggRecordFor(cooked, plan, null);
-  if (record === null) {
-    state.probeHeld = true;
-    page().calibNote.textContent = t('feedback.learning');
-    return;
-  }
-  // Bounded by the model the cook ran under, not one that has since folded
-  // this egg's own answer (2.4).
-  const params = cookShown(cooked, plan)?.params ?? calibrationParams(state.calib);
-  const [low, high] = plausibleProbeRange_C(plan.egg, plan.setup, params, recordCookTime_s(record));
-  if (reading_C === null || reading_C < low || reading_C > high) {
-    page().probeNote.textContent = t('probe.refused', {
-      low: show('probeTemp', low), high: show('probeTemp', high),
-    });
-    return;
-  }
-  // When it was asked for: the end of the counted cooling, from the moment
-  // the record scores as the pull.
-  const coolEnd = plan.deadlines.coolEnd_s;
-  const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cooked.startedAt_s : null);
-  if (!host.answer(null, null, probe)) return;
+  host.probe(parse(measure('probeTemp'), Number(typed)));
+}
+
+/** A reading refused: the range it should be in, said under it. */
+export function probeRefused(low_C: number, high_C: number): void {
+  page().probeNote.textContent = t('probe.refused', { low: show('probeTemp', low_C), high: show('probeTemp', high_C) });
+}
+
+/** A reading taken: the field settles on it. */
+export function probeTaken(reading_C: number): void {
   page().probeReading.disabled = true;
   disableSteppers(page().probeReading, true);
   page().probeSave.disabled = true;
@@ -216,9 +163,7 @@ function onProbeSave(): void {
 /** A surface landed: a reading held for want of the egg's record is read
  *  again. */
 export function retryProbe(): void {
-  if (!state.probeHeld) return;
-  state.probeHeld = false;
-  onProbeSave();
+  if (state.probeHeld) onProbeSave();
 }
 
 /** Wire both rows of answers and the probe's entry. Once, at boot. */

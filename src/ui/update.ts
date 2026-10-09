@@ -1,37 +1,31 @@
 /**
- * Taking a change up: the idle page solved again and its answer taken up
- * (`recompute`), the settings saved, a new language, another tab's writes,
- * and "Forget everything". Each ends in the page drawn again (render.ts).
+ * The page's effects that are not the cook's, as cook.ts carries them out
+ * for `update` (model.ts): the settings written, coalesced or at once, with
+ * whatever another tab wrote since taken up; the idle page solved again once
+ * the controls settle; the words in a new language; everything forgotten;
+ * what another tab wrote, taken up as messages; and the sharing section, with
+ * how many final eggs are still to go.
  */
 
-import { Solution } from '../core/solve.js';
-import { LevelAnswer } from '../core/reach.js';
-import { LanguageState, effectiveLanguage } from '../core/language.js';
+import { effectiveLanguage } from '../core/language.js';
 import { CookPlan, openEggId, replan } from '../core/running.js';
-import { answerFor, currentInputs, decided } from './answer.js';
 import {
   calibrationStoredElsewhere, clearCalibration, eggsBehind, keptState, learn,
 } from './calibration.js';
-import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './controls.js';
+import { applyLanguageToDom, applyUnitsToDom } from './controls.js';
 import { activeLocale, applyCopy, loadCopy } from './copy.js';
-import { cachedOddsProfile } from './decisionGrids.js';
-import { page, selectRadio } from './dom.js';
 import { cancelSoon, soon } from './idle.js';
 import { labelInfoButtons } from './info.js';
-import { renderCalibNote, renderLearned } from './learned.js';
-import { forgetDrawnWords, render, renderMute, renderVersion } from './render.js';
+import { renderVersion } from './render.js';
+import { send } from './send.js';
 import { forgetShare, shareState, shareStoredElsewhere } from './share.js';
 import { renderShare } from './shareView.js';
 import { labelTicks } from './slider.js';
-import { isSousVide, learning, state, timeToBoil_s } from './state.js';
+import { state } from './state.js';
 import { labelSteppers } from './stepper.js';
 import {
-  Settings, boilStoredElsewhere, clearBoilMemory, saveSettings, settingsStoredElsewhere, storedCook,
-  storedCookText,
+  boilStoredElsewhere, clearBoilMemory, saveSettings, settingsStoredElsewhere, storedCook, storedCookText,
 } from './store.js';
-import { setAlarmSound, setMuted } from './clock.js';
-import { useUnits } from './units.js';
-import { warningText } from './warning.js';
 import { forgetDevClockUse, nowMs } from './now.js';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
@@ -42,62 +36,15 @@ const pending = {
   languageAsked: 0,
 };
 
-/* -------------------------------------------------------------- recompute */
-
-/** Take the answer up: show its warning, and move the slider if the answer
- *  says it must (only out of the stripes). Idle only - once the egg is in the water the controls are
- *  gone and there is nothing to snap, so a call mid-cook takes nothing up:
- *  it neither moves `settings.doneness` nor writes it. */
-export function applyAnswer(answer: LevelAnswer): Solution {
-  if (state.cook !== null) return answer.solution;
-  state.idleWarning = warningText(answer);
-  const snapTo = answer.verdict.snapTo;
-  if (snapTo !== null && snapTo !== state.settings.doneness) {
-    state.settings.doneness = snapTo;
-    page().doneness.value = String(snapTo);
-    saveNow();
-  }
-  return answer.solution;
-}
-
-/** Solve for what is on screen and take the answer up. Idle only: mid-cook
- *  it only redraws, since the controls describe the next cook, not this one
- *  (a second tab may have changed them). A running cook is planned by core's
- *  `replan`, from its own choices (cook.ts). */
-export function recompute(): void {
-  if (state.cook !== null) {
-    render(nowMs());
-    return;
-  }
-  // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
-  // needs none of this.
-  if (isSousVide()) {
-    state.idleWarning = '';
-    state.chosen = null;
-    state.decision = null;
-    state.outcome = null;
-    state.profile = null;
-    render(nowMs());
-    return;
-  }
-  const boil = timeToBoil_s();
-  state.profile = cachedOddsProfile(currentInputs(boil), state.calib);
-  const answer = answerFor(boil, state.settings.doneness, state.profile);
-  applyAnswer(answer);
-  state.chosen = decided(answer, boil);
-  state.solution = state.chosen?.solution ?? answer.solution;
-  state.decision = state.chosen?.decision ?? null;
-  state.outcome = state.chosen?.outcome ?? null;
-  render(nowMs());
-}
+/* -------------------------------------------------------------- solving */
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
  *  on every pixel of a slider drag. */
-export function scheduleSolve(): void {
+export function solveSoon(): void {
   if (pending.solveHandle !== 0) return;
   pending.solveHandle = soon(() => {
     pending.solveHandle = 0;
-    recompute();
+    send({ kind: 'solve' });
   }, 90);
 }
 
@@ -106,58 +53,12 @@ export function scheduleSolve(): void {
 /** Coalesce writes for the same reason. A drag fires `input` per pixel, and
  *  every one of those was a JSON.stringify and a localStorage write for a
  *  settings object nobody had finished changing. */
-export function scheduleSave(): void {
+export function saveSoon(): void {
   if (pending.saveHandle !== 0) return;
   pending.saveHandle = soon(() => {
     pending.saveHandle = 0;
     writeSettings();
   }, 250);
-}
-
-/** Write the settings, with whatever another tab wrote since taken up
- *  first (store.ts), and show what was taken up. */
-export function writeSettings(): void {
-  const next = saveSettings(state.settings);
-  if (next !== state.settings) takeUpSettings(next);
-}
-
-/** Settings another tab changed, taken up: the units, the sound and the
- *  words follow, and an idle page's controls follow and it is solved again.
- *  A cook under way is described by its own choices, never by the settings
- *  (DECISIONS.md 97; review 2.5): while one runs, the settings are taken up
- *  for the next cook, but its controls (`state.controls`) take only what the
- *  cook does not hold - the units, the language, the sound and which sound
- *  - and show the settings again when it ends (`reset`). */
-function takeUpSettings(next: Settings): void {
-  const settings = state.settings;
-  const before = effectiveLanguage(settings.language);
-  const unitsBefore = settings.unitsChosen;
-  Object.assign(settings, next);
-  useUnits(settings.unitsChosen);
-  setMuted(settings.muted);
-  setAlarmSound(settings.alarm);
-  if (state.cook === null) {
-    applySettingsToDom();
-  } else {
-    state.controls.unitsChosen = settings.unitsChosen;
-    state.controls.language = settings.language;
-    state.controls.muted = settings.muted;
-    state.controls.alarm = settings.alarm;
-    selectRadio('alarm', settings.alarm);
-    if (settings.unitsChosen !== unitsBefore) {
-      applyUnitsToDom();
-      render(nowMs());
-    }
-  }
-  renderMute();
-  const tag = effectiveLanguage(settings.language);
-  if (tag !== before || tag !== activeLocale()) {
-    const asked = ++pending.languageAsked;
-    void loadCopy(tag).then(() => {
-      if (asked === pending.languageAsked) relabel();
-    });
-  }
-  if (state.cook === null) recompute();
 }
 
 /** Write now, for the paths that must not lose the setting: starting a cook,
@@ -168,20 +69,24 @@ export function saveNow(): void {
   writeSettings();
 }
 
+/** Write the settings, with whatever another tab wrote since taken up
+ *  first (store.ts), and that taken up on the page. */
+function writeSettings(): void {
+  const next = saveSettings(state.settings);
+  if (next !== state.settings) send({ kind: 'settingsTaken', settings: next });
+}
+
 /* -------------------------------------------------------------- language */
 
 /**
- * Take up a new language state: store it, and if the catalogue on screen
- * changes, fetch the new one and redraw every word in place. Nothing about the
- * egg changes, and the units are never touched from here: that rule runs one
- * way (LANGUAGE.md section 6). Settings is reachable in every phase, so it
- * may come while a cook runs: its words are drawn again with the rest.
+ * The words follow the settings' language, `before` the one they were in:
+ * if the catalogue on screen changes, the new one fetched and every word
+ * drawn again in place; otherwise only the picker. Settings is reachable in
+ * every phase, so it may come while a cook runs: its words are drawn again
+ * with the rest.
  */
-export function setLanguage(next: LanguageState): void {
-  const before = effectiveLanguage(state.settings.language);
-  state.settings.language = next;
-  saveNow();
-  const tag = effectiveLanguage(next);
+export function followLanguage(before: string): void {
+  const tag = effectiveLanguage(state.settings.language);
   if (tag === before && tag === activeLocale()) {
     applyLanguageToDom();
     return;
@@ -199,30 +104,29 @@ function relabel(): void {
   labelInfoButtons();
   labelSteppers();
   labelTicks();
-  renderMute();
   renderVersion();
   applyUnitsToDom();
   applyLanguageToDom();
-  // Drawn only when what they say changes, so they are told it has.
-  forgetDrawnWords();
-  renderCalibNote(learning());
-  if (state.cook === null) recompute();
-  else render(nowMs());
+  send({ kind: 'relabelled' });
 }
 
 /* ------------------------------------------------------------ calibration */
 
 /** Take it all back: the posterior and the pan. */
 export function forgetAll(): void {
-  state.calib = clearCalibration();
+  const calib = clearCalibration();
   // The log is gone, and with it any egg cooked on the development clock.
   forgetDevClockUse();
   // The next egg is a new cook's, under a new id (share.ts).
   forgetShare();
-  state.boilMemory = {};
   clearBoilMemory();
-  renderCalibNote(learning());
-  recompute();
+  send({ kind: 'calibration', calib: calib, boilMemory: {} });
+}
+
+/** Eggs written down but not yet folded, folded off the main thread, and the
+ *  page told when they are in. */
+export function learnBehind(): void {
+  if (eggsBehind() > 0) void learn().then(() => send({ kind: 'learned' }));
 }
 
 /* ---------------------------------------------------------------- sharing */
@@ -270,32 +174,22 @@ export function drawShare(): void {
 }
 
 /**
- * Another tab wrote the log or the sharing state (the `storage` event): this
- * page takes it up at once rather than writing back what it loaded, which
- * would undo it. Eggs the other tab logged are folded here too, if it has
- * not folded them, and the time on screen moves with what was learned.
+ * Another tab wrote the settings, the pans, the log or the sharing state
+ * (the `storage` event): this page takes it up at once rather than writing
+ * back what it loaded, which would undo it. Eggs the other tab logged are
+ * folded here too, if it has not folded them, and the time on screen moves
+ * with what was learned. The cook in progress is cook.ts's
+ * (`cookElsewhere`).
  */
 export function storedElsewhere(key: string | null): void {
-  // The cook in progress is cook.ts's (`cookElsewhere`).
   const nextSettings = settingsStoredElsewhere(key, state.settings);
-  if (nextSettings !== null) takeUpSettings(nextSettings);
+  if (nextSettings !== null) send({ kind: 'settingsTaken', settings: nextSettings });
   // The pans: another tab's measured boil, or its "Forget everything".
   const pans = boilStoredElsewhere(key);
-  if (pans !== null) {
-    state.boilMemory = pans;
-    renderLearned(learning());
-    if (state.cook === null) recompute();
-  }
+  if (pans !== null) send({ kind: 'pans', boilMemory: pans, quiet: false });
   const calibration = calibrationStoredElsewhere(key);
   const sharing = shareStoredElsewhere(key);
   if (!calibration && !sharing) return;
-  renderCalibNote(learning());
-  drawShare();
-  if (state.cook === null) recompute();
-  if (calibration && eggsBehind() > 0) {
-    void learn().then(() => {
-      renderCalibNote(learning());
-      if (state.cook === null) recompute();
-    });
-  }
+  send({ kind: 'stores' });
+  if (calibration) learnBehind();
 }

@@ -40,9 +40,8 @@ import {
   recordSecondAnswer,
 } from '../src/ui/calibration.js';
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
-import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { APP_VERSION } from '../src/ui/version.js';
-import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';
+import { appSetup, gridFor, knowing, recordAt, webRecordFor } from '../tools/common.js';
 import {
   PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces,
   seedOf, spread, summarise, wordLog,
@@ -651,7 +650,7 @@ function onSurface(cook: RunningCook, now_s: number): CookPlan {
 function rec(
   cook: RunningCook, plan: CookPlan, yolk: YolkWord | null, white: WhiteReport | null = null,
 ): EggRecord {
-  const r = eggRecordFor(cook, plan, yolk, white);
+  const r = webRecordFor(cook, plan, yolk, white);
   assert.ok(r !== null, 'a record');
   return r;
 }
@@ -728,7 +727,7 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
 test('4b4. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
   const cook = cookOf();
   const interim = replan(cook, C4, null, 0, S0);
-  assert.equal(eggRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record (review 1.3)');
+  assert.equal(webRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record (review 1.3)');
   const inputs = interim.inputs;
   assert.ok(inputs !== null);
   const surface = { inputs: inputs, grid: gridFor(C4, inputs.egg, inputs.setup), profile: null };

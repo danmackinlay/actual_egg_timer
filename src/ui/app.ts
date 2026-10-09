@@ -3,29 +3,31 @@
  * together. `boot()` reads the state from storage, draws the page and wires
  * every event; what each part holds and does is its own module:
  *
- * - model.ts: the page's model, and `update`, how a message moves the
- *   running cook over core's `step`;
+ * - model.ts: the page's model, and `update`, how a message moves it - the
+ *   idle page, and the running cook over core's `step`;
  * - state.ts: the model's one instance, and the egg, the pot and the time to
  *   boil it derives;
- * - answer.ts: the solve, the decided time, the nudge, and the worker's
- *   surfaces and profiles asked for;
- * - update.ts: a change taken up - the idle page solved again, the settings
- *   saved, a new language, another tab's writes;
+ * - answer.ts: the idle page's solve, its decided time, the nudge and the
+ *   advice, from what is built;
+ * - cook.ts: the runner - each message through `update`, its effects
+ *   carried out (the cook written down, its alarms, its record; the
+ *   settings written; what the page waits for built), the ticker, a cook
+ *   picked back up after a reload, and the page drawn; send.ts, the way in
+ *   for the modules under it;
+ * - update.ts: the page's own effects - the settings written, the solve
+ *   coalesced, a new language, everything forgotten, another tab's writes
+ *   taken up as messages;
  * - render.ts: the egg page drawn from the state;
- * - controls.ts and input.ts: the controls written from the settings, and
- *   read back into them;
- * - cook.ts: `update`'s effects carried out - the cook written down, its
- *   alarms, its record, what it waits for built - its ticker, and one picked
- *   back up after a reload.
+ * - controls.ts and input.ts: the controls written from the model, and read
+ *   back as messages.
  */
 
+import { nudgeSeconds } from '../core/decide.js';
 import { stepPast } from '../core/units.js';
-import { drawNudge, whenAnswerLands, whenCookSurfaceLands } from './answer.js';
-import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './calibration.js';
-import { setAlarmSound, setMuted } from './clock.js';
+import { exportResults, keptState, loadCalibration } from './calibration.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  answerCook, cookElsewhere, cookLanded, cookWants, correctCook, lookAgain, onPrimary, onStillOut, reset, restoreCook,
+  answerCook, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, probeCook, reset, restoreCook, startRunner,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -33,7 +35,8 @@ import { wireInfoButtons } from './info.js';
 import { onInput, onToggleMute } from './input.js';
 import { renderCalibNote, wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
-import { render, renderMute, renderVersion } from './render.js';
+import { renderVersion } from './render.js';
+import { send } from './send.js';
 import { buildClauses } from './sentence.js';
 import { loadShare, retryDeletes, sendFinal, shareState } from './share.js';
 import { wireShare } from './shareView.js';
@@ -44,10 +47,10 @@ import { setStepRule, wireSteppers } from './stepper.js';
 import { claimStorage, loadBoilMemory, loadSettings, newerStoredElsewhere, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
-import { drawShare, finalEggs, forgetAll, recompute, storedElsewhere } from './update.js';
+import { drawShare, finalEggs, learnBehind, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
-import { markDevClockUse, nowMs } from './now.js';
+import { markDevClockUse, nowMs, random } from './now.js';
 
 export function boot(): void {
   bindDom();
@@ -59,17 +62,13 @@ export function boot(): void {
   // The development clock's mark, for a clock set as the page loaded.
   markDevClockUse();
   state.settings = loadSettings(sizeClasses);
-  state.controls = state.settings;
+  state.controls = { ...state.settings };
   useUnits(state.settings.unitsChosen);
   state.boilMemory = loadBoilMemory();
   state.calib = loadCalibration();
-  // This page's nudge, drawn now rather than as answer.ts loads, so a
-  // script's seed (now.ts) is in place for it.
-  drawNudge();
-  // A surface or a profile the screen wants, landed: the idle page is
-  // solved again with it, or the running cook planned again.
-  whenAnswerLands(recompute);
-  whenCookSurfaceLands(cookWants, cookLanded);
+  // This page's nudge (E8), drawn at boot rather than as a module loads, so
+  // a script's seed (now.ts) is in place for it.
+  state.nudgeDraw = nudgeSeconds(random());
   // For the egg's record: this build, and the population of the prior.
   state.appVersion = APP_VERSION;
   state.prior = activePopulation().id;
@@ -90,13 +89,13 @@ export function boot(): void {
   }
 
   // Corrections mid-cook: when a change in hand is committed (edit.ts).
-  wireEdits(correctCook);
+  wireEdits();
   wireStartTime();
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
   page().stillOut.addEventListener('click', onStillOut);
   page().mute.addEventListener('click', onToggleMute);
-  wireForget(forgetAll);
+  wireForget(() => send({ kind: 'forget' }));
   wireExport(() => exportResults(shareState().uid, nowMs()));
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
@@ -104,21 +103,23 @@ export function boot(): void {
   wireSteppers();
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
-  setMuted(state.settings.muted);
-  setAlarmSound(state.settings.alarm);
-  renderMute();
+  // From here on every change to the page is a message (send.ts).
+  startRunner();
   renderVersion();
 
-  wireFeedback({ answer: answerCook });
+  wireFeedback({ answer: answerCook, probe: probeCook });
 
-  renderCalibNote(learning());
+  renderCalibNote(learning(state));
   restoreCook();
   // Sharing, if the cook turned it on: every egg in the log is final but the
   // stored running cook's, which may still be answered or corrected
   // (`finalEggs`). A deletion not yet confirmed is asked again first.
   // Turning sharing on or off moves the time by the nudge, so the egg page
   // is solved again with the section redrawn.
-  wireShare(() => { drawShare(); recompute(); });
+  wireShare(() => {
+    drawShare();
+    send({ kind: 'solve' });
+  });
   loadShare({ log: () => keptState().log, finalCount: finalEggs, changed: drawShare });
   drawShare();
   void retryDeletes().then(sendFinal);
@@ -135,19 +136,14 @@ export function boot(): void {
   document.addEventListener('visibilitychange', lookAgain);
   window.addEventListener('focus', lookAgain);
   window.addEventListener('pageshow', lookAgain);
-  // A cook picked back up is described by its own choices and its plan,
-  // never by the controls, which another tab may have changed since.
-  if (state.cook === null) recompute();
-  else render(nowMs());
+  // The idle page solved; a cook picked back up is described by its own
+  // choices and its plan, never by the settings, which another tab may have
+  // changed since.
+  dispatch({ kind: 'solve' });
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.
-  if (eggsBehind() > 0) {
-    void learn().then(() => {
-      renderCalibNote(learning());
-      if (state.cook === null) recompute();
-    });
-  }
+  learnBehind();
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(() => state.cook === null);
@@ -167,7 +163,5 @@ let booted = false;
 function leaveStoresAlone(): void {
   if (!booted) return;
   page().newerNote.hidden = false;
-  render(nowMs());
-  drawShare();
-  renderCalibNote(learning());
+  send({ kind: 'stores' });
 }

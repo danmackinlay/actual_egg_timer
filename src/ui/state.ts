@@ -1,7 +1,8 @@
 /**
  * The page's model, in one place (`state`, a `Model`: model.ts), and what it
  * derives: the egg and the pot on screen, how the cook starts, and the time
- * to a rolling boil.
+ * to a rolling boil. Each derivation takes the model it reads, so `update`
+ * and `view` can ask it of any model, not only this page's.
  *
  * The app is the timer. It measures the time to a rolling boil rather than
  * asking the user to stopwatch it elsewhere, which is the one measurement the
@@ -19,10 +20,10 @@
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { roomInUse } from '../core/inputs.js';
-import { MassFrom } from '../core/record.js';
 import { CookChoices, CookPot, Phase, cookSetupOf, phaseAt } from '../core/running.js';
-import { Learning } from './learned.js';
-import { Model, NO_NEED } from './model.js';
+import type { CookNeed } from '../core/step.js';
+import type { Learning } from './learned.js';
+import type { Model } from './model.js';
 import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';
 import { REGION } from './units.js';
 
@@ -33,40 +34,56 @@ import { REGION } from './units.js';
  *  since it was saved. */
 export const sizeClasses = sizeClassesFor(REGION);
 
-/** The page's model (model.ts). The settings, the pans and the calibration
- *  are read from storage by `boot()` (app.ts), not when this module is
- *  imported, so a test can import it. */
-export const state: Model = {
-  settings: null!,
-  controls: null!,
-  boilMemory: null!,
-  calib: null!,
-  solution: null,
-  decision: null,
-  outcome: null,
-  chosen: null,
-  profile: null,
-  idleWarning: '',
-  aim: null,
-  controlsStart_s: null,
-  nudgeDraw: 0,
-  cook: null,
-  plan: null,
-  leanHint_s: 0,
-  need: NO_NEED,
-  ending: [],
-  before: [],
-  surfaces: [],
-  appVersion: '',
-  prior: '',
-  pull_s: null,
-  written: null,
-  works: true,
-  closed: false,
-  questions: 'open',
-  reloaded: false,
-  probeHeld: false,
-};
+/** Nothing wanted. */
+export const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: null, wakeAt_s: null };
+
+/** A model with nothing on it yet: the settings, the pans and the calibration
+ *  are `boot()`'s to read (app.ts). */
+export function emptyModel(): Model {
+  return {
+    settings: null!,
+    controls: null!,
+    boilMemory: null!,
+    calib: null!,
+    sharing: false,
+    readOnly: false,
+    profiles: [],
+    idleAnswer: null,
+    solution: null,
+    decision: null,
+    outcome: null,
+    chosen: null,
+    profile: null,
+    unsolved: false,
+    aim: null,
+    controlsStart_s: null,
+    nudgeDraw: 0,
+    held: null,
+    live: null,
+    cook: null,
+    plan: null,
+    leanHint_s: 0,
+    need: NO_NEED,
+    ending: [],
+    before: [],
+    surfaces: [],
+    appVersion: '',
+    prior: '',
+    pull_s: null,
+    written: null,
+    works: true,
+    closed: false,
+    questions: 'open',
+    reloaded: false,
+    probeHeld: false,
+  };
+}
+
+/** The page's model (model.ts): what cook.ts's `dispatch` keeps, and reads
+ *  for the page. The settings, the pans and the calibration are read from
+ *  storage by `boot()` (app.ts), not when this module is imported, so a test
+ *  can import it. */
+export const state: Model = emptyModel();
 
 /* --------------------------------------------------------------- physics */
 
@@ -98,14 +115,8 @@ export function choicesOf(settings: Settings, region: string | null): CookChoice
 
 /** The cook the settings describe, as core's choices: the idle screen's,
  *  and the next cook's. */
-export function idleChoices(): CookChoices {
-  return choicesOf(state.settings, REGION);
-}
-
-/** The cook the controls on screen describe: the settings' while idle, a
- *  running cook's own (or a correction to it in hand) otherwise. */
-function controlsChoices(): CookChoices {
-  return choicesOf(state.controls, REGION);
+export function idleChoices(m: Model): CookChoices {
+  return choicesOf(m.settings, REGION);
 }
 
 /**
@@ -137,64 +148,56 @@ export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: 
   };
 }
 
-/** The egg and the pot the controls describe, for a time to a rolling boil:
+/** The egg and the pot the settings describe, for a time to a rolling boil:
  *  core's `cookSetupOf`, the one assembly both apps and a running cook share. */
-export function idlePot(timeToBoil_s: number): CookPot {
-  return cookSetupOf(idleChoices(), timeToBoil_s);
+export function idlePot(m: Model, boil_s: number = timeToBoil_s(m)): CookPot {
+  return cookSetupOf(idleChoices(m), boil_s);
 }
 
 /** The egg the controls describe. */
-export function currentEgg(): Egg {
-  return cookSetupOf(controlsChoices(), timeToBoil_s()).egg;
-}
-
-/** Which input the egg on screen came from: the size class, or whichever of the
- *  three measurements was typed in last. They all end up as one diameter, so
- *  this is the only place the difference survives - and it is the egg-level
- *  noise the fit needs (a class is a 10 g bucket; a scale is a gram). */
-export function massFrom(): MassFrom {
-  return idleChoices().massFrom;
+export function currentEgg(m: Model): Egg {
+  return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).egg;
 }
 
 /** The room as the cook measured it, while it counts, or null to assume one
  *  (`roomInUse`: only with the probe on), as the controls say. */
-export function room_C(): number | null {
-  return roomInUse(state.controls.probe, state.controls.room_C);
+export function room_C(m: Model): number | null {
+  return roomInUse(m.controls.probe, m.controls.room_C);
 }
 
-export function boilingPoint_C(): number {
-  return boilingPointAtAltitude(state.controls.altitude_m);
+export function boilingPoint_C(m: Model): number {
+  return boilingPointAtAltitude(m.controls.altitude_m);
 }
 
 /** Sous-vide on the idle screen: it starts no cook, so a running one never
  *  is. */
-export function isSousVide(): boolean {
-  return state.cook === null && state.settings.startMode === 'sous';
+export function isSousVide(m: Model): boolean {
+  return m.cook === null && m.settings.startMode === 'sous';
 }
 
-/** Time to a rolling boil on the controls' pot, remembered or guessed, s: the
+/** Time to a rolling boil on the settings' pot, remembered or guessed, s: the
  *  pan's one measured number, and the one thing the solver needs that the
  *  settings do not hold. A running cook's is its plan's - the guess, the slow
  *  hob's, or the tap - never this. A hot start never times it and the physics
  *  never reads it there - with the heat off the pan's cooling comes from the
  *  water volume (see panTimeConstant) - but the setup still carries the
  *  remembered value, so the record can say which pan was assumed. */
-export function timeToBoil_s(): number {
-  return estimateTimeToBoil(state.boilMemory, state.settings.waterLitres);
+export function timeToBoil_s(m: Model): number {
+  return estimateTimeToBoil(m.boilMemory, m.settings.waterLitres);
 }
 
 /** The phase of the cook on screen at `now_ms`: idle, or what core's
  *  `phaseAt` reads from the running cook's plan. */
-export function phaseNow(now_ms: number): Phase {
-  return state.plan === null ? 'IDLE' : phaseAt(state.plan.deadlines, now_ms / 1000);
+export function phaseNow(m: Model, now_ms: number): Phase {
+  return m.plan === null ? 'IDLE' : phaseAt(m.plan.deadlines, now_ms / 1000);
 }
 
-/** How the cook on screen starts: the running cook's, or the controls'. */
-export function startModeNow(): UiStartMode {
-  return state.cook?.choices.startMode ?? state.settings.startMode;
+/** How the cook on screen starts: the running cook's, or the settings'. */
+export function startModeNow(m: Model): UiStartMode {
+  return m.cook?.choices.startMode ?? m.settings.startMode;
 }
 
 /** What has been learned, as it stands now, for learned.ts to say. */
-export function learning(): Learning {
-  return { eggs: state.calib.eggsLogged, boilMemory: state.boilMemory, waterLitres: state.settings.waterLitres };
+export function learning(m: Model): Learning {
+  return { eggs: m.calib.eggsLogged, boilMemory: m.boilMemory, waterLitres: m.settings.waterLitres };
 }

@@ -1,28 +1,24 @@
 /**
- * What the cook does to the controls and the Settings form, read into the
- * settings: every input and change (`onInput`), the units, and the mute.
- * The full solve follows, coalesced (update.ts).
+ * What the cook does to the controls and the Settings form, read as
+ * messages (model.ts): every input and change (`onInput`), read into the
+ * controls as they now stand; the units, the language, the alarm's sound,
+ * and the mute. What follows - the settings written, the page solved again,
+ * a correction in hand - is `update`'s.
  */
 
 import { eggFromMass } from '../core/geometry.js';
 import { Cooling } from '../core/protocol.js';
-import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
-import { Quantity, UnitSystem, chooseUnits, parse } from '../core/units.js';
+import { Quantity, parse } from '../core/units.js';
 import { ALARM_SOUNDS, readAlarmSound } from '../core/sounds.js';
 import { DEFAULTS } from '../core/inputs.js';
-import { targetPeakYolk_C } from '../core/slider.js';
-import { LANGUAGES, languageAfterFlip, languageAfterPick } from '../core/language.js';
-import { previewAlarm, setAlarmSound, setMuted } from './clock.js';
-import { applyUnitsToDom, labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
+import { LANGUAGES, languageAfterPick } from '../core/language.js';
+import { labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
-import { renderMute } from './render.js';
 import { cookControlsChanged } from './edit.js';
-import { liveSetupFacts, renderSentence } from './sentence.js';
-import { renderDonenessReading } from './slider.js';
-import { boilingPoint_C, currentEgg, isSousVide, sizeClasses, state } from './state.js';
+import { send } from './send.js';
+import { state } from './state.js';
 import { LIMITS, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber } from './store.js';
-import { REGIONAL_UNITS, measure, show, useUnits } from './units.js';
-import { recompute, saveNow, scheduleSave, scheduleSolve, setLanguage, writeSettings } from './update.js';
+import { measure } from './units.js';
 
 /** The three ways a person can measure an egg are one number in three units.
  *  The model egg's equator is a circle, so girth = pi * B exactly; mass goes
@@ -45,47 +41,17 @@ function readField(input: HTMLInputElement, q: Quantity, fallback: number): numb
   return parse(measure(q), Number(input.value)) ?? fallback;
 }
 
-/** The cook picks a system, stored as their choice. A cook's own switch
- *  from metric to Imperial, in modern English, is also a switch into the
- *  English of 1750 (LANGUAGE.md section 6); the switch back to metric
- *  leaves the language alone. `setLanguage` saves for both. */
-function onUnits(next: UnitSystem): void {
-  const settings = state.settings;
-  const choice = chooseUnits(settings.unitsChosen, REGIONAL_UNITS, next);
-  settings.unitsChosen = choice.chosen;
-  useUnits(settings.unitsChosen);
-  if (choice.flip !== null) setLanguage(languageAfterFlip(settings.language, choice.flip));
-  else saveNow();
-  applyUnitsToDom();
-  recompute();
-}
-
 /** Sound is a setting, not a phase: the toggle works mid-cook, and muting
  *  while the alarm is going stops it. */
 export function onToggleMute(): void {
-  state.settings.muted = !state.settings.muted;
-  setMuted(state.settings.muted);
-  writeSettings();
-  renderMute();
+  send({ kind: 'mute' });
 }
 
-/** The cook picks an alarm sound, and hears it: the pick is the moment
- *  they want to know what they chose. It plays with the sound off too, since
- *  they asked for it. Like the sound itself, a setting about the kitchen, not
- *  the egg, so it holds mid-cook. */
-function onAlarmSound(value: string): void {
-  const sound = readAlarmSound(value);
-  state.settings.alarm = sound;
-  state.controls.alarm = sound;
-  setAlarmSound(sound);
-  previewAlarm();
-  writeSettings();
-}
-
-/** The controls read back into what they show (`state.controls`): the
- *  settings while idle; while a cook runs, its correction in hand. */
-function readInputs(source: EventTarget | null): void {
-  const settings = state.controls;
+/** The controls as the page now shows them: what they showed
+ *  (`state.controls`: the settings while idle; while a cook runs, its
+ *  correction in hand), with what `source` changed read back over them. */
+function readInputs(source: EventTarget | null): Settings {
+  const settings: Settings = { ...state.controls };
   const sizeIndex = Number(page().size.value);
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
@@ -105,7 +71,6 @@ function readInputs(source: EventTarget | null): void {
       : source === page().measureGirth ? 'girth' : 'width';
     settings.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, settings.customMinor_mm);
     settings.sizeIndex = -1;
-    page().size.value = '-1';
   }
   settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
   // The three fields with a unit are read only when they are the one being
@@ -131,15 +96,19 @@ function readInputs(source: EventTarget | null): void {
     settings.room_C = page().roomTemp.value.trim() === ''
       ? null : readField(page().roomTemp, 'roomTemp', settings.room_C ?? START_TEMP_PRESETS_C.room);
   }
+  return settings;
+}
+
+/** The controls that follow one read: the egg measured fills in the other
+ *  measurements and the menu, and the fields a choice opens. */
+function echoInputs(source: EventTarget | null): void {
+  const settings = state.controls;
+  if (settings.sizeIndex === -1) page().size.value = '-1';
   page().roomField.hidden = !settings.probe;
   labelStartTemps();
-
   page().customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
   labelMeasuredOption();
-  // While a cook runs the controls are its correction in hand, written to
-  // the settings when it is committed (edit.ts), not before.
-  if (state.cook === null) scheduleSave();
 }
 
 /** Every input and change on the egg's controls, its sentence and the
@@ -149,31 +118,26 @@ export function onInput(event: Event): void {
   // their own path.
   const target = event.target;
   if (target instanceof HTMLInputElement && target.name === 'units') {
-    if (event.type === 'change') onUnits(target.value === 'imperial' ? 'imperial' : 'metric');
+    if (event.type === 'change') send({ kind: 'units', system: target.value === 'imperial' ? 'imperial' : 'metric' });
     return;
   }
   // So is the language, which changes every word and no number.
   if (target instanceof HTMLInputElement && target.name === 'language') {
     if (event.type === 'change' && LANGUAGES.includes(target.value)) {
-      setLanguage(languageAfterPick(state.settings.language, target.value));
+      send({ kind: 'language', next: languageAfterPick(state.settings.language, target.value) });
     }
     return;
   }
   if (target instanceof HTMLInputElement && target.name === 'alarm') {
-    if (event.type === 'change' && (ALARM_SOUNDS as string[]).includes(target.value)) onAlarmSound(target.value);
+    // The cook picks an alarm sound, and hears it: the pick is the moment
+    // they want to know what they chose.
+    if (event.type === 'change' && (ALARM_SOUNDS as string[]).includes(target.value)) {
+      send({ kind: 'alarm', sound: readAlarmSound(target.value) });
+    }
     return;
   }
-  readInputs(target);
-  // Instant feedback on what the eye is on while dragging or choosing - the
-  // reading under the slider, the sentence, the boiling point beside the
-  // altitude; the full solve (tens of milliseconds) follows and corrects them.
-  const shown = state.controls;
-  renderDonenessReading(shown.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(shown.doneness) });
-  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  page().body.dataset['start'] = shown.startMode;
-  renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg()));
-  // A running cook is corrected, in time (edit.ts); the idle screen is solved
-  // again.
+  send({ kind: 'controls', controls: readInputs(target) });
+  echoInputs(target);
+  // A running cook is corrected, in time (edit.ts).
   if (state.cook !== null) cookControlsChanged(target);
-  else scheduleSolve();
 }

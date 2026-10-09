@@ -418,11 +418,24 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       steps core's `step`; cook.ts runs its effects and builds its `need`
       (the wake at Done included, e2e `done-wakes`); `takeUpStored`,
       `endCook`, `refreshAsRan`, the held answers, the web's plan loop and
-      record making went. *Not done:* the idle page (`recompute`, settings,
-      language) is not messages yet; no `view` structs or once-a-frame DOM
-      writer (`render` still asks for profiles); `controls` is still
-      `settings` while idle; render's, edit's and the stores' module state
-      stay theirs (caches, the gesture, storage).
+      record making went. *The page* (`60c9982`, `909b553`): every change
+      to it is a message (the controls, the units, the language, the mute,
+      the sound, another tab's settings, the pans, eggs folded, everything
+      forgotten, the probe reading); the idle solve is pure (`solveIdle`,
+      the surfaces and profiles in the model) and its asks are effects;
+      `controls` is a copy of the settings while idle; `view(model, now)`
+      (view.ts) as plain data, written by render.ts once an animation
+      frame; the held certainty and the live egg in the model, the
+      previews and what is drawn in caches handed in; `render` asks for
+      nothing and steps nothing; the probe scored on core's record (e2e
+      `probe-reading`); the modules under the runner send through send.ts.
+      *Not done:* edit.ts's gesture (the correction in hand, the finger,
+      its timers) and the stores' state (calibration.ts's fold, share.ts,
+      `syncedKey`'s last-seen text, `lastPanStart`) are still module state;
+      the runner writes `written`, `works` and `before` outside `update`;
+      the boot-time callbacks of the stores and Settings' sections
+      (`claimStorage`, `loadShare`, `wireShare`, `wireFeedback`,
+      `wireForget`) and `now.ts` booting on import stay.
 - [x] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
       times today (settings, boil, calibration, share, cook) with its own
       "seen" copy each; `takeUpEvents` (domain logic in `store.ts`) into

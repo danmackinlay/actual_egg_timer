@@ -1422,6 +1422,47 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
+  'probe-reading': {
+    what: 'a probe reading at Done: one no kitchen could make refused with its range, a believable one scored on the egg\'s record and logged',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      s = await tab.phase('DONE');
+      const field = await tab.eval<{ shown: boolean; placeholder: string }>(`(() => ({
+        shown: !document.getElementById('probeEntry').hidden,
+        placeholder: document.getElementById('probeReading').placeholder }))()`);
+      check(field.shown && field.placeholder !== '', `the probe's field, from the peak: ${JSON.stringify(field)}`);
+      const save = (typed: string): Promise<void> => tab.eval(`(() => {
+        document.getElementById('probeReading').value = ${JSON.stringify(typed)};
+        document.getElementById('probeSave').click(); })()`);
+      // Freezing, in either unit: no kitchen makes it.
+      await save('0');
+      await tab.settle();
+      const refused = await tab.eval<string>("document.getElementById('probeNote').textContent");
+      s = await tab.snap();
+      check(s.log.length === 0 && s.cook !== null && JSON.stringify(s.cook).indexOf('"probe":{') < 0,
+        `0 refused, nothing logged: ${s.log.length}`);
+      check(refused !== '' && refused !== '0', `the range said: "${refused}"`);
+      // The peak the field suggests: taken, and logged with the egg.
+      await save(field.placeholder);
+      await tab.until('__snap().log.length === 1', 'the reading logged');
+      s = await tab.snap();
+      const probe = (s.log[0] as unknown as { probe: { centre_C: number } | null }).probe;
+      const peak = s.peakYolk_C ?? 0;
+      check(probe !== null && Math.abs(probe.centre_C - peak) < 1, `logged ${JSON.stringify(probe)} for a peak of ${peak.toFixed(1)} °C`);
+      const settled = await tab.eval<boolean>("document.getElementById('probeReading').disabled");
+      check(settled, 'the field settled on the reading');
+      return `refused 0: "${refused}"; ${field.placeholder} logged as ${probe?.centre_C} °C`;
+    },
+  },
+
   'done-as-ran': {
     what: 'review 2.4: Done after an answer and a reload shows the cook as it ran',
     run: async (h) => {

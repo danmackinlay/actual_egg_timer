@@ -16,7 +16,7 @@
  * The dose surface costs about two seconds to build and is built once per
  * logged egg, off the main thread (`offThread.ts`), so the page stays live
  * while it runs. What is kept, and its format in storage, is
- * calibrationStore.ts; the record of one egg is eggRecord.ts.
+ * calibrationStore.ts; the record of one egg is core's, made by `step`.
  */
 
 import { Doneness, ModelParams } from '../core/solve.js';

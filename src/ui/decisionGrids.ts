@@ -10,6 +10,7 @@ import { DecisionInputs, inputsKey } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { Calibration, copyCalibration } from '../core/record.js';
 import { CookSurface } from '../core/running.js';
+import type { PotOdds } from './answer.js';
 import { offThread } from './offThread.js';
 
 /* ---------------------------------------------------- the decision's surface */
@@ -32,14 +33,27 @@ export function cachedDecisionGrid(inputs: DecisionInputs): DoseGrid | null {
   return decisionGrids.get(decisionKey(inputs))?.grid ?? null;
 }
 
-/** Every surface built, with its odds profile on `c` if that is in too:
- *  what a cook's step plans on (`CookEnv.surfaces`). */
-export function cookSurfaces(c: Calibration): CookSurface[] {
-  const out: CookSurface[] = [];
+/** What is built, as the page's model holds it (model.ts): every surface,
+ *  with its odds profile on `c` if that is in too - what a cook's step plans
+ *  on (`CookEnv.surfaces`) - and every odds profile on `c`, for any pot. */
+export function builtFor(c: Calibration): { surfaces: CookSurface[]; profiles: PotOdds[] } {
+  const print = posteriorPrint(c);
+  const surfaces: CookSurface[] = [];
   for (const { inputs, grid } of decisionGrids.values()) {
-    out.push({ inputs: inputs, grid: grid, profile: cachedOddsProfile(inputs, c) });
+    surfaces.push({ inputs: inputs, grid: grid, profile: profiles.get(`${decisionKey(inputs)}#${print}`)?.profile ?? null });
   }
-  return out;
+  const odds: PotOdds[] = [];
+  for (const [key, p] of profiles) if (key.endsWith(`#${print}`)) odds.push(p);
+  return { surfaces: surfaces, profiles: odds };
+}
+
+/** The surface for `inputs` as far as it is in: the grid, with the odds
+ *  profile on `c` if that is in too; null until the grid is. */
+export function surfaceFor(inputs: DecisionInputs | null, c: Calibration): CookSurface | null {
+  if (inputs === null) return null;
+  const grid = cachedDecisionGrid(inputs);
+  if (grid === null) return null;
+  return { inputs: inputs, grid: grid, profile: cachedOddsProfile(inputs, c) };
 }
 
 /** The surface for these inputs, built in the worker if it has not been. Two
@@ -75,7 +89,7 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
 /** Odds profiles, by pot AND posterior: unlike the surface, a profile reads
  *  every particle, so an egg folded - or a second answer refolded, which keeps
  *  the count - makes a new one. Kept like the surfaces, a handful at a time. */
-const profiles = new Map<string, OddsProfile>();
+const profiles = new Map<string, PotOdds>();
 const profileBuilds = new Map<string, Promise<OddsProfile>>();
 const PROFILES_KEPT = 8;
 
@@ -105,7 +119,7 @@ export function profileKey(inputs: DecisionInputs, c: Calibration): string {
 
 /** The profile for this pot and posterior if it has been computed, or null. */
 export function cachedOddsProfile(inputs: DecisionInputs, c: Calibration): OddsProfile | null {
-  return profiles.get(profileKey(inputs, c)) ?? null;
+  return profiles.get(profileKey(inputs, c))?.profile ?? null;
 }
 
 /**
@@ -123,7 +137,7 @@ export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<
     return Promise.reject(error);
   }
   const done = profiles.get(key);
-  if (done !== undefined) return Promise.resolve(done);
+  if (done !== undefined) return Promise.resolve(done.profile);
   const running = profileBuilds.get(key);
   if (running !== undefined) return running;
   const snapshot = copyCalibration(c);
@@ -132,7 +146,7 @@ export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<
       profile: { calibration: snapshot, egg: inputs.egg, setup: inputs.setup, grid: grid },
     }) as Promise<OddsProfile>)
     .then((profile) => {
-      profiles.set(key, profile);
+      profiles.set(key, { inputs: inputs, profile: profile });
       while (profiles.size > PROFILES_KEPT) {
         const oldest = profiles.keys().next().value;
         if (oldest === undefined) break;
