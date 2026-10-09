@@ -22,7 +22,8 @@ import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './
 import { setAlarmSound, setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  cookElsewhere, cookOpen, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset, restoreCook,
+  cookElsewhere, cookOpen, correctCook, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset,
+  restoreCook,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -79,7 +80,7 @@ export function boot(): void {
   }
 
   // Corrections mid-cook: when a change in hand is committed (edit.ts).
-  wireEdits();
+  wireEdits(correctCook);
   wireStartTime();
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
