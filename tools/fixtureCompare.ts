@@ -1,6 +1,7 @@
 /**
  * Whether a fixture made afresh says what the committed one says: the rule
- * `npm run fixtures:check` applies (tools/fixturesCheck.ts).
+ * `npm run fixtures:check` applies (tools/fixturesCheck.ts). And how every
+ * fixture is laid out (`fixtureLayout`, at the end).
  *
  * Every key, in the same order, every string, boolean and null, and every
  * array's length must be the same. Numbers must agree to FIXTURE_TOLERANCE,
@@ -92,4 +93,71 @@ export function compareFixtures(committed: unknown, fresh: unknown): FixtureComp
   };
   walk(committed, fresh, '$');
   return out;
+}
+
+/* ------------------------------------------------------------- the layout */
+
+/**
+ * How a fixture is laid out: one row per line, so that a diff names the rows
+ * that changed and two branches that change different rows merge, and still
+ * JSON, so every reader reads it as it read the old layout.
+ *
+ * A row is an element of a list that holds objects or lists: a case, a step
+ * of a trace, a particle. Each row starts a line, and is written whole on it
+ * when it is at most ROW_LIMIT characters; a longer row is opened, a key a
+ * line, and its own rows go a line each. A list of numbers or strings is one
+ * line wherever it is. An object that is not a row is one line when it holds
+ * no rows and fits ROW_LIMIT, and is opened otherwise; the file's own object
+ * is always opened. Within a line, `, ` and `: ` separate, so that
+ * `git diff --word-diff` finds the value that changed in a long row.
+ */
+
+/** The longest row written on one line, in characters: room for the largest
+ *  case (a running cook's plan, 6.6k), not for a posterior's particles. */
+export const ROW_LIMIT = 8000;
+
+function isContainer(v: unknown): v is object {
+  return v !== null && typeof v === 'object';
+}
+
+/** On one line: what JSON.stringify writes, with a space after each `,` and `:`. */
+function inline(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(inline).join(', ')}]`;
+  if (isContainer(v)) {
+    return `{${Object.entries(v).map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(', ')}}`;
+  }
+  return JSON.stringify(v);
+}
+
+/** Whether a value holds a list of rows, at any depth. */
+function holdsRows(v: unknown): boolean {
+  if (Array.isArray(v)) return v.some(isContainer);
+  return isContainer(v) && Object.values(v).some(holdsRows);
+}
+
+function laid(v: unknown, depth: number, row: boolean): string {
+  if (!isContainer(v)) return JSON.stringify(v);
+  const pad = '  '.repeat(depth + 1);
+  const end = '  '.repeat(depth);
+  if (Array.isArray(v)) {
+    if (!v.some(isContainer)) return inline(v);
+    if (row) {
+      const one = inline(v);
+      if (one.length <= ROW_LIMIT) return one;
+    }
+    return `[\n${v.map((e) => pad + laid(e, depth + 1, true)).join(',\n')}\n${end}]`;
+  }
+  const entries = Object.entries(v);
+  if (entries.length === 0) return '{}';
+  if (depth > 0 && (row || !holdsRows(v))) {
+    const one = inline(v);
+    if (one.length <= ROW_LIMIT) return one;
+  }
+  return `{\n${entries.map(([k, x]) => `${pad}${JSON.stringify(k)}: ${laid(x, depth + 1, false)}`).join(',\n')}\n${end}}`;
+}
+
+/** A fixture's text: its value, as JSON.stringify would keep it, laid out
+ *  one row per line, with a closing newline. */
+export function fixtureLayout(fixture: unknown): string {
+  return `${laid(JSON.parse(JSON.stringify(fixture)) as unknown, 0, false)}\n`;
 }

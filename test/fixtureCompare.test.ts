@@ -1,7 +1,7 @@
 /**
  * The rule `npm run fixtures:check` holds a fresh fixture to
  * (tools/fixtureCompare.ts): numbers to Swift's conformance tolerance,
- * everything else exactly.
+ * everything else exactly; and the layout every fixture is written in.
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { compareFixtures, FIXTURE_TOLERANCE } from '../tools/fixtureCompare.js';
+import { compareFixtures, FIXTURE_TOLERANCE, ROW_LIMIT, fixtureLayout } from '../tools/fixtureCompare.js';
 
 test('a number in its last bits is close, not different', () => {
   // decide.json's grid on x86 Linux and arm64 macOS (10 October 2026).
@@ -37,4 +37,52 @@ test('everything but a number must be the same', () => {
   assert.equal(compareFixtures({ a: 1, b: 2 }, { b: 2, a: 1 }).differences[0]!.path, '$ (keys)');
   assert.equal(compareFixtures({ a: [1] }, { a: { 0: 1 } }).differences.length, 1);
   assert.deepEqual(compareFixtures({ a: [{ b: 'c' }] }, { a: [{ b: 'c' }] }), { close: 0, largest: 0, differences: [] });
+});
+
+test('a fixture is laid out one row per line, and reads back as the same value', () => {
+  const fixture = {
+    about: 'x',
+    grid: { alphaCount: 7, times: [60, 120.5] },
+    cases: [{ why: 'a', at: [1, 2], out: { t: 0.1 } }, { why: 'b', at: [], out: null }],
+    traces: [{ note: 'n', steps: [{ event: { kind: 'start' }, effects: [{ kind: 'persist' }] }] }],
+    empty: [],
+    dropped: undefined,
+  };
+  const text = fixtureLayout(fixture);
+  assert.equal(text, [
+    '{',
+    '  "about": "x",',
+    '  "grid": {"alphaCount": 7, "times": [60, 120.5]},',
+    '  "cases": [',
+    '    {"why": "a", "at": [1, 2], "out": {"t": 0.1}},',
+    '    {"why": "b", "at": [], "out": null}',
+    '  ],',
+    '  "traces": [',
+    '    {"note": "n", "steps": [{"event": {"kind": "start"}, "effects": [{"kind": "persist"}]}]}',
+    '  ],',
+    '  "empty": []',
+    '}',
+    '',
+  ].join('\n'));
+  assert.equal(JSON.stringify(JSON.parse(text)), JSON.stringify(fixture), 'the same value, keys in order');
+  assert.equal(fixtureLayout(JSON.parse(text)), text, 'laid out again, the same text');
+});
+
+test('a row longer than the limit is opened, and its own rows go a line each', () => {
+  const long = 'y'.repeat(ROW_LIMIT);
+  const text = fixtureLayout({ traces: [{ note: long, steps: [{ a: 1 }, { a: 2 }] }] });
+  assert.equal(text, [
+    '{',
+    '  "traces": [',
+    '    {',
+    `      "note": "${long}",`,
+    '      "steps": [',
+    '        {"a": 1},',
+    '        {"a": 2}',
+    '      ]',
+    '    }',
+    '  ]',
+    '}',
+    '',
+  ].join('\n'));
 });
