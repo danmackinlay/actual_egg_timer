@@ -772,3 +772,22 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     shows the queue for review on a phone. `tools/drafts/` and the draft
     proofs go; the no-literals lint and the surfaces' budgets stay.
     9 October 2026.
+107. **The results log starts fresh in 0.5, and 81's protection goes**
+    (the worklist, 2.6, 2.8, 2.9 and 2.14; the owner: "The data is not
+    so important that we should be excessively complicated in order to
+    maintain it", and "yeah, let's be simple"). Replaces 81's rule that
+    the log changes only with a migration: the log is ordinary data under
+    48 again. 0.5 writes a new key (`calibration.v5` on iOS,
+    `aet.calibration.v5` on the web) holding only today's record shape,
+    and never reads 0.3's `v4`; a cook on 0.3 starts learning again from
+    the population prior, once. What goes, in both apps, core, the
+    fixtures and the import tool: a record that cannot be read kept in
+    place and written back; a store that cannot be read kept aside under
+    side keys; a cook in progress that cannot be read kept aside; the
+    positional re-merge; the `t` column; the three-way yolk answer and
+    the fields an older record may lack. A store or cook that cannot be
+    read is dropped. What stays: "Export my results" (the store as
+    stored), replaying the posterior when `MODEL_ID` changes, the
+    newer-build guard (100), and the import tool reading the owner's
+    older files. Export from a current build before installing 0.5 to
+    keep your own eggs. 9 October 2026.
