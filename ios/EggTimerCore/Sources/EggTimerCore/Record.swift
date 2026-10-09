@@ -615,6 +615,38 @@ public func validRecord(_ r: EggRecord) -> Bool {
     return true
 }
 
+// MARK: - The calibration
+
+/// Particles in the filter, and the seed they start from. Both apps must agree
+/// or two identical kitchens learn two different things from the same egg.
+public let particleCount = 1000
+public let calibrationSeed: Int32 = 0x5eed_1e
+
+/// The calibration grid's alpha bounds, as factors of the posterior's centre.
+public let calibrationAlphaLow = 0.55
+public let calibrationAlphaHigh = 1.8
+
+/// Where to build the dose surface for one logged outcome.
+///
+/// The most consequential choice in the calibration. The grid is handed to
+/// `buildDoseGrid` by the CALLER, so its bounds decide what the particle
+/// filter can see and therefore what the posterior becomes: two apps with
+/// different grids learn different things from the same egg.
+///
+/// The bounds bracket the plausible answer rather than the whole domain: alpha
+/// within a factor of ~2 of where the posterior currently sits, and cook times
+/// from a third of what was cooked to a bit over double it.
+public func calibrationGrid(alphaCentre: Double, cookTimeS: Double) -> GridSpec {
+    GridSpec(
+        alphaMin: alphaCentre * calibrationAlphaLow,
+        alphaMax: alphaCentre * calibrationAlphaHigh,
+        alphaCount: 21,
+        timeMinS: max(60, cookTimeS * 0.35),
+        timeMaxS: cookTimeS * 2.4,
+        timeCount: 32
+    )
+}
+
 // MARK: - Fold
 
 /// A posterior and the number of eggs that taught it. The count is state, not a

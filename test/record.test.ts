@@ -21,17 +21,15 @@ import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, LIKELIHOOD_ID, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
-  parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
-  RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
+  CALIBRATION_SEED, Calibration, EggRecord, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION,
+  calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, jsonString, parseLog, parseRecord,
+  recordCookTime_s, recordMass_g, replay, resultsFile, resultsFileName,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION, WhiteReport, YolkWord } from '../src/core/infer.js';
+import { BoilMemory } from '../src/core/boil.js';
 import {
-  BoilMemory, calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED, PULL_GRACE_SECONDS, phaseAt,
-} from '../src/core/policy.js';
-import {
-  CookChoices, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, readRunningCook, replan, startCook, withBoil,
-  withOut, writeEvents,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, readRunningCook,
+  replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -798,3 +796,37 @@ test('4e. the same egg logged again keeps its facts as last corrected, and the a
   assertIdentical(keptState().calibration, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), keptState().log),
     'the corrected egg, folded once');
 });
+
+// --------------------------------------------------------------------------
+// 5. The calibration grid: the bounds that decide the posterior
+// --------------------------------------------------------------------------
+
+test('5a. the grid brackets the cook that was actually performed', () => {
+  const g = calibrationGrid(1.4e-7, 441);
+  assert.ok(g.alphaMin < 1.4e-7 && g.alphaMax > 1.4e-7, 'grid does not contain its centre');
+  assert.ok(g.timeMin_s < 441 && g.timeMax_s > 441, 'grid does not contain the cook');
+  assert.equal(g.alphaCount, 21);
+  assert.equal(g.timeCount, 32);
+});
+
+test('5b. a very short cook still gets a grid with a floor on it', () => {
+  // 0.35 * 60 is 21 s, which is not a cook. The floor is what stops the
+  // interpolation domain collapsing on a fast egg.
+  const g = calibrationGrid(1.4e-7, 60);
+  assert.ok(g.timeMin_s >= 60, `time floor collapsed to ${g.timeMin_s}`);
+  assert.ok(g.timeMax_s > g.timeMin_s, 'grid has no width');
+});
+
+test('5c. the grid scales with the cook rather than sitting at fixed seconds', () => {
+  const short = calibrationGrid(1.4e-7, 400);
+  const long = calibrationGrid(1.4e-7, 800);
+  assert.ok(long.timeMax_s > short.timeMax_s, 'grid did not follow the cook');
+  close(long.timeMax_s / short.timeMax_s, 2, 1e-12, 'grid scaling');
+});
+
+function close(actual: number, expected: number, tol: number, what: string): void {
+  assert.ok(
+    Math.abs(actual - expected) <= tol,
+    `${what}: expected ${expected} +/- ${tol}, got ${actual} (delta ${actual - expected})`,
+  );
+}

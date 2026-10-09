@@ -29,16 +29,14 @@ import {
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
-  CALIBRATION_SEED, COOLING_MIN_SECONDS, COOLING_SECONDS, PARTICLE_COUNT, calibrationGrid,
-  coolingSecondsFor, plausibleProbeRange_C, probeMomentFor,
-} from '../src/core/policy.js';
-import {
-  EggRecord, MODEL_ID, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
-  freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
+  CALIBRATION_SEED, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
+  copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
-import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
-import { RunningCook, eventsDue, replan, startCook, withBoil, withOut, writeEvents } from '../src/core/running.js';
+import {
+  COOLING_MIN_SECONDS, COOLING_SECONDS, PULL_GRACE_SECONDS, RunningCook, coolingSecondsFor, eventsDue,
+  plausibleProbeRange_C, probeMomentFor, replan, startCook, withBoil, withOut, writeEvents,
+} from '../src/core/running.js';
 import { appSetup, knowing } from '../tools/common.js';
 
 // --------------------------------------------------------------------------

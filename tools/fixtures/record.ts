@@ -1,21 +1,22 @@
 /**
  * fixtures/record.json: the record (INFERENCE.md section 4): which records a
- * loader trusts, and a replayed log.
+ * loader trusts, and a replayed log; and the calibration grid's geometry and
+ * the filter's size and seed.
  */
 
 import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  Calibration, CookFacts, EggRecord, LIKELIHOOD_ID, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
-  StoreRead, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord, probeReadingFor,
-  recordCookTime_s, recordFor,
-  recordMass_g,
-  recordProbe_C, recordTeaches, replay, RESULTS_FILE_VERSION, ResultsMeta, resultsFile, resultsFileName,
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, CookFacts, EggRecord, LIKELIHOOD_ID,
+  MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, ResultsMeta, StoreRead, calibrationDoneness,
+  calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
+  probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
+  resultsFileName,
 } from '../../src/core/record.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
-import { COOLING_SECONDS, coolingSecondsFor, calibrationGrid } from '../../src/core/policy.js';
+import { COOLING_SECONDS, coolingSecondsFor } from '../../src/core/running.js';
 
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';
@@ -35,7 +36,7 @@ import { referenceSetup } from '../common.js';
  * The grid is coarser than the app's: `calibrationGrid`'s BOUNDS, which are what
  * decide what the filter sees, at 7 x 9 instead of 21 x 32. The counts are
  * written out; a port rebuilds the same policy from them. The production grid's
- * geometry is pinned separately in policy.json. */
+ * geometry is pinned on its own, as `calibrationGrid` below. */
 
 const REPLAY_GRID_ALPHA = 7;
 const REPLAY_GRID_TIME = 9;
@@ -636,6 +637,32 @@ export const recordFixture = {
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),
     cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored) })),
   },
+  // The grid one logged outcome is learned on in the apps, with its alpha
+  // factors by name, and the filter's size and seed: both apps must agree,
+  // or two identical kitchens learn two things from the same egg.
+  calibrationGrid: {
+    alphaLow: CALIBRATION_ALPHA_LOW,
+    alphaHigh: CALIBRATION_ALPHA_HIGH,
+    cases: [
+      { alphaCentre: 1.4e-7, cookTime_s: 441 },
+      { alphaCentre: 1.4e-7, cookTime_s: 60 },
+      { alphaCentre: 1.4e-7, cookTime_s: 120 },
+      { alphaCentre: 2.0e-7, cookTime_s: 800 },
+    ].map((c) => {
+      const g = calibrationGrid(c.alphaCentre, c.cookTime_s);
+      return {
+        alphaCentre: c.alphaCentre,
+        cookTime_s: c.cookTime_s,
+        alphaMin: g.alphaMin,
+        alphaMax: g.alphaMax,
+        alphaCount: g.alphaCount,
+        timeMin_s: g.timeMin_s,
+        timeMax_s: g.timeMax_s,
+        timeCount: g.timeCount,
+      };
+    }),
+  },
+  calibration: { particles: PARTICLE_COUNT, seed: CALIBRATION_SEED },
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },

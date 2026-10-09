@@ -70,7 +70,7 @@
 
 import { DoseGrid } from './doseGrid.js';
 import { Posterior, predictCookTime, yolkWordProbabilities } from './infer.js';
-import { anchorNear } from './policy.js';
+import { anchorNear } from './slider.js';
 import { DONENESS_ANCHORS, logYolkTarget } from './solve.js';
 
 /** How sure, in three words: the keys D1 will give words to. */

@@ -11,21 +11,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
-import {
-  LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, calibrationGrid, coolingSecondsFor, phaseAt,
-} from '../src/core/policy.js';
+import { LIMITS, START_TEMP_PRESETS_C } from '../src/core/inputs.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 import { decisionInputs } from '../src/core/decide.js';
 import {
-  CookFacts, ProbeReading, copyCalibration, foldRecord, gridRequestFor, recordFor,
+  CookFacts, ProbeReading, calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor,
 } from '../src/core/record.js';
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../src/core/infer.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, asRanCorrected, asRanCurrent,
-  asRanShown, keepAsRan, boilToRemember, cookEnding,
-  cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
-  SlowHobPlace, coldHistory, guessLengthened, readRunningCook, withAsRan, writeEvents, replan, slowHobDue, slowHobMemoFits, solutionAsRan, startCook, startCorrected, stillIn, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
+  SLOW_HOB_EXTRA_S, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, coldHistory, cookEnding,
+  cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, coolingSecondsFor, corrected, earliestStart_s, eventsDue,
+  guessLengthened, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands, readRunningCook, replan, slowHobDue,
+  slowHobMemoFits, solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 

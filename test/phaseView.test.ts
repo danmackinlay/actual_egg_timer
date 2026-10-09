@@ -17,9 +17,9 @@ import { readFileSync } from 'node:fs';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { parseCatalogue } from '../src/core/copy.js';
-import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
 import {
-  CookChoices, CookPlan, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil, withOut, writeEvents,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil,
+  withOut, writeEvents,
 } from '../src/core/running.js';
 import { phaseKeys } from '../src/core/wording.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';

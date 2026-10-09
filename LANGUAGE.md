@@ -14,8 +14,8 @@ read is the review queue (§3).
 
 Until 27 September 2026 the two apps typed their sentences separately, and
 nothing but care kept them together: the five refusals were in the web's UI
-code and again in the iOS planner. That is the failure `src/core/policy.ts`
-was created to end for numbers. Core also returned English in three places
+code and again in the iOS planner. That is the failure core's shared
+decisions (`src/core/inputs.ts`, `slider.ts` and the rest) end for numbers. Core also returned English in three places
 (the doneness anchors, the size-class labels and the sous-vide durations),
 and English grammar was written into the code (`egg${n === 1 ? '' : 's'}`, a
 hand-made 24-hour clock, seven English weekday names). None of that survives
@@ -374,7 +374,7 @@ After that, the setting is the cook's.
 
 **Core stays in SI.** This is `CLAUDE.md` invariant 3: "convert only at the UI
 boundary". The new work is making both UIs convert *identically*. That means a
-`units.ts` in core, fixtured like `policy.ts`, which owns three things:
+`units.ts` in core, fixtured like the rest of core, which owns three things:
 
 - the conversions
 - the display precision and input step for each quantity in each system

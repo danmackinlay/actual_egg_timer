@@ -264,7 +264,7 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  * no particle scores below PROBE_UNRELATED / PROBE_UNRELATED_SPAN_C per degree.
  * It is smaller than the answers' UNRELATED because the apps refuse, before it
  * is ever folded, a reading no believable kitchen could make
- * (`plausibleProbeRange_C` in policy.ts), and because every per cent of it is
+ * (`plausibleProbeRange_C` in running.ts), and because every per cent of it is
  * a fat tail that one reading has to fight: at 5% over 40 C the same reading
  * would leave about 3.1% in the weights rather than 2.8%.
  */

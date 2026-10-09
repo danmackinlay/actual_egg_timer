@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 
 import { Outcome } from '../../src/core/outcome.js';
 import { Certainty, CertaintyReading, wordCertainty } from '../../src/core/certainty.js';
-import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.js';
+import { Phase } from '../../src/core/running.js';
+import { RefusalKind, Verdict, anchorNear } from '../../src/core/slider.js';
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
 import { EggFrom, forecastOf } from '../../src/core/record.js';
 import {

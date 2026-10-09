@@ -1,23 +1,22 @@
 /**
  * fixtures/running.json: a running cook - its egg and pot, how each thing the
- * cook does moves it, and how a stored one is read (src/core/running.ts).
+ * cook does moves it, how a stored one is read, and which phase it is in at
+ * every boundary (src/core/running.ts).
  */
 
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
-import {
-  PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
-} from '../../src/core/policy.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { decisionInputs, inputsKey } from '../../src/core/decide.js';
 import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobMemo,
-  SlowHobPlace, appendEntry, correctedLater, takeUpEvents, writeEvents,
-  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
-  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, slowHobDue, solutionAsRan,
-  startCook, startCorrected, stillIn, withBoil, withOut,
+  COOLING_SECONDS, CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
+  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace, appendEntry,
+  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf, cookStillOpen,
+  corrected, correctedLater, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
+  readRunningCook, replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, takeUpEvents, withBoil,
+  withOut, writeEvents,
 } from '../../src/core/running.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
@@ -838,7 +837,7 @@ function stored(node: unknown): unknown {
 }
 
 export const runningFixture = stored({
-  about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, and the plan derived from it. src/core/running.ts.',
+  about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, the plan derived from it, and the phase at every boundary. src/core/running.ts.',
   constants: {
     slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
     slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS, restoreWindow_s: RESTORE_WINDOW_S,
@@ -852,4 +851,43 @@ export const runningFixture = stored({
     note: t.note, ours: t.ours, theirs: t.theirs, oursAfter: takeUpEvents(t.ours, t.theirs), theirsAfter: takeUpEvents(t.theirs, t.ours),
     later: [correctedLater(t.ours, t.theirs), correctedLater(t.theirs, t.ours)],
   })),
+  phase: {
+    coolingSeconds: COOLING_SECONDS,
+    pullGraceSeconds: PULL_GRACE_SECONDS,
+    slowHob: { whenLeft_s: SLOW_HOB_WHEN_LEFT_S, extra_s: SLOW_HOB_EXTRA_S, every_s: SLOW_HOB_EVERY_S },
+    /* Two timelines from the same cook, differing only in whether there is a
+     * cooling step to time. The counter one matters most: with no cooling
+     * deadline, a port could fall from COOKING straight to DONE and never show
+     * the pull at all. Sampled either side of every boundary. */
+    timelines: [
+      { name: 'ice bath', cookEnd_s: 600, coolEnd_s: 600 + PULL_GRACE_SECONDS + COOLING_SECONDS, outAt_s: null },
+      { name: 'counter rest', cookEnd_s: 600, coolEnd_s: null, outAt_s: null },
+      // The cook tapped the eggs out 5 s into the grace: the cooling is timed
+      // from the tap.
+      { name: 'ice bath, out at the tap', cookEnd_s: 600, coolEnd_s: 605 + COOLING_SECONDS, outAt_s: 605 },
+      { name: 'counter rest, out at the tap', cookEnd_s: 600, coolEnd_s: null, outAt_s: 605 },
+    ].map((t) => ({
+      name: t.name,
+      cookEnd_s: t.cookEnd_s,
+      coolEnd_s: t.coolEnd_s,
+      outAt_s: t.outAt_s,
+      samples: [
+        0, 1, 599, 599.999, 600, 600.001, 604.999, 605, 605.001, 619, 619.999, 620, 620.001,
+        700, 784.999, 785, 799, 799.999, 800, 800.001, 10000,
+      ].map((now_s) => ({
+        now_s: now_s,
+        provisional: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: true, outAt_s: t.outAt_s }, now_s,
+        ),
+        phase: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false, outAt_s: t.outAt_s }, now_s,
+        ),
+        // A question open about a pull the clock assumed: never Done.
+        asking: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false, outAt_s: t.outAt_s, asking: true },
+          now_s,
+        ),
+      })),
+    })),
+  },
 }) as Record<string, unknown[]> & { setups: unknown[]; moves: unknown[]; reads: unknown[] };

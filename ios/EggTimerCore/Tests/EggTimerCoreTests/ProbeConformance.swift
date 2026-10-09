@@ -7,7 +7,7 @@ import Foundation
 /// The peak on the dose grid and its interpolation; the error model's density
 /// across both tails, where a careless exp(big) * erfc(tiny) would be NaN; one
 /// particle's likelihood; a fold sequence of readings alone, with answers, and
-/// wildly off, through the resample, particle by particle; and the policy -
+/// wildly off, through the resample, particle by particle; and the rules -
 /// how long the cooling counts, whether a probe is asked for, and which
 /// readings are taken at entry.
 

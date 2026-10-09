@@ -48,7 +48,7 @@ export interface GridSpec {
 }
 
 /** Where the dose surface goes, given its centre and the cook. Production is
- *  `calibrationGrid` (policy.ts); the fixtures and tests pass a coarser one so
+ *  `calibrationGrid` (record.ts); the fixtures and tests pass a coarser one so
  *  a replay of several eggs costs a fraction of a second rather than several. */
 export type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
 

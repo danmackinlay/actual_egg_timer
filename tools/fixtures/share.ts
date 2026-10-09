@@ -14,11 +14,13 @@
  *    cursor moved), and the first pending deletion confirmed.
  *  - `nextToSend`: the egg each starting point sends next, for a few logs.
  *  - `deletionDone`: which answers to a deletion end it.
+ *  - `answers`: what a sender makes of the endpoint's answer, and when it
+ *    stops waiting on a busy one.
  */
 
 import {
   FRESH_SHARE, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, forgotten, isUid, nextToSend,
-  readShareState, reconciled, turnedOff, turnedOn,
+  SHARE_WAIT_S, SHARE_WAIT_TRIES, readShareState, reconciled, shareGivesUp, shareReply, turnedOff, turnedOn,
 } from '../../src/core/share.js';
 
 const A = '11111111-1111-4111-8111-111111111111';
@@ -130,7 +132,7 @@ export function shareFixture() {
   }
 
   return {
-    about: 'Sharing\'s state: ids, defensive reads, and every move from every reachable state. src/core/share.ts.',
+    about: 'Sharing\'s state: ids, defensive reads, every move from every reachable state, and what a sender makes of the endpoint\'s answer. src/core/share.ts.',
     fresh: FRESH_SHARE,
     uids,
     reads,
@@ -140,5 +142,19 @@ export function shareFixture() {
       state: i, finalCount, logLength, at: nextToSend(state, finalCount, logLength),
     }))),
     deletionDone: [200, 201, 400, 404, 409, 429, 500, 503].map((status) => ({ status, done: deletionDone(status) })),
+    /* What a sender makes of the endpoint's answer, and when it stops waiting:
+     * every status class's edges, and both bounds either side. */
+    answers: {
+      waitTries: SHARE_WAIT_TRIES,
+      wait_s: SHARE_WAIT_S,
+      replies: [100, 199, 200, 201, 202, 204, 299, 301, 304, 399, 400, 401, 402, 403, 404, 405, 407, 408, 409, 413,
+        415, 422, 428, 429, 430, 451, 499, 500, 502, 503, 504, 511, 599, 600].map((status) => ({
+        status: status,
+        reply: shareReply(status),
+      })),
+      givesUp: [0, 1, 4, 5, 6, 50].flatMap((tries) => [
+        -1, 0, 3600, SHARE_WAIT_S - 1, SHARE_WAIT_S, SHARE_WAIT_S + 1, 30 * 24 * 3600,
+      ].map((waited_s) => ({ tries: tries, waited_s: waited_s, givesUp: shareGivesUp(tries, waited_s) }))),
+    },
   };
 }

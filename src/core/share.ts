@@ -26,16 +26,74 @@
  *
  * WHEN AN EGG GOES: once it is final - when the cook has moved on from it, so
  * no answer can be added - one at a time, in order (`nextToSend`). What the
- * server's answer means is `shareReply` in policy.ts, and how long a busy
- * one is waited on `shareGivesUp` there, since an iPhone's attestation is
- * answered by the same rules; what the answer does to this state is
- * `answered` here.
+ * server's answer means is `shareReply`, and how long a busy one is waited
+ * on is `shareGivesUp`, both below; an iPhone's attestation is answered by
+ * the same rules. What the answer does to this state is `answered`.
  *
  * No I/O, no clock, no randomness: a new id and the time are the caller's,
  * passed in.
  */
 
-import { shareGivesUp, shareReply } from './policy.js';
+/* ------------------------------------------------- the server's answers */
+
+/**
+ * What an answer from the collection endpoint (`server/eggs.ts`) means to the
+ * app that sent a result or an attestation (`src/ui/share.ts`, iOS's
+ * `Sharing.swift`):
+ *
+ * - `kept`: 201 kept, 200 already kept.
+ * - `busy`: 403, 404, 408, 429 or any 5xx - an answer about the way to the
+ *   server, not about what was sent. The server is overloaded, limited or
+ *   down, or a bad deploy, a firewall or a proxy is in the way (403, 404),
+ *   and the same request may well be taken once that is put right. Wait,
+ *   and ask again on a later run; `shareGivesUp` bounds it, so an answer
+ *   that never changes cannot stop the queue for good.
+ * - `refused`: anything else, for good: an answer about the request itself.
+ *   400 (not a record; an attestation refused), 409 (another key for this
+ *   id), 413 (too big), 415 (not JSON), 422, and any other 4xx; and anything
+ *   that is neither kept nor an error (a 1xx, another 2xx, a 3xx). The same
+ *   request would be refused again, so the result is passed over at once,
+ *   and an attestation given up (the phone sends open), and the rest of the
+ *   queue moves.
+ *
+ * No answer at all - offline, a timeout - is the caller's, and is not one of
+ * these: it waits, and is not counted, since nothing else can get through
+ * either, and nothing was learned.
+ */
+export type ShareReply = 'kept' | 'busy' | 'refused';
+
+export function shareReply(status: number): ShareReply {
+  if (status === 200 || status === 201) return 'kept';
+  if (status === 403 || status === 404 || status === 408 || status === 429 || (status >= 500 && status <= 599)) {
+    return 'busy';
+  }
+  return 'refused';
+}
+
+/**
+ * How long a step waits on busy answers before it gives up: a result is then
+ * passed over, as if refused, and an attestation, or a signature the phone
+ * could not make, given up for the id, which then sends open - as a phone
+ * that lost its key does. So nothing waits for good.
+ *
+ * Both bounds must be met. Three days outlasts the outages that pass - a
+ * deploy gone wrong, a provider's bad day, Apple's service down - including
+ * one that waits a weekend for the owner to fix it. Five busy answers, each
+ * from its own run, keep a phone opened once in a while from giving up on
+ * the first busy answer after days asleep. Only busy answers count (no
+ * answer does not), and the count starts again for each result.
+ */
+export const SHARE_WAIT_TRIES = 5;
+export const SHARE_WAIT_S = 3 * 24 * 60 * 60;
+
+/** Whether a step that has had `tries` busy answers, the first `waited_s`
+ *  ago, stops waiting. A negative wait is a clock set back since: the start
+ *  cannot be trusted, and the tries alone decide. */
+export function shareGivesUp(tries: number, waited_s: number): boolean {
+  return tries >= SHARE_WAIT_TRIES && (waited_s >= SHARE_WAIT_S || waited_s < 0);
+}
+
+/* ------------------------------------------------------------- the state */
 
 export interface ShareState {
   on: boolean;

@@ -119,7 +119,7 @@
        (design/one-screen.md section 2): while idle they are the settings,
        and while a cook runs, its own choices. Numeric bounds, steps,
        units and the preset temperatures are filled in at boot from
-       src/core/policy.ts and src/core/units.ts, in the cook's units, so the
+       src/core/inputs.ts and src/core/units.ts, in the cook's units, so the
        markup cannot disagree with the model. -->
   <form id="controls" autocomplete="off">
 
@@ -393,7 +393,7 @@
 
       <!-- The room, measured with the probe: offered only while the probe is
            on, optional, and empty until set, when it shows the room assumed,
-           greyed (src/core/policy.ts, roomInUse). -->
+           greyed (src/core/inputs.ts, roomInUse). -->
       <div class="setting pan-only" id="roomField" hidden>
         <div class="setting__line">
           <span class="setting__head">

@@ -11,7 +11,7 @@ import EggTimerApp
 /// With notifications refused, unanswered or not taken, the screen says "keep
 /// the app open". This is what makes that true: while the app is on screen it
 /// rings at each deadline itself. `Cook` decides WHEN, through the tested rule
-/// in EggTimerCore (`deadlineToRing`); this only makes the noise.
+/// in EggTimerApp (`deadlineToRing`); this only makes the noise.
 ///
 /// The sound is the one the cook chose (`AlarmSoundChoice`), the web's
 /// (`src/ui/alarmSounds.ts`), from the file the notification plays: whole

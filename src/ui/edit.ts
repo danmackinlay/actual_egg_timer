@@ -38,7 +38,7 @@ import {
   CookChoices, RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, replan, sameChoices,
   startCorrected,
 } from '../core/running.js';
-import { targetPeakYolk_C } from '../core/policy.js';
+import { targetPeakYolk_C } from '../core/slider.js';
 import { surfaceFor } from './answer.js';
 import { calibrationParams } from './calibration.js';
 import { t, timeOfDay } from './copy.js';

@@ -467,18 +467,26 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ### Core, smaller
 
-- [ ] **3.15 `policy.ts` by subject**: `phaseAt`, `Deadlines` and the
+- [x] **3.15 `policy.ts` by subject**: `phaseAt`, `Deadlines` and the
       slow-hob/grace constants to the running module; `shareReply` /
       `shareGivesUp` to `share.ts`; alarm sounds apart. Policy.swift is the
       most-churned Swift file. S-M.
+      *Done:* `inputs`, `slider`, `texture`, `boil` and `sounds`, each a
+      module, a Swift twin and a fixture; the phases to `running`, the
+      replies to `share`, the calibration grid to `record`. Every fixture
+      value moved unchanged.
 - [ ] **3.16 One time unit**: `startCook(now_ms)` and `share.answered(now)`
       take ms, everything else seconds. S.
       *Half done:* the running cook's API is seconds (`startCook(now_s)`;
       the record's id stays ms). `share.answered` still takes ms: its
       stored `busySince` is ms, a format change of its own.
-- [ ] **3.17 Core only what the apps must agree on.** `deadlineToRing` is
+- [x] **3.17 Core only what the apps must agree on.** `deadlineToRing` is
       iOS-only logic in EggTimerCore with no twin; one-liners
       (`effectiveUnits`, `languageOf`) don't earn a twin. S.
+      *Done:* `deadlineToRing` to EggTimerApp, the notification sound's
+      length to `src/ui/alarmSounds.ts`. `effectiveUnits` and `languageOf`
+      stay: core calls both itself (`chooseUnits`; `copy`, `format`,
+      `language`), and neither has a fixture of its own.
 - [ ] **3.18 Generate the Swift data layer** (types, defensive readers,
       Codable, `jsonObject`) from the TS interfaces: that is where the copies
       drifted (Running 967 Swift code lines against 727 TS; Share 162

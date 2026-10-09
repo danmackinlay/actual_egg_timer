@@ -62,7 +62,7 @@ public struct GridSpec: Sendable {
 }
 
 /// Where the dose surface goes, given its centre and the cook. Production is
-/// `calibrationGrid` (Policy.swift); fixtures and tests pass a coarser one.
+/// `calibrationGrid` (Record.swift); fixtures and tests pass a coarser one.
 public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
 
 /// Everything a dose-surface build needs.

@@ -33,13 +33,12 @@
  */
 
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
-import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
+import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
 import { boilingPointAtAltitude } from './thermo.js';
-import {
-  BoilMemory, Deadlines, LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
-  ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
-} from './policy.js';
-import { ModelParams, Solution, logYolkTarget, simulate } from './solve.js';
+import { ALPHA_REL_SD } from './constants.js';
+import { LIMITS, ambientFor, startTempPreset_C } from './inputs.js';
+import { BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.js';
+import { CookResult, ModelParams, Solution, logYolkTarget, simulate } from './solve.js';
 import {
   DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, inputsKey, numberKey, solutionAt,
 } from './decide.js';
@@ -220,6 +219,152 @@ export interface RunningCook {
   /** The plan as it ran, from the pull on; null before it, and until a plan
    *  on the pot's surface has been made since (`keepAsRan`). */
   asRan: CookAsRan | null;
+}
+
+/* ---------------------------------------------- the phases and deadlines */
+
+/**
+ * The phases of a cook, in order.
+ *
+ *   IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
+ */
+export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
+
+/** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
+ *  stage of the cook, not a suggestion appended to the end of it.
+ *
+ *  This is the FALLBACK: the countdown runs to the moment the yolk's centre
+ *  peaks (`coolingSecondsFor`), and this flat three minutes is only what a
+ *  cook gets when there is no peak after the pull to run to - a heat-off pan
+ *  that ran out while the egg was still in it - and the default before a cook
+ *  is given its own. */
+export const COOLING_SECONDS = 180;
+
+/** The shortest counted cooling, s. The model's peak never comes sooner than
+ *  about a minute and a half after the pull for any egg the app will time
+ *  (88 s, a 53 g egg at hard with the heat off); this is a floor under a
+ *  rounding, not a rule anyone should meet. */
+export const COOLING_MIN_SECONDS = 60;
+
+/**
+ * How long to count the cooling down, s from the pull: to the moment the
+ * yolk's centre peaks, for this cook as the solver ran it. A flat three minutes
+ * would end 3 s before the peak for the default egg in ice and 25 s after it
+ * for a small one; the thermometer is read at the peak, so the countdown and
+ * the reading end together.
+ *
+ * `result` is the solve the cook is running on, for its own cooling method -
+ * the peak comes about 20 s later under a tap than in ice. On the counter
+ * nothing is counted (`beginCooling`), and this is not asked.
+ */
+export function coolingSecondsFor(result: CookResult): number {
+  const toPeak = result.peakYolkTime_s - result.cookTime_s;
+  if (!(toPeak > 0.0)) return COOLING_SECONDS;
+  const whole = Math.round(toPeak);
+  return whole < COOLING_MIN_SECONDS ? COOLING_MIN_SECONDS : whole;
+}
+
+/**
+ * Whether this cook has a moment to take a probe reading at: a counted
+ * cooling that ends when the yolk's centre peaks. Not on the counter, where
+ * nothing is counted and the peak is nine minutes off with the carryover
+ * constant in it (INFERENCE.md section 5), and not when the centre peaked
+ * before the egg came out, where there is no peak after the pull to read.
+ */
+export function probeMomentFor(result: CookResult, cooling: Cooling): boolean {
+  if (cooling === 'counter') return false;
+  return result.peakYolkTime_s - result.cookTime_s >= COOLING_MIN_SECONDS;
+}
+
+/** How far past the peaks of the fastest and slowest kitchens believed in a
+ *  reading may land and still be taken, C: three instrument sds. */
+export const PROBE_MARGIN_C = 3.0;
+
+/** How many prior sds of the time-scale either side of where the posterior
+ *  stands a kitchen may be and still have its reading taken. Three is wider
+ *  than any kitchen the prior believes in, and narrow enough that a reading
+ *  with its digits swapped - 46 for 64 - lands outside. */
+export const PROBE_ALPHA_SDS = 3.0;
+
+/**
+ * The centre readings the app will take for this cook, C, as [low, high].
+ *
+ * The peak for a time-scale PROBE_ALPHA_SDS prior sds either side of the
+ * posterior mean, widened by PROBE_MARGIN_C, and never outside what is
+ * possible at all: colder than the coldest thing the egg touched, or hotter
+ * than the water boiled. A reading outside is refused at entry rather than
+ * folded: it is a typo, the white, or another egg. For the default egg at
+ * jammy in ice that is 47.6 to 81.7 C around a peak of 64.7. Two
+ * simulations, so cheap enough to run on every keystroke.
+ */
+export function plausibleProbeRange_C(
+  egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
+): [number, number] {
+  const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
+  const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread }, cookTime_s);
+  const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread }, cookTime_s);
+  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup.cooling, setup.ambient_C));
+  const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
+  const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
+  return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];
+}
+
+/** A slow hob: a cold start still not boiling this close to its provisional
+ *  deadline, s, has a slower hob than assumed. Rather than count down to an
+ *  alarm for an egg that has not begun cooking, both apps push the estimate
+ *  out to the time heating so far plus SLOW_HOB_EXTRA_S, at most once every
+ *  SLOW_HOB_EVERY_S. */
+export const SLOW_HOB_WHEN_LEFT_S = 45;
+export const SLOW_HOB_EXTRA_S = 60;
+export const SLOW_HOB_EVERY_S = 10;
+
+/** If nobody confirms the transfer, assume it happened. A stalled timer at the
+ *  hob is worse than a slightly optimistic one. */
+export const PULL_GRACE_SECONDS = 20;
+
+/** The deadlines a cook is made of, as epoch seconds. `coolEnd_s` is null when
+ *  there is no cooling step to time - resting on the counter, where the
+ *  carryover IS the point rather than something to wait out. */
+export interface Deadlines {
+  cookEnd_s: number;
+  coolEnd_s: number | null;
+  /** True on a cold start until the boil is tapped: the deadline is a guess. */
+  provisional: boolean;
+  /** When the cook said the eggs were out, inside the pull's grace; null
+   *  until they do. The tap ends the pull, and the cooling (whose deadline
+   *  the app then times from the tap) starts there. */
+  outAt_s: number | null;
+  /** The plan asks whether the egg is still in the water (`asksIfStillIn`,
+   *  below): nothing past the question, so the phase that would be Done
+   *  reads Cooling until it is answered. Absent is false. */
+  asking?: boolean;
+}
+
+/**
+ * Which phase a cook is in at a given instant.
+ *
+ * Pure, and it takes the clock rather than reading it, so one render sees one
+ * time. This is the rule both apps derive from, and it exists here because
+ * they did not agree on it: the iOS app checked for a cooling deadline BEFORE
+ * checking the pull grace, so a counter rest - which has no cooling deadline -
+ * fell straight from COOKING to DONE. "Out of the water, now" never appeared,
+ * the 20 s grace never ran, and the phone still fired the pull notification at
+ * a screen that already said Done. The web app always passed through PULL.
+ *
+ * PULL is therefore unconditional: every cook has a moment where the egg has
+ * to come out, whatever happens to it next. It ends early only when the cook
+ * says the eggs are out (`outAt_s`).
+ */
+export function phaseAt(d: Deadlines, now_s: number): Phase {
+  if (d.provisional) return 'HEATING';
+  if (now_s < d.cookEnd_s) return 'COOKING';
+  const out = d.outAt_s !== null && now_s >= d.outAt_s;
+  if (now_s < d.cookEnd_s + PULL_GRACE_SECONDS && !out) return 'PULL';
+  // A question open about the pull: the egg may still be in the water, so
+  // the cook is not Done, and nothing rings or ends it, until it is answered.
+  if (d.asking === true) return 'COOLING';
+  if (d.coolEnd_s === null) return 'DONE';
+  return now_s < d.coolEnd_s ? 'COOLING' : 'DONE';
 }
 
 /* ------------------------------------------------------------- the log */

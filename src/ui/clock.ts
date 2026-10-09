@@ -9,7 +9,7 @@
  * setInterval does not.
  */
 
-import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/policy.js';
+import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/sounds.js';
 import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
 import { request, soon } from './idle.js';
 import { clockSpeed, nowMs, onClockChange } from './now.js';

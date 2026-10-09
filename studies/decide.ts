@@ -35,10 +35,8 @@ import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid
 import { UNRELATED } from '../src/core/infer.js';
 import { sliderFromYolkDose } from '../src/core/solve.js';
 import {
-  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, PARTICLE_COUNT,
-} from '../src/core/policy.js';
-import {
-  Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, EggRecord, PARTICLE_COUNT,
+  calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
 import { appSetup, draw, recordAt, rng } from '../tools/common.js';
 

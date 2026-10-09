@@ -5,7 +5,7 @@ import Observation
 /// The alarm's sound, as the cook chose it in Settings (DECISIONS.md 101),
 /// kept. The sounds, their order and the default are the core's
 /// (`AlarmSound`), as the web's are; what a stored value reads as is
-/// `readAlarmSound`, held to the web's by `fixtures/policy.json`.
+/// `readAlarmSound`, held to the web's by `fixtures/sounds.json`.
 ///
 /// The notification and the in-app ring both read it when they sound, so a
 /// change reaches the next alarm scheduled. One already scheduled for a

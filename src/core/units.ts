@@ -42,7 +42,7 @@
  * ask the platform for the region and hand it in.
  */
 
-import { LIMITS, Limit, clamp } from './policy.js';
+import { LIMITS, Limit, clamp } from './inputs.js';
 import { SizeClass, isUS } from './geometry.js';
 import { Fixed, roundTo } from './format.js';
 

@@ -9,8 +9,10 @@
  * Asking once per egg is what closes that gap.
  */
 
-import { Phase, anchorNear, plausibleProbeRange_C } from '../core/policy.js';
-import { CookPlan, RunningCook, answered, answersOf, asRanShown } from '../core/running.js';
+import { anchorNear } from '../core/slider.js';
+import {
+  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown, plausibleProbeRange_C,
+} from '../core/running.js';
 import { ModelParams } from '../core/solve.js';
 import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';

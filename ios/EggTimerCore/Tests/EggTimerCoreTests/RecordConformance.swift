@@ -384,3 +384,39 @@ struct ReplayConformance {
         #expect(identical(start, before))
     }
 }
+
+@Suite("The calibration grid matches the reference implementation")
+struct CalibrationGridConformance {
+    /// The one that matters most: these six numbers are handed to
+    /// `buildDoseGrid`, so they decide what the filter can see and therefore
+    /// what the posterior becomes.
+    @Test("the alpha factors are the same factors")
+    func factors() throws {
+        let grid = try Fixtures.object("record.json", "calibrationGrid")
+        #expect(try calibrationAlphaLow == grid.num("alphaLow"))
+        #expect(try calibrationAlphaHigh == grid.num("alphaHigh"))
+    }
+
+    @Test("extent and resolution, including the floor on a short cook")
+    func cases() throws {
+        for c in try Fixtures.list("record.json", "calibrationGrid.cases") {
+            let alphaCentre = try c.num("alphaCentre")
+            let cookTimeS = try c.num("cookTime_s")
+            let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
+            let what = "grid(alpha \(alphaCentre), cook \(cookTimeS))"
+            try expectClose(g.alphaMin, c.num("alphaMin"), "\(what) alphaMin")
+            try expectClose(g.alphaMax, c.num("alphaMax"), "\(what) alphaMax")
+            try expectClose(Double(g.alphaCount), c.num("alphaCount"), "\(what) alphaCount")
+            try expectClose(g.timeMinS, c.num("timeMin_s"), "\(what) timeMinS")
+            try expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
+            try expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
+        }
+    }
+
+    @Test("the particle count and seed are the same kitchen")
+    func particles() throws {
+        let calibration = try Fixtures.object("record.json", "calibration")
+        try expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
+        try expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
+    }
+}

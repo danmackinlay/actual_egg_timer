@@ -7068,3 +7068,53 @@ What one could trip on: `fixtures:check` compares with git's index, so a
 regenerated fixture must be staged before `verify`. A new `LIKELIHOOD_ID`
 string that differs from `MODEL_ID` is a new Swift literal for
 `copy:literals`' list.
+
+## 10 October 2026: policy.ts by subject, and core only what both apps agree on (REFACTOR-0.5 3.15, 3.17)
+
+**policy.ts is gone.** Its ten subjects now live with what each decides, in
+both cores alike: `inputs.ts` (bounds, defaults, the egg-temperature
+buttons, the room in use, a stored size carried into a table),
+`slider.ts` (snapping, the nearest label, which words can be reached, the
+target temperature, the refusal verdict), `texture.ts`, `boil.ts` and
+`sounds.ts`, each with its Swift twin and its fixture; the phases and
+deadlines (`phaseAt`, `Deadlines`, the pull's grace, the slow hob, the
+counted cooling, the probe's range) to `running.ts`; `shareReply` and
+`shareGivesUp` to `share.ts`; the calibration grid and the filter's size
+and seed to `record.ts`. `RingDeadline`, the twin of `AlarmMoment`, is in
+Sounds.swift.
+
+**The fixtures moved, not changed.** policy.json became inputs, slider,
+texture, boil and sounds.json; its phase, share and calibration sections
+joined running.json (`phase`), share.json (`answers`) and record.json
+(`calibrationGrid`, `calibration`). A script compared each of policy.json's
+30 sections with its new place, as JSON, and found every one identical;
+the three files that gained sections are otherwise as committed but for
+their about lines, and probe.json's about now names running.ts.
+PolicyConformance.swift and test/policy.test.ts are split the same way
+(the Swift suites keep their names; one test added, that the grid's alpha
+factors are the same).
+
+**What left core (3.17), call sites first.**
+
+- `deadlineToRing`: called only by iOS's `Cook.ringIfDue`; the web has no
+  notifications and rings at every deadline. It sat in EggTimerCore so
+  that `swift test` could reach it; EggTimerApp is under `swift test` now
+  (1.2), so it is there, internal, and RingTests is in EggTimerAppTests.
+- `NOTIFICATION_SOUND_MAX_S` and `notificationRepeats`: called only by
+  `tools/sounds.ts` and `test/alarmSounds.test.ts`, which render and check
+  the iOS files; the Swift twin was called by nothing but its conformance
+  test. They are in `src/ui/alarmSounds.ts`, beside the samples the
+  renderer takes from there, and sounds.json lost their two columns.
+- Kept: `effectiveUnits` (web `src/ui/units.ts`, iOS `Planner.units`) and
+  `languageOf` (web `controls.ts`, iOS `SettingsView`) are one-liners, but
+  core calls both itself (`chooseUnits`; `copy`, `format`, `language`), so
+  a twin is needed whatever the apps do, and neither has a fixture to drop.
+  Everything else policy.ts exported has a caller in both apps, or in core.
+
+**Behaviour unchanged.** `npm run verify`, `npm run ios:build`, `npm run
+e2e` (83 scenarios) and `npm run ios:e2e` (48, muted, its own simulator)
+green on 3.15 and again at the end, on 0.5.x merged in and 3.17 done;
+verify and ios:build after every commit between.
+
+**Left.** `CLAUDE.md` line 58 still names `policy.ts` among the modules
+above the physics; it should name `inputs.ts`, `slider.ts` and the rest.

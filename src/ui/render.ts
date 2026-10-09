@@ -12,7 +12,7 @@
 
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
 import { ModelParams, Solution } from '../core/solve.js';
-import { textureFor, textureNoteKeys } from '../core/policy.js';
+import { textureFor, textureNoteKeys } from '../core/texture.js';
 import { decisionInputs } from '../core/decide.js';
 import { OddsProfile, pricedChanges, protocolAdvice } from '../core/reach.js';
 import { Outcome } from '../core/outcome.js';

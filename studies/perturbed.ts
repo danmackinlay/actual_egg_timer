@@ -28,7 +28,7 @@ import {
   wetShellDrop_C,
 } from '../src/core/protocol.js';
 import { Egg, eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/policy.js';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
 
 export interface Theta {
   /** ln(alpha). The time-scale, and everything that behaves like one. */

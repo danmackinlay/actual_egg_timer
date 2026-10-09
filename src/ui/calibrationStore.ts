@@ -10,10 +10,9 @@
 
 import { Particle, Population } from '../core/infer.js';
 import { priorStart } from '../core/population.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT } from '../core/policy.js';
 import {
-  Calibration, EggRecord, LIKELIHOOD_ID, LoadPath, copyCalibration, freshCalibration as freshFrom, loadDecision,
-  parseLog,
+  CALIBRATION_SEED, Calibration, EggRecord, LIKELIHOOD_ID, LoadPath, PARTICLE_COUNT, copyCalibration,
+  freshCalibration as freshFrom, loadDecision, parseLog,
 } from '../core/record.js';
 import { activePopulation } from './population.js';
 import { SyncedKey, syncedKey } from './store.js';

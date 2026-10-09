@@ -25,7 +25,7 @@ import { buildDoseGrid } from '../src/core/doseGrid.js';
 import {
   YOLK_WORD_CUTS, createPrior, predictCookTime, updatePosterior, yolkWordProbabilities,
 } from '../src/core/infer.js';
-import { anchorNear } from '../src/core/policy.js';
+import { anchorNear } from '../src/core/slider.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DONENESS_ANCHORS, logYolkTarget } from '../src/core/solve.js';
