@@ -142,6 +142,9 @@ final class Cook {
     // (`pullGraceSeconds`, `coolingSeconds`), so the two apps cannot time the
     // same egg differently.
 
+    /// The phase now: for an event acting at the moment it happens (a tap,
+    /// a cook ending), never for a draw, which takes its frame's moment
+    /// (`phase(at:)`).
     var phase: Phase { phase(at: AppClock.now) }
 
     /// The phase at a given instant.
@@ -209,8 +212,10 @@ final class Cook {
         return setup.timeToBoilS
     }
 
-    var secondsToPull: TimeInterval { max(0, pullAt.map { $0.timeIntervalSince(AppClock.now) } ?? 0) }
-    var secondsToCoolDone: TimeInterval { max(0, coolDoneAt.map { $0.timeIntervalSince(AppClock.now) } ?? 0) }
+    /// The time left to the pull and to the cooling's end at `now`, s: the
+    /// moment the frame drawing them was drawn for, as everything else in it.
+    func secondsToPull(at now: Date) -> TimeInterval { max(0, pullAt.map { $0.timeIntervalSince(now) } ?? 0) }
+    func secondsToCoolDone(at now: Date) -> TimeInterval { max(0, coolDoneAt.map { $0.timeIntervalSince(now) } ?? 0) }
     /// Seconds of cooking after the boil is reached - the number every recipe
     /// quotes, and the only part of a cold start comparable to one.
     var secondsAfterBoil: TimeInterval { cookSeconds - assumedBoilS }
@@ -420,6 +425,8 @@ final class Cook {
         await readBackAlarms()
         guard gen == generation else { return }
 
+        // The card as it stands once the alarms are asked for, which can take
+        // a prompt's seconds: a moment of its own.
         if let state = activityState(at: AppClock.now) {
             let attributes = Self.attributes(cook)
             #if DEBUG
@@ -437,8 +444,9 @@ final class Cook {
     /// says what it says. Remembered for this pan when the cook ends
     /// (`cookEnding`), not now: by then it is the cook as last corrected.
     func boil() {
-        guard let running, phase == .heating else { return }
-        let next = withBoil(running, nowS: AppClock.now.timeIntervalSince1970)
+        let now = AppClock.now
+        guard let running, phase(at: now) == .heating else { return }
+        let next = withBoil(running, nowS: now.timeIntervalSince1970)
         guard next != running else { return }
         change(to: next)
     }
@@ -748,10 +756,12 @@ final class Cook {
         let wasAsking = plan?.askIfStillIn
         plan = next
         plannedFor = cook
+        // The moment the plan is taken: what it stops, covers and pushes.
+        let now = AppClock.now
         // A pull made overdue by a correction and changed back within the
         // grace is cancelled: nothing rings for it. Nor while the plan asks
         // whether the egg is still in the water.
-        let phaseNow = phase(at: AppClock.now)
+        let phaseNow = phase(at: now)
         if phaseNow == .heating || phaseNow == .cooking || next.askIfStillIn { Ringer.shared.stop() }
         #if DEBUG
         // What Done shows: the peak as it ran once kept, else this plan's.
@@ -778,7 +788,7 @@ final class Cook {
             // corrects only the record, and the cooling's end it writes
             // (Done on the counter, corrected to ice) is not one to ring
             // (onescreen review 2.1).
-            if phaseAt(before, nowS: AppClock.now.timeIntervalSince1970) == .done, phaseNow == .done {
+            if phaseAt(before, nowS: now.timeIntervalSince1970) == .done, phaseNow == .done {
                 rung[.pull] = next.deadlines.cookEndS
                 if let cooled = next.deadlines.coolEndS { rung[.cooled] = cooled }
             }
@@ -787,7 +797,7 @@ final class Cook {
                 // notification has been delivered, and a correction in the
                 // pull's grace that holds the pull must not ring it again in
                 // the app (onescreen review 3).
-                let nowS = AppClock.now.timeIntervalSince1970
+                let nowS = now.timeIntervalSince1970
                 alarmCovers = alarmCovers.filter { d in
                     guard let at = Self.at(d, next.deadlines) else { return false }
                     return at <= nowS && Self.same(Self.at(d, before), at)
@@ -797,7 +807,7 @@ final class Cook {
             }
         }
         askForSurface(next.inputs)
-        pushActivity()
+        pushActivity(at: now)
         planTaken?()
     }
 
@@ -1056,7 +1066,8 @@ final class Cook {
             // while the Lock Screen shows nothing is the same broken promise in
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
-            if phase != .done, let state = activityState(at: AppClock.now) {
+            let now = AppClock.now
+            if phase(at: now) != .done, let state = activityState(at: now) {
                 let attributes = Self.attributes(restored)
                 #if DEBUG
                 Self.logCard("start", state)
@@ -1110,9 +1121,8 @@ final class Cook {
     /// Ring for a deadline no notification holds, while the app is on screen:
     /// what makes "keep the app open" true. See `deadlineToRing`. Whenever
     /// the phase enters Pull at a pull no notification holds, it rings.
-    private func ringIfDue() {
+    private func ringIfDue(at now: Date) {
         guard let plan else { return }
-        let now = AppClock.now
         let d = plan.deadlines
         guard let due = deadlineToRing(
             phase: phase(at: now),
@@ -1134,7 +1144,7 @@ final class Cook {
     /// The cook has just said they have a probe: the cooling's alarm, if
     /// it is still to come, now asks for the reading.
     func probeSettingChanged() {
-        guard alarmAuthorized == true, phase != .done else { return }
+        guard alarmAuthorized == true, phase(at: AppClock.now) != .done else { return }
         scheduleAlarms()
     }
 
@@ -1144,39 +1154,41 @@ final class Cook {
         Ringer.shared.activate()
         ticker?.cancel()
         ticker = Task { [weak self] in
+            // At Done only the hour that keeps the egg open is left to watch
+            // for, so the tick slows down: by the phase the last tick saw.
+            var done = self?.phase == .done
             while !Task.isCancelled {
-                // At Done only the hour that keeps the egg open is left to
-                // watch for, so the tick slows down.
-                let done = self?.phase == .done
                 try? await AppClock.sleep(done ? 5 : 0.25)
                 guard let self else { return }
-                self.tick()
+                done = self.tick() == .done
             }
         }
     }
 
-    /// One tick: whether the cook is too old; the events the clock has
-    /// decided, written the first time they are past, from the plan of the
-    /// cook as it stands; the slow hob's next lengthening; the card; and the
-    /// ring.
-    private func tick() {
+    /// One tick, at one moment: whether the cook is too old; the events the
+    /// clock has decided, written the first time they are past, from the
+    /// plan of the cook as it stands; the slow hob's next lengthening; the
+    /// card; and the ring. Returns the phase at that moment, which sets the
+    /// ticker's pace.
+    private func tick() -> Phase {
+        let at = AppClock.now
+        let now = at.timeIntervalSince1970
         #if DEBUG
         // Once the tick has done what the phase asks, so a script that waits
         // for the phase and then for `settled` sees what it set going.
-        defer { logPhase() }
+        defer { logPhase(at: at) }
         #endif
         // Too old to pick back up, by the plan held: ended as Start again
         // ends it, here as at a relaunch (running-cook review 2.2).
-        if running != nil, let plan, cookTooOld(plan, nowS: AppClock.now.timeIntervalSince1970) {
+        if running != nil, let plan, cookTooOld(plan, nowS: now) {
             tooOld?()
-            return
+            return phase(at: at)
         }
         guard let running, let plan, plannedFor == running else {
-            pushActivity()
-            ringIfDue()
-            return
+            pushActivity(at: at)
+            ringIfDue(at: at)
+            return phase(at: at)
         }
-        let now = AppClock.now.timeIntervalSince1970
         let due = eventsDue(running, plan: plan, nowS: now)
         if due != running.events {
             var next = running
@@ -1189,8 +1201,9 @@ final class Cook {
             // again every tick.
             replanSoon()
         }
-        pushActivity()
-        ringIfDue()
+        pushActivity(at: at)
+        ringIfDue(at: at)
+        return phase(at: at)
     }
 
     #if DEBUG
@@ -1210,11 +1223,11 @@ final class Cook {
 
     /// The phase, to the debug log when it changes, and whether that left
     /// the cook settled.
-    private func logPhase() {
-        let now = phase
-        guard now != loggedPhase else { return }
-        loggedPhase = now
-        Screenshots.log("phase \(now.rawValue)")
+    private func logPhase(at now: Date) {
+        let phase = phase(at: now)
+        guard phase != loggedPhase else { return }
+        loggedPhase = phase
+        Screenshots.log("phase \(phase.rawValue)")
         logIfSettled()
     }
 
@@ -1313,8 +1326,8 @@ final class Cook {
     /// At done the card ends at once (`LiveActivity.endAll`), once per cook -
     /// including a card left from before a relaunch that restored a cook
     /// already done.
-    private func pushActivity() {
-        if running != nil, phase == .done {
+    private func pushActivity(at now: Date) {
+        if running != nil, phase(at: now) == .done {
             guard !activityFinished else { return }
             activityFinished = true
             #if DEBUG
@@ -1323,7 +1336,7 @@ final class Cook {
             activity { await LiveActivity.endAll() }
             return
         }
-        guard let state = activityState(at: AppClock.now), state != pushed else { return }
+        guard let state = activityState(at: now), state != pushed else { return }
         pushed = state
         #if DEBUG
         Self.logCard("update", state)

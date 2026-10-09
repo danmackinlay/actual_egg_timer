@@ -50,10 +50,20 @@ then restructure.
 - [ ] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
       logs the unanswered egg with no yolk or white, then clears `held`; the
       web logs `heldAnswers()` (`cook.ts:504`). S.
-- [ ] **0.5 iOS: one render reads the clock several times**. `ReadoutView`'s
+- [x] **0.5 iOS: one render reads the clock several times**. `ReadoutView`'s
       big time uses `cook.secondsToPull`, which reads `AppClock.now` itself,
       not the `TimelineView`'s `now`; `Cook` reads `AppClock.now` 24 times.
-      Pass `now` in. S.
+      Pass `now` in. S. *Done:* the time left takes the frame's moment
+      (`secondsToPull(at:)`, `secondsToCoolDone(at:)`), as does the alarm
+      line's fallback; in `Cook` a tick, a plan taken and the card after a
+      restore each read the clock once and hand that moment on (`tick`
+      returns its phase for the ticker's pace; `pushActivity(at:)`,
+      `ringIfDue(at:)`). What is left reads it where something happens: a
+      tap, a start, a plan made, a launch, and `phase` and the defaults
+      `AppModel` calls at an event. `one-moment` in `npm run ios:e2e` checks
+      each frame's time and time heated against the moment it logs, frozen
+      either side of a second and at ×60; at ×60 it failed 13 frames of 20
+      with the old read.
 - [x] **0.6 Web: two import cycles** ✔, though B1 says there are none:
       `render.ts:55` ↔ `update.ts:25`, and `edit.ts:43` ↔ `cook.ts:34`. Move
       `warningText` to a leaf; hand `correctCook` in. S. *Done:*

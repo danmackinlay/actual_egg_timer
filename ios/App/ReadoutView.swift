@@ -89,6 +89,13 @@ struct ReadoutView: View {
                         .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
                             Screenshots.log("readout \(said)")
                         }
+                        // One frame whole: the moment it was drawn for, to
+                        // the millisecond, with the time, the line under it
+                        // and the certainty's time range it drew, so a check
+                        // can see that all of them are of that one moment.
+                        .onChange(of: frame, initial: true) { _, said in
+                            Screenshots.log("frame \(said)")
+                        }
                         #endif
                     certaintyLine
                 }
@@ -173,11 +180,7 @@ struct ReadoutView: View {
         // While idle, the choice on screen's; once a cook is running, its
         // plan's.
         let o = idle ? planner.heldOutcome : cook.outcome
-        let sure: CertaintyReading? = switch phase {
-        case .idle: planner.heldCertainty
-        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? cook.heldCertainty : nil
-        case .pull, .cooling, .done: nil
-        }
+        let sure = certainty
         VStack(spacing: 2) {
             ZStack(alignment: .top) {
                 // Two lines' room in every phase, the word and "most
@@ -258,6 +261,17 @@ struct ReadoutView: View {
             Screenshots.log("likely \(shown)")
         }
         #endif
+    }
+
+    /// How sure I am, in this phase: while idle, the choice on screen's;
+    /// while the egg is in, its plan's, where the white sets; after the
+    /// pull, nothing.
+    private var certainty: CertaintyReading? {
+        switch phase {
+        case .idle: planner.heldCertainty
+        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? cook.heldCertainty : nil
+        case .pull, .cooling, .done: nil
+        }
     }
 
     /// Whether the line can say how sure I am in this phase, and so "most
@@ -347,12 +361,21 @@ struct ReadoutView: View {
         // (running-cook review 3): the time heated, counting up, instead.
         case .heating where cook.plan?.lengthened == true:
             clockString(now.timeIntervalSince(cook.startedAt ?? now))
-        case .heating, .cooking: clockString(cook.secondsToPull)
+        case .heating, .cooking: clockString(cook.secondsToPull(at: now))
         case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
-        case .cooling: clockString(cook.secondsToCoolDone)
+        case .cooling: clockString(cook.secondsToCoolDone(at: now))
         case .done: clockString(cook.cookSeconds)
         }
     }
+
+    #if DEBUG
+    /// This frame as the debug log says it: its moment, epoch s, the phase,
+    /// the time, the line under it, and the certainty's time range.
+    private var frame: String {
+        let range = certainty.map { opened($0).last ?? "" } ?? "none"
+        return String(format: "%.3f", now.timeIntervalSince1970) + " \(phase.rawValue) \(bigTime) | \(subline) | \(range)"
+    }
+    #endif
 
     /// The line under the clock: core's key, with this phase's arguments.
     private var subline: String {
