@@ -5,11 +5,7 @@
  */
 
 import { Solution } from '../core/solve.js';
-import { Cooling } from '../core/protocol.js';
-import { anchorNear } from '../core/policy.js';
 import { LevelAnswer } from '../core/reach.js';
-import { warningKey } from '../core/wording.js';
-import { midSentence } from '../core/copy.js';
 import { LanguageState, effectiveLanguage } from '../core/language.js';
 import { CookPlan, openEggId, replan } from '../core/running.js';
 import { answerFor, currentInputs, decided } from './answer.js';
@@ -17,7 +13,7 @@ import {
   calibrationStoredElsewhere, clearCalibration, eggsBehind, keptState, learn,
 } from './calibration.js';
 import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './controls.js';
-import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
+import { activeLocale, applyCopy, loadCopy } from './copy.js';
 import { cachedOddsProfile } from './decisionGrids.js';
 import { page, selectRadio } from './dom.js';
 import { labelInfoButtons } from './info.js';
@@ -33,7 +29,8 @@ import {
   storedCookText,
 } from './store.js';
 import { setAlarmSound, setMuted } from './clock.js';
-import { show, useUnits } from './units.js';
+import { useUnits } from './units.js';
+import { warningText } from './warning.js';
 import { forgetDevClockUse, nowMs } from './now.js';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
@@ -43,25 +40,6 @@ const pending = {
   /** Which language changes went in last, so two quick changes land in order. */
   languageAsked: 0,
 };
-
-/* ------------------------------------------------------------------ copy */
-
-/** The warning line, in words: a refusal, or that the level is a wild guess. Which,
- *  and which words say it, are core's (`answerAt`, `warningKey`); the
- *  arguments are this app's, for `pot`: the settings', or a running cook's
- *  own choices. The warning names the level the slider rests on, a word
- *  standing alone before the colon. */
-export function warningText(
-  answer: LevelAnswer, pot: { cooling: Cooling; waterLitres: number } = state.settings,
-): string {
-  const v = answer.verdict;
-  const ref = warningKey(v, answer.lowOdds, pot.cooling);
-  if (ref === null) return '';
-  return tRef(ref, {
-    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', pot.waterLitres),
-    doneness: t(anchorNear(answer.level).key),
-  });
-}
 
 /* -------------------------------------------------------------- recompute */
 

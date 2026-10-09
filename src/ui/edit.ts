@@ -40,7 +40,6 @@ import {
 import { targetPeakYolk_C } from '../core/policy.js';
 import { surfaceFor } from './answer.js';
 import { calibrationParams } from './calibration.js';
-import { correctCook } from './cook.js';
 import { t, timeOfDay } from './copy.js';
 import { cookShown } from './feedback.js';
 import { page } from './dom.js';
@@ -107,6 +106,9 @@ const edit = {
   settle: 0,
   preview: 0,
   release: 0,
+  /** Corrects the running cook (cook.ts, `correctCook`), handed in by
+   *  `wireEdits`: cook.ts imports this module, so this one cannot import it. */
+  correct: null as ((choices: CookChoices, startedAt_s: number | null) => void) | null,
 };
 
 /** The cook's controls are drawn from it afresh (a start, a reload, a
@@ -269,7 +271,7 @@ export function commitEdit(upTo: InHand | null = null): void {
     edit.previewedLevel = true;
   }
   const start = startInHand !== null && startInHand !== cook.startedAt_s ? startInHand : null;
-  if (start !== null || !sameChoices(choices, cook.choices)) correctCook(choices, start);
+  if (start !== null || !sameChoices(choices, cook.choices)) edit.correct?.(choices, start);
   // The start as the cook now has it: a correction refused leaves the cook's.
   // Unless the change come since is the start's own.
   if (upTo === null || state.controlsStart_s === upTo.start) {
@@ -330,8 +332,11 @@ function onPointerUp(): void {
 }
 
 /** The gestures, watched on the whole page, once at boot; and the page
- *  going, which commits a change still settling (onescreen review 3). */
-export function wireEdits(): void {
+ *  going, which commits a change still settling (onescreen review 3).
+ *  `correct` is what a commit calls to correct the cook (cook.ts,
+ *  `correctCook`). */
+export function wireEdits(correct: (choices: CookChoices, startedAt_s: number | null) => void): void {
+  edit.correct = correct;
   document.addEventListener('pointerdown', onPointerDown, true);
   window.addEventListener('pointerup', onPointerUp, true);
   window.addEventListener('pointercancel', onPointerUp, true);

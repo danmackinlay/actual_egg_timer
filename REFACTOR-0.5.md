@@ -54,11 +54,16 @@ then restructure.
       big time uses `cook.secondsToPull`, which reads `AppClock.now` itself,
       not the `TimelineView`'s `now`; `Cook` reads `AppClock.now` 24 times.
       Pass `now` in. S.
-- [ ] **0.6 Web: two import cycles** ✔, though B1 says there are none:
+- [x] **0.6 Web: two import cycles** ✔, though B1 says there are none:
       `render.ts:55` ↔ `update.ts:25`, and `edit.ts:43` ↔ `cook.ts:34`. Move
-      `warningText` to a leaf; hand `correctCook` in. S.
-- [ ] **0.7 Web: the hourly update check runs on the dev clock**
+      `warningText` to a leaf; hand `correctCook` in. S. *Done:*
+      `warningText` to `src/ui/warning.ts` (`9fc60ad`); `correctCook` handed
+      in by the boot, `wireEdits(correctCook)` (`f11b388`). No other cycle
+      (1.3).
+- [x] **0.7 Web: the hourly update check runs on the dev clock**
       (`src/ui/offline.ts:74`, `nowMs()`), against `now.ts`'s own rule. S.
+      *Done* (`3d20a8c`): `now.ts` gains `realMs()`, which `offline.ts`
+      reads; `test/offline.test.ts` 5.
 - [ ] **0.8 The two apps accept different stored cooks.** TS refuses a cook
       with no `asRan` key (`running.ts:502`); Swift's Codable path turns it
       into nil, so `Running.swift:520`'s check cannot be reached. Comes free
@@ -82,8 +87,11 @@ gate could catch it.
       `EggTimerApp` target in `ios/EggTimerCore/Package.swift` and be tested
       by the `swift test` already in `verify`. Protocols for the six
       singletons, `AppClock` and `UserDefaults`. L, the base for 3.x.
-- [ ] **1.3 A cycle check**: a node test over `import … from './x.js'`
-      that fails on any cycle in `src/`. S.
+- [x] **1.3 A cycle check**: a node test over `import … from './x.js'`
+      that fails on any cycle in `src/`. S. *Done* (`38894b0`,
+      `test/cycles.test.ts`): every static import, bare import and
+      re-export is an edge, type-used or not; only `import type` /
+      `export type` and `import()` are not.
 - [ ] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
       12 significant digits) so `fixtures:check` isn't arm64-only and the
       diffs can be read. Swift already compares at 1e-12. S-M.
