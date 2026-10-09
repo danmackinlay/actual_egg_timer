@@ -59,8 +59,7 @@ import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } fr
 import { step, surfaceFor } from '../core/step.js';
 import type { UnitSystem } from '../core/units.js';
 import { chooseUnits } from '../core/units.js';
-import type { LanguageState } from '../core/language.js';
-import { effectiveLanguage, languageAfterFlip } from '../core/language.js';
+import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.js';
 import { PotOdds, nudgeNow, solveIdle } from './answer.js';
 import { inputsKey } from '../core/decide.js';
 import { targetPeakYolk_C } from '../core/slider.js';
@@ -309,11 +308,13 @@ export type Msg =
   /** Start, on the idle page: the cook the settings describe, at the time
    *  on screen, in these units and words. */
   | { kind: 'begin'; units: Units; lang: string }
-  /** The controls as the page now shows them (input.ts), changed on the
-   *  field `source` of control `group` (edit.ts, `groupOf`) at `real_ms`. */
-  | { kind: 'controls'; controls: Settings; source: string | null; group: number | null; real_ms: number }
+  /** What the controls now say (input.ts), as far as they say it, changed
+   *  on the field `source` of control `group` (edit.ts, `groupOf`) at
+   *  `real_ms`. */
+  | { kind: 'controls'; read: Partial<Settings>; source: string | null; group: number | null; real_ms: number }
   | { kind: 'units'; system: UnitSystem }
-  | { kind: 'language'; next: LanguageState }
+  /** A language picked in Settings. */
+  | { kind: 'language'; pick: string }
   | { kind: 'mute' }
   | { kind: 'alarm'; sound: AlarmSound }
   /** The settings with another tab's write taken up (store.ts). */
@@ -879,9 +880,10 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // to the settings when it is committed, not before. The controls that
       // follow it are drawn again, but the field it came from.
       const echoed: Model = { ...redraw(m, 'echo'), echoSource: msg.source };
-      if (m.cook !== null) return handChanged({ ...echoed, controls: msg.controls }, msg.group, msg.real_ms, now_s);
+      const controls = { ...m.controls, ...msg.read };
+      if (m.cook !== null) return handChanged({ ...echoed, controls: controls }, msg.group, msg.real_ms, now_s);
       return [
-        { ...echoed, controls: msg.controls, settings: { ...msg.controls }, unsolved: true },
+        { ...echoed, controls: controls, settings: { ...controls }, unsolved: true },
         [{ kind: 'save', soon: true }, { kind: 'solveSoon' }],
       ];
     }
@@ -905,7 +907,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // Nothing about the egg changes, and the units are never touched from
       // here: that rule runs one way (LANGUAGE.md section 6).
       const before = effectiveLanguage(m.settings.language);
-      const settings = { ...m.settings, language: msg.next };
+      const settings = { ...m.settings, language: languageAfterPick(m.settings.language, msg.pick) };
       const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
       return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
     }

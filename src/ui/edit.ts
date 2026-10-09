@@ -7,11 +7,9 @@
  * in hand").
  */
 
-import type { StartLimit } from './model.js';
-import { t, timeOfDay } from './copy.js';
 import { page } from './dom.js';
 import { send } from './send.js';
-import { state } from './state.js';
+import { pageModel } from './cook.js';
 import { pressAndHold } from './stepper.js';
 
 /** The controls, for "another control touched": the slider, a number with
@@ -31,20 +29,15 @@ export function groupOf(target: EventTarget | null): number | null {
  *  going. */
 export function wireEdits(): void {
   document.addEventListener('pointerdown', (event) => {
-    if (state.cook === null) return;
     const group = groupOf(event.target);
     if (group === null) return;
     const slider = event.target instanceof Element && event.target.closest('.slider') !== null;
     send({ kind: 'fingerDown', group: group, slider: slider, real_ms: performance.now() });
   }, true);
-  const up = (): void => {
-    if (state.edit !== null && state.edit.down !== null) send({ kind: 'fingerUp', real_ms: performance.now() });
-  };
+  const up = (): void => send({ kind: 'fingerUp', real_ms: performance.now() });
   window.addEventListener('pointerup', up, true);
   window.addEventListener('pointercancel', up, true);
-  const going = (): void => {
-    if (state.edit?.pending === true) send({ kind: 'commit' });
-  };
+  const going = (): void => send({ kind: 'commit' });
   window.addEventListener('pagehide', going);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') going();
@@ -54,25 +47,10 @@ export function wireEdits(): void {
 /** The start's − and +, once at boot: whether a press moved it. */
 export function wireStartTime(): void {
   const step = (up: boolean): boolean => {
-    const from = state.controlsStart_s;
+    const from = pageModel().controlsStart_s;
     send({ kind: 'startStep', up: up, group: groupOf(page().startedAt), real_ms: performance.now() });
-    return state.controlsStart_s !== from;
+    return pageModel().controlsStart_s !== from;
   };
   pressAndHold(page().startedAtLess, () => step(false));
   pressAndHold(page().startedAtMore, () => step(true));
-}
-
-/** The line under the start's time: why a press went no further, or nothing. */
-export function showStartLimit(limit: StartLimit | null): void {
-  const line = page().startedAtLimit;
-  line.hidden = limit === null;
-  if (limit === null) {
-    line.textContent = '';
-    return;
-  }
-  const time = timeOfDay(limit.at_s * 1000);
-  const key = limit.kind === 'earliest' ? 'controls.startedAt.earliest'
-    : limit.kind === 'boil' ? 'controls.startedAt.latestBoil'
-      : limit.kind === 'pull' ? 'controls.startedAt.latestPull' : 'controls.startedAt.latestNow';
-  line.textContent = t(key, { time: time });
 }

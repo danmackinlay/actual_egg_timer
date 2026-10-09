@@ -1,5 +1,5 @@
 /**
- * The page's model, in one place (`state`, a `Model`: model.ts), and what it
+ * The page's model (a `Model`: model.ts), as it starts, and what it
  * derives: the egg and the pot on screen, how the cook starts, and the time
  * to a rolling boil. Each derivation takes the model it reads, so `update`
  * and `view` can ask it of any model, not only this page's.
@@ -37,7 +37,8 @@ export const sizeClasses = sizeClassesFor(REGION);
 export const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: null, wakeAt_s: null };
 
 /** A model with nothing on it yet: the settings, the pans and the calibration
- *  are `boot()`'s to read (app.ts). */
+ *  are `boot()`'s to read (app.ts), which hands the model to the runner
+ *  (cook.ts), the one place it is kept. */
 export function emptyModel(): Model {
   return {
     settings: null!,
@@ -84,12 +85,6 @@ export function emptyModel(): Model {
     probeHeld: false,
   };
 }
-
-/** The page's model (model.ts): what cook.ts's `dispatch` keeps, and reads
- *  for the page. The settings, the pans and the calibration are read from
- *  storage by `boot()` (app.ts), not when this module is imported, so a test
- *  can import it. */
-export const state: Model = emptyModel();
 
 /* --------------------------------------------------------------- physics */
 

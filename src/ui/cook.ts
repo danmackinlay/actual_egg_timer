@@ -23,8 +23,8 @@
 import { nudgeSeconds } from '../core/decide.js';
 import type { BoilMemory } from '../core/boil.js';
 import { RunningCook, answered } from '../core/running.js';
-import { phaseNow, state } from './state.js';
-import { EditTimer, Effect, Msg, update } from './model.js';
+import { phaseNow } from './state.js';
+import { EditTimer, Effect, Model, Msg, update } from './model.js';
 import type { Learner } from './calibration.js';
 import {
   Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
@@ -32,11 +32,10 @@ import {
 } from './clock.js';
 import { activeLocale } from './copy.js';
 import { builtFor } from './decisionGrids.js';
-import { showStartLimit } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
 import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
 import { saveResults } from './learned.js';
-import { draw, drawnNothing } from './render.js';
+import { draw, drawnNothing, showStartLimit } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import type { Sharing } from './share.js';
@@ -44,10 +43,29 @@ import {
   CookStore, KeptAnswers, PansStore, SettingsStore, correctedLater, storageReadOnly, takeUpEvents,
 } from './store.js';
 import { unitSystem, useUnits } from './units.js';
-import { finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './effects.js';
+import { finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon, storedElsewhere } from './effects.js';
 import { showEgg } from './views.js';
 import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
+
+/** The page's model: what `update` last made of it. Kept here only. */
+let model!: Model;
+
+/** The model as it stands, for what reads the page between messages: the
+ *  test API's snapshot (dev/test.ts), the start's − and + (edit.ts). */
+export function pageModel(): Model {
+  return model;
+}
+
+/** Whether no cook runs: a newer build takes over only then (offline.ts). */
+export function betweenCooks(): boolean {
+  return model.cook === null;
+}
+
+/** How many of the log's eggs are final, for sharing (share.ts). */
+export function finalNow(): number {
+  return finalEggs(stores, model);
+}
 
 /** The stores this page keeps: opened at boot (app.ts), and held here. */
 export interface Stores {
@@ -117,7 +135,7 @@ function requestDraw(): void {
 
 function drawNow(): void {
   framed = false;
-  draw(view(state, nowMs(), memo), drawn);
+  draw(view(model, nowMs(), memo), drawn);
 }
 
 /** A frame asked for and not yet drawn, drawn now: a script reads the page
@@ -131,7 +149,7 @@ export function flushDraw(): void {
 /** The stored cook's id as this tab reads it, for whether its egg is still
  *  open: its own when storage does not work. */
 function storedId(): number | null {
-  if (!state.works) return state.cook === null ? null : state.cook.id_ms;
+  if (!model.works) return model.cook === null ? null : model.cook.id_ms;
   return stores.cooks.peek()?.cook.id_ms ?? null;
 }
 
@@ -145,20 +163,20 @@ const ABOUT_THE_COOK = new Set<Msg['kind']>([
  *  caches and the stores handed in with it, and the units and the sound
  *  kept with the settings before the effects. */
 function apply(msg: Msg, now: number): void {
-  const built = builtFor(state.calib);
+  const built = builtFor(model.calib);
   const share = stores.sharing.state();
-  const [next, effects] = update(state, msg, now, {
+  const [next, effects] = update(model, msg, now, {
     surfaces: built.surfaces, profiles: built.profiles, sharing: share.on, readOnly: storageReadOnly(),
-    storedId_ms: state.cook === null ? null : storedId(),
-    share: { state: share, final: finalEggs(stores, state) },
+    storedId_ms: model.cook === null ? null : storedId(),
+    share: { state: share, final: finalEggs(stores, model) },
   });
-  Object.assign(state, next);
-  useUnits(state.settings.unitsChosen);
-  if (muted !== state.settings.muted) {
-    muted = state.settings.muted;
+  model = next;
+  useUnits(model.settings.unitsChosen);
+  if (muted !== model.settings.muted) {
+    muted = model.settings.muted;
     setMuted(muted);
   }
-  setAlarmSound(state.settings.alarm);
+  setAlarmSound(model.settings.alarm);
   perform(effects);
 }
 
@@ -176,7 +194,7 @@ export function dispatch(msg: Msg): void {
     while (queue.length > 0) {
       const next = queue.shift()!;
       const now = nowMs();
-      if (state.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
+      if (model.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
         const taken = stores.cooks.takeUp();
         if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs }, now);
       }
@@ -190,17 +208,18 @@ export function dispatch(msg: Msg): void {
   requestDraw();
 }
 
-/** The runner, with the stores it holds, plugged in for `send` and for the
- *  development clock's moves, and the sound as the settings have it: once,
- *  at boot. */
-export function startRunner(s: Stores, builds: Builds = workerBuilds(s.learner)): void {
+/** The runner, with the stores it holds and the model as boot read it,
+ *  plugged in for `send` and for the development clock's moves, and the
+ *  sound as the settings have it: once, at boot. */
+export function startRunner(s: Stores, initial: Model, builds: Builds = workerBuilds(s.learner)): void {
   stores = s;
-  needs = openNeeds(builds, () => state, dispatch);
+  model = initial;
+  needs = openNeeds(builds, () => model, dispatch);
   sendTo(dispatch);
   onClockChange(clockMoved);
-  muted = state.settings.muted;
+  muted = model.settings.muted;
   setMuted(muted);
-  setAlarmSound(state.settings.alarm);
+  setAlarmSound(model.settings.alarm);
 }
 
 /* ------------------------------------------------------------- effects */
@@ -212,7 +231,7 @@ function perform(effects: Effect[]): void {
       // the page has booted, since this can come of a restore.
       queueMicrotask(() => send({ kind: 'shared' }));
     }
-    if (performStored(e, stores, state.boilMemory, send)) continue;
+    if (performStored(e, stores, model.boilMemory, send)) continue;
     switch (e.kind) {
       case 'ring':
         if (e.moment === 'pull') {
@@ -253,8 +272,8 @@ function perform(effects: Effect[]): void {
         showStartLimit(e.limit);
         break;
       case 'save':
-        if (e.soon) saveSoon(stores.settings);
-        else saveNow(stores.settings);
+        if (e.soon) saveSoon(stores.settings, () => model.settings);
+        else saveNow(stores.settings, model.settings);
         break;
       case 'solveSoon':
         solveSoon();
@@ -269,7 +288,7 @@ function perform(effects: Effect[]): void {
         retryProbe();
         break;
       case 'language':
-        followLanguage(e.before);
+        followLanguage(e.before, model.settings.language);
         break;
       case 'previewAlarm':
         previewAlarm();
@@ -302,8 +321,8 @@ function perform(effects: Effect[]): void {
   // The pull's beeps, ahead on the audio clock, for the pull the plan sets:
   // none while the time to boil is a guess (the plan reads Heating whatever
   // it says).
-  const plan = state.plan;
-  setPullAlarm(plan === null || plan.deadlines.provisional || state.pull_s === null ? null : state.pull_s * 1000);
+  const plan = model.plan;
+  setPullAlarm(plan === null || plan.deadlines.provisional || model.pull_s === null ? null : model.pull_s * 1000);
 }
 
 /**
@@ -371,7 +390,7 @@ function persist(
 /** The ticker and the screen kept awake while the running cook is short of
  *  Done; at Done, a wake when its plan next decides something. */
 function keepTime(): void {
-  const running = state.cook !== null && phaseNow(state, nowMs()) !== 'DONE';
+  const running = model.cook !== null && phaseNow(model, nowMs()) !== 'DONE';
   if (running && clock.ticker === null) {
     keepScreenAwake();
     clock.ticker = startTicker(() => dispatch({ kind: 'tick' }));
@@ -386,8 +405,8 @@ function keepTime(): void {
 function armWake(): void {
   window.clearTimeout(clock.wake);
   clock.wake = 0;
-  const at = state.need.wakeAt_s;
-  if (clock.ticker !== null || state.cook === null || at === null) return;
+  const at = model.need.wakeAt_s;
+  if (clock.ticker !== null || model.cook === null || at === null) return;
   const ms = Math.min(2 ** 31 - 1, Math.max(0, (at * 1000 - nowMs()) / clockSpeed()) + 50);
   clock.wake = window.setTimeout(() => {
     clock.wake = 0;
@@ -399,7 +418,7 @@ function armWake(): void {
 
 /** The primary button, in every phase. */
 export function onPrimary(): void {
-  if (state.cook === null) {
+  if (model.cook === null) {
     startCookNow();
     return;
   }
@@ -421,7 +440,7 @@ function startCookNow(): void {
 /** Cancel: a correction still settling goes with the cook. */
 export function reset(): void {
   stopAlarm();
-  if (state.cook !== null) dispatch({ kind: 'cancel' });
+  if (model.cook !== null) dispatch({ kind: 'cancel' });
 }
 
 /** "Still in the water?" No: the egg came out when the clock assumed. */
@@ -434,15 +453,20 @@ export function onStillOut(): void {
  *  all): what it wrote for this cook taken up at once, so a tab leaves
  *  Heating when another taps the boil; at Done, whether this
  *  egg is still open, its questions going if not. */
-export function cookElsewhere(key: string | null): void {
-  if (!stores.cooks.touches(key) || state.cook === null) return;
+export function storageElsewhere(key: string | null): void {
+  storedElsewhere(stores, key, model.settings);
+  cookElsewhere(key);
+}
+
+function cookElsewhere(key: string | null): void {
+  if (!stores.cooks.touches(key) || model.cook === null) return;
   dispatch({ kind: 'elsewhere', theirs: stores.cooks.takeUp()?.theirs ?? null });
 }
 
 /** The page is looked at again (shown, focused): the ticker, which stops at
  *  Done, is not there to see a cook at Done become too old. */
 export function lookAgain(): void {
-  if (state.cook !== null) dispatch({ kind: 'tick' });
+  if (model.cook !== null) dispatch({ kind: 'tick' });
 }
 
 /**

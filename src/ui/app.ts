@@ -27,7 +27,8 @@ import { stepPast } from '../core/units.js';
 import { openLearner } from './calibration.js';
 import { applyConstantsToDom, buildSizeOptions } from './controls.js';
 import {
-  Stores, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
+  Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
+  storageElsewhere,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -40,13 +41,14 @@ import { buildClauses } from './sentence.js';
 import { openSharing } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
-import { sizeClasses, state } from './state.js';
+import { emptyModel, sizeClasses } from './state.js';
 import { activePopulation } from './population.js';
 import { setStepRule, wireSteppers } from './stepper.js';
 import { claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
-import { finalEggs, learnBehind, storedElsewhere } from './effects.js';
+import { learnBehind } from './effects.js';
+import type { Model } from './model.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
 import { markDevClockUse, random } from './now.js';
@@ -65,19 +67,18 @@ export function boot(): void {
   const learner = openLearner();
   const stores: Stores = {
     settings: openSettings(sizeClasses), pans: openPans(), cooks: openCooks(), learner: learner,
-    sharing: openSharing({ log: () => learner.keptState().log, finalCount: () => finalEggs(stores, state) }),
+    sharing: openSharing({ log: () => learner.keptState().log, finalCount: finalNow }),
   };
-  state.settings = stores.settings.load();
-  state.controls = { ...state.settings };
-  useUnits(state.settings.unitsChosen);
-  state.boilMemory = stores.pans.load();
-  state.calib = learner.calibration();
+  const settings = stores.settings.load();
+  useUnits(settings.unitsChosen);
   // This page's nudge, drawn at boot rather than as a module loads, so
   // a script's seed (now.ts) is in place for it.
-  state.nudgeDraw = nudgeSeconds(random());
   // For the egg's record: this build, and the population of the prior.
-  state.appVersion = APP_VERSION;
-  state.prior = activePopulation().id;
+  const initial: Model = {
+    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: stores.pans.load(),
+    calib: learner.calibration(), nudgeDraw: nudgeSeconds(random()), appVersion: APP_VERSION,
+    prior: activePopulation().id,
+  };
 
   buildSizeOptions();
   buildTicks();
@@ -109,7 +110,7 @@ export function boot(): void {
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
   // From here on every change to the page is a message (send.ts).
-  startRunner(stores);
+  startRunner(stores, initial);
   renderVersion();
 
   wireFeedback();
@@ -125,8 +126,7 @@ export function boot(): void {
     // (`claimStorage`), and takes up nothing more either.
     newerStoredElsewhere(event.key);
     if (storageReadOnly()) return;
-    storedElsewhere(stores, event.key);
-    cookElsewhere(event.key);
+    storageElsewhere(event.key);
   });
   // A cook left at DONE an hour or more ends when the page is next looked at.
   document.addEventListener('visibilitychange', lookAgain);
@@ -142,5 +142,5 @@ export function boot(): void {
   learnBehind(learner);
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
-  startOffline(() => state.cook === null);
+  startOffline(betweenCooks);
 }

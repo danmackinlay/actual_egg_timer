@@ -1,7 +1,7 @@
 /**
  * What the cook does to the controls and the Settings form, read as
- * messages (model.ts): every input and change (`onInput`), read into the
- * controls as they now stand; the units, the language, the alarm's sound,
+ * messages (model.ts): every input and change (`onInput`), what the controls
+ * now say; the units, the language, the alarm's sound,
  * and the mute. What follows - the settings written, the page solved again,
  * a correction in hand - is `update`'s.
  */
@@ -11,12 +11,11 @@ import { Cooling } from '../core/protocol.js';
 import { Quantity, parse } from '../core/units.js';
 import { ALARM_SOUNDS, readAlarmSound } from '../core/sounds.js';
 import { DEFAULTS } from '../core/inputs.js';
-import { LANGUAGES, languageAfterPick } from '../core/language.js';
+import { LANGUAGES } from '../core/language.js';
 import { page, radioValue } from './dom.js';
 import { groupOf } from './edit.js';
 import { send } from './send.js';
-import { state } from './state.js';
-import { LIMITS, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber } from './store.js';
+import { LIMITS, Settings, UiStartMode, clampNumber } from './store.js';
 import { measure } from './units.js';
 
 /** The three ways a person can measure an egg are one number in three units.
@@ -31,13 +30,13 @@ function minorFromMass_mm(mass_g: number): number {
   return eggFromMass(mass_g / 1000).minorDiameter_m * 1000;
 }
 
-/** What a field says, in SI and clamped, or `fallback` while it holds no
- *  number. Only ever called for the field the cook is editing: re-reading a
- *  field nobody touched would re-parse a rounded display back over the stored
+/** What a field says, in SI and clamped, or null while it holds no number.
+ *  Only ever called for the field the cook is editing: re-reading a field
+ *  nobody touched would re-parse a rounded display back over the stored
  *  value, and that is the drift the round trip exists to prevent. */
-function readField(input: HTMLInputElement, q: Quantity, fallback: number): number {
-  if (input.value.trim() === '') return fallback;
-  return parse(measure(q), Number(input.value)) ?? fallback;
+function readField(input: HTMLInputElement, q: Quantity): number | null {
+  if (input.value.trim() === '') return null;
+  return parse(measure(q), Number(input.value));
 }
 
 /** Sound is a setting, not a phase: the toggle works mid-cook, and muting
@@ -46,56 +45,62 @@ export function onToggleMute(): void {
   send({ kind: 'mute' });
 }
 
-/** The controls as the page now shows them: what they showed
- *  (`state.controls`: the settings while idle; while a cook runs, its
- *  correction in hand), with what `source` changed read back over them. */
-function readInputs(source: EventTarget | null): Settings {
-  const settings: Settings = { ...state.controls };
+/** What the controls now say, read back as far as they say it: the choices,
+ *  and, of the fields with a unit, only `source`, the one being edited (see
+ *  `readField`). A field that holds no number says nothing, and the
+ *  controls keep what they had (`update`). */
+function readInputs(source: EventTarget | null): Partial<Settings> {
+  const read: Partial<Settings> = {};
   const sizeIndex = Number(page().size.value);
-  settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
+  read.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
   // Measuring the egg any of the three ways overrides the size class, because
   // a measured egg is better information than a box label. A box cleared, or
   // holding something that is not a number, measures nothing: the egg stays.
-  let measured_mm = NaN;
+  let measured_mm: number | null = null;
   if (source === page().measureMass) {
-    measured_mm = minorFromMass_mm(readField(page().measureMass, 'mass', NaN));
+    const mass_g = readField(page().measureMass, 'mass');
+    measured_mm = mass_g === null ? null : minorFromMass_mm(mass_g);
   } else if (source === page().measureGirth) {
-    measured_mm = minorFromGirth_mm(readField(page().measureGirth, 'girth', NaN));
+    const girth_mm = readField(page().measureGirth, 'girth');
+    measured_mm = girth_mm === null ? null : minorFromGirth_mm(girth_mm);
   } else if (source === page().measureMinor) {
-    measured_mm = readField(page().measureMinor, 'width', NaN);
+    measured_mm = readField(page().measureMinor, 'width');
   }
-  if (measured_mm > 0) {
-    settings.measuredBy = source === page().measureMass ? 'scale'
+  if (measured_mm !== null && measured_mm > 0) {
+    read.measuredBy = source === page().measureMass ? 'scale'
       : source === page().measureGirth ? 'girth' : 'width';
-    settings.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, settings.customMinor_mm);
-    settings.sizeIndex = -1;
+    read.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, measured_mm);
+    read.sizeIndex = -1;
   }
-  settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
-  // The three fields with a unit are read only when they are the one being
+  read.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
+  // The fields with a unit are read only when they are the one being
   // edited, like the measurements above: see `readField`.
-  if (source === page().customTemp) {
-    settings.customStart_C = readField(page().customTemp, 'eggTemp', settings.customStart_C);
-  }
-  if (source === page().altitude) {
-    settings.altitude_m = readField(page().altitude, 'altitude', settings.altitude_m);
-  }
-  settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
-  settings.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
-  settings.cooling = radioValue('cooling', 'ice') as Cooling;
-  if (source === page().litres) {
-    settings.waterLitres = readField(page().litres, 'water', settings.waterLitres);
-  }
-  settings.eggCount = Math.round(clampNumber(page().eggCount.value, LIMITS.eggCount, settings.eggCount));
-  settings.doneness = clampNumber(page().doneness.value, LIMITS.doneness, settings.doneness);
-  settings.probe = page().probeSetting.checked;
+  const field = (input: HTMLInputElement, q: Quantity): number | null => (source === input ? readField(input, q) : null);
+  const egg_C = field(page().customTemp, 'eggTemp');
+  if (egg_C !== null) read.customStart_C = egg_C;
+  const altitude_m = field(page().altitude, 'altitude');
+  if (altitude_m !== null) read.altitude_m = altitude_m;
+  read.startMode = radioValue('startMode', 'cold') as UiStartMode;
+  read.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
+  read.cooling = radioValue('cooling', 'ice') as Cooling;
+  const litres = field(page().litres, 'water');
+  if (litres !== null) read.waterLitres = litres;
+  const eggCount = clampNumber(page().eggCount.value, LIMITS.eggCount, NaN);
+  if (!Number.isNaN(eggCount)) read.eggCount = Math.round(eggCount);
+  const doneness = clampNumber(page().doneness.value, LIMITS.doneness, NaN);
+  if (!Number.isNaN(doneness)) read.doneness = doneness;
+  read.probe = page().probeSetting.checked;
   // The room, measured: an emptied field is "not measured", and the room is
   // assumed again. Read only when it is the one being edited (`readField`).
   if (source === page().roomTemp) {
-    settings.room_C = page().roomTemp.value.trim() === ''
-      ? null : readField(page().roomTemp, 'roomTemp', settings.room_C ?? START_TEMP_PRESETS_C.room);
+    if (page().roomTemp.value.trim() === '') read.room_C = null;
+    else {
+      const room = readField(page().roomTemp, 'roomTemp');
+      if (room !== null) read.room_C = room;
+    }
   }
-  return settings;
+  return read;
 }
 
 /** Every input and change on the egg's controls, its sentence and the
@@ -111,7 +116,7 @@ export function onInput(event: Event): void {
   // So is the language, which changes every word and no number.
   if (target instanceof HTMLInputElement && target.name === 'language') {
     if (event.type === 'change' && LANGUAGES.includes(target.value)) {
-      send({ kind: 'language', next: languageAfterPick(state.settings.language, target.value) });
+      send({ kind: 'language', pick: target.value });
     }
     return;
   }
@@ -125,5 +130,5 @@ export function onInput(event: Event): void {
   }
   // While a cook runs, a correction in hand on the control it came from.
   const source = target instanceof HTMLElement && target.id !== '' ? target.id : null;
-  send({ kind: 'controls', controls: readInputs(target), source: source, group: groupOf(target), real_ms: performance.now() });
+  send({ kind: 'controls', read: readInputs(target), source: source, group: groupOf(target), real_ms: performance.now() });
 }

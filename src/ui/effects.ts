@@ -7,7 +7,7 @@
  * eggs are final, for sharing.
  */
 
-import { effectiveLanguage } from '../core/language.js';
+import { LanguageState, effectiveLanguage } from '../core/language.js';
 import { CookPlan, openEggId, replan } from '../core/running.js';
 import type { Learner } from './calibration.js';
 import type { Stores } from './cook.js';
@@ -19,9 +19,8 @@ import { labelInfoButtons } from './info.js';
 import { renderVersion } from './render.js';
 import { send } from './send.js';
 import { labelTicks } from './slider.js';
-import { state } from './state.js';
 import { labelSteppers } from './stepper.js';
-import type { SettingsStore } from './store.js';
+import type { Settings, SettingsStore } from './store.js';
 import { forgetDevClockUse, nowMs } from './now.js';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
@@ -49,27 +48,27 @@ export function solveSoon(): void {
 /** Coalesce writes for the same reason. A drag fires `input` per pixel, and
  *  every one of those was a JSON.stringify and a localStorage write for a
  *  settings object nobody had finished changing. */
-export function saveSoon(store: SettingsStore): void {
+export function saveSoon(store: SettingsStore, settings: () => Settings): void {
   if (pending.saveHandle !== 0) return;
   pending.saveHandle = soon(() => {
     pending.saveHandle = 0;
-    writeSettings(store);
+    writeSettings(store, settings());
   }, 250);
 }
 
 /** Write now, for the paths that must not lose the setting: starting a cook,
  *  and the snap that moves the slider out from under the user. */
-export function saveNow(store: SettingsStore): void {
+export function saveNow(store: SettingsStore, settings: Settings): void {
   cancelSoon(pending.saveHandle);
   pending.saveHandle = 0;
-  writeSettings(store);
+  writeSettings(store, settings);
 }
 
 /** Write the settings, with whatever another tab wrote since taken up
  *  first (store.ts), and that taken up on the page. */
-function writeSettings(store: SettingsStore): void {
-  const next = store.save(state.settings);
-  if (next !== state.settings) send({ kind: 'settingsTaken', settings: next });
+function writeSettings(store: SettingsStore, settings: Settings): void {
+  const next = store.save(settings);
+  if (next !== settings) send({ kind: 'settingsTaken', settings: next });
 }
 
 /* -------------------------------------------------------------- language */
@@ -81,8 +80,8 @@ function writeSettings(store: SettingsStore): void {
  * every phase, so it may come while a cook runs: its words are drawn again
  * with the rest.
  */
-export function followLanguage(before: string): void {
-  const tag = effectiveLanguage(state.settings.language);
+export function followLanguage(before: string, language: LanguageState): void {
+  const tag = effectiveLanguage(language);
   if (tag === before && tag === activeLocale()) {
     applyLanguageToDom();
     return;
@@ -173,8 +172,8 @@ export function finalEggs(s: Stores, m: Model): number {
  * with what was learned. The cook in progress is cook.ts's
  * (`cookElsewhere`).
  */
-export function storedElsewhere(s: Stores, key: string | null): void {
-  const nextSettings = s.settings.elsewhere(key, state.settings);
+export function storedElsewhere(s: Stores, key: string | null, settings: Settings): void {
+  const nextSettings = s.settings.elsewhere(key, settings);
   if (nextSettings !== null) send({ kind: 'settingsTaken', settings: nextSettings });
   // The pans: another tab's measured boil, or its "Forget everything".
   const pans = s.pans.elsewhere(key);

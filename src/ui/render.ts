@@ -8,13 +8,13 @@
  * Settings, written once.
  */
 
-import { t } from './copy.js';
+import { t, timeOfDay } from './copy.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 import { showInfo } from './info.js';
 import { drawForm } from './controls.js';
 import { drawLearned, renderCalibNote } from './learned.js';
-import type { Redraws } from './model.js';
+import type { Redraws, StartLimit } from './model.js';
 import { drawShare } from './shareView.js';
 import { renderSentence } from './sentence.js';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
@@ -210,4 +210,19 @@ export function renderVersion(): void {
   number.translate = false;
   number.textContent = APP_VERSION;
   page().appVersion.replaceChildren(before, number, after);
+}
+
+/** The line under the start's time: why a press went no further, or nothing. */
+export function showStartLimit(limit: StartLimit | null): void {
+  const line = page().startedAtLimit;
+  line.hidden = limit === null;
+  if (limit === null) {
+    line.textContent = '';
+    return;
+  }
+  const time = timeOfDay(limit.at_s * 1000);
+  const key = limit.kind === 'earliest' ? 'controls.startedAt.earliest'
+    : limit.kind === 'boil' ? 'controls.startedAt.latestBoil'
+      : limit.kind === 'pull' ? 'controls.startedAt.latestPull' : 'controls.startedAt.latestNow';
+  line.textContent = t(key, { time: time });
 }

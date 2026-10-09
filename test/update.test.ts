@@ -90,7 +90,7 @@ test('solve: the idle page asks for its pot\'s surface, and answers the level as
 
 test('controls: idle, the settings follow the controls, saved soon and solved once they settle', () => {
   const m = idle();
-  const [next, effects] = go(m, { kind: 'controls', controls: { ...m.controls, eggCount: 4 }, source: 'eggCount', group: 1, real_ms: 0 }, S);
+  const [next, effects] = go(m, { kind: 'controls', read: { eggCount: 4 }, source: 'eggCount', group: 1, real_ms: 0 }, S);
   assert.equal(next.settings.eggCount, 4);
   assert.notEqual(next.settings, next.controls, 'a copy');
   assert.equal(next.unsolved, true);
@@ -114,9 +114,8 @@ test('units: the system chosen is stored as the cook\'s; Imperial from metric En
 
 test('language: the words follow, from the language they were in; the units are never touched', () => {
   const m = idle({ unitsChosen: 'metric' });
-  const next: Settings['language'] = { chosen: 'en-x-1750' };
-  const [after, effects] = go(m, { kind: 'language', next: next }, S);
-  assert.deepEqual(after.settings.language, next);
+  const [after, effects] = go(m, { kind: 'language', pick: 'en-x-1750' }, S);
+  assert.deepEqual(after.settings.language, { chosen: 'en-x-1750' });
   assert.equal(after.settings.unitsChosen, m.settings.unitsChosen);
   assert.deepEqual(kinds(effects), ['save', 'language']);
 });
@@ -343,7 +342,7 @@ test('kept: the egg kept is thanked for at Done; one that could not be kept puts
 
 /** A change to the controls mid-cook, on control `group`, at `real_ms`. */
 function change(m: Model, over: Partial<Settings>, group: number, real_ms: number, now_s = S + 60): [Model, Effect[]] {
-  return go(m, { kind: 'controls', controls: { ...m.controls, ...over }, source: null, group: group, real_ms: real_ms }, now_s);
+  return go(m, { kind: 'controls', read: { ...over }, source: null, group: group, real_ms: real_ms }, now_s);
 }
 
 function timers(effects: Effect[]): string[] {

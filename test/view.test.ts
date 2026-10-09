@@ -98,7 +98,7 @@ test('1. idle: the solve\'s time and Eggs in, the welcome before anything is lea
 
 test('2. a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
   const m = page({ startMode: 'hot' });
-  const moved = go(m, { kind: 'controls', controls: { ...m.controls, doneness: 0.7, startMode: 'cold' }, source: null, group: null, real_ms: 0 }, S);
+  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, real_ms: 0 }, S);
   const v = view(moved, S * 1000, viewMemo());
   assert.equal(v.kind, 'unsolved');
   if (v.kind !== 'unsolved') return;

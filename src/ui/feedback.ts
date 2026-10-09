@@ -19,7 +19,6 @@ import { t } from './copy.js';
 import { page } from './dom.js';
 import type { Model } from './model.js';
 import { send } from './send.js';
-import { state } from './state.js';
 import { disableSteppers, setStepRule } from './stepper.js';
 import { measure, show } from './units.js';
 
@@ -138,9 +137,7 @@ export function probePending(m: Model, phase: Phase, wanted: boolean): boolean {
  * when a surface lands (`retryProbe`).
  */
 function onProbeSave(): void {
-  const cooked = state.cook;
-  if (cooked === null || page().probeReading.disabled) return;
-  if (answersOf(cooked).probe !== null) return;
+  if (page().probeReading.disabled) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
   send({ kind: 'probe', reading_C: parse(measure('probeTemp'), Number(typed)) });
@@ -161,9 +158,9 @@ export function probeTaken(reading_C: number): void {
 }
 
 /** A surface landed: a reading held for want of the egg's record is read
- *  again. */
+ *  again (`update` asks only when one is held). */
 export function retryProbe(): void {
-  if (state.probeHeld) onProbeSave();
+  onProbeSave();
 }
 
 /** Wire both rows of answers and the probe's entry. Once, at boot. */
