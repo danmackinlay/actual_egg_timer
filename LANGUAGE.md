@@ -352,15 +352,6 @@ by `copy.test.ts` 7a (§2).
   egg. The settings, a kitchen and a cooking session are named as
   themselves.
 
-**History.** Until 9 October 2026 each wording change was a named draft,
-`tools/drafts/<name>.ts`: every key it changed, before and after, with its
-1750 twin, proved by `copyLiterals --since` and `copySnapshot compare
---draft` to have changed only what it listed, and this section held a table
-for each draft under review. The fifty drafts, `feedback` to `alarm`, are in
-git (`git show bfd11fa^:tools/drafts/<name>.ts`), and each one's reasoning is
-in the `LOGBOOK.md` entry of its day. Those after `notes`, `data` to
-`alarm`, are what the review queue began with.
-
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:
