@@ -7,10 +7,7 @@
   Every word the web app puts on screen, in every state worth reaching.
 
   It is the proof that a change touched no wording: run it against the build
-  before and the build after, and the two outputs must be identical. It is also
-  the proof that a rewrite changed ONLY the strings it meant to:
-  `copySnapshot.js compare --draft` holds the two outputs to tools/copyDraft.ts
-  instead of to each other. The steps below also work on older builds that
+  before and the build after, and the two outputs must be identical. The steps below also work on older builds that
   asked one question, then maybe a second. It drives the real app, unmodified,
   in an iframe. It touches Date.now, which it freezes and then steps, because
   the cook machine is a pure function of it; Math.random, which it seeds, for

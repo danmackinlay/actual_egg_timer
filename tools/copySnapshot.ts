@@ -5,7 +5,6 @@
  *   npm run build
  *   node dist/tools/copySnapshot.js capture <out.json>
  *   node dist/tools/copySnapshot.js compare <before.json> <after.json>
- *   node dist/tools/copySnapshot.js compare <before.json> <after.json> --draft [name]
  *
  * `capture` serves the repo root, opens the harness page in headless Chrome
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
@@ -18,23 +17,12 @@
  * page, to show it.
  *
  * `compare` exits non-zero on the first difference and says where it is.
- *
- * `compare --draft` is the proof for a REWRITE, where the words are meant to
- * change and the screens may too - a new likelihood, say, moves the times a
- * second cook is shown.
- * It pools every string of every state on each side, rewrites the old side
- * through tools/copyDraft.ts, reads every digit as the same digit, and then
- * requires the two pools to hold the same strings: nothing new unless it is a
- * drafted string, and nothing gone unless it is a retired one. It says nothing
- * about which state a string is in; the ordinary `compare` is for that. The
- * draft is the latest in tools/copyDraft.ts unless one is named.
  */
 
 import { spawn, ChildProcess } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
-import { Templates, applyDraft, draftFor, templateRegExp, withOverlays } from './copyDraft.js';
 
 interface Snapshot {
   name: string;
@@ -126,144 +114,12 @@ function compare(beforePath: string, afterPath: string): void {
     + `${distinct.size} distinct`);
 }
 
-/** Every string a snapshot holds, with every number read as one number and
- *  the noun after it as singular: a time that moved because the likelihood
- *  changed - "4 seconds" where it was "1 second" - is not a word that changed. */
-function pool(states: Snapshot[], rewrite: (s: string) => string): Map<string, string> {
-  const out = new Map<string, string>();
-  for (const s of states) {
-    // An attribute's words, whichever element bears them: the harness names
-    // an element without an id by its tag (a clause of the sentence was a
-    // <button> and is a <span role="button"> since the one screen), and a
-    // word is the same word on either.
-    const attrs = s.attrs.map((a) => a.replace(/^\S+ (?=[a-z-]+=)/, '* '));
-    for (const text of [...s.texts, ...attrs, s.title]) {
-      const t = rewrite(text);
-      out.set(t.replace(/[0-9]+/g, '0').replace(/\b0 ([A-Za-z]+?)s\b/g, '0 $1'), t);
-    }
-  }
-  return out;
-}
-
-function matchesAny(text: string, templates: string[]): boolean {
-  return templates.some((t) => templateRegExp(t, false).test(text));
-}
-
-/** Whether `text` is the words between two placeholders of a template, or
- *  either side of a link in it, as a text node of their own. The redesign's
- *  setup sentence draws each placeholder as a button, so what is left between
- *  them - ", " and "." in English - is a text node that belongs to the
- *  drafted template without matching it whole; and Help draws a
- *  `[label](https://…)` as a link, so the words after it are a node too. */
-function isPieceOfAny(text: string, templates: string[]): boolean {
-  return templates.some((t) => t.split(/\{[A-Za-z][A-Za-z0-9_]*\}|\[[^\]]*\]\([^)]*\)/)
-    .some((piece) => piece.trim() !== '' && piece.trim() === text));
-}
-
-/** Whether a string is a value rather than words: a stat's number, the "--"
- *  before the first solve, or an attribute whose value is one ("probeReading
- *  placeholder=64", the peak the probe's field starts from). */
-function isValue(text: string): boolean {
-  const at = text.indexOf('=');
-  return !/[A-Za-z]{3,}/.test(at >= 0 && /^\S+ [a-z-]+=/.test(text) ? text.slice(at + 1) : text);
-}
-
-function compareDraft(beforePath: string, afterPath: string, draftName: string | undefined): void {
-  // These are the web app's snapshots, so each row is read as the web sees
-  // it: a key the web stops naming is retired here, whatever iOS still says
-  // with it, and a key the web starts naming is new here. Rewriting the old
-  // side with a key the web no longer shows would only corrupt it: the
-  // redesign's "bath" -> "sous-vide at" (iOS only now) would rewrite every
-  // "ice bath" on the old web screens.
-  // The harness collapses every run of white space in a text node to one
-  // space, a no-break space included ("I can't" in outcome.unsure), so each
-  // template is read the same way.
-  const flat = (t: Templates | null): Templates | null => (t === null ? null
-    : Object.fromEntries(Object.entries(t).map(([c, s]) => [c, s.replace(/\s+/g, ' ')])));
-  const rows = withOverlays(draftFor(draftName).rows).map((d) => ({
-    ...d,
-    before: d.appsBefore.includes('web') ? flat(d.before) : null,
-    after: d.appsAfter.includes('web') ? flat(d.after) : null,
-  }));
-  const before = JSON.parse(readFileSync(beforePath, 'utf8')) as Snapshot[];
-  const after = JSON.parse(readFileSync(afterPath, 'utf8')) as Snapshot[];
-  const was = pool(before, (s) => applyDraft(s, rows));
-  const is = pool(after, (s) => s);
-  const added = rows.flatMap((d) => (d.after === null ? [] : Object.values(d.after)));
-  const retired = rows.flatMap((d) => (d.before === null || d.after !== null ? [] : Object.values(d.before)));
-  // Templates whose words stand, read as the web renders them, whose
-  // inserted words the draft's change in core moved (`argumentsMoved`).
-  const draft = draftFor(draftName);
-  const english = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, Templates> }).messages;
-  const moved = Object.keys({ ...draft.argumentsMoved, ...draft.redrawn }).flatMap((key) => {
-    const entry = english[key] as Record<string, unknown> | undefined;
-    if (entry === undefined) throw new Error(`argumentsMoved or redrawn names ${key}, which is not in copy/en.json`);
-    return ['text', 'zero', 'one', 'two', 'few', 'many', 'other']
-      .map((c) => entry[c]).filter((t): t is string => typeof t === 'string').map((t) => t.replace(/\s+/g, ' '));
-  });
-
-  const failures: string[] = [];
-  const appeared: string[] = [];
-  const vanished: string[] = [];
-  // The old wording of a drafted rewrite, for the pieces of it a link left
-  // as nodes of their own, which `applyDraft` cannot rewrite whole.
-  const rewrittenFrom = rows.flatMap((d) => (d.before === null || d.after === null ? [] : Object.values(d.before)));
-  for (const [key, text] of is) {
-    if (was.has(key)) continue;
-    if (matchesAny(text, added) || isPieceOfAny(text, added)) appeared.push(text);
-    else if (matchesAny(text, moved)) appeared.push(text);
-    // A value, not a word, newly on a screen: a field shown in more states.
-    else if (isValue(text)) appeared.push(text);
-    else failures.push(`new, and not drafted: "${text}"`);
-  }
-  for (const [key, text] of was) {
-    if (is.has(key)) continue;
-    // A value, not a word: a stat's number, or the "--" before the first
-    // solve. The redesign moved or dropped stats, and a number is not copy.
-    if (isValue(text)) {
-      vanished.push(text);
-      continue;
-    }
-    if (isPieceOfAny(text, rewrittenFrom) || isPieceOfAny(text, retired)) {
-      vanished.push(text);
-      continue;
-    }
-    // A rewrite that gained a placeholder the old screen had no value for
-    // ("{water} of water takes ..."), so the rewritten old side still shows it.
-    if (/\{[A-Za-z]+\}/.test(text) && matchesAny(text.replace(/\{[A-Za-z]+\}/g, 'x'), added)) {
-      vanished.push(text);
-      continue;
-    }
-    if (matchesAny(text, retired) || matchesAny(text, moved)) vanished.push(text);
-    else failures.push(`gone, and not retired: "${text}"`);
-  }
-  // Every drafted rewrite the old build could show must have been shown by it,
-  // or this proves nothing about it.
-  const rewritten = rows.filter((d) => d.before !== null && d.after !== null
-    && JSON.stringify(d.before) !== JSON.stringify(d.after));
-  const seen = rewritten.filter((d) => before.some((s) => [...s.texts, ...s.attrs]
-    .some((t) => matchesAny(t, Object.values(d.before ?? {})))));
-
-  console.log(`${before.length} states before, ${after.length} after; `
-    + `${was.size} distinct strings before (drafted rewrites applied), ${is.size} after.`);
-  console.log(`drafted rewrites exercised by the web app: ${seen.map((d) => d.key).join(', ')}`);
-  console.log(`new, as drafted: ${[...new Set(appeared)].map((s) => `"${s}"`).join(', ') || 'none'}`);
-  console.log(`gone, as retired: ${[...new Set(vanished)].map((s) => `"${s}"`).join(', ') || 'none'}`);
-  if (failures.length > 0) {
-    console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
-    process.exit(1);
-  }
-  console.log('only the drafted strings changed.');
-}
-
-const [mode, a, b, flag, draftName] = process.argv.slice(2);
+const [mode, a, b] = process.argv.slice(2);
 if (mode === 'capture' && a !== undefined) {
   await capture(a);
-} else if (mode === 'compare' && a !== undefined && b !== undefined && flag === '--draft') {
-  compareDraft(a, b, draftName);
 } else if (mode === 'compare' && a !== undefined && b !== undefined) {
   compare(a, b);
 } else {
-  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json> [--draft [name]]');
+  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json>');
   process.exit(2);
 }

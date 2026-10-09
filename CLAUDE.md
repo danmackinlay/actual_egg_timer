@@ -88,17 +88,19 @@ things stand is `PLAN.md`; which document holds what is its last section.
 ## Words
 
 - Every word either app shows is a key in `copy/en.json`, with a twin in
-  `copy/en-x-1750.json`; no literal on an iOS screen is words
-  (`npm run copy:literals`). `LANGUAGE.md` is the machinery.
-- **A wording change is a named draft**: `tools/drafts/<name>.ts`, registered
-  last in `tools/copyDraft.ts`, in both apps and with each 1750 twin
-  rewritten, not transformed. A key `copy/en-US.json` overrides is rewritten
-  there too, with its `base` (`LANGUAGE.md` §2). Prove it changed only what it lists:
-  `node dist/tools/copyLiterals.js --since <base> <name>` and
-  `node dist/tools/copySnapshot.js compare <before> <after> --draft <name>`.
-  Fit each string to its surface's budget in `test/data/surfaces.json`;
-  raising a small surface's budget is the owner's call. Then
-  `npm run fixtures`.
+  `copy/en-x-1750.json` that may lag (`DECISIONS.md` 103: a missing twin
+  shows the English, and the queue lists it); no literal on an iOS screen
+  is words (`npm run copy:literals`). `LANGUAGE.md` is the machinery.
+- **A wording change is an edit to the catalogue, read in the review queue**
+  (`DECISIONS.md` 106; `LANGUAGE.md` §3): change `copy/en.json`, in both
+  apps. A key `copy/en-US.json` overrides is rewritten there too, with its
+  `base` (`LANGUAGE.md` §2). A 1750 twin is rewritten, not transformed, then
+  stamped with `npm run copy:approve -- --translation en-x-1750 <key…>`; or
+  left to lag (`DECISIONS.md` 103), and the queue lists it. Fit each string
+  to its surface's budget in `test/data/surfaces.json`; raising a small
+  surface's budget is the owner's call. Then `npm run fixtures`. The owner
+  reads `npm run copy:review` on a phone; stamping his approval
+  (`npm run copy:approve -- <key…>`) is his word, never an agent's call.
 - **The owner's rules** (`LANGUAGE.md` §3): plain words a cook uses, no term
   only this repository uses; the app is "I" and the cook "you", in the
   active voice; say what to do, and a caveat's consequence rather than its
@@ -108,8 +110,8 @@ things stand is `PLAN.md`; which document holds what is its last section.
   hob, and the rest goes to Help. Say it as a person who cooks would, not
   as a model writes (`LANGUAGE.md` §3 lists the marks). Apostrophes and
   quotes are curly, ’ “ ”, never straight. What the owner
-  approved was good enough for now (`DECISIONS.md` 54); change it in a
-  named draft like any other.
+  approved was good enough for now (`DECISIONS.md` 54); change it like any
+  other, and it joins the queue again.
 - Wording is judged by the owner on a phone, not in a table.
 
 ## iOS gotchas

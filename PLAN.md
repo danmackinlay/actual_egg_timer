@@ -11,7 +11,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 404 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 408 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 37 scenarios in headless
 Chrome and `npm run ios:e2e` the iOS app through 40 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
@@ -21,8 +21,8 @@ call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
 uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
-(`ios/RELEASING.md`). The owner is reviewing the `tidy`, `tidy2` and
-`plain` copy drafts.
+(`ios/RELEASING.md`). The words the owner has not yet read are the review
+queue (`npm run copy:queue`).
 
 These counts are the only ones in the documents. If you want a number, run
 `npm test`.
@@ -37,8 +37,8 @@ These counts are the only ones in the documents. If you want a number, run
 3. **F5, Czech**, when the owner's friend can review it.
 4. **E6-E8**, the collective part: built, on this branch, `0.4.x`
    (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
-   to date with `main` and not released. The owner reviews it first: the
-   `share` and `learning` drafts on a phone, the privacy page (rewritten for
+   to date with `main` and not released. The owner reviews it first: its
+   words on a phone (in the review queue), the privacy page (rewritten for
    0.4; two `OWNER` marks left to answer, `SHIP-0.4.md` B), and the
    endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
    It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
@@ -53,12 +53,20 @@ These counts are the only ones in the documents. If you want a number, run
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
    on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
    and red-teamed as built (`design/running-cook-review.md`): core's, the
-   web's and iOS's findings fixed, before the one screen; certainty in words is the `certainty` draft (93, D1),
+   web's and iOS's findings fixed, before the one screen; certainty in words (93, D1),
    for the owner on a phone. The one screen is built in both apps (C3,
-   the `onescreen` draft and iOS's `onescreen_ios`, for the owner on a
-   phone), and red-teamed as built (`design/onescreen-review.md`): core's
-   and the web's findings fixed with the `tighten2` draft (`DECISIONS.md`
-   99), and iOS's on the same core (9 October 2026). `0.4.x` is merged in as it moves.
+   for the owner on a phone), and red-teamed as built
+   (`design/onescreen-review.md`): core's and the web's findings fixed
+   (`DECISIONS.md` 99), and iOS's on the same core (9 October 2026). 0.5 is
+   the next release and `0.4.x` is retired (`DECISIONS.md` 102).
+6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
+   (section 0), the gates that make the code safe to change (1), what to
+   delete (2), the restructure (3) and the process (4), with the owner's
+   decisions marked (`DECISIONS.md` 102-107). Done: the copy review queue
+   (2.2). In flight: the fresh results log (2.6, 2.8, 2.9, 2.11, 2.14), the
+   bugs 0.2-0.4 and 0.6-0.7, the cycle check (1.3), one compile per
+   verify (1.5, 1.6). Then the rest of section 0, and the gates (1.1-1.9)
+   before the restructure.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -66,31 +74,19 @@ Throughout: cook real eggs, and the two measurements in README §11.3.
 
 The one queue. Nothing else in the documents waits on the owner.
 
-1. **The `tidy` copy draft, on a phone** (`DECISIONS.md` 45): all of
-   WORKLIST §9, live in both apps, to be trimmed back where the owner says.
-   `LANGUAGE.md` §3 has the table. Also open to revision there: the E2
+1. **The review queue, on a phone** (`DECISIONS.md` 106): every word
+   changed or added since the owner last read them all (`e3a81cb`, the
+   `notes` draft, 3 October 2026), and every one retired since. 101 keys:
+   25 changed, 57 added and 19 removed: the words of the items below, and
+   the 0.4 line's sharing (the consent beside the switch, the deletion's
+   words, the Learning mark and its (i), "Your random ID" over the id).
+   No 1750 twin is stale or missing.
+   `npm run copy:queue` lists them; `npm run copy:review` writes the page to
+   read them on beside the apps (`LANGUAGE.md` §3). Say what to put back;
+   `npm run copy:approve` stamps the rest. Also open to revision: the E2
    feedback wording, which went in on the owner's behalf, and the probe's
-   "highest" (a physics correction of the draft's "lowest", which stands
-   unless the owner objects; `INFERENCE.md` §5).
-   With it, **`tidy2`**: FOLLOWUP §5 and §4.2, 15 keys the first tidy left
-   clunky (the Forget button and dialog, "or else", the restored cook's
-   line, "Full rolling boil" mid-sentence, the screen reader's phase said
-   twice). `LANGUAGE.md` §3 has its table, and where it departs from
-   FOLLOWUP.
-   Then **`plain`** (`DECISIONS.md` 54): a style pass over 71 keys of
-   both apps, after the owner's rewrite of the Help line on cooling,
-   including the strings approved as good enough for now.
-   `tools/drafts/plain.ts` has every row and what it left alone. With
-   it, **`bench`** (`DECISIONS.md` 55): the base English is Australian,
-   so the egg cools on the bench; and `copy/en-US.json`, the American
-   overlay, 20 keys that an American phone or browser reads over it
-   ("counter", "running water", "pot"); **`quotes`** (`DECISIONS.md`
-   56), curly apostrophes and quotes everywhere; and **`owner`**
-   (`DECISIONS.md` 57), the owner's own edits with "running water", "in
-   the air" and "below the time display", which cut the American overlay
-   to four "pot" strings; **`below`**, the bracket "below the slider"
-   in the direction's (i) too; and **`notes`**, the owner's notes from
-   reading every string, who found the rest fine.
+   "highest" (a physics correction of "lowest", which stands unless the
+   owner objects; `INFERENCE.md` §5).
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide. Its
    face, IM FELL English with the long s everywhere (§6, *The face*), is
@@ -110,57 +106,44 @@ The one queue. Nothing else in the documents waits on the owner.
    ID, not tracking, and App Attest needs no answer of its own
    (`DECISIONS.md` 72), as `ios/RELEASING.md` step 6 lists them.
    Read the page first: it speaks in your name, says what sharing sends
-   and keeps, and carries `OWNER` marks for you (`SHIP-0.4.md` B). Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
-   the `privacy` draft), and so does Settings, under sharing.
+   and keeps, and carries `OWNER` marks for you (`SHIP-0.4.md` B). Help links it in both apps, as "Privacy" ("Of Privacy" in 1750),
+   and so does Settings, under sharing. It names the controls as they now
+   read: "Sharing results", "Share results" and "Delete shared results".
    **The owner's privacy items left**, after `DECISIONS.md` 67-72, and
    only these: the retention rule (a five-year cap from the day cooked, or
    criteria); whether you delete the local copy of the records after each
    fit; and Linked to You or Not Linked on Apple's label.
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
    `DECISIONS.md` 53).
-7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent
-   beside the switch, the deletion's words, and the Learning mark and its
-   (i). `tools/drafts/share.ts` and `learning.ts` have every key and its
-   1750 twin. With them, **`data`**: what is kept and sent is a "result",
-   never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
-   page names the controls as they now read: "Sharing results",
-   "Share results" and "Delete shared results". And **`sharingid`**
-   (`DECISIONS.md` 67): "Your random ID" over the id, whole and
-   selectable, in both apps' sharing section once sharing has been on.
-8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
+7. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
    `help.unsure.counter` with the owner's hand edit of the words, with its
    en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
    suggestion).
 
-9. **The − and + beside every number, on a phone** (4 October 2026): in
+8. **The − and + beside every number, on a phone** (4 October 2026): in
    both apps, stepping on the units grid (the egg's mass now in half grams,
    shown "58 g" and "58.5 g"), repeating while held. The web's two
-   screen-reader names are the **`steppers`** draft ("Less: {label}",
-   "More: {label}"; in 1750, "Diminish:" and "Augment:").
-10. **The version at the foot of Settings, on a phone** (5 October 2026):
-   the **`version`** draft, "Version {version}" (1750: "Edition
-   {version}"), under the colophon in both apps, the number fixed-width and
+   screen-reader names ("Less: {label}", "More: {label}") are in the
+   review queue.
+9. **The version at the foot of Settings, on a phone** (5 October 2026):
+   "Version {version}" (1750: "Edition {version}"; in the review queue),
+   under the colophon in both apps, the number fixed-width and
    selectable like the random number. The web shows `APP_VERSION`
    ("0.4.0-alpha.1"); iOS the App Store version and its build ("0.4.0
    (2)"), since the App Store version holds only integers.
 
-11. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
-    leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps;
-    the **`stay`** draft drops "and back when you pick Metric" from the
-    Language (i). The **`press`** draft takes "tap" for the screen gesture
-    out of eight strings, en-US and 1750 twins with them: "then press Start
-    heating", "press Full rolling boil", and on the Lock Screen "my guess
-    until Full rolling boil". The **`randomid`** draft calls the random
-    number a "random ID" (1750: a "cypher"), in Settings, the consent
-    and the privacy page. The **`boiling`** draft takes "boil" as a noun out
-    of eleven strings (`DECISIONS.md` 78), en-US and 1750 twins with them:
-    the setting "Once it’s boiling" (1750: "Once it boils"), water "boiling
-    hard" for "a full boil", and in 1750 on the Lock Screen "my conjecture,
-    till you tell me it boils". The button stays "Full rolling boil", and
-    "brought to the boil" stays.
+10. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
+    leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps,
+    and the Language (i) no longer says "and back when you pick Metric".
+    The day's words are in the review queue: "press" for the screen
+    gesture, never "tap"; the "random ID" (1750: a "cypher"), in Settings,
+    the consent and the privacy page; and "boil" never a noun
+    (`DECISIONS.md` 78), so the setting is "Once it’s boiling" and water is
+    "boiling hard". The button stays "Full rolling boil", and "brought to
+    the boil" stays.
 
-12. **The feedback and the room, on a phone** (5 October 2026,
-    `DECISIONS.md` 79), the **`feedback2`** draft in both apps. After a
+11. **The feedback and the room, on a phone** (5 October 2026,
+    `DECISIONS.md` 79), in both apps. After a
     cook, "You asked for: jammy, peak yolk 65 °C" over the yolk question
     (1750: "You desired: thick, the yolk rising to …"); the probe reading
     has a − and +, in whole degrees from the peak the cook was started at,
@@ -169,8 +152,8 @@ The one queue. Nothing else in the documents waits on the owner.
     measured room is the room the model cools toward and the Room egg's
     start (`roomInUse`, `src/core/policy.ts`), recorded in each result's
     `ambient_C` as before.
-13. **Your results, kept and exported** (5 October 2026, `DECISIONS.md` 81
-    and 82). The **`export`** draft, on a phone: "Export my results" under
+12. **Your results, kept and exported** (5 October 2026, `DECISIONS.md` 81
+    and 82). On a phone: "Export my results" under
     What I’ve learned in Settings (1750: "Copy out my results"), a
     download on the web and the share sheet on iOS, and "Nothing to export
     yet." on an empty log. The log is never written over now: a record a
@@ -179,8 +162,8 @@ The one queue. Nothing else in the documents waits on the owner.
     the model changes. `npm run eggs -- import` reads an exported file for
     the fit, and the fit gives your own random IDs full weight once they
     are in `fit/trusted.local.txt` (`fit/README.md` says how).
-14. **A soft yolk can be chosen again, on a phone** (5 October 2026,
-    `DECISIONS.md` 83), the **`warn`** draft in both apps. With your setup
+13. **A soft yolk can be chosen again, on a phone** (5 October 2026,
+    `DECISIONS.md` 83), in both apps. With your setup
     (58 g from the fridge, boiling water, an ice bath, a little learned),
     the thumb goes left of jammy onto the dots, and the time, the sentence
     under it and the bracket follow; the line under the setup says "Soft: I
@@ -192,8 +175,8 @@ The one queue. Nothing else in the documents waits on the owner.
     after one egg answered too soft at jammy, soft came out only 10-12 s
     shorter than jammy, with the bracket from soft to fudgy and "probably
     too firm", because the time leans late to set the white (decision 80);
-    the warning now says why. Since item 15 it is never later than jammy.
-15. **The time never rises as the thumb moves softer, on a phone** (5
+    the warning now says why. Since item 14 it is never later than jammy.
+14. **The time never rises as the thumb moves softer, on a phone** (5
     October 2026, `DECISIONS.md` 84), both apps, no new words. With your
     setup and one egg answered soft with a runny white, soft was 500 s and
     jammy 428 s; now everything from soft to just under jammy shows the
@@ -202,12 +185,12 @@ The one queue. Nothing else in the documents waits on the owner.
     Drag from hard to the left edge and watch the time only fall or hold.
     The time can step once, a second or so after a new pot, when its odds
     arrive.
-16. **The `certainty` draft, on a phone** (8 October 2026, `DECISIONS.md`
+15. **How sure I am, in words, on a phone** (8 October 2026, `DECISIONS.md`
     93 and 97; `SHIP-0.5.md` D1), both apps and both Englishes: the line
     below the time ("Very certain", "A ballpark figure", "A wild guess"),
     what pressing it opens, "Most likely" under it, the warning on a
-    dotted level, and Help's "How sure I am". `LANGUAGE.md` §3 has the
-    table, `tools/drafts/certainty.ts` the 1750 twins. Three things to
+    dotted level, and Help's "How sure I am"; the words, and their 1750
+    twins, are in the review queue. Three things to
     judge with it: the shading now dips between the words, since a level
     on a cut is half one word; your soft egg of 5 October is a ballpark
     now and no longer dotted ("Most likely: Jammy." says where it lands);
@@ -217,10 +200,10 @@ The one queue. Nothing else in the documents waits on the owner.
     words wide, and "How to make this more reliable" shows only at a wild
     guess a change of setup makes surer: on the model a fresh install
     never gets it (`UI.md` §8).
-17. **The `onescreen` draft and the one screen, on a phone** (8 October
+16. **The one screen, on a phone** (8 October
     2026, `DECISIONS.md` 91, 96 to 98; `SHIP-0.5.md` C3), in both apps: the
-    web, and iOS with the same words (`onescreen_ios`, which also retires
-    the line under iOS's running sentence, `cook.summary`).
+    web, and iOS with the same words (iOS also retires the line under its
+    running sentence, `cook.summary`).
     One layout from setup to Done: start an egg and change anything - the
     start clause (boiling to cold, your case), the egg, the slider,
     Settings' water - and watch it re-plan; hold the slider and the egg
@@ -229,14 +212,14 @@ The one queue. Nothing else in the documents waits on the owner.
     "…, to the boil, heat off, lid on", shorter than idle's to fit), "Eggs
     in at" and the four reasons it stops, and "Are the eggs still in the
     water?" with "Yes, still in" / "No, they’re out".
-    `tools/drafts/onescreen.ts` has every row and its 1750 twin; `UI.md`
-    §3 the screen. Things to judge with it: the clock keeps its idle size
+    The words, and their 1750 twins, are in the review queue; `UI.md` §3
+    has the screen. Things to judge with it: the clock keeps its idle size
     while the egg cooks (nothing moves at the start); at Done the
     questions are below the slider and sentence, scrolled to; after the
     pull the slider only previews and springs back. On iOS also: while "Are
     the eggs still in the water?" is open the Lock Screen card shows the
     pull, "now", with its line naming the cooling (`UI.md` §9).
-18. **The `tighten2` draft, on a phone** (9 October 2026; the one screen's
+17. **The one screen's review, on a phone** (9 October 2026; the one screen's
     review, `design/onescreen-review.md`, and `DECISIONS.md` 99), both
     apps: under the time, "about 8:00 to boil",
     guessed or remembered; once the eggs cook, the time range opened under
@@ -246,8 +229,8 @@ The one queue. Nothing else in the documents waits on the owner.
     With it, the time's two lines sit closer under the digits, and the
     readout is an x-height (8 px or pt) shorter under the folded certainty
     word, opened as before (`UI.md` §8).
-19. **An older build leaves a newer one's results alone, on a phone** (9
-    October 2026, `DECISIONS.md` 100), the **`newer`** draft in both apps.
+18. **An older build leaves a newer one's results alone, on a phone** (9
+    October 2026, `DECISIONS.md` 100), in both apps.
     Install this build after a newer one (or, on the web, keep a tab of it
     open while a newer one loads): at the top of the screen, and of
     Settings, "A newer edition of this app saved your results. Until you
@@ -256,8 +239,8 @@ The one queue. Nothing else in the documents waits on the owner.
     Until you procure it, I shall time your eggs, but shall neither keep
     nor learn any thing."). The questions after an egg, the sharing
     switch and Start learning again are gone while it shows.
-20. **The alarm sounds, on a phone** (9 October 2026, `DECISIONS.md` 101),
-    the **`alarm`** draft in both apps. In Settings, after Language,
+19. **The alarm sounds, on a phone** (9 October 2026, `DECISIONS.md` 101),
+    in both apps. In Settings, after Language,
     "Alarm sound": Wind-up timer (the default), Cuckoo clock or Hen, and
     choosing one plays it once. Hear each across the kitchen at both
     moments: at the pull the cuckoo calls three times, the bell rings
@@ -292,7 +275,7 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   about next to the yolk, and the probe reading moves below the two
   answers. Built on the branch `after-egg` (`LOGBOOK.md`, 6 October): the
   five-word probit and the record's `yolkWord` in both cores, the server,
-  the fit, both apps' panels and the `afteregg` draft, and the ticks struck
+  the fit, both apps' panels and their words, and the ticks struck
   through only when no position of their word can be reached. Waiting on the
   owner, on a phone: the five words and the probe field's two lines, and
   whether the field should show when the probe setting is off (it does
@@ -518,6 +501,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
+| `REFACTOR-0.5.md` | the 0.5 red team's worklist: what is wrong now, the gates, what to delete, the restructure, the process; ticked as it lands |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
 | `design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
 | `design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |

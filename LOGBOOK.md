@@ -6123,6 +6123,50 @@ where it was 1¼. Both sides of a comparison must be captured by the fixed
 harness: the harness is served from the tree being captured, so a "before"
 taken on a commit without this one is the old, racing capture.
 
+## 9 October 2026: the copy drafts give way to a review queue
+
+`DECISIONS.md` 106 and 103, on the branch `copy-review-queue`. A wording
+change was a named draft, `tools/drafts/<name>.ts`, listing every key's
+words before and after, proved by `copyLiterals --since` and
+`copySnapshot compare --draft` to have changed only what it listed. Fifty
+drafts and their proofs were 7268 lines, all compiled on every build, and
+replayed by nothing: each proof read one draft against its own base. Every
+word is in `copy/*.json` and the no-literals lint keeps words out of the
+Swift code, so what a change does to the words is the catalogue's diff;
+what was missing was a record of what the owner had read.
+
+- **Approval is stored.** `copy/approved.json`: per key, the English the
+  owner approved and its sha256 (16 hex digits, over the templates by CLDR
+  category). It began from `e3a81cb`, the `notes` draft, the last time he
+  read every string (`npm run copy:approve -- --all --at e3a81cb` on no
+  file, which also records the keys retired since, so they show as
+  removed). The queue is generated: `npm run copy:queue`. It began at 101
+  keys, 25 changed, 57 added and 19 removed: the drafts `data` to `alarm`,
+  and the 0.4 line's sharing words (`share.none`, `learning.badge` and
+  five more), which came from `0.4.x` and were never on `main` when he
+  read it. `warn.lowOdds` is in none of them: added by `warn` and retired by
+  `certainty`, both after `e3a81cb`.
+- **The twins know their source.** `copy/en-x-1750.base.json`: per key,
+  the hash of the English the twin was written against, stamped from
+  today's English for all 370 twins, and `app.name` recorded as left to
+  English on purpose. A first version let a base on a key with no twin
+  mean "left to English", which read a deleted twin as deliberate; so the
+  file keeps the two apart (`base` and `english`). The sidecar keeps the
+  catalogues, and so Swift's parser, untouched; `en1750.test.ts` 1b no
+  longer asks for a twin of every key (103).
+- **The files beside the catalogues are not catalogues.** The tests, the
+  copy fixture and the site build skip `approved.json` and `*.base.json`
+  (`isCatalogueFile`). The iOS bundle copies `copy/` as a folder reference,
+  so they ride along there, unread: about 50 KB.
+- **The page**, `npm run copy:review`: the first diff, word against word,
+  read as noise ("<del>to</del><ins>on</ins> <del>get</del><ins>average</ins>"),
+  so a changed stretch is folded whole, as it was and as it is, with a
+  space or a short word inside it carried into both.
+
+Checked: `npm run verify`, `npm run e2e` 37 of 37, `npm run build:site` (no sidecar in
+`_site/copy/`), and with one 1750 twin deleted by hand, `npm test`
+passed and the queue listed it as missing.
+
 ## 9 October 2026: the copy snapshot proved repeatable, the advice's notes, the slow hob's one comparison
 
 **The copy snapshot.** The harness that waits for the app to settle
