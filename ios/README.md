@@ -467,8 +467,9 @@ phases, plans, the stored cook, the egg log, alarms scheduled, read back and
 delivered, rings, cards with their description, and `settled` when the cook
 has nothing under way; for the one screen also where the slider, the
 sentence and the egg sit, which egg is drawn, each change in hand and each
-correction committed, what the readout and the slot say, whether "Most
-likely" shows) and on the prefs plist through plistlib. A scenario at the
+correction committed, what the readout and the slot say, each frame of the
+readout with the moment it was drawn for, whether "Most likely" shows) and on
+the prefs plist through plistlib. A scenario at the
 largest text size passes UIKit's own `-UIPreferredContentSizeCategoryName
 UICTContentSizeCategoryAccessibilityXXXL`. It deletes the device at the end. A tap's settle is
 the host's 1.5 s, as a finger's would be; the cook's clock stays frozen

@@ -1441,6 +1441,72 @@ scenario('certainty-mid-cook', 'onescreen review 2.3: once cooking, the range op
   run.note(`"${hot?.time}"; 16:00 "${a?.time}"; 20:00 "${b?.time}"`);
 });
 
+/// The readout's frames logged in these lines: { at (the moment drawn for,
+/// epoch s, to the millisecond), phase, big, sub, range, i }.
+function frames(lines, from = 0) {
+  const out = [];
+  for (let i = from; i < lines.length; i += 1) {
+    const m = lines[i].text.match(/^frame (\S+) (\w+) (.*?) \| (.*) \| (.*)$/);
+    if (m) out.push({ at: Number(m[1]), phase: m[2], big: m[3], sub: m[4], range: m[5], i });
+  }
+  return out;
+}
+
+/// The app's clock face for a span, s (Presentation.swift `clockString`).
+const clockOf = (s) => {
+  const total = Math.round(Math.max(0, s));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+/// Whether a heating frame is all of its one moment: the countdown to the
+/// plan in force when it was drawn and the time heated under it both read
+/// at the moment it was drawn for. What it got wrong, or null.
+function frameWrong(f, lines, start) {
+  const plan = lastPlan(lines.slice(0, f.i));
+  const big = clockOf(plan.pull - f.at);
+  const heated = clockOf(f.at - start);
+  if (f.big !== big) return `at +${(f.at - start).toFixed(3)} the time ${f.big}, not ${big}`;
+  if (!f.sub.startsWith(`${heated} `)) return `at +${(f.at - start).toFixed(3)} "${f.sub}", not ${heated} heated`;
+  return null;
+}
+
+scenario('one-moment', 'REFACTOR-0.5 0.5: each frame of the readout reads one moment, the TimelineView\'s: stepped across a second, and run fast', async (run) => {
+  const stored = await started(run);
+  const start = startOf(stored);
+  run.check(stored.cook.choices.startMode === 'cold', `a cold start: ${stored.cook.choices.startMode}`);
+  // Frozen either side of where each line's second turns: the time heated at
+  // 100.5 s, and the countdown where the pull is a half second off.
+  const pull = lastPlan(run.lines()).pull;
+  const turn = pull - Math.floor(pull - start - 200) - 0.5;
+  for (const at of [start + 100.499, start + 100.501, turn - 0.001, turn + 0.001]) {
+    const i = await run.step(at);
+    const f = await run.until(new RegExp(`^frame ${at.toFixed(3).replace('.', '\\.')} `), {
+      from: i, what: `a frame at +${(at - start).toFixed(3)}`,
+    });
+    const lines = run.lines();
+    const frame = frames(lines, f.i)[0];
+    run.check(frame.phase === 'HEATING', f.text);
+    const wrong = frameWrong(frame, lines, start);
+    run.check(!wrong, wrong);
+  }
+  // Running at x60 from launch, so the screen redraws ten times a second, each
+  // frame six seconds of cook time on: a frame that read the clock again
+  // while it was drawn would be off by whatever the draw took, times sixty.
+  run.terminate();
+  const r = await relaunched(run, start + 120, [], { speed: 60 });
+  const from = run.launched + r.lines.findIndex((l) => l.text.startsWith('restore '));
+  const end = Date.now() + WAIT_S * 1000;
+  while (frames(run.lines(), from).filter((f) => f.phase === 'HEATING').length < 20 && Date.now() < end) await sleep(100);
+  const lines = run.lines();
+  run.terminate();
+  const ran = frames(lines, from).filter((f) => f.phase === 'HEATING' && !lastPlan(lines.slice(0, f.i)).lengthened);
+  run.check(ran.length >= 20, `${ran.length} frames heating at x60`);
+  const wrong = ran.map((f) => frameWrong(f, lines, start)).filter(Boolean);
+  run.check(wrong.length === 0, `${wrong.length} of ${ran.length} frames not of one moment: ${wrong.slice(0, 3).join('; ')}`);
+  const ranges = new Set(ran.map((f) => f.range));
+  run.note(`${ran.length} frames at x60, +${(ran[0]?.at - start).toFixed(1)} to +${(ran.at(-1)?.at - start).toFixed(1)} s; ranges ${[...ranges].join(' / ')}`);
+});
+
 
 scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
   await hotStarted(run, 'drag:0.3@30');
