@@ -1,8 +1,10 @@
 /**
  * The web app driven end to end, in seconds: the checks that were done by
- * hand (design/running-cook-review.md, the LOGBOOK of 6 to 8 October), each
- * a named scenario with assertions on the page and on what it stored, and
- * the copy capture's states (tools/copyScenarios.ts), each a scenario too.
+ * hand (archive/design/running-cook-review.md, the LOGBOOK of 6 to 8
+ * October), each a named scenario with assertions on the page and on what
+ * it stored, and the copy capture's states (tools/copyScenarios.ts), each a
+ * scenario too, every state checked for raw keys, straight quotes and the
+ * certainty line.
  *
  *   npm run e2e                      # build the site, then every scenario
  *   npm run e2e -- reload two-tabs   # only those named (after a build)
@@ -564,7 +566,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'sentence-no-time': {
-    what: "DECISIONS 108: the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does",
+    what: "the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does",
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.until("__snap().chosen !== null", 'the time decided');
@@ -630,7 +632,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'two-tabs-own-cooks': {
-    what: 'review 2.5: a correction in one tab leaves another tab\'s cook and its controls alone (both stopped at one moment)',
+    what: 'a correction in one tab leaves another tab\'s cook and its controls alone (both stopped at one moment)',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'hot');
@@ -763,7 +765,7 @@ const SCENARIOS: Record<string, Scenario> = {
       check(s.primary === await words('ask.stillIn.yes'), `yes: ${s.primary}`);
       check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
       // Nothing past the question: not the white's line, a caveat about the
-      // pull it doubts (onescreen review 3).
+      // pull it doubts.
       check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question');
       // The cooling's counted end passes under the question: nothing.
       await tab.shift(600);
@@ -841,7 +843,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'two-tabs-correction': {
-    what: 'onescreen review 1.1: a second tab on the same cook never undoes the first one\'s correction with its own ring',
+    what: 'a second tab on the same cook never undoes the first one\'s correction with its own ring',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'hot');
@@ -879,7 +881,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'start-again-corrected': {
-    what: 'onescreen review 1.2: a correction at Done, then Start again at once, logs and keeps the corrected egg',
+    what: 'a correction at Done, then Start again at once, logs and keeps the corrected egg',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -908,7 +910,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'done-stays-done': {
-    what: 'onescreen review 2.1: after Done and an answer, the cooling corrected to ice keeps Done, its questions and its silence',
+    what: 'after Done and an answer, the cooling corrected to ice keeps Done, its questions and its silence',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.click('#coolCounter');
@@ -966,7 +968,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'done-note-as-ran': {
-    what: 'onescreen review 2.2: Done after an answer and a reload, the texture note is the cook as it ran',
+    what: 'Done after an answer and a reload, the texture note is the cook as it ran',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -993,7 +995,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'certainty-mid-cook': {
-    what: 'onescreen review 2.3: once the cook runs, the likely time range is when to take them out, and moves with a slow hob',
+    what: 'once the cook runs, the likely time range is when to take them out, and moves with a slow hob',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -1038,7 +1040,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'grace-correction': {
-    what: 'onescreen review 3: a correction in the grace that leaves the pull due keeps the grace\'s end and rings nothing more',
+    what: 'a correction in the grace that leaves the pull due keeps the grace\'s end and rings nothing more',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
@@ -1064,7 +1066,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'change-kept-on-hide': {
-    what: 'onescreen review 3: a change still settling is committed when the page goes, and two changes commit apart by keyboard too',
+    what: 'a change still settling is committed when the page goes, and two changes commit apart by keyboard too',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
@@ -1190,7 +1192,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'woken-past-pull': {
-    what: 'review 1.1: a tab woken 25 s past the pull rings it; one woken past the cooling rings the pull, not Done',
+    what: 'a tab woken 25 s past the pull rings it; one woken past the cooling rings the pull, not Done',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'cold');
@@ -1236,7 +1238,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'two-tabs': {
-    what: 'review 1.2: a second tab follows the first one\'s tap and writes nothing back over it (both stopped at one moment)',
+    what: 'a second tab follows the first one\'s tap and writes nothing back over it (both stopped at one moment)',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'cold');
@@ -1329,7 +1331,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'two-tabs-cook': {
-    what: 'review 1.2: the boil tapped in another tab on the same cook is taken up, and the cook never written back',
+    what: 'the boil tapped in another tab on the same cook is taken up, and the cook never written back',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'cold');
@@ -1354,7 +1356,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'too-old': {
-    what: 'review 2.2: a cold start never tapped is ended at two hours, in the tab that runs it',
+    what: 'a cold start never tapped is ended at two hours, in the tab that runs it',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
@@ -1371,7 +1373,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'done-wakes': {
-    what: 'a page left at Done, never looked at again, ends its cook an hour past the end and logs the egg (REFACTOR-0.5 3.7)',
+    what: 'a page left at Done, never looked at again, ends its cook an hour past the end and logs the egg',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -1393,7 +1395,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'final-egg': {
-    what: 'review 2.3: an egg final by the clock takes no more answers',
+    what: 'an egg final by the clock takes no more answers',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -1464,7 +1466,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'done-as-ran': {
-    what: 'review 2.4: Done after an answer and a reload shows the cook as it ran',
+    what: 'Done after an answer and a reload shows the cook as it ran',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -1624,7 +1626,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'newer-version': {
-    what: 'DECISIONS 100: a newer build\'s mark: the line shown, an egg timed to Done and started again, and not one write or request',
+    what: 'a newer build\'s mark: the line shown, an egg timed to Done and started again, and not one write or request',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       // What a newer build left: its mark, the settings with a field this
@@ -1674,7 +1676,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'newer-version-tab': {
-    what: 'DECISIONS 100: a tab already open stops writing when a newer build\'s tab marks the storage',
+    what: 'a tab already open stops writing when a newer build\'s tab marks the storage',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       check((await a.storage('aet.newest')) !== null, 'this build marked the storage first');
