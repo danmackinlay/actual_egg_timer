@@ -7404,7 +7404,8 @@ Branch `worktree-agent-a62a97d51e4044ffa`, `136a32c`..`d584880`, with
   taken out.
 
 Counted the same way before and after (src/ui, every .ts): lines 9,182
-→ 9,489; top-level `let` 51 → 35; modules importing `state` 9 (139
+→ 9,489 (on 0.5.x as it now is, with store.ts reading core's settings:
+9,089 → 9,392, +303); top-level `let` 51 → 35; modules importing `state` 9 (139
 reads) → 0, the model read between messages through `pageModel` in 2
 (the test API, the start's − and +). The lines grew: the correction's
 logic moved into model.ts (edit.ts −345, model.ts +495, its comments
@@ -7418,5 +7419,6 @@ one; both were mine, found and stopped, and the gates rerun.
 
 Proof: the copy capture of 178 states, this harness driving the build at
 `4ecc06a` (`--tree`) and this one, is byte for byte the same. Gates on
-`d584880` (merged tree): `verify` (491 tests), `build:site`, `e2e` 86 of
-86 (47 behaviour, 39 copy/, every state checked, none asserting nothing).
+`21364be`, with 0.5.x at `231216d` merged in: `verify` (493 tests),
+`build:site`, `e2e` 86 of 86 (47 behaviour, 39 copy/, every state
+checked, none asserting nothing).
