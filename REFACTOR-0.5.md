@@ -625,7 +625,7 @@ it found, in its order, with where each is being done:
       dismissed with Start again (the web keeps it off screen). *Done*
       (`7e9baf4`): through the real `AppModel` with fakes; a failed remake
       is tried once; the relaunch case tested.
-- [ ] **5.6 One logical change per commit.** *The scenario:* e2e
+- [x] **5.6 One logical change per commit.** *The scenario:* e2e
       `later-answer-refolds` (`452069f`). `83ba983`, `60c9982` and
       `d231a5b` put behaviour changes inside refactor commits. That can't be
       undone, but "a later answer re-folds the log" gets a named
@@ -634,7 +634,7 @@ it found, in its order, with where each is being done:
       message kind (about 12 of 27 are sent today), and `view` per
       section, with 3.7. *Done* (`fa86090`, `38c57bd`): test/update.test.ts,
       every kind of message; view.test.ts 6, the sections.
-- [ ] **5.8 3.7 half old, half new**: `update.ts` is an effect helper
+- [x] **5.8 3.7 half old, half new**: `update.ts` is an effect helper
       (to `effects.ts`); `cook.ts` writes the model outside `update`; the
       settings, units, notes, learned and share sections are still DOM
       effects; `state` is read in 8 modules; the module `let`s moved, not
@@ -658,7 +658,9 @@ it found, in its order, with where each is being done:
       3.16's `share.answered` in ms (a key bump, 48); `nonisolated(unsafe)`
       6 → 12 and 417 declarations made public wholesale; `#if DEBUG` 75 →
       89; 2.11's sweep a fixed list, not "any `aet.*` not current"; the
-      `studies/` build outside `verify`.
+      `studies/` build outside `verify`. *Done:* the studies type-checked
+      (`297e3aa`); `sameCook` alike in both (`7de8775`); `Running.swift`'s
+      comment. The rest after the refactor, with 5.12's deletions.
 - [ ] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`
@@ -681,7 +683,7 @@ it found, in its order, with where each is being done:
         app's real load path, the web's store and iOS's `Stored`
         (`Cook.swift`) then `readRunningCook`, both accepting or refusing
         the same rows.
-  - [ ] *Holes 4-6, after the gates (1.1):* 4 and 5 done (`fa86090`,
+  - [x] *Holes 4-6, after the gates (1.1):* 6 done (`917aa8e`); 4 and 5 done (`fa86090`,
         `b6a0be3`, `1cf2c41`); `test/views.test.ts`'s import of every
         module is test/modulesLoad.test.ts (`3fd8aaa`). `edit.ts` and `update.ts` (a
         preview never commits; a settle commits once; forget-all in

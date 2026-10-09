@@ -11,8 +11,8 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 442 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 46 scenarios in headless
+layout (`UI.md`). `npm test` runs 493 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 47 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
@@ -73,15 +73,16 @@ These counts are the only ones in the documents. If you want a number, run
    restructure, core's `step`, its log and `readoutAt` (3.1-3.6), one
    `syncedKey` (3.8), the model id split (3.14), `policy.ts` by subject
    (3.15, 3.17) and fixtures a row a line (3.19). The web's page goes
-   through `update` and a pure view drawn once a frame (3.7, two parts of
-   three). The e2e now gate CI (1.1, 5.1). iOS runs the cook on core's
+   through `update` and a pure view drawn once a frame, its stores are
+   objects the runner holds, and nothing but the runner keeps the model
+   (3.7); every message has a unit test, and the runner is tested on fake
+   stores (5.7, 5.8). The e2e now gate CI (1.1, 5.1). iOS runs the cook on core's
    `step` and its readout is `readoutAt` (3.9), its settings one value read
    by core's `readSettings` as the web's are (3.11, `settings.v1`; a 0.3
    phone's settings start from the defaults, as its log does), the planner
    holds them as one value (3.10), and its logic keeps time in seconds
-   (3.12); its end-of-cook fixes are under Swift tests (5.5). Next: the
-   rest of 3.7 with a unit test per message; then the test deletions
-   (5.12), 3.13, 3.16, 3.18, 2.4 and 4.2, and what is left of 3.9 (Sharing's
+   (3.12); its end-of-cook fixes are under Swift tests (5.5). Next: the test
+   deletions (5.12) and the smaller items (5.11), 3.13, 3.16, 3.18, 2.4 and 4.2, and what is left of 3.9 (Sharing's
    `generation` tokens; `Cook` still runs the alarms, ring and card
    itself).
 
