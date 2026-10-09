@@ -58,7 +58,15 @@ These counts are the only ones in the documents. If you want a number, run
    the `onescreen` draft and iOS's `onescreen_ios`, for the owner on a
    phone), and red-teamed as built (`design/onescreen-review.md`): core's
    and the web's findings fixed with the `tighten2` draft (`DECISIONS.md`
-   99), and iOS's on the same core (9 October 2026). `0.4.x` is merged in as it moves.
+   99), and iOS's on the same core (9 October 2026). 0.5 is the next
+   release and `0.4.x` is retired (`DECISIONS.md` 102).
+6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
+   (section 0), the gates that make the code safe to change (1), what to
+   delete (2), the restructure (3) and the process (4), with the owner's
+   decisions marked (`DECISIONS.md` 102-107). In flight on 9 October: the
+   copy review queue (2.2) and the fresh results log (2.6, 2.8, 2.9, 2.11,
+   2.14). Next, needing no decision: the bugs in section 0 (0.2-0.8), then
+   the gates (1.1-1.9) before the restructure.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -518,6 +526,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
+| `REFACTOR-0.5.md` | the 0.5 red team's worklist: what is wrong now, the gates, what to delete, the restructure, the process; ticked as it lands |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
 | `design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
 | `design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |
