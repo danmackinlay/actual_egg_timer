@@ -252,11 +252,11 @@ extension Planner {
     ) async -> Answer {
         #if DEBUG
         let a = Perf.time(.answerAt) { answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: true
+            calibration, egg: egg, setup: setup, level: level, profile: profile
         ) }
         #else
         let a = answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: true
+            calibration, egg: egg, setup: setup, level: level, profile: profile
         )
         #endif
         return Answer(

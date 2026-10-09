@@ -359,7 +359,7 @@ export function wordLog(): EggRecord[] {
 function appDecision(c: Calibration): { time_s: number; meanTime_s: number; odds: number; tenths: number } {
   const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, CHECK_EGG, CHECK_SETUP)));
   const profile = oddsProfile(c, CHECK_EGG, CHECK_SETUP, grid);
-  const a = answerAt(c, CHECK_EGG, CHECK_SETUP, CHECK_LEVEL, profile, true);
+  const a = answerAt(c, CHECK_EGG, CHECK_SETUP, CHECK_LEVEL, profile);
   const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
   return { time_s: d.cookTime_s, meanTime_s: d.meanCookTime_s, odds: d.odds, tenths: d.oddsTenths };
 }

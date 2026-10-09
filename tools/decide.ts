@@ -61,7 +61,7 @@ const POTS: Pot[] = [
 /** The app's idle answer (core `answerAt`), without the odds' range: this
  *  tool measures the mean solve, not the slider's reach. */
 function meanSolve(c: Calibration, egg: Egg, setup: CookSetup, level: number): { sol: Solution; level: number } {
-  const a = answerAt(c, egg, setup, level, null, true);
+  const a = answerAt(c, egg, setup, level, null);
   return { sol: a.solution, level: a.level };
 }
 
@@ -594,7 +594,7 @@ if (run('certainty')) {
     const profile = oddsProfile(c, egg58, SETUP, grid);
     console.log(`${name}:`);
     for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
-      const a = answerAt(c, egg58, SETUP, level, profile, true);
+      const a = answerAt(c, egg58, SETUP, level, profile);
       const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
       const snapped = a.level === level ? '' : ` (snapped to ${a.level})`;
       console.log(`  ${level}${snapped}: ${d.cookTime_s.toFixed(0)} s, ${d.oddsTenths}/10: `

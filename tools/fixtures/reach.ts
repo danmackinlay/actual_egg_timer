@@ -57,7 +57,7 @@ function decidedRow(
   withOdds: boolean, nudge_s: number,
 ) {
   const odds = withOdds ? profile : null;
-  const a = answerAt(c, egg, setup, level, odds, true);
+  const a = answerAt(c, egg, setup, level, odds);
   const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, odds, nudge_s);
   return {
     withOdds: withOdds, asked: level, drawn_s: nudge_s,
@@ -89,14 +89,12 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   )));
   for (const withOdds of [false, true]) {
     for (const level of [0, 0.05, 0.41, 0.95, 1]) {
-      for (const snapRetry of [true, false]) {
-        const a = answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null, snapRetry);
-        reachAnswers.push({
-          profile: index, withOdds: withOdds, level: level, snapRetry: snapRetry,
-          kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level, lowOdds: a.lowOdds,
-          reachable: a.solution.reachable, cookTime_s: a.solution.result.cookTime_s,
-        });
-      }
+      const a = answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null);
+      reachAnswers.push({
+        profile: index, withOdds: withOdds, level: level,
+        kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level, lowOdds: a.lowOdds,
+        reachable: a.solution.reachable, cookTime_s: a.solution.result.cookTime_s,
+      });
     }
   }
   return {
@@ -118,7 +116,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     // above is null: JSON has no infinity.
     envelope: [0, 0.05, 0.13, 0.22, 0.29 + 1e-12, 0.41, 0.625, 0.99, 1].map((level) => {
       const bounds = envelopeBounds(profile, level);
-      const a = answerAt(c, DECIDE_EGG, rc.setup, level, profile, true);
+      const a = answerAt(c, DECIDE_EGG, rc.setup, level, profile);
       return {
         level: level,
         bounds: bounds === null ? null

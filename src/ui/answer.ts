@@ -51,7 +51,7 @@ export function whenCookSurfaceLands(replanCook: () => void): void {
  *  two steps, and only the idle path takes the second. */
 export function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null): LevelAnswer {
   const pot = idlePot(timeToBoil_s);
-  return answerAt(state.calib, pot.egg, pot.setup, level, odds, true);
+  return answerAt(state.calib, pot.egg, pot.setup, level, odds);
 }
 
 /**

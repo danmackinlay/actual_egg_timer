@@ -243,7 +243,7 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Dead code and parameters
 
-- [ ] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
+- [x] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
       both running cooks); only `tools/fixtures/reach.ts` passes `false`, and
       the doc at `reach.ts:395` says otherwise. Remove it and its fixture
       rows. S.

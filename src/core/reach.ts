@@ -391,18 +391,14 @@ export interface LevelAnswer {
  * the level it moves to - so the numbers on screen are for the egg on offer
  * rather than for one that was refused. The retry is kept only if it
  * reaches. Then whether the odds at the level answered are warned of.
- *
- * `snapRetry` is false for an egg already in the water: its target is
- * frozen, so a solve at a snapped level would answer for an egg nobody is
- * cooking.
  */
 export function answerAt(
-  c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null, snapRetry: boolean,
+  c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null,
 ): LevelAnswer {
   const params = calibrationParams(c);
   const solution = solveCookTime(egg, setup, params, calibrationDoneness(c, level));
   const verdict = verdictFor(solution, level);
-  if (snapRetry && verdict.snapTo !== null) {
+  if (verdict.snapTo !== null) {
     const retry = solveCookTime(egg, setup, params, calibrationDoneness(c, verdict.snapTo));
     if (retry.reachable) {
       return { solution: retry, verdict: verdict, level: verdict.snapTo, lowOdds: lowOddsAt(profile, verdict.snapTo) };
