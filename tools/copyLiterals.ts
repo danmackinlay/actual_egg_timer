@@ -292,7 +292,7 @@ const NOT_COPY: Record<string, string> = {
   'playing {} frames at {} Hz{}': 'log message, never shown',
   ', looped': 'log message, never shown',
   'no sound to play: its file is missing or unreadable': 'log message, never shown',
-  '2026-10-e10': 'record model id, never shown',
+  '2026-10-e10': 'the model and likelihood ids, never shown',
   '2026-09': 'the literature population\'s id, never shown',
   population: 'bundle resource name (Calibration.swift)',
   'sharing.v1': 'UserDefaults key (Sharing.swift)',

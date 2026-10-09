@@ -163,8 +163,8 @@ export function withUnrelatedWord(p: number): number {
  * 1h in test/infer.test.ts), so moving an anchor in `DONENESS_ANCHORS`
  * fails it rather than silently rescoring every word already given. Whoever
  * moves one decides then: keep these and let the slider's words and the
- * answers' bands part, or move these too and bump `MODEL_ID` so the stored
- * words are refolded under the new meaning.
+ * answers' bands part, or move these too and bump `LIKELIHOOD_ID` (and so
+ * `MODEL_ID`) so the stored words are refolded under the new meaning.
  */
 export const YOLK_WORD_CUTS: number[] = [
   -0.7948033966179053, 0.1486189016043269, 1.0690308998699196, 2.4266385973116686,
@@ -368,7 +368,7 @@ export interface Population {
 /** The literature's population: the prior every cook drew from before E7,
  *  number for number, less the carryover, which left the particle in 0.5
  *  (DECISIONS.md 95; a prior drawn from it is not the old one, and
- *  `MODEL_ID` says so). '2026-09' is the id E1's records gave it. */
+ *  `LIKELIHOOD_ID` says so). '2026-09' is the id E1's records gave it. */
 export const LITERATURE_POPULATION: Population = {
   id: '2026-09',
   alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },

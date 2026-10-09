@@ -3,6 +3,7 @@
   "version": 1,
   "prior": "2026-09",
   "model": "2026-10-e10",
+  "likelihood": "2026-10-e10",
   "cases": [
     {
       "why": "canonical",
@@ -9690,7 +9691,7 @@
   ],
   "load": {
     "population": "this-population",
-    "model": "this-model",
+    "likelihood": "this-likelihood",
     "cases": [
       {
         "why": "nothing stored, or nothing of this format: dropped",
@@ -9701,7 +9702,7 @@
           "folded": null,
           "records": null,
           "population": null,
-          "model": null
+          "likelihood": null
         },
         "decision": {
           "path": "fresh",
@@ -9720,7 +9721,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "loaded",
@@ -9739,7 +9740,7 @@
           "folded": 3,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "loaded",
@@ -9758,7 +9759,7 @@
           "folded": 0,
           "records": 0,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "loaded",
@@ -9777,7 +9778,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "loaded",
@@ -9796,7 +9797,7 @@
           "folded": 2,
           "records": null,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -9815,7 +9816,7 @@
           "folded": 2,
           "records": null,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -9834,7 +9835,7 @@
           "folded": 2,
           "records": null,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -9853,7 +9854,7 @@
           "folded": 2,
           "records": null,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -9864,7 +9865,7 @@
         }
       },
       {
-        "why": "the log unreadable, another model: still rebased",
+        "why": "the log unreadable, another likelihood: still rebased",
         "read": {
           "readable": true,
           "base": null,
@@ -9872,7 +9873,7 @@
           "folded": 2,
           "records": null,
           "population": "this-population",
-          "model": "another-model"
+          "likelihood": "another-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -9891,7 +9892,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9910,7 +9911,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9929,7 +9930,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9948,7 +9949,7 @@
           "folded": null,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9967,7 +9968,7 @@
           "folded": 2,
           "records": 3,
           "population": "another-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9978,7 +9979,7 @@
         }
       },
       {
-        "why": "folded under another model",
+        "why": "folded under another likelihood",
         "read": {
           "readable": true,
           "base": null,
@@ -9986,7 +9987,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "another-model"
+          "likelihood": "another-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -9997,7 +9998,7 @@
         }
       },
       {
-        "why": "no model named",
+        "why": "no likelihood named",
         "read": {
           "readable": true,
           "base": null,
@@ -10005,7 +10006,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": null
+          "likelihood": null
         },
         "decision": {
           "path": "rebuild",
@@ -10024,7 +10025,7 @@
           "folded": 2,
           "records": 3,
           "population": null,
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -10035,7 +10036,7 @@
         }
       },
       {
-        "why": "another model, on a base: the base stays",
+        "why": "another likelihood, on a base: the base stays",
         "read": {
           "readable": true,
           "base": "sound",
@@ -10043,7 +10044,7 @@
           "folded": 2,
           "records": 3,
           "population": "this-population",
-          "model": "another-model"
+          "likelihood": "another-likelihood"
         },
         "decision": {
           "path": "rebuild",
@@ -10062,7 +10063,7 @@
           "folded": 4,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -10081,7 +10082,7 @@
           "folded": 1,
           "records": 0,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -10100,7 +10101,7 @@
           "folded": 4,
           "records": 3,
           "population": "this-population",
-          "model": "this-model"
+          "likelihood": "this-likelihood"
         },
         "decision": {
           "path": "rebased",
@@ -10111,7 +10112,7 @@
         }
       },
       {
-        "why": "ahead, and another model: replayed first",
+        "why": "ahead, and another likelihood: replayed first",
         "read": {
           "readable": true,
           "base": null,
@@ -10119,7 +10120,7 @@
           "folded": 4,
           "records": 3,
           "population": "this-population",
-          "model": "another-model"
+          "likelihood": "another-likelihood"
         },
         "decision": {
           "path": "rebuild",
