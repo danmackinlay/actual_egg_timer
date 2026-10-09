@@ -1,5 +1,6 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerShared
 
 /// The strip under the doneness slider: where this pan works.
 ///

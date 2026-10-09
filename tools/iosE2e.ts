@@ -1,9 +1,9 @@
 // `npm run ios:e2e`: the checks agents kept doing by hand on the simulator,
 // scripted. A Debug build on a simulator of the script's own, the app's clock
 // frozen at each moment a scenario checks and stepped from one to the next
-// (`-clockAt`, `-clockSpeed 0`, `Library/Caches/aet.clock`;
-// ios/App/AppClock.swift), taps by launch argument (`-uiDo`,
-// ios/App/Screenshots.swift), and what happened read from the app's debug log
+// (`-clockAt`, `-clockSpeed 0`, `Library/Caches/aet.clock`; AppClock.swift
+// in ios/EggTimerCore/Sources/EggTimerApp), taps by launch argument (`-uiDo`,
+// Screenshots.swift there), and what happened read from the app's debug log
 // (`Library/Caches/aet.log`, an event a line, each a JSON object:
 // `Screenshots.Event`) and its stored state (the prefs plist, through
 // plistlib). After every step the script waits until the app says it has

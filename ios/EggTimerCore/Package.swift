@@ -11,12 +11,25 @@ import PackageDescription
 // The words are a second, smaller library in the same package. EggTimerCopy is
 // the catalogue renderer (src/core/copy.ts on the web), and it is separate only
 // so that the widget extension can link it without linking the physics.
+//
+// Above the core, two libraries of the app's own (REFACTOR-0.5 1.2), so that
+// what the app does with the core is tested by `swift test` too, without a
+// simulator. EggTimerShared is what the app and its widget both compile: the
+// catalogue as the app loads it (`tr`) and the Live Activity's contract; the
+// widget links it and not the physics. EggTimerApp is the app's logic: the
+// cook, the planner, the stores, the clock, the decision surfaces, the
+// corrections. It imports Foundation, Observation and the libraries here, and
+// reaches what only an iPhone has - notifications, sound, the Lock Screen,
+// sharing, VoiceOver - through protocols the app fills at launch
+// (`Services`).
 let package = Package(
     name: "EggTimerCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "EggTimerCore", targets: ["EggTimerCore"]),
-        .library(name: "EggTimerCopy", targets: ["EggTimerCopy"])
+        .library(name: "EggTimerCopy", targets: ["EggTimerCopy"]),
+        .library(name: "EggTimerShared", targets: ["EggTimerShared"]),
+        .library(name: "EggTimerApp", targets: ["EggTimerApp"])
     ],
     targets: [
         // Optimised in every configuration. The physics is a hot numeric loop,
@@ -34,6 +47,8 @@ let package = Package(
             swiftSettings: [.unsafeFlags(["-O"], .when(configuration: .debug))]
         ),
         .target(name: "EggTimerCopy"),
+        .target(name: "EggTimerShared", dependencies: ["EggTimerCopy"]),
+        .target(name: "EggTimerApp", dependencies: ["EggTimerCore", "EggTimerCopy", "EggTimerShared"]),
         .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"])
     ]
 )

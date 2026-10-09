@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// Where the egg screen can push to: Settings, and Help, at a section or at
 /// the top.

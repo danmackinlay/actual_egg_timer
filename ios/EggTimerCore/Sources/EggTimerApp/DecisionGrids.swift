@@ -8,8 +8,8 @@ import EggTimerCore
 /// waits for one. Two asks for the same pot share one build, and the build is
 /// not cancelled with the solve that asked for it: a pot that comes back should
 /// not be built twice. The web app keeps the same cache (`decisionGrid`).
-actor DecisionGrids {
-    static let shared = DecisionGrids()
+public actor DecisionGrids: DecisionSurfaces {
+    public static let shared = DecisionGrids()
 
     /// The pot on screen, the one before, and a cold start's measured ramp.
     private static let kept = 6
@@ -25,11 +25,11 @@ actor DecisionGrids {
         return String(decoding: data, as: UTF8.self)
     }
 
-    func cached(_ inputs: DecisionInputs) -> DoseGrid? {
+    public func cached(_ inputs: DecisionInputs) -> DoseGrid? {
         done[Self.key(inputs)]
     }
 
-    func grid(_ inputs: DecisionInputs) async -> DoseGrid {
+    public func grid(_ inputs: DecisionInputs) async -> DoseGrid {
         let key = Self.key(inputs)
         if let grid = done[key] { return grid }
         if let running = building[key] { return await running.value }
@@ -66,7 +66,7 @@ actor DecisionGrids {
     /// A cheap summary of where the posterior stands: the count and the
     /// weighted sums of every dimension. Any fold moves at least one of them.
     /// The web app's `posteriorPrint`.
-    nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
+    public nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
         var a = 0.0, b = 0.0, d = 0.0, e = 0.0
         let post = c.posterior
         for (p, w) in zip(post.particles, post.weights) {
@@ -78,14 +78,14 @@ actor DecisionGrids {
         return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
     }
 
-    func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
+    public func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
         profiles[Self.profileKey(inputs, c)]
     }
 
     /// The odds at every level for this pot and posterior, on the pot's
     /// surface (built first if need be), off the main actor: a couple of dozen
     /// solves and decisions. Two asks share one build.
-    func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile {
+    public func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile {
         let key = Self.profileKey(inputs, c)
         if let p = profiles[key] { return p }
         if let running = profileBuilds[key] { return await running.value }

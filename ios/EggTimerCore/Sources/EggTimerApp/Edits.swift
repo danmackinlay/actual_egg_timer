@@ -1,13 +1,13 @@
 import Foundation
 import Observation
-import UIKit
 import EggTimerCore
 import EggTimerCopy
+import EggTimerShared
 
 /// A control a correction can come from, for "another control touched", and
 /// the settings and the cook's choices each one makes. The web's `FIELDS`
 /// (src/ui/edit.ts), plus the start's time.
-enum ControlField: Hashable, CaseIterable {
+public enum ControlField: Hashable, CaseIterable {
     case level, mass, eggFrom, customStart, room, start, afterBoil, cooling, water, eggCount, altitude
     /// The start clause's time, which is the cook's own and no setting.
     case startTime
@@ -15,22 +15,22 @@ enum ControlField: Hashable, CaseIterable {
 
 /// The controls as the planner holds them, in its own terms: what a
 /// correction is measured against (`Edits.base`).
-struct Controls: Equatable {
-    var doneness: Double
-    var sizeIndex: Int
-    var weighedMassG: Double
-    var startTemp: EggFrom
-    var customStartC: Double
-    var probe: Bool
-    var roomC: Double?
-    var start: StartChoice
-    var heatOff: Bool
-    var cooling: Cooling
-    var waterLitres: Double
-    var eggCount: Int
-    var altitudeM: Double
+public struct Controls: Equatable {
+    public var doneness: Double
+    public var sizeIndex: Int
+    public var weighedMassG: Double
+    public var startTemp: EggFrom
+    public var customStartC: Double
+    public var probe: Bool
+    public var roomC: Double?
+    public var start: StartChoice
+    public var heatOff: Bool
+    public var cooling: Cooling
+    public var waterLitres: Double
+    public var eggCount: Int
+    public var altitudeM: Double
 
-    @MainActor init(_ p: Planner) {
+    @MainActor public init(_ p: Planner) {
         doneness = p.doneness
         sizeIndex = p.sizeIndex
         weighedMassG = p.weighedMassG
@@ -47,7 +47,7 @@ struct Controls: Equatable {
     }
 
     /// Whether `field` says the same in both.
-    func same(_ field: ControlField, _ o: Controls) -> Bool {
+    public func same(_ field: ControlField, _ o: Controls) -> Bool {
         switch field {
         case .level: doneness == o.doneness
         case .mass: sizeIndex == o.sizeIndex && weighedMassG == o.weighedMassG
@@ -65,12 +65,12 @@ struct Controls: Equatable {
     }
 
     /// The fields that differ from `o`.
-    func changed(from o: Controls) -> [ControlField] {
+    public func changed(from o: Controls) -> [ControlField] {
         ControlField.allCases.filter { !same($0, o) }
     }
 
     /// `field` as `o` has it.
-    mutating func take(_ field: ControlField, from o: Controls) {
+    public mutating func take(_ field: ControlField, from o: Controls) {
         switch field {
         case .level: doneness = o.doneness
         case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
@@ -90,7 +90,7 @@ struct Controls: Equatable {
 
 extension CookChoices {
     /// `field` as `o` has it: the choices each control makes.
-    mutating func take(_ field: ControlField, from o: CookChoices) {
+    public mutating func take(_ field: ControlField, from o: CookChoices) {
         switch field {
         case .level: level = o.level
         case .mass: massKg = o.massKg; massFrom = o.massFrom; sizeTable = o.sizeTable
@@ -138,17 +138,17 @@ extension CookChoices {
 /// are written to the settings, for the next cook.
 @Observable
 @MainActor
-final class Edits {
+public final class Edits {
     /// How long a tap's change settles before it is committed, and how long
     /// the aimed-for egg stays after the last change (design section 5).
-    static let settle: Duration = .milliseconds(1500)
+    public static let settle: Duration = .milliseconds(1500)
     /// A − or + held this long has begun to repeat: a hold, committed on
     /// release.
-    static let held: Duration = .milliseconds(400)
+    public static let held: Duration = .milliseconds(400)
     /// How long a burst of changes waits before the aimed-for egg is planned.
-    static let previewDelay: Duration = .milliseconds(90)
+    public static let previewDelay: Duration = .milliseconds(90)
 
-    @ObservationIgnored weak var model: AppModel?
+    @ObservationIgnored public weak var model: AppModel?
 
     /// The controls as last drawn from the cook, or committed; nil while
     /// idle. A field that differs from this is one the cook changed.
@@ -157,7 +157,7 @@ final class Edits {
     @ObservationIgnored private var seen: Controls?
     /// Whether the controls hold a change not yet committed, and from which
     /// control.
-    @ObservationIgnored private(set) var pending = false
+    @ObservationIgnored public private(set) var pending = false
     @ObservationIgnored private var group: ControlField?
     /// A finger down on a control: when, on which, and whether the slider.
     @ObservationIgnored private var down: (at: ContinuousClock.Instant, group: ControlField, slider: Bool)?
@@ -178,22 +178,22 @@ final class Edits {
     @ObservationIgnored private var previewing = 0
     /// Whether a change is settling, being previewed, or letting its aimed-for
     /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
-    var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
+    public var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
     #endif
 
     /// When the eggs went in as the start's panel says, while a cook runs:
     /// the cook's own, or a correction of it in hand. Nil while idle.
-    private(set) var startInHand: Double?
+    public private(set) var startInHand: Double?
     /// Why the start's − or + went no further, and the time it stopped at.
-    private(set) var startLimit: (kind: StartLimit, atS: Double)?
+    public private(set) var startLimit: (kind: StartLimit, atS: Double)?
     /// The slider's reading of a change in hand: its level and peak yolk at
     /// once, and the plan's solution when it lands.
-    private(set) var aim: (level: Double, peakYolkC: Double, solution: Solution?)?
+    public private(set) var aim: (level: Double, peakYolkC: Double, solution: Solution?)?
 
-    enum StartLimit: Equatable {
+    public enum StartLimit: Equatable {
         case now, boil, pull, earliest
 
-        var key: String {
+        public var key: String {
             switch self {
             case .now: "controls.startedAt.latestNow"
             case .boil: "controls.startedAt.latestBoil"
@@ -204,7 +204,7 @@ final class Edits {
     }
 
     /// When the eggs went in as the panel shows it: in hand, or the cook's.
-    var shownStart: Double? { startInHand ?? cook?.running?.startedAtS }
+    public var shownStart: Double? { startInHand ?? cook?.running?.startedAtS }
 
     private var planner: Planner? { model?.planner }
     private var cook: Cook? { model?.cook }
@@ -213,7 +213,7 @@ final class Edits {
 
     /// A cook is running and its controls are drawn from it afresh (a start,
     /// a relaunch): nothing is in hand.
-    func begin() {
+    public func begin() {
         guard let planner else { return }
         clearTasks()
         generation &+= 1
@@ -231,7 +231,7 @@ final class Edits {
 
     /// The cook has ended: whatever was in hand goes with it (committed
     /// first by the caller), and the controls answer to the idle screen again.
-    func end() {
+    public func end() {
         if previewedLevel, let base { restoreLevel(base.doneness) }
         clearTasks()
         generation &+= 1
@@ -260,7 +260,7 @@ final class Edits {
     /// A control's value changed while a cook runs (the planner, after the
     /// control has taken it in), or the start's time (`group` given): the
     /// change is in hand until it is committed.
-    func controlsChanged(_ given: ControlField? = nil) {
+    public func controlsChanged(_ given: ControlField? = nil) {
         guard let planner, cook?.running != nil, base != nil else { return }
         let now = Controls(planner)
         let field = given ?? (seen.map { now.changed(from: $0).first } ?? nil)
@@ -297,7 +297,7 @@ final class Edits {
     /// A finger comes down on a control (the slider, a − or +): another
     /// control than the one with a change in hand commits it, and the
     /// gesture begins.
-    func fingerDown(_ field: ControlField, slider: Bool = false) {
+    public func fingerDown(_ field: ControlField, slider: Bool = false) {
         guard cook?.running != nil, base != nil else { return }
         if pending, group != field { commit() }
         down = (.now, field, slider)
@@ -307,7 +307,7 @@ final class Edits {
 
     /// The finger lifts: a drag of the slider, or a − or + held, commits
     /// now; a tap settles first.
-    func fingerUp() {
+    public func fingerUp() {
         guard let d = down else { return }
         down = nil
         guard pending else { return }
@@ -320,14 +320,14 @@ final class Edits {
 
     /// Another control touched that is not one of the cook's (a clause, a
     /// button that moves the cook on): what is in hand is committed now.
-    func touchedElsewhere() {
+    public func touchedElsewhere() {
         if pending { commit() }
     }
 
     /// The app leaves the screen (`scenePhase` no longer active): what is in
     /// hand is committed now, so a kill from the app switcher inside the
     /// settle loses nothing (onescreen review 3); a finger down then is gone.
-    func leaving() {
+    public func leaving() {
         down = nil
         guard pending else { return }
         #if DEBUG
@@ -413,7 +413,7 @@ final class Edits {
     /// level is not corrected (DECISIONS.md 98): the slider only previewed,
     /// and goes back to the level the egg was pulled at; nothing is written
     /// for it. The aimed-for egg stays until a settle after the last change.
-    func commit(except: ControlField? = nil) {
+    public func commit(except: ControlField? = nil) {
         settleTask?.cancel()
         settleTask = nil
         guard pending, let model, let planner, let running = model.cook.running, let base else { return }
@@ -486,7 +486,7 @@ final class Edits {
     /// `earliestStartS`, `latestStartS`): a correction in hand like any
     /// other, committed the same way. Whether it moved.
     @discardableResult
-    func stepStart(up: Bool) -> Bool {
+    public func stepStart(up: Bool) -> Bool {
         guard let running = cook?.running, base != nil else { return false }
         let from = startInHand ?? running.startedAtS
         let nowS = AppClock.now.timeIntervalSince1970
@@ -511,7 +511,7 @@ final class Edits {
         // `aria-live`), since the value it reads has not changed.
         if let limit {
             let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
-            UIAccessibility.post(notification: .announcement, argument: said)
+            Services.announce(said)
             #if DEBUG
             Screenshots.log(.announce(text: said))
             #endif

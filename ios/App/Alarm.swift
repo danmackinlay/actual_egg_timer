@@ -2,6 +2,8 @@ import EggTimerCore
 import EggTimerCopy
 import Foundation
 import UserNotifications
+import EggTimerApp
+import EggTimerShared
 
 /// The alarm, which is the whole reason this is a native app.
 ///
@@ -181,3 +183,6 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         #endif
     }
 }
+
+/// What the app's logic asks of the alarms (`Services`, in EggTimerApp).
+extension Alarm: AlarmScheduling {}

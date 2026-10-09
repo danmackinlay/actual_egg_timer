@@ -1,5 +1,7 @@
 import ActivityKit
 import Foundation
+import EggTimerApp
+import EggTimerShared
 
 /// The one Live Activity a cook is allowed to have.
 ///
@@ -88,4 +90,17 @@ enum LiveActivity {
         // system should grey it out rather than keep presenting it as live.
         ActivityContent(state: state, staleDate: state.ends.addingTimeInterval(90))
     }
+}
+
+/// The card as the app's logic reaches it (`Services.card`, in EggTimerApp).
+struct LiveActivityCard: LockScreenCard {
+    func start(_ attributes: CookActivity, state: CookActivity.ContentState) async {
+        await LiveActivity.start(attributes, state: state)
+    }
+    func update(_ state: CookActivity.ContentState) async { await LiveActivity.update(state) }
+    func endAll() async { await LiveActivity.endAll() }
+    func endAtTheirEnds() async { await LiveActivity.endAtTheirEnds() }
+    #if DEBUG
+    @MainActor func logAll(_ when: String) { LiveActivity.logAll(when) }
+    #endif
 }

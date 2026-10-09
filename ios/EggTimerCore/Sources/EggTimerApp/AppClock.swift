@@ -38,7 +38,71 @@ import Foundation
 /// countdown reaches zero with the app's but counts real seconds (8:00 to go
 /// reads 0:08 at ×60). Sharing sends nothing, and an egg recorded under it
 /// is marked in its `appVersion` (`mark`) and never sent.
-enum AppClock {
+public enum AppClock {
+    /// The clock cook time is read from: the launch's (`LaunchClock`), or a
+    /// test's.
+    nonisolated(unsafe) public static var source: any CookClock = LaunchClock.Source()
+
+    /// Now, in cook time.
+    public static var now: Date { source.now }
+    /// A moment on the system's clock, in cook time.
+    public static func app(_ system: Date) -> Date { source.app(system) }
+    /// A moment in cook time, on the system's clock: when it will come.
+    public static func real(_ app: Date) -> Date { source.real(app) }
+    /// `real` undone, for the debug log.
+    public static func fromReal(_ system: Date) -> Date { source.fromReal(system) }
+    /// The system's seconds from now until a moment in cook time.
+    public static func realInterval(until app: Date) -> TimeInterval { source.realInterval(until: app) }
+    /// Wait this much cook time.
+    public static func sleep(_ cookSeconds: Double) async throws { try await source.sleep(cookSeconds) }
+    /// A redraw period in the system's seconds for one in cook time.
+    public static func period(_ cookSeconds: Double) -> TimeInterval { source.period(cookSeconds) }
+    /// Whether this launch's clock is, or has been, not the system's.
+    public static var altered: Bool { source.altered }
+
+    #if DEBUG
+    /// What marks a record made under a clock not the system's.
+    private static let marker = " (debug clock)"
+
+    /// The app's version as a record made now carries it: marked while the
+    /// clock is altered.
+    public static func mark(_ appVersion: String) -> String {
+        altered ? appVersion + marker : appVersion
+    }
+
+    /// Whether a record was made under an altered clock: never sent.
+    public static func marked(_ appVersion: String) -> Bool { appVersion.hasSuffix(marker) }
+
+    /// Start reading steps, if this launch's clock can take them. Once, at
+    /// launch.
+    public static func listen() { LaunchClock.listen() }
+    #else
+    public static func mark(_ appVersion: String) -> String { appVersion }
+    public static func marked(_ appVersion: String) -> Bool { false }
+    #endif
+
+    /// The system's clock, for what is not cook time: sharing's dealings with
+    /// the server and Apple, and the card's own dates, which the system
+    /// counts.
+    public static var system: Date { Date() }
+}
+
+/// What cook time is read from (`AppClock`): the launch's clock in the app,
+/// a test's own in the tests, which moves only when the test moves it.
+public protocol CookClock: Sendable {
+    var now: Date { get }
+    func app(_ system: Date) -> Date
+    func real(_ app: Date) -> Date
+    func fromReal(_ system: Date) -> Date
+    func realInterval(until app: Date) -> TimeInterval
+    func sleep(_ cookSeconds: Double) async throws
+    func period(_ cookSeconds: Double) -> TimeInterval
+    var altered: Bool { get }
+}
+
+/// The launch's clock: the system's, or in a DEBUG build one the launch
+/// arguments and the step file move (below).
+enum LaunchClock {
     #if DEBUG
     /// Where the clock stands: cook time `app` at the system's `system`,
     /// running on at `speed` (0 frozen).
@@ -135,17 +199,8 @@ enum AppClock {
         return s > 0 ? max(cookSeconds / s, 0.1) : min(max(cookSeconds, 0.1), 1)
     }
 
-    /// What marks a record made under a clock not the system's.
-    private static let marker = " (debug clock)"
 
-    /// The app's version as a record made now carries it: marked while the
-    /// clock is altered.
-    static func mark(_ appVersion: String) -> String {
-        altered ? appVersion + marker : appVersion
-    }
 
-    /// Whether a record was made under an altered clock: never sent.
-    static func marked(_ appVersion: String) -> Bool { appVersion.hasSuffix(marker) }
 
     // MARK: - Stepped from outside
 
@@ -204,12 +259,19 @@ enum AppClock {
     static func realInterval(until app: Date) -> TimeInterval { app.timeIntervalSinceNow }
     static func sleep(_ cookSeconds: Double) async throws { try await Task.sleep(for: .seconds(cookSeconds)) }
     static func period(_ cookSeconds: Double) -> TimeInterval { cookSeconds }
-    static func mark(_ appVersion: String) -> String { appVersion }
-    static func marked(_ appVersion: String) -> Bool { false }
     #endif
+}
 
-    /// The system's clock, for what is not cook time: sharing's dealings with
-    /// the server and Apple, and the card's own dates, which the system
-    /// counts.
-    static var system: Date { Date() }
+extension LaunchClock {
+    /// The launch's clock as a `CookClock`.
+    struct Source: CookClock {
+        var now: Date { LaunchClock.now }
+        func app(_ system: Date) -> Date { LaunchClock.app(system) }
+        func real(_ app: Date) -> Date { LaunchClock.real(app) }
+        func fromReal(_ system: Date) -> Date { LaunchClock.fromReal(system) }
+        func realInterval(until app: Date) -> TimeInterval { LaunchClock.realInterval(until: app) }
+        func sleep(_ cookSeconds: Double) async throws { try await LaunchClock.sleep(cookSeconds) }
+        func period(_ cookSeconds: Double) -> TimeInterval { LaunchClock.period(cookSeconds) }
+        var altered: Bool { LaunchClock.altered }
+    }
 }

@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// Settings: what belongs to the kitchen rather than the egg (UI.md sections
 /// 2 and 3, the web's `#settings`). Set once, cook many, so it is a page of its

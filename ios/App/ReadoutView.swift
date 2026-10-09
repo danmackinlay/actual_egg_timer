@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// The phase, the time, and the line under it; then how sure I am.
 ///

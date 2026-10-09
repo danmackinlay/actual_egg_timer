@@ -1,5 +1,7 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerApp
+import EggTimerShared
 
 /// A section of Help, which a link on the main screen can open at.
 enum HelpSection: String, CaseIterable, Hashable, Identifiable {

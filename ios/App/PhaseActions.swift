@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// Under the controls, in every phase: the one slot for a longer line, and
 /// the hint and the button that move the cook on.

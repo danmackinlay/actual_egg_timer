@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import EggTimerCore
 import EggTimerCopy
+import EggTimerShared
 
 /// The egg screen's two objects and the wiring between them: the Planner
 /// (every input, the solve and the learning) and the Cook (the phase machine
@@ -10,25 +11,27 @@ import EggTimerCopy
 /// whichever view has the button.
 @Observable
 @MainActor
-final class AppModel {
-    let planner = Planner()
-    let cook = Cook()
+public final class AppModel {
+    public let planner = Planner()
+    public let cook = Cook()
     /// Corrections while a cook runs (`Edits`).
-    let edits = Edits()
+    public let edits = Edits()
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
-    private(set) var starting = false
+    public private(set) var starting = false
     /// The egg a change in hand aims for, while a control is held during a
     /// cook and for a moment after (design/one-screen.md section 5): drawn
     /// in place of the live egg. Nil otherwise.
-    var aimView: SectionView?
+    public var aimView: SectionView?
+
+    public init() {}
 
     /// The screen is up: wire the cook to the planner, read what was stored,
     /// and pick up a cook that was running.
-    func appear() {
+    public func appear() {
         edits.model = self
         // Install the notification delegate before anything can fire.
-        Alarm.shared.activate()
+        Services.alarm.activate()
         // Every plan of a running cook reads the calibration as it stands.
         cook.calibration = { [planner] in planner.calibration }
         // Whether the cooling's alarm asks for a probe reading.
@@ -41,11 +44,11 @@ final class AppModel {
         #if DEBUG
         planner.seed(Screenshots.seedEggs)
         Perf.drive(planner)
-        LiveActivity.logAll("launch")
+        Services.card.logAll("launch")
         Task {
             try? await Task.sleep(for: .seconds(3))
-            LiveActivity.logAll("launch+3s")
-            _ = await Alarm.shared.pendingDeadlines()
+            Services.card.logAll("launch+3s")
+            _ = await Services.alarm.pendingDeadlines()
         }
         #endif
         // After the calibration is loaded, which the restored cook's plan
@@ -78,7 +81,7 @@ final class AppModel {
         // log is final but the stored cook's, until Start again or until it is
         // too old to pick back up (`openEggId`), so the server never has an
         // egg that can still change.
-        Sharing.shared.start(host: Sharing.Host(
+        Services.sharing.start(host: ShareHost(
             log: { [planner] in planner.kept.log },
             finalCount: { [weak self, planner, cook] in
                 // Nor the egg whose record is being made again as its cook
@@ -93,18 +96,18 @@ final class AppModel {
         // been sent: a later answer then changes nothing already shared. Here,
         // after sharing has read what it sent and before it sends anything.
         if cook.feedbackGiven, cook.phase == .done, let egg = cook.eggRecord(yolk: nil),
-           Sharing.shared.state.sent < planner.kept.log.count {
+           Services.sharing.state.sent < planner.kept.log.count {
             planner.resumeAnswers(egg)
         }
         // The planner solved before sharing was read, so without the nudge
         // (E8); a cook who is sharing has the time solved again with it. Not
         // the other way round: sharing reads the log, which the planner loads.
-        if Sharing.shared.state.on { planner.refresh() }
+        if Services.sharing.state.on { planner.refresh() }
     }
 
     /// Which words the readout says in a phase: core's `phaseKeys`, from the
     /// running cook's plan while one runs and from the controls while idle.
-    func keys(_ phase: Phase) -> PhaseKeys {
+    public func keys(_ phase: Phase) -> PhaseKeys {
         let plan = cook.plan
         let setup = plan?.setup
         return phaseKeys(PhaseFacts(
@@ -119,7 +122,7 @@ final class AppModel {
     }
 
     /// "Eggs in", tapped: one cook, however many taps.
-    func eggsIn() {
+    public func eggsIn() {
         guard !starting else { return }
         starting = true
         Task { await startCook() }
@@ -159,7 +162,7 @@ final class AppModel {
     /// Cancel, from any running phase: a pan the cook timed is remembered
     /// (`cookEnding`), and the idle screen solves again for the inputs as
     /// they stand.
-    func cancel() {
+    public func cancel() {
         edits.touchedElsewhere()
         edits.end()
         if let boil = cook.ending()?.boil { planner.rememberBoil(boil) }
@@ -178,7 +181,7 @@ final class AppModel {
     /// the usual case - has it made first, in place of the egg logged, and
     /// only then is the cook forgotten and the egg final (`remake`,
     /// onescreen review 1.2).
-    func startAgain() {
+    public func startAgain() {
         edits.touchedElsewhere()
         edits.end()
         var stale: RunningCook?
@@ -203,13 +206,13 @@ final class AppModel {
             remakeThenEnd(stale, logged: logged, before: before)
         } else {
             // The egg just finished is final now: no answer can be added to it.
-            Sharing.shared.sendFinal()
+            Services.sharing.sendFinal()
         }
     }
 
     /// How many ended cooks' records are being made again (`remakeThenEnd`):
     /// their eggs are not final until they are.
-    private(set) var remaking = 0
+    public private(set) var remaking = 0
 
     /// An ended cook whose record could not be made again (`remakeThenEnd`),
     /// left stored for the next launch to make: its egg is not final until
@@ -243,7 +246,7 @@ final class AppModel {
                 #endif
                 relogCorrected(made, logged: logged)
                 Cook.forgetStored(idMs: stale.idMs)
-                Sharing.shared.sendFinal()
+                Services.sharing.sendFinal()
                 return
             }
             unremade = true
@@ -260,7 +263,7 @@ final class AppModel {
     /// cooked through is logged as Start again logs it (running-cook review
     /// 2.2, 2.3). A cook not yet planned - the moment after Eggs in - is
     /// not judged: `stillOpen` is false without a plan.
-    func endIfNoLongerOpen() {
+    public func endIfNoLongerOpen() {
         guard cook.running != nil, cook.plan != nil, !cook.stillOpen() else { return }
         startAgain()
     }
@@ -271,7 +274,7 @@ final class AppModel {
     /// plan. A plan made after the egg's own fold - at a relaunch at Done -
     /// reads a posterior that already holds the egg, so a record from it is
     /// not what was cooked to. Before an answer, the cook's own.
-    func liveRecord() -> EggRecord? {
+    public func liveRecord() -> EggRecord? {
         cook.feedbackGiven ? planner.kept.log.last : cook.eggRecord(yolk: nil)
     }
 
@@ -284,7 +287,7 @@ final class AppModel {
     /// relaunch, when core will not make the record (it would have no
     /// forecast), is held and made when the plan on the surface lands
     /// (`answerHeld`), a second or so later (running-cook review 1.3).
-    func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) {
+    public func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) {
         // An egg already final takes no more answers (running-cook review 2.3).
         guard cook.stillOpen() else {
             endIfNoLongerOpen()
@@ -322,22 +325,22 @@ final class AppModel {
     /// Full rolling boil, the egg out, and the answers to "still in the
     /// water?": a correction still settling is committed first, so the
     /// button acts on the cook as the controls say it is.
-    func boil() {
+    public func boil() {
         edits.touchedElsewhere()
         cook.boil()
     }
 
-    func pulledOut() {
+    public func pulledOut() {
         edits.touchedElsewhere()
         cook.pulledOut()
     }
 
-    func stillIn() {
+    public func stillIn() {
         edits.touchedElsewhere()
         cook.answerStillIn()
     }
 
-    func stillOut() {
+    public func stillOut() {
         edits.touchedElsewhere()
         cook.answerOut()
         Task { await refreshAsRan() }
@@ -347,7 +350,7 @@ final class AppModel {
 
     /// A correction committed (`Edits.commit`): the cook corrected
     /// (`Cook.correct`), and after the pull the record with it.
-    func correct(_ choices: CookChoices, startedAtS: Double?) {
+    public func correct(_ choices: CookChoices, startedAtS: Double?) {
         cook.correct(choices: choices, startedAtS: startedAtS, answered: cook.feedbackGiven || held != nil)
         Task { await refreshAsRan() }
     }
@@ -363,7 +366,7 @@ final class AppModel {
     /// folded again (`Planner.replaceLogged`); an answer held meanwhile (the
     /// record refused as stale) is made then. Dropped if the cook has been
     /// corrected again, or has ended, before it lands.
-    func refreshAsRan() async {
+    public func refreshAsRan() async {
         guard let running = cook.running, running.events.pulled != nil, running.asRan != nil,
               !asRanCurrent(running) else { return }
         #if DEBUG
@@ -394,8 +397,8 @@ final class AppModel {
         let nowS = AppClock.now.timeIntervalSince1970
         return await Task.detached(priority: .userInitiated) {
             guard let inputs = replan(running, before, surface: nil, leanHintS: 0, nowS: nowS).inputs else { return nil }
-            let grid = await DecisionGrids.shared.grid(inputs)
-            let profile = await DecisionGrids.shared.profile(inputs, before)
+            let grid = await Services.grids.grid(inputs)
+            let profile = await Services.grids.profile(inputs, before)
             let surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             guard let next = asRanCorrected(running, before: before, surface: surface, nowS: nowS) else { return nil }
             return (next, replan(next, before, surface: surface, leanHintS: 0, nowS: nowS))
@@ -414,7 +417,7 @@ final class AppModel {
 
     /// The answers given while the record waited for the pot's surface, made
     /// once a plan lets it; nil when none is held. On screen as given.
-    private(set) var held: Planner.Answers?
+    public private(set) var held: Planner.Answers?
 
     /// A plan has landed: the held answer, if the record can be made now.
     private func answerHeld() {
@@ -447,13 +450,13 @@ final class AppModel {
             planner.logUnanswered(record)
             // Sent once final: at a relaunch now; at Start again, by its own
             // send once the stored cook is gone (this one skips it as open).
-            Sharing.shared.sendFinal()
+            Services.sharing.sendFinal()
             return
         }
         Task {
             guard let record = await Cook.unansweredRecord(egg, held: held) else { return }
             planner.logUnanswered(record)
-            Sharing.shared.sendFinal()
+            Services.sharing.sendFinal()
         }
     }
 }
