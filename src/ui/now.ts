@@ -37,7 +37,7 @@ export interface PageClock {
 
 let clock: PageClock | null = null;
 let draw: () => number = Math.random;
-const listeners: (() => void)[] = [];
+let moved: () => void = () => {};
 
 /** Only these: never the live site, whatever its address says. */
 export function isDevHost(hostname: string): boolean {
@@ -63,9 +63,10 @@ export function clockSpeed(): number {
   return clock === null ? 1 : clock.speed();
 }
 
-/** Call `f` whenever the development clock is set (never on the live site). */
+/** Call `f` whenever the development clock is set (never on the live
+ *  site): once, at boot (cook.ts, `startRunner`). */
 export function onClockChange(f: () => void): void {
-  listeners.push(f);
+  moved = f;
 }
 
 /** Whether this browser's log may hold an egg cooked on the development
@@ -99,7 +100,7 @@ export function useClock(c: PageClock): void {
 
 /** The development clock was set: the tick and the beeps take it up. */
 export function clockChanged(): void {
-  for (const f of listeners) f();
+  moved();
 }
 
 /** A seeded draw in place of `Math.random` (dev/test.ts). */

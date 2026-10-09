@@ -29,8 +29,8 @@ import { Effect, Msg, update } from './model.js';
 import { currentInputs, wantedProfiles } from './answer.js';
 import { calibrationBefore, keepRecord } from './calibration.js';
 import {
-  Ticker, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm, setAlarmSound,
-  setMuted, setPullAlarm, startTicker, stopAlarm,
+  Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
+  setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
 } from './clock.js';
 import { applySettingsToDom, applyUnitsToDom } from './controls.js';
 import { activeLocale, t } from './copy.js';
@@ -50,7 +50,7 @@ import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, sav
 import { unitSystem, useUnits } from './units.js';
 import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
 import { showEgg } from './views.js';
-import { clockSpeed, nowMs, random } from './now.js';
+import { clockSpeed, nowMs, onClockChange, random } from './now.js';
 
 /** The ticker while a cook short of Done runs, and the page's wake at Done. */
 const clock = {
@@ -162,10 +162,11 @@ export function dispatch(msg: Msg): void {
   requestDraw();
 }
 
-/** The runner, plugged in for `send`, and the sound as the settings have
- *  it: once, at boot. */
+/** The runner, plugged in for `send` and for the development clock's
+ *  moves, and the sound as the settings have it: once, at boot. */
 export function startRunner(): void {
   sendTo(dispatch);
+  onClockChange(clockMoved);
   muted = state.settings.muted;
   setMuted(muted);
   setAlarmSound(state.settings.alarm);
