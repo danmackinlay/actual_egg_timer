@@ -177,9 +177,10 @@ export function render(now_ms: number): void {
   renderLearning();
   // The sentence, in every phase: the controls' (the settings, or the
   // running cook's own choices).
+  renderSentence(liveSetupFacts(state.controls, sizeClasses, currentEgg()));
+  // When the eggs went in, in the start's panel, while a cook runs: the
+  // sentence never says it.
   const start = state.cook === null ? null : state.controlsStart_s;
-  renderSentence(liveSetupFacts(state.controls, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
-  // When the eggs went in, in the start's panel, while a cook runs.
   page().startedAtField.hidden = start === null;
   if (start !== null) page().startedAt.textContent = timeOfDay(start * 1000);
   if (state.cook === null) renderIdle(now_ms);

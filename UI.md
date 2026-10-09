@@ -132,9 +132,9 @@ the level the egg ran at; anything else corrects the record, planned on the
 calibration before this egg. A correction also changes the settings for
 the next cook.
 
-**The start's time.** While a cook runs the start clause says when the eggs
-went in ("into cold water at 7:42, brought to the boil"; the `*At` keys),
-and its panel has "Eggs in at" (`controls.startedAt`) with a − and a +, a
+**The start's time.** The sentence never says when the eggs went in: the
+countdown already does (`DECISIONS.md` 108). While a cook runs the start
+clause's panel has "Eggs in at" (`controls.startedAt`) with a − and a +, a
 minute at a time, no later than now, the press of Full rolling boil or the
 pull, no earlier than two hours before Start. When a press goes no further
 the line under it says why (`controls.startedAt.latestNow`, `.latestBoil`,
@@ -265,9 +265,9 @@ there.
   inline block, and beside the egg a clause that wrapped pushed the comma
   after it to the end of its last line.
 - **While a cook runs** the sentence is the cook's own choices, and stays
-  tappable: a choice corrects the cook (§3). The start clause says when the
-  eggs went in (`setup.start.coldAt` and the rest), which its panel
-  corrects.
+  tappable: a choice corrects the cook (§3). The start clause says what it
+  said at idle ("into cold water, brought to the boil"), never the time;
+  its panel says when the eggs went in, and corrects it.
 - **Heat after the boil is not a clause.** It is a habit of a kitchen, tied
   to the water, and a fifth clause pushes the sentence onto a third line at
   390 px. The readout's line says "lid on" when it is set.

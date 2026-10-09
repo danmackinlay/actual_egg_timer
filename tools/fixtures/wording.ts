@@ -137,14 +137,9 @@ export function wordingFixture(): Record<string, unknown> {
     }),
   ))));
 
-  // Idle, and while a cook runs, when the start clause says when the eggs
-  // went in.
   const clauses = FROMS.flatMap((eggFrom) => STARTS.flatMap((startMode) => [false, true].flatMap(
-    (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.flatMap((cooling) => [false, true].map((startedAt) => {
-      const facts = {
-        eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling,
-        startedAt: startedAt,
-      };
+    (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.map((cooling) => {
+      const facts = { eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling };
       const k = clauseKeys(facts);
       for (const c of Object.values(k)) {
         known(c.text);
@@ -152,7 +147,7 @@ export function wordingFixture(): Record<string, unknown> {
         known(c.value);
       }
       return { ...facts, keys: k };
-    }))),
+    })),
   )));
 
   return {

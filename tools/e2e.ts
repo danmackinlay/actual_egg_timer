@@ -521,6 +521,23 @@ async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Promise<Sn
   return tab.snap();
 }
 
+/** What the start's panel says the eggs went in at. */
+async function panelStart(tab: Tab): Promise<string> {
+  return tab.eval<string>(`(() => { const f = document.getElementById('startedAtField');
+    return f.hidden || f.offsetParent === null ? '' : document.getElementById('startedAt').textContent; })()`);
+}
+
+/** A moment, epoch s, as the page says a time of day. */
+async function clockAt(tab: Tab, at_s: number): Promise<string> {
+  return tab.eval<string>(`(async () => (await window.__e2e.ui('copy')).timeOfDay(${at_s * 1000}))()`);
+}
+
+/** The setup sentence's words, and its start clause's. */
+async function sentenceSays(tab: Tab): Promise<{ sentence: string; clause: string }> {
+  return tab.eval(`(() => ({ sentence: document.getElementById('sentence').textContent,
+    clause: document.querySelector('#sentence .clause[aria-controls="panelStart"]').textContent }))()`);
+}
+
 /** A person's next tap, a few seconds on. */
 async function later(tab: Tab): Promise<void> {
   await tab.shift(3);
@@ -877,7 +894,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   },
 
   'start-time': {
-    what: 'C3 step 3: the start corrected in its clause, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back',
+    what: "C3 step 3: the start corrected in its clause's panel, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back",
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
@@ -885,9 +902,8 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const start0 = s.cook?.startedAt_s ?? 0;
       await tab.shift(150);
       await tab.click('#sentence .clause[aria-controls="panelStart"]');
-      const clock = await tab.eval<string>("document.getElementById('startedAt').textContent");
-      const clause = await tab.eval<string>("document.querySelector('#sentence .clause[aria-controls=\"panelStart\"]').textContent");
-      check(clause.includes(clock) && clock !== '', `the clause says when: "${clause}", "${clock}"`);
+      const clock = await panelStart(tab);
+      check(clock === await clockAt(tab, start0), `the panel says when: "${clock}"`);
       // + three times, a tap each: the third goes no further than now.
       for (let i = 0; i < 3; i++) await press(tab, '#startedAtMore');
       const limit = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
@@ -896,6 +912,8 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await corrected(tab, null);
       const late = (s.cook?.startedAt_s ?? 0) - start0;
       check(near(late, 150, 1e-6), `in at now, 150 s on: ${late.toFixed(1)} s later`);
+      const moved = await panelStart(tab);
+      check(moved === await clockAt(tab, s.cook?.startedAt_s ?? 0), `the panel follows: "${moved}"`);
       // The boil pressed, then + again: no later than the press.
       await tab.shift(240);
       s = await boil(tab);
@@ -914,7 +932,47 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const early = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
       s = await corrected(tab, s);
       check(near(s.cook?.startedAt_s ?? 0, id_s - 7200, 1e-6), `two hours back: ${((s.cook?.startedAt_s ?? 0) - id_s).toFixed(1)} s`);
-      return `"${clause}"; "${limit}"; "${atBoil}"; "${early}"`;
+      return `"${clock}" → "${moved}"; "${limit}"; "${atBoil}"; "${early}"`;
+    },
+  },
+
+  'sentence-no-time': {
+    what: "DECISIONS 108: the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does",
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+      await tab.settle();
+      const idle = await sentenceSays(tab);
+      const cold = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('setup.start.cold'))()");
+      const noTime = (where: string, said: { sentence: string; clause: string }, clause: string): void => {
+        check(!/\d:\d\d/.test(said.sentence), `${where}: a time in the sentence: "${said.sentence}"`);
+        check(said.clause === clause, `${where}: the start clause "${said.clause}", not "${clause}"`);
+      };
+      noTime('idle', idle, cold);
+      let s = await start(tab, 'cold');
+      await tab.settle();
+      const heating = await sentenceSays(tab);
+      noTime('heating', heating, cold);
+      check(heating.sentence === idle.sentence, `heating: "${heating.sentence}", idle "${idle.sentence}"`);
+      await tab.shift(300);
+      s = await boil(tab);
+      await tab.settle();
+      const cooking = await sentenceSays(tab);
+      noTime('cooking', cooking, cold);
+      check(cooking.sentence === idle.sentence, `cooking: "${cooking.sentence}"`);
+      // The start's panel says it.
+      await tab.click('#sentence .clause[aria-controls="panelStart"]');
+      const clock = await panelStart(tab);
+      check(clock === await clockAt(tab, s.cook?.startedAt_s ?? 0), `the panel says when: "${clock}"`);
+      // Corrected to the heat off: the clause says so, still with no time.
+      await later(tab);
+      await tab.click('#heatOff');
+      s = await corrected(tab, null);
+      await tab.settle();
+      const standing = await sentenceSays(tab);
+      noTime('the heat off', standing,
+        await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('setup.start.coldStanding'))()"));
+      return `"${cooking.sentence}"; the panel "${clock}"; "${standing.clause}"`;
     },
   },
 

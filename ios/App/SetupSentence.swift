@@ -21,10 +21,6 @@ import EggTimerCopy
 struct SetupSentence: View {
     let planner: Planner
     @Binding var open: Clause?
-    /// When the eggs went in, while a cook runs: the start clause says it
-    /// ("into cold water at 7:42"), and its panel corrects it. Nil while
-    /// idle.
-    var startedAt: Date? = nil
     /// Whether a clause opens its choice.
     var editable = true
     /// A clause pressed: another control than one with a change in hand,
@@ -36,7 +32,7 @@ struct SetupSentence: View {
     private static let scheme = "eggtimer-clause"
 
     var body: some View {
-        let texts = clauseTexts(SetupFacts(planner, startedAt: startedAt))
+        let texts = clauseTexts(SetupFacts(planner))
         let shown = clauses
         Text(attributed(texts, shown: shown))
             .appFont(.title3)
@@ -69,6 +65,13 @@ struct SetupSentence: View {
                     }
                 }
             }
+            #if DEBUG
+            // What the sentence says, to the debug log whenever it changes
+            // (`sentence into cold water…`): what the scripted checks read.
+            .onChange(of: plain(texts), initial: true) { _, said in
+                Screenshots.log("sentence \(said)")
+            }
+            #endif
     }
 
     /// The clauses the sentence has now, in the template's order.
@@ -144,14 +147,10 @@ struct SetupFacts {
     var heatOff: Bool
     var cooling: Cooling
     var units: UnitSystem
-    /// When the eggs went in, as a time of day, while a cook runs: the start
-    /// clause says it. Nil while idle.
-    var startedAt: String?
 
     /// The setup on the controls: the settings while idle, a running cook's
-    /// own choices while one runs (`AppModel`'s edits), with when its eggs
-    /// went in.
-    @MainActor init(_ planner: Planner, startedAt: Date? = nil) {
+    /// own choices while one runs (`AppModel`'s edits).
+    @MainActor init(_ planner: Planner) {
         units = planner.units
         mass = planner.sizeClasses.indices.contains(planner.sizeIndex)
             ? classMass(planner.sizeClasses[planner.sizeIndex], units: units)
@@ -161,7 +160,6 @@ struct SetupFacts {
         start = planner.start
         heatOff = planner.heatOff
         cooling = planner.cooling
-        self.startedAt = startedAt.map { timeOfDay($0) }
     }
 }
 
@@ -178,11 +176,10 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
         "mass": .text(f.mass),
         "temp": .text(showIn(f.units, .eggTemp, f.customC)),
         "bath": .text(showIn(f.units, .temperature, sousVideBathC)),
-        "time": .text(f.startedAt ?? ""),
     ]
     let keys = clauseKeys(ClauseFacts(
         eggFrom: f.from, startMode: f.start == .cold ? .cold : .hot, sousVide: f.start == .sousVide,
-        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling, startedAt: f.startedAt != nil
+        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling
     ))
     /// A nil value is the argument itself: the mass, or the cook's own
     /// temperature.
@@ -301,6 +298,13 @@ struct ClausePanel: View {
                 .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
             }
             .appFont(.subheadline)
+            #if DEBUG
+            // The start the panel shows, epoch s, to the debug log whenever
+            // it changes (`panel start 1791234567.0`).
+            .onChange(of: start, initial: true) { _, at in
+                Screenshots.log("panel start \(at)")
+            }
+            #endif
             if let limit = edits.startLimit {
                 Text(tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
                     .appFont(.caption)

@@ -282,7 +282,6 @@ struct ContentView: View {
                 }
                 SetupSentence(
                     planner: planner, open: $openClause,
-                    startedAt: running.flatMap { _ in model.edits.shownStart }.map { Date(timeIntervalSince1970: $0) },
                     onTap: { model.edits.touchedElsewhere() }
                 )
                 #if DEBUG

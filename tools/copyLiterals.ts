@@ -234,6 +234,9 @@ const NOT_COPY: Record<string, string> = {
   'edit {}': 'debug log (Screenshots.log), never shown',
   'edit committed {} start {}': 'debug log (Screenshots.log), never shown',
   'start limit {} {}': 'debug log (Screenshots.log), never shown',
+  // what the sentence and the start's panel say, and their checks
+  'sentence {}': 'debug log (Screenshots.log), never shown',
+  'panel start {}': 'debug log (Screenshots.log), never shown',
   drag: 'debug launch argument value',
   release: 'debug launch argument value',
   stillIn: 'debug launch argument value',

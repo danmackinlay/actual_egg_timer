@@ -335,19 +335,14 @@ export interface ClauseFacts {
   sousVide: boolean;
   afterBoil: HeatAfterBoil;
   cooling: Cooling;
-  /** A cook is running, so the start clause says when the eggs went in
-   *  ("into cold water at 7:42"), the time its panel corrects
-   *  (design/one-screen.md section 7, 20): the app supplies `time`. Absent
-   *  is false, as idle. Sous-vide starts no cook, and has none. */
-  startedAt?: boolean;
 }
 
 /** The setup sentence's keys. The start clause carries the boil, and the
  *  standing when the heat goes off: "into cold water" alone reads as if the
- *  eggs never boil. While a cook runs it carries when the eggs went in. */
+ *  eggs never boil. It never says when the eggs went in, idle or mid-cook:
+ *  the countdown already does, and the start's panel corrects it. */
 export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
   const standing = f.afterBoil === 'off';
-  const at = f.startedAt === true;
   const from: ClauseKeys = f.eggFrom === 'fridge'
     ? { text: 'setup.from.fridge', label: 'controls.eggFrom', value: 'controls.eggFrom.fridge' }
     : f.eggFrom === 'room'
@@ -356,18 +351,8 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
   const start: ClauseKeys = f.sousVide
     ? { text: 'setup.start.sous', label: 'controls.start', value: 'controls.start.sousVide' }
     : f.startMode === 'cold'
-      ? {
-        text: standing
-          ? at ? 'setup.start.coldStandingAt' : 'setup.start.coldStanding'
-          : at ? 'setup.start.coldAt' : 'setup.start.cold',
-        label: 'controls.start', value: 'controls.start.cold',
-      }
-      : {
-        text: standing
-          ? at ? 'setup.start.hotStandingAt' : 'setup.start.hotStanding'
-          : at ? 'setup.start.hotAt' : 'setup.start.hot',
-        label: 'controls.start', value: 'controls.start.hot',
-      };
+      ? { text: standing ? 'setup.start.coldStanding' : 'setup.start.cold', label: 'controls.start', value: 'controls.start.cold' }
+      : { text: standing ? 'setup.start.hotStanding' : 'setup.start.hot', label: 'controls.start', value: 'controls.start.hot' };
   const cooling: ClauseKeys = f.cooling === 'ice'
     ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.cooling.ice' }
     : f.cooling === 'tap'

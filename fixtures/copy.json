@@ -733,38 +733,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "setup.start.coldAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "set in cold water at 7:42 and brought to the boil"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "setup.start.coldStandingAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "set in cold water at 7:42, lid on and fire out as it boils"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "setup.start.hotAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "put into boiling water at 7:42"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "setup.start.hotStandingAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "put into boiling water at 7:42, the fire out and the lid on"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "setup.clause",
       "args": {
         "label": "Egg from",
@@ -2413,38 +2381,6 @@
         "bath": "136 °F"
       },
       "text": "sous-vide at 136 °F"
-    },
-    {
-      "locale": "en",
-      "key": "setup.start.coldAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "into cold water at 7:42, brought to the boil"
-    },
-    {
-      "locale": "en",
-      "key": "setup.start.coldStandingAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "into cold water at 7:42, heat off and lid on once it boils"
-    },
-    {
-      "locale": "en",
-      "key": "setup.start.hotAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "into boiling water at 7:42"
-    },
-    {
-      "locale": "en",
-      "key": "setup.start.hotStandingAt",
-      "args": {
-        "time": "7:42"
-      },
-      "text": "into boiling water at 7:42, heat off and lid on"
     },
     {
       "locale": "en",

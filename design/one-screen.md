@@ -82,15 +82,17 @@ Heating, as a 390-pt column. `_x_` is a tappable clause and `( )` is the egg.
           └───────┴─────────┘
  white set, yolk jammy
   ╭──╮   _68 g eggs_ _from the fridge_,
- │ ○ │   _into cold water at 7:42_,
+ │ ○ │   _into cold water, brought to the boil_,
   ╰──╯   _then an ice bath_.
         wait for the whole surface to roll (i)
              [  Full rolling boil  ]
                     Cancel
 ```
 
-Idle is the same without "at 7:42", without Cancel, with "Total time" and
-Start. Cooking is the same without the boil button. In Pull, the button
+Idle is the same without Cancel, with "Total time" and Start. The
+sentence never says when the eggs went in, idle or mid-cook: the countdown
+already does, and the start clause's panel corrects it ("Eggs in at 7:42",
+with − and +; `DECISIONS.md` 108). Cooking is the same without the boil button. In Pull, the button
 names the cooling and changes with it. In Cooling and Done everything stays
 tappable. A change there corrects the record (and, while the egg cools, the
 cooling's end); the time does not move, because the pull has happened.
@@ -928,7 +930,8 @@ commit each):
     above, or chose where they were silent:
     - **Core** names the start clause's `*At` keys (`clauseKeys`'
       `startedAt`), which the web had chosen in `sentence.ts`, so both
-      apps choose them alike, fixtured.
+      apps choose them alike, fixtured. (Retired with the keys by
+      `DECISIONS.md` 108: the clause no longer says the time.)
     - **The controls are the planner**: while a cook runs `Planner.onEdit`
       sends every change to `Edits` (`ios/App/Edits.swift`) instead of
       saving and solving; a relaunch sets them to the cook's choices
@@ -1065,7 +1068,8 @@ Each has my recommendation first, and the alternative after "Or".
 20. **The start time is corrected through the start clause**, which during
     a cook reads "into cold water at 7:42" (a placeholder), with − and + a
     minute at a time, as every number has. Or a line of its own under the
-    time.
+    time. *Since `DECISIONS.md` 108 the clause says no time; its panel
+    keeps "Eggs in at 7:42" with − and +.*
 21. **An event's own time is not correctable in 0.5.** For example, a boil
     pressed late: the tap is what the cook saw. Or offer it the same way as
     the start ("boiling since 7:50").
