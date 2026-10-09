@@ -304,6 +304,8 @@ const NOT_COPY: Record<string, string> = {
   '0:00': 'digits sizing the countdown, never shown',
   '0:00:00': 'digits sizing the countdown, never shown',
   'arrow.right': 'SF Symbol',
+  checkmark: 'SF Symbol',
+  'chevron.up.chevron.down': 'SF Symbol',
   'info.circle': 'SF Symbol',
   'info.circle.fill': 'SF Symbol',
   'name.danmackinlay.actualeggtimer': 'log subsystem',

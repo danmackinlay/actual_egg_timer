@@ -116,7 +116,7 @@ struct ContentView: View {
             // for a screenshot at the largest text sizes.
             .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
             #endif
-            .navigationTitle(tr("app.name"))
+            .barTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // In every phase: Settings' pot rows correct a running cook.

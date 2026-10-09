@@ -12,9 +12,11 @@ import EggTimerCore
 /// names its OpenType features. It has one weight, so a semibold is its
 /// roman, and no small capitals, so those are capitals a size down. A
 /// segmented picker's segments are UIKit's, set through its appearance
-/// (`segmented`). What else UIKit draws itself (the bar's title, a menu),
-/// the clock, a number the cook sets (`systemFigures`) and the Live
-/// Activity keep the system face.
+/// (`segmented`); the bar's title (`barTitle`) and a menu (`MenuChoice`) are
+/// views of the app's own in 1750. What else UIKit draws itself (the menu
+/// the bar's buttons fold into at the largest text sizes, the share sheet,
+/// the system's alerts), the clock, a number the cook sets
+/// (`systemFigures`) and the Live Activity keep the system face.
 enum PeriodFace {
     static let roman = "IM_FELL_English_Roman"
     static let italic = "IM_FELL_English_Italic"
@@ -141,6 +143,132 @@ extension View {
     /// place of `.pickerStyle(.segmented)`.
     func segmented() -> some View {
         modifier(Segmented())
+    }
+
+    /// The navigation bar's title, in the face of the language on screen, in
+    /// place of `.navigationTitle`.
+    func barTitle(_ title: String) -> some View {
+        modifier(BarTitle(title: title))
+    }
+}
+
+/// The bar draws its title itself, in the system face, and takes another
+/// only through an appearance it reads once, when it is made. So in 1750 the
+/// title is a view of the app's own in the bar's middle, which the language
+/// redraws in place; the bar's own title stays beneath it, for what reads it
+/// (a back button's menu, the app switcher), and is the title in modern
+/// English, as before. At the bar's own size, which Dynamic Type does not
+/// change.
+private struct BarTitle: ViewModifier {
+    let title: String
+
+    func body(content: Content) -> some View {
+        let period = isPeriod(Copy.activeLocale)
+        return content
+            .navigationTitle(title)
+            .toolbar {
+                if period {
+                    ToolbarItem(placement: .principal) {
+                        Text(title)
+                            .font(PeriodFace.font(.headline, size: .large))
+                            .lineLimit(1)
+                            .accessibilityAddTraits(.isHeader)
+                    }
+                }
+            }
+    }
+}
+
+/// A choice as a menu (`.pickerStyle(.menu)`), in the face of the language on
+/// screen. UIKit draws a menu, its button and its list, in the system face,
+/// and its list takes no other; so in 1750 the button is the app's own and
+/// its list a popover of the app's own, as the system's looks: the choices
+/// in a column, a tick at the one chosen, closed by a choice. In modern
+/// English it is the system's menu, as before.
+struct MenuChoice<Tag: Hashable>: View {
+    let label: String
+    let choices: [(title: String, tag: Tag)]
+    @Binding var selection: Tag
+    @State private var open = false
+    @Environment(\.dynamicTypeSize) private var size
+
+    var body: some View {
+        if isPeriod(Copy.activeLocale) {
+            period
+        } else {
+            Picker(label, selection: $selection) {
+                ForEach(choices.indices, id: \.self) { i in
+                    Text(choices[i].title).tag(choices[i].tag)
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+        }
+    }
+
+    private var chosen: String {
+        choices.first { $0.tag == selection }?.title ?? ""
+    }
+
+    private var period: some View {
+        Button {
+            open = true
+        } label: {
+            HStack(spacing: 5) {
+                Text(chosen).appFont(.body)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(.tint)
+            // The system's button's height, so the row is as tall.
+            .padding(.vertical, 5)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel(label)
+        .accessibilityValue(chosen)
+        .popover(isPresented: $open) {
+            ViewThatFits(in: .vertical) {
+                list
+                ScrollView { list }
+            }
+            .presentationCompactAdaptation(.popover)
+        }
+    }
+
+    private var list: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(choices.indices, id: \.self) { i in
+                let picked = choices[i].tag == selection
+                Button {
+                    selection = choices[i].tag
+                    open = false
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Image(systemName: "checkmark")
+                            .font(.body.weight(.semibold))
+                            .opacity(picked ? 1 : 0)
+                            .accessibilityHidden(true)
+                        Text(choices[i].title)
+                            .appFont(.body)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(picked ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 8)
+        // As wide as the system's menu, and at the accessibility sizes as
+        // wide as the screen allows, as its is.
+        .frame(minWidth: 240, maxWidth: size.isAccessibilitySize ? .infinity : 340, alignment: .leading)
+        // Not the style of what the button sits in (a `LabeledContent`'s
+        // value is secondary): the list's own, as the system's menu.
+        .foregroundStyle(Color.primary)
     }
 }
 

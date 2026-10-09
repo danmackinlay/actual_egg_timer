@@ -50,7 +50,7 @@ struct HelpView: View {
             }
         }
         .tint(.primary)
-        .navigationTitle(tr("help.title"))
+        .barTitle(tr("help.title"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

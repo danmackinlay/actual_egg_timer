@@ -315,19 +315,16 @@ struct ClausePanel: View {
     private var egg: some View {
         VStack(alignment: .leading, spacing: 10) {
             LabeledContent(tr("controls.size")) {
-                Picker(tr("controls.size"), selection: Binding(
-                    get: { planner.sizeIndex },
-                    set: { planner.chooseSize($0) }
-                )) {
-                    ForEach(planner.sizeClasses.indices, id: \.self) { i in
-                        Text(sizeLabel(planner.sizeClasses[i])).tag(i)
-                    }
-                    Text(tr("controls.size.measured", [
-                        "mass": .text(planner.show(.mass, planner.weighedMassG)),
-                    ])).tag(-1)
-                }
-                .pickerStyle(.menu)
-                .labelsHidden()
+                // In the face of 1750 there, the button and its list
+                // (`MenuChoice`).
+                MenuChoice(
+                    label: tr("controls.size"),
+                    choices: planner.sizeClasses.indices.map { (sizeLabel(planner.sizeClasses[$0]), $0) } + [(
+                        tr("controls.size.measured", ["mass": .text(planner.show(.mass, planner.weighedMassG))]),
+                        -1
+                    )],
+                    selection: Binding(get: { planner.sizeIndex }, set: { planner.chooseSize($0) })
+                )
                 // "Extra large — 76 g" otherwise wraps onto two lines.
                 .fixedSize()
             }
