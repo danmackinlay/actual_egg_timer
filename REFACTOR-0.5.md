@@ -95,7 +95,7 @@ gate could catch it.
       logic are checked by nothing else. Make both jobs blocking, and add
       `npm run e2e` / `npm run ios:e2e` to the CLAUDE.md rule for commits
       touching `src/ui` or `ios/App`. S.
-      *Done* (`06e6b63`, merged with 5.1 and 5.3): both jobs gate the run;
+      *Done* (`06e6b63`, merged with 5.1): both jobs gate the run;
       CLAUDE.md's rule has both suites (`edbe190`). Unproven until a push:
       the hosted runners' Chrome audio, simulator runtimes and timings, and
       `ubuntu-latest` moving to Ubuntu 26 on 19 October 2026.
@@ -130,8 +130,6 @@ gate could catch it.
       (`tools/fixturesCheck.ts`) holds numbers to Swift's 1e-12 and all
       else exactly, lists what differs by path, and runs in CI's Linux
       `web` job; x86 and arm64 Linux pass against the macOS fixtures.
-      Tightened by 5.3 (`03e4f9c`): 1e-13 of each number's own value, at
-      every magnitude; Swift's 1e-12 stays in conformance only.
 - [x] **1.5 One compile per `verify`.** It runs `tsc` six times, from
       `rm -rf dist`. Project references (`tsc -b`: core, app, tools, tests)
       and run each step from that build. M. *Done:* three projects
@@ -579,16 +577,16 @@ it found, in its order, with where each is being done:
       since `d12a978` (`1e0fd3e`).
 - [ ] **5.2 iOS is not on `step`/`readoutAt`** (3.1, 3.3 reopened): 3.9
       deletes `Cook.swift`'s own orchestration, about 24 calls.
-- [x] **5.3 The fixture check is too loose for TS against TS** (1.4): the
+- [x] **5.3 ~~The fixture check is too loose for TS against TS** (1.4): the
       bound divides by max(|x|, 1), so 116 nonzero values under 1e-12 may
       change freely, sign included. A pure relative bound (about 1e-13,
       against a measured spread of 7.3e-15) with a denormal floor; Swift's
-      slack stays in conformance only. *Done* (`03e4f9c`). Measured on
-      Linux: arm64 differs in one number by 1.8e-16; x86 in 4,105 of
-      60,193, by at most 9.1e-14, a 10% margin. The worst are particles'
-      `whiteOffset`s, whose error is absolute (resampling sums terms at
-      the prior's scale), and the 7 `seriesTheta` values at the surface,
-      where the true value is 0: follow-up 5.13.
+      slack stays in conformance only.~~ *Not done* (the owner, 10
+      October 2026: the platforms measured for it are "an excessively broad
+      selection"). The check asks whether the TypeScript changed the
+      numbers, and a real change moves them far past 1e-12; 1e-13 made the
+      last bits of one processor's arithmetic a matter for the gate.
+      Built (`03e4f9c`) and reverted.
 - [x] **5.4 CLAUDE.md's `ios:build` rule** named `ios/Shared`, which is
       gone, and not the package's `EggTimerApp`/`EggTimerShared`, which
       `verify` builds for macOS only. It now covers all of `ios/` but the
@@ -631,11 +629,6 @@ it found, in its order, with where each is being done:
       6 → 12 and 417 declarations made public wholesale; `#if DEBUG` 75 →
       89; 2.11's sweep a fixed list, not "any `aet.*` not current"; the
       `studies/` build outside `verify`.
-- [ ] **5.13 Quantities compared at their own scale.** A `whiteOffset`
-      within about 0.009 of zero, or `seriesTheta` at the surface, can fail
-      the Linux check on cancellation noise alone; none does today. Compare
-      each such field against its natural scale (the prior's spread; θ's
-      1), named per field, not the old max(|x|, 1) for everything.
 - [ ] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`
@@ -680,8 +673,6 @@ it found, in its order, with where each is being done:
         9, 15b); the 20 titles citing review or decision numbers renamed
         by behaviour, and the drifted ordinals (record 4b4/4b5, copy's two
         1e).
-  - [ ] *A further tranche of test feedback* from the red team, after
-        the refactor (3.7, 3.9-3.12).
 
 **Size.** Outside the fixtures and the drafts the repo grew about 7.9k
 lines; shipped code 39.4k → 42.2k (core +15%, the Swift core +12%, the

@@ -11,12 +11,13 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 440 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 438 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 46 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one; CI fails on either. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 154 tests
+machine and a loaded one. CI is set to fail on either, though
+neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 154 tests
 in 40 suites for the core twin and 16 in 2 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -74,8 +75,7 @@ These counts are the only ones in the documents. If you want a number, run
    (3.15, 3.17) and fixtures a row a line (3.19). The web's page goes
    through `update` and a pure view drawn once a frame (3.7, two parts of
    three). The red team of `4ecc06a` (section 5) reopened 3.1 and 3.3
-   until iOS runs on them. The e2e now gate CI and the fixture bound is
-   1e-13 of each value (1.1, 5.1, 5.3). Next, in its order: iOS's 0.3 and
+   until iOS runs on them. The e2e now gate CI (1.1, 5.1). Next, in its order: iOS's 0.3 and
    0.4 under Swift tests; iOS onto `step` (3.9-3.12); the rest of 3.7 with a unit test
    per message; then 3.13, 3.16, 3.18, 2.4 and 4.2.
 

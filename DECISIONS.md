@@ -212,7 +212,7 @@ Decided by the owner, 29 September 2026:
     with no users to speak of is still free to change a storage format:
     bump its key so an old value is dropped, and write no migration. This
     corrects the reading of 46 that the push alone made the formats
-    permanent.
+    permanent. Amended by 81 for the results log, and whole again since 107.
 49. **Versions for both apps, with no promise of stability, and tags in
     git.** `0.3.0-alpha.1`: the owner asked for "something like 0.0.2alpha";
     it is 0.3.0 because the live site already reports 0.2.0 and versions only
@@ -446,6 +446,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     leans firmer to set the white (decision 7), so the bracket's median sits
     right of the thumb; the direction sentence says so. Not hatched or
     skipped, and the 3× runny-white cost is unchanged. 5 October 2026.
+    Amended by 84: the soft end still leans late.
 81. **The owner's results are kept, and can be exported**: "build an
     export function", and protect the log. Amends 48 for this one store:
     **the results log's storage key and its record format change only
@@ -467,7 +468,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     in the log and not yet shared. The results file `8d1ab68`; the log
     kept, web `2e37357` and iOS `301668c`; dropped cooks and the second
     answer `5a24742`; the `export` draft `7596437`; import `6910cbd`; the
-    privacy page `8354d8a`.
+    privacy page `8354d8a`. Replaced by 107: the log starts fresh in 0.5,
+    under 48 like any other store.
 82. **The owner's own random IDs are trusted in the population fit**:
     "trust my random id explicitly". An egg under an ID the owner lists
     counts at the attested tier's full weight whatever tier it came in -
@@ -809,3 +811,17 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     in at 19:42" with − and + still corrects the start (97's question 20,
     moved). The four "…at {time}" start clauses go. Recorded `7a09eb7`; built
     `dbfa28d`.
+109. **Numbers agree in distribution, not in bits** (the owner, 7 October
+    2026: "we almost never care about bitwise accuracy for posterior
+    sampling, just stochastic indistinguishability"; 10 October 2026, of
+    holding the fixtures to 1e-13 on x86 and arm64 Linux: scope creep,
+    "an excessively broad selection of platforms to test relatively simple
+    functionality on"). The fixtures, and the Swift twin against them, are
+    held to 1e-12, relative above 1 and absolute below (`conformanceTolerance`,
+    `tools/fixtureCompare.ts`): a real change moves a number far past it.
+    Last-bit drift between processors, libms or the two languages is not a
+    finding, not a reason to tighten a check or test another platform, and
+    not a question for the owner; where its cause is understood, loosen and
+    say so in the commit. The filter is tested as a distribution
+    (`record.test.ts` 2a3, `npm run sbc`), never by matching draws.
+    Recorded with the revert of the 1e-13 bound, `0fe3c2d`.
