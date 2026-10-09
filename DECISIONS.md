@@ -794,3 +794,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Confirmed to the 0.5 foundations session the same day ("Yes, sweep v4
     too"): the boot sweep of retired keys deletes `v4` with the rest, on
     every device 0.5 runs on.
+108. **The start time leaves the setup sentence; it stays correctable in
+    the start's panel** (the owner, 9 October 2026, of "set in cold water
+    at 19:42": "I think it wastes screen real estate with useless
+    information that is already conveyed by the relative countdown
+    timer"; of keeping the correction in the panel: "Sounds perfect").
+    The sentence says "into cold water, brought to the boil" before and
+    during a cook; pressing the start clause opens its panel, where "Eggs
+    in at 19:42" with − and + still corrects the start (97's question 20,
+    moved). The four "…at {time}" start clauses go.
