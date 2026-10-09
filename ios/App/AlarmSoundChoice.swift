@@ -24,10 +24,11 @@ final class AlarmSoundChoice {
         sound = readAlarmSound(UserDefaults.standard.string(forKey: Self.key))
     }
 
-    /// The cook's pick, kept, and played once so they hear what they chose.
+    /// The cook's pick, kept through the guard (`Stores`), and played once
+    /// so they hear what they chose.
     func pick(_ next: AlarmSound) {
         sound = next
-        UserDefaults.standard.set(next.rawValue, forKey: Self.key)
+        Stores.set(next.rawValue, forKey: Self.key)
         Ringer.shared.preview(next)
     }
 

@@ -21,8 +21,8 @@ import EggTimerCore
 /// Whether it may write is core's `writerCheckBuilt`.
 ///
 /// Every write the app makes to UserDefaults goes through `set` and
-/// `remove`, so the guard holds for all of them; reads go straight to
-/// UserDefaults. `claim` runs first thing at launch, before anything is
+/// `remove`, so the guard holds for all of them (`test/iosStores.test.ts`
+/// fails on any other); reads go straight to UserDefaults. `claim` runs first thing at launch, before anything is
 /// written, and writes this build's version as the mark when it may write.
 /// The mark is never removed: "Start learning again" keeps it.
 enum Stores {

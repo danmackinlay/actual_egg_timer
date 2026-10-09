@@ -82,8 +82,9 @@ final class AppModel {
             log: { [planner] in planner.kept.log },
             finalCount: { [weak self, planner, cook] in
                 // Nor the egg whose record is being made again as its cook
-                // ends (`remakeThenEnd`).
-                let open = cook.eggOpen(at: AppClock.now) || (self?.remaking ?? 0) > 0
+                // ends (`remakeThenEnd`), or is left stored for the next
+                // launch to make (`unremade`).
+                let open = cook.eggOpen(at: AppClock.now) || (self?.remaking ?? 0) > 0 || self?.unremade == true
                 return planner.kept.log.count - (open ? 1 : 0)
             }
         ))
@@ -141,6 +142,8 @@ final class AppModel {
         guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
         // The controls are the cook's from here: a change is a correction.
         edits.begin()
+        // Stored over a cook left for the next launch: that egg is final now.
+        unremade = false
         await cook.start(
             choices: planner.choices,
             // The nudge drawn for this cook, while sharing is on (E8).
@@ -167,12 +170,14 @@ final class AppModel {
     }
 
     /// "Start again", at Done: what the cook leaves (`cookEnding`). A pan it
-    /// timed is remembered, and an egg cooked through that nobody answered
-    /// about is still logged; it folds nothing. An answered egg corrected
-    /// after its pull whose record is not yet made again - a change still
-    /// settling is committed just above, so the usual case - has it made
-    /// first, in place of the egg logged, and only then is the cook
-    /// forgotten and the egg final (`remake`, onescreen review 1.2).
+    /// timed is remembered, and an egg cooked through whose answer was never
+    /// made into its record is still logged, with any answer held for it
+    /// (`held`), as the web logs `heldAnswers()`; with none, it folds
+    /// nothing. An answered egg corrected after its pull whose record is not
+    /// yet made again - a change still settling is committed just above, so
+    /// the usual case - has it made first, in place of the egg logged, and
+    /// only then is the cook forgotten and the egg final (`remake`,
+    /// onescreen review 1.2).
     func startAgain() {
         edits.touchedElsewhere()
         edits.end()
@@ -182,7 +187,7 @@ final class AppModel {
             if ending.remake, cook.feedbackGiven, let running = cook.running {
                 stale = running
             } else if let egg = cook.unanswered() {
-                logUnanswered(egg)
+                logUnanswered(egg, held: held)
             }
         }
         // Read before `endEgg` lets go of what this process folded.
@@ -206,25 +211,45 @@ final class AppModel {
     /// their eggs are not final until they are.
     private(set) var remaking = 0
 
+    /// An ended cook whose record could not be made again (`remakeThenEnd`),
+    /// left stored for the next launch to make: its egg is not final until
+    /// then, or until a new cook is stored over it.
+    private var unremade = false
+
+    /// How many times more an ended cook's record is tried before the cook
+    /// is left stored: the web's `RECORD_TRIES`.
+    private static let remakeTries = 3
+
     /// An answered egg's record made again for its correction after the pull
     /// (`correctedAsRan`, on `before`, the calibration before it, or worked
     /// out here), logged in place of the egg at `logged`, its answers kept;
-    /// then the stored cook forgotten and what is final sent.
+    /// then the stored cook forgotten and what is final sent. If it cannot
+    /// be made, the cook stays stored, and the next launch makes it, as a
+    /// cook killed before it was made is (`Cook.restoreIfNeeded`).
     private func remakeThenEnd(_ stale: RunningCook, logged: Int?, before: Calibration?) {
         remaking += 1
         Task {
-            defer {
-                remaking -= 1
-                Cook.forgetStored(idMs: stale.idMs)
-                Sharing.shared.sendFinal()
-            }
+            defer { remaking -= 1 }
             let base: Calibration
             if let before { base = before } else { base = await planner.calibrationBefore(logged) }
-            guard let made = await Self.correctedAsRan(stale, before: base) else { return }
+            for _ in 0...Self.remakeTries {
+                var remade = await Self.correctedAsRan(stale, before: base)
+                #if DEBUG
+                if Screenshots.failRemake { remade = nil }
+                #endif
+                guard let made = remade else { continue }
+                #if DEBUG
+                Screenshots.log("as ran remade")
+                #endif
+                relogCorrected(made, logged: logged)
+                Cook.forgetStored(idMs: stale.idMs)
+                Sharing.shared.sendFinal()
+                return
+            }
+            unremade = true
             #if DEBUG
-            Screenshots.log("as ran remade")
+            Screenshots.log("as ran not remade, kept stored")
             #endif
-            relogCorrected(made, logged: logged)
         }
     }
 
@@ -412,12 +437,13 @@ final class AppModel {
         }
     }
 
-    /// Log a finished egg nobody answered about, made on its pot's surface
-    /// when it must be (`Cook.unansweredRecord`), and send what is final.
-    private func logUnanswered(_ egg: Cook.Unanswered) {
+    /// Log a finished egg whose answer was never made into its record, with
+    /// any answer `held` for it, made on its pot's surface when it must be
+    /// (`Cook.unansweredRecord`), and send what is final.
+    private func logUnanswered(_ egg: Cook.Unanswered, held: Planner.Answers? = nil) {
         // Logged before the stored cook goes whenever the record can be made
         // at once; only an egg whose surface must still be built waits.
-        if let record = Cook.unansweredRecordNow(egg) {
+        if let record = Cook.unansweredRecordNow(egg, held: held) {
             planner.logUnanswered(record)
             // Sent once final: at a relaunch now; at Start again, by its own
             // send once the stored cook is gone (this one skips it as open).
@@ -425,7 +451,7 @@ final class AppModel {
             return
         }
         Task {
-            guard let record = await Cook.unansweredRecord(egg) else { return }
+            guard let record = await Cook.unansweredRecord(egg, held: held) else { return }
             planner.logUnanswered(record)
             Sharing.shared.sendFinal()
         }

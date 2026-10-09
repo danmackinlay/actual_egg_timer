@@ -6356,3 +6356,49 @@ fixture's resample case now sharpens the word sequence's end from flat,
 since that set sat at the threshold already. Server records already kept
 are untouched; the endpoint reads only today's shape, so a record without
 `yolkWord`, as a build before the five words wrote, is refused.
+
+## 9 October 2026: three iOS bugs from the red team (REFACTOR-0.5 0.2 to 0.4)
+
+**0.2, the alarm's sound round the guard.** `AlarmSoundChoice.pick` wrote
+`UserDefaults` itself, so a build that had found a newer build's mark
+(`Stores.readOnly`) still wrote the sound. It writes through `Stores.set`
+now, and `test/iosStores.test.ts`, in `npm test`, reads the Swift of
+`ios/App`, `ios/Shared` and `ios/Widget` with its comments left out, and
+fails on a setter (`set` or `setValue` with `forKey:`) called on anything
+but `Stores`, or on `removeObject` or a persistent domain set or removed,
+anywhere but `Store.swift`. It failed on the old line and on nothing else.
+No debug hook needed an exception: the launch arguments are read, never
+written.
+
+**0.3, a corrected cook forgotten though its record was not made again.**
+`AppModel.remakeThenEnd` forgot the stored cook and sent the egg final in a
+`defer`, so both ran when `correctedAsRan` came back with nothing. Now it
+tries three times more, as the web's `remakeThenEnd` does
+(`RECORD_TRIES`), and forgets the cook and sends only once the record is
+made. If it never is, the cook stays stored, the next launch makes it as it
+makes one killed before it was, and sharing holds the egg back meanwhile
+(`unremade`, cleared when a new cook is stored over it, as the web's
+`finalEggs` follows the stored cook). `-uiFailRemake YES` makes every try
+come back with nothing. `npm run ios:e2e -- again-not-remade`: before,
+`stored none` at Start again and nothing stored for the next launch; after,
+the cook kept stored, and the next launch, too old to pick up, logs the egg
+corrected (68 -> 76 g), Jammy kept, then forgets it.
+
+**0.4, an answer held at Start again dropped.** An answer given while the
+egg's record cannot be made yet (its pot's surface not built again after a
+relaunch, or a correction after the pull not yet planned as it ran) is
+`held`; Start again logged the egg with no yolk or white and cleared it.
+Now `logUnanswered` makes the record with the held answers, the probe's
+reading among them (`Cook.unansweredRecord(_:held:)`), as the web's
+`endCook` logs `heldAnswers()`, and the egg is folded. `npm run ios:e2e --
+again-held` (`-uiHoldAsRan YES`, a correction at Done, Jammy held, Start
+again): before, the egg logged with `yolkWord` null; after, Jammy, with its
+forecast, folded.
+
+Checked: `npm run verify` and `npm run ios:build` on each commit;
+`npm run ios:e2e`, 42 of 42, on the last commit's code, and on each
+commit the scenarios it touches, with `AET_E2E_WAIT=300`: the machine's
+load average was 130 to 620 from other agents' simulators, and the first
+full run's warm-up gave up on a new device's alarms after five launches.
+The two new scenarios failed on the old code as described and pass on the
+new.

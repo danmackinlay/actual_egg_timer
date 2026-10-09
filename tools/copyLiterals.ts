@@ -265,6 +265,8 @@ const NOT_COPY: Record<string, string> = {
   'note {}': 'debug log (Screenshots.log), never shown',
   'as ran remade': 'debug log (Screenshots.log), never shown',
   uiHoldAsRan: 'debug launch argument',
+  'as ran not remade, kept stored': 'debug log (Screenshots.log), never shown',
+  uiFailRemake: 'debug launch argument',
   'edit leaving': 'debug log (Screenshots.log), never shown',
   'announce {}': 'debug log (Screenshots.log), never shown',
   // the face of 1750 (ios/App/PeriodFace.swift)

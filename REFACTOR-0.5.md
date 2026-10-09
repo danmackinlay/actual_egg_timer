@@ -37,19 +37,23 @@ then restructure.
       (5 commits on `8972a05`) was never merged. *Done:* `0.4.x`
       fast-forwarded to `774c459` (9 October 2026); `verify` and `ios:build`
       passed; no 0.5 commit fixed the guard itself, so nothing came across.
-- [ ] **0.2 iOS: the alarm sound bypasses the guard** ✔.
+- [x] **0.2 iOS: the alarm sound bypasses the guard** ✔.
       `ios/App/AlarmSoundChoice.swift:30` writes `UserDefaults` directly;
       `Store.swift` says every write goes through `Stores.set`. Route it, and
       add a lint that `UserDefaults.standard.set|removeObject` appears only in
-      `Store.swift`. S.
-- [ ] **0.3 iOS forgets a corrected cook whose record could not be remade** ✔.
+      `Store.swift`. S. *Done:* through `Stores.set`; `test/iosStores.test.ts`
+      fails on any write to UserDefaults outside `Store.swift`.
+- [x] **0.3 iOS forgets a corrected cook whose record could not be remade** ✔.
       `AppModel.remakeThenEnd` (`AppModel.swift:215`) forgets the stored cook
       and sends it final in a `defer`, so it runs when `correctedAsRan`
       returns nil. The web retries and leaves the cook stored
-      (`src/ui/cook.ts:549`). S.
-- [ ] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
+      (`src/ui/cook.ts:549`). S. *Done:* tried three times more, then left
+      stored for the next launch and held back from sharing;
+      `ios:e2e again-not-remade`.
+- [x] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
       logs the unanswered egg with no yolk or white, then clears `held`; the
-      web logs `heldAnswers()` (`cook.ts:504`). S.
+      web logs `heldAnswers()` (`cook.ts:504`). S. *Done:* the egg logged with
+      the held answers and folded; `ios:e2e again-held`.
 - [x] **0.5 iOS: one render reads the clock several times**. `ReadoutView`'s
       big time uses `cook.secondsToPull`, which reads `AppClock.now` itself,
       not the `TimelineView`'s `now`; `Cook` reads `AppClock.now` 24 times.
