@@ -42,7 +42,7 @@ struct ContentView: View {
         // takes the instant rather than sampling the clock itself, so a phase
         // boundary cannot land between two reads and leave the label describing
         // one phase while the button below it describes the next.
-        let outerPhase = cook.phase(at: AppClock.now)
+        let outerPhase = cook.phase(atS: AppClock.now.timeIntervalSince1970)
         // The English of 1750: read here, so this body depends on it and
         // a change of language redraws the page in place.
         let period = isPeriod(Copy.activeLocale)
@@ -79,7 +79,7 @@ struct ContentView: View {
                     // which is the date the phase is computed from.
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
-                        let phase = cook.phase(at: now)
+                        let phase = cook.phase(atS: now.timeIntervalSince1970)
                         ReadoutView(
                             model: model, phase: phase, now: now,
                             sousVide: sousVideAt(now, sousVide, phase: phase),
@@ -94,7 +94,7 @@ struct ContentView: View {
                     setup(phase: outerPhase, every: every, tick: tick)
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
-                        let phase = cook.phase(at: now)
+                        let phase = cook.phase(atS: now.timeIntervalSince1970)
                         VStack(spacing: 18) {
                             PhaseActions(
                                 model: model, phase: phase, now: now,
@@ -289,7 +289,7 @@ struct ContentView: View {
                 if running != nil || !planner.isSousVide {
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
-                        EggSectionView(model: model, phase: cook.phase(at: now), now: now)
+                        EggSectionView(model: model, phase: cook.phase(atS: now.timeIntervalSince1970), now: now)
                     }
                     .id(tick)
                     .frame(width: size.width, height: size.height)

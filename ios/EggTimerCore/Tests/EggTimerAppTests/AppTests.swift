@@ -38,7 +38,7 @@ struct AppTests {
 
         #expect(cook.phase == .heating)
         #expect(world.stored?.idMs == cook.running?.idMs)
-        #expect(world.alarm.scheduled.last?.pullAt?.timeIntervalSince1970 == (try pullS(cook)))
+        #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
         #expect(world.card.calls.contains(.start(.heating)))
 
         // Full rolling boil, five minutes in.
@@ -48,7 +48,7 @@ struct AppTests {
         #expect(cook.running?.events.boilAtS == t0 + 300)
         #expect(world.stored?.events.boilAtS == t0 + 300)
         #expect(cook.phase == .cooking)
-        #expect(world.alarm.scheduled.last?.pullAt?.timeIntervalSince1970 == (try pullS(cook)))
+        #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
 
         // The pull, which the system's alarm covers: no ring from the app.
         world.clock.set(try pullS(cook) + 1)
@@ -91,7 +91,7 @@ struct AppTests {
     @Test func withoutAlarmsTheAppRingsThePull() async throws {
         let world = World()
         world.alarm.authorized = false
-        world.ringer.onScreenSince = world.clock.now
+        world.ringer.onScreenSinceS = world.clock.seconds
         let planner = Planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
@@ -142,7 +142,7 @@ struct AppTests {
         #expect(world.ringer.rung.isEmpty)
         await world.until("the alarms and the card set again") { world.log.events.contains(.restored) }
         #expect(world.alarm.scheduled.count > scheduled)
-        #expect(world.alarm.scheduled.last?.pullAt == nil)
+        #expect(world.alarm.scheduled.last?.pullS == nil)
         #expect(world.card.calls.dropFirst(calls).contains(.start(.cooling)))
         await world.settled(cook)
     }
@@ -187,7 +187,7 @@ struct AppTests {
         #expect(try pullS(cook) > pull0 + 60)
         #expect(world.stored?.choices.startMode == .cold)
         #expect(world.stored?.correctedAtS == world.clock.seconds)
-        #expect(world.alarm.scheduled.last?.pullAt?.timeIntervalSince1970 == (try pullS(cook)))
+        #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
         // Changed back: the first plan exactly.
         choices.startMode = .hot
         cook.correct(choices: choices, startedAtS: nil)
@@ -199,7 +199,7 @@ struct AppTests {
     /// notification was holding the pull it moved.
     @Test func anOverdueCorrectionRings() async throws {
         let world = World()
-        world.ringer.onScreenSince = world.clock.now
+        world.ringer.onScreenSinceS = world.clock.seconds
         let planner = Planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }

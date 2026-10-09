@@ -125,8 +125,7 @@ public final class Cook {
         return phaseAt(plan.deadlines, nowS: nowS)
     }
 
-    /// The phase at a frame's moment, for a view; the phase now, for a tap.
-    public func phase(at now: Date) -> Phase { phase(atS: now.timeIntervalSince1970) }
+    /// The phase now, for a tap; a view takes its frame's moment.
     public var phase: Phase { phase(atS: AppClock.nowS) }
 
     /// What the readout says at `nowS` (core's `readoutAt`); nil while idle.
@@ -679,11 +678,7 @@ public final class Cook {
         notifiedAt = notifiedAt.filter { alarmCovers.contains($0.key) }
         if let p = pullS, p > now { notifiedAt[.pull] = p }
         if let c = cooledS, c > now { notifiedAt[.cooled] = c }
-        Services.alarm.schedule(
-            pullAt: pullS.map(Date.init(timeIntervalSince1970:)),
-            coolDoneAt: cooledS.map(Date.init(timeIntervalSince1970:)),
-            probe: asksForProbe, cooling: cook.choices.cooling
-        )
+        Services.alarm.schedule(pullS: pullS, cooledS: cooledS, probe: asksForProbe, cooling: cook.choices.cooling)
         Task { await readBackAlarms() }
     }
 
@@ -717,7 +712,7 @@ public final class Cook {
         guard deadlineToRing(
             phase: deadline == .pull ? .pull : .done, nowS: now, pullS: d.cookEndS, cooledS: d.coolEndS,
             authorized: alarmAuthorized, scheduled: held, rung: [],
-            onScreenSinceS: Services.ringer.onScreenSince?.timeIntervalSince1970
+            onScreenSinceS: Services.ringer.onScreenSinceS
         ) == deadline else { return }
         #if DEBUG
         Screenshots.log(.ring(deadline: deadline.rawValue))

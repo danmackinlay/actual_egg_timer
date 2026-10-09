@@ -111,7 +111,7 @@ public enum Screenshots {
               let colon = json.firstIndex(of: ":") else { return }
         let name = json[json.index(json.startIndex, offsetBy: 2)..<json.index(before: colon)]
         let fields = json[json.index(after: colon)...].dropFirst().dropLast(2)
-        let t = String(format: "%.3f", AppClock.now.timeIntervalSince1970)
+        let t = String(format: "%.3f", AppClock.nowS)
         let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
         output(event, text)
     }
@@ -399,7 +399,7 @@ extension Screenshots {
                 for i in left.indices {
                     if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
-                let now = AppClock.now.timeIntervalSince1970
+                let now = AppClock.nowS
                 guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else {
                     nothingDue &+= 1
                     continue
@@ -426,7 +426,7 @@ extension Screenshots {
     @MainActor public static var open: ((String) -> Void)?
 
     /// The clock at this launch, cook time: what `launch` counts from.
-    public static let launchedAtS = AppClock.now.timeIntervalSince1970
+    public static let launchedAtS = AppClock.nowS
 
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {

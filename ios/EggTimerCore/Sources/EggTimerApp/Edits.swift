@@ -351,7 +351,7 @@ public final class Edits {
         guard let model, let cook = model.cook.running, let plan = model.cook.plan, let base,
               pending || down != nil else { return }
         let gen = generation
-        let nowS = AppClock.now.timeIntervalSince1970
+        let nowS = AppClock.nowS
         let hand = cookInHand(cook, choicesInHand(cook, base).choices, nowS: nowS)
         let calibration = model.planner.calibration
         let ran = asRanShown(cook, plan: plan)
@@ -451,7 +451,7 @@ public final class Edits {
     public func stepStart(up: Bool) -> Bool {
         guard let running = cook?.running, base != nil else { return false }
         let from = startInHand ?? running.startedAtS
-        let nowS = AppClock.now.timeIntervalSince1970
+        let nowS = AppClock.nowS
         let earliest = earliestStartS(running)
         let latest = latestStartS(running, nowS: nowS)
         var next = from + (up ? 60 : -60)

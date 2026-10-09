@@ -89,10 +89,10 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// alarm asks for it instead of announcing the end.
     ///
     /// The pull alarm names the cooling the cook chose (`pullLineKey`).
-    func schedule(pullAt: Date?, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
         cancel()
 
-        if let pullAt {
+        if let pullAt = pullS.map(Date.init(timeIntervalSince1970:)) {
             request(
                 id: pullID, moment: .pull, at: pullAt,
                 title: tr("alarm.pull.title"),
@@ -100,7 +100,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
             )
         }
 
-        if let coolDoneAt {
+        if let coolDoneAt = cooledS.map(Date.init(timeIntervalSince1970:)) {
             request(
                 id: coolID, moment: .cooled, at: coolDoneAt,
                 title: tr(probe ? "alarm.probe.title" : "alarm.cooled.title"),
