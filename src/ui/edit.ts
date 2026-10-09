@@ -35,7 +35,8 @@
  */
 
 import {
-  CookChoices, RunningCook, corrected, earliestStart_s, latestStart_s, replan, sameChoices, startCorrected,
+  CookChoices, RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, replan, sameChoices,
+  startCorrected,
 } from '../core/running.js';
 import { targetPeakYolk_C } from '../core/policy.js';
 import { surfaceFor } from './answer.js';
@@ -210,12 +211,7 @@ function choicesInHand(
 function cookInHand(cook: RunningCook, choices: CookChoices, now_s: number): RunningCook {
   const start = state.controlsStart_s;
   if (start !== null && start !== cook.startedAt_s) cook = startCorrected(cook, start, now_s) ?? cook;
-  if (cook.events.pulled !== null && choices.level !== cook.choices.level) {
-    return {
-      ...cook, choices: choices, correctedAt_s: null,
-      events: { ...cook.events, pulled: null, cooledAt_s: null, rangAt_s: null },
-    };
-  }
+  if (cook.events.pulled !== null && choices.level !== cook.choices.level) return levelPreview(cook, choices);
   return corrected(cook, choices, now_s);
 }
 
@@ -234,8 +230,8 @@ function previewNow(): void {
     ? cookShown(cook, state.plan)?.params ?? calibrationParams(state.calib)
     : calibrationParams(state.calib);
   const time_s = pulled === null ? plan.cookTime_s : pulled.out_s - hand.startedAt_s;
-  state.aim = { level: plan.level, peakYolk_C: plan.solution.result.peakYolk_C, solution: plan.solution };
-  holdAim(aimedEgg(plan.egg, plan.setup, params, time_s, plan.level));
+  state.aim = { level: plan.answer.level, peakYolk_C: plan.solution.result.peakYolk_C, solution: plan.solution };
+  holdAim(aimedEgg(plan.egg, plan.setup, params, time_s, plan.answer.level));
 }
 
 /**

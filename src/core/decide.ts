@@ -128,6 +128,45 @@ export function decisionInputs(c: Calibration, egg: Egg, setup: CookSetup): Deci
   };
 }
 
+/** Eight digits of hex, zero-padded. */
+function hex8(n: number): string {
+  const s = n.toString(16);
+  return '00000000'.slice(s.length) + s;
+}
+
+/**
+ * A number as a key: its 64 bits, as sixteen hex digits, so two numbers have
+ * the same key exactly when they are equal (0 and -0 alike). Written out bit
+ * by bit rather than as decimal, which each language prints its own way
+ * (480 and 480.0, 1e-7 and 1e-07), so both apps make the same text.
+ */
+export function numberKey(x: number): string {
+  const view = new DataView(new ArrayBuffer(8));
+  view.setFloat64(0, x === 0 ? 0 : x);
+  return hex8(view.getUint32(0)) + hex8(view.getUint32(4));
+}
+
+/**
+ * The key of a decision surface's inputs: the pot, the egg and where the
+ * posterior stands, every number to the bit (`numberKey`), in a fixed order.
+ * Two inputs read the same surface exactly when their keys are equal, so the
+ * plan (`replan`) and both apps' caches of surfaces and odds use it, and a
+ * surface stored or sent between threads keeps its key.
+ */
+export function inputsKey(inputs: DecisionInputs): string {
+  const e = inputs.egg;
+  const s = inputs.setup;
+  const p = inputs.params;
+  const numbers = [
+    e.radius_m, e.minorDiameter_m, e.mass_kg, e.volume_m3,
+    s.eggStart_C, s.ambient_C, s.boiling_C, s.timeToBoil_s, s.waterLitres, s.eggCount,
+    p.alpha_m2s, p.tauAirScale, inputs.whiteDose_min,
+  ];
+  let key = `${s.startMode}|${s.afterBoil ?? 'hold'}|${s.cooling}`;
+  for (let i = 0; i < numbers.length; i++) key += `|${numberKey(numbers[i])}`;
+  return key;
+}
+
 /**
  * Where the decision grid goes, for this pot: every level the pot can deliver,
  * and DECISION_WINDOW_S either side.

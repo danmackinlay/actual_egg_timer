@@ -41,11 +41,11 @@ enum Stores {
     /// settings no build reads any more.
     static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.unread",
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
         "share.v1", "share.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
     ]
     /// The keys where an earlier build kept its cook in progress.
-    private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2"]
+    private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2", "cookInProgress.v3"]
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock

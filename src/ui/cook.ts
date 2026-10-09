@@ -19,9 +19,9 @@
 import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookChoices, CookEvents, CookPlan, RunningCook, asRanCorrected, asRanCurrent, cookEnding, cookStillOpen, cookTooOld,
-  corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, slowHobDue, startCook, startCorrected, stillIn,
-  withBoil, withOut,
+  CookChoices, CookPlan, RunningCook, asRanCorrected, asRanCurrent, asksIfStillIn, cookEnding, cookStillOpen,
+  cookTooOld, corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, sameEvents, slowHobDue, startCook,
+  startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
@@ -185,7 +185,7 @@ export function cookElsewhere(key: string | null): void {
  */
 function planFor(cook: RunningCook, leanHint_s: number, now_s: number, before: CookPlan | null): CookPlan {
   const guess = before === null ? null : before.inputs;
-  const hint = before === null ? null : before.slowHob;
+  const hint = before === null ? null : before.memo;
   let plan = replan(cook, state.calib, surfaceFor(guess), leanHint_s, now_s, hint);
   if (plan.inputs !== null && plan.decided === null) {
     const s = surfaceFor(plan.inputs);
@@ -203,7 +203,7 @@ function plannedWithEvents(
   const plan = planFor(cook, leanHint_s, now_s, before);
   const due = eventsDue(cook, plan, now_s);
   if (sameEvents(due, cook.events)) return { cook: cook, plan: plan };
-  const next = { ...cook, events: due };
+  const next = writeEvents(cook, due);
   return { cook: next, plan: planFor(next, leanHint_s, now_s, plan) };
 }
 
@@ -241,7 +241,7 @@ function takeUp(cook: RunningCook, plan: CookPlan): void {
  *  asks whether the egg is still in. */
 function armPullFor(cook: RunningCook, plan: CookPlan): void {
   const d = plan.deadlines;
-  const pullDue = !d.provisional && cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
+  const pullDue = !d.provisional && cook.events.pulled === null && !asksIfStillIn(plan) && !clock.pullRung;
   setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
 }
 
@@ -315,7 +315,7 @@ function refreshAsRan(): void {
   const stillThis = (): boolean => state.cook !== null && state.cook.id_ms === id && state.cook.correctedAt_s === stamp;
   correctedAsRan(cook, nowMs() / 1000).then((r) => {
     if (r === null || !stillThis() || state.cook === null) return;
-    state.cook = { ...state.cook, asRan: r.cook.asRan };
+    state.cook = withAsRan(state.cook, r.cook.asRan);
     persistCook();
     relogCorrected(state.cook, r.plan);
     retryHeld();
@@ -355,7 +355,7 @@ async function correctedAsRan(cook: RunningCook, now_s: number): Promise<{ cook:
 export function onStillOut(): void {
   const cook = state.cook;
   const plan = state.plan;
-  if (cook === null || plan === null || !plan.askIfStillIn) return;
+  if (cook === null || plan === null || !asksIfStillIn(plan)) return;
   stopAlarm();
   state.cook = pullStands(cook);
   afterCorrection(nowMs());
@@ -367,10 +367,6 @@ function planNow(now_s: number): void {
   takeUpStored();
   const next = plannedWithEvents(state.cook, state.leanHint_s, now_s, state.plan);
   takeUp(next.cook, next.plan);
-}
-
-function sameEvents(a: CookEvents, b: CookEvents): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /** A surface or a profile the running cook's plan wanted, landed: an answer
@@ -396,7 +392,7 @@ function notice(now_ms: number): void {
   const phase = phaseNow(now_ms);
   const was = clock.phase;
   clock.phase = phase;
-  if (phase === was || state.cook === null || state.plan === null || state.plan.askIfStillIn) return;
+  if (phase === was || state.cook === null || state.plan === null || asksIfStillIn(state.plan)) return;
   const passed = (was === 'HEATING' || was === 'COOKING')
     && (phase === 'PULL' || phase === 'COOLING' || phase === 'DONE');
   const out = state.cook.events.pulled;
@@ -632,7 +628,7 @@ export function onPrimary(): void {
     forgetAnswers();
     freshWrites(null, null);
     clock.pullRung = false;
-    state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
+    state.cook = startCook(now_s, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
     showCookControls();
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
@@ -653,7 +649,7 @@ export function onPrimary(): void {
   // "Still in the water?" Yes: the pull the clock assumed is dropped, and
   // the cook planned again as told now; a pull already past is now, and
   // rings, as if the egg had never been taken out.
-  if (plan.askIfStillIn) {
+  if (asksIfStillIn(plan)) {
     state.cook = stillIn(cook, now_s);
     clock.pullRung = false;
     clock.phase = 'COOKING';

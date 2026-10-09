@@ -215,7 +215,7 @@ struct SliderReading {
             profile = whiteSets && before ? cook.heldProfile : nil
             words = whiteSets && before ? cook.heldCertainty?.words : nil
             peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
-            level = ran?.level ?? plan.level
+            level = ran?.level ?? plan.answer.level
             // The note too, once the egg is out (`Cook.ranSolution`, onescreen
             // review 2.2): beside the peak, not from a plan made since on a
             // posterior that has folded this egg's answer.

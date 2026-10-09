@@ -81,7 +81,7 @@ struct PhaseActions: View {
 
     @ViewBuilder
     private var action: some View {
-        if phase != .idle, cook.plan?.askIfStillIn == true {
+        if phase != .idle, cook.plan.map(asksIfStillIn) == true {
             asking
         } else {
             phaseAction

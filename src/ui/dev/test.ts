@@ -24,7 +24,7 @@
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
 import { Phase } from '../../core/policy.js';
-import { RunningCook } from '../../core/running.js';
+import { RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
 import { eggsBehind, keptState } from '../calibration.js';
 import { t, timeOfDay } from '../copy.js';
@@ -61,7 +61,7 @@ export interface Snapshot {
   lengthened: boolean;
   certainty: CertaintyReading | null;
   peakYolk_C: number | null;
-  /** The running cook as stored (`aet.cook.v4`), its text. */
+  /** The running cook as stored (`aet.cook.v5`), its text. */
   stored: string | null;
   /** The results log, how many of it are folded in, how many still to
    *  fold, and how many are final. */
@@ -105,10 +105,10 @@ function snapshot(): Snapshot {
     cook: state.cook,
     deadlines: plan === null ? null : plan.deadlines,
     decided: plan !== null && plan.decided !== null,
-    lengthened: plan !== null && plan.lengthened,
+    lengthened: plan !== null && guessLengthened(plan),
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
-    stored: localStorage.getItem('aet.cook.v4'),
+    stored: localStorage.getItem('aet.cook.v5'),
     log: keptState().log,
     eggsLogged: state.calib.eggsLogged,
     eggsBehind: eggsBehind(),

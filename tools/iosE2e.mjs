@@ -1005,8 +1005,8 @@ scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again
   run.check(egg.last.yolkWord === 'jammy' && egg.last.pulledBy === 'cook', 'the answer and the pull recorded');
   run.check(forecastOk(egg.last), 'the record has its forecast');
   run.check(egg.last.appVersion.endsWith(' (debug clock)'), `marked: ${egg.last.appVersion}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.length === 1);
-  run.check(!('cookInProgress.v3' in prefs), 'no cook stored after Start again');
+  const prefs = await run.prefs((p) => !('cookInProgress.v4' in p) && p['calibration.v5']?.log?.length === 1);
+  run.check(!('cookInProgress.v4' in prefs), 'no cook stored after Start again');
   run.check(prefs['calibration.v5']?.log?.length === 1, 'the plist holds the one egg');
   run.note(
     `in ${Math.round(last.events.pulled.out_s - start)} s, cooled ${Math.round(last.events.cooledAt_s - last.events.pulled.out_s)} s`,
@@ -1182,8 +1182,8 @@ scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone 
   run.check(same(pending(lines), []), `pending ${pending(lines)}`);
   run.check(!has(lines, /^launch\+3s activity/), 'its card ended');
   run.check(!has(lines, /^phase /), 'idle');
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p));
-  run.check(!('cookInProgress.v3' in prefs), 'nothing stored');
+  const prefs = await run.prefs((p) => !('cookInProgress.v4' in p));
+  run.check(!('cookInProgress.v4' in prefs), 'nothing stored');
 });
 
 scenario('final-egg', 'Done, relaunched near the hour: ended at it, a later answer not taken (2.3)', async (run) => {
@@ -1289,14 +1289,14 @@ scenario('reschedule', 'relaunched while heating past the guess: the pending pul
 scenario('unreadable', 'a cook and a results log this build cannot read: dropped, the alarms and the card gone, nothing kept aside', async (run) => {
   await started(run);
   run.terminate();
-  const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook && p['calibration.v5']);
-  run.check(stored['cookInProgress.v3'] && stored['calibration.v5'], 'the cook and the log in the plist');
-  run.setData({ 'cookInProgress.v3': '{"cook":{"id_ms":1}}', 'calibration.v5': '{damaged' });
+  const stored = await run.prefs((p) => p['cookInProgress.v4']?.cook && p['calibration.v5']);
+  run.check(stored['cookInProgress.v4'] && stored['calibration.v5'], 'the cook and the log in the plist');
+  run.setData({ 'cookInProgress.v4': '{"cook":{"id_ms":1}}', 'calibration.v5': '{damaged' });
   run.launch();
   await run.until(/^restore unreadable$/, { from: run.launched, what: 'the cook dropped' });
   await run.until(/^alarms cancelled$/, { from: run.launched, what: 'its alarms cancelled' });
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.v === 5);
-  run.check(!('cookInProgress.v3' in prefs), 'the cook gone');
+  const prefs = await run.prefs((p) => !('cookInProgress.v4' in p) && p['calibration.v5']?.v === 5);
+  run.check(!('cookInProgress.v4' in prefs), 'the cook gone');
   run.check(prefs['calibration.v5']?.v === 5 && prefs['calibration.v5']?.log?.length === 0, 'the log written again, empty');
   const aside = Object.keys(prefs).filter((k) => k.endsWith('.unread'));
   run.check(aside.length === 0, `nothing kept aside: ${aside.join(', ')}`);
@@ -1306,11 +1306,11 @@ scenario('unreadable', 'a cook and a results log this build cannot read: dropped
 scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's cook among them, are deleted at launch; its alarms left; under a newer mark, not one", async (run) => {
   await started(run);
   run.terminate();
-  await run.prefs((p) => p['cookInProgress.v3']?.cook);
+  await run.prefs((p) => p['cookInProgress.v4']?.cook);
   // What 0.3 and 0.4 wrote: this build's cook stands in for theirs, under
   // their key, with the same alarm ids pending (a day out, on a frozen
   // clock: still pending however long the plist takes).
-  run.renameKey('cookInProgress.v3', 'cookInProgress');
+  run.renameKey('cookInProgress.v4', 'cookInProgress');
   const old = {
     'calibration.v4': '{"v":4,"log":[]}', 'calibration.v4.unread': '[]', 'cookInProgress.v2': '{}',
     'cookInProgress.unread': '[]', 'share.v1': '{}', 'probeAsked': '1', 'coldStart': '1',
@@ -1350,9 +1350,9 @@ scenario('again-logs', 'Start again logs the unanswered egg before it clears the
   run.check(logged >= 0 && logged < index(lines, /^stored none$/), 'logged before the cook was cleared');
   const egg = eggLog(lines);
   run.check(egg?.last?.yolkWord === null && forecastOk(egg?.last), 'unanswered, with its forecast');
-  const prefs = await run.prefs((p) => p['calibration.v5']?.log?.length === 1 && !('cookInProgress.v3' in p));
+  const prefs = await run.prefs((p) => p['calibration.v5']?.log?.length === 1 && !('cookInProgress.v4' in p));
   run.check(prefs['calibration.v5']?.log?.length === 1, 'the plist holds the egg');
-  run.check(!('cookInProgress.v3' in prefs), 'and no cook');
+  run.check(!('cookInProgress.v4' in prefs), 'and no cook');
 });
 
 // ------------------------------------- the one screen's review, on iOS
@@ -1381,7 +1381,7 @@ scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg 
   const egg = eggLog(lines.slice(0, gone.i)).last;
   run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
   run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  const prefs = await run.prefs((p) => !('cookInProgress.v4' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
   const kept = prefs['calibration.v5']?.log;
   run.check(kept?.length === 1 && kept[0].egg.mass_g === egg.egg.mass_g, `the plist's egg: ${kept?.[0]?.egg?.mass_g} g`);
   run.note(`the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept, then forgotten`);
@@ -1404,7 +1404,7 @@ scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected a
   const egg = eggLog(run.lines().slice(0, gone.i)).last;
   run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
   run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  const prefs = await run.prefs((p) => !('cookInProgress.v4' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
   run.check(prefs['calibration.v5']?.log?.[0]?.egg.mass_g === egg.egg.mass_g, 'the plist holds the corrected egg');
   run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
 });
@@ -1425,8 +1425,8 @@ scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start agai
   const again = await tapAt(run, cooling.cooled + 20, 'again');
   const end = await run.until(/^(stored none|as ran not remade)/, { from: again.i, what: 'the remake given up' });
   run.check(end.text.startsWith('as ran not remade'), `the cook kept stored, not forgotten: ${end.text}`);
-  const prefs = await run.prefs((p) => 'cookInProgress.v3' in p, 5);
-  run.check('cookInProgress.v3' in prefs, 'the plist still holds the cook');
+  const prefs = await run.prefs((p) => 'cookInProgress.v4' in p, 5);
+  run.check('cookInProgress.v4' in prefs, 'the plist still holds the cook');
   run.check(eggLog(run.lines()).last.egg.mass_g === first.egg.mass_g, 'the egg as logged, not yet corrected');
   run.terminate();
   // The next launch, too old to pick up: the record made again, then forgotten.

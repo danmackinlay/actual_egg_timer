@@ -269,7 +269,7 @@ test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () =
   };
   const C = knowing({ particles: 50, eggsLogged: 0 });
   const recorded = (lang: string) => {
-    const cook = startCook(1_750_000_000_000, choices, 0, {}, 'imperial', lang);
+    const cook = startCook(1_750_000_000, choices, 0, {}, 'imperial', lang);
     // On its pot's surface: no record is made from a plan with none.
     const inputs = replan(cook, C, null, 0, 1_750_000_500).inputs;
     assert.ok(inputs !== null);

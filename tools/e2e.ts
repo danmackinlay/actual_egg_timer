@@ -1055,9 +1055,9 @@ const SCENARIOS: Record<string, Scenario> = {
       const w0 = (await tab.writes()).length;
       await pick(tab, '#size', '1');
       await tab.click('#coolTap');
-      await tab.until("JSON.parse(localStorage.getItem('aet.cook.v4')).cook.choices.cooling === 'tap'", 'the second committed');
+      await tab.until("JSON.parse(localStorage.getItem('aet.cook.v5')).cook.choices.cooling === 'tap'", 'the second committed');
       await tab.settle();
-      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === 'aet.cook.v4')
+      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === 'aet.cook.v5')
         .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook.choices);
       const firstAlone = cooks.some((c) => c.mass_kg !== s.cook?.choices.mass_kg && c.cooling === 'ice');
       check(firstAlone, `the first committed without the second: ${JSON.stringify(cooks.map((c) => [c.mass_kg, c.cooling]))}`);
@@ -1228,7 +1228,7 @@ const SCENARIOS: Record<string, Scenario> = {
       await b.settle();
       const stored = storedCook(await a.snap());
       check(stored?.events.boilAt_s !== null, 'the tap still stored');
-      const bWrites = (await b.writes()).filter((w) => w.key === 'aet.cook.v4')
+      const bWrites = (await b.writes()).filter((w) => w.key === 'aet.cook.v5')
         .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook);
       check(bWrites.every((c) => c.events.boilAt_s !== null), 'B never wrote a cook without the tap');
       await a.reload();
@@ -1343,7 +1343,7 @@ const SCENARIOS: Record<string, Scenario> = {
     what: 'a cook and a results log this build cannot read: dropped, the page idle on the prior, nothing kept aside',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      await tab.eval(`localStorage.setItem('aet.cook.v4', '{"cook":{"id_ms":1},"answers":"none"}');
+      await tab.eval(`localStorage.setItem('aet.cook.v5', '{"cook":{"id_ms":1},"answers":"none"}');
         localStorage.setItem('aet.calibration.v5', '{damaged')`);
       await tab.reload();
       await tab.settle();
@@ -1364,7 +1364,7 @@ const SCENARIOS: Record<string, Scenario> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const old = ['aet.calibration.v3', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.unread',
-        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3'];
+        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4'];
       const plant = `for (const k of ${JSON.stringify(old)}) localStorage.setItem(k, '{"v":4,"log":[]}')`;
       const keys = 'Object.keys(localStorage).sort()';
       await tab.eval(plant);
@@ -1394,11 +1394,13 @@ const SCENARIOS: Record<string, Scenario> = {
       const D = 20 * 60;
       await tab.goto(`${h.origin}/privacy/`, false);
       await tab.eval(`(() => {
-        const o = JSON.parse(localStorage.getItem('aet.cook.v4'));
+        const o = JSON.parse(localStorage.getItem('aet.cook.v5'));
         const c = o.cook;
         c.id_ms -= ${D * 1000};
-        for (const k of ['startedAt_s', 'firstHotAt_s', 'coldSince_s', 'correctedAt_s']) if (c[k] !== null) c[k] -= ${D};
-        localStorage.setItem('aet.cook.v4', JSON.stringify(o));
+        // The press and its start; the log is read, the rest folded from it.
+        c.start.at_s -= ${D};
+        for (const e of c.log) if (typeof e.at_s === 'number') e.at_s -= ${D};
+        localStorage.setItem('aet.cook.v5', JSON.stringify(o));
       })()`).catch(() => undefined);
       await tab.goto(`${h.origin}/`);
       await tab.phase('DONE');

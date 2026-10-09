@@ -298,7 +298,7 @@ export function cookShown(cook: RunningCook | null, plan: CookPlan | null): Cook
   if (ran !== null) {
     return { level: ran.level, peakYolk_C: ran.peakYolk_C, probeMoment: ran.probeMoment, params: ran.params };
   }
-  return { level: plan.level, peakYolk_C: plan.solution.result.peakYolk_C, probeMoment: plan.probeMoment, params: null };
+  return { level: plan.answer.level, peakYolk_C: plan.solution.result.peakYolk_C, probeMoment: plan.probeMoment, params: null };
 }
 
 /** Whether this cook will ask for a probe reading when its cooling ends - the

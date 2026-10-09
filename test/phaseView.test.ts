@@ -19,7 +19,7 @@ import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { parseCatalogue } from '../src/core/copy.js';
 import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
 import {
-  CookChoices, CookPlan, RunningCook, eventsDue, replan, startCook, withBoil, withOut,
+  CookChoices, CookPlan, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { phaseKeys } from '../src/core/wording.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
@@ -60,7 +60,7 @@ const CHOICES: CookChoices = {
 };
 
 function cookOf(over: Partial<CookChoices> = {}): RunningCook {
-  return startCook(T0, { ...CHOICES, ...over }, 0, { '2.0': 480 }, 'metric', 'en');
+  return startCook(T0 / 1000, { ...CHOICES, ...over }, 0, { '2.0': 480 }, 'metric', 'en');
 }
 
 function planOf(cook: RunningCook, now_s: number): CookPlan {
@@ -109,7 +109,7 @@ test('a slow hob: once the guess is lengthened, the time heated counts up, never
   for (const heated of [900, 1000, 1500]) {
     const now_s = S + heated;
     const plan = planOf(cook, now_s);
-    assert.equal(plan.lengthened, true, `lengthened by ${heated} s`);
+    assert.equal(guessLengthened(plan), true, `lengthened by ${heated} s`);
     const v = phaseView(cook, plan, now_s * 1000, facts());
     assert.equal(v.label, t('readout.phase.heating'));
     assert.equal(v.digits, formatClock(heated), 'the time heated, not the pull the clock is chasing');
@@ -155,7 +155,7 @@ test('the pull, the cooling and done', () => {
   assert.equal(cool.secondaryVisible, true);
 
   const end_s = (cooling.deadlines.coolEnd_s ?? 0) + 1;
-  const done = { ...out, events: eventsDue(out, cooling, end_s) };
+  const done = writeEvents(out, eventsDue(out, cooling, end_s));
   const finished = planOf(done, end_s);
   const plain = phaseView(done, finished, end_s * 1000, facts());
   assert.equal(plain.digits, formatClock(finished.cookTime_s));

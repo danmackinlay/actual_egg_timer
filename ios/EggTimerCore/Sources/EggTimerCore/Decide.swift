@@ -53,6 +53,33 @@ public func decisionInputs(_ c: Calibration, egg: Egg, setup: CookSetup) -> Deci
     )
 }
 
+/// A number as a key: its 64 bits as sixteen hex digits, so two numbers have
+/// the same key exactly when they are equal (0 and -0 alike). See `numberKey`
+/// in `src/core/decide.ts`, whose text this is to the character.
+public func numberKey(_ x: Double) -> String {
+    let bits = (x == 0 ? 0.0 : x).bitPattern
+    let hex = String(bits, radix: 16)
+    return String(repeating: "0", count: 16 - hex.count) + hex
+}
+
+/// The key of a decision surface's inputs, every number to the bit
+/// (`numberKey`), in a fixed order: what the plan and this app's caches of
+/// surfaces and odds key them by, and the web's alike (`inputsKey`,
+/// `fixtures/running.json`).
+public func inputsKey(_ inputs: DecisionInputs) -> String {
+    let e = inputs.egg
+    let s = inputs.setup
+    let p = inputs.params
+    let numbers = [
+        e.radiusM, e.minorDiameterM, e.massKg, e.volumeM3,
+        s.eggStartC, s.ambientC, s.boilingC, s.timeToBoilS, s.waterLitres, s.eggCount,
+        p.alphaM2s, p.tauAirScale, inputs.whiteDoseMin,
+    ]
+    var key = "\(s.startMode.rawValue)|\(s.afterBoil.rawValue)|\(s.cooling.rawValue)"
+    for n in numbers { key += "|" + numberKey(n) }
+    return key
+}
+
 /// Every level this pot can deliver, and the window either side: the soft end
 /// is the shortest white-setting cook, the hard end the answer at level 1.
 public func decisionGridSpec(_ inputs: DecisionInputs) -> GridSpec {

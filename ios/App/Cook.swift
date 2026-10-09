@@ -192,7 +192,7 @@ final class Cook {
 
     /// The level and the peak yolk the cook was planned to, as it ran once
     /// the egg is out: what "You asked for" and the sentence say.
-    var shownLevel: Double? { asRan?.level ?? plan?.level }
+    var shownLevel: Double? { asRan?.level ?? plan?.answer.level }
     var shownPeakYolkC: Double? { asRan?.peakYolkC ?? plan?.solution.result.peakYolkC }
     /// The solve as the cook ran, once the egg is out (core `solutionAsRan`):
     /// the plan's pot at the time that ran, on the parameters it ran under,
@@ -401,7 +401,7 @@ final class Cook {
         let gen = generation
         reset()
         let cook = startCook(
-            nowMs: AppClock.now.timeIntervalSince1970 * 1000, choices: choices, nudgeS: nudgeS,
+            nowS: AppClock.now.timeIntervalSince1970, choices: choices, nudgeS: nudgeS,
             boilMemory: boilMemory, units: units, lang: lang
         )
         running = cook
@@ -494,7 +494,7 @@ final class Cook {
     /// dropped, and the cook planned again as told now; a pull already past
     /// is now, and rings, as if the egg had never been taken out (`stillIn`).
     func answerStillIn() {
-        guard let running, plan?.askIfStillIn == true else { return }
+        guard let running, plan.map(asksIfStillIn) == true else { return }
         rung = [:]
         change(to: stillIn(running, nowS: AppClock.now.timeIntervalSince1970))
     }
@@ -503,7 +503,7 @@ final class Cook {
     /// confirmed, the correction applies to the record, and the plan does
     /// not ask again (`pullStands`).
     func answerOut() {
-        guard let running, plan?.askIfStillIn == true else { return }
+        guard let running, plan.map(asksIfStillIn) == true else { return }
         Ringer.shared.stop()
         change(to: pullStands(running))
     }
@@ -512,10 +512,9 @@ final class Cook {
     /// calibration before this egg (`asRanCorrected`), kept with the cook if
     /// it is still the cook it was made for.
     func keepCorrectedAsRan(_ next: RunningCook) {
-        guard var c = running, c.idMs == next.idMs, c.correctedAtS == next.correctedAtS,
+        guard let c = running, c.idMs == next.idMs, c.correctedAtS == next.correctedAtS,
               c.asRan != next.asRan else { return }
-        c.asRan = next.asRan
-        running = c
+        running = withAsRan(c, next.asRan)
         persist()
         replanSoon()
     }
@@ -550,12 +549,12 @@ final class Cook {
         let cooking = plan.cookTimeS
         let cooled = cook.choices.cooling == .counter ? 0 : plan.coolS
         let start = AppClock.now.timeIntervalSince1970 - (cooking + cooled + ago)
-        cook = Self.shifted(cook, by: start - cook.startedAtS)
+        cook = shiftedCook(cook, by: start - cook.startedAtS)
         let out = start + cooking
-        cook.events = CookEvents(
-            pulled: Pulled(dueS: out, outS: out, by: .cook, confirmed: true),
+        cook = writeEvents(cook, CookEvents(
+            boilAtS: cook.events.boilAtS, pulled: Pulled(dueS: out, outS: out, by: .cook, confirmed: true),
             cooledAtS: cook.choices.cooling == .counter ? nil : out + cooled
-        )
+        ))
         change(to: cook)
     }
 
@@ -563,28 +562,7 @@ final class Cook {
     /// every time in it moved back `seconds`, and planned again.
     func moveBack(_ seconds: Double) {
         guard let cook = running else { return }
-        change(to: Self.shifted(cook, by: -seconds))
-    }
-
-    /// The cook with every clock time in it moved by `shift`, s.
-    private static func shifted(_ cook: RunningCook, by shift: Double) -> RunningCook {
-        var c = cook
-        c.idMs = (c.idMs + shift * 1000).rounded()
-        c.startedAtS += shift
-        c.coldSinceS = c.coldSinceS.map { $0 + shift }
-        c.firstHotAtS = c.firstHotAtS.map { $0 + shift }
-        c.correctedAtS = c.correctedAtS.map { $0 + shift }
-        c.events.boilAtS = c.events.boilAtS.map { $0 + shift }
-        c.events.cooledAtS = c.events.cooledAtS.map { $0 + shift }
-        c.events.rangAtS = c.events.rangAtS.map { $0 + shift }
-        c.events.pulled = c.events.pulled.map {
-            Pulled(dueS: $0.dueS + shift, outS: $0.outS + shift, by: $0.by, confirmed: $0.confirmed)
-        }
-        if var ran = c.asRan {
-            ran.correctedAtS = ran.correctedAtS.map { $0 + shift }
-            c.asRan = ran
-        }
-        return c
+        change(to: shiftedCook(cook, by: -seconds))
     }
     #endif
 
@@ -662,7 +640,7 @@ final class Cook {
         let nowS: Double
         /// The last plan's slow hob, where its rule got to (running-cook
         /// review 2.1): core takes it only when it fits this cook.
-        var hint: SlowHobHint?
+        var memo: SlowHobMemo?
     }
 
     private struct Made: Sendable {
@@ -676,7 +654,7 @@ final class Cook {
         guard let running else { return nil }
         return PlanInput(
             cook: running, calibration: calibration(), surface: surface, leanHintS: leanHintS,
-            nowS: AppClock.now.timeIntervalSince1970, hint: plan?.slowHob
+            nowS: AppClock.now.timeIntervalSince1970, memo: plan?.memo
         )
     }
 
@@ -685,13 +663,13 @@ final class Cook {
     /// otherwise the one at the plan's time.
     private nonisolated static func made(_ i: PlanInput) -> Made {
         let p = replan(
-            i.cook, i.calibration, surface: i.surface, leanHintS: i.leanHintS, nowS: i.nowS, hint: i.hint
+            i.cook, i.calibration, surface: i.surface, leanHintS: i.leanHintS, nowS: i.nowS, memo: i.memo
         )
         var outcome: Outcome?
         if let d = p.decided, let s = i.surface {
             outcome = p.cookTimeS == d.solution.result.cookTimeS
                 ? d.outcome
-                : predictOutcome(i.calibration.posterior, s.grid, p.cookTimeS, logYolkTarget(p.level))
+                : predictOutcome(i.calibration.posterior, s.grid, p.cookTimeS, logYolkTarget(p.answer.level))
         }
         // As it ran, with the plan as it ran kept as `adopt` keeps it: one
         // simulation here, off the main actor, rather than in a draw.
@@ -748,15 +726,15 @@ final class Cook {
         #if DEBUG
         Screenshots.log(
             "plan pull \(next.deadlines.cookEndS) cooled \(next.deadlines.coolEndS.map { String($0) } ?? "-")"
-                + " lengthened \(next.lengthened) surface \(next.decided != nil)"
+                + " lengthened \(guessLengthened(next)) surface \(next.decided != nil)"
                 + " next \(next.slowHobAtS.map { String($0) } ?? "-")"
-                + " asking \(next.askIfStillIn) overdue \(next.overdue)"
+                + " asking \(asksIfStillIn(next)) overdue \(next.overdue)"
         )
         Screenshots.log(
             "verdict \(next.answer.verdict.kind) white sets \(next.solution.whiteSets) cook \(next.cookTimeS)"
         )
         #endif
-        let wasAsking = plan?.askIfStillIn
+        let wasAsking = plan.map(asksIfStillIn)
         plan = next
         plannedFor = cook
         // The moment the plan is taken: what it stops, covers and pushes.
@@ -765,7 +743,7 @@ final class Cook {
         // grace is cancelled: nothing rings for it. Nor while the plan asks
         // whether the egg is still in the water.
         let phaseNow = phase(at: now)
-        if phaseNow == .heating || phaseNow == .cooking || next.askIfStillIn { Ringer.shared.stop() }
+        if phaseNow == .heating || phaseNow == .cooking || asksIfStillIn(next) { Ringer.shared.stop() }
         #if DEBUG
         // What Done shows: the peak as it ran once kept, else this plan's.
         Screenshots.log(String(
@@ -784,7 +762,7 @@ final class Cook {
             leanHintS = next.leanS
             persist()
         }
-        if let before, Self.moved(before, next.deadlines) || wasAsking != next.askIfStillIn {
+        if let before, Self.moved(before, next.deadlines) || wasAsking != asksIfStillIn(next) {
             // A deadline rung for and since moved rings again at its new time.
             rung = rung.filter { Self.same($0.value, Self.at($0.key, next.deadlines)) }
             // But a cook already Done stays silent: a correction there
@@ -898,7 +876,7 @@ final class Cook {
         }
     }
 
-    private static let savedKey = "cookInProgress.v3"
+    private static let savedKey = "cookInProgress.v4"
 
     private func persist() {
         guard let running else {
@@ -1001,7 +979,7 @@ final class Cook {
         // rang.
         let due = eventsDue(cook, plan: made.plan, nowS: now)
         if due != cook.events {
-            restored.events = due
+            restored = writeEvents(restored, due)
             made = Self.made(PlanInput(
                 cook: restored, calibration: input.calibration, surface: nil, leanHintS: stored.leanHintS, nowS: now
             ))
@@ -1070,7 +1048,7 @@ final class Cook {
         // While the plan asks whether the egg is still in the water, nothing
         // past the question is timed (running-cook review 3): the deadlines
         // wait on the answer. No correction in this build can ask yet.
-        if plan?.askIfStillIn == true {
+        if plan.map(asksIfStillIn) == true {
             Alarm.shared.cancel()
             return
         }
@@ -1172,9 +1150,7 @@ final class Cook {
         }
         let due = eventsDue(running, plan: plan, nowS: now)
         if due != running.events {
-            var next = running
-            next.events = due
-            change(to: next)
+            change(to: writeEvents(running, due))
         } else if let at = plan.slowHobAtS, now > at, planning == nil {
             // Past the moment, not on it: core lengthens the guess only once
             // the time heated is past its point (`replan`), so a clock on
@@ -1236,7 +1212,7 @@ final class Cook {
         // Once the egg is out, as it ran (`asRanShown`).
         let ran = asRanShown(cook, plan: plan)
         return CookActivity.Description(
-            doneness: tr(anchorNear(ran?.level ?? plan.level).key, in: cook.lang),
+            doneness: tr(anchorNear(ran?.level ?? plan.answer.level).key, in: cook.lang),
             peakYolk: showIn(cook.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC),
             eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000),
             cooling: cook.choices.cooling.rawValue
@@ -1269,7 +1245,7 @@ final class Cook {
         // cooling, not a cooling's countdown that may not be running: if
         // they are still in, that is what to do. Until the question is
         // answered, or the cook is too old.
-        if plan.askIfStillIn, phase(at: now) != .idle {
+        if asksIfStillIn(plan), phase(at: now) != .idle {
             return .init(
                 stage: .pull, began: pull, ends: Date(timeIntervalSince1970: plan.tooOldAtS), provisional: false,
                 cook: cook
@@ -1278,7 +1254,7 @@ final class Cook {
         switch phase(at: now) {
         case .idle, .done:
             return nil
-        case .heating where plan.lengthened:
+        case .heating where guessLengthened(plan):
             // The time heated, counting up to when the guess gives out, not
             // down to a pull that keeps moving (running-cook review 3).
             return .init(

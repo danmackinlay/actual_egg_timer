@@ -6,7 +6,7 @@
  */
 
 import { DoseGrid } from '../core/doseGrid.js';
-import { DecisionInputs } from '../core/decide.js';
+import { DecisionInputs, inputsKey } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { Calibration, copyCalibration } from '../core/record.js';
 import { offThread } from './offThread.js';
@@ -21,8 +21,9 @@ const decisionGrids = new Map<string, DoseGrid>();
 const decisionBuilds = new Map<string, Promise<DoseGrid>>();
 const DECISION_GRIDS_KEPT = 6;
 
+/** A surface's key: core's (`inputsKey`), which iOS's caches and the plan use too. */
 export function decisionKey(inputs: DecisionInputs): string {
-  return JSON.stringify(inputs);
+  return inputsKey(inputs);
 }
 
 /** The surface for these inputs if it has been built, or null. */
@@ -33,7 +34,13 @@ export function cachedDecisionGrid(inputs: DecisionInputs): DoseGrid | null {
 /** The surface for these inputs, built in the worker if it has not been. Two
  *  asks for the same inputs share one build. */
 export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
-  const key = decisionKey(inputs);
+  // A pot that cannot even be keyed cannot be built: rejected, as a build that throws is.
+  let key: string;
+  try {
+    key = decisionKey(inputs);
+  } catch (error: unknown) {
+    return Promise.reject(error);
+  }
   const done = decisionGrids.get(key);
   if (done !== undefined) return Promise.resolve(done);
   const running = decisionBuilds.get(key);
@@ -98,7 +105,12 @@ export function cachedOddsProfile(inputs: DecisionInputs, c: Calibration): OddsP
  * fold landing meanwhile cannot change what the profile is of.
  */
 export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<OddsProfile> {
-  const key = profileKey(inputs, c);
+  let key: string;
+  try {
+    key = profileKey(inputs, c);
+  } catch (error: unknown) {
+    return Promise.reject(error);
+  }
   const done = profiles.get(key);
   if (done !== undefined) return Promise.resolve(done);
   const running = profileBuilds.get(key);

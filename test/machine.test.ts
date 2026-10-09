@@ -22,7 +22,7 @@ import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { PULL_GRACE_SECONDS, Phase, phaseAt } from '../src/core/policy.js';
 import { Cooling, StartMode } from '../src/core/protocol.js';
 import {
-  CookChoices, CookPlan, RunningCook, eventsDue, replan, startCook, withBoil, withOut,
+  CookChoices, CookPlan, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { coolingStartsIn_s } from '../src/ui/phaseView.js';
 import { knowing } from '../tools/common.js';
@@ -38,7 +38,7 @@ const CHOICES: CookChoices = {
 };
 
 function cookOf(startMode: StartMode, cooling: Cooling): RunningCook {
-  return startCook(T0, { ...CHOICES, startMode: startMode, cooling: cooling }, 0, { '2.0': 480 }, 'metric', 'en');
+  return startCook(T0 / 1000, { ...CHOICES, startMode: startMode, cooling: cooling }, 0, { '2.0': 480 }, 'metric', 'en');
 }
 
 /** A cook under way, as the page holds it, and what it has rung for. */
@@ -61,7 +61,7 @@ function planNow(r: Running, now_s: number): void {
   r.plans += 1;
   const due = eventsDue(r.cook, r.plan, now_s);
   if (JSON.stringify(due) !== JSON.stringify(r.cook.events)) {
-    r.cook = { ...r.cook, events: due };
+    r.cook = writeEvents(r.cook, due);
     r.plan = replan(r.cook, C, null, 0, now_s);
     r.plans += 1;
   }
@@ -149,7 +149,7 @@ test('2. a cold start is HEATING until the boil is tapped, however slow the hob,
   runTo(r, S, S + 1500);
   assert.equal(r.phase, 'HEATING');
   assert.deepEqual(r.rang, []);
-  assert.ok(r.plan.lengthened, 'the slow hob lengthened the guess');
+  assert.ok(guessLengthened(r.plan), 'the slow hob lengthened the guess');
   assert.ok(r.plan.deadlines.cookEnd_s > guessed);
   assert.ok(r.plans < 150, `planned ${r.plans} times in 1500 ticks: at the slow hob's moments, not every tick`);
 });
@@ -162,7 +162,7 @@ test('2b. the tap fixes the time to boil from the start; a tap after the plan\'s
   tick(r, S + 420);
   assert.equal(r.phase, 'COOKING');
   assert.equal(r.plan.setup.timeToBoil_s, 420, 'the ramp is the tap less the start');
-  assert.equal(r.plan.provisional, false);
+  assert.equal(r.plan.deadlines.provisional, false);
 
   // A hob so slow the egg would be done before it boiled: the tap comes after
   // the pull the measured ramp gives, so the pull is the tap, with its grace.

@@ -47,8 +47,9 @@
  *                              and every move from every reachable state
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
- *   fixtures/running.json      a running cook: its egg and pot, its moves, and
- *                              a stored one read back
+ *   fixtures/running.json      a running cook: its egg and pot, its moves, a
+ *                              stored one read back, its plan, two copies
+ *                              taken up
  *   fixtures/newer.json        which build may write: versions compared, and
  *                              the verdict on the newest-version mark
  *

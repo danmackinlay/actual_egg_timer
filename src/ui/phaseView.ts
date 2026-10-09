@@ -8,7 +8,7 @@
 
 import { Cooling, HeatAfterBoil } from '../core/protocol.js';
 import { Deadlines, PULL_GRACE_SECONDS, phaseAt } from '../core/policy.js';
-import { CookPlan, RunningCook } from '../core/running.js';
+import { CookPlan, RunningCook, asksIfStillIn, guessLengthened } from '../core/running.js';
 import { phaseKeys } from '../core/wording.js';
 import { t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
@@ -62,7 +62,7 @@ export interface PhaseView {
   /** Cancel is reachable in every phase of a cook under way, including one a
    *  reload lands in: a cook picked back up must be one you can put down. */
   secondaryVisible: boolean;
-  /** The plan asks whether the egg is still in the water (`askIfStillIn`):
+  /** The plan asks whether the egg is still in the water (`deadlines.asking`):
    *  the primary button says yes, and a second button no. */
   asking: boolean;
 }
@@ -109,7 +109,7 @@ export function phaseView(
   } else if (phase === 'HEATING') {
     const heated = formatClock(now_s - run.cook.startedAt_s);
     subline = t(keys.subline, { elapsed: heated, boil: formatClock(boil_s) });
-    if (run.plan.lengthened) {
+    if (guessLengthened(run.plan)) {
       // The slow hob has lengthened the guess: the pull moves with the clock,
       // so no time left is shown from it (it would read 0:00 while still
       // heating, running-cook review 3), but the time heated, counting up.
@@ -146,7 +146,7 @@ export function phaseView(
   // still in the water (DECISIONS.md 98, review 1.1), and nothing past the
   // question is shown until it is answered (running-cook review 3): not the
   // cooling, nor Done. The time is how long since the egg was due out.
-  if (run !== null && run.plan.askIfStillIn) {
+  if (run !== null && asksIfStillIn(run.plan)) {
     const since = Math.max(0, now_s - run.plan.deadlines.cookEnd_s);
     return {
       label: t('ask.stillIn'),

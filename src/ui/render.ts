@@ -21,7 +21,7 @@ import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
   refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.js';
-import { CookPlan, RunningCook, asRanShown, solutionAsRan } from '../core/running.js';
+import { CookPlan, RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
 import { EggSection, SectionView, advanceSection, createSection, previewSection, sectionView } from '../core/section.js';
 import { Egg } from '../core/geometry.js';
@@ -245,7 +245,7 @@ function renderRunning(now_ms: number): void {
   const aim = state.aim;
   page().note.textContent = textureNote(aim?.solution ?? solutionShown(cook, plan));
   if (aim !== null) renderDonenessReading(aim.level, { peakYolk_C: aim.peakYolk_C });
-  else renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
+  else renderDonenessReading(shown?.level ?? plan.answer.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
   renderDonenessScale(sol, sol.whiteSets ? reading.profile : null, sol.whiteSets ? reading.sure?.words ?? null : null);
   // The warning line while a cook runs, until the pull: what the plan says
   // of the level, as the idle screen says it (design/one-screen.md section
@@ -350,7 +350,7 @@ function renderSection(now_ms: number): void {
   if (egg.held !== null) return;
   const shown = cookShown(cook, plan);
   const params = shown?.params ?? calibrationParams(state.calib);
-  const level = shown?.level ?? plan.level;
+  const level = shown?.level ?? plan.answer.level;
   const pulled = cook.events.pulled;
   const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
   if (out_s !== null && phaseNow(now_ms) === 'DONE') {
@@ -533,7 +533,7 @@ function renderOdds(now_ms: number, reading: RunningReading | null = null): void
   renderCertainty(sure, cook === null || plan === null ? null : { startedAt_s: cook.startedAt_s, cookTime_s: plan.cookTime_s });
   // Nothing past "still in the water?": not a caveat about the pull it
   // doubts (onescreen review 3).
-  const asking = state.cook !== null && state.plan !== null && state.plan.askIfStillIn;
+  const asking = state.cook !== null && state.plan !== null && asksIfStillIn(state.plan);
   page().whiteRisk.hidden = asking || (ranWhite !== null ? !ranWhite : o === null || !whiteAtRisk(o));
 
   // While a new pot's surface is on its way the lines above are blank, and

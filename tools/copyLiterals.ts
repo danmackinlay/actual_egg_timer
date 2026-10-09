@@ -101,7 +101,24 @@ const NOT_COPY: Record<string, string> = {
   // the running cook as stored (Cook.swift; design/one-screen.md section 4)
   'cookInProgress.v2': 'UserDefaults key',
   'cookInProgress.v3': 'UserDefaults key',
+  'cookInProgress.v4': 'UserDefaults key',
   leanHint_s: 'stored cook field name',
+  log: 'stored cook field name: its log',
+  kind: 'stored cook field name: a log entry\'s kind',
+  at_s: 'stored cook field name: a log entry\'s time',
+  boil: 'stored cook log entry kind',
+  correct: 'stored cook log entry kind',
+  stands: 'stored cook log entry kind',
+  rang: 'stored cook log entry kind',
+  ran: 'stored cook log entry kind',
+  answered: 'stored cook log entry kind',
+  logged: 'stored cook log entry kind',
+  ended: 'stored cook log entry kind',
+  'not a running cook': 'decoding error, never shown',
+  // the key of a decision surface or a slow hob's memo (Decide.swift,
+  // `inputsKey`; Running.swift): machine text, never shown
+  '|': 'key separator',
+  '{}|{}|{}': 'key: the pot\'s three kinds',
   // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',

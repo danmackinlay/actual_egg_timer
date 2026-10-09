@@ -51,6 +51,14 @@ func choicesOf(_ json: [String: Any]) throws -> CookChoices {
     )
 }
 
+/// A cook as it is stored: what was fixed at the press, the start and the
+/// log, as the fixtures write every cook, without the cook as it stands.
+func storedJSON(_ cook: RunningCook?) -> [String: Any]? {
+    guard var o = cook?.jsonObject else { return nil }
+    for key in ["startedAt_s", "choices", "events", "correctedAt_s", "asRan"] { o[key] = nil }
+    return o
+}
+
 /// A cook the fixture writes, read as the app will read it.
 func runningCookOf(_ json: Any?, _ what: String) throws -> RunningCook {
     try #require(readRunningCook(json), "\(what): the cook does not read")
@@ -80,6 +88,20 @@ struct RunningConformance {
             #expect(pot.setup.timeToBoilS == expected.timeToBoilS, "\(label) time to boil")
             #expect(pot.setup.waterLitres == expected.waterLitres, "\(label) water")
             #expect(pot.setup.eggCount == expected.eggCount, "\(label) eggs")
+            // The key of the inputs, from the fixture's own numbers, read from
+            // their text to the bit: the same key as the web's, character for
+            // character.
+            let n = try #require(row["keyNumbers"] as? [String], "\(label): no key numbers").compactMap(Double.init)
+            #expect(n.count == 13, "\(label): key numbers")
+            guard n.count == 13 else { continue }
+            var setup = expected
+            (setup.eggStartC, setup.ambientC, setup.boilingC, setup.timeToBoilS) = (n[4], n[5], n[6], n[7])
+            (setup.waterLitres, setup.eggCount) = (n[8], n[9])
+            let inputs = DecisionInputs(
+                egg: Egg(radiusM: n[0], minorDiameterM: n[1], massKg: n[2], volumeM3: n[3]), setup: setup,
+                params: ModelParams(alphaM2s: n[10], tauAirScale: n[11]), whiteDoseMin: n[12]
+            )
+            #expect(try inputsKey(inputs) == row.str("inputsKey"), "\(label) inputs key \(inputsKey(inputs))")
         }
     }
 
@@ -106,7 +128,7 @@ struct RunningConformance {
                 try expectClose(earliestStartS(cook), row.num("earliest_s"), "\(note): earliest start")
                 after = startCorrected(cook, startedAtS: try move.optionalNum("start") ?? .nan, nowS: now)
             }
-            #expect(sameJSON(after?.jsonObject, row["after"]), "\(note)")
+            #expect(sameJSON(storedJSON(after), row["after"]), "\(note)")
         }
     }
 
@@ -117,7 +139,7 @@ struct RunningConformance {
         for row in rows {
             let note = try row.str("note")
             let read = readRunningCook(row["raw"])
-            #expect(sameJSON(read?.jsonObject, row["cook"]), "\(note)")
+            #expect(sameJSON(storedJSON(read), row["cook"]), "\(note)")
             if let read {
                 let data = try JSONSerialization.data(withJSONObject: read.jsonObject)
                 // To the last bit but one: JSONSerialization writes 0.068 as
@@ -136,16 +158,17 @@ struct RunningConformance {
         // which is what JSONSerialization read back an ulp off.
         var draw = SplitMix(seed: 20261007)
         for base in cooks {
-            var cook = base
-            cook.startedAtS += draw.next()
-            cook.idMs = (cook.startedAtS * 1000).rounded()
-            cook.choices.massKg = 0.04 + 0.04 * draw.next()
-            cook.choices.waterLitres = 0.2 + 3 * draw.next()
-            cook.choices.level = draw.next()
-            cook.choices.altitudeM = 2000 * draw.next()
+            // Every time moved by a fraction, and a correction of every
+            // number, logged as a cook makes one.
+            var cook = shiftedCook(base, by: draw.next())
+            var choices = cook.choices
+            choices.massKg = 0.04 + 0.04 * draw.next()
+            choices.waterLitres = 0.2 + 3 * draw.next()
+            choices.level = draw.next()
+            choices.altitudeM = 2000 * draw.next()
+            cook = corrected(cook, choices: choices, nowS: cook.startedAtS + 1 + draw.next())
             cook.nudgeS = 20 * draw.next() - 10
-            cook.boilMemory = ["\(cook.choices.waterLitres)": 300 + 600 * draw.next()]
-            if cook.events.boilAtS != nil { cook.events.boilAtS = cook.startedAtS + 400 + draw.next() }
+            cook.boilMemory = ["\(choices.waterLitres)": 300 + 600 * draw.next()]
             cooks.append(cook)
         }
         for cook in cooks {
@@ -203,8 +226,8 @@ struct RunningConformance {
                 let profile = try (s["profile"] as? [String: Any]).map { try profileOf($0) }
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
-            let slowHob = try (row["hint"] as? [String: Any]).map { try slowHobHintOf($0) }
-            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, hint: slowHob)
+            let memo = try (row["hint"] as? [String: Any]).map { try slowHobMemoOf($0) }
+            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, memo: memo)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
             let stillOpen = [
@@ -236,9 +259,9 @@ struct RunningConformance {
             // At the slow hob's moment itself (this core's, to the bit) it has
             // not come, and the plan made then is the plan already made: a
             // clock stopped there plans nothing more.
-            if let at = plan.slowHobAtS, plan.slowHob != nil {
+            if let at = plan.slowHobAtS, plan.memo != nil {
                 #expect(!slowHobDue(plan, nowS: at), "\(note): due at its own moment")
-                let then = replan(cook, c, surface: surface, leanHintS: hint, nowS: at, hint: slowHob)
+                let then = replan(cook, c, surface: surface, leanHintS: hint, nowS: at, memo: memo)
                 #expect(then.slowHobAtS == at, "\(note): planned again at its moment, it moved")
             }
             // The record, the boil remembered, and how the cook ends.
@@ -297,6 +320,21 @@ struct RunningConformance {
         #expect(hobsAsked >= 7, "the slow hob's moment asked of too few plans")
     }
 
+    @Test("two copies of one cook: what each takes up from the other, and which a reload restores")
+    func takeUps() throws {
+        let rows = try Fixtures.list("running.json", "takeUps")
+        #expect(rows.count >= 8)
+        for row in rows {
+            let note = try row.str("note")
+            let ours = try runningCookOf(row["ours"], "\(note): ours")
+            let theirs = try runningCookOf(row["theirs"], "\(note): theirs")
+            #expect(sameJSON(storedJSON(takeUpEvents(ours, theirs)), row["oursAfter"]), "\(note): ours")
+            #expect(sameJSON(storedJSON(takeUpEvents(theirs, ours)), row["theirsAfter"]), "\(note): theirs")
+            let later = [correctedLater(ours, theirs), correctedLater(theirs, ours)]
+            #expect(later == (row["later"] as? [Bool]), "\(note): corrected later")
+        }
+    }
+
     @Test("what the boil memory learns from a cook, and what it does not")
     func remembers() throws {
         let rows = try Fixtures.list("running.json", "remembers")
@@ -323,47 +361,31 @@ private func expectAsRan(_ a: CookAsRan?, _ json: Any?, _ what: String) {
     #expect(sameJSON(a?.jsonObject, json, relative: conformanceTolerance), "\(what)")
 }
 
-/// The slow hob's hint as the fixtures write one.
-private func slowHobHintOf(_ json: [String: Any]) throws -> SlowHobHint {
-    let params = try json.object("params")
-    return try SlowHobHint(
-        startedAtS: json.num("startedAt_s"), choices: choicesOf(json.object("choices")),
-        fromRampS: json.num("fromRamp_s"), carryS: json.num("carry_s"),
-        params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
-        whiteDoseMin: json.num("whiteDose_min"), steps: Int(json.num("steps")), lastS: json.num("last_s"),
-        rampS: json.num("ramp_s"), carriedS: json.optionalNum("carried_s")
+/// The slow hob's memo as the fixtures write one: its place, and the key of
+/// what the web's core read, which this core may make otherwise in the last
+/// bits; a memo that does not fit is ignored, and the plan is the same.
+private func slowHobMemoOf(_ json: [String: Any]) throws -> SlowHobMemo {
+    try SlowHobMemo(
+        key: json.str("key"), steps: Int(json.num("steps")), lastS: json.num("last_s"), rampS: json.num("ramp_s"),
+        carriedS: json.optionalNum("carried_s")
     )
 }
 
-private func expectHint(_ h: SlowHobHint?, _ json: Any?, _ note: String) throws {
+private func expectMemo(_ h: SlowHobMemo?, _ json: Any?, _ note: String) throws {
     guard let j = json as? [String: Any] else {
-        #expect(h == nil, "\(note): no slow hob's hint")
+        #expect(h == nil, "\(note): no slow hob's memo")
         return
     }
-    let hint = try #require(h, "\(note): a slow hob's hint")
-    let want = try slowHobHintOf(j)
-    #expect(hint.steps == want.steps, "\(note): hint steps")
-    expectClose(hint.lastS, want.lastS, "\(note): hint's last")
-    expectClose(hint.rampS, want.rampS, "\(note): hint's ramp")
-    expectClose(hint.fromRampS, want.fromRampS, "\(note): hint's start")
-    expectClose(hint.carryS, want.carryS, "\(note): hint's carry")
+    let hint = try #require(h, "\(note): a slow hob's memo")
+    let want = try slowHobMemoOf(j)
+    #expect(hint.steps == want.steps, "\(note): memo steps")
+    expectClose(hint.lastS, want.lastS, "\(note): memo's last")
+    expectClose(hint.rampS, want.rampS, "\(note): memo's ramp")
     switch (hint.carriedS, want.carriedS) {
     case (nil, nil): break
     case let (a?, b?): expectClose(a, b, "\(note): hint's carried time")
     default: Issue.record("\(note): hint's carried time")
     }
-}
-
-/// An odds profile as the fixtures write one.
-private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
-    try OddsProfile(
-        points: json.rows("points", mayBeEmpty: true).map {
-            try LevelOdds(level: $0.num("level"), cookTimeS: $0.num("cookTime_s"), odds: $0.num("odds"))
-        },
-        best: json.num("best"),
-        physicalSoftest: json.num("physicalSoftest"), physicalHardest: json.num("physicalHardest"),
-        softest: json.optionalNum("softest"), hardest: json.optionalNum("hardest")
-    )
 }
 
 /// A clock time, as seconds from the cook's start: an epoch time's relative
@@ -400,8 +422,6 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     let setup = try cookSetup(json.object("setup"))
     #expect(p.setup.startMode == setup.startMode, "\(note): start")
     expectClose(p.setup.timeToBoilS, setup.timeToBoilS, "\(note): time to boil")
-    #expect(try p.provisional == json.flag("provisional"), "\(note): provisional")
-    #expect(try p.lengthened == json.flag("lengthened"), "\(note): lengthened")
     if let inputs = json["inputs"] as? [String: Any] {
         let i = try #require(p.inputs, "\(note): no inputs")
         try expectClose(i.params.alphaM2s, inputs.object("params").num("alpha_m2s"), "\(note): inputs' alpha")
@@ -415,7 +435,6 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     #expect(try p.answer.verdict.snapTo == a.optionalNum("snapTo"), "\(note): snap to")
     #expect(try p.answer.lowOdds == a.flag("lowOdds"), "\(note): low odds")
     try expectClose(p.answer.solution.result.cookTimeS, a.num("cookTime_s"), "\(note): mean solve")
-    try expectClose(p.level, json.num("level"), "\(note): level")
     let sol = try json.object("solution")
     #expect(try p.solution.reachable == sol.flag("reachable"), "\(note): reachable")
     #expect(try p.solution.whiteSets == sol.flag("whiteSets"), "\(note): white sets")
@@ -441,7 +460,6 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     try expectClose(p.nudgeS, json.num("nudge_s"), "\(note): nudge")
     try expectClose(p.cookTimeS, json.num("cookTime_s"), "\(note): cook time")
     #expect(try p.overdue == json.flag("overdue"), "\(note): overdue")
-    #expect(try p.askIfStillIn == json.flag("askIfStillIn"), "\(note): ask if still in")
     try expectClose(p.coolS, json.num("cool_s"), "\(note): cooling")
     #expect(try p.probeMoment == json.flag("probeMoment"), "\(note): probe moment")
     let dl = try json.object("deadlines")
@@ -452,7 +470,7 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     expectTime(p.deadlines.outAtS, try dl.optionalNum("outAt_s"), start: start, "\(note): out")
     expectTime(p.slowHobAtS, try json.optionalNum("slowHobAt_s"), start: start, "\(note): slow hob")
     expectTime(p.tooOldAtS, try json.num("tooOldAt_s"), start: start, "\(note): too old")
-    try expectHint(p.slowHob, json["slowHob"], note)
+    try expectMemo(p.memo, json["memo"], note)
     if let cj = json["certainty"] as? [String: Any] {
         let c = try #require(p.certainty, "\(note): no certainty")
         let w = try cj.object("words")

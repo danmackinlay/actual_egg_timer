@@ -79,7 +79,7 @@ struct EggSectionView: View {
         // (`asRanShown`), not a posterior that has since learned from it.
         let ran = asRanShown(running, plan: plan)
         let params = ran?.params ?? calibrationParams(calibration)
-        let whiteTarget = calibrationDoneness(calibration, level: ran?.level ?? plan.level).whiteDoseMin
+        let whiteTarget = calibrationDoneness(calibration, level: ran?.level ?? plan.answer.level).whiteDoseMin
         let start = running.startedAtS
         if phase == .done, let pulled = running.events.pulled {
             return (cache.preview(
