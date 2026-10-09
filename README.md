@@ -984,9 +984,9 @@ boot and after each step, once the page is idle. `npm run copy:snapshot --
 capture <out.json>` writes those words, and `compare` proves two builds
 render the same ones; `npm run e2e` runs them too, so a step that no longer
 reaches its state fails there. The whole suite, 78 scenarios, takes about
-six minutes, so
-it is not in `npm run verify`; CI runs it as a job of its own on Linux
-(`.github/workflows/verify.yml`, `e2e`), not yet failing the workflow.
+six minutes, so it is not in `npm run verify`; CI runs it as a job of its
+own on Linux (`.github/workflows/verify.yml`, `e2e`), not yet failing the
+workflow.
 
 What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
 Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
@@ -1021,10 +1021,10 @@ pull; the grace is its margin for a slow machine. A person's timers (a
 control's 1.5-s settle, a held key) stay real, and a scenario waits for the
 page to say it is idle (`aetTest.whenIdle()`: the app sets those timers,
 sends its worker jobs and makes its requests through `src/ui/idle.ts`, which
-counts them, so nothing is patched) rather than for a fixed time; a wait for
-something that will come gives up after a minute, which is failure
-detection, not a measure. Two scenarios run off
-the stopped clock: the address check, and sharing, which sends nothing on
+counts them, so no timer, worker or request is patched) rather than for a
+fixed time; a wait for something that will come gives up after a minute,
+which is failure detection, not a measure. Two scenarios run off the
+stopped clock: the address check, and sharing, which sends nothing on
 the development clock and is checked on the real one. `E2E_CPU_THROTTLE=6`
 slows every page six times (DevTools' CPU throttling); with every core
 busy as well, the suite passes as it does on a quiet machine.

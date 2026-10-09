@@ -3,7 +3,7 @@
  * settle, a solve or a write coalesced, a held key's repeat, a decision's
  * settle), the jobs sent off the main thread, and the requests out. The app
  * sets those timers and makes those requests through here, so a script can
- * wait for the page to have done what it will (`whenIdle`, dev/test.ts)
+ * wait for the page to have done what it will (src/ui/dev/test.ts)
  * rather than for a fixed time, whatever the machine's speed. A timer that
  * is not such a span - a request's timeout, a download's cleanup - is a
  * plain `setTimeout`.
