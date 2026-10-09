@@ -64,6 +64,9 @@ export interface Snapshot {
   lengthened: boolean;
   certainty: CertaintyReading | null;
   peakYolk_C: number | null;
+  /** Whether the white sets at the time on screen: the running cook's
+   *  plan's, else the idle answer's; null with neither. */
+  whiteSets: boolean | null;
   /** The running cook as stored (`aet.cook.v5`), its text. */
   stored: string | null;
   /** The results log, how many of it are folded in, how many still to
@@ -114,6 +117,7 @@ function snapshot(): Snapshot {
     lengthened: plan !== null && guessLengthened(plan),
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
+    whiteSets: plan !== null ? plan.solution.whiteSets : state.solution?.whiteSets ?? null,
     stored: localStorage.getItem('aet.cook.v5'),
     log: keptState().log,
     eggsLogged: state.calib.eggsLogged,

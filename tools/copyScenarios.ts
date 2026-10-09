@@ -19,9 +19,17 @@
  *   - <html lang> and document.title.
  *
  * The development clock's mark is not the app's, and is left out.
+ *
+ * Each state is checked as it is captured (`checkState`): that it rendered;
+ * that no catalogue key and no `{placeholder}` shows raw, and no straight
+ * apostrophe or quote, anywhere in its words; that the mute button says
+ * what the setting means; and that the certainty line is on screen exactly
+ * where the page's own state says there is a time to be sure of.
  */
 
-import { Failure, Harness, Scenario, Snap, Tab } from './harness.js';
+import { readFileSync } from 'node:fs';
+
+import { Failure, Harness, Scenario, Snap, Tab, check } from './harness.js';
 
 /** One state's words, as `copySnapshot.js compare` reads them. */
 export interface CopyState {
@@ -61,6 +69,77 @@ const CAPTURE = `(() => {
   if (mark !== null) d.body.append(mark);
   return out;
 })()`;
+
+/* ----------------------------------------------------------------- checks */
+
+/** The first parts of the catalogue's keys (`readout`, `doneness`, ...). A
+ *  word on screen that starts with one and goes on in dotted parts is a key
+ *  shown raw, which is what the app shows for a key it cannot find. */
+const KEY_ROOTS = new Set(Object.keys(
+  (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages,
+).map((k) => k.split('.')[0]));
+const KEY_LIKE = /\b([a-z][A-Za-z0-9]*)(?:\.[A-Za-z0-9]+)+\b/g;
+const PLACEHOLDER = /\{[A-Za-z_][A-Za-z0-9_]*\}/;
+/** Apostrophes and quotes are curly in every catalogue string. */
+const STRAIGHT = /['"]/;
+
+/** What the page's state says should be on screen, read beside its words. */
+interface Facts {
+  phase: string;
+  startMode: string;
+  /** A time decided at idle; a running cook's plan has a certainty. */
+  chosen: boolean;
+  certainty: boolean;
+  /** Missing from a build older than this harness (`--tree`), whose test
+   *  API did not say; its certainty line is then not checked. */
+  whiteSets?: boolean | null;
+  /** The certainty line drawn, with words in it. */
+  certaintyShown: boolean;
+  /** The mute button's words, and the catalogue's for the setting. */
+  mute: string;
+  muteWanted: string;
+}
+
+const FACTS = `(() => {
+  const s = window.__snap();
+  const line = document.getElementById('certaintyWord');
+  const box = line.getBoundingClientRect();
+  return {
+    phase: s.phase, startMode: s.settings.startMode,
+    chosen: s.chosen !== null, certainty: s.certainty !== null, whiteSets: s.whiteSets,
+    certaintyShown: !line.hidden && box.width > 0 && box.height > 0 && line.textContent.trim() !== '',
+    mute: document.getElementById('mute').textContent,
+    muteWanted: window.aetTest.t(s.settings.muted ? 'readout.mute.off' : 'readout.mute.on'),
+  };
+})()`;
+
+/** Whether the certainty line belongs on screen, from the state alone: a
+ *  pan time to be sure of, which is idle's once it is decided and a running
+ *  cook's until the pull, and only where the white sets in that time;
+ *  never in sous-vide, which answers in hours with no pan to be unsure of. */
+function certaintyWanted(f: Facts): boolean {
+  if (f.startMode === 'sous' || f.whiteSets !== true) return false;
+  if (f.phase === 'IDLE') return f.chosen;
+  return (f.phase === 'HEATING' || f.phase === 'COOKING') && f.certainty;
+}
+
+/** Holds one captured state to what every state must show. */
+function checkState(st: CopyState, f: Facts): void {
+  const at = st.name;
+  check(st.lang.startsWith('en') && st.title.trim() !== '' && st.innerText.trim() !== '', `${at}: nothing rendered`);
+  check(f.startMode === 'sous' || f.phase !== 'IDLE' || f.chosen, `${at}: idle with no time decided`);
+  const words = [st.title, ...st.texts, ...st.attrs.map((a) => a.slice(a.indexOf('=') + 1))];
+  for (const w of words) {
+    check(!PLACEHOLDER.test(w), `${at}: a placeholder shown raw in "${w}"`);
+    for (const m of w.matchAll(KEY_LIKE)) check(!KEY_ROOTS.has(m[1]), `${at}: a key shown raw, ${m[0]}, in "${w}"`);
+    check(!STRAIGHT.test(w), `${at}: a straight quote in "${w}"`);
+  }
+  check(f.mute === f.muteWanted, `${at}: the mute button says "${f.mute}", not "${f.muteWanted}"`);
+  if (f.whiteSets === undefined) return;
+  const wanted = certaintyWanted(f);
+  check(f.certaintyShown === wanted, `${at}: the certainty line ${wanted ? 'missing' : 'shown'} `
+    + `(${f.phase}, ${f.startMode}, the white ${f.whiteSets === true ? 'sets' : 'does not set'})`);
+}
 
 /* ------------------------------------------------------------------ steps */
 
@@ -113,6 +192,10 @@ interface CopyScenario {
    *  the American ones). en-GB unless given. */
   lang?: string;
   settings: Record<string, unknown>;
+  /** Planted settings the app opens on another value, on purpose: the
+   *  slider snapped out of a refusal's stripes, a size carried to this
+   *  carton's. */
+  moves?: string[];
   boil?: Record<string, number>;
   steps: Step[];
 }
@@ -130,19 +213,19 @@ const SCENARIOS: CopyScenario[] = [
   { name: 'idle hot', settings: { startMode: 'hot' }, steps: [] },
   { name: 'US carton', lang: 'en-US', settings: {}, steps: [] },
   { name: 'US carton, Jumbo', lang: 'en-US', settings: { sizeIndex: 4 }, steps: [] },
-  { name: 'EU carton, stored Jumbo', settings: { sizeIndex: 4 }, steps: [] },
+  { name: 'EU carton, stored Jumbo', settings: { sizeIndex: 4 }, moves: ['sizeIndex'], steps: [] },
   { name: 'idle hot standing', settings: { startMode: 'hot', afterBoil: 'off' }, steps: [] },
   { name: 'idle cold standing', settings: { afterBoil: 'off' }, steps: [] },
   { name: 'idle soft', settings: { startMode: 'hot', doneness: 0.22 }, steps: [] },
   { name: 'idle fudgy', settings: { startMode: 'hot', doneness: 0.62 }, steps: [] },
   { name: 'idle hard', settings: { startMode: 'hot', doneness: 1 }, steps: [] },
   { name: 'idle runny hot', settings: { startMode: 'hot', doneness: 0 }, steps: [] },
-  { name: 'refusal ice', settings: { sizeIndex: 0, startTempMode: 'room', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
-  { name: 'refusal tap', settings: { sizeIndex: 0, cooling: 'tap', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
-  { name: 'refusal counter', settings: { sizeIndex: 0, cooling: 'counter', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
-  { name: 'refusal hardest', settings: { sizeIndex: 3, afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 1 }, steps: [] },
-  { name: 'refusal hardest 0.75 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 0.75, eggCount: 2, doneness: 1 }, boil: { '0.8': 300 }, steps: [] },
-  { name: 'refusal hardest 1 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 1, eggCount: 1, doneness: 1 }, boil: { '1.0': 300 }, steps: [] },
+  { name: 'refusal ice', settings: { sizeIndex: 0, startTempMode: 'room', waterLitres: 0.5, eggCount: 1, doneness: 0 }, moves: ['doneness'], steps: [] },
+  { name: 'refusal tap', settings: { sizeIndex: 0, cooling: 'tap', waterLitres: 0.5, eggCount: 1, doneness: 0 }, moves: ['doneness'], steps: [] },
+  { name: 'refusal counter', settings: { sizeIndex: 0, cooling: 'counter', waterLitres: 0.5, eggCount: 1, doneness: 0 }, moves: ['doneness'], steps: [] },
+  { name: 'refusal hardest', settings: { sizeIndex: 3, afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 1 }, moves: ['doneness'], steps: [] },
+  { name: 'refusal hardest 0.75 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 0.75, eggCount: 2, doneness: 1 }, boil: { '0.8': 300 }, moves: ['doneness'], steps: [] },
+  { name: 'refusal hardest 1 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 1, eggCount: 1, doneness: 1 }, boil: { '1.0': 300 }, moves: ['doneness'], steps: [] },
   { name: 'white never sets', settings: { sizeIndex: 0, startMode: 'hot', afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
   { name: 'custom temp, measured egg', settings: { startTempMode: 'custom', customStart_C: 15, sizeIndex: -1, customMinor_mm: 45 }, steps: [] },
   { name: 'room temp', settings: { startTempMode: 'room' }, steps: [] },
@@ -224,8 +307,11 @@ const SCENARIOS: CopyScenario[] = [
   },
 ];
 
+/** The page's words now, checked. */
 async function words(tab: Tab, name: string): Promise<CopyState> {
-  return { name: name, ...await tab.eval<Omit<CopyState, 'name'>>(CAPTURE) };
+  const state = { name: name, ...await tab.eval<Omit<CopyState, 'name'>>(CAPTURE) };
+  checkState(state, await tab.eval<Facts>(FACTS));
+  return state;
 }
 
 /** One scenario's states, in order: the app opened, then each step. */
@@ -239,6 +325,15 @@ async function capture(h: Harness, sc: CopyScenario): Promise<CopyState[]> {
   await tab.goto(`${h.origin}/?clock=0&at=${encodeURIComponent(T0)}&seed=${SEED}`);
   await tab.settle();
   const out = [await words(tab, `${sc.name} / start`)];
+  // The settings planted are the ones the app opened on, so the state is
+  // the one the scenario names; a setting the app does not keep, or carries
+  // to another value on purpose, would capture another state unseen.
+  const opened = (await tab.snap()).settings;
+  for (const [key, value] of Object.entries(sc.settings)) {
+    const moved = sc.moves?.includes(key) === true;
+    check((opened[key] === value) !== moved,
+      `${sc.name}: planted ${key} ${JSON.stringify(value)}, opened on ${JSON.stringify(opened[key])}`);
+  }
   let i = 0;
   for (const step of sc.steps) {
     await step.run(tab);
@@ -252,7 +347,7 @@ async function capture(h: Harness, sc: CopyScenario): Promise<CopyState[]> {
 const slug = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /** The copy capture as harness scenarios, `copy/<name>`, in order; each
- *  hands its states to `sink` as well as counting them. */
+ *  checks its states and hands them to `sink`. */
 export function copyScenarios(sink: (states: CopyState[]) => void = () => undefined): Record<string, Scenario> {
   const out: Record<string, Scenario> = {};
   for (const sc of SCENARIOS) {
@@ -261,7 +356,7 @@ export function copyScenarios(sink: (states: CopyState[]) => void = () => undefi
       run: async (h) => {
         const states = await capture(h, sc);
         sink(states);
-        return `${states.length} states`;
+        return `${states.length} ${states.length === 1 ? 'state' : 'states'} checked`;
       },
     };
   }
