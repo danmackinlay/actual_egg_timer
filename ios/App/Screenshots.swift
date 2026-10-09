@@ -98,10 +98,13 @@ import UIKit
 /// of `-uiDo`, and what the screen says, which the scripted checks read
 /// (`tools/iosE2e.ts`). A line is `{"t":<cook time, epoch s>,"ev":"<the
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
-/// `Codable` writes them, a field with no value left out.
+/// `Codable` writes them, in the order of their names, a field with no value
+/// left out.
 enum Screenshots {
     static func log(_ event: Event) {
         let encoder = JSONEncoder()
+        // The same event the same line, every time, to read and to diff.
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         encoder.nonConformingFloatEncodingStrategy = .convertToString(
             positiveInfinity: "inf", negativeInfinity: "-inf", nan: "nan"
         )
