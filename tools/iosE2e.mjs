@@ -1311,6 +1311,28 @@ scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start agai
   run.note(`left stored at Start again; the next launch logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept`);
 });
 
+scenario('again-held', 'red team 0.4: Done, corrected, Jammy held for the record, Start again: the egg logged with Jammy, not unanswered', async (run) => {
+  // `-uiHoldAsRan YES`: the corrected record is never planned as it ran in
+  // this launch, so the answer is held until Start again.
+  await started(run, [...HOT, '-uiHoldAsRan', 'YES', '-uiDo',
+    'out@pull+2,set:size=3@cooled+10,answer:jammy@cooled+15,again@cooled+20']);
+  const cooling = await toCooling(run, 2);
+  const i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  await corrected(run, t.i);
+  const a = await tapAt(run, cooling.cooled + 15, 'answer');
+  await run.until(/^answer held$/, { from: a.i, what: 'the answer held' });
+  const again = await tapAt(run, cooling.cooled + 20, 'again');
+  const logged = await run.until(/^log 1 /, { from: again.i, what: 'the egg logged' });
+  const egg = eggLog(run.lines().slice(0, logged.i + 1)).last;
+  run.check(egg.yolkWord === 'jammy', `the held answer logged: ${egg.yolkWord}`);
+  run.check(forecastOk(egg), 'with its forecast');
+  const folded = await run.until(/^log 1 folded 1 /, { from: logged.i, what: 'the egg folded' });
+  run.check(folded, 'and learned from');
+  run.note(`Start again logged the held answer: ${egg.yolkWord}, folded`);
+});
+
 
 scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
   await started(run, [...HOT, '-cooling', 'counter', '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);

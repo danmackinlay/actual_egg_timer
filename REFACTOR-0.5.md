@@ -50,9 +50,10 @@ then restructure.
       (`src/ui/cook.ts:549`). S. *Done:* tried three times more, then left
       stored for the next launch and held back from sharing;
       `ios:e2e again-not-remade`.
-- [ ] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
+- [x] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
       logs the unanswered egg with no yolk or white, then clears `held`; the
-      web logs `heldAnswers()` (`cook.ts:504`). S.
+      web logs `heldAnswers()` (`cook.ts:504`). S. *Done:* the egg logged with
+      the held answers and folded; `ios:e2e again-held`.
 - [ ] **0.5 iOS: one render reads the clock several times**. `ReadoutView`'s
       big time uses `cook.secondsToPull`, which reads `AppClock.now` itself,
       not the `TimelineView`'s `now`; `Cook` reads `AppClock.now` 24 times.

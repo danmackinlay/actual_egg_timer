@@ -170,12 +170,14 @@ final class AppModel {
     }
 
     /// "Start again", at Done: what the cook leaves (`cookEnding`). A pan it
-    /// timed is remembered, and an egg cooked through that nobody answered
-    /// about is still logged; it folds nothing. An answered egg corrected
-    /// after its pull whose record is not yet made again - a change still
-    /// settling is committed just above, so the usual case - has it made
-    /// first, in place of the egg logged, and only then is the cook
-    /// forgotten and the egg final (`remake`, onescreen review 1.2).
+    /// timed is remembered, and an egg cooked through whose answer was never
+    /// made into its record is still logged, with any answer held for it
+    /// (`held`), as the web logs `heldAnswers()`; with none, it folds
+    /// nothing. An answered egg corrected after its pull whose record is not
+    /// yet made again - a change still settling is committed just above, so
+    /// the usual case - has it made first, in place of the egg logged, and
+    /// only then is the cook forgotten and the egg final (`remake`,
+    /// onescreen review 1.2).
     func startAgain() {
         edits.touchedElsewhere()
         edits.end()
@@ -185,7 +187,7 @@ final class AppModel {
             if ending.remake, cook.feedbackGiven, let running = cook.running {
                 stale = running
             } else if let egg = cook.unanswered() {
-                logUnanswered(egg)
+                logUnanswered(egg, held: held)
             }
         }
         // Read before `endEgg` lets go of what this process folded.
@@ -435,12 +437,13 @@ final class AppModel {
         }
     }
 
-    /// Log a finished egg nobody answered about, made on its pot's surface
-    /// when it must be (`Cook.unansweredRecord`), and send what is final.
-    private func logUnanswered(_ egg: Cook.Unanswered) {
+    /// Log a finished egg whose answer was never made into its record, with
+    /// any answer `held` for it, made on its pot's surface when it must be
+    /// (`Cook.unansweredRecord`), and send what is final.
+    private func logUnanswered(_ egg: Cook.Unanswered, held: Planner.Answers? = nil) {
         // Logged before the stored cook goes whenever the record can be made
         // at once; only an egg whose surface must still be built waits.
-        if let record = Cook.unansweredRecordNow(egg) {
+        if let record = Cook.unansweredRecordNow(egg, held: held) {
             planner.logUnanswered(record)
             // Sent once final: at a relaunch now; at Start again, by its own
             // send once the stored cook is gone (this one skips it as open).
@@ -448,7 +451,7 @@ final class AppModel {
             return
         }
         Task {
-            guard let record = await Cook.unansweredRecord(egg) else { return }
+            guard let record = await Cook.unansweredRecord(egg, held: held) else { return }
             planner.logUnanswered(record)
             Sharing.shared.sendFinal()
         }

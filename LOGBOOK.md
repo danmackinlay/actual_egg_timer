@@ -6149,3 +6149,22 @@ come back with nothing. `npm run ios:e2e -- again-not-remade`: before,
 `stored none` at Start again and nothing stored for the next launch; after,
 the cook kept stored, and the next launch, too old to pick up, logs the egg
 corrected (68 -> 76 g), Jammy kept, then forgets it.
+
+**0.4, an answer held at Start again dropped.** An answer given while the
+egg's record cannot be made yet (its pot's surface not built again after a
+relaunch, or a correction after the pull not yet planned as it ran) is
+`held`; Start again logged the egg with no yolk or white and cleared it.
+Now `logUnanswered` makes the record with the held answers, the probe's
+reading among them (`Cook.unansweredRecord(_:held:)`), as the web's
+`endCook` logs `heldAnswers()`, and the egg is folded. `npm run ios:e2e --
+again-held` (`-uiHoldAsRan YES`, a correction at Done, Jammy held, Start
+again): before, the egg logged with `yolkWord` null; after, Jammy, with its
+forecast, folded.
+
+Checked: `npm run verify` and `npm run ios:build` on each commit;
+`npm run ios:e2e`, 42 of 42, on the last commit's code, and on each
+commit the scenarios it touches, with `AET_E2E_WAIT=300`: the machine's
+load average was 130 to 620 from other agents' simulators, and the first
+full run's warm-up gave up on a new device's alarms after five launches.
+The two new scenarios failed on the old code as described and pass on the
+new.

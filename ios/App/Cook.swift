@@ -289,22 +289,25 @@ final class Cook {
     /// An unanswered egg's record if it can be made now, without building a
     /// surface: from the plan as it ran, the usual case. Start again logs it
     /// before the stored cook is cleared, so no kill in between can lose it.
-    static func unansweredRecordNow(_ u: Unanswered) -> EggRecord? {
-        record(u.cook, u.plan, yolk: nil, white: nil, probe: nil).record
+    /// With any answer held for it (`AppModel.held`).
+    static func unansweredRecordNow(_ u: Unanswered, held: Planner.Answers? = nil) -> EggRecord? {
+        record(u.cook, u.plan, yolk: held?.yolk, white: held?.white, probe: held?.probe).record
     }
 
     /// An unanswered egg's record, never one with no forecast (running-cook
     /// review 1.3): from the plan as it ran when kept, else from its plan on
     /// its pot's surface, which is built here when the plan has none (a
     /// relaunch, or a cook dropped as too old). Nil only when core refuses
-    /// it for another reason (a correction not yet planned as it ran).
-    static func unansweredRecord(_ u: Unanswered) async -> EggRecord? {
-        let first = record(u.cook, u.plan, yolk: nil, white: nil, probe: nil)
+    /// it for another reason (a correction not yet planned as it ran). With
+    /// any answer held for it (`AppModel.held`).
+    static func unansweredRecord(_ u: Unanswered, held: Planner.Answers? = nil) async -> EggRecord? {
+        let (yolk, white, probe) = (held?.yolk, held?.white, held?.probe)
+        let first = record(u.cook, u.plan, yolk: yolk, white: white, probe: probe)
         if let made = first.record { return made }
         if first.refused == .stale {
             // Corrected after the pull, and not yet planned as it ran: on the
             // calibration as it stands, which has not learned from this egg,
-            // since nobody answered about it.
+            // since it is not logged yet.
             guard let inputs = replan(u.cook, u.calibration, surface: nil, leanHintS: 0, nowS: u.nowS).inputs else {
                 return nil
             }
@@ -315,14 +318,14 @@ final class Cook {
                 return nil
             }
             let plan = replan(ran, u.calibration, surface: surface, leanHintS: 0, nowS: u.nowS)
-            return record(ran, plan, yolk: nil, white: nil, probe: nil).record
+            return record(ran, plan, yolk: yolk, white: white, probe: probe).record
         }
         guard first.refused == .noSurface, let inputs = u.plan.inputs else { return nil }
         let grid = await DecisionGrids.shared.grid(inputs)
         let profile = await DecisionGrids.shared.cachedProfile(inputs, u.calibration)
         let surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
         let again = replan(u.cook, u.calibration, surface: surface, leanHintS: u.leanHintS, nowS: u.nowS)
-        return record(keepAsRan(u.cook, plan: again), again, yolk: nil, white: nil, probe: nil).record
+        return record(keepAsRan(u.cook, plan: again), again, yolk: yolk, white: white, probe: probe).record
     }
 
     /// A probe reading typed at DONE, as the record carries it
