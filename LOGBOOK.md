@@ -7367,3 +7367,58 @@ alarms, the ring and the card itself. 3.12: `sharing.v1` keeps
 `fixtures/settings.json`, `settings.ts`/`Settings.swift`, and iOS's
 `SolveLoop.swift` and `Learning.swift` in place of the planner's
 extensions.
+## 10 October 2026: the rest of the web's model through `update`, and its tests (REFACTOR-0.5 3.7, 5.7, 5.8, 5.10, 5.12)
+
+Branch `worktree-agent-a62a97d51e4044ffa`, `136a32c`..`d584880`, with
+0.5.x (`bec9942`) merged in at `7a7ecd0`.
+
+- **A correction in hand is the model's** (`79db214`): edit.ts's module
+  object - the controls it was drawn from, pending, the control, the
+  finger, three timers - is `Edit` in the model, and every gesture a
+  message (`controls`, `fingerDown`, `fingerUp`, `commit`, `editTimer`,
+  `startStep`); the preview's plan is made in `update`. edit.ts went from
+  400 lines to the gestures.
+- **The stores are objects** (`ae7925f`) opened at boot and held by the
+  runner; two pages in a test are two objects, not one module imported
+  under two URLs. `written`, `works` and `before` are set by `update`
+  (`76ed72b`); the boot-time callbacks are messages (`aba2138`); the
+  development clock's hook is set at boot (`136a32c`).
+- **The model lives in the runner** (`a9a339a`): `state` is gone; input.ts
+  sends what the controls say and `update` lays it over them; the runner
+  hands `update` its views of caches and stores (`Seen`).
+- **The sections drawn from the view** (`38c57bd`): the controls, the
+  fields with a unit, the slider, the alarm's choice, the controls that
+  follow a change, what has been learned and sharing are view structs,
+  each drawn when a count `update` bumps has moved - at the same moments
+  as the effects were, so a field being typed in is not written under the
+  cook.
+- **update.ts is effects.ts** (`070117e`); what the page waits for is
+  needs.ts, handed its builds (`01ff934`).
+- **Tests where the code was untested**: every message kind
+  (test/update.test.ts, 38 tests); the runner against stores in memory
+  (runner.test.ts: the record in the log before the cook is forgotten;
+  sent only once logged; an ended cook stays stored until logged; one
+  surface ask); the alarm on a recording audio context (clock.test.ts);
+  the open egg and a forget elsewhere (effects.test.ts); the view's
+  sections; e2e `later-answer-refolds`, which fails with the fallback
+  taken out.
+
+Counted the same way before and after (src/ui, every .ts): lines 9,182
+→ 9,489 (on 0.5.x as it now is, with store.ts reading core's settings:
+9,089 → 9,392, +303); top-level `let` 51 → 35; modules importing `state` 9 (139
+reads) → 0, the model read between messages through `pageModel` in 2
+(the test API, the start's − and +). The lines grew: the correction's
+logic moved into model.ts (edit.ts −345, model.ts +495, its comments
+with it), needs.ts was split out of cook.ts, and the sections are view
+structs plus their writers. What the split made redundant went
+(`d584880`); little else did.
+
+A slip on the way: an `npm run build` while an e2e run served dist/ broke
+that run, and stopping it left its dev server on port 9409 for the next
+one; both were mine, found and stopped, and the gates rerun.
+
+Proof: the copy capture of 178 states, this harness driving the build at
+`4ecc06a` (`--tree`) and this one, is byte for byte the same. Gates on
+`21364be`, with 0.5.x at `231216d` merged in: `verify` (493 tests),
+`build:site`, `e2e` 86 of 86 (47 behaviour, 39 copy/, every state
+checked, none asserting nothing).

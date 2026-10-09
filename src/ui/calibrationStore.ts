@@ -18,8 +18,7 @@ import { activePopulation } from './population.js';
 import { SyncedKey, syncedKey } from './store.js';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
- *  and records of today's shape only. v5: the log started fresh in 0.5, and
- *  0.3's v4 is never read (DECISIONS.md 107). */
+ *  and records of today's shape only. An earlier key's store is never read. */
 const KEY = 'aet.calibration.v5';
 
 /** Everything that is kept, and the one invariant that holds it together:

@@ -90,13 +90,13 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   p.land(S + 401);
   assert.deepEqual(kinds(p.go({ kind: 'tick' }, p.pull + 1)), ['persist', 'ring:pull']);
   assert.equal(p.m.pull_s, null, 'rung: no alarm left');
-  assert.deepEqual(kinds(p.go({ kind: 'primary' }, p.pull + 3)), ['persist', 'silence'], 'the egg out');
+  assert.deepEqual(kinds(p.go({ kind: 'primary' }, p.pull + 3)), ['silence', 'persist', 'silence'], 'the egg out');
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const end = p.go({ kind: 'primary' }, p.coolEnd + 10);
   assert.equal(p.m.cook, null, 'Start again at Done');
-  assert.deepEqual(kinds(end).slice(0, 5), ['rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
-  assert.deepEqual(kinds(end).slice(5), [
-    'editsEnd', 'silence', 'questionsReset', 'controlsDrawn', 'drawNudge', 'shareDrawn',
+  assert.deepEqual(kinds(end).slice(0, 6), ['silence', 'rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
+  assert.deepEqual(kinds(end).slice(6), [
+    'editTimersOff', 'startLimit', 'silence', 'questionsReset', 'drawNudge',
   ], 'and the page goes back to the settings, with a new nudge');
   assert.deepEqual(p.m.controls, p.m.settings, 'the controls show the settings again');
   assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
@@ -107,7 +107,8 @@ test('2. an answer to an egg no longer open closes it here: nothing stepped, not
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const id = (p.m.cook as NonNullable<Model['cook']>).id_ms;
-  const refused = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null, storedId_ms: id + 1 }, p.coolEnd + 5);
+  p.m.storedId_ms = id + 1;
+  const refused = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, p.coolEnd + 5);
   assert.deepEqual(refused, []);
   assert.equal(p.m.closed, true);
   assert.equal(p.m.questions, 'away');
@@ -123,14 +124,15 @@ test('3. another tab\'s tap is taken up, and the pull this tab never rang rings 
   b.m = { ...a.m };
   a.go({ kind: 'primary' }, S + 400);
   const theirs = { cook: a.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  b.go({ kind: 'elsewhere', theirs: theirs, storedId_ms: theirs.cook.id_ms }, S + 401);
+  b.m.storedId_ms = theirs.cook.id_ms;
+  b.go({ kind: 'elsewhere', theirs: theirs }, S + 401);
   assert.equal(b.m.cook?.events.boilAt_s, S + 400, 'B has A\'s tap');
   assert.equal(b.m.written, JSON.stringify(theirs.cook), 'B has seen A\'s write');
   a.land(S + 402);
   b.land(S + 402);
   a.go({ kind: 'tick' }, a.pull + 1);
   const rang = { cook: a.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  assert.deepEqual(kinds(b.go({ kind: 'elsewhere', theirs: rang, storedId_ms: rang.cook.id_ms }, a.pull + 2)), ['ring:pull']);
+  assert.deepEqual(kinds(b.go({ kind: 'elsewhere', theirs: rang }, a.pull + 2)), ['ring:pull']);
 });
 
 test('4. a reload rings nothing, and an answer given before it puts the questions away', () => {
@@ -138,7 +140,8 @@ test('4. a reload rings nothing, and an answer given before it puts the question
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const id = (p.m.cook as NonNullable<Model['cook']>).id_ms;
-  p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null, storedId_ms: id }, p.coolEnd + 5);
+  p.m.storedId_ms = id;
+  p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, p.coolEnd + 5);
   const stored = { cook: p.m.cook as NonNullable<Model['cook']>, answers: 'beforeReload' as const, leanHint_s: p.m.leanHint_s };
   const q = new Page();
   q.m.surfaces = p.m.surfaces;

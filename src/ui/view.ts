@@ -34,8 +34,13 @@ import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { activeLocale, t, timeOfDay } from './copy.js';
 import { formatClock } from './countdown.js';
 import { CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
-import type { Learning } from './learned.js';
-import type { Model } from './model.js';
+import { formView } from './controls.js';
+import type { FormView } from './controls.js';
+import { learnedLine, learnedView } from './learned.js';
+import type { Learning, LearnedView } from './learned.js';
+import { shareView } from './shareView.js';
+import type { ShareView } from './shareView.js';
+import type { Model, Redraws } from './model.js';
 import { PhaseView, phaseView } from './phaseView.js';
 import { SetupFacts, liveSetupFacts } from './sentence.js';
 import { sousVideCopy } from './sousvide.js';
@@ -123,7 +128,22 @@ interface Screen {
 }
 
 /** What the page shows. */
-export type View = { mute: { label: string; pressed: boolean } } & (
+/** The parts of the page drawn only when `update` asks (model.ts, `Part`):
+ *  as they should read, with the counts that say which are asked for. */
+export interface Sections {
+  redraws: Redraws;
+  echoSource: string | null;
+  form: FormView;
+  /** The line over the questions, as last said. */
+  note: { rev: number; text: string };
+  learned: LearnedView;
+  /** Null before sharing is read. */
+  share: ShareView | null;
+}
+
+/** On every screen: the mute, the line that says a newer build's stores are
+ *  left alone, and the parts drawn only when asked. */
+export type View = { mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
    *  slider, the boiling point beside the altitude, the start, the
@@ -149,10 +169,11 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
+  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m) };
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
-      mute: mute, kind: 'unsolved',
+      ...top, kind: 'unsolved',
       reading: isSousVide(m) ? { level: shown.doneness, bath_C: SOUS_VIDE_BATH_C }
         : { level: shown.doneness, peakYolk_C: targetPeakYolk_C(shown.doneness) },
       statBoil: show('boilingPoint', boilingPoint_C(m)),
@@ -160,7 +181,7 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
       sentence: liveSetupFacts(shown, sizeClasses, currentEgg(m)),
     };
   }
-  // The Learning mark (E8, DECISIONS.md 58): on the time while sharing is
+  // The Learning mark: on the time while sharing is
   // on, since the time may then be nudged - and never in sous-vide, which
   // has no time to nudge.
   const learningOn = m.sharing && !isSousVide(m);
@@ -170,17 +191,33 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   // When the eggs went in, in the start's panel, while a cook runs: the
   // sentence never says it.
   const startedAt = m.cook === null || m.controlsStart_s === null ? null : timeOfDay(m.controlsStart_s * 1000);
-  const blank = { mute: mute, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
+  const blank = { ...top, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
   // Sous-vide is answered honestly and separately: no cook to run, no
   // clock to start, and a start time that has already been and gone.
-  if (isSousVide(m)) return { mute: mute, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
+  if (isSousVide(m)) return { ...top, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
   if (m.cook === null) {
     const sol = m.solution;
     if (sol === null) return blank;
-    return { mute: mute, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
+    return { ...top, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
   }
   if (m.plan === null) return blank;
-  return { mute: mute, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
+  return { ...top, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
+}
+
+/** The parts drawn only when asked, for `m`. */
+function sectionsOf(m: Model): Sections {
+  const l = learning(m);
+  const said = m.note.say;
+  const share = m.share;
+  return {
+    redraws: m.redraws,
+    echoSource: m.echoSource,
+    form: formView(m),
+    note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
+    learned: learnedView(l, m.readOnly),
+    share: share === null ? null
+      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere, m.readOnly),
+  };
 }
 
 /* -------------------------------------------------------------- screens */
@@ -197,8 +234,7 @@ function idleScreen(
   const sure = m.chosen !== null && sol.whiteSets ? m.chosen.certainty : null;
   const o = m.chosen !== null && sol.whiteSets ? m.outcome : null;
   const advice = adviceFor(m);
-  // The egg the controls aim for, at the time on screen, as eaten
-  // (DECISIONS.md 91, 97 and 98).
+  // The egg the controls aim for, at the time on screen, as eaten.
   const pot = idlePot(m);
   const level = m.chosen?.level ?? m.settings.doneness;
   const aim = aimedEgg(m, memo, pot.egg, pot.setup, calibrationParams(m.calib), sol.result.cookTime_s, level);
@@ -254,7 +290,7 @@ function runningScreen(
   const restored = pickedUpAfterReload(m) && phase !== 'DONE' ? t('readout.restored') : '';
   const warning = refusal || restored === '' ? said : restored;
   // Nothing past "still in the water?": not a caveat about the pull it
-  // doubts (onescreen review 3).
+  // doubts.
   const asking = asksIfStillIn(plan);
   return {
     learning: learningOn, sentence: sentence, startedAt: startedAt,
@@ -381,7 +417,7 @@ function targetText(shown: CookShown | null): string {
 
 /** The reading's field at DONE, under the two questions, whenever this cook
  *  had a moment to probe, the cooling having ended at the yolk's peak, with
- *  the probe setting on or off (DECISIONS.md 92). The − and + start from
+ *  the probe setting on or off. The − and + start from
  *  the peak of the cook that ran, shown greyed in the empty field: a
  *  suggestion, never taken as a reading until stepped or typed. */
 function probeView(phase: Phase, shown: CookShown | null): { shown: boolean; placeholder: string | null } {
@@ -402,7 +438,7 @@ function textureNote(sol: Solution): string {
 }
 
 /** The solve the texture note reads while a cook runs: once the egg is out,
- *  the cook as it ran (`solutionAsRan`, onescreen review 2.2), like the peak
+ *  the cook as it ran (`solutionAsRan`), like the peak
  *  and the white's line, so a plan made since on a posterior that has folded
  *  this egg's own answer never moves it; until then, the plan's. */
 function solutionShown(memo: ViewMemo, cook: RunningCook, plan: CookPlan): Solution {
@@ -424,7 +460,7 @@ function solutionShown(memo: ViewMemo, cook: RunningCook, plan: CookPlan): Solut
  *  until the pull, when the time they were about has passed
  *  (design/one-screen.md section 7, 12). The white's line stays to the
  *  end; once the egg is out it is the cook's as it ran, not a plan made
- *  since, which may know how the egg came out (review 2.4). */
+ *  since, which may know how the egg came out. */
 interface RunningReading {
   outcome: Outcome | null;
   sure: CertaintyReading | null;
@@ -454,7 +490,7 @@ function words(ref: WordsRef): string {
 }
 
 /** How sure I am of the time on screen, under it (src/core/wording.ts, "How
- *  sure, in words"; DECISIONS.md 93 and 97): the class as a line the cook
+ *  sure, in words"): the class as a line the cook
  *  presses, which opens in place the 90% interval in the slider's words, the
  *  most likely word, the likely time range and the way to Help. "Most
  *  likely" shows under the line unpressed when it is not the word asked, and
@@ -462,7 +498,7 @@ function words(ref: WordsRef): string {
  *  (`mostLikelyOpened`). While a cook runs (`running`, its start and its
  *  plan's time now) the likely time range is when to take the eggs out, as
  *  times of day, not whole times under a clock counting down (core
- *  `timeRangeWords`, onescreen review 2.3). */
+ *  `timeRangeWords`). */
 function certaintyView(
   sure: CertaintyReading | null, running: { startedAt_s: number; cookTime_s: number } | null,
 ): CertaintyView | null {
@@ -484,7 +520,7 @@ function certaintyView(
 
 /**
  * The egg in cross-section has three readings (design/one-screen.md section
- * 5; DECISIONS.md 97, 19, and 98), named on the drawing as `data-egg`:
+ * 5), named on the drawing as `data-egg`:
  *
  * - `aim`: the egg the settings on screen aim for, at the end of the
  *   cooling, the egg as eaten (`previewSection`): at idle, the controls' egg
@@ -513,7 +549,7 @@ export function aimedEgg(
  *  hand, or the egg as it ran at Done, or the live egg. At the posterior
  *  mean, the same egg the countdown times, in the pot its plan has now; once
  *  the egg is out, with the model's parameters it ran under, so a fold of
- *  this egg's own answer does not redraw it (review 2.4). */
+ *  this egg's own answer does not redraw it. */
 function runningSection(
   m: Model, now_ms: number, memo: ViewMemo, cook: RunningCook, plan: CookPlan, shown: CookShown | null,
 ): SectionDraw | null {

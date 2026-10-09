@@ -26,15 +26,13 @@ import { CopyArgs } from '../../core/copy.js';
 import { BoilMemory } from '../../core/boil.js';
 import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
-import { eggsBehind, keptState } from '../calibration.js';
-import { flushDraw } from '../cook.js';
+import { flushDraw, pageModel, pageStores } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
 import { inHand } from '../idle.js';
 import { isDevHost, nowMs, useRandom } from '../now.js';
-import { shareState } from '../share.js';
-import { phaseNow, state } from '../state.js';
+import { phaseNow } from '../state.js';
 import { Settings } from '../store.js';
-import { finalEggs } from '../update.js';
+import { finalEggs } from '../effects.js';
 
 /** The page as a script sees it. */
 export interface Snapshot {
@@ -92,12 +90,14 @@ function snapshot(): Snapshot {
   // The page as the model now stands, not a frame behind it.
   flushDraw();
   const now = nowMs();
-  const plan = state.plan;
+  const m = pageModel();
+  const plan = m.plan;
   const primary = document.getElementById('primary');
-  const share = shareState();
+  const stores = pageStores();
+  const share = stores.sharing.state();
   return {
     now_ms: now,
-    phase: phaseNow(state, now),
+    phase: phaseNow(m, now),
     label: text('phaseLabel'),
     digits: text('digits'),
     subline: text('sublineText'),
@@ -108,21 +108,21 @@ function snapshot(): Snapshot {
       heating: t('readout.phase.heating'), pull: t('readout.phase.pull'), done: t('readout.phase.done'),
       coolingIce: t('readout.phase.coolingIce'), cookingBoiling: t('readout.phase.cookingBoiling'),
     },
-    settings: state.settings,
-    boilMemory: state.boilMemory,
-    chosen: state.chosen === null ? null : { level: state.chosen.level },
-    cook: state.cook,
+    settings: m.settings,
+    boilMemory: m.boilMemory,
+    chosen: m.chosen === null ? null : { level: m.chosen.level },
+    cook: m.cook,
     deadlines: plan === null ? null : plan.deadlines,
     decided: plan !== null && plan.decided !== null,
     lengthened: plan !== null && guessLengthened(plan),
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
-    whiteSets: plan !== null ? plan.solution.whiteSets : state.solution?.whiteSets ?? null,
+    whiteSets: plan !== null ? plan.solution.whiteSets : m.solution?.whiteSets ?? null,
     stored: localStorage.getItem('aet.cook.v5'),
-    log: keptState().log,
-    eggsLogged: state.calib.eggsLogged,
-    eggsBehind: eggsBehind(),
-    finalEggs: finalEggs(),
+    log: stores.learner.keptState().log,
+    eggsLogged: m.calib.eggsLogged,
+    eggsBehind: stores.learner.eggsBehind(),
+    finalEggs: finalEggs(stores, m),
     share: { on: share.on, sent: share.sent },
     inHand: inHand(),
   };

@@ -8,15 +8,18 @@
  * Settings, written once.
  */
 
-import { t } from './copy.js';
+import { t, timeOfDay } from './copy.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 import { showInfo } from './info.js';
-import { renderCalibNote } from './learned.js';
+import { drawForm } from './controls.js';
+import { drawLearned, renderCalibNote } from './learned.js';
+import type { Redraws, StartLimit } from './model.js';
+import { drawShare } from './shareView.js';
 import { renderSentence } from './sentence.js';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
 import { APP_VERSION } from './version.js';
-import { CertaintyView, ReadingView, ReadoutView, SectionDraw, View } from './view.js';
+import { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.js';
 
 /** What is on the page now, as far as the writer needs to know it. */
 export interface Drawn {
@@ -31,23 +34,40 @@ export interface Drawn {
   rings: string;
   painted: SectionDraw['view'] | null;
   reading: SectionDraw['reading'] | null;
+  /** The parts drawn only when asked, as last drawn (null: none yet), and
+   *  the line over the questions. */
+  redraws: Redraws | null;
+  note: number;
 }
 
 export function drawnNothing(): Drawn {
-  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null };
+  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, redraws: null, note: -1 };
 }
 
-/** The words drawn only when they change, to be drawn again: a new
- *  language. */
-export function forgetDrawnWords(d: Drawn): void {
-  d.advice = '';
-  d.announced = '';
+/** The parts of the page drawn only when `update` asks for them, each whose
+ *  count has moved since it was last drawn. */
+function drawSections(s: Sections, d: Drawn): void {
+  const was = d.redraws;
+  const moved = (part: keyof Redraws): boolean => was === null || s.redraws[part] !== was[part];
+  if (moved('words')) {
+    // A new language: the words drawn only when they change, drawn again.
+    d.advice = '';
+    d.announced = '';
+  }
+  drawForm(s.form, s.redraws, was, s.echoSource);
+  if (s.note.rev !== d.note) page().calibNote.textContent = s.note.text;
+  if (moved('learned')) drawLearned(s.learned);
+  if (moved('share') && s.share !== null) drawShare(s.share);
+  d.redraws = s.redraws;
+  d.note = s.note.rev;
 }
 
 /** Draw `v` over what `d` says is there. */
 export function draw(v: View, d: Drawn): void {
+  drawSections(v.sections, d);
   page().mute.textContent = v.mute.label;
   page().mute.setAttribute('aria-pressed', v.mute.pressed ? 'true' : 'false');
+  page().newerNote.hidden = !v.newer;
   if (v.kind === 'unsolved') {
     drawReading(v.reading);
     page().statBoil.textContent = v.statBoil;
@@ -67,7 +87,7 @@ export function draw(v: View, d: Drawn): void {
   drawReading(v.reading);
   if (v.scale === 'bare') renderBareScale();
   else renderDonenessScale(v.scale.solution, v.scale.odds, v.scale.bracket);
-  drawReadout(v.readout, d);
+  drawReadout(v.readout, d, v.newer);
   showInfo(page().sublineInfo, v.sublineInfo);
   drawCertainty(v.certainty);
   page().whiteRisk.hidden = !v.whiteRisk;
@@ -82,7 +102,7 @@ function drawReading(r: ReadingView): void {
 }
 
 /** The readout, the buttons under it and the questions at Done. */
-function drawReadout(r: ReadoutView, d: Drawn): void {
+function drawReadout(r: ReadoutView, d: Drawn, readOnly: boolean): void {
   page().body.dataset['phase'] = r.phase;
   page().body.dataset['start'] = r.start;
   page().warn.textContent = r.warning;
@@ -97,7 +117,7 @@ function drawReadout(r: ReadoutView, d: Drawn): void {
   // "Still in the water?": the primary says yes, and this says no.
   page().stillOut.hidden = !w.asking;
   page().feedback.hidden = !r.feedback;
-  if (r.notes !== null) renderCalibNote(r.notes);
+  if (r.notes !== null) renderCalibNote(r.notes, readOnly);
   page().probeEntry.hidden = !r.probe.shown;
   if (r.probe.placeholder !== null) page().probeReading.placeholder = r.probe.placeholder;
   if (r.target !== null) {
@@ -190,4 +210,19 @@ export function renderVersion(): void {
   number.translate = false;
   number.textContent = APP_VERSION;
   page().appVersion.replaceChildren(before, number, after);
+}
+
+/** The line under the start's time: why a press went no further, or nothing. */
+export function showStartLimit(limit: StartLimit | null): void {
+  const line = page().startedAtLimit;
+  line.hidden = limit === null;
+  if (limit === null) {
+    line.textContent = '';
+    return;
+  }
+  const time = timeOfDay(limit.at_s * 1000);
+  const key = limit.kind === 'earliest' ? 'controls.startedAt.earliest'
+    : limit.kind === 'boil' ? 'controls.startedAt.latestBoil'
+      : limit.kind === 'pull' ? 'controls.startedAt.latestPull' : 'controls.startedAt.latestNow';
+  line.textContent = t(key, { time: time });
 }

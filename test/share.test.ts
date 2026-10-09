@@ -8,10 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  REQUEST_TIMEOUT_MS, Transport, fetchWithin, deleteSent, forgetShare, loadShare, newUid, readShare, retryDeletes,
-  sendFinal, setSharing, shareState, shareStoredElsewhere,
-} from '../src/ui/share.js';
+import { REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare } from '../src/ui/share.js';
 import {
   FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone,
   forgotten, isUid, nextToSend, reconciled, shareGivesUp, shareReply, turnedOff, turnedOn,
@@ -127,8 +124,11 @@ function fake(answers: (number | 'offline')[] = []): Transport & { posts: Record
   };
 }
 
+/** The page's sharing, as the test last opened it. */
+let sh: Sharing;
+
 function page(log: EggRecord[], final = log.length) {
-  const h = { log: () => log, finalCount: () => final, changed: () => {} };
+  const h = { log: () => log, finalCount: () => final };
   return h;
 }
 
@@ -139,11 +139,11 @@ const LOG: EggRecord[] = [0, 1, 2].map((i) => ({
 test('4. turning sharing on sends the log so far, in order, each copy carrying the id', async () => {
   storage.clear();
   const t = fake();
-  loadShare(page(LOG, 2), t);
-  await sendFinal();
+  sh = openSharing(page(LOG, 2), t);
+  await sh.sendFinal();
   assert.equal(t.posts.length, 0, 'off: nothing goes');
-  await setSharing(true);
-  const uid = shareState().uid;
+  await sh.setSharing(true);
+  const uid = sh.state().uid;
   assert.equal(t.posts.length, 2, 'the last egg is still on screen');
   assert.deepEqual(t.posts.map((p) => p['seq']), [0, 1]);
   assert.deepEqual(t.posts.map((p) => (p['record'] as EggRecord).day), ['2026-10-01', '2026-10-02']);
@@ -157,17 +157,17 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
 test('5. a refused egg is passed over; a busy server or none stops the run until the next', async () => {
   storage.clear();
   const t = fake([500]);
-  loadShare(page(LOG), t, () => 1e12);
-  await setSharing(true);
-  assert.deepEqual([shareState().sent, shareState().busy], [0, 1], '500: try again later, counted');
+  sh = openSharing(page(LOG), t, () => 1e12);
+  await sh.setSharing(true);
+  assert.deepEqual([sh.state().sent, sh.state().busy], [0, 1], '500: try again later, counted');
   t.post = fake(['offline']).post;
-  await sendFinal();
-  assert.deepEqual([shareState().sent, shareState().busy], [0, 1], 'offline: try again later, not counted');
+  await sh.sendFinal();
+  assert.deepEqual([sh.state().sent, sh.state().busy], [0, 1], 'offline: try again later, not counted');
   const ok = fake([415, 201, 200]);
-  loadShare(page(LOG), ok);
-  await sendFinal();
-  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'refused (not JSON), kept, already kept: all done with');
-  await sendFinal();
+  sh = openSharing(page(LOG), ok);
+  await sh.sendFinal();
+  assert.deepEqual([sh.state().sent, sh.state().seq], [3, 3], 'refused (not JSON), kept, already kept: all done with');
+  await sh.sendFinal();
   assert.equal(ok.posts.length, 3, 'nothing is sent twice');
 });
 
@@ -176,13 +176,13 @@ test('5b. an egg the server stays busy for, or out of reach, is passed over in t
   let clock = 1e12;
   // Down, then a bad deploy (404), then a firewall (403): all waited on.
   const t = fake([503, 404, 404, 403, 503, 201, 201]);
-  loadShare(page(LOG), t, () => clock);
-  await setSharing(true);
+  sh = openSharing(page(LOG), t, () => clock);
+  await sh.setSharing(true);
   for (let run = 1; run < 5; run++) {
     clock += 24 * 3600 * 1000;
-    await sendFinal();
+    await sh.sendFinal();
   }
-  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'the first given up on the fifth try, four days on');
+  assert.deepEqual([sh.state().sent, sh.state().seq], [3, 3], 'the first given up on the fifth try, four days on');
   assert.deepEqual(t.posts.map((p) => p['seq']), [0, 0, 0, 0, 0, 1, 2]);
 });
 
@@ -194,63 +194,63 @@ test('6. forgetting starts a new cook; deleting reaches every id, after what was
     post: () => new Promise<number>((resolve) => { release = resolve; }).then((s) => { slow.order.push('post'); return s; }),
     remove: async (uid) => { slow.order.push('delete'); slow.removes.push(uid); return 200; },
   };
-  loadShare(page(LOG), slow);
-  void setSharing(true);
-  const first = shareState().uid;
-  forgetShare();
-  const second = shareState().uid;
+  sh = openSharing(page(LOG), slow);
+  void sh.setSharing(true);
+  const first = sh.state().uid;
+  sh.forget();
+  const second = sh.state().uid;
   assert.notEqual(second, first);
-  assert.deepEqual(shareState().uids, [first, second]);
-  const sending = sendFinal();
-  const deleting = deleteSent();
+  assert.deepEqual(sh.state().uids, [first, second]);
+  const sending = sh.sendFinal();
+  const deleting = sh.deleteSent();
   release(201);
   await Promise.all([sending, deleting]);
   assert.deepEqual(slow.order, ['post', 'delete', 'delete'], 'the egg in flight lands before the deletion');
   assert.deepEqual(slow.removes, [first, second]);
-  assert.deepEqual(shareState(), FRESH_SHARE, 'off, no id, nothing left to delete');
+  assert.deepEqual(sh.state(), FRESH_SHARE, 'off, no id, nothing left to delete');
 });
 
 test('7. a deletion the server did not confirm is asked again at the next load', async () => {
   storage.clear();
   storage.set('aet.share.v1', JSON.stringify({ on: false, uid: null, uids: [], deleting: [A, B] }));
   const t = fake(['offline']);
-  loadShare(page([]), t);
-  await retryDeletes();
-  assert.deepEqual(shareState().deleting, [A, B]);
+  sh = openSharing(page([]), t);
+  await sh.retryDeletes();
+  assert.deepEqual(sh.state().deleting, [A, B]);
   const later = fake([500, 200]);
-  loadShare(page([]), later);
-  await retryDeletes();
-  assert.deepEqual(shareState().deleting, [A], 'B confirmed, A not yet');
-  loadShare(page([]), fake([200]));
-  await retryDeletes();
-  assert.deepEqual(shareState().deleting, []);
+  sh = openSharing(page([]), later);
+  await sh.retryDeletes();
+  assert.deepEqual(sh.state().deleting, [A], 'B confirmed, A not yet');
+  sh = openSharing(page([]), fake([200]));
+  await sh.retryDeletes();
+  assert.deepEqual(sh.state().deleting, []);
 });
 
 test('8. another tab\'s change is taken up before this one acts: a stale tab neither sends nor undoes a deletion', async () => {
   storage.clear();
   const t = fake();
   const log = [...LOG];
-  loadShare(page(log), t);
-  await setSharing(true);
-  const uid = shareState().uid as string;
+  sh = openSharing(page(log), t);
+  await sh.setSharing(true);
+  const uid = sh.state().uid as string;
   assert.equal(t.posts.length, 3);
-  assert.equal(shareStoredElsewhere('aet.share.v1'), false, 'nothing new');
+  assert.equal(sh.storedElsewhere('aet.share.v1'), false, 'nothing new');
   // Another tab, loaded later, deletes everything sent.
   storage.set('aet.share.v1', JSON.stringify(deletionAsked(readShare(storage.get('aet.share.v1') ?? null))));
   // This tab, still showing sharing on, finishes an egg before it hears.
   log.push({ ...LOG[0], day: '2026-10-04' });
-  await sendFinal();
+  await sh.sendFinal();
   assert.equal(t.posts.length, 3, 'nothing goes under an id another tab deleted');
-  assert.equal(shareState().on, false);
+  assert.equal(sh.state().on, false);
   // And its own writes start from what the other tab wrote.
-  forgetShare();
+  sh.forget();
   assert.deepEqual(readShare(storage.get('aet.share.v1') ?? null).deleting, [uid], 'the deletion is still to be asked');
   // The page's storage event: taken up once, and only for this key.
   storage.set('aet.share.v1', JSON.stringify({ ...FRESH_SHARE, deleting: [uid, B] }));
-  assert.equal(shareStoredElsewhere('aet.settings.v1'), false);
-  assert.equal(shareStoredElsewhere('aet.share.v1'), true);
-  assert.equal(shareStoredElsewhere('aet.share.v1'), false);
-  assert.deepEqual(shareState().deleting, [uid, B]);
+  assert.equal(sh.storedElsewhere('aet.settings.v1'), false);
+  assert.equal(sh.storedElsewhere('aet.share.v1'), true);
+  assert.equal(sh.storedElsewhere('aet.share.v1'), false);
+  assert.deepEqual(sh.state().deleting, [uid, B]);
 });
 
 test('9. two tabs sending the same egg move the cursor once', async () => {
@@ -260,11 +260,11 @@ test('9. two tabs sending the same egg move the cursor once', async () => {
     post: () => new Promise<number>((resolve) => { release = resolve; }),
     remove: async () => 200,
   };
-  loadShare(page(LOG, 0), slow);
-  await setSharing(true);
+  sh = openSharing(page(LOG, 0), slow);
+  await sh.setSharing(true);
   const sending = (async () => {
-    loadShare(page(LOG, 1), slow);
-    return sendFinal();
+    sh = openSharing(page(LOG, 1), slow);
+    return sh.sendFinal();
   })();
   await new Promise((r) => setTimeout(r, 0));
   // Meanwhile the other tab sent egg 0 and moved on.
@@ -272,7 +272,7 @@ test('9. two tabs sending the same egg move the cursor once', async () => {
   storage.set('aet.share.v1', JSON.stringify({ ...s, sent: 1, seq: 1 }));
   release(200);
   await sending;
-  assert.deepEqual([shareState().sent, shareState().seq], [1, 1], 'not 2: the other tab already moved it');
+  assert.deepEqual([sh.state().sent, sh.state().seq], [1, 1], 'not 2: the other tab already moved it');
 });
 
 test('10. a request the server never answers is given up, so the lock it holds is let go', async () => {

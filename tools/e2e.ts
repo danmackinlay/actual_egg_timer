@@ -909,6 +909,44 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
+  'later-answer-refolds': {
+    what: 'an answer after a correction at Done, when the egg cannot be folded again from before it, folds the whole log again rather than being refused',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('__snap().eggsLogged === 1 && __snap().eggsBehind === 0', 'Jammy folded');
+      const first = JSON.stringify((await tab.snap()).log[0].egg);
+      // A correction at Done: the egg logged is replaced, and the log folded
+      // again from its start, so the fold before this egg is gone.
+      await later(tab);
+      await pick(tab, '#size', '3');
+      await tab.until(`await (async () => { const s = __snap(); return s.log.length === 1 && s.eggsBehind === 0
+        && JSON.stringify(s.log[0].egg) !== ${JSON.stringify(first)}; })()`, 'the corrected egg logged and folded');
+      // The white, answered after it: it cannot be folded from the fold
+      // before this egg, so the whole log is folded again with it.
+      await later(tab);
+      await tab.click('.wb[data-white="firm"]');
+      await tab.until("__snap().log[0].white === 'firm' && __snap().eggsBehind === 0", 'Firm logged and folded');
+      s = await tab.snap();
+      check(s.log.length === 1, `one egg: ${s.log.length}`);
+      check(s.log[0].yolkWord === 'jammy' && s.log[0].white === 'firm', `both answers kept: ${s.log[0].yolkWord}, ${s.log[0].white}`);
+      check(s.eggsLogged === 1, `folded once, from the start: ${s.eggsLogged}`);
+      check(s.feedback, 'the questions stay, the answer taken');
+      check(await tab.eval<boolean>(`document.querySelector('.wb[data-white="firm"]').getAttribute('aria-pressed') === 'true'`),
+        'Firm settled as said');
+      return `Jammy, a correction (${first} became ${JSON.stringify(s.log[0].egg)}), then Firm: both in the log, folded from the start`;
+    },
+  },
+
   'done-stays-done': {
     what: 'after Done and an answer, the cooling corrected to ice keeps Done, its questions and its silence',
     run: async (h) => {

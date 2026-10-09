@@ -1,5 +1,5 @@
 /**
- * The page's model, in one place (`state`, a `Model`: model.ts), and what it
+ * The page's model (a `Model`: model.ts), as it starts, and what it
  * derives: the egg and the pot on screen, how the cook starts, and the time
  * to a rolling boil. Each derivation takes the model it reads, so `update`
  * and `view` can ask it of any model, not only this page's.
@@ -13,8 +13,7 @@
  * `RunningCook` (src/core/running.ts): its start, its own choices and what it
  * observed, with everything else - the deadlines, the time, the record -
  * derived as its `CookPlan`. A running cook is described by its own choices,
- * never by the settings, which another tab may have changed since
- * (DECISIONS.md 97).
+ * never by the settings, which another tab may have changed since.
  */
 
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
@@ -38,7 +37,8 @@ export const sizeClasses = sizeClassesFor(REGION);
 export const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: null, wakeAt_s: null };
 
 /** A model with nothing on it yet: the settings, the pans and the calibration
- *  are `boot()`'s to read (app.ts). */
+ *  are `boot()`'s to read (app.ts), which hands the model to the runner
+ *  (cook.ts), the one place it is kept. */
 export function emptyModel(): Model {
   return {
     settings: null!,
@@ -47,6 +47,12 @@ export function emptyModel(): Model {
     calib: null!,
     sharing: false,
     readOnly: false,
+    storedId_ms: null,
+    deletedHere: false,
+    share: null,
+    redraws: { controls: 0, units: 0, doneness: 0, alarm: 0, echo: 0, learned: 0, share: 0, words: 0 },
+    echoSource: null,
+    note: { rev: 0, say: 'learned' },
     profiles: [],
     idleAnswer: null,
     solution: null,
@@ -56,6 +62,7 @@ export function emptyModel(): Model {
     profile: null,
     unsolved: false,
     aim: null,
+    edit: null,
     controlsStart_s: null,
     nudgeDraw: 0,
     held: null,
@@ -78,12 +85,6 @@ export function emptyModel(): Model {
     probeHeld: false,
   };
 }
-
-/** The page's model (model.ts): what cook.ts's `dispatch` keeps, and reads
- *  for the page. The settings, the pans and the calibration are read from
- *  storage by `boot()` (app.ts), not when this module is imported, so a test
- *  can import it. */
-export const state: Model = emptyModel();
 
 /* --------------------------------------------------------------- physics */
 

@@ -18,12 +18,16 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
-  DEFAULT_SETTINGS, claimStorage, clearBoilMemory, clearCook, dropStoredCook, loadBoilMemory, loadCook, loadSettings,
-  RETIRED_KEYS, newerStoredElsewhere, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, storageReadOnly,
+  DEFAULT_SETTINGS, claimStorage, RETIRED_KEYS, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly,
 } from '../src/ui/store.js';
-import { clearCalibration, keptState, loadCalibration, logEgg } from '../src/ui/calibration.js';
+import { openLearner } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
-import { loadShare, sendFinal, setSharing, retryDeletes } from '../src/ui/share.js';
+import { openSharing } from '../src/ui/share.js';
+import { sendTo } from '../src/ui/send.js';
+
+/** How many times the page was told its stores are left alone. */
+let told = 0;
+sendTo((msg) => { if (msg.kind === 'stores') told += 1; });
 
 /** localStorage, in memory, with every write in order. */
 const storage = new Map<string, string>();
@@ -39,6 +43,10 @@ const writes: string[] = [];
 const NEWEST_KEY = 'aet.newest';
 const GONE = '0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab';
 const classes = sizeClassesFor('eu');
+/** The page's stores, as boot() opens them. */
+const settings = openSettings(classes);
+const pans = openPans();
+const cooks = openCooks();
 
 /** What a newer build left: every store this build knows, in shapes it may
  *  or may not read, and two it does not know of. */
@@ -67,7 +75,7 @@ test('1. no mark: the mark is the first thing written, then the stores as before
   assert.equal(claimStorage(APP_VERSION), 'write');
   assert.equal(storage.get(NEWEST_KEY), APP_VERSION);
   assert.deepEqual(writes, [NEWEST_KEY]);
-  saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 300 });
+  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 300 });
   assert.equal(storageReadOnly(), false);
   assert.ok(storage.has('aet.settings.v1'));
 });
@@ -79,7 +87,7 @@ test('2. an older mark is brought up to this build; its own is left as it is', (
   assert.equal(claimStorage(APP_VERSION), 'write');
   assert.equal(storage.get(NEWEST_KEY), APP_VERSION);
   writes.length = 0;
-  saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 300 });
+  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 300 });
   assert.deepEqual(writes, ['aet.settings.v1'], 'the mark is not written again');
 });
 
@@ -88,33 +96,33 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   for (const [k, v] of newerStores()) storage.set(k, v);
   const before = new Map(storage);
   writes.length = 0;
-  let told = 0;
-  assert.equal(claimStorage(APP_VERSION, () => { told += 1; }), 'readOnly');
+  told = 0;
+  assert.equal(claimStorage(APP_VERSION), 'readOnly');
   assert.equal(storageReadOnly(), true);
   assert.equal(told, 1);
 
   // Everything a page does from boot to "Start learning again".
-  const settings = loadSettings(classes);
-  assert.equal(settings.altitude_m, 1200, 'read as before');
-  saveSettings({ ...settings, altitude_m: 0, eggCount: 4 });
-  rememberTimeToBoil(loadBoilMemory(), 2, 500);
-  clearBoilMemory();
-  loadCook();
-  saveCook({ id_ms: 7 } as never, 'none', 12);
-  saveLeanHint(7, 30);
-  clearCook(7);
-  dropStoredCook();
-  loadCalibration();
-  const sizeBefore = keptState().log.length;
-  assert.equal(logEgg({ v: 1 } as never), -1, 'no egg is written down');
-  assert.equal(keptState().log.length, sizeBefore, 'nor learned from');
+  const loaded = settings.load();
+  assert.equal(loaded.altitude_m, 1200, 'read as before');
+  settings.save({ ...loaded, altitude_m: 0, eggCount: 4 });
+  pans.remember(pans.load(), 2, 500);
+  pans.clear();
+  cooks.peek();
+  cooks.save({ id_ms: 7 } as never, 'none', 12);
+  cooks.saveLeanHint(7, 30);
+  cooks.clear(7);
+  cooks.remove();
+  const learner = openLearner();
+  const sizeBefore = learner.keptState().log.length;
+  assert.equal(learner.logEgg({ v: 1 } as never), -1, 'no egg is written down');
+  assert.equal(learner.keptState().log.length, sizeBefore, 'nor learned from');
   const posts: string[] = [];
-  loadShare({ log: () => [], finalCount: () => 0, changed: () => undefined },
+  const sharing = openSharing({ log: () => [], finalCount: () => 0 },
     { post: async (b) => { posts.push(b); return 200; }, remove: async (u) => { posts.push(u); return 200; } });
-  await retryDeletes();
-  await setSharing(true);
-  await sendFinal();
-  clearCalibration();
+  await sharing.retryDeletes();
+  await sharing.setSharing(true);
+  await sharing.sendFinal();
+  learner.clear();
 
   assert.deepEqual(writes, [], 'not one write');
   assert.deepEqual(posts, [], 'not one request');
@@ -149,16 +157,16 @@ test('4. another tab of a newer build: this page stops writing at its event, or 
   assert.equal(newerStoredElsewhere(NEWEST_KEY), true);
   assert.equal(storageReadOnly(), true);
   writes.length = 0;
-  saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 10 });
+  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 10 });
   assert.deepEqual(writes, []);
 
   // The event not yet here: the next write finds the mark first.
   storage.clear();
-  let told = 0;
-  claimStorage(APP_VERSION, () => { told += 1; });
+  told = 0;
+  claimStorage(APP_VERSION);
   storage.set(NEWEST_KEY, '9.0.0');
   writes.length = 0;
-  saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 20 });
+  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 20 });
   assert.deepEqual(writes, []);
   assert.equal(storageReadOnly(), true);
   assert.equal(told, 1);
@@ -170,6 +178,6 @@ test('4. another tab of a newer build: this page stops writing at its event, or 
   storage.clear();
   assert.equal(newerStoredElsewhere(null), false);
   writes.length = 0;
-  saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 30 });
+  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 30 });
   assert.deepEqual(writes, [NEWEST_KEY, 'aet.settings.v1']);
 });

@@ -16,9 +16,7 @@ import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
-  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, correctedLater, loadBoilMemory, loadCook,
-  loadSettings, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, settingsStoredElsewhere, storedCook,
-  storedCookText, takeUpEvents,
+  DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
 } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -35,12 +33,16 @@ const storage = new Map<string, string>();
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v5';
 const classes = sizeClassesFor('eu');
+/** The page's stores, as boot() opens them. */
+const settings = openSettings(classes);
+const pans = openPans();
+const cooks = openCooks();
 
 /** A page opened on this storage: as boot() does, the settings are read
  *  before anything is saved, which is where the last pan comes from. */
 function freshPage(): void {
   storage.clear();
-  loadSettings(classes);
+  settings.load();
 }
 
 function settingsWith(over: Partial<Settings>): Settings {
@@ -49,39 +51,39 @@ function settingsWith(over: Partial<Settings>): Settings {
 
 test('a pan start is saved and comes back', () => {
   freshPage();
-  saveSettings(settingsWith({ startMode: 'hot' }));
-  assert.equal(loadSettings(classes).startMode, 'hot');
-  saveSettings(settingsWith({ startMode: 'cold' }));
-  assert.equal(loadSettings(classes).startMode, 'cold');
+  settings.save(settingsWith({ startMode: 'hot' }));
+  assert.equal(settings.load().startMode, 'hot');
+  settings.save(settingsWith({ startMode: 'cold' }));
+  assert.equal(settings.load().startMode, 'cold');
 });
 
 test('sous-vide is not saved: a reload comes back to the last pan', () => {
   freshPage();
-  saveSettings(settingsWith({ startMode: 'hot', altitude_m: 400 }));
-  saveSettings(settingsWith({ startMode: 'sous', altitude_m: 800, eggCount: 3 }));
-  const back = loadSettings(classes);
+  settings.save(settingsWith({ startMode: 'hot', altitude_m: 400 }));
+  settings.save(settingsWith({ startMode: 'sous', altitude_m: 800, eggCount: 3 }));
+  const back = settings.load();
   assert.equal(back.startMode, 'hot');
   // Everything else in the same save is kept as before.
   assert.equal(back.altitude_m, 800);
   assert.equal(back.eggCount, 3);
   // And it stays the last pan however many saves sous-vide makes.
-  saveSettings(settingsWith({ startMode: 'sous', doneness: 0.2 }));
-  saveSettings(settingsWith({ startMode: 'sous', doneness: 0.3 }));
-  assert.equal(loadSettings(classes).startMode, 'hot');
-  assert.equal(loadSettings(classes).doneness, 0.3);
+  settings.save(settingsWith({ startMode: 'sous', doneness: 0.2 }));
+  settings.save(settingsWith({ startMode: 'sous', doneness: 0.3 }));
+  assert.equal(settings.load().startMode, 'hot');
+  assert.equal(settings.load().doneness, 0.3);
 });
 
 test('sous-vide with no pan before it comes back as cold', () => {
   freshPage();
-  saveSettings(settingsWith({ startMode: 'sous' }));
-  assert.equal(loadSettings(classes).startMode, 'cold');
+  settings.save(settingsWith({ startMode: 'sous' }));
+  assert.equal(settings.load().startMode, 'cold');
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'cold');
 });
 
 test('a stored sous-vide from an older build loads as cold', () => {
   freshPage();
   storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'sous', altitude_m: 600 }));
-  const back = loadSettings(classes);
+  const back = settings.load();
   assert.equal(back.startMode, 'cold');
   assert.equal(back.altitude_m, 600);
 });
@@ -93,19 +95,19 @@ test('a measured egg saved before measuredBy existed is read as weighed', () => 
   const old: Record<string, unknown> = { ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44 };
   delete old['measuredBy'];
   storage.set(SETTINGS_KEY, JSON.stringify(old));
-  const back = loadSettings(classes);
+  const back = settings.load();
   assert.equal(back.measuredBy, 'scale');
   assert.equal(back.customMinor_mm, 44);
-  saveSettings(settingsWith({ sizeIndex: -1, measuredBy: 'girth' }));
-  assert.equal(loadSettings(classes).measuredBy, 'girth', 'a box typed in since is kept');
+  settings.save(settingsWith({ sizeIndex: -1, measuredBy: 'girth' }));
+  assert.equal(settings.load().measuredBy, 'girth', 'a box typed in since is kept');
 });
 
 test('choosing sous-vide still works within the session', () => {
   // The in-memory setting is the page's; only what is written down changes.
   freshPage();
-  const settings = settingsWith({ startMode: 'sous' });
-  saveSettings(settings);
-  assert.equal(settings.startMode, 'sous');
+  const sous = settingsWith({ startMode: 'sous' });
+  settings.save(sous);
+  assert.equal(sous.startMode, 'sous');
 });
 
 /** A running cook, as core starts one (src/core/running.ts), not yet
@@ -123,15 +125,15 @@ function aCook(id_ms = 1_791_363_600_000): RunningCook {
 test('a cook comes back whole, with whether its egg was written down and the lean last decided', () => {
   storage.clear();
   const cook = aCook();
-  saveCook(cook, 'beforeReload', 12.5);
-  assert.deepEqual(loadCook(), { cook: cook, answers: 'beforeReload', leanHint_s: 12.5 });
-  saveCook(cook, 'none', 0);
-  assert.equal(loadCook()?.answers, 'none');
-  assert.deepEqual(storedCook(), cook, 'whichever tab wrote it');
-  saveLeanHint(cook.id_ms + 1, 4);
-  assert.equal(loadCook()?.leanHint_s, 0, 'the lean goes only beside its own cook');
-  saveLeanHint(cook.id_ms, 4);
-  assert.deepEqual(loadCook(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
+  cooks.save(cook, 'beforeReload', 12.5);
+  assert.deepEqual(cooks.peek(), { cook: cook, answers: 'beforeReload', leanHint_s: 12.5 });
+  cooks.save(cook, 'none', 0);
+  assert.equal(cooks.peek()?.answers, 'none');
+  assert.deepEqual((cooks.peek()?.cook ?? null), cook, 'whichever tab wrote it');
+  cooks.saveLeanHint(cook.id_ms + 1, 4);
+  assert.equal(cooks.peek()?.leanHint_s, 0, 'the lean goes only beside its own cook');
+  cooks.saveLeanHint(cook.id_ms, 4);
+  assert.deepEqual(cooks.peek(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
 });
 
 test('two tabs on one cook take up each other\'s events, never a copy that lacks them (review 1.2)', () => {
@@ -206,27 +208,27 @@ test('a cook kept without `answers` or the lean is refused, never read as unansw
   storage.clear();
   const cook = aCook();
   storage.set(COOK_KEY, JSON.stringify({ cook: cook, leanHint_s: 0, feedbackGiven: true }));
-  assert.equal(loadCook(), null);
+  assert.equal(cooks.peek(), null);
   storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'live', leanHint_s: 0 }));
-  assert.equal(loadCook(), null, 'only what saveCook writes');
+  assert.equal(cooks.peek(), null, 'only what saveCook writes');
   storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'none' }));
-  assert.equal(loadCook(), null, 'without the lean');
+  assert.equal(cooks.peek(), null, 'without the lean');
   storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, start: { ...cook.start, at_s: 'then' } }, answers: 'none', leanHint_s: 0 }));
-  assert.equal(loadCook(), null, 'a cook that does not read (`readRunningCook`)');
+  assert.equal(cooks.peek(), null, 'a cook that does not read (`readRunningCook`)');
 });
 
 test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   storage.clear();
   const mine = aCook();
   const theirs = aCook(mine.id_ms + 60_000);
-  saveCook(theirs, 'none', 0);
-  clearCook(mine.id_ms);
-  assert.deepEqual(storedCook(), theirs, 'another tab started a cook since: it stays');
-  clearCook(theirs.id_ms);
-  assert.equal(storedCookText(), null);
+  cooks.save(theirs, 'none', 0);
+  cooks.clear(mine.id_ms);
+  assert.deepEqual((cooks.peek()?.cook ?? null), theirs, 'another tab started a cook since: it stays');
+  cooks.clear(theirs.id_ms);
+  assert.equal(cooks.text(), null);
   storage.set(COOK_KEY, '{');
-  clearCook(mine.id_ms);
-  assert.equal(storedCookText(), null, 'junk goes');
+  cooks.clear(mine.id_ms);
+  assert.equal(cooks.text(), null, 'junk goes');
 });
 
 test('a cook in a shape this build does not read is not read', () => {
@@ -234,10 +236,10 @@ test('a cook in a shape this build does not read is not read', () => {
   // An earlier build's running cook: its events whole, no start or log.
   const { start: _start, log: _log, ...earlier } = aCook();
   storage.set(COOK_KEY, JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 }));
-  assert.equal(loadCook(), null, 'without its log, not read');
+  assert.equal(cooks.peek(), null, 'without its log, not read');
   // 0.4's shape: a machine and a ticket.
   storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
-  assert.equal(loadCook(), null, 'never read as a running cook');
+  assert.equal(cooks.peek(), null, 'never read as a running cook');
 });
 
 test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {
@@ -257,38 +259,38 @@ test('junk under the cook\'s key is never a crash', () => {
   storage.clear();
   for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ cook: 3, answers: 'none', leanHint_s: 0 })]) {
     storage.set(COOK_KEY, junk);
-    assert.equal(loadCook(), null, junk);
-    assert.equal(storedCook(), null, junk);
+    assert.equal(cooks.peek(), null, junk);
+    assert.equal((cooks.peek()?.cook ?? null), null, junk);
   }
 });
 
 test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {
   freshPage();
-  const mine = loadSettings(classes);
+  const mine = settings.load();
   // Another tab, loaded earlier, changes the altitude and turns the sound off.
   const theirs = { ...DEFAULT_SETTINGS, altitude_m: 900, muted: true };
   storage.set(SETTINGS_KEY, JSON.stringify(theirs));
   // This page, before it hears, moves the slider and saves.
   mine.doneness = 0.8;
-  const saved = saveSettings(mine);
+  const saved = settings.save(mine);
   assert.deepEqual([saved.altitude_m, saved.muted, saved.doneness], [900, true, 0.8]);
   const stored = JSON.parse(storage.get(SETTINGS_KEY) ?? '{}') as Settings;
   assert.deepEqual([stored.altitude_m, stored.muted, stored.doneness], [900, true, 0.8], 'nothing undone');
   // The page's storage event: taken up once, keeping a change not yet saved.
   saved.eggCount = 3;
   storage.set(SETTINGS_KEY, JSON.stringify({ ...stored, cooling: 'tap' }));
-  assert.equal(settingsStoredElsewhere('aet.boil.v1', saved), null);
-  const heard = settingsStoredElsewhere(SETTINGS_KEY, saved);
+  assert.equal(settings.elsewhere('aet.boil.v1', saved), null);
+  const heard = settings.elsewhere(SETTINGS_KEY, saved);
   assert.deepEqual([heard?.cooling, heard?.eggCount, heard?.altitude_m], ['tap', 3, 900]);
-  assert.equal(settingsStoredElsewhere(SETTINGS_KEY, saved), null, 'once');
+  assert.equal(settings.elsewhere(SETTINGS_KEY, saved), null, 'once');
 });
 
 test('a sous-vide on screen stays this page\'s when another tab saves a pan', () => {
   freshPage();
-  saveSettings(settingsWith({ startMode: 'cold' }));
+  settings.save(settingsWith({ startMode: 'cold' }));
   const mine = settingsWith({ startMode: 'sous' });
   storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
-  const saved = saveSettings(mine);
+  const saved = settings.save(mine);
   assert.equal(saved.startMode, 'sous');
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'hot', 'the other tab\'s pan, the last saved');
 });
@@ -296,30 +298,30 @@ test('a sous-vide on screen stays this page\'s when another tab saves a pan', ()
 test('"Forget everything" in another tab is not undone by this one\'s next measured boil', () => {
   storage.clear();
   const BOIL_KEY = 'aet.boil.v1';
-  let memory = loadBoilMemory();
-  memory = rememberTimeToBoil(memory, 2, 600);
-  assert.equal(boilStoredElsewhere(BOIL_KEY), null, 'its own write is nothing new');
+  let memory = pans.load();
+  memory = pans.remember(memory, 2, 600);
+  assert.equal(pans.elsewhere(BOIL_KEY), null, 'its own write is nothing new');
   // Another tab forgets every pan; this one has not heard, and times a boil.
   storage.delete(BOIL_KEY);
-  memory = rememberTimeToBoil(memory, 1.5, 420);
+  memory = pans.remember(memory, 1.5, 420);
   assert.deepEqual(Object.keys(JSON.parse(storage.get(BOIL_KEY) ?? '{}') as object), Object.keys(memory));
   assert.equal(Object.keys(memory).length, 1, 'only the pan timed since');
   // And when it hears, it follows.
   storage.delete(BOIL_KEY);
-  assert.deepEqual(boilStoredElsewhere(null), {});
-  assert.equal(boilStoredElsewhere(BOIL_KEY), null);
-  clearBoilMemory();
+  assert.deepEqual(pans.elsewhere(null), {});
+  assert.equal(pans.elsewhere(BOIL_KEY), null);
+  pans.clear();
 });
 
 test('the alarm sound comes back as stored, and anything else, or nothing, is the wind-up timer', () => {
   freshPage();
-  assert.equal(loadSettings(classes).alarm, 'timer', 'a fresh install');
-  saveSettings(settingsWith({ alarm: 'hen' }));
-  assert.equal(loadSettings(classes).alarm, 'hen');
+  assert.equal(settings.load().alarm, 'timer', 'a fresh install');
+  settings.save(settingsWith({ alarm: 'hen' }));
+  assert.equal(settings.load().alarm, 'hen');
   storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
-  assert.equal(loadSettings(classes).alarm, 'timer', 'a sound this version does not offer');
+  assert.equal(settings.load().alarm, 'timer', 'a sound this version does not offer');
   const before = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
   delete before['alarm'];
   storage.set(SETTINGS_KEY, JSON.stringify(before));
-  assert.equal(loadSettings(classes).alarm, 'timer', 'a record from before the choice');
+  assert.equal(settings.load().alarm, 'timer', 'a record from before the choice');
 });

@@ -1,33 +1,28 @@
 /**
  * Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
  * turns it on sends every egg in the log to the collection endpoint
- * (`server/eggs.ts`), the ones from before it was on included (DECISIONS.md
- * 54), and can delete everything this browser has sent.
+ * (`server/eggs.ts`), the ones from before it was on included, and can
+ * delete everything this browser has sent.
  *
  * What is kept, in `aet.share.v1` beside the log rather than in it, and how
  * each step moves it - turned on and off, forgotten, deletion asked, an
  * answer from the server - is core's (`src/core/share.ts`), which iOS moves
- * alike. This module holds the current state and writes it through, takes up
- * what another tab wrote before acting, and does the talking: each final egg
- * in turn, in order. No answer, or a busy one (`answered`), stops the run
- * until the next (a load, a new egg, sharing turned on, the browser back
- * online).
+ * alike. A page's sharing (`openSharing`) holds the current state and writes
+ * it through, takes up what another tab wrote before acting, and does the
+ * talking: each final egg in turn, in order. No answer, or a busy one
+ * (`answered`), stops the run until the next (a load, a new egg, sharing
+ * turned on, the browser back online).
  */
 
 import { EggRecord, sharedRecord } from '../core/record.js';
 import {
-  ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, FRESH_SHARE, forgotten, nextToSend,
+  ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, forgotten, nextToSend,
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
 import { request } from './idle.js';
+import { send } from './send.js';
 import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
-
-/** The state as stored: another tab's write is taken up before this one
- *  acts (`current`). A tab loaded yesterday must not send under an id
- *  another tab has since deleted, nor write back the deletions it never
- *  saw. */
-const store = syncedKey('aet.share.v1', readShare);
 
 /** How the page reaches the endpoint: a status for each call, or a throw
  *  when the network does not answer. */
@@ -98,51 +93,6 @@ export interface ShareHost {
   /** How many of the log's eggs are final: all, unless the last is the egg
    *  on screen, whose answers may still come. */
   finalCount(): number;
-  /** Redraw what is said about sharing. */
-  changed(): void;
-}
-
-let state: ShareState = { ...FRESH_SHARE };
-let host: ShareHost | null = null;
-let transport: Transport = fetchTransport;
-let clock: () => number = nowMs;
-/** Bumped by every change of id, so a send in flight for an old one lands
- *  on nothing. */
-let generation = 0;
-let pumping: Promise<void> | null = null;
-let again = false;
-
-function save(next: ShareState): void {
-  state = next;
-  store.write(JSON.stringify(state));
-  if (host !== null) host.changed();
-}
-
-/** Another tab's state, taken up: whether there was one. A change of id or
- *  of on and off is a new generation, so a send in flight under the old one
- *  lands on nothing. */
-function takeUp(taken: Taken<ShareState> | null): boolean {
-  if (taken === null) return false;
-  const next = reconciled(taken.theirs, host === null ? 0 : host.log().length);
-  if (next.uid !== state.uid || next.on !== state.on) generation += 1;
-  state = next;
-  return true;
-}
-
-/** The state, with whatever another tab wrote since this one last looked
- *  taken up first. */
-function current(): ShareState {
-  takeUp(store.takeUp());
-  return state;
-}
-
-/** Another tab changed storage (the page's `storage` event; a null key is a
- *  tab that cleared it all): taken up now, if it touched sharing. Says
- *  whether it did. */
-export function shareStoredElsewhere(key: string | null): boolean {
-  if (!takeUp(store.elsewhere(key))) return false;
-  if (host !== null) host.changed();
-  return true;
 }
 
 /**
@@ -156,110 +106,155 @@ function exclusive<T>(f: () => Promise<T>): Promise<T> {
   return locks === undefined ? f() : locks.request('aet.share', f) as Promise<T>;
 }
 
-export function shareState(): Readonly<ShareState> {
-  return current();
-}
-
-/** Read what is stored, against the log as it now is, and remember who to
- *  ask. Once, at boot, after the calibration is loaded. */
-export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () => number = nowMs): ShareState {
-  host = h;
-  transport = t;
-  clock = now;
-  state = reconciled(store.load(), h.log().length);
-  return state;
-}
-
-/** Sharing on or off. On sends the log so far; the promise is that run. */
-export function setSharing(on: boolean): Promise<void> {
-  if (storageReadOnly() || on === current().on) return Promise.resolve();
-  generation += 1;
-  save(on ? turnedOn(state, newUid()) : turnedOff(state));
-  return on ? sendFinal() : Promise.resolve();
-}
-
-/** Forget everything: paired with the calibration's reset. */
-export function forgetShare(): void {
-  generation += 1;
-  save(forgotten(current(), newUid()));
-}
+/** A page's sharing (`openSharing`). */
+export type Sharing = ReturnType<typeof openSharing>;
 
 /**
- * Send every final egg not yet sent, one at a time. A call while a run is
- * going asks it to go round again, so an egg made final meanwhile is not
- * left until the next load.
+ * A page's sharing: what is stored, read against the log as it now is, and
+ * who to ask. One per page, opened at boot (app.ts), after the calibration,
+ * and held by the runner (cook.ts). Every change is told to the page (the
+ * `shared` message).
  */
-export function sendFinal(): Promise<void> {
-  if (pumping !== null) {
-    again = true;
+export function openSharing(host: ShareHost, transport: Transport = fetchTransport, clock: () => number = nowMs) {
+  /** The state as stored: another tab's write is taken up before this one
+   *  acts (`current`). A tab loaded yesterday must not send under an id
+   *  another tab has since deleted, nor write back the deletions it never
+   *  saw. */
+  const store = syncedKey('aet.share.v1', readShare);
+  let state: ShareState = reconciled(store.load(), host.log().length);
+  /** Bumped by every change of id, so a send in flight for an old one lands
+   *  on nothing. */
+  let generation = 0;
+  let pumping: Promise<void> | null = null;
+  let again = false;
+
+  function save(next: ShareState): void {
+    state = next;
+    store.write(JSON.stringify(state));
+    send({ kind: 'shared' });
+  }
+
+  /** Another tab's state, taken up: whether there was one. A change of id or
+   *  of on and off is a new generation, so a send in flight under the old one
+   *  lands on nothing. */
+  function takeUp(taken: Taken<ShareState> | null): boolean {
+    if (taken === null) return false;
+    const next = reconciled(taken.theirs, host.log().length);
+    if (next.uid !== state.uid || next.on !== state.on) generation += 1;
+    state = next;
+    return true;
+  }
+
+  /** The state, with whatever another tab wrote since this one last looked
+   *  taken up first. */
+  function current(): ShareState {
+    takeUp(store.takeUp());
+    return state;
+  }
+
+  /** Another tab changed storage (the page's `storage` event; a null key is a
+   *  tab that cleared it all): taken up now, if it touched sharing. Says
+   *  whether it did. */
+  function storedElsewhere(key: string | null): boolean {
+    return takeUp(store.elsewhere(key));
+  }
+
+  /** Sharing on or off. On sends the log so far; the promise is that run. */
+  function setSharing(on: boolean): Promise<void> {
+    if (storageReadOnly() || on === current().on) return Promise.resolve();
+    generation += 1;
+    save(on ? turnedOn(state, newUid()) : turnedOff(state));
+    return on ? sendFinal() : Promise.resolve();
+  }
+
+  /** Forget everything: paired with the calibration's reset. */
+  function forget(): void {
+    generation += 1;
+    save(forgotten(current(), newUid()));
+  }
+
+  /**
+   * Send every final egg not yet sent, one at a time. A call while a run is
+   * going asks it to go round again, so an egg made final meanwhile is not
+   * left until the next load.
+   */
+  function sendFinal(): Promise<void> {
+    if (pumping !== null) {
+      again = true;
+      return pumping;
+    }
+    pumping = (async () => {
+      do {
+        again = false;
+        await sendRun();
+      } while (again);
+    })().finally(() => { pumping = null; });
     return pumping;
   }
-  pumping = (async () => {
-    do {
-      again = false;
-      await sendRun();
-    } while (again);
-  })().finally(() => { pumping = null; });
-  return pumping;
-}
 
-async function sendRun(): Promise<void> {
-  while (await exclusive(sendOne));
-}
-
-/** The next final egg, if there is one and sharing is on: whether to go on. */
-async function sendOne(): Promise<boolean> {
-  const h = host;
-  // Never an egg cooked on the development clock, which runs only on this
-  // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
-  // anything while a newer build's results are left alone (store.ts).
-  if (h === null || devClockUsed() || storageReadOnly()) return false;
-  const s = current();
-  const log = h.log();
-  const at = nextToSend(s, h.finalCount(), log.length);
-  if (at === null) return false;
-  const gen = generation;
-  const body = JSON.stringify({ seq: s.seq, record: sharedRecord(log[at], s.uid) });
-  let status: number;
-  try {
-    status = await transport.post(body);
-  } catch {
-    return false;
+  async function sendRun(): Promise<void> {
+    while (await exclusive(sendOne));
   }
-  const now = current();
-  if (gen !== generation) return false;
-  // Another tab may have sent the same egg meanwhile and moved on: then
-  // there is nothing to move, and the next is looked at afresh.
-  if (now.sent !== s.sent || now.seq !== s.seq) return true;
-  const { next, moved } = answered(now, status, clock());
-  save(next);
-  return moved;
-}
 
-/** "Delete what I've sent", confirmed: off, and every id asked for - after
- *  any egg already on its way has landed, so that it cannot arrive after the
- *  deletion and outlive it. */
-export async function deleteSent(): Promise<void> {
-  if (storageReadOnly()) return;
-  generation += 1;
-  save(deletionAsked(current()));
-  if (pumping !== null) await pumping;
-  await retryDeletes();
-}
-
-/** Ask the server to delete every id it has not yet confirmed. At every
- *  load, and after the cook asks. */
-export function retryDeletes(): Promise<void> {
-  if (storageReadOnly()) return Promise.resolve();
-  return exclusive(async () => {
-    for (const uid of [...current().deleting]) {
-      let status: number;
-      try {
-        status = await transport.remove(uid);
-      } catch {
-        return;
-      }
-      if (deletionDone(status)) save(deletionConfirmed(current(), uid));
+  /** The next final egg, if there is one and sharing is on: whether to go on. */
+  async function sendOne(): Promise<boolean> {
+    // Never an egg cooked on the development clock, which runs only on this
+    // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
+    // anything while a newer build's results are left alone (store.ts).
+    if (devClockUsed() || storageReadOnly()) return false;
+    const s = current();
+    const log = host.log();
+    const at = nextToSend(s, host.finalCount(), log.length);
+    if (at === null) return false;
+    const gen = generation;
+    const body = JSON.stringify({ seq: s.seq, record: sharedRecord(log[at], s.uid) });
+    let status: number;
+    try {
+      status = await transport.post(body);
+    } catch {
+      return false;
     }
-  });
+    const now = current();
+    if (gen !== generation) return false;
+    // Another tab may have sent the same egg meanwhile and moved on: then
+    // there is nothing to move, and the next is looked at afresh.
+    if (now.sent !== s.sent || now.seq !== s.seq) return true;
+    const { next, moved } = answered(now, status, clock());
+    save(next);
+    return moved;
+  }
+
+  /** "Delete what I've sent", confirmed: off, and every id asked for - after
+   *  any egg already on its way has landed, so that it cannot arrive after the
+   *  deletion and outlive it. */
+  async function deleteSent(): Promise<void> {
+    if (storageReadOnly()) return;
+    generation += 1;
+    save(deletionAsked(current()));
+    if (pumping !== null) await pumping;
+    await retryDeletes();
+  }
+
+  /** Ask the server to delete every id it has not yet confirmed. At every
+   *  load, and after the cook asks. */
+  function retryDeletes(): Promise<void> {
+    if (storageReadOnly()) return Promise.resolve();
+    return exclusive(async () => {
+      for (const uid of [...current().deleting]) {
+        let status: number;
+        try {
+          status = await transport.remove(uid);
+        } catch {
+          return;
+        }
+        if (deletionDone(status)) save(deletionConfirmed(current(), uid));
+      }
+    });
+  }
+
+  return {
+    /** The state, with another tab's write taken up first. */
+    state: (): Readonly<ShareState> => current(),
+    storedElsewhere, setSharing, forget, sendFinal, deleteSent, retryDeletes,
+  };
 }

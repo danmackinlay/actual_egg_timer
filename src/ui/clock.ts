@@ -12,7 +12,7 @@
 import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/sounds.js';
 import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
 import { request, soon } from './idle.js';
-import { clockSpeed, nowMs, onClockChange } from './now.js';
+import { clockSpeed, nowMs } from './now.js';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
 const TICK_MS = 200;
@@ -27,12 +27,12 @@ function tickMs(): number {
 /** The running ticker's way to take up a new speed, if one runs. */
 let ticking: (() => void) | null = null;
 
-// The development clock set (never on the live site): the tick takes up its
-// speed, and the pull's beeps are scheduled again for where it now is.
-onClockChange(() => {
+/** The development clock set (never on the live site): the tick takes up
+ *  its speed, and the pull's beeps are scheduled again for where it now is. */
+export function clockMoved(): void {
   if (ticking !== null) ticking();
   armPull();
-});
+}
 
 export interface Ticker {
   stop(): void;
@@ -153,7 +153,7 @@ export function primeAudio(): void {
 
 /* ------------------------------------------------------------ alarm sounds */
 
-/** The sound the cook chose (DECISIONS.md 101). */
+/** The sound the cook chose. */
 let sound: AlarmSound = DEFAULT_ALARM_SOUND;
 
 /** One period of each sound and moment, as the audio context's buffers, made

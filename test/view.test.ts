@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import { parseCatalogue } from '../src/core/copy.js';
 import { targetPeakYolk_C } from '../src/core/slider.js';
 import { CookSurface } from '../src/core/running.js';
+import { FRESH_SHARE } from '../src/core/share.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
 import { formatClock } from '../src/ui/countdown.js';
 import { Model, Msg, update } from '../src/ui/model.js';
@@ -97,7 +98,7 @@ test('1. idle: the solve\'s time and Eggs in, the welcome before anything is lea
 
 test('2. a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
   const m = page({ startMode: 'hot' });
-  const moved = go(m, { kind: 'controls', controls: { ...m.controls, doneness: 0.7, startMode: 'cold' } }, S);
+  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, real_ms: 0 }, S);
   const v = view(moved, S * 1000, viewMemo());
   assert.equal(v.kind, 'unsolved');
   if (v.kind !== 'unsolved') return;
@@ -160,7 +161,7 @@ test('4. a cold cook in each phase: Heating, Cooking, the pull, the cooling, Don
   assert.equal(done.section?.reading, 'ran', 'the egg as it ran');
   assert.equal(done.certainty, null, 'nothing more to say of a time that has passed');
 
-  const after = go(m, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null, storedId_ms: m.cook!.id_ms }, coolEnd + 5);
+  const after = go({ ...m, storedId_ms: m.cook!.id_ms }, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, coolEnd + 5);
   const answered = view(after, (coolEnd + 5) * 1000, memo);
   assert.equal(answered.kind, 'running');
   if (answered.kind === 'running') assert.equal(answered.readout.notes, null, 'what was said stays said');
@@ -181,4 +182,29 @@ test('5. the question: past the grace and corrected, "still in the water?" holds
   assert.equal(v.readout.feedback, false, 'no questions past it');
   assert.equal(v.whiteRisk, false, 'no caveat about the pull it doubts');
   assert.equal(v.readout.announce.text, v.readout.words.spoken, 'the question is its own announcement');
+});
+
+test('6. the parts drawn only when asked: the form in the units on screen, the line over the questions, Settings\' note, sharing', () => {
+  const m = page({ waterLitres: 1.5, eggCount: 3 }, { '1.5': 400 });
+  const s = view(m, S * 1000, viewMemo()).sections;
+  assert.deepEqual(s.redraws, m.redraws);
+  assert.equal(s.form.values.litres, '1.5');
+  assert.equal(s.form.controls.eggCount, 3);
+  assert.equal(s.form.units, 'metric');
+  assert.equal(s.form.measures.litres.unit, t('unit.litres'));
+  assert.equal(s.note.text, t('learned.tuned', { eggs: 3 }), 'three eggs learned');
+  assert.ok(s.learned.text.startsWith(t('learned.tuned', { eggs: 3 })), 'and the pan measured, in Settings');
+  assert.equal(s.learned.forget, true);
+  assert.equal(s.share, null, 'sharing not yet read');
+  const thanked = go(m, { kind: 'kept', id_ms: null, kept: true }, S);
+  assert.equal(view(thanked, S * 1000, viewMemo()).sections.note.text, t('learned.tuned', { eggs: 3 }), 'no cook on screen: nothing to thank for');
+  const sharing = { ...m, share: { state: { ...FRESH_SHARE, on: true, uid: 'u', uids: ['u'], sent: 2 }, final: 3 } };
+  const v = view(sharing, S * 1000, viewMemo()).sections.share;
+  assert.deepEqual(v, {
+    on: true, frozen: false, note: `${t('share.sent', { eggs: 2 })} ${t('share.waiting', { eggs: 1 })}`, uid: 'u', deletable: true,
+  });
+  const frozen = view({ ...sharing, readOnly: true }, S * 1000, viewMemo()).sections;
+  assert.equal(frozen.share?.frozen, true, 'a newer build\'s stores: the switch cannot be moved');
+  assert.equal(frozen.share?.deletable, false);
+  assert.equal(frozen.learned.readOnly, true);
 });

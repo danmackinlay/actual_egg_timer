@@ -35,10 +35,7 @@ import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
 import { CookSetup } from '../src/core/protocol.js';
-import {
-  calibrationStoredElsewhere, clearCalibration, eggsBehind, exportResults, keptState, learn, loadCalibration, logEgg,
-  recordSecondAnswer,
-} from '../src/ui/calibration.js';
+import { Learner, openLearner } from '../src/ui/calibration.js';
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { appSetup, gridFor, knowing, recordAt, webRecordFor } from '../tools/common.js';
@@ -61,6 +58,9 @@ const storage = new Map<string, string>();
     removeItem: (k: string) => { storage.delete(k); },
   },
 };
+
+/** The page under test, as boot() opens it: opened again for a reload. */
+let cal: Learner;
 
 const COARSE = (alphaCentre: number, cookTime_s: number): GridSpec => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 7, timeCount: 9,
@@ -418,24 +418,24 @@ test('3a3. a posterior folded under another likelihood is replayed', () => {
 test('3a4. a store this build cannot read is dropped; the export is the store as stored', () => {
   storage.clear();
   storage.set('aet.calibration.v5', '{damaged');
-  loadCalibration();
+  cal = openLearner();
   assert.equal((JSON.parse(storage.get('aet.calibration.v5') as string) as { v: number }).v, 5, 'written over');
   assert.deepEqual([...storage.keys()], ['aet.calibration.v5'], 'nothing kept aside');
-  assert.equal(exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
-  logEgg(solvedRecord(0.4, 'jammy'));
-  const exported = exportResults(null, Date.UTC(2026, 9, 5, 12));
+  assert.equal(cal.exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
+  cal.logEgg(solvedRecord(0.4, 'jammy'));
+  const exported = cal.exportResults(null, Date.UTC(2026, 9, 5, 12));
   assert.ok(exported !== null);
   assert.match(exported.name, /^actual-egg-timer-results-2026-10-0[56]\.json$/);
   assert.ok(exported.text.includes(`"stored":${storage.get('aet.calibration.v5') as string}`), 'the store as stored');
-  clearCalibration();
-  assert.equal(exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
+  cal.clear();
+  assert.equal(cal.exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
 });
 
 test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {
   storage.clear();
-  let calib = loadCalibration();
-  assert.equal(keptState().base, null);
-  assert.equal(eggsBehind(), 0);
+  let calib = (cal = openLearner()).calibration();
+  assert.equal(cal.keptState().base, null);
+  assert.equal(cal.eggsBehind(), 0);
   assert.equal(calib.eggsLogged, 0);
 
   // Then the app's own path, on real 21 x 32 surfaces: the yolk then the white;
@@ -454,16 +454,16 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
     const r = solvedRecord(levels[i], null, 60 + 3 * i);
     r.yolkWord = a.first.yolkWord ?? null;
     r.white = a.first.white ?? null;
-    const index = logEgg(r);
-    await learn(index);
-    if (a.second !== null) assert.ok(await recordSecondAnswer(index, a.second), `egg ${i}: second answer taken`);
-    calib = loadCalibration(); // a reload: everything back from storage
+    const index = cal.logEgg(r);
+    await cal.learn(index);
+    if (a.second !== null) assert.ok(await cal.recordSecondAnswer(index, a.second), `egg ${i}: second answer taken`);
+    calib = (cal = openLearner()).calibration(); // a reload: everything back from storage
     // After a reload the surface is gone, and a late answer is refused rather
     // than written down unfolded.
-    assert.equal(await recordSecondAnswer(index, { yolkWord: 'jammy' }), false, `egg ${i}: nothing after a reload`);
+    assert.equal(await cal.recordSecondAnswer(index, { yolkWord: 'jammy' }), false, `egg ${i}: nothing after a reload`);
   }
-  assert.equal(eggsBehind(), 0);
-  const log = keptState().log;
+  assert.equal(cal.eggsBehind(), 0);
+  const log = cal.keptState().log;
   assert.equal(log.length, 4);
   assert.deepEqual(log.map((r) => [r.yolkWord, r.white]),
     [['runny', 'runny'], [null, 'tender'], [null, null], ['fudgy', 'firm']]);
@@ -475,53 +475,53 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   // app fold the whole log again from the prior.
   const stored = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v5', JSON.stringify({ ...stored, cal: null }));
-  calib = loadCalibration();
-  assert.equal(eggsBehind(), 4);
-  await learn();
-  assertIdentical(keptState().calibration, rebuilt, 'the app rebuilt it from the log');
+  calib = (cal = openLearner()).calibration();
+  assert.equal(cal.eggsBehind(), 4);
+  await cal.learn();
+  assertIdentical(cal.keptState().calibration, rebuilt, 'the app rebuilt it from the log');
 
   // And across an upgrade: a posterior folded under another likelihood is
   // folded again, and comes out as a replay of the log under this one.
   const upgraded = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v5', JSON.stringify({ ...upgraded, m: '2026-10-e6' }));
-  loadCalibration();
-  assert.equal(eggsBehind(), 4);
-  await learn();
-  assertIdentical(keptState().calibration, rebuilt, 'replayed on a likelihood change');
+  cal = openLearner();
+  assert.equal(cal.eggsBehind(), 4);
+  await cal.learn();
+  assertIdentical(cal.keptState().calibration, rebuilt, 'replayed on a likelihood change');
   assert.equal((JSON.parse(storage.get('aet.calibration.v5') as string) as { m: string }).m, LIKELIHOOD_ID);
 });
 
 test('3c. forget everything clears the log, the base and the posterior', () => {
   storage.clear();
-  loadCalibration();
-  logEgg(solvedRecord(0.4, null));
-  const fresh = clearCalibration();
+  cal = openLearner();
+  cal.logEgg(solvedRecord(0.4, null));
+  const fresh = cal.clear();
   assert.equal(storage.size, 0);
-  assert.equal(keptState().log.length, 0);
-  assert.equal(keptState().base, null);
+  assert.equal(cal.keptState().log.length, 0);
+  assert.equal(cal.keptState().base, null);
   assert.equal(fresh.eggsLogged, 0);
 });
 
 test('3d. another tab\'s egg is taken up, not written over', () => {
   storage.clear();
-  const calib = loadCalibration();
-  logEgg(solvedRecord(0.3, null));
+  const calib = (cal = openLearner()).calibration();
+  cal.logEgg(solvedRecord(0.3, null));
   // Another tab, loaded now, logs an egg of its own.
   const other = decodeKept(storage.get('aet.calibration.v5') as string).kept;
   other.log.push(solvedRecord(0.4, null));
   storage.set('aet.calibration.v5', encodeKept(other));
   // This tab never heard, and logs another.
-  assert.equal(logEgg(solvedRecord(0.5, null)), 2, 'logged after the other tab\'s egg');
+  assert.equal(cal.logEgg(solvedRecord(0.5, null)), 2, 'logged after the other tab\'s egg');
   const stored = decodeKept(storage.get('aet.calibration.v5') as string).kept;
   assert.deepEqual(stored.log.map((r) => r.level), [0.3, 0.4, 0.5]);
-  assert.equal(calibrationStoredElsewhere('aet.calibration.v5'), false, 'nothing new since');
-  assert.equal(calibrationStoredElsewhere('aet.settings.v1'), false);
+  assert.equal(cal.storedElsewhere('aet.calibration.v5'), false, 'nothing new since');
+  assert.equal(cal.storedElsewhere('aet.settings.v1'), false);
   // The other tab forgets everything: this one follows, in the calibration
   // the app holds, and a late answer to its egg is refused.
   storage.delete('aet.calibration.v5');
-  assert.equal(calibrationStoredElsewhere(null), true);
-  assert.equal(keptState().log.length, 0);
-  assert.equal(keptState().calibration, calib, 'the same reference, emptied');
+  assert.equal(cal.storedElsewhere(null), true);
+  assert.equal(cal.keptState().log.length, 0);
+  assert.equal(cal.keptState().calibration, calib, 'the same reference, emptied');
   assert.equal(calib.eggsLogged, 0);
 });
 
@@ -529,25 +529,23 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   storage.clear();
   const KEY = 'aet.calibration.v5';
   const NEWER = '2026-10-e99';
-  // A second page, a newer build's: the same code under another likelihood, as
-  // the service worker leaves an old window on the build it opened with.
-  const newer = await import(new URL('../src/ui/calibration.js?tab=newer', import.meta.url).href) as
-    typeof import('../src/ui/calibration.js');
   // This page logs two eggs. Unanswered, so they fold nothing and build no
   // surface, and the test runs in milliseconds.
-  loadCalibration();
-  logEgg(solvedRecord(0.3, null));
-  logEgg(solvedRecord(0.5, null));
-  await learn();
-  // The newer build opens: it replays the log under its own likelihood and writes.
-  newer.loadCalibration(NEWER);
+  cal = openLearner();
+  cal.logEgg(solvedRecord(0.3, null));
+  cal.logEgg(solvedRecord(0.5, null));
+  await cal.learn();
+  // A second page, a newer build's: the same code under another likelihood, as
+  // the service worker leaves an old window on the build it opened with. It
+  // opens, replays the log under its own likelihood and writes.
+  const newer = openLearner(NEWER);
   await newer.learn();
   assert.equal((JSON.parse(storage.get(KEY) as string) as { m: string }).m, NEWER);
   // The browser tells each page whenever the other writes, and each page
-  // folds whatever is behind when it hears, as update.ts does.
+  // folds whatever is behind when it hears, as effects.ts does.
   const pages = [
-    { heard: calibrationStoredElsewhere, learn: learn, behind: eggsBehind },
-    { heard: newer.calibrationStoredElsewhere, learn: newer.learn, behind: newer.eggsBehind },
+    { heard: cal.storedElsewhere, learn: cal.learn, behind: cal.eggsBehind },
+    { heard: newer.storedElsewhere, learn: newer.learn, behind: newer.eggsBehind },
   ];
   const listen = async (rounds: number): Promise<number> => {
     let writes = 0;
@@ -563,15 +561,15 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
     return writes;
   };
   assert.equal(await listen(8), 0, 'taking up the other build\'s store writes nothing');
-  assert.equal(keptState().log.length, 2);
-  assert.equal(keptState().folded, 2, 'what this page folded is kept, not replayed');
+  assert.equal(cal.keptState().log.length, 2);
+  assert.equal(cal.keptState().folded, 2, 'what this page folded is kept, not replayed');
   // A page's own change is written, under its own likelihood, and taken up
   // by the other without a write back; the other folds only the egg that is
   // new.
-  logEgg(solvedRecord(0.6, null));
+  cal.logEgg(solvedRecord(0.6, null));
   const written = storage.get(KEY);
   assert.equal((JSON.parse(written as string) as { m: string }).m, LIKELIHOOD_ID);
-  assert.equal(newer.calibrationStoredElsewhere(KEY), true);
+  assert.equal(newer.storedElsewhere(KEY), true);
   assert.equal(newer.eggsBehind(), 1, 'one egg to fold, not the whole log again');
   await newer.learn();
   assert.equal(storage.get(KEY), written, 'folded in memory, not written');
@@ -586,14 +584,12 @@ test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down'
   storage.clear();
   const KEY = 'aet.calibration.v5';
   const T = 1759700000123;
-  const other = await import(new URL('../src/ui/calibration.js?tab=same-cook', import.meta.url).href) as
-    typeof import('../src/ui/calibration.js');
-  const calib = loadCalibration();
-  other.loadCalibration();
+  const calib = (cal = openLearner()).calibration();
+  const other = openLearner();
   // This tab writes the egg down with the yolk.
-  const index = logEgg({ ...solvedRecord(0.4, 'jammy'), id: T });
+  const index = cal.logEgg({ ...solvedRecord(0.4, 'jammy'), id: T });
   // The other tab hears, and leaves the egg to this one.
-  assert.equal(other.calibrationStoredElsewhere(KEY), true);
+  assert.equal(other.storedElsewhere(KEY), true);
   await other.learn();
   assert.equal(other.keptState().folded, 0, 'another tab\'s newest egg is that tab\'s to fold');
   // The cook answers the white in the other tab, which shows the same cook:
@@ -603,21 +599,21 @@ test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down'
   assert.equal(other.keptState().log.length, 1, 'one cook, one egg');
   assert.equal(await other.recordSecondAnswer(0, { white: 'firm' }), true);
   // This tab folds the egg with both answers, and can still take a third.
-  await learn(index);
+  await cal.learn(index);
   assert.equal(calib.eggsLogged, 1);
-  assert.deepEqual([keptState().log[0].yolkWord, keptState().log[0].white], ['jammy', 'firm']);
-  assert.equal(other.calibrationStoredElsewhere(KEY), true);
+  assert.deepEqual([cal.keptState().log[0].yolkWord, cal.keptState().log[0].white], ['jammy', 'firm']);
+  assert.equal(other.storedElsewhere(KEY), true);
   assert.equal(await other.recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), false,
     'refused where it cannot be folded, and nothing written');
   assert.equal(decodeKept(storage.get(KEY) as string).kept.log[0].probe, null);
-  assert.equal(await recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), true);
+  assert.equal(await cal.recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), true);
   // What this tab holds is what a replay of the log makes.
   const stored = decodeKept(storage.get(KEY) as string).kept;
   assert.equal(stored.folded, 1);
   assertIdentical(calib, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), stored.log), 'three answers, two tabs');
   // "Start again" in either tab logs nothing more.
   assert.equal(other.logEgg({ ...solvedRecord(0.4, null), id: T }), 0);
-  assert.equal(logEgg({ ...solvedRecord(0.4, null), id: T }), 0);
+  assert.equal(cal.logEgg({ ...solvedRecord(0.4, null), id: T }), 0);
   assert.equal(decodeKept(storage.get(KEY) as string).kept.log.length, 1);
 });
 
@@ -769,30 +765,30 @@ test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the
 
 test('4e. the same egg logged again keeps its facts as last corrected, and the answers already given', async () => {
   storage.clear();
-  loadCalibration();
+  cal = openLearner();
   const cook = cookOf();
   const plan = onSurface(cook, S0);
   const first = rec(cook, plan, 'jammy');
-  assert.equal(logEgg(first), 0);
+  assert.equal(cal.logEgg(first), 0);
   // The same cook, its record made again from another tab's plan: another
   // forecast, no answer. The answer stays; the rest is the newer record.
   const again = { ...rec(cook, plan, null), cooled_s: first.cooled_s + 10 };
-  assert.equal(logEgg(again), 0);
-  const kept = keptState().log;
+  assert.equal(cal.logEgg(again), 0);
+  const kept = cal.keptState().log;
   assert.equal(kept.length, 1);
   assert.equal(kept[0].yolkWord, 'jammy');
   assert.equal(kept[0].cooled_s, again.cooled_s);
-  assert.equal(logEgg(again), 0, 'once kept, nothing changes');
+  assert.equal(cal.logEgg(again), 0, 'once kept, nothing changes');
   // One already folded is folded again, from the prior: the posterior is the
   // log's replay.
-  await learn();
-  assert.equal(keptState().folded, 1);
+  await cal.learn();
+  assert.equal(cal.keptState().folded, 1);
   const corrected = { ...again, cooled_s: again.cooled_s + 30 };
-  logEgg(corrected);
-  assert.equal(keptState().folded, 0, 'to be folded again');
-  await learn();
-  assert.equal(keptState().folded, 1);
-  assertIdentical(keptState().calibration, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), keptState().log),
+  cal.logEgg(corrected);
+  assert.equal(cal.keptState().folded, 0, 'to be folded again');
+  await cal.learn();
+  assert.equal(cal.keptState().folded, 1);
+  assertIdentical(cal.keptState().calibration, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), cal.keptState().log),
     'the corrected egg, folded once');
 });
 
