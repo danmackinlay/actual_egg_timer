@@ -743,3 +743,32 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     as the beeps were at the same moment. Built on `0.5.x`: `db878e5`
     (core), `e6da9e1` (the sounds and the iOS files), `f9766a0` (both
     apps, the `alarm` draft). 9 October 2026.
+102. **0.4 does not ship; 0.5 is the next release, and `0.4.x` retires**
+    (the owner, 9 October 2026, through the 0.5 red team's worklist,
+    `REFACTOR-0.5.md` 4.3, and confirmed: "All correct"). 0.5 forked from
+    0.4 before 0.4 shipped, so the two were one line in practice and every
+    fix was built twice (`0.4.x-newer-version-guard`, `0.5.x-…`). The
+    guard (100) ships in 0.5. CLAUDE.md's branch rule changes with it.
+103. **The English of 1750 may lag the English** (the same worklist, 4.6;
+    confirmed). A wording change may ship without its 1750 twin; the twins
+    are written in batches. A missing key falls back to the English
+    (`src/core/copy.ts`), and a twin written against older English is
+    listed for review and still shown, never a failed build. Czech (F5)
+    gets the same rule.
+104. **`PLAN.md` is updated at merge, by the session that merges**, not in
+    each working commit (the worklist, 4.1; confirmed): it was touched by a
+    quarter of all commits and was the commonest merge conflict across
+    worktrees. A CLAUDE.md change.
+105. **Comments say what the code does and why** (the worklist, 2.3;
+    confirmed). A decision number appears in a comment only where the code
+    would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
+106. **The copy drafts give way to a review queue** (the worklist, 2.2;
+    confirmed: "Yes, including CLAUDE.md"). What the owner approved is
+    stored, as a hash of each key's English (`copy/approved.json`, from
+    the English he last read whole, `e3a81cb`); every key that no longer
+    matches is the review queue, generated, never typed; a script stamps
+    approval; each translation records the English it was written
+    against, so a stale twin is listed rather than blocking (103); a page
+    shows the queue for review on a phone. `tools/drafts/` and the draft
+    proofs go; the no-literals lint and the surfaces' budgets stay.
+    9 October 2026.
