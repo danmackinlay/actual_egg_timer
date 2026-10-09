@@ -6492,3 +6492,47 @@ saving to count on is the compiler's, 6-9 s a run.
 Agents adding a script: start it `node tools/build.mjs && node dist/…`,
 not `tsc && …`, which builds only the tests, tools and server and leaves
 a deleted file's output in place.
+
+## 10 October 2026: the fixtures checked on Linux (REFACTOR-0.5 1.4)
+
+`fixtures:check` ran only on CI's macOS job, because the same TypeScript
+on x86 Linux makes some numbers differently in the last bit. Measured in
+OrbStack containers (Node 26.11.1, `node:26-bookworm-slim`) against the
+fixtures as made on this Mac (arm64, Node 26.8.1): x86 Linux differed in
+3,848 numbers across nine fixtures, by at most 7.3e-15 relative (in
+decide.json's grid; most by one or two ulps); arm64 Linux in one, a dose
+of 1.7e-14 in section.json that x86 Linux shares, so that one is Node's
+version or the OS, not the processor.
+
+**Rounding was tried and does not work**, at either count of digits.
+Twelve significant digits are up to 5e-12 from the value, past Swift's
+1e-12, and 3,362 Swift expectations failed. Thirteen kept that margin but
+broke 790, because the fixtures are inputs as well as answers and an
+input must reach Swift as the TypeScript used it: 4.722222222222222 C is
+40.5 F, a half-way case that rounds up to 41, and rounded it read 40;
+1759700000123.5 is an id in fractions of a millisecond, which a loader
+refuses, and rounded it was a whole number and accepted; running.json's
+cooks, their eggs and pots rounded, came out up to 5e-6 apart. Nor would rounding have made the
+bytes agree: where two platforms' values straddle a boundary they still
+differ in the last digit written, and at twelve digits one number in
+reach.json did.
+
+**So the check compares numbers, not bytes.** `tools/fixturesCheck.ts`
+(the rule in `tools/fixtureCompare.ts`, tested in
+`test/fixtureCompare.test.ts`) compares each fresh fixture with the one in
+git's index: every key in order, every string, boolean, null and length
+exactly, every number to 1e-12 relative, absolute below 1, which is
+Support.swift's `conformanceTolerance`: a difference it lets through is
+one Swift could not tell from none. A fixture that agrees but for last
+digits is put back as committed, so the tree is left clean; one that does
+not is left for `git diff`, and its differences are listed by JSON path
+(`$.cases[0].solution.cookTime_s: 442.1533203135 -> 442.1533203125
+(2.3e-12)`), which is the readable diff the item asked for. On both Linux
+containers the check passed against the macOS fixtures and left the tree
+clean, and failed, naming the path, when a committed cook time was moved
+by 1e-9 s. Fixtures are still made and committed at full precision; no
+Swift tolerance changed.
+
+**CI**: `fixtures:check` moved to the Linux `web` job; the macOS `apple`
+job runs `swift test` on the committed fixtures, which it never
+regenerated, and the iOS build.

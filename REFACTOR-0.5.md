@@ -106,9 +106,15 @@ gate could catch it.
       `test/cycles.test.ts`): every static import, bare import and
       re-export is an edge, type-used or not; only `import type` /
       `export type` and `import()` are not.
-- [ ] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
+- [x] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
       12 significant digits) so `fixtures:check` isn't arm64-only and the
-      diffs can be read. Swift already compares at 1e-12. S-M.
+      diffs can be read. Swift already compares at 1e-12. S-M. *Done* (`85eb483`),
+      not by rounding: the fixtures carry inputs that must reach Swift
+      exactly (a half-way °F, an id in fractions of a millisecond), and a
+      rounding boundary still splits two platforms' values. `fixtures:check`
+      (`tools/fixturesCheck.ts`) holds numbers to Swift's 1e-12 and all
+      else exactly, lists what differs by path, and runs in CI's Linux
+      `web` job; x86 and arm64 Linux pass against the macOS fixtures.
 - [x] **1.5 One compile per `verify`.** It runs `tsc` six times, from
       `rm -rf dist`. Project references (`tsc -b`: core, app, tools, tests)
       and run each step from that build. M. *Done:* three projects
