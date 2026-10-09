@@ -1,8 +1,7 @@
 /**
  * The rule `npm run fixtures:check` holds a fresh fixture to
- * (tools/fixtureCompare.ts): numbers to 1e-13 of their value at every
- * magnitude, everything else exactly; and the layout every fixture is
- * written in.
+ * (tools/fixtureCompare.ts): numbers to Swift's conformance tolerance,
+ * everything else exactly; and the layout every fixture is written in.
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -10,48 +9,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  compareFixtures, FIXTURE_TOLERANCE, ROW_LIMIT, SMALLEST_NORMAL, fixtureLayout, relativeDifference,
-} from '../tools/fixtureCompare.js';
-
-/** Whether `fresh` passes for `committed`. */
-const agrees = (committed: number, fresh: number): boolean =>
-  compareFixtures({ x: committed }, { x: fresh }).differences.length === 0;
+import { compareFixtures, FIXTURE_TOLERANCE, ROW_LIMIT, fixtureLayout } from '../tools/fixtureCompare.js';
 
 test('a number in its last bits is close, not different', () => {
-  // A number in decide.json's grid as x86 Linux and arm64 macOS make it.
+  // decide.json's grid on x86 Linux and arm64 macOS (10 October 2026).
   const r = compareFixtures({ logWhite: [2.524908250280827, 1] }, { logWhite: [2.5249082502808267, 1] });
   assert.deepEqual(r.differences, []);
   assert.equal(r.close, 1);
   assert.ok(r.largest > 0 && r.largest < 1e-15);
-  // The farthest apart the two make any number: a particle's offset near
-  // zero, whose error is an ulp of the terms it is summed from.
-  assert.ok(agrees(-0.003050281876359709, -0.0030502818763599865));
 });
 
-test('the tolerance is relative at every magnitude, on both sides of 1', () => {
-  for (const x of [400, 1, 0.5, 1e-6, 1e-14, 4e-216, 1e-300, -3e-5]) {
-    assert.ok(agrees(x, x * (1 + FIXTURE_TOLERANCE / 2)), `${x} within half the tolerance`);
-    assert.ok(!agrees(x, x * (1 + 3 * FIXTURE_TOLERANCE)), `${x} beyond three times it`);
-  }
+test('a number beyond the tolerance differs, relative above 1 and absolute below', () => {
   const big = compareFixtures({ t: 400 }, { t: 400 * (1 + 3 * FIXTURE_TOLERANCE) });
+  assert.equal(big.differences.length, 1);
   assert.equal(big.differences[0]!.path, '$.t');
-  assert.ok(big.differences[0]!.error! > 2 * FIXTURE_TOLERANCE);
-});
-
-test('a small number doubled, or changing sign, differs', () => {
-  assert.ok(!agrees(1e-14, 2e-14));
-  assert.ok(!agrees(1.809504045294345e-16, -1.809504045294345e-16));
-  assert.equal(relativeDifference(1e-20, -1e-20), 2);
-  assert.ok(!agrees(0, 1e-300), 'a zero stays zero');
-  assert.ok(!agrees(1e-300, 0));
-});
-
-test('below the smallest normal double the bound is absolute', () => {
-  assert.equal(relativeDifference(0, 0), 0);
-  assert.ok(agrees(0, Number.MIN_VALUE), 'zero and the smallest denormal');
-  assert.ok(agrees(5e-321, 5.0000001e-321));
-  assert.ok(!agrees(0, SMALLEST_NORMAL * FIXTURE_TOLERANCE * 3));
+  assert.equal(compareFixtures({ t: 400 }, { t: 400 * (1 + FIXTURE_TOLERANCE / 2) }).differences.length, 0);
+  // Below 1 the tolerance is absolute, as Swift's expectClose is.
+  assert.equal(compareFixtures({ p: 1e-14 }, { p: 2e-14 }).differences.length, 0);
+  assert.equal(compareFixtures({ p: 0.5 }, { p: 0.5 + 3 * FIXTURE_TOLERANCE }).differences.length, 1);
 });
 
 test('everything but a number must be the same', () => {

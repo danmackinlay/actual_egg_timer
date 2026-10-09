@@ -5,15 +5,15 @@
  *
  * Each fixture just written is compared with the one in git's index by
  * tools/fixtureCompare.ts: the same keys, strings and lengths, and the same
- * numbers to 1e-13 of their value at every magnitude, so the check holds on
- * x86 Linux as on arm64 macOS, where the fixtures are made, and no number,
- * however small, moves unseen. A fixture that agrees but for its numbers'
- * last digits is put back as committed, so the check leaves the tree as it
- * found it; one that disagrees is left as written, for `git diff`, and the
- * differences are listed by path. A fixture git does not know fails, as one
- * the check cannot compare, and so does one committed in another layout
- * than one row per line (`fixtureLayout`), say by a branch from before it:
- * it is written in this one, its values unchanged, to be committed.
+ * numbers to Swift's conformance tolerance, so the check holds on x86 Linux
+ * as on arm64 macOS, where the fixtures are made. A fixture that agrees but
+ * for its numbers' last digits is put back as committed, so the check leaves
+ * the tree as it found it; one that disagrees is left as written, for
+ * `git diff`, and the differences are listed by path. A fixture git does not
+ * know fails, as one the check cannot compare, and so does one committed in
+ * another layout than one row per line (`fixtureLayout`), say by a branch
+ * from before it: it is written in this one, its values unchanged, to be
+ * committed.
  */
 
 import { execFileSync } from 'node:child_process';

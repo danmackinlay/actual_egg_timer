@@ -5,8 +5,8 @@
 # web, on Linux (quick to start): the type checks, the tests, the
 # validation table (`npm run validate`), the Swift copy lint, and fixtures
 # that match a fresh `npm run fixtures`. The same TypeScript on x86 Linux
-# differs from arm64 macOS, where the fixtures are made, in the last bits of
-# some numbers, so the check holds every number to 1e-13 of its value
+# differs from arm64 macOS, where the fixtures are made, in the last bit of
+# some numbers, so the check holds numbers to Swift's conformance tolerance
 # rather than to the byte (tools/fixtureCompare.ts).
 #
 # apple, on macOS: the Swift core against the committed fixtures (`swift
