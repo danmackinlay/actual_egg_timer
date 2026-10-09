@@ -6663,3 +6663,63 @@ One commit each, each through `verify`, `build:site`, `e2e` and
 go; `design/running-cook-review.md` and `design/onescreen-review.md`
 become `archive/design/…`, and the status lines at PLAN.md 34, 53, 55, 59
 and 224 cite `archive/`. `studies/` wants a row.
+
+## 10 October 2026: the running cook as a log and one state machine, in core (REFACTOR-0.5 3.1 to 3.6, 3.16)
+
+Core only, for both apps; the apps still call the pieces, and move onto
+`step` in 3.7 (web) and 3.9 (iOS). Branch `core-step-0.5`.
+
+- **A cook is its start and a log** (3.2). `RunningCook` keeps what was
+  fixed at the press, `start` (the egg in, the choices then) and `log`, an
+  append-only list of `CookEntry`; the cook as it stands is the log folded
+  (`appendEntry`), kept beside it in memory and written beside it for whoever
+  reads a store, never read back. Every transition is a check and an entry;
+  `writeEvents` and `withAsRan` log what the clock, a plan or another tab
+  decided. `coldSince_s`, `firstHotAt_s` and `boilRemembered` went from the
+  fields (`coldHistory`, `boilRemembered`). The 85 `plans` rows of
+  `running.json` are what they were, field for field but the four that went
+  (checked by script against the committed fixture), and so are the 36
+  moves; the stored cooks in the fixtures are written as stored. New keys,
+  `aet.cook.v5` and `cookInProgress.v4`, the old ones on the boot sweep.
+- **Two copies of one cook** (`takeUpEvents`, `correctedLater`) moved from
+  the web's `store.ts` into core, over the log, and are fixtured both ways
+  (`running.json` `takeUps`); `store.ts` re-exports them.
+- **One step** (3.1): `step(state, event, env) → { cook, plan, leanHint_s,
+  need, effects }` in `step.ts` and `Step.swift`. The answers, the end and
+  the record's log are entries too, so an answer the record cannot yet be
+  made for is held in the cook, and an ended cook stays until its egg is
+  logged (made again first if corrected after the pull), then `forget` and
+  `sendFinal`. 31 traces, 223 steps (`fixtures/step.json`), with the readout
+  at each, and Swift held to all of them at the conformance tolerance; the
+  e2e scenarios and review findings each trace covers are named in it, and
+  those that are the screen's or the store's are listed with where they are
+  held (`screenOnly`). An ended cook waiting on a surface is a state of its
+  own: a Start meanwhile starts another state, so no record is lost.
+- **The readout** (3.3): `readoutAt`; the web's `phaseView` renders it.
+  The spoken line says which line to say rather than naming the web's
+  `spoken.*` keys, which iOS does not speak (`copy.test` 6a holds keys to
+  the apps that name them, and core's Swift is iOS's).
+- **One surface key** (3.4): `inputsKey`, each number as its 64 bits in hex,
+  in `replan` and both apps' caches. A web pot that cannot be keyed is now a
+  rejected build, as one that throws is (`gridBuilds.test`). Swift's typed
+  Codable of the cook went: `RunningCook: Codable` is an exact JSON value
+  read by `readRunningCook`.
+- **3.5, 3.6, 3.16**: `plan.memo`; `CookPlan` without `level`,
+  `provisional`, `askIfStillIn`, `lengthened`; `startCook(now_s)`.
+  `share.answered` still takes ms (its stored `busySince` is ms).
+- **The e2e scripts** changed only where they name the store: the keys, and
+  `sharing-final-only`'s move of a stored cook back in time, which now moves
+  its start and its log.
+
+Two commits, the log (3.2, 3.4 to 3.6, 3.16) and then `step` and the
+readout (3.1, 3.3), each through `verify`, `ios:build`, `e2e` (78 of 78)
+and `ios:e2e` (48 of 48; `change-kept-on-hide` failed once waiting on the
+settings plist, which this work does not write, and passed run again).
+
+What one could trip on: the slider's preview after the pull is a cook for a
+plan only (`levelPreview`), whose fold is not its log's; it is never stored.
+A JSON reader may read a 17-digit number an ulp off, so `running.json`
+writes the key's numbers as text for Swift's `inputsKey` check.
+
+**For PLAN's map at merge:** `fixtures/step.json` wants a row, beside
+`running.json`; the status line's test and check counts move.

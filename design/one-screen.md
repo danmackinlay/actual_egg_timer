@@ -565,6 +565,55 @@ it Done, and a deadline past and not moved keeps the notification's cover
 when the alarms are scheduled again, so neither a cooling's end a
 correction wrote nor a pull its notification rang rings in the app.
 
+*As built, the state machine* (`REFACTOR-0.5.md` 3.1-3.6 and 3.16, 10
+October 2026; core for both apps, which still call the pieces until 3.7 and
+3.9 move them onto it):
+- **The cook is its start and a log** (3.2). `RunningCook` stores what was
+  fixed at the press (`id_ms`, the nudge, the pans, units, language), the
+  start (`start`: when the egg went in and the choices then) and `log`, an
+  append-only list of `CookEntry`: what the cook told the app (`boil`,
+  `correct`, `start`, a `pulled` by the cook, `stillIn`, `stands`,
+  `answered`, `ended`) and what the clock or a plan decided (`rang`, a
+  `pulled` by `timeout`, `cooled`, `ran`, `logged`). The cook as it stands
+  (`startedAt_s`, `choices`, `events`, `correctedAt_s`, `asRan`) is the log
+  folded (`appendEntry`); `coldSince_s`, `firstHotAt_s` and `boilRemembered`
+  are no longer fields but functions of the log and the pans
+  (`coldHistory`, `boilRemembered`). Every move above is a check, then an
+  entry; `writeEvents` and `withAsRan` log what `eventsDue`, `keepAsRan` or
+  another copy decided; `levelPreview` is the cook the slider's level after
+  the pull would make, for a plan only; `shiftedCook` moves every time, for
+  a development clock. `readRunningCook` reads the press, the start and the
+  log and folds it again; the cook as it stood is written beside them for
+  whoever reads a store, and never read. `takeUpEvents` and `correctedLater`
+  (two copies of one cook, onescreen review 1.1) moved into core from the
+  web's store, fixtured.
+- **One step** (3.1): `step(state, event, env) → { cook, plan, leanHint_s,
+  need, effects }` in `step.ts`, an event of `start`, `boil`, `correct`,
+  `correctStart`, `out`, `stillIn`, `pullStands`, `tick`, `surfaceLanded`,
+  `answered` or `startAgain` (Cancel too); a reload is a tick with no plan.
+  Inside: the transition, the plan on the surface its pot wants, the events
+  the clock decided and the second plan, the plan as it ran kept, the
+  record logged and logged again (answers are log entries, held there until
+  the surface or the calibration before this egg lands), the end (the boil
+  remembered, the record made or made again, then `forget` and
+  `sendFinal`), the ring (`pull` when this step wrote the ring, `cooled` when
+  it finished the egg), `silence`, and the alarms the plan sets. `need` says
+  what to build: the pot's surface, the calibration before this egg and a
+  surface on it, and the next moment the clock decides something.
+- **The readout** (3.3): `readoutAt(cook, plan, now_s, probe)` in
+  `readout.ts`, the keys and the numbers they take; the web's `phaseView`
+  renders it, iOS's `ReadoutView` is still its own until 3.9.
+- **One surface key** (3.4): `inputsKey` (`decide.ts`), every number as its
+  64 bits in hex, used by `replan` and both apps' caches.
+- **The slow hob's memo** (3.5): `plan.memo`, opaque (`SlowHobMemo`), keyed
+  by what the rule read; `slowHobMemoFits` replaces `slowHobHintFits`.
+- **`CookPlan`** (3.6) lost `level` (`answer.level`), `provisional`
+  (`deadlines.provisional`), `askIfStillIn` (`deadlines.asking`,
+  `asksIfStillIn`) and `lengthened` (`guessLengthened`: `inputs` null).
+- **One time unit** (3.16): `startCook(now_s)`; the record's id stays ms.
+- Stored under new keys (`DECISIONS.md` 48): `aet.cook.v5` and
+  `cookInProgress.v4`, the earlier ones swept at boot.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 
@@ -579,8 +628,8 @@ does at setup today.
 
 | | Key | Holds |
 |---|---|---|
-| web | `aet.cook.v4` (was `aet.cook.v3`, before it `aet.cook.v2`) | `{ cook: RunningCook, answers: KeptAnswers, leanHint_s }` |
-| iOS | `cookInProgress.v3` (was `cookInProgress.v2`, before it `cookInProgress`) | `{ cook, feedbackGiven, leanHint_s }` |
+| web | `aet.cook.v5` (was `aet.cook.v4`, `v3`, `v2`) | `{ cook: RunningCook, answers: KeptAnswers, leanHint_s }` |
+| iOS | `cookInProgress.v4` (was `cookInProgress.v3`, `v2`, `cookInProgress`) | `{ cook, feedbackGiven, leanHint_s }` |
 
 *As built, after the running-cook review:* the cook gained `asRan` (1.3),
 so both keys moved on a version (`DECISIONS.md` 48). Every earlier key is

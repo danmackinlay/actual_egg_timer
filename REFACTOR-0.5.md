@@ -324,7 +324,7 @@ each app strings them together in its own order. The after-pull correction
 is written three times (`cook.ts:342`, `AppModel.swift:366`,
 `Cook.swift:308`). 0.3 and 0.4 above are that drift.
 
-- [ ] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
+- [x] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
       core. Events: start, boil, correct, correctStart, out, stillIn,
       pullStands, tick, surfaceLanded, answered, startAgain. Effects:
       persist, askSurface, arm/cancel alarms, ring, log record, forget,
@@ -332,25 +332,51 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       the end-of-cook steps (log, remake, retry, held answers) are in it
       too. The fixtures become event traces; today's 83 `plans` rows check
       that behaviour hasn't changed. L.
-- [ ] **3.2 `RunningCook` as start + choices + an append-only event log.**
+      *Done* (10 October 2026, `core-step-0.5`): `step(state, event, env)`
+      in `src/core/step.ts` (`Step.swift`), the state the cook, its plan
+      and the lean; `need` is `askSurface` (the pot's surface, the
+      calibration before this egg and its surface) and the next moment to
+      wake; effects `persist`, `alarms`, `ring`, `silence`, `rememberBoil`,
+      `log`, `forget`, `sendFinal`. 31 traces of 223 steps
+      (`fixtures/step.json`), each e2e scenario and review finding that is
+      the cook's named in it; the 85 `plans` rows unchanged. The apps still
+      call the pieces (the transitions are now `step`'s parts, not wrappers
+      of it): 3.7 and 3.9.
+- [x] **3.2 `RunningCook` as start + choices + an append-only event log.**
       Today it has 13 fields, four of them partial correction history
       (`coldSince_s`, `firstHotAt_s`, `correctedAt_s`, `boilRemembered`)
       decoded by hand. "Changing a setting back gives back the old plan
       exactly" then holds by construction. M, with 3.1.
-- [ ] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
+      *Done:* `start` and `log` (`CookEntry`), folded by `appendEntry`;
+      `coldSince_s`, `firstHotAt_s` and `boilRemembered` are functions of
+      the log. Stored as `aet.cook.v5` and `cookInProgress.v4`, the earlier
+      keys swept. `takeUpEvents` and `correctedLater` moved into core from
+      the web's store (two copies of one cook, `running.json` `takeUps`).
+- [x] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
       digits, sign, args}`. The web has it pure and tested (`phaseView.ts`);
       iOS spreads it over `ReadoutView`, `PhaseActions` and `AppModel.keys`
       (47 phase branches in views). M.
-- [ ] **3.4 One `inputsKey()` in core** with explicit number formatting,
+      *Done* in core (`readoutAt`, `readout.ts`, `Readout.swift`), held
+      for every trace step; the web's `phaseView` renders it. iOS's views
+      move onto it in 3.9. The spoken line is which line to say, since iOS
+      speaks none of the web's `spoken.*` keys.
+- [x] **3.4 One `inputsKey()` in core** with explicit number formatting,
       used by `replan` and both caches, in place of 17-field `===` checks,
       `JSON.stringify(inputs)` with field order that matters, and iOS's
       three representations of a cook. Then one of Codable or
       `readRunningCook` goes. M.
-- [ ] **3.5 The slow-hob hint becomes an opaque memo** the apps never read
+      *Done:* `inputsKey` (each number its 64 bits in hex) in `replan` and
+      both apps' caches; the typed Codable of the cook went: a stored cook
+      is read by `readRunningCook` alone, through an exact JSON value.
+- [x] **3.5 The slow-hob hint becomes an opaque memo** the apps never read
       (`SlowHobHint`, `slowHobHintFits`, ~130 lines each side), or goes
       inside 3.1's state. M.
-- [ ] **3.6 `CookPlan` without its duplicates**: `level`,
+      *Done:* `plan.memo` (`SlowHobMemo`, opaque in Swift), keyed by what
+      the rule read; `slowHobMemoFits`.
+- [x] **3.6 `CookPlan` without its duplicates**: `level`,
       `provisional`, `askIfStillIn` and `lengthened` repeat other fields. S.
+      *Done:* `answer.level`, `deadlines.provisional`, `asksIfStillIn`,
+      `guessLengthened`.
 
 ### Each app as an effect runner over it
 
@@ -405,6 +431,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       most-churned Swift file. S-M.
 - [ ] **3.16 One time unit**: `startCook(now_ms)` and `share.answered(now)`
       take ms, everything else seconds. S.
+      *Half done:* the running cook's API is seconds (`startCook(now_s)`;
+      the record's id stays ms). `share.answered` still takes ms: its
+      stored `busySince` is ms, a format change of its own.
 - [ ] **3.17 Core only what the apps must agree on.** `deadlineToRing` is
       iOS-only logic in EggTimerCore with no twin; one-liners
       (`effectiveUnits`, `languageOf`) don't earn a twin. S.
