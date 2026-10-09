@@ -1420,6 +1420,8 @@ scenario('slow-hob', 'never boiled: the guess lengthens, the time heated counts 
   // ticks, each caught up with (it once planned the same plan at every
   // one). First where the guess gives out.
   const first = num(planIn(run.lines()).next);
+  // All the start set going done with first, its pot's surface among it.
+  await run.tick();
   let i = await run.step(first);
   for (let k = 1; k < 8; k += 1) await run.tick();
   const onIt = run.lines().slice(i).filter(is('plan')).length;
@@ -1612,10 +1614,14 @@ scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start agai
   const again = await tapAt(run, cooledAt(cooling) + 20, 'again');
   const end = await run.until((e) => storedNone(e) || e.ev === 'asRanNotRemade', { from: again.i, what: 'the remake given up' });
   run.check(end.ev === 'asRanNotRemade', `the cook kept stored, not forgotten: ${say(end)}`);
-  const prefs = await run.prefs((p) => 'cookInProgress.v3' in p, 5);
-  run.check('cookInProgress.v3' in prefs, 'the plist still holds the cook');
+  // Caught up with: the cook not cleared from the store since, and in the
+  // file, which the system writes when it will, once the app has gone.
+  await run.tick();
+  run.check(!has(run.lines().slice(again.i), storedNone), 'the cook cleared after Start again');
   run.check(lastEgg(run.lines()).egg.mass_g === first.egg.mass_g, 'the egg as logged, not yet corrected');
   run.terminate();
+  const prefs = await run.prefs((p) => 'cookInProgress.v3' in p);
+  run.check('cookInProgress.v3' in prefs, 'the plist still holds the cook');
   // The next launch, too old to pick up: the record made again, then forgotten.
   run.launch([], { at: cooledAt(cooling) + 3700 });
   const old = await run.until(is('restoreTooOld'), { from: run.launched, what: 'the stored cook, too old' });
