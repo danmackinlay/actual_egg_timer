@@ -180,6 +180,7 @@ struct RunningConformance {
         let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
         let rows = try Fixtures.list("running.json", "plans")
         #expect(rows.count >= 30)
+        var hobsAsked = 0
         for row in rows {
             let note = try row.str("note")
             let post = try #require(byName[row.str("posterior")], "\(note): no posterior")
@@ -222,6 +223,23 @@ struct RunningConformance {
                 try expectEvents(
                     eventsDue(cook, plan: plan, nowS: t), due.object("events"), "\(note): due at \(t - cook.startedAtS)"
                 )
+            }
+            // Only the last cases ask; `hobsAsked` says some did.
+            for hob in row["hobDue"] as? [[String: Any]] ?? [] {
+                hobsAsked += 1
+                let t = try hob.num("now_s")
+                #expect(
+                    try slowHobDue(plan, nowS: t) == hob.flag("due"),
+                    "\(note): the slow hob's moment at \(t - cook.startedAtS)"
+                )
+            }
+            // At the slow hob's moment itself (this core's, to the bit) it has
+            // not come, and the plan made then is the plan already made: a
+            // clock stopped there plans nothing more.
+            if let at = plan.slowHobAtS, plan.slowHob != nil {
+                #expect(!slowHobDue(plan, nowS: at), "\(note): due at its own moment")
+                let then = replan(cook, c, surface: surface, leanHintS: hint, nowS: at, hint: slowHob)
+                #expect(then.slowHobAtS == at, "\(note): planned again at its moment, it moved")
             }
             // The record, the boil remembered, and how the cook ends.
             let ctx = try row.object("context")
@@ -276,6 +294,7 @@ struct RunningConformance {
             #expect(try ending.finished == expectedEnding.flag("finished"), "\(note): finished")
             #expect(try ending.remake == expectedEnding.flag("remake"), "\(note): made again first")
         }
+        #expect(hobsAsked >= 7, "the slow hob's moment asked of too few plans")
     }
 
     @Test("what the boil memory learns from a cook, and what it does not")

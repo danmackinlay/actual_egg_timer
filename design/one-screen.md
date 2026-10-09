@@ -360,7 +360,7 @@ The functions, all pure and fixtured:
     heated: whenever the carried time would pull within 45 s, and 10 s after
     the last lengthening (the start counting as one), the guess becomes the
     time heated plus 60 s. `slowHobAt_s` says when it next fires, and the app
-    plans again then. Where it would fire again at once (the egg is done
+    plans again once the clock is past it (`slowHobDue`, below). Where it would fire again at once (the egg is done
     before the water boils), the guess creeps in 10-s steps without a solve
     per step; at most 100 lengthenings a plan. A lengthened guess moves with
     the clock, so its pot asks for no surface (`inputs` null) and its time is
@@ -541,6 +541,20 @@ The functions, all pure and fixtured:
   of day to take the eggs out, and a reading held over a plan it was not
   read on (`CertaintyReading.at_s`) keeps its range about the plan's time
   now, so it moves with a slow hob's guess.
+
+*As built, the slow hob's one comparison* (9 October 2026; core for both
+apps, and the web's tick): **the slow hob's moment has come when the clock
+is strictly past `slowHobAt_s`** - `slowHobDue(plan, now_s)`, `now_s >
+plan.slowHobAt_s`, in core (`slowHobDue(_:nowS:)` in Swift) - and a tick
+plans again only then. `replan` lengthens by the same comparison, written
+the same way (`now_s > start + fire`, where `slowHobAt_s` is `start +
+fire`), and `slowHobHintFits` takes a hint once `now_s > start + last_s`.
+So a plan made at the moment itself is the plan already made, and a clock
+stopped exactly there plans nothing at every tick, where the apps' `>=`
+against core's `heated > fire` planned the same plan at every one. `>`
+rather than `>=` because it is what core already did: no fixture's plan or
+deadline moved. The web's tick calls `slowHobDue`; iOS's tick
+(`Cook.swift`, `now >= at`) is to call it too.
 
 Both apps follow each rule as built (the web `1695522` and before; iOS
 `cb18c4a..bebd5db`, its notes in the review's "Actioned, on iOS" lines).

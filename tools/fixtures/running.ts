@@ -14,7 +14,7 @@ import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
-  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, solutionAsRan,
+  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, slowHobDue, solutionAsRan,
   startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
 
@@ -323,6 +323,8 @@ interface PlanCase {
   dues?: number[];
   /** The slow hob's hint handed to the plan (review 2.1). */
   hint?: SlowHobHint | null;
+  /** Moments to ask whether the slow hob's moment has come (`slowHobDue`). */
+  hobDue?: number[];
 }
 
 function named(posterior: string) {
@@ -412,6 +414,7 @@ function plan(pc: PlanCase): CookPlan {
     plan: planJson(p),
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
+    ...(pc.hobDue === undefined ? {} : { hobDue: pc.hobDue.map((t) => ({ now_s: t, due: slowHobDue(p, t) })) }),
     open: openEggId(pc.cook, p, pc.now_s),
     stillOpen: [cookStillOpen(pc.cook, p, pc.cook.id_ms, pc.now_s), cookStillOpen(pc.cook, p, null, pc.now_s),
       cookStillOpen(pc.cook, p, pc.cook.id_ms + 60000, pc.now_s)],
@@ -708,6 +711,20 @@ const S = START_S;
   plan({ note: 'the pull rang, then a heavier egg in the grace: the ring undone, the pull later', posterior: 'learned', cook: corrected(rung, { ...h.choices, mass_kg: 0.076 }, hEnd + 15), leanHint_s: 0, now_s: hEnd + 15, surface: 'own', dues: [hEnd + 16] });
   plan({ note: 'the pull rang, then corrected to cold: heating, the ring undone', posterior: 'learned', cook: corrected(rung, { ...h.choices, startMode: 'cold' }, hEnd + 15), leanHint_s: 0, now_s: hEnd + 15, surface: 'own', dues: [hEnd + 16] });
   plan({ note: 'the pull rang, then the start a minute earlier: still due, the pull held', posterior: 'learned', cook: startCorrected(rung, S - 60, hEnd + 10) as RunningCook, leanHint_s: 0, now_s: hEnd + 10, surface: 'own', dues: [hEnd + 11] });
+}
+
+{
+  // The slow hob's moment, as both apps' tick reads it (`slowHobDue`): due
+  // only once the clock is past it. After every case above, so none moves.
+  // At the moment itself the plan is the one already made; that is held by
+  // each core's own tests, since the two cores' moments may differ in the
+  // last bits.
+  const learned = calibrationOf(named('learned'));
+  const c0 = cookOf({}, 6);
+  const at = replan(c0, learned, null, 0, S + 60).slowHobAt_s as number;
+  const next = replan(c0, learned, null, 0, at + 1).slowHobAt_s as number;
+  plan({ note: 'cold, heating: the slow hob\'s moment not yet come, then past', posterior: 'learned', cook: c0, leanHint_s: 0, now_s: S + 60, surface: 'none', hobDue: [S + 61, at - 0.5, at + 0.5, at + 3000] });
+  plan({ note: 'cold, heating, a second past the slow hob\'s moment: lengthened, and its next moment not yet come, then past', posterior: 'learned', cook: c0, leanHint_s: 0, now_s: at + 1, surface: 'none', hobDue: [at + 1, next - 0.5, next + 0.5] });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

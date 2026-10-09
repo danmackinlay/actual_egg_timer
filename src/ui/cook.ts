@@ -20,8 +20,8 @@ import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
   CookChoices, CookEvents, CookPlan, RunningCook, asRanCorrected, asRanCurrent, cookEnding, cookStillOpen, cookTooOld,
-  corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, startCook, startCorrected, stillIn, withBoil,
-  withOut,
+  corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, slowHobDue, startCook, startCorrected, stillIn,
+  withBoil, withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
@@ -425,8 +425,7 @@ function onTick(): void {
     // clock has decided: plan again.
     const theirs = takeUpStored();
     const cook = state.cook;
-    const slow = plan.slowHobAt_s !== null && now_s >= plan.slowHobAt_s;
-    if (theirs || slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
+    if (theirs || slowHobDue(plan, now_s) || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
     // Too old to pick back up (a pan heated for two hours and never tapped,
     // or an hour past the end): it ends as Cancel ends it, with its events
     // written first, as a reload would (running-cook review 2.2).

@@ -11,7 +11,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 403 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 404 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 37 scenarios in headless
 Chrome and `npm run ios:e2e` the iOS app through 40 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
