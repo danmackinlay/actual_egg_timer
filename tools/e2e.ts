@@ -1021,11 +1021,19 @@ const SCENARIOS: Record<string, Scenario> = {
       check(await tab.eval<boolean>("!document.getElementById('certaintyTime').closest('#certaintyMore').hidden"),
         'the range shown');
       const at16 = await tab.eval<string>(line);
-      await tab.shift(65);
-      // The ticker plans the slow hob's moment, a tick after the clock moves.
-      await tab.until(`${line} !== ${JSON.stringify(at16)}`, `the range to move with the guess from "${at16}"`);
-      const at17 = await tab.eval<string>(line);
-      return `cooking: "${cooking}"; heating 16:00: "${at16}"; 17:05: "${at17}"`;
+      const pull16 = deadlines(s).cookEnd_s;
+      // Four minutes on, as the iOS scenario steps. The times are said to
+      // the minute and the cook started at the real clock's second, so the
+      // line is sure to change only if the guess moved a whole minute: 65 s
+      // on it moved about 38 s, and the line stayed put one start in five.
+      await tab.shiftTo(start_s + 20 * 60);
+      await tab.settle();
+      s = await tab.phase('HEATING');
+      const moved_s = deadlines(s).cookEnd_s - pull16;
+      check(s.lengthened && moved_s >= 60, `the guess a minute later or more: ${moved_s.toFixed(1)} s`);
+      const at20 = await tab.eval<string>(line);
+      check(at20 !== at16, `the range moved with the guess: still "${at16}"`);
+      return `cooking: "${cooking}"; heating 16:00: "${at16}"; 20:00: "${at20}"`;
     },
   },
 
