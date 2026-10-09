@@ -363,6 +363,11 @@
     "controls.language.more": { "text": "English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit’s scale kept." },
     "language.en": { "text": "English" },
     "language.en1750": { "text": "English (1750)" },
+    "controls.alarm": { "text": "Sound of the alarm" },
+    "controls.alarm.more": { "text": "What you shall hear when the eggs must come out, and again when they are cool. Choose one, and you shall hear it. The hen’s calls were recorded by Jofae and Rudmer Rotteveel, who give them freely at Freesound." },
+    "controls.alarm.timer": { "text": "Clockwork bell" },
+    "controls.alarm.cuckoo": { "text": "Cuckoo clock" },
+    "controls.alarm.hen": { "text": "The hen" },
     "controls.units.period": { "text": "I can likewise write the imperial measures in the English of their day." },
     "app.titlePage": { "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their cauſes, and illuſtrated in their different degrees of hardneſs." },
 

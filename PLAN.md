@@ -11,11 +11,11 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 399 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 403 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 37 scenarios in headless
 Chrome and `npm run ios:e2e` the iOS app through 40 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 159 tests
+machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 160 tests
 in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -256,6 +256,19 @@ The one queue. Nothing else in the documents waits on the owner.
     Until you procure it, I shall time your eggs, but shall neither keep
     nor learn any thing."). The questions after an egg, the sharing
     switch and Start learning again are gone while it shows.
+20. **The alarm sounds, on a phone** (9 October 2026, `DECISIONS.md` 101),
+    the **`alarm`** draft in both apps. In Settings, after Language,
+    "Alarm sound": Wind-up timer (the default), Cuckoo clock or Hen, and
+    choosing one plays it once. Hear each across the kitchen at both
+    moments: at the pull the cuckoo calls three times, the bell rings
+    longer and the hen gives her alarm call; when cooled, two calls, a
+    shorter ring and her egg song. Each is as loud as the beeps were;
+    louder is a change to `level` in `src/ui/alarmSounds.ts`. On iOS both
+    paths: with notifications allowed, the notification plays the sound
+    for up to 30 s (the silent switch silences it); refused, the in-app
+    ring loops it for 40 s. The (i) credits the hen's two recordings.
+    1750: "Sound of the alarm", "Clockwork bell", "Cuckoo clock", "The
+    hen".
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

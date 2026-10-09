@@ -159,6 +159,7 @@ export function applySettingsToDom(): void {
   selectRadio('startMode', settings.startMode);
   selectRadio('afterBoil', settings.afterBoil);
   selectRadio('cooling', settings.cooling);
+  selectRadio('alarm', settings.alarm);
   page().eggCount.value = String(settings.eggCount);
   page().doneness.value = String(settings.doneness);
   page().customTempField.hidden = settings.startTempMode !== 'custom';

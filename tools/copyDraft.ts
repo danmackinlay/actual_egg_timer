@@ -72,6 +72,7 @@ import { onescreen } from './drafts/onescreen.js';
 import { onescreen_ios } from './drafts/onescreen_ios.js';
 import { tighten2 } from './drafts/tighten2.js';
 import { newer } from './drafts/newer.js';
+import { alarm } from './drafts/alarm.js';
 
 export type Templates = Record<string, string>;
 
@@ -173,6 +174,7 @@ export const DRAFTS: Record<string, Draft> = {
   onescreen_ios,
   tighten2,
   newer,
+  alarm,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

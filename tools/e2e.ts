@@ -18,7 +18,7 @@
  * asserts. So what it sees does not depend on how fast the machine is: a
  * step past the pull lands where it was aimed whether the page took a
  * millisecond or a second to get there. The one span run is the last second
- * before a pull at the real clock's speed, to see the beeps scheduled ahead
+ * before a pull at the real clock's speed, to see the ring scheduled ahead
  * sound as the tick reaches the pull; the 20-s grace after it is that span's
  * margin for a slow machine. The timers that are a person's, not the cook's
  * (a control's settle, a held key), stay real: a scenario waits for the page
@@ -27,8 +27,9 @@
  * with the stored cook moved into the past, since nothing is sent while the
  * development clock is on.
  *
- * Each page gets, before the app runs, a count of the oscillators made and
- * when each is set to start on the audio clock (`__osc`), of what it wrote to
+ * Each page gets, before the app runs, a count of the sounds made, each
+ * ring (one looped buffer, DECISIONS.md 101) and each blip (an oscillator),
+ * and when each is set to start on the audio clock (`__osc`), of what it wrote to
  * localStorage (`__writes`), of the requests it made (`__fetches`), and of
  * what is pending (`__pending`). The alarm is checked by what was scheduled
  * and for when, never by waiting for it to play. An exception thrown in a
@@ -65,15 +66,29 @@ const INSTRUMENT = `(() => {
   window.__osc = osc;
   const B = window.BaseAudioContext || window.AudioContext;
   if (B) {
-    const make = B.prototype.createOscillator;
-    B.prototype.createOscillator = function () {
-      const o = make.call(this);
-      const r = { made: this.currentTime, at: null, page: window.aetClock ? window.aetClock.now() : Date.now() };
-      osc.push(r);
-      const start = o.start;
-      o.start = function (t) { r.at = t === undefined ? this.context.currentTime : t; return start.apply(this, arguments); };
-      return o;
+    const counted = (name, kind) => {
+      const make = B.prototype[name];
+      B.prototype[name] = function () {
+        const o = make.call(this);
+        const r = { kind: kind, made: this.currentTime, at: null, page: window.aetClock ? window.aetClock.now() : Date.now() };
+        osc.push(r);
+        const start = o.start;
+        o.start = function (t) {
+          r.at = t === undefined ? this.context.currentTime : t;
+          // A ring's sound, as a number: the pull's and Done's differ.
+          if (this.buffer) {
+            const x = this.buffer.getChannelData(0);
+            let m = 0;
+            for (let i = 0; i < x.length; i++) m += Math.abs(x[i]);
+            r.mark = Math.round(m);
+          }
+          return start.apply(this, arguments);
+        };
+        return o;
+      };
     };
+    counted('createOscillator', 'blip');
+    counted('createBufferSource', 'ring');
   }
   // What is pending: timers of up to 5 s (a person's: a settle, a solve
   // coalesced, a repeat; not a request's timeout), worker jobs, requests.
@@ -198,12 +213,15 @@ interface Rec {
   forecast: unknown;
 }
 
-/** An oscillator made: when on the audio clock and on the page's clock, and
- *  when on the audio clock it is set to start. */
-interface Osc { made: number; at: number | null; page: number }
+/** A sound made, a ring or a blip: when on the audio clock and on the
+ *  page's clock, and when on the audio clock it is set to start. */
+interface Osc { kind: 'ring' | 'blip'; made: number; at: number | null; page: number; mark?: number }
 
-/** The alarm's beeps scheduled ahead, not rung now (nor a blip). */
-const scheduledAhead = (o: Osc): boolean => o.at !== null && o.at - o.made > 1;
+/** The rings among sounds made. */
+const rings = (os: Osc[]): Osc[] => os.filter((o) => o.kind === 'ring');
+
+/** The alarm's ring scheduled ahead, not rung now (nor a blip). */
+const scheduledAhead = (o: Osc): boolean => o.kind === 'ring' && o.at !== null && o.at - o.made > 1;
 
 class Failure extends Error {}
 
@@ -558,7 +576,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   },
 
   'cold-cook': {
-    what: 'a cold cook: boil, pull, cooling, Done, Jammy, Start again; the beeps ahead at x1 and x60; the record and its forecast',
+    what: 'a cold cook: boil, pull, cooling, Done, Jammy, Start again; the ring ahead at x1 and x60; the record and its forecast',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const real0 = Date.now();
@@ -569,10 +587,10 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await boil(tab);
       labelSays(s);
       const d = deadlines(s);
-      // The pull's beeps, ahead on the audio clock: the last plan's, the
+      // The pull's ring, ahead on the audio clock: the last plan's, the
       // cook's seconds ahead, a stopped clock's steps taken as seconds.
-      const ahead = (await tab.osc()).filter(scheduledAhead).slice(-75);
-      check(ahead.length === 75, `75 pull beeps scheduled ahead, ${ahead.length}`);
+      const ahead = (await tab.osc()).filter(scheduledAhead).slice(-1);
+      check(ahead.length === 1, `the pull's ring scheduled ahead, ${ahead.length}`);
       const lead = (o: Osc, speed: number): string | null => {
         const want_s = (d.cookEnd_s * 1000 - o.page) / 1000 / speed;
         const got_s = (o.at ?? 0) - o.made;
@@ -581,14 +599,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const at1 = lead(ahead[0], 1);
       check(at1 === null, at1 ?? '');
       // At x60, a sixtieth of that: the clock run fast for an instant, the
-      // beeps it scheduled read, and the clock stopped at the moment again.
+      // ring it scheduled read, and the clock stopped at the moment again.
       const fast = await tab.eval<Osc[]>(`(() => { const T = window.aetClock.now(); window.aetClock.speed(60);
-        const o = window.__osc.slice(-75); window.aetClock.speed(0); window.aetClock.set(T); return o; })()`);
-      check(fast.length === 75 && fast.every(scheduledAhead), `75 beeps ahead at x60: ${fast.filter(scheduledAhead).length}`);
+        const o = window.__osc.slice(-1); window.aetClock.speed(0); window.aetClock.set(T); return o; })()`);
+      check(fast.length === 1 && fast.every(scheduledAhead), `the ring ahead at x60: ${fast.filter(scheduledAhead).length}`);
       const at60 = lead(fast[0], 60);
       check(at60 === null, at60 ?? '');
-      // The last second before the pull, at the real clock's speed: the beeps
-      // ahead are sounding as the tick reaches the pull. The grace, 20 s of
+      // The last second before the pull, at the real clock's speed: the ring
+      // ahead is sounding as the tick reaches the pull. The grace, 20 s of
       // it, is the margin for a slow machine to see the pull and stop.
       await tab.shiftTo(d.cookEnd_s - 1);
       const oscAtRun = await tab.eval<number>('(() => { window.aetClock.speed(1); return window.__osc.length; })()');
@@ -599,7 +617,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(s.phase === 'PULL', `stopped in the pull's grace: ${s.phase}, ${(stopped_s - d.cookEnd_s).toFixed(1)} s past it`);
       labelSays(s);
       // Sounding on the audio clock as the pull came: nothing rung again.
-      check(s.osc === oscAtRun, `the beeps ahead rang the pull: ${s.osc - oscAtRun} more made`);
+      check(s.osc === oscAtRun, `the ring ahead rang the pull: ${s.osc - oscAtRun} more made`);
       await tab.click('#primary');
       s = await tab.phase('COOLING');
       labelSays(s);
@@ -610,7 +628,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.phase('DONE');
       labelSays(s);
       await tab.settle();
-      check((await tab.osc()).length >= oscBeforeDone + 50, "Done's 50 beeps");
+      check(rings((await tab.osc()).slice(oscBeforeDone)).length === 1, "Done's ring");
       check(s.feedback, 'the questions at Done');
       const cook = storedCook(s);
       await tab.click('.fb[data-yolk="jammy"]');
@@ -803,8 +821,8 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       let s = await corrected(tab, null);
       s = await tab.phase('PULL');
       await tab.settle();
-      let osc = (await tab.osc()).slice(base);
-      check(osc.length === 75 && (osc[0].at ?? 0) - osc[0].made < 0.1, `rang at once: ${osc.length}`);
+      let osc = rings((await tab.osc()).slice(base));
+      check(osc.length === 1 && (osc[0].at ?? 0) - osc[0].made < 0.1, `rang at once: ${osc.length}`);
       await tab.shift(5);
       await pick(tab, '#size', '2');
       s = await corrected(tab, s);
@@ -816,9 +834,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).cookEnd_s + 1);
       await tab.phase('PULL');
       await tab.settle();
-      osc = (await tab.osc()).slice(base);
-      check(osc.length === 75, `the pull rings again at its time: ${osc.length}`);
-      return 'overdue: Pull and 75 at once; back within the grace: Cooking, nothing written; the pull rang again';
+      osc = rings((await tab.osc()).slice(base));
+      check(osc.length === 1, `the pull rings again at its time: ${osc.length}`);
+      return 'overdue: Pull and a ring at once; back within the grace: Cooking, nothing written; the pull rang again';
     },
   },
 
@@ -853,7 +871,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await drag(tab, [0], true);
       s = await corrected(tab, null);
       s = await tab.phase('PULL');
-      check((await tab.osc()).length >= base + 75, 'rang on release');
+      check(rings((await tab.osc()).slice(base)).length >= 1, 'rang on release');
       return 'held through runny: no ring, the aim drawn; back and released: nothing; released runny: Pull, rang';
     },
   },
@@ -1490,25 +1508,26 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const d = deadlines(s);
       let osc = await tab.osc();
       const ahead = osc.filter(scheduledAhead);
-      check(ahead.length === 75, `75 beeps scheduled ahead at the tap, ${ahead.length}`);
+      check(ahead.length === 1, `the pull's ring scheduled ahead at the tap, ${ahead.length}`);
+      const pullRing = ahead[0].mark;
       const lead = (ahead[0].at ?? 0) - ahead[0].made;
-      check(near(lead, d.cookEnd_s - ahead[0].page / 1000, 0.05), `the pull's beeps ${lead.toFixed(1)} s ahead`);
+      check(near(lead, d.cookEnd_s - ahead[0].page / 1000, 0.05), `the pull's ring ${lead.toFixed(1)} s ahead`);
       // Woken 25 s past the pull, as a throttled or frozen tab is.
       let base = osc.length;
       await tab.shiftTo(d.cookEnd_s + 25);
       s = await tab.phase('COOLING');
       await tab.settle();
       osc = await tab.osc();
-      const now = osc.slice(base);
-      check(now.length === 75 && (now[0].at ?? 0) - now[0].made < 0.1, `75 rung at once, ${now.length}`);
+      const now = rings(osc.slice(base));
+      check(now.length === 1 && (now[0].at ?? 0) - now[0].made < 0.1, `rung at once, ${now.length}`);
       const ev = storedCook(s)?.events;
       check(ev?.rangAt_s !== null && ev?.pulled?.by === 'timeout', `the pull rung and timed out: ${JSON.stringify(ev)}`);
       base = osc.length;
       await tab.shiftTo(deadlines(s).coolEnd_s + 1);
       s = await tab.phase('DONE');
       await tab.settle();
-      const done = (await tab.osc()).length - base;
-      check(done === 50, `Done's 50, ${done}`);
+      const done = rings((await tab.osc()).slice(base));
+      check(done.length === 1 && done[0].mark !== pullRing, `Done's ring, not the pull's: ${done.length}`);
       // A second cook, woken straight past the cooling: the pull rings, not Done.
       await tab.click('#primary');
       await tab.phase('IDLE');
@@ -1519,9 +1538,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 600);
       s = await tab.phase('DONE');
       await tab.settle();
-      const rung = (await tab.osc()).length - base;
-      check(rung === 75, `past the cooling: the pull's 75, not Done's 50: ${rung}`);
-      return 'tap: 75 ahead; +25 s: 75 at once, Cooling; Done: 50; straight to Done: 75';
+      const rung = rings((await tab.osc()).slice(base));
+      check(rung.length === 1 && rung[0].mark === pullRing, `past the cooling: the pull's ring, not Done's: ${rung.length}`);
+      return 'tap: a ring ahead; +25 s: rung at once, Cooling; Done: its own ring; straight to Done: the pull\'s';
     },
   },
 

@@ -19,7 +19,7 @@ import {
 import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './controls.js';
 import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { cachedOddsProfile } from './decisionGrids.js';
-import { page } from './dom.js';
+import { page, selectRadio } from './dom.js';
 import { labelInfoButtons } from './info.js';
 import { renderCalibNote, renderLearned } from './learned.js';
 import { forgetDrawnWords, render, renderMute, renderVersion } from './render.js';
@@ -32,7 +32,7 @@ import {
   Settings, boilStoredElsewhere, clearBoilMemory, saveSettings, settingsStoredElsewhere, storedCook,
   storedCookText,
 } from './store.js';
-import { setMuted } from './clock.js';
+import { setAlarmSound, setMuted } from './clock.js';
 import { show, useUnits } from './units.js';
 import { forgetDevClockUse, nowMs } from './now.js';
 
@@ -147,8 +147,8 @@ export function writeSettings(): void {
  *  A cook under way is described by its own choices, never by the settings
  *  (DECISIONS.md 97; review 2.5): while one runs, the settings are taken up
  *  for the next cook, but its controls (`state.controls`) take only what the
- *  cook does not hold - the units, the language and the sound - and show the
- *  settings again when it ends (`reset`). */
+ *  cook does not hold - the units, the language, the sound and which sound
+ *  - and show the settings again when it ends (`reset`). */
 function takeUpSettings(next: Settings): void {
   const settings = state.settings;
   const before = effectiveLanguage(settings.language);
@@ -156,12 +156,15 @@ function takeUpSettings(next: Settings): void {
   Object.assign(settings, next);
   useUnits(settings.unitsChosen);
   setMuted(settings.muted);
+  setAlarmSound(settings.alarm);
   if (state.cook === null) {
     applySettingsToDom();
   } else {
     state.controls.unitsChosen = settings.unitsChosen;
     state.controls.language = settings.language;
     state.controls.muted = settings.muted;
+    state.controls.alarm = settings.alarm;
+    selectRadio('alarm', settings.alarm);
     if (settings.unitsChosen !== unitsBefore) {
       applyUnitsToDom();
       render(nowMs());

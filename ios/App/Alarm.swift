@@ -91,14 +91,14 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         cancel()
 
         request(
-            id: pullID, at: pullAt,
+            id: pullID, moment: .pull, at: pullAt,
             title: tr("alarm.pull.title"),
             body: tr(pullLineKey(cooling: cooling.rawValue))
         )
 
         if let coolDoneAt {
             request(
-                id: coolID, at: coolDoneAt,
+                id: coolID, moment: .cooled, at: coolDoneAt,
                 title: tr(probe ? "alarm.probe.title" : "alarm.cooled.title"),
                 body: tr(probe ? "alarm.probe.body" : "alarm.cooled.body")
             )
@@ -139,7 +139,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         return Set(pending.compactMap { ours[$0.identifier] })
     }
 
-    private func request(id: String, at date: Date, title: String, body: String) {
+    private func request(id: String, moment: RingDeadline, at date: Date, title: String, body: String) {
         // The system's seconds to the moment: under a debug build's fast
         // clock, the cook's interval scaled (`AppClock`).
         let seconds = AppClock.realInterval(until: date)
@@ -151,7 +151,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        // The cook's sound (DECISIONS.md 101): whole periods of it, under the
+        // 30 s past which iOS plays its default instead (tools/sounds.ts).
+        content.sound = UNNotificationSound(
+            named: UNNotificationSoundName(AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment))
+        )
         #if DEBUG
         if Screenshots.muteAudio { content.sound = nil }
         #endif

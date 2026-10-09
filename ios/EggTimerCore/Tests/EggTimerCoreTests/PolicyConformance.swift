@@ -260,6 +260,28 @@ struct DefaultsConformance {
         try expectClose(StartTempPresets.roomC, d.num("room_C"), "room preset")
     }
 
+    @Test("the alarm sounds: the order, the default, a stored value read, and the timing")
+    func alarmSounds() throws {
+        let a = try Fixtures.object("policy.json", "alarm")
+        #expect(AlarmSound.allCases.map(\.rawValue) == a["sounds"] as? [String])
+        #expect(try defaultAlarmSound.rawValue == a.str("default"))
+        try expectClose(alarmRingS, a.num("ring_s"), "ring_s")
+        try expectClose(notificationSoundMaxS, a.num("notificationMax_s"), "notificationMax_s")
+        for c in try Fixtures.list("policy.json", "alarm.read") {
+            #expect(try readAlarmSound(c["stored"]).rawValue == c.str("sound"), "\(String(describing: c["stored"]))")
+        }
+        for c in try Fixtures.list("policy.json", "alarm.timing") {
+            let sound = try #require(AlarmSound(rawValue: c.str("sound")))
+            let moment = try #require(RingDeadline(rawValue: c.str("moment")))
+            try expectClose(alarmPeriodS(sound, moment), c.num("period_s"), "\(sound) \(moment) period")
+            #expect(try Double(alarmRepeats(sound, moment)) == c.num("repeats"), "\(sound) \(moment) repeats")
+            #expect(
+                try Double(notificationRepeats(sound, moment)) == c.num("notificationRepeats"),
+                "\(sound) \(moment) notification repeats"
+            )
+        }
+    }
+
     @Test("the room follows the egg at the same threshold, and a measured room wins")
     func ambient() throws {
         for c in try Fixtures.list("policy.json", "ambient") {

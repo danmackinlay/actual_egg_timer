@@ -13,7 +13,8 @@ import { UnitSystem, readChosenUnits } from '../core/units.js';
 import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
-  BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
+  AlarmSound, BoilMemory, DEFAULTS, DEFAULT_ALARM_SOUND, LIMITS, Limit, carrySizeIndex, clamp, isWithin,
+  readAlarmSound, rememberBoil,
 } from '../core/policy.js';
 import { CookAsRan, CookEvents, Pulled, RunningCook, readRunningCook, sameChoices } from '../core/running.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
@@ -60,6 +61,8 @@ export interface Settings {
   doneness: number;
   /** No alarm, no blips. The countdown still runs. */
   muted: boolean;
+  /** Which sound the alarm makes (`ALARM_SOUNDS`, DECISIONS.md 101). */
+  alarm: AlarmSound;
   /** Metric or Imperial, as the COOK chose it, or null if they never have.
    *  Not the system on screen: that is this or, failing it, the region's
    *  default (`effectiveUnits`), and storing the result instead would turn a
@@ -101,6 +104,7 @@ export const DEFAULT_SETTINGS: Settings = {
   eggCount: DEFAULTS.eggCount,
   doneness: DEFAULTS.doneness,
   muted: false,
+  alarm: DEFAULT_ALARM_SOUND,
   unitsChosen: null,
   language: FRESH_LANGUAGE,
   probe: false,
@@ -289,6 +293,8 @@ function readSettings(raw: Record<string, unknown> | null, classes: SizeClass[])
     eggCount: Math.round(clampNumber(raw['eggCount'], LIMITS.eggCount, d.eggCount)),
     doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
     muted: raw['muted'] === true,
+    // Absent from every settings record before 9 October 2026: the default.
+    alarm: readAlarmSound(raw['alarm']),
     unitsChosen: readChosenUnits(raw['unitsChosen']),
     language: readLanguageState(raw['language'], LANGUAGES),
     probe: raw['probe'] === true,

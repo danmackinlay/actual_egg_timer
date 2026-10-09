@@ -726,3 +726,20 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `0.4.x-newer-version-guard` branch, and merged into `0.5.x`, where it
     covers the running cook (`aet.cook.v4`, `cookInProgress.v3`) and every
     store 0.5 adds. 0.3 cannot be given it. 9 October 2026.
+101. **The alarm's sound is chosen in Settings: the wind-up timer, the
+    cuckoo clock or the hen** ("I like the recorded hens, the cuckoo clock
+    and the wind-up timer. Let's give the user a selector to choose from
+    the 3 on the settings page"; the default, "Wind-up timer"; the line,
+    "0.5.x"). Chosen from eight sounds made in the browser and heard on an
+    auditions page, and two CC0 recordings the owner found on Freesound:
+    the hen's egg song (Jofae) when the eggs have cooled, and her alarm
+    call (Rudmer Rotteveel) at the pull; credited in the (i), though CC0
+    asks for none. The beeps are retired, kept only as the web's alarm
+    while the hen's recordings have not loaded. One implementation of the
+    sounds (`src/ui/alarmSounds.ts`), which the web plays and `npm run
+    sounds` renders into the files iOS ships, rather than a Swift copy of
+    each synth made on the phone; so an iOS notification now rings in the
+    cook's sound for up to 30 s, not iOS's short default. Each is as loud
+    as the beeps were at the same moment. Built on `0.5.x`: `db878e5`
+    (core), `e6da9e1` (the sounds and the iOS files), `f9766a0` (both
+    apps, the `alarm` draft). 9 October 2026.
