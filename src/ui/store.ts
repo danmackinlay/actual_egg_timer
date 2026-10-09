@@ -31,7 +31,7 @@ const BOIL_KEY = 'aet.boil.v1';
  * Every key an earlier build of this app wrote that this one does not read,
  * deleted at boot (`claimStorage`) rather than left in storage being neither
  * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
- * 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
+ * 0.3 and 0.4 (`v4`), the
  * copies 0.4 kept aside of what it could not read, and the cooks in progress
  * before this one's shape (`aet.cook.v1`-`v4`; `v5` keeps a cook's log).
  */
@@ -67,7 +67,7 @@ export interface Settings {
   doneness: number;
   /** No alarm, no blips. The countdown still runs. */
   muted: boolean;
-  /** Which sound the alarm makes (`ALARM_SOUNDS`, DECISIONS.md 101). */
+  /** Which sound the alarm makes (`ALARM_SOUNDS`). */
   alarm: AlarmSound;
   /** Metric or Imperial, as the COOK chose it, or null if they never have.
    *  Not the system on screen: that is this or, failing it, the region's
@@ -150,8 +150,7 @@ export function removeStorage(key: string): void {
 /* ------------------------------------------------- the newest build's mark */
 
 /**
- * The newest version of the app that has run in this browser
- * (DECISIONS.md 100). An older build writes what it stores whole, from the
+ * The newest version of the app that has run in this browser. An older build writes what it stores whole, from the
  * fields it knows, and drops what a newer one added, so a build that finds a
  * newer version here writes nothing at all for the rest of the page's life:
  * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is core's `writerCheck`.
@@ -567,8 +566,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
   clear(id_ms: number): void;
   /** The lean last decided, a cache, written beside the stored cook if it
    *  is the one started at `id_ms`, without writing the cook: a plan alone
-   *  never writes a tab's copy of the cook over another's (running-cook
-   *  review 1.2). */
+   *  never writes a tab's copy of the cook over another's. */
   saveLeanHint(id_ms: number, leanHint_s: number): void;
 }
 

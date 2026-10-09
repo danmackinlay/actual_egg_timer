@@ -32,7 +32,7 @@ export function renderShare(s: Readonly<ShareState>, waiting: number, deletedHer
     if (s.sent > 0 && waiting > 0) note += ` ${t('share.waiting', { eggs: waiting })}`;
   }
   page().shareNote.textContent = note;
-  // The random number, to quote by email (DECISIONS.md 67): whole, and only
+  // The random number, to quote by email: whole, and only
   // while there is one - from the first time sharing is turned on until a
   // deletion.
   page().shareId.hidden = s.uid === null;

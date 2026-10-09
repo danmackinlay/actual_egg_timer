@@ -326,7 +326,7 @@ function perform(effects: Effect[]): void {
         drawShare(stores);
         break;
       case 'drawNudge':
-        // A new page or a new cook, a new nudge (E8, DECISIONS.md 61): a
+        // A new page or a new cook, a new nudge: a
         // whole number of seconds from -10 to +10, drawn when the page boots
         // and again after each cook, so the time on screen holds still while
         // the cook looks at it.
@@ -360,9 +360,9 @@ function perform(effects: Effect[]): void {
 
 /**
  * Write the cook on screen down. A copy of this cook another tab corrected
- * later stays the copy stored (onescreen review 1.1), so a reload restores
+ * later stays the copy stored, so a reload restores
  * the latest correction: what this tab saw in the pan is written into it
- * instead (`takeUpEvents`), and this tab runs on as it is (DECISIONS.md 97).
+ * instead (`takeUpEvents`), and this tab runs on as it is.
  * The page is told when whether a write reads back changes.
  */
 function persist(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): void {
@@ -580,7 +580,7 @@ function cookLanded(): void {
 
 /** Another tab changed storage (the `storage` event; a null key cleared it
  *  all): what it wrote for this cook taken up at once, so a tab leaves
- *  Heating when another taps the boil (review 1.2); at Done, whether this
+ *  Heating when another taps the boil; at Done, whether this
  *  egg is still open, its questions going if not. */
 export function cookElsewhere(key: string | null): void {
   if (!stores.cooks.touches(key) || state.cook === null) return;

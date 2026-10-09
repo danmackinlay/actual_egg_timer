@@ -78,7 +78,7 @@ function labelSizeOptions(): void {
 }
 
 /** The measured egg's option carries its mass, as iOS's does, so choosing it
- *  says which egg comes back (D6). */
+ *  says which egg comes back. */
 export function labelMeasuredOption(): void {
   const measured = eggFromMinorDiameter(state.controls.customMinor_mm / 1000);
   page().size.options[sizeClasses.length].textContent = t('controls.size.measured', {

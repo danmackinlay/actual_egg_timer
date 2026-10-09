@@ -1,7 +1,7 @@
 /**
  * The gestures of a correction mid-cook, as messages: which control a change
  * came from (`groupOf`), a finger down on one and lifted, the page hidden or
- * gone (which commits a change still settling, onescreen review 3), and the
+ * gone (which commits a change still settling), and the
  * start's − and +; and the line under the start's time. What a correction in
  * hand is, and when it is committed, is `update`'s (model.ts, "A correction
  * in hand").

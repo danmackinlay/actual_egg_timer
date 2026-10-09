@@ -191,8 +191,8 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    *
    * An egg already written down - the same cook, by `id`, from another tab or
    * from this one - is not written twice. The record given is the cook as last
-   * corrected, so its facts replace the ones logged (review 2.5: two tabs can
-   * run one id with different corrections), with the answers already in the
+   * corrected, so its facts replace the ones logged (two tabs can run one
+   * id with different corrections), with the answers already in the
    * log kept as they are; an answer given with it is a later answer to that
    * egg (`recordSecondAnswer`). When that changes an egg already folded, the
    * posterior no longer holds the log, and the log is folded again from where

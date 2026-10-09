@@ -15,7 +15,7 @@
  * the language, the sound, another tab's settings, a pan measured, an egg
  * learned, everything forgotten: each a message, the page solved again after
  * it (`solve`). While a cook runs the controls are its own choices, never
- * the settings, which another tab may have changed since (DECISIONS.md 97):
+ * the settings, which another tab may have changed since:
  * a change to them is a correction, held in hand until it is committed
  * (`Edit`; the gestures are edit.ts's).
  *
@@ -26,7 +26,7 @@
  *   Pull, "still in" while the plan asks, Start again at Done.
  * - Another tab's copy of this cook (`elsewhere`): what it saw in the pan
  *   taken up (`takeUpEvents`) and planned on, and the pull rung here if this
- *   tab never rang it. Never another cook (DECISIONS.md 97).
+ *   tab never rang it. Never another cook.
  * - Which egg is open (`cookStillOpen`): at Done, one another tab ended or
  *   stored another for, or an hour past its end, is final. Its questions go,
  *   and nothing more is written or logged for it (`closed`).
@@ -188,7 +188,7 @@ export interface Model extends CookState {
   /** When the eggs went in, as the controls show it while a cook runs; null
    *  while idle. */
   controlsStart_s: number | null;
-  /** This page's nudge (E8): drawn at boot and after each cook. */
+  /** This page's nudge: drawn at boot and after each cook. */
   nudgeDraw: number;
 
   /** What the running cook's plan last said of how sure, while it was on
@@ -560,7 +560,7 @@ function stillOpen(m: Model, now_s: number): boolean {
  * same context): refused, with the range it should be in, when no
  * believable kitchen could have made it for this cook
  * (`plausibleProbeRange_C`), bounded by the model the cook ran under, not
- * one that has since folded this egg's own answer (review 2.4); otherwise
+ * one that has since folded this egg's own answer; otherwise
  * an answer like the others. When the record cannot be made yet (no
  * surface), the reading is held, to be read again when one lands.
  */
@@ -694,7 +694,7 @@ function profileIn(m: Model, inputs: DecisionInputs | null): OddsProfile | null 
  * changes, on through the cooling: at the posterior mean, the same egg the
  * countdown times, in the pot its plan has now; once the egg is out, with
  * the model's parameters it ran under, so a fold of this egg's own answer
- * does not redraw it (review 2.4). Not while a correction's aim is drawn in
+ * does not redraw it. Not while a correction's aim is drawn in
  * its place, nor at Done, where the egg as it ran is (view.ts).
  */
 function liveEgg(m: Model, now_s: number): Model {
@@ -721,7 +721,7 @@ function copySection(s: EggSection): EggSection {
 
 /**
  * The controls follow a cook begun or ended. Begun: they show its own
- * choices, never the settings (review 2.5) - at the start, where they are the
+ * choices, never the settings - at the start, where they are the
  * same, and after a reload, where another tab may have changed the settings
  * since - with nothing in hand. Ended: whatever was in hand goes with it; they show the settings again (another tab may have changed
  * them meanwhile), the alarm stops, the questions start empty, a new cook
@@ -866,8 +866,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'settingsTaken': {
       // Another tab's settings: the units, the sound and the words follow,
       // and an idle page's controls follow and it is solved again. A cook
-      // under way is described by its own choices, never by the settings
-      // (DECISIONS.md 97; review 2.5).
+      // under way is described by its own choices, never by the settings.
       const before = effectiveLanguage(m.settings.language);
       const next = withSettings(m, msg.settings);
       const effects: Effect[] = m.cook === null ? [{ kind: 'controlsDrawn' }] : [{ kind: 'alarmDrawn' }];
@@ -1009,13 +1008,13 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
 /* ------------------------------------------------- a correction in hand */
 
 /*
- * Corrections mid-cook (DECISIONS.md 96 to 98; design/one-screen.md sections
+ * Corrections mid-cook (design/one-screen.md sections
  * 3 to 5): every control on the one screen stays open after Start, and a
  * change to one is a correction, "it was always like this" - the cook's
  * choices replaced (core `corrected`) and the whole cook planned again from
  * its start.
  *
- * A change is not committed at every step (review 2.4): each would stamp the
+ * A change is not committed at every step: each would stamp the
  * cook, plan again, write it and the settings, and a drag through an overdue
  * level would ring mid-drag. While the cook's finger is on a control the
  * change is in hand: the controls and the sentence show it, and the egg in
@@ -1029,7 +1028,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  *   number typed - the settle starting again with each change;
  * - at once when another control is touched, or the primary button pressed:
  *   the change in hand alone, as it was before the other control's, whether a
- *   finger or the keyboard moves on (onescreen review 3);
+ *   finger or the keyboard moves on;
  * - and when the page is hidden or goes, so a reload or a closed tab inside
  *   the settle loses nothing.
  *
@@ -1037,7 +1036,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  * (`correct`). The aimed-for egg stays for a settle after the last change,
  * then the live egg comes back.
  *
- * A running cook's controls read its own choices (review 2.5): what they show
+ * A running cook's controls read its own choices: what they show
  * is `controls`, drawn from the cook (`settingsOfChoices`), and a correction
  * is the fields the cook changed on them, laid over the cook's own choices,
  * so a field nobody touched keeps the cook's value to the bit and changing a
@@ -1132,8 +1131,8 @@ function choicesInHand(
 }
 
 /** The cook as the change in hand would make it, for its preview: a
- *  correction; but after the pull a new level only previews (DECISIONS.md
- *  98), the egg that level aims for in this pot, so it is planned as if not
+ *  correction; but after the pull a new level only previews, the egg that
+ *  level aims for in this pot, so it is planned as if not
  *  yet pulled. */
 function cookInHand(cook: RunningCook, choices: CookChoices, start: number | null, now_s: number): RunningCook {
   if (start !== null && start !== cook.startedAt_s) cook = startCorrected(cook, start, now_s) ?? cook;
@@ -1167,7 +1166,8 @@ function preview(m: Model, now_s: number): [Model, Effect[]] {
 /**
  * Commit the change in hand: the cook corrected (`correct`), and the fields
  * it changed written to the settings for the next cook. After the pull the
- * level is not corrected (DECISIONS.md 98): the slider only previewed, and
+ * level is not corrected (the egg came out at the level it was cooked for):
+ * the slider only previewed, and
  * goes back to the level the egg was pulled at; nothing is written for it.
  * The aimed-for egg stays until a settle after the last change. `upTo`, the
  * controls as the change in hand left them, commits that change alone when

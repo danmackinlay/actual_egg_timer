@@ -132,7 +132,7 @@ export function learnBehind(learner: Learner): void {
  *  the same (how old a cook may get does not move with the clock). */
 const storedPlan = { text: null as string | null, plan: null as CookPlan | null };
 
-/** The egg still open to correction (core `openEggId`, review 2.1): the
+/** The egg still open to correction (core `openEggId`): the
  *  stored running cook's, whichever tab wrote it, until it is too old to
  *  pick back up; null when there is none. */
 function openEgg(s: Stores, now_s: number): number | null {

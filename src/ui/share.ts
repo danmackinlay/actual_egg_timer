@@ -1,8 +1,8 @@
 /**
  * Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
  * turns it on sends every egg in the log to the collection endpoint
- * (`server/eggs.ts`), the ones from before it was on included (DECISIONS.md
- * 54), and can delete everything this browser has sent.
+ * (`server/eggs.ts`), the ones from before it was on included, and can
+ * delete everything this browser has sent.
  *
  * What is kept, in `aet.share.v1` beside the log rather than in it, and how
  * each step moves it - turned on and off, forgotten, deletion asked, an

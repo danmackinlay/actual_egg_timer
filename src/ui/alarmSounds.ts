@@ -1,5 +1,5 @@
 /**
- * The alarm sounds, as samples (DECISIONS.md 101).
+ * The alarm sounds, as samples.
  *
  * One period of each sound's pattern, mono, at any sample rate: the web plays
  * it looped on the audio clock (`clock.ts`), and `npm run sounds` renders the

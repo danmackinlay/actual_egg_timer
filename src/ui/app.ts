@@ -54,7 +54,7 @@ import { markDevClockUse, random } from './now.js';
 export function boot(): void {
   bindDom();
   // Before anything is written: whether a newer build has run here, and the
-  // mark brought up to this one if not (DECISIONS.md 100), and then the keys
+  // mark brought up to this one if not, and then the keys
   // no build reads any more deleted.
   claimStorage(APP_VERSION);
   // The development clock's mark, for a clock set as the page loaded.
@@ -72,7 +72,7 @@ export function boot(): void {
   useUnits(state.settings.unitsChosen);
   state.boilMemory = stores.pans.load();
   state.calib = learner.calibration();
-  // This page's nudge (E8), drawn at boot rather than as a module loads, so
+  // This page's nudge, drawn at boot rather than as a module loads, so
   // a script's seed (now.ts) is in place for it.
   state.nudgeDraw = nudgeSeconds(random());
   // For the egg's record: this build, and the population of the prior.

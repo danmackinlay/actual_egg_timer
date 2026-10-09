@@ -13,8 +13,7 @@
  * `RunningCook` (src/core/running.ts): its start, its own choices and what it
  * observed, with everything else - the deadlines, the time, the record -
  * derived as its `CookPlan`. A running cook is described by its own choices,
- * never by the settings, which another tab may have changed since
- * (DECISIONS.md 97).
+ * never by the settings, which another tab may have changed since.
  */
 
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';

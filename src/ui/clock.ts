@@ -153,7 +153,7 @@ export function primeAudio(): void {
 
 /* ------------------------------------------------------------ alarm sounds */
 
-/** The sound the cook chose (DECISIONS.md 101). */
+/** The sound the cook chose. */
 let sound: AlarmSound = DEFAULT_ALARM_SOUND;
 
 /** One period of each sound and moment, as the audio context's buffers, made

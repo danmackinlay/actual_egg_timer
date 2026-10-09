@@ -1,6 +1,6 @@
 /**
  * The questions at DONE - which yolk the cook got, in the slider's own five
- * words, and how the white next to it was (DECISIONS.md 92) - and under them
+ * words, and how the white next to it was - and under them
  * the probe reading. Each answer is a step of the cook (core `step`'s
  * `answered`, through cook.ts): the cook's log keeps what was said, and the
  * egg's record is made and learned from there.

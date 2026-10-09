@@ -85,10 +85,10 @@ export interface IdleSolve {
  * the chosen one mid-drag. It changes once, when a new pot's surface lands.
  *
  * Once the pot's odds profile is in too, the time is held by it, so a softer
- * level never gets a later time than a firmer one (`envelopeBounds`,
- * DECISIONS.md 84). Until then a level has its own choice, and the time can
+ * level never gets a later time than a firmer one (`envelopeBounds`).
+ * Until then a level has its own choice, and the time can
  * move once more when the profile lands. The nudge moves the chosen time,
- * where one is chosen, for a cook who is sharing (E8). The outcome is read on
+ * where one is chosen, for a cook who is sharing. The outcome is read on
  * the same surface: about 2 ms beside the decision's 13-16, so it runs here
  * with it rather than in the worker.
  */
