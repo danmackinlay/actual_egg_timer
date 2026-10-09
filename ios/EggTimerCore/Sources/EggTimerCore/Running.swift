@@ -4,10 +4,11 @@ import Foundation
 /// (design/one-screen.md section 3 and 4; DECISIONS.md 96 to 98).
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
-/// part is for, and held to it by `fixtures/running.json`. A cook is its
-/// start (when the egg went in, and the choices then) and an append-only
-/// log; the cook as it stands is the log folded (`appendEntry`), and the plan
-/// (`replan`) is derived from it each time, never stored as truth. Times are epoch seconds, except the record's
+/// part is for, and held to it by `fixtures/running.json` and
+/// `fixtures/step.json`. A cook is its start (when the egg went in, and the
+/// choices then) and an append-only log; the cook as it stands is the log
+/// folded (`appendEntry`), and the plan (`replan`) is derived from it each
+/// time, never stored as truth. Times are epoch seconds, except the record's
 /// id, the web's milliseconds. Nothing here reads a clock.
 
 // MARK: - The types

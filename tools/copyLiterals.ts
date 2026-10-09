@@ -115,6 +115,14 @@ const NOT_COPY: Record<string, string> = {
   logged: 'stored cook log entry kind',
   ended: 'stored cook log entry kind',
   'not a running cook': 'decoding error, never shown',
+  // what a step asks the app to do (Step.swift, `CookEffect.kind`): names
+  // for the tests, never shown
+  persist: 'effect kind',
+  alarms: 'effect kind',
+  silence: 'effect kind',
+  rememberBoil: 'effect kind',
+  forget: 'effect kind',
+  sendFinal: 'effect kind',
   // the key of a decision surface or a slow hob's memo (Decide.swift,
   // `inputsKey`; Running.swift): machine text, never shown
   '|': 'key separator',

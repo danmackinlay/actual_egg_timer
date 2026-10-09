@@ -23,12 +23,13 @@
  *
  * What is derived (the ramp in force, the solve, the decided time, the
  * deadlines `phaseAt` reads, the cooling, how sure, the record's facts) is the
- * plan, `replan`'s. Nothing derived is ever stored as truth.
+ * plan, `replan`'s. Nothing derived is ever stored as truth. `step`
+ * (step.ts) runs a cook from event to event over these.
  *
  * Times are epoch seconds, as `Deadlines` has them; the record's id is the
  * web's milliseconds. Nothing here reads a clock: the time is handed in.
  * Pure, like the rest of `src/core/`, and `Running.swift` is held to it by
- * `fixtures/running.json`.
+ * `fixtures/running.json` and `fixtures/step.json`.
  */
 
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
