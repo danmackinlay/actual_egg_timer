@@ -52,7 +52,7 @@ import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
 import { nowMs } from './now.js';
-import { warningText } from './update.js';
+import { warningText } from './warning.js';
 
 /** What was last drawn, so the page draws only what changed. */
 const drawn = {
