@@ -1172,11 +1172,16 @@ scenario('slow-hob', 'never boiled: the guess lengthens, the time heated counts 
   const start = startOf(await started(run));
   // A millisecond past each moment the plan says it lengthens next, as a
   // clock running through them would be: core lengthens once the time
-  // heated is past it, and the tick plans again from the moment itself, so
-  // a clock frozen on it would plan the same plan at every tick. First
-  // where the guess gives out.
+  // heated is past it, and so the tick plans again only past the moment.
+  // On the moment itself, frozen there, nothing is planned again: two s of
+  // the host's, eight ticks (it once planned the same plan at every one).
+  // First where the guess gives out.
   const first = lastPlan(run.lines()).next;
-  let i = await run.step(first + 0.001);
+  let i = await run.step(first);
+  await sleep(2000);
+  const onIt = run.lines().slice(i).filter((l) => l.text.startsWith('plan ')).length;
+  run.check(onIt === 0, `${onIt} plans with the clock frozen on the moment the guess gives out`);
+  i = await run.step(first + 0.001);
   const lengthened = await run.until(/^plan .* lengthened true/, { from: i, what: 'a lengthened plan' });
   await run.settled(lengthened.i);
   // Then from 1,000 s through 1,100 s.

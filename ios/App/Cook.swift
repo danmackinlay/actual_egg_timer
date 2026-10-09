@@ -1182,7 +1182,11 @@ final class Cook {
             var next = running
             next.events = due
             change(to: next)
-        } else if let at = plan.slowHobAtS, now >= at, planning == nil {
+        } else if let at = plan.slowHobAtS, now > at, planning == nil {
+            // Past the moment, not on it: core lengthens the guess only once
+            // the time heated is past its point (`replan`), so a clock on
+            // the moment itself, as a frozen one can be, would plan the same
+            // again every tick.
             replanSoon()
         }
         pushActivity()
