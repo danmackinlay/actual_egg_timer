@@ -567,47 +567,34 @@ does at setup today.
 | iOS | `cookInProgress.v3` (was `cookInProgress.v2`, before it `cookInProgress`) | `{ cook, feedbackGiven, leanHint_s }` |
 
 *As built, after the running-cook review:* the cook gained `asRan` (1.3),
-so both keys moved on a version (`DECISIONS.md` 48); every earlier key is
-read once, kept aside and deleted, as the 0.4 key was, and iOS leaves the
-notifications of a cook from any of them alone, cancelling only for a
-damaged cook under the current key.
+so both keys moved on a version (`DECISIONS.md` 48). Every earlier key is
+deleted unread at launch, with every other key the apps no longer use (the
+boot sweep, `DECISIONS.md` 107), once the newer-build guard says this build
+may write.
 
 `leanHint_s` is the last decided lean, used only as the interim while a
 surface is rebuilt after a reload. It is a cache and never truth. The
 settings keys do not change: `CookChoices` is read from them
 (`choicesOf(settings, region)`), and a correction writes back to them (§7,
-22). The record's format does not change (`DECISIONS.md` 81).
+22).
 
-**A 0.4 cook running at the upgrade** is a store this build cannot read, so
-it goes where `DECISIONS.md` 81 already sends one: kept aside as stored
-(`keepUnreadCook`, `Calibrations.keepUnreadCook`), exported with the
-results, and the screen opens idle. It is not converted (§7, 24): this is
-alpha (48), and the window is one cook long.
+**A cook an earlier build was running at the upgrade** is under a key this
+build does not read, so it is not picked up: the screen opens idle, and the
+sweep deletes the key. It is not converted (§7, 24): this is alpha (48), and
+the window is one cook long. Since 0.5 it is not kept aside either
+(`DECISIONS.md` 107): it costs at most one unanswered egg.
 
-With the key bumped, nothing would read the old key (review 2.6): the web
-reads only `COOK_KEY` (`store.ts`) and iOS only `savedKey` (`Cook.swift`),
-so the 0.4 value would sit in storage for good. So each app reads the 0.4
-key (`aet.cook.v2`, `cookInProgress`) once at launch, keeps what it finds
-aside and deletes the key, as `store.ts` already drops `aet.cook.v1`.
-
-The alarms differ by why the cook is unread. iOS updates apps in the
+The alarms differ by why the cook is not picked up. iOS updates apps in the
 background, and the update kills the app, but the pending notifications
 and the card's countdown survive it and are still right for the egg in the
-pot. So for a cook kept aside from the 0.4 key, iOS keeps the
-notifications still ahead of now (and the card until it ends): cancelling
-them would leave that cook with no timer at all. Only a damaged cook under
-the current key has its pending alarms cancelled and its card ended, since
-nothing then knows what they ring for. The 0.4 path that logs a finished,
-unanswered egg (`cook.ts`, `restoreCook`) goes with the old key, which
-costs at most one egg.
-
-*As built on iOS, after the running-cook review (§3):* nothing would ever
-update or end the old card, so it sat at its last stage, stale, for the
-system's eight hours. When an old key is kept aside at launch, each card is
-ended with a dismissal at its own stage's end (at once if that has
-passed): it shows what it showed until then, beside the notifications
-still pending. The unread cooks are a list, each text once, so two old
-keys at one launch lose nothing.
+pot. So for a cook under an earlier key, iOS keeps the notifications still
+ahead of now: cancelling them would leave that cook with no timer at all.
+Nothing would ever update or end its card, so it would sit at its last
+stage, stale, for the system's eight hours: when the sweep finds an earlier
+cook's key, each card is ended with a dismissal at its own stage's end (at
+once if that has passed), showing what it showed until then. Only a damaged
+cook under the current key has its pending alarms cancelled and its card
+ended, since nothing then knows what they ring for; it is dropped.
 
 ### How an edit is followed
 
@@ -762,7 +749,7 @@ commit each):
    - `state.ts`: `ticket` and `machine` become `cook` and `plan`, and
      `buildSetup`/`currentEgg` become `cookSetupOf(choicesOf(…))`.
    - `store.ts`: `aet.cook.v3`; `aet.cook.v2` read once, kept aside and
-     deleted.
+     deleted (since 0.5, deleted unread by the boot sweep).
    - `cook.ts`: `onPrimary`, `onTick` and `restoreCook` written as events
      and `eventsDue`.
    - `machine.ts` shrinks to what `phaseAt` does not cover
@@ -899,7 +886,8 @@ commit each):
    `resolveCookTime`. Also `AppModel.swift` (`eggsIn`), `Calibration.swift`
    (the 0.4 key read once, kept aside and deleted, its notifications still
    ahead of now kept; a damaged cook under `cookInProgress.v2` also cancels
-   alarms and the card), `EggSectionView.swift`
+   alarms and the card; since 0.5 the key is deleted unread by the boot
+   sweep), `EggSectionView.swift`
    (its cache keyed on the cook, not the ticket) and `FeedbackPanel.swift`.
    *After the running-cook review (iOS, 8 October 2026):* each plan passes
    the last one's `slowHob` and keeps the plan as it ran (`keepAsRan`,
@@ -1075,4 +1063,5 @@ Each has my recommendation first, and the alternative after "Or".
     another. Or keep today's: each tab runs what it started.
 24. **A 0.4 cook running at the upgrade is kept aside, not converted**
     (alpha, 48). Or convert it, which the stored ticket mostly allows,
-    though it keeps the boiling point and not the altitude.
+    though it keeps the boiling point and not the altitude. *Since 0.5
+    (`DECISIONS.md` 107) it is not kept aside either: the key is deleted.*
