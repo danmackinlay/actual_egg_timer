@@ -1365,8 +1365,8 @@ answers are recorded here rather than deleted, because each one was a plausible 
   `src/core/` (`slider.ts`, `texture.ts`, `record.ts`, `running.ts`) and is
   conformance-tested, which is where all three of the real-egg bugs in `LOGBOOK.md`
   ("Three things a real egg found that the simulator did not") would have been caught.
-  Above it, the web's phase machine, store and formatting have tests
-  (`test/machine.test.ts`, `test/store.test.ts`, `test/format.test.ts`), and iOS's
+  Above it, the phase timeline ticked each second, the web's store and formatting have
+  tests (`test/step.test.ts`, `test/store.test.ts`, `test/format.test.ts`), and iOS's
   decision to ring is `deadlineToRing` in EggTimerApp, under `swift test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the
   apps. The iOS app project has no test target. Two things a cook sees are untested
   anywhere: the Lock Screen card ending as the cooling does, and the web's setup
