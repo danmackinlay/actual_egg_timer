@@ -9,6 +9,7 @@ import { DoseGrid } from '../core/doseGrid.js';
 import { DecisionInputs, inputsKey } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { Calibration, copyCalibration } from '../core/record.js';
+import { CookSurface } from '../core/running.js';
 import { offThread } from './offThread.js';
 
 /* ---------------------------------------------------- the decision's surface */
@@ -17,7 +18,7 @@ import { offThread } from './offThread.js';
  *  slider is not part of the key, so dragging it never waits for one. A handful
  *  is plenty - the pot on screen, the one before, and a cold start's measured
  *  ramp - and the oldest goes first. */
-const decisionGrids = new Map<string, DoseGrid>();
+const decisionGrids = new Map<string, { inputs: DecisionInputs; grid: DoseGrid }>();
 const decisionBuilds = new Map<string, Promise<DoseGrid>>();
 const DECISION_GRIDS_KEPT = 6;
 
@@ -28,7 +29,17 @@ export function decisionKey(inputs: DecisionInputs): string {
 
 /** The surface for these inputs if it has been built, or null. */
 export function cachedDecisionGrid(inputs: DecisionInputs): DoseGrid | null {
-  return decisionGrids.get(decisionKey(inputs)) ?? null;
+  return decisionGrids.get(decisionKey(inputs))?.grid ?? null;
+}
+
+/** Every surface built, with its odds profile on `c` if that is in too:
+ *  what a cook's step plans on (`CookEnv.surfaces`). */
+export function cookSurfaces(c: Calibration): CookSurface[] {
+  const out: CookSurface[] = [];
+  for (const { inputs, grid } of decisionGrids.values()) {
+    out.push({ inputs: inputs, grid: grid, profile: cachedOddsProfile(inputs, c) });
+  }
+  return out;
 }
 
 /** The surface for these inputs, built in the worker if it has not been. Two
@@ -42,12 +53,12 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
     return Promise.reject(error);
   }
   const done = decisionGrids.get(key);
-  if (done !== undefined) return Promise.resolve(done);
+  if (done !== undefined) return Promise.resolve(done.grid);
   const running = decisionBuilds.get(key);
   if (running !== undefined) return running;
   // A build that fails leaves no trace, so the next ask starts a fresh one.
   const build = (offThread({ decision: inputs }) as Promise<DoseGrid>).then((grid) => {
-    decisionGrids.set(key, grid);
+    decisionGrids.set(key, { inputs: inputs, grid: grid });
     while (decisionGrids.size > DECISION_GRIDS_KEPT) {
       const oldest = decisionGrids.keys().next().value;
       if (oldest === undefined) break;
