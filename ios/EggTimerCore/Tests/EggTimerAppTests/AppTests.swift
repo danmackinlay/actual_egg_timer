@@ -318,6 +318,151 @@ struct AppTests {
         #expect(!model.cook.eggOpen(atS: world.clock.seconds))
     }
 
+    // MARK: - How a cook ends
+
+    /// The cook on screen's choices with a heavier egg: a correction.
+    private func heavier(_ model: AppModel) throws -> CookChoices {
+        var choices = try #require(model.cook.running).choices
+        choices.massKg += 0.008
+        choices.massFrom = .scale
+        choices.sizeTable = nil
+        return choices
+    }
+
+    /// The egg answered about at Done, logged and folded: its record.
+    private func answeredAtDone(_ model: AppModel, _ world: World) async throws -> EggRecord {
+        try await toDone(model, world)
+        model.answer(yolk: .jammy, white: nil)
+        await world.settled(model.cook)
+        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        return try #require(model.planner.kept.log.last)
+    }
+
+    /// The test hooks for a record never made again, off whatever happens.
+    private func hooksOff() {
+        Screenshots.holdAsRan = false
+        Screenshots.failRemake = false
+    }
+
+    /// Jammy at Done, the egg corrected, and Start again pressed at once:
+    /// the egg logged as corrected, Jammy kept, and only then the cook
+    /// forgotten and the egg final.
+    @Test func aCorrectionAtDoneThenStartAgainLogsTheCorrectedEgg() async throws {
+        let world = World()
+        let model = AppModel()
+        defer { model.cook.killed() }
+        let first = try await answeredAtDone(model, world)
+        let finals = world.sharing.finals
+        model.correct(try heavier(model), startedAtS: nil)
+        model.startAgain()
+        await world.settled(model.cook)
+        await world.until("the fold") { !model.planner.learner.draining }
+        #expect(model.cook.running == nil)
+        let egg = try #require(model.planner.kept.log.last)
+        #expect(model.planner.kept.log.count == 1)
+        #expect(egg.egg.massG != first.egg.massG)
+        #expect(egg.yolkWord == .jammy)
+        #expect(world.stored == nil)
+        #expect(world.sharing.finals > finals)
+    }
+
+    /// An answer given while the egg's record cannot be made yet - a
+    /// correction after the pull not planned as it ran - is held with the
+    /// cook; Start again logs the egg with it, and folds it.
+    @Test func anAnswerHeldAtStartAgainIsLoggedWithIt() async throws {
+        let world = World()
+        let model = AppModel()
+        defer {
+            model.cook.killed()
+            hooksOff()
+        }
+        try await toDone(model, world)
+        Screenshots.holdAsRan = true
+        model.correct(try heavier(model), startedAtS: nil)
+        await world.settled(model.cook)
+        model.answer(yolk: .jammy, white: .tender)
+        await world.settled(model.cook)
+        #expect(model.planner.kept.log.isEmpty)
+        #expect(model.cook.answers?.yolkWord == .jammy)
+        #expect(world.log.events.contains(.answerHeld))
+        model.startAgain()
+        await world.settled(model.cook)
+        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        let egg = try #require(model.planner.kept.log.last)
+        #expect(model.planner.kept.log.count == 1)
+        #expect(egg.yolkWord == .jammy)
+        #expect(egg.white == .tender)
+        #expect(egg.forecast != nil)
+        #expect(world.stored == nil)
+    }
+
+    /// Start again on an answered egg corrected after the pull whose record
+    /// cannot be made again: the cook stays stored and the egg is not final
+    /// (sharing holds it back). A relaunch within the hour does not bring it
+    /// back on screen: it makes the record, logs the corrected egg, and only
+    /// then forgets the cook and sends the egg.
+    @Test func aFailedRemakeLeavesTheCookStoredNotFinal() async throws {
+        let world = World()
+        let model = AppModel()
+        defer {
+            model.cook.killed()
+            hooksOff()
+        }
+        let first = try await answeredAtDone(model, world)
+        Screenshots.holdAsRan = true
+        Screenshots.failRemake = true
+        model.correct(try heavier(model), startedAtS: nil)
+        await world.settled(model.cook)
+        let finals = world.sharing.finals
+        model.startAgain()
+        await world.settled(model.cook)
+        #expect(world.log.events.contains(.asRanNotRemade))
+        #expect(model.cook.running == nil)
+        let stored = try #require(world.stored)
+        #expect(endedAtS(stored) != nil)
+        #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
+        #expect(world.sharing.finals == finals)
+        #expect(model.cook.eggOpen(atS: world.clock.seconds))
+        model.cook.killed()
+
+        hooksOff()
+        world.clock.advance(60)
+        let again = AppModel()
+        defer { again.cook.killed() }
+        again.appear()
+        await world.settled(again.cook)
+        await world.until("the fold") { !again.planner.learner.draining }
+        #expect(again.cook.running == nil)
+        #expect(again.cook.phase == .idle)
+        let egg = try #require(again.planner.kept.log.last)
+        #expect(again.planner.kept.log.count == 1)
+        #expect(egg.egg.massG != first.egg.massG)
+        #expect(egg.yolkWord == .jammy)
+        #expect(world.stored == nil)
+        #expect(world.sharing.finals > finals)
+    }
+
+    /// A cook dismissed with Start again stays dismissed: a relaunch within
+    /// the egg's hour opens idle, with the egg logged once.
+    @Test func aCookDismissedWithStartAgainStaysDismissed() async throws {
+        let world = World()
+        let model = AppModel()
+        defer { model.cook.killed() }
+        try await toDone(model, world)
+        model.startAgain()
+        await world.settled(model.cook)
+        model.cook.killed()
+        world.clock.advance(60)
+        let again = AppModel()
+        defer { again.cook.killed() }
+        again.appear()
+        await world.settled(again.cook)
+        #expect(again.cook.running == nil)
+        #expect(again.cook.phase == .idle)
+        #expect(again.planner.kept.log.count == 1)
+        await world.until("the fold") { !again.planner.learner.draining }
+    }
+
     // MARK: - Stores
 
     /// The settings are one value, read by core's `readSettings`: a control

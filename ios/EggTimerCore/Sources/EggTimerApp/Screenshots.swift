@@ -79,11 +79,11 @@ import Observation
 /// - `-muteAudio YES`: the ring at no volume and notifications without
 ///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
 /// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
-///   ran in this launch, as if the app were killed before it landed: the
-///   stale cook a relaunch then finds (`AppModel.refreshAsRan`).
+///   ran while the cook runs in this launch, as if the app were killed
+///   before it landed: the stale cook a relaunch then finds (`Cook`).
 /// - `-uiFailRemake YES`: an ended cook's record is never made again in this
-///   launch (`AppModel.remakeThenEnd`), as if it could not be: the cook left
-///   stored for the next launch.
+///   launch, as if it could not be: the cook left stored for the next launch
+///   (`Cook`).
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -143,13 +143,14 @@ public enum Screenshots {
     /// Mac's speakers; everything else about the ring and the alarms is as is.
     public static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
     /// `-uiHoldAsRan YES`: a correction after the pull never has its record
-    /// made again in this launch (`AppModel.refreshAsRan`), as if the app were
-    /// killed before it landed, so a script can find the stale cook stored
-    /// at the next launch.
-    public static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
-    /// `-uiFailRemake YES`: every try at an ended cook's record made again
-    /// comes back with none (`AppModel.remakeThenEnd`).
-    public static var failRemake: Bool { UserDefaults.standard.bool(forKey: "uiFailRemake") }
+    /// made again while the cook runs in this launch (`Cook`), as if the app
+    /// were killed before it landed, so a script can find the stale cook
+    /// stored at the next launch. Read at launch; a test sets it.
+    nonisolated(unsafe) public static var holdAsRan = UserDefaults.standard.bool(forKey: "uiHoldAsRan")
+    /// `-uiFailRemake YES`: an ended cook's record is never made again in
+    /// this launch (`Cook`): the cook stays stored for the next. Read at
+    /// launch; a test sets it.
+    nonisolated(unsafe) public static var failRemake = UserDefaults.standard.bool(forKey: "uiFailRemake")
     public static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     public static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
     public static var doneAgo: Double {

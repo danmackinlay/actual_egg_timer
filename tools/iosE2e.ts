@@ -1394,7 +1394,7 @@ scenario('final-egg', 'Done, relaunched near the hour: ended at it, a later answ
   run.check(egg?.count === 1, `one egg logged, not ${egg?.count}`);
   run.check(egg?.last?.yolkWord === null, `logged unanswered: ${egg?.last?.yolkWord}`);
   run.check(forecastOk(egg?.last), 'with its forecast');
-  // An answer taken is stored with the cook at once (`recordFeedbackGiven`).
+  // An answer taken is stored with the cook at once (the cook's log).
   const afterTap = run.lines().slice(tap.i);
   run.check(!has(afterTap, storedAs((s) => s.feedbackGiven === true)), 'the Runny not stored');
   run.check(!lines.some(is('log', (e) => e.last?.yolkWord === 'runny')), 'the Runny not logged');
