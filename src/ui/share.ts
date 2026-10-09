@@ -20,10 +20,14 @@ import {
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
 import { request } from './idle.js';
-import { readStorage, storageReadOnly, writeStorage } from './store.js';
+import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
-const KEY = 'aet.share.v1';
+/** The state as stored: another tab's write is taken up before this one
+ *  acts (`current`). A tab loaded yesterday must not send under an id
+ *  another tab has since deleted, nor write back the deletions it never
+ *  saw. */
+const store = syncedKey('aet.share.v1', readShare);
 
 /** How the page reaches the endpoint: a status for each call, or a throw
  *  when the network does not answer. */
@@ -107,31 +111,28 @@ let clock: () => number = nowMs;
 let generation = 0;
 let pumping: Promise<void> | null = null;
 let again = false;
-/** The text this page last read from `KEY` or wrote there; anything else
- *  there is another tab's, and is taken up before this one acts (`current`).
- *  A tab loaded yesterday must not send under an id another tab has since
- *  deleted, nor write back the deletions it never saw. */
-let seen: string | null = null;
 
 function save(next: ShareState): void {
   state = next;
-  writeStorage(KEY, JSON.stringify(state));
-  // Read back: a write that failed leaves the store as it was, which is then
-  // not another tab's.
-  seen = readStorage(KEY);
+  store.write(JSON.stringify(state));
   if (host !== null) host.changed();
 }
 
-/** The state, with whatever another tab wrote since this one last looked
- *  taken up first. A change of id or of on and off is a new generation, so
- *  a send in flight under the old one lands on nothing. */
-function current(): ShareState {
-  const raw = readStorage(KEY);
-  if (raw === seen) return state;
-  seen = raw;
-  const next = reconciled(readShare(raw), host === null ? 0 : host.log().length);
+/** Another tab's state, taken up: whether there was one. A change of id or
+ *  of on and off is a new generation, so a send in flight under the old one
+ *  lands on nothing. */
+function takeUp(taken: Taken<ShareState> | null): boolean {
+  if (taken === null) return false;
+  const next = reconciled(taken.theirs, host === null ? 0 : host.log().length);
   if (next.uid !== state.uid || next.on !== state.on) generation += 1;
   state = next;
+  return true;
+}
+
+/** The state, with whatever another tab wrote since this one last looked
+ *  taken up first. */
+function current(): ShareState {
+  takeUp(store.takeUp());
   return state;
 }
 
@@ -139,10 +140,7 @@ function current(): ShareState {
  *  tab that cleared it all): taken up now, if it touched sharing. Says
  *  whether it did. */
 export function shareStoredElsewhere(key: string | null): boolean {
-  if (key !== null && key !== KEY) return false;
-  const was = seen;
-  current();
-  if (seen === was) return false;
+  if (!takeUp(store.elsewhere(key))) return false;
   if (host !== null) host.changed();
   return true;
 }
@@ -168,8 +166,7 @@ export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () =
   host = h;
   transport = t;
   clock = now;
-  seen = readStorage(KEY);
-  state = reconciled(readShare(seen), h.log().length);
+  state = reconciled(store.load(), h.log().length);
   return state;
 }
 
