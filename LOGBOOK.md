@@ -6166,3 +6166,41 @@ what was missing was a record of what the owner had read.
 Checked: `npm run verify`, `npm run e2e` 37 of 37, `npm run build:site` (no sidecar in
 `_site/copy/`), and with one 1750 twin deleted by hand, `npm test`
 passed and the queue listed it as missing.
+
+## 9 October 2026: the start time leaves the sentence (DECISIONS.md 108)
+
+The owner, of "set in cold water at 19:42": it spends the screen on what
+the countdown already says. The setup sentence now says "into cold water,
+brought to the boil" (and its kin) idle and mid-cook, in both apps;
+pressing the start clause still opens its panel, where "Eggs in at 19:42"
+with − and + corrects the start as before (97's question 20, moved).
+
+- **Core first.** `clauseKeys` no longer takes `startedAt` or picks the
+  four `setup.start.*At` keys; the wording fixture lost its running half
+  and the Swift twin followed. The apps pass no time to the sentence.
+- **The keys go.** The four `*At` keys and their 1750 twins are gone (no
+  en-US overlay had them). None was ever approved, so they leave the review
+  queue rather than show as removed: 101 keys to 97, 57 added to 53.
+  Nothing was stamped. Their four entries in the 1750 bases are orphans,
+  harmless (a base is read only for a key the English has), and the next
+  translation stamp drops them.
+- **The checks.** The web's and iOS's `start-time` read the panel's time,
+  and that it follows a correction, not the clause's; iOS reaches the
+  panel by `-uiDo open:clause-start` and reads it from a new debug line,
+  `panel start <epoch s>`, beside `sentence <words>`. A new scenario in both
+  suites, `sentence-no-time`: idle, heating, cooking and corrected to the
+  heat off, no time in the sentence, the plain start key, and the panel
+  says when.
+- **The review queue's files leave `copy/`.** iOS bundles `copy/` as a
+  folder reference, which xcodegen cannot filter, so `approved.json` and
+  `en-x-1750.base.json` (55 KB) shipped in the app, unread. They move to
+  `test/data/copy-review/` (`REVIEW_DIR` in `tools/copyApproval.ts`), and
+  `en1750.test.ts` 1a now holds `copy/` to catalogues only, so nothing else
+  rides along. The site never shipped them; its `rm -f` of them in
+  `build:site` is now a no-op, left for whoever next edits the build
+  scripts.
+
+Checked, each commit: `npm run verify`, `npm run build:site` (`_site/copy/`
+the three catalogues), `npm run e2e` 38 of 38, `npm run ios:build`,
+`npm run ios:e2e` 41 of 41 (the bundle's `copy/` the three catalogues after
+the move).
