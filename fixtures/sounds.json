@@ -7,7 +7,6 @@
   ],
   "default": "timer",
   "ring_s": 40,
-  "notificationMax_s": 30,
   "read": [
     {
       "stored": "timer",
@@ -51,43 +50,37 @@
       "sound": "timer",
       "moment": "pull",
       "period_s": 2.6,
-      "repeats": 15,
-      "notificationRepeats": 11
+      "repeats": 15
     },
     {
       "sound": "timer",
       "moment": "cooled",
       "period_s": 2.6,
-      "repeats": 15,
-      "notificationRepeats": 11
+      "repeats": 15
     },
     {
       "sound": "cuckoo",
       "moment": "pull",
       "period_s": 2.2,
-      "repeats": 18,
-      "notificationRepeats": 13
+      "repeats": 18
     },
     {
       "sound": "cuckoo",
       "moment": "cooled",
       "period_s": 2.2,
-      "repeats": 18,
-      "notificationRepeats": 13
+      "repeats": 18
     },
     {
       "sound": "hen",
       "moment": "pull",
       "period_s": 1.6,
-      "repeats": 25,
-      "notificationRepeats": 18
+      "repeats": 25
     },
     {
       "sound": "hen",
       "moment": "cooled",
       "period_s": 4.4,
-      "repeats": 9,
-      "notificationRepeats": 6
+      "repeats": 9
     }
   ]
 }

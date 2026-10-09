@@ -13,7 +13,6 @@ struct SoundsConformance {
         #expect(AlarmSound.allCases.map(\.rawValue) == a["sounds"] as? [String])
         #expect(try defaultAlarmSound.rawValue == a.str("default"))
         try expectClose(alarmRingS, a.num("ring_s"), "ring_s")
-        try expectClose(notificationSoundMaxS, a.num("notificationMax_s"), "notificationMax_s")
         for c in try Fixtures.list("sounds.json", "read") {
             #expect(try readAlarmSound(c["stored"]).rawValue == c.str("sound"), "\(String(describing: c["stored"]))")
         }
@@ -22,10 +21,6 @@ struct SoundsConformance {
             let moment = try #require(RingDeadline(rawValue: c.str("moment")))
             try expectClose(alarmPeriodS(sound, moment), c.num("period_s"), "\(sound) \(moment) period")
             #expect(try Double(alarmRepeats(sound, moment)) == c.num("repeats"), "\(sound) \(moment) repeats")
-            #expect(
-                try Double(notificationRepeats(sound, moment)) == c.num("notificationRepeats"),
-                "\(sound) \(moment) notification repeats"
-            )
         }
     }
 }

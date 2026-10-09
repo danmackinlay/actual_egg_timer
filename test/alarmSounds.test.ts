@@ -16,10 +16,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
+import { ALARM_SOUNDS, AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
 import {
-  ALARM_SOUNDS, AlarmMoment, NOTIFICATION_SOUND_MAX_S, alarmPeriod_s, notificationRepeats,
-} from '../src/core/sounds.js';
-import { PEAK, RECORDINGS, beepsPeriod, loudness, recordedPeriod, synthPeriod } from '../src/ui/alarmSounds.js';
+  NOTIFICATION_SOUND_MAX_S, PEAK, RECORDINGS, beepsPeriod, loudness, notificationRepeats, recordedPeriod, synthPeriod,
+} from '../src/ui/alarmSounds.js';
 
 const MOMENTS: AlarmMoment[] = ['pull', 'cooled'];
 const RATE = 22050;

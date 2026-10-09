@@ -46,13 +46,3 @@ public let alarmRingS = 40.0
 public func alarmRepeats(_ sound: AlarmSound, _ moment: RingDeadline) -> Int {
     Int((alarmRingS / alarmPeriodS(sound, moment)).rounded())
 }
-
-/// iOS plays the default sound instead of a notification sound this long or
-/// longer, s.
-public let notificationSoundMaxS = 30.0
-
-/// How many whole periods the notification's sound holds, a second under the
-/// limit.
-public func notificationRepeats(_ sound: AlarmSound, _ moment: RingDeadline) -> Int {
-    Int(((notificationSoundMaxS - 1) / alarmPeriodS(sound, moment)).rounded(.down))
-}

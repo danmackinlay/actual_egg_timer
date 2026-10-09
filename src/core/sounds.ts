@@ -52,14 +52,3 @@ export const ALARM_RING_S = 40;
 export function alarmRepeats(sound: AlarmSound, moment: AlarmMoment): number {
   return Math.round(ALARM_RING_S / alarmPeriod_s(sound, moment));
 }
-
-/** iOS plays the default sound instead of a notification sound this long or
- *  longer, s (UNNotificationSound). */
-export const NOTIFICATION_SOUND_MAX_S = 30;
-
-/** How many periods the iOS notification's sound holds: whole periods only,
- *  so the in-app ring can loop the same file, and with a second to spare
- *  under `NOTIFICATION_SOUND_MAX_S`. */
-export function notificationRepeats(sound: AlarmSound, moment: AlarmMoment): number {
-  return Math.floor((NOTIFICATION_SOUND_MAX_S - 1) / alarmPeriod_s(sound, moment));
-}

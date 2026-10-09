@@ -6,8 +6,7 @@
  */
 
 import {
-  ALARM_RING_S, ALARM_SOUNDS, AlarmMoment, DEFAULT_ALARM_SOUND, NOTIFICATION_SOUND_MAX_S, alarmPeriod_s, alarmRepeats,
-  notificationRepeats, readAlarmSound,
+  ALARM_RING_S, ALARM_SOUNDS, AlarmMoment, DEFAULT_ALARM_SOUND, alarmPeriod_s, alarmRepeats, readAlarmSound,
 } from '../../src/core/sounds.js';
 
 export const soundsFixture = {
@@ -15,7 +14,6 @@ export const soundsFixture = {
   sounds: ALARM_SOUNDS,
   default: DEFAULT_ALARM_SOUND,
   ring_s: ALARM_RING_S,
-  notificationMax_s: NOTIFICATION_SOUND_MAX_S,
   read: ['timer', 'cuckoo', 'hen', 'Hen', 'beeps', '', 3, true, null].map((stored) => ({
     stored: stored,
     sound: readAlarmSound(stored),
@@ -25,6 +23,5 @@ export const soundsFixture = {
     moment: moment,
     period_s: alarmPeriod_s(sound, moment),
     repeats: alarmRepeats(sound, moment),
-    notificationRepeats: notificationRepeats(sound, moment),
   }))),
 };
