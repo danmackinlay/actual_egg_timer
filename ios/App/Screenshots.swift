@@ -85,6 +85,9 @@ import EggTimerCore
 /// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
 ///   ran in this launch, as if the app were killed before it landed: the
 ///   stale cook a relaunch then finds (`AppModel.refreshAsRan`).
+/// - `-uiFailRemake YES`: an ended cook's record is never made again in this
+///   launch (`AppModel.remakeThenEnd`), as if it could not be: the cook left
+///   stored for the next launch.
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -122,6 +125,9 @@ enum Screenshots {
     /// killed before it landed, so a script can find the stale cook stored
     /// at the next launch.
     static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
+    /// `-uiFailRemake YES`: every try at an ended cook's record made again
+    /// comes back with none (`AppModel.remakeThenEnd`).
+    static var failRemake: Bool { UserDefaults.standard.bool(forKey: "uiFailRemake") }
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
     static var doneAgo: Double {

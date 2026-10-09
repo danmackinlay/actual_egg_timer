@@ -43,11 +43,13 @@ then restructure.
       add a lint that `UserDefaults.standard.set|removeObject` appears only in
       `Store.swift`. S. *Done:* through `Stores.set`; `test/iosStores.test.ts`
       fails on any write to UserDefaults outside `Store.swift`.
-- [ ] **0.3 iOS forgets a corrected cook whose record could not be remade** ✔.
+- [x] **0.3 iOS forgets a corrected cook whose record could not be remade** ✔.
       `AppModel.remakeThenEnd` (`AppModel.swift:215`) forgets the stored cook
       and sends it final in a `defer`, so it runs when `correctedAsRan`
       returns nil. The web retries and leaves the cook stored
-      (`src/ui/cook.ts:549`). S.
+      (`src/ui/cook.ts:549`). S. *Done:* tried three times more, then left
+      stored for the next launch and held back from sharing;
+      `ios:e2e again-not-remade`.
 - [ ] **0.4 iOS drops an answer held at Start again**. `AppModel.startAgain`
       logs the unanswered egg with no yolk or white, then clears `held`; the
       web logs `heldAnswers()` (`cook.ts:504`). S.

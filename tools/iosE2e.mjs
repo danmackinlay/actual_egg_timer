@@ -1280,6 +1280,37 @@ scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected a
   run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
 });
 
+scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start again, the record not made again: the cook left stored, and the next launch makes it', async (run) => {
+  // `-uiHoldAsRan YES`: the correction is not made again while the cook runs,
+  // so Start again must; `-uiFailRemake YES`: it cannot be, in this launch.
+  await started(run, [...HOT, '-uiHoldAsRan', 'YES', '-uiFailRemake', 'YES', '-uiDo',
+    'out@pull+2,answer:jammy@cooled+5,set:size=3@cooled+10,again@cooled+20']);
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const first = eggLog(run.lines()).last;
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  await corrected(run, t.i);
+  const again = await tapAt(run, cooling.cooled + 20, 'again');
+  const end = await run.until(/^(stored none|as ran not remade)/, { from: again.i, what: 'the remake given up' });
+  run.check(end.text.startsWith('as ran not remade'), `the cook kept stored, not forgotten: ${end.text}`);
+  const prefs = await run.prefs((p) => 'cookInProgress.v3' in p, 5);
+  run.check('cookInProgress.v3' in prefs, 'the plist still holds the cook');
+  run.check(eggLog(run.lines()).last.egg.mass_g === first.egg.mass_g, 'the egg as logged, not yet corrected');
+  run.terminate();
+  // The next launch, too old to pick up: the record made again, then forgotten.
+  run.launch([], { at: cooling.cooled + 3700 });
+  const old = await run.until(/^restore too old$/, { from: run.launched, what: 'the stored cook, too old' });
+  await run.until(/^as ran remade$/, { from: old.i, what: 'the record made again' });
+  const gone = await run.until(/^stored none$/, { from: old.i, what: 'the cook forgotten' });
+  const egg = eggLog(run.lines().slice(0, gone.i)).last;
+  run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
+  run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
+  run.note(`left stored at Start again; the next launch logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept`);
+});
+
 
 scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
   await started(run, [...HOT, '-cooling', 'counter', '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);

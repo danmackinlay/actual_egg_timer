@@ -6135,3 +6135,17 @@ but `Stores`, or on `removeObject` or a persistent domain set or removed,
 anywhere but `Store.swift`. It failed on the old line and on nothing else.
 No debug hook needed an exception: the launch arguments are read, never
 written.
+
+**0.3, a corrected cook forgotten though its record was not made again.**
+`AppModel.remakeThenEnd` forgot the stored cook and sent the egg final in a
+`defer`, so both ran when `correctedAsRan` came back with nothing. Now it
+tries three times more, as the web's `remakeThenEnd` does
+(`RECORD_TRIES`), and forgets the cook and sends only once the record is
+made. If it never is, the cook stays stored, the next launch makes it as it
+makes one killed before it was, and sharing holds the egg back meanwhile
+(`unremade`, cleared when a new cook is stored over it, as the web's
+`finalEggs` follows the stored cook). `-uiFailRemake YES` makes every try
+come back with nothing. `npm run ios:e2e -- again-not-remade`: before,
+`stored none` at Start again and nothing stored for the next launch; after,
+the cook kept stored, and the next launch, too old to pick up, logs the egg
+corrected (68 -> 76 g), Jammy kept, then forgets it.
