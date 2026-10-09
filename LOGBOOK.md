@@ -6038,3 +6038,48 @@ wraps to two lines, more than the room kept for it, so it moves the slider
 
 Checked: `npm run verify` (`swift test` 159 in 39 suites), `npm run e2e`
 37 of 37, `npm run ios:build`, `npm run ios:e2e` 40 of 40.
+
+## 9 October 2026: the alarm's sound, chosen in Settings
+
+The owner wanted better than the beeps. Eight candidates were made in the
+browser for an auditions page (the beeps, a cuckoo clock, a kettle, a spoon
+on the shell, a wind-up timer, a lid rattling, a church bell, ice into a
+glass) and the owner found two CC0 recordings of a hen on Freesound, her
+egg song (Jofae) and an alarm call (Rudmer Rotteveel). The owner chose
+three, the wind-up timer as the default (`DECISIONS.md` 101), and the work
+moved from `0.4.x` to `0.5.x`, where the screens it touches had been
+rewritten.
+
+One implementation: `src/ui/alarmSounds.ts` makes one period of each sound
+at any rate, the web loops it on the audio clock, and `npm run sounds`
+renders the same samples into the six files iOS ships. Generating them on
+the phone instead (`Library/Sounds` is also searched) would have meant a
+Swift copy of every synth to keep in step.
+
+**Things that cost an hour to find out.**
+
+- **A notification's sound cannot be an mp3 or an m4a.** It must be linear
+  PCM, IMA4, µ-law or a-law, in an aiff, wav or caf, and under 30 s, or
+  iOS plays its default instead (UNNotificationSound). IMA4 at 22.05 kHz
+  holds the timer's highest mode and is about 330 KB for 28.6 s.
+- **Overlapping strikes need their start to the fraction of a sample.**
+  The first render started each strike on the nearest sample and came out
+  up to 7% off the Web Audio rendering in its loudness over time: the
+  timer's strikes overlap, and where each falls between two samples decides
+  whether their modes add or cancel. Timed from the exact start, the render
+  matches an OfflineAudioContext rendering of the original code to 0.1%.
+- **The web harness counted oscillators.** A ring was 75 of them; it is now
+  one looped buffer, so `npm run e2e` counts rings, and tells the pull's
+  from Done's by a fingerprint of the buffer, where it once told them apart
+  by 75 against 50.
+- **`copySnapshot.js capture` is not repeatable on `0.5.x`.** Two captures
+  of the same commit differ in eight strings, the running cook's clock and
+  the certainty interval, so a `compare --draft` reports them as new.
+  The `alarm` draft's own five strings were found as drafted, and
+  `copyLiterals --since` passed.
+
+Checked: `npm run verify`, `npm run e2e` 37 of 37, `npm run ios:build`;
+on a simulator, Settings shows the three, a pick is kept in the app's
+defaults, and its preview reads one whole period from the file (57 330
+frames for the timer, 2.6 s at 22.05 kHz). The sounds themselves are the
+owner's to hear on a phone (`PLAN.md`, the queue).

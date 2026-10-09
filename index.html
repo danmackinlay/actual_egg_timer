@@ -316,6 +316,23 @@
         </div>
       </fieldset>
 
+      <!-- The alarm's sound (DECISIONS.md 101). Choosing one plays it. -->
+      <fieldset class="setting" aria-labelledby="lblAlarm">
+        <div class="setting__head">
+          <span id="lblAlarm" data-copy="controls.alarm"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreAlarm" data-label="controls.alarm"></button>
+        </div>
+        <p id="moreAlarm" class="disclosed" hidden data-copy="controls.alarm.more"></p>
+        <div class="seg">
+          <input type="radio" name="alarm" id="alarmTimer" value="timer">
+          <label for="alarmTimer" data-copy="controls.alarm.timer"></label>
+          <input type="radio" name="alarm" id="alarmCuckoo" value="cuckoo">
+          <label for="alarmCuckoo" data-copy="controls.alarm.cuckoo"></label>
+          <input type="radio" name="alarm" id="alarmHen" value="hen">
+          <label for="alarmHen" data-copy="controls.alarm.hen"></label>
+        </div>
+      </fieldset>
+
       <div class="setting pan-only">
         <div class="setting__line">
           <span class="setting__head">

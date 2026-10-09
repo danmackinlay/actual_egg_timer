@@ -19,7 +19,7 @@
 import { stepPast } from '../core/units.js';
 import { whenAnswerLands, whenCookSurfaceLands } from './answer.js';
 import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './calibration.js';
-import { setMuted } from './clock.js';
+import { setAlarmSound, setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
   cookElsewhere, cookOpen, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset, restoreCook,
@@ -94,6 +94,7 @@ export function boot(): void {
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
   setMuted(state.settings.muted);
+  setAlarmSound(state.settings.alarm);
   renderMute();
   renderVersion();
 

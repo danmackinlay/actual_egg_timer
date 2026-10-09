@@ -328,3 +328,16 @@ test('"Forget everything" in another tab is not undone by this one\'s next measu
   assert.equal(boilStoredElsewhere(BOIL_KEY), null);
   clearBoilMemory();
 });
+
+test('the alarm sound comes back as stored, and anything else, or nothing, is the wind-up timer', () => {
+  freshPage();
+  assert.equal(loadSettings(classes).alarm, 'timer', 'a fresh install');
+  saveSettings(settingsWith({ alarm: 'hen' }));
+  assert.equal(loadSettings(classes).alarm, 'hen');
+  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
+  assert.equal(loadSettings(classes).alarm, 'timer', 'a sound this version does not offer');
+  const before = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
+  delete before['alarm'];
+  storage.set(SETTINGS_KEY, JSON.stringify(before));
+  assert.equal(loadSettings(classes).alarm, 'timer', 'a record from before the choice');
+});

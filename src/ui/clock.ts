@@ -9,6 +9,8 @@
  * setInterval does not.
  */
 
+import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/policy.js';
+import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
 import { clockSpeed, nowMs, onClockChange } from './now.js';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
@@ -115,7 +117,7 @@ export function releaseScreen(): void {
 type AudioContextCtor = new () => AudioContext;
 
 let audio: AudioContext | null = null;
-let ringing: OscillatorNode[] = [];
+let ringing: AudioScheduledSourceNode[] = [];
 let muted = false;
 
 /** Silence the alarm and the blips. Muting mid-ring stops the ring. The audio
@@ -145,10 +147,134 @@ export function primeAudio(): void {
     }
   }
   if (audio.state === 'suspended') void audio.resume();
+  prepare();
 }
 
-/** One beep on the audio clock. The alarm keeps its beeps, to stop them;
- *  a blip is left to end on its own. */
+/* ------------------------------------------------------------ alarm sounds */
+
+/** The sound the cook chose (DECISIONS.md 101). */
+let sound: AlarmSound = DEFAULT_ALARM_SOUND;
+
+/** One period of each sound and moment, as the audio context's buffers, made
+ *  once: the sounds made in code take tens of milliseconds to render, and the
+ *  hen's recordings must be fetched and decoded. */
+const periods = new Map<string, AudioBuffer>();
+/** The hen's recordings as fetched, before a context exists to decode them. */
+const fetched = new Map<AlarmMoment, Promise<ArrayBuffer>>();
+const decoded = new Map<AlarmMoment, Float32Array>();
+
+/** The cook's choice, from the settings. A pull already scheduled ahead is
+ *  scheduled again in the new sound. */
+export function setAlarmSound(next: AlarmSound): void {
+  if (next === sound) return;
+  sound = next;
+  prepare();
+  armPull();
+}
+
+/** Get the chosen sound ready, without holding up the tap that asked: the
+ *  hen's files fetched and decoded, the others rendered, a moment later. */
+function prepare(): void {
+  if (sound === 'hen') {
+    for (const moment of ['pull', 'cooled'] as AlarmMoment[]) void loadRecording(moment);
+  }
+  const ctx = audio;
+  if (ctx === null) return;
+  const chosen = sound;
+  window.setTimeout(() => {
+    periodBuffer(ctx, chosen, 'pull');
+    periodBuffer(ctx, chosen, 'cooled');
+  }, 0);
+}
+
+/** One of the hen's recordings, decoded at the context's rate; null while it
+ *  cannot be (no context yet) or if it failed, which the beeps then cover.
+ *  A recording decoded after its pull was scheduled ahead in beeps puts the
+ *  hen there in their place. */
+async function loadRecording(moment: AlarmMoment): Promise<Float32Array | null> {
+  const ready = decoded.get(moment);
+  if (ready !== undefined) return ready;
+  let bytes = fetched.get(moment);
+  if (bytes === undefined) {
+    bytes = fetch(RECORDINGS[moment]).then((r) => {
+      if (!r.ok) throw new Error(`${RECORDINGS[moment]}: ${r.status}`);
+      return r.arrayBuffer();
+    });
+    // A failed fetch is asked again next time, not remembered.
+    bytes.catch(() => fetched.delete(moment));
+    fetched.set(moment, bytes);
+  }
+  const ctx = audio;
+  if (ctx === null) return null;
+  try {
+    // decodeAudioData takes the bytes for its own, so it is given a copy.
+    const buffer = await ctx.decodeAudioData((await bytes).slice(0));
+    const samples = buffer.getChannelData(0);
+    decoded.set(moment, samples);
+    if (sound === 'hen' && moment === 'pull') armPull();
+    return samples;
+  } catch {
+    return null;
+  }
+}
+
+/** One period of a sound as a buffer the context can loop, or null for a
+ *  recording not yet decoded. */
+function periodBuffer(ctx: AudioContext, of: AlarmSound, moment: AlarmMoment): AudioBuffer | null {
+  const key = `${of}-${moment}`;
+  const made = periods.get(key);
+  if (made !== undefined) return made;
+  let samples = synthPeriod(of, moment, ctx.sampleRate);
+  if (samples === null) {
+    const recording = decoded.get(moment);
+    if (recording === undefined) return null;
+    samples = recordedPeriod(recording, ctx.sampleRate, moment);
+  }
+  const buffer = toBuffer(ctx, samples);
+  periods.set(key, buffer);
+  return buffer;
+}
+
+function toBuffer(ctx: AudioContext, samples: Float32Array): AudioBuffer {
+  const buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+  buffer.getChannelData(0).set(samples);
+  return buffer;
+}
+
+/** A period looped from `at` on the audio clock, `repeats` times. */
+function loop(ctx: AudioContext, buffer: AudioBuffer, at: number, repeats: number): AudioBufferSourceNode {
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  source.connect(ctx.destination);
+  source.start(at);
+  source.stop(at + repeats * buffer.duration);
+  return source;
+}
+
+/** The sound being played once in Settings, if one is. */
+let previewing: AudioBufferSourceNode | null = null;
+
+/** Play the chosen sound once, as it rings when the cooling is done: the
+ *  cook choosing one in Settings hears it. Not a ring, so it stops nothing
+ *  but the last one played. Must be called from the tap. */
+export function previewAlarm(): void {
+  primeAudio();
+  const ctx = audio;
+  if (ctx === null) return;
+  const chosen = sound;
+  const play = (): void => {
+    const buffer = periodBuffer(ctx, chosen, 'cooled');
+    if (buffer === null || chosen !== sound) return;
+    if (previewing !== null) stopAll([previewing]);
+    previewing = loop(ctx, buffer, ctx.currentTime + 0.05, 1);
+  };
+  if (chosen === 'hen' && !decoded.has('cooled')) void loadRecording('cooled').then(play);
+  else play();
+}
+
+/** One beep on the audio clock, for a blip, which is left to end on its
+ *  own. */
 function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: number): OscillatorNode {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -166,25 +292,21 @@ function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: numbe
   return osc;
 }
 
-const BURST_PERIOD_S = 1.6;
-const BURSTS = 25;
-
-/** The alarm's beeps from `base` on the audio clock: two short, and a third
- *  higher when it is urgent, every 1.6 s for ~40 s. */
-function scheduleRing(ctx: AudioContext, base: number, urgent: boolean): OscillatorNode[] {
-  const beeps: OscillatorNode[] = [];
-  for (let i = 0; i < BURSTS; i += 1) {
-    const at = base + i * BURST_PERIOD_S;
-    beeps.push(scheduleBeep(ctx, at, 880, 0.14));
-    beeps.push(scheduleBeep(ctx, at + 0.2, 880, 0.14));
-    if (urgent) beeps.push(scheduleBeep(ctx, at + 0.4, 1175, 0.2));
-  }
-  return beeps;
+/** The alarm from `base` on the audio clock: the chosen sound's period,
+ *  looped for ~40 s (`alarmRepeats`). The hen's, while its recording is not
+ *  yet decoded or could not be fetched, is the beeps the sounds replaced, so
+ *  that an alarm always rings. */
+function scheduleRing(ctx: AudioContext, base: number, urgent: boolean): AudioScheduledSourceNode[] {
+  const moment: AlarmMoment = urgent ? 'pull' : 'cooled';
+  const buffer = periodBuffer(ctx, sound, moment);
+  if (buffer !== null) return [loop(ctx, buffer, base, alarmRepeats(sound, moment))];
+  const beeps = toBuffer(ctx, beepsPeriod(moment, ctx.sampleRate));
+  return [loop(ctx, beeps, base, Math.round(ALARM_RING_S / beeps.duration))];
 }
 
-/** Ring until stopped (or for ~40 s, whichever comes first). Every beep is
- *  scheduled up front on the audio clock so the alarm still sounds if the tab
- *  is backgrounded mid-ring. */
+/** Ring until stopped (or for ~40 s, whichever comes first). The whole ring
+ *  is scheduled up front on the audio clock so the alarm still sounds if the
+ *  tab is backgrounded mid-ring. */
 export function ringAlarm(urgent: boolean): void {
   primeAudio();
   const ctx = audio;
@@ -193,7 +315,7 @@ export function ringAlarm(urgent: boolean): void {
   ringing = scheduleRing(ctx, ctx.currentTime + 0.05, urgent);
 }
 
-function stopAll(beeps: OscillatorNode[]): void {
+function stopAll(beeps: AudioScheduledSourceNode[]): void {
   for (let i = 0; i < beeps.length; i += 1) {
     try {
       beeps[i].stop();
@@ -224,8 +346,8 @@ export function stopAlarm(): void {
  */
 const pull = {
   at_ms: null as number | null,
-  /** The beeps scheduled, and where on the audio clock they start. */
-  beeps: [] as OscillatorNode[],
+  /** The ring scheduled, and where on the audio clock it starts. */
+  beeps: [] as AudioScheduledSourceNode[],
   start: 0,
 };
 

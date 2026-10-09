@@ -8,9 +8,9 @@ import { eggFromMass } from '../core/geometry.js';
 import { Cooling } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
 import { Quantity, UnitSystem, chooseUnits, parse } from '../core/units.js';
-import { DEFAULTS, targetPeakYolk_C } from '../core/policy.js';
+import { ALARM_SOUNDS, DEFAULTS, readAlarmSound, targetPeakYolk_C } from '../core/policy.js';
 import { LANGUAGES, languageAfterFlip, languageAfterPick } from '../core/language.js';
-import { setMuted } from './clock.js';
+import { previewAlarm, setAlarmSound, setMuted } from './clock.js';
 import { applyUnitsToDom, labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
 import { renderMute } from './render.js';
@@ -66,6 +66,19 @@ export function onToggleMute(): void {
   setMuted(state.settings.muted);
   writeSettings();
   renderMute();
+}
+
+/** The cook picks an alarm sound, and hears it: the pick is the moment
+ *  they want to know what they chose. It plays with the sound off too, since
+ *  they asked for it. Like the sound itself, a setting about the kitchen, not
+ *  the egg, so it holds mid-cook. */
+function onAlarmSound(value: string): void {
+  const sound = readAlarmSound(value);
+  state.settings.alarm = sound;
+  state.controls.alarm = sound;
+  setAlarmSound(sound);
+  previewAlarm();
+  writeSettings();
 }
 
 /** The controls read back into what they show (`state.controls`): the
@@ -143,6 +156,10 @@ export function onInput(event: Event): void {
     if (event.type === 'change' && LANGUAGES.includes(target.value)) {
       setLanguage(languageAfterPick(state.settings.language, target.value));
     }
+    return;
+  }
+  if (target instanceof HTMLInputElement && target.name === 'alarm') {
+    if (event.type === 'change' && (ALARM_SOUNDS as string[]).includes(target.value)) onAlarmSound(target.value);
     return;
   }
   readInputs(target);

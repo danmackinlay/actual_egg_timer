@@ -12,11 +12,12 @@ import UIKit.UIGestureRecognizerSubclass
 /// rings at each deadline itself. `Cook` decides WHEN, through the tested rule
 /// in EggTimerCore (`deadlineToRing`); this only makes the noise.
 ///
-/// The sound is the web app's (`src/ui/clock.ts`, `ringAlarm`), generated here
-/// rather than shipped as a file: two 880 Hz beeps every 1.6 s, with a third,
-/// higher one at the pull, which is the urgent moment. It rings for up to 40 s,
-/// as the web's does, and stops as soon as the cook does anything - touches the
-/// screen anywhere, taps the pull button or Cancel, or leaves the app. Up to 40
+/// The sound is the one the cook chose (`AlarmSoundChoice`), the web's
+/// (`src/ui/alarmSounds.ts`), from the file the notification plays: whole
+/// periods of its pattern, the urgent form at the pull, looped. It rings for
+/// up to 40 s (`alarmRingS`), as the web's does, and stops as soon as the cook
+/// does anything - touches the screen anywhere, taps the pull button or
+/// Cancel, or leaves the app. Up to 40
 /// s rather than until answered, because an unattended phone beeping for ever
 /// in an empty kitchen helps nobody, and the screen still says what to do when
 /// they come back; rather than one short chime, because a cook across the room
@@ -35,11 +36,6 @@ final class Ringer {
     private var buzzing: Task<Void, Never>?
     private var touch: AnyTouch?
     private let log = Logger(subsystem: "name.danmackinlay.actualeggtimer", category: "ring")
-
-    /// The web app's pattern: `BURST_PERIOD_S` and `BURSTS` in clock.ts.
-    private static let burstPeriodS = 1.6
-    private static let bursts = 25
-    private static let sampleRate = 44_100.0
 
     private init() {
         onScreenSince = UIApplication.shared.applicationState == .background ? nil : AppClock.now
@@ -74,6 +70,40 @@ final class Ringer {
         guard onScreenSince != nil else { return }
         log.notice("ringing for \(deadline.rawValue, privacy: .public): no notification holds it")
 
+        let sound = AlarmSoundChoice.shared.sound
+        play(Self.buffer(sound, deadline), loops: true)
+
+        // Each period vibrates; the last one ends the ring.
+        let period = alarmPeriodS(sound, deadline)
+        let repeats = alarmRepeats(sound, deadline)
+        buzzing = Task { [weak self] in
+            for _ in 0..<repeats {
+                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+                try? await Task.sleep(for: .seconds(period))
+                if Task.isCancelled { return }
+            }
+            self?.stop()
+        }
+        listenForAnyTouch()
+    }
+
+    /// The sound played once, as it rings when the cooling is done, for the
+    /// cook choosing it in Settings. Through the silent switch, as the ring
+    /// is, since the cook asked to hear it; no vibration, and a touch does
+    /// not stop it, since the touch is what chose it.
+    func preview(_ sound: AlarmSound) {
+        stop()
+        play(Self.buffer(sound, .cooled, periods: 1), loops: false)
+        let period = alarmPeriodS(sound, .cooled)
+        buzzing = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(period))
+            if Task.isCancelled { return }
+            self?.stop()
+        }
+    }
+
+    /// Play a buffer on an engine of its own.
+    private func play(_ buffer: AVAudioPCMBuffer?, loops: Bool) {
         // .playback, so the alarm sounds with the silent switch on. The switch
         // is for sounds nobody asked for - ringtones, other apps' alerts - and
         // this is a timer the cook set and was told to keep the app open for;
@@ -90,35 +120,25 @@ final class Ringer {
         } catch {
             log.error("audio session: \(error.localizedDescription, privacy: .public)")
         }
-
         let engine = AVAudioEngine()
         let player = AVAudioPlayerNode()
-        if let format = AVAudioFormat(standardFormatWithSampleRate: Self.sampleRate, channels: 1),
-           let burst = Self.burst(urgent: deadline == .pull, format: format) {
+        if buffer == nil { log.error("no sound to play: its file is missing or unreadable") }
+        if let buffer {
+            log.notice("playing \(buffer.frameLength) frames at \(buffer.format.sampleRate) Hz\(loops ? ", looped" : "", privacy: .public)")
             engine.attach(player)
-            engine.connect(player, to: engine.mainMixerNode, format: format)
+            engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
             #if DEBUG
             if Screenshots.muteAudio { engine.mainMixerNode.outputVolume = 0 }
             #endif
             do {
                 try engine.start()
-                player.scheduleBuffer(burst, at: nil, options: .loops)
+                player.scheduleBuffer(buffer, at: nil, options: loops ? .loops : [])
                 player.play()
             } catch {
                 log.error("audio engine: \(error.localizedDescription, privacy: .public)")
             }
         }
         self.engine = engine
-
-        buzzing = Task { [weak self] in
-            for _ in 0..<Self.bursts {
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-                try? await Task.sleep(for: .seconds(Self.burstPeriodS))
-                if Task.isCancelled { return }
-            }
-            self?.stop()
-        }
-        listenForAnyTouch()
     }
 
     func stop() {
@@ -146,37 +166,19 @@ final class Ringer {
         touch = recogniser
     }
 
-    /// One period of the pattern, looped by the player: beeps at 0, 0.2 and (at
-    /// the pull) 0.4 s, then silence to 1.6 s. Triangle waves with ramped edges,
-    /// as the web's are - a square-edged gate clicks.
-    private static func burst(urgent: Bool, format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        let frames = AVAudioFrameCount(burstPeriodS * sampleRate)
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames),
-              let samples = buffer.floatChannelData?[0] else { return nil }
-        buffer.frameLength = frames
-        for i in 0..<Int(frames) { samples[i] = 0 }
-
-        var beeps: [(at: Double, hz: Double, length: Double)] = [(0, 880, 0.14), (0.2, 880, 0.14)]
-        if urgent { beeps.append((0.4, 1175, 0.2)) }
-        let peak = 0.35, floor = 0.0001, attack = 0.012, release = 0.03
-        for beep in beeps {
-            let first = Int(beep.at * sampleRate)
-            let count = Int(beep.length * sampleRate)
-            for n in 0..<count where first + n < Int(frames) {
-                let t = Double(n) / sampleRate
-                let gain: Double
-                if t < attack {
-                    gain = floor * pow(peak / floor, t / attack)
-                } else if t < beep.length - release {
-                    gain = peak
-                } else {
-                    gain = peak * pow(floor / peak, (t - (beep.length - release)) / release)
-                }
-                let cycle = (t * beep.hz).truncatingRemainder(dividingBy: 1)
-                let triangle = 4 * abs(cycle - 0.5) - 1
-                samples[first + n] += Float(gain * triangle)
-            }
-        }
+    /// A sound's file for a moment, or its first `periods` periods, read
+    /// whole: whole periods, so it loops without a seam. Nil if the file is
+    /// missing or unreadable, and the ring is then only the vibration.
+    private static func buffer(_ sound: AlarmSound, _ moment: RingDeadline, periods: Int? = nil) -> AVAudioPCMBuffer? {
+        let name = AlarmSoundChoice.file(sound, moment)
+        guard let url = Bundle.main.url(forResource: name, withExtension: nil),
+              let file = try? AVAudioFile(forReading: url) else { return nil }
+        let whole = AVAudioFrameCount(file.length)
+        let frames = periods.map {
+            min(whole, AVAudioFrameCount((Double($0) * alarmPeriodS(sound, moment) * file.processingFormat.sampleRate).rounded()))
+        } ?? whole
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: frames),
+              (try? file.read(into: buffer, frameCount: frames)) != nil else { return nil }
         return buffer
     }
 }

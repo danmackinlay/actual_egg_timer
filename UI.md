@@ -119,8 +119,8 @@ its debug log (`egg aim|live|ran`):
 `ios/App/Edits.swift`). After
 Start every clause of the sentence, the slider and Settings' pot rows stay
 open, showing the cook's own choices, never the settings (another tab's
-settings touch only the units, the language and the sound while a cook
-runs). A change is a correction, "it was always like this": the cook is
+settings touch only the units, the language and the sound, and which sound,
+while a cook runs). A change is a correction, "it was always like this": the cook is
 planned again from its start. It is committed on release of the slider or
 of a − or + held long enough to repeat, after a 1.5-s settle for anything
 else (a choice, a tap, a number typed), and at once when another control
@@ -159,6 +159,9 @@ Nothing past the question is shown or rung until it is answered.
 - Heat after the boil: keep boiling, or heat off and lid on.
 - The probe thermometer: "ask for a reading after each egg".
 - Language: English or English (1750) (`LANGUAGE.md` §6).
+- Alarm sound: Wind-up timer, the default, Cuckoo clock or Hen (`DECISIONS.md`
+  101, the `alarm` draft). Choosing one plays it once, as it rings when the
+  cooling is done; its (i) credits the hen's two recordings.
 - What I've learned (`learned.literature`, `.tuned`, `.pan` or `.both`), and
   Forget, which asks first, in place (`learned.confirm.*`).
 - Sharing results (E6, the `share` draft; the `data` draft named it), with

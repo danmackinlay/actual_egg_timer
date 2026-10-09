@@ -79,6 +79,23 @@ struct SettingsView: View {
                 .labelsHidden()
             }
 
+            // The alarm's sound (DECISIONS.md 101). Choosing one plays it.
+            Section {
+                InfoRow(name: about("controls.alarm"), more: [tr("controls.alarm.more")]) {
+                    Text(tr("controls.alarm"))
+                }
+                Picker(tr("controls.alarm"), selection: Binding(
+                    get: { AlarmSoundChoice.shared.sound },
+                    set: { AlarmSoundChoice.shared.pick($0) }
+                )) {
+                    Text(tr("controls.alarm.timer")).tag(AlarmSound.timer)
+                    Text(tr("controls.alarm.cuckoo")).tag(AlarmSound.cuckoo)
+                    Text(tr("controls.alarm.hen")).tag(AlarmSound.hen)
+                }
+                .segmented()
+                .labelsHidden()
+            }
+
             if !planner.isSousVide {
                 Section {
                     InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
