@@ -3,15 +3,16 @@
 # two but the iOS build.
 #
 # web, on Linux (quick to start): the type checks, the tests, the
-# validation table (`npm run validate`) and the Swift copy lint.
+# validation table (`npm run validate`), the Swift copy lint, and fixtures
+# that match a fresh `npm run fixtures`. The same TypeScript on x86 Linux
+# differs from arm64 macOS, where the fixtures are made, in the last bit of
+# some numbers, so the check holds numbers to Swift's conformance tolerance
+# rather than to the byte (tools/fixtureCompare.ts).
 #
-# apple, on macOS: fixtures that match a fresh `npm run fixtures`, the Swift
-# core against them (`swift test`, against the Foundation the apps are built
-# with), then `npm run ios:build`, the app and its widget built for the
-# simulator, unsigned, which `swift test` does not reach. The fixtures are
-# checked here, not on Linux: they pin numbers to the last bit, and the same
-# TypeScript on x86 Linux differs from arm64 macOS, where they are made, in
-# the last digit of some (seen 4 October 2026).
+# apple, on macOS: the Swift core against the committed fixtures (`swift
+# test`, against the Foundation the apps are built with), then `npm run
+# ios:build`, the app and its widget built for the simulator, unsigned,
+# which `swift test` does not reach.
 #
 # ios-e2e, on macOS, once apple has passed: `npm run ios:e2e`, the app driven
 # through its 16 scenarios on a simulator of the script's own, its clock
@@ -60,6 +61,7 @@ jobs:
       - run: npm test
       - run: npm run validate
       - run: npm run copy:literals
+      - run: npm run fixtures:check
 
   apple:
     runs-on: macos-latest
@@ -69,7 +71,6 @@ jobs:
         with:
           node-version-file: .node-version
       - run: npm ci
-      - run: npm run fixtures:check
       - run: cd ios/EggTimerCore && swift test
       - run: brew install xcodegen
       - run: npm run ios:build

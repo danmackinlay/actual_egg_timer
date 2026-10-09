@@ -26,7 +26,7 @@
     "copy:queue": "node tools/build.mjs && node dist/tools/copyQueue.js queue",
     "copy:approve": "node tools/build.mjs && node dist/tools/copyQueue.js approve",
     "copy:review": "node tools/build.mjs && node dist/tools/copyReview.js",
-    "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/ && test -z \"$(git ls-files --others --exclude-standard -- fixtures/)\"",
+    "fixtures:check": "npm run fixtures && node dist/tools/fixturesCheck.js",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "npm run build && npm test && npm run validate && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "ios:archive": "node tools/iosArchive.mjs",
