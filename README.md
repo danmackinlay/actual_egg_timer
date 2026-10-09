@@ -883,8 +883,8 @@ half-minute of error.
 npm install
 npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest
 npm test           # node --test
-npm run verify     # the gate: build, test, copy:literals, fixtures:check and swift test
-npm run validate   # prints the validation table in §7
+npm run verify     # the gate: build, test, validate, copy:literals, fixtures:check and swift test
+npm run validate   # prints the validation table in §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
 npm run decide     # measures the choice of cook time (tools/decide.ts)

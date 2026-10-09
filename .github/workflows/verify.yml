@@ -2,8 +2,8 @@
 # side, and a fifth after the second. `npm run verify` locally is the first
 # two but the iOS build.
 #
-# web, on Linux (quick to start): the type checks, the tests and the Swift
-# copy lint.
+# web, on Linux (quick to start): the type checks, the tests, the
+# validation table (`npm run validate`) and the Swift copy lint.
 #
 # apple, on macOS: fixtures that match a fresh `npm run fixtures`, the Swift
 # core against them (`swift test`, against the Foundation the apps are built
@@ -58,6 +58,7 @@ jobs:
         run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
       - run: npm run build
       - run: npm test
+      - run: npm run validate
       - run: npm run copy:literals
 
   apple:

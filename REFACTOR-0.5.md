@@ -96,8 +96,9 @@ gate could catch it.
       renamed or the packages change, which `tsc -b` alone gets wrong.
       `build:site` copies the app's part of that build (`sitePaths.mjs`),
       byte for byte what `tsconfig.site.json` emitted, which is gone.
-- [ ] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
-      PLAN as if it were a gate. S.
+- [x] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
+      PLAN as if it were a gate. S. *Done:* in `verify` and CI's web job;
+      it takes about 4 s.
 - [ ] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
       imports live app modules 25 times and reads `state` directly, so the
       refactor it should protect breaks it. Load the dev clock (`now.ts`,

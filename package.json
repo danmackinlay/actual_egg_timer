@@ -25,7 +25,7 @@
     "copy:snapshot": "node tools/build.mjs && node dist/tools/copySnapshot.js",
     "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/ && test -z \"$(git ls-files --others --exclude-standard -- fixtures/)\"",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
-    "verify": "npm run build && npm test && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
+    "verify": "npm run build && npm test && npm run validate && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "ios:archive": "node tools/iosArchive.mjs",
     "ios:upload": "node tools/iosUpload.mjs",
     "ios:e2e": "node tools/iosE2e.mjs",
