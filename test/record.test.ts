@@ -708,7 +708,7 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
 
-test('4b5. a nudged cook is recorded as the time recommended and the nudge, apart', () => {
+test('4b4. a nudged cook is recorded as the time recommended and the nudge, apart', () => {
   // The plan runs the nudged time; the record splits it, and scores an egg
   // nobody pulled at the time that actually ran.
   const cook = cookOf({}, -7);
@@ -720,7 +720,7 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
   assert.notEqual(parseRecord(r), null);
 });
 
-test('4b4. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
+test('4b5. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
   const cook = cookOf();
   const interim = replan(cook, C4, null, 0, S0);
   assert.equal(webRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record (review 1.3)');

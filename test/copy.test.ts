@@ -91,14 +91,14 @@ test('1e. a word set mid-sentence loses its first capital and keeps the rest', (
   assert.equal(midSentence('', 'en'), '');
 });
 
-test('1e. a CopyRef from core renders with the app\'s extra arguments', () => {
+test('1f. a CopyRef from core renders with the app\'s extra arguments', () => {
   assert.equal(renderRef(EN, { key: 'sousvide.start.lastWeekday', args: {} }, { weekday: 'Tuesday' }),
     'Last Tuesday');
   assert.equal(renderRef(EN, { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } }),
     '22 h 43 min');
 });
 
-test('1f. a malformed catalogue is refused, naming the key', () => {
+test('1g. a malformed catalogue is refused, naming the key', () => {
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { a: { count: 'n', one: 'x' } } }), /a:/);
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { b: {} } }), /b:/);
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { c: { text: 'x', one: 'y' } } }), /c:/);

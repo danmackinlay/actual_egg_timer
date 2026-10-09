@@ -96,7 +96,7 @@ test('3. the synthetic attestation is this app\'s, bound to the cook\'s id', () 
   assert.equal(kp.environment, 'production');
 });
 
-test('3b. only a key from production vouches for a genuine copy of the app (DECISIONS.md 68)', () => {
+test('3b. only a key from production vouches for a genuine copy of the app', () => {
   assert.equal(countsAsGenuine('production'), true, 'TestFlight and the App Store');
   assert.equal(countsAsGenuine('development'), false, 'a build installed from Xcode');
   assert.equal(countsAsGenuine(''), false);
