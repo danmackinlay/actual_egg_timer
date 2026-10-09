@@ -11,8 +11,7 @@
  * a new build when it comes back into view, at most once an hour.
  *
  * Only the built site has a service worker: tools/precache.mjs writes it and
- * names it in index.html's <meta name="service-worker">. The repo root,
- * served as it is, has neither, and runs online only.
+ * names it in index.html's <meta name="service-worker">.
  *
  * A browser keeps a service worker whose file has gone, and would answer
  * from its last build for ever. So when the page looks for a new build, it
@@ -21,7 +20,7 @@
  * afresh from the network (again, never during a cook). Taking the worker
  * out of the site is deleting sw.js, and nothing more: a browser lets it go
  * at its next visit online. The same goes for another site later served at
- * the same address, such as the repo root on a port the built site used.
+ * the same address.
  */
 
 import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.js';

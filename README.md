@@ -900,7 +900,6 @@ npm run copy:review      # the same, as copy-review.html, to read on a phone
 npm run copy:approve -- <key…|--all>   # stamp today's English as approved
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
-npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
