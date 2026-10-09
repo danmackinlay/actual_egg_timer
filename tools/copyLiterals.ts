@@ -258,7 +258,7 @@ const NOT_COPY: Record<string, string> = {
   ' {} {} | {} | {}': 'debug log of one frame of the readout (Screenshots.log), never shown',
   uiScrollAnchor: 'debug launch argument',
   'verdict {} white sets {} cook {}': 'debug log (Screenshots.log), never shown',
-  // the one screen's review on iOS (design/onescreen-review.md), its checks
+  // the one screen's review on iOS (archive/design/onescreen-review.md), its checks
   'certainty {}': 'debug log (Screenshots.log), never shown',
   '{} | {}': 'debug log of the certainty line (Screenshots.log), never shown',
   'white {}': 'debug log (Screenshots.log), never shown',

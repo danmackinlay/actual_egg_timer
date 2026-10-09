@@ -58,9 +58,9 @@
  * points, as the slider is on a drag, is held between those two points'
  * times (`envelopeBounds`). So the time is monotone at the points, and
  * within about a second of it between them: the choice can dip inside the
- * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does (REVIEW-0.4.x, and
- * DECISIONS.md 84, which accepts it). A drag costs what it did: its own
- * decision, and a look-up. What
+ * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does
+ * (archive/REVIEW-0.4.x.md, and DECISIONS.md 84, which accepts it). A drag
+ * costs what it did: its own decision, and a look-up. What
  * the sampling misses is a dip in the choices narrower than the step between
  * points; the time it gives there is within one step's change of the
  * choice, a few seconds. A bisection point is held between its neighbours,
@@ -82,7 +82,7 @@
  * chosen, the solve re-read there, the outcome and the certainty there, and
  * whether the word asked is a wild guess there, so advice is looked for. Until 6 October 2026 each
  * app wrote it out for itself, and DECISIONS.md 84 had to land twice
- * (REVIEW-0.4.x, "Bloat and factoring" 1).
+ * (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
  *
  * THE WARNING. A level that is a wild guess at its time (`certaintyAt`'s
  * class: the word asked and its neighbours together under 9 times in 10) is

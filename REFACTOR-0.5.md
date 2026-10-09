@@ -265,13 +265,17 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Repo, docs, branches
 
-- [ ] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
+- [x] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
       WORKLIST (795, "every item is done"), FOLLOWUP (0 open), REVIEW-0.4.x,
       SHIP-0.4 once 0.4 ships, and the three design reviews with
       near-identical names (`one-screen-review.md`, `onescreen-review.md`,
       `running-cook-review.md`). Fix PLAN's map (it omits three files) and
       PLAN.md:40 ("on this branch, `0.4.x`"). Already decided for
-      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S.
+      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S. *WORKLIST and
+      FOLLOWUP deleted (in git at `14603cd`); REVIEW-0.4.x and the three
+      reviews in `archive/`. SHIP-0.4 stays: its open release items (the
+      privacy page's OWNER marks, App Privacy, App Attest) are 0.5's now.
+      PLAN's map is the merging session's (DECISIONS 104).*
 - [ ] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
       perturbed, decide (INFERENCE §8's numbers), shape-study, into
       `studies/` with their own tsconfig, out of the default build, each

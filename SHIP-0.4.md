@@ -227,7 +227,7 @@ so is the label's **Not Linked** (74).
 
 Kept here so a new session can pick up without this conversation.
 
-1. [x] (done 47f098c; its OWNER questions remain, see 1b) **Action `REVIEW-0.4.x.md`** (the owner's adversarial review, committed
+1. [x] (done 47f098c; its OWNER questions remain, see 1b) **Action `archive/REVIEW-0.4.x.md`** (the owner's adversarial review, committed
        on this branch): first "Fix before 0.4 ships" (multi-tab writes, the
        raw-JSON write-back, the ID that is also the password), then security,
        the privacy page against the code, data safety, decision logic,
@@ -248,7 +248,7 @@ Kept here so a new session can pick up without this conversation.
        through only when none of it can be reached (bb1cc9d). Open for the
        owner: show the probe field even when the probe setting is off (it
        does now)?
-1d. [x] (merged 293963d) **The QA agent's second pass** (REVIEW-0.4.x.md, "Second pass"),
+1d. [x] (merged 293963d) **The QA agent's second pass** (archive/REVIEW-0.4.x.md, "Second pass"),
        on three branches merged by the session that sent them: `qa2-tabs`
        (the two-tab write loop, a start-time ID per record, boil memory
        across tabs, a timeout on the send, the rollback claim),

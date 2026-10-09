@@ -468,7 +468,7 @@ public func protocolAdvice(
 
 /// The answer at a level, with its time decided on the pot's surface: what
 /// the screen shows, and what a cook started now carries. Both apps' one
-/// copy of it (REVIEW-0.4.x, "Bloat and factoring" 1).
+/// copy of it (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
 public struct DecidedAnswer: Sendable {
     /// The level decided for: the answer's (`LevelAnswer.level`), after any
     /// snap. The advice is priced here, against the chance of the word asked

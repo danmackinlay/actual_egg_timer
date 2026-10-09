@@ -42,7 +42,7 @@ core's exports.
       store's `t` column is still written, at 1.0, and never read, so the
       key and its format stay (`DECISIONS.md` 81); the fit and its sample;
       `npm run sbc` ranks seven quantities. `LOGBOOK.md`, 6 October 2026.
-- [x] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
+- [x] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `archive/REVIEW-0.4.x.md`,
       Bloat 1). `decided()` is written twice (`src/ui/app.ts`,
       `ios/App/Planner+Solve.swift`); `DECISIONS.md` 84 had to land as two
       commits. One core function, fixtured.
@@ -179,7 +179,7 @@ core's exports.
       no surface, the pull held at the last correction or tap
       (`correctedAt_s`) rather than at now, `coldSince_s` for the boil
       memory, no `cooledAt` on the counter.
-- [x] **C2, the review applied** (`design/one-screen-review.md`,
+- [x] **C2, the review applied** (`archive/design/one-screen-review.md`,
       `DECISIONS.md` 98), core and design only, no screen or storage key
       changed: a timeout pull asks whether the egg is still in the water
       (`askIfStillIn`, `stillIn`, `pullStands`); a late boil tap after a
@@ -209,7 +209,7 @@ core's exports.
         description in its `ContentState`; a later probe reading scored
         against the record logged at the answer. Driven on the simulator
         (`LOGBOOK.md`, 7 October 2026).
-- [x] **C2, red-teamed as built** (`design/running-cook-review.md`), core's
+- [x] **C2, red-teamed as built** (`archive/design/running-cook-review.md`), core's
       findings: the slow hob starts where the last plan got to, the same plan
       to the bit, one solve a plan (2.1, `94c2f69`); nothing passes an open
       question about the pull (3, `3ecc07c`); the cook as it ran kept from
@@ -315,7 +315,7 @@ core's exports.
         with no change, `cook.summary` retired. `npm run ios:e2e`: 31
         scenarios, 15 of them new, the web's where iOS can drive them, all
         passing.
-  - [x] *Red-teamed as built* (`design/onescreen-review.md`), core's and
+  - [x] *Red-teamed as built* (`archive/design/onescreen-review.md`), core's and
         the web's findings fixed (9 October 2026): core's rules for a
         correction after Done (Done kept) and in the grace (the ring kept
         while still due), the cook as it ran for Done's note, an ending
@@ -380,10 +380,13 @@ answer did not make. Waiting on the owner.
       hand copy of `netlify.toml`'s)? Deleted (the owner, 7 October 2026:
       "delete it we can add vercel later if needed"), with README §10's
       Vercel lines, `netlify.toml`'s note and `tools/precache.mjs`'s.
-- [ ] `WORKLIST.md` and `FOLLOWUP.md`, closed records: move to `LOGBOOK.md`,
+- [x] `WORKLIST.md` and `FOLLOWUP.md`, closed records: move to `LOGBOOK.md`,
       or delete? Decided 7 October 2026: kept until the owner has reviewed
       `tidy2` (FOLLOWUP §5, §4.2), then deleted, with their citations
-      fixed; `LOGBOOK.md` records what came of them.
+      fixed; `LOGBOOK.md` records what came of them. Deleted with
+      `REFACTOR-0.5.md` 2.15: the owner read every string at `e3a81cb`,
+      after `tidy2`, and what changed since is in the copy review queue
+      (`DECISIONS.md` 106).
 - [x] Finished drafts compiled on every build: leave, or move out? Left
       (the owner, 7 October 2026): each imports only `copyDraft.ts`'s
       types, so they cost build time, and a change only if `Draft` does.
@@ -409,5 +412,5 @@ design (C1) is answered (`DECISIONS.md` 96, 97), so C2 can start.
 1. **A7's time range** stays as built, the right cook time's 90%
    interval, until real eggs say how it reads (the owner: "will only have
    a good sense for this from empirical evidence").
-2. **E**: `WORKLIST.md` and `FOLLOWUP.md` go after the owner's `tidy2`
-   review.
+2. **E**: `WORKLIST.md` and `FOLLOWUP.md` are gone (`REFACTOR-0.5.md`
+   2.15).
