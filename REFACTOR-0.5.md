@@ -204,11 +204,14 @@ gate could catch it.
 Only one old format is on real users' devices: 0.3's `calibration.v4`, the
 eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
-- [ ] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
+- [x] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
       / iOS `cookInProgress.v2`; the single-string unread-cook readers
       (`calibrationStore.ts:408, 427`, `Calibration.swift:480`);
       `aet.calibration.v3`; `Attest.madeAt` optional; AppClock's
       `-clockOffset`/`-clockEpoch` older form; the e2e `upgrade` scenario. S.
+      *The readers, keys and scenario went with 107's sweep (their keys stay
+      on its list); left were `madeAt`'s old-record default and the older
+      clock arguments, gone in the commit that ticks this.*
 - [x] **2.6 Old cooks kept aside that nothing reads.** `takeOldCooks`,
       `keepUnreadCook`, iOS `oldKeys` / `unreadCookKey`: `eggsImport.ts:152`
       passes them over. Delete; keep only iOS ending old Live Activity cards.

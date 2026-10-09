@@ -180,8 +180,6 @@ const NOT_COPY: Record<string, string> = {
   // the debug clock (ios/App/AppClock.swift) and what the scripted checks
   // read and tap with (tools/iosE2e.mjs)
   clockSpeed: 'debug launch argument',
-  clockOffset: 'debug launch argument',
-  clockEpoch: 'debug launch argument',
   clockAt: 'debug launch argument',
   'aet.clock': 'the file the debug clock is stepped through, never shown',
   'clock {} at {} speed {}': 'debug log (Screenshots.log), never shown',

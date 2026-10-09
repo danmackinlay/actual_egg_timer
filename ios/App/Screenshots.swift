@@ -52,15 +52,13 @@ import EggTimerCore
 ///   launched is stepped from outside: a line `<n> <at> <speed>` written to
 ///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
 ///   it on at `speed`, and the log says `clock <n> …` once it has. The
-///   scripted checks freeze it at each moment they check. The older
-///   `-clockSpeed 60 -clockOffset -900 -clockEpoch 1791234567`, passed again
-///   at every launch, carries one fast clock on through a relaunch. Sharing
-///   sends nothing under any of them.
+///   scripted checks freeze it at each moment they check. Sharing sends
+///   nothing under either.
 /// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
 ///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
 ///   past its guesses, or a cook about to be too old, on screen. The cook
-///   moved, not the clock: `-clockOffset` moves the clock instead, which
-///   needs a cook stored to move past.
+///   moved, not the clock: `-clockAt` moves the clock instead, which needs
+///   a cook stored to move past.
 /// - `-doneAgo 3590`: with `-uiScreen done`, the cooling ended that many
 ///   seconds ago rather than 2.
 /// - `-uiAnswer jammy`, `jammy/tender`, `/firm`: at Done, answer the yolk,

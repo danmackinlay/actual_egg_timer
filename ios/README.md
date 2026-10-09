@@ -437,9 +437,7 @@ wraps around it.
 Every read of the time a cook depends on goes through `App/AppClock.swift`. A
 Release build is the system's clock and nothing else. A Debug build takes
 `-clockAt <epoch s>` (cook time at launch) and `-clockSpeed` (60 runs it sixty
-times as fast; 0 freezes it), or the older `-clockOffset -900` and
-`-clockEpoch <epoch s>`, which passed the same at every launch carry one fast
-clock through a relaunch. A clock so launched can be stepped while the app
+times as fast; 0 freezes it). A clock so launched can be stepped while the app
 runs: a line `<n> <at> <speed>` written to `Library/Caches/aet.clock` in the
 app's container moves cook time to `at` and runs it on at `speed`, and the
 debug log says `clock <n> …` once it has. Under a running clock the

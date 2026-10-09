@@ -39,9 +39,8 @@ final class Sharing {
         /// again rather than attested again.
         var attestation: String?
         var status: Status
-        /// When Apple made `attestation`. Its certificate is good for a few
-        /// days, so one posted later is refused; absent in what an earlier
-        /// build kept.
+        /// When Apple made `attestation`, set with it. Its certificate is
+        /// good for a few days, so one posted later is refused.
         var madeAt: Date?
         /// How many busy answers - the server's or Apple's - or signatures
         /// the phone could not make it has had, and when the first came:
@@ -326,7 +325,7 @@ final class Sharing {
                 // the next run, for a while.
                 return waited(a)
             case .refused:
-                if status == 400, a.madeAt.map({ AppClock.system.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
+                if status == 400, let made = a.madeAt, AppClock.system.timeIntervalSince(made) > Self.attestationFresh {
                     // Posted days after Apple made it - the phone was offline -
                     // and refused, most likely for its certificate's date: a
                     // new key, attested now, on the next run.
