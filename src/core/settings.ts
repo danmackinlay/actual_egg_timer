@@ -52,7 +52,7 @@ export interface Settings {
   doneness: number;
   /** The web's: no alarm, no blips. The countdown still runs. */
   muted: boolean;
-  /** Which sound the alarm makes (`ALARM_SOUNDS`, DECISIONS.md 101). */
+  /** Which sound the alarm makes (`ALARM_SOUNDS`). */
   alarm: AlarmSound;
   /** Metric or Imperial as the cook chose it, or null if they never have:
    *  not the system on screen, which falls back to the region's
