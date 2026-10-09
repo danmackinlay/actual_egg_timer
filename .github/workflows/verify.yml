@@ -20,9 +20,7 @@
 # takes longer and checks the same (tools/iosE2e.ts; ios/README.md). It
 # builds the Debug app again rather than taking apple's: an artifact
 # between jobs is a zip, which drops the bundle's file modes, and apple's
-# build is to another derived-data path. New on GitHub's runners and not
-# yet run there, so it may fail without failing the run (continue-on-error)
-# until it has passed there; then that line goes.
+# build is to another derived-data path. A failing scenario fails the run.
 #
 # fit, on Linux: the population fit's tests (`fit/`, Python under uv),
 # since the fit writes `fixtures/population.json`, which both apps ship.
@@ -32,10 +30,9 @@
 # Chrome (the image's google-chrome, which tools/chrome.ts finds; run
 # without its sandbox under CI). Every scenario steps a stopped development
 # clock to the moments it checks, so a slow runner sees what a fast one does
-# (README §9, "Checking the web app end to end"). It is new and was not run
-# on GitHub before it was added, so it does not fail the workflow
-# (`continue-on-error`): its result shows on the run, and once it has passed
-# there the line comes out and it gates like the rest.
+# (README §9, "Checking the web app end to end"). A failing scenario, or a
+# copy state with a raw key, a straight quote or the certainty line where
+# the state says it should not be, fails the run.
 #
 # The actions are @v5 (setup-uv @v10), which run on Node 24; @v4 ran on Node 20, which GitHub
 # retires. The Node the project itself runs is `.node-version`.
@@ -78,8 +75,9 @@ jobs:
   ios-e2e:
     needs: apple
     runs-on: macos-latest
-    timeout-minutes: 45
-    continue-on-error: true
+    # About ten minutes on a developer's Mac, the build included; a hosted
+    # runner is slower, and a new simulator's first launches slower still.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -107,8 +105,8 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    continue-on-error: true
+    # About eight minutes on a developer's Mac; room for a slower runner.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
