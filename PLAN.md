@@ -4,19 +4,20 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 8 October 2026, on `0.5.x`** (forked from
+**Where things stand, 10 October 2026, on `0.5.x`** (forked from
 `0.4.x` at `8972a05`; its worklist is `SHIP-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 413 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 39 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 48 on a simulator, each
+layout (`UI.md`). `npm test` runs 438 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 46 scenarios in headless
+Chrome, and captures 39 copy states that assert nothing yet, and `npm run
+ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 161 tests
-in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
+machine and a loaded one. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 154 tests
+in 40 suites for the core twin and 16 in 2 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
@@ -51,7 +52,7 @@ These counts are the only ones in the documents. If you want a number, run
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
    (`archive/design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
+   on it (now `aet.cook.v5`, `cookInProgress.v4`; `design/one-screen.md` §4),
    and red-teamed as built (`archive/design/running-cook-review.md`): core's, the
    web's and iOS's findings fixed, before the one screen; certainty in words (93, D1),
    for the owner on a phone. The one screen is built in both apps (C3,
@@ -61,13 +62,22 @@ These counts are the only ones in the documents. If you want a number, run
    the next release and `0.4.x` is retired (`DECISIONS.md` 102).
 6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
    (section 0), the gates that make the code safe to change (1), what to
-   delete (2), the restructure (3) and the process (4), with the owner's
-   decisions marked (`DECISIONS.md` 102-108). Done (9-10 October): the
-   bugs 0.2-0.7, the copy review queue in place of the drafts (2.1, 2.2),
-   the fresh results log (2.6, 2.8, 2.9, 2.11, 2.14), the cycle check
-   (1.3), one compile per verify with `validate` in it (1.5, 1.6), and the
-   start time out of the sentence (108). Next: the gates 1.4 and 1.7-1.9,
-   the deletions needing no decision, then 1.2 and the restructure (3).
+   delete (2), the restructure (3), the process (4), and the red team of
+   the work so far (5), with the owner's decisions marked (`DECISIONS.md`
+   102-108). Done (9-10 October): the bugs 0.2-0.7; the gates 1.2-1.9 (an
+   iOS app test target with the logic in a package, the cycle check,
+   fixtures checked on Linux, one compile per verify, the e2e through a
+   snapshot, the iOS e2e settled and in TypeScript, one web harness);
+   the deletions 2.1-2.18 but the comment sweep (2.4); and of the
+   restructure, core's `step`, its log and `readoutAt` (3.1-3.6), one
+   `syncedKey` (3.8), the model id split (3.14), `policy.ts` by subject
+   (3.15, 3.17) and fixtures a row a line (3.19). The web's page goes
+   through `update` and a pure view drawn once a frame (3.7, two parts of
+   three). The red team of `4ecc06a` (section 5) reopened 3.1 and 3.3
+   until iOS runs on them. Next, in its order: the e2e blocking in CI and
+   the fixture bound tightened (1.1, 5.3); iOS's 0.3 and 0.4 under Swift
+   tests; iOS onto `step` (3.9-3.12); the rest of 3.7 with a unit test
+   per message; then 3.13, 3.16, 3.18, 2.4 and 4.2.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -151,7 +161,7 @@ The one queue. Nothing else in the documents waits on the owner.
     which the empty field shows greyed; and with the probe on, Settings
     has an optional Room temperature, empty until set, with an (i). A
     measured room is the room the model cools toward and the Room egg's
-    start (`roomInUse`, `src/core/policy.ts`), recorded in each result's
+    start (`roomInUse`, `src/core/inputs.ts`), recorded in each result's
     `ambient_C` as before.
 12. **Your results, kept and exported** (5 October 2026, `DECISIONS.md` 81
     and 82). On a phone: "Export my results" under
@@ -456,7 +466,7 @@ checked, fixed or deleted. Start the QA pass here.
   the iOS simulator, not yet on a phone or on Netlify.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
-  (`aet.settings.v1`, `aet.cook.v4`, `aet.calibration.v4`, `aet.boil.v1`,
+  (`aet.settings.v1`, `aet.cook.v5`, `aet.calibration.v5`, `aet.boil.v1`,
   `aet.share.v1`; iOS's `sharing.v1` and `sharing.attest.v1`; record v1) may
   change without a migration; bump the key's version so an old value is
   dropped rather than misread. Back-compat starts when the owner says the app

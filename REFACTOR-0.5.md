@@ -349,7 +349,7 @@ each app strings them together in its own order. The after-pull correction
 is written three times (`cook.ts:342`, `AppModel.swift:366`,
 `Cook.swift:308`). 0.3 and 0.4 above are that drift.
 
-- [x] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
+- [ ] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
       core. Events: start, boil, correct, correctStart, out, stillIn,
       pullStands, tick, surfaceLanded, answered, startAgain. Effects:
       persist, askSurface, arm/cancel alarms, ring, log record, forget,
@@ -367,6 +367,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       the cook's named in it; the 85 `plans` rows unchanged. The apps still
       call the pieces (the transitions are now `step`'s parts, not wrappers
       of it): 3.7 and 3.9.
+      *Open until 3.9 lands* (the red team of `4ecc06a`): nothing on iOS
+      calls `step`, and `Cook.swift` still strings the pieces together
+      itself, a second orchestration nothing holds to the first.
 - [x] **3.2 `RunningCook` as start + choices + an append-only event log.**
       Today it has 13 fields, four of them partial correction history
       (`coldSince_s`, `firstHotAt_s`, `correctedAt_s`, `boilRemembered`)
@@ -377,14 +380,15 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       the log. Stored as `aet.cook.v5` and `cookInProgress.v4`, the earlier
       keys swept. `takeUpEvents` and `correctedLater` moved into core from
       the web's store (two copies of one cook, `running.json` `takeUps`).
-- [x] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
+- [ ] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
       digits, sign, args}`. The web has it pure and tested (`phaseView.ts`);
       iOS spreads it over `ReadoutView`, `PhaseActions` and `AppModel.keys`
       (47 phase branches in views). M.
       *Done* in core (`readoutAt`, `readout.ts`, `Readout.swift`), held
       for every trace step; the web's `phaseView` renders it. iOS's views
       move onto it in 3.9. The spoken line is which line to say, since iOS
-      speaks none of the web's `spoken.*` keys.
+      speaks none of the web's `spoken.*` keys. *Open until 3.9 lands*: nothing
+      on iOS calls `readoutAt` yet.
 - [x] **3.4 One `inputsKey()` in core** with explicit number formatting,
       used by `replan` and both caches, in place of 17-field `===` checks,
       `JSON.stringify(inputs)` with field order that matters, and iOS's
@@ -546,6 +550,67 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       (`src/core/copy.ts:137`). What changes is the rule and its test: a
       wording change may ship without its 1750 twin, and the twins are
       written in batches.
+
+## 5. The red team of `4ecc06a` (10 October 2026)
+
+Of `6eeff78..4ecc06a`, 121 commits. The equivalence discipline in core,
+107, the deletions, the review queue, the harnesses and 1.2 held up. What
+it found, in its order, with where each is being done:
+
+- [ ] **5.1 Gates before more restructure.** 1.1 was not done, yet 3.7
+      and 1.2 went in behind it. And "85 of 85" overstated the web
+      e2e: the 39 copy states assert nothing. Do 1.1 now, and either make
+      the copy states assert or stop counting them as checks. The rest of
+      3.7 and 3.9 merge only after it.
+- [ ] **5.2 iOS is not on `step`/`readoutAt`** (3.1, 3.3 reopened): 3.9
+      deletes `Cook.swift`'s own orchestration, about 24 calls.
+- [ ] **5.3 The fixture check is too loose for TS against TS** (1.4): the
+      bound divides by max(|x|, 1), so 116 nonzero values under 1e-12 may
+      change freely, sign included. A pure relative bound (about 1e-13,
+      against a measured spread of 7.3e-15) with a denormal floor; Swift's
+      slack stays in conformance only.
+- [x] **5.4 CLAUDE.md's `ios:build` rule** named `ios/Shared`, which is
+      gone, and not the package's `EggTimerApp`/`EggTimerShared`, which
+      `verify` builds for macOS only. It now covers all of `ios/` but the
+      core twin, the e2e rule is in it, and the stale paths are fixed.
+- [ ] **5.5 iOS 0.3 and 0.4 tested, not only driven**: Swift tests for
+      both; `remakeThenEnd` retries once, not four times on the same
+      inputs; and whether a relaunch within the hour brings back a cook
+      dismissed with Start again (the web keeps it off screen).
+- [ ] **5.6 One logical change per commit.** `83ba983`, `60c9982` and
+      `d231a5b` put behaviour changes inside refactor commits. That can't be
+      undone, but "a later answer re-folds the log" gets a named
+      scenario, and from now on a behaviour change is its own commit.
+- [ ] **5.7 The web's pure core unit-tested**: one `update` test per
+      message kind (about 12 of 27 are sent today), and `view` per
+      section, with 3.7.
+- [ ] **5.8 3.7 half old, half new**: `update.ts` is an effect helper
+      (to `effects.ts`); `cook.ts` writes the model outside `update`; the
+      settings, units, notes, learned and share sections are still DOM
+      effects; `state` is read in 8 modules; the module `let`s moved, not
+      reduced (49 → 50).
+- [x] **5.9 `PLAN.md` stale across 11 merges** (against 104), and
+      CLAUDE.md's `policy.ts`, 106's `copy/approved.json`, and 102-108
+      without commits: brought up to date.
+- [ ] **5.10 D105 in new code**: 24 lines in `src/ui` cite decisions or
+      reviews, "REFACTOR-0.5 N.N" in `Package.swift`, `ios/README` and
+      e2e descriptions, 29 "review N.N" labels in `tools/fixtures/step.ts`.
+      Each working branch cleans what it touches; 2.4 sweeps the rest.
+- [ ] **5.11 Smaller**: exports reachable only from tests and fixtures
+      (`coldHistory`, `slowHobMemoFits`, `sameAsRan`,
+      `sameDecisionInputs`); stale comments (`decide.ts:113`,
+      `Running.swift:384`); `step` compares cooks with `===` in TS and
+      `==` in Swift; `readProbe` returns `undefined` as a third state; the
+      folded legacy fields written and never read (`running.ts` 191-229);
+      3.16's `share.answered` in ms (a key bump, 48); `nonisolated(unsafe)`
+      6 → 12 and 417 declarations made public wholesale; `#if DEBUG` 75 →
+      89; 2.11's sweep a fixed list, not "any `aet.*` not current"; the
+      `studies/` build outside `verify`.
+
+**Size.** Outside the fixtures and the drafts the repo grew about 7.9k
+lines; shipped code 39.4k → 42.2k (core +15%, the Swift core +12%, the
+iOS app and its package +6.6%). Section 3 is measured from here by the
+lines it removes from the apps, not the lines it adds to core.
 
 ## The owner's decisions in this list
 
