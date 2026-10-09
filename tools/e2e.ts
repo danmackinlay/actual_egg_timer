@@ -1,8 +1,10 @@
 /**
  * The web app driven end to end, in seconds: the checks that were done by
- * hand (design/running-cook-review.md, the LOGBOOK of 6 to 8 October), each
- * a named scenario with assertions on the page and on what it stored, and
- * the copy capture's states (tools/copyScenarios.ts), each a scenario too.
+ * hand (archive/design/running-cook-review.md, the LOGBOOK of 6 to 8
+ * October), each a named scenario with assertions on the page and on what
+ * it stored, and the copy capture's states (tools/copyScenarios.ts), each a
+ * scenario too, every state checked for raw keys, straight quotes and the
+ * certainty line.
  *
  *   npm run e2e                      # build the site, then every scenario
  *   npm run e2e -- reload two-tabs   # only those named (after a build)

@@ -17,8 +17,8 @@
  * them to it from the build (devServer.ts).
  *
  * Beyond that API the harness watches the platform, not the app: before the
- * app runs, each page counts the sounds made, each ring (one looped buffer,
- * DECISIONS.md 101) and each blip (an oscillator), and when each is set to
+ * app runs, each page counts the sounds made, each ring (one looped buffer)
+ * and each blip (an oscillator), and when each is set to
  * start on the audio clock (`__osc`), and what it wrote to localStorage
  * (`__writes`); its requests are read off DevTools' network events. An
  * exception thrown in a page fails its scenario.
@@ -113,6 +113,7 @@ export interface Snap {
   lengthened: boolean;
   certainty: { time: { low_s: number; high_s: number } } | null;
   peakYolk_C: number | null;
+  whiteSets: boolean | null;
   stored: string | null;
   log: Rec[];
   eggsLogged: number;
@@ -156,7 +157,12 @@ export interface Osc { kind: 'ring' | 'blip'; made: number; at: number | null; p
 
 export class Failure extends Error {}
 
+/** Checks made so far, by every scenario: a scenario that made none
+ *  asserted nothing, and is not counted as passing (`runScenarios`). */
+let checks = 0;
+
 export function check(cond: boolean, what: string): void {
+  checks += 1;
   if (!cond) throw new Failure(what);
 }
 
@@ -455,6 +461,7 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
   server.stdout?.on('data', (b: Buffer) => { lines.push(...String(b).split('\n').filter((l) => l !== '')); });
   let chrome: Browser | null = null;
   let failed = 0;
+  const unchecked: string[] = [];
   const t0 = Date.now();
   try {
     await waitForHttp(`${origin}/index.html`);
@@ -469,6 +476,7 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
       const t = Date.now();
       let note = '';
       let error: string | null = null;
+      const before = checks;
       try {
         note = await scenarios[name].run({
           ctx: ctx, origin: origin, port: port, posts: () => lines.filter((l) => l.startsWith('POST /api/eggs')),
@@ -486,7 +494,10 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
       }
       await ctx.dispose();
       const secs = ((Date.now() - t) / 1000).toFixed(1);
-      if (error === null) {
+      if (error === null && checks === before) {
+        unchecked.push(name);
+        console.log(`ran   ${name.padEnd(width)} ${secs.padStart(5)} s  asserted nothing: ${note}`);
+      } else if (error === null) {
         console.log(`ok    ${name.padEnd(width)} ${secs.padStart(5)} s  ${note}`);
       } else {
         failed += 1;
@@ -498,6 +509,16 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
     server.kill();
     if (chrome !== null) await chrome.close();
   }
-  console.log(`${names.length - failed} of ${names.length} passed in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  // Passed means asserted and held: a scenario that ran but checked nothing
+  // is said apart, never counted. The count by kind: `copy/...` and the rest.
+  const counted = names.filter((n) => !unchecked.includes(n));
+  const kinds = new Map<string, number>();
+  for (const n of counted) {
+    const kind = n.includes('/') ? `${n.slice(0, n.indexOf('/'))}/` : 'behaviour';
+    kinds.set(kind, (kinds.get(kind) ?? 0) + 1);
+  }
+  const byKind = [...kinds].map(([k, n]) => `${n} ${k}`).join(', ');
+  console.log(`${counted.length - failed} of ${counted.length} passed (${byKind}) in ${((Date.now() - t0) / 1000).toFixed(1)} s`
+    + (unchecked.length > 0 ? `; ${unchecked.length} ran asserting nothing, not counted: ${unchecked.join(', ')}` : ''));
   return failed;
 }

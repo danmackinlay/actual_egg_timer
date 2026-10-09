@@ -7159,3 +7159,114 @@ Proof: the copy capture of 172 states is byte for byte the build before
 
 Left for 3.7 is listed under it in `REFACTOR-0.5.md`: edit.ts's gesture,
 the stores' module state, the boot-time callbacks, `now.ts`.
+
+## 10 October 2026: the gates red-teamed: the e2e jobs blocking, every copy state checked, the fixtures held relative (REFACTOR-0.5 1.1, 1.4)
+
+Branch `gates-red-team`, from `0.5.x` at `4ecc06a`: `a623886` (e2e.ts's
+pointer to the archived review), `1e0fd3e` (the sous-vide copy states),
+`917aa8e` (every copy state checked, the summary honest), `06e6b63` (CI's
+e2e jobs blocking), `03e4f9c` (fixtures:check relative at every
+magnitude), `297e3aa` (the studies in `npm run build`), `3efb625` (no
+review numbers in the e2e's descriptions).
+
+A red team found that nothing could fail on a broken UI: both e2e jobs in
+CI were `continue-on-error`, and 39 of the web e2e's "85 of 85" were the
+copy capture, which counted states and asserted nothing. And that the
+fixtures' regression check let small numbers move freely.
+
+- **The copy states assert.** Each of the capture's states is checked as
+  it is captured (`checkState`, tools/copyScenarios.ts): it rendered; no
+  `{placeholder}` and no catalogue key shows raw, and no straight
+  apostrophe or quote, in any text node, the title or a label-like
+  attribute; the mute button says the catalogue's words for the setting;
+  idle on a pan, a time is decided; and the certainty line is on screen
+  exactly where the page's state says there is a pan time to be sure of
+  (idle once decided, a running cook until the pull, only where the white
+  sets, never sous-vide), read from the phase, the start, the decided time
+  or the plan's certainty and the solution's `whiteSets`, which the test
+  API's snapshot now carries. And the settings a scenario plants must be
+  the ones the app opened on, but for those it names as moved on purpose.
+  Each check failed the scenario it should when the built site was
+  mutated: a raw `{oops}`, a missing key, "Hard's", the line always hidden,
+  the line always shown.
+- **The sous-vide states were not sous-vide.** That last check failed six
+  scenarios at once: the copy capture's sous-vide scenarios planted
+  `startMode: 'sous'`, which has not been stored since `d12a978`, so all six
+  captured the cold idle screen under a sous-vide name, and every proof
+  "the words did not change" since then was blind to the sous-vide screen.
+  Each now taps sous-vide as a step; the capture has 178 states.
+- **The summary counts only what asserted.** The harness counts the
+  checks each scenario makes; one that passes having made none is printed
+  `ran ... asserted nothing` and left out. Now "85 of 85 passed
+  (46 behaviour, 39 copy/)": every behaviour scenario asserts.
+- **CI's e2e jobs gate.** `continue-on-error` is gone from `e2e` and
+  `ios-e2e`. Read for anything that would plainly fail on a hosted runner,
+  nothing did; each job builds what it runs. Timeouts raised for a slower
+  runner: web 20 -> 30 minutes (about 7.5 here), iOS 45 -> 60 (about 10
+  here with the build). actionlint passes the workflow.
+- **fixtures:check is relative at every magnitude.** It held numbers to
+  Swift's rule, 1e-12 of max(|x|, 1), absolute below 1, so the 116 nonzero
+  fixture numbers below 1e-12 could change freely, sign included, and the
+  test called 1e-14 -> 2e-14 no difference. Now 1e-13 of the larger of the
+  two, with an absolute floor only below the smallest normal double.
+  Swift's `conformanceTolerance` is unchanged.
+- **The studies compile in `npm run build`** (0.6 s from nothing), so
+  `verify` and CI type-check them; they are still run only by hand.
+
+**The cross-platform spread, measured relative.** The fixtures made in
+OrbStack containers (`node:26-bookworm-slim`, Node 26.11.1) against those
+committed from this Mac: x86 Linux differs in 4,105 of 60,193 numbers, by
+at most 9.1e-14 of the value; arm64 Linux in one, by 1.8e-16. The 7.3e-15
+of 10 October was in the old metric, which read every number below 1
+absolutely. Both pass the new rule, x86 by a margin of 10%.
+
+**The margin is the particle offsets'.** The 9.1e-14 is a whiteOffset of
+-0.00305 (record.json, the replay's step 8, particle 3): differing by
+2.8e-16, which is 650 ulps of itself and a few of the terms it is
+summed from. A particle's offsets (whiteOffset, logDoseOffset) come out of
+`resample` in infer.ts as a sum of the prior's scale, shrink times the
+particle plus the mean plus the kernel's noise, carried through every
+resampling, so their error is absolute, up to 9.2e-16 on x86, whatever
+their size. 1,524 whiteOffsets are in the fixtures, 27% differ on x86 and
+19 lie within 0.003 of zero; any that differs and lies within about 0.009
+of zero fails the check on x86 for noise. None does today; a change that
+draws the particles again may. Not changed here, since loosening the bound
+for cancellation is what the check is meant not to do: the choice is the
+owner's (an absolute floor for the offset fields at their prior's scale,
+or the generator writing the offsets so they are not read relatively).
+
+**The 116 tiny numbers** are not the margin's problem: on both Linux
+platforms all but one are bitwise the same (that one, a dose in
+section.json, by an ulp). By kind:
+
+- 7 in core.json are `seriesTheta` at x = 1, the surface, where θ is
+  exactly 0: 1.8e-16 down to 4e-21 is the residue of sin(nπ) at the
+  double nearest nπ, summed. Their size and sign mean nothing, and the
+  relative rule now pins them; they are made the same on both platforms,
+  but a change to how the series forms nπ would move them wholesale with
+  nothing wrong. The generator could write the surface case as a separate,
+  absolute expectation; reported, not changed.
+- 89 in section.json are doses at the first ticks of a 4 °C egg, 1e-13 to
+  8e-18 min. Real and stable, but the scatter across the white's nodes
+  (8.0 to 9.1e-18) is the 40-mode series' ripple about the starting
+  temperature (3.92 to 4.05 °C at t = 1 s), not the egg. In the same
+  fixture the hot start's section at t = 0 reads -7.6 °C one node in from
+  the surface: the same ripple, at the step itself. Not looked into.
+- 16 in calibration.json (`firstProbit`, down to 5e-257), 3 in probe.json
+  (`density`, down to 4e-216) and erfc(6) in core.json are deep tails:
+  meaningful, but conditioned by the square of how far out they are, so an
+  ulp in their argument moves them by up to about 1e-13.
+
+**Not verifiable without a push**: that the image's Chrome starts headless
+as configured and its audio clock runs with no sound device (the alarm
+checks need it); the macOS runner's simulator runtimes, how long a new
+simulator takes to answer for its notifications there, and whether a
+delivery comes within its slack; and how long either job takes on a
+hosted runner. `ubuntu-latest` becomes Ubuntu 26 from 19 October 2026
+(GitHub's notice on the last run); whether its image has google-chrome is
+unknown. The CLAUDE.md rule asking for `npm run e2e` / `ios:e2e` on
+commits that touch `src/ui` or `ios/App`, which the worklist item also
+asks for, is left to the session that merges.
+
+Gates at `3efb625` and at this entry: `verify` (440 tests), `npm run e2e` 85 of 85
+(46 behaviour, 39 copy/, 178 states checked).

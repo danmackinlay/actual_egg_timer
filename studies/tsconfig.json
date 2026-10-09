@@ -1,6 +1,8 @@
 // The studies: measurements quoted in the documents, run by hand, never
-// by a gate. Out of the default build (`npm run build` builds tsconfig.json);
-// each npm script builds this project first, over core and the tools.
+// by a gate. They are compiled by `npm run build` (and so by `verify` and
+// CI), which takes under a second more, so a change to core or the tools
+// that breaks one fails there; each study's npm script builds this project
+// first, over core and the tools.
 {
   "extends": "../tsconfig.base.json",
   "include": ["*.ts"],

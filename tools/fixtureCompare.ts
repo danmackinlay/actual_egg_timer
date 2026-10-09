@@ -4,14 +4,22 @@
  * fixture is laid out (`fixtureLayout`, at the end).
  *
  * Every key, in the same order, every string, boolean and null, and every
- * array's length must be the same. Numbers must agree to FIXTURE_TOLERANCE,
- * relative to the committed value or absolute below 1: Support.swift's
- * `conformanceTolerance`, the closeness at which Swift is held to these
- * numbers, so a difference the check lets through is one conformance could
- * not have told from no difference. Bitwise agreement is not asked for: the
- * same TypeScript on x86 Linux and arm64 macOS differs in the last bit of
- * some results, and was seen to differ by 7.3e-15 at most (in decide.json,
- * 10 October 2026), so the bytes differ though nothing does.
+ * array's length must be the same. Numbers must agree to FIXTURE_TOLERANCE
+ * relative to the larger of the two, at every magnitude: a probability of
+ * 1e-200 is held as closely as a cook time of 400 s, and a number that
+ * changes sign differs. Only below the smallest normal double, where a
+ * double has fewer digits, is the bound absolute (SMALLEST_NORMAL).
+ *
+ * This is the TypeScript held to itself, so it is tighter than the bound
+ * Swift is held to (Support.swift's `conformanceTolerance`, 1e-12, absolute
+ * below 1), which allows for another libm. Bitwise agreement is not asked
+ * for: the same TypeScript on x86 Linux and arm64 macOS differs in the last
+ * bits of some results: by a few ulps, and by up to 9.1e-14 of the value
+ * where a particle's offset lands near zero. An offset is a sum of terms of
+ * the prior's scale, carried through each resampling (infer.ts, `resample`),
+ * so its error is set by those terms, up to 1e-15, not by itself, and one
+ * drawn nearer zero than about 0.01 can differ by more than the bound
+ * between the two platforms while meaning nothing.
  *
  * Rounding the numbers when they are written would not have done instead.
  * Wherever two platforms' values straddle a rounding boundary they still
@@ -23,14 +31,18 @@
  * digits, the first read 40 and the second became a whole number.
  */
 
-export const FIXTURE_TOLERANCE = 1e-12;
+export const FIXTURE_TOLERANCE = 1e-13;
+
+/** The smallest normal double, 2^-1022: below it a difference is measured
+ *  against this rather than against the numbers, which have lost digits. */
+export const SMALLEST_NORMAL = 2 ** -1022;
 
 /** A difference between two fixtures: where, and what each side holds. */
 export interface FixtureDifference {
   path: string;
   committed: string;
   fresh: string;
-  /** Relative (absolute below 1) difference, for two numbers. */
+  /** Relative difference, for two numbers (`relativeDifference`). */
   error: number | null;
 }
 
@@ -43,6 +55,13 @@ export interface FixtureComparison {
   /** Every difference that matters: a number beyond the tolerance, or any
    *  other value, key or length that is not the same. */
   differences: FixtureDifference[];
+}
+
+/** How far apart two numbers are, relative to the larger: 0 when they are
+ *  the same, 2 when they are opposite, against SMALLEST_NORMAL below it. */
+export function relativeDifference(a: number, b: number): number {
+  if (a === b) return 0;
+  return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), SMALLEST_NORMAL);
 }
 
 function shown(value: unknown): string {
@@ -59,7 +78,7 @@ export function compareFixtures(committed: unknown, fresh: unknown): FixtureComp
   const walk = (a: unknown, b: unknown, path: string): void => {
     if (typeof a === 'number' && typeof b === 'number') {
       if (a === b) return;
-      const error = Math.abs(a - b) / Math.max(Math.abs(a), 1);
+      const error = relativeDifference(a, b);
       if (error <= FIXTURE_TOLERANCE) {
         out.close++;
         out.largest = Math.max(out.largest, error);

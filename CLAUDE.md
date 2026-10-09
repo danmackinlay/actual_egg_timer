@@ -17,7 +17,13 @@ things stand is `PLAN.md`; which document holds what is its last section.
   before every commit that touches code.
   CI also runs `npm run ios:build` (the app and widget for the simulator,
   unsigned; about a minute, so not in `verify`): run it too before a commit
-  that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
+  that touches anything under `ios/` but the core twin
+  (`ios/EggTimerCore/Sources/EggTimerCore`): `verify` builds the package
+  for macOS only, so an iOS-only compile break in `EggTimerApp` or
+  `EggTimerShared` passes it.
+  A change to either app's screens or the logic under them is driven
+  before it is merged: `npm run e2e` (web) and `npm run ios:e2e` (iOS),
+  which CI runs too and fails on.
 - **One logical change per commit.**
 - **Branches are named for their version line** (`DECISIONS.md` 64, 102):
   `main` is what is live, today the 0.3 line; the next release is built on
@@ -55,7 +61,8 @@ things stand is `PLAN.md`; which document holds what is its last section.
 ## Both apps, TypeScript first
 
 - Anything both apps must agree on lives in `src/core/` (above the physics,
-  in `policy.ts`, `wording.ts`, `reach.ts`), lands in TypeScript first, is
+  in `inputs.ts`, `step.ts`, `readout.ts`, `wording.ts`, `reach.ts` and
+  their neighbours), lands in TypeScript first, is
   fixtured from it with `npm run fixtures`, and is held in Swift by
   `npm run conformance`. `ios/README.md` has the module-by-module map.
 - **Fixtures are never hand-edited, and never regenerated to make Swift
@@ -120,7 +127,7 @@ things stand is `PLAN.md`; which document holds what is its last section.
   change to `project.yml`. The project is generated and gitignored.
 - **A debug build takes launch arguments** (`-uiScreen`, `-seedEggs`,
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
-  `ios/App/Screenshots.swift` lists them.
+  `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them.
 - **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools;
   write the value into the app's `UserDefaults` plist in the simulator
   container and relaunch instead. The doneness slider is a `UISlider`
