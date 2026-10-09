@@ -238,6 +238,15 @@ test('tick: rings once per deadline, the pull and the end of the cooling, ticked
   assert.deepEqual(rang, ['pull', 'cooled']);
 });
 
+test('tick: a page woken past both deadlines rings the pull it missed, once, and not Done', () => {
+  const m = running();
+  const coolEnd = pull(m) + 300;
+  const [woken, effects] = go(m, { kind: 'tick' }, coolEnd);
+  assert.deepEqual(effects.flatMap((e) => (e.kind === 'ring' ? [e.moment] : [])), ['pull']);
+  const [, again] = go(woken, { kind: 'tick' }, coolEnd + 1);
+  assert.ok(!kinds(again).includes('ring'), 'and nothing more');
+});
+
 test('restore: a deadline that passed before the page was shown rings nothing', () => {
   const m = running();
   const stored = { cook: m.cook!, answers: 'none' as const, leanHint_s: m.leanHint_s };
