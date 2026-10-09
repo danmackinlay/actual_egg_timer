@@ -19,6 +19,7 @@ import {
   ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, FRESH_SHARE, forgotten, nextToSend,
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
+import { request } from './idle.js';
 import { readStorage, storageReadOnly, writeStorage } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
@@ -49,7 +50,7 @@ export const REQUEST_TIMEOUT_MS = 20000;
  *  answer. */
 export async function fetchWithin(
   url: string, init: RequestInit, ms = REQUEST_TIMEOUT_MS,
-  f: (url: string, init: RequestInit) => Promise<Response> = (u, i) => fetch(u, i),
+  f: (url: string, init: RequestInit) => Promise<Response> = (u, i) => request(u, i),
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => { controller.abort(); }, ms);

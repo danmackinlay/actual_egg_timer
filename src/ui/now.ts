@@ -128,6 +128,7 @@ export function devClockAt(hostname: string, search: string, stored: string | nu
 let dev: DevClock | null = null;
 let onDevHost = false;
 const listeners: (() => void)[] = [];
+let draw: () => number = Math.random;
 
 /** The current time, ms since 1970: the real one, or the development clock. */
 export function nowMs(): number {
@@ -146,6 +147,18 @@ export function realMs(): number {
  *  fast. A stopped clock's steps are the cook's seconds, so it is 1 too. */
 export function clockSpeed(): number {
   return dev === null || dev.speed === 0 ? 1 : dev.speed;
+}
+
+/** A number from [0, 1), for the nudge (answer.ts): `Math.random()`, or a
+ *  script's seeded draw (`useRandom`). */
+export function random(): number {
+  return draw();
+}
+
+/** A seeded draw in place of `Math.random`, for a script that needs the
+ *  same page on every run. */
+export function useRandom(f: () => number): void {
+  draw = f;
 }
 
 /** Call `f` whenever the development clock is set (never on the live site). */

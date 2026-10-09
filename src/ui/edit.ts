@@ -43,6 +43,7 @@ import { calibrationParams } from './calibration.js';
 import { t, timeOfDay } from './copy.js';
 import { cookShown } from './feedback.js';
 import { page } from './dom.js';
+import { cancelSoon, soon } from './idle.js';
 import { nowMs } from './now.js';
 import { aimedEgg, holdAim } from './render.js';
 import { choicesOf, state } from './state.js';
@@ -140,7 +141,7 @@ export function endEdits(): void {
 }
 
 function clearTimers(): void {
-  for (const handle of [edit.settle, edit.preview, edit.release]) if (handle !== 0) window.clearTimeout(handle);
+  for (const handle of [edit.settle, edit.preview, edit.release]) cancelSoon(handle);
   edit.settle = 0;
   edit.preview = 0;
   edit.release = 0;
@@ -167,20 +168,18 @@ export function cookControlsChanged(source: EventTarget | null): void {
   edit.group = group;
   edit.inHand = { controls: { ...state.controls }, start: state.controlsStart_s };
   edit.changed = performance.now();
-  if (edit.release !== 0) {
-    window.clearTimeout(edit.release);
-    edit.release = 0;
-  }
+  cancelSoon(edit.release);
+  edit.release = 0;
   // At once, the slider's own reading; the plan's follows.
   const level = state.controls.doneness;
   state.aim = { level: level, peakYolk_C: targetPeakYolk_C(level), solution: null };
-  if (edit.preview === 0) edit.preview = window.setTimeout(previewNow, PREVIEW_MS);
+  if (edit.preview === 0) edit.preview = soon(previewNow, PREVIEW_MS);
   if (edit.down === null) settleThenCommit();
 }
 
 function settleThenCommit(): void {
-  if (edit.settle !== 0) window.clearTimeout(edit.settle);
-  edit.settle = window.setTimeout(() => {
+  cancelSoon(edit.settle);
+  edit.settle = soon(() => {
     edit.settle = 0;
     commitEdit();
   }, SETTLE_MS);
@@ -250,10 +249,8 @@ function previewNow(): void {
  * two changes are two commits however they are made.
  */
 export function commitEdit(upTo: InHand | null = null): void {
-  if (edit.settle !== 0) {
-    window.clearTimeout(edit.settle);
-    edit.settle = 0;
-  }
+  cancelSoon(edit.settle);
+  edit.settle = 0;
   const cook = state.cook;
   const base = edit.base;
   if (!edit.pending || cook === null || base === null) return;
@@ -288,9 +285,9 @@ export function commitEdit(upTo: InHand | null = null): void {
 /** The aimed-for egg goes a settle after the last change, unless a finger
  *  is down or another change is in hand by then. */
 function letAimGo(): void {
-  if (edit.release !== 0) window.clearTimeout(edit.release);
+  cancelSoon(edit.release);
   const left = Math.max(0, edit.changed + SETTLE_MS - performance.now());
-  edit.release = window.setTimeout(() => {
+  edit.release = soon(() => {
     edit.release = 0;
     if (edit.pending || edit.down !== null) return;
     dropAim();

@@ -13,6 +13,7 @@
 
 import { LITERATURE_POPULATION, Population } from '../core/infer.js';
 import { parsePopulation } from '../core/population.js';
+import { request } from './idle.js';
 
 let active: Population = LITERATURE_POPULATION;
 
@@ -24,7 +25,7 @@ export function activePopulation(): Population {
  *  wrong, the literature's stands. */
 export async function loadPopulation(): Promise<Population> {
   try {
-    const response = await fetch('fixtures/population.json');
+    const response = await request('fixtures/population.json');
     if (response.ok) {
       const parsed = parsePopulation(await response.json());
       if (parsed !== null) active = parsed;

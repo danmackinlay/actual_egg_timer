@@ -16,6 +16,7 @@ import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './contr
 import { activeLocale, applyCopy, loadCopy } from './copy.js';
 import { cachedOddsProfile } from './decisionGrids.js';
 import { page, selectRadio } from './dom.js';
+import { cancelSoon, soon } from './idle.js';
 import { labelInfoButtons } from './info.js';
 import { renderCalibNote, renderLearned } from './learned.js';
 import { forgetDrawnWords, render, renderMute, renderVersion } from './render.js';
@@ -94,7 +95,7 @@ export function recompute(): void {
  *  on every pixel of a slider drag. */
 export function scheduleSolve(): void {
   if (pending.solveHandle !== 0) return;
-  pending.solveHandle = window.setTimeout(() => {
+  pending.solveHandle = soon(() => {
     pending.solveHandle = 0;
     recompute();
   }, 90);
@@ -107,7 +108,7 @@ export function scheduleSolve(): void {
  *  settings object nobody had finished changing. */
 export function scheduleSave(): void {
   if (pending.saveHandle !== 0) return;
-  pending.saveHandle = window.setTimeout(() => {
+  pending.saveHandle = soon(() => {
     pending.saveHandle = 0;
     writeSettings();
   }, 250);
@@ -162,10 +163,8 @@ function takeUpSettings(next: Settings): void {
 /** Write now, for the paths that must not lose the setting: starting a cook,
  *  and the snap that moves the slider out from under the user. */
 export function saveNow(): void {
-  if (pending.saveHandle !== 0) {
-    window.clearTimeout(pending.saveHandle);
-    pending.saveHandle = 0;
-  }
+  cancelSoon(pending.saveHandle);
+  pending.saveHandle = 0;
   writeSettings();
 }
 

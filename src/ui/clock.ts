@@ -11,6 +11,7 @@
 
 import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/policy.js';
 import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
+import { request, soon } from './idle.js';
 import { clockSpeed, nowMs, onClockChange } from './now.js';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
@@ -181,7 +182,7 @@ function prepare(): void {
   const ctx = audio;
   if (ctx === null) return;
   const chosen = sound;
-  window.setTimeout(() => {
+  soon(() => {
     periodBuffer(ctx, chosen, 'pull');
     periodBuffer(ctx, chosen, 'cooled');
   }, 0);
@@ -196,7 +197,7 @@ async function loadRecording(moment: AlarmMoment): Promise<Float32Array | null> 
   if (ready !== undefined) return ready;
   let bytes = fetched.get(moment);
   if (bytes === undefined) {
-    bytes = fetch(RECORDINGS[moment]).then((r) => {
+    bytes = request(RECORDINGS[moment]).then((r) => {
       if (!r.ok) throw new Error(`${RECORDINGS[moment]}: ${r.status}`);
       return r.arrayBuffer();
     });

@@ -17,7 +17,7 @@
  */
 
 import { stepPast } from '../core/units.js';
-import { whenAnswerLands, whenCookSurfaceLands } from './answer.js';
+import { drawNudge, whenAnswerLands, whenCookSurfaceLands } from './answer.js';
 import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './calibration.js';
 import { setAlarmSound, setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
@@ -60,6 +60,9 @@ export function boot(): void {
   useUnits(state.settings.unitsChosen);
   state.boilMemory = loadBoilMemory();
   state.calib = loadCalibration();
+  // This page's nudge, drawn now rather than as answer.ts loads, so a
+  // script's seed (now.ts) is in place for it.
+  drawNudge();
   // A surface or a profile the screen wants, landed: the idle page is
   // solved again with it, or the running cook planned again.
   whenAnswerLands(recompute);

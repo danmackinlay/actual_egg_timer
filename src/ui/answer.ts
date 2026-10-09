@@ -15,6 +15,8 @@ import { CookSurface, sameDecisionInputs } from '../core/running.js';
 import {
   cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
 } from './decisionGrids.js';
+import { cancelSoon, soon } from './idle.js';
+import { random } from './now.js';
 import { shareState } from './share.js';
 import { idlePot, isSousVide, state, timeToBoil_s } from './state.js';
 
@@ -88,13 +90,15 @@ export function decided(answer: LevelAnswer, timeToBoil_s: number): DecidedAnswe
 /* -------------------------------------------------------------- the nudge */
 
 /** This page's nudge (E8, DECISIONS.md 61): a whole number of seconds from
- *  -10 to +10, drawn when the page loads and again after each cook, so the
- *  time on screen holds still while the cook looks at it. */
-const nudge = { draw: nudgeSeconds(Math.random()) };
+ *  -10 to +10, drawn when the page boots and again after each cook, so the
+ *  time on screen holds still while the cook looks at it. Drawn by `boot()`
+ *  (app.ts), not as this module loads, so a script's seed (now.ts) is in
+ *  place for the first draw. */
+const nudge = { draw: 0 };
 
-/** A new cook, a new nudge. */
+/** A new page or a new cook, a new nudge. */
 export function drawNudge(): void {
-  nudge.draw = nudgeSeconds(Math.random());
+  nudge.draw = nudgeSeconds(random());
 }
 
 /** The nudge the time takes now: the draw while sharing is on, and none
@@ -112,8 +116,8 @@ const DECISION_SETTLE_MS = 300;
 /** Ask the worker for this pot's surface once the inputs have settled, and
  *  re-solve when it lands if the pot on screen is still the one it was for. */
 function askForDecision(inputs: DecisionInputs): void {
-  if (asking.decisionHandle !== 0) window.clearTimeout(asking.decisionHandle);
-  asking.decisionHandle = window.setTimeout(() => {
+  cancelSoon(asking.decisionHandle);
+  asking.decisionHandle = soon(() => {
     asking.decisionHandle = 0;
     const key = decisionKey(inputs);
     decisionGrid(inputs).then(() => {
