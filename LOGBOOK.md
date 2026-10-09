@@ -6122,3 +6122,40 @@ them was not proved by one. A capture is slower for it, about 3½ minutes
 where it was 1¼. Both sides of a comparison must be captured by the fixed
 harness: the harness is served from the tree being captured, so a "before"
 taken on a commit without this one is the old, racing capture.
+
+## 9 October 2026: no import cycles in the web app, and a test that keeps it so
+
+The red team found two (`REFACTOR-0.5.md` 0.6): `render.ts` ↔ `update.ts`
+and `edit.ts` ↔ `cook.ts`. In a cycle a module can be read before it has
+run, so a call across it while the page loads finds a name still unset;
+which way round depends on which module the page loads first. Neither had
+bitten, but nothing stopped a third.
+
+- The warning line, in words (`warningText`), moved unchanged from
+  `update.ts` to `src/ui/warning.ts`, which imports neither of the two that
+  use it (`9fc60ad`).
+- `edit.ts` no longer imports `cook.ts`: the boot hands it `correctCook`,
+  `wireEdits(correctCook)`, as it hands `forgetAll` to `wireForget`
+  (`f11b388`).
+- `test/cycles.test.ts` (1.3, `38894b0`) walks every static import between
+  files under `src/` and fails on any cycle, naming its files in order.
+  Every `import … from`, bare `import '…'` and `export … from` counts,
+  whether its names are used as values or only as types: the source states
+  the dependency either way. Only what is written `import type` or
+  `export type` is left out (the compiler erases it, and says so), and an
+  `import()`, which runs after every module has loaded. A second test
+  builds a small tree in a temporary directory and checks that a cycle
+  through a multi-line import, a re-export and a bare import is caught, and
+  a module importing itself. With the two gone, `src/` has none.
+
+**The hourly look for a new build went by the development clock**
+(0.7, `3d20a8c`). `offline.ts` timed it with `nowMs()`, though `now.ts`
+says only spans of the cook follow that clock: at ×60 every return to the
+page looked, a stopped clock never did, and a shift looked once for
+nothing. `now.ts` gains `realMs()`, the real time whatever the development
+clock says, so every read of the time in `src/ui/` still goes through it;
+`test/offline.test.ts` 5 drives `startOffline` on localhost with the clock
+stopped, and fails on the old code. One `npm run e2e` of four on this work
+timed out in `newer-version-tab` waiting for two worker jobs (60 s); it
+passed alone three times and in a full run after, so it is the machine's
+load, not this change.
