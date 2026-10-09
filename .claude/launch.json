@@ -16,7 +16,7 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "npm run build:site && npx tsc && node dist/tools/devServer.js"
+        "npm run build:site && npm run build && node dist/tools/devServer.js"
       ],
       "port": 8888,
       "autoPort": true

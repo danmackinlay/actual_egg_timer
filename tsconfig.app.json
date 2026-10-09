@@ -1,0 +1,11 @@
+// The web app above core: the DOM, and no Node's types, since it runs in a
+// browser. `npm run build:site` builds this (and so core) and ships it.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/core/**"],
+  "references": [{ "path": "./tsconfig.core.json" }]
+}
