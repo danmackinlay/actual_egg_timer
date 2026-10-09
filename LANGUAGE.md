@@ -4,9 +4,9 @@ How both apps get their words, units and languages, and the rules the words
 are held to. Built: the catalogue (F1), units (F3), locale formatting (F4)
 and the English of 1750 (F6), in both apps. Not built: Czech (F5), which waits
 for its reviewer. The owner's decisions on all of it are in `DECISIONS.md`
-(12-17, 22-23, 28-30); the drafts that changed the wording are in
-`tools/drafts/`, one file each, and each draft's reasoning is in the
-`LOGBOOK.md` entry of its day.
+(12-17, 22-23, 28-30). What changed the wording, and why, is in the
+history and in the `LOGBOOK.md` entry of its day; what the owner has yet to
+read is the review queue (§3).
 
 ---
 
@@ -110,10 +110,10 @@ running water or in the air, not under a cold tap or on a bench
   anywhere reads American.
 - **The language stays `en`.** The picker, `<html lang>`, the record's
   `lang` and the units switch never see an overlay's tag; only the words
-  move. The English of 1750 covers every key and has no overlay.
+  move. The English of 1750 has no overlay, and may lag the English (§3).
 - **An overlay cannot go stale unseen.** Each entry carries `base`, the
   English it was written against, and `copy.test.ts` 7a fails when the two
-  part, so a draft that changes an overlaid key rewrites the overlay too.
+  part, so a wording change to an overlaid key rewrites the overlay too.
 - A British overlay ("worktop") waits until someone asks for one.
 
 `src/core/` keeps its invariants: no I/O and no dependencies. The catalogue is
@@ -285,263 +285,78 @@ cost in Czech (§5).
 - Wording is judged in place on a phone, not approved row by row in a table
   (`UI.md` §6).
 
-**How a wording change is made.** As one named draft in `tools/drafts/`,
-proved to have changed only what it lists, in both apps and with each 1750
-twin, and with each `copy/en-US.json` entry it reaches (§2); `CLAUDE.md` has
-the steps. A string the owner has approved (the
-`alarm.pull.*` bodies, `alarm.cooled.body`, `idle.welcome`,
-`activity.note.estimate`) was approved as good enough for now, not as
-final (`DECISIONS.md` 54): a style pass reads it like the rest.
+**How a wording change is made, read and approved** (`DECISIONS.md` 106).
+Every word is in `copy/*.json`, and `npm run copy:literals` keeps words out
+of the Swift code, so what a change does to the words is the catalogue's
+diff. `CLAUDE.md` has the steps.
 
-**The draft under review: `tidy`** (29 September 2026, `DECISIONS.md` 45).
-WORKLIST.md section 9 applied at once, in both apps, for the owner to read on
-a phone and say what to put back: `tools/drafts/tidy.ts`, on `bfc070d`, 67
-keys, one retired. Each 1750 twin is rewritten with its key: "ice bath" stays
-"iced water" there, and "Full rolling boil" is "It boils in earnest". Where it
-departs from WORKLIST Appendix A: the sous-vide notes say what the model
-computes (whichever of yolk and white binds, the other has passed its target);
-`help.unsure.sousVide` says "hours, even days", since the white's hold is
-9.7 h just under 60 °C and 89 h at 55 °C, while the warning keeps "most of a
-day" for the one bath the app offers (22.7 h at 58 °C); `controls.egg.more`
-says "give me its weight", as iOS takes it on a slider; the F2 cooking hints
-are trimmed to what their label does not say; `outcome.unsure` holds "I
-can't" together with a no-break space. Held to the old wording:
-`help.reliable.forYou`, `idle.welcome`, and the 1750 twins of
-`learned.forget` and `learned.confirm.title`. Outside the catalogue: the
-head's and the manifest's descriptions, and the web's measured-egg option,
-which now carries the egg's mass as iOS's does. Delete this table once the
-owner has been through it; the draft file keeps it.
+- **Made**: an edit to `copy/en.json`, in both apps, with each
+  `copy/en-US.json` entry it reaches and that entry's `base` (§2), each
+  string within its surface's budget (`test/data/surfaces.json`); then
+  `npm run fixtures`.
+- **Approval is stored.** `copy/approved.json` holds, per key, the English
+  the owner approved and its hash. It began from the English of `e3a81cb`
+  (the `notes` draft, 3 October 2026), the last time he read every string.
+  Every key whose English hashes otherwise (changed), that has no approval
+  (added), or that has one and is gone from the English (removed) is the
+  review queue: generated, never typed. `npm run copy:queue` prints it, each
+  key with its approved and current English and its apps. The queue never
+  fails a build; a malformed `approved.json` does (`test/copyQueue.test.ts`).
+- **Read** on a phone: `npm run copy:review` writes `copy-review.html`
+  (gitignored), one file with no script and no network, light or dark. For
+  each key: the approved English against today's, word by word; the 1750
+  twin, and whether it is stale or missing; the en-US words; the surface's
+  budget against the longest rendering, as `copy.test.ts` 5a measures it;
+  which apps say it; and its note. The words are still judged in place, in
+  the apps (`UI.md` §6); the page says what to look at.
+- **Approved** on the owner's word, never on an agent's judgement:
+  `npm run copy:approve -- <key…|--all>` stamps today's English for those
+  keys. A removed key named, or `--all`, drops its approval. `--at <ref>`
+  stamps a commit's English instead, which is how the file began
+  (`--all --at e3a81cb`).
 
-| key | now | 1750 |
-|---|---|---|
-| `controls.doneness.peak` (new) | peak yolk {yolk} | the yolk at most {yolk} |
-| `controls.doneness.bath` (new) | water at {bath} | the water at {bath} |
-| `controls.doneness.value` | {doneness}, peak yolk {yolk} (was "·"; now the slider's value to a screen reader only) | {doneness}, the yolk at most {yolk} |
-| `controls.doneness.valueBath` | {doneness}, water at {bath} (the same) | {doneness}, the water at {bath} |
-| `cook.summary` | {doneness} · peak yolk {yolk} (was "{mass} · …", iOS only; now both apps, under the running cook's sentence) | {doneness} · the yolk rising to {yolk} |
-| `outcome.bracket` | less its last sentence, "Or tap the level I suggest, when I suggest one." | less "Or tap the degree I propose, when I propose one." |
-| `help.odds.p1` | less "When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny." | less its "I propose a degree that plays safe" sentence |
-| `help.odds.aside` | less "I suggest playing safe when either way of missing is at least one egg in five: …" | less its "I propose to play safe" sentence |
+A string the owner has approved (the `alarm.pull.*` bodies,
+`alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
+as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
+it like the rest, and a change puts it back in the queue.
 
-**The second draft under review: `tidy2`** (29 September 2026). FOLLOWUP.md
-section 5 with 4.2: the lines the first tidy left clunky, in both apps, for
-the same phone pass. `tools/drafts/tidy2.ts`, on `a04ccfc`, 15 keys, none
-retired; its header has each 1750 twin before and after. Where it departs
-from FOLLOWUP's proposals: `readout.restored` says "I can't sound the
-alarm", since "the alarm is off" reads as the header's Sound switch;
-`learned.confirm.forget` moves with its title, since under "Start learning
-again?" a button saying "Forget it" reads as "never mind"; "Full rolling
-boil" stays as the button's name wherever the cook is told to tap it, and
-where a screen with no button asks for a future tap it is "a full rolling
-boil" in lower case, since "when the water boils" there invites the tap at
-the first bubbles (`CLAUDE.md` invariant 6). `spoken.total` ("Total time.
-Total 6 minutes") has the same fault as the three `spoken.*` below and is
-left: the web proof reads the label "Total time" as the template "Total
-{time}". Delete this table with the other.
+**The twins may lag the English** (`DECISIONS.md` 103). A translation's twin
+need not be rewritten in the commit that changes its English; the twins are
+written in batches. Each translation has a sidecar, `copy/<tag>.base.json`
+(today `copy/en-x-1750.base.json`): per key with a twin, the hash of the
+English it was written against (`base`); per key left to English on
+purpose, the hash of the English it was judged at (`english`, today only
+`app.name`). A twin whose English has moved since is stale, and keeps
+showing. A key with no twin that is not left to English is missing, and
+renders in English (`src/core/copy.ts`). The queue and the page list both,
+and neither fails a build. Once a twin is rewritten,
+`npm run copy:approve -- --translation <tag> <key…|--all>` stamps it; a key
+named that has no twin is stamped as left to English. No app reads the
+sidecars, and the site build leaves them and `approved.json` out (the iOS
+bundle copies `copy/` whole, so they ride along there, unread). Czech (F5)
+gets the same by adding its catalogue and stamping it. A regional overlay
+may not lag: it keeps its own `base`, held by `copy.test.ts` 7a (§2).
 
-| key | now | 1750 |
-|---|---|---|
-| `learned.forget` | Start learning again | Begin to learn anew |
-| `learned.confirm.title` | Start learning again? | Shall I learn anew? |
-| `learned.confirm.forget` | Start again | Begin anew |
-| `outcome.likely.firm` / `.soft` | Probably just right; if not, a little firm. / …soft. | Probably as you desire; if not, a little firm. / …soft. |
-| `readout.restored` | …The times are right, but I can't sound the alarm, so watch the clock. | …The times are true, but I cannot sound the alarm, so watch the clock. |
-| `controls.eggFrom.more` | Fridge eggs are the most predictable. A fridge is much the same every day and a room isn't, and each degree moves the time a little. | …the most certain. A fridge is much the same from day to day and a room is not, and… |
-| `readout.sub.coldAssumes.more` | …taken to boil before, timed from your taps. … | …hitherto been in boiling, timed by your taps. … |
-| `controls.eggsInPan.more` | …your tap when the water boils already counts them. | …your tap when the water boils already reckons them. |
-| `help.learn.p1` | …From your taps at the boil, I learn how long your water takes to boil. … | …from your taps at the boil, how long your water is in boiling. … |
-| `outcome.learning` | …and on a cold-water start, tell me when the water is at a full rolling boil. … | …and, having begun from cold water, tell me when the water boils in earnest. … |
-| `learned.literature` | I haven't learned anything yet. Tell me how each egg came out, and on a cold-water start, when the water reaches a full rolling boil. | …Tell me how each egg came out, and, having begun from cold water, when the water boils in earnest. |
-| `spoken.heating` | {time} left in total (was "Heating. …", after the label "Heating") | {time} remaining in all |
-| `spoken.cooking` / `.cooling` | {time} left (was "Cooking. …" / "Cooling. …") | {time} remaining |
+**Rules the drafts settled, which stand:**
 
-**The third draft under review: `plain`** (3 October 2026, `DECISIONS.md`
-54). A style pass over both apps, after the owner's model rewrite of
-`help.how.p2`: `tools/drafts/plain.ts`, on `73ea0f8`, 71 keys, none
-retired, 11 of their 1750 twins rewritten where the meaning moved. Its
-header lists what it left alone on purpose (the motto, "Full rolling boil",
-the colon before an inserted word, "counter", "cold tap" and "pan", which
-wait on the owner's choice of base English) and every place a row now says
-more or less than it did.
+- **No "tap" for the screen gesture** (5 October 2026, the owner's: "not
+  global English", and "then tap" read as tapping the eggs). A button is
+  pressed, or named alone where there is no room for a verb. "Tap" for the
+  kitchen fitting went earlier (`DECISIONS.md` 57).
+- **An object never stands in for the data about it** (3 October 2026, the
+  owner's): what the app keeps and sends is a **result** (one cooked egg:
+  how it was cooked and how it came out), and "egg" is only the physical
+  egg. The settings, a kitchen and a cooking session are named as
+  themselves.
 
-**The fourth draft under review: `data`** (3 October 2026). The owner's
-rule against metonyms: an object never stands in for the data about it.
-What the app keeps and sends is a **result** (one cooked egg: how it was
-cooked and how it came out), and "egg" is only the physical egg. Likewise
-the settings, a kitchen and a cooking session are named as themselves.
-`tools/drafts/data.ts`, on `13a5e05`, 13 keys, none retired or renamed. Each
-1750 twin is rewritten with its key ("result" there too, "Expunge the
-results"), and the twin of `help.learn.aside`, whose modern wording stands,
-keeps "a record of" every egg rather than every egg.
-
-| key | before | after |
-|---|---|---|
-| `share.title` | Share my eggs | Sharing results |
-| `share.toggle` | Send how my eggs come out | Share results |
-| `share.what` | I’ll send how each egg was cooked and how you said it came out, the eggs I already know included. … | I’ll send your results, including past ones: how each egg was cooked and how you said it came out. … |
-| `share.more` | One kitchen teaches me only about itself. Many together show me … from what they showed. … Turn this off whenever you like; Delete what I’ve sent takes back every egg. | Results from one kitchen tell me only about that kitchen. Results from many show me … from what they show. … Turn this off whenever you like, and tap Delete shared results to remove every one from the server. |
-| `share.sent` | I’ve sent {eggs} egg(s). | I’ve sent {eggs} result(s). |
-| `share.delete` | Delete what I’ve sent | Delete shared results |
-| `share.confirm.title` | Delete what I’ve sent? | Delete shared results? |
-| `share.confirm.message` | …delete every egg this device has sent… | …delete every result this device has sent… |
-| `learning.badge.more` | You’re sharing your eggs, … | You’re sharing your results, … |
-| `learned.tuned` | Learned from {eggs} egg(s) | Learned from {eggs} result(s) |
-| `learned.confirm.message` | I’ll forget every egg and every boil, … | I’ll forget all your results and boil times, … |
-| `help.reliable.forYou` | For the eggs you’ve set up now | For your current settings |
-| `action.hint.heating.more` | …I time the rest of the cook from your input here… | …I time the rest of the cooking from your input here… |
-
-**The fifth: `sharingid`** (3 October 2026, `DECISIONS.md` 67). One new
-key, `share.id`, "Your random number" (1750: "Your number, drawn at
-random"), the label over the cook's random id in Settings' sharing section,
-shown once sharing has been turned on, so that it can be quoted in an email
-asking for deletion. It is the privacy page's own name for it, and
-`share.what`'s. The id is shown whole and selectable, in a fixed-width
-face; it is not words and has no key. No en-US entry: American English
-says it the same way. `tools/drafts/sharingid.ts`, on `99572b7`.
-Since 5 October 2026 it is "Your random ID" (1750: "Your cypher, drawn at
-random"), with `share.what` and the privacy page: the `randomid` draft.
-
-**No "tap" for the screen gesture** (5 October 2026, the owner's: "not
-global English", and "then tap" read as tapping the eggs). A button is
-pressed, or named alone where there is no room for a verb; the `press`
-draft, with its en-US and 1750 twins. "Tap" for the kitchen fitting went
-earlier (`DECISIONS.md` 57).
-
-**Low odds are a warning, not a wall: `warn`** (5 October 2026,
-`DECISIONS.md` 83). The slider no longer stops at the softest level the
-app gets right 3 times in 10, so the two sentences that named where it had
-stopped are retired, and one warning names the level the thumb rests on.
-The doneness word stands alone before the colon, capitalised as on the
-ticks, so it is never lower-cased into running grammar. It shows in the
-warning line while idle, unless a refusal is worth saying there, and the
-advice link stays under it. No en-US entry. `tools/drafts/warn.ts`, on
-`ab5cd22`.
-
-| key | before | after |
-|---|---|---|
-| `refusal.unlikelySoft` | The softest I get right at least {hits} times in {of}, so far: {limit}. | (retired) |
-| `refusal.unlikelyHard` | The firmest I get right at least {hits} times in {of}, so far: {limit}. | (retired) |
-| `warn.lowOdds` | (new) | {doneness}: I get this right fewer than {hits} times in {of} so far. |
-
-The 1750 twin: "{doneness}: in this I have hitherto succeeded fewer than
-{hits} times in {of}."
-
-**The questions after an egg: `afteregg`** (6 October 2026, `DECISIONS.md`
-92). The cook names the yolk they got in the slider's own words, so the
-yolk's answers are the ticks' keys, `doneness.runny` to `doneness.hard`,
-unchanged but for a note; their five-character budget is what lets five
-share a phone's width. The white question names the white the model
-scores. The probe is no longer offered during a cook: its reading is a
-field under the questions, with a question and a line of its own, "now"
-standing for the offer's "when I ask". No en-US entry.
-`tools/drafts/afteregg.ts`, on `1676676`; its header has the 1750 twins.
-
-| key | before | after |
-|---|---|---|
-| `feedback.tooSoft`, `.justRight`, `.tooFirm` | Too soft / Just right / Too firm | (retired; the yolk's answers are the doneness words) |
-| `feedback.white.ask` | And the white? | And the white next to the yolk? |
-| `feedback.optional` | Both questions are optional. | Each of these is optional. |
-| `probe.offer`, `.offer.yes`, `.offer.no` | Do you have a probe thermometer? If so, when I ask, … / Yes / No thanks | (retired) |
-| `probe.now`, `probe.hint` | Push the probe to the middle / Tell me the highest number you see. | (retired) |
-| `probe.ask` | (new) | Do you have a probe thermometer? |
-| `probe.how` | (new) | Push it into the middle of the yolk now and tell me the highest number you see. |
-| `help.learn.aside` | … for too soft, just right and too firm. … | … for the yolk you got, runny to hard, and the white next to it. … |
-
-**How sure I am, in words: `certainty`** (8 October 2026, `DECISIONS.md`
-93 and 97; `SHIP-0.5.md` D1). The direction spoke of "just right", which
-the cook is no longer asked (92), so it retires, with its lean and its (i).
-Below the time display is one of the owner's three words, as a label the
-cook presses: "ballpark" gets its noun, and none has a full stop. Pressed,
-it opens the 90% interval with each word standing alone after a colon, "Most
-likely" unless it is already said, and the likely time range in the first
-person, as an estimate is said aloud. The three paragraphs the (i) opened
-move to Help word for word. No en-US entry. `tools/drafts/certainty.ts`, on
-`e9c4208`; its header has the 1750 twins ("Morally certain", "Near the
-mark", "A guess at hazard"). The bracket's words to a screen reader move
-with the bracket, now the 90% range (`argumentsMoved`, a draft's list of
-keys whose words stand while the numbers behind them move).
-
-| key | before | after |
-|---|---|---|
-| `certainty.veryCertain`, `.ballpark`, `.wildGuess` | (new) | Very certain / A ballpark figure / A wild guess |
-| `certainty.interval`, `.interval.one` | (new) | {hits} times in {of}: {from} to {to}. / {hits} times in {of}: {word}. |
-| `certainty.mostLikely` | (new) | Most likely: {word}. |
-| `certainty.time` | (new) | I think the right time is between {low} and {high}. |
-| `certainty.help` | (new) | More about how sure I am |
-| `warn.lowOdds` | {doneness}: I get this right fewer than {hits} times in {of} so far. | (retired) |
-| `warn.wildGuess` | (new) | {doneness}: a wild guess so far. |
-| `outcome.likely`, `.likely.firm`, `.likely.soft`, `.unsure`, `.miss.firm`, `.miss.soft` | Probably just right. … / It could come out too soft or too firm. I can’t tell yet. / It might miss, … | (retired) |
-| `outcome.info` | How sure I am | (retired: the (i) is gone) |
-| `outcome.bracket`, `.why`, `.learning` | in the direction’s (i) | the same words, in Help |
-| `help.odds.p1` | … I tell you whether this one will probably come out as you asked, and if not, whether too soft or too firm. … | … Very certain means that 9 times in 10 you’ll get the yolk you asked for. A ballpark figure means … that yolk or the one next to it on the slider. Anything less sure is a wild guess. Press the words … |
-| `help.odds.aside` | Eight eggs out of ten … The stronger the shading on the slider, the surer I am of getting that doneness right. | Nine eggs out of ten … the more often you get the yolk you asked for. Dots mark the yolks that are still a wild guess. |
-
-**The one screen: `onescreen`** (8 October 2026, `DECISIONS.md` 91, 96 to
-98; `SHIP-0.5.md` C3), the web only for now: iOS adds its apps to these rows
-in its step. The sentence and the slider stay on screen while the egg
-cooks, so the summary line under the running cook's sentence is iOS's
-alone. While a cook runs the start clause says when the eggs went in, and
-its panel corrects that time, a minute at a time; when a − or + goes no
-further, the line under it says why in the first person. When the alarm's
-grace ran out and a correction since would cook the eggs longer, I ask
-whether they are still in the water. No en-US entry. `tools/drafts/onescreen.ts`,
-on `b314a4c`; its header has the 1750 twins ("set in cold water at {time}
-and brought to the boil", "The eggs put in at", "Are the eggs yet in the
-water?"). Proved with `copyLiterals --since b314a4c onescreen` and the
-snapshot compared with `--draft onescreen` (`LOGBOOK.md`, 8 October 2026).
-The same day `onescreen_ios` (`tools/drafts/onescreen_ios.ts`, on
-`ee5ffda`) gave iOS the rows below but `spoken.stillIn` (iOS speaks no
-`spoken.*` key), unchanged, and retired `cook.summary` from iOS too, its
-1750 twin with it; core's `clauseKeys` now chooses the `*At` start
-clauses. Proved with `copyLiterals --since ee5ffda onescreen_ios`.
-
-| key | before | after |
-|---|---|---|
-| `cook.summary` | {doneness} · peak yolk {yolk} (both apps) | the same, iOS only |
-| `setup.start.coldAt`, `.hotAt` | (new) | into cold water at {time}, brought to the boil / into boiling water at {time} |
-| `setup.start.coldStandingAt`, `.hotStandingAt` | (new) | into cold water at {time}, to the boil, heat off, lid on / into boiling water at {time}, heat off and lid on |
-| `controls.startedAt` | (new) | Eggs in at |
-| `controls.startedAt.latestNow` | (new) | I can’t move it later than now. |
-| `controls.startedAt.latestBoil` | (new) | I can’t move it later than {time}, when you pressed Full rolling boil. |
-| `controls.startedAt.latestPull` | (new) | I can’t move it later than {time}, when the eggs were due out. |
-| `controls.startedAt.earliest` | (new) | I can’t move it earlier than {time}, two hours before I started timing. |
-| `ask.stillIn`, `.yes`, `.no` | (new) | Are the eggs still in the water? / Yes, still in / No, they’re out |
-| `readout.sub.stillIn` | (new) | since they were due out |
-| `spoken.stillIn` | (new) | Are the eggs still in the water? They were due out {time} ago. |
-**An older build after a newer one: `newer`** (9 October 2026,
-`DECISIONS.md` 100). One new key, `newer.note`, at the top of every screen
-when a newer version of the app has run on the device and this one writes
-nothing: "A newer edition of this app saved your results. Until you update
-this one, I’ll time your eggs but won’t save or learn anything." No
-"version" or "store": "edition" is the plain word, and the 1750 colophon's
-already. The 1750 twin: "A later edition of this work has kept your
-results. Until you procure it, I shall time your eggs, but shall neither
-keep nor learn any thing." No en-US entry. `tools/drafts/newer.ts`, on
-`c2a156f`.
-
-**The one screen's review: `tighten2`** (9 October 2026,
-`design/onescreen-review.md` 2.3 and 3, and the owner's `DECISIONS.md`
-99), both apps. The boil line under the time no longer says how sure it is
-of itself: the certainty line below speaks for both, so a guessed and a
-remembered time to boil read alike, and the two keys are one. Once the eggs
-cook, the likely time range is when to take them out, as times of day,
-where a range of whole times sat under a clock counting down (core's
-`timeRangeWords` chooses the key and the times). The cold "heat off" clause
-says the heat off as the boiling one does, as a sentence. No en-US entry.
-`tools/drafts/tighten2.ts`, on `83f7010`; its header has the 1750 twins
-("about {boil} to the boil", "set in cold water at {time}, lid on and fire
-out as it boils", "I judge the true time to take the eggs out to lie
-between {low} and {high}."). Proved with `copyLiterals --since 83f7010
-tighten2` and the snapshot compared with `--draft tighten2`, four captures
-of the base pooled against two of this build (`LOGBOOK.md`, 9 October
-2026).
-
-| key | before | after |
-|---|---|---|
-| `readout.sub.coldAssumes` | about {boil} to boil, from what I’ve timed before | about {boil} to boil |
-| `readout.sub.coldGuesses` | about {boil} to boil, my guess | (retired: `coldAssumes` says both) |
-| `setup.start.coldStandingAt` | into cold water at {time}, to the boil, heat off, lid on | into cold water at {time}, heat off and lid on once it boils |
-| `certainty.timeOut` | (new) | I think the right time to take the eggs out is between {low} and {high}. |
+**History.** Until 9 October 2026 each wording change was a named draft,
+`tools/drafts/<name>.ts`: every key it changed, before and after, with its
+1750 twin, proved by `copyLiterals --since` and `copySnapshot compare
+--draft` to have changed only what it listed, and this section held a table
+for each draft under review. The fifty drafts, `feedback` to `alarm`, are in
+git (`git show bfd11fa^:tools/drafts/<name>.ts`), and each one's reasoning is
+in the `LOGBOOK.md` entry of its day. Those after `notes`, `data` to
+`alarm`, are what the review queue began with.
 
 ## 4. Units
 
@@ -958,7 +773,7 @@ whole catalogue is for their review (`DECISIONS.md` 17).
   learning* line is not used: that key is retired.
 
 **As built (iOS), 28 September 2026.** Commits `01c621e` to `15cf890`,
-drafted as `period_ios` in `tools/drafts/period_ios.ts`. Like the web half, it is for
+drafted as `period_ios` (§3, History). Like the web half, it is for
 the owner's review.
 
 - **The switch is ported, not rewritten.** `src/core/language.ts` is
@@ -1006,9 +821,11 @@ the owner's review.
     you tap the boil*;
   - a few controls: `more.*` and `controls.units.more.ios`.
 
-  `test/en1750.test.ts` 1b now asks for a twin for every key either app
+  `test/en1750.test.ts` 1b then asked for a twin for every key either app
   uses, not only the web's, so the archaisms, the spellings and the long s
-  bind the alarms and the Lock Screen too. 1b2 holds the small surfaces (an
+  bind the alarms and the Lock Screen too. Since `DECISIONS.md` 103 a twin
+  may lag: every twin there is binds them, and the queue lists one missing
+  (§3). 1b2 holds the small surfaces (an
   alarm's title, the Dynamic Island, the Lock Screen) to eight words at
   most. That is rule 2, and it is tested. The compact island's *NOW* and
   *Eat* have no room for flavour and stay as they are. The widget cannot

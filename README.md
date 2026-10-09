@@ -894,9 +894,12 @@ npm run rank       # how many parameters can feedback move? (§11.5)
 npm run probe      # is a probe thermometer worth an egg? (§11.3)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
-npm run copy:literals    # no Swift literal is words; with --since <ref> [draft], the copy proof
+npm run copy:literals    # no Swift literal is words
+npm run copy:queue       # the words not yet approved, and stale or missing twins (LANGUAGE.md §3)
+npm run copy:review      # the same, as copy-review.html, to read on a phone
+npm run copy:approve -- <key…|--all>   # stamp today's English as approved
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
-npm run copy:snapshot -- compare <before.json> <after.json> --draft [name]
+npm run copy:snapshot -- compare <before.json> <after.json>
 npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/

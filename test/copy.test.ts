@@ -17,6 +17,7 @@ import {
   Catalogue, Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.js';
+import { catalogueTags } from '../tools/copyApproval.js';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {
@@ -28,12 +29,9 @@ interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 interface Surface { budget: number; about: string }
 
 const SURFACES = JSON.parse(readFileSync('test/data/surfaces.json', 'utf8')) as Record<string, Surface>;
-/** Every catalogue: `copy/<tag>.json`, and nothing else is in copy/ (the
- *  surfaces and the 1750 spelling table are tests' data, in test/data/). The
- *  same rule as `tools/fixtures/copy.ts`. */
-const LOCALES = readdirSync('copy')
-  .filter((f) => f.endsWith('.json'))
-  .map((f) => f.replace(/\.json$/, ''));
+/** Every catalogue: `copy/<tag>.json`, less the review queue's state beside
+ *  them (`tools/copyApproval.ts`). The same rule as `tools/fixtures/copy.ts`. */
+const LOCALES = catalogueTags();
 const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
   l, JSON.parse(readFileSync(`copy/${l}.json`, 'utf8')) as CatalogueJson,
 ]));
@@ -382,7 +380,7 @@ test('7a. an overlay says only what its region says differently, against today\'
       }
       const fields = Object.keys(entry).sort().join(',');
       if (fields !== 'base,text') failures.push(`${tag} ${key}: has ${fields}, not just base and text`);
-      // Written against the English as it is: a draft that changed the English
+      // Written against the English as it is: a wording change to the English
       // and not this would leave the region reading the old meaning.
       if (entry['base'] !== english['text']) failures.push(`${tag} ${key}: written against "${String(entry['base'])}", but English now says "${String(english['text'])}"`);
       if (entry['text'] === english['text']) failures.push(`${tag} ${key}: says what English says`);
