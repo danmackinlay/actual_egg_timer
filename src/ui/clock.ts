@@ -11,13 +11,14 @@
 
 import { ALARM_RING_S, AlarmMoment, AlarmSound, DEFAULT_ALARM_SOUND, alarmRepeats } from '../core/policy.js';
 import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
+import { request, soon } from './idle.js';
 import { clockSpeed, nowMs, onClockChange } from './now.js';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
 const TICK_MS = 200;
 
 /** The tick, real ms: 200 on the real clock. On the development clock
- *  (now.ts) it is 0.2 s of the cook's time, never under 16 ms, so at x60 a
+ *  (dev/clock.ts) it is 0.2 s of the cook's time, never under 16 ms, so at x60 a
  *  tick is about a second of the cook and still sees the 20-s pull. */
 function tickMs(): number {
   return Math.max(16, TICK_MS / clockSpeed());
@@ -181,7 +182,7 @@ function prepare(): void {
   const ctx = audio;
   if (ctx === null) return;
   const chosen = sound;
-  window.setTimeout(() => {
+  soon(() => {
     periodBuffer(ctx, chosen, 'pull');
     periodBuffer(ctx, chosen, 'cooled');
   }, 0);
@@ -196,7 +197,7 @@ async function loadRecording(moment: AlarmMoment): Promise<Float32Array | null> 
   if (ready !== undefined) return ready;
   let bytes = fetched.get(moment);
   if (bytes === undefined) {
-    bytes = fetch(RECORDINGS[moment]).then((r) => {
+    bytes = request(RECORDINGS[moment]).then((r) => {
       if (!r.ok) throw new Error(`${RECORDINGS[moment]}: ${r.status}`);
       return r.arrayBuffer();
     });

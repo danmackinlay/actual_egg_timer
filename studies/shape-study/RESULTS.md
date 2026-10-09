@@ -3,7 +3,8 @@
 The app conducts heat through an equal-volume **sphere** (radius 0.5477 B for
 L/B = 1.35). Real eggs are ovoid. This study solves the same physics in the
 real shape and asks what the sphere costs, in seconds of cook time. It
-changes nothing in the app.
+changes nothing in the app. This page is where it is quoted, with
+LOGBOOK.md, 5 October 2026.
 
 **Short answer: the owner's suspicion holds — the sphere is fine.** Its error
 is a near-constant 2–3% that the calibrated `ALPHA_DEFAULT` already absorbs.
@@ -159,9 +160,9 @@ and the path has to guess it.
 
 ```
 npm run build                      # only for the check against the app
-python3 tools/shape-study/shape_study.py --app-core dist/src/core   # ~2.5 min
-python3 tools/shape-study/shape_study.py --quick                    # coarse mesh, ~20 s
-python3 tools/shape-study/report.py      # prints the tables below
+python3 studies/shape-study/shape_study.py --app-core dist/src/core   # ~2.5 min
+python3 studies/shape-study/shape_study.py --quick                    # coarse mesh, ~20 s
+python3 studies/shape-study/report.py      # prints the tables below
 ```
 
 It needs numpy and scipy, and no npm packages. It writes `results.json`

@@ -1,6 +1,6 @@
 /**
  * The web app's surface and odds builds (`src/ui/decisionGrids.ts`) when a build
- * throws: WORKLIST 2.3's path. A build that throws must reject, not hang, and
+ * throws. A build that throws must reject, not hang, and
  * must leave no trace, so the same pot can be asked again. Before 5005798 a
  * throw on the main thread left the promise pending and the key in
  * `decisionBuilds` / `profileBuilds`, and that pot never got a direction.

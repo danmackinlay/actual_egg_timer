@@ -2,7 +2,7 @@
 // solveCookTime from compiled core, equal-volume sphere, hot start into a
 // held boil at 100 C, 2 eggs in 2 L, ice bath. Prints JSON.
 //
-//   node tools/shape-study/app_reference.mjs [path/to/compiled/src/core]
+//   node studies/shape-study/app_reference.mjs [path/to/compiled/src/core]
 //
 // The default path is dist/src/core, which `npm run build` writes.
 import path from 'node:path';

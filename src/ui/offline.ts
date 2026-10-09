@@ -25,6 +25,7 @@
  */
 
 import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.js';
+import { request } from './idle.js';
 import { realMs } from './now.js';
 
 const LOOK_EVERY_MS = 60 * 60 * 1000;
@@ -56,7 +57,7 @@ export function startOffline(noCookRunning: () => boolean): void {
     };
     // Past the worker, which answers only GETs of the build's own files.
     const look = (update: boolean): void => {
-      fetch(named.content, { method: 'HEAD', cache: 'no-store' }).then((response) => {
+      request(named.content, { method: 'HEAD', cache: 'no-store' }).then((response) => {
         if (response.status === 404 || response.status === 410) {
           if (noCookRunning()) retire(registration).catch(() => { /* again next visit */ });
         } else if (update) {
@@ -72,7 +73,7 @@ export function startOffline(noCookRunning: () => boolean): void {
       });
     });
     // An hour on the wall, not of the cook: a development clock run fast or
-    // shifted (now.ts) would look at every return to the page, or never.
+    // shifted (dev/clock.ts) would look at every return to the page, or never.
     let looked_ms = realMs();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && realMs() - looked_ms > LOOK_EVERY_MS) {

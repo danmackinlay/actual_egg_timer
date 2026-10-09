@@ -7,6 +7,7 @@
 
 import { DoseGrid, GridRequest } from '../core/doseGrid.js';
 import { OddsProfile } from '../core/reach.js';
+import { job as inHand } from './idle.js';
 import { Job, runJob } from './runJob.js';
 
 interface Waiting {
@@ -73,12 +74,12 @@ function gridWorker(): Worker | null {
 /** A job's answer, from the worker if there is one. */
 export function offThread(job: Job): Promise<unknown> {
   const w = gridWorker();
-  if (w === null) return onThisThread(job);
-  return new Promise((resolve, reject) => {
+  if (w === null) return inHand(onThisThread(job));
+  return inHand(new Promise((resolve, reject) => {
     const id = nextId++;
     waiting.set(id, { job: job, resolve: resolve, reject: reject });
     w.postMessage({ id: id, ...job });
-  });
+  }));
 }
 
 /** A fold's surface (calibration.ts). */

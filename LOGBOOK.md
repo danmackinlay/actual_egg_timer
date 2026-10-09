@@ -6492,3 +6492,174 @@ saving to count on is the compiler's, 6-9 s a run.
 Agents adding a script: start it `node tools/build.mjs && node dist/…`,
 not `tsc && …`, which builds only the tests, tools and server and leaves
 a deleted file's output in place.
+
+## 10 October 2026: the fixtures checked on Linux (REFACTOR-0.5 1.4)
+
+`fixtures:check` ran only on CI's macOS job, because the same TypeScript
+on x86 Linux makes some numbers differently in the last bit. Measured in
+OrbStack containers (Node 26.11.1, `node:26-bookworm-slim`) against the
+fixtures as made on this Mac (arm64, Node 26.8.1): x86 Linux differed in
+3,848 numbers across nine fixtures, by at most 7.3e-15 relative (in
+decide.json's grid; most by one or two ulps); arm64 Linux in one, a dose
+of 1.7e-14 in section.json that x86 Linux shares, so that one is Node's
+version or the OS, not the processor.
+
+**Rounding was tried and does not work**, at either count of digits.
+Twelve significant digits are up to 5e-12 from the value, past Swift's
+1e-12, and 3,362 Swift expectations failed. Thirteen kept that margin but
+broke 790, because the fixtures are inputs as well as answers and an
+input must reach Swift as the TypeScript used it: 4.722222222222222 C is
+40.5 F, a half-way case that rounds up to 41, and rounded it read 40;
+1759700000123.5 is an id in fractions of a millisecond, which a loader
+refuses, and rounded it was a whole number and accepted; running.json's
+cooks, their eggs and pots rounded, came out up to 5e-6 apart. Nor would rounding have made the
+bytes agree: where two platforms' values straddle a boundary they still
+differ in the last digit written, and at twelve digits one number in
+reach.json did.
+
+**So the check compares numbers, not bytes.** `tools/fixturesCheck.ts`
+(the rule in `tools/fixtureCompare.ts`, tested in
+`test/fixtureCompare.test.ts`) compares each fresh fixture with the one in
+git's index: every key in order, every string, boolean, null and length
+exactly, every number to 1e-12 relative, absolute below 1, which is
+Support.swift's `conformanceTolerance`: a difference it lets through is
+one Swift could not tell from none. A fixture that agrees but for last
+digits is put back as committed, so the tree is left clean; one that does
+not is left for `git diff`, and its differences are listed by JSON path
+(`$.cases[0].solution.cookTime_s: 442.1533203135 -> 442.1533203125
+(2.3e-12)`), which is the readable diff the item asked for. On both Linux
+containers the check passed against the macOS fixtures and left the tree
+clean, and failed, naming the path, when a committed cook time was moved
+by 1e-9 s. Fixtures are still made and committed at full precision; no
+Swift tolerance changed.
+
+**CI**: `fixtures:check` moved to the Linux `web` job; the macOS `apple`
+job runs `swift test` on the committed fixtures, which it never
+regenerated, and the iOS build.
+
+## 10 October 2026: one web harness, an app that says when it is idle, and the development clock out of the site (REFACTOR-0.5 1.7, 1.9, 2.18)
+
+`291eabd` (2.18), `b301777` (the app's counts), `34076ae` (1.7), `b7693a6`
+(1.9), `8d9fa1a` (a request counted per document).
+
+**The test API.** `tools/e2e.ts` imported the app's modules 25 times and
+read `state`; now the e2e and the copy capture read the app through what it
+shows, what it stores and `window.aetTest` (`src/ui/dev/test.ts`):
+`snapshot()`, the page's state as plain data (the phase and what the readout
+says, the settings, the decided level, the cook, its deadlines and
+certainty, the stored cook, the log and how much of it is folded or final,
+sharing's on and sent); `whenIdle()`; `t(key, args)` and `timeOfDay(ms)`. The
+harness is `tools/harness.ts` (Chrome, the server, a context per scenario,
+`Tab`); `tools/e2e.ts` keeps the scenarios. It still watches the platform:
+the sounds started on the audio clock and the localStorage writes, by
+patching `AudioContext` and `Storage` before the app runs, and now the
+requests off DevTools' network events rather than a patched `fetch`.
+
+**The development clock leaves the site.** It moved from `now.ts` to
+`src/ui/dev/clock.ts`; `now.ts` keeps `nowMs()` and a hook it puts itself in
+(`useClock`). `main.ts` imports `src/ui/dev/index.ts` dynamically, on
+localhost and 127.0.0.1 only, before the app boots; `build:site` leaves
+`src/ui/dev/` out (`sitePaths.mjs`), and `devServer.ts` serves it beside the
+site from `dist/`. Where it is missing (`serve:site` on localhost) the import
+fails and the page boots without it. `inert-off-localhost` now checks that a
+page on another host does not even ask for it. The shipped `_site/` has no
+`aetClock`, `aetTest`, `parseSpan`, `devClockAt`, `aet.devClock` or
+`whenIdle` in it (grep); 2,060,681 bytes in 90 files before, 2,055,425 in 91
+after (`app/` 679,886 to 674,538): the clock out, `idle.js` in.
+
+**Idle.** Both harnesses patched `setTimeout`, `Worker` and `fetch` and
+counted what was pending by a threshold (the e2e timers of 5 s or less, the
+capture 2 s). Now the app says it: a person's timers (a control's settle and
+preview, a solve or a write coalesced, a held key's repeat, the decision's
+settle, the sounds' render), the worker's jobs and the requests go through
+`src/ui/idle.ts`, which counts them, and `whenIdle()` resolves after three
+looks 40 ms apart with nothing in hand. A request's 20-s timeout and a
+download's cleanup stay plain timers, as the thresholds left them. The
+nudge draws from `now.ts`'s `random()`, which `?seed=` seeds for the tab,
+and is drawn at boot rather than as `answer.ts` loads, so the seed is in
+place for it.
+
+**The copy capture as e2e scenarios.** `tools/copy-snapshot.html`, the third
+harness, is gone. Its 39 scenarios are `tools/copyScenarios.ts`, e2e
+scenarios named `copy/…`; `copySnapshot.js capture` runs them and writes
+the 172 states in the same format, and `compare` is unchanged. Where the
+frame had `Date.now` frozen at 7:30 local time, a scenario opens on the
+development clock stopped at 07:30 in London with the zone pinned (DevTools'
+`setTimezoneOverride`), and the carton's region comes from DevTools' locale
+override rather than a patched `navigator.language`. The settings are
+planted from `/privacy/`, a page of the site with no app on it. The
+development clock's corner mark is left out of what is captured.
+
+**Proof.** A capture of the new build (`b7693a6`) is byte for byte the old
+harness's capture of the build before any of this (`14603cd`): 172 states,
+47,063 strings, sha256 `16df6805…`. So the new harness reaches the same
+states, and the app's changes moved no rendered string. Two more captures
+of the new build, quiet (load 67 to 186 from other agents) and under 18
+`yes` hogs on 18 cores with the page throttled six times, are the same
+bytes.
+
+**One harness, any build.** `--tree <dir>` (E2E_TREE) serves another
+checkout's `_site/` and `dist/src/ui/dev/` to today's harness, for the e2e
+and the capture. It works for a commit from `34076ae` on, which has the test
+API and the counts. An older commit has neither; driving it would need the
+patching back, as a second harness, which is what this removes. For the
+words, the old harness's captures of older commits stand (the one above
+matched the new harness's to the byte).
+
+**2.18.** `build:site` is `tools/buildSite.mjs`, the same steps in the same
+order; `_site/` was byte for byte the one-liner's, `sw.js` included (`diff
+-r`). Left from the item: `index.html` pointed at `app/`, which would break
+the repo root served as it is, and netlify.toml's stale comments, which
+change the site's build name (`precache.mjs` hashes netlify.toml).
+
+**Times.** `npm run e2e` was 39 scenarios in 209 and 204 s (load 10 to 20);
+it is 78 (39 and the capture's 39) in 388 and 383 s at load 13 to 104,
+and 640 s under 18 hogs with the page throttled six times (load to 255).
+A capture was 205 s on the old harness; 180 and 178 s now, 289 s loaded.
+
+Things that cost an hour: a request counted across a reload. The newer
+build's scenario plants a deletion still to ask for, then reloads; under
+load the page it was planted under, which has no reason to leave stores
+alone, sent the deletion before the reload landed. The patched `fetch` had
+been counted per document, since the patch ran again in each; DevTools'
+events are per tab, so the harness now counts a request against the
+document that made it (its loader).
+
+## 10 October 2026: the deletions that needed no decision (REFACTOR-0.5 2.5, 2.7, 2.12, 2.13, 2.15, 2.16)
+
+One commit each, each through `verify`, `build:site`, `e2e` and
+`ios:build`, and `ios:e2e` (48 of 48) after each that touched Swift.
+
+- **2.5, unreleased formats.** 107's sweep had already taken the readers,
+  keys and the upgrade scenario the worklist named; its list of retired
+  keys stays. Left were sharing's `madeAt` default (an attestation kept
+  without one was taken as stale) and AppClock's `-clockOffset` /
+  `-clockEpoch`, which no script passed.
+- **2.7, the Live Activity's legacy fields.** The card is read in this
+  build's shape only. A card 0.3 began, on the Lock Screen when 0.5
+  installs, no longer decodes, so the launch cannot end it early; it lasts
+  as long as the system keeps a card.
+- **2.12, `snapRetry`.** True in every call; the reach fixture loses the
+  rows for the branch nothing ran (390 lines).
+- **2.13, exports.** Traced over `src/`, `server/` and `tools/` (not
+  `tools/fixtures/`, being changed on another branch, where `NOMINAL_TARGET`,
+  `BASE_CHOICES`, `START_S` and `MEMORY` are exported for nobody). Kept:
+  what a tool imports, what a test checks as a unit, and every type an
+  exported function names. `machine.ts` is in `phaseView.ts`.
+- **2.15, closed documents.** `WORKLIST.md` and `FOLLOWUP.md` deleted (read
+  them at `14603cd`). Of `tidy2`'s 13 keys, the copy review queue lists
+  the five that changed or went since the owner read every string at
+  `e3a81cb`; the other eight are approved as he read them then, after
+  `tidy2` landed. `REVIEW-0.4.x.md` and the three design reviews are in
+  `archive/`. `SHIP-0.4.md` stays: its open release items are 0.5's.
+  `tools/e2e.ts`'s header still names `design/running-cook-review.md`.
+- **2.16, studies.** identifiability, rank, probe, perturbed, decide and
+  the shape study are in `studies/`, with `studies/tsconfig.json`, outside
+  `npm run build`; each npm script builds them first. Each ran from there
+  (identifiability, rank, probe, `decide -- lean`, the shape study's
+  reference), and each says which document quotes it.
+
+**For PLAN's map at merge:** the rows for `WORKLIST.md` and `FOLLOWUP.md`
+go; `design/running-cook-review.md` and `design/onescreen-review.md`
+become `archive/design/…`, and the status lines at PLAN.md 34, 53, 55, 59
+and 224 cite `archive/`. `studies/` wants a row.

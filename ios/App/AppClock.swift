@@ -17,10 +17,6 @@ import Foundation
 /// - `-clockAt 1791234567`: cook time at this launch is that moment, epoch s.
 /// - `-clockSpeed 60`: cook time runs sixty times as fast as the system's;
 ///   `-clockSpeed 0` holds it still at its moment (frozen).
-/// - `-clockOffset -900`, `-clockEpoch 1791234567`: the older form, without
-///   `-clockAt`: cook time is epoch + speed × (system − epoch) + offset, the
-///   epoch this launch's moment when not given. Passed the same at every
-///   launch, the same clock carries on through a relaunch.
 ///
 /// Launch arguments last one launch; a relaunch without them is back on the
 /// system's clock, with a stored cook in what is then the future.
@@ -59,11 +55,8 @@ enum AppClock {
         let d = UserDefaults.standard
         let launched = Date().timeIntervalSince1970
         let speed = d.object(forKey: "clockSpeed") == nil ? 1 : max(0, d.double(forKey: "clockSpeed"))
-        if d.object(forKey: "clockAt") != nil {
-            return Anchor(system: launched, app: d.double(forKey: "clockAt"), speed: speed)
-        }
-        let epoch = d.object(forKey: "clockEpoch") == nil ? launched : d.double(forKey: "clockEpoch")
-        return Anchor(system: epoch, app: epoch + d.double(forKey: "clockOffset"), speed: speed)
+        let at = d.object(forKey: "clockAt") == nil ? launched : d.double(forKey: "clockAt")
+        return Anchor(system: launched, app: at, speed: speed)
     }()
 
     /// Whether this launch's clock was ever not the system's.
@@ -157,7 +150,7 @@ enum AppClock {
     // MARK: - Stepped from outside
 
     /// Whether this launch's clock reads steps: one given any clock argument.
-    static let steppable: Bool = ["clockAt", "clockSpeed", "clockOffset", "clockEpoch"]
+    static let steppable: Bool = ["clockAt", "clockSpeed"]
         .contains { UserDefaults.standard.object(forKey: $0) != nil }
 
     /// The file a step is read from, in the app's container.

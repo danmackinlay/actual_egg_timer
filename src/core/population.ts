@@ -23,7 +23,7 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import { LITERATURE_POPULATION, LogNormal, Normal, Population } from './infer.js';
+import { LogNormal, Normal, Population } from './infer.js';
 
 export { LITERATURE_POPULATION } from './infer.js';
 export type { Population } from './infer.js';
@@ -43,9 +43,6 @@ export function priorStart(p: Population): PriorStart {
     whiteOffset: p.whiteOffset.mean,
   };
 }
-
-/** The literature's start: the literature's values exactly. */
-export const LITERATURE_START: PriorStart = priorStart(LITERATURE_POPULATION);
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);

@@ -31,7 +31,7 @@ import { Cbor, decode, decodeFirst } from './cbor.js';
 /** Apple App Attestation Root CA, from
  *  https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem
  *  (SHA-256 fingerprint 1C:B9:82:3B:...:62:42:C9:32). Valid to 2045. */
-export const APPLE_APP_ATTEST_ROOT = `-----BEGIN CERTIFICATE-----
+const APPLE_APP_ATTEST_ROOT = `-----BEGIN CERTIFICATE-----
 MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
 JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
 QXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNa

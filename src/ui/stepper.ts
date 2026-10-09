@@ -21,6 +21,7 @@
  */
 
 import { t } from './copy.js';
+import { cancelSoon, soon } from './idle.js';
 
 /** A held button's first repeat, then its pace, and the pace it speeds up
  *  to after `FAST_AFTER` repeats: 30 steps of altitude in about 2.5 s. */
@@ -93,11 +94,11 @@ export function pressAndHold(button: HTMLButtonElement, once: () => boolean): vo
   let timer = 0;
   let repeats = 0;
   const stop = (): void => {
-    if (timer !== 0) window.clearTimeout(timer);
+    cancelSoon(timer);
     timer = 0;
   };
   const repeat = (delay: number): void => {
-    timer = window.setTimeout(() => {
+    timer = soon(() => {
       repeats += 1;
       if (!once()) { stop(); return; }
       repeat(repeats >= FAST_AFTER ? FAST_REPEAT_MS : REPEAT_MS);

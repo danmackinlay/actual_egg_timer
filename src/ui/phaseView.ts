@@ -7,12 +7,11 @@
  */
 
 import { Cooling, HeatAfterBoil } from '../core/protocol.js';
-import { phaseAt } from '../core/policy.js';
+import { Deadlines, PULL_GRACE_SECONDS, phaseAt } from '../core/policy.js';
 import { CookPlan, RunningCook } from '../core/running.js';
 import { phaseKeys } from '../core/wording.js';
 import { t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
-import { coolingStartsIn_s } from './machine.js';
 import { UiStartMode } from './store.js';
 import { show } from './units.js';
 
@@ -172,4 +171,13 @@ export function phaseView(
     secondaryVisible: !idle && phase !== 'DONE',
     asking: false,
   };
+}
+
+/** Whole seconds until the counted cooling starts without the cook, if they
+ *  do not tap first; null outside PULL, and null on a counter rest, where
+ *  nothing starts - the grace runs out into DONE, so a counter rest must not
+ *  promise that cooling starts on its own. */
+export function coolingStartsIn_s(d: Deadlines, cooling: Cooling, now_s: number): number | null {
+  if (phaseAt(d, now_s) !== 'PULL' || cooling === 'counter') return null;
+  return Math.max(0, Math.ceil(PULL_GRACE_SECONDS - (now_s - d.cookEnd_s)));
 }

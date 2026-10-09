@@ -106,9 +106,15 @@ gate could catch it.
       `test/cycles.test.ts`): every static import, bare import and
       re-export is an edge, type-used or not; only `import type` /
       `export type` and `import()` are not.
-- [ ] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
+- [x] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
       12 significant digits) so `fixtures:check` isn't arm64-only and the
-      diffs can be read. Swift already compares at 1e-12. S-M.
+      diffs can be read. Swift already compares at 1e-12. S-M. *Done* (`85eb483`),
+      not by rounding: the fixtures carry inputs that must reach Swift
+      exactly (a half-way °F, an id in fractions of a millisecond), and a
+      rounding boundary still splits two platforms' values. `fixtures:check`
+      (`tools/fixturesCheck.ts`) holds numbers to Swift's 1e-12 and all
+      else exactly, lists what differs by path, and runs in CI's Linux
+      `web` job; x86 and arm64 Linux pass against the macOS fixtures.
 - [x] **1.5 One compile per `verify`.** It runs `tsc` six times, from
       `rm -rf dist`. Project references (`tsc -b`: core, app, tools, tests)
       and run each step from that build. M. *Done:* three projects
@@ -121,11 +127,16 @@ gate could catch it.
 - [x] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
       PLAN as if it were a gate. S. *Done:* in `verify` and CI's web job;
       it takes about 4 s.
-- [ ] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
+- [x] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
       imports live app modules 25 times and reads `state` directly, so the
       refactor it should protect breaks it. Load the dev clock (`now.ts`,
       `window.aetClock`) by a dynamic import on localhost only, not in every
-      build. S-M.
+      build. S-M. *Done:* `window.aetTest` (`src/ui/dev/test.ts`:
+      `snapshot()`, `whenIdle()`, `t()`, `timeOfDay()`); the harness imports
+      no app module. The development clock is `src/ui/dev/clock.ts`, which
+      `main.ts` imports on localhost only; `build:site` leaves `src/ui/dev/`
+      out, and `devServer.ts` serves it beside the site from `dist/`.
+      `now.ts` keeps `nowMs()` and a hook for the clock.
 - [ ] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
       happened** (`iosE2e.mjs:684, 692, 824, …`) pass vacuously on a slow
       runner: step, wait for settled, then assert. Emit the debug log as
@@ -144,7 +155,16 @@ gate could catch it.
       `whenIdle()` and an injected clock and random source (the nudge draws
       `Math.random()`, `answer.ts:93`), run the copy capture as e2e
       scenarios, and serve the harness from HEAD against any commit's
-      build. M.
+      build. M. *Done:* the app sets a person's timers, sends its worker
+      jobs and makes its requests through `src/ui/idle.ts`, and
+      `aetTest.whenIdle()` waits on its counts; the nudge draws from
+      `now.ts`'s `random()`, seeded by `?seed=`; the clock is the
+      development clock, stopped. `tools/copy-snapshot.html` is gone: its
+      39 scenarios are `copy/…` in `npm run e2e` (`tools/copyScenarios.ts`),
+      and `copySnapshot.js capture` writes their 172 states in the same
+      format. `--tree <dir>` serves another checkout's build to today's
+      harness, for any commit from this one on; a commit before it has no
+      test API and no counts, and would need the patching back.
 
 ## 2. Delete
 
@@ -204,19 +224,23 @@ gate could catch it.
 Only one old format is on real users' devices: 0.3's `calibration.v4`, the
 eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
-- [ ] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
+- [x] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
       / iOS `cookInProgress.v2`; the single-string unread-cook readers
       (`calibrationStore.ts:408, 427`, `Calibration.swift:480`);
       `aet.calibration.v3`; `Attest.madeAt` optional; AppClock's
       `-clockOffset`/`-clockEpoch` older form; the e2e `upgrade` scenario. S.
+      *The readers, keys and scenario went with 107's sweep (their keys stay
+      on its list); left were `madeAt`'s old-record default and the older
+      clock arguments, gone in the commit that ticks this.*
 - [x] **2.6 Old cooks kept aside that nothing reads.** `takeOldCooks`,
       `keepUnreadCook`, iOS `oldKeys` / `unreadCookKey`: `eggsImport.ts:152`
       passes them over. Delete; keep only iOS ending old Live Activity cards.
       Cost: a 0.3 user mid-cook at the deploy loses one unanswered egg.
       OWNER (amends 81/97). S.
-- [ ] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
+- [x] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
       `eggMass`, `cooling`, optional `countsUp`/`cook`/`lang`): a Live Activity
-      lives 8-12 hours. S.
+      lives 8-12 hours. S. *A card 0.3 began is no longer read
+      (`ios/README.md`).*
 - [x] **2.8 The second guard.** D81's in-place unread records, `overlay` /
       `Kept.stored`, `moved` and the positional re-merge (written three
       times: TS, Swift, `eggsImport.ts`) defend against an older build
@@ -239,17 +263,21 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Dead code and parameters
 
-- [ ] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
+- [x] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
       both running cooks); only `tools/fixtures/reach.ts` passes `false`, and
       the doc at `reach.ts:395` says otherwise. Remove it and its fixture
       rows. S.
-- [ ] **2.13 Exports used only in their own file or only by tests**:
+- [x] **2.13 Exports used only in their own file or only by tests**:
       `NO_EVENTS`, `eggStartOf`, `likelyTimeRange`, `oddsAtLevel`,
       `slowHobHintFits`, `posteriorAlphaRelSd`, `posteriorMeanOffset`,
       `LITERATURE_START`, `volumeKey`, `jsonString`, the unit constants,
       `yolkWordIndex`, `yolkWordBands`, `templatesOf`; web `controlsChoices`;
       `machine.ts` (23 lines) into `phaseView.ts`. Finishes SHIP-0.5 E's
-      last item. S.
+      last item. S. *Kept exported: what a tool imports (`posteriorMeanOffset`,
+      `yolkWord*`, `templatesOf`), what a test checks as a unit of its own
+      (`oddsAtLevel`, `slowHobHintFits`, `posteriorAlphaRelSd`, `volumeKey`,
+      `jsonString`, and the like in `server/` and `src/ui/now.ts`), every type
+      an exported function names, and `tools/fixtures/` (another branch's).*
 - [x] **2.14 The three-way yolk answer** (−1/0/1): never written now, still a
       branch in `answerLikelihood` with ~115 fixture rows. Kept by D81 for
       the owner's log; it goes only with a one-off rewrite of that log.
@@ -257,23 +285,34 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Repo, docs, branches
 
-- [ ] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
+- [x] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
       WORKLIST (795, "every item is done"), FOLLOWUP (0 open), REVIEW-0.4.x,
       SHIP-0.4 once 0.4 ships, and the three design reviews with
       near-identical names (`one-screen-review.md`, `onescreen-review.md`,
       `running-cook-review.md`). Fix PLAN's map (it omits three files) and
       PLAN.md:40 ("on this branch, `0.4.x`"). Already decided for
-      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S.
-- [ ] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
+      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S. *WORKLIST and
+      FOLLOWUP deleted (in git at `14603cd`); REVIEW-0.4.x and the three
+      reviews in `archive/`. SHIP-0.4 stays: its open release items (the
+      privacy page's OWNER marks, App Privacy, App Attest) are 0.5's now.
+      PLAN's map is the merging session's (DECISIONS 104).*
+- [x] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
       perturbed, decide (INFERENCE §8's numbers), shape-study, into
       `studies/` with their own tsconfig, out of the default build, each
-      with a line saying which document quotes it. S.
+      with a line saying which document quotes it. S. *`studies/tsconfig.json`
+      references the root project, since `decide.ts` uses `tools/common.ts`;
+      `posterior.ts`, which the tests import, stays in `tools/`.*
 - [x] **2.17 38 worktrees, 45 branches, 42 of them merged.** Pruned by the
       owner, 9 October 2026: 30 merged, clean worktrees and their branches;
       13 worktrees and 25 branches left.
-- [ ] **2.18 Web build**: `build:site`'s 11-step one-liner into
+- [x] **2.18 Web build**: `build:site`'s 11-step one-liner into
       `tools/buildSite.mjs`; point `index.html` at `app/` everywhere so
       `sitePaths.mjs` can go; fix netlify.toml's stale comments. S.
+      *Done in part:* the script, `_site/` byte for byte as the one-liner
+      made it, `sw.js` included. Left: `index.html` at `app/` (the repo
+      root, served as it is, loads `dist/`) and netlify.toml's comments,
+      which change the site's bytes (`precache.mjs` hashes netlify.toml
+      into the build's name), so each is its own change.
 
 ## 3. Restructure
 

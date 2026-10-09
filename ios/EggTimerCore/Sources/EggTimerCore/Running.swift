@@ -880,7 +880,7 @@ public func replan(
     var pot = cookSetupOf(ch, timeToBoilS: ramp)
     // Nil while the hint stands for it: solved only if the plan stops there.
     var found: LevelAnswer? = resume == nil
-        ? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true) : nil
+        ? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil) : nil
     var lengthened = false
     var slowHobAt: Double?
     var slowHob: SlowHobHint?
@@ -912,7 +912,7 @@ public func replan(
                 known = nil
             } else {
                 let a = found ?? answerAt(
-                    c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true
+                    c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil
                 )
                 found = a
                 t = carriedSolution(
@@ -936,7 +936,7 @@ public func replan(
             ramp = last + slowHobExtraS < most ? last + slowHobExtraS : most
             lengthened = true
             pot = cookSetupOf(ch, timeToBoilS: ramp)
-            found = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
+            found = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil)
             if creeping {
                 crept = true
             } else if !crept {
@@ -954,7 +954,7 @@ public func replan(
         )
     }
 
-    let mean = found ?? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
+    let mean = found ?? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil)
     let inputs = lengthened ? nil : decisionInputs(c, egg: pot.egg, setup: pot.setup)
     var s: CookSurface?
     if let inputs, let surface, sameDecisionInputs(surface.inputs, inputs) { s = surface }

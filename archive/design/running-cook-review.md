@@ -4,7 +4,7 @@ A review of the web's and iOS's move onto `src/core/running.ts`
 (`2a43487..e9c4208`, with the previous review's fixes before it,
 `fb782dc..2a43487`), before the one screen (step 6 onwards) goes on top of
 it. What it is meant to do is `DECISIONS.md` 96 to 98, `design/one-screen.md`
-§3 and §4, and `design/one-screen-review.md`. It was asked to press on:
+§3 and §4, and `archive/design/one-screen-review.md`. It was asked to press on:
 reload and relaunch at every phase; the clock's events after a tab is
 backgrounded or a phone sleeps; iOS's notifications and Live Activity when
 a plan's deadlines move; two web tabs sharing one stored key; records and

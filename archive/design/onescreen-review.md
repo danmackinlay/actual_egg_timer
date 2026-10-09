@@ -8,8 +8,8 @@ What it is meant to do is `DECISIONS.md` 91, 93 and 96 to 98,
 `SHIP-0.5.md` C and D. It was asked to press on corrections in every phase
 and of every setting, commit on release, the record and learning, the alarms,
 two web tabs, the egg's readings and the certainty line, accessibility and
-words, and parity. The two earlier reviews (`design/one-screen-review.md`,
-`design/running-cook-review.md`) are not re-reported: nothing they found has
+words, and parity. The two earlier reviews (`archive/design/one-screen-review.md`,
+`archive/design/running-cook-review.md`) are not re-reported: nothing they found has
 come back.
 
 The corrections hold where the suites drive them: every setting, every

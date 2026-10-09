@@ -887,10 +887,11 @@ npm run verify     # the gate: build, test, validate, copy:literals, fixtures:ch
 npm run validate   # prints the validation table in §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
-npm run decide     # measures the choice of cook time (tools/decide.ts)
+npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (§11.2)
 npm run rank       # how many parameters can feedback move? (§11.5)
 npm run probe      # is a probe thermometer worth an egg? (§11.3)
+                   # (these four, and studies/shape-study, are in studies/: outside `npm run build`)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
@@ -949,8 +950,9 @@ to port to Swift essentially unchanged.
 `npm run e2e` builds the site, serves it with the sharing endpoint on a store
 in memory (`tools/devServer.ts`), and drives it in headless Chrome over the
 DevTools protocol, with nothing installed beyond Chrome itself
-(`tools/e2e.ts`, `tools/chrome.ts`, which finds Chrome where macOS and
-Linux put it; `CHROME` names another binary). Each scenario runs in a browser context of its
+(`tools/e2e.ts`, its scenarios, over `tools/harness.ts` and
+`tools/chrome.ts`, which finds Chrome where macOS and Linux put it; `CHROME`
+names another binary). Each scenario runs in a browser context of its
 own and asserts on the page and on what it stored: a cold cook at sixty
 times speed, a hot start, Cancel, a reload at every phase, a tab woken past
 the pull, two tabs on one cook, a cook too old, an egg made final, Done
@@ -962,13 +964,40 @@ to cold, overdue and back, a drag that rings only on release, the start's
 time and its limits, Settings' water, two tabs' own cooks), a correction at
 Done and the slider there, and "still in the water?". `npm run e2e -- reload two-tabs` runs
 those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
-the page's text when one fails. The whole suite takes about two minutes, so
-it is not in `npm run verify`; CI runs it as a job of its own on Linux
-(`.github/workflows/verify.yml`, `e2e`), not yet failing the workflow.
+the page's text when one fails.
 
-What makes it take seconds is the development clock (`src/ui/now.ts`),
-through which every read of the time in `src/ui/` goes. On a page served
-from `localhost` or `127.0.0.1`, and nowhere else, `?clock=60` runs it sixty
+The harness reads the app through what it shows, what it stores, and a
+test API, `window.aetTest` (`src/ui/dev/test.ts`): `snapshot()`, the page's
+state as plain data, `whenIdle()`, `t(key)` and `timeOfDay(ms)`; never by
+importing the app's modules, so the app can be reshaped under it, and a
+build from another checkout can be driven by today's scenarios (`npm run
+e2e -- --tree <dir>`, for a commit that has the test API; `tools/harness.ts`
+says how). Beyond it the harness watches the platform: the sounds scheduled
+on the audio clock, the writes to localStorage, and the requests, read off
+DevTools' network events.
+
+The copy capture runs on the same harness. Its scenarios
+(`tools/copyScenarios.ts`) are e2e scenarios named `copy/…`: settings
+planted, the app opened on the development clock stopped at 7:30 on a
+Saturday in London (the time zone pinned), its one random draw seeded
+(`?seed=`), and every word on screen, visible or not, captured after the
+boot and after each step, once the page is idle. `npm run copy:snapshot --
+capture <out.json>` writes those words, and `compare` proves two builds
+render the same ones; `npm run e2e` runs them too, so a step that no longer
+reaches its state fails there. The whole suite, 78 scenarios, takes about
+six minutes, so it is not in `npm run verify`; CI runs it as a job of its
+own on Linux (`.github/workflows/verify.yml`, `e2e`), not yet failing the
+workflow.
+
+What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
+Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
+`Date.now()` unless the development clock has put itself there. On a page
+served from `localhost` or `127.0.0.1`, and nowhere else, `src/ui/main.ts`
+loads the development tools (`src/ui/dev/`: the clock and the test API) by a
+dynamic import before the app boots; `npm run build:site` leaves them out
+of the site, so the site that ships does not carry them, and the harness's
+server (`tools/devServer.ts`, as `npm run serve:dev` runs it) serves them
+beside it from the build. There, `?clock=60` runs it sixty
 times fast, `?clock=0` stops it, `?at=+7m40s` or `?at=-15m` sets it ahead or
 behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
 back; it is kept for the tab across a reload, a red mark in the corner shows
@@ -977,7 +1006,8 @@ it, and `aetClock.shift('+20m')`, `aetClock.set(moment)` and
 ahead on the audio clock, follow it. While it is on, and in that browser
 until Forget everything, sharing sends nothing, so no egg cooked on it
 reaches a server. On the live site the clock is `Date.now()`
-(`test/now.test.ts`).
+(`test/now.test.ts`), and the development tools are never asked for (the
+`inert-off-localhost` scenario).
 
 What makes it independent of the machine's speed is that the clock is
 stopped. A scenario steps it to the moment it means, tells the page to look
@@ -990,10 +1020,12 @@ run: the last second before the cold cook's pull, at the real clock's
 speed, to see the beeps scheduled ahead sounding as the tick reaches the
 pull; the grace is its margin for a slow machine. A person's timers (a
 control's 1.5-s settle, a held key) stay real, and a scenario waits for the
-page to settle - no such timer pending, no worker job, no request - rather
-than for a fixed time; a wait for something that will come gives up after
-a minute, which is failure detection, not a measure. Two scenarios run off
-the stopped clock: the address check, and sharing, which sends nothing on
+page to say it is idle (`aetTest.whenIdle()`: the app sets those timers,
+sends its worker jobs and makes its requests through `src/ui/idle.ts`, which
+counts them, so no timer, worker or request is patched) rather than for a
+fixed time; a wait for something that will come gives up after a minute,
+which is failure detection, not a measure. Two scenarios run off the
+stopped clock: the address check, and sharing, which sends nothing on
 the development clock and is checked on the real one. `E2E_CPU_THROTTLE=6`
 slows every page six times (DevTools' CPU throttling); with every core
 busy as well, the suite passes as it does on a quiet machine.
@@ -1178,7 +1210,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
    larger than §8 used to claim. The honest fix is a Robin boundary condition (§11.4).
 
    Two things about this were assertions until September 2026 and are now measured
-   (`npm run identifiability`, `tools/identifiability.ts`):
+   (`npm run identifiability`, `studies/identifiability.ts`):
 
    - **`H_EFF` is not in the simulation path at all.** `sphere.ts` imports `MODE_COUNT`
      and `K_EGG` and nothing else; the surface is clamped. The constant appears only in
@@ -1275,7 +1307,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
   feedback, so adding it as another calibrated parameter would add a dimension the data
   cannot move. The reason to do this is that Dirichlet under-predicts cook time and that
   bias currently sits inside `ALPHA_DEFAULT` — not that anyone will ever fit `h` from
-  eating eggs. `tools/identifiability.ts` already carries working Robin eigenmodes,
+  eating eggs. `studies/identifiability.ts` already carries working Robin eigenmodes,
   cross-checked against `seriesTheta` to 3e-7, so the hard part of the maths is done.
 - **Convection in the liquid white during the ramp** (§8). Not tractable in this
   architecture; the practical mitigation is to keep `ALPHA_DEFAULT` calibrated against

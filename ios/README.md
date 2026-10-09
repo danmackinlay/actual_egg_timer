@@ -392,7 +392,10 @@ cook this build cannot read is dropped, its alarms cancelled and its card
 ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
 earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every
 other key the app no longer uses (`Stores.retiredKeys`), its notifications
-left to ring and its card ended to go at its own end.
+left to ring and its card ended to go at its own end. A card is read in this
+build's shape only (`Shared/CookActivity.swift`): one 0.3 began, with its
+description in the attributes, is not read, and lasts as long as the system
+lets any card.
 
 ## The Live Activity
 
@@ -437,9 +440,7 @@ wraps around it.
 Every read of the time a cook depends on goes through `App/AppClock.swift`. A
 Release build is the system's clock and nothing else. A Debug build takes
 `-clockAt <epoch s>` (cook time at launch) and `-clockSpeed` (60 runs it sixty
-times as fast; 0 freezes it), or the older `-clockOffset -900` and
-`-clockEpoch <epoch s>`, which passed the same at every launch carry one fast
-clock through a relaunch. A clock so launched can be stepped while the app
+times as fast; 0 freezes it). A clock so launched can be stepped while the app
 runs: a line `<n> <at> <speed>` written to `Library/Caches/aet.clock` in the
 app's container moves cook time to `at` and runs it on at `speed`, and the
 debug log says `clock` with its `n` once it has. Under a running clock the

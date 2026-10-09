@@ -200,7 +200,7 @@ export function wordBracket(w: WordCertainty): WordBracket {
 /** The likely time range for a cook aiming at a nominal yolk dose of
  *  10^`logNominalTarget`: the right cook time's 90% interval. See the
  *  header; this is the one definition the owner may change. */
-export function likelyTimeRange(post: Posterior, grid: DoseGrid, logNominalTarget: number): TimeRange {
+function likelyTimeRange(post: Posterior, grid: DoseGrid, logNominalTarget: number): TimeRange {
   const r = predictCookTime(post, grid, logNominalTarget, TIME_RANGE_LOW_Q, TIME_RANGE_HIGH_Q);
   return { low_s: r.low_s, high_s: r.high_s };
 }

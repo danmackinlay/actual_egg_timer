@@ -1,13 +1,15 @@
 /**
  * The page's clock (src/ui/now.ts): the real one everywhere but a page served
  * from this machine, whatever the address or the tab's storage says; on
- * localhost, the development clock the address asks for, kept for a reload.
+ * localhost, the development clock the address asks for (src/ui/dev/clock.ts,
+ * which main.ts loads there and only there), kept for a reload.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { devClockAt, devTime, isDevHost, parseMoment, parseSpan } from '../src/ui/now.js';
+import { devClockAt, devTime, parseMoment, parseSpan } from '../src/ui/dev/clock.js';
+import { isDevHost } from '../src/ui/now.js';
 
 const REAL = 1_790_000_000_000;
 const KEPT = JSON.stringify({ speed: 60, real0_ms: REAL - 10_000, page0_ms: REAL + 3_600_000 });
@@ -78,8 +80,12 @@ test('4b. a stopped clock: at the moment set, however much real time passes, and
   assert.equal(devClockAt('localhost', '?clock=', null, REAL), null);
 });
 
-/** The module as a page loads it, at `hostname` with `search`, the tab
- *  having kept `kept`: a fresh instance each time. */
+/** The clock as a page has it, at `hostname` with `search`, the tab having
+ *  kept `kept`: the development clock installed, as main.ts installs it on
+ *  this machine, from a fresh instance each time (the page's clock, now.ts,
+ *  is the one it installs itself in). On any other host, a fresh now.ts
+ *  that nothing has installed a clock in, and the development clock's
+ *  install asked anyway, to show it does nothing there. */
 async function pageAt(hostname: string, search: string, kept: string | null): Promise<{
   m: typeof import('../src/ui/now.js'); win: Record<string, unknown>; local: Map<string, string>;
 }> {
@@ -99,7 +105,12 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
   g['history'] = { state: null, replaceState: () => { /* the address */ } };
   g['sessionStorage'] = store(session);
   g['localStorage'] = store(local);
-  const m = await import(`../src/ui/now.js?${hostname}${search}${kept ?? ''}`) as typeof import('../src/ui/now.js');
+  const key = `${hostname}${search}${kept ?? ''}`;
+  const dev = await import(`../src/ui/dev/clock.js?${key}`) as typeof import('../src/ui/dev/clock.js');
+  dev.installDevClock();
+  const m = isDevHost(hostname)
+    ? await import('../src/ui/now.js')
+    : await import(`../src/ui/now.js?${key}`) as typeof import('../src/ui/now.js');
   return { m: m, win: win, local: local };
 }
 
@@ -129,7 +140,7 @@ test('6. the page on localhost: the clock asked for, its handle, and the log mar
 
 test('7. stepped from a script: stopped, set to a moment, shifted, and running again', async () => {
   const { m, win } = await pageAt('127.0.0.1', '?clock=0&at=2026-10-08T07:30:00Z', null);
-  const clock = win['aetClock'] as import('../src/ui/now.js').ClockHandle;
+  const clock = win['aetClock'] as import('../src/ui/dev/clock.js').ClockHandle;
   const MOMENT = Date.UTC(2026, 9, 8, 7, 30);
   assert.equal(m.nowMs(), MOMENT);
   assert.equal(m.clockSpeed(), 1, 'the tick and the beeps ahead take a stopped clock\'s steps as seconds');

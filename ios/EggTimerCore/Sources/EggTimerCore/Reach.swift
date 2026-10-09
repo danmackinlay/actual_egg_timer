@@ -308,19 +308,15 @@ public struct LevelAnswer: Sendable {
 /// the level it moves to, so the numbers on screen are for the egg on offer.
 /// The retry is kept only if it reaches. Then whether the odds at the level
 /// answered are warned of.
-///
-/// `snapRetry` is false for an egg already in the water: its target is
-/// frozen, so a solve at a snapped level would answer for an egg nobody is
-/// cooking.
 public func answerAt(
-    _ c: Calibration, egg: Egg, setup: CookSetup, level: Double, profile: OddsProfile?, snapRetry: Bool
+    _ c: Calibration, egg: Egg, setup: CookSetup, level: Double, profile: OddsProfile?
 ) -> LevelAnswer {
     let params = calibrationParams(c)
     let solution = solveCookTime(
         egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: level)
     )
     let verdict = verdictFor(solution, level: level)
-    if snapRetry, let snapTo = verdict.snapTo {
+    if let snapTo = verdict.snapTo {
         let retry = solveCookTime(
             egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: snapTo)
         )
@@ -472,7 +468,7 @@ public func protocolAdvice(
 
 /// The answer at a level, with its time decided on the pot's surface: what
 /// the screen shows, and what a cook started now carries. Both apps' one
-/// copy of it (REVIEW-0.4.x, "Bloat and factoring" 1).
+/// copy of it (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
 public struct DecidedAnswer: Sendable {
     /// The level decided for: the answer's (`LevelAnswer.level`), after any
     /// snap. The advice is priced here, against the chance of the word asked

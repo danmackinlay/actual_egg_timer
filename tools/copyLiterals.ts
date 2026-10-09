@@ -10,8 +10,8 @@
  * iOS screen without going through copy/, and what a wording change changed
  * is the catalogue's diff, which the review queue reads (tools/copyQueue.ts).
  *
- * The web half of the words is tools/copy-snapshot.html, which renders the
- * running app. What neither proves: that each key is rendered with the right
+ * The web half of the words is the copy capture (tools/copyScenarios.ts,
+ * tools/copySnapshot.ts), which renders the running app. What neither proves: that each key is rendered with the right
  * argument in the right slot, or on the right branch. Those are one-line call
  * sites, reviewed in the diff and built by xcodebuild; the renderer itself is
  * held to the web's by fixtures/copy.json.
@@ -175,8 +175,6 @@ const NOT_COPY: Record<string, string> = {
   // the debug clock (ios/App/AppClock.swift) and what the scripted checks
   // read and tap with (tools/iosE2e.ts)
   clockSpeed: 'debug launch argument',
-  clockOffset: 'debug launch argument',
-  clockEpoch: 'debug launch argument',
   clockAt: 'debug launch argument',
   'aet.clock': 'the file the debug clock is stepped through, never shown',
   '%.3f': 'debug log number format',
@@ -212,7 +210,7 @@ const NOT_COPY: Record<string, string> = {
   stillOut: 'debug launch argument value',
   open: 'debug launch argument value',
   uiScrollAnchor: 'debug launch argument',
-  // the one screen's review on iOS (design/onescreen-review.md), its checks
+  // the one screen's review on iOS (archive/design/onescreen-review.md), its checks
   uiHoldAsRan: 'debug launch argument',
   uiFailRemake: 'debug launch argument',
   // the face of 1750 (ios/App/PeriodFace.swift)

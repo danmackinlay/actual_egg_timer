@@ -76,7 +76,7 @@ export const MAX_STRING = 64;
 export const MAX_SEQ = 5000;
 
 /** The header an iPhone's assertion comes in, base64. */
-export const ASSERTION_HEADER = 'x-egg-assertion';
+const ASSERTION_HEADER = 'x-egg-assertion';
 
 /** Where an egg is kept: the sequence number zero-padded, so a listing sorts
  *  in the order the cook sent them. */

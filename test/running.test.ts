@@ -338,7 +338,7 @@ test('14. the boil memory learns the tap the cook was watching for, and only tha
   assert.equal(boilToRemember(unread), null);
 });
 
-/* ------------------------------------- design/one-screen-review.md's calls */
+/* ----------------------------- archive/design/one-screen-review.md's calls */
 
 const CTX: RecordContext = { app: 'web', appVersion: '0.5.0-alpha.1', prior: '2026-09', day: '2026-10-07', id: START_MS };
 
@@ -551,7 +551,7 @@ test('22. review 3: the start has a lower bound, two hours before Start was pres
   assert.equal(earliestStart_s(earlier), earliestStart_s(cold));
 });
 
-/* ------------------------------------ design/running-cook-review.md's calls */
+/* ---------------------------- archive/design/running-cook-review.md's calls */
 
 test("23. review 2.1: the slow hob starts where the last plan got to, and the plan is the one from the start", () => {
   const cold = cookOf();

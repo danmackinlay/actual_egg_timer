@@ -153,7 +153,7 @@ export function idleChoices(): CookChoices {
 
 /** The cook the controls on screen describe: the settings' while idle, a
  *  running cook's own (or a correction to it in hand) otherwise. */
-export function controlsChoices(): CookChoices {
+function controlsChoices(): CookChoices {
   return choicesOf(state.controls, REGION);
 }
 

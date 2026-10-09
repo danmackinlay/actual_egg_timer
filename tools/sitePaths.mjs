@@ -12,9 +12,13 @@
 // site ships none, so what lands in _site/app is byte for byte what `tsc`
 // emits with `sourceMap` off. The list is src/'s .ts files, not dist/'s, so
 // a module whose source is gone is never shipped; a source with no compiled
-// twin fails the build.
+// twin fails the build. The development tools (src/ui/dev/: the development
+// clock and the test API, loaded on this machine only, main.ts) are left
+// out: a server for the harness adds them from dist/ (tools/devServer.ts).
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+
+const DEV = join('src', 'ui', 'dev');
 
 const MAP = /\n\/\/# sourceMappingURL=[^\n]*\n?$/;
 
@@ -23,8 +27,9 @@ function sources(dir) {
   const found = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...sources(path));
-    else if (path.endsWith('.ts') && !path.endsWith('.d.ts')) found.push(path);
+    if (entry.isDirectory()) {
+      if (path !== DEV) found.push(...sources(path));
+    } else if (path.endsWith('.ts') && !path.endsWith('.d.ts')) found.push(path);
   }
   return found;
 }

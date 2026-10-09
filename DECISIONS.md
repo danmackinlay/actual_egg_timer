@@ -175,7 +175,7 @@ Recorded in `7e142e0` and `b7a5e31`. The design they belong to is
     learning" interval are display and decision heuristics, not evaluation
     (`INFERENCE.md` §6, §7, §9). Recorded `2e9a67c`. Not built (E6, E7).
 
-The worklist's questions (WORKLIST.md §1, D1-D8), answered the same day:
+The worklist's questions (WORKLIST.md §1, D1-D8; in git at `14603cd`), answered the same day:
 
 38. **No build newer than 19 September ran outside the owner's devices, so
     every piece of back-compat for one goes** ("kill em all", D1). Built
@@ -205,7 +205,7 @@ Decided by the owner, 29 September 2026:
 47. **Agents in worktrees commit on their branch and do not merge; the
     session that sent them verifies their work and merges it to local
     `main`.** Pushing stays the owner's call. This was already how the work
-    ran before the rule said so (FOLLOWUP §0). Rule `5a9b290`.
+    ran before the rule said so (FOLLOWUP §0, in git at `14603cd`). Rule `5a9b290`.
 48. **Alpha: no back-compat until the app is widely deployed**, and the owner
     says when that is ("actual widespread deployment is what makes storage
     formats permanent; I will tell you when that happens"). A public site
@@ -478,7 +478,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `npm run eggs -- pull` and `import` mark the lines, and the fit reads
     the list again. The published population counts trusted eggs and names
     no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).
-    Amended 6 October 2026 (REVIEW-0.4.x; `f11ddf6`): an ID on the list
+    Amended 6 October 2026 (archive/REVIEW-0.4.x.md; `f11ddf6`): an ID on the list
     is not enough, since anyone who learns it could post at full weight
     under it. A result counts in full only if it is in a results file the
     owner exported and imported, or is the pulled twin of one that is.
@@ -510,7 +510,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     runny-white cost is unchanged. Before the pot's profile lands, and
     before the first egg, nothing changes. 5 October 2026. Built `22eadb5`
     (core, Swift), web `ffba100`, iOS `2a3d7b7`, on the `monotone` branch.
-    Amended 6 October 2026 (REVIEW-0.4.x, "agreed"): monotone at the
+    Amended 6 October 2026 (archive/REVIEW-0.4.x.md, "agreed"): monotone at the
     profile's points, and within about a second of it between them, where
     the choice can dip inside its bounds (0.61 at 716.1 s, 0.62 at 715.2 s).
     Exact would cost up to four more solves a drag; not worth it.
@@ -535,14 +535,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     risk is that someone who learns an ID can delete that person's
     results; IDs are 122 random bits, shown only in that person's own
     Settings, and deleting is that person's right in any case.
-    6 October 2026; REVIEW-0.4.x.
+    6 October 2026; archive/REVIEW-0.4.x.md.
 87. **A phone restored from a backup sends unverified** ("Accepted"). The
     App Attest key does not survive a restore, and the server refuses a
     second key for an ID. The phone keeps its random ID and sends without
     App Attest from then on (since `a4a5cf1`, explicitly), so its results
     weigh as the web's do (85). A new ID would split one person in two for
     the fit; a second key per ID could be claimed by anyone with an iPhone
-    and someone else's ID. 6 October 2026; REVIEW-0.4.x.
+    and someone else's ID. 6 October 2026; archive/REVIEW-0.4.x.md.
 88. **Settings shows only the current random ID** ("an open and shut
     privacy non-problem"). A device can hold older IDs it has stopped
     using; "Delete shared results" deletes under every one of them, and an
@@ -681,7 +681,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     becomes `0.5.x`; A7's time range stays as built until real eggs show
     how it reads. 7 October 2026.
 98. **The red-team review's choices, under 97's rule**
-    (`design/one-screen-review.md`; 97: "accept them all except where one
+    (`archive/design/one-screen-review.md`; 97: "accept them all except where one
     accrues substantially more maintenance burden than the alternative").
     A pull the clock assumed (the grace ran out) is not an observation: it
     stays correctable, and a correction that would move it later asks

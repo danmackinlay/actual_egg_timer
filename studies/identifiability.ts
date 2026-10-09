@@ -5,8 +5,9 @@
  * Run: npm run identifiability
  *
  * It exists so that README 11.2(2)'s answer is measured rather than asserted.
- * The numbers it prints are quoted there and in 11.4, so they can be
- * re-derived rather than believed.
+ * The numbers it prints are quoted there, in README 11.4 and in INFERENCE.md
+ * (the white's physics ratio), so they can be re-derived rather than
+ * believed.
  *
  * README 11.2(2) says changing H_EFF "would simply be re-absorbed by
  * ALPHA_DEFAULT". That is true with ONE observable. The question here is whether

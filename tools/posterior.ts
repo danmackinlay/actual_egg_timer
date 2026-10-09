@@ -53,7 +53,7 @@ export const REFERENCE_FILE = 'test/data/word-answers-posterior.json';
 /** The surfaces the distributional checks score on: 7 x 9, as the old test
  *  had them. Coarse is fine: the filter and the reference score on the SAME
  *  surfaces, so what is compared is the sampler, not the physics. */
-export const COARSE_GRID: GridPolicy = (alphaCentre, cookTime_s) => ({
+const COARSE_GRID: GridPolicy = (alphaCentre, cookTime_s) => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 7, timeCount: 9,
 });
 
@@ -80,7 +80,7 @@ export function foldOnSurfaces(start: Calibration, log: EggRecord[], surfaces: (
 }
 
 /** Each particle's log likelihood of the whole log, on these surfaces. */
-export function logLikelihoods(post: Posterior, log: EggRecord[], surfaces: (DoseGrid | null)[]): number[] {
+function logLikelihoods(post: Posterior, log: EggRecord[], surfaces: (DoseGrid | null)[]): number[] {
   const out: number[] = new Array<number>(post.particles.length).fill(0.0);
   for (let k = 0; k < log.length; k++) {
     const g = surfaces[k];
@@ -109,7 +109,7 @@ function normalise(logW: number[]): number[] {
 /** The posterior with no filter at all: `count` draws from the prior, each
  *  weighted by the product of every egg's likelihood on the same surfaces.
  *  Exact up to Monte Carlo error, and that error is measured (`writeReference`). */
-export function exactPosterior(count: number, seed: number, log: EggRecord[], surfaces: (DoseGrid | null)[]): Posterior {
+function exactPosterior(count: number, seed: number, log: EggRecord[], surfaces: (DoseGrid | null)[]): Posterior {
   const post = createPrior(count, seed);
   post.weights = normalise(logLikelihoods(post, log, surfaces));
   return post;
@@ -119,9 +119,9 @@ export function exactPosterior(count: number, seed: number, log: EggRecord[], su
 
 /** The egg the checks decide for: 58 g, from the fridge, into boiling water,
  *  then ice, at jammy. */
-export const CHECK_EGG = eggFromMass(0.058);
-export const CHECK_SETUP = appSetup();
-export const CHECK_LEVEL = 0.41;
+const CHECK_EGG = eggFromMass(0.058);
+const CHECK_SETUP = appSetup();
+const CHECK_LEVEL = 0.41;
 
 /** What is compared, for one posterior. The time-scale is a factor on the
  *  literature's; the taste and white offsets are in decades. `time_s` and
@@ -315,7 +315,7 @@ function printComparison(exact: Summary, se: Summary, mean: Summary, sd: Summary
 /* ---------------------------------------------------- noise, as the app */
 
 /** A record answered in the five words, cooked for the literature's time. */
-export function wordRecord(
+function wordRecord(
   level: number, mass_g: number, word: YolkWord | null, white: WhiteReport | null, over: { probe_C?: number } = {},
 ): EggRecord {
   const egg = eggFromMass(mass_g / 1000);
@@ -359,7 +359,7 @@ export function wordLog(): EggRecord[] {
 function appDecision(c: Calibration): { time_s: number; meanTime_s: number; odds: number; tenths: number } {
   const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, CHECK_EGG, CHECK_SETUP)));
   const profile = oddsProfile(c, CHECK_EGG, CHECK_SETUP, grid);
-  const a = answerAt(c, CHECK_EGG, CHECK_SETUP, CHECK_LEVEL, profile, true);
+  const a = answerAt(c, CHECK_EGG, CHECK_SETUP, CHECK_LEVEL, profile);
   const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
   return { time_s: d.cookTime_s, meanTime_s: d.meanCookTime_s, odds: d.odds, tenths: d.oddsTenths };
 }
@@ -508,7 +508,7 @@ export interface SbcResult {
   exact: Record<Quantity, number[]> | null;
 }
 
-export const SBC_EXACT_DRAWS = 20_000;
+const SBC_EXACT_DRAWS = 20_000;
 
 /** Run one scenario: `replications` cooks from `seed`, the filter at
  *  `particles`, and the exact posterior beside it unless `exact` is false. */
@@ -572,10 +572,10 @@ function lnGamma(x: number): number {
   return -tmp + Math.log(2.5066282746310005 * ser / x);
 }
 
-export const SBC_BINS = 10;
+const SBC_BINS = 10;
 
 /** Chi-square of the counts in SBC_BINS equal bins, and its p-value. */
-export function chiSquare(us: number[]): { stat: number; p: number; counts: number[] } {
+function chiSquare(us: number[]): { stat: number; p: number; counts: number[] } {
   const counts = new Array<number>(SBC_BINS).fill(0);
   for (const x of us) counts[Math.min(SBC_BINS - 1, Math.floor(x * SBC_BINS))]++;
   const e = us.length / SBC_BINS;
@@ -585,7 +585,7 @@ export function chiSquare(us: number[]): { stat: number; p: number; counts: numb
 }
 
 /** Kolmogorov-Smirnov against the uniform, and its asymptotic p-value. */
-export function ksUniform(us: number[]): { d: number; p: number } {
+function ksUniform(us: number[]): { d: number; p: number } {
   const s = [...us].sort((a, b) => a - b);
   const n = s.length;
   let d = 0;
