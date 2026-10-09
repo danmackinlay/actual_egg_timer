@@ -168,6 +168,52 @@ machinery with the surface temperature held constant, and its answer - a
 start time in the past, for a 58 °C bath - is the model's real conclusion,
 not the code declining to work.
 
+## The app's logic, file by file
+
+Above the core, the package has two libraries of the app's own (REFACTOR-0.5
+1.2), so that what the app does with the core is run by `swift test` as well,
+on a Mac, with no simulator. `ios/App` keeps the screens and what only an
+iPhone has.
+
+| library | file | what it is |
+|---|---|---|
+| EggTimerShared | `Copy.swift` | the catalogue as loaded, `tr`; the widget links it too |
+| EggTimerShared | `CookActivity.swift` | the Live Activity's contract; an `ActivityAttributes` on iOS |
+| EggTimerApp | `Services.swift` | the protocols below, and where the app puts each at launch |
+| EggTimerApp | `AppClock.swift` | cook time (`CookClock`); a Debug build's fast and stepped clock |
+| EggTimerApp | `Store.swift` | `Stores`, the one door to the store (`KeyValueStore`), its guard, the settings and the pans |
+| EggTimerApp | `Calibration.swift` | the posterior and the log, kept (`Calibrations`) |
+| EggTimerApp | `DecisionGrids.swift` | the decision surfaces and odds profiles, built off the main actor and kept |
+| EggTimerApp | `Planner.swift`, `+Solve`, `+Learning` | every input, the idle screen's solve, the learning from each egg |
+| EggTimerApp | `Cook.swift` | one cook: restore, plans, alarms, the ring, the card |
+| EggTimerApp | `AppModel.swift` | the two together: Eggs in, Start again, answers, the record made again |
+| EggTimerApp | `Edits.swift` | corrections while a cook runs |
+| EggTimerApp | `Presentation.swift`, `SousVide.swift` | words for a value, and the sous-vide start |
+| EggTimerApp | `LanguageChoice.swift`, `AlarmSoundChoice.swift` | the language and the alarm's sound, kept |
+| EggTimerApp | `Screenshots.swift`, `Perf.swift` | Debug only: launch arguments, the taps of `-uiDo`, the debug log |
+
+What the logic reaches outside itself, it reaches through a protocol, so a
+test can put a fake there: `Services.alarm` (`AlarmScheduling`; the app's
+`Alarm`), `.ringer` (`AlarmRinging`; `Ringer`), `.sharing` (`ResultSharing`;
+`Sharing`), `.card` (`LockScreenCard`; `LiveActivity`), `.announce`
+(VoiceOver), and `.grids`, `.language` and `.alarmSound` (`DecisionSurfaces`,
+`LanguageChoosing`, `AlarmSoundChoosing`), whose own are in the library;
+`AppClock.source` (`CookClock`); and `Stores.store` (`KeyValueStore`), which
+takes a write only with a `Stores.Pass` that only `Stores` can make.
+`ActualEggTimerApp.init` fills them before anything runs.
+
+Not moved, because each needs a framework only an iPhone has: `Alarm`
+(UserNotifications), `Ringer` (AVFoundation, UIKit), `Sharing` (App Attest),
+`LiveActivity` (ActivityKit), `ResultsExport` (the share sheet's
+Transferable), and the views.
+
+`Tests/EggTimerAppTests` drives them on a clock the test moves, with every
+service a fake: a cook from Eggs in to Done through `Cook`, the pull rung in
+the app with no notifications allowed, a relaunch picking up a stored cook
+past its pull, Start again logging an unanswered egg before the stored cook
+is cleared, nothing written under a newer build's mark, and every write of a
+whole cook through `Stores` (the runtime twin of `test/iosStores.test.ts`).
+
 ## The app
 
 ```sh
@@ -262,7 +308,7 @@ What it says is the honest answer and nothing more:
 
 The words — "Yesterday", "Last Tuesday", "2 weeks ago" — are in the catalogue
 (`copy/en.json`); the core's `longDuration` and `startPhrase` choose which, and
-only the calendar arithmetic stays in `ios/App/SousVide.swift`. The core carries
+only the calendar arithmetic stays in the app's `SousVide.swift`. The core carries
 the decision and the catalogue carries the sentence. `StartChoice` is an app type for the same reason, which is why
 `StartMode` in the core is still a pair.
 
@@ -399,7 +445,7 @@ ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
 earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every
 other key the app no longer uses (`Stores.retiredKeys`), its notifications
 left to ring and its card ended to go at its own end. A card is read in this
-build's shape only (`Shared/CookActivity.swift`): one 0.3 began, with its
+build's shape only (EggTimerShared's `CookActivity.swift`): one 0.3 began, with its
 description in the attributes, is not read, and lasts as long as the system
 lets any card.
 
@@ -443,7 +489,7 @@ wraps around it.
 
 ## The fast clock and the scripted checks
 
-Every read of the time a cook depends on goes through `App/AppClock.swift`. A
+Every read of the time a cook depends on goes through `AppClock.swift`. A
 Release build is the system's clock and nothing else. A Debug build takes
 `-clockAt <epoch s>` (cook time at launch) and `-clockSpeed` (60 runs it sixty
 times as fast; 0 freezes it). A clock so launched can be stepped while the app
@@ -469,7 +515,7 @@ npm run ios:e2e -- relaunch-*      # some; --list names them
 simulator of its own, and for each
 scenario installs afresh, drives the app by launch argument (`-uiScreen
 heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
-`App/Screenshots.swift`, never screen coordinates, the one screen's among
+`Screenshots.swift`, never screen coordinates, the one screen's among
 them: `eggsIn@launch+1`, `set:size=3@30`, `drag:0.3/0.1@pull-60` and
 `release`, `start:+3`, `stillIn`, `stillOut`, `open:settings`), terminates
 and relaunches it, and asserts on the debug log (`Library/Caches/aet.log`,

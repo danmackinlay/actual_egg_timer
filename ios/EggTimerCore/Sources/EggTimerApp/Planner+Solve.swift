@@ -4,7 +4,7 @@ import EggTimerCore
 extension Planner {
     // MARK: - Solving
 
-    func changed() {
+    public func changed() {
         guard !applying else { return }
         // While a cook runs the controls are its own: a change is a
         // correction in hand (`Edits`), neither saved nor solved for here.
@@ -65,7 +65,7 @@ extension Planner {
     /// 2026). Now one solve loop runs at a time. A change while it solves is
     /// picked up when it finishes; the answer it just got is shown meanwhile,
     /// a step behind, without the snap (`applyInterim`).
-    func recompute() {
+    public func recompute() {
         asked &+= 1
         // A pot's surface is built only once the inputs have sat still.
         settleTask?.cancel()
@@ -122,7 +122,7 @@ extension Planner {
             // the mean solve's time first, and the chosen one when its surface
             // lands, once the inputs have settled.
             var chosen: Answer?
-            if let grid = await DecisionGrids.shared.cached(inputs) {
+            if let grid = await Services.grids.cached(inputs) {
                 chosen = await Self.decided(answer, grid: grid, snapshot)
             }
             guard !Task.isCancelled, !isSousVide else { return }
@@ -146,7 +146,7 @@ extension Planner {
         settleTask = Task { [weak self] in
             try? await Task.sleep(for: Self.settle)
             guard !Task.isCancelled else { return }
-            let grid = await DecisionGrids.shared.grid(snapshot.inputs)
+            let grid = await Services.grids.grid(snapshot.inputs)
             guard !Task.isCancelled else { return }
             let chosen = await Self.decided(answer, grid: grid, snapshot)
             guard !Task.isCancelled, let self, question == self.asked, !self.isSousVide else { return }
@@ -195,7 +195,7 @@ extension Planner {
         var priced: [(key: String, profile: OddsProfile)] = []
         for change in pricedChanges(answer.setup) {
             let changed = decisionInputs(calibration, egg: egg, setup: change.setup)
-            if let p = await DecisionGrids.shared.cachedProfile(changed, calibration) {
+            if let p = await Services.grids.cachedProfile(changed, calibration) {
                 priced.append((key: change.key, profile: p))
             } else {
                 chosen.missing.append(changed)
@@ -218,7 +218,7 @@ extension Planner {
             guard !profilesAsked.contains(key) else { continue }
             profilesAsked.insert(key)
             Task { [weak self] in
-                _ = await DecisionGrids.shared.profile(inputs, calibration)
+                _ = await Services.grids.profile(inputs, calibration)
                 guard let self else { return }
                 self.profilesAsked.remove(key)
                 guard !self.isSousVide, self.wantedProfileKeys.contains(key) else { return }
@@ -269,7 +269,7 @@ extension Planner {
     /// pot's are in, set the slider's ends (Reach.swift); if not, the physical
     /// limits do.
     private nonisolated static func solve(_ snapshot: InputSnapshot, inputs: DecisionInputs) async -> Answer {
-        let profile = await DecisionGrids.shared.cachedProfile(inputs, snapshot.calibration)
+        let profile = await Services.grids.cachedProfile(inputs, snapshot.calibration)
         return await solve(
             egg: snapshot.egg, setup: snapshot.setup, level: snapshot.level,
             calibration: snapshot.calibration, profile: profile
@@ -292,7 +292,7 @@ extension Planner {
     /// Applied like any other answer, so a snap moves the slider before the
     /// caller reads the choices for its cook. Loops only if the inputs move
     /// again while it solves.
-    func currentSolution() async -> Solution? {
+    public func currentSolution() async -> Solution? {
         while true {
             if isSousVide { return nil }
             if let solution, answered == asked { return solution }
@@ -306,7 +306,7 @@ extension Planner {
             // is already built, so "Eggs in" starts on that one too. A
             // surface still to build is not waited for: the mean is what the
             // screen would show, and the egg is going in now.
-            if let grid = await DecisionGrids.shared.cached(inputs) {
+            if let grid = await Services.grids.cached(inputs) {
                 answer = await Self.decided(answer, grid: grid, snapshot)
             }
             guard question == asked else { continue }
@@ -394,7 +394,7 @@ extension Planner {
     /// Needed when a cook ends: a new nudge is drawn, and a pan timed by the
     /// cook just ended is remembered, so the idle screen's time is not the
     /// one it showed before the cook.
-    func refresh() {
+    public func refresh() {
         recompute()
     }
 }

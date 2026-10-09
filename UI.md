@@ -116,7 +116,7 @@ its debug log (`egg aim|live|ran`):
   (`ran`), eaten, with the parameters it ran under.
 
 **Corrections** (`DECISIONS.md` 96 to 98; web `src/ui/edit.ts`, iOS
-`ios/App/Edits.swift`). After
+`ios/EggTimerCore/Sources/EggTimerApp/Edits.swift`). After
 Start every clause of the sentence, the slider and Settings' pot rows stay
 open, showing the cook's own choices, never the settings (another tab's
 settings touch only the units, the language and the sound, and which sound,
@@ -559,7 +559,7 @@ the thumb when the finger lifts; the web's thumb moves at once.
 
 A debug iOS build takes launch arguments (`-uiScreen`, `-seedEggs`,
 `-noAlarmPrompt` and others), so screens can be reached without a tap; the
-header of `ios/App/Screenshots.swift` lists them. The web's states are driven
+header of `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them. The web's states are driven
 by `npm run copy:snapshot` (`tools/copySnapshot.ts`).
 
 What the cook sees on the reference setup (68 g, fridge, cold start, ice,

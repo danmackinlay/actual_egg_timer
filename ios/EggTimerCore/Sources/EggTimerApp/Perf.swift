@@ -11,21 +11,21 @@ import QuartzCore
 /// produced it, because that is what the cook waits for. Its lines are not
 /// words on a screen, and are built from as few literals as will do, each on
 /// copyLiterals' NOT_COPY list.
-enum Perf {
-    static let on = UserDefaults.standard.string(forKey: "perfProbe") != nil
+public enum Perf {
+    public static let on = UserDefaults.standard.string(forKey: "perfProbe") != nil
     nonisolated(unsafe) private static var inputAt = CACurrentMediaTime()
 
     /// What is timed on its own.
-    enum Stage { case answerAt, grid, profile }
+    public enum Stage { case answerAt, grid, profile }
 
     /// What lands: an answer, and whether it is a step behind, its time
     /// chosen, with its odds, or a moment the main actor was late.
-    enum Event { case landed, interim, chosen, odds, late }
+    public enum Event { case landed, interim, chosen, odds, late }
 
     /// The scripted inputs.
-    enum Script { case tapAltitude, holdAltitude, tapWater, dragDoneness, inputsDone, worstLateness, done }
+    public enum Script { case tapAltitude, holdAltitude, tapWater, dragDoneness, inputsDone, worstLateness, done }
 
-    static func input() { inputAt = CACurrentMediaTime() }
+    public static func input() { inputAt = CACurrentMediaTime() }
 
     private static func line(_ parts: [String]) {
         print(parts.joined(separator: " "))
@@ -36,7 +36,7 @@ enum Perf {
     }
 
     /// An answer on screen: when, and what it was.
-    static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
+    public static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
         guard on else { return }
         var events: [Event] = [.landed]
         if interim { events.append(.interim) }
@@ -46,7 +46,7 @@ enum Perf {
     }
 
     /// How long one stage took, wherever it runs.
-    static func time<T>(_ stage: Stage, _ body: () -> T) -> T {
+    public static func time<T>(_ stage: Stage, _ body: () -> T) -> T {
         guard on else { return body() }
         let t0 = CACurrentMediaTime()
         let out = body()
@@ -59,7 +59,7 @@ enum Perf {
     /// worst lateness over each is printed with it: how long a tap could have
     /// waited to be seen at all.
     @MainActor
-    static func drive(_ planner: Planner) {
+    public static func drive(_ planner: Planner) {
         guard on else { return }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(6))

@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// The doneness slider: its heading, with the peak yolk the level asks for at
 /// its end (in sous-vide, the water's temperature - there is no peak there);

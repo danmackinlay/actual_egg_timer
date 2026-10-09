@@ -86,7 +86,7 @@ languages.
 - **The language picker** came with F6, not F1: a picker with one row in it
   is a control that does nothing. The active locale is plumbing
   (`ACTIVE_LOCALE` in `src/ui/copy.ts`, `Copy.activeLocale` in
-  `ios/Shared/Copy.swift`) that the picker sets.
+  `ios/EggTimerCore/Sources/EggTimerShared/Copy.swift`) that the picker sets.
 - **Inserted words are still lower-cased in code**, because some templates
   insert a doneness word or a headline mid-sentence. `midSentence` (the core
   copy module, both apps) lower-cases only the first letter, in the
@@ -784,7 +784,7 @@ the owner's review.
   `fixtures/language.json` (`LanguageConformance.swift`): the constants, which
   tags are 1750 and which register each gets, every move from every reachable
   state (30 transitions), and 19 stored states read defensively. The app side
-  is `ios/App/LanguageChoice.swift`, which only stores and applies. It keeps
+  is `ios/EggTimerCore/Sources/EggTimerApp/LanguageChoice.swift`, which only stores and applies. It keeps
   the state as the same JSON the web stores, under `languageState` rather
   than `language`, because a launch argument of that name would shadow it
   (UserDefaults' argument domain). It reads the state in the app's `init`,

@@ -10,7 +10,7 @@ extension Planner {
     /// Written down FIRST, before any arithmetic: an app killed during the fold
     /// then folds it again on the next launch, rather than losing it. The
     /// record carries the egg and pan the cook was RUN with, off its plan.
-    func record(_ egg: EggRecord) async {
+    public func record(_ egg: EggRecord) async {
         // A newer build's results are left alone (`Stores`): nothing is
         // written down, so nothing is learned either.
         guard !Stores.readOnly else { return }
@@ -32,7 +32,7 @@ extension Planner {
     /// replay of the log makes whichever order the taps came in. Refused, and
     /// nothing written, when that is no longer possible - which is what keeps
     /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
-    func secondAnswer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) async {
+    public func secondAnswer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) async {
         guard !Stores.readOnly, var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
               index == kept.log.count - 1 else { return }
         if yolk != nil, given.yolk != nil { return }
@@ -103,7 +103,7 @@ extension Planner {
     ///
     /// The first two are `calibrationBeforeAtHand`, which Start again reads
     /// before `endEgg` lets go of what this process folded.
-    func calibrationBefore(_ index: Int?) async -> Calibration {
+    public func calibrationBefore(_ index: Int?) async -> Calibration {
         if let atHand = calibrationBeforeAtHand(index) { return atHand }
         // Not at hand: an egg in the log, folded before a relaunch.
         guard let index else { return kept.calibration }
@@ -119,7 +119,7 @@ extension Planner {
     /// `calibrationBefore` when it needs no replay: the calibration as it
     /// stands for an egg not in the log or not folded yet, the one held
     /// before folding it in this process; nil otherwise.
-    func calibrationBeforeAtHand(_ index: Int?) -> Calibration? {
+    public func calibrationBeforeAtHand(_ index: Int?) -> Calibration? {
         guard let index, index < kept.folded else { return kept.calibration }
         if let done = folded, done.index == index { return done.before }
         return nil
@@ -130,7 +130,7 @@ extension Planner {
     /// egg (review 2.5), and the posterior is folded again from before it -
     /// from the calibration held before its fold when this process folded
     /// it, else from where the log's replay starts.
-    func replaceLogged(_ index: Int, _ record: EggRecord) {
+    public func replaceLogged(_ index: Int, _ record: EggRecord) {
         // Nothing this build logged, nor learned from, while a newer build's
         // results are left alone (`Stores`).
         guard !Stores.readOnly, kept.log.indices.contains(index) else { return }
@@ -160,7 +160,7 @@ extension Planner {
     }
 
     /// The cook has moved on: the next answers are about the next egg.
-    func endEgg() {
+    public func endEgg() {
         answers = nil
         folded = nil
         liveIndex = nil
@@ -171,7 +171,7 @@ extension Planner {
     /// if its egg is the last in the log - the same record but for the
     /// answers - what it was told is on screen again, and the questions it
     /// was not are still open. Anything else, and the cook stays as answered.
-    func resumeAnswers(_ cooked: EggRecord) {
+    public func resumeAnswers(_ cooked: EggRecord) {
         guard answers == nil, let index = kept.log.indices.last else { return }
         let last = kept.log[index]
         var bare = last
@@ -198,7 +198,7 @@ extension Planner {
 
     /// An egg finished and never answered about. Still a record - the cook, the
     /// recommendation and the pull are data for the fit - and it folds nothing.
-    func logUnanswered(_ egg: EggRecord) {
+    public func logUnanswered(_ egg: EggRecord) {
         guard !Stores.readOnly else { return }
         kept.log.append(egg)
         Calibrations.save(kept)
@@ -217,7 +217,7 @@ extension Planner {
     /// One drain at a time: a call made while one runs returns at once, and the
     /// running one picks up whatever was appended, because it reads the log
     /// again after every egg.
-    func drain() async {
+    public func drain() async {
         guard !draining else { return }
         draining = true
         learning = true
@@ -260,7 +260,7 @@ extension Planner {
     /// base under it, AND the measured pan. The web app clears them all from one
     /// button, and a kitchen that has forgotten your taste but still insists it
     /// knows your hob is not a state anyone asked for.
-    func resetCalibration() {
+    public func resetCalibration() {
         generation &+= 1
         liveIndex = nil
         resumedIndex = nil
@@ -271,7 +271,7 @@ extension Planner {
         BoilMemories.reset()
         boilMemory = [:]
         // The next egg is a new cook's, under a new id (Sharing.swift).
-        Sharing.shared.forget()
+        Services.sharing.forget()
         recompute()
     }
 
@@ -282,7 +282,7 @@ extension Planner {
     /// about the yolk, in the five words, and, where given, the white; then fold
     /// them, as a relaunch folds eggs it finds unfolded. Only into an empty
     /// log, so a relaunch does not seed twice.
-    func seed(_ answers: [SeedAnswer]) {
+    public func seed(_ answers: [SeedAnswer]) {
         guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
         let solved = solveCookTime(
             egg: egg, setup: setup, params: calibrationParams(calibration),

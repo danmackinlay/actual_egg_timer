@@ -4,6 +4,7 @@ import EggTimerCore
 import os
 import UIKit
 import UIKit.UIGestureRecognizerSubclass
+import EggTimerApp
 
 /// The alarm the app sounds itself, when no notification will.
 ///
@@ -209,3 +210,6 @@ private final class AnyTouch: UIGestureRecognizer, UIGestureRecognizerDelegate {
         shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
     ) -> Bool { true }
 }
+
+/// What the app's logic asks of the ring (`Services`, in EggTimerApp).
+extension Ringer: AlarmRinging {}

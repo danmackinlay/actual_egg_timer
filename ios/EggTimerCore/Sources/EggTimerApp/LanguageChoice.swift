@@ -1,5 +1,6 @@
 import Foundation
 import EggTimerCore
+import EggTimerShared
 
 /// The language the cook reads, kept: the picker in Settings, and the units
 /// switch into the English of 1750 (LANGUAGE.md section 6).
@@ -13,15 +14,15 @@ import EggTimerCore
 /// when the cook changes the system on screen and never for a default.
 /// Nothing here touches the units: a change of language never changes them.
 @MainActor
-final class LanguageChoice {
-    static let shared = LanguageChoice()
+public final class LanguageChoice: LanguageChoosing {
+    public static let shared = LanguageChoice()
 
     /// Under its own key, not "language": a launch argument of that name
     /// would shadow it (UserDefaults' argument domain), and the debug builds
     /// take one (`-uiLanguage`, Screenshots.swift).
     private static let key = "languageState"
 
-    private(set) var state = LanguageState.fresh
+    public private(set) var state = LanguageState.fresh
     private var observer: NSObjectProtocol?
 
     private init() {}
@@ -29,7 +30,7 @@ final class LanguageChoice {
     /// Read the stored state and speak it, then start listening for the
     /// units switch. Called once, before the first view is drawn, so the
     /// first frame is already in the cook's language.
-    func start() {
+    public func start() {
         state = Self.read()
         #if DEBUG
         if let tag = Screenshots.language, languages.contains(tag) {
@@ -49,7 +50,7 @@ final class LanguageChoice {
 
     /// The cook's pick in the picker. Choosing English leaves 1750 and keeps
     /// °F; it is the only way out of 1750.
-    func pick(_ tag: String) {
+    public func pick(_ tag: String) {
         set(languageAfterPick(state, tag))
     }
 
@@ -61,7 +62,7 @@ final class LanguageChoice {
     }
 
     private static func read() -> LanguageState {
-        guard let data = UserDefaults.standard.data(forKey: key),
+        guard let data = Stores.store.data(forKey: key),
               let raw = try? JSONSerialization.jsonObject(with: data) else { return .fresh }
         return readLanguageState(raw, known: languages)
     }
@@ -75,7 +76,7 @@ final class LanguageChoice {
 /// Text as a screen reader should hear it: every long s an s. The title is
 /// the one string drawn with the long s (LANGUAGE.md section 6), and its
 /// label is this, as the web's `applyCopy` does for any text that has one.
-func withoutLongS(_ text: String) -> String {
+public func withoutLongS(_ text: String) -> String {
     String(text.unicodeScalars.map { $0 == longS ? "s" : Character($0) })
 }
 

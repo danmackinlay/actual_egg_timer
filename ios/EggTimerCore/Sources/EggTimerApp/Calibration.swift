@@ -1,6 +1,4 @@
-import CoreTransferable
 import Foundation
-import UniformTypeIdentifiers
 import EggTimerCore
 
 /// Bridges the particle filter in `EggTimerCore` to the app, and keeps the
@@ -24,32 +22,17 @@ import EggTimerCore
 
 /// Everything that is kept, and the invariant that holds it together:
 /// `calibration` is `replay(base ?? prior, log.prefix(folded))`.
-struct Kept: Sendable {
+public struct Kept: Sendable {
     /// Where the replay starts when it is not the prior: only ever the posterior
     /// of a log that was damaged and had to be dropped. Nil on every healthy
     /// phone.
-    var base: Calibration?
-    var calibration: Calibration
-    var folded: Int
-    var log: [EggRecord]
+    public var base: Calibration?
+    public var calibration: Calibration
+    public var folded: Int
+    public var log: [EggRecord]
 }
 
-/// "Export my results" as the share sheet takes it: a file, written when the
-/// cook picks where it goes, from what is stored then (DECISIONS.md 81).
-struct ResultsExport: Transferable {
-    let uid: String?
-    let name: String
-
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(exportedContentType: .json) { item in
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent(item.name)
-            try Data(Calibrations.exportText(uid: item.uid).utf8).write(to: url, options: .atomic)
-            return SentTransferredFile(url)
-        }
-    }
-}
-
-enum Calibrations {
+public enum Calibrations {
     /// The posterior, the base under it, and the log: a particle of six
     /// numbers, and records of today's shape only. v5: the log started fresh
     /// in 0.5, and 0.3's v4 is never read (DECISIONS.md 107).
@@ -59,7 +42,7 @@ enum Calibrations {
     /// when a build does, and the fit has to know which version said what -
     /// down to the build, since TestFlight ships several of one version:
     /// "0.4.0+3", the build after a plus as semantic versioning writes it.
-    static let appVersion: String = {
+    public static let appVersion: String = {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? "unknown"
         guard let build = info?["CFBundleVersion"] as? String, !build.isEmpty else { return version }
@@ -70,7 +53,7 @@ enum Calibrations {
     /// `fixtures/population.json` from the repo, bundled, which is the
     /// literature's until a fit of shared eggs publishes another. A bundle
     /// without it, or with one that does not read, draws from the literature.
-    static let population: Population = {
+    public static let population: Population = {
         guard let url = Bundle.main.url(forResource: "population", withExtension: "json"),
               let data = try? Data(contentsOf: url), let p = parsePopulation(data) else {
             return literaturePopulation
@@ -78,16 +61,16 @@ enum Calibrations {
         return p
     }()
 
-    static func fresh() -> Calibration {
+    public static func fresh() -> Calibration {
         freshCalibration(count: particleCount, seed: calibrationSeed, population: population)
     }
 
-    static func freshKept() -> Kept {
+    public static func freshKept() -> Kept {
         Kept(base: nil, calibration: fresh(), folded: 0, log: [])
     }
 
     /// Where a replay starts: the base if there is one, the prior if not.
-    static func start(_ base: Calibration?) -> Calibration {
+    public static func start(_ base: Calibration?) -> Calibration {
         base ?? fresh()
     }
 
@@ -194,7 +177,7 @@ enum Calibrations {
         return Calibration(posterior: Posterior(particles: particles, weights: s.w, rng: s.rng), eggsLogged: s.n)
     }
 
-    static func save(_ k: Kept) {
+    public static func save(_ k: Kept) {
         let data = try? JSONEncoder().encode(StoredV5(
             p: population.id, base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded, log: k.log))
         if let data {
@@ -216,8 +199,8 @@ enum Calibrations {
     ///
     /// Whatever comes back starts at this population's centre: the start is
     /// the population's, not stored.
-    static func load() -> Kept {
-        var (kept, path) = decode(UserDefaults.standard.data(forKey: key))
+    public static func load() -> Kept {
+        var (kept, path) = decode(Stores.store.data(forKey: key))
         let start = priorStart(population)
         kept.calibration.start = start
         kept.base?.start = start
@@ -259,17 +242,17 @@ enum Calibrations {
     }
 
     /// How many results there are to export: every egg in the log.
-    static func resultsKept(_ k: Kept) -> Int {
+    public static func resultsKept(_ k: Kept) -> Int {
         k.log.count
     }
 
     /// The results file (`resultsFile` in EggTimerCore): the store exactly as
     /// stored, and the sharing ID if there is one. Read from storage when it
     /// is asked for, so it is what is stored then.
-    static func exportText(uid: String?, now: Date = AppClock.now) -> String {
+    public static func exportText(uid: String?, now: Date = AppClock.now) -> String {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let stored = UserDefaults.standard.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
+        let stored = Stores.store.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
         return resultsFile(
             ResultsMeta(app: .ios, appVersion: appVersion, exported: iso.string(from: now),
                         population: population.id, uid: uid),
@@ -278,7 +261,7 @@ enum Calibrations {
     }
 
     /// The results file's name, for the local day.
-    static func exportName(now: Date = AppClock.now) -> String {
+    public static func exportName(now: Date = AppClock.now) -> String {
         let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: now)
         return resultsFileName(day: String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0))
     }
@@ -286,7 +269,7 @@ enum Calibrations {
     /// Forget every egg: the posterior, the base under it and the log. A run
     /// of wrong answers about how an egg was is otherwise undone only by
     /// deleting the app, and the honest thing is to let someone take it back.
-    static func reset() {
+    public static func reset() {
         Stores.remove(key)
     }
 }

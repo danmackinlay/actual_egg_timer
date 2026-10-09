@@ -12,29 +12,29 @@ import Observation
 /// running cook keeps the sound it was scheduled with.
 @MainActor
 @Observable
-final class AlarmSoundChoice {
-    static let shared = AlarmSoundChoice()
+public final class AlarmSoundChoice: AlarmSoundChoosing {
+    public static let shared = AlarmSoundChoice()
 
     /// Under its own key, as the language is (`LanguageChoice`).
     private static let key = "alarmSound"
 
-    private(set) var sound: AlarmSound
+    public private(set) var sound: AlarmSound
 
     private init() {
-        sound = readAlarmSound(UserDefaults.standard.string(forKey: Self.key))
+        sound = readAlarmSound(Stores.store.string(forKey: Self.key))
     }
 
     /// The cook's pick, kept through the guard (`Stores`), and played once
     /// so they hear what they chose.
-    func pick(_ next: AlarmSound) {
+    public func pick(_ next: AlarmSound) {
         sound = next
         Stores.set(next.rawValue, forKey: Self.key)
-        Ringer.shared.preview(next)
+        Services.ringer.preview(next)
     }
 
     /// The file a sound rings from at a moment, in the bundle: rendered by
     /// `npm run sounds` (tools/sounds.ts), with its extension.
-    static func file(_ sound: AlarmSound, _ moment: RingDeadline) -> String {
+    public static func file(_ sound: AlarmSound, _ moment: RingDeadline) -> String {
         "alarm-\(sound.rawValue)-\(moment.rawValue).caf"
     }
 }

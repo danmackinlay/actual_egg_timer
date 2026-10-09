@@ -1,4 +1,5 @@
 import SwiftUI
+import EggTimerShared
 
 /// The (i), one component everywhere (UI.md sections 4 and 7): a circled *i*
 /// beside a short label, which opens a paragraph in place, under the line it
