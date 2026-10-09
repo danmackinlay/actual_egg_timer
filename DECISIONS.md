@@ -791,3 +791,6 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     newer-build guard (100), and the import tool reading the owner's
     older files. Export from a current build before installing 0.5 to
     keep your own eggs. 9 October 2026.
+    Confirmed to the 0.5 foundations session the same day ("Yes, sweep v4
+    too"): the boot sweep of retired keys deletes `v4` with the rest, on
+    every device 0.5 runs on.
