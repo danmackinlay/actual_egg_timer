@@ -105,6 +105,7 @@ export interface Snap {
   target: string;
   labels: Record<string, string>;
   settings: Record<string, unknown> & { startMode: string; cooling: string; sizeIndex: number; doneness: number };
+  boilMemory: Record<string, number>;
   chosen: { level: number } | null;
   cook: Cook | null;
   deadlines: { cookEnd_s: number; coolEnd_s: number | null; provisional: boolean; outAt_s: number | null } | null;

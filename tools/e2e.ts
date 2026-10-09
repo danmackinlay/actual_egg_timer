@@ -36,7 +36,7 @@
 import { sleep } from './chrome.js';
 import { copyScenarios } from './copyScenarios.js';
 import {
-  Cook, Failure, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
+  Cook, Failure, Harness, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
 } from './harness.js';
 
 /** Every page but those checking the address or sharing: the clock stopped. */
@@ -174,6 +174,24 @@ async function later(tab: Tab): Promise<void> {
 
 function storedCook(s: Snap): Cook | null {
   return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
+}
+
+/** Two tabs open and idle, each on its stopped clock, and how many writes
+ *  the first had made by then. */
+async function twoTabs(h: Harness): Promise<[Tab, Tab, number]> {
+  const a = await h.ctx.open(STOPPED);
+  const b = await h.ctx.open(STOPPED);
+  await a.settle();
+  await b.settle();
+  return [a, b, (await a.writes()).length];
+}
+
+/** Once both tabs have settled, what `tab` has written to `key` since its
+ *  `from`th write. */
+async function settled(tab: Tab, other: Tab, key: string, from: number): Promise<string[]> {
+  await other.settle();
+  await tab.settle();
+  return (await tab.writes()).slice(from).filter((w) => w.key === key).map((w) => w.value);
 }
 
 /* ------------------------------------------------------------ scenarios */
@@ -1235,6 +1253,95 @@ const SCENARIOS: Record<string, Scenario> = {
       const sa = await a.snap();
       check(sa.phase === 'COOKING', `A reloaded to ${sa.phase}`);
       return `B followed in COOKING; B's writes of the cook: ${bWrites.length}, none without the tap; A reloaded to COOKING`;
+    },
+  },
+
+  'two-tabs-settings': {
+    what: 'a setting changed in another tab is taken up and shown, and never written back',
+    run: async (h) => {
+      const [a, b, from] = await twoTabs(h);
+      await pick(b, '#size', '3');
+      await a.until("__snap().settings.sizeIndex === 3 && document.getElementById('size').value === '3'", 'B\'s size in A');
+      const back = await settled(a, b, 'aet.settings.v1', from);
+      check(back.length === 0, `A wrote the settings back: ${back.length}`);
+      return 'B chose size 3: A shows it, and wrote the settings 0 times';
+    },
+  },
+
+  'two-tabs-pans': {
+    what: 'a pan another tab timed to the boil is taken up, and never written back',
+    run: async (h) => {
+      const [a, b, from] = await twoTabs(h);
+      await start(b, 'cold');
+      await b.shift(240);
+      await boil(b);
+      await b.click('#secondary');
+      await b.phase('IDLE');
+      const pans = JSON.parse((await b.storage('aet.boil.v1')) ?? '{}') as Record<string, number>;
+      check(Object.keys(pans).length === 1, `B remembered the pan: ${JSON.stringify(pans)}`);
+      await a.until(`JSON.stringify(__snap().boilMemory) === ${JSON.stringify(JSON.stringify(pans))}`, 'B\'s pan in A');
+      const back = await settled(a, b, 'aet.boil.v1', from);
+      check(back.length === 0, `A wrote the pans back: ${back.length}`);
+      return `B timed ${JSON.stringify(pans)}: A has it, and wrote the pans 0 times`;
+    },
+  },
+
+  'two-tabs-log': {
+    what: 'an egg another tab logged and folded is taken up, and never written back',
+    run: async (h) => {
+      const [a, b, from] = await twoTabs(h);
+      let s = await start(b, 'hot');
+      await b.until('__snap().decided', 'B planned');
+      s = await b.snap();
+      await b.shiftTo(deadlines(s).cookEnd_s + 2);
+      await b.phase('PULL');
+      await b.click('#primary');
+      s = await b.phase('COOLING');
+      await b.shiftTo(deadlines(s).coolEnd_s + 2);
+      await b.phase('DONE');
+      await b.click('.fb[data-yolk="jammy"]');
+      await a.until('__snap().log.length === 1 && __snap().eggsLogged === 1 && __snap().eggsBehind === 0',
+        'B\'s egg, folded, in A');
+      const back = await settled(a, b, 'aet.calibration.v5', from);
+      check(back.length === 0, `A wrote the log back: ${back.length}`);
+      return 'B logged Jammy and folded it: A has the egg, and wrote the log 0 times';
+    },
+  },
+
+  'two-tabs-sharing': {
+    what: 'sharing turned on in another tab is taken up and shown, and never written back',
+    run: async (h) => {
+      const [a, b, from] = await twoTabs(h);
+      await b.click('#shareSetting');
+      await a.until("__snap().share.on && document.getElementById('shareSetting').checked", 'sharing on in A');
+      const back = await settled(a, b, 'aet.share.v1', from);
+      check(back.length === 0, `A wrote the sharing state back: ${back.length}`);
+      return 'B turned sharing on: A shows it, and wrote the sharing state 0 times';
+    },
+  },
+
+  'two-tabs-cook': {
+    what: 'review 1.2: the boil tapped in another tab on the same cook is taken up, and the cook never written back',
+    run: async (h) => {
+      const a = await h.ctx.open(STOPPED);
+      await start(a, 'cold');
+      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      await b.phase('HEATING');
+      await b.until('__snap().deadlines !== null', 'B planned');
+      await b.settle();
+      const from = (await b.writes()).length;
+      await a.click('#primary');
+      const sa = await a.phase('COOKING');
+      const sb = await b.phase('COOKING');
+      check(sb.cook?.events.boilAt_s === sa.cook?.events.boilAt_s, 'B has A\'s tap');
+      const cookOf = (text: string): string => JSON.stringify((JSON.parse(text) as { cook: Cook }).cook);
+      const written = await settled(b, a, 'aet.cook.v4', from);
+      // B's lean, a cache, may be written beside a cook A stored; a cook of
+      // B's own, never.
+      const aCooks = new Set((await a.writes()).filter((w) => w.key === 'aet.cook.v4').map((w) => cookOf(w.value)));
+      const back = written.filter((w) => !aCooks.has(cookOf(w)));
+      check(back.length === 0, `B wrote its copy of the cook back: ${back.length}`);
+      return `A tapped the boil: B took it up; of B's ${written.length} writes of the cook, 0 its own copy`;
     },
   },
 
