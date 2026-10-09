@@ -34,8 +34,13 @@ import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { activeLocale, t, timeOfDay } from './copy.js';
 import { formatClock } from './countdown.js';
 import { CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
-import type { Learning } from './learned.js';
-import type { Model } from './model.js';
+import { formView } from './controls.js';
+import type { FormView } from './controls.js';
+import { learnedLine, learnedView } from './learned.js';
+import type { Learning, LearnedView } from './learned.js';
+import { shareView } from './shareView.js';
+import type { ShareView } from './shareView.js';
+import type { Model, Redraws } from './model.js';
 import { PhaseView, phaseView } from './phaseView.js';
 import { SetupFacts, liveSetupFacts } from './sentence.js';
 import { sousVideCopy } from './sousvide.js';
@@ -123,9 +128,22 @@ interface Screen {
 }
 
 /** What the page shows. */
-/** On every screen: the mute, and the line that says a newer build's stores
- *  are left alone. */
-export type View = { mute: { label: string; pressed: boolean }; newer: boolean } & (
+/** The parts of the page drawn only when `update` asks (model.ts, `Part`):
+ *  as they should read, with the counts that say which are asked for. */
+export interface Sections {
+  redraws: Redraws;
+  echoSource: string | null;
+  form: FormView;
+  /** The line over the questions, as last said. */
+  note: { rev: number; text: string };
+  learned: LearnedView;
+  /** Null before sharing is read. */
+  share: ShareView | null;
+}
+
+/** On every screen: the mute, the line that says a newer build's stores are
+ *  left alone, and the parts drawn only when asked. */
+export type View = { mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
    *  slider, the boiling point beside the altitude, the start, the
@@ -151,11 +169,11 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
-  const newer = m.readOnly;
+  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m) };
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
-      mute: mute, newer: newer, kind: 'unsolved',
+      ...top, kind: 'unsolved',
       reading: isSousVide(m) ? { level: shown.doneness, bath_C: SOUS_VIDE_BATH_C }
         : { level: shown.doneness, peakYolk_C: targetPeakYolk_C(shown.doneness) },
       statBoil: show('boilingPoint', boilingPoint_C(m)),
@@ -173,17 +191,33 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   // When the eggs went in, in the start's panel, while a cook runs: the
   // sentence never says it.
   const startedAt = m.cook === null || m.controlsStart_s === null ? null : timeOfDay(m.controlsStart_s * 1000);
-  const blank = { mute: mute, newer: newer, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
+  const blank = { ...top, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
   // Sous-vide is answered honestly and separately: no cook to run, no
   // clock to start, and a start time that has already been and gone.
-  if (isSousVide(m)) return { mute: mute, newer: newer, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
+  if (isSousVide(m)) return { ...top, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
   if (m.cook === null) {
     const sol = m.solution;
     if (sol === null) return blank;
-    return { mute: mute, newer: newer, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
+    return { ...top, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
   }
   if (m.plan === null) return blank;
-  return { mute: mute, newer: newer, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
+  return { ...top, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
+}
+
+/** The parts drawn only when asked, for `m`. */
+function sectionsOf(m: Model): Sections {
+  const l = learning(m);
+  const said = m.note.say;
+  const share = m.share;
+  return {
+    redraws: m.redraws,
+    echoSource: m.echoSource,
+    form: formView(m),
+    note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
+    learned: learnedView(l, m.readOnly),
+    share: share === null ? null
+      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere, m.readOnly),
+  };
 }
 
 /* -------------------------------------------------------------- screens */

@@ -21,25 +21,26 @@ export interface Learning {
   waterLitres: number;
 }
 
-/** The line over the questions at DONE, and the note in Settings. */
-export function renderCalibNote(l: Learning): void {
-  page().calibNote.textContent = l.eggs === 0
-    ? t('feedback.invite')
-    : t('learned.tuned', { eggs: l.eggs });
-  renderLearned(l);
+/** What has been learned, as said: the line over the questions at Done. */
+export function learnedLine(l: Learning): string {
+  return l.eggs === 0 ? t('feedback.invite') : t('learned.tuned', { eggs: l.eggs });
 }
 
-/** What this kitchen has taught the app, and the way to take it back. */
-export function renderLearned(l: Learning): void {
+/** The note in Settings: what this kitchen has taught the app, and whether
+ *  there is anything to take back (`forget`) or to export (`exported`); and
+ *  whether a newer build's results are left alone (store.ts), when there
+ *  is nothing this page may forget. */
+export interface LearnedView {
+  text: string;
+  forget: boolean;
+  exported: boolean;
+  readOnly: boolean;
+}
+
+export function learnedView(l: Learning, readOnly: boolean): LearnedView {
   const eggs = l.eggs;
   const pan = hasBoilMemory(l.boilMemory);
-  // There is something to export now.
-  if (eggs > 0) page().exportNote.hidden = true;
-  if (eggs === 0 && !pan) {
-    page().learnedNote.textContent = t('learned.literature');
-    showForget(false);
-    return;
-  }
+  if (eggs === 0 && !pan) return { text: t('learned.literature'), forget: false, exported: false, readOnly: readOnly };
   const tuned = eggs > 0 ? t('learned.tuned', { eggs: eggs }) : '';
   const measured = pan
     ? t('learned.pan', {
@@ -47,18 +48,31 @@ export function renderLearned(l: Learning): void {
       time: formatClock(estimateTimeToBoil(l.boilMemory, l.waterLitres)),
     })
     : '';
-  page().learnedNote.textContent = tuned !== '' && measured !== ''
-    ? t('learned.both', { tuned: tuned, pan: measured })
-    : tuned + measured;
+  const text = tuned !== '' && measured !== '' ? t('learned.both', { tuned: tuned, pan: measured }) : tuned + measured;
+  return { text: text, forget: true, exported: eggs > 0, readOnly: readOnly };
+}
+
+/** The line over the questions at DONE, and the note in Settings. */
+export function renderCalibNote(l: Learning, readOnly: boolean): void {
+  page().calibNote.textContent = learnedLine(l);
+  drawLearned(learnedView(l, readOnly));
+}
+
+/** What this kitchen has taught the app, and the way to take it back. */
+export function drawLearned(v: LearnedView): void {
+  // There is something to export now.
+  if (v.exported) page().exportNote.hidden = true;
+  page().learnedNote.textContent = v.text;
   // Not while the confirmation is up: it stands in the button's place.
-  if (page().forgetConfirm.hidden) showForget(true);
+  if (!v.forget) showForget(false, v.readOnly);
+  else if (page().forgetConfirm.hidden) showForget(true, v.readOnly);
 }
 
 /** Forget and its (i) come and go together, and both go while a newer
- *  build's results are left alone (store.ts): there is nothing this page
- *  may forget. */
-function showForget(visible: boolean): void {
-  const shown = visible && !storageReadOnly();
+ *  build's results are left alone: there is nothing this page may
+ *  forget. */
+function showForget(visible: boolean, readOnly: boolean = storageReadOnly()): void {
+  const shown = visible && !readOnly;
   page().forget.hidden = !shown;
   showInfo(page().forgetInfo, shown);
 }

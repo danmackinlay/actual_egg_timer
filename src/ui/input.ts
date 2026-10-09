@@ -12,7 +12,6 @@ import { Quantity, parse } from '../core/units.js';
 import { ALARM_SOUNDS, readAlarmSound } from '../core/sounds.js';
 import { DEFAULTS } from '../core/inputs.js';
 import { LANGUAGES, languageAfterPick } from '../core/language.js';
-import { labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
 import { groupOf } from './edit.js';
 import { send } from './send.js';
@@ -99,18 +98,6 @@ function readInputs(source: EventTarget | null): Settings {
   return settings;
 }
 
-/** The controls that follow one read: the egg measured fills in the other
- *  measurements and the menu, and the fields a choice opens. */
-function echoInputs(source: EventTarget | null): void {
-  const settings = state.controls;
-  if (settings.sizeIndex === -1) page().size.value = '-1';
-  page().roomField.hidden = !settings.probe;
-  labelStartTemps();
-  page().customTempField.hidden = settings.startTempMode !== 'custom';
-  syncMeasurements(source);
-  labelMeasuredOption();
-}
-
 /** Every input and change on the egg's controls, its sentence and the
  *  Settings form. */
 export function onInput(event: Event): void {
@@ -137,6 +124,6 @@ export function onInput(event: Event): void {
     return;
   }
   // While a cook runs, a correction in hand on the control it came from.
-  send({ kind: 'controls', controls: readInputs(target), group: groupOf(target), real_ms: performance.now() });
-  echoInputs(target);
+  const source = target instanceof HTMLElement && target.id !== '' ? target.id : null;
+  send({ kind: 'controls', controls: readInputs(target), source: source, group: groupOf(target), real_ms: performance.now() });
 }

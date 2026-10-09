@@ -23,22 +23,20 @@
 import { nudgeSeconds } from '../core/decide.js';
 import type { BoilMemory } from '../core/boil.js';
 import { RunningCook, answered } from '../core/running.js';
-import { learning, phaseNow, state } from './state.js';
+import { phaseNow, state } from './state.js';
 import { EditTimer, Effect, Msg, update } from './model.js';
 import type { Learner } from './calibration.js';
 import {
   Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
   setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
 } from './clock.js';
-import { applySettingsToDom, applyUnitsToDom } from './controls.js';
-import { activeLocale, t } from './copy.js';
+import { activeLocale } from './copy.js';
 import { builtFor } from './decisionGrids.js';
-import { page, selectRadio } from './dom.js';
 import { showStartLimit } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
 import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
-import { renderCalibNote, renderLearned, saveResults } from './learned.js';
-import { draw, drawnNothing, forgetDrawnWords } from './render.js';
+import { saveResults } from './learned.js';
+import { draw, drawnNothing } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import type { Sharing } from './share.js';
@@ -46,7 +44,7 @@ import {
   CookStore, KeptAnswers, PansStore, SettingsStore, correctedLater, storageReadOnly, takeUpEvents,
 } from './store.js';
 import { unitSystem, useUnits } from './units.js';
-import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './effects.js';
+import { finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './effects.js';
 import { showEgg } from './views.js';
 import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
@@ -144,16 +142,16 @@ const ABOUT_THE_COOK = new Set<Msg['kind']>([
 ]);
 
 /** Take up what `msg` did, and do what it asks: the runner's view of its
- *  caches and the stores taken first, and the units and the sound kept
- *  with the settings before the effects. */
+ *  caches and the stores handed in with it, and the units and the sound
+ *  kept with the settings before the effects. */
 function apply(msg: Msg, now: number): void {
   const built = builtFor(state.calib);
-  state.surfaces = built.surfaces;
-  state.profiles = built.profiles;
-  state.sharing = stores.sharing.state().on;
-  state.readOnly = storageReadOnly();
-  state.storedId_ms = state.cook === null ? null : storedId();
-  const [next, effects] = update(state, msg, now);
+  const share = stores.sharing.state();
+  const [next, effects] = update(state, msg, now, {
+    surfaces: built.surfaces, profiles: built.profiles, sharing: share.on, readOnly: storageReadOnly(),
+    storedId_ms: state.cook === null ? null : storedId(),
+    share: { state: share, final: finalEggs(stores, state) },
+  });
   Object.assign(state, next);
   useUnits(state.settings.unitsChosen);
   if (muted !== state.settings.muted) {
@@ -210,8 +208,9 @@ export function startRunner(s: Stores, builds: Builds = workerBuilds(s.learner))
 function perform(effects: Effect[]): void {
   for (const e of effects) {
     if (e.kind === 'sendFinal') {
-      // Drawn after the page has booted, since this can come of a restore.
-      queueMicrotask(() => drawShare(stores));
+      // What is final may have moved: sharing read again, and drawn, after
+      // the page has booted, since this can come of a restore.
+      queueMicrotask(() => send({ kind: 'shared' }));
     }
     if (performStored(e, stores, state.boilMemory, send)) continue;
     switch (e.kind) {
@@ -237,12 +236,6 @@ function perform(effects: Effect[]): void {
         break;
       case 'answerTaken':
         answerTaken(e.yolkWord, e.white);
-        break;
-      case 'thanks':
-        page().calibNote.textContent = t('feedback.thanks');
-        break;
-      case 'learning':
-        page().calibNote.textContent = t('feedback.learning');
         break;
       case 'probeRefused':
         probeRefused(e.low_C, e.high_C);
@@ -278,38 +271,13 @@ function perform(effects: Effect[]): void {
       case 'language':
         followLanguage(e.before);
         break;
-      case 'controlsDrawn':
-        applySettingsToDom();
-        break;
-      case 'unitsDrawn':
-        applyUnitsToDom();
-        break;
-      case 'donenessDrawn':
-        page().doneness.value = String(state.controls.doneness);
-        break;
-      case 'alarmDrawn':
-        selectRadio('alarm', state.settings.alarm);
-        break;
       case 'previewAlarm':
         previewAlarm();
         break;
-      case 'wordsForgotten':
-        forgetDrawnWords(drawn);
-        break;
-      case 'notesDrawn':
-        renderCalibNote(learning(state));
-        break;
-      case 'learnedDrawn':
-        renderLearned(learning(state));
-        break;
-      case 'shareDrawn':
-        drawShare(stores);
-        break;
       case 'drawNudge':
-        // A new page or a new cook, a new nudge: a
-        // whole number of seconds from -10 to +10, drawn when the page boots
-        // and again after each cook, so the time on screen holds still while
-        // the cook looks at it.
+        // A new page or a new cook, a new nudge: a whole number of seconds
+        // from -10 to +10, drawn when the page boots and again after each
+        // cook, so the time on screen holds still while the cook looks at it.
         send({ kind: 'nudge', draw: nudgeSeconds(random()) });
         break;
       case 'forgetAll':

@@ -3,21 +3,21 @@
  * carries them out for `update` (model.ts): the settings written, coalesced or at once, with
  * whatever another tab wrote since taken up; the idle page solved again once
  * the controls settle; the words in a new language; everything forgotten;
- * what another tab wrote, taken up as messages; and the sharing section, with
- * how many final eggs are still to go.
+ * what another tab wrote, taken up as messages; and how many of the log's
+ * eggs are final, for sharing.
  */
 
 import { effectiveLanguage } from '../core/language.js';
 import { CookPlan, openEggId, replan } from '../core/running.js';
 import type { Learner } from './calibration.js';
 import type { Stores } from './cook.js';
-import { applyLanguageToDom, applyUnitsToDom } from './controls.js';
+import type { Model } from './model.js';
+import { applyLanguageToDom } from './controls.js';
 import { activeLocale, applyCopy, loadCopy } from './copy.js';
 import { cancelSoon, soon } from './idle.js';
 import { labelInfoButtons } from './info.js';
 import { renderVersion } from './render.js';
 import { send } from './send.js';
-import { renderShare } from './shareView.js';
 import { labelTicks } from './slider.js';
 import { state } from './state.js';
 import { labelSteppers } from './stepper.js';
@@ -101,8 +101,8 @@ function relabel(): void {
   labelSteppers();
   labelTicks();
   renderVersion();
-  applyUnitsToDom();
   applyLanguageToDom();
+  // The fields with a unit, and the rest drawn only when asked, drawn again.
   send({ kind: 'relabelled' });
 }
 
@@ -135,17 +135,17 @@ const storedPlan = { text: null as string | null, plan: null as CookPlan | null 
 /** The egg still open to correction (core `openEggId`): the
  *  stored running cook's, whichever tab wrote it, until it is too old to
  *  pick back up; null when there is none. */
-function openEgg(s: Stores, now_s: number): number | null {
+function openEgg(s: Stores, m: Model, now_s: number): number | null {
   const cook = s.cooks.peek()?.cook ?? null;
   if (cook === null) return null;
   let plan: CookPlan;
-  if (state.cook !== null && state.plan !== null && state.cook.id_ms === cook.id_ms) {
-    plan = state.plan;
+  if (m.cook !== null && m.plan !== null && m.cook.id_ms === cook.id_ms) {
+    plan = m.plan;
   } else {
     const text = s.cooks.text();
     if (storedPlan.text !== text || storedPlan.plan === null) {
       storedPlan.text = text;
-      storedPlan.plan = replan(cook, state.calib, null, 0, now_s);
+      storedPlan.plan = replan(cook, m.calib, null, 0, now_s);
     }
     plan = storedPlan.plan;
   }
@@ -156,19 +156,14 @@ function openEgg(s: Stores, now_s: number): number | null {
  *  them but the stored running cook's, whichever tab asks, which can still be
  *  answered and corrected until Start again or until it is too old
  *  (`openEggId`, design/one-screen.md section 4, "Which eggs are final"). */
-export function finalEggs(s: Stores): number {
+export function finalEggs(s: Stores, m: Model): number {
   const log = s.learner.keptState().log;
-  const open = openEgg(s, nowMs() / 1000);
+  const open = openEgg(s, m, nowMs() / 1000);
   if (open === null) return log.length;
   const at = log.findIndex((r) => (r.id ?? null) === open);
   return at < 0 ? log.length : at;
 }
 
-/** The Settings section, with how many final eggs are still to go. */
-export function drawShare(s: Stores): void {
-  const sharing = s.sharing.state();
-  renderShare(sharing, Math.max(0, finalEggs(s) - sharing.sent), state.deletedHere);
-}
 
 /**
  * Another tab wrote the settings, the pans, the log or the sharing state

@@ -25,7 +25,7 @@
 import { nudgeSeconds } from '../core/decide.js';
 import { stepPast } from '../core/units.js';
 import { openLearner } from './calibration.js';
-import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
+import { applyConstantsToDom, buildSizeOptions } from './controls.js';
 import {
   Stores, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
 } from './cook.js';
@@ -33,20 +33,20 @@ import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
 import { wireInfoButtons } from './info.js';
 import { onInput, onToggleMute } from './input.js';
-import { renderCalibNote, wireExport, wireForget } from './learned.js';
+import { wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
 import { renderVersion } from './render.js';
 import { buildClauses } from './sentence.js';
 import { openSharing } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
-import { learning, sizeClasses, state } from './state.js';
+import { sizeClasses, state } from './state.js';
 import { activePopulation } from './population.js';
 import { setStepRule, wireSteppers } from './stepper.js';
 import { claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
-import { drawShare, finalEggs, learnBehind, storedElsewhere } from './effects.js';
+import { finalEggs, learnBehind, storedElsewhere } from './effects.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
 import { markDevClockUse, random } from './now.js';
@@ -65,7 +65,7 @@ export function boot(): void {
   const learner = openLearner();
   const stores: Stores = {
     settings: openSettings(sizeClasses), pans: openPans(), cooks: openCooks(), learner: learner,
-    sharing: openSharing({ log: () => learner.keptState().log, finalCount: () => finalEggs(stores) }),
+    sharing: openSharing({ log: () => learner.keptState().log, finalCount: () => finalEggs(stores, state) }),
   };
   state.settings = stores.settings.load();
   state.controls = { ...state.settings };
@@ -83,7 +83,6 @@ export function boot(): void {
   buildTicks();
   buildClauses();
   applyConstantsToDom();
-  applySettingsToDom();
 
   // The egg's two controls and its sentence, and the Settings page's, are
   // read the same way: every input goes through readInputs.
@@ -115,11 +114,9 @@ export function boot(): void {
 
   wireFeedback();
 
-  renderCalibNote(learning(state));
   restoreCook();
   // A deletion not yet confirmed is asked again before anything is sent.
   wireShare();
-  drawShare(stores);
   const resend = (): void => { void stores.sharing.retryDeletes().then(stores.sharing.sendFinal); };
   resend();
   window.addEventListener('online', resend);

@@ -117,7 +117,7 @@ function snapshot(): Snapshot {
     log: stores.learner.keptState().log,
     eggsLogged: state.calib.eggsLogged,
     eggsBehind: stores.learner.eggsBehind(),
-    finalEggs: finalEggs(stores),
+    finalEggs: finalEggs(stores, state),
     share: { on: share.on, sent: share.sent },
     inHand: inHand(),
   };

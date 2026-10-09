@@ -96,7 +96,7 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   assert.equal(p.m.cook, null, 'Start again at Done');
   assert.deepEqual(kinds(end).slice(0, 6), ['silence', 'rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
   assert.deepEqual(kinds(end).slice(6), [
-    'editTimersOff', 'startLimit', 'silence', 'questionsReset', 'controlsDrawn', 'drawNudge', 'shareDrawn',
+    'editTimersOff', 'startLimit', 'silence', 'questionsReset', 'drawNudge',
   ], 'and the page goes back to the settings, with a new nudge');
   assert.deepEqual(p.m.controls, p.m.settings, 'the controls show the settings again');
   assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
