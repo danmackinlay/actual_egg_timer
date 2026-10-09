@@ -270,6 +270,14 @@ private func logRecord(_ w: inout Work, _ env: CookEnv, nowS: Double, unanswered
     return true
 }
 
+/// Whether a tick at `nowS` has anything to decide for a running cook with
+/// this plan: an event the clock writes, the slow hob's next lengthening, or
+/// the cook too old. See `tickDue` in `src/core/step.ts`.
+public func tickDue(_ cook: RunningCook, _ plan: CookPlan, nowS: Double) -> Bool {
+    slowHobDue(plan, nowS: nowS) || cookTooOld(plan, nowS: nowS)
+        || !sameEvents(eventsDue(cook, plan: plan, nowS: nowS), cook.events)
+}
+
 /// Whether `b` is the cook `a` was: a cook moves only by an entry appended to
 /// its log (`appendEntry`), so the same log length is the same cook, and a
 /// move that changes nothing appends nothing.
@@ -349,8 +357,7 @@ public func step(_ state: CookState, _ event: CookEvent, _ env: CookEnv) -> Cook
         break
     case .tick:
         // Nothing due: the plan stands.
-        if let last, ended || (!slowHobDue(last, nowS: nowS) && !cookTooOld(last, nowS: nowS)
-            && eventsDue(held, plan: last, nowS: nowS) == held.events) {
+        if let last, ended || !tickDue(held, last, nowS: nowS) {
             return quiet(state, env, nowS: nowS)
         }
     case .surfaceLanded:

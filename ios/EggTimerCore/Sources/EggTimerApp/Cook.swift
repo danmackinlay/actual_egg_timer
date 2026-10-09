@@ -751,11 +751,9 @@ public final class Cook {
             ticks &+= 1
         }
         #endif
-        if let cook = running, let plan,
-           slowHobDue(plan, nowS: now) || cookTooOld(plan, nowS: now)
-            || eventsDue(cook, plan: plan, nowS: now) != cook.events {
-            send(.event(.tick(nowS: now)))
-        }
+        // Stepped only when the clock has something to decide (core's
+        // `tickDue`, which the step asks too).
+        if let cook = running, let plan, tickDue(cook, plan, nowS: now) { send(.event(.tick(nowS: now))) }
         pushActivity(atS: now)
         return phase(atS: now)
     }

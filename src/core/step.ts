@@ -308,6 +308,14 @@ function logRecord(w: Work, env: CookEnv, now_s: number, unanswered: boolean): b
   return true;
 }
 
+/** Whether a tick at `now_s` has anything to decide for a running cook with
+ *  this plan: an event the clock writes, the slow hob's next lengthening, or
+ *  the cook too old. A tick when it has not leaves the state as it is; an app
+ *  may ask first, and not step at all. */
+export function tickDue(cook: RunningCook, plan: CookPlan, now_s: number): boolean {
+  return slowHobDue(plan, now_s) || cookTooOld(plan, now_s) || !sameEvents(eventsDue(cook, plan, now_s), cook.events);
+}
+
 /** Whether `b` is the cook `a` was: a cook moves only by an entry appended
  *  to its log (`appendEntry`), so the same log length is the same cook, and a
  *  move that changes nothing appends nothing. */
@@ -407,8 +415,7 @@ export function step(state: CookState, event: CookEvent, env: CookEnv): CookStep
   switch (event.kind) {
     case 'tick':
       // Nothing due: the plan stands.
-      if (last !== null && (ended || (!slowHobDue(last, now_s) && !cookTooOld(last, now_s)
-        && sameEvents(eventsDue(held, last, now_s), held.events)))) {
+      if (last !== null && (ended || !tickDue(held, last, now_s))) {
         return quiet(state, env, now_s);
       }
       break;
