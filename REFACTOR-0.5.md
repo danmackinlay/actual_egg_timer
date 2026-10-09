@@ -271,9 +271,14 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 - [x] **2.17 38 worktrees, 45 branches, 42 of them merged.** Pruned by the
       owner, 9 October 2026: 30 merged, clean worktrees and their branches;
       13 worktrees and 25 branches left.
-- [ ] **2.18 Web build**: `build:site`'s 11-step one-liner into
+- [x] **2.18 Web build**: `build:site`'s 11-step one-liner into
       `tools/buildSite.mjs`; point `index.html` at `app/` everywhere so
       `sitePaths.mjs` can go; fix netlify.toml's stale comments. S.
+      *Done in part:* the script, `_site/` byte for byte as the one-liner
+      made it, `sw.js` included. Left: `index.html` at `app/` (the repo
+      root, served as it is, loads `dist/`) and netlify.toml's comments,
+      which change the site's bytes (`precache.mjs` hashes netlify.toml
+      into the build's name), so each is its own change.
 
 ## 3. Restructure
 
