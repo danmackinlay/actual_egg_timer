@@ -1,6 +1,8 @@
 #if DEBUG
-import Foundation
 import EggTimerCore
+import Foundation
+import Observation
+import UIKit
 
 /// Launch arguments that put a debug build on a given screen, so screenshots
 /// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
@@ -185,6 +187,10 @@ extension Screenshots {
         /// The clock stepped from outside (`AppClock.takeStep`): step `n`,
         /// to `at`, running on at `speed` (0 frozen).
         case clock(n: Int, at: Double, speed: Double)
+        /// After step `step`, the app caught up with it: nothing under way
+        /// and the screen drawn (`idle(after:)`). What a script waits for
+        /// after every step.
+        case idle(step: Int)
         /// A tap of `-uiDo` (`name`, as `boil`, `set`), as given (`raw`).
         case action(name: String, raw: String)
         case actionUnknown(raw: String)
@@ -246,6 +252,8 @@ extension Screenshots {
         // The stores (`Stores.claim`).
         case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
         case swept(key: String)
+        /// A key written to the store (`Stores`).
+        case wrote(key: String)
 
         // The idle screen.
         /// An answer on screen: its time, whether it is decided on its pot's
@@ -361,10 +369,12 @@ extension Screenshots {
     /// (an answer after the egg's hour).
     @MainActor
     static func drive(_ model: AppModel) {
+        self.model = model
         let all = actions
         guard !all.isEmpty else { return }
         // Read now, at the launch, for `launch`.
         _ = launchedAtS
+        driving = true
         Task { @MainActor in
             var left = all.map { (action: $0, due: Double?.none) }
             while !left.isEmpty {
@@ -373,13 +383,26 @@ extension Screenshots {
                     if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
                 let now = AppClock.now.timeIntervalSince1970
-                guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
+                guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else {
+                    nothingDue &+= 1
+                    continue
+                }
                 let action = left.remove(at: i).action
                 log(.action(name: action.name, raw: action.raw))
+                tappedAtTick = model.cook.ticks
                 tap(action, model)
             }
+            driving = false
         }
     }
+
+    /// Whether `-uiDo` has taps still to come; how many of its looks found
+    /// none due; and the cook's ticks at its last tap: for `idle(after:)`.
+    @MainActor private static var driving = false
+    @MainActor private static var nothingDue = 0
+    @MainActor private static var tappedAtTick = 0
+    /// Drags of `-uiDo` still moving the slider.
+    @MainActor private static var dragging = 0
 
     /// `open:settings` pushes Settings, `open:clause-start` opens a
     /// clause's choice, as a press on its link would (set by the screen).
@@ -407,11 +430,13 @@ extension Screenshots {
             // a twentieth of a second apart; it stays down (`release`).
             let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
             model.edits.fingerDown(.level, slider: true)
+            dragging += 1
             Task { @MainActor in
                 for level in levels {
                     model.planner.doneness = level
                     try? await Task.sleep(for: .milliseconds(50))
                 }
+                dragging -= 1
             }
         case "release": model.edits.fingerUp()
         case "start":
@@ -448,6 +473,80 @@ extension Screenshots {
         case "altitude": planner.altitudeM = number
         case "language": LanguageChoice.shared.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
+        }
+    }
+}
+
+extension Screenshots {
+    /// What the screen draws again for after a step: read by the page and
+    /// by its timelines (ContentView), so that a change of it draws them at
+    /// the clock's new moment, a frozen clock's timelines otherwise waiting
+    /// up to a second of the system's.
+    @Observable @MainActor
+    final class Probe {
+        var drawn = 0
+    }
+
+    @MainActor static let probe = Probe()
+    /// The app's model, for what `idle(after:)` waits on (`drive`).
+    @MainActor static weak var model: AppModel?
+    @MainActor private static var drawing: [CheckedContinuation<Void, Never>] = []
+
+    /// Step `n` taken (`AppClock.takeStep`, off the main actor).
+    static func stepped(_ n: Int) {
+        Task { @MainActor in await idle(after: n) }
+    }
+
+    /// Once the app has caught up with step `n`, `idle`: the cook has
+    /// ticked at the new moment, and after the last tap; `-uiDo` has looked
+    /// and found nothing more due, and is moving no slider; nothing is under
+    /// way in the cook, the planner, a change in hand or a record made
+    /// again; and the page has been drawn since, at the new moment. A script
+    /// waits for it after every step, so that what it checks next, that
+    /// something did not happen as much as that it did, is checked once the
+    /// app is done however slow the machine, never after a span of the
+    /// system's time.
+    @MainActor private static func idle(after n: Int) async {
+        while model == nil { try? await Task.sleep(for: .milliseconds(20)) }
+        guard let model else { return }
+        let ticks = model.cook.ticks
+        let looks = nothingDue
+        while true {
+            while underWay(model, ticks: ticks, looks: looks) { try? await Task.sleep(for: .milliseconds(20)) }
+            // In the background the page is not drawn, and nothing waits for it.
+            if UIApplication.shared.applicationState == .active { await draw() }
+            if !underWay(model, ticks: ticks, looks: looks) { break }
+        }
+        log(.idle(step: n))
+    }
+
+    /// Whether the app is still at work on a step taken when the cook had
+    /// ticked `ticks` times and `-uiDo` had looked `looks` times.
+    @MainActor private static func underWay(_ model: AppModel, ticks: Int, looks: Int) -> Bool {
+        let planner = model.planner
+        return (model.cook.ticking && model.cook.ticks <= max(ticks, tappedAtTick))
+            || (driving && nothingDue <= looks) || dragging > 0
+            || !model.cook.isSettled
+            || model.edits.underWay
+            || planner.task != nil || planner.settleTask != nil || !planner.profilesAsked.isEmpty || planner.draining
+            || model.remaking > 0
+    }
+
+    /// The page drawn again: once a pass of the screen has followed.
+    @MainActor private static func draw() async {
+        await withCheckedContinuation { c in
+            drawing.append(c)
+            probe.drawn &+= 1
+        }
+    }
+
+    /// The page has drawn `probe` again (ContentView): resumed once that
+    /// pass of the screen is over, with what it logged.
+    @MainActor static func drawn() {
+        Task { @MainActor in
+            let waiting = drawing
+            drawing = []
+            for c in waiting { c.resume() }
         }
     }
 }

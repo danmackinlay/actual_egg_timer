@@ -1152,7 +1152,10 @@ final class Cook {
         #if DEBUG
         // Once the tick has done what the phase asks, so a script that waits
         // for the phase and then for `settled` sees what it set going.
-        defer { logPhase(at: at) }
+        defer {
+            logPhase(at: at)
+            ticks &+= 1
+        }
         #endif
         // Too old to pick back up, by the plan held: ended as Start again
         // ends it, here as at a relaunch (running-cook review 2.2).
@@ -1189,11 +1192,19 @@ final class Cook {
     /// How many starts, restores and alarm read-backs are under way.
     @ObservationIgnored private var busy = 0
 
-    /// Nothing under way - no plan being made, no surface being built, no
-    /// start, restore or read-back - to the debug log: what the scripted
-    /// checks wait for before they move the clock on.
+    /// Ticks taken, and whether the ticker runs: a step's `idle` waits for a
+    /// tick at its moment (`Screenshots.idle(after:)`).
+    @ObservationIgnored private(set) var ticks = 0
+    var ticking: Bool { ticker != nil }
+
+    /// Nothing under way: no plan being made, no surface being built, no
+    /// start, restore or read-back.
+    var isSettled: Bool { planning == nil && surfaceAsked == nil && busy == 0 }
+
+    /// The cook settled, to the debug log: what the scripted checks wait for
+    /// before they move the clock on.
     private func logIfSettled() {
-        guard planning == nil, surfaceAsked == nil, busy == 0 else { return }
+        guard isSettled else { return }
         Screenshots.log(.settled)
     }
 

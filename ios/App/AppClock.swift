@@ -200,6 +200,7 @@ enum AppClock {
         wasAltered = true
         lock.unlock()
         Screenshots.log(.clock(n: step.n, at: step.at, speed: step.speed))
+        Screenshots.stepped(step.n)
     }
     #else
     static let altered = false

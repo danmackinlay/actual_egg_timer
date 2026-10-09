@@ -76,7 +76,7 @@ struct ContentView: View {
                     // once a `tick`, and hands over the date it drew for -
                     // which is the date the phase is computed from.
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
-                        let now = AppClock.app(context.date)
+                        let now = moment(context.date)
                         let phase = cook.phase(at: now)
                         ReadoutView(
                             model: model, phase: phase, now: now,
@@ -91,7 +91,7 @@ struct ContentView: View {
                         #endif
                     setup(phase: outerPhase, every: every, tick: tick)
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
-                        let now = AppClock.app(context.date)
+                        let now = moment(context.date)
                         let phase = cook.phase(at: now)
                         VStack(spacing: 18) {
                             PhaseActions(
@@ -148,6 +148,8 @@ struct ContentView: View {
         .onChange(of: path) { _, now in
             Screenshots.log(.view(page: now.last.map { "\($0)" } ?? "egg"))
         }
+        // A step's `idle` waits for the page drawn again (Screenshots.swift).
+        .onChange(of: Screenshots.probe.drawn) { Screenshots.drawn() }
         #endif
         // 1750 is set in its period face, as on the web (`PeriodFace`):
         // here for whatever sets no style of its own, and through
@@ -178,6 +180,16 @@ struct ContentView: View {
     private func sousVideAt(_ now: Date, _ estimate: SousVideEstimate?, phase: Phase) -> SousVideCopy? {
         guard phase == .idle, let estimate else { return nil }
         return sousVideCopy(estimate, now: now, units: planner.units)
+    }
+
+    /// A timeline's date in cook time. A debug build reads the probe a
+    /// step's `idle` draws the page again with, so that the timelines draw a
+    /// frozen clock's new moment at once (`Screenshots.idle(after:)`).
+    private func moment(_ date: Date) -> Date {
+        #if DEBUG
+        _ = Screenshots.probe.drawn
+        #endif
+        return AppClock.app(date)
     }
 
     #if DEBUG
@@ -271,7 +283,7 @@ struct ContentView: View {
             HStack(alignment: .top, spacing: 14) {
                 if running != nil || !planner.isSousVide {
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
-                        let now = AppClock.app(context.date)
+                        let now = moment(context.date)
                         EggSectionView(model: model, phase: cook.phase(at: now), now: now)
                     }
                     .id(tick)

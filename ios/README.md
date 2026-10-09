@@ -482,7 +482,16 @@ to the next: launched 14 s into the pull's 20-s grace, the app is 14 s into
 it however long the launch took. The script waits for the log to say what
 happened, never for the host's seconds to pass, so a slow or loaded machine
 takes longer and checks the same; a wait's timeout (`AET_E2E_WAIT`, 60 s)
-only says when to give up. Moments the clock was stepped to are checked to a
+only says when to give up. After every step it waits for `idle` with the
+step's number (`Screenshots.idle(after:)`): the cook has ticked at the new
+moment and after the last tap, `-uiDo` has nothing more due, nothing is under
+way in the cook, the planner or a change in hand, and the page has been drawn
+again at the moment. So a check that something did not happen (no ring, no
+plan, nothing committed) is made once the app is done, not after a second of
+the host's that a slow runner can spend before the app has begun; a step to
+where the clock already stands (`tick`) is how a scenario waits for that
+without moving it. What the screen says is read the same way, after a
+`tick`. Moments the clock was stepped to are checked to a
 millisecond, a deadline planned again at a relaunch to a second. Notifications
 are checked as scheduled, for which cook time, and pending; one scenario
 (`asleep`) leaves one to the system, at ×1 with the app killed, and gives it

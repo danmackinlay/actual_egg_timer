@@ -173,6 +173,14 @@ final class Edits {
     /// dropped.
     @ObservationIgnored private var generation = 0
 
+    #if DEBUG
+    /// Previews being planned.
+    @ObservationIgnored private var previewing = 0
+    /// Whether a change is settling, being previewed, or letting its aimed-for
+    /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
+    var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
+    #endif
+
     /// When the eggs went in as the start's panel says, while a cook runs:
     /// the cook's own, or a correction of it in hand. Nil while idle.
     private(set) var startInHand: Double?
@@ -276,6 +284,10 @@ final class Edits {
                 try? await Task.sleep(for: Self.previewDelay)
                 guard let self, gen == self.generation else { return }
                 self.previewTask = nil
+                #if DEBUG
+                self.previewing += 1
+                defer { self.previewing -= 1 }
+                #endif
                 await self.preview()
             }
         }

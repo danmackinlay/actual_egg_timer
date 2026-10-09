@@ -83,8 +83,8 @@ enum Stores {
         let verdict = writerCheckBuilt(mark, markBuild, version, build)
         readOnly = verdict == .readOnly
         if verdict == .write, parseVersion(version) != nil {
-            if mark != version { defaults.set(version, forKey: markKey) }
-            if markBuild != build, parseBuild(build) != nil { defaults.set(build, forKey: buildKey) }
+            if mark != version { wrote(version, forKey: markKey, in: defaults) }
+            if markBuild != build, parseBuild(build) != nil { wrote(build, forKey: buildKey, in: defaults) }
         }
         // A build that finds a newer mark deletes nothing.
         if verdict == .write {
@@ -104,7 +104,16 @@ enum Stores {
 
     static func set(_ value: Any?, forKey key: String, in defaults: UserDefaults = .standard) {
         guard !readOnly else { return }
+        wrote(value, forKey: key, in: defaults)
+    }
+
+    /// Every write to the store, here, and to the debug log: the scripted
+    /// checks hold the store to what the log says was written.
+    private static func wrote(_ value: Any?, forKey key: String, in defaults: UserDefaults) {
         defaults.set(value, forKey: key)
+        #if DEBUG
+        Screenshots.log(.wrote(key: key))
+        #endif
     }
 
     static func remove(_ key: String, in defaults: UserDefaults = .standard) {
