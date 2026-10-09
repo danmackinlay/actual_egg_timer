@@ -332,6 +332,9 @@ export type Effect =
   /** The questions empty again, for the next egg; "thank you" for the egg
    *  kept; "learning" for an answer taken. */
   | { kind: 'questionsReset' }
+  /** A surface landed: a probe reading held for want of the egg's record
+   *  read again. */
+  | { kind: 'retryProbe' }
   | { kind: 'thanks' }
   | { kind: 'learning' }
   /** An answer taken: its row settles on the button pressed. */
@@ -618,6 +621,7 @@ function close(m: Model): Model {
 export function update(m: Model, msg: Msg, now_ms: number): [Model, Effect[]] {
   const now_s = now_ms / 1000;
   const [next, effects] = written(...updateAny(m, msg, now_s));
+  if (msg.kind === 'landed' && next.probeHeld) effects.push({ kind: 'retryProbe' });
   return [shown(next, now_s), effects];
 }
 

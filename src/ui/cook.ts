@@ -20,12 +20,11 @@
  * the plan says something is next decided (`wakeAt_s`), and when looked at.
  */
 
-import { DecisionInputs, inputsKey, nudgeSeconds } from '../core/decide.js';
-import { EggRecord } from '../core/record.js';
+import { nudgeSeconds } from '../core/decide.js';
+import type { BoilMemory } from '../core/boil.js';
 import { RunningCook, answered } from '../core/running.js';
-import { isSousVide, learning, phaseNow, state } from './state.js';
+import { learning, phaseNow, state } from './state.js';
 import { EditTimer, Effect, Msg, update } from './model.js';
-import { currentInputs, wantedProfiles } from './answer.js';
 import type { Learner } from './calibration.js';
 import {
   Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
@@ -33,9 +32,7 @@ import {
 } from './clock.js';
 import { applySettingsToDom, applyUnitsToDom } from './controls.js';
 import { activeLocale, t } from './copy.js';
-import {
-  builtFor, cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
-} from './decisionGrids.js';
+import { builtFor } from './decisionGrids.js';
 import { page, selectRadio } from './dom.js';
 import { showStartLimit } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
@@ -51,6 +48,7 @@ import {
 import { unitSystem, useUnits } from './units.js';
 import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './effects.js';
 import { showEgg } from './views.js';
+import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
 
 /** The stores this page keeps: opened at boot (app.ts), and held here. */
@@ -75,11 +73,8 @@ const clock = {
   wake: 0,
 };
 
-/** What is being built, by key, so each is asked for once: a cook's, and
- *  the idle page's profiles; and the idle pot's surface, asked for once its
- *  inputs settle. */
-const building = new Set<string>();
-const asking = { decisionHandle: 0, profiles: new Set<string>() };
+/** What the page waits for, asked for once each (needs.ts). */
+let needs!: Needs;
 
 /** The timers of a correction in hand, as set (model.ts, `EditTimer`). */
 const EDIT_TIMERS: EditTimer[] = ['settle', 'preview', 'release'];
@@ -192,15 +187,17 @@ export function dispatch(msg: Msg): void {
   } finally {
     busy = false;
   }
-  follow();
+  needs.follow();
+  keepTime();
   requestDraw();
 }
 
 /** The runner, with the stores it holds, plugged in for `send` and for the
  *  development clock's moves, and the sound as the settings have it: once,
  *  at boot. */
-export function startRunner(s: Stores): void {
+export function startRunner(s: Stores, builds: Builds = workerBuilds(s.learner)): void {
   stores = s;
+  needs = openNeeds(builds, () => state, dispatch);
   sendTo(dispatch);
   onClockChange(clockMoved);
   muted = state.settings.muted;
@@ -212,16 +209,12 @@ export function startRunner(s: Stores): void {
 
 function perform(effects: Effect[]): void {
   for (const e of effects) {
+    if (e.kind === 'sendFinal') {
+      // Drawn after the page has booted, since this can come of a restore.
+      queueMicrotask(() => drawShare(stores));
+    }
+    if (performStored(e, stores, state.boilMemory, send)) continue;
     switch (e.kind) {
-      case 'persist':
-        persist(e.cook, e.answers, e.leanHint_s);
-        break;
-      case 'persistLean':
-        stores.cooks.saveLeanHint(e.id_ms, e.leanHint_s);
-        break;
-      case 'persistEnded':
-        if (stores.cooks.peek()?.cook.id_ms === e.cook.id_ms) stores.cooks.save(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
-        break;
       case 'ring':
         if (e.moment === 'pull') {
           // Already sounding if it was scheduled ahead and its time has come
@@ -235,22 +228,6 @@ function perform(effects: Effect[]): void {
         break;
       case 'silence':
         stopAlarm();
-        break;
-      case 'rememberBoil':
-        send({ kind: 'pans', boilMemory: stores.pans.remember(state.boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
-        break;
-      case 'log':
-        logRecord(e.record);
-        break;
-      case 'forget':
-        stores.cooks.clear(e.id_ms);
-        break;
-      case 'sendFinal':
-        // After the page has booted, since this can come of a restore.
-        queueMicrotask(() => {
-          drawShare(stores);
-          void stores.sharing.sendFinal();
-        });
         break;
       case 'blip':
         blip();
@@ -290,10 +267,13 @@ function perform(effects: Effect[]): void {
         solveSoon();
         break;
       case 'askSurface':
-        askForDecision(e.inputs);
+        needs.askSurface(e.inputs);
         break;
       case 'askProfile':
-        askForProfile(e.inputs);
+        needs.askProfile(e.inputs);
+        break;
+      case 'retryProbe':
+        retryProbe();
         break;
       case 'language':
         followLanguage(e.before);
@@ -359,156 +339,66 @@ function perform(effects: Effect[]): void {
 }
 
 /**
+ * What a message asks of the stores, carried out: the cook written down,
+ * the lean beside it, an ended cook over its own copy; a measured boil
+ * remembered (`boilMemory`, the pans the page holds); the egg's record kept
+ * and learned from, the page told whether it was; the cook forgotten; what
+ * is final sent. Whether `e` was one of these. A test hands in its own
+ * stores and `send`.
+ */
+export function performStored(e: Effect, s: Stores, boilMemory: BoilMemory, send: (msg: Msg) => void): boolean {
+  switch (e.kind) {
+    case 'persist':
+      persist(s.cooks, e.cook, e.answers, e.leanHint_s, send);
+      return true;
+    case 'persistLean':
+      s.cooks.saveLeanHint(e.id_ms, e.leanHint_s);
+      return true;
+    case 'persistEnded':
+      if (s.cooks.peek()?.cook.id_ms === e.cook.id_ms) s.cooks.save(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
+      return true;
+    case 'rememberBoil':
+      send({ kind: 'pans', boilMemory: s.pans.remember(boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
+      return true;
+    case 'log': {
+      const id = e.record.id ?? null;
+      void s.learner.keepRecord(e.record).then((kept) => send({ kind: 'kept', id_ms: id, kept: kept }));
+      return true;
+    }
+    case 'forget':
+      s.cooks.clear(e.id_ms);
+      return true;
+    case 'sendFinal':
+      // After the page has booted, since this can come of a restore.
+      queueMicrotask(() => { void s.sharing.sendFinal(); });
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
  * Write the cook on screen down. A copy of this cook another tab corrected
  * later stays the copy stored, so a reload restores
  * the latest correction: what this tab saw in the pan is written into it
  * instead (`takeUpEvents`), and this tab runs on as it is.
  * The page is told when whether a write reads back changes.
  */
-function persist(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): void {
-  const stored = stores.cooks.peek();
+function persist(
+  cooks: CookStore, cook: RunningCook, answers: KeptAnswers, leanHint_s: number, send: (msg: Msg) => void,
+): void {
+  const stored = cooks.peek();
   let written: string | null;
   if (stored !== null && stored.cook.id_ms === cook.id_ms && correctedLater(stored.cook, cook)) {
     const kept = stored.answers === 'beforeReload' ? stored.answers : answers;
-    written = stores.cooks.save(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
+    written = cooks.save(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
   } else {
-    written = stores.cooks.save(cook, answers, leanHint_s);
+    written = cooks.save(cook, answers, leanHint_s);
   }
-  if ((written !== null) !== state.works) send({ kind: 'persisted', works: written !== null });
-}
-
-/** The egg's record kept and learned from (`keepRecord`), and the page
- *  told whether it was. */
-function logRecord(record: EggRecord): void {
-  const id = record.id ?? null;
-  void stores.learner.keepRecord(record).then((kept) => send({ kind: 'kept', id_ms: id, kept: kept }));
+  send({ kind: 'persisted', works: written !== null });
 }
 
 /* ------------------------------------------------------------ the needs */
-
-/** Whether a cook wants the surface for `inputs`: the running cook's plan
- *  reads it, or a cook waits on it. */
-function cookWants(inputs: DecisionInputs): boolean {
-  const key = inputsKey(inputs);
-  const wanted = (i: DecisionInputs | null): boolean => i !== null && inputsKey(i) === key;
-  if (state.plan !== null && wanted(state.plan.inputs)) return true;
-  return wanted(state.need.surface) || state.ending.some((e) => wanted(e.need.surface));
-}
-
-/** Whether the idle page is on screen with a pan to solve for. */
-function idlePan(): boolean {
-  return state.cook === null && !isSousVide(state);
-}
-
-/** How long the inputs must sit still before a decision surface is asked for,
- *  ms, on top of the solve's own coalescing. A surface is a second of the
- *  worker's time; a pot typed digit by digit should not queue one per digit. */
-const DECISION_SETTLE_MS = 300;
-
-/** Ask the worker for the idle pot's surface once the inputs have settled,
- *  and solve again when it lands if the pot on screen is still the one it
- *  was for. */
-function askForDecision(inputs: DecisionInputs): void {
-  cancelSoon(asking.decisionHandle);
-  asking.decisionHandle = soon(() => {
-    asking.decisionHandle = 0;
-    const key = decisionKey(inputs);
-    decisionGrid(inputs).then(() => {
-      if (idlePan() && decisionKey(currentInputs(state)) === key) send({ kind: 'solve' });
-    }, (error: unknown) => console.warn('decision surface failed', error));
-  }, DECISION_SETTLE_MS);
-}
-
-/** Ask the worker for the odds at every level for these inputs - after their
- *  surface, which it builds first if need be - and take them up when they
- *  land, if a cook or the idle page still wants them. */
-function askForProfile(inputs: DecisionInputs): void {
-  const key = profileKey(inputs, state.calib);
-  if (asking.profiles.has(key)) return;
-  asking.profiles.add(key);
-  // The key is cleared whether the profile lands or fails, so a failed one
-  // is asked for again the next time the page wants it.
-  oddsProfileFor(inputs, state.calib).then(() => {
-    asking.profiles.delete(key);
-    if (cookWants(inputs)) {
-      cookLanded();
-      return;
-    }
-    if (idlePan() && wantedProfiles(state).some((i) => profileKey(i, state.calib) === key)) send({ kind: 'solve' });
-  }, (error: unknown) => {
-    asking.profiles.delete(key);
-    console.warn('odds profile failed', error);
-  });
-}
-
-/** Ask the worker for what a cook wants and has not got - its pot's
- *  surface, then the odds profile on it - and step the cook as each lands,
- *  if it still wants it: once, however many messages ask while it is
- *  built. A new pot mid-cook (the boil tapped) is asked for at once: the egg
- *  is already in the water. */
-function askForCookSurface(inputs: DecisionInputs): void {
-  if (cachedDecisionGrid(inputs) === null) {
-    const key = `surface|${inputsKey(inputs)}`;
-    if (building.has(key)) return;
-    building.add(key);
-    decisionGrid(inputs).then(() => {
-      building.delete(key);
-      if (cookWants(inputs)) cookLanded();
-    }, (error: unknown) => {
-      building.delete(key);
-      console.warn('decision surface failed', error);
-    });
-    return;
-  }
-  if (cachedOddsProfile(inputs, state.calib) === null) askForProfile(inputs);
-}
-
-/** Ask for what each cook waits for, and keep the page's clock with the
- *  running one's. */
-function follow(): void {
-  const waiting = [{ cook: state.cook, need: state.need }, ...state.ending];
-  for (const w of waiting) {
-    if (w.cook === null) continue;
-    if (w.need.surface !== null) askForCookSurface(w.need.surface);
-    if (w.need.before) askBefore(w.cook.id_ms);
-    if (w.need.beforeSurface !== null) askBeforeSurface(w.cook.id_ms, w.need.beforeSurface);
-  }
-  keepTime();
-}
-
-/** The calibration before the egg of the cook `id` (`calibrationBefore`),
- *  built off the main thread, and the cook stepped when it is in. */
-function askBefore(id: number): void {
-  const key = `before|${id}`;
-  if (building.has(key)) return;
-  building.add(key);
-  stores.learner.calibrationBefore(id).then((calibration) => {
-    building.delete(key);
-    dispatch({ kind: 'before', id_ms: id, calibration: calibration, surface: null });
-  }, (error: unknown) => {
-    building.delete(key);
-    console.warn('the calibration before an egg failed', error);
-  });
-}
-
-/** The surface and its odds for `inputs` on the calibration before the egg
- *  of the cook `id`, built off the main thread, and the cook stepped when
- *  they are in. */
-function askBeforeSurface(id: number, inputs: DecisionInputs): void {
-  const held = state.before.find((b) => b.id_ms === id);
-  if (held === undefined) return;
-  const key = `beforeSurface|${id}|${inputsKey(inputs)}`;
-  if (building.has(key)) return;
-  building.add(key);
-  const calibration = held.before.calibration;
-  Promise.all([decisionGrid(inputs), oddsProfileFor(inputs, calibration)]).then(([grid, profile]) => {
-    building.delete(key);
-    dispatch({ kind: 'before', id_ms: id, calibration: calibration, surface: { inputs: inputs, grid: grid, profile: profile } });
-  }, (error: unknown) => {
-    building.delete(key);
-    console.warn('the corrected egg’s surface failed', error);
-  });
-}
 
 /** The ticker and the screen kept awake while the running cook is short of
  *  Done; at Done, a wake when its plan next decides something. */
@@ -570,12 +460,6 @@ export function reset(): void {
 export function onStillOut(): void {
   stopAlarm();
   dispatch({ kind: 'stillOut' });
-}
-
-/** A surface, a profile or a calibration a cook wanted, landed. */
-function cookLanded(): void {
-  dispatch({ kind: 'landed' });
-  retryProbe();
 }
 
 /** Another tab changed storage (the `storage` event; a null key cleared it
