@@ -3,8 +3,9 @@
  *
  *   npm run copy:literals
  *
- * Every string literal in ios/App, ios/Widget, ios/Shared and the core, with
- * `+` concatenations joined and each `\(...)` interpolation reduced to `{}`,
+ * Every string literal in ios/App, ios/Widget, the app's logic and shared
+ * code (EggTimerApp, EggTimerShared) and the core, with `+`
+ * concatenations joined and each `\(...)` interpolation reduced to `{}`,
  * must be a catalogue key, an argument's name in key position, or on the
  * NOT_COPY list below with the reason it is not words. So no word reaches an
  * iOS screen without going through copy/, and what a wording change changed
@@ -22,7 +23,10 @@ import { join } from 'node:path';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
 
-const DIRS = ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources/EggTimerCore'];
+const DIRS = [
+  'ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared',
+  'ios/EggTimerCore/Sources/EggTimerCore',
+];
 
 /** Literals that are not words on a screen, and why. Exact raw text. */
 const NOT_COPY: Record<string, string> = {
@@ -51,7 +55,7 @@ const NOT_COPY: Record<string, string> = {
   '--:--': 'the empty clock, not words',
   ' ': 'a spacer that keeps a line\'s height while learning',
   '': 'the empty string',
-  // the catalogue's own plumbing (Shared/Copy.swift)
+  // the catalogue's own plumbing (EggTimerShared/Copy.swift)
   en: 'locale tag',
   json: 'file extension',
   copy: 'bundle folder',
@@ -176,8 +180,8 @@ const NOT_COPY: Record<string, string> = {
   uiLanguage: 'debug launch argument',
   uiScreen: 'debug launch argument',
   perfProbe: 'debug launch argument',
-  PERF: 'debug timing log (ios/App/Perf.swift), never shown',
-  'q{}': 'debug timing log (ios/App/Perf.swift), never shown',
+  PERF: 'debug timing log (EggTimerApp/Perf.swift), never shown',
+  'q{}': 'debug timing log (EggTimerApp/Perf.swift), never shown',
   soft: 'debug launch argument value',
   right: 'debug launch argument value',
   firm: 'debug launch argument value',
@@ -197,7 +201,7 @@ const NOT_COPY: Record<string, string> = {
   'set:{}': 'debug launch argument, as the debug log says it',
   launch: 'debug log (Screenshots.log), never shown',
   'launch+3s': 'debug log (Screenshots.log), never shown',
-  // the debug clock (ios/App/AppClock.swift) and what the scripted checks
+  // the debug clock (EggTimerApp/AppClock.swift) and what the scripted checks
   // read and tap with (tools/iosE2e.ts)
   clockSpeed: 'debug launch argument',
   clockAt: 'debug launch argument',
@@ -228,7 +232,7 @@ const NOT_COPY: Record<string, string> = {
   '1':'debug launch argument value',
   '{}|{}|{}|{}': 'cache key, never shown',
   '{}|{}|{}|{}|{}': 'cache key, never shown',
-  // corrections mid-cook (ios/App/Edits.swift), and their checks
+  // corrections mid-cook (EggTimerApp/Edits.swift), and their checks
   drag: 'debug launch argument value',
   release: 'debug launch argument value',
   stillIn: 'debug launch argument value',

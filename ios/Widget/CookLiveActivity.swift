@@ -2,6 +2,7 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 import EggTimerCopy
+import EggTimerShared
 
 /// The Lock Screen and Dynamic Island countdown.
 ///

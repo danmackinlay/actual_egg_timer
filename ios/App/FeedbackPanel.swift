@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerCopy
+import EggTimerApp
+import EggTimerShared
 
 /// At Done: the two questions, both always on screen and neither required
 /// (INFERENCE.md section 3) - the yolk the cook got, in the slider's own five

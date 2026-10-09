@@ -1,5 +1,6 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerApp
 
 /// The egg in cross-section, beside the setup sentence in every phase: how
 /// set each layer is, ring by ring (`DECISIONS.md` 52). The web's is
