@@ -4,12 +4,13 @@
  * read. `tools/copyQueue.ts` is its command line, `tools/copyReview.ts` its
  * page, and `test/copyQueue.test.ts` holds the files' shape.
  *
- * Two kinds of file, both in copy/ beside the catalogues they describe, and
- * neither a catalogue (`isCatalogueFile`):
+ * Two kinds of file, in test/data/copy-review/ and not beside the
+ * catalogues they describe: the apps ship copy/ whole (the site its
+ * catalogues, iOS the folder in its bundle), and no app reads these.
  *
- *   copy/approved.json      per key of copy/en.json, the English the owner
+ *   approved.json           per key of copy/en.json, the English the owner
  *                           approved: its templates and their hash
- *   copy/<tag>.base.json    per key of a translation (copy/<tag>.json, a
+ *   <tag>.base.json         per key of a translation (copy/<tag>.json, a
  *                           catalogue that is not English and not a regional
  *                           overlay), the hash of the English its twin was
  *                           written against (`base`), or, for a key it leaves
@@ -43,19 +44,22 @@ export interface CatalogueJson { locale: string; about?: string; messages: Recor
 /** Approved English for one key: its templates, and their hash. */
 export type Approval = { hash: string } & Templates;
 
-export const APPROVED_PATH = 'copy/approved.json';
+/** Where the review queue's state is kept: out of copy/, which the apps ship. */
+export const REVIEW_DIR = 'test/data/copy-review';
+
+export const APPROVED_PATH = `${REVIEW_DIR}/approved.json`;
 
 export function basePath(tag: string): string {
-  return `copy/${tag}.base.json`;
+  return `${REVIEW_DIR}/${tag}.base.json`;
 }
 
 /** The categories a template can be under, in the order they are hashed and shown. */
 export const CATEGORIES: readonly string[] = ['text', ...PLURAL_CATEGORIES];
 
-/** Whether a file in copy/ is a catalogue, `<tag>.json`: not the approvals,
- *  and not a translation's bases (whose name has a second dot). */
+/** Whether a file in copy/ is a catalogue, `<tag>.json`: everything there
+ *  should be, since the apps ship the folder whole. */
 export function isCatalogueFile(name: string): boolean {
-  return /^[a-zA-Z0-9-]+\.json$/.test(name) && name !== 'approved.json';
+  return /^[a-zA-Z0-9-]+\.json$/.test(name);
 }
 
 /** Every catalogue's tag, sorted: `en`, the overlays and the translations. */
@@ -303,14 +307,15 @@ export const APPROVED_ABOUT = 'The English the owner has approved, per key of co
   + 'queue: `npm run copy:queue` lists it, `npm run copy:review` writes a page to read it on, and '
   + '`npm run copy:approve -- <key…|--all>` stamps today’s English. Begun from the English of e3a81cb, the last time '
   + 'the owner read every string (`npm run copy:approve -- --all --at e3a81cb` on no file). Never edited by hand: a '
-  + 'hash that is not its templates’ fails the tests. Not a catalogue, and no app reads it. LANGUAGE.md section 3.';
+  + 'hash that is not its templates’ fails the tests. Not a catalogue, and no app reads it, so it is kept out of '
+  + 'copy/, which the apps ship. LANGUAGE.md section 3.';
 
 export function baseAbout(tag: string): string {
   return `The English each twin in copy/${tag}.json was written against, per key: the hash of its templates, as in `
-    + 'copy/approved.json (`base`), and the English each key it leaves to English on purpose was judged at '
+    + `${APPROVED_PATH} (\`base\`), and the English each key it leaves to English on purpose was judged at `
     + '(`english`). A twin whose English has moved since is stale, and a key with no twin and not left to English '
     + 'at today’s English is missing: each keeps showing (a missing one in English), and `npm run copy:queue` lists '
     + `it. Rewrite the twin, then \`npm run copy:approve -- --translation ${tag} <key…|--all>\` stamps today’s `
     + 'English (a key named that has no twin is left to English). Never edited by hand. '
-    + 'Not a catalogue, and no app reads it. LANGUAGE.md section 3.';
+    + 'Not a catalogue, and no app reads it, so it is kept out of copy/, which the apps ship. LANGUAGE.md section 3.';
 }

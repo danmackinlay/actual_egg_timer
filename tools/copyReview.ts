@@ -18,8 +18,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 import { Catalogue, OVERLAYS, parseCatalogue, render } from '../src/core/copy.js';
 import {
-  CATEGORIES, CatalogueJson, Entry, Queued, Templates, TwinState, readApproved, readBases, readCatalogue, reviewQueue,
-  templatesOf, translationTags, twinQueue, twinState,
+  CATEGORIES, CatalogueJson, Entry, Queued, REVIEW_DIR, Templates, TwinState, readApproved, readBases, readCatalogue,
+  reviewQueue, templatesOf, translationTags, twinQueue, twinState,
 } from './copyApproval.js';
 
 interface Surface { budget: number; about: string }
@@ -205,8 +205,8 @@ function card(q: Queued, ctx: Context): string {
 function revision(): string {
   try {
     const head = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-    const dirty = execFileSync('git', ['status', '--porcelain', '--', 'copy'], { encoding: 'utf8' }).trim() !== '';
-    return dirty ? `${head}, with uncommitted changes to copy/` : head;
+    const dirty = execFileSync('git', ['status', '--porcelain', '--', 'copy', REVIEW_DIR], { encoding: 'utf8' }).trim() !== '';
+    return dirty ? `${head}, with uncommitted changes to the words or their approvals` : head;
   } catch {
     return 'an unknown commit';
   }

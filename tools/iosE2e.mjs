@@ -636,6 +636,13 @@ async function tapAt(run, at, what) {
   return run.until(new RegExp(`^action ${what}`), { from: i, what: `the tap ${what}` });
 }
 
+/// The start the start's panel shows, from line `from` on: epoch s, and
+/// the line's index.
+async function panelStart(run, from) {
+  const l = await run.until(/^panel start /, { from, what: "the start's panel" });
+  return { at: Number(l.text.slice('panel start '.length)), i: l.i };
+}
+
 /// A hot cook started and planned on its pot's surface: its plan.
 async function hotStarted(run, uiDo) {
   await started(run, [...HOT, '-uiDo', uiDo]);
@@ -753,13 +760,19 @@ scenario('drag-no-ring', 'C3 step 3: a drag through an overdue level rings nothi
   run.note('held through runny: no ring, the aim drawn; back and released: nothing; released runny: rang');
 });
 
-scenario('start-time', 'C3 step 3: the start corrected a minute at a time, stopped with its reason at now, the boil pressed, and two hours back', async (run) => {
-  const cook = await started(run, ['-uiDo', 'start:+3@150,boil@240,start:+5@boil+60,start:-140@boil+70']);
+scenario('start-time', "C3 step 3: the start corrected in its clause's panel a minute at a time, stopped with its reason at now, the boil pressed, and two hours back", async (run) => {
+  const cook = await started(run, ['-uiDo', 'open:clause-start@140,start:+3@150,boil@240,start:+5@boil+60,start:-140@boil+70']);
   const id = cook.cook.id_ms / 1000;
-  let t = await tapAt(run, run.t0 + 150, 'start');
+  let t = await tapAt(run, run.t0 + 140, 'open');
+  const shown = await panelStart(run, t.i);
+  run.check(near(shown.at, startOf(cook), EXACT), `the panel says when: ${shown.at - run.t0}`);
+  t = await tapAt(run, run.t0 + 150, 'start');
   const now = await run.until(/^start limit now /, { from: t.i, what: 'the limit at now' });
   let after = await corrected(run, t.i);
   run.check(near(after.cook?.startedAt_s, run.t0 + 150, EXACT), `in at now: ${after.cook?.startedAt_s - run.t0}`);
+  const moved = (await quiet(run, 'panel start ')).filter((l) => l.text.startsWith('panel start ')).at(-1);
+  const movedAt = Number(moved?.text.slice('panel start '.length));
+  run.check(near(movedAt, after.cook?.startedAt_s, EXACT), `the panel follows: ${movedAt - run.t0}`);
   t = await tapAt(run, run.t0 + 390, 'boil');
   await run.until(/^phase COOKING$/, { from: t.i, what: 'the boil' });
   const tap = run.t0 + 390;
@@ -775,6 +788,33 @@ scenario('start-time', 'C3 step 3: the start corrected a minute at a time, stopp
   const said = run.lines().filter((l) => l.text.startsWith('announce ')).map((l) => l.text.slice(9));
   run.check(said.length >= 3 && said[0] === EN['controls.startedAt.latestNow'].text, `announced: ${JSON.stringify(said)}`);
   run.note(`"${now.text}"; "${boil.text}"; "${early.text}"`);
+});
+
+scenario('sentence-no-time', "DECISIONS 108: the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does", async (run) => {
+  await idle(run, ['-uiDo', 'eggsIn@launch+1,boil@300,open:clause-start@310,set:heatOff=1@320']);
+  const said = (lines) => lines.filter((l) => l.text.startsWith('sentence ')).map((l) => l.text.slice('sentence '.length));
+  const idleSaid = said(run.lines()).at(-1) ?? '';
+  const cold = EN['setup.start.cold'].text;
+  const i = await run.step(run.t0 + 1);
+  const heating = await run.until(/^phase HEATING$/, { from: i, what: 'phase HEATING' });
+  await run.settled(heating.i);
+  run.t0 += 1;
+  await boiled(run);
+  const t = await tapAt(run, run.t0 + 310, 'open');
+  const shown = await panelStart(run, t.i);
+  run.check(near(shown.at, startOf(lastStored(run.lines())), EXACT), `the panel says when: ${shown.at - run.t0}`);
+  const off = await tapAt(run, run.t0 + 320, 'set');
+  await corrected(run, off.i);
+  const lines = await quiet(run, 'sentence ');
+  const before = said(lines.slice(i, off.i));
+  const after = said(lines.slice(off.i));
+  const standing = EN['setup.start.coldStanding'].text;
+  run.check(idleSaid.includes(cold), `idle: "${idleSaid}"`);
+  for (const line of [...before, ...after]) run.check(!/\d:\d\d/.test(line), `a time in the sentence: "${line}"`);
+  // Idle, heating and cooking: the same words.
+  run.check(before.every((x) => x === idleSaid), `the sentence changed before the heat went off: ${JSON.stringify(before)}`);
+  run.check(after.at(-1)?.includes(standing), `the heat off: "${after.at(-1)}"`);
+  run.note(`"${idleSaid}"; "${after.at(-1)}"`);
 });
 
 scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its water corrects the cook and the next cook's; the pull brings the egg back", async (run) => {

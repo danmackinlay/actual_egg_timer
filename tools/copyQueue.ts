@@ -14,8 +14,8 @@
  *       stamped as left to English on purpose
  *
  * The queue only reports: it exits 0 whatever is in it, so it never fails
- * `verify`. A malformed copy/approved.json or bases file stops it, and a stamp
- * refuses a key the catalogue does not have.
+ * `verify`. A malformed approvals or bases file (test/data/copy-review/)
+ * stops it, and a stamp refuses a key the catalogue does not have.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -93,7 +93,7 @@ function approve(args: string[]): void {
   const removed = [...new Set([...Object.keys(before), ...Object.keys(from?.messages ?? {})])]
     .filter((k) => !(k in en.messages));
   const keys = keysFrom(rest, [...Object.keys(en.messages), ...removed],
-    new Set([...Object.keys(en.messages), ...removed]), 'copy/en.json or copy/approved.json');
+    new Set([...Object.keys(en.messages), ...removed]), `copy/en.json or ${APPROVED_PATH}`);
   const after = stamp(before, en, keys, from);
   writeFileSync(APPROVED_PATH, writeOnePerLine(APPROVED_ABOUT, { messages: after }));
   const moved = keys.filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));

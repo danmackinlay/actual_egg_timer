@@ -10,7 +10,7 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C } from '../core/sousvide.js';
 import { Measure, Quantity, displayText, nudgeFrom, sizeClassLabel } from '../core/units.js';
 import { SLIDER_STEPS, startTempPreset_C } from '../core/policy.js';
 import { languageOf } from '../core/format.js';
-import { activeLocale, t, timeOfDay } from './copy.js';
+import { activeLocale, t } from './copy.js';
 import { page, selectRadio } from './dom.js';
 import { liveSetupFacts, redrawSentence, renderSentence } from './sentence.js';
 import { currentEgg, room_C, sizeClasses, state } from './state.js';
@@ -135,8 +135,7 @@ export function applyUnitsToDom(): void {
   });
   // The sentence's masses and temperatures are in the units too.
   redrawSentence();
-  const start = state.controlsStart_s;
-  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
 }
 
 /** The presets are assumptions, and are labelled as such rather than baked

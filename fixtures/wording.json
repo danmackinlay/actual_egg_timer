@@ -4065,7 +4065,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4094,38 +4093,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4154,38 +4122,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4213,39 +4150,8 @@
       "eggFrom": "fridge",
       "startMode": "hot",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4274,38 +4180,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4334,38 +4209,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4392,70 +4236,9 @@
     {
       "eggFrom": "fridge",
       "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4485,37 +4268,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4545,37 +4297,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4605,37 +4326,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4665,37 +4355,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4725,37 +4384,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4785,7 +4413,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4814,38 +4441,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4874,38 +4470,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4933,39 +4498,8 @@
       "eggFrom": "fridge",
       "startMode": "cold",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -4994,38 +4528,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5054,38 +4557,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5112,70 +4584,9 @@
     {
       "eggFrom": "fridge",
       "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5205,37 +4616,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5265,37 +4645,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5325,37 +4674,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5385,37 +4703,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5445,37 +4732,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.fridge",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.fridge"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "fridge",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5505,7 +4761,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5534,38 +4789,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5594,38 +4818,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5653,39 +4846,8 @@
       "eggFrom": "room",
       "startMode": "hot",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5714,38 +4876,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5774,38 +4905,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5832,70 +4932,9 @@
     {
       "eggFrom": "room",
       "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5925,37 +4964,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -5985,37 +4993,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6045,37 +5022,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6105,37 +5051,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6165,37 +5080,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6225,7 +5109,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6254,38 +5137,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6314,38 +5166,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6373,39 +5194,8 @@
       "eggFrom": "room",
       "startMode": "cold",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6434,38 +5224,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6494,38 +5253,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6552,70 +5280,9 @@
     {
       "eggFrom": "room",
       "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6645,37 +5312,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6705,37 +5341,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6765,37 +5370,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6825,37 +5399,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6885,37 +5428,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.room",
-          "label": "controls.eggFrom",
-          "value": "controls.eggFrom.room"
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "room",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6945,7 +5457,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -6974,38 +5485,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7034,38 +5514,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7093,39 +5542,8 @@
       "eggFrom": "custom",
       "startMode": "hot",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7154,38 +5572,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7214,38 +5601,7 @@
       "startMode": "hot",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7272,70 +5628,9 @@
     {
       "eggFrom": "custom",
       "startMode": "hot",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.hotStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.hot"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7365,37 +5660,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7425,37 +5689,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7485,37 +5718,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7545,37 +5747,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7605,37 +5776,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "hot",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7665,7 +5805,6 @@
       "sousVide": false,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7694,38 +5833,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7754,38 +5862,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7813,39 +5890,8 @@
       "eggFrom": "custom",
       "startMode": "cold",
       "sousVide": false,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": false,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7874,38 +5920,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7934,38 +5949,7 @@
       "startMode": "cold",
       "sousVide": false,
       "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -7992,70 +5976,9 @@
     {
       "eggFrom": "custom",
       "startMode": "cold",
-      "sousVide": false,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.coldStandingAt",
-          "label": "controls.start",
-          "value": "controls.start.cold"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -8085,37 +6008,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -8145,37 +6037,6 @@
       "sousVide": true,
       "afterBoil": "hold",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "hold",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -8205,37 +6066,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "ice",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.ice",
-          "label": "controls.cooling",
-          "value": "controls.cooling.ice"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "ice",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -8265,37 +6095,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "tap",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.tap",
-          "label": "controls.cooling",
-          "value": "controls.cooling.tap"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "tap",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
@@ -8325,37 +6124,6 @@
       "sousVide": true,
       "afterBoil": "off",
       "cooling": "counter",
-      "startedAt": false,
-      "keys": {
-        "egg": {
-          "text": "setup.egg",
-          "label": "controls.egg",
-          "value": null
-        },
-        "from": {
-          "text": "setup.from.custom",
-          "label": "controls.eggFrom",
-          "value": null
-        },
-        "start": {
-          "text": "setup.start.sous",
-          "label": "controls.start",
-          "value": "controls.start.sousVide"
-        },
-        "cooling": {
-          "text": "setup.cooling.counter",
-          "label": "controls.cooling",
-          "value": "controls.cooling.counter"
-        }
-      }
-    },
-    {
-      "eggFrom": "custom",
-      "startMode": "cold",
-      "sousVide": true,
-      "afterBoil": "off",
-      "cooling": "counter",
-      "startedAt": true,
       "keys": {
         "egg": {
           "text": "setup.egg",
