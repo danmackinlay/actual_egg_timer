@@ -142,7 +142,7 @@ public final class Cook {
     public var logged: Bool { running.map { answersLogged($0) != nil } ?? false }
 
     /// Whether this cook will ask for a probe reading when its cooling ends.
-    public var asksForProbe: Bool { plan?.probeMoment == true && planner.probe }
+    public var asksForProbe: Bool { plan?.probeMoment == true && planner.settings.probe }
 
     /// The plan as it ran, once the egg is out (`asRanShown`): what Done and
     /// the cooling show, whatever a later plan on a newer posterior reads.
@@ -494,7 +494,7 @@ public final class Cook {
             case let .rememberBoil(boil):
                 planner.rememberBoil(boil)
             case let .log(record, replaces):
-                planner.logRecord(record, replaces: replaces)
+                planner.learner.logRecord(record, replaces: replaces)
             case .forget:
                 if let cook { Self.forgetStored(idMs: cook.idMs) }
             case .sendFinal:
@@ -557,7 +557,7 @@ public final class Cook {
         building.insert(key)
         let logged = answersLogged(cook) != nil ? planner.kept.log.indices.last : nil
         Task {
-            let c = await planner.calibrationBefore(logged)
+            let c = await planner.learner.calibrationBefore(logged)
             before[cook.idMs] = CookBefore(calibration: c, surfaces: [])
             building.remove(key)
             send(.landed)

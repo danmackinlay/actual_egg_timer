@@ -185,7 +185,7 @@ iPhone has.
 | EggTimerApp | `Store.swift` | `Stores`, the one door to the store (`KeyValueStore`), its guard, the settings and the pans |
 | EggTimerApp | `Calibration.swift` | the posterior and the log, kept (`Calibrations`) |
 | EggTimerApp | `DecisionGrids.swift` | the decision surfaces and odds profiles, built off the main actor and kept |
-| EggTimerApp | `Planner.swift`, `+Solve`, `+Learning` | every input, the idle screen's solve, the learning from each egg |
+| EggTimerApp | `Planner.swift`, `SolveLoop.swift`, `Learning.swift` | the settings as one value and the choices made from them, the idle screen's solve, the learning from each egg |
 | EggTimerApp | `Cook.swift` | the running cook as core's `step` runs it: its effects carried out (the store, alarms, ring, log), what it waits for built, the card |
 | EggTimerApp | `AppModel.swift` | the three together: Eggs in, Start again, the buttons, a change in hand committed first |
 | EggTimerApp | `Edits.swift` | corrections while a cook runs |

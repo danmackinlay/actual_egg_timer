@@ -13,49 +13,17 @@ public enum ControlField: Hashable, CaseIterable {
     case startTime
 }
 
-/// The controls as the planner holds them, in its own terms: what a
-/// correction is measured against (`Edits.base`).
-public struct Controls: Equatable {
-    public var doneness: Double
-    public var sizeIndex: Int
-    public var weighedMassG: Double
-    public var startTemp: EggFrom
-    public var customStartC: Double
-    public var probe: Bool
-    public var roomC: Double?
-    public var start: StartChoice
-    public var heatOff: Bool
-    public var cooling: Cooling
-    public var waterLitres: Double
-    public var eggCount: Int
-    public var altitudeM: Double
-
-    @MainActor public init(_ p: Planner) {
-        doneness = p.doneness
-        sizeIndex = p.sizeIndex
-        weighedMassG = p.weighedMassG
-        startTemp = p.startTemp
-        customStartC = p.customStartC
-        probe = p.probe
-        roomC = p.roomC
-        start = p.start
-        heatOff = p.heatOff
-        cooling = p.cooling
-        waterLitres = p.waterLitres
-        eggCount = p.eggCount
-        altitudeM = p.altitudeM
-    }
-
+extension AppSettings {
     /// Whether `field` says the same in both.
-    public func same(_ field: ControlField, _ o: Controls) -> Bool {
+    public func same(_ field: ControlField, _ o: AppSettings) -> Bool {
         switch field {
         case .level: doneness == o.doneness
         case .mass: sizeIndex == o.sizeIndex && weighedMassG == o.weighedMassG
-        case .eggFrom: startTemp == o.startTemp
+        case .eggFrom: startTempMode == o.startTempMode
         case .customStart: customStartC == o.customStartC
         case .room: probe == o.probe && roomC == o.roomC
-        case .start: start == o.start
-        case .afterBoil: heatOff == o.heatOff
+        case .start: startMode == o.startMode
+        case .afterBoil: afterBoil == o.afterBoil
         case .cooling: cooling == o.cooling
         case .water: waterLitres == o.waterLitres
         case .eggCount: eggCount == o.eggCount
@@ -65,20 +33,20 @@ public struct Controls: Equatable {
     }
 
     /// The fields that differ from `o`.
-    public func changed(from o: Controls) -> [ControlField] {
+    public func changed(from o: AppSettings) -> [ControlField] {
         ControlField.allCases.filter { !same($0, o) }
     }
 
-    /// `field` as `o` has it.
-    public mutating func take(_ field: ControlField, from o: Controls) {
+    /// `field` as `o` has it: the settings each control makes.
+    public mutating func take(_ field: ControlField, from o: AppSettings) {
         switch field {
         case .level: doneness = o.doneness
         case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
-        case .eggFrom: startTemp = o.startTemp
+        case .eggFrom: startTempMode = o.startTempMode
         case .customStart: customStartC = o.customStartC
         case .room: probe = o.probe; roomC = o.roomC
-        case .start: start = o.start
-        case .afterBoil: heatOff = o.heatOff
+        case .start: startMode = o.startMode
+        case .afterBoil: afterBoil = o.afterBoil
         case .cooling: cooling = o.cooling
         case .water: waterLitres = o.waterLitres
         case .eggCount: eggCount = o.eggCount
@@ -152,9 +120,9 @@ public final class Edits {
 
     /// The controls as last drawn from the cook, or committed; nil while
     /// idle. A field that differs from this is one the cook changed.
-    @ObservationIgnored private var base: Controls?
+    @ObservationIgnored private var base: AppSettings?
     /// The controls as last seen, so a change can be put down to its field.
-    @ObservationIgnored private var seen: Controls?
+    @ObservationIgnored private var seen: AppSettings?
     /// Whether the controls hold a change not yet committed, and from which
     /// control.
     @ObservationIgnored public private(set) var pending = false
@@ -218,7 +186,7 @@ public final class Edits {
         clearTasks()
         generation &+= 1
         previewedLevel = false
-        base = Controls(planner)
+        base = planner.settings
         seen = base
         pending = false
         group = nil
@@ -262,7 +230,7 @@ public final class Edits {
     /// change is in hand until it is committed.
     public func controlsChanged(_ given: ControlField? = nil) {
         guard let planner, cook?.running != nil, base != nil else { return }
-        let now = Controls(planner)
+        let now = planner.settings
         let field = given ?? (seen.map { now.changed(from: $0).first } ?? nil)
         seen = now
         // Another control than the one with a change in hand commits it,
@@ -277,7 +245,7 @@ public final class Edits {
         Screenshots.log(.edit(group: group.map { "\($0)" }))
         #endif
         // At once, the slider's own reading; the plan's follows.
-        aim = (planner.doneness, targetPeakYolkC(planner.doneness), nil)
+        aim = (planner.settings.doneness, targetPeakYolkC(planner.settings.doneness), nil)
         if previewTask == nil {
             let gen = generation
             previewTask = Task { [weak self] in
@@ -353,10 +321,10 @@ public final class Edits {
     /// the cook changed (against `base`), but those in `except`, and the
     /// cook's for the rest.
     private func choicesInHand(
-        _ cook: RunningCook, _ base: Controls, except: Set<ControlField> = []
+        _ cook: RunningCook, _ base: AppSettings, except: Set<ControlField> = []
     ) -> (choices: CookChoices, touched: [ControlField]) {
         guard let planner else { return (cook.choices, []) }
-        let now = Controls(planner)
+        let now = planner.settings
         let said = planner.choices
         var next = cook.choices
         let touched = now.changed(from: base).filter { !except.contains($0) }
@@ -414,7 +382,7 @@ public final class Edits {
         group = nil
         let skip: Set<ControlField> = except.map { [$0] } ?? []
         var (choices, touched) = choicesInHand(running, base, except: skip)
-        var next = Controls(planner)
+        var next = planner.settings
         for f in skip { next.take(f, from: base) }
         if running.events.pulled != nil, choices.level != running.choices.level {
             choices.level = running.choices.level
@@ -469,9 +437,9 @@ public final class Edits {
     private func restoreLevel(_ level: Double) {
         guard let planner else { return }
         planner.applying = true
-        planner.doneness = level
+        planner.settings.doneness = level
         planner.applying = false
-        seen = Controls(planner)
+        seen = planner.settings
     }
 
     // MARK: - The start

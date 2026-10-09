@@ -6,52 +6,47 @@ import EggTimerShared
 
 /// Every input the solver has, and the answer it last gave.
 ///
-/// The solve is roughly a dozen full simulations of ten thousand steps each, so
-/// it does not belong on the main actor while a finger is on the slider. One
-/// solve loop runs at a time, off the main actor, starting a solve at most
-/// every 90 ms (`recompute`): a change while it solves is taken up when that
-/// solve is done, whose answer is shown meanwhile, a step behind and without
-/// the snap. Only an answer to the current question is applied in full.
-///
-/// The loop is not `Task.detached`, which does not inherit cancellation:
-/// "Eggs in" cancels it (`currentSolution`), and a detached loop would go on
-/// solving for a result thrown away.
-///
-/// This file holds the inputs and what is derived from them. The solve is in
-/// Planner+Solve.swift, the learning from each egg in Planner+Learning.swift,
-/// and the decision surfaces both of them share in DecisionGrids.swift.
+/// The inputs are one value, the settings both apps keep (`settings`, core's
+/// `AppSettings`), and a cook's choices are made from them (`choices`) and
+/// back (`adopt`). This file holds them and what is derived from them. The
+/// solve is `SolveLoop`, the learning from each egg `Learning`, and the
+/// decision surfaces both of them share are in DecisionGrids.swift.
 ///
 /// What this class decides is only what a KITCHEN knows. The decisions above
 /// the physics - snapping, which refusal applies, the texture bands, the
-/// calibration grid, the bounds and the defaults - live in EggTimerCore's
-/// Policy, so this app and the web app cannot answer differently.
+/// calibration grid, the bounds and the defaults - live in EggTimerCore, so
+/// this app and the web app cannot answer differently.
 @Observable
 @MainActor
 public final class Planner {
     // MARK: - Inputs
 
-    public var doneness: Double = Defaults.doneness { didSet { changed() } }
+    /// The controls, as both apps keep them: core's `AppSettings`, one value,
+    /// stored as it is (`SettingsStore`). While a cook runs they are its own
+    /// choices (`adopt`), and a change is a correction in hand (`Edits`).
+    public var settings = AppSettings.defaults { didSet { settingsChanged(from: oldValue) } }
+
+    /// A sous-vide on screen: never stored, so the pan under it
+    /// (`settings.startMode`) stays the one saved.
+    private var sousVideChosen = false
+
     /// The size classes on this cook's carton: American in region US, EU
     /// everywhere else. Region only - not the language, not the units. Read
     /// once, like the web app's, and a stored index is carried into it by
     /// `carrySizeIndex` if the region has changed since.
     public let sizeClasses = sizeClassesFor(region: deviceRegion)
-    /// Index into `sizeClasses`, or -1 for an egg that was weighed.
-    public private(set) var sizeIndex: Int = Defaults.sizeIndex { didSet { changed() } }
-    /// What the slider says when the egg was weighed. Ignored while a class is
-    /// chosen, and kept, so that choosing Weighed again goes back to it.
-    public private(set) var weighedMassG: Double = Defaults.eggMassKg * 1000 { didSet { changed() } }
 
     /// The mass the solver is given: the class's, or the weighed one.
     public var eggMassG: Double {
-        sizeClasses.indices.contains(sizeIndex) ? sizeClasses[sizeIndex].massKg * 1000 : weighedMassG
+        sizeClasses.indices.contains(settings.sizeIndex)
+            ? sizeClasses[settings.sizeIndex].massKg * 1000 : settings.weighedMassG
     }
 
     /// `sizeClasses` by name, read with it, for the record.
     private let sizeTableInUse = sizeTableFor(region: deviceRegion)
     /// Where the egg's mass came from, for the record: the carton's class, or the
     /// slider - which is a scale as far as this screen is concerned.
-    public var massFrom: MassFrom { sizeClasses.indices.contains(sizeIndex) ? .sizeClass : .scale }
+    public var massFrom: MassFrom { sizeClasses.indices.contains(settings.sizeIndex) ? .sizeClass : .scale }
     /// Whose carton, for a class; nil for a weighed egg.
     public var sizeTable: SizeTable? { massFrom == .sizeClass ? sizeTableInUse : nil }
 
@@ -59,28 +54,18 @@ public final class Planner {
     /// last weighed - the one its menu item names - as the web's "Measured
     /// below" does.
     public func chooseSize(_ index: Int) {
-        sizeIndex = index
+        settings.sizeIndex = index
     }
 
     /// The slider. A weighed egg is better information than a carton, so moving
     /// it overrides the class - the same rule as measuring on the web.
     public func weigh(_ grams: Double) {
-        weighedMassG = grams
-        sizeIndex = -1
+        var next = settings
+        next.weighedMassG = grams
+        next.sizeIndex = -1
+        settings = next
     }
 
-    /// Restore from storage without going through the rules above.
-    public func restoreSize(index: Int, weighedMassG grams: Double) {
-        weighedMassG = grams
-        sizeIndex = index
-    }
-    /// Where the egg comes from: the fridge, the room, or a temperature the
-    /// cook knows better (the web's `startTempMode`).
-    public var startTemp: EggFrom = .fridge { didSet { changed() } }
-    /// The egg's temperature when it is Custom. Kept while another choice is
-    /// made, so choosing Custom again goes back to it.
-    public var customStartC: Double = Defaults.customStartC { didSet { changed() } }
-    public var cooling: Cooling = .ice { didSet { changed() } }
     /// Where the egg starts. Cold start: into cold water, and the heating ramp
     /// is part of the cook. Hot start: into water already at a rolling boil.
     /// Sous-vide: into a bath already at the target temperature, which is not a
@@ -89,7 +74,18 @@ public final class Planner {
     /// Cold is the default because it is the better way to boil an egg: the
     /// shell is never thermally shocked, and the app can MEASURE the ramp
     /// instead of assuming it. The cost is that it needs you to tap the boil.
-    public var start: StartChoice = .cold { didSet { changed() } }
+    public var start: StartChoice {
+        get { sousVideChosen ? .sousVide : settings.startMode == .hot ? .hot : .cold }
+        set {
+            guard newValue != start else { return }
+            sousVideChosen = newValue == .sousVide
+            if newValue != .sousVide, settings.startMode.rawValue != newValue.rawValue {
+                settings.startMode = newValue == .hot ? .hot : .cold
+            } else {
+                changed()
+            }
+        }
+    }
 
     /// A cold start, as the pan solver and the phase machine mean it. Sous-vide
     /// is neither: it answers false here and is filtered out by `isSousVide`
@@ -101,13 +97,24 @@ public final class Planner {
     public var isSousVide: Bool { start == .sousVide }
     /// The standing method - heat off at the boil, lid on. The pan coasts down
     /// and the cook is whatever the stored heat can still do.
-    public var heatOff: Bool = false { didSet { changed() } }
-    public var altitudeM: Double = Defaults.altitudeM { didSet { changed() } }
-    public var waterLitres: Double = Defaults.waterLitres { didSet { changed() } }
-    /// An Int, because eggs are. The core takes a Double, because it mirrors a
-    /// TypeScript `number`; that is the core's business rather than the app's,
-    /// and the conversion belongs at the boundary, not in the control.
-    public var eggCount: Int = Defaults.eggCount { didSet { changed() } }
+    public var heatOff: Bool {
+        get { settings.afterBoil == .off }
+        set { settings.afterBoil = newValue ? .off : .hold }
+    }
+
+    /// A change of the settings: saved and solved for, or, while a cook runs,
+    /// a correction in hand. The units alone are saved, and nothing solved:
+    /// the egg does not change when its numbers change clothes.
+    private func settingsChanged(from old: AppSettings) {
+        guard !applying else { return }
+        var rest = settings
+        rest.unitsChosen = old.unitsChosen
+        guard rest != old else {
+            SettingsStore.save(self)
+            return
+        }
+        changed()
+    }
 
     // MARK: - Units
 
@@ -115,71 +122,40 @@ public final class Planner {
     /// measurement system, then its region (`regionalUnits`). Read once, like
     /// the size classes.
     public let regionalUnits = platformUnits()
-    /// Metric or Imperial as the COOK chose it, or nil if they never have. Not
-    /// the system on screen, which falls back to `regionalUnits`: storing that
-    /// instead would turn a default into a choice nobody made. Saved, but no
-    /// re-solve: the egg does not change when its numbers change clothes.
-    public private(set) var unitsChosen: UnitSystem? { didSet { if !applying { SettingsStore.save(self) } } }
 
-    /// The system on screen.
-    public var units: UnitSystem { effectiveUnits(chosen: unitsChosen, regional: regionalUnits) }
+    /// The system on screen: the cook's choice (`settings.unitsChosen`, never
+    /// a default stored as one), else the phone's.
+    public var units: UnitSystem { effectiveUnits(chosen: settings.unitsChosen, regional: regionalUnits) }
 
     /// The cook picks a system. A change of system is posted as
     /// `.unitsFlipped`, which the switch into 1750 listens for
     /// (`LanguageChoice`); a default never is.
     public func chooseUnits(_ next: UnitSystem) {
-        let choice = EggTimerCore.chooseUnits(chosen: unitsChosen, regional: regionalUnits, next: next)
-        unitsChosen = choice.chosen
+        let choice = EggTimerCore.chooseUnits(chosen: settings.unitsChosen, regional: regionalUnits, next: next)
+        settings.unitsChosen = choice.chosen
         if let flip = choice.flip {
             NotificationCenter.default.post(name: .unitsFlipped, object: self, userInfo: ["flip": flip.rawValue])
         }
     }
 
-    /// Restore from storage without saving it straight back.
-    public func restoreUnits(_ chosen: UnitSystem?) {
-        unitsChosen = chosen
-    }
-
     // MARK: - The thermometer
 
-    /// "I have a probe thermometer": when the cooling ends, ask for one reading
-    /// from the middle of the egg - the alarm says so, and the line under the
-    /// cooling countdown - and offer a room temperature. Off until the cook
-    /// says so. The reading's field after a cook is there whatever this is
-    /// (DECISIONS.md 92).
-    public private(set) var probe = false
-
-    /// The setting, from the controls. It brings a measured room into the
-    /// model, or takes it out (`roomInUseC`), so the pot is solved again.
+    /// "I have a probe thermometer" (`settings.probe`), from the controls: when
+    /// the cooling ends, ask for one reading from the middle of the egg. It
+    /// brings a measured room into the model, or takes it out (`roomInUseC`),
+    /// so the pot is solved again.
     public func setProbe(_ on: Bool) {
-        probe = on
-        changed()
+        settings.probe = on
     }
-
-    /// Restore from storage without saving it straight back.
-    public func restoreProbe(on: Bool) {
-        probe = on
-    }
-
-    /// The room as the cook measured it, C, or nil for not measured, when a
-    /// room is assumed. Offered, and counted, only while `probe` is on
-    /// (`roomInUse`); kept while it is off, for when it comes back on.
-    public private(set) var roomC: Double?
 
     /// The room, from Settings; nil is "not measured". Clamped like anything
     /// typed.
     public func setRoom(_ c: Double?) {
-        roomC = c.map { clamp($0, to: Limits.roomC) }
-        changed()
-    }
-
-    /// Restore from storage without saving it straight back.
-    public func restoreRoom(_ c: Double?) {
-        roomC = c.map { clamp($0, to: Limits.roomC) }
+        settings.roomC = c.map { clamp($0, to: Limits.roomC) }
     }
 
     /// The room the model is told about, or nil to assume one.
-    public var roomInUseC: Double? { roomInUse(probe: probe, roomC: roomC) }
+    public var roomInUseC: Double? { roomInUse(probe: settings.probe, roomC: settings.roomC) }
 
     /// The readings the app takes for this cook, C: outside them it is a typo,
     /// the white or another egg, and is refused rather than folded.
@@ -197,10 +173,8 @@ public final class Planner {
 
     // MARK: - Outputs
     //
-    // Written only by the Planner and its extensions (Planner+Solve.swift,
-    // Planner+Learning.swift). Internal rather than `private(set)` because
-    // Swift's `private` stops at the file; nothing outside the Planner writes
-    // them.
+    // Written only by the Planner, its solve (`SolveLoop`) and its learning
+    // (`Learning`).
 
     /// The cook the pan is being asked for, or nil while there is no answer -
     /// which includes sous-vide, where there is no pan to solve for. A nil
@@ -317,45 +291,41 @@ public final class Planner {
         decision != nil ? (!isSousVide && adviceShown) : (holding && held.adviceShown)
     }
 
-    // MARK: - Bookkeeping
-    //
-    // The solve's and the learning's own state. Internal for the same reason
-    // as the outputs, and for no one else.
+    // MARK: - The solve and the learning
 
-    /// Profiles asked for and not yet in, so each lands once.
-    public var profilesAsked = Set<String>()
+    /// The idle screen's solve (`SolveLoop`), and the learning from each egg
+    /// (`Learning`): each with its own bookkeeping.
+    @ObservationIgnored public private(set) var solver: SolveLoop!
+    @ObservationIgnored public private(set) var learner: Learning!
 
-    /// The live egg once folded: its place in the log, the surface it was
-    /// scored against, and the calibration as it stood before it - so that a
-    /// second answer folds the egg again rather than on top of itself.
-    public struct Folded: Sendable {
-        public let index: Int
-        public let grid: DoseGrid
-        public let before: Calibration
+    public init() {
+        solver = SolveLoop(self)
+        learner = Learning(self)
     }
-    public var folded: Folded?
 
-    /// The solve loop in flight, if one is (`recompute`), and which run it is.
-    public var task: Task<Void, Never>?
-    public var solverRun = 0
-    /// When the loop last started a solve, for the throttle.
-    public var lastSolveStart: ContinuousClock.Instant?
-    /// Waiting for the inputs to sit still before building a new pot's surface.
-    public var settleTask: Task<Void, Never>?
-    /// Bumped by every `recompute()`: which question the inputs are asking.
-    public var asked = 0
-    /// Which question `solution` answers, or nil when it answers none of them -
-    /// nothing yet. `solution` is current only when
-    /// this equals `asked`; between an input change and the coalesced solve
-    /// landing, it is the answer to the PREVIOUS inputs.
-    public var answered: Int?
-    /// Bumped by "forget what it learned", so a fold still running when the
-    /// button is pressed lands on nothing rather than on the fresh prior.
-    public var generation = 0
-    /// The egg on screen, whose second answer may still come. Every other egg in
-    /// the log is folded quietly.
-    public var liveIndex: Int?
-    public var draining = false
+    /// Re-solve for the inputs as they stand: when a cook ends (a new nudge,
+    /// a pan the cook timed remembered), and when what the solve reads moves.
+    public func refresh() {
+        solver.recompute()
+    }
+
+    /// A change of the controls: saved and solved for, or, while a cook runs,
+    /// a correction in hand (`Edits`), neither saved nor solved for here.
+    public func changed() {
+        guard !applying else { return }
+        // While a cook runs the controls are its own: a change is a
+        // correction in hand (`Edits`), neither saved nor solved for here.
+        if let onEdit {
+            onEdit()
+            return
+        }
+        #if DEBUG
+        Perf.input()
+        #endif
+        SettingsStore.save(self)
+        solver.recompute()
+    }
+
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.
     public var applying = false
@@ -373,22 +343,24 @@ public final class Planner {
     public func adopt(_ c: CookChoices) {
         applying = true
         defer { applying = false }
-        doneness = c.level
-        if c.massFrom == .sizeClass,
-           let i = sizeClasses.firstIndex(where: { abs($0.massKg - c.massKg) < 1e-12 }) {
-            sizeIndex = i
+        var next = settings
+        next.doneness = c.level
+        if c.massFrom == .sizeClass, let i = sizeClasses.firstIndex(where: { abs($0.massKg - c.massKg) < 1e-12 }) {
+            next.sizeIndex = i
         } else {
-            weighedMassG = c.massKg * 1000
-            sizeIndex = -1
+            next.weighedMassG = c.massKg * 1000
+            next.sizeIndex = -1
         }
-        startTemp = c.eggFrom
-        customStartC = c.customStartC
-        start = c.startMode == .cold ? .cold : .hot
-        heatOff = c.afterBoil == .off
-        cooling = c.cooling
-        waterLitres = c.waterLitres
-        eggCount = Int(c.eggCount.rounded())
-        altitudeM = c.altitudeM
+        next.startTempMode = c.eggFrom
+        next.customStartC = c.customStartC
+        next.startMode = c.startMode
+        next.afterBoil = c.afterBoil
+        next.cooling = c.cooling
+        next.waterLitres = c.waterLitres
+        next.eggCount = Int(c.eggCount.rounded())
+        next.altitudeM = c.altitudeM
+        sousVideChosen = false
+        settings = next
     }
 
     /// Read what was stored and solve for it.
@@ -411,14 +383,14 @@ public final class Planner {
         applying = true
         kept = Calibrations.load()
         boilMemory = BoilMemories.load()
-        SettingsStore.load(into: self)
+        settings = SettingsStore.read(classes: sizeClasses)
         applying = false
-        recompute()
+        solver.recompute()
         // Eggs written down but not yet folded - the app was killed mid-fold, or
         // the posterior had to be rebuilt from the log - are folded now, off the
         // main actor. The app runs on what it had until they land.
         if kept.folded < kept.log.count {
-            Task { await drain() }
+            Task { await learner.drain() }
         }
     }
 
@@ -428,11 +400,12 @@ public final class Planner {
     /// a cook started now holds as its own (the web's `choicesOf`). Sous-vide
     /// is neither start, and says hot here; nothing starts one.
     public var choices: CookChoices {
-        CookChoices(
-            massKg: eggMassG / 1000, massFrom: massFrom, sizeTable: sizeTable, eggFrom: startTemp,
-            customStartC: customStartC, roomC: roomInUseC, startMode: coldStart ? .cold : .hot,
-            afterBoil: heatOff ? .off : .hold, cooling: cooling, waterLitres: waterLitres,
-            eggCount: Double(eggCount), altitudeM: altitudeM, level: doneness
+        let s = settings
+        return CookChoices(
+            massKg: eggMassG / 1000, massFrom: massFrom, sizeTable: sizeTable, eggFrom: s.startTempMode,
+            customStartC: s.customStartC, roomC: roomInUseC, startMode: coldStart ? .cold : .hot,
+            afterBoil: s.afterBoil, cooling: s.cooling, waterLitres: s.waterLitres,
+            eggCount: Double(s.eggCount), altitudeM: s.altitudeM, level: s.doneness
         )
     }
 
@@ -442,7 +415,7 @@ public final class Planner {
 
     public var egg: Egg { pot.egg }
 
-    public var boilingC: Double { Thermo.boilingPointAtAltitude(altitudeM) }
+    public var boilingC: Double { Thermo.boilingPointAtAltitude(settings.altitudeM) }
 
     /// Time to a rolling boil, s - the pan's one measured number. Remembered
     /// per water volume, because the same pan on the same hob gives the same
@@ -450,14 +423,14 @@ public final class Planner {
     /// more: with the heat off the pan's cooling comes from the water volume
     /// (`Protocols.panTimeConstant`), so a hot start carries it only for the
     /// record, which says which pan was assumed.
-    public var timeToBoilS: Double { estimateTimeToBoil(boilMemory, litres: waterLitres) }
+    public var timeToBoilS: Double { estimateTimeToBoil(boilMemory, litres: settings.waterLitres) }
 
     public var hasBoilMemory: Bool { EggTimerCore.hasBoilMemory(boilMemory) }
 
     public var setup: CookSetup { pot.setup }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
-    public var label: String { tr(anchorNear(doneness).key) }
+    public var label: String { tr(anchorNear(settings.doneness).key) }
 
     public var eggsLogged: Int { calibration.eggsLogged }
 
@@ -468,7 +441,7 @@ public final class Planner {
     /// forms - so putting it through the coalesce machinery would buy latency
     /// and a chance to be stale in exchange for nothing.
     public var sousVide: SousVideEstimate {
-        let doneness = calibrationDoneness(calibration, level: doneness)
+        let doneness = calibrationDoneness(calibration, level: settings.doneness)
         return sousVideEstimate(
             radiusM: egg.radiusM,
             alphaM2s: calibrationParams(calibration).alphaM2s,

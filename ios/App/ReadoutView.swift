@@ -384,7 +384,7 @@ struct ReadoutView: View {
         guard let r = readout else {
             return tr(model.keys(.idle).subline, [
                 "boil": .text(clockString(planner.timeToBoilS)),
-                "water": .text(planner.show(.water, planner.waterLitres)),
+                "water": .text(planner.show(.water, planner.settings.waterLitres)),
             ])
         }
         return tr(r.subline.key, r.subline.args.mapValues { .text(clockString($0)) })

@@ -1,8 +1,44 @@
 import Foundation
 import EggTimerCore
 
-extension Planner {
-    // MARK: - Learning from an egg
+/// What this kitchen learns from its own eggs: each egg's record written
+/// down first, then folded into the posterior one surface at a time, off the
+/// main actor (`drain`); an egg replaced - a later answer, a correction after
+/// the pull - folded again from the calibration before it; the calibration
+/// before an egg, for a correction planned on it. The log and the posterior
+/// are the planner's (`kept`); the bookkeeping is this.
+@MainActor
+public final class Learning {
+    /// The planner it learns for, which holds it: the two live as long as the
+    /// app, and a fold in flight keeps both.
+    private let planner: Planner
+
+    init(_ planner: Planner) {
+        self.planner = planner
+    }
+
+    /// The live egg once folded: its place in the log, the surface it was
+    /// scored against, and the calibration as it stood before it - so that
+    /// an answer after it folds the egg again rather than on top of itself.
+    private struct Folded: Sendable {
+        let index: Int
+        let grid: DoseGrid
+        let before: Calibration
+    }
+    private var folded: Folded?
+    /// The egg on screen, whose answer may still change. Every other egg in
+    /// the log is folded quietly.
+    private var liveIndex: Int?
+    /// Bumped by "forget what it learned", so a fold still running when the
+    /// button is pressed lands on nothing rather than on the fresh prior.
+    private var generation = 0
+    /// Whether a fold is under way.
+    public private(set) var draining = false
+
+    private var kept: Kept {
+        get { planner.kept }
+        set { planner.kept = newValue }
+    }
 
     /// An egg's record, as core made it (the cook's `log` effect): written
     /// down FIRST, before any arithmetic, so an app killed during the fold
@@ -23,7 +59,7 @@ extension Planner {
         }
         kept.log.append(record)
         Calibrations.save(kept)
-        Task { await drain() }
+        Task { await self.drain() }
     }
 
     /// The calibration before the egg at `index` in the log, for a
@@ -72,7 +108,7 @@ extension Planner {
             liveIndex = index
         }
         Calibrations.save(kept)
-        Task { await drain() }
+        Task { await self.drain() }
     }
 
     /// Fold every egg not yet folded, one surface at a time.
@@ -90,7 +126,7 @@ extension Planner {
     public func drain() async {
         guard !draining else { return }
         draining = true
-        learning = true
+        planner.learning = true
         while kept.folded < kept.log.count {
             let gen = generation
             let index = kept.folded
@@ -120,27 +156,27 @@ extension Planner {
             Calibrations.save(kept)
         }
         draining = false
-        learning = false
+        planner.learning = false
         // The egg just eaten keeps the numbers it was cooked with; the new
         // ones show up on the next cook.
-        recompute()
+        planner.refresh()
     }
 
     /// Take it all back: the posterior, the log of eggs it was folded from, the
     /// base under it, AND the measured pan. The web app clears them all from one
     /// button, and a kitchen that has forgotten your taste but still insists it
     /// knows your hob is not a state anyone asked for.
-    public func resetCalibration() {
+    public func reset() {
         generation &+= 1
         liveIndex = nil
         folded = nil
         Calibrations.reset()
         kept = Calibrations.freshKept()
         BoilMemories.reset()
-        boilMemory = [:]
+        planner.boilMemory = [:]
         // The next egg is a new cook's, under a new id (Sharing.swift).
         Services.sharing.forget()
-        recompute()
+        planner.refresh()
     }
 
     #if DEBUG
@@ -151,27 +187,29 @@ extension Planner {
     /// them, as a relaunch folds eggs it finds unfolded. Only into an empty
     /// log, so a relaunch does not seed twice.
     public func seed(_ answers: [SeedAnswer]) {
-        guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
+        let p = planner
+        guard kept.log.isEmpty, !answers.isEmpty, !p.isSousVide else { return }
+        let (egg, setup, calibration) = (p.egg, p.setup, p.calibration)
         let solved = solveCookTime(
             egg: egg, setup: setup, params: calibrationParams(calibration),
-            doneness: calibrationDoneness(calibration, level: doneness)
+            doneness: calibrationDoneness(calibration, level: p.settings.doneness)
         )
         let seconds = solved.result.cookTimeS
         for answer in answers {
             kept.log.append(EggRecord(
                 day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
-                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: massFrom, sizeTable: sizeTable),
+                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: p.massFrom, sizeTable: p.sizeTable),
                 setup: RecordSetup(
-                    setup: setup, eggFrom: startTemp,
-                    timeToBoilFrom: coldStart ? .measured : .default
+                    setup: setup, eggFrom: p.settings.startTempMode,
+                    timeToBoilFrom: p.coldStart ? .measured : .default
                 ),
-                level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
-                cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
+                level: p.settings.doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
+                cooledS: p.settings.cooling == .counter ? 0 : coolingSecondsFor(solved.result),
                 yolkWord: answer.yolkWord, white: answer.white, lang: "en", units: .metric
             ))
         }
         Calibrations.save(kept)
-        Task { await drain() }
+        Task { await self.drain() }
     }
     #endif
 }

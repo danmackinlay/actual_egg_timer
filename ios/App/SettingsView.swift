@@ -106,7 +106,7 @@ struct SettingsView: View {
                     InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
                         StepperValue(
                             label: tr("controls.altitude"), measure: planner.measure(.altitude),
-                            value: $planner.altitudeM, show: { planner.show(.altitude, $0) }, field: .altitude
+                            value: $planner.settings.altitudeM, show: { planner.show(.altitude, $0) }, field: .altitude
                         )
                     }
                     LabeledContent(tr("readout.stat.waterBoilsAt")) {
@@ -121,12 +121,12 @@ struct SettingsView: View {
                     InfoRow("controls.water", more: [tr("controls.water.more")]) {
                         StepperValue(
                             label: tr("controls.water"), measure: planner.measure(.water),
-                            value: $planner.waterLitres, show: { planner.show(.water, $0) }, field: .water
+                            value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .water
                         )
                     }
                     InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
                         CountValue(
-                            label: tr("controls.eggsInPan"), value: $planner.eggCount, range: Limits.eggCount,
+                            label: tr("controls.eggsInPan"), value: $planner.settings.eggCount, range: Limits.eggCount,
                             field: .eggCount
                         )
                     }
@@ -147,14 +147,14 @@ struct SettingsView: View {
                 Section {
                     InfoRow("controls.thermometer", more: [tr("controls.thermometer.more")])
                     Toggle(tr("controls.thermometer.ask"), isOn: Binding(
-                        get: { planner.probe },
+                        get: { planner.settings.probe },
                         set: { planner.setProbe($0) }
                     ))
                     // The room, measured with the probe: offered only while
                     // the probe is on, and optional (`roomInUse`).
                     // Its label is too long to share a line with the field
                     // and its stepper, so the control has a line of its own.
-                    if planner.probe {
+                    if planner.settings.probe {
                         InfoRow("controls.room", more: [tr("controls.room.more", [
                             "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
                         ])])
@@ -231,7 +231,7 @@ struct SettingsView: View {
                     .accessibilityElement(children: .combine)
                     Button(tr("learned.confirm.forget"), role: .destructive) {
                         confirming = false
-                        planner.resetCalibration()
+                        planner.learner.reset()
                     }
                     Button(tr("learned.confirm.keep")) {
                         confirming = false
@@ -345,7 +345,7 @@ struct SettingsView: View {
         let tuned = eggs > 0 ? tr("learned.tuned", ["eggs": .int(eggs)]) : ""
         let measured = pan
             ? tr("learned.pan", [
-                "water": .text(planner.show(.water, planner.waterLitres)),
+                "water": .text(planner.show(.water, planner.settings.waterLitres)),
                 "time": .text(clockString(planner.timeToBoilS)),
             ])
             : ""

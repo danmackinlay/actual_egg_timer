@@ -449,7 +449,7 @@ extension Screenshots {
             dragging += 1
             Task { @MainActor in
                 for level in levels {
-                    model.planner.doneness = level
+                    model.planner.settings.doneness = level
                     try? await Task.sleep(for: .milliseconds(50))
                 }
                 dragging -= 1
@@ -477,16 +477,16 @@ extension Screenshots {
         let value = parts[1]
         let number = Double(value) ?? .nan
         switch parts[0] {
-        case "level": planner.doneness = number
+        case "level": planner.settings.doneness = number
         case "size": planner.chooseSize(Int(number))
         case "mass": planner.weigh(number)
-        case "from": if let v = EggFrom(rawValue: value) { planner.startTemp = v }
+        case "from": if let v = EggFrom(rawValue: value) { planner.settings.startTempMode = v }
         case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
-        case "cooling": if let v = Cooling(rawValue: value) { planner.cooling = v }
+        case "cooling": if let v = Cooling(rawValue: value) { planner.settings.cooling = v }
         case "heatOff": planner.heatOff = value == "1"
-        case "water": planner.waterLitres = number
-        case "eggs": planner.eggCount = Int(number)
-        case "altitude": planner.altitudeM = number
+        case "water": planner.settings.waterLitres = number
+        case "eggs": planner.settings.eggCount = Int(number)
+        case "altitude": planner.settings.altitudeM = number
         case "language": Services.language.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
@@ -544,7 +544,7 @@ extension Screenshots {
             || (driving && nothingDue <= looks) || dragging > 0
             || !model.cook.isSettled
             || model.edits.underWay
-            || planner.task != nil || planner.settleTask != nil || !planner.profilesAsked.isEmpty || planner.draining
+            || planner.solver.busy || planner.learner.draining
     }
 
     /// The page drawn again: once a pass of the screen has followed.

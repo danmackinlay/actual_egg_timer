@@ -84,7 +84,7 @@ struct AppTests {
         #expect(planner.kept.log.count == 1)
         #expect(planner.kept.log.first?.yolkWord == nil)
         #expect(planner.hasBoilMemory)
-        await world.until("the planner to fold it") { !planner.draining }
+        await world.until("the planner to fold it") { !planner.learner.draining }
     }
 
     /// With no notifications allowed, the app rings the pull itself, once.
@@ -251,7 +251,7 @@ struct AppTests {
     private func toDone(_ model: AppModel, _ world: World) async throws {
         model.appear()
         model.planner.start = .hot
-        await world.until("the planner's answer") { model.planner.solution != nil && model.planner.task == nil }
+        await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
         await world.settled(model.cook)
@@ -286,7 +286,7 @@ struct AppTests {
         #expect(logged < cleared)
         #expect(world.store.data(forKey: Cook.savedKey) == nil)
         #expect(world.sharing.finals > finals)
-        await world.until("the planner to fold it") { !model.planner.draining }
+        await world.until("the planner to fold it") { !model.planner.learner.draining }
     }
 
     /// The answers at Done: the first logs the egg and folds it; the second
@@ -299,7 +299,7 @@ struct AppTests {
         try await toDone(model, world)
         model.answer(yolk: .jammy, white: nil)
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.draining && model.planner.kept.folded == 1 }
+        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
         #expect(model.planner.kept.log.count == 1)
         #expect(model.planner.kept.log.first?.yolkWord == .jammy)
         #expect(model.cook.answers?.yolkWord == .jammy)
@@ -307,7 +307,7 @@ struct AppTests {
         // Answered again about the yolk: the first word stands.
         model.answer(yolk: .hard, white: .firm)
         await world.settled(model.cook)
-        await world.until("the fold again") { !model.planner.draining && model.planner.kept.folded == 1 }
+        await world.until("the fold again") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
         #expect(model.planner.kept.log.count == 1)
         #expect(model.planner.kept.log.first?.yolkWord == .jammy)
         #expect(model.planner.kept.log.first?.white == .firm)
@@ -328,8 +328,8 @@ struct AppTests {
         #expect(world.store.object(forKey: "doneness") == nil)
         let planner = Planner()
         planner.load()
-        #expect(planner.doneness == Defaults.doneness)
-        planner.waterLitres = 3
+        #expect(planner.settings.doneness == Defaults.doneness)
+        planner.settings.waterLitres = 3
         planner.start = .hot
         let data = try #require(world.store.data(forKey: SettingsStore.key))
         let stored = readSettings(try JSONSerialization.jsonObject(with: data), classes: planner.sizeClasses)
@@ -337,9 +337,9 @@ struct AppTests {
         #expect(stored.startMode == .hot)
         let again = Planner()
         again.load()
-        #expect(again.waterLitres == 3)
+        #expect(again.settings.waterLitres == 3)
         #expect(again.start == .hot)
-        await world.until("the solves") { planner.task == nil && again.task == nil }
+        await world.until("the solves") { !planner.solver.busy && !again.solver.busy }
     }
 
     /// Under a newer build's mark this build writes nothing at all, and
@@ -379,7 +379,7 @@ struct AppTests {
         let model = AppModel()
         defer { model.cook.killed() }
         model.appear()
-        await world.until("the planner's answer") { model.planner.solution != nil && model.planner.task == nil }
+        await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
         await world.settled(model.cook)
@@ -389,7 +389,7 @@ struct AppTests {
         await world.ticked(model.cook)
         model.startAgain()
         await world.settled(model.cook)
-        await world.until("the planner to fold it") { !model.planner.draining }
+        await world.until("the planner to fold it") { !model.planner.learner.draining }
 
         let set = world.store.writes.filter { !$0.removed }.map(\.key)
         let wrote = world.log.events.compactMap { e -> String? in

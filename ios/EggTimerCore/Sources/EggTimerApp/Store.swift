@@ -196,64 +196,24 @@ public enum SettingsStore {
         return saved
     }
 
-    @MainActor
-    public static func load(into planner: Planner) {
-        let s = read(classes: planner.sizeClasses)
-        planner.restoreUnits(s.unitsChosen)
-        planner.restoreProbe(on: s.probe)
-        planner.restoreRoom(s.roomC)
-        planner.doneness = s.doneness
-        planner.restoreSize(index: s.sizeIndex, weighedMassG: s.weighedMassG)
-        planner.altitudeM = s.altitudeM
-        planner.waterLitres = s.waterLitres
-        planner.eggCount = s.eggCount
-        planner.startTemp = s.startTempMode
-        planner.customStartC = s.customStartC
-        planner.start = s.startMode == .hot ? .hot : .cold
-        planner.heatOff = s.afterBoil == .off
-        planner.cooling = s.cooling
-    }
-
-    /// The controls as settings, over `base` for what they do not hold.
-    /// Sous-vide is never remembered: its answer is a start time most of a
-    /// day in the past, so the pan saved before it stays saved.
-    @MainActor
-    private static func of(_ planner: Planner, over base: AppSettings) -> AppSettings {
-        var s = base
-        s.doneness = planner.doneness
-        s.sizeIndex = planner.sizeIndex
-        s.weighedMassG = planner.weighedMassG
-        s.altitudeM = planner.altitudeM
-        s.waterLitres = planner.waterLitres
-        s.eggCount = planner.eggCount
-        s.startTempMode = planner.startTemp
-        s.customStartC = planner.customStartC
-        if planner.start != .sousVide { s.startMode = planner.start == .hot ? .hot : .cold }
-        s.afterBoil = planner.heatOff ? .off : .hold
-        s.cooling = planner.cooling
-        s.probe = planner.probe
-        s.roomC = planner.roomC
-        // The cook's choice of units, not the system on screen: none until
-        // they make one, so a default can still follow the phone.
-        s.unitsChosen = planner.unitsChosen
-        return s
-    }
-
     /// Only the settings a correction changed, for the next cook
     /// (design/one-screen.md section 7, 22): the rest stay as they were, and
     /// a level the slider only previewed after the pull is never written.
     @MainActor
     public static func save(_ planner: Planner, fields: Set<ControlField>, level: Double) {
-        var now = of(planner, over: saved)
+        var now = planner.settings
         now.doneness = level
         var next = saved
         for field in fields { next.take(field, from: now) }
         write(next)
     }
 
+    /// The settings as they stand. A sous-vide is never remembered - its
+    /// answer is a start time most of a day in the past - and is not in
+    /// them: the pan saved before it stays saved.
     @MainActor
     public static func save(_ planner: Planner) {
-        write(of(planner, over: saved))
+        write(planner.settings)
     }
 
     @MainActor
@@ -264,22 +224,3 @@ public enum SettingsStore {
     }
 }
 
-extension AppSettings {
-    /// `field` as `o` has it: the settings each control makes.
-    public mutating func take(_ field: ControlField, from o: AppSettings) {
-        switch field {
-        case .level: doneness = o.doneness
-        case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
-        case .eggFrom: startTempMode = o.startTempMode
-        case .customStart: customStartC = o.customStartC
-        case .room: probe = o.probe; roomC = o.roomC
-        case .start: startMode = o.startMode
-        case .afterBoil: afterBoil = o.afterBoil
-        case .cooling: cooling = o.cooling
-        case .water: waterLitres = o.waterLitres
-        case .eggCount: eggCount = o.eggCount
-        case .altitude: altitudeM = o.altitudeM
-        case .startTime: break
-        }
-    }
-}

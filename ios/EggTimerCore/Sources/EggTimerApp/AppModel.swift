@@ -39,7 +39,7 @@ public final class AppModel {
         // the view struct and keeps only the first.
         planner.load()
         #if DEBUG
-        planner.seed(Screenshots.seedEggs)
+        planner.learner.seed(Screenshots.seedEggs)
         Perf.drive(planner)
         Services.card.logAll("launch")
         Task {
@@ -72,7 +72,7 @@ public final class AppModel {
             phase: phase,
             startMode: planner.coldStart ? .cold : .hot,
             afterBoil: planner.heatOff ? .off : .hold,
-            cooling: planner.cooling,
+            cooling: planner.settings.cooling,
             whiteSets: planner.solution?.whiteSets ?? true,
             boilKnown: planner.hasBoilMemory,
             probeWanted: cook.asksForProbe
@@ -92,7 +92,7 @@ public final class AppModel {
     /// the cook is the inputs it was solved for, a slider just snapped
     /// included.
     private func startCook() async {
-        let current = await planner.currentSolution()
+        let current = await planner.solver.currentSolution()
         starting = false
         guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
         await cook.start(

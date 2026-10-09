@@ -1,23 +1,47 @@
 import Foundation
 import EggTimerCore
 
-extension Planner {
-    // MARK: - Solving
+/// The idle screen's solve: one loop at a time, off the main actor, a solve
+/// started at most every 90 ms (`recompute`), a change while it solves taken
+/// up when that solve is done, whose answer is shown meanwhile, a step
+/// behind and without the snap; only an answer to the current question is
+/// applied in full. Then this pot's decision surface, once the inputs have
+/// sat still, and the odds profiles the answer wants. What it finds is the
+/// planner's (`solution`, `decision` and the rest); the bookkeeping is its
+/// own.
+///
+/// The loop is not `Task.detached`, which does not inherit cancellation:
+/// "Eggs in" cancels it (`currentSolution`), and a detached loop would go on
+/// solving for a result thrown away.
+@MainActor
+public final class SolveLoop {
+    /// The planner it solves for, which holds it: the two live as long as the
+    /// app, and a solve in flight keeps both.
+    private let planner: Planner
 
-    public func changed() {
-        guard !applying else { return }
-        // While a cook runs the controls are its own: a change is a
-        // correction in hand (`Edits`), neither saved nor solved for here.
-        if let onEdit {
-            onEdit()
-            return
-        }
-        #if DEBUG
-        Perf.input()
-        #endif
-        SettingsStore.save(self)
-        recompute()
+    init(_ planner: Planner) {
+        self.planner = planner
     }
+
+    /// The loop in flight, if one is (`recompute`), and which run it is.
+    private var task: Task<Void, Never>?
+    private var solverRun = 0
+    /// When the loop last started a solve, for the throttle.
+    private var lastSolveStart: ContinuousClock.Instant?
+    /// Waiting for the inputs to sit still before building a new pot's surface.
+    private var settleTask: Task<Void, Never>?
+    /// Bumped by every `recompute()`: which question the inputs are asking.
+    private var asked = 0
+    /// Which question `solution` answers, or nil when it answers none of them -
+    /// nothing yet. `solution` is current only when this equals `asked`;
+    /// between an input change and the coalesced solve landing, it is the
+    /// answer to the PREVIOUS inputs.
+    private var answered: Int?
+    /// Profiles asked for and not yet in, so each lands once.
+    private var profilesAsked = Set<String>()
+
+    /// Whether a solve, a surface or a profile is under way.
+    public var busy: Bool { task != nil || settleTask != nil || !profilesAsked.isEmpty }
 
     /// Solves start at most this often. A drag fires `didSet` on every step,
     /// and a solve is too long to run on each one - with the heat off it is a
@@ -49,9 +73,9 @@ extension Planner {
     /// The inputs as they stand.
     private var inputSnapshot: InputSnapshot {
         InputSnapshot(
-            level: doneness, egg: egg, setup: setup, calibration: calibration,
-            facts: AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: startTemp == .room),
-            nudgeS: nudgeS
+            level: planner.settings.doneness, egg: planner.egg, setup: planner.setup, calibration: planner.calibration,
+            facts: AdviceFacts(eggFromClass: planner.massFrom == .sizeClass, startAssumed: planner.settings.startTempMode == .room),
+            nudgeS: planner.nudgeS
         )
     }
 
@@ -75,18 +99,18 @@ extension Planner {
         // so it neither pays for a hot-start solve it would discard nor leaves
         // half of one on screen. Clearing the solution is what also makes the
         // start button dead, which is the truth here: there is nothing to start.
-        if isSousVide {
+        if planner.isSousVide {
             task?.cancel()
             task = nil
-            solution = nil
-            warning = ""
-            decision = nil
-            outcome = nil
-            certainty = nil
-            oddsProfile = nil
-            advice = []
-            adviceShown = false
-            held = Held()
+            planner.solution = nil
+            planner.warning = ""
+            planner.decision = nil
+            planner.outcome = nil
+            planner.certainty = nil
+            planner.oddsProfile = nil
+            planner.advice = []
+            planner.adviceShown = false
+            planner.held = Planner.Held()
             return
         }
         // The loop in flight takes the new question when its solve is done.
@@ -110,7 +134,7 @@ extension Planner {
                 let wait = Self.coalesce - (ContinuousClock.now - last)
                 if wait > .zero { try? await Task.sleep(for: wait) }
             }
-            guard !Task.isCancelled, !isSousVide else { return }
+            guard !Task.isCancelled, !planner.isSousVide else { return }
             lastSolveStart = ContinuousClock.now
             let question = asked
             let snapshot = inputSnapshot
@@ -125,7 +149,7 @@ extension Planner {
             if let grid = await Services.grids.cached(inputs) {
                 chosen = await Self.decided(answer, grid: grid, snapshot)
             }
-            guard !Task.isCancelled, !isSousVide else { return }
+            guard !Task.isCancelled, !planner.isSousVide else { return }
             guard question == asked else {
                 applyInterim(chosen ?? answer, question: question)
                 continue
@@ -149,7 +173,7 @@ extension Planner {
             let grid = await Services.grids.grid(snapshot.inputs)
             guard !Task.isCancelled else { return }
             let chosen = await Self.decided(answer, grid: grid, snapshot)
-            guard !Task.isCancelled, let self, question == self.asked, !self.isSousVide else { return }
+            guard !Task.isCancelled, let self, question == self.asked, !self.planner.isSousVide else { return }
             self.settleTask = nil
             self.land(chosen, question: question, calibration: snapshot.calibration)
         }
@@ -221,7 +245,7 @@ extension Planner {
                 _ = await Services.grids.profile(inputs, calibration)
                 guard let self else { return }
                 self.profilesAsked.remove(key)
-                guard !self.isSousVide, self.wantedProfileKeys.contains(key) else { return }
+                guard !self.planner.isSousVide, self.wantedProfileKeys.contains(key) else { return }
                 self.recompute()
             }
         }
@@ -229,11 +253,12 @@ extension Planner {
 
     /// The profiles the screen wants now: this pot's, and its priced changes'.
     private var wantedProfileKeys: Set<String> {
-        let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+        let calibration = planner.calibration
+        let inputs = decisionInputs(calibration, egg: planner.egg, setup: planner.setup)
         var keys: Set<String> = [DecisionGrids.profileKey(inputs, calibration)]
-        for change in pricedChanges(setup) {
+        for change in pricedChanges(planner.setup) {
             keys.insert(DecisionGrids.profileKey(
-                decisionInputs(calibration, egg: egg, setup: change.setup), calibration
+                decisionInputs(calibration, egg: planner.egg, setup: change.setup), calibration
             ))
         }
         return keys
@@ -256,7 +281,7 @@ extension Planner {
         ) }
         #else
         let a = answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile
+            calibration, egg: planner.egg, setup: planner.setup, level: level, profile: profile
         )
         #endif
         return Answer(
@@ -294,8 +319,8 @@ extension Planner {
     /// again while it solves.
     public func currentSolution() async -> Solution? {
         while true {
-            if isSousVide { return nil }
-            if let solution, answered == asked { return solution }
+            if planner.isSousVide { return nil }
+            if let solution = planner.solution, answered == asked { return solution }
             task?.cancel()
             task = nil
             let question = asked
@@ -331,25 +356,25 @@ extension Planner {
             cookS: answer.solution.result.cookTimeS, decided: answer.decision != nil, odds: answer.profile != nil
         ))
         #endif
-        solution = answer.solution
+        planner.solution = answer.solution
         answered = question
-        decision = answer.decision
-        outcome = answer.decision == nil ? nil : answer.outcome
-        certainty = answer.decision == nil ? nil : answer.certainty
-        appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
-        oddsProfile = answer.profile
-        advice = answer.advice
-        adviceShown = answer.decision != nil && answer.adviceShown
-        warning = warningText(
+        planner.decision = answer.decision
+        planner.outcome = answer.decision == nil ? nil : answer.outcome
+        planner.certainty = answer.decision == nil ? nil : answer.certainty
+        planner.appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
+        planner.oddsProfile = answer.profile
+        planner.advice = answer.advice
+        planner.adviceShown = answer.decision != nil && answer.adviceShown
+        planner.warning = warningText(
             answer.verdict, lowOdds: answer.lowOdds, level: answer.level, setup: answer.setup,
-            water: show(.water, answer.setup.waterLitres)
+            water: planner.show(.water, answer.setup.waterLitres)
         )
-        hold()
-        if snap, let snapTo = answer.verdict.snapTo, snapTo != doneness {
-            applying = true
-            doneness = snapTo
-            applying = false
-            SettingsStore.save(self)
+        planner.hold()
+        if snap, let snapTo = answer.verdict.snapTo, snapTo != planner.settings.doneness {
+            planner.applying = true
+            planner.settings.doneness = snapTo
+            planner.applying = false
+            SettingsStore.save(planner)
         }
     }
 
