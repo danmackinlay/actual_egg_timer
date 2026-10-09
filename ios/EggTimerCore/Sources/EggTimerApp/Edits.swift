@@ -181,8 +181,8 @@ public final class Edits {
     public var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
     #endif
 
-    /// When the eggs went in as the start's panel says, while a cook runs:
-    /// the cook's own, or a correction of it in hand. Nil while idle.
+    /// A correction of when the eggs went in, in hand; nil for none, when
+    /// the panel shows the cook's own (`shownStart`).
     public private(set) var startInHand: Double?
     /// Why the start's − or + went no further, and the time it stopped at.
     public private(set) var startLimit: (kind: StartLimit, atS: Double)?
@@ -223,7 +223,7 @@ public final class Edits {
         pending = false
         group = nil
         down = nil
-        startInHand = cook?.running?.startedAtS
+        startInHand = nil
         startLimit = nil
         dropAim()
         planner.onEdit = { [weak self] in self?.controlsChanged() }
@@ -427,9 +427,10 @@ public final class Edits {
         Screenshots.log(.editCommitted(fields: touched.map { "\($0)" }, start: start))
         #endif
         if start != nil || choices != running.choices { model.correct(choices, startedAtS: start) }
-        // The start as the cook now has it: a correction refused leaves the
+        // Nothing in hand: the panel shows the start as the cook has it once
+        // the correction is stepped, and a correction refused leaves the
         // cook's.
-        startInHand = model.cook.running?.startedAtS
+        startInHand = nil
         self.base = next
         if !touched.isEmpty {
             SettingsStore.save(planner, fields: Set(touched), level: next.doneness)

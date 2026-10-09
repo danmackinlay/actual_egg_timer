@@ -186,8 +186,8 @@ iPhone has.
 | EggTimerApp | `Calibration.swift` | the posterior and the log, kept (`Calibrations`) |
 | EggTimerApp | `DecisionGrids.swift` | the decision surfaces and odds profiles, built off the main actor and kept |
 | EggTimerApp | `Planner.swift`, `+Solve`, `+Learning` | every input, the idle screen's solve, the learning from each egg |
-| EggTimerApp | `Cook.swift` | one cook: restore, plans, alarms, the ring, the card |
-| EggTimerApp | `AppModel.swift` | the two together: Eggs in, Start again, answers, the record made again |
+| EggTimerApp | `Cook.swift` | the running cook as core's `step` runs it: its effects carried out (the store, alarms, ring, log), what it waits for built, the card |
+| EggTimerApp | `AppModel.swift` | the three together: Eggs in, Start again, the buttons, a change in hand committed first |
 | EggTimerApp | `Edits.swift` | corrections while a cook runs |
 | EggTimerApp | `Presentation.swift`, `SousVide.swift` | words for a value, and the sous-vide start |
 | EggTimerApp | `LanguageChoice.swift`, `AlarmSoundChoice.swift` | the language and the alarm's sound, kept |
@@ -416,18 +416,27 @@ signing, which needs the Apple Developer Program — see **Signing** below.
 Unsigned simulator builds carry no entitlement and fall back silently to the
 default level, which is the right failure: quieter, never wrong.
 
-`Cook.swift` holds the state: core's `RunningCook` (`Running.swift`), its start
-and the log of what it was told and observed, stored as `cookInProgress.v4`, and the
-plan `replan` derives from them, made again only on an event, a surface landing, the slow hob's
-`slowHobAt_s` or a launch. Every phase is derived from the plan's deadlines and
-the clock (`phaseAt`) rather than counted down, so a ticker that stops —
-backgrounded, locked, or simply busy — cannot make the egg wrong. The ticker
-counts nothing down: it ends a cook core calls too old (`cookTooOld`) as Start
-again would, writes the events the clock decides (`eventsDue`), plans
-again when the slow hob says, pushes the Live Activity's changes, and rings for
-a deadline no notification holds (at Done it goes on every 5 s, for the hour the
-egg stays open); the screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
-app uses when it recomputes from timestamps on `visibilitychange`.
+`Cook.swift` runs the cook as core's state machine (`step`, `Step.swift`): it
+holds a `CookState` (the `RunningCook`, its start and the log of what it was
+told and observed, its plan and the lean), and feeds `step` each thing that
+happens - a tap, a correction, a tick, a surface landing - one at a time, off
+the main actor, each with its own moment. It carries out what the step asks
+(write the cook down, hold the alarms the plan sets, ring where no
+notification already rang, stop a ring, remember the boil, log the egg's
+record, forget the cook, send what is final), builds what it waits for (its
+pot's surface, the calibration before this egg and a surface on it, for a
+correction after the pull), and keeps the Live Activity with the plan. The
+readout and the buttons are core's `readoutAt` at the frame's moment. Every
+phase is derived from the plan's deadlines and the clock (`phaseAt`) rather
+than counted down, so a ticker that stops — backgrounded, locked, or simply
+busy — cannot make the egg wrong. The ticker counts nothing down: it sends a
+tick only when the clock has something to decide (the events it writes, the
+slow hob's next lengthening, a cook too old), and pushes the card's changes
+(at Done it goes on every 5 s, for the hour the egg stays open); the screen
+redraws from its own `TimelineView`. A cook that ends before its record can
+be made waits off the screen, stored, until it is logged and forgotten. This
+is the native form of the same discipline the web app uses when it recomputes
+from timestamps on `visibilitychange`.
 
 A cook in progress is written to `UserDefaults` (`cookInProgress.v4`, through
 JSONEncoder so every double comes back to the bit) and restored on launch. From
@@ -438,9 +447,9 @@ Live Activity on the Lock Screen while the app itself reopens to an idle screen 
 which teaches the user to distrust an alarm that was, in fact, perfectly
 correct. A restored cook's alarms are set again from its plan, since a slow hob
 planned later pulls at another moment. A cook core calls too old (`cookTooOld`:
-an hour past its end, or two hours still heating) is dropped instead of
-restored, its alarms cancelled and its card ended; that egg has been eaten, and
-if nobody answered about it, it is logged from its plan on its pot's surface. A
+an hour past its end, or two hours still heating) is ended instead of
+restored, as Start again ends it, its alarms cancelled and its card ended;
+that egg has been eaten, and if it was cooked through it is logged. A
 cook this build cannot read is dropped, its alarms cancelled and its card
 ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
 earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every

@@ -22,54 +22,45 @@ struct FeedbackPanel: View {
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
+    /// What has been said about the egg: kept with the cook, a relaunch
+    /// included.
+    private var said: CookAnswers? { cook.answers }
 
     var body: some View {
         VStack(spacing: 12) {
-            // After a relaunch the second question is not offered again: the
-            // surface it would be folded against is gone, and the one left
-            // unanswered stays a skip in the record.
-            if cook.feedbackGiven && planner.answers == nil {
-                Text(tr(planner.learning ? "feedback.learning" : "feedback.thanks"))
+            if let target = targetLine {
+                Text(target)
                     .appFont(.subheadline)
-                Text(planner.learning ? " " : tunedLine)
-                    .appFont(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            } else {
-                if let target = targetLine {
-                    Text(target)
-                        .appFont(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                Text(tr("feedback.ask"))
-                    .appFont(.headline)
-                    .multilineTextAlignment(.center)
-                yolkWords
-                    .answerRow(tr("feedback.ask"))
-
-                Text(tr("feedback.white.ask"))
-                    .appFont(.headline)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
-                AnswerRows(spacing: 10, rowSpacing: 8) {
-                    whiteButton(tr("feedback.white.runny"), .runny)
-                    whiteButton(tr("feedback.white.tender"), .tender)
-                    whiteButton(tr("feedback.white.firm"), .firm)
-                }
-                .answerRow(tr("feedback.white.ask"))
-
-                probeEntry
-
-                Text(tr("feedback.optional"))
-                    .appFont(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Text(calibrationNote)
-                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
+            Text(tr("feedback.ask"))
+                .appFont(.headline)
+                .multilineTextAlignment(.center)
+            yolkWords
+                .answerRow(tr("feedback.ask"))
+
+            Text(tr("feedback.white.ask"))
+                .appFont(.headline)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+            AnswerRows(spacing: 10, rowSpacing: 8) {
+                whiteButton(tr("feedback.white.runny"), .runny)
+                whiteButton(tr("feedback.white.tender"), .tender)
+                whiteButton(tr("feedback.white.firm"), .firm)
+            }
+            .answerRow(tr("feedback.white.ask"))
+
+            probeEntry
+
+            Text(tr("feedback.optional"))
+                .appFont(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Text(calibrationNote)
+                .appFont(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 12)
@@ -87,7 +78,7 @@ struct FeedbackPanel: View {
     @ViewBuilder
     private var probeEntry: some View {
         if cook.shownProbeMoment {
-            let given = planner.answers?.probe
+            let given = said?.probe
             VStack(spacing: 8) {
                 Text(tr("probe.ask"))
                     .appFont(.headline)
@@ -118,7 +109,7 @@ struct FeedbackPanel: View {
     }
 
     private func saveProbe() {
-        guard let plan = cook.plan, planner.answers?.probe == nil else { return }
+        guard let plan = cook.plan, said?.probe == nil else { return }
         let reading = parseTyped(probeText).flatMap { parse(planner.measure(.probeTemp), $0) }
         guard let scored = model.liveRecord().map(recordCookTimeS) else { return }
         let range = planner.probeRange(egg: plan.egg, setup: plan.setup, cookTimeS: scored)
@@ -129,7 +120,9 @@ struct FeedbackPanel: View {
             ])
             return
         }
-        guard let probe = cook.probeReading(centreC: reading, against: model.liveRecord()) else { return }
+        guard let record = model.liveRecord(), let probe = cook.probeReading(centreC: reading, against: record) else {
+            return
+        }
         probeNote = planner.show(.probeTemp, reading)
         model.answer(yolk: nil, white: nil, probe: probe)
     }
@@ -147,7 +140,7 @@ struct FeedbackPanel: View {
 
     private func yolkButton(_ index: Int) -> some View {
         let value = YolkWord.allCases[index]
-        let given = planner.answers?.yolk ?? model.held?.yolk
+        let given = said?.yolkWord
         return answerButton(
             tr(donenessAnchors[index].key), chosen: given == value, answered: given != nil, tight: true
         ) {
@@ -156,7 +149,7 @@ struct FeedbackPanel: View {
     }
 
     private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
-        let given = planner.answers?.white ?? model.held?.white
+        let given = said?.white
         return answerButton(label, chosen: given == value, answered: given != nil) {
             model.answer(yolk: nil, white: value)
         }
@@ -187,7 +180,7 @@ struct FeedbackPanel: View {
 
     private var calibrationNote: String {
         if planner.learning { return tr("feedback.learning") }
-        if planner.answers != nil { return tr("feedback.thanks") }
+        if said.map({ $0.yolkWord != nil || $0.white != nil || $0.probe != nil }) == true { return tr("feedback.thanks") }
         if planner.eggsLogged == 0 {
             return tr("feedback.invite")
         }

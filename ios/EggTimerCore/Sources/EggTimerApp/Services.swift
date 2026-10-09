@@ -38,7 +38,8 @@ public protocol AlarmScheduling: AnyObject {
     func activate()
     /// Whether alarms may be set, asking the cook the first time.
     func authorize() async -> Bool
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling)
+    /// These alarms and no others: none for a deadline that is nil.
+    func schedule(pullAt: Date?, coolDoneAt: Date?, probe: Bool, cooling: Cooling)
     func cancel()
     /// The deadlines a notification holds, pending or delivered.
     func pendingDeadlines() async -> Set<RingDeadline>
@@ -122,7 +123,7 @@ public protocol AlarmSoundChoosing: AnyObject {
 final class Unwired: AlarmScheduling, AlarmRinging, ResultSharing {
     func activate() {}
     func authorize() async -> Bool { false }
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {}
+    func schedule(pullAt: Date?, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {}
     func cancel() {}
     func pendingDeadlines() async -> Set<RingDeadline> { [] }
     var onScreenSince: Date? { nil }

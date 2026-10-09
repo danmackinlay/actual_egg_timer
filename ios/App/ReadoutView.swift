@@ -63,7 +63,7 @@ struct ReadoutView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             } else {
-                Text(asking ? tr("ask.stillIn") : tr(model.keys(phase).label))
+                Text(tr(readout?.label ?? model.keys(phase).label))
                     .appFont(.caption, smallCaps: true)
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
@@ -350,26 +350,21 @@ struct ReadoutView: View {
     /// label's place, the time since they were due out under it, and
     /// nothing past the question - not the cooling, nor Done - until it is
     /// answered (`PhaseActions`).
-    private var asking: Bool { phase != .idle && cook.plan.map(asksIfStillIn) == true }
+    private var asking: Bool { readout?.asking == true }
+
+    /// What a running cook's readout says at this frame's moment (core's
+    /// `readoutAt`): the label, the clock and the line under it. Nil idle.
+    private var readout: Readout? {
+        phase == .idle ? nil : cook.readout(atS: now.timeIntervalSince1970)
+    }
 
     /// The web's clock face in every phase: the countdown (the time heated,
     /// counting up, once the slow hob has lengthened the guess), how late the
     /// pull is running while the eggs wait to come out, and at the end the
     /// time the egg was in the water.
     private var bigTime: String {
-        if asking { return "+" + clockString(max(0, now.timeIntervalSince(cook.pullAt ?? now))) }
-        return switch phase {
-        case .idle: planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
-        // Once the slow hob has lengthened the guess, the pull is a guess
-        // that keeps moving and would read 0:00 while the water still heats
-        // (running-cook review 3): the time heated, counting up, instead.
-        case .heating where cook.plan.map(guessLengthened) == true:
-            clockString(now.timeIntervalSince(cook.startedAt ?? now))
-        case .heating, .cooking: clockString(cook.secondsToPull(at: now))
-        case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
-        case .cooling: clockString(cook.secondsToCoolDone(at: now))
-        case .done: clockString(cook.cookSeconds)
-        }
+        guard let r = readout else { return planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--" }
+        return r.sign + clockString(r.clockS)
     }
 
     #if DEBUG
@@ -384,32 +379,14 @@ struct ReadoutView: View {
     #endif
 
     /// The line under the clock: core's key, with this phase's arguments.
+    /// While a cook runs every number it takes is a time, as a clock.
     private var subline: String {
-        if asking { return tr("readout.sub.stillIn") }
-        let key = model.keys(phase).subline
-        return switch phase {
-        case .idle:
-            tr(key, [
+        guard let r = readout else {
+            return tr(model.keys(.idle).subline, [
                 "boil": .text(clockString(planner.timeToBoilS)),
                 "water": .text(planner.show(.water, planner.waterLitres)),
             ])
-        case .heating:
-            tr(key, [
-                "elapsed": .text(clockString(now.timeIntervalSince(cook.startedAt ?? now))),
-                "boil": .text(clockString(cook.assumedBoilS)),
-            ])
-        case .cooking:
-            tr(key, [
-                "boil": .text(clockString(cook.assumedBoilS)),
-                "after": .text(clockString(cook.secondsAfterBoil)),
-            ])
-        case .done:
-            tr(key, [
-                "boil": .text(clockString(cook.assumedBoilS)),
-                "cooking": .text(clockString(cook.cookSeconds - cook.assumedBoilS)),
-            ])
-        case .pull, .cooling:
-            tr(key)
         }
+        return tr(r.subline.key, r.subline.args.mapValues { .text(clockString($0)) })
     }
 }

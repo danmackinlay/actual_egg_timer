@@ -221,14 +221,6 @@ public final class Planner {
     }
     /// True while the dose surface is being rebuilt after an outcome.
     public var learning = false
-    /// What the cook on screen has said so far - the yolk, the white, or both -
-    /// or nil before the first answer. Both questions stay on screen until the
-    /// cook moves on; this is what marks each one answered.
-    ///
-    /// Deliberately not persisted, with the surface a second answer is folded
-    /// against: after a relaunch the questions are not offered again, and the
-    /// one left unanswered stays a skip in the record.
-    public var answers: Answers?
     /// The warning line while idle, in words, or empty: why the requested
     /// doneness was refused, the point being to teach the constraint rather
     /// than merely to block the control; or else that the level on screen is
@@ -333,14 +325,6 @@ public final class Planner {
     /// Profiles asked for and not yet in, so each lands once.
     public var profilesAsked = Set<String>()
 
-    public struct Answers: Sendable {
-        /// The yolk the cook got, in the slider's words (DECISIONS.md 92).
-        public var yolk: YolkWord?
-        public var white: WhiteReport?
-        /// A probe reading at the middle, when the cooling ended.
-        public var probe: ProbeReading?
-    }
-
     /// The live egg once folded: its place in the log, the surface it was
     /// scored against, and the calibration as it stood before it - so that a
     /// second answer folds the egg again rather than on top of itself.
@@ -371,10 +355,6 @@ public final class Planner {
     /// The egg on screen, whose second answer may still come. Every other egg in
     /// the log is folded quietly.
     public var liveIndex: Int?
-    /// The egg on screen when it was answered before a relaunch and is the
-    /// last in the log (`resumeAnswers`): its surface went with the old
-    /// process, so a later answer to it replays the log instead.
-    public var resumedIndex: Int?
     public var draining = false
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.

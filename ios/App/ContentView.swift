@@ -131,7 +131,10 @@ struct ContentView: View {
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .settings: SettingsView(planner: planner, cooking: cook.running != nil)
+                case .settings:
+                    SettingsView(
+                        planner: planner, cooking: cook.running != nil, eggOpen: cook.eggOpen(atS: AppClock.nowS)
+                    )
                 case .help(let section): HelpView(planner: planner, start: section)
                 }
             }

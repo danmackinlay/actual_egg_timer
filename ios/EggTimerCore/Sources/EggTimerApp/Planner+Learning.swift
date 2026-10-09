@@ -4,87 +4,26 @@ import EggTimerCore
 extension Planner {
     // MARK: - Learning from an egg
 
-    /// Write one egg down with its first answer - the yolk or the white - then
-    /// learn from it.
-    ///
-    /// Written down FIRST, before any arithmetic: an app killed during the fold
-    /// then folds it again on the next launch, rather than losing it. The
-    /// record carries the egg and pan the cook was RUN with, off its plan.
-    public func record(_ egg: EggRecord) async {
+    /// An egg's record, as core made it (the cook's `log` effect): written
+    /// down FIRST, before any arithmetic, so an app killed during the fold
+    /// folds it again at the next launch rather than losing it; then learned
+    /// from, if it says anything. In place of the egg logged last when
+    /// `replaces`: a later answer, or a correction after the pull.
+    public func logRecord(_ record: EggRecord, replaces: Bool) {
         // A newer build's results are left alone (`Stores`): nothing is
         // written down, so nothing is learned either.
         guard !Stores.readOnly else { return }
-        answers = Answers(yolk: egg.yolkWord, white: egg.white, probe: egg.probe)
-        folded = nil
-        liveIndex = kept.log.count
-        kept.log.append(egg)
+        if replaces, let index = kept.log.indices.last {
+            replaceLogged(index, record)
+            return
+        }
+        if recordTeaches(record) {
+            folded = nil
+            liveIndex = kept.log.count
+        }
+        kept.log.append(record)
         Calibrations.save(kept)
-        await drain()
-    }
-
-    /// The second answer about the egg on screen - the white after the yolk, or
-    /// the yolk after the white.
-    ///
-    /// If the egg is still being folded, the answer is written into its record
-    /// and the fold, which reads the record when its surface lands, takes both.
-    /// If it has been folded, it is folded AGAIN from the calibration as it
-    /// stood before it, against the same surface, so the posterior is what a
-    /// replay of the log makes whichever order the taps came in. Refused, and
-    /// nothing written, when that is no longer possible - which is what keeps
-    /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
-    public func secondAnswer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) async {
-        guard !Stores.readOnly, var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
-              index == kept.log.count - 1 else { return }
-        if yolk != nil, given.yolk != nil { return }
-        if white != nil, given.white != nil { return }
-        if probe != nil, given.probe != nil { return }
-        var egg = kept.log[index]
-        if let yolk { egg.yolkWord = yolk; given.yolk = yolk }
-        if let white { egg.white = white; given.white = white }
-        if let probe { egg.probe = probe; given.probe = probe }
-        if kept.folded <= index {
-            answers = given
-            kept.log[index] = egg
-            Calibrations.save(kept)
-            await drain()
-            return
-        }
-        guard let done = folded, done.index == index, kept.folded == index + 1 else {
-            // Answered before a relaunch, and folded then: the surface and the
-            // posterior before this egg went with that process. The answer is
-            // written into the record and the whole log replayed from where it
-            // starts, which is what the posterior is by definition - seconds
-            // per egg, off the main actor, while the app runs on what it had.
-            guard resumedIndex == index, kept.folded == index + 1 else { return }
-            // Nothing is mid-fold (the log is all folded), but whatever was
-            // lands on nothing.
-            generation &+= 1
-            answers = given
-            kept.log[index] = egg
-            kept.calibration = Calibrations.start(kept.base)
-            kept.folded = 0
-            // Folded again as the live egg, so a third answer needs no replay.
-            liveIndex = index
-            resumedIndex = nil
-            Calibrations.save(kept)
-            await drain()
-            return
-        }
-        answers = given
-        learning = true
-        let gen = generation
-        let again = await Task.detached(priority: .userInitiated) {
-            var c = done.before
-            foldRecord(&c, egg, grid: done.grid)
-            return c
-        }.value
-        if gen == generation {
-            kept.log[index] = egg
-            kept.calibration = again
-            Calibrations.save(kept)
-        }
-        learning = false
-        recompute()
+        Task { await drain() }
     }
 
     /// The calibration before the egg at `index` in the log, for a
@@ -100,13 +39,9 @@ extension Planner {
     ///   (`folded.before`), as a second answer refolds from.
     /// - Otherwise (folded before a relaunch): the log replayed up to it, a
     ///   surface per egg, off the main actor.
-    ///
-    /// The first two are `calibrationBeforeAtHand`, which Start again reads
-    /// before `endEgg` lets go of what this process folded.
     public func calibrationBefore(_ index: Int?) async -> Calibration {
-        if let atHand = calibrationBeforeAtHand(index) { return atHand }
-        // Not at hand: an egg in the log, folded before a relaunch.
-        guard let index else { return kept.calibration }
+        guard let index, index < kept.folded else { return kept.calibration }
+        if let done = folded, done.index == index { return done.before }
         var c = Calibrations.start(kept.base)
         for egg in kept.log[..<index] where recordTeaches(egg) {
             let request = gridRequestFor(c, egg)
@@ -116,31 +51,13 @@ extension Planner {
         return c
     }
 
-    /// `calibrationBefore` when it needs no replay: the calibration as it
-    /// stands for an egg not in the log or not folded yet, the one held
-    /// before folding it in this process; nil otherwise.
-    public func calibrationBeforeAtHand(_ index: Int?) -> Calibration? {
-        guard let index, index < kept.folded else { return kept.calibration }
-        if let done = folded, done.index == index { return done.before }
-        return nil
-    }
-
-    /// The egg at `index` made again from its cook as corrected after the
-    /// pull, its answers kept: the log keeps the last-corrected record of the
-    /// egg (review 2.5), and the posterior is folded again from before it -
-    /// from the calibration held before its fold when this process folded
-    /// it, else from where the log's replay starts.
+    /// The egg at `index` replaced by `record`, the same egg as last said
+    /// and corrected, and the posterior folded again from before it: from
+    /// the calibration held before its fold when this process folded it,
+    /// else from where the log's replay starts.
     public func replaceLogged(_ index: Int, _ record: EggRecord) {
-        // Nothing this build logged, nor learned from, while a newer build's
-        // results are left alone (`Stores`).
-        guard !Stores.readOnly, kept.log.indices.contains(index) else { return }
-        let had = kept.log[index]
-        var next = record
-        next.yolkWord = had.yolkWord
-        next.white = had.white
-        next.probe = had.probe
-        guard next != had else { return }
-        kept.log[index] = next
+        guard kept.log.indices.contains(index), kept.log[index] != record else { return }
+        kept.log[index] = record
         if index < kept.folded {
             // Whatever is mid-fold lands on nothing.
             generation &+= 1
@@ -152,55 +69,8 @@ extension Planner {
                 kept.folded = 0
             }
             folded = nil
-            resumedIndex = nil
             liveIndex = index
         }
-        Calibrations.save(kept)
-        Task { await drain() }
-    }
-
-    /// The cook has moved on: the next answers are about the next egg.
-    public func endEgg() {
-        answers = nil
-        folded = nil
-        liveIndex = nil
-        resumedIndex = nil
-    }
-
-    /// A finished cook picked back up after a relaunch, answered before it:
-    /// if its egg is the last in the log - the same record but for the
-    /// answers - what it was told is on screen again, and the questions it
-    /// was not are still open. Anything else, and the cook stays as answered.
-    public func resumeAnswers(_ cooked: EggRecord) {
-        guard answers == nil, let index = kept.log.indices.last else { return }
-        let last = kept.log[index]
-        var bare = last
-        bare.yolkWord = nil
-        bare.white = nil
-        bare.probe = nil
-        // Nor the forecast: the cook is planned again at the relaunch, before
-        // its pot's surface is built again, and under the posterior this egg
-        // has since moved, so what it says it said is not the same numbers.
-        bare.forecast = nil
-        var plain = cooked
-        plain.forecast = nil
-        guard bare == plain else { return }
-        answers = Answers(yolk: last.yolkWord, white: last.white, probe: last.probe)
-        folded = nil
-        // Not folded yet (the fold is caught up on launch): a later answer is
-        // written in and folded with it. Folded already: replayed.
-        if index >= kept.folded {
-            liveIndex = index
-        } else {
-            resumedIndex = index
-        }
-    }
-
-    /// An egg finished and never answered about. Still a record - the cook, the
-    /// recommendation and the pull are data for the fit - and it folds nothing.
-    public func logUnanswered(_ egg: EggRecord) {
-        guard !Stores.readOnly else { return }
-        kept.log.append(egg)
         Calibrations.save(kept)
         Task { await drain() }
     }
@@ -263,9 +133,7 @@ extension Planner {
     public func resetCalibration() {
         generation &+= 1
         liveIndex = nil
-        resumedIndex = nil
         folded = nil
-        answers = nil
         Calibrations.reset()
         kept = Calibrations.freshKept()
         BoilMemories.reset()

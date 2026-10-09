@@ -89,14 +89,16 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// alarm asks for it instead of announcing the end.
     ///
     /// The pull alarm names the cooling the cook chose (`pullLineKey`).
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {
+    func schedule(pullAt: Date?, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {
         cancel()
 
-        request(
-            id: pullID, moment: .pull, at: pullAt,
-            title: tr("alarm.pull.title"),
-            body: tr(pullLineKey(cooling: cooling.rawValue))
-        )
+        if let pullAt {
+            request(
+                id: pullID, moment: .pull, at: pullAt,
+                title: tr("alarm.pull.title"),
+                body: tr(pullLineKey(cooling: cooling.rawValue))
+            )
+        }
 
         if let coolDoneAt {
             request(

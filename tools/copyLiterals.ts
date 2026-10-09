@@ -96,6 +96,11 @@ const NOT_COPY: Record<string, string> = {
   'calibration.v4': 'UserDefaults key',
   'calibration.v5': 'UserDefaults key',
   'settings.v1': 'UserDefaults key',
+  'surface|{}': 'a build\'s key in Cook, never shown',
+  'before|{}': 'a build\'s key in Cook, never shown',
+  'beforeSurface|{}|{}': 'a build\'s key in Cook, never shown',
+  seconds: 'a readout argument\'s name, read from core\'s readoutAt',
+  boiling: 'a readout argument\'s name, read from core\'s readoutAt',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
   // keys earlier builds wrote, deleted at launch (Store.swift, `retiredKeys`)

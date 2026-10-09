@@ -20,6 +20,9 @@ struct SettingsView: View {
     /// controls, and correct it as the sentence does; what I have learned
     /// and sharing wait for it to end (design/one-screen.md, step 7).
     var cooking = false
+    /// Whether the egg on screen is in the log and still open to correction
+    /// (`Cook.eggOpen`): sharing holds it back.
+    var eggOpen = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
@@ -328,7 +331,7 @@ struct SettingsView: View {
         if deletedHere && !s.on { return tr("share.deleted") }
         guard s.on else { return nil }
         if s.sent == 0 { return tr("share.none") }
-        let final = planner.kept.log.count - (planner.answers == nil ? 0 : 1)
+        let final = planner.kept.log.count - (eggOpen ? 1 : 0)
         let waiting = max(0, final - s.sent)
         let sent = tr("share.sent", ["eggs": .int(s.sent)])
         return waiting > 0 ? sent + " " + tr("share.waiting", ["eggs": .int(waiting)]) : sent

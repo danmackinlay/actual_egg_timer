@@ -83,8 +83,8 @@ struct PhaseActions: View {
 
     @ViewBuilder
     private var action: some View {
-        if phase != .idle, cook.plan.map(asksIfStillIn) == true {
-            asking
+        if let r = readout, r.asking {
+            asking(r)
         } else {
             phaseAction
         }
@@ -93,19 +93,19 @@ struct PhaseActions: View {
     /// "Are the eggs still in the water?" (`ReadoutView`): the two answers as
     /// buttons a cook can press without reading the question again, yes the
     /// primary; then Cancel. Nothing past the question is shown.
-    private var asking: some View {
+    private func asking(_ r: Readout) -> some View {
         VStack(spacing: 10) {
             Button {
                 model.stillIn()
             } label: {
-                Text(tr("ask.stillIn.yes")).frame(maxWidth: .infinity).onAccent()
+                Text(tr(r.primary ?? "ask.stillIn.yes")).frame(maxWidth: .infinity).onAccent()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             Button {
                 model.stillOut()
             } label: {
-                Text(tr("ask.stillIn.no")).frame(maxWidth: .infinity)
+                Text(tr(r.secondary ?? "ask.stillIn.no")).frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
@@ -164,7 +164,7 @@ struct PhaseActions: View {
                     more: [tr("action.hint.heating.more")],
                     alignment: .center
                 ) {
-                    Text(model.keys(.heating).hint.map { tr($0) } ?? "")
+                    Text(readout?.hint.map { tr($0.key) } ?? "")
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -174,7 +174,7 @@ struct PhaseActions: View {
                 Button {
                     model.boil()
                 } label: {
-                    Text(tr(model.keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
+                    Text(tr(readout?.primary ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -191,9 +191,8 @@ struct PhaseActions: View {
                 // The web's hint: when the cooling starts on its own. Not on
                 // the counter, where the grace runs out into Done and the line
                 // under the time already says the yolk is still cooking.
-                if let hint = model.keys(.pull).hint, let pullAt = cook.pullAt {
-                    let left = max(0, (pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
-                    Text(tr(hint, ["seconds": .int(Int(left))]))
+                if let hint = readout?.hint {
+                    Text(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -205,7 +204,7 @@ struct PhaseActions: View {
                 Button {
                     model.pulledOut()
                 } label: {
-                    Text(tr(model.keys(.pull).action ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
+                    Text(tr(readout?.primary ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -218,7 +217,7 @@ struct PhaseActions: View {
             }
 
         case .done:
-            Button(tr(model.keys(.done).action ?? "action.startAgain")) {
+            Button(tr(readout?.primary ?? "action.startAgain")) {
                 model.startAgain()
             }
             .buttonStyle(.bordered)
@@ -230,10 +229,8 @@ struct PhaseActions: View {
                 if phase == .cooking {
                     VStack(spacing: 4) {
                         // The web's hint: what the hob must do until the pull.
-                        Text(model.keys(.cooking).hint.map {
-                            tr($0, ["boiling": .text(planner.show(
-                                .temperature, cook.plan?.setup.boilingC ?? planner.boilingC
-                            ))])
+                        Text(readout?.hint.map {
+                            tr($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
                         } ?? "")
                         // Whether the alarm is really set: iOS's own line,
                         // since the web's alarm is the open tab.
@@ -251,6 +248,12 @@ struct PhaseActions: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    /// What a running cook's readout says at this frame's moment (core's
+    /// `readoutAt`): the buttons and the hint. Nil idle.
+    private var readout: Readout? {
+        phase == .idle ? nil : cook.readout(atS: now.timeIntervalSince1970)
     }
 
     /// The running plan's warning: a refusal, or a wild guess at the
@@ -286,7 +289,8 @@ struct PhaseActions: View {
             guard cook.pendingAlarms > 0 else {
                 return tr("readout.alarm.failed")
             }
-            return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? now, withSeconds: true))])
+            let pull = cook.plan.map { Date(timeIntervalSince1970: $0.deadlines.cookEndS) } ?? now
+            return tr("readout.alarm.set", ["time": .text(timeOfDay(pull, withSeconds: true))])
         }
     }
 }

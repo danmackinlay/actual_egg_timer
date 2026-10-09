@@ -516,8 +516,8 @@ extension Screenshots {
     /// Once the app has caught up with step `n`, `idle`: the cook has
     /// ticked at the new moment, and after the last tap; `-uiDo` has looked
     /// and found nothing more due, and is moving no slider; nothing is under
-    /// way in the cook, the planner, a change in hand or a record made
-    /// again; and the page has been drawn since, at the new moment. A script
+    /// way in the cook (a record made again among it), the planner or a
+    /// change in hand; and the page has been drawn since, at the new moment. A script
     /// waits for it after every step, so that what it checks next, that
     /// something did not happen as much as that it did, is checked once the
     /// app is done however slow the machine, never after a span of the
@@ -545,7 +545,6 @@ extension Screenshots {
             || !model.cook.isSettled
             || model.edits.underWay
             || planner.task != nil || planner.settleTask != nil || !planner.profilesAsked.isEmpty || planner.draining
-            || model.remaking > 0
     }
 
     /// The page drawn again: once a pass of the screen has followed.
