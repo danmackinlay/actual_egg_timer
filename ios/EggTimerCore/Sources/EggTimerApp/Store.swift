@@ -50,11 +50,14 @@ public enum Stores {
     /// 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
     /// copies 0.4 kept aside of what it could not read, the cooks in progress
     /// before this one's shape, the sharing keys of an earlier 0.4 build, and
-    /// settings no build reads any more.
+    /// settings no build reads any more, the settings a key each among them.
     public static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
         "share.v1", "share.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
+        // The settings before they were one value (`SettingsStore`).
+        "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
+        "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
     ]
     /// The keys where an earlier build kept its cook in progress.
     private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2", "cookInProgress.v3"]
@@ -175,128 +178,108 @@ public enum BoilMemories {
     }
 }
 
-/// The inputs, remembered between launches. Nobody wants to re-enter their
-/// altitude every morning.
+/// The inputs, remembered between launches: one value, core's `AppSettings`,
+/// as JSON under one key, read by core's `readSettings`, which the web reads
+/// its own with. Nobody wants to re-enter their altitude every morning.
 public enum SettingsStore {
+    public static let key = "settings.v1"
+
+    /// The settings as last read or written: what a save of some fields is
+    /// laid over, so the rest stay as they were.
+    @MainActor private static var saved = AppSettings.defaults
+
+    /// What is stored, read against the size table in use.
+    @MainActor
+    public static func read(classes: [SizeClass]) -> AppSettings {
+        let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        saved = readSettings(raw, classes: classes)
+        return saved
+    }
+
     @MainActor
     public static func load(into planner: Planner) {
-        let store = Stores.store
-        // The cook's choice of units, or none. Read before the early return,
-        // because it is its own key and a choice can predate the rest.
-        planner.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
-        // The probe thermometer, the same way: its own keys, and off when
-        // they are absent.
-        planner.restoreProbe(on: store.bool(forKey: "probe"))
-        // The measured room, absent until set: not measured.
-        planner.restoreRoom(store.object(forKey: "roomC") == nil ? nil : store.double(forKey: "roomC"))
-        guard store.object(forKey: "doneness") != nil else { return }
-        planner.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
-        // The last weighed mass, under its own key, so Weighed comes back to it
-        // whatever class was chosen since; the default egg when none was kept.
-        let weighedG = store.object(forKey: "weighedMassG") == nil
-            ? Defaults.eggMassKg * 1000
-            : clamp(store.double(forKey: "weighedMassG"), to: Limits.massG)
-        let index = store.object(forKey: "sizeIndex") == nil
-            ? Defaults.sizeIndex
-            : carrySizeIndex(clamp(store.double(forKey: "sizeIndex"), to: Limits.sizeIndex),
-                             classes: planner.sizeClasses)
-        planner.restoreSize(index: index, weighedMassG: weighedG)
-        planner.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
-        planner.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
-        planner.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
-        planner.startTemp = EggFrom(rawValue: store.string(forKey: "startTemp") ?? "") ?? .fridge
-        if store.object(forKey: "customStartC") != nil {
-            planner.customStartC = clamp(store.double(forKey: "customStartC"), to: Limits.eggTempC)
-        }
-        // Only a pan is ever saved (see `save`), so anything else - none saved
-        // yet, or a sous-vide - opens on the default.
-        let start = StartChoice(rawValue: store.string(forKey: "start") ?? "") ?? .cold
-        planner.start = start == .sousVide ? .cold : start
-        planner.heatOff = store.bool(forKey: "heatOff")
-        planner.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
+        let s = read(classes: planner.sizeClasses)
+        planner.restoreUnits(s.unitsChosen)
+        planner.restoreProbe(on: s.probe)
+        planner.restoreRoom(s.roomC)
+        planner.doneness = s.doneness
+        planner.restoreSize(index: s.sizeIndex, weighedMassG: s.weighedMassG)
+        planner.altitudeM = s.altitudeM
+        planner.waterLitres = s.waterLitres
+        planner.eggCount = s.eggCount
+        planner.startTemp = s.startTempMode
+        planner.customStartC = s.customStartC
+        planner.start = s.startMode == .hot ? .hot : .cold
+        planner.heatOff = s.afterBoil == .off
+        planner.cooling = s.cooling
+    }
+
+    /// The controls as settings, over `base` for what they do not hold.
+    /// Sous-vide is never remembered: its answer is a start time most of a
+    /// day in the past, so the pan saved before it stays saved.
+    @MainActor
+    private static func of(_ planner: Planner, over base: AppSettings) -> AppSettings {
+        var s = base
+        s.doneness = planner.doneness
+        s.sizeIndex = planner.sizeIndex
+        s.weighedMassG = planner.weighedMassG
+        s.altitudeM = planner.altitudeM
+        s.waterLitres = planner.waterLitres
+        s.eggCount = planner.eggCount
+        s.startTempMode = planner.startTemp
+        s.customStartC = planner.customStartC
+        if planner.start != .sousVide { s.startMode = planner.start == .hot ? .hot : .cold }
+        s.afterBoil = planner.heatOff ? .off : .hold
+        s.cooling = planner.cooling
+        s.probe = planner.probe
+        s.roomC = planner.roomC
+        // The cook's choice of units, not the system on screen: none until
+        // they make one, so a default can still follow the phone.
+        s.unitsChosen = planner.unitsChosen
+        return s
     }
 
     /// Only the settings a correction changed, for the next cook
     /// (design/one-screen.md section 7, 22): the rest stay as they were, and
     /// a level the slider only previewed after the pull is never written.
-    ///
-    /// Settings never saved (a fresh install) are read only once the level
-    /// is (`load`), so then the whole controls are saved, with the level in
-    /// force, `level`.
     @MainActor
     public static func save(_ planner: Planner, fields: Set<ControlField>, level: Double) {
-        let store = Guarded()
-        if Stores.store.object(forKey: "doneness") == nil {
-            save(planner)
-            store.set(level, forKey: "doneness")
-            return
-        }
-        for field in fields {
-            switch field {
-            case .level: store.set(planner.doneness, forKey: "doneness")
-            case .mass:
-                store.set(planner.weighedMassG, forKey: "weighedMassG")
-                store.set(Double(planner.sizeIndex), forKey: "sizeIndex")
-            case .eggFrom: store.set(planner.startTemp.rawValue, forKey: "startTemp")
-            case .customStart: store.set(planner.customStartC, forKey: "customStartC")
-            case .room:
-                store.set(planner.probe, forKey: "probe")
-                if let room = planner.roomC {
-                    store.set(room, forKey: "roomC")
-                } else {
-                    store.remove("roomC")
-                }
-            case .start: if planner.start != .sousVide { store.set(planner.start.rawValue, forKey: "start") }
-            case .afterBoil: store.set(planner.heatOff, forKey: "heatOff")
-            case .cooling: store.set(planner.cooling.rawValue, forKey: "cooling")
-            case .water: store.set(planner.waterLitres, forKey: "waterLitres")
-            case .eggCount: store.set(Double(planner.eggCount), forKey: "eggCount")
-            case .altitude: store.set(planner.altitudeM, forKey: "altitudeM")
-            case .startTime: break
-            }
-        }
+        var now = of(planner, over: saved)
+        now.doneness = level
+        var next = saved
+        for field in fields { next.take(field, from: now) }
+        write(next)
     }
 
     @MainActor
     public static func save(_ planner: Planner) {
-        let store = Guarded()
-        store.set(planner.doneness, forKey: "doneness")
-        store.set(planner.weighedMassG, forKey: "weighedMassG")
-        store.set(Double(planner.sizeIndex), forKey: "sizeIndex")
-        store.set(planner.altitudeM, forKey: "altitudeM")
-        store.set(planner.waterLitres, forKey: "waterLitres")
-        store.set(Double(planner.eggCount), forKey: "eggCount")
-        store.set(planner.startTemp.rawValue, forKey: "startTemp")
-        store.set(planner.customStartC, forKey: "customStartC")
-        // Sous-vide is never remembered. Its answer is a start time most of a
-        // day in the past, and an app that reopened on it would greet the cook
-        // by telling them they are 22 hours late. So while it is chosen, the
-        // pan saved before it stays saved, and a relaunch comes back to that
-        // pan - or to cold, the default, if there never was one. The web app
-        // does the same (`saveSettings` in src/ui/store.ts).
-        if planner.start != .sousVide {
-            store.set(planner.start.rawValue, forKey: "start")
-        }
-        store.set(planner.heatOff, forKey: "heatOff")
-        store.set(planner.cooling.rawValue, forKey: "cooling")
-        // The cook's choice, not the system on screen: absent until they make
-        // one, so a default can still follow the phone.
-        store.set(planner.probe, forKey: "probe")
-        if let room = planner.roomC {
-            store.set(room, forKey: "roomC")
-        } else {
-            store.remove("roomC")
-        }
-        if let chosen = planner.unitsChosen {
-            store.set(chosen.rawValue, forKey: "unitsChosen")
-        } else {
-            store.remove("unitsChosen")
-        }
+        write(of(planner, over: saved))
+    }
+
+    @MainActor
+    private static func write(_ s: AppSettings) {
+        saved = s
+        guard let data = try? JSONSerialization.data(withJSONObject: s.jsonObject, options: [.sortedKeys]) else { return }
+        Stores.set(data, forKey: key)
     }
 }
 
-/// UserDefaults' setter, through the guard (`Stores`), for a run of writes.
-private struct Guarded {
-    func set(_ value: Any?, forKey key: String) { Stores.set(value, forKey: key) }
-    func remove(_ key: String) { Stores.remove(key) }
+extension AppSettings {
+    /// `field` as `o` has it: the settings each control makes.
+    public mutating func take(_ field: ControlField, from o: AppSettings) {
+        switch field {
+        case .level: doneness = o.doneness
+        case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
+        case .eggFrom: startTempMode = o.startTempMode
+        case .customStart: customStartC = o.customStartC
+        case .room: probe = o.probe; roomC = o.roomC
+        case .start: startMode = o.startMode
+        case .afterBoil: afterBoil = o.afterBoil
+        case .cooling: cooling = o.cooling
+        case .water: waterLitres = o.waterLitres
+        case .eggCount: eggCount = o.eggCount
+        case .altitude: altitudeM = o.altitudeM
+        case .startTime: break
+        }
+    }
 }

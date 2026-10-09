@@ -166,6 +166,28 @@ struct AppTests {
 
     // MARK: - Stores
 
+    /// The settings are one value, read by core's `readSettings`: a control
+    /// changed while idle writes it whole, and the next launch reads it back;
+    /// the keys of before are swept.
+    @Test func theSettingsAreOneValue() async throws {
+        let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot"]))
+        #expect(world.store.object(forKey: "doneness") == nil)
+        let planner = Planner()
+        planner.load()
+        #expect(planner.doneness == Defaults.doneness)
+        planner.waterLitres = 3
+        planner.start = .hot
+        let data = try #require(world.store.data(forKey: SettingsStore.key))
+        let stored = readSettings(try JSONSerialization.jsonObject(with: data), classes: planner.sizeClasses)
+        #expect(stored.waterLitres == 3)
+        #expect(stored.startMode == .hot)
+        let again = Planner()
+        again.load()
+        #expect(again.waterLitres == 3)
+        #expect(again.start == .hot)
+        await world.until("the solves") { planner.task == nil && again.task == nil }
+    }
+
     /// Under a newer build's mark this build writes nothing at all, and
     /// still times the egg.
     @Test func aNewerMarkWritesNothing() async throws {
@@ -192,7 +214,7 @@ struct AppTests {
     /// never touched.
     @Test func everyWriteGoesThroughStores() async throws {
         let keys = [
-            Cook.savedKey, "calibration.v5", "boilMemory", "doneness", "start", "newestVersion",
+            Cook.savedKey, "calibration.v5", "boilMemory", SettingsStore.key, "newestVersion",
             "newestBuild", "languageState", "alarmSound",
         ]
         let standard = UserDefaults.standard

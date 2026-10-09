@@ -95,6 +95,7 @@ const NOT_COPY: Record<string, string> = {
   // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
   'calibration.v5': 'UserDefaults key',
+  'settings.v1': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
   // keys earlier builds wrote, deleted at launch (Store.swift, `retiredKeys`)

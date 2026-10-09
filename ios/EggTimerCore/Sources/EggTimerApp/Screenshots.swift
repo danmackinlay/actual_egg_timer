@@ -43,8 +43,8 @@ import Observation
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
 /// - `-perfProbe all`: after the first solve, tap, hold and drag the inputs
 ///   on a script and print how long each takes to reach the screen
-///   (`Perf.swift`). `-altitudeM 0 -waterLitres 1.5 -doneness 0.5` start it
-///   from the same place each time.
+///   (`Perf.swift`). `-settings.v1 <hex>`, the settings as stored, as JSON
+///   in hex (`SettingsStore`), starts it from the same place each time.
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
