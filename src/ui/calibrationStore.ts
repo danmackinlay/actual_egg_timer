@@ -23,12 +23,6 @@ import { readStorage, writeStorage, removeStorage } from './store.js';
  *  0.3's v4 is never read (DECISIONS.md 107). */
 const KEY = 'aet.calibration.v5';
 
-/** Every store before this one, deleted rather than read: the v1 and v2
- *  posteriors, which have no log behind them (v2 is what the live site of 19
- *  September writes), and v3, a three-number particle that only the owner's
- *  devices ever held. */
-const SUPERSEDED_KEYS = ['aet.calibration.v3', 'aet.calibration.v2', 'aet.calibration.v1'];
-
 /** Everything that is kept, and the one invariant that holds it together:
  *  `calibration` is `replay(base ?? prior, log.slice(0, folded))`. */
 export interface Kept {
@@ -260,14 +254,7 @@ export function touchesKept(key: string | null): boolean {
   return key === null || key === KEY;
 }
 
-/** Whatever came before the log goes, rather than sitting in storage being
- *  neither read nor collected. */
-export function removeSuperseded(): void {
-  for (const key of SUPERSEDED_KEYS) removeStorage(key);
-}
-
 /** The store, gone. */
 export function removeEverything(): void {
   removeStorage(KEY);
-  removeSuperseded();
 }

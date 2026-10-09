@@ -231,7 +231,7 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   assert.equal(storedCookText(), null, 'junk goes');
 });
 
-test('a cook in a shape this build does not read is not read; the live site\'s is dropped', () => {
+test('a cook in a shape this build does not read is not read', () => {
   storage.clear();
   // A running cook without the plan as it ran (review 1.3).
   const { asRan: _dropped, ...earlier } = aCook();
@@ -240,10 +240,6 @@ test('a cook in a shape this build does not read is not read; the live site\'s i
   // 0.4's shape: a machine and a ticket.
   storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
   assert.equal(loadCook(), null, 'never read as a running cook');
-  storage.delete(COOK_KEY);
-  storage.set('aet.cook.v1', JSON.stringify({ machine: { phase: 'COOKING' }, feedbackGiven: false }));
-  assert.equal(loadCook(), null);
-  assert.equal(storage.has('aet.cook.v1'), false, 'the superseded key is removed');
 });
 
 test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {

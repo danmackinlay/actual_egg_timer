@@ -24,10 +24,20 @@ export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from 
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v4';
-/** The cook as the live site of 19 September stores it: a shape the ticket
- *  does not read. Dropped, not migrated. */
-const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
 const BOIL_KEY = 'aet.boil.v1';
+
+/**
+ * Every key an earlier build of this app wrote that this one does not read,
+ * deleted at boot (`claimStorage`) rather than left in storage being neither
+ * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
+ * 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
+ * copies 0.4 kept aside of what it could not read, and the cooks in progress
+ * before this one's shape (`aet.cook.v1`-`v3`).
+ */
+export const RETIRED_KEYS = [
+  'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
+  'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3',
+];
 
 type StartTempMode = 'fridge' | 'room' | 'custom';
 
@@ -162,13 +172,16 @@ let onReadOnly: (() => void) | null = null;
 /**
  * Before anything is read for writing back, or written: compare the mark
  * with this build, and write this build's version there if it is not older
- * than what is there. Says what this page does with the stores from now on.
+ * than what is there; then, if this build may write, delete the keys no
+ * build from this one on reads (`RETIRED_KEYS`). A build that finds a newer
+ * mark deletes nothing. Says what this page does with the stores from now on.
  */
 export function claimStorage(version: string, readOnlyNow: (() => void) | null = null): WriterVerdict {
   mine = version;
   readOnly = false;
   onReadOnly = readOnlyNow;
   mayWrite();
+  for (const key of RETIRED_KEYS) if (readStorage(key) !== null) removeStorage(key);
   return readOnly ? 'readOnly' : 'write';
 }
 
@@ -471,7 +484,6 @@ export function saveCook(cook: RunningCook, answers: KeptAnswers, leanHint_s: nu
  *  `answers` is refused rather than read as unanswered, which would log its
  *  egg a second time. */
 export function loadCook(): StoredCook | null {
-  removeStorage(SUPERSEDED_COOK_KEY);
   return readStoredCook(readStorage(COOK_KEY));
 }
 

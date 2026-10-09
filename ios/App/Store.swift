@@ -32,6 +32,32 @@ enum Stores {
     /// before it was kept reads only the mark, and leaves this alone.
     static let buildKey = "newestBuild"
 
+    /// Every key an earlier build wrote that this one does not read, deleted
+    /// at launch (`claim`) rather than left on the phone being neither read
+    /// nor collected: the posteriors before the log (`v1`-`v3`), the log of
+    /// 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
+    /// copies 0.4 kept aside of what it could not read, the cooks in progress
+    /// before this one's shape, the sharing keys of an earlier 0.4 build, and
+    /// settings no build reads any more.
+    static let retiredKeys = [
+        "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.unread",
+        "share.v1", "share.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
+    ]
+    /// The keys where an earlier build kept its cook in progress.
+    private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2"]
+
+    /// Whether the sweep found an earlier build's cook in progress, until
+    /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
+    /// Screen, and nothing will update it again.
+    nonisolated(unsafe) private static var retiredCook = false
+
+    /// Once: whether the launch's sweep deleted an earlier build's cook.
+    static func takeRetiredCook() -> Bool {
+        defer { retiredCook = false }
+        return retiredCook
+    }
+
     /// Set once, at launch, before the first view; read on the main actor.
     nonisolated(unsafe) private(set) static var readOnly = false
 
@@ -59,6 +85,16 @@ enum Stores {
         if verdict == .write, parseVersion(version) != nil {
             if mark != version { defaults.set(version, forKey: markKey) }
             if markBuild != build, parseBuild(build) != nil { defaults.set(build, forKey: buildKey) }
+        }
+        // A build that finds a newer mark deletes nothing.
+        if verdict == .write {
+            for key in retiredKeys where defaults.object(forKey: key) != nil {
+                if retiredCookKeys.contains(key) { retiredCook = true }
+                defaults.removeObject(forKey: key)
+                #if DEBUG
+                Screenshots.log("swept \(key)")
+                #endif
+            }
         }
         #if DEBUG
         Screenshots.log(

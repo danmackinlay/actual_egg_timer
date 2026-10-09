@@ -29,8 +29,8 @@ import {
   gridRequestFor, recordTeaches, resultsFile, resultsFileName,
 } from '../core/record.js';
 import {
-  Decoded, Kept, decodeKept, encodeKept, freshKept, readKeptText, removeEverything, removeSuperseded, startOf,
-  touchesKept, writeKeptText,
+  Decoded, Kept, decodeKept, encodeKept, freshKept, readKeptText, removeEverything, startOf, touchesKept,
+  writeKeptText,
 } from './calibrationStore.js';
 import { localDay } from './eggRecord.js';
 import { buildOffThread } from './offThread.js';
@@ -202,9 +202,6 @@ export function loadCalibration(model = MODEL_ID): Calibration {
   modelId = model;
   ours = true;
   elsewhere = new Set<number>();
-  // Whatever came before the log goes now, rather than sitting in storage
-  // being neither read nor collected.
-  removeSuperseded();
   const raw = readKeptText();
   const decoded = decodeKept(raw, activePopulation(), modelId);
   kept = decoded.kept;

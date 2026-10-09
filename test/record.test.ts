@@ -378,14 +378,7 @@ test('3a4. a store this build cannot read is dropped; the export is the store as
 
 test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {
   storage.clear();
-  // A browser that last ran the live site (v2), or an interim build (v3):
-  // both are deleted unread, and the cook starts from the prior.
-  storage.set('aet.calibration.v3', '{"v":3,"log":[]}');
-  storage.set('aet.calibration.v2', '{"v":2}');
-
   let calib = loadCalibration();
-  assert.equal(storage.has('aet.calibration.v3'), false);
-  assert.equal(storage.has('aet.calibration.v2'), false);
   assert.equal(keptState().base, null);
   assert.equal(eggsBehind(), 0);
   assert.equal(calib.eggsLogged, 0);
@@ -444,7 +437,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
 });
 
 test('3c. forget everything clears the log, the base and the posterior', () => {
-  storage.set('aet.calibration.v3', '{"v":3}');
+  storage.clear();
   loadCalibration();
   logEgg(solvedRecord(0.4, null));
   const fresh = clearCalibration();

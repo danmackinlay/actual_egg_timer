@@ -930,6 +930,11 @@ final class Cook {
     /// clock decided while the app was away are written at once.
     func restoreIfNeeded() -> Dropped? {
         guard running == nil else { return nil }
+        // An earlier build's cook, its key deleted at launch (`Stores`): its
+        // notifications are left, still right for the egg in the pot, and
+        // its card is ended to go at its own end, since nothing will update
+        // it again.
+        if Stores.takeRetiredCook() { activity { await LiveActivity.endAtTheirEnds() } }
         guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return nil }
         // A cook this build cannot read whole is not patched; it is dropped.
         // Nothing then knows what its alarms and its card are for, so they go.

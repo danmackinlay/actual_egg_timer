@@ -1223,6 +1223,42 @@ scenario('unreadable', 'a cook and a results log this build cannot read: dropped
   run.note('dropped, and nothing kept aside');
 });
 
+scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's cook among them, are deleted at launch; its alarms left; under a newer mark, not one", async (run) => {
+  await started(run);
+  run.terminate();
+  await run.prefs((p) => p['cookInProgress.v3']?.cook);
+  // What 0.3 and 0.4 wrote: this build's cook stands in for theirs, under
+  // their key, with the same alarm ids pending (a day out, on a frozen
+  // clock: still pending however long the plist takes).
+  run.renameKey('cookInProgress.v3', 'cookInProgress');
+  const old = {
+    'calibration.v4': '{"v":4,"log":[]}', 'calibration.v4.unread': '[]', 'cookInProgress.v2': '{}',
+    'cookInProgress.unread': '[]', 'share.v1': '{}', 'probeAsked': '1', 'coldStart': '1',
+  };
+  run.setData(old);
+  const keys = [...Object.keys(old), 'cookInProgress'];
+  run.launch();
+  const swept = await run.until(/^swept cookInProgress$/, { from: run.launched, what: 'the old cook swept' });
+  await run.until(/^delivered /, { from: swept.i, what: 'the alarms read back' });
+  const lines = run.sinceLaunch();
+  run.check(keys.every((k) => has(lines, new RegExp(`^swept ${k.replaceAll('.', '\\.')}$`))), 'each swept');
+  run.check(!has(lines, /^alarms cancelled$/), 'its alarms not cancelled');
+  run.check(same(sorted(pending(lines)), ['cook.cool', 'cook.pull']), `pending ${pending(lines)}`);
+  run.check(!has(lines, /^restore (HEATING|COOKING|PULL|COOLING|DONE)/), 'idle');
+  const prefs = await run.prefs((p) => keys.every((k) => !(k in p)));
+  run.check(keys.every((k) => !(k in prefs)), `gone: ${keys.filter((k) => k in prefs).join(', ')}`);
+  run.check(prefs['calibration.v5']?.v === 5, 'this build\'s log kept');
+  run.terminate();
+  // A newer build's mark: nothing deleted.
+  run.setData(old);
+  run.launch(['-newestVersion', '9.0.0']);
+  await run.until(/^newer note$/, { from: run.launched, what: 'the line shown' });
+  run.check(!has(run.sinceLaunch(), /^swept /), 'nothing swept under a newer mark');
+  const kept = await run.prefs((p) => Object.keys(old).every((k) => k in p));
+  run.check(Object.keys(old).every((k) => k in kept), 'each kept');
+  run.note(`${keys.length} swept, the old cook's alarms left; under 9.0.0, none`);
+});
+
 scenario('again-logs', 'Start again logs the unanswered egg before it clears the cook', async (run) => {
   await started(run, ['-uiDo', `${TO_DONE},again@cooled+5`]);
   const done = await toDone(run);

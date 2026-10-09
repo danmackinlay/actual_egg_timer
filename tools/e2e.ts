@@ -1695,6 +1695,29 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'retired-keys': {
+    what: 'the keys no build reads, 0.3\'s log among them, are deleted at boot; under a newer build\'s mark, not one',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      const old = ['aet.calibration.v3', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.unread',
+        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3'];
+      const plant = `for (const k of ${JSON.stringify(old)}) localStorage.setItem(k, '{"v":4,"log":[]}')`;
+      const keys = 'Object.keys(localStorage).sort()';
+      await tab.eval(plant);
+      await tab.reload();
+      await tab.settle();
+      const left = await tab.eval<string[]>(keys);
+      check(old.every((k) => !left.includes(k)), `each deleted: ${left.join(', ')}`);
+      check(left.includes('aet.calibration.v5') && left.includes('aet.newest'), `this build's stores kept: ${left.join(', ')}`);
+      await tab.eval(`localStorage.setItem('aet.newest', '9.0.0'); ${plant}`);
+      await tab.reload();
+      await tab.settle();
+      const kept = await tab.eval<string[]>(keys);
+      check(old.every((k) => kept.includes(k)), `under a newer mark, each kept: ${kept.join(', ')}`);
+      return `${old.length} deleted at boot; under 9.0.0, ${old.length} kept`;
+    },
+  },
+
   'sharing-final-only': {
     what: 'sharing sends only final eggs: none at Done, the egg at Start again (real clock, the cook moved back)',
     run: async (h) => {
@@ -1768,6 +1791,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
         const s = JSON.parse(localStorage.getItem('aet.settings.v1') ?? '{}');
         localStorage.setItem('aet.settings.v1', JSON.stringify({ ...s, addedLater: true }));
         localStorage.setItem('aet.later.v1', 'a newer store');
+        localStorage.setItem('aet.calibration.v4', 'a key this build would sweep');
         localStorage.setItem('aet.share.v1', JSON.stringify({ on: false, uid: null,
           uids: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'], deleting: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'] }));
       })()`);

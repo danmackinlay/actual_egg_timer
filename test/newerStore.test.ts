@@ -2,8 +2,10 @@
  * The web's guard against an older build writing over a newer one's stores
  * (src/ui/store.ts, `claimStorage`; DECISIONS.md 100): with a newer build's
  * mark in storage, the store layer writes nothing at all - the settings, the
- * pans, the cook, the log, the sharing state - and sends nothing. With none, or an older one, the mark is brought up to this
- * build before anything else is written.
+ * pans, the cook, the log, the sharing state - sends nothing, and deletes
+ * none of the keys it no longer reads. With none, or an older one, the mark
+ * is brought up to this build before anything else is written, and then
+ * those keys are deleted.
  *
  * In a file of its own: the guard is the store module's state for the life
  * of the page, and node runs each test file in a process of its own.
@@ -17,7 +19,7 @@ import assert from 'node:assert/strict';
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
   DEFAULT_SETTINGS, claimStorage, clearBoilMemory, clearCook, dropStoredCook, loadBoilMemory, loadCook, loadSettings,
-  newerStoredElsewhere, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, storageReadOnly,
+  RETIRED_KEYS, newerStoredElsewhere, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, storageReadOnly,
 } from '../src/ui/store.js';
 import { clearCalibration, keptState, loadCalibration, logEgg } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
@@ -117,6 +119,26 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   assert.deepEqual(writes, [], 'not one write');
   assert.deepEqual(posts, [], 'not one request');
   assert.deepEqual(storage, before, 'every store as the newer build left it');
+});
+
+test('3b. the keys no build reads any more are deleted at the claim, after the mark, and nothing else', () => {
+  storage.clear();
+  for (const key of RETIRED_KEYS) storage.set(key, 'an earlier build\'s');
+  storage.set('aet.settings.v1', JSON.stringify(DEFAULT_SETTINGS));
+  storage.set('aet.later.v1', 'a store this build has never heard of');
+  writes.length = 0;
+  assert.equal(claimStorage(APP_VERSION), 'write');
+  assert.deepEqual(writes, [NEWEST_KEY, ...RETIRED_KEYS.map((k) => `-${k}`)]);
+  assert.deepEqual([...storage.keys()].sort(), ['aet.later.v1', NEWEST_KEY, 'aet.settings.v1'].sort());
+  assert.ok(RETIRED_KEYS.includes('aet.calibration.v4'), '0.3\'s log among them (DECISIONS.md 107)');
+  // Under a newer build's mark, not one.
+  storage.clear();
+  for (const key of RETIRED_KEYS) storage.set(key, 'an earlier build\'s');
+  storage.set(NEWEST_KEY, '9.0.0');
+  writes.length = 0;
+  assert.equal(claimStorage(APP_VERSION), 'readOnly');
+  assert.deepEqual(writes, []);
+  assert.equal(storage.size, RETIRED_KEYS.length + 1);
 });
 
 test('4. another tab of a newer build: this page stops writing at its event, or at its next write before it', () => {

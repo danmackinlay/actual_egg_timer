@@ -97,6 +97,17 @@ const NOT_COPY: Record<string, string> = {
   'calibration.v5': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
+  // keys earlier builds wrote, deleted at launch (Store.swift, `retiredKeys`)
+  'calibration.v1': 'UserDefaults key',
+  'calibration.v2': 'UserDefaults key',
+  'calibration.v3': 'UserDefaults key',
+  'share.v1': 'UserDefaults key',
+  'share.attest.v1': 'UserDefaults key',
+  coldStart: 'UserDefaults key',
+  fromFridge: 'UserDefaults key',
+  eggMassG: 'UserDefaults key',
+  probeAsked: 'UserDefaults key',
+  'swept {}': 'debug log (Screenshots.log), never shown',
   // the running cook as stored (Cook.swift; design/one-screen.md section 4)
   'cookInProgress.v2': 'UserDefaults key',
   'cookInProgress.v3': 'UserDefaults key',
