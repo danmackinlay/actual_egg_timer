@@ -243,7 +243,9 @@ The one queue. Nothing else in the documents waits on the owner.
     the certainty line is when to take them out ("I think the right time
     to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
     clause "into cold water at 7:42, heat off and lid on once it boils".
-    With it, the time's two lines sit closer under the digits (`UI.md` §8).
+    With it, the time's two lines sit closer under the digits, and the
+    readout is an x-height (8 px or pt) shorter under the folded certainty
+    word, opened as before (`UI.md` §8).
 19. **An older build leaves a newer one's results alone, on a phone** (9
     October 2026, `DECISIONS.md` 100), the **`newer`** draft in both apps.
     Install this build after a newer one (or, on the web, keep a tab of it

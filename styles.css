@@ -226,8 +226,12 @@ button.mute[aria-pressed="true"] {
    line holds two lines' room, the word and "most likely", the word at its
    top, close under the boil line (DECISIONS.md 99): so a drag that brings
    "most likely" or takes it away moves neither the word nor the slider under
-   the thumb. The word is underlined, dotted in the accent
+   the thumb. The second line's room hangs the word's x-height (0.5rem, 8 px)
+   into the panel's foot, so the folded word has no more empty room under it
+   than it needs; what opens under it and the white's line take that back,
+   so they sit where they did. The word is underlined, dotted in the accent
    while closed and solid while open, as a link is: no chevron. */
+#readout { --certainty-hang: 0.5rem; }
 #certainty {
   margin: 0 auto;
   max-width: 24rem;
@@ -239,6 +243,7 @@ body:not([data-start="sous"]) #certainty {
   align-items: center;
   justify-content: flex-start;
   min-height: 3.25rem;
+  margin-bottom: calc(-1 * var(--certainty-hang));
 }
 button.disclose {
   display: inline-block;
@@ -257,6 +262,7 @@ button.disclose {
 button.disclose[aria-expanded="true"] { text-decoration-style: solid; }
 #mostLikely { margin: 0; font-size: 0.875rem; color: var(--dim); }
 #whiteRisk { margin: 2px 0 0; font-size: 0.875rem; color: var(--warn); }
+body:not([data-start="sous"]) #whiteRisk { margin-top: calc(2px + var(--certainty-hang)); }
 
 /* An older build left running after a newer one (DECISIONS.md 100): above
    every view, in the warning's colour. */
@@ -311,6 +317,7 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   border-radius: 0 8px 8px 0;
 }
 #readout .disclosed { margin-left: auto; margin-right: auto; max-width: 28rem; }
+body:not([data-start="sous"]) #certaintyMore { margin-top: calc(8px + var(--certainty-hang)); }
 #certaintyMore p { margin: 0; }
 #certaintyMore p:not([hidden]) ~ p { margin-top: 8px; }
 #certaintyMore a.morelink { padding: 2px 0; }

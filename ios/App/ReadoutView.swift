@@ -33,6 +33,15 @@ struct ReadoutView: View {
     /// From the digits' baseline to the top of the boil line, pt (the web's
     /// 10 px on a 390-px screen).
     private static let underBaseline: CGFloat = 10
+    /// How far the certainty line's second line of room hangs into the
+    /// panel's foot, pt: the word's x-height at the default text size (about
+    /// 8 pt, the web's 0.5rem), so the folded word has no more empty room
+    /// under it than it needs. What opens under it and the white's line take
+    /// it back, so they sit where they did. Fixed at every text size, as the
+    /// panel's 22 pt padding is, so "most likely" never reaches its edge.
+    private static let hang = UIFont.preferredFont(
+        forTextStyle: .subheadline, compatibleWith: UITraitCollection(preferredContentSizeCategory: .large)
+    ).xHeight.rounded()
 
     var body: some View {
         VStack(spacing: 6) {
@@ -173,7 +182,8 @@ struct ReadoutView: View {
                 // Two lines' room in every phase, the word and "most
                 // likely", so nothing under it moves when they come or go,
                 // nor at the start; the word at its top, close under the
-                // boil line (DECISIONS.md 99).
+                // boil line (DECISIONS.md 99); the second line hanging its
+                // x-height into the panel's foot (`hang`).
                 Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 if let sure {
                     VStack(spacing: 2) {
@@ -196,6 +206,7 @@ struct ReadoutView: View {
                     }
                 }
             }
+            .padding(.bottom, -Self.hang)
             if let sure, certaintyOpen {
                 VStack(alignment: .leading, spacing: 0) {
                     MoreText(opened(sure))
@@ -212,14 +223,14 @@ struct ReadoutView: View {
                         .padding(.top, 6)
                     }
                 }
-                .padding(.top, 4)
+                .padding(.top, 4 + Self.hang)
                 .transition(.opacity)
             }
             if whiteRunny(o) {
                 Text(tr("outcome.whiteRunny"))
                     .appFont(.footnote)
                     .foregroundStyle(.orange)
-                    .padding(.top, 2)
+                    .padding(.top, 2 + Self.hang)
             }
         }
         .multilineTextAlignment(.center)

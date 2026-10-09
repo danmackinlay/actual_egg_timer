@@ -452,6 +452,32 @@ text size, so at the largest the boil line, wrapping to two lines, is
 still 10 pt under it and the word under that. The idle readout is 20.5 pt
 shorter (the slider moved from 387 to 366.5 pt on an iPhone 17 Pro).
 
+**The folded word is an x-height closer to the panel's foot** (the owner on
+a phone, 9 October 2026). The certainty line's second line of room, kept
+for "Most likely", hangs the word's x-height into the readout's bottom
+padding, so a folded word with nothing under it has that much less empty
+room below it; what the word opens, and the white's line, take it back, so
+they sit where they did and the open readout is the height it was. "Most
+likely" still fits in the room, so it comes and goes without moving the
+slider; it now sits that much nearer the panel's foot (on the web its
+line box ends 8 px above the panel's border, inside the 14-px padding;
+was 16). On the web
+(`styles.css`, `--certainty-hang`): 0.5rem, the 15-px word's x-height
+(8 px; 7 px in the face of 1750); `#certainty` has that as a negative
+bottom margin, and `#certaintyMore` and `#whiteRisk` add it to their top
+margins. On a 390-px screen the idle readout, folded, is 205.7 px (was
+213.7), the word's text ends 34 px above the panel's border (was 42), and
+the slider is 8 px higher; opened it is 375.2 px, as before. iOS
+(`ReadoutView.hang`): the subheadline's x-height at the default text size,
+8 pt, as negative bottom padding on the line's two-line room and added to
+what opens and the white's line; fixed at every text size, as the panel's
+22-pt padding is, so the hang never takes "Most likely" through it. On an
+iPhone 17 the slider moved from 366.5 to 358.5 pt folded (in 1750 from
+454.5 to 446.5; at the largest text size from 519.5 to 511.5) and stays at
+477.5 pt open (569.5 in 1750). At the largest text size "Most likely:
+Fudgy." wraps to two lines, more than the room, and moves the slider 48.5
+pt, as it did before.
+
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is
 `controls.doneness.value` (or `.valueBath`), and the heading's number is

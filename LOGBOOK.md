@@ -6014,3 +6014,27 @@ ios:e2e` 40 of 40 in 370 s. Screenshots of the readout idle, heating and
 cooking, in both Englishes and at the largest text size, before and after,
 were taken for the comparison with the web's spacing; the owner judges it
 on a phone.
+
+## 9 October 2026: the folded certainty word an x-height closer to the panel's foot
+
+The owner, on a phone: under a folded "A wild guess" the grey readout had
+too much empty room, by about the word's x-height; opened, the room under
+the interval was right. What reserved it was the certainty line's two
+lines' room (`#certainty`'s 3.25rem min-height on the web, the hidden
+" \n " in `ReadoutView`'s line on iOS), kept so "Most likely" comes and
+goes without moving the slider, over the panel's own bottom padding. Now
+the second line hangs one x-height (0.5rem, 8 px; 8 pt on iOS) into that
+padding, and what opens and the white's line add it back to their top
+margins, so the open readout and the white's line are where they were and
+"Most likely" still moves nothing; it sits 8 px nearer the panel's foot.
+Measured: web, 390 px, folded readout 213.7 to 205.7 px, opened 375.2 as
+before, both Englishes and both schemes; iOS, iPhone 17, the slider 366.5
+to 358.5 pt folded, 477.5 opened as before; in 1750 454.5 to 446.5; at the
+largest text 519.5 to 511.5 (`UI.md` §8 has the rest).
+
+**Found on the way.** At the largest text size iOS's "Most likely: Fudgy."
+wraps to two lines, more than the room kept for it, so it moves the slider
+48.5 pt as it comes and goes; it did before this change, by the same.
+
+Checked: `npm run verify` (`swift test` 159 in 39 suites), `npm run e2e`
+37 of 37, `npm run ios:build`, `npm run ios:e2e` 40 of 40.
