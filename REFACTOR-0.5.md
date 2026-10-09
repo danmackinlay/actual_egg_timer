@@ -607,28 +607,49 @@ it found, in its order, with where each is being done:
       89; 2.11's sweep a fixed list, not "any `aet.*` not current"; the
       `studies/` build outside `verify`.
 - [ ] **5.12 The tests sit where the code is already safe** (the red
-      team's audit of the suite). Core is 98% covered (400 of 408
-      functions); `src/ui` 253 of 479, with `cook.ts`, `edit.ts`,
-      `update.ts`, `controls.ts`, `input.ts`, `clock.ts` and `render.ts`
-      next to untested, and `test/views.test.ts` importing every module
-      and asserting nothing else. Conformance holds the two cores alike,
-      not the two apps; review findings got a core pin or a scenario
-      that could not fail, not a test where the bug was. Holes, by
-      behaviour: iOS's end of cook through the real `AppModel` (with
-      3.9); the web's effect runner against a fake store, `edit`/
-      `update`, and the ticker and ring (with 3.7); the copy states
-      asserting (with 1.1); and one table of raw stored blobs through
-      each app's real load path, the web's store and iOS's `Stored` then
-      `readRunningCook`, both accepting or refusing the same rows (0.8).
-      After 3.7 and 3.9 merge, about 350 lines and some 40% of `npm
-      test`'s time go: `test/machine.test.ts` for one step-driven tick
-      trace; `running.test.ts` 23, 24 and 29 for one seeded property over
-      0-2 h and 29's boundaries; four tautologies (`YOLK_RADIUS_FRAC`,
-      `LEAN_RATIO`, `YOLK_WORD_CUTS.length`, `PullLineTests.keys`); one
-      copy each of the tests `core.test.ts` and `validate.ts` share (7b,
-      9, 15b); the 20 titles citing review or decision numbers renamed
-      by behaviour, and the drifted ordinals (record 4b4/4b5, copy's two
-      1e).
+      team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
+      408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`
+      0/19, `update.ts` 0/12, `controls.ts` 0/12, `input.ts` 0/7,
+      `clock.ts` 1/26 and `render.ts` 1/10, and `test/views.test.ts`
+      importing every module and asserting nothing else. Conformance holds
+      the two cores alike, not the two apps; review findings got a core pin
+      or a scenario that could not fail, not a test where the bug was.
+      Each test is named by its behaviour. The holes, and when:
+  - [ ] *Hole 1, in 3.9:* iOS's end of cook through the real `AppModel`
+        in `EggTimerAppTests`: an answer held at Start again is logged
+        with it (today only `yolkWord == nil`); a failed remake leaves the
+        cook stored, not final; a correction at Done, then Start again,
+        logs the corrected egg.
+  - [ ] *Hole 2, in 3.7:* the web's effect runner (`cook.ts`) against a
+        fake store: the log written before the cook is forgotten; a failed
+        remake keeps the cook stored; send-final only after logging; no
+        surface asked twice.
+  - [ ] *Hole 3, with 0.8:* one table of raw stored blobs through each
+        app's real load path, the web's store and iOS's `Stored`
+        (`Cook.swift`) then `readRunningCook`, both accepting or refusing
+        the same rows.
+  - [ ] *Holes 4-6, after the gates (1.1):* `edit.ts` and `update.ts` (a
+        preview never commits; a settle commits once; forget-all in
+        another tab is not undone; the open egg is the stored one); the
+        web's ticker and ring (`clock.ts`: one ring per deadline, none in
+        the background, none for a deadline passed before the page was
+        shown; iOS has `RingTests`); the copy states asserting (no raw key
+        on screen, the certainty line where expected). 4 and 5 are with
+        the 3.7 agent and 6 with the gates agent, so each merges once the
+        gates are in.
+  - [ ] *The deletions and renames, after 3.7 and 3.9 merge* (about 350
+        lines, some 40% of `npm test`'s time): `test/machine.test.ts` for
+        one step-driven tick trace in `step.test.ts` (the counter rest
+        rings PULL then DONE; a cold start stays HEATING);
+        `running.test.ts` 23, 24 and 29 for one seeded property over 0-2 h
+        and 29's boundaries; four tautologies (`YOLK_RADIUS_FRAC`,
+        `LEAN_RATIO`, `YOLK_WORD_CUTS.length`, `PullLineTests.keys`); one
+        copy each of the tests `core.test.ts` and `validate.ts` share (7b,
+        9, 15b); the 20 titles citing review or decision numbers renamed
+        by behaviour, and the drifted ordinals (record 4b4/4b5, copy's two
+        1e).
+  - [ ] *A further tranche of test feedback* from the red team, after
+        the refactor (3.7, 3.9-3.12).
 
 **Size.** Outside the fixtures and the drafts the repo grew about 7.9k
 lines; shipped code 39.4k → 42.2k (core +15%, the Swift core +12%, the
