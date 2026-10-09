@@ -90,6 +90,15 @@ const toCoolEnd: Step = {
   },
 };
 const reopen: Step = { name: 'reload', run: (tab) => tab.reload() };
+/** Sous-vide chosen, as a tap does: it is never stored, so it cannot be
+ *  planted, and a reload comes back to the pan. */
+const sousVide: Step = {
+  name: 'sous-vide',
+  run: async (tab) => {
+    await tab.click('#startSous');
+    await tab.until("__snap().settings.startMode === 'sous'", 'sous-vide chosen');
+  },
+};
 /** Wait until the feedback fold is done: no note says "learning…". */
 const learned: Step = {
   name: 'learned',
@@ -139,13 +148,13 @@ const SCENARIOS: CopyScenario[] = [
   { name: 'room temp', settings: { startTempMode: 'room' }, steps: [] },
   { name: 'pan remembered', settings: {}, boil: { '2.0': 480 }, steps: [] },
   { name: 'pan remembered, hot standing', settings: { startMode: 'hot', afterBoil: 'off' }, boil: { '2.0': 480 }, steps: [] },
-  { name: 'sous-vide jammy', settings: { startMode: 'sous' }, steps: [] },
-  { name: 'sous-vide 0.8', settings: { startMode: 'sous', doneness: 0.8 }, steps: [] },
-  { name: 'sous-vide 0.9', settings: { startMode: 'sous', doneness: 0.9 }, steps: [] },
-  { name: 'sous-vide hard', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
+  { name: 'sous-vide jammy', settings: {}, steps: [sousVide] },
+  { name: 'sous-vide 0.8', settings: { doneness: 0.8 }, steps: [sousVide] },
+  { name: 'sous-vide 0.9', settings: { doneness: 0.9 }, steps: [sousVide] },
+  { name: 'sous-vide hard', settings: { doneness: 1 }, steps: [sousVide] },
   // A time of day and numbers in a 12-hour, comma-grouped locale.
-  { name: 'sous-vide jammy, en-US', lang: 'en-US', settings: { startMode: 'sous' }, steps: [] },
-  { name: 'sous-vide hard, en-US', lang: 'en-US', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
+  { name: 'sous-vide jammy, en-US', lang: 'en-US', settings: {}, steps: [sousVide] },
+  { name: 'sous-vide hard, en-US', lang: 'en-US', settings: { doneness: 1 }, steps: [sousVide] },
   // The spoken countdown at one of each, so "1 seconds" would show.
   {
     name: 'hot cook, spoken at 61 s and 1 s',
