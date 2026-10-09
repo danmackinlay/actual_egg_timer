@@ -2,6 +2,7 @@ import Foundation
 import CryptoKit
 import DeviceCheck
 import EggTimerCore
+import EggTimerApp
 
 /// Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
 /// turns it on sends every egg in the log to the collection endpoint, the
@@ -57,15 +58,9 @@ final class Sharing {
     private(set) var state = ShareState()
     @ObservationIgnored private var attest: Attest?
 
-    /// What sharing needs of the planner, read when it needs it.
-    struct Host {
-        var log: @MainActor () -> [EggRecord]
-        /// How many of the log's eggs are final: all, unless the last is the
-        /// egg on screen, whose answers may still come.
-        var finalCount: @MainActor () -> Int
-    }
-
-    @ObservationIgnored private var host: Host?
+    /// What sharing needs of the planner, read when it needs it
+    /// (`ShareHost`, in EggTimerApp).
+    @ObservationIgnored private var host: ShareHost?
     /// Bumped by every change of id, so a send in flight for an old one lands
     /// on nothing.
     @ObservationIgnored private var generation = 0
@@ -160,9 +155,9 @@ final class Sharing {
     /// Read what is kept, against the log as it now is, and send whatever is
     /// owed: a deletion not yet confirmed first, then any final egg. Once, at
     /// launch, after the planner has loaded.
-    func start(host: Host) {
+    func start(host: ShareHost) {
         self.host = host
-        let defaults = UserDefaults.standard
+        let defaults = Stores.store
         state = reconciled(Self.read(defaults.data(forKey: Self.stateKey)), logLength: host.log().count)
         attest = defaults.data(forKey: Self.attestKey).flatMap { try? JSONDecoder().decode(Attest.self, from: $0) }
         resume()
@@ -421,3 +416,6 @@ final class Sharing {
         }
     }
 }
+
+/// What the app's logic asks of sharing (`Services`, in EggTimerApp).
+extension Sharing: ResultSharing {}

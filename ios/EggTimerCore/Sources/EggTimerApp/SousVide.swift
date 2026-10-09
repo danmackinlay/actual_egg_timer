@@ -1,6 +1,7 @@
 import Foundation
 import EggTimerCore
 import EggTimerCopy
+import EggTimerShared
 
 /// What the app says when you ask it for a sous-vide egg.
 ///
@@ -23,17 +24,17 @@ import EggTimerCopy
 /// is no third mode - which is why this is an app type and `StartMode` in the
 /// core stays a pair. The web draws the same distinction, as `UiStartMode` in
 /// `src/ui/store.ts`.
-enum StartChoice: String, CaseIterable, Sendable {
+public enum StartChoice: String, CaseIterable, Sendable {
     case cold, hot, sousVide
 }
 
-struct SousVideCopy {
+public struct SousVideCopy {
     /// Big text, in place of the clock.
-    let headline: String
-    let subline: String
-    let note: String
-    let warn: String
-    let hint: String
+    public let headline: String
+    public let subline: String
+    public let note: String
+    public let warn: String
+    public let hint: String
 }
 
 /// Whole days between two instants, by local midnight rather than by elapsed
@@ -56,7 +57,7 @@ private func dayOfWeek(_ date: Date) -> Int {
     Calendar.current.component(.weekday, from: date) - 1
 }
 
-func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) -> SousVideCopy {
+public func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) -> SousVideCopy {
     let start = now.addingTimeInterval(-est.totalS)
     let duration = tr(longDuration(est.totalS))
     let bath = showIn(units, .temperature, est.bathC)
