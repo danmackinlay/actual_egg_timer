@@ -112,7 +112,7 @@ export interface CookEvents {
 }
 
 /** A cook with nothing observed yet. */
-export const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
+const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
 
 /**
  * The plan as the cook ran (running-cook review 1.3, 2.4): what the record
@@ -200,7 +200,7 @@ export interface CookPot {
 
 /** The egg's temperature as it goes in, C: a preset's (`startTempPreset_C`,
  *  which a measured room moves), or the cook's own number. */
-export function eggStartOf(ch: CookChoices): number {
+function eggStartOf(ch: CookChoices): number {
   if (ch.eggFrom === 'custom') return ch.customStart_C;
   return startTempPreset_C(ch.eggFrom, ch.room_C);
 }
@@ -836,7 +836,7 @@ export function replan(
   if (resume !== null) ramp = resume.ramp_s;
   let pot = cookSetupOf(ch, ramp);
   // Null while the hint stands for it: solved only if the plan stops there.
-  let found: LevelAnswer | null = resume === null ? answerAt(c, pot.egg, pot.setup, ch.level, null, true) : null;
+  let found: LevelAnswer | null = resume === null ? answerAt(c, pot.egg, pot.setup, ch.level, null) : null;
   let lengthened = false;
   let slowHobAt: number | null = null;
 
@@ -869,7 +869,7 @@ export function replan(
         t = known;
         known = null;
       } else {
-        if (found === null) found = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+        if (found === null) found = answerAt(c, pot.egg, pot.setup, ch.level, null);
         t = carriedSolution(pot.egg, pot.setup, params, found.solution, carry).result.cookTime_s;
       }
       if (!crept && step === keptSteps) keptCarried = t;
@@ -891,7 +891,7 @@ export function replan(
       ramp = last + SLOW_HOB_EXTRA_S < most ? last + SLOW_HOB_EXTRA_S : most;
       lengthened = true;
       pot = cookSetupOf(ch, ramp);
-      found = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+      found = answerAt(c, pot.egg, pot.setup, ch.level, null);
       if (creeping) {
         crept = true;
       } else if (!crept) {
@@ -908,7 +908,7 @@ export function replan(
     };
   }
 
-  const mean = found !== null ? found : answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+  const mean = found !== null ? found : answerAt(c, pot.egg, pot.setup, ch.level, null);
   const inputs = lengthened ? null : decisionInputs(c, pot.egg, pot.setup);
   const s = inputs !== null && surface !== null && sameDecisionInputs(surface.inputs, inputs) ? surface : null;
   const profile = s === null ? null : s.profile;

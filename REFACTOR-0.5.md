@@ -224,19 +224,23 @@ gate could catch it.
 Only one old format is on real users' devices: 0.3's `calibration.v4`, the
 eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
-- [ ] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
+- [x] **2.5 Formats that only ever existed on unreleased builds**: `aet.cook.v3`
       / iOS `cookInProgress.v2`; the single-string unread-cook readers
       (`calibrationStore.ts:408, 427`, `Calibration.swift:480`);
       `aet.calibration.v3`; `Attest.madeAt` optional; AppClock's
       `-clockOffset`/`-clockEpoch` older form; the e2e `upgrade` scenario. S.
+      *The readers, keys and scenario went with 107's sweep (their keys stay
+      on its list); left were `madeAt`'s old-record default and the older
+      clock arguments, gone in the commit that ticks this.*
 - [x] **2.6 Old cooks kept aside that nothing reads.** `takeOldCooks`,
       `keepUnreadCook`, iOS `oldKeys` / `unreadCookKey`: `eggsImport.ts:152`
       passes them over. Delete; keep only iOS ending old Live Activity cards.
       Cost: a 0.3 user mid-cook at the deploy loses one unanswered egg.
       OWNER (amends 81/97). S.
-- [ ] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
+- [x] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
       `eggMass`, `cooling`, optional `countsUp`/`cook`/`lang`): a Live Activity
-      lives 8-12 hours. S.
+      lives 8-12 hours. S. *A card 0.3 began is no longer read
+      (`ios/README.md`).*
 - [x] **2.8 The second guard.** D81's in-place unread records, `overlay` /
       `Kept.stored`, `moved` and the positional re-merge (written three
       times: TS, Swift, `eggsImport.ts`) defend against an older build
@@ -259,17 +263,21 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Dead code and parameters
 
-- [ ] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
+- [x] **2.12 `snapRetry`** ✔ is `true` in every production call (web, iOS,
       both running cooks); only `tools/fixtures/reach.ts` passes `false`, and
       the doc at `reach.ts:395` says otherwise. Remove it and its fixture
       rows. S.
-- [ ] **2.13 Exports used only in their own file or only by tests**:
+- [x] **2.13 Exports used only in their own file or only by tests**:
       `NO_EVENTS`, `eggStartOf`, `likelyTimeRange`, `oddsAtLevel`,
       `slowHobHintFits`, `posteriorAlphaRelSd`, `posteriorMeanOffset`,
       `LITERATURE_START`, `volumeKey`, `jsonString`, the unit constants,
       `yolkWordIndex`, `yolkWordBands`, `templatesOf`; web `controlsChoices`;
       `machine.ts` (23 lines) into `phaseView.ts`. Finishes SHIP-0.5 E's
-      last item. S.
+      last item. S. *Kept exported: what a tool imports (`posteriorMeanOffset`,
+      `yolkWord*`, `templatesOf`), what a test checks as a unit of its own
+      (`oddsAtLevel`, `slowHobHintFits`, `posteriorAlphaRelSd`, `volumeKey`,
+      `jsonString`, and the like in `server/` and `src/ui/now.ts`), every type
+      an exported function names, and `tools/fixtures/` (another branch's).*
 - [x] **2.14 The three-way yolk answer** (−1/0/1): never written now, still a
       branch in `answerLikelihood` with ~115 fixture rows. Kept by D81 for
       the owner's log; it goes only with a one-off rewrite of that log.
@@ -277,17 +285,23 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 
 ### Repo, docs, branches
 
-- [ ] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
+- [x] **2.15 Closed documents to `archive/`** (or delete; git keeps them):
       WORKLIST (795, "every item is done"), FOLLOWUP (0 open), REVIEW-0.4.x,
       SHIP-0.4 once 0.4 ships, and the three design reviews with
       near-identical names (`one-screen-review.md`, `onescreen-review.md`,
       `running-cook-review.md`). Fix PLAN's map (it omits three files) and
       PLAN.md:40 ("on this branch, `0.4.x`"). Already decided for
-      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S.
-- [ ] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
+      WORKLIST/FOLLOWUP after `tidy2` (SHIP-0.5 E). S. *WORKLIST and
+      FOLLOWUP deleted (in git at `14603cd`); REVIEW-0.4.x and the three
+      reviews in `archive/`. SHIP-0.4 stays: its open release items (the
+      privacy page's OWNER marks, App Privacy, App Attest) are 0.5's now.
+      PLAN's map is the merging session's (DECISIONS 104).*
+- [x] **2.16 Studies out of `tools/`**: identifiability, rank, probe +
       perturbed, decide (INFERENCE §8's numbers), shape-study, into
       `studies/` with their own tsconfig, out of the default build, each
-      with a line saying which document quotes it. S.
+      with a line saying which document quotes it. S. *`studies/tsconfig.json`
+      references the root project, since `decide.ts` uses `tools/common.ts`;
+      `posterior.ts`, which the tests import, stays in `tools/`.*
 - [x] **2.17 38 worktrees, 45 branches, 42 of them merged.** Pruned by the
       owner, 9 October 2026: 30 merged, clean worktrees and their branches;
       13 worktrees and 25 branches left.

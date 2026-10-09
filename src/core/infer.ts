@@ -236,7 +236,7 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  *                                 h ~ Exponential(mean PROBE_HANDLING_MEAN_C)
  *
  * `e` is the thermometer: symmetric, about a degree for anything worth owning
- * (tools/probe.ts). `h` is the handling, and it is ONE-SIDED, and COLD. At the
+ * (studies/probe.ts). `h` is the handling, and it is ONE-SIDED, and COLD. At the
  * moment the centre peaks it is the warmest point in the egg, in space and in
  * time: `npm run probe` has a probe 3 mm off reading 0.03 C low, 15 s late
  * 0.14 C low, 30 s late 0.6 C low, and a probe that has not finished

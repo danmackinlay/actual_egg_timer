@@ -24,7 +24,7 @@ import { Cooling, StartMode } from '../src/core/protocol.js';
 import {
   CookChoices, CookPlan, RunningCook, eventsDue, replan, startCook, withBoil, withOut,
 } from '../src/core/running.js';
-import { coolingStartsIn_s } from '../src/ui/machine.js';
+import { coolingStartsIn_s } from '../src/ui/phaseView.js';
 import { knowing } from '../tools/common.js';
 
 const C = knowing({ particles: 200, eggsLogged: 0 });

@@ -197,7 +197,7 @@ export function whiteAtRisk(o: Outcome): boolean {
 /** The same, for a cook as it ran: its forecast's chance of a runny white,
  *  which is the outcome's `pWhiteRunny` (`forecastOf`). Done reads this, not
  *  a plan made since, which may know how the egg came out
- *  (design/running-cook-review.md 2.4). */
+ *  (archive/design/running-cook-review.md 2.4). */
 export function forecastWhiteAtRisk(f: Forecast): boolean {
   return f.white[0] >= WHITE_RISK;
 }

@@ -21,7 +21,7 @@ the first draft of this file in `DECISIONS.md` 96:
 So a cook is its start, its setup and its observed events, and everything
 else is derived from them each time. §3 is that model, §4 is the state that
 carries it in both apps, and §7 holds the questions still open. The
-red-team review of §3 and §4 (`design/one-screen-review.md`) is applied
+red-team review of §3 and §4 (`archive/design/one-screen-review.md`) is applied
 here and in core as `DECISIONS.md` 98 settled it (marked "review" and its
 finding's number where it changed the text). Proposed
 words are placeholders for a named draft (`onescreen` for the screen,
@@ -483,7 +483,7 @@ The functions, all pure and fixtured:
   that far is the same egg (`test/section.test.ts` 7). About 2,700 steps
   for a soft-boiled egg, once per solve.
 
-*As built, after the running-cook review* (`design/running-cook-review.md`,
+*As built, after the running-cook review* (`archive/design/running-cook-review.md`,
 8 October 2026; core only, the apps' part listed there):
 - **The slow hob's hint** (2.1): `replan(cook, c, surface, leanHint_s, now_s,
   hint)`, `hint` the last plan's `slowHob`: the last lengthening that did not
@@ -512,7 +512,7 @@ The functions, all pure and fixtured:
   call too, of the plan it holds; `cookStillOpen(cook, plan, storedId_ms,
   now_s)` tells a screen its egg is no longer open with no second plan.
 
-*As built, after the one screen's review* (`design/onescreen-review.md`,
+*As built, after the one screen's review* (`archive/design/onescreen-review.md`,
 9 October 2026; core, for both apps, with the web's part):
 - **Done keeps Done** (2.1). A correction once the cook is Done corrects
   only the record. On the counter the egg is Done at the out, so a

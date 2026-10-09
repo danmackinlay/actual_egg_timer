@@ -180,8 +180,6 @@ const NOT_COPY: Record<string, string> = {
   // the debug clock (ios/App/AppClock.swift) and what the scripted checks
   // read and tap with (tools/iosE2e.mjs)
   clockSpeed: 'debug launch argument',
-  clockOffset: 'debug launch argument',
-  clockEpoch: 'debug launch argument',
   clockAt: 'debug launch argument',
   'aet.clock': 'the file the debug clock is stepped through, never shown',
   'clock {} at {} speed {}': 'debug log (Screenshots.log), never shown',
@@ -260,7 +258,7 @@ const NOT_COPY: Record<string, string> = {
   ' {} {} | {} | {}': 'debug log of one frame of the readout (Screenshots.log), never shown',
   uiScrollAnchor: 'debug launch argument',
   'verdict {} white sets {} cook {}': 'debug log (Screenshots.log), never shown',
-  // the one screen's review on iOS (design/onescreen-review.md), its checks
+  // the one screen's review on iOS (archive/design/onescreen-review.md), its checks
   'certainty {}': 'debug log (Screenshots.log), never shown',
   '{} | {}': 'debug log of the certainty line (Screenshots.log), never shown',
   'white {}': 'debug log (Screenshots.log), never shown',

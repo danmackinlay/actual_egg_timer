@@ -1216,8 +1216,8 @@ final class Cook {
     private static func logCard(_ what: String, _ s: CookActivity.ContentState) {
         Screenshots.log(
             "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
-                + " up \(s.countsUp == true)"
-                + " cook \(s.cook?.doneness ?? "-")|\(s.cook?.peakYolk ?? "-")|\(s.cook?.eggMass ?? "-")|\(s.cook?.cooling ?? "-")"
+                + " up \(s.countsUp)"
+                + " cook \(s.cook.doneness)|\(s.cook.peakYolk)|\(s.cook.eggMass)|\(s.cook.cooling)"
         )
     }
     #endif

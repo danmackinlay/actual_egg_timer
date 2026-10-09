@@ -58,9 +58,9 @@
  * points, as the slider is on a drag, is held between those two points'
  * times (`envelopeBounds`). So the time is monotone at the points, and
  * within about a second of it between them: the choice can dip inside the
- * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does (REVIEW-0.4.x, and
- * DECISIONS.md 84, which accepts it). A drag costs what it did: its own
- * decision, and a look-up. What
+ * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does
+ * (archive/REVIEW-0.4.x.md, and DECISIONS.md 84, which accepts it). A drag
+ * costs what it did: its own decision, and a look-up. What
  * the sampling misses is a dip in the choices narrower than the step between
  * points; the time it gives there is within one step's change of the
  * choice, a few seconds. A bisection point is held between its neighbours,
@@ -82,7 +82,7 @@
  * chosen, the solve re-read there, the outcome and the certainty there, and
  * whether the word asked is a wild guess there, so advice is looked for. Until 6 October 2026 each
  * app wrote it out for itself, and DECISIONS.md 84 had to land twice
- * (REVIEW-0.4.x, "Bloat and factoring" 1).
+ * (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
  *
  * THE WARNING. A level that is a wild guess at its time (`certaintyAt`'s
  * class: the word asked and its neighbours together under 9 times in 10) is
@@ -391,18 +391,14 @@ export interface LevelAnswer {
  * the level it moves to - so the numbers on screen are for the egg on offer
  * rather than for one that was refused. The retry is kept only if it
  * reaches. Then whether the odds at the level answered are warned of.
- *
- * `snapRetry` is false for an egg already in the water: its target is
- * frozen, so a solve at a snapped level would answer for an egg nobody is
- * cooking.
  */
 export function answerAt(
-  c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null, snapRetry: boolean,
+  c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null,
 ): LevelAnswer {
   const params = calibrationParams(c);
   const solution = solveCookTime(egg, setup, params, calibrationDoneness(c, level));
   const verdict = verdictFor(solution, level);
-  if (snapRetry && verdict.snapTo !== null) {
+  if (verdict.snapTo !== null) {
     const retry = solveCookTime(egg, setup, params, calibrationDoneness(c, verdict.snapTo));
     if (retry.reachable) {
       return { solution: retry, verdict: verdict, level: verdict.snapTo, lowOdds: lowOddsAt(profile, verdict.snapTo) };

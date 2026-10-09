@@ -59,7 +59,7 @@ const LEVELS = [0.22, 0.41, 0.62, 0.85, 1.0];
 /** What the apps do (`answerAt`): the mean solve, the verdict, a snap if
  *  there is one, and the level the solve is for. */
 function meanSolve(c: Calibration, level: number, setup = SETUP): { sol: Solution; level: number } {
-  const a = answerAt(c, EGG, setup, level, null, true);
+  const a = answerAt(c, EGG, setup, level, null);
   return { sol: a.solution, level: a.level };
 }
 

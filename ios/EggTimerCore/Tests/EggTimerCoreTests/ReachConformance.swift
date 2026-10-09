@@ -106,7 +106,7 @@ struct ReachConformance {
                 } else {
                     #expect(bounds == nil, "\(label) bounds at \(level)")
                 }
-                let a = answerAt(c, egg: egg, setup: setup, level: level, profile: p, snapRetry: true)
+                let a = answerAt(c, egg: egg, setup: setup, level: level, profile: p)
                 let d = decide(
                     c, grid: grid, solution: a.solution, logNominalTarget: logYolkTarget(a.level),
                     bounds: envelopeBounds(p, level: a.level)
@@ -131,13 +131,11 @@ struct ReachConformance {
             let egg = try Geometry.eggFromMass(p.object("egg").num("mass_kg"))
             let level = try row.num("level")
             let withOdds = try row.flag("withOdds")
-            let snapRetry = try row.flag("snapRetry")
             let a = try answerAt(
                 c, egg: egg, setup: cookSetup(p.object("setup")), level: level,
-                profile: withOdds ? profileOf(p.object("profile")) : nil,
-                snapRetry: snapRetry
+                profile: withOdds ? profileOf(p.object("profile")) : nil
             )
-            let label = "profile \(index) at \(level), odds \(withOdds), retry \(snapRetry)"
+            let label = "profile \(index) at \(level), odds \(withOdds)"
             #expect(try a.verdict.kind.rawValue == row.str("kind"), "\(label) kind")
             #expect(try a.verdict.snapTo == row.optionalNum("snapTo"), "\(label) snapTo")
             #expect(try a.level == row.num("answeredLevel"), "\(label) level")
@@ -176,7 +174,7 @@ struct ReachConformance {
                 let drawn = try row.num("drawn_s")
                 let label = "\(pot.label) at \(asked), odds \(withOdds), nudge \(drawn)"
                 let odds = withOdds ? profile : nil
-                let a = answerAt(c, egg: egg, setup: setup, level: asked, profile: odds, snapRetry: true)
+                let a = answerAt(c, egg: egg, setup: setup, level: asked, profile: odds)
                 #expect(try a.level == row.num("answeredLevel"), "\(label) answered level")
                 #expect(try a.lowOdds == row.flag("lowOdds"), "\(label) low odds")
                 let own = decide(c, grid: grid, solution: a.solution, logNominalTarget: logYolkTarget(a.level))

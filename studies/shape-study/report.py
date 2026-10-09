@@ -2,7 +2,7 @@
 """Print the tables in RESULTS.md from results.json (and, if it is there,
 results-quick.json for the mesh-convergence line).
 
-    python3 tools/shape-study/report.py
+    python3 studies/shape-study/report.py
 """
 
 import json

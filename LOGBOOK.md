@@ -6624,3 +6624,42 @@ alone, sent the deletion before the reload landed. The patched `fetch` had
 been counted per document, since the patch ran again in each; DevTools'
 events are per tab, so the harness now counts a request against the
 document that made it (its loader).
+
+## 10 October 2026: the deletions that needed no decision (REFACTOR-0.5 2.5, 2.7, 2.12, 2.13, 2.15, 2.16)
+
+One commit each, each through `verify`, `build:site`, `e2e` and
+`ios:build`, and `ios:e2e` (48 of 48) after each that touched Swift.
+
+- **2.5, unreleased formats.** 107's sweep had already taken the readers,
+  keys and the upgrade scenario the worklist named; its list of retired
+  keys stays. Left were sharing's `madeAt` default (an attestation kept
+  without one was taken as stale) and AppClock's `-clockOffset` /
+  `-clockEpoch`, which no script passed.
+- **2.7, the Live Activity's legacy fields.** The card is read in this
+  build's shape only. A card 0.3 began, on the Lock Screen when 0.5
+  installs, no longer decodes, so the launch cannot end it early; it lasts
+  as long as the system keeps a card.
+- **2.12, `snapRetry`.** True in every call; the reach fixture loses the
+  rows for the branch nothing ran (390 lines).
+- **2.13, exports.** Traced over `src/`, `server/` and `tools/` (not
+  `tools/fixtures/`, being changed on another branch, where `NOMINAL_TARGET`,
+  `BASE_CHOICES`, `START_S` and `MEMORY` are exported for nobody). Kept:
+  what a tool imports, what a test checks as a unit, and every type an
+  exported function names. `machine.ts` is in `phaseView.ts`.
+- **2.15, closed documents.** `WORKLIST.md` and `FOLLOWUP.md` deleted (read
+  them at `14603cd`). Of `tidy2`'s 13 keys, the copy review queue lists
+  the five that changed or went since the owner read every string at
+  `e3a81cb`; the other eight are approved as he read them then, after
+  `tidy2` landed. `REVIEW-0.4.x.md` and the three design reviews are in
+  `archive/`. `SHIP-0.4.md` stays: its open release items are 0.5's.
+  `tools/e2e.ts`'s header still names `design/running-cook-review.md`.
+- **2.16, studies.** identifiability, rank, probe, perturbed, decide and
+  the shape study are in `studies/`, with `studies/tsconfig.json`, outside
+  `npm run build`; each npm script builds them first. Each ran from there
+  (identifiability, rank, probe, `decide -- lean`, the shape study's
+  reference), and each says which document quotes it.
+
+**For PLAN's map at merge:** the rows for `WORKLIST.md` and `FOLLOWUP.md`
+go; `design/running-cook-review.md` and `design/onescreen-review.md`
+become `archive/design/…`, and the status lines at PLAN.md 34, 53, 55, 59
+and 224 cite `archive/`. `studies/` wants a row.

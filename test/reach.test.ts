@@ -54,7 +54,7 @@ const PARTICLES = 400;
  *  the profile or without it: the time held by the profile's envelope, as the
  *  apps hold it (`decideAnswer`, with no nudge). */
 function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, profile: OddsProfile | null) {
-  const a = answerAt(c, EGG, setup, level, profile, true);
+  const a = answerAt(c, EGG, setup, level, profile);
   return {
     verdict: a.verdict, level: a.level, lowOdds: a.lowOdds,
     decision: decideAnswer(c, EGG, setup, grid, a.solution, a.level, profile, 0).decision,
@@ -87,7 +87,7 @@ test('1. a profile point is the odds and the certainty the app shows at that lev
   assert.ok(p.points.length >= 19, `${p.points.length} points`);
   for (let i = 1; i < p.points.length; i++) assert.ok(p.points[i].level > p.points[i - 1].level);
   for (const q of p.points) {
-    const a = answerAt(WHITE_BOUND, EGG, SETUP, q.level, p, true);
+    const a = answerAt(WHITE_BOUND, EGG, SETUP, q.level, p);
     const shown = decideAnswer(WHITE_BOUND, EGG, SETUP, grid, a.solution, a.level, p, 0);
     const d = shown.decision;
     assert.equal(d.odds, q.odds, `level ${q.level}`);
@@ -111,7 +111,7 @@ test('2. a fresh install is warned of nothing, at any level, and is never very c
     assert.ok(p.points.every((q) => q.certainty !== 'veryCertain'), 'never very certain');
     assert.ok(p.points.some((q) => q.certainty === 'ballpark'), 'a ballpark at the firm end');
     for (const level of [0, 0.22, 0.41, 0.62, 1]) {
-      const a = answerAt(FRESH, EGG, setup, level, p, true);
+      const a = answerAt(FRESH, EGG, setup, level, p);
       const sol = solveCookTime(EGG, setup, calibrationParams(FRESH), calibrationDoneness(FRESH, level));
       assert.deepEqual(a.verdict, verdictFor(sol, level));
       assert.equal(a.lowOdds, false, `level ${level}`);
@@ -146,7 +146,7 @@ test('3. after an egg, the range that is not a wild guess is on the slider\'s gr
   // Asked for a level the pan delivers but a wild guess: the slider stays, the
   // answer is for that level, it is a wild guess on screen, and it is warned of.
   for (const level of [p.physicalSoftest, Math.round(softest * 100 - 1) / 100]) {
-    const a = answerAt(unsure, EGG, SETUP, level, p, true);
+    const a = answerAt(unsure, EGG, SETUP, level, p);
     const shown = decideAnswer(unsure, EGG, SETUP, grid, a.solution, a.level, p, 0);
     assert.equal(a.verdict.kind, 'none', `asked ${level}`);
     assert.equal(a.level, level, `asked ${level}`);
@@ -176,7 +176,7 @@ test('3a. a white-bound cook is no wild guess anywhere, so nothing is dotted; wh
   assert.equal(stripes.level, p.physicalSoftest);
   assert.equal(stripes.lowOdds, false);
   // At the edge the white holds the time late: runny is asked, and seldom got.
-  const a = answerAt(WHITE_BOUND, EGG, SETUP, p.physicalSoftest, p, true);
+  const a = answerAt(WHITE_BOUND, EGG, SETUP, p.physicalSoftest, p);
   const shown = decideAnswer(WHITE_BOUND, EGG, SETUP, grid, a.solution, a.level, p, 0).certainty.words;
   console.log(`# white-bound at ${a.level}: ${shown.certainty}, P(asked) ${shown.pAsked.toFixed(2)}, most likely ${shown.mostLikely}`);
   assert.ok(shown.mostLikely > shown.asked, 'a firmer yolk is likelier');
@@ -195,7 +195,7 @@ test('4. when every level is a wild guess, nothing is warned of', () => {
   assert.equal(p.softest, null);
   assert.equal(p.hardest, null);
   for (const level of [0, 0.22, 1]) {
-    const a = answerAt(scattered, EGG, SETUP, level, p, true);
+    const a = answerAt(scattered, EGG, SETUP, level, p);
     const sol = solveCookTime(EGG, SETUP, calibrationParams(scattered), calibrationDoneness(scattered, level));
     assert.deepEqual(a.verdict, verdictFor(sol, level));
     assert.equal(a.lowOdds, false);
@@ -342,7 +342,7 @@ function cookedAt(setup: CookSetup, egg: Egg, n: number, word: 'runny' | 'soft' 
   const c: Calibration = { posterior: post, eggsLogged: 0 };
   for (let k = 0; k < n; k++) {
     const grid = gridFor(c, egg, setup);
-    const a = answerAt(c, egg, setup, 0.41, null, true);
+    const a = answerAt(c, egg, setup, 0.41, null);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, null, 0);
     updatePosterior(post, grid, d.decision.cookTime_s, word, 'tender');
     c.eggsLogged += 1;
@@ -357,7 +357,7 @@ test('9. on the model, ice makes a counter rest surer once it has bitten, and no
     const p = oddsProfile(c, egg, COUNTER, grid);
     const change = pricedChanges(COUNTER)[0];
     const ice = oddsProfile(c, egg, change.setup, gridFor(c, egg, change.setup));
-    const a = answerAt(c, egg, COUNTER, level, p, true);
+    const a = answerAt(c, egg, COUNTER, level, p);
     const d = decideAnswer(c, egg, COUNTER, grid, a.solution, a.level, p, 0);
     const advice = protocolAdvice(
       COUNTER, { eggFromClass: false, startAssumed: false }, d.level, d.certainty.words.pAsked,
@@ -390,7 +390,7 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   // level above runny, so asked for runny, the slider goes there.
   const cold = appSetup({ startMode: 'cold' });
   const freshGrid = gridFor(FRESH, EGG, cold);
-  const fresh = answerAt(FRESH, EGG, cold, 0, oddsProfile(FRESH, EGG, cold, freshGrid), true);
+  const fresh = answerAt(FRESH, EGG, cold, 0, oddsProfile(FRESH, EGG, cold, freshGrid));
   assert.equal(fresh.verdict.kind, 'tooSoftForWhite');
   assert.ok(fresh.verdict.snapTo !== null && fresh.verdict.snapTo > 0);
   // Where both apps put the slider (the iOS thumb too, once the finger
@@ -414,7 +414,7 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   const c = knowing({ particles: PARTICLES, eggsLogged: 3 });
   const grid = gridFor(c, EGG, cold);
   const coldProfile = oddsProfile(c, EGG, cold, grid);
-  const a = answerAt(c, EGG, cold, 0, coldProfile, true);
+  const a = answerAt(c, EGG, cold, 0, coldProfile);
   assert.equal(a.level, a.verdict.snapTo ?? 0);
   const target = logYolkTarget(a.level);
   const d = decide(c, grid, a.solution, target, envelopeBounds(coldProfile, a.level));
@@ -442,8 +442,8 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   const grid = gridFor(c, egg, SETUP);
   const p = oddsProfile(c, egg, SETUP, grid);
   const soft = 0.22;
-  const a = answerAt(c, egg, SETUP, soft, p, true);
-  const jammy = answerAt(c, egg, SETUP, 0.41, p, true);
+  const a = answerAt(c, egg, SETUP, soft, p);
+  const jammy = answerAt(c, egg, SETUP, 0.41, p);
   const own = decide(c, grid, a.solution, logYolkTarget(a.level));
   const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(p, a.level));
   const o = predictOutcome(c.posterior, grid, d.cookTime_s, logYolkTarget(a.level));
@@ -482,7 +482,7 @@ function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: Odd
   const lo = Math.round(profile.physicalSoftest * 100);
   const hi = Math.round(profile.physicalHardest * 100);
   for (let k = lo; k <= hi; k++) {
-    const a = answerAt(c, egg, setup, k / 100, profile, true);
+    const a = answerAt(c, egg, setup, k / 100, profile);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
     times.push([a.level, d.cookTime_s]);
   }
@@ -555,8 +555,8 @@ test('14. one decided answer for both apps: the soft yolk chosen again and held 
   const c: Calibration = { posterior: post, eggsLogged: 1 };
   const grid = gridFor(c, egg, SETUP);
   const p = oddsProfile(c, egg, SETUP, grid);
-  const soft = answerAt(c, egg, SETUP, 0.22, p, true);
-  const jammy = answerAt(c, egg, SETUP, 0.41, p, true);
+  const soft = answerAt(c, egg, SETUP, 0.22, p);
+  const jammy = answerAt(c, egg, SETUP, 0.41, p);
   const d = decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, p, 0);
   const dj = decideAnswer(c, egg, SETUP, grid, jammy.solution, jammy.level, p, 0);
   // DECISIONS.md 83: soft is decided at soft, not moved. It was warned of
@@ -595,7 +595,7 @@ test('14. one decided answer for both apps: the soft yolk chosen again and held 
   const never = appSetup({ eggCount: 12, afterBoil: 'off', waterLitres: 0.3 });
   const learned = knowing({ particles: PARTICLES, eggsLogged: 3 });
   const neverGrid = gridFor(learned, EGG, never);
-  const a = answerAt(learned, EGG, never, 0.41, null, true);
+  const a = answerAt(learned, EGG, never, 0.41, null);
   assert.equal(a.solution.whiteSets, false);
   const dn = decideAnswer(learned, EGG, never, neverGrid, a.solution, a.level, null, -7);
   assert.equal(dn.decision.chosen, false);

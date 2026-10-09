@@ -31,7 +31,7 @@ These counts are the only ones in the documents. If you want a number, run
 
 1. **The owner's reviews** (the queue below).
 2. **An adversarial QA pass** against this baseline, starting from the QA
-   list below. The owner's review of the 0.4 line, `REVIEW-0.4.x.md`, is
+   list below. The owner's review of the 0.4 line, `archive/REVIEW-0.4.x.md`, is
    actioned item by item; what is left there
    is marked OWNER, the owner's questions.
 3. **F5, Czech**, when the owner's friend can review it.
@@ -50,13 +50,13 @@ These counts are the only ones in the documents. If you want a number, run
    screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
-   (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
+   (`archive/design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
    on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
-   and red-teamed as built (`design/running-cook-review.md`): core's, the
+   and red-teamed as built (`archive/design/running-cook-review.md`): core's, the
    web's and iOS's findings fixed, before the one screen; certainty in words (93, D1),
    for the owner on a phone. The one screen is built in both apps (C3,
    for the owner on a phone), and red-teamed as built
-   (`design/onescreen-review.md`): core's and the web's findings fixed
+   (`archive/design/onescreen-review.md`): core's and the web's findings fixed
    (`DECISIONS.md` 99), and iOS's on the same core (9 October 2026). 0.5 is
    the next release and `0.4.x` is retired (`DECISIONS.md` 102).
 6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
@@ -221,7 +221,7 @@ The one queue. Nothing else in the documents waits on the owner.
     the eggs still in the water?" is open the Lock Screen card shows the
     pull, "now", with its line naming the cooling (`UI.md` §9).
 17. **The one screen's review, on a phone** (9 October 2026; the one screen's
-    review, `design/onescreen-review.md`, and `DECISIONS.md` 99), both
+    review, `archive/design/onescreen-review.md`, and `DECISIONS.md` 99), both
     apps: under the time, "about 8:00 to boil",
     guessed or remembered; once the eggs cook, the time range opened under
     the certainty line is when to take them out ("I think the right time
@@ -499,12 +499,12 @@ checked, fixed or deleted. Start the QA pass here.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
-| `WORKLIST.md` | the review of 28 September 2026, worked through |
-| `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
 | `REFACTOR-0.5.md` | the 0.5 red team's worklist: what is wrong now, the gates, what to delete, the restructure, the process; ticked as it lands |
+| `archive/` | closed records: the 0.4 review and the three design reviews of 0.5, kept for their findings |
+| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), outside the default build; each names the document that quotes it |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
-| `design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
-| `design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |
+| `archive/design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
+| `archive/design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

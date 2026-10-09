@@ -19,7 +19,7 @@ import {
 } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
 import {
-  IMPERIAL_PINT_L, Measure, OUNCE_G, QUANTITIES, Quantity, UNIT_SYSTEMS, US_QUART_L,
+  Measure, QUANTITIES, Quantity, UNIT_SYSTEMS,
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
@@ -27,6 +27,12 @@ import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { parseRecord } from '../src/core/record.js';
 import { replan, startCook } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
+
+/** The units' definitions, written out here rather than imported, so the
+ *  conversions are checked against them. */
+const OUNCE_G = 28.349523125;
+const US_QUART_L = 0.946352946;
+const IMPERIAL_PINT_L = 0.56826125;
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
