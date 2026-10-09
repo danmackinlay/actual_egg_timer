@@ -9,6 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isDeepStrictEqual } from 'node:util';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { LIMITS, START_TEMP_PRESETS_C } from '../src/core/inputs.js';
@@ -21,10 +22,10 @@ import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../src/core/infer.js';
 import {
   CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
-  SLOW_HOB_EXTRA_S, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, coldHistory, cookEnding,
+  SLOW_HOB_EXTRA_S, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, coolingSecondsFor, corrected, earliestStart_s, eventsDue,
   guessLengthened, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands, readRunningCook, replan, slowHobDue,
-  slowHobMemoFits, solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
+  solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -72,25 +73,25 @@ test('2. the boil is tapped once, on a cold start still heating, and not before 
   assert.equal(withBoil(out, S + 900), out);
 });
 
-test('3. a correction keeps the start and the events, and says since when the cook was told cold', () => {
+test('3. a correction keeps the start and the events; the tap is read by when the cook was told cold', () => {
   const tapped = withBoil(cookOf(), S + 500);
-  assert.equal(coldHistory(tapped).coldSince_s, S, 'cold from the start');
+  const remembered = { litres: 2, seconds: 500 };
+  assert.deepEqual(boilToRemember(tapped), remembered, 'cold from the start: the tap is the boil');
   const heavier = corrected(tapped, { ...CHOICES, mass_kg: 0.076 }, S + 600);
-  assert.deepEqual([heavier.startedAt_s, heavier.events, coldHistory(heavier).coldSince_s], [S, tapped.events, S]);
-  assert.equal(coldHistory(tapped).firstHotAt_s, null, 'never said boiling');
+  assert.deepEqual([heavier.startedAt_s, heavier.events, boilToRemember(heavier)], [S, tapped.events, remembered]);
   const boiling = corrected(tapped, { ...CHOICES, startMode: 'hot' }, S + 600);
   assert.equal(boiling.events.boilAt_s, S + 500, 'the tap is kept, unread');
-  assert.equal(coldHistory(boiling).coldSince_s, null);
-  assert.equal(coldHistory(boiling).firstHotAt_s, S + 600);
+  assert.equal(boilToRemember(boiling), null, 'said boiling: nothing to remember');
   const back = corrected(boiling, CHOICES, S + 610);
   assert.equal(back.events.boilAt_s, S + 500);
-  assert.equal(coldHistory(back).coldSince_s, S + 610, 'told cold again only now');
-  assert.equal(coldHistory(back).firstHotAt_s, S + 600, 'but the tap came before the choices first said boiling (review 2.2)');
-  assert.deepEqual(boilToRemember(back), boilToRemember(tapped), 'so changing back gives back the boil memory too');
-  assert.equal(coldHistory(corrected(corrected(back, { ...CHOICES, startMode: 'hot' }, S + 620), CHOICES, S + 630)).firstHotAt_s, S + 600);
-  const owner = corrected(cookOf({ startMode: 'hot' }), CHOICES, S + 240);
-  assert.equal(coldHistory(owner).coldSince_s, S + 240, "the owner's case: boiling corrected to cold");
-  assert.equal(coldHistory(owner).firstHotAt_s, S, 'begun boiling');
+  assert.deepEqual(boilToRemember(back), remembered, 'told cold again, but the tap came before the choices first said boiling (review 2.2)');
+  assert.deepEqual(
+    boilToRemember(corrected(corrected(back, { ...CHOICES, startMode: 'hot' }, S + 620), CHOICES, S + 630)), remembered,
+    'only the first boiling counts',
+  );
+  // The owner's case: begun boiling, corrected to cold at 240 s, tapped at 600 s.
+  const owner = withBoil(corrected(cookOf({ startMode: 'hot' }), CHOICES, S + 240), S + 600);
+  assert.deepEqual(boilToRemember(owner), { litres: 2, seconds: 600 }, 'watched from the correction to cold');
 });
 
 test('4. the start is corrected to no later than now or the first event, an unread one included', () => {
@@ -609,7 +610,12 @@ test('24. review 2.1: a hint made under anything else is ignored, never trusted'
   const at = S + 20 * 60;
   const hint = replan(cold, C, null, 0, at).memo as SlowHobPlace | null;
   assert.ok(hint !== null && hint.steps > 0);
-  assert.equal(slowHobMemoFits(hint, cold, C, 0, at + 30), true);
+  // Whether a plan takes the hint: one made wrong on purpose, a minute off
+  // its ramp, changes the plan only if it is read.
+  const wrong: SlowHobPlace = { ...hint, ramp_s: hint.ramp_s + 60 };
+  const takes = (cook: RunningCook, c = C, lean = 0, now = at + 30): boolean =>
+    !isDeepStrictEqual(replan(cook, c, null, lean, now, wrong), replan(cook, c, null, lean, now));
+  assert.equal(takes(cold), true);
   const fresh = (cook: RunningCook, c = C, lean = 0, now = at + 30): void => {
     assert.deepEqual(replan(cook, c, null, lean, now, hint), replan(cook, c, null, lean, now));
   };
@@ -617,32 +623,32 @@ test('24. review 2.1: a hint made under anything else is ignored, never trusted'
   // remembered, another calibration, the boil tapped, or a moment before the
   // place kept: each ignored.
   const heavier = corrected(cold, { ...CHOICES, mass_kg: 0.076 }, at + 10);
-  assert.equal(slowHobMemoFits(hint, heavier, C, 0, at + 30), false);
+  assert.equal(takes(heavier), false);
   fresh(heavier);
   const earlier = startCorrected(cold, S - 60, at + 10) as RunningCook;
-  assert.equal(slowHobMemoFits(hint, earlier, C, 0, at + 30), false);
+  assert.equal(takes(earlier), false);
   fresh(earlier);
-  assert.equal(slowHobMemoFits(hint, cold, C, 2, at + 30), false);
+  assert.equal(takes(cold, C, 2), false);
   fresh(cold, C, 2);
-  assert.equal(slowHobMemoFits(hint, cookOf({}, 3), C, 0, at + 30), false);
+  assert.equal(takes(cookOf({}, 3)), false);
   const pan = { ...cold, boilMemory: { '2.0': 500 } };
-  assert.equal(slowHobMemoFits(hint, pan, C, 0, at + 30), false);
+  assert.equal(takes(pan), false);
   fresh(pan);
   const other = knowing({ particles: 200, eggsLogged: 5, taste: 0.1, alphaFactor: 1.05 });
-  assert.equal(slowHobMemoFits(hint, cold, other, 0, at + 30), false);
+  assert.equal(takes(cold, other), false);
   fresh(cold, other);
   // An egg folded that moved only the taste, which the rule never reads,
   // keeps it: the guess is the same.
   const tasted = knowing({ particles: 200, eggsLogged: 5, taste: -0.1 });
-  assert.equal(slowHobMemoFits(hint, cold, tasted, 0, at + 30), true);
+  assert.equal(takes(cold, tasted), true);
   fresh(cold, tasted);
   const tapped = withBoil(cold, at + 5);
-  assert.equal(slowHobMemoFits(hint, tapped, C, 0, at + 30), false);
+  assert.equal(takes(tapped), false);
   fresh(tapped);
-  assert.equal(slowHobMemoFits(hint, cold, C, 0, S + hint.last_s), false, 'not past the place kept');
+  assert.equal(takes(cold, C, 0, S + hint.last_s), false, 'not past the place kept');
   fresh(cold, C, 0, S + hint.last_s - 5);
   // A correction that changes nothing the rule reads keeps it.
-  assert.equal(slowHobMemoFits(hint, corrected(cold, { ...CHOICES }, at + 10), C, 0, at + 30), true);
+  assert.equal(takes(corrected(cold, { ...CHOICES }, at + 10)), true);
   // A hot start has no guess, and no hint.
   assert.equal(replan(cookOf({ startMode: 'hot' }), C, null, 0, at).memo, null);
 });
