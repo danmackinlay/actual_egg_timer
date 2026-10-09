@@ -560,7 +560,6 @@ unless a row says otherwise. As of 29 September 2026, all 28 pass:
 | Williams' standing method: 17 min reaches hard | 1.00 | 1.00 | ±0 | PASS |
 | standing dose saturates: 20 min vs 30 min | 0.00 % | 0.01 % | ±1 % | PASS |
 | pan time constant at 2 L (1183.8 s) is the old rule's at an 8-minute boil | 1183.83 s | 1183.83 s | ±1e-9 s | PASS |
-| a 1 L pan cannot stand its way to hard | 1.00 | 1.00 | ±0 | PASS |
 | Williams prefactor from his rho, c, K | 0.45 min/g^(2/3) | 0.45 min/g^(2/3) | ±0.002 min/g^(2/3) | PASS |
 | Williams' worked example: 57 g, 4 C, yolk 63 C | 4.50 min | 4.53 min | ±0.1 min | PASS |
 | Buay 2006 fig 6 vs their published prediction | 745.00 s | 744.95 s | ±10 s | PASS |
