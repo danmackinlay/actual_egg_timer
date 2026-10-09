@@ -11,11 +11,11 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 408 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 37 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 40 on a simulator, each
+layout (`UI.md`). `npm test` runs 413 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 39 scenarios in headless
+Chrome and `npm run ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 160 tests
+machine and a loaded one. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 161 tests
 in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -62,11 +62,12 @@ These counts are the only ones in the documents. If you want a number, run
 6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
    (section 0), the gates that make the code safe to change (1), what to
    delete (2), the restructure (3) and the process (4), with the owner's
-   decisions marked (`DECISIONS.md` 102-107). Done: the copy review queue
-   (2.2). In flight: the fresh results log (2.6, 2.8, 2.9, 2.11, 2.14), the
-   bugs 0.2-0.4 and 0.6-0.7, the cycle check (1.3), one compile per
-   verify (1.5, 1.6). Then the rest of section 0, and the gates (1.1-1.9)
-   before the restructure.
+   decisions marked (`DECISIONS.md` 102-108). Done (9-10 October): the
+   bugs 0.2-0.7, the copy review queue in place of the drafts (2.1, 2.2),
+   the fresh results log (2.6, 2.8, 2.9, 2.11, 2.14), the cycle check
+   (1.3), one compile per verify with `validate` in it (1.5, 1.6), and the
+   start time out of the sentence (108). Next: the gates 1.4 and 1.7-1.9,
+   the deletions needing no decision, then 1.2 and the restructure (3).
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 

@@ -150,13 +150,13 @@ gate could catch it.
 
 ### Copy
 
-- [ ] **2.1 The applied drafts** ✔. `tools/drafts/` is 50 files, 6,675
+- [x] **2.1 The applied drafts** ✔. `tools/drafts/` is 50 files, 6,675
       lines, all compiled on every build; nothing replays them (each proof
       reads one draft against its own base commit). Keep only the drafts not
       yet approved; git and LOGBOOK keep the rest. Point
       `test/copyDraft.test.ts` at a synthetic draft. Rule: a draft is deleted
       when the owner approves it. S.
-- [ ] **2.2 OWNER: retire drafts for the usual i18n workflow.** Every word
+- [x] **2.2 OWNER: retire drafts for the usual i18n workflow.** Every word
       is in `copy/*.json` and `copy:literals` keeps words out of the code,
       so what changed is the catalogue's diff. What multi-platform projects
       do, mapped here:
@@ -209,7 +209,7 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       (`calibrationStore.ts:408, 427`, `Calibration.swift:480`);
       `aet.calibration.v3`; `Attest.madeAt` optional; AppClock's
       `-clockOffset`/`-clockEpoch` older form; the e2e `upgrade` scenario. S.
-- [ ] **2.6 Old cooks kept aside that nothing reads.** `takeOldCooks`,
+- [x] **2.6 Old cooks kept aside that nothing reads.** `takeOldCooks`,
       `keepUnreadCook`, iOS `oldKeys` / `unreadCookKey`: `eggsImport.ts:152`
       passes them over. Delete; keep only iOS ending old Live Activity cards.
       Cost: a 0.3 user mid-cook at the deploy loses one unanswered egg.
@@ -217,7 +217,7 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
 - [ ] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
       `eggMass`, `cooling`, optional `countsUp`/`cook`/`lang`): a Live Activity
       lives 8-12 hours. S.
-- [ ] **2.8 The second guard.** D81's in-place unread records, `overlay` /
+- [x] **2.8 The second guard.** D81's in-place unread records, `overlay` /
       `Kept.stored`, `moved` and the positional re-merge (written three
       times: TS, Swift, `eggsImport.ts`) defend against an older build
       writing a newer one's records, which the guard (D100) now prevents in
@@ -225,13 +225,13 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       the store text aside once and rebuilds. Close the guard's gap first:
       iOS marks with `MARKETING_VERSION` only, so two TestFlight builds of
       0.5.0 are equal to it. OWNER (amends 81). M.
-- [ ] **2.9 Stop writing the `t` column.** It buys nothing: 0.3 rewrites
+- [x] **2.9 Stop writing the `t` column.** It buys nothing: 0.3 rewrites
       the log from the fields it knows either way. OWNER (81). S.
 - [ ] **2.10 `tauAirScale`** (D95 holds it at 1.0): 27 occurrences in TS
       core, 25 in Swift, compared bit-for-bit, stored in the running cook's
       `asRan`. A constant, out of `ModelParams` and `asRan`; bump the cook key.
       M.
-- [ ] **2.11 One sweep of old keys at boot**, after the guard says this
+- [x] **2.11 One sweep of old keys at boot**, after the guard says this
       build may write: delete any `aet.*` key not on the current list (iOS: a
       retired-keys list, including the orphaned `probeAsked`). It replaces
       the per-store deletions, and `loadCook()` removing `aet.cook.v1` on
@@ -250,7 +250,7 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       `yolkWordIndex`, `yolkWordBands`, `templatesOf`; web `controlsChoices`;
       `machine.ts` (23 lines) into `phaseView.ts`. Finishes SHIP-0.5 E's
       last item. S.
-- [ ] **2.14 The three-way yolk answer** (−1/0/1): never written now, still a
+- [x] **2.14 The three-way yolk answer** (−1/0/1): never written now, still a
       branch in `answerLikelihood` with ~115 fixture rows. Kept by D81 for
       the owner's log; it goes only with a one-off rewrite of that log.
       OWNER. S.
