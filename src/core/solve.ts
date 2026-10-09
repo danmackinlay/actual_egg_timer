@@ -21,16 +21,10 @@ export interface ModelParams {
   /** Thermal diffusivity, m^2/s. Absorbs all geometry/property model error,
    *  since only tau = R^2/alpha is identifiable. */
   alpha_m2s: number;
-  /** Multiplier on the egg's cooling time constant on the counter
-   *  (airTimeConstant): the kitchen's draughts and surfaces. The apps hold it
-   *  at 1.0 and do not learn it (DECISIONS.md 95); the tools vary it to see
-   *  what it would move. */
-  tauAirScale: number;
 }
 
 export const DEFAULT_PARAMS: ModelParams = {
   alpha_m2s: ALPHA_DEFAULT,
-  tauAirScale: 1.0,
 };
 
 /** Dose target for the white, equivalent minutes at 80 C. The binding white
@@ -145,9 +139,7 @@ export function simulate(
       next = bathTemperature(egg, setup, tNext);
     } else {
       if (!pullRecorded) waterAtPull = sphere.surface_C;
-      next = coolingTemperature(
-        sphere, egg, setup, tNext - cookTime_s, DT_SIM, waterAtPull, params.tauAirScale,
-      );
+      next = coolingTemperature(sphere, egg, setup, tNext - cookTime_s, DT_SIM, waterAtPull);
     }
     stepSphere(sphere, DT_SIM, next);
     t = tNext;

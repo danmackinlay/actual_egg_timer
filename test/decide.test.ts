@@ -255,7 +255,7 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
   // egg, +-22 after one, +-13 after two, and narrows egg by egg from there;
   // under a fixed resample jitter it would rise again at every resample. An
   // egg nobody answered about teaches nothing and moves nothing.
-  const truth = { alpha_m2s: ALPHA_DEFAULT, logDoseOffset: 0, tauAirScale: 1, noise: 1e-6, whiteOffset: 0, whiteFirmGap: 1.08 };
+  const truth = { alpha_m2s: ALPHA_DEFAULT, logDoseOffset: 0, noise: 1e-6, whiteOffset: 0, whiteFirmGap: 1.08 };
   const flags: boolean[] = [];
   const widths: string[] = [];
   const c = copyCalibration(PRIOR);
@@ -266,7 +266,7 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
     flags.push(stillLearning(interval));
     widths.push((0.5 * (interval.high_s - interval.low_s)).toFixed(1));
     const t = d.cookTime_s;
-    const truthGrid = buildRequestedGrid({ egg: EGG, setup: SETUP, tauAirScale: 1, spec: COARSE(ALPHA_DEFAULT, t) });
+    const truthGrid = buildRequestedGrid({ egg: EGG, setup: SETUP, spec: COARSE(ALPHA_DEFAULT, t) });
     const y = yolkWordProbit(truthGrid, truth, t);
     const w = whiteProbit(truthGrid, truth, t);
     const r = recordAt(0.41, t, YOLK_WORDS[y.indexOf(Math.max(...y))], w[0] > 0.5 ? 'runny' : w[2] > 0.5 ? 'firm' : 'tender');

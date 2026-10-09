@@ -55,7 +55,7 @@ const COOK_S = COOK.result.cookTime_s;
  *  the literature's. */
 function truePeak(factor: number, cooling: CookSetup['cooling'] = 'ice'): number {
   return simulate(
-    EGG, appSetup({ cooling: cooling }), { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * factor, tauAirScale: 1 },
+    EGG, appSetup({ cooling: cooling }), { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * factor },
     COOK_S,
   ).peakYolk_C;
 }
@@ -120,7 +120,7 @@ test('1b. the skew is COLD: a reading under the peak costs less than one the sam
 
 test('1c. no reading can kill a particle, and none makes a NaN', () => {
   const grid = buildDoseGrid(
-    EGG, appSetup(), 1.0, {
+    EGG, appSetup(), {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
       alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
       alphaCount: 7,
@@ -130,7 +130,7 @@ test('1c. no reading can kill a particle, and none makes a NaN', () => {
     },
   );
   const p = {
-    alpha_m2s: DEFAULT_PARAMS.alpha_m2s, logDoseOffset: 0, tauAirScale: 1, noise: 0.2,
+    alpha_m2s: DEFAULT_PARAMS.alpha_m2s, logDoseOffset: 0, noise: 0.2,
     whiteOffset: 0, whiteFirmGap: 1.08,
   };
   const floor = PROBE_UNRELATED / PROBE_UNRELATED_SPAN_C;
@@ -142,11 +142,11 @@ test('1c. no reading can kill a particle, and none makes a NaN', () => {
 
 test('1d. the grid carries the peak, and interpolates it to within a tenth of a degree', () => {
   const spec = calibrationGrid(DEFAULT_PARAMS.alpha_m2s, COOK_S);
-  const grid = buildDoseGrid(EGG, appSetup(), 1.0, spec);
+  const grid = buildDoseGrid(EGG, appSetup(), spec);
   assert.equal(grid.peakYolk_C.length, spec.alphaCount * spec.timeCount);
   for (const factor of [0.7, 0.9, 1.0, 1.13, 1.4]) {
     const alpha = DEFAULT_PARAMS.alpha_m2s * factor;
-    const exact = simulate(EGG, appSetup(), { alpha_m2s: alpha, tauAirScale: 1 }, COOK_S).peakYolk_C;
+    const exact = simulate(EGG, appSetup(), { alpha_m2s: alpha }, COOK_S).peakYolk_C;
     const looked = lookupPeakYolk_C(grid, alpha, COOK_S);
     assert.ok(Math.abs(looked - exact) < 0.1, `x${factor}: ${looked.toFixed(3)} against ${exact.toFixed(3)}`);
   }
@@ -225,7 +225,7 @@ test('2b. a hot reading says the egg heats fast, so the next cook is shorter; a 
 
 test('3a. the reading multiplies into the answers: one fold, whatever arrived first', () => {
   const grid = buildDoseGrid(
-    EGG, appSetup(), 1.0, {
+    EGG, appSetup(), {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
       alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
       alphaCount: 7,

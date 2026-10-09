@@ -3,7 +3,7 @@
   "egg": {
     "mass_kg": 0.06
   },
-  "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+  "params": { "alpha_m2s": 1.7e-7 },
   "samples": {
     "yolk": 17,
     "white": 17

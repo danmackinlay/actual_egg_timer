@@ -900,7 +900,6 @@ npm run copy:review      # the same, as copy-review.html, to read on a phone
 npm run copy:approve -- <key…|--all>   # stamp today's English as approved
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
-npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
@@ -984,7 +983,7 @@ Saturday in London (the time zone pinned), its one random draw seeded
 boot and after each step, once the page is idle. `npm run copy:snapshot --
 capture <out.json>` writes those words, and `compare` proves two builds
 render the same ones; `npm run e2e` runs them too, so a step that no longer
-reaches its state fails there. The whole suite, 78 scenarios, takes about
+reaches its state fails there. The whole suite takes about
 six minutes, so it is not in `npm run verify`; CI runs it as a job of its
 own on Linux (`.github/workflows/verify.yml`, `e2e`), not yet failing the
 workflow.

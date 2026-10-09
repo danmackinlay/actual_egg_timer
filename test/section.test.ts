@@ -70,7 +70,7 @@ for (const [name, setup] of [
     let peakWhite = setup.eggStart_C;
     // A tick at a time, as a screen would: the peaks are read between steps.
     while (s.t_s < cookTime_s + CARRYOVER_WINDOW) {
-      advanceSection(s, EGG, setup, DEFAULT_PARAMS, s.t_s + DT_SIM, s.t_s + DT_SIM >= cookTime_s ? cookTime_s : null);
+      advanceSection(s, EGG, setup, s.t_s + DT_SIM, s.t_s + DT_SIM >= cookTime_s ? cookTime_s : null);
       const v = sectionView(s, WHITE_DOSE_TARGET);
       if (v.temperature_C[CENTRE] > peakYolk) peakYolk = v.temperature_C[CENTRE];
       if (v.temperature_C[INNER_WHITE] > peakWhite) peakWhite = v.temperature_C[INNER_WHITE];
@@ -89,11 +89,11 @@ test('section 4. a tick at a time is the same as one long advance', () => {
   const a = createSection(EGG, setup, DEFAULT_PARAMS);
   const b = createSection(EGG, setup, DEFAULT_PARAMS);
   const out_s = 731.3;
-  advanceSection(a, EGG, setup, DEFAULT_PARAMS, 1200, out_s);
+  advanceSection(a, EGG, setup, 1200, out_s);
   for (let now = 0.2; now <= 1200; now += 0.2) {
-    advanceSection(b, EGG, setup, DEFAULT_PARAMS, now, now >= out_s ? out_s : null);
+    advanceSection(b, EGG, setup, now, now >= out_s ? out_s : null);
   }
-  advanceSection(b, EGG, setup, DEFAULT_PARAMS, 1200, out_s);
+  advanceSection(b, EGG, setup, 1200, out_s);
   assert.equal(b.t_s, a.t_s);
   assert.deepEqual(b.sphere.amp, a.sphere.amp);
   assert.deepEqual(b.dose.map((d) => d.minutes), a.dose.map((d) => d.minutes));
@@ -106,7 +106,7 @@ test('section 5. nothing unsets, and the white sets from the shell in', () => {
   let shellSetAt = -1;
   let innerSetAt = -1;
   for (let t = 5; t <= 1500; t += 5) {
-    advanceSection(s, EGG, setup, DEFAULT_PARAMS, t, t >= 420 ? 420 : null);
+    advanceSection(s, EGG, setup, t, t >= 420 ? 420 : null);
     const now = sectionView(s, WHITE_DOSE_TARGET).set;
     for (let i = 0; i < now.length; i++) assert.ok(now[i] >= last[i], `ring ${i} at ${t} s`);
     if (shellSetAt < 0 && now[SHELL] >= 1) shellSetAt = t;
@@ -119,15 +119,15 @@ test('section 5. nothing unsets, and the white sets from the shell in', () => {
 test('section 6. once out, the shell follows what the egg cools in', () => {
   const setup = appSetup();
   const s = createSection(EGG, setup, DEFAULT_PARAMS);
-  advanceSection(s, EGG, setup, DEFAULT_PARAMS, 400, null);
+  advanceSection(s, EGG, setup, 400, null);
   assert.equal(s.outAt_s, null);
-  advanceSection(s, EGG, setup, DEFAULT_PARAMS, 460, 400);
+  advanceSection(s, EGG, setup, 460, 400);
   assert.equal(s.outAt_s, 400);
   // An ice bath does not read the egg's state, only the water it left.
-  const expected = coolingTemperature(s.sphere, EGG, setup, s.t_s - 400, DT_SIM, s.waterAtPull_C, 1.0);
+  const expected = coolingTemperature(s.sphere, EGG, setup, s.t_s - 400, DT_SIM, s.waterAtPull_C);
   assert.equal(s.sphere.surface_C, expected);
   // A later, different time out cannot rewrite the one already crossed.
-  advanceSection(s, EGG, setup, DEFAULT_PARAMS, 470, 450);
+  advanceSection(s, EGG, setup, 470, 450);
   assert.equal(s.outAt_s, 400);
 });
 
@@ -149,14 +149,14 @@ test('section 7. the egg the settings aim for is the egg as eaten: the yolk at t
     const end = r.cookTime_s + CARRYOVER_WINDOW;
     const live = createSection(EGG, setup, DEFAULT_PARAMS);
     for (let t = 7.3; t < end; t += 7.3) {
-      advanceSection(live, EGG, setup, DEFAULT_PARAMS, t, t >= r.cookTime_s ? r.cookTime_s : null);
+      advanceSection(live, EGG, setup, t, t >= r.cookTime_s ? r.cookTime_s : null);
     }
-    advanceSection(live, EGG, setup, DEFAULT_PARAMS, end, r.cookTime_s);
+    advanceSection(live, EGG, setup, end, r.cookTime_s);
     assert.deepEqual(sectionView(live, WHITE_DOSE_TARGET), aimed);
     // At the yolk's peak, which is Done, the dose is not all in: softer than
     // asked, which is why the aimed-for egg is not shown there (DECISIONS.md 98).
     const peak = createSection(EGG, setup, DEFAULT_PARAMS);
-    advanceSection(peak, EGG, setup, DEFAULT_PARAMS, r.peakYolkTime_s, r.cookTime_s);
+    advanceSection(peak, EGG, setup, r.peakYolkTime_s, r.cookTime_s);
     assert.ok(sectionView(peak, WHITE_DOSE_TARGET).set[CENTRE] < aimed.set[CENTRE] - 0.03);
     assert.equal(aimed.set[SHELL], 1, 'the white set at the shell');
   }

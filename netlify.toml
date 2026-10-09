@@ -1,10 +1,10 @@
 # The app is static: TypeScript compiled to ES modules, no bundler, no runtime
-# dependencies. `npm run build:site` compiles src/ and copies the static files
-# next to it - the page, the styles, the artwork, the words in copy/ and the
-# privacy page (privacy/index.html, so /privacy finds it on any host) - so
-# that index.html's <script src="dist/src/ui/main.js"> and the scripts' fetch
-# of copy/en.json resolve identically whether you are serving _site/ or the
-# repo root.
+# dependencies. `npm run build:site` (tools/buildSite.mjs) builds the whole
+# site into _site/: the compiled scripts under app/, which index.html's
+# <script src="app/src/ui/main.js"> loads, beside the page, the styles, the
+# artwork, the words in copy/, the privacy page (privacy/index.html, so
+# /privacy finds it on any host), the prior's population, and last the
+# service worker that lists all of it (sw.js, tools/precache.mjs).
 
 [build]
   command = "npm run build:site"
@@ -27,30 +27,28 @@
 # silently override the file, so it deliberately is not set.
 
 # The scripts and the words are revalidated on every load, not cached for a
-# year. They keep their names across deploys - dist/src/ui/main.js is
-# dist/src/ui/main.js in every build, because there is no bundler to hash them -
+# year. They keep their names across deploys - app/src/ui/main.js is
+# app/src/ui/main.js in every build, because there is no bundler to hash them -
 # so "immutable" here would be a false promise: a returning browser would run
 # last month's modules against this month's index.html, or a mix of old and
 # new, since every import is its own cache entry. The page assumes the scripts,
 # the worker they start (gridWorker.js) and copy/*.json all came from one
 # build; the per-egg record and the catalogue keys both depend on it.
 #
-# The other fix is to version the paths per deploy (dist/<commit>/...) and
+# The other fix is to version the paths per deploy (app/<commit>/...) and
 # rewrite index.html's <script src> at build time. It would let these be
-# immutable, but it adds a rewriting step to a build that is otherwise tsc and
-# cp, for a couple of dozen small files. Revalidating costs one conditional
-# request per file, which Netlify's edge answers with a 304 from its own cache;
-# the edge copy is purged on every deploy, so only the browser's copy needed
-# fixing.
+# immutable, but it adds a rewriting step to the build, for a few dozen small
+# files. Revalidating costs one conditional request per file, which Netlify's
+# edge answers with a 304 from its own cache; the edge copy is purged on every
+# deploy, so only the browser's copy needed fixing. Once the service worker
+# has a build, it answers for all of these anyway (below).
 #
 # This is also Netlify's default for a file with no rule; it is written out so
 # that nobody adds the year back.
-# The published site serves the scripts from /app/, not /dist/ (the build
-# rewrites index.html's one <script src>; serving the repo root still uses
-# dist/). The 19 September site sent /dist/* as immutable for a year, so a
-# browser that visited then would keep running those modules against new
-# ones; a path it has never cached cannot be stale. Never mark /app/*
-# immutable for the same reason.
+# The scripts are under /app/, not /dist/: the 19 September site sent /dist/*
+# as immutable for a year, so a browser that visited then would keep running
+# those modules against new ones; a path it has never cached cannot be stale.
+# Never mark /app/* immutable for the same reason.
 [[headers]]
   for = "/app/*"
   [headers.values]
@@ -92,12 +90,14 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 # Security headers, on everything. The page has no inline script, style or
-# event handler: one module script, one same-origin worker (gridWorker.js),
-# same-origin fetches of copy/*.json, styles.css, and images from assets/. The
-# slider's shading is set through element.style from script, which a CSP does
-# not govern. So a strict policy costs nothing, and anything it blocks is a
-# regression worth hearing about. The wake lock (the screen stays on while a
-# cook runs) is the one powerful feature the page uses.
+# event handler: one module script, one same-origin worker (gridWorker.js)
+# and the service worker (sw.js), same-origin fetches (copy/*.json, the
+# population, /api/* when sharing is on), styles.css, and the images, fonts
+# and sounds in assets/. The slider's shading is set through element.style
+# from script, which a CSP does not govern. So a strict policy costs nothing,
+# and anything it blocks is a regression worth hearing about. The wake lock
+# (the screen stays on while a cook runs) is the one powerful feature the page
+# uses.
 [[headers]]
   for = "/*"
   [headers.values]

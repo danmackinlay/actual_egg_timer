@@ -555,8 +555,8 @@ export function plausibleProbeRange_C(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
 ): [number, number] {
   const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
-  const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread, tauAirScale: params.tauAirScale }, cookTime_s);
-  const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread, tauAirScale: params.tauAirScale }, cookTime_s);
+  const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread }, cookTime_s);
+  const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread }, cookTime_s);
   const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup.cooling, setup.ambient_C));
   const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
   const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;

@@ -35,7 +35,7 @@ export const CALIB_GRID_SPEC: GridSpec = {
   alphaMin: 1.2e-7, alphaMax: 2.4e-7, alphaCount: 9, timeMin_s: 240, timeMax_s: 900, timeCount: 12,
 };
 export const CALIB_GRID = buildRequestedGrid({
-  egg: CALIB_EGG, setup: CALIB_SETUP, tauAirScale: 1.0, spec: CALIB_GRID_SPEC,
+  egg: CALIB_EGG, setup: CALIB_SETUP, spec: CALIB_GRID_SPEC,
 });
 
 /* Includes points outside the grid on both axes, because the clamp is where an
@@ -68,7 +68,6 @@ function readout(post: ReturnType<typeof createPrior>) {
     rng: post.rng,
     ess: effectiveSampleSize(post),
     alpha_m2s: params.alpha_m2s,
-    tauAirScale: params.tauAirScale,
     meanWhiteOffset: posteriorMeanWhiteOffset(post),
     predict: {
       low_s: predicted.low_s,
@@ -168,7 +167,6 @@ export const calibrationFixture = {
   },
   setup: CALIB_SETUP,
   grid: {
-    tauAirScale: 1.0,
     ...CALIB_GRID_SPEC,
     logAlphaMin: CALIB_GRID.logAlphaMin,
     logAlphaStep: CALIB_GRID.logAlphaStep,

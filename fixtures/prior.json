@@ -57,7 +57,7 @@
         }
       },
       "start": { "alpha_m2s": 1.7e-7, "whiteOffset": 0 },
-      "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+      "params": { "alpha_m2s": 1.7e-7 },
       "whiteDoseAtSoft": 0.05,
       "rng": -690179489,
       "particles": [
@@ -122,7 +122,7 @@
         }
       },
       "start": { "alpha_m2s": 1.7e-7, "whiteOffset": 0 },
-      "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+      "params": { "alpha_m2s": 1.7e-7 },
       "whiteDoseAtSoft": 0.05,
       "rng": -690179489,
       "particles": {
@@ -191,7 +191,7 @@
         }
       },
       "start": { "alpha_m2s": 1.81e-7, "whiteOffset": 0.21 },
-      "params": { "alpha_m2s": 1.81e-7, "tauAirScale": 1 },
+      "params": { "alpha_m2s": 1.81e-7 },
       "whiteDoseAtSoft": 0.0810905048679465,
       "rng": -690179489,
       "particles": [
@@ -260,7 +260,7 @@
         }
       },
       "start": { "alpha_m2s": 1.7e-7, "whiteOffset": 0 },
-      "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+      "params": { "alpha_m2s": 1.7e-7 },
       "whiteDoseAtSoft": 0.05,
       "rng": -690179489,
       "particles": {

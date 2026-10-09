@@ -6705,3 +6705,44 @@ five passed against `560fa62` with only the snapshot's new `boilMemory`
 added, so they hold the behaviour as it was. One run of `two-tabs-sharing`
 there waited 60 s on a worker job in the hidden tab; it passed in 3 s on
 every run since, and 83 of 83 passed on the branch.
+
+## 10 October 2026: tauAirScale out, the page at app/, and the red team's small items (REFACTOR-0.5 2.10, 2.18, 4.4, 4.5)
+
+One commit each, each through `verify` and `build:site`; `e2e` (78 of 78)
+and `ios:build` after each that changed the site or the code, and
+`ios:e2e` (48 of 48) after the one that touched Swift.
+
+- **2.10, `tauAirScale`** (`f4898be`). Out of `ModelParams`,
+  `GridRequest`, `buildDoseGrid`, `coolingTemperature` and the running
+  cook's `asRan`, in core, Swift, the fixtures' tools and the tests;
+  `advanceSection` loses the params it then never read. Regenerated, every
+  fixture number is bit for bit what it was: the diff is the keys gone and
+  running.json's read row "no carryover scale". The cook key is not
+  bumped, against the worklist's line: a stored cook carrying the field
+  reads as before, so a cook running at the upgrade is kept, and an older
+  alpha that drops a newer cook is what a bump would have done anyway.
+  `npm run probe` and `rank` vary it by restating the counter's surface in
+  `studies/perturbed.ts`, which rank cross-checks against `simulate`;
+  both print what they printed. `fit/` carried no scale. Two lines each in
+  `running.ts` and `Running.swift`, which another branch is restructuring.
+- **2.18's remainder** (`b2496bc`, `2345aee`). `index.html` asks for
+  `app/src/ui/main.js`; the copy into `_site/app` is in `buildSite.mjs`
+  and `sitePaths.mjs` is gone. The repo root no longer runs the page, so
+  `npm run serve` went; the tool pages still load from it. `_site/` was
+  unchanged but for comments and `sw.js`'s hash; the site from
+  `npm run serve:site` loads (its one 404 is the development tools, left
+  out of the site, as before). netlify.toml's comments describe that build.
+- **4.4** (`e0f4de2`): verify.yml's "16 scenarios" and README's "78
+  scenarios" out; no other comment counts tests.
+- **4.5** (`46be264`): RELEASING's Rolling back says a web rollback to an
+  older 0.5 alpha leaves every browser that ran the newer one writing
+  nothing, so roll forward; and that worktrees served on one port share a
+  localStorage, so a port each.
+
+**A flake, not this branch's:** `certainty-mid-cook` fails about one run
+in four ("waited 60 s for the range to move"), at `560fa62` as here: the
+range is to the minute and the clock starts at the real time of day, so
+whether 65 s moves it depends on when the run starts.
+
+**For PLAN at merge:** the status line's web e2e count (39) is 78 with the
+copy scenarios.

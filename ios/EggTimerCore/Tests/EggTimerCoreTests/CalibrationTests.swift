@@ -119,7 +119,6 @@ struct InferenceConformance {
         try expectClose(effectiveSampleSize(post), expected.num("ess"), "\(label) ess")
         let params = posteriorParams(post)
         try expectClose(params.alphaM2s, expected.num("alpha_m2s"), "\(label) mean alpha")
-        try expectClose(params.tauAirScale, expected.num("tauAirScale"), "\(label) mean tauAirScale")
         try expectClose(posteriorMeanWhiteOffset(post), expected.num("meanWhiteOffset"), "\(label) mean white offset")
 
         let predictJSON = try expected.object("predict")

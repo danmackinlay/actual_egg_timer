@@ -409,8 +409,31 @@ What is still not safe:
 - **A rollback of the web's deploy** still serves the older build to every
   browser, and the older service worker replaces the newer one's cached
   build; the guard keeps the stores, not the build.
+- **A rollback of the web to an older 0.5 alpha** (Netlify's "Publish
+  deploy" on an earlier one) leaves every browser that ran the newer alpha
+  stuck: each holds the newer mark, so the older build writes nothing in it
+  until a build at least that new is served again. It still times the egg,
+  but no setting, pan or egg is kept, and its top line says to update, with
+  nothing to update to. To undo a web release, roll forward instead: revert
+  on `main`, bump the version past the one being undone, tag and deploy
+  that. If a rollback has already gone out, the same new version clears it.
 
-So a web deploy must never go back before 0.5.
+So a web deploy must never go back before 0.5, and never back to an older
+version than one already served.
+
+**The same guard on this machine.** `npm run serve:dev` serves on port 8888
+and `npm run serve:site` on 8080 whichever worktree runs them, and a
+browser keeps one localStorage per address, so every worktree served on
+the same port shares one: the mark, the settings, the log. Open a build
+of a newer version there (a branch that has bumped it) and then an older
+one, and the older one writes nothing, shows the update line, and looks
+broken. The e2e harness is immune (a fresh Chrome profile each run, and a
+fresh context each scenario). In a browser, give each
+worktree its own port (`env PORT=8890 npm run serve:dev`; for the static
+server, `python3 -m http.server 8090 --directory _site`), or clear the
+site's data (Chrome's DevTools, Application, Storage, "Clear site data")
+before switching.
+
 ## What this is instead of
 
 **Free provisioning (a Personal Team) is not an option here**, and not merely

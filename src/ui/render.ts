@@ -369,7 +369,7 @@ function renderSection(now_ms: number): void {
   }
   const now_s = now_ms / 1000 - cook.startedAt_s;
   advanceSection(
-    egg.live, plan.egg, plan.setup, params,
+    egg.live, plan.egg, plan.setup,
     out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
   );
   egg.painted = 'live';

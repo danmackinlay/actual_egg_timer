@@ -403,7 +403,6 @@ const NOT_COPY: Record<string, string> = {
   sizeTable: 'stored running cook field (Running.swift)',
   startMode: 'stored running cook field (Running.swift)',
   startedAt_s: 'stored running cook field (Running.swift)',
-  tauAirScale: 'stored running cook field (Running.swift)',
   units: 'stored running cook field (Running.swift)',
   white: 'stored running cook field (Running.swift)',
   yolk: 'stored running cook field (Running.swift)',

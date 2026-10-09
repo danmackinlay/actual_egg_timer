@@ -4914,7 +4914,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": {
@@ -4984,7 +4984,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       }
     },
@@ -5057,7 +5057,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": {
@@ -5127,7 +5127,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       }
     },
@@ -7715,7 +7715,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -7816,7 +7816,7 @@
           "forecast": null,
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -7890,7 +7890,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -7964,7 +7964,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8038,7 +8038,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8112,7 +8112,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8185,7 +8185,7 @@
             ]
           },
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8259,7 +8259,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": 1,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8333,81 +8333,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 0, "tauAirScale": 1 }
-        }
-      },
-      "cook": null
-    },
-    {
-      "note": "the plan as it ran, no carryover scale",
-      "raw": {
-        "id_ms": 1791363600000,
-        "startedAt_s": 1791363600,
-        "choices": {
-          "mass_kg": 0.068,
-          "massFrom": "class",
-          "sizeTable": "eu",
-          "eggFrom": "fridge",
-          "customStart_C": 12,
-          "room_C": null,
-          "startMode": "cold",
-          "afterBoil": "hold",
-          "cooling": "ice",
-          "waterLitres": 2,
-          "eggCount": 2,
-          "altitude_m": 0,
-          "level": 0.41
-        },
-        "events": {
-          "boilAt_s": 1791364132.5,
-          "pulled": {
-            "due_s": 1791364451.2,
-            "out_s": 1791364458.9,
-            "by": "cook",
-            "confirmed": true
-          },
-          "cooledAt_s": 1791364631.9,
-          "rangAt_s": null
-        },
-        "nudge_s": 0,
-        "boilMemory": {
-          "2.0": 480,
-          "3.0": 610
-        },
-        "units": "metric",
-        "lang": "en",
-        "boilRemembered": true,
-        "coldSince_s": 1791363600,
-        "firstHotAt_s": null,
-        "correctedAt_s": null,
-        "asRan": {
-          "correctedAt_s": null,
-          "level": 0.41,
-          "cook_s": 851.2000000476837,
-          "nudge_s": 0,
-          "forecast": {
-            "cook_s": 851.2000000476837,
-            "yolk": [
-              0.01666668652659309,
-              0.016672762412146925,
-              0.966660551061259
-            ],
-            "white": [
-              0.016666666750001256,
-              0.016673270230394818,
-              0.9666600630196022
-            ],
-            "yolkWord": [
-              0.010000000000140336,
-              0.01000000340945362,
-              0.010034296730765866,
-              0.11607032261644772,
-              0.8538953772431911
-            ]
-          },
-          "peakYolk_C": 75.4570303697839,
-          "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7 }
+          "params": { "alpha_m2s": 0 }
         }
       },
       "cook": null
@@ -8481,7 +8407,7 @@
           },
           "peakYolk_C": 75.4570303697839,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "cook": null
@@ -8641,7 +8567,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05
         },
         "answer": {
@@ -8694,7 +8620,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 6,
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05,
           "steps": 0,
           "last_s": 0,
@@ -8790,7 +8716,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -8818,7 +8743,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -8883,7 +8808,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 6,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -9088,7 +9013,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -9141,7 +9066,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 13.524585354713508,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -9250,7 +9175,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -9278,7 +9202,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -9343,7 +9267,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 13.524585354713508,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -9571,7 +9495,6 @@
           "now_s": 1791363660
         },
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -9649,7 +9572,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 13.524585354713508,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 1,
           "last_s": 645.7902103547135,
@@ -9811,7 +9734,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 13.524585354713508,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 904.5011478547135,
@@ -9949,7 +9872,6 @@
           "now_s": 1791363660
         },
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -9977,7 +9899,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -10107,7 +10029,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -10135,7 +10056,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -10370,7 +10291,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -10398,7 +10318,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -10725,7 +10645,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -10753,7 +10672,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -10920,7 +10839,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -10949,7 +10868,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -10979,7 +10898,7 @@
             },
             "peakYolk_C": 65.88582544651473,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -11125,7 +11044,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -11153,7 +11071,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -11276,7 +11194,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -11305,7 +11223,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -11335,7 +11253,7 @@
             },
             "peakYolk_C": 65.88582544651473,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -11482,7 +11400,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -11510,7 +11427,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -11633,7 +11550,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -11662,7 +11579,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -11692,7 +11609,7 @@
             },
             "peakYolk_C": 65.88582544651473,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -11839,7 +11756,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -11867,7 +11783,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -12103,7 +12019,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -12131,7 +12046,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -12366,7 +12281,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -12394,7 +12308,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -12659,7 +12573,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -12687,7 +12600,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -12810,7 +12723,7 @@
           },
           "peakYolk_C": 74.89371462317746,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364200,
@@ -12839,7 +12752,7 @@
           },
           "peakYolk_C": 74.89371462317746,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -12869,7 +12782,7 @@
             },
             "peakYolk_C": 74.89371462317746,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -13009,7 +12922,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -13037,7 +12949,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -13160,7 +13072,7 @@
           },
           "peakYolk_C": 54.91055918136964,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364230,
@@ -13189,7 +13101,7 @@
           },
           "peakYolk_C": 54.91055918136964,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -13219,7 +13131,7 @@
             },
             "peakYolk_C": 54.91055918136964,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -13361,7 +13273,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -13389,7 +13300,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -13629,7 +13540,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -13657,7 +13567,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -13780,7 +13690,7 @@
           },
           "peakYolk_C": 74.16496980453078,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364358.5507414,
@@ -13809,7 +13719,7 @@
           },
           "peakYolk_C": 74.16496980453078,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -13839,7 +13749,7 @@
             },
             "peakYolk_C": 74.16496980453078,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -13986,7 +13896,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -14014,7 +13923,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -14137,7 +14046,7 @@
           },
           "peakYolk_C": 74.16496980453078,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364503.5507414,
@@ -14166,7 +14075,7 @@
           },
           "peakYolk_C": 74.16496980453078,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -14196,7 +14105,7 @@
             },
             "peakYolk_C": 74.16496980453078,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -14342,7 +14251,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -14370,7 +14278,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -14508,7 +14416,7 @@
           },
           "peakYolk_C": 75.54388344854635,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364358.5507414,
@@ -14537,7 +14445,7 @@
           },
           "peakYolk_C": 75.54388344854635,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -14567,7 +14475,7 @@
             },
             "peakYolk_C": 75.54388344854635,
             "probeMoment": false,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -14720,7 +14628,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -14748,7 +14655,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -14871,7 +14778,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364918.5507414,
@@ -14900,7 +14807,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -14930,7 +14837,7 @@
             },
             "peakYolk_C": 65.88582544651473,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -15076,7 +14983,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -15104,7 +15010,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -15227,7 +15133,7 @@
           },
           "peakYolk_C": 75.54388344854635,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364918.5507414,
@@ -15256,7 +15162,7 @@
           },
           "peakYolk_C": 75.54388344854635,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -15286,7 +15192,7 @@
             },
             "peakYolk_C": 75.54388344854635,
             "probeMoment": false,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -15433,7 +15339,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -15461,7 +15366,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -15584,7 +15489,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364928.5507414,
@@ -15613,7 +15518,7 @@
           },
           "peakYolk_C": 65.88582544651473,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -15643,7 +15548,7 @@
             },
             "peakYolk_C": 65.88582544651473,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -15790,7 +15695,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -15988,7 +15892,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -16218,7 +16122,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0199999999999999e-7,
           "alphaMax": 2.8049999999999995e-7,
           "alphaCount": 7,
@@ -16246,7 +16149,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05
         },
         "answer": {
@@ -16475,7 +16378,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -16503,7 +16405,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -16759,7 +16661,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -16787,7 +16688,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -16910,7 +16811,7 @@
           },
           "peakYolk_C": 64.56272043393915,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -16939,7 +16840,7 @@
           },
           "peakYolk_C": 64.56272043393915,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -16969,7 +16870,7 @@
             },
             "peakYolk_C": 64.56272043393915,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -17109,7 +17010,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -17137,7 +17037,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -17260,7 +17160,7 @@
           },
           "peakYolk_C": 64.56272043393915,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -17289,7 +17189,7 @@
           },
           "peakYolk_C": 64.56272043393915,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -17319,7 +17219,7 @@
             },
             "peakYolk_C": 64.56272043393915,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -17455,7 +17355,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -17483,7 +17382,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -17548,7 +17447,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": -2.1438055847530677,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -17743,7 +17642,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -17771,7 +17669,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -18007,7 +17905,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -18035,7 +17932,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -18264,7 +18161,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -18292,7 +18188,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -18528,7 +18424,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -18556,7 +18451,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -18809,7 +18704,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -18837,7 +18731,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -19072,7 +18966,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -19100,7 +18993,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -19223,7 +19116,7 @@
           },
           "peakYolk_C": 62.77467106185234,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364067.7341242,
@@ -19252,7 +19145,7 @@
           },
           "peakYolk_C": 62.77467106185234,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -19282,7 +19175,7 @@
             },
             "peakYolk_C": 62.77467106185234,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -19423,7 +19316,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -19451,7 +19343,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -19686,7 +19578,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -19714,7 +19605,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -19852,7 +19743,7 @@
           },
           "peakYolk_C": 73.13198609396466,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -19881,7 +19772,7 @@
           },
           "peakYolk_C": 73.13198609396466,
           "probeMoment": false,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -19911,7 +19802,7 @@
             },
             "peakYolk_C": 73.13198609396466,
             "probeMoment": false,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -20051,7 +19942,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -20079,7 +19969,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -20217,7 +20107,7 @@
           },
           "peakYolk_C": 61.7761847461109,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364635.9238281,
@@ -20246,7 +20136,7 @@
           },
           "peakYolk_C": 61.7761847461109,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -20276,7 +20166,7 @@
             },
             "peakYolk_C": 61.7761847461109,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -20423,7 +20313,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -20451,7 +20340,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -20589,7 +20478,7 @@
           },
           "peakYolk_C": 42.505841254275744,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364092.7341242,
@@ -20618,7 +20507,7 @@
           },
           "peakYolk_C": 42.505841254275744,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -20648,7 +20537,7 @@
             },
             "peakYolk_C": 42.505841254275744,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -20783,7 +20672,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -20811,7 +20699,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -20876,7 +20764,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": -2.1438055847530677,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -21071,7 +20959,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -21099,7 +20986,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -21222,7 +21109,7 @@
           },
           "peakYolk_C": 42.505841254275744,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364092.7341242,
@@ -21251,7 +21138,7 @@
           },
           "peakYolk_C": 42.505841254275744,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -21281,7 +21168,7 @@
             },
             "peakYolk_C": 42.505841254275744,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -21427,7 +21314,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -21455,7 +21341,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -21578,7 +21464,7 @@
           },
           "peakYolk_C": 61.5312737581245,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364092.7341242,
@@ -21607,7 +21493,7 @@
           },
           "peakYolk_C": 61.5312737581245,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -21637,7 +21523,7 @@
             },
             "peakYolk_C": 61.5312737581245,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -21773,7 +21659,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -21801,7 +21686,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -22045,7 +21930,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -22073,7 +21957,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -22196,7 +22080,7 @@
           },
           "peakYolk_C": 73.90635193192995,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364092.7341242,
@@ -22225,7 +22109,7 @@
           },
           "peakYolk_C": 73.90635193192995,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -22255,7 +22139,7 @@
             },
             "peakYolk_C": 73.90635193192995,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -22413,7 +22297,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -22537,7 +22421,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -22565,7 +22448,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -22834,7 +22717,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -22862,7 +22744,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -23097,7 +22979,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -23125,7 +23006,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -23371,7 +23252,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -23495,7 +23376,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -23523,7 +23403,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -23831,7 +23711,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 5,
           "last_s": 602.548828125,
@@ -23993,7 +23873,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05,
           "steps": 7,
           "last_s": 1026.4501953125,
@@ -24155,7 +24035,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -24320,7 +24200,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -24482,7 +24362,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -24599,7 +24479,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -24729,7 +24609,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -24757,7 +24636,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -24880,7 +24759,7 @@
           },
           "peakYolk_C": 64.6757500257973,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364087.8779297,
@@ -24909,7 +24788,7 @@
           },
           "peakYolk_C": 64.6757500257973,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -24939,7 +24818,7 @@
             },
             "peakYolk_C": 64.6757500257973,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -25079,7 +24958,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -25107,7 +24985,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -25230,7 +25108,7 @@
           },
           "peakYolk_C": 57.146075725169545,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364087.8779297,
@@ -25259,7 +25137,7 @@
           },
           "peakYolk_C": 57.146075725169545,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -25289,7 +25167,7 @@
             },
             "peakYolk_C": 57.146075725169545,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -25440,7 +25318,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -25516,7 +25394,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -25630,7 +25508,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -25706,7 +25584,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -25817,7 +25695,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -25893,7 +25771,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 874.3701171875,
@@ -26004,7 +25882,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -26080,7 +25958,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 938.173828125,
@@ -26194,7 +26072,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -26270,7 +26148,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 2,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 6,
           "last_s": 878.1181640625,
@@ -26381,7 +26259,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -26457,7 +26335,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05,
           "steps": 6,
           "last_s": 873.49609375,
@@ -26568,7 +26446,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -26644,7 +26522,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 0,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 5,
           "last_s": 863.0078125,
@@ -26758,7 +26636,7 @@
         },
         "fromRamp_s": 480,
         "carry_s": 0,
-        "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+        "params": { "alpha_m2s": 1.6980617920400428e-7 },
         "whiteDose_min": 0.053098419200147955,
         "steps": 6,
         "last_s": 874.3701171875,
@@ -26784,7 +26662,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -26919,7 +26797,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -26947,7 +26824,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -27099,7 +26976,7 @@
           },
           "peakYolk_C": 42.756227828841666,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364124.8779297,
@@ -27128,7 +27005,7 @@
           },
           "peakYolk_C": 42.756227828841666,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -27158,7 +27035,7 @@
             },
             "peakYolk_C": 42.756227828841666,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -27314,7 +27191,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -27475,7 +27352,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -27602,7 +27479,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -27630,7 +27506,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -27753,7 +27629,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -27782,7 +27658,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -27812,7 +27688,7 @@
             },
             "peakYolk_C": 64.13581938727887,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -27972,7 +27848,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "leanHint_s": 0,
@@ -27997,7 +27873,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -28073,7 +27949,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -28102,7 +27978,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": null,
         "solution": {
@@ -28267,7 +28143,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "leanHint_s": 0,
@@ -28276,7 +28152,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0199999999999999e-7,
           "alphaMax": 2.8049999999999995e-7,
           "alphaCount": 7,
@@ -28304,7 +28179,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.7e-7 },
           "whiteDose_min": 0.05
         },
         "answer": {
@@ -28427,7 +28302,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": null,
@@ -28456,7 +28331,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -28486,7 +28361,7 @@
             },
             "peakYolk_C": 64.18198426406076,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.7e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.7e-7 }
           }
         },
         "solution": {
@@ -28646,7 +28521,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "leanHint_s": 0,
@@ -28655,7 +28530,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -28683,7 +28557,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -28806,7 +28680,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": null,
         "corrected": {
@@ -28837,7 +28711,7 @@
             },
             "peakYolk_C": 66.65176826956233,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": null
@@ -28934,7 +28808,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "leanHint_s": 0,
@@ -28959,7 +28833,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -29035,7 +28909,7 @@
           },
           "peakYolk_C": 64.13581938727887,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": null,
         "corrected": null,
@@ -29136,7 +29010,7 @@
           },
           "peakYolk_C": 66.65176826956233,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         }
       },
       "leanHint_s": 0,
@@ -29161,7 +29035,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -29237,7 +29111,7 @@
           },
           "peakYolk_C": 66.65176826956233,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791365057.8779297,
@@ -29266,7 +29140,7 @@
           },
           "peakYolk_C": 66.65176826956233,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": null,
         "solution": {
@@ -29406,7 +29280,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -29434,7 +29307,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -29586,7 +29459,7 @@
           },
           "peakYolk_C": 49.09034299575683,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791363973.9238281,
@@ -29615,7 +29488,7 @@
           },
           "peakYolk_C": 49.09034299575683,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -29645,7 +29518,7 @@
             },
             "peakYolk_C": 49.09034299575683,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -29786,7 +29659,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -29814,7 +29686,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -29952,7 +29824,7 @@
           },
           "peakYolk_C": 50.099099477692114,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364513.9238281,
@@ -29981,7 +29853,7 @@
           },
           "peakYolk_C": 50.099099477692114,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -30011,7 +29883,7 @@
             },
             "peakYolk_C": 50.099099477692114,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -30157,7 +30029,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -30185,7 +30056,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -30308,7 +30179,7 @@
           },
           "peakYolk_C": 78.68484252013114,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "shown": {
           "correctedAt_s": 1791364279.8779297,
@@ -30337,7 +30208,7 @@
           },
           "peakYolk_C": 78.68484252013114,
           "probeMoment": true,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+          "params": { "alpha_m2s": 1.6980617920400428e-7 }
         },
         "corrected": {
           "asRan": {
@@ -30367,7 +30238,7 @@
             },
             "peakYolk_C": 78.68484252013114,
             "probeMoment": true,
-            "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 }
+            "params": { "alpha_m2s": 1.6980617920400428e-7 }
           }
         },
         "solution": {
@@ -30503,7 +30374,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -30531,7 +30401,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -30784,7 +30654,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -30812,7 +30681,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -31058,7 +30927,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -31086,7 +30954,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -31151,7 +31019,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": -7,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -31350,7 +31218,6 @@
       "surface": {
         "of": null,
         "grid": {
-          "tauAirScale": 1,
           "alphaMin": 1.0188370752240256e-7,
           "alphaMax": 2.8018019568660706e-7,
           "alphaCount": 7,
@@ -31378,7 +31245,7 @@
         "provisional": false,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -31634,7 +31501,7 @@
         "provisional": true,
         "lengthened": false,
         "inputs": {
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955
         },
         "answer": {
@@ -31687,7 +31554,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 6,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 0,
           "last_s": 0,
@@ -31870,7 +31737,7 @@
           },
           "fromRamp_s": 480,
           "carry_s": 6,
-          "params": { "alpha_m2s": 1.6980617920400428e-7, "tauAirScale": 1 },
+          "params": { "alpha_m2s": 1.6980617920400428e-7 },
           "whiteDose_min": 0.053098419200147955,
           "steps": 1,
           "last_s": 638.265625,

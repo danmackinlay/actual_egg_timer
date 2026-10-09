@@ -112,8 +112,7 @@ export function createSection(egg: Egg, setup: CookSetup, params: ModelParams): 
  * Mutates `s`.
  */
 export function advanceSection(
-  s: EggSection, egg: Egg, setup: CookSetup, params: ModelParams,
-  to_s: number, outAt_s: number | null,
+  s: EggSection, egg: Egg, setup: CookSetup, to_s: number, outAt_s: number | null,
 ): void {
   const n = s.x.length;
   while (s.t_s + DT_SIM <= to_s) {
@@ -127,9 +126,7 @@ export function advanceSection(
         s.outAt_s = out;
         s.waterAtPull_C = s.sphere.surface_C;
       }
-      next = coolingTemperature(
-        s.sphere, egg, setup, tNext - out, DT_SIM, s.waterAtPull_C, params.tauAirScale,
-      );
+      next = coolingTemperature(s.sphere, egg, setup, tNext - out, DT_SIM, s.waterAtPull_C);
     }
     stepSphere(s.sphere, DT_SIM, next);
     s.t_s = tNext;
@@ -188,6 +185,6 @@ export function previewSection(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, whiteTarget_min: number,
 ): SectionView {
   const s = createSection(egg, setup, params);
-  advanceSection(s, egg, setup, params, cookTime_s + CARRYOVER_WINDOW, cookTime_s);
+  advanceSection(s, egg, setup, cookTime_s + CARRYOVER_WINDOW, cookTime_s);
   return sectionView(s, whiteTarget_min);
 }

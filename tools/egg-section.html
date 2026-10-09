@@ -142,7 +142,7 @@ function rebuild() {
   const s = createSection(egg, setup, DEFAULT_PARAMS);
   frames = [];
   for (let t = 0; t <= end_s; t += FRAME_S) {
-    advanceSection(s, egg, setup, DEFAULT_PARAMS, t, out_s);
+    advanceSection(s, egg, setup, t, out_s);
     frames.push({ t: s.t_s, view: sectionView(s, WHITE_DOSE_TARGET) });
   }
   cook = { out_s, end_s, eggStart_C: setup.eggStart_C, peak_C: solved.result.peakYolk_C };

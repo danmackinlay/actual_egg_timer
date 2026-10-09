@@ -129,13 +129,13 @@ public enum Protocols {
     /// takes its latent heat over `tauPlunge`. protocol.ts has the physics.
     static func coolingTemperature(
         sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePullS: Double, dtS: Double,
-        waterAtPullC: Double, tauAirScale: Double
+        waterAtPullC: Double
     ) -> Double {
         if setup.cooling == .counter {
             let before = elapsedSincePullS > dtS ? elapsedSincePullS - dtS : 0.0
             let drying = wetShellDropC(egg)
                 * (exp(-before / Constants.tauPlunge) - exp(-elapsedSincePullS / Constants.tauPlunge))
-            let tau = airTimeConstant(egg) * tauAirScale
+            let tau = airTimeConstant(egg)
             if elapsedSincePullS >= dtS {
                 return sphere.robinSurface(dtS: dtS, ambientC: setup.ambientC, tauS: tau, lossC: drying)
             }

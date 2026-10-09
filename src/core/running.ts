@@ -457,11 +457,10 @@ function readAsRan(raw: unknown, start_s: number): CookAsRan | null {
   if (forecast === null || !isNumber(peak) || typeof probe !== 'boolean') return null;
   if (!isObject(params)) return null;
   const alpha = params['alpha_m2s'];
-  const tau = params['tauAirScale'];
-  if (!isNumber(alpha) || !(alpha > 0) || !isNumber(tau) || !(tau > 0)) return null;
+  if (!isNumber(alpha) || !(alpha > 0)) return null;
   return {
     correctedAt_s: at, level: level, cook_s: cook, nudge_s: nudge, forecast: forecast, peakYolk_C: peak,
-    probeMoment: probe, params: { alpha_m2s: alpha, tauAirScale: tau },
+    probeMoment: probe, params: { alpha_m2s: alpha },
   };
 }
 
@@ -654,7 +653,7 @@ export function slowHobHintFits(
   if (hint.fromRamp_s !== estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return false;
   if (hint.carry_s !== leanHint_s + cook.nudge_s) return false;
   const p = calibrationParams(c);
-  if (hint.params.alpha_m2s !== p.alpha_m2s || hint.params.tauAirScale !== p.tauAirScale) return false;
+  if (hint.params.alpha_m2s !== p.alpha_m2s) return false;
   if (hint.whiteDose_min !== calibrationDoneness(c, 1.0).whiteDose_min) return false;
   return hint.steps === 0 || now_s > cook.startedAt_s + hint.last_s;
 }
@@ -682,7 +681,7 @@ export function sameDecisionInputs(a: DecisionInputs, b: DecisionInputs): boolea
     && sa.eggStart_C === sb.eggStart_C && sa.ambient_C === sb.ambient_C && sa.boiling_C === sb.boiling_C
     && sa.timeToBoil_s === sb.timeToBoil_s && sa.cooling === sb.cooling
     && sa.waterLitres === sb.waterLitres && sa.eggCount === sb.eggCount
-    && a.params.alpha_m2s === b.params.alpha_m2s && a.params.tauAirScale === b.params.tauAirScale
+    && a.params.alpha_m2s === b.params.alpha_m2s
     && a.whiteDose_min === b.whiteDose_min;
 }
 
@@ -1139,8 +1138,7 @@ export function asRanShown(cook: RunningCook, plan: CookPlan): CookAsRan | null 
  */
 export function solutionAsRan(plan: CookPlan, ran: CookAsRan): Solution {
   const p = plan.inputs === null ? null : plan.inputs.params;
-  if (p !== null && p.alpha_m2s === ran.params.alpha_m2s && p.tauAirScale === ran.params.tauAirScale
-    && plan.cookTime_s === ran.cook_s) {
+  if (p !== null && p.alpha_m2s === ran.params.alpha_m2s && plan.cookTime_s === ran.cook_s) {
     return plan.solution;
   }
   return { ...plan.solution, result: simulate(plan.egg, plan.setup, ran.params, ran.cook_s) };

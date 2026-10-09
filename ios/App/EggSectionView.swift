@@ -132,7 +132,7 @@ final class SectionCache {
             section = EggSection(egg: egg, setup: setup, params: params)
             key = k
         }
-        section!.advance(egg: egg, setup: setup, params: params, toS: toS, outAtS: outAtS)
+        section!.advance(egg: egg, setup: setup, toS: toS, outAtS: outAtS)
         return section!.view(whiteTargetMin: whiteTargetMin)
     }
 
