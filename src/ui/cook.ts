@@ -1,11 +1,13 @@
 /**
- * The cook itself, as an effect runner over core's `step` (model.ts,
- * `update`): each thing that happens is a message (`dispatch`), the model
- * takes what `update` returns, and this module does what it asks - writes
- * the cook down, schedules and rings the alarm, remembers the boil, logs the
- * egg's record, forgets the cook and sends what is final - builds what the
- * cook waits for (its pot's surface, the calibration before this egg and a
- * surface on it) off the main thread, and draws the page.
+ * The page's runner, over `update` (model.ts): each thing that happens is a
+ * message (`dispatch`, or `send` from below), the model takes what `update`
+ * returns, and this module does what it asks - writes the cook down,
+ * schedules and rings the alarm, remembers the boil, logs the egg's record,
+ * forgets the cook and sends what is final; writes the settings, solves the
+ * idle page again once the controls settle, follows a new language, writes
+ * the controls - builds what the page waits for (the idle pot's surface and
+ * odds, a cook's pot's surface, the calibration before its egg and a surface
+ * on it) off the main thread, and draws the page.
  *
  * Before any message about the running cook, what another tab wrote for it
  * since is taken up (`elsewhere`), so a tab never writes over what another
@@ -18,32 +20,37 @@
  * the plan says something is next decided (`wakeAt_s`), and when looked at.
  */
 
-import { DecisionInputs, inputsKey } from '../core/decide.js';
+import { DecisionInputs, inputsKey, nudgeSeconds } from '../core/decide.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import { EggRecord, ProbeReading } from '../core/record.js';
-import { CookChoices, RunningCook, answered } from '../core/running.js';
-import { idleChoices, learning, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
+import { RunningCook, answered } from '../core/running.js';
+import { isSousVide, learning, phaseNow, state } from './state.js';
 import { Effect, Msg, update } from './model.js';
-import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow } from './answer.js';
+import { currentInputs, wantedProfiles } from './answer.js';
 import { calibrationBefore, keepRecord } from './calibration.js';
 import {
-  Ticker, keepScreenAwake, blip, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
-  stopAlarm,
+  Ticker, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm, setAlarmSound,
+  setMuted, setPullAlarm, startTicker, stopAlarm,
 } from './clock.js';
-import { applySettingsToDom } from './controls.js';
+import { applySettingsToDom, applyUnitsToDom } from './controls.js';
 import { activeLocale, t } from './copy.js';
-import { cachedOddsProfile, cookSurfaces, decisionGrid, oddsProfileFor } from './decisionGrids.js';
-import { page } from './dom.js';
+import {
+  builtFor, cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
+} from './decisionGrids.js';
+import { page, selectRadio } from './dom.js';
 import { commitEdit, endEdits, startEdits } from './edit.js';
+import { cancelSoon, nextFrame, soon } from './idle.js';
 import { resetFeedback, retryProbe } from './feedback.js';
-import { renderLearned } from './learned.js';
-import { render } from './render.js';
-import { sendFinal } from './share.js';
-import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, takeUpEvents } from './store.js';
-import { unitSystem } from './units.js';
-import { applyAnswer, drawShare, recompute } from './update.js';
+import { renderCalibNote, renderLearned } from './learned.js';
+import { draw, drawnNothing, forgetDrawnWords } from './render.js';
+import { view, viewMemo } from './view.js';
+import { send, sendTo } from './send.js';
+import { sendFinal, shareState } from './share.js';
+import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, storageReadOnly, takeUpEvents } from './store.js';
+import { unitSystem, useUnits } from './units.js';
+import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
 import { showEgg } from './views.js';
-import { clockSpeed, nowMs } from './now.js';
+import { clockSpeed, nowMs, random } from './now.js';
 
 /** The ticker while a cook short of Done runs, and the page's wake at Done. */
 const clock = {
@@ -51,8 +58,47 @@ const clock = {
   wake: 0,
 };
 
-/** What is being built for a cook, by key, so each is asked for once. */
+/** What is being built, by key, so each is asked for once: a cook's, and
+ *  the idle page's profiles; and the idle pot's surface, asked for once its
+ *  inputs settle. */
 const building = new Set<string>();
+const asking = { decisionHandle: 0, profiles: new Set<string>() };
+
+/** Messages sent while one is being taken up: taken up after it, in turn,
+ *  before the page is drawn. */
+const queue: Msg[] = [];
+let busy = false;
+
+/** The sound as last set on the audio clock (`setMuted`), so it is set only
+ *  when the settings change it. */
+let muted: boolean | null = null;
+
+/** The page as drawn (render.ts), the egg previews the view keeps
+ *  (view.ts), and whether a frame is asked for. */
+const drawn = drawnNothing();
+const memo = viewMemo();
+let framed = false;
+
+/** The page drawn at the next frame, once however many messages come
+ *  before it. */
+function requestDraw(): void {
+  if (framed) return;
+  framed = true;
+  nextFrame(() => {
+    if (framed) drawNow();
+  });
+}
+
+function drawNow(): void {
+  framed = false;
+  draw(view(state, nowMs(), memo), drawn);
+}
+
+/** A frame asked for and not yet drawn, drawn now: a script reads the page
+ *  as the model stands, not a frame behind it (dev/test.ts). */
+export function flushDraw(): void {
+  if (framed) drawNow();
+}
 
 /* ------------------------------------------------------------ messages */
 
@@ -63,32 +109,66 @@ function storedId(): number | null {
   return cookStore.peek()?.cook.id_ms ?? null;
 }
 
-/** Take up what `msg` did, and do what it asks. */
+/** The messages about the running cook, before which another tab's write
+ *  for it is taken up. */
+const ABOUT_THE_COOK = new Set<Msg['kind']>([
+  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'answered', 'restore',
+]);
+
+/** Take up what `msg` did, and do what it asks: the runner's view of its
+ *  caches and the stores taken first, and the units and the sound kept
+ *  with the settings before the effects. */
 function apply(msg: Msg, now: number): void {
-  state.surfaces = cookSurfaces(state.calib);
+  const built = builtFor(state.calib);
+  state.surfaces = built.surfaces;
+  state.profiles = built.profiles;
+  state.sharing = shareState().on;
+  state.readOnly = storageReadOnly();
   const [next, effects] = update(state, msg, now);
   Object.assign(state, next);
+  useUnits(state.settings.unitsChosen);
+  if (muted !== state.settings.muted) {
+    muted = state.settings.muted;
+    setMuted(muted);
+  }
+  setAlarmSound(state.settings.alarm);
   perform(effects);
 }
 
 /**
  * One thing that happened, at the page's time now. What another tab wrote
- * for the running cook since is taken up first. Then the controls follow a
- * cook begun or ended, what the cook waits for is asked for, the ticker and
- * the alarm follow the plan, and the page is drawn.
+ * for the running cook since is taken up first. Then what the page waits
+ * for is asked for, the ticker and the alarm follow the plan, and the page
+ * is drawn. A message sent while one is taken up waits for it.
  */
 export function dispatch(msg: Msg): void {
-  const now = nowMs();
-  const was = state.cook;
-  if (was !== null && msg.kind !== 'elsewhere') {
-    const taken = cookStore.takeUp();
-    if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs, storedId_ms: storedId() }, now);
+  queue.push(msg);
+  if (busy) return;
+  busy = true;
+  try {
+    while (queue.length > 0) {
+      const next = queue.shift()!;
+      const now = nowMs();
+      if (state.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
+        const taken = cookStore.takeUp();
+        if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs, storedId_ms: storedId() }, now);
+      }
+      apply(next, now);
+    }
+  } finally {
+    busy = false;
   }
-  apply(msg, now);
-  if (was === null && state.cook !== null) showCookControls();
-  if (was !== null && state.cook === null) leaveCook();
   follow();
-  render(now);
+  requestDraw();
+}
+
+/** The runner, plugged in for `send`, and the sound as the settings have
+ *  it: once, at boot. */
+export function startRunner(): void {
+  sendTo(dispatch);
+  muted = state.settings.muted;
+  setMuted(muted);
+  setAlarmSound(state.settings.alarm);
 }
 
 /* ------------------------------------------------------------- effects */
@@ -114,7 +194,7 @@ function perform(effects: Effect[]): void {
         stopAlarm();
         break;
       case 'rememberBoil':
-        state.boilMemory = rememberTimeToBoil(state.boilMemory, e.boil.litres, e.boil.seconds);
+        send({ kind: 'pans', boilMemory: rememberTimeToBoil(state.boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
         break;
       case 'log':
         logRecord(e.record);
@@ -131,6 +211,71 @@ function perform(effects: Effect[]): void {
         break;
       case 'blip':
         blip();
+        break;
+      case 'questionsReset':
+        resetFeedback();
+        break;
+      case 'thanks':
+        page().calibNote.textContent = t('feedback.thanks');
+        break;
+      case 'editsStart':
+        startEdits();
+        break;
+      case 'editsEnd':
+        endEdits();
+        break;
+      case 'save':
+        if (e.soon) saveSoon();
+        else saveNow();
+        break;
+      case 'solveSoon':
+        solveSoon();
+        break;
+      case 'askSurface':
+        askForDecision(e.inputs);
+        break;
+      case 'askProfile':
+        askForProfile(e.inputs);
+        break;
+      case 'language':
+        followLanguage(e.before);
+        break;
+      case 'controlsDrawn':
+        applySettingsToDom();
+        break;
+      case 'unitsDrawn':
+        applyUnitsToDom();
+        break;
+      case 'donenessDrawn':
+        page().doneness.value = String(state.controls.doneness);
+        break;
+      case 'alarmDrawn':
+        selectRadio('alarm', state.settings.alarm);
+        break;
+      case 'previewAlarm':
+        previewAlarm();
+        break;
+      case 'wordsForgotten':
+        forgetDrawnWords(drawn);
+        break;
+      case 'notesDrawn':
+        renderCalibNote(learning(state));
+        break;
+      case 'learnedDrawn':
+        renderLearned(learning(state));
+        break;
+      case 'shareDrawn':
+        drawShare();
+        break;
+      case 'drawNudge':
+        // A new page or a new cook, a new nudge (E8, DECISIONS.md 61): a
+        // whole number of seconds from -10 to +10, drawn when the page boots
+        // and again after each cook, so the time on screen holds still while
+        // the cook looks at it.
+        send({ kind: 'nudge', draw: nudgeSeconds(random()) });
+        break;
+      case 'forgetAll':
+        forgetAll();
         break;
     }
   }
@@ -180,32 +325,90 @@ function persist(cook: RunningCook, leanHint_s: number, onScreen: boolean): void
   state.works = written !== null;
 }
 
-/** The egg's record kept and learned from (`keepRecord`); then, if the cook
- *  is still on screen at Done, thanked for, or, if it could not be kept, its
- *  questions put away, since no more could be kept either. */
+/** The egg's record kept and learned from (`keepRecord`), and the page
+ *  told whether it was. */
 function logRecord(record: EggRecord): void {
   const id = record.id ?? null;
-  void keepRecord(record).then((kept) => {
-    const cook = state.cook;
-    const here = cook !== null && cook.id_ms === id && phaseNow(nowMs()) === 'DONE';
-    if (here && kept && answered(cook)) page().calibNote.textContent = t('feedback.thanks');
-    if (here && !kept) {
-      state.questions = 'away';
-      render(nowMs());
-    }
-    renderLearned(learning());
-  });
+  void keepRecord(record).then((kept) => send({ kind: 'kept', id_ms: id, kept: kept }));
 }
 
 /* ------------------------------------------------------------ the needs */
 
 /** Whether a cook wants the surface for `inputs`: the running cook's plan
  *  reads it, or a cook waits on it. */
-export function cookWants(inputs: DecisionInputs): boolean {
+function cookWants(inputs: DecisionInputs): boolean {
   const key = inputsKey(inputs);
   const wanted = (i: DecisionInputs | null): boolean => i !== null && inputsKey(i) === key;
   if (state.plan !== null && wanted(state.plan.inputs)) return true;
   return wanted(state.need.surface) || state.ending.some((e) => wanted(e.need.surface));
+}
+
+/** Whether the idle page is on screen with a pan to solve for. */
+function idlePan(): boolean {
+  return state.cook === null && !isSousVide(state);
+}
+
+/** How long the inputs must sit still before a decision surface is asked for,
+ *  ms, on top of the solve's own coalescing. A surface is a second of the
+ *  worker's time; a pot typed digit by digit should not queue one per digit. */
+const DECISION_SETTLE_MS = 300;
+
+/** Ask the worker for the idle pot's surface once the inputs have settled,
+ *  and solve again when it lands if the pot on screen is still the one it
+ *  was for. */
+function askForDecision(inputs: DecisionInputs): void {
+  cancelSoon(asking.decisionHandle);
+  asking.decisionHandle = soon(() => {
+    asking.decisionHandle = 0;
+    const key = decisionKey(inputs);
+    decisionGrid(inputs).then(() => {
+      if (idlePan() && decisionKey(currentInputs(state)) === key) send({ kind: 'solve' });
+    }, (error: unknown) => console.warn('decision surface failed', error));
+  }, DECISION_SETTLE_MS);
+}
+
+/** Ask the worker for the odds at every level for these inputs - after their
+ *  surface, which it builds first if need be - and take them up when they
+ *  land, if a cook or the idle page still wants them. */
+function askForProfile(inputs: DecisionInputs): void {
+  const key = profileKey(inputs, state.calib);
+  if (asking.profiles.has(key)) return;
+  asking.profiles.add(key);
+  // The key is cleared whether the profile lands or fails, so a failed one
+  // is asked for again the next time the page wants it.
+  oddsProfileFor(inputs, state.calib).then(() => {
+    asking.profiles.delete(key);
+    if (cookWants(inputs)) {
+      cookLanded();
+      return;
+    }
+    if (idlePan() && wantedProfiles(state).some((i) => profileKey(i, state.calib) === key)) send({ kind: 'solve' });
+  }, (error: unknown) => {
+    asking.profiles.delete(key);
+    console.warn('odds profile failed', error);
+  });
+}
+
+/** Ask the worker for what a cook wants and has not got - its pot's
+ *  surface, then the odds profile on it - and step the cook as each lands,
+ *  if it still wants it: once, however many messages ask while it is
+ *  built. A new pot mid-cook (the boil tapped) is asked for at once: the egg
+ *  is already in the water. */
+function askForCookSurface(inputs: DecisionInputs): void {
+  if (cachedDecisionGrid(inputs) === null) {
+    const key = `surface|${inputsKey(inputs)}`;
+    if (building.has(key)) return;
+    building.add(key);
+    decisionGrid(inputs).then(() => {
+      building.delete(key);
+      if (cookWants(inputs)) cookLanded();
+    }, (error: unknown) => {
+      building.delete(key);
+      console.warn('decision surface failed', error);
+    });
+    return;
+  }
+  if (cachedOddsProfile(inputs, state.calib) === null) askForProfile(inputs);
 }
 
 /** Ask for what each cook waits for, and keep the page's clock with the
@@ -270,7 +473,7 @@ function waitsOn(id: number): boolean {
 /** The ticker and the screen kept awake while the running cook is short of
  *  Done; at Done, a wake when its plan next decides something. */
 function keepTime(): void {
-  const running = state.cook !== null && phaseNow(nowMs()) !== 'DONE';
+  const running = state.cook !== null && phaseNow(state, nowMs()) !== 'DONE';
   if (running && clock.ticker === null) {
     keepScreenAwake();
     clock.ticker = startTicker(() => dispatch({ kind: 'tick' }));
@@ -294,34 +497,6 @@ function armWake(): void {
   }, ms);
 }
 
-/* ------------------------------------------------- the controls follow */
-
-/** The controls show the running cook's own choices, never the settings
- *  (review 2.5): at the start, where they are the same, and after a reload,
- *  where another tab may have changed the settings since. */
-function showCookControls(): void {
-  if (state.cook === null) return;
-  state.controls = settingsOfChoices(state.settings, state.cook.choices, sizeClasses);
-  applySettingsToDom();
-  startEdits();
-}
-
-/** The cook has ended: the controls show the settings again (another tab may
- *  have changed them meanwhile), a new cook gets a new nudge, the questions
- *  start empty, and the idle page is solved again. */
-function leaveCook(): void {
-  endEdits();
-  stopAlarm();
-  resetFeedback();
-  state.controls = state.settings;
-  applySettingsToDom();
-  drawNudge();
-  recompute();
-  // The egg just finished is final once it is forgotten: no answer can be
-  // added to it.
-  drawShare();
-}
-
 /* ------------------------------------------------------------ the page */
 
 /** The primary button, in every phase. */
@@ -337,26 +512,16 @@ export function onPrimary(): void {
   dispatch({ kind: 'primary' });
 }
 
-/** Start: the answer on screen taken up one last time while the controls
- *  are still live - the level it snaps to is the one the cook starts at -
- *  and the cook started on it, with the lean the time on screen took. */
+/** Start: a cook started here is this tab's own, whatever happened before
+ *  it. */
 function startCookNow(): void {
   // The audio context must be created inside a user gesture or the alarm is
   // silently blocked later, when it matters.
   primeAudio();
   stopAlarm();
-  const boil = timeToBoil_s();
-  state.profile = cachedOddsProfile(currentInputs(boil), state.calib);
-  const answer = answerFor(boil, state.settings.doneness, state.profile);
-  applyAnswer(answer);
-  const chosen = decided(answer, boil);
-  // A cook started here is this tab's own, whatever happened before it.
   resetFeedback();
   cookStore.load();
-  dispatch({
-    kind: 'start', choices: idleChoices(), nudge_s: nudgeNow(), units: unitSystem(), lang: activeLocale(),
-    leanHint_s: chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s,
-  });
+  dispatch({ kind: 'begin', units: unitSystem(), lang: activeLocale() });
 }
 
 /** Cancel: a correction still settling goes with the cook. */
@@ -369,11 +534,6 @@ export function reset(): void {
 export function onStillOut(): void {
   stopAlarm();
   dispatch({ kind: 'stillOut' });
-}
-
-/** A correction committed (edit.ts): the start and the choices replaced. */
-export function correctCook(choices: CookChoices, startedAt_s: number | null): void {
-  dispatch({ kind: 'correct', choices: choices, startedAt_s: startedAt_s });
 }
 
 /** An answer at Done (feedback.ts): whether the cook took it. */
@@ -390,7 +550,7 @@ function answersGiven(cook: RunningCook): number {
 }
 
 /** A surface, a profile or a calibration a cook wanted, landed. */
-export function cookLanded(): void {
+function cookLanded(): void {
   dispatch({ kind: 'landed' });
   retryProbe();
 }

@@ -22,7 +22,7 @@ import { measure, show, unitSystem } from './units.js';
  *  That exception is half of the round trip: the box being typed in keeps what
  *  was typed, and the others show the stored egg rounded to their step. */
 export function syncMeasurements(except: EventTarget | null): void {
-  const egg = currentEgg();
+  const egg = currentEgg(state);
   const minor_mm = egg.minorDiameter_m * 1000;
   if (except !== page().measureMass) page().measureMass.value = inputText('mass', egg.mass_kg * 1000);
   if (except !== page().measureGirth) page().measureGirth.value = inputText('girth', Math.PI * minor_mm);
@@ -135,7 +135,7 @@ export function applyUnitsToDom(): void {
   });
   // The sentence's masses and temperatures are in the units too.
   redrawSentence();
-  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg(state)));
 }
 
 /** The presets are assumptions, and are labelled as such rather than baked
@@ -143,8 +143,8 @@ export function applyUnitsToDom(): void {
  *  anyone who knows better. A measured room is what the Room button means. */
 export function labelStartTemps(): void {
   page().startTempHint.textContent = t('controls.eggFrom.hint', {
-    fridge: show('temperature', startTempPreset_C('fridge', room_C())),
-    room: show('temperature', startTempPreset_C('room', room_C())),
+    fridge: show('temperature', startTempPreset_C('fridge', room_C(state))),
+    room: show('temperature', startTempPreset_C('room', room_C(state))),
   });
 }
 

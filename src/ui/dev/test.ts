@@ -27,6 +27,7 @@ import { BoilMemory, Phase } from '../../core/policy.js';
 import { RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
 import { eggsBehind, keptState } from '../calibration.js';
+import { flushDraw } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
 import { inHand } from '../idle.js';
 import { isDevHost, nowMs, useRandom } from '../now.js';
@@ -85,13 +86,15 @@ export interface TestApi {
 const text = (id: string): string => document.getElementById(id)?.textContent ?? '';
 
 function snapshot(): Snapshot {
+  // The page as the model now stands, not a frame behind it.
+  flushDraw();
   const now = nowMs();
   const plan = state.plan;
   const primary = document.getElementById('primary');
   const share = shareState();
   return {
     now_ms: now,
-    phase: phaseNow(now),
+    phase: phaseNow(state, now),
     label: text('phaseLabel'),
     digits: text('digits'),
     subline: text('sublineText'),

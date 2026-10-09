@@ -1,14 +1,25 @@
 /**
- * The page's model, and how a message moves the running cook (`update`).
+ * The page's model, and how a message moves it (`update`): the idle page -
+ * the controls, the settings, the answer they give - and the running cook.
+ *
+ * `update` is pure: what it needs from storage, the clock and the worker
+ * comes in the message or the model (`surfaces`, `profiles`, `sharing`: the
+ * runner's view of its caches and stores, taken before each message), and
+ * everything it changes is in what it returns, with what the page must do
+ * (`Effect`). Carrying the effects out, building what the model waits for
+ * and drawing the screen is cook.ts's.
+ *
+ * The idle page: a change to the controls is taken into the settings, saved
+ * once the cook stops changing them, and answered once they settle (a solve
+ * is tens of milliseconds, too long for every pixel of a drag); the units,
+ * the language, the sound, another tab's settings, a pan measured, an egg
+ * learned, everything forgotten: each a message, the page solved again after
+ * it (`solve`). While a cook runs the controls are its own choices, never
+ * the settings, which another tab may have changed since (DECISIONS.md 97);
+ * correcting it is edit.ts's.
  *
  * The cook is core's `CookState` (src/core/step.ts): `update` hands it to
- * `step` with each thing that happened, and returns the model as it now
- * stands and what the page must do (`Effect`). It is pure: what it needs from
- * storage comes in the message, and everything it changes is in what it
- * returns. Carrying the effects out, building what `need` asks for and
- * drawing the screen is cook.ts's.
- *
- * What is the web's own, around `step`:
+ * `step` with each thing that happened. What is the web's own, around it:
  *
  * - The primary button reads the phase: the boil at Heating, the egg out at
  *   Pull, "still in" while the plan asks, Start again at Done.
@@ -24,19 +35,54 @@
  *   and forgotten.
  */
 
-import type { AlarmMoment, BoilMemory } from '../core/policy.js';
+import type { AlarmMoment, AlarmSound, BoilMemory } from '../core/policy.js';
 import { phaseAt } from '../core/policy.js';
-import type { Decision } from '../core/decide.js';
-import type { DecidedAnswer, OddsProfile } from '../core/reach.js';
+import type { Decision, DecisionInputs } from '../core/decide.js';
+import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.js';
 import type { Outcome } from '../core/outcome.js';
 import type { Solution } from '../core/solve.js';
+import type { CertaintyReading } from '../core/certainty.js';
+import { CARRYOVER_WINDOW } from '../core/constants.js';
+import { EggSection, SectionView, advanceSection, createSection } from '../core/section.js';
 import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
-import { answered, asRanCurrent, asksIfStillIn, cookStillOpen, endedAt_s, takeUpEvents } from '../core/running.js';
+import {
+  answered, asRanCurrent, asRanShown, asksIfStillIn, cookStillOpen, endedAt_s, takeUpEvents,
+} from '../core/running.js';
+import { calibrationParams } from '../core/record.js';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';
 import { step } from '../core/step.js';
+import type { UnitSystem } from '../core/units.js';
+import { chooseUnits } from '../core/units.js';
+import type { LanguageState } from '../core/language.js';
+import { effectiveLanguage, languageAfterFlip } from '../core/language.js';
+import { PotOdds, nudgeNow, solveIdle } from './answer.js';
+import { inputsKey } from '../core/decide.js';
+import { NO_NEED, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
 import type { Settings, StoredCook } from './store.js';
+import { REGIONAL_UNITS } from './units.js';
+
+export { NO_NEED } from './state.js';
+
+/** A correction in hand: the slider's reading for it, the plan's solve,
+ *  and the egg it aims for, once planned. */
+export interface Aim {
+  level: number;
+  peakYolk_C: number;
+  solution: Solution | null;
+  section: SectionView | null;
+}
+
+/** What a running cook's plan last said of how sure, on its pot's
+ *  surface: its outcome (null until decided), its certainty, and its pot's
+ *  odds profile, for the cook started at `id_ms`. */
+export interface Held {
+  id_ms: number;
+  outcome: Outcome | null;
+  certainty: CertaintyReading | null;
+  profile: OddsProfile | null;
+}
 
 /** A cook ended before its egg's record could be made, and what it waits
  *  for. */
@@ -47,20 +93,32 @@ export interface Ending extends CookState {
 /** What the page holds. The running cook is core's `CookState`: `cook`, its
  *  `plan` and the lean (`leanHint_s`), all null and 0 while idle. */
 export interface Model extends CookState {
+  /** The settings: the next cook's choices, and the page's own (the units,
+   *  the language, the sound). Replaced, never changed in place. */
   settings: Settings;
-  /** What the controls show and write: the settings themselves while idle,
-   *  the same object; while a cook runs, its own choices over a copy of them
-   *  (`settingsOfChoices`), never the settings, which another tab may have
-   *  changed since. */
+  /** What the controls show: a copy of the settings while idle; while a
+   *  cook runs, its own choices over a copy of them (`settingsOfChoices`),
+   *  with a correction in hand on them, never the settings, which another
+   *  tab may have changed since. */
   controls: Settings;
   boilMemory: BoilMemory;
   /** The posterior over the model's uncertain constants, folded IN PLACE as
    *  eggs are learned (calibration.ts). */
   calib: Calibration;
-  /** The idle screen's answer: the solve behind the time on screen, the
-   *  choice and the outcome at it, and the whole of it as core decided it
+  /** Whether sharing is on (the nudge, the Learning mark), and whether a
+   *  newer build's stores are left alone (store.ts): the runner's view of
+   *  those stores, taken before each message. */
+  sharing: boolean;
+  readOnly: boolean;
+  /** The odds profiles built on the calibration as it stands, for any pot:
+   *  the runner's view of its caches, like `surfaces`. */
+  profiles: PotOdds[];
+  /** The idle screen's answer: the answer at the level asked (its verdict
+   *  is the warning line), the solve behind the time on screen, the choice
+   *  and the outcome at it, and the whole of it as core decided it
    *  (`decideAnswer`); the last three null until the pot's surface is in,
    *  and on the sous-vide screen. */
+  idleAnswer: LevelAnswer | null;
   solution: Solution | null;
   decision: Decision | null;
   outcome: Outcome | null;
@@ -68,16 +126,27 @@ export interface Model extends CookState {
   /** The odds at every level for the idle pot and the posterior as it
    *  stands; null until worked out. */
   profile: OddsProfile | null;
-  /** The warning line while idle: a refusal or the level's low odds. */
-  idleWarning: string;
+  /** The controls changed since the idle page was last solved: the slider's
+   *  reading is the level's own until the solve lands. */
+  unsolved: boolean;
   /** While a correction is in hand mid-cook (edit.ts), the slider's reading
-   *  for it, from a plan of the cook as it would be; null otherwise. */
-  aim: { level: number; peakYolk_C: number; solution: Solution | null } | null;
+   *  for it, from a plan of the cook as it would be, and the egg it aims for
+   *  (`previewSection`), once planned; null otherwise. */
+  aim: Aim | null;
   /** When the eggs went in, as the controls show it while a cook runs; null
    *  while idle. */
   controlsStart_s: number | null;
   /** This page's nudge (E8): drawn at boot and after each cook. */
   nudgeDraw: number;
+
+  /** What the running cook's plan last said of how sure, while it was on
+   *  its pot's surface: held while a new pot's surface is on its way (the
+   *  boil tapped, a correction), rather than blanking (view.ts). */
+  held: Held | null;
+  /** The egg in the water now, carried forward with the cook (core
+   *  `advanceSection`), and what it was started from: the cook, its start,
+   *  its pot and the model's parameters. */
+  live: { key: string; section: EggSection } | null;
 
   /** What the running cook waits for (`step`'s `need`). */
   need: CookNeed;
@@ -114,13 +183,11 @@ export interface Model extends CookState {
   probeHeld: boolean;
 }
 
-/** Nothing wanted. */
-export const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: null, wakeAt_s: null };
-
 /** What happened. `storedId_ms` is the stored cook's id as this tab reads
  *  it (this cook's own when storage does not work), for whether its egg is
  *  still open. */
 export type Msg =
+  /* The running cook. */
   | { kind: 'start'; choices: CookChoices; nudge_s: number; units: Units; lang: string; leanHint_s: number }
   | { kind: 'primary' }
   | { kind: 'cancel' }
@@ -133,9 +200,53 @@ export type Msg =
     storedId_ms: number | null;
   }
   | { kind: 'elsewhere'; theirs: StoredCook | null; storedId_ms: number | null }
-  | { kind: 'restore'; stored: StoredCook };
+  | { kind: 'restore'; stored: StoredCook }
+  /** A correction in hand, planned or let go (edit.ts); `level`, the slider
+   *  back at the cook's own after a level only previewed. */
+  | { kind: 'aim'; aim: Aim | null; level: number | null }
+  /** When the eggs went in, as the start's − and + have it (edit.ts), or as
+   *  the cook has it again. */
+  | { kind: 'startInHand'; at_s: number | null }
+  /** The egg of the cook `id_ms` kept in the log, or not (`keepRecord`). */
+  | { kind: 'kept'; id_ms: number | null; kept: boolean }
+  /* The page. */
+  /** Start, on the idle page: the cook the settings describe, at the time
+   *  on screen, in these units and words. */
+  | { kind: 'begin'; units: Units; lang: string }
+  /** The controls as the page now shows them (input.ts). */
+  | { kind: 'controls'; controls: Settings }
+  /** Fields of the settings a correction changed, for the next cook. */
+  | { kind: 'touched'; fields: Partial<Settings> }
+  | { kind: 'units'; system: UnitSystem }
+  | { kind: 'language'; next: LanguageState }
+  | { kind: 'mute' }
+  | { kind: 'alarm'; sound: AlarmSound }
+  /** The settings with another tab's write taken up (store.ts). */
+  | { kind: 'settingsTaken'; settings: Settings }
+  /** The pans remembered: a boil this page measured (`quiet`), or another
+   *  tab's. */
+  | { kind: 'pans'; boilMemory: BoilMemory; quiet: boolean }
+  /** A new posterior, everything forgotten, and the pans with it. */
+  | { kind: 'calibration'; calib: Calibration; boilMemory: BoilMemory }
+  /** Eggs folded: the idle page solved again, and what is said of what has
+   *  been learned drawn again. */
+  | { kind: 'learned' }
+  /** Every word on the page in a new language: as `learned`, and the words
+   *  drawn only when they change drawn again. */
+  | { kind: 'relabelled' }
+  /** What another store holds changed - another tab's log or sharing,
+   *  sharing turned on or off, a newer build's mark: as `learned`, and the
+   *  sharing section drawn again. */
+  | { kind: 'stores' }
+  | { kind: 'forget' }
+  /** A new nudge drawn (`nudgeSeconds`), after a cook. */
+  | { kind: 'nudge'; draw: number }
+  /** The idle page solved again: the controls settled, a surface or a
+   *  profile landed. */
+  | { kind: 'solve' };
 
-/** What the page must do: core's effects, each with the cook it is for. */
+/** What the page must do: core's effects, each with the cook it is for, and
+ *  the page's. */
 export type Effect =
   | { kind: 'persist'; cook: RunningCook; leanHint_s: number; onScreen: boolean }
   | { kind: 'ring'; moment: AlarmMoment }
@@ -144,7 +255,42 @@ export type Effect =
   | { kind: 'log'; record: EggRecord }
   | { kind: 'forget'; id_ms: number }
   | { kind: 'sendFinal' }
-  | { kind: 'blip' };
+  | { kind: 'blip' }
+  /** The questions empty again, for the next egg; "thank you" for the egg
+   *  kept. */
+  | { kind: 'questionsReset' }
+  | { kind: 'thanks' }
+  /** A cook begun or ended: its correction's bookkeeping (edit.ts). */
+  | { kind: 'editsStart' }
+  | { kind: 'editsEnd' }
+  /** The settings written: coalesced (a drag), or now. */
+  | { kind: 'save'; soon: boolean }
+  /** The idle page solved again once the controls settle. */
+  | { kind: 'solveSoon' }
+  /** What the idle page wants built: the pot's surface, once the inputs
+   *  settle, and an odds profile. */
+  | { kind: 'askSurface'; inputs: DecisionInputs }
+  | { kind: 'askProfile'; inputs: DecisionInputs }
+  /** The words follow the settings' language; `before`, the one they were
+   *  in. */
+  | { kind: 'language'; before: string }
+  /** The controls written from the model: all of them, every field with a
+   *  unit, the slider, the alarm's choice. */
+  | { kind: 'controlsDrawn' }
+  | { kind: 'unitsDrawn' }
+  | { kind: 'donenessDrawn' }
+  | { kind: 'alarmDrawn' }
+  | { kind: 'previewAlarm' }
+  /** The words drawn only when they change, forgotten: a new language. */
+  | { kind: 'wordsForgotten' }
+  /** What is said of what has been learned (the note over the questions
+   *  and in Settings, or Settings' alone), and the sharing section. */
+  | { kind: 'notesDrawn' }
+  | { kind: 'learnedDrawn' }
+  | { kind: 'shareDrawn' }
+  /** A new nudge to draw; everything learned to forget. */
+  | { kind: 'drawNudge' }
+  | { kind: 'forgetAll' };
 
 /** The LOCAL date of a moment, ms. A day, not a timestamp. */
 export function localDay(ms: number): string {
@@ -307,14 +453,284 @@ function close(m: Model): Model {
 /** What `msg` does to the model at `now_ms`, and what the page must do. */
 export function update(m: Model, msg: Msg, now_ms: number): [Model, Effect[]] {
   const now_s = now_ms / 1000;
+  const [next, effects] = updateAny(m, msg, now_s);
+  return [shown(next, now_s), effects];
+}
+
+function updateAny(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
+  const page = updatePage(m, msg, now_s);
+  if (page !== null) return page;
   let [next, effects] = updateCook(m, msg, now_s);
   if (msg.kind === 'landed') {
     const [after, more] = stepEnding(next, now_s);
     next = after;
     effects = [...effects, ...more];
   }
-  return [beforeKept(next), effects];
+  return around(m, beforeKept(next), effects);
 }
+
+/* ----------------------------------------------------------- what is shown */
+
+/** The model with what the screen holds on to brought up to `now_s`: how
+ *  sure the running cook's plan is (`held`), and the live egg. */
+function shown(m: Model, now_s: number): Model {
+  return liveEgg(holdReading(m), now_s);
+}
+
+/** What the running cook's plan says of how sure, held while a new pot's
+ *  surface is on its way: taken up whenever the plan is decided on its
+ *  surface, and when a new cook is on screen; the odds profile, which lands
+ *  after the surface, when it does. */
+function holdReading(m: Model): Model {
+  const cook = m.cook;
+  const plan = m.plan;
+  if (cook === null || plan === null) return m;
+  const decided = plan.decided === null ? null : plan.decided.outcome;
+  let held = m.held;
+  if (decided !== null || held === null || held.id_ms !== cook.id_ms) {
+    held = { id_ms: cook.id_ms, outcome: decided, certainty: plan.certainty, profile: profileIn(m, plan.inputs) };
+  }
+  if (decided !== null && held.profile === null) held = { ...held, profile: profileIn(m, plan.inputs) };
+  return held === m.held ? m : { ...m, held: held };
+}
+
+/** The odds profile of the surface built for `inputs`, if it is in. */
+function profileIn(m: Model, inputs: DecisionInputs | null): OddsProfile | null {
+  if (inputs === null) return null;
+  const key = inputsKey(inputs);
+  for (const s of m.surfaces) if (inputsKey(s.inputs) === key) return s.profile;
+  return null;
+}
+
+/**
+ * The egg in the water now, carried forward a tick at a time (core
+ * `advanceSection`) and replayed from raw when the cook's pot or start
+ * changes, on through the cooling: at the posterior mean, the same egg the
+ * countdown times, in the pot its plan has now; once the egg is out, with
+ * the model's parameters it ran under, so a fold of this egg's own answer
+ * does not redraw it (review 2.4). Not while a correction's aim is drawn in
+ * its place, nor at Done, where the egg as it ran is (view.ts).
+ */
+function liveEgg(m: Model, now_s: number): Model {
+  const cook = m.cook;
+  const plan = m.plan;
+  if (cook === null || plan === null) return m.live === null ? m : { ...m, live: null };
+  if (m.aim !== null && m.aim.section !== null) return m;
+  const ran = asRanShown(cook, plan);
+  const params = ran?.params ?? calibrationParams(m.calib);
+  const pulled = cook.events.pulled;
+  const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
+  if (out_s !== null && phaseAt(plan.deadlines, now_s) === 'DONE') return m;
+  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
+  const section = m.live === null || m.live.key !== key ? createSection(plan.egg, plan.setup, params) : copySection(m.live.section);
+  const t_s = now_s - cook.startedAt_s;
+  advanceSection(section, plan.egg, plan.setup, out_s === null ? t_s : Math.min(t_s, out_s + CARRYOVER_WINDOW), out_s);
+  return { ...m, live: { key: key, section: section } };
+}
+
+/** A section to carry forward, apart from the one it is copied from. */
+function copySection(s: EggSection): EggSection {
+  return { ...s, sphere: { ...s.sphere, amp: s.sphere.amp.slice() }, dose: s.dose.map((d) => ({ ...d })) };
+}
+
+/**
+ * The controls follow a cook begun or ended. Begun: they show its own
+ * choices, never the settings (review 2.5) - at the start, where they are the
+ * same, and after a reload, where another tab may have changed the settings
+ * since. Ended: they show the settings again (another tab may have changed
+ * them meanwhile), the alarm stops, the questions start empty, a new cook
+ * gets a new nudge (and the idle page is solved again with it), and the egg
+ * just finished is final once it is forgotten: no answer can be added to
+ * it.
+ */
+function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
+  if (was.cook === null && m.cook !== null) {
+    const next: Model = {
+      ...m, controls: settingsOfChoices(m.settings, m.cook.choices, sizeClasses), controlsStart_s: m.cook.startedAt_s,
+    };
+    return [next, [...effects, { kind: 'controlsDrawn' }, { kind: 'editsStart' }]];
+  }
+  if (was.cook !== null && m.cook === null) {
+    const next: Model = { ...m, controls: { ...m.settings }, controlsStart_s: null, aim: null };
+    return [next, [
+      ...effects, { kind: 'editsEnd' }, { kind: 'silence' }, { kind: 'questionsReset' }, { kind: 'controlsDrawn' },
+      { kind: 'drawNudge' }, { kind: 'shareDrawn' },
+    ]];
+  }
+  return [m, effects];
+}
+
+/* ---------------------------------------------------------- the idle page */
+
+/**
+ * The idle page solved again (answer.ts, `solveIdle`), and its answer taken
+ * up: the slider moved if the answer says it must (only out of the
+ * stripes), and the settings written at once for it, since the slider moved
+ * out from under the cook; what is still to be built asked for. Idle only:
+ * once the egg is in the water its plan is core's, from its own choices, and
+ * a solve takes nothing up. No pan, no solve: the sous-vide answer comes
+ * from src/core/sousvide.ts and needs none of this.
+ */
+function solve(m: Model): [Model, Effect[]] {
+  if (m.cook !== null) return [m, []];
+  if (isSousVide(m)) {
+    return [{ ...m, idleAnswer: null, chosen: null, decision: null, outcome: null, profile: null, unsolved: false }, []];
+  }
+  const s = solveIdle(m);
+  const effects: Effect[] = [];
+  let settings = m.settings;
+  let controls = m.controls;
+  const snapTo = s.answer.verdict.snapTo;
+  if (snapTo !== null && snapTo !== settings.doneness) {
+    settings = { ...settings, doneness: snapTo };
+    controls = { ...controls, doneness: snapTo };
+    effects.push({ kind: 'donenessDrawn' }, { kind: 'save', soon: false });
+  }
+  if (s.surface !== null) effects.push({ kind: 'askSurface', inputs: s.surface });
+  for (const inputs of s.profiles) effects.push({ kind: 'askProfile', inputs: inputs });
+  const chosen = s.chosen;
+  return [{
+    ...m, settings: settings, controls: controls, idleAnswer: s.answer, profile: s.profile, chosen: chosen,
+    solution: chosen?.solution ?? s.answer.solution, decision: chosen?.decision ?? null,
+    outcome: chosen?.outcome ?? null, unsolved: false,
+  }, effects];
+}
+
+/** `m` with these settings: the controls a copy of them while idle; while a
+ *  cook runs, only what the cook does not hold - the units, the language,
+ *  the sound and which sound. */
+function withSettings(m: Model, settings: Settings): Model {
+  const c = m.controls;
+  const controls = m.cook === null ? { ...settings } : {
+    ...c, unitsChosen: settings.unitsChosen, language: settings.language, muted: settings.muted, alarm: settings.alarm,
+  };
+  return { ...m, settings: settings, controls: controls };
+}
+
+/** Solved again after `effects`, idle. */
+function solved(m: Model, effects: Effect[]): [Model, Effect[]] {
+  const [next, more] = solve(m);
+  return [next, [...effects, ...more]];
+}
+
+/** What a message about the page does; null for one about the cook. */
+function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null {
+  switch (msg.kind) {
+    case 'solve':
+      return solve(m);
+    case 'begin': {
+      // The answer on screen taken up one last time while the controls are
+      // still live - the level it snaps to is the one the cook starts at -
+      // and the cook started on it, with the lean the time on screen took.
+      if (m.cook !== null) return [m, []];
+      const [at, effects] = solve(m);
+      const chosen = at.chosen;
+      const [next, more] = updateCook(at, {
+        kind: 'start', choices: idleChoices(at), nudge_s: nudgeNow(at), units: msg.units, lang: msg.lang,
+        leanHint_s: chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s,
+      }, now_s);
+      return around(m, next, [...effects, ...more]);
+    }
+    case 'controls': {
+      // While a cook runs the controls are its correction in hand, written
+      // to the settings when it is committed (edit.ts), not before.
+      if (m.cook !== null) return [{ ...m, controls: msg.controls }, []];
+      return [
+        { ...m, controls: msg.controls, settings: { ...msg.controls }, unsolved: true },
+        [{ kind: 'save', soon: true }, { kind: 'solveSoon' }],
+      ];
+    }
+    case 'touched':
+      return [{ ...m, settings: { ...m.settings, ...msg.fields } }, [{ kind: 'save', soon: false }]];
+    case 'units': {
+      // The cook picks a system, stored as their choice. A cook's own switch
+      // from metric to Imperial, in modern English, is also a switch into
+      // the English of 1750 (LANGUAGE.md section 6); the switch back to
+      // metric leaves the language alone.
+      const choice = chooseUnits(m.settings.unitsChosen, REGIONAL_UNITS, msg.system);
+      let settings: Settings = { ...m.settings, unitsChosen: choice.chosen };
+      const effects: Effect[] = [];
+      if (choice.flip !== null) {
+        effects.push({ kind: 'language', before: effectiveLanguage(settings.language) });
+        settings = { ...settings, language: languageAfterFlip(settings.language, choice.flip) };
+      }
+      effects.push({ kind: 'save', soon: false }, { kind: 'unitsDrawn' });
+      const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
+      return solved(next, effects);
+    }
+    case 'language': {
+      // Nothing about the egg changes, and the units are never touched from
+      // here: that rule runs one way (LANGUAGE.md section 6).
+      const before = effectiveLanguage(m.settings.language);
+      const settings = { ...m.settings, language: msg.next };
+      const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
+      return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
+    }
+    case 'mute': {
+      // Sound is a setting, not a phase: the toggle works mid-cook.
+      const settings = { ...m.settings, muted: !m.settings.muted };
+      return [m.cook === null ? withSettings(m, settings) : { ...m, settings: settings }, [{ kind: 'save', soon: false }]];
+    }
+    case 'alarm': {
+      // Like the sound itself, a setting about the kitchen, not the egg, so
+      // it holds mid-cook; heard as it is picked.
+      const settings = { ...m.settings, alarm: msg.sound };
+      return [
+        { ...m, settings: settings, controls: { ...m.controls, alarm: msg.sound } },
+        [{ kind: 'previewAlarm' }, { kind: 'save', soon: false }],
+      ];
+    }
+    case 'settingsTaken': {
+      // Another tab's settings: the units, the sound and the words follow,
+      // and an idle page's controls follow and it is solved again. A cook
+      // under way is described by its own choices, never by the settings
+      // (DECISIONS.md 97; review 2.5).
+      const before = effectiveLanguage(m.settings.language);
+      const next = withSettings(m, msg.settings);
+      const effects: Effect[] = m.cook === null ? [{ kind: 'controlsDrawn' }] : [{ kind: 'alarmDrawn' }];
+      if (m.cook !== null && msg.settings.unitsChosen !== m.settings.unitsChosen) effects.push({ kind: 'unitsDrawn' });
+      effects.push({ kind: 'language', before: before });
+      return solved(next, effects);
+    }
+    case 'pans':
+      return msg.quiet ? [{ ...m, boilMemory: msg.boilMemory }, []]
+        : solved({ ...m, boilMemory: msg.boilMemory }, [{ kind: 'learnedDrawn' }]);
+    case 'calibration':
+      return solved({ ...m, calib: msg.calib, boilMemory: msg.boilMemory }, [{ kind: 'notesDrawn' }]);
+    case 'learned':
+      return solved(m, [{ kind: 'notesDrawn' }]);
+    case 'relabelled':
+      return solved(m, [{ kind: 'wordsForgotten' }, { kind: 'notesDrawn' }]);
+    case 'startInHand':
+      return [{ ...m, controlsStart_s: msg.at_s }, []];
+    case 'stores':
+      return solved(m, [{ kind: 'notesDrawn' }, { kind: 'shareDrawn' }]);
+    case 'forget':
+      return [m, [{ kind: 'forgetAll' }]];
+    case 'nudge':
+      return solve({ ...m, nudgeDraw: msg.draw });
+    case 'aim': {
+      // A level the slider only previewed after the pull goes back to the
+      // cook's own as the aim goes.
+      if (msg.level === null) return [{ ...m, aim: msg.aim }, []];
+      return [{ ...m, aim: msg.aim, controls: { ...m.controls, doneness: msg.level } }, [{ kind: 'donenessDrawn' }]];
+    }
+    case 'kept': {
+      // The egg kept and learned from: if its cook is still on screen at
+      // Done, thanked for, or, if it could not be kept, its questions put
+      // away, since no more could be kept either.
+      const cook = m.cook;
+      const here = cook !== null && cook.id_ms === msg.id_ms && m.plan !== null && phaseAt(m.plan.deadlines, now_s) === 'DONE';
+      const effects: Effect[] = here && msg.kept && cook !== null && answered(cook) ? [{ kind: 'thanks' }] : [];
+      effects.push({ kind: 'learnedDrawn' });
+      return [here && !msg.kept ? { ...m, questions: 'away' } : m, effects];
+    }
+    default:
+      return null;
+  }
+}
+
+/* ------------------------------------------------------------ the cook */
 
 function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
   switch (msg.kind) {
@@ -381,5 +797,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       if (phaseOf(m, now_s) === 'DONE' && !stillOpen(m, msg.storedId_ms, now_s)) return [close(m), []];
       return msg.theirs === null ? [m, []] : takeUp(m, msg.theirs, now_s);
     }
+    default:
+      return [m, []];
   }
 }

@@ -9,31 +9,31 @@
  * Asking once per egg is what closes that gap.
  */
 
-import { Phase, anchorNear, plausibleProbeRange_C } from '../core/policy.js';
+import { Phase, plausibleProbeRange_C } from '../core/policy.js';
 import { CookPlan, RunningCook, answered, answersOf, asRanShown } from '../core/running.js';
 import { ModelParams } from '../core/solve.js';
-import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
-import { nudgeFrom, parse, stepPast } from '../core/units.js';
+import { parse, stepPast } from '../core/units.js';
 import { calibrationParams, eggLogged, keptState } from './calibration.js';
 import { eggRecordFor } from './eggRecord.js';
-import { activeLocale, t } from './copy.js';
+import { t } from './copy.js';
 import { page } from './dom.js';
+import type { Model } from './model.js';
 import { state } from './state.js';
 import { disableSteppers, setStepRule } from './stepper.js';
 import { measure, show } from './units.js';
 
 /** Whether the questions are on offer for the cook on screen, and something
  *  has been said on this page: they stay, settled, until it moves on. */
-export function answeredHere(): boolean {
-  return state.cook !== null && state.questions === 'open' && answered(state.cook);
+export function answeredHere(m: Model): boolean {
+  return m.cook !== null && m.questions === 'open' && answered(m.cook);
 }
 
 /** Whether the cook on screen was picked back up after a reload, which a
  *  running cook says on screen: its alarm died with the old page. */
-export function pickedUpAfterReload(): boolean {
-  return state.questions === 'away' || (state.reloaded && !answeredHere());
+export function pickedUpAfterReload(m: Model): boolean {
+  return m.questions === 'away' || (m.reloaded && !answeredHere(m));
 }
 
 /** What the questions need of the page: an answer stepped into the cook
@@ -124,42 +124,9 @@ export function probeWanted(probeOn: boolean, shown: CookShown | null): boolean 
 }
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
-export function probePending(phase: Phase, wanted: boolean): boolean {
-  const cook = state.cook;
-  return phase === 'DONE' && wanted && state.questions === 'open' && (cook === null || answersOf(cook).probe === null);
-}
-
-/** Whether the reading's field is under the questions: whenever the cook has
- *  a moment to probe, the cooling having ended at the yolk's peak, with the
- *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-function probeOffered(shown: CookShown | null): boolean {
-  return shown !== null && shown.probeMoment;
-}
-
-/** The reading's field at DONE, under the two questions, whenever this cook
- *  had a moment to probe; it shows what was given once it is. */
-export function renderProbe(phase: Phase, shown: CookShown | null): void {
-  const visible = phase === 'DONE' && probeOffered(shown);
-  page().probeEntry.hidden = !visible;
-  // The − and + start from the peak of the cook that ran, shown greyed in
-  // the empty field: a suggestion, never taken as a reading until stepped or
-  // typed. Plain digits, as the field holds them.
-  if (visible && shown !== null) {
-    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), shown.peakYolk_C));
-  }
-}
-
-/** What the cook on screen was cooked for, over the yolk question, so the
- *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
- *  The cook as it ran (`cookShown`) - the level it ran at, and the peak of
- *  the time that ran - never the slider now, nor a plan made since. */
-export function renderTarget(shown: CookShown | null): void {
-  page().feedbackTarget.hidden = shown === null;
-  if (shown === null) return;
-  page().feedbackTarget.textContent = t('feedback.target', {
-    doneness: midSentence(t(anchorNear(shown.level).key), activeLocale()),
-    yolk: show('temperature', shown.peakYolk_C),
-  });
+export function probePending(m: Model, phase: Phase, wanted: boolean): boolean {
+  const cook = m.cook;
+  return phase === 'DONE' && wanted && m.questions === 'open' && (cook === null || answersOf(cook).probe === null);
 }
 
 /**

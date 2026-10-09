@@ -12,7 +12,9 @@ import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { CookChoices, CookSurface, endedAt_s } from '../src/core/running.js';
-import { Effect, Model, Msg, NO_NEED, update } from '../src/ui/model.js';
+import { Effect, Model, Msg, update } from '../src/ui/model.js';
+import { emptyModel } from '../src/ui/state.js';
+import { DEFAULT_SETTINGS } from '../src/ui/store.js';
 import { gridFor, knowing } from '../tools/common.js';
 
 const S = 1791363600;
@@ -26,11 +28,8 @@ const CHOICES: CookChoices = {
 
 function idleModel(): Model {
   return {
-    settings: null!, controls: null!, boilMemory: { '2.0': 480 }, calib: C, solution: null, decision: null,
-    outcome: null, chosen: null, profile: null, idleWarning: '', aim: null, controlsStart_s: null, nudgeDraw: 0,
-    cook: null, plan: null, leanHint_s: 0, need: NO_NEED, ending: [], before: [], surfaces: [],
-    appVersion: '0.5.0-alpha.1', prior: 'test', pull_s: null, written: null, works: true, closed: false,
-    questions: 'open', reloaded: false, probeHeld: false,
+    ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, controls: { ...DEFAULT_SETTINGS }, boilMemory: { '2.0': 480 },
+    calib: C, appVersion: '0.5.0-alpha.1', prior: 'test',
   };
 }
 
@@ -95,7 +94,12 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const end = p.go({ kind: 'primary' }, p.coolEnd + 10);
   assert.equal(p.m.cook, null, 'Start again at Done');
-  assert.deepEqual(kinds(end), ['rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
+  assert.deepEqual(kinds(end).slice(0, 5), ['rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
+  assert.deepEqual(kinds(end).slice(5), [
+    'editsEnd', 'silence', 'questionsReset', 'controlsDrawn', 'drawNudge', 'shareDrawn',
+  ], 'and the page goes back to the settings, with a new nudge');
+  assert.deepEqual(p.m.controls, p.m.settings, 'the controls show the settings again');
+  assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
 });
 
 test('2. an answer to an egg no longer open closes it here: nothing stepped, nothing written or logged', () => {
