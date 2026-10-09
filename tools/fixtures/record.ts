@@ -23,15 +23,14 @@ import { referenceSetup } from '../common.js';
 /* The record (INFERENCE.md section 4) and the replay built on it.
  *
  * Two things are pinned. First, which records a loader TRUSTS: a canonical
- * record, the variations version skew allows, and one breakage per rule, so a
+ * record, the variations today's shape allows, and one breakage per rule, so a
  * port that forgets a check - or adds one - disagrees on a named case. Second,
- * the replay: a log of fifteen eggs from both apps - answered either way or not
- * at all, pulled by the cook or by the clock, some with a probe reading, the
- * first ten in the old three yolk answers and the last five in the five yolk
- * words (DECISIONS.md 92) - folded
- * from a fresh prior with every particle and weight written out after each
- * egg, and the tail of the same log folded again from the state after the second
- * egg, which is what a phone whose damaged log was dropped starts from.
+ * the replay: a log of fifteen eggs from both apps - answered or not, pulled by
+ * the cook or by the clock, some with a probe reading, the yolk in the five
+ * words (DECISIONS.md 92) - folded from a fresh prior with every particle and
+ * weight written out after each egg, and the tail of the same log folded again
+ * from the state after the second egg, which is what a phone whose damaged log
+ * was dropped starts from.
  *
  * The grid is coarser than the app's: `calibrationGrid`'s BOUNDS, which are what
  * decide what the filter sees, at 7 x 9 instead of 21 x 32. The counts are
@@ -59,9 +58,8 @@ interface EggSpec {
   level: number;
   pulledBy: EggRecord['pulledBy'];
   late_s: number;
-  yolk: EggRecord['yolk'];
-  /** The yolk the cook got, in five words (DECISIONS.md 92); none if absent. */
-  yolkWord?: EggRecord['yolkWord'];
+  /** The yolk the cook got, in five words (DECISIONS.md 92). */
+  yolkWord: EggRecord['yolkWord'];
   white: EggRecord['white'];
   /** A probe reading, as degrees off the peak the literature values
    *  predict for this cook, so the fixture reads where a real one would. */
@@ -112,8 +110,7 @@ function recordOf(e: EggSpec): EggRecord {
     pulled_s: recommended + e.late_s,
     pulledBy: e.pulledBy,
     cooled_s: setup.cooling === 'counter' ? 0 : probe !== null ? coolingSecondsFor(solved) : COOLING_SECONDS,
-    yolk: e.yolk,
-    yolkWord: e.yolkWord ?? null,
+    yolkWord: e.yolkWord,
     white: e.white,
     probe: probe,
     forecast: e.forecast === undefined ? null : {
@@ -126,91 +123,89 @@ function recordOf(e: EggSpec): EggRecord {
 }
 
 const REPLAY_LOG: EggRecord[] = [
-  // Soft, too soft, and the white was runny: both channels, from the prior.
+  // Soft-ish, soft got, and the white was runny: both channels, from the prior.
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.3, pulledBy: 'cook', late_s: 7.25, yolk: -1, white: 'runny',
+    level: 0.3, pulledBy: 'cook', late_s: 7.25, yolkWord: 'soft', white: 'runny',
     forecast: { yolk: [0.25, 0.5, 0.25], white: [0.375, 0.5, 0.125] },
   }),
   // A cold start with a measured ramp; the white skipped.
   recordOf({
     app: 'ios', mass_g: 68.5, massFrom: 'scale', eggFrom: 'fridge',
     over: { startMode: 'cold', timeToBoil_s: 512.4 },
-    level: 0.45, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null,
+    level: 0.45, pulledBy: 'timeout', late_s: 0, yolkWord: 'jammy', white: null,
   }),
   // Nobody answered. Still a record; it folds nothing and builds no surface.
   // Nor had anybody ever timed the pan.
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'room', over: { eggStart_C: 20 },
     boilFrom: 'default',
-    level: 0.5, pulledBy: 'timeout', late_s: 0, yolk: null, white: null,
+    level: 0.5, pulledBy: 'timeout', late_s: 0, yolkWord: null, white: null,
   }),
-  // Asked about the white, and skipped it.
+  // Firmer than asked, the white skipped.
   recordOf({
     app: 'web', mass_g: 55.3, massFrom: 'girth', eggFrom: 'custom',
     over: { eggStart_C: 8, cooling: 'tap' },
-    level: 0.4, pulledBy: 'cook', late_s: 31.5, yolk: 1, white: null,
+    level: 0.4, pulledBy: 'cook', late_s: 31.5, yolkWord: 'fudgy', white: null,
   }),
   // Rested on the counter, the only cook that reaches tauAirScale.
   recordOf({
     app: 'ios', mass_g: 67.3, massFrom: 'class', sizeTable: 'us', eggFrom: 'room',
     over: { eggStart_C: 20, cooling: 'counter' },
-    level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null,
+    level: 0.62, pulledBy: 'timeout', late_s: 0, yolkWord: 'fudgy', white: null,
   }),
   // The standing method, from a cold start, and a tender white.
   recordOf({
     app: 'web', mass_g: 60.2, massFrom: 'width', eggFrom: 'fridge',
     over: { startMode: 'cold', timeToBoil_s: 430, afterBoil: 'off', waterLitres: 1.5, eggCount: 2 },
-    level: 0.5, pulledBy: 'cook', late_s: 2, yolk: -1, white: 'tender',
+    level: 0.5, pulledBy: 'cook', late_s: 2, yolkWord: 'soft', white: 'tender',
   }),
   // The white alone, tender, pulled late by the cook's own tap - scored
   // at the tap, 40 s after the alarm.
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.22, pulledBy: 'cook', late_s: 40, yolk: null, white: 'tender',
+    level: 0.22, pulledBy: 'cook', late_s: 40, yolkWord: null, white: 'tender',
   }),
-  // Both, and a firm white at fudgy.
+  // Hard at fudgy, and a firm white.
   recordOf({
     app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm',
+    level: 0.62, pulledBy: 'cook', late_s: 5, yolkWord: 'hard', white: 'firm',
   }),
-  // A probe reading a degree hot, with the yolk "just right".
+  // A probe reading a degree hot, with the yolk jammy as asked.
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 0.41, pulledBy: 'cook', late_s: 3, yolk: 0, white: null, probeOff_C: 1.0,
+    level: 0.41, pulledBy: 'cook', late_s: 3, yolkWord: 'jammy', white: null, probeOff_C: 1.0,
   }),
   // And a reading alone, under a tap, cold - nothing else answered.
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: { cooling: 'tap' },
-    level: 0.3, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, probeOff_C: -1.5,
+    level: 0.3, pulledBy: 'timeout', late_s: 0, yolkWord: null, white: null, probeOff_C: -1.5,
   }),
-  // From here the cook names the yolk they got (DECISIONS.md 92). Every egg
-  // above folds exactly as it did before the five words.
   // Soft asked for, runny got, a runny white: the owner's egg.
   recordOf({
     app: 'ios', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.22, pulledBy: 'cook', late_s: -12, yolk: null, yolkWord: 'runny', white: 'runny',
+    level: 0.22, pulledBy: 'cook', late_s: -12, yolkWord: 'runny', white: 'runny',
     forecast: { yolk: [0.25, 0.5, 0.25], white: [0.375, 0.5, 0.125], yolkWord: [0.125, 0.5, 0.25, 0.0625, 0.0625] },
   }),
   // Jammy asked for and got, with a probe reading.
   recordOf({
     app: 'web', mass_g: 66, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 0.41, pulledBy: 'cook', late_s: 2, yolk: null, yolkWord: 'jammy', white: 'firm', probeOff_C: 0.5,
+    level: 0.41, pulledBy: 'cook', late_s: 2, yolkWord: 'jammy', white: 'firm', probeOff_C: 0.5,
   }),
   // Fudgy asked for, hard got, a cold start; the white skipped.
   recordOf({
     app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: { startMode: 'cold', timeToBoil_s: 450 },
-    level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: null, yolkWord: 'hard', white: null,
+    level: 0.62, pulledBy: 'timeout', late_s: 0, yolkWord: 'hard', white: null,
   }),
   // The yolk alone, soft, at hard: the far end of the scale.
   recordOf({
     app: 'ios', mass_g: 70, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 1.0, pulledBy: 'cook', late_s: 0, yolk: null, yolkWord: 'soft', white: null,
+    level: 1.0, pulledBy: 'cook', late_s: 0, yolkWord: 'soft', white: null,
   }),
   // And fudgy, at jammy.
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.41, pulledBy: 'cook', late_s: 20, yolk: null, yolkWord: 'fudgy', white: 'tender',
+    level: 0.41, pulledBy: 'cook', late_s: 20, yolkWord: 'fudgy', white: 'tender',
   }),
 ];
 
@@ -281,41 +276,45 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
     why: 'fields from a later v1 are ignored',
     mutate: (r) => { r['futureField'] = 3; eggPart(r)['shell'] = 'brown'; },
   },
-  {
-    why: 'nullable fields may be absent',
-    mutate: (r) => { delete r['uid']; delete r['probe']; delete r['yolk']; delete r['white']; },
-  },
+  { why: 'no uid field', mutate: (r) => { delete r['uid']; } },
+  { why: 'no model field', mutate: (r) => { delete r['model']; } },
+  { why: 'no yolk word field', mutate: (r) => { delete r['yolkWord']; } },
+  { why: 'no white field', mutate: (r) => { delete r['white']; } },
+  { why: 'no probe field', mutate: (r) => { delete r['probe']; } },
+  { why: 'no forecast field', mutate: (r) => { delete r['forecast']; } },
+  { why: 'no carton field on a weighed egg', mutate: (r) => { eggPart(r)['massFrom'] = 'scale'; delete eggPart(r)['sizeTable']; } },
   { why: 'a uid, as an uploaded copy carries one', mutate: (r) => { r['uid'] = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f'; } },
-  {
-    why: 'from before E6: no model, no forecast',
-    mutate: (r) => { delete r['model']; delete r['forecast']; },
-  },
+  { why: 'a model of null', mutate: (r) => { r['model'] = null; } },
   { why: 'no forecast kept', mutate: (r) => { r['forecast'] = null; } },
   {
     why: 'a forecast whose answers sum to one in floating point',
-    mutate: (r) => { r['forecast'] = { cook_s: 400.5, yolk: [0.1, 0.2, 0.7], white: [0.3, 0.6, 0.1] }; },
+    mutate: (r) => { r['forecast'] = { cook_s: 400.5, yolk: [0.1, 0.2, 0.7], white: [0.3, 0.6, 0.1], yolkWord: null }; },
   },
   { why: 'an empty model', mutate: (r) => { r['model'] = ''; } },
   { why: 'a model as a number', mutate: (r) => { r['model'] = 6; } },
   {
     why: 'a forecast that does not sum to one',
-    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.5, 0.2], white: [0.3, 0.5, 0.2] }; },
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.5, 0.2], white: [0.3, 0.5, 0.2], yolkWord: null }; },
   },
   {
     why: 'a forecast with two answers',
-    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.5, 0.5], white: [0.3, 0.5, 0.2] }; },
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.5, 0.5], white: [0.3, 0.5, 0.2], yolkWord: null }; },
   },
   {
     why: 'a forecast with a probability past one',
-    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [1.5, -0.25, -0.25], white: [0.3, 0.5, 0.2] }; },
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [1.5, -0.25, -0.25], white: [0.3, 0.5, 0.2], yolkWord: null }; },
   },
   {
     why: 'a forecast for no time',
-    mutate: (r) => { r['forecast'] = { cook_s: 0, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2] }; },
+    mutate: (r) => { r['forecast'] = { cook_s: 0, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2], yolkWord: null }; },
   },
-  { why: 'a forecast with no white', mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2] }; } },
+  { why: 'a forecast with no white', mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2], yolkWord: null }; } },
+  {
+    why: 'a forecast with no yolk word field',
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2] }; },
+  },
   { why: 'a forecast as a string', mutate: (r) => { r['forecast'] = '7/10'; } },
-  { why: 'an unanswered egg', mutate: (r) => { r['yolk'] = null; r['white'] = null; } },
+  { why: 'an unanswered egg', mutate: (r) => { r['yolkWord'] = null; r['white'] = null; } },
   { why: 'the white offered and skipped', mutate: (r) => { r['white'] = null; } },
   { why: 'a tender white (E2)', mutate: (r) => { r['white'] = 'tender'; } },
   { why: 'a firm white (E2)', mutate: (r) => { r['white'] = 'firm'; } },
@@ -372,16 +371,13 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a pull at zero', mutate: (r) => { r['pulled_s'] = 0; } },
   { why: 'an unknown puller', mutate: (r) => { r['pulledBy'] = 'alarm'; } },
   { why: 'negative cooling', mutate: (r) => { r['cooled_s'] = -1; } },
-  { why: 'a yolk answer out of range', mutate: (r) => { r['yolk'] = 2; } },
-  { why: 'a yolk answer as a word', mutate: (r) => { r['yolk'] = 'soft'; } },
-  { why: 'the yolk the cook got (DECISIONS.md 92)', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'runny'; } },
-  { why: 'each of the five yolk words, hard', mutate: (r) => { delete r['yolk']; r['yolkWord'] = 'hard'; } },
-  { why: 'a fudgy yolk', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'fudgy'; } },
-  { why: 'the yolk word skipped', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = null; } },
-  { why: 'both yolk answers at once', mutate: (r) => { r['yolkWord'] = 'soft'; } },
-  { why: 'a yolk word nobody offers', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'medium'; } },
-  { why: 'a yolk word as a number', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 2; } },
-  { why: 'a yolk word in capitals', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'Jammy'; } },
+  { why: 'the yolk the cook got (DECISIONS.md 92)', mutate: (r) => { r['yolkWord'] = 'runny'; } },
+  { why: 'each of the five yolk words, hard', mutate: (r) => { r['yolkWord'] = 'hard'; } },
+  { why: 'a fudgy yolk', mutate: (r) => { r['yolkWord'] = 'fudgy'; } },
+  { why: 'the yolk word skipped', mutate: (r) => { r['yolkWord'] = null; } },
+  { why: 'a yolk word nobody offers', mutate: (r) => { r['yolkWord'] = 'medium'; } },
+  { why: 'a yolk word as a number', mutate: (r) => { r['yolkWord'] = 2; } },
+  { why: 'a yolk word in capitals', mutate: (r) => { r['yolkWord'] = 'Jammy'; } },
   {
     why: 'a forecast of the five yolk words',
     mutate: (r) => {
@@ -410,14 +406,14 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'the two-level white E1 logged, gone with D1', mutate: (r) => { r['white'] = 'set'; } },
   { why: 'a probe reading (E4)', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: 187 }; } },
   { why: 'a probe reading, when unknown', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: null }; } },
-  { why: 'a probe reading, when absent', mutate: (r) => { r['probe'] = { centre_C: 61.3 }; } },
-  { why: 'a probe reading as cold as the ice', mutate: (r) => { r['probe'] = { centre_C: 2 }; } },
-  { why: 'a probe reading at the boil', mutate: (r) => { r['probe'] = { centre_C: 100 }; } },
-  { why: 'a probe reading colder than the ice', mutate: (r) => { r['probe'] = { centre_C: 1.9 }; } },
-  { why: 'a probe reading past the boil', mutate: (r) => { r['probe'] = { centre_C: 100.01 }; } },
+  { why: 'a probe reading with no when field', mutate: (r) => { r['probe'] = { centre_C: 61.3 }; } },
+  { why: 'a probe reading as cold as the ice', mutate: (r) => { r['probe'] = { centre_C: 2, after_s: null }; } },
+  { why: 'a probe reading at the boil', mutate: (r) => { r['probe'] = { centre_C: 100, after_s: null }; } },
+  { why: 'a probe reading colder than the ice', mutate: (r) => { r['probe'] = { centre_C: 1.9, after_s: null }; } },
+  { why: 'a probe reading past the boil', mutate: (r) => { r['probe'] = { centre_C: 100.01, after_s: null }; } },
   { why: 'a bare number for a probe', mutate: (r) => { r['probe'] = 64.5; } },
-  { why: 'a probe with no reading', mutate: (r) => { r['probe'] = {}; } },
-  { why: 'a probe reading as a string', mutate: (r) => { r['probe'] = { centre_C: '61.3' }; } },
+  { why: 'a probe with no reading', mutate: (r) => { r['probe'] = { after_s: null }; } },
+  { why: 'a probe reading as a string', mutate: (r) => { r['probe'] = { centre_C: '61.3', after_s: null }; } },
   { why: 'a probe asked for before the pull', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: -1 }; } },
   { why: 'no language', mutate: (r) => { r['lang'] = ''; } },
   { why: 'an unknown unit system', mutate: (r) => { r['units'] = 'kelvin'; } },
@@ -431,7 +427,6 @@ const recordCases = RECORD_CASES.map((c) => {
     record: record,
     valid: parsed !== null,
     id: parsed === null ? null : parsed.id ?? null,
-    yolk: parsed === null ? null : parsed.yolk,
     yolkWord: parsed === null ? null : parsed.yolkWord,
     white: parsed === null ? null : parsed.white,
     probe: parsed === null ? null : parsed.probe,
@@ -445,7 +440,6 @@ recordCases.push({
   record: [CANONICAL] as unknown as Record<string, unknown>,
   valid: parseRecord([CANONICAL]) !== null,
   id: null,
-  yolk: null,
   yolkWord: null,
   white: null,
   probe: null,
@@ -455,21 +449,29 @@ recordCases.push({
 
 /* The results file (DECISIONS.md 81): the same store makes the same file in
  * both apps, character for character. A store spliced in as it is, a missing
- * store, damaged and bare copies kept as strings, and every character the
+ * store, damaged and bare stores kept as strings, and every character the
  * escaping treats specially. */
 const STORE_TEXT = JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: MODEL_ID, folded: 1, log: [REPLAY_LOG[0]] });
-const RESULTS_CASES: { meta: ResultsMeta; stored: string | null; unread: string[] }[] = [
+const RESULTS_CASES: { meta: ResultsMeta; stored: string | null }[] = [
   {
     meta: { app: 'web', appVersion: '0.4.0-alpha.1', exported: '2026-10-05T09:41:07.250Z', population: LITERATURE_POPULATION.id, uid: null },
-    stored: STORE_TEXT, unread: [],
+    stored: STORE_TEXT,
   },
   {
     meta: { app: 'ios', appVersion: '0.4.0', exported: '2026-10-05T09:41:07Z', population: '2026-11', uid: '0f8fad5b-d9cb-469f-a165-70867728950e' },
-    stored: null, unread: ['{not json', '{"v":5,"log":[{"a/b":"‘café’"}]}', '17', '', 'tab\there "quoted" back\\slash \u0001\u001f'],
+    stored: null,
   },
   {
     meta: { app: 'web', appVersion: 'a"b\\c/d\n\r\t\b\f\u0000\u007f’', exported: 'x', population: 'p', uid: 'u' },
-    stored: '[1,2.5,-0.0001,1e+21]', unread: [STORE_TEXT],
+    stored: '[1,2.5,-0.0001,1e+21]',
+  },
+  { meta: { app: 'ios', appVersion: '0.5.0', exported: 'x', population: 'p', uid: null }, stored: '{not json' },
+  { meta: { app: 'ios', appVersion: '0.5.0', exported: 'x', population: 'p', uid: null }, stored: '{"v":5,"log":[{"a/b":"‘café’"}]}' },
+  { meta: { app: 'web', appVersion: '0.5.0', exported: 'x', population: 'p', uid: null }, stored: '17' },
+  { meta: { app: 'web', appVersion: '0.5.0', exported: 'x', population: 'p', uid: null }, stored: '' },
+  {
+    meta: { app: 'web', appVersion: '0.5.0', exported: 'x', population: 'p', uid: null },
+    stored: 'tab\there "quoted" back\\slash \u0001\u001f',
   },
 ];
 
@@ -567,45 +569,41 @@ const probeWhen = [recordFor(FACTS_BASE), recordFor({ ...FACTS_BASE, out_s: null
   })),
 );
 
-/* What a launch makes of the store it read (`loadDecision`; DECISIONS.md
- * 81): every path, and which wins where two apply. The build's own
- * population and model are named here, not taken from the code, so a new
- * `MODEL_ID` does not move these. Each case is a change to a sound store of
- * three records, two folded. */
+/* What a launch makes of the store it read (`loadDecision`): every path, and
+ * which wins where two apply. The build's own population and model are named
+ * here, not taken from the code, so a new `MODEL_ID` does not move these.
+ * Each case is a change to a sound store of three records, two folded. */
 const LOAD_POPULATION = 'this-population';
 const LOAD_MODEL = 'this-model';
 const SOUND_STORE: StoreRead = {
-  stored: true, v4: true, base: null, posterior: true, folded: 2, records: 3, moved: false,
-  population: LOAD_POPULATION, model: LOAD_MODEL,
+  readable: true, base: null, posterior: true, folded: 2, records: 3, population: LOAD_POPULATION, model: LOAD_MODEL,
 };
 const NOT_A_STORE: Partial<StoreRead> = {
-  v4: false, base: null, posterior: false, folded: null, records: null, population: LITERATURE_POPULATION.id, model: null,
+  readable: false, base: null, posterior: false, folded: null, records: null, population: null, model: null,
 };
 const LOAD_CASES: { why: string; over: Partial<StoreRead> }[] = [
-  { why: 'nothing stored', over: { ...NOT_A_STORE, stored: false } },
-  { why: 'a store that is not v4, or not JSON: kept aside', over: { ...NOT_A_STORE } },
+  { why: 'nothing stored, or nothing of this format: dropped', over: { ...NOT_A_STORE } },
   { why: 'loaded, two of three folded', over: {} },
   { why: 'loaded, every record folded', over: { folded: 3 } },
   { why: 'loaded, an empty log', over: { folded: 0, records: 0 } },
   { why: 'loaded on a base', over: { base: 'sound' } },
-  { why: 'the log not a list: the posterior becomes the base', over: { records: null } },
-  { why: 'the log not a list on a base: the posterior still', over: { records: null, base: 'sound' } },
-  { why: 'the log not a list, the posterior damaged: the base', over: { records: null, posterior: false, base: 'sound' } },
-  { why: 'the log not a list, nothing sound: the prior', over: { records: null, posterior: false, base: 'damaged' } },
-  { why: 'the log not a list, another model: still rebased', over: { records: null, model: 'another-model' } },
+  { why: 'the log unreadable: the posterior becomes the base', over: { records: null } },
+  { why: 'the log unreadable on a base: the posterior still', over: { records: null, base: 'sound' } },
+  { why: 'the log unreadable, the posterior damaged: the base', over: { records: null, posterior: false, base: 'sound' } },
+  { why: 'the log unreadable, nothing sound: the prior', over: { records: null, posterior: false, base: 'damaged' } },
+  { why: 'the log unreadable, another model: still rebased', over: { records: null, model: 'another-model' } },
   { why: 'the posterior damaged: the log again from the prior', over: { posterior: false } },
   { why: 'the posterior damaged on a base: the log again from the base', over: { posterior: false, base: 'sound' } },
   { why: 'the base damaged: dropped, and the log again from the prior', over: { base: 'damaged' } },
   { why: 'the count damaged', over: { folded: null } },
   { why: 'drawn from another population', over: { population: 'another-population' } },
   { why: 'folded under another model', over: { model: 'another-model' } },
-  { why: 'from before the model was kept', over: { model: null } },
+  { why: 'no model named', over: { model: null } },
+  { why: 'no population named', over: { population: null } },
   { why: 'another model, on a base: the base stays', over: { model: 'another-model', base: 'sound' } },
-  { why: 'a record changed sides: replayed', over: { moved: true } },
   { why: 'a posterior ahead of its log: rebased on it', over: { folded: 4 } },
   { why: 'ahead of an empty log', over: { folded: 1, records: 0 } },
   { why: 'ahead, on a base: the posterior becomes the base', over: { folded: 4, base: 'sound' } },
-  { why: 'ahead, and a record changed sides: replayed first', over: { folded: 4, moved: true } },
   { why: 'ahead, and another model: replayed first', over: { folded: 4, model: 'another-model' } },
 ];
 const loadCases = LOAD_CASES.map((c) => {
@@ -635,7 +633,7 @@ export const recordFixture = {
   resultsFile: {
     version: RESULTS_FILE_VERSION,
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),
-    cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored, c.unread) })),
+    cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored) })),
   },
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },

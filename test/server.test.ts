@@ -20,7 +20,7 @@ const SITE = 'https://actualeggtimer.netlify.app';
 const OPTS: Options = { root: SYNTH.root };
 
 function egg(uid: string | null = UID, over: Partial<EggRecord> = {}): EggRecord {
-  return { ...recordAt(0.41, 412, 0, 'tender'), uid: uid, ...over };
+  return { ...recordAt(0.41, 412, 'jammy', 'tender'), uid: uid, ...over };
 }
 
 function post(path: string, body: unknown, headers: Record<string, string> = {}): Request {
@@ -48,9 +48,9 @@ test('1. an egg is kept once, in the open tier, as the loader reads it', async (
   assert.equal('id' in kept, false);
   assert.equal(recordKey('open', UID, 0), `records/open/${UID}/000000.json`);
   // A retry is harmless, and nothing is overwritten.
-  const again = await send(store, post('/api/eggs', { seq: 0, record: egg(UID, { yolk: 1 }) }));
+  const again = await send(store, post('/api/eggs', { seq: 0, record: egg(UID, { yolkWord: 'fudgy' }) }));
   assert.deepEqual(again, { status: 200, body: { tier: 'open', stored: false } });
-  assert.equal(JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null').yolk, 0);
+  assert.equal(JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null').yolkWord, 'jammy');
   assert.equal((await send(store, post('/api/eggs', { seq: 1, record: egg() }))).status, 201);
   assert.deepEqual(await store.list(`records/open/${UID}/`), [recordKey('open', UID, 0), recordKey('open', UID, 1), recordKey('open', UID, 9)]);
 });
@@ -199,21 +199,22 @@ test('7. the yolk the cook got (DECISIONS.md 92) is kept, and capped like everyt
   const store = new MemoryStore();
   const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
   const forecast = { cook_s: 412, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: five };
-  const named = egg(UID, { yolk: null, yolkWord: 'runny', forecast: forecast });
+  const named = egg(UID, { yolkWord: 'runny', forecast: forecast });
   assert.equal((await send(store, post('/api/eggs', { seq: 0, record: named }))).status, 201);
   const kept = JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null') as Record<string, unknown>;
   assert.equal(kept['yolkWord'], 'runny');
-  assert.equal(kept['yolk'], null);
+  assert.equal('yolk' in kept, false);
   assert.deepEqual((kept['forecast'] as Record<string, unknown>)['yolkWord'], five);
-  // An older app's record has no yolk word, and is kept with null.
-  assert.equal((await send(store, post('/api/eggs', { seq: 1, record: egg() }))).status, 201);
+  // The yolk skipped is kept as null.
+  assert.equal((await send(store, post('/api/eggs', { seq: 1, record: egg(UID, { yolkWord: null }) }))).status, 201);
   assert.equal(JSON.parse(store.blobs.get(recordKey('open', UID, 1)) ?? 'null').yolkWord, null);
-  // What no app writes is refused: both yolk answers, a word nobody offers,
-  // a word as long text, five probabilities that are not.
+  // What no app writes is refused: a record without the yolk word, as an
+  // app before the five words wrote it; a word nobody offers; a word as long
+  // text; five probabilities that are not.
   const refused: [string, Partial<EggRecord> | Record<string, unknown>][] = [
-    ['both yolk answers', { yolk: 0, yolkWord: 'jammy' }],
-    ['a word nobody offers', { yolk: null, yolkWord: 'medium' }],
-    ['a long word', { yolk: null, yolkWord: 'jammy'.repeat(20) }],
+    ['the old yolk answer, no yolk word', { yolk: 0, yolkWord: undefined }],
+    ['a word nobody offers', { yolkWord: 'medium' }],
+    ['a long word', { yolkWord: 'jammy'.repeat(20) }],
     ['four yolk words', { forecast: { ...forecast, yolkWord: [0.25, 0.25, 0.25, 0.25] } }],
   ];
   for (const [why, over] of refused) {
@@ -228,7 +229,7 @@ test('7. the yolk the cook got (DECISIONS.md 92) is kept, and capped like everyt
   const words = [0.0123456789012345, 0.2123456789012345, 0.5123456789012345, 0.2506172839506173];
   words.push(1 - words.reduce((s, v) => s + v, 0));
   const longest = {
-    ...egg(UID, { yolk: null, yolkWord: 'jammy' }), appVersion: x, prior: x, model: x, lang: x, register: x,
+    ...egg(UID, { yolkWord: 'jammy' }), appVersion: x, prior: x, model: x, lang: x, register: x,
     level: 0.41234567890123456, recommended_s: 412.12345678901234, pulled_s: 419.12345678901234,
     cooled_s: 183.12345678901234, probe: { centre_C: 64.12, after_s: 183.12345678901234 },
     forecast: {

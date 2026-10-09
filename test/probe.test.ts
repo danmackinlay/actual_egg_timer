@@ -24,7 +24,7 @@ import {
 } from '../src/core/infer.js';
 import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
 import {
-  CookResult, DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, simulate, solveCookTime,
+  CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
@@ -33,7 +33,7 @@ import {
   coolingSecondsFor, plausibleProbeRange_C, probeMomentFor,
 } from '../src/core/policy.js';
 import {
-  EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
+  EggRecord, MODEL_ID, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
   freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
@@ -62,7 +62,7 @@ function truePeak(factor: number, cooling: CookSetup['cooling'] = 'ice'): number
 
 function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: MODEL_ID,
     egg: { mass_g: 68, massFrom: 'scale', sizeTable: null },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,
@@ -70,7 +70,7 @@ function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggR
       waterLitres: 2, eggCount: 2,
     },
     level: JAMMY, recommended_s: COOK_S, nudge_s: 0, pulled_s: COOK_S, pulledBy: 'timeout',
-    cooled_s: coolingSecondsFor(COOK.result), yolk: null, yolkWord: null, white: null,
+    cooled_s: coolingSecondsFor(COOK.result), yolkWord: null, white: null,
     probe: probe_C === null ? null : { centre_C: probe_C, after_s: coolingSecondsFor(COOK.result) },
     forecast: null,
     lang: 'en', register: 'modern', units: 'metric',
@@ -167,7 +167,7 @@ function oneReading(reading_C: number): {
   const grid = buildRequestedGrid(gridRequestFor(start, rec, calibrationGrid));
   const post = start.posterior;
   const w = post.particles.map((p, i) => post.weights[i]
-    * answerLikelihood(grid, p, COOK_S, 0, null, null, reading_C));
+    * answerLikelihood(grid, p, COOK_S, null, null, reading_C));
   const total = w.reduce((a, b) => a + b, 0);
   let mean = 0.0;
   for (let i = 0; i < w.length; i++) mean += (w[i] / total) * post.particles[i].alpha_m2s;
@@ -234,19 +234,18 @@ test('3a. the reading multiplies into the answers: one fold, whatever arrived fi
       timeCount: 9,
     },
   );
-  const target = logYolkTarget(JAMMY);
   const prior = createPrior(40, 7);
   for (const p of prior.particles) {
-    const both = answerLikelihood(grid, p, COOK_S, target, 0, 'firm', 64.0);
-    const apart = answerLikelihood(grid, p, COOK_S, target, 0, 'firm')
-      * answerLikelihood(grid, p, COOK_S, target, null, null, 64.0);
+    const both = answerLikelihood(grid, p, COOK_S, 'jammy', 'firm', 64.0);
+    const apart = answerLikelihood(grid, p, COOK_S, 'jammy', 'firm')
+      * answerLikelihood(grid, p, COOK_S, null, null, 64.0);
     assert.ok(Math.abs(both - apart) <= 1e-15 * Math.abs(both));
   }
   // A null reading is no reading: bit-identical to a fold without one.
   const a = createPrior(200, 11);
   const b = createPrior(200, 11);
-  updatePosterior(a, grid, COOK_S, target, 1, 'tender');
-  updatePosterior(b, grid, COOK_S, target, 1, 'tender', null);
+  updatePosterior(a, grid, COOK_S, 'fudgy', 'tender');
+  updatePosterior(b, grid, COOK_S, 'fudgy', 'tender', null);
   assert.deepEqual(a, b);
 });
 
@@ -272,30 +271,30 @@ test('3c. the loader takes a reading the egg could have been, and refuses one it
     parseRecord({ ...recordWith(null, over), probe: probe }) !== null;
   assert.ok(ok(null));
   assert.ok(ok({ centre_C: 64.2, after_s: 183 }));
-  assert.ok(ok({ centre_C: 64.2 }), 'when it was asked is optional');
+  assert.ok(!ok({ centre_C: 64.2 }), 'when it was asked is always written, null or not');
   assert.ok(ok({ centre_C: 64.2, after_s: null }));
-  assert.ok(ok({ centre_C: 2.0 }), 'as cold as the ice');
-  assert.ok(ok({ centre_C: 100 }), 'as hot as the boil');
-  assert.ok(!ok({ centre_C: 1.9 }), 'colder than anything the egg touched');
-  assert.ok(!ok({ centre_C: 100.1 }), 'hotter than the water boiled');
-  assert.ok(!ok({ centre_C: 94 }, {
+  assert.ok(ok({ centre_C: 2.0, after_s: null }), 'as cold as the ice');
+  assert.ok(ok({ centre_C: 100, after_s: null }), 'as hot as the boil');
+  assert.ok(!ok({ centre_C: 1.9, after_s: null }), 'colder than anything the egg touched');
+  assert.ok(!ok({ centre_C: 100.1, after_s: null }), 'hotter than the water boiled');
+  assert.ok(!ok({ centre_C: 94, after_s: null }, {
     setup: { ...recordWith(null).setup, boiling_C: 93.5 },
   }), 'hotter than the water boiled, up a mountain');
-  assert.ok(!ok({ centre_C: 14 }, { setup: { ...recordWith(null).setup, cooling: 'tap', eggStart_C: 20, ambient_C: 20 } }),
+  assert.ok(!ok({ centre_C: 14, after_s: null }, { setup: { ...recordWith(null).setup, cooling: 'tap', eggStart_C: 20, ambient_C: 20 } }),
     'colder than the tap, the room and the egg');
   assert.ok(!ok(64.5), 'a bare number');
-  assert.ok(!ok({}), 'no reading');
-  assert.ok(!ok({ centre_C: '64' }));
-  assert.ok(!ok({ centre_C: Number.NaN }));
+  assert.ok(!ok({ after_s: null }), 'no reading');
+  assert.ok(!ok({ centre_C: '64', after_s: null }));
+  assert.ok(!ok({ centre_C: Number.NaN, after_s: null }));
   assert.ok(!ok({ centre_C: 64, after_s: -1 }));
   assert.ok(!ok({ centre_C: 64, after_s: '183' }));
   // Typed in F, carried in C to a hundredth: 147.2 F is 64 C, not 63.99999999999999.
   assert.equal(recordProbe_C((147.2 - 32) * 5 / 9), 64);
   assert.equal(recordProbe_C((147.3 - 32) * 5 / 9), 64.06);
-  // Absent reads as null, as a record without a probe field has it.
+  // A record always says whether there was a reading.
   const raw = { ...recordWith(null) } as Record<string, unknown>;
   delete raw['probe'];
-  assert.equal(parseRecord(raw)?.probe, null);
+  assert.equal(parseRecord(raw), null);
 });
 
 // --------------------------------------------------------------------------

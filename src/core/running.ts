@@ -469,7 +469,7 @@ function readAsRan(raw: unknown, start_s: number): CookAsRan | null {
  * A stored cook, read defensively: whole, or null. A cook is what the
  * calibration learns from and what the alarms ring for, so a shape this build
  * cannot read is reported, not guessed at or patched from the controls; the
- * app keeps it aside, as stored (DECISIONS.md 81). Extra fields are ignored.
+ * app drops it. Extra fields are ignored.
  */
 export function readRunningCook(raw: unknown): RunningCook | null {
   if (!isObject(raw)) return null;
@@ -1204,8 +1204,7 @@ export interface CookFactsResult {
  * and its plan, with whichever answers have been given (DECISIONS.md 97, 8):
  * the egg, the pot with the time to boil in force, the level it ran at, the
  * cook time that ran and the nudge in it, the pull the cook tapped, the
- * cooling as it ran, and what the app said for that cook at that time. The
- * format does not change (DECISIONS.md 81).
+ * cooling as it ran, and what the app said for that cook at that time.
  *
  * The level, cook time, nudge and forecast are the plan as it ran when the
  * cook keeps one (`asRan`), whatever `plan` reads now; otherwise `plan`'s,

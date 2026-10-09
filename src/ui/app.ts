@@ -49,7 +49,8 @@ import { markDevClockUse, nowMs } from './now.js';
 export function boot(): void {
   bindDom();
   // Before anything is written: whether a newer build has run here, and the
-  // mark brought up to this one if not (DECISIONS.md 100).
+  // mark brought up to this one if not (DECISIONS.md 100), and then the keys
+  // no build reads any more deleted.
   claimStorage(APP_VERSION, leaveStoresAlone);
   page().newerNote.hidden = !storageReadOnly();
   // The development clock's mark, for a clock set as the page loaded.

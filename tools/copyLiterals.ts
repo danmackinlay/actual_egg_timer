@@ -84,8 +84,20 @@ const NOT_COPY: Record<string, string> = {
   cooled_s: 'record field name',
   // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
+  'calibration.v5': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
+  // keys earlier builds wrote, deleted at launch (Store.swift, `retiredKeys`)
+  'calibration.v1': 'UserDefaults key',
+  'calibration.v2': 'UserDefaults key',
+  'calibration.v3': 'UserDefaults key',
+  'share.v1': 'UserDefaults key',
+  'share.attest.v1': 'UserDefaults key',
+  coldStart: 'UserDefaults key',
+  fromFridge: 'UserDefaults key',
+  eggMassG: 'UserDefaults key',
+  probeAsked: 'UserDefaults key',
+  'swept {}': 'debug log (Screenshots.log), never shown',
   // the running cook as stored (Cook.swift; design/one-screen.md section 4)
   'cookInProgress.v2': 'UserDefaults key',
   'cookInProgress.v3': 'UserDefaults key',
@@ -93,7 +105,7 @@ const NOT_COPY: Record<string, string> = {
   // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',
-  'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4); "unread" holds any stored copy the app could not read, kept rather than overwritten.':
+  'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4).':
     'results file: its description of itself, inside the file, never on a screen',
   about: 'results file field name',
   file: 'results file field name',
@@ -102,7 +114,6 @@ const NOT_COPY: Record<string, string> = {
   exported: 'results file field name',
   model: 'results file field name',
   stored: 'results file field name',
-  unread: 'results file field name',
   '{}+{}': 'the app version a record carries: version, plus, build number',
   null: 'JSON null, in the results file',
   '"': 'JSON punctuation, in the results file',
@@ -128,6 +139,7 @@ const NOT_COPY: Record<string, string> = {
   unitsChosen: 'UserDefaults key',
   languageState: 'UserDefaults key',
   newestVersion: 'UserDefaults key: the newest version that has run (DECISIONS.md 100)',
+  newestBuild: 'UserDefaults key: the build number of the newest version that has run',
   alarmSound: 'UserDefaults key: the alarm sound chosen (DECISIONS.md 101)',
   'alarm-{}-{}.caf': 'bundle resource name: an alarm sound\'s file (tools/sounds.ts)',
   flip: 'notification userInfo key',
@@ -156,7 +168,7 @@ const NOT_COPY: Record<string, string> = {
   'AET {} {}\n': 'debug log (Screenshots.log), never shown',
   'aet.log': 'debug log file name',
   'newer note': 'debug log (Screenshots.log), never shown',
-  'stores {} mark {} mine {}': 'debug log (Screenshots.log), never shown',
+  'stores {} mark {} build {} mine {} build {}': 'debug log (Screenshots.log), never shown',
   none: 'debug log (Screenshots.log): no mark, no certainty line; never shown',
   'pending {} at {}': 'debug log (Screenshots.log), never shown',
   launch: 'debug log (Screenshots.log), never shown',
@@ -198,7 +210,6 @@ const NOT_COPY: Record<string, string> = {
   'shown peak %.2f level %.3f planned peak %.2f': 'debug log (Screenshots.log), never shown',
   'stored none': 'debug log (Screenshots.log), never shown',
   'stored {}': 'debug log (Screenshots.log), never shown',
-  'restore kept aside {}': 'debug log (Screenshots.log), never shown',
   'restore unreadable': 'debug log (Screenshots.log), never shown',
   'restore too old': 'debug log (Screenshots.log), never shown',
   'restore {} events written {}': 'debug log (Screenshots.log), never shown',

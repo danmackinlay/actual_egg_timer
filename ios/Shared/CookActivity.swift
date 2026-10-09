@@ -60,8 +60,9 @@ struct CookActivity: ActivityAttributes {
 
     // A card begun by a build before the description moved into the state
     // carried it here, fixed for the card's life. Read only for such a card,
-    // which a cook kept aside at an upgrade may leave on the Lock Screen
-    // until it ends (`description(_:)`); this build writes none of them.
+    // which an earlier build's cook may leave on the Lock Screen at an
+    // upgrade until it ends (`description(_:)`); this build writes none of
+    // them.
     var doneness: String? = nil
     var peakYolk: String? = nil
     var eggMass: String? = nil

@@ -61,6 +61,12 @@ the file's copy is. `fit` reads
 the list again (`--trusted <path>` for another file), so an emulated file made
 before an ID was added is trusted all the same.
 
+A file exported before 0.5 still imports, older records and the yolk
+answered too soft, just right or too firm included (`readFitRecord`), and
+the fit scores those answers as it always did. A device keeps no such
+record once 0.5 has run on it, which deletes its earlier log at first
+launch (`DECISIONS.md` 107): export from the build before.
+
 ## Checking it on cooks whose answer is known
 
 ```

@@ -16,12 +16,12 @@ import { logYolkTarget } from '../../src/core/solve.js';
  * three yolk answers, a runny white, the level range and the lean. On
  * decide.json's surface and its three posteriors, which are not written out
  * again, and one more written out here: a cook whose three jammy eggs all came
- * out just right with a firm white. Each case is read at the time decided,
+ * out jammy with a firm white. Each case is read at the time decided,
  * and 40 s either side of the mean solve, so that both leans and a balance
  * are pinned. */
 
 const outcomeConsistent = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
-for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, logYolkTarget(0.41), 0, 'firm');
+for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, 'jammy', 'firm');
 export const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
 
 const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [

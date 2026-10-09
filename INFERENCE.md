@@ -180,13 +180,13 @@ three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
   softer. The noise is the same particle's `noise`, and the unrelated share
   is the same 5%, spread evenly over the five answers rather than three, so
   the five still sum to one and no word scores below 0.01 (`withUnrelatedWord`).
-  A record holds the old answer or the new, never both. **Old records keep
-  their -1 / 0 / 1 and are scored exactly as before**: the old arithmetic is
-  untouched: `test/record.test.ts` 2a2 holds `yolkProbit` and
-  `answerLikelihood` to the numbers the code before the change gave
-  (`test/data/old-answers-likelihood.json`), to rounding, and 2a3 holds the
-  posterior a log answered the old way makes (`test/data/old-answers.json`)
-  to the exact one, in distribution (below, "the seed"). The decision still scores a
+  The old answer, too soft / just right / too firm against `level` (-1 / 0
+  / 1), is no longer read or scored by the apps: the log started fresh in
+  0.5 (`DECISIONS.md` 107, §4). The fit still reads the owner's older
+  exported results and scores those answers itself (`tools/eggsImport.ts`
+  `readFitRecord`, `fit/`). `test/record.test.ts` 2a3 holds the posterior
+  ten eggs answered in the words make (`tools/posterior.ts` `wordLog`) to
+  the exact one, in distribution (below, "the seed"). The decision still scores a
   candidate time by the three-way miss around the asked-for level
   (`decide.ts`, `yolk[0] + yolk[2]`), and the odds and the lean read it too:
   the five words are for learning, and for the forecast a record keeps.
@@ -278,7 +278,7 @@ fit's training data cannot drift between the two.
   "level": 0.22,
   "recommended_s": 399, "nudge_s": 0, "pulled_s": 412, "pulledBy": "cook",
   "cooled_s": 180,
-  "yolk": null, "yolkWord": "runny", "white": null,
+  "yolkWord": "runny", "white": null,
   "probe": null,
   "forecast": { "cook_s": 399, "yolk": [0.21, 0.55, 0.24], "white": [0.04, 0.31, 0.65],
                 "yolkWord": [0.18, 0.52, 0.27, 0.02, 0.01] },
@@ -286,23 +286,21 @@ fit's training data cannot drift between the two.
 }
 ```
 
-- `yolk` and `white` are each an answer or `null`, and a record with both
+- `yolkWord` and `white` are each an answer or `null`, and a record with both
   `null` is still a record, because the cook, the recommendation and the actual
   pull time are data too. An egg finished and never answered about is logged
   when the cook starts again.
 - **`yolkWord`** (`DECISIONS.md` 92, 6 October 2026) is the yolk the cook got,
   `runny`, `soft`, `jammy`, `fudgy` or `hard` - the slider's words as keys,
-  whatever the cook read them as - or `null`, a skip. Since then the apps
-  write it and leave `yolk` null; `yolk`, -1 / 0 / 1 against `level`, is the
-  answer from before, kept as it was and scored as it was. Absent reads as
-  `null`, so every older record is read unchanged, and a record carrying both
-  is refused. `forecast.yolkWord` is the five words' probabilities at "Eggs
-  in", absent or `null` on a forecast from before them.
+  whatever the cook read them as - or `null`, a skip. `forecast.yolkWord` is
+  the five words' probabilities at "Eggs in", or `null` when the outcome on
+  screen had none.
 - **`id`** (6 October 2026) is the moment the cook started, in whole
   milliseconds since 1970 UTC: which cook the egg was. The web app writes it,
   so that two tabs showing one cook, or a cook written down twice, make one
   egg, and only the tab that wrote an egg down learns from it; the iPhone app
-  runs one cook at a time and writes none. Absent reads as `null`. It stays
+  runs one cook at a time and writes none, and it is the one field a record
+  may leave out. It stays
   on the device: sharing sends the record without it, and the server drops
   it from whatever it is sent (`sharedRecord`), because a start time to the
   millisecond says far more about a cook than `day` does.
@@ -362,9 +360,8 @@ fit's training data cannot drift between the two.
   differ from `recommended_s`. Null when the cook was started before the
   odds were known. `model` (E6) is `MODEL_ID`, the code that made the
   forecast and chose the time - the likelihood, the decision and, from E8,
-  the nudge - changed whenever they change. Both are null, or absent, on a
-  record from before E6. A replay says what the current code would have
-  forecast; only these say what the app said.
+  the nudge - changed whenever they change. A replay says what the current
+  code would have forecast; only these say what the app said.
 - `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the
@@ -399,19 +396,27 @@ log leaves behind (the `rebased` path above).
 the base and the log. A damaged log - one bad record refuses the lot, because a
 hole would change what every later egg is scored against - cannot be folded, but
 what it taught is in the posterior, which is sound, so the posterior becomes the
-new base and the log starts again empty. What a launch keeps of its store -
+new base and the log starts again empty. A store that cannot be read at all is
+dropped, and so is a cook in progress: nothing is kept aside (`DECISIONS.md`
+107). What a launch keeps of its store -
 `fresh`, `rebuild`, `rebased` or `loaded` - is one decision in core for both
 apps (`loadDecision`, 6 October 2026), each app reading its own store apart
 and core deciding from the parts. "Forget everything" clears the log, the
 base and the posterior together.
 
-**Version skew.** The web app deploys on push and the iOS app ships when a build
-does, so every record carries `appVersion` and a loader accepts any of them under
-`v: 1`. Within v1, fields may be ADDED but never removed or reinterpreted: a
-loader ignores fields it does not know, and the nullable fields (`uid`,
-`egg.sizeTable`, `yolk`, `yolkWord`, `white`, `probe`, `forecast.yolkWord`)
-may be absent and read as `null`. A new field must say what its absence
-means. A different `v` is refused.
+**Today's shape only** (`DECISIONS.md` 107, 9 October 2026). The log started
+fresh in 0.5, under a new key in each app (`aet.calibration.v5`,
+`calibration.v5`), and the stores of 0.3 and 0.4 (`v4`) are not read; each
+app deletes them at launch with every other key it no longer uses, once the
+newer-build guard (`DECISIONS.md` 100) has said it may write. A loader reads
+only the record `recordFor` writes: every field present, `null` or not, and
+only `id` may be absent. It ignores fields it does not know, so a later build
+of the same schema may add one, and a different `v` is refused. Every record
+carries `appVersion`, which any value may be. An older build cannot write over
+a newer one's log, because the guard stops it writing at all, so the apps keep
+no copy of what they cannot read. The owner's older exported files, with their
+old answers and the fields an older record could leave out, are read by the
+import tool for the fit, outside core (`readFitRecord`).
 
 ## 5. The thermometer
 

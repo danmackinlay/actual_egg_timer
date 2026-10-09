@@ -315,8 +315,10 @@ const SOURCES: Record<'web' | 'ios', string[]> = {
 /** Quoted strings shaped like a key: 'group.name', "group.name.more". */
 const KEY_SHAPE = /['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+)['"`]/g;
 
-/** Identifiers that are shaped like keys and are not: notification ids. */
-const NOT_KEYS = new Set(['cook.pull', 'cook.cool']);
+/** Identifiers that are shaped like keys and are not: notification ids, and
+ *  the UserDefaults keys an earlier build's sharing used, which the launch
+ *  deletes (ios/App/Store.swift, `retiredKeys`). */
+const NOT_KEYS = new Set(['cook.pull', 'cook.cool', 'share.v1', 'share.attest.v1']);
 
 function keysIn(file: string): string[] {
   const text = readFileSync(file, 'utf8');

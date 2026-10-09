@@ -896,11 +896,6 @@ final class Cook {
     }
 
     private static let savedKey = "cookInProgress.v3"
-    /// Where earlier builds kept their cook, in shapes this build does not
-    /// read: 0.3's and 0.4's (`cookInProgress`), and an earlier 0.5 build's,
-    /// without the plan as it ran (`cookInProgress.v2`, running-cook review
-    /// 1.3; DECISIONS.md 48).
-    private static let oldKeys = ["cookInProgress", "cookInProgress.v2"]
 
     private func persist() {
         guard let running else {
@@ -945,33 +940,16 @@ final class Cook {
     /// clock decided while the app was away are written at once.
     func restoreIfNeeded() -> Dropped? {
         guard running == nil else { return nil }
-        let defaults = UserDefaults.standard
-        // A cook an earlier build was running at the upgrade: kept aside as
-        // stored, with the results (DECISIONS.md 81, 97), not converted, and
-        // the key deleted, so it is read once. Its notifications and its card
-        // are left alone: they are still right for the egg in the pot, and
-        // nothing else times it now (design/one-screen-review.md 2.6). Its
-        // card is ended, though, to go at its own end: nothing will update it
-        // again, so it would otherwise sit there stale for the system's eight
-        // hours (running-cook review 3).
-        var keptOld = false
-        for key in Self.oldKeys {
-            guard let old = defaults.data(forKey: key) else { continue }
-            Calibrations.keepUnreadCook(old)
-            Stores.remove(key)
-            keptOld = true
-            #if DEBUG
-            Screenshots.log("restore kept aside \(key)")
-            #endif
-        }
-        if keptOld { activity { await LiveActivity.endAtTheirEnds() } }
-        guard let data = defaults.data(forKey: Self.savedKey) else { return nil }
-        // A cook this build cannot read whole is not patched; it is kept
-        // aside, as stored, and exported with the results (DECISIONS.md 81).
+        // An earlier build's cook, its key deleted at launch (`Stores`): its
+        // notifications are left, still right for the egg in the pot, and
+        // its card is ended to go at its own end, since nothing will update
+        // it again.
+        if Stores.takeRetiredCook() { activity { await LiveActivity.endAtTheirEnds() } }
+        guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return nil }
+        // A cook this build cannot read whole is not patched; it is dropped.
         // Nothing then knows what its alarms and its card are for, so they go.
         guard let stored = try? JSONDecoder().decode(Stored.self, from: data),
               let cook = readRunningCook(stored.cook.jsonObject) else {
-            Calibrations.keepUnreadCook(data)
             Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("restore unreadable")

@@ -17,10 +17,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, Feedback, Particle, Posterior, WhiteReport, YOLK_WORDS,
+  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, Particle, Posterior, WhiteReport, YOLK_WORDS,
   YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
-  posteriorMeanWhiteOffset, posteriorParams, updatePosterior, whiteAnswerProbabilities,
-  yolkAnswerProbabilities, yolkWordProbabilities,
+  posteriorMeanWhiteOffset, posteriorParams, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated,
+  withUnrelatedWord, yolkAnswerProbabilities, yolkProbit, yolkWordProbabilities, yolkWordProbit,
 } from '../src/core/infer.js';
 import { DoseGrid, buildDoseGrid, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import {
@@ -31,7 +31,7 @@ import { eggFromMass } from '../src/core/geometry.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, anchorNear, calibrationGrid } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
+  Calibration, EggRecord, MODEL_ID, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { appSetup, draw, rng } from '../tools/common.js';
@@ -79,15 +79,15 @@ function particleAtWhite(c: ReturnType<typeof cookAt>, l: number, over: Partial<
   return particle({ ...over, whiteOffset: delivered - Math.log10(WHITE_DOSE_TARGET) - l });
 }
 
+/** Too soft, just right and too firm against the level asked for, unrelated
+ *  share in: the miss the decision is made on. */
 function yolkProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
-  return ([-1, 0, 1] as Feedback[]).map(
-    (y) => answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, y, null),
-  );
+  return yolkProbit(c.grid, p, c.cookTime_s, c.logNominalTarget).map(withUnrelated);
 }
 
 function whiteProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
   return (['runny', 'tender', 'firm'] as WhiteReport[]).map(
-    (w) => answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, w),
+    (w) => answerLikelihood(c.grid, p, c.cookTime_s, null, w),
   );
 }
 
@@ -145,7 +145,7 @@ test('1d. no answer can kill a particle: every likelihood is at least the unrela
 /** The five yolk words' likelihoods for a particle, unrelated share in. */
 function wordProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
   return YOLK_WORDS.map(
-    (w) => answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, null, null, w),
+    (w) => answerLikelihood(c.grid, p, c.cookTime_s, w, null),
   );
 }
 
@@ -207,7 +207,7 @@ test('1j. soft asked for and runny got: the next soft egg goes longer; runny ask
     const c = cookAt(level);
     const post = createPrior(PARTICLE_COUNT, CALIBRATION_SEED);
     const before = posteriorParams(post).alpha_m2s;
-    updatePosterior(post, c.grid, c.cookTime_s, c.logNominalTarget, null, null, null, word);
+    updatePosterior(post, c.grid, c.cookTime_s, word, null);
     return posteriorParams(post).alpha_m2s / before;
   };
   // A runny yolk where soft was meant says the heat got in slower.
@@ -269,7 +269,7 @@ test('2b. a runny white raises the white offset and lowers alpha; a firm one doe
   const moved: Record<string, Posterior> = {};
   for (const w of ['runny', 'firm'] as WhiteReport[]) {
     const post = createPrior(600, 0x5eed1e);
-    updatePosterior(post, c.grid, c.cookTime_s, c.logNominalTarget, null, w);
+    updatePosterior(post, c.grid, c.cookTime_s, null, w);
     moved[w] = post;
   }
   const a0 = posteriorParams(before).alpha_m2s;
@@ -287,7 +287,7 @@ test('2c. a white answer barely touches the yolk\'s taste offset', () => {
   const c = cookAt(0.22);
   const before = createPrior(600, 0x5eed1e);
   const after = createPrior(600, 0x5eed1e);
-  updatePosterior(after, c.grid, c.cookTime_s, c.logNominalTarget, null, 'runny');
+  updatePosterior(after, c.grid, c.cookTime_s, null, 'runny');
   const dOffset = Math.abs(posteriorMeanOffset(after) - posteriorMeanOffset(before));
   assert.ok(dOffset < 0.03, `the white moved the taste offset by ${dOffset}`);
 });
@@ -295,13 +295,13 @@ test('2c. a white answer barely touches the yolk\'s taste offset', () => {
 test('2d. one fold per egg: the answers together are the product, whichever arrived first', () => {
   const c = cookAt(0.3);
   const together = createPrior(200, 11);
-  updatePosterior(together, c.grid, c.cookTime_s, c.logNominalTarget, -1, 'runny');
+  updatePosterior(together, c.grid, c.cookTime_s, 'soft', 'runny');
   const expected = createPrior(200, 11);
   let total = 0;
   for (let i = 0; i < 200; i++) {
     const p = expected.particles[i];
-    expected.weights[i] *= answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, -1, null)
-      * answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, 'runny');
+    expected.weights[i] *= answerLikelihood(c.grid, p, c.cookTime_s, 'soft', null)
+      * answerLikelihood(c.grid, p, c.cookTime_s, null, 'runny');
     total += expected.weights[i];
   }
   // Before any resample: compare on a set that cannot degenerate from one egg.
@@ -312,7 +312,7 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
   }
   // And no answers is no fold at all.
   const none = createPrior(200, 11);
-  updatePosterior(none, c.grid, c.cookTime_s, c.logNominalTarget, null, null);
+  updatePosterior(none, c.grid, c.cookTime_s, null, null);
   assert.deepEqual(none, createPrior(200, 11));
 });
 
@@ -320,20 +320,24 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
 // 3. The recovery experiment
 // --------------------------------------------------------------------------
 
-test('3. an injected alpha and taste are recovered in no more eggs, to no worse an error', (t) => {
+test('3. an injected alpha and taste are recovered in a few eggs, to a band\'s error', (t) => {
   // alpha = 1.535e-7 with a taste offset of +0.20 decades,
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,
   // aimed at the nominal target moved by the posterior mean taste - and the
-  // yolk answer is what the truth says about it. Measured 27 September on the
-  // same egg (68 g, fridge, boiling water, ice, jammy): a hard 0.8 / 0.1 band
-  // is within 15 s of the true optimum from egg 3, settled 14.0 s long, alpha
-  // sd 2.9%; the probit within 15 s from egg 2, settled 12.2 s short, sd 3.0%.
+  // yolk the truth names, in the five words, is the answer. Measured 27
+  // September on the same egg (68 g, fridge, boiling water, ice, jammy), when
+  // the answer was too soft, just right or too firm: a hard 0.8 / 0.1 band
+  // within 15 s of the true optimum from egg 3, settled 14.0 s long, alpha sd
+  // 2.9%; the probit within 15 s from egg 2, settled 12.2 s short, sd 3.0%.
+  // With the yolk in the five words, measured 9 October: within 20 s from
+  // egg 2, settled 17.5 s short, sd 3.3%. A word is a wider band than "just
+  // right" was, so a noiseless cook who keeps naming the same word pins the
+  // time less finely.
   const truth: ModelParams = { alpha_m2s: 1.535e-7, tauAirScale: 1 };
   const TASTE = 0.2;
   const setup = appSetup();
   const d = donenessFromSlider(0.41);
-  const target = Math.log10(d.yolkDose_min);
   const optimum = solveCookTime(EGG, setup, truth, { ...d, yolkDose_min: d.yolkDose_min * 10 ** TASTE }).result.cookTime_s;
   const post = createPrior(PARTICLE_COUNT, CALIBRATION_SEED);
   const errors: number[] = [];
@@ -346,15 +350,16 @@ test('3. an injected alpha and taste are recovered in no more eggs, to no worse 
     errors.push(t - optimum);
     const g = calibrationGrid(alpha, t);
     const grid = buildDoseGrid(EGG, setup, 1, g);
-    const latent = Math.log10(simulate(EGG, setup, truth, t).yolkDose_min) - (target + TASTE);
-    const yolk: Feedback = latent < -FEEDBACK_BAND ? -1 : latent > FEEDBACK_BAND ? 1 : 0;
-    updatePosterior(post, grid, t, target, yolk, null);
+    const latent = Math.log10(simulate(EGG, setup, truth, t).yolkDose_min) - TASTE;
+    let band = 0;
+    while (band < YOLK_WORD_CUTS.length && latent > YOLK_WORD_CUTS[band]) band++;
+    updatePosterior(post, grid, t, YOLK_WORDS[band], null);
     sd = posteriorAlphaRelSd(post);
   }
-  const firstClose = errors.findIndex((_e, i) => errors.slice(i).every((x) => Math.abs(x) < 15));
+  const firstClose = errors.findIndex((_e, i) => errors.slice(i).every((x) => Math.abs(x) < 20));
   t.diagnostic(`errors ${errors.map((e) => e.toFixed(1)).join(', ')} s; alpha sd ${(100 * sd).toFixed(2)}%`);
-  assert.ok(firstClose >= 0 && firstClose <= 2, `within 15 s from egg ${firstClose + 1}: ${errors.map((e) => e.toFixed(1))}`);
-  assert.ok(Math.abs(errors[errors.length - 1]) <= 14.0, `settled ${errors[errors.length - 1].toFixed(1)} s off`);
+  assert.ok(firstClose >= 0 && firstClose <= 2, `within 20 s from egg ${firstClose + 1}: ${errors.map((e) => e.toFixed(1))}`);
+  assert.ok(Math.abs(errors[errors.length - 1]) <= 18.0, `settled ${errors[errors.length - 1].toFixed(1)} s off`);
   assert.ok(sd > 0.015 && sd < 0.05, `alpha sd ${sd}: plateaus, neither collapsing nor wandering`);
 });
 
@@ -366,7 +371,8 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
   // Draw each cook's truth from the prior, cook them a few eggs at assorted
   // levels, and before each egg ask the model how likely each answer is. Then
   // draw the answers from the truth - the probit, the unrelated share and all -
-  // and fold them. If the filter is doing its job, answers predicted at 30%
+  // and fold the white and the yolk in the five words. If the filter is doing
+  // its job, answers predicted at 30%
   // happen 30% of the time, at every stage of learning. Measured on 27
   // September: 200 cooks, 5 eggs each, 6000 predictions; expected calibration
   // error 1.4% on the yolk and 1.8% on the white, and 0.8% / 1.0% at 400 cooks.
@@ -409,15 +415,14 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
       const target = logYolkTarget(levels[k]);
       const py = yolkAnswerProbabilities(post, grid, t, target);
       const pw = whiteAnswerProbabilities(post, grid, t);
-      const ty = ([-1, 0, 1] as Feedback[]).map((y) => answerLikelihood(grid, truth, t, target, y, null));
-      const tw = (['runny', 'tender', 'firm'] as WhiteReport[]).map((w) => answerLikelihood(grid, truth, t, target, null, w));
-      const y = draw(ty, random());
-      const w = draw(tw, random());
+      const y = draw(yolkProbit(grid, truth, t, target).map(withUnrelated), random());
+      const w = draw(whiteProbit(grid, truth, t).map(withUnrelated), random());
+      const word = YOLK_WORDS[draw(yolkWordProbit(grid, truth, t).map(withUnrelatedWord), random())];
       for (let j = 0; j < 3; j++) {
         note(py[j], j === y);
         note(pw[j], j === w);
       }
-      updatePosterior(post, grid, t, target, (y - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(post, grid, t, word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
     }
   }
   let ece = 0;
@@ -443,11 +448,11 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
 // 5. Two runny whites at soft
 // --------------------------------------------------------------------------
 
-function softRecord(cal: Calibration, level: number, yolk: Feedback | null, white: WhiteReport | null): EggRecord {
+function softRecord(cal: Calibration, level: number, yolkWord: YolkWord | null, white: WhiteReport | null): EggRecord {
   const setup = appSetup();
   const t = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: MODEL_ID,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,
@@ -455,7 +460,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
       waterLitres: 2, eggCount: 2,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, yolkWord: null, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
+    yolkWord: yolkWord, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 
@@ -479,7 +484,7 @@ const twoRunny = (() => {
     let cal = start;
     const log: EggRecord[] = [];
     for (let i = 0; i < 2; i++) {
-      log.push(softRecord(cal, 0.22, kind === 'withYolk' ? 0 : null, 'runny'));
+      log.push(softRecord(cal, 0.22, kind === 'withYolk' ? 'soft' : null, 'runny'));
       cal = replay(start, log);
     }
     out[kind] = { before: nextTimes(start), after: nextTimes(cal), cal: cal };
@@ -494,7 +499,7 @@ test('5a. two runny whites at soft move the next soft recommendation later', (t)
     assert.ok(r.after.soft > r.before.soft + 15, `${kind}: soft ${r.before.soft.toFixed(1)} -> ${r.after.soft.toFixed(1)}`);
     assert.ok(posteriorMeanWhiteOffset(r.cal.posterior) > 0.4, `${kind}: the white offset took its share`);
   }
-  // With the yolk answered "just right" the time-scale is held, and the soft
+  // With the yolk answered soft, as asked, the time-scale is held, and the soft
   // time is now the shortest cook that sets the white: the slider will be
   // refused at soft and offered the softest egg whose white sets.
   assert.ok(twoRunny.withYolk.after.softWhiteBound, 'soft is now bound by the white');

@@ -13,7 +13,8 @@ import assert from 'node:assert/strict';
 import { decideAt } from '../src/core/decide.js';
 import { buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, Particle, WhiteReport, answerLikelihood, createPrior, updatePosterior,
+  Particle, WhiteReport, YOLK_WORDS, createPrior, updatePosterior, whiteProbit, withUnrelated, withUnrelatedWord,
+  yolkProbit, yolkWordProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -28,9 +29,10 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
   // Each cook's truth is a draw from the prior. Every egg is cooked at the time
   // the app would choose - the literature's before the first answer, the choice
   // after - and before it the model says how likely a hit is. The answers are
-  // drawn from the truth's own probit, unrelated share and all, and folded. A
-  // hit is a white not answered runny and a yolk answered just right. One
-  // fixed surface, for speed.
+  // drawn from the truth's own probit, unrelated share and all: the white, the
+  // yolk against the level asked for, and the yolk in the five words, which
+  // with the white is what is folded. A hit is a white not answered runny and
+  // a yolk just right. One fixed surface, for speed.
   //
   // Measured with `npm run decide -- odds` (400 cooks, six eggs each, 1000
   // particles): expected calibration error 2.2%, every egg within 1-3 points
@@ -62,15 +64,14 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
       );
       const d = decideAt(cal.posterior, cal.eggsLogged, grid, mean, true, target);
       const t = d.cookTime_s;
-      const ty = ([-1, 0, 1] as Feedback[]).map((y) => answerLikelihood(grid, truth, t, target, y, null));
-      const tw = (['runny', 'tender', 'firm'] as WhiteReport[]).map((w) => answerLikelihood(grid, truth, t, target, null, w));
-      const y = draw(ty, random());
-      const w = draw(tw, random());
+      const y = draw(yolkProbit(grid, truth, t, target).map(withUnrelated), random());
+      const w = draw(whiteProbit(grid, truth, t).map(withUnrelated), random());
+      const word = YOLK_WORDS[draw(yolkWordProbit(grid, truth, t).map(withUnrelatedWord), random())];
       const b = Math.min(BINS - 1, Math.floor(d.odds * BINS));
       predicted[b] += d.odds;
       observed[b] += y === 1 && w !== 0 ? 1 : 0;
       counts[b] += 1;
-      updatePosterior(cal.posterior, grid, t, target, (y - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(cal.posterior, grid, t, word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
       cal.eggsLogged += 1;
     }
   }

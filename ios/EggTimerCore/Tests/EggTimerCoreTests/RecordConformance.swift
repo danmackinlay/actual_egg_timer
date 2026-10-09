@@ -173,8 +173,6 @@ struct RecordConformance {
             #expect((record != nil) == valid, "\(why): valid should be \(valid)")
             guard let record else { continue }
             #expect(try record.id.map(Double.init) == c.optionalNum("id"), "\(why): id")
-            let yolk = try c.optionalNum("yolk")
-            #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
             #expect(record.yolkWord?.rawValue == c["yolkWord"] as? String, "\(why): yolk word")
             #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
             // The probe reading: the same number, and the same "when".
@@ -235,14 +233,14 @@ struct RecordConformance {
             let why = try c.str("why")
             let r = try c.object("read")
             let read = try StoreRead(
-                stored: r.flag("stored"), v4: r.flag("v4"), base: r.optionalValue(StoredBase.self, "base"),
+                readable: r.flag("readable"), base: r.optionalValue(StoredBase.self, "base"),
                 posterior: r.flag("posterior"), folded: r.optionalNum("folded").map { Int($0) },
-                records: r.optionalNum("records").map { Int($0) }, moved: r.flag("moved"),
-                population: r.str("population"), model: r.optionalStr("model")
+                records: r.optionalNum("records").map { Int($0) },
+                population: r.optionalStr("population"), model: r.optionalStr("model")
             )
             let d = try c.object("decision")
             let want = try LoadDecision(
-                path: d.value(LoadPath.self, "path"), loses: d.flag("loses"),
+                path: d.value(LoadPath.self, "path"),
                 base: d.optionalValue(KeptBase.self, "base"), calibration: d.value(KeptCalibration.self, "calibration"),
                 folded: Int(d.num("folded")), log: d.flag("log")
             )
@@ -280,8 +278,7 @@ struct RecordConformance {
                 app: #require(AppName(rawValue: m.str("app"))), appVersion: m.str("appVersion"),
                 exported: m.str("exported"), population: m.str("population"), uid: m["uid"] as? String
             )
-            let unread = try #require(c["unread"] as? [String])
-            let file = resultsFile(meta, stored: c["stored"] as? String, unread: unread)
+            let file = resultsFile(meta, stored: c["stored"] as? String)
             #expect(try file == c.str("file"), "results file for \(meta.appVersion)")
         }
     }
@@ -299,7 +296,7 @@ struct RecordConformance {
                 record.probe == nil ? object?["probe"] is NSNull : object?["probe"] is [String: Any],
                 "probe written, as null when there is none"
             )
-            #expect(object?["yolk"] != nil, "yolk written")
+            #expect(object?["yolk"] == nil, "no answer from before the five words")
             #expect(object?["yolkWord"] != nil, "yolk word written, as null when there is none")
         }
     }
@@ -307,7 +304,7 @@ struct RecordConformance {
 
 @Suite("Replay")
 struct ReplayConformance {
-    @Test("a fifteen-egg log, old answers and five yolk words, egg by egg, every particle")
+    @Test("a fifteen-egg log in the five yolk words, egg by egg, every particle")
     func stepByStep() throws {
         let steps = try Fixtures.list("record.json", "replay.steps")
         let log = try fixtureLog()
@@ -361,7 +358,7 @@ struct ReplayConformance {
             let surface = buildRequestedGrid(gridRequestFor(c, r, grid: grid))
             // The first answer alone - whichever it was - folded and stored.
             var first = r
-            if r.yolk != nil || r.yolkWord != nil { first.white = nil }
+            if r.yolkWord != nil { first.white = nil }
             foldRecord(&c, first, grid: surface)
             c = try throughJSON(c)
             // The second answer arrives later: the egg is folded again from

@@ -344,7 +344,7 @@ function cookedAt(setup: CookSetup, egg: Egg, n: number, word: 'runny' | 'soft' 
     const grid = gridFor(c, egg, setup);
     const a = answerAt(c, egg, setup, 0.41, null, true);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, null, 0);
-    updatePosterior(post, grid, d.decision.cookTime_s, logYolkTarget(0.41), null, 'tender', null, word);
+    updatePosterior(post, grid, d.decision.cookTime_s, word, 'tender');
     c.eggsLogged += 1;
   }
   return c;
@@ -429,15 +429,15 @@ test('10. the far left: the slider rests on the level the time and the bracket a
 });
 
 test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
-  // One egg: soft asked, the yolk just right and the white runny. That put
-  // 3/10 at jammy, as on the owner's phone (5 October 2026). Since the
+  // One egg: soft asked, the yolk soft and the white runny, as on the
+  // owner's phone (5 October 2026), where it put 3/10 at jammy. Since the
   // `certainty` draft soft is a ballpark there and is not dotted: soft or a
   // neighbour 9 times in 10, and most likely jammy, which the line says.
   const egg = eggFromMass(0.058);
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
   const first: Calibration = { posterior: post, eggsLogged: 0 };
   const asked = solveCookTime(egg, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
-  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, 'soft', 'runny');
   const c: Calibration = { posterior: post, eggsLogged: 1 };
   const grid = gridFor(c, egg, SETUP);
   const p = oddsProfile(c, egg, SETUP, grid);
@@ -454,7 +454,7 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   // Soft's own choice, against its own target, is later than jammy's: the
   // white's weight. The envelope gives it no later than jammy's
   // (DECISIONS.md 84), and jammy, which nothing firmer undercuts, keeps its own.
-  assert.ok(own.cookTime_s > ownJammy.cookTime_s + 30, 'unheld, soft would be the firmer egg');
+  assert.ok(own.cookTime_s > ownJammy.cookTime_s + 15, 'unheld, soft would be the firmer egg');
   assert.ok(d.cookTime_s <= dj.cookTime_s, `soft ${d.cookTime_s} against jammy ${dj.cookTime_s}`);
   assert.equal(dj.cookTime_s, ownJammy.cookTime_s);
   assert.ok(p.physicalSoftest <= soft);
@@ -506,7 +506,7 @@ test('12. the time never falls as the level rises: across the slider, for the ow
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
   const first: Calibration = { posterior: post, eggsLogged: 0 };
   const asked = solveCookTime(egg58, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
-  updatePosterior(post, gridFor(first, egg58, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  updatePosterior(post, gridFor(first, egg58, SETUP), asked.result.cookTime_s, 'soft', 'runny');
   const owners: Calibration = { posterior: post, eggsLogged: 1 };
   const cases: [string, Calibration, Egg, CookSetup][] = [
     ['the owner\'s egg', owners, egg58, SETUP],
@@ -551,7 +551,7 @@ test('14. one decided answer for both apps: the soft yolk chosen again and held 
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
   const first: Calibration = { posterior: post, eggsLogged: 0 };
   const asked = solveCookTime(egg, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
-  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, 'soft', 'runny');
   const c: Calibration = { posterior: post, eggsLogged: 1 };
   const grid = gridFor(c, egg, SETUP);
   const p = oddsProfile(c, egg, SETUP, grid);

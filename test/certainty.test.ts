@@ -152,7 +152,7 @@ test('the bracket is the interval: its words\' outer edges on the slider, marked
 
 test('the reading is the model\'s own predictive and its right-time interval at 90%', () => {
   const learned = createPrior(400, 777);
-  for (const t of [464, 462, 463]) updatePosterior(learned, GRID, t, logYolkTarget(0.41), null, 'firm', null, 'jammy');
+  for (const t of [464, 462, 463]) updatePosterior(learned, GRID, t, 'jammy', 'firm');
   for (const post of [createPrior(400, 777), learned]) {
     for (const level of [0, 0.22, 0.41, 0.47, 0.62, 1]) {
       for (const t of [380, 464, 560]) {

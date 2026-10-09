@@ -6303,3 +6303,56 @@ stopped, and fails on the old code. One `npm run e2e` of four on this work
 timed out in `newer-version-tab` waiting for two worker jobs (60 s); it
 passed alone three times and in a full run after, so it is the machine's
 load, not this change.
+
+## 9 October 2026: the results log starts fresh in 0.5 (DECISIONS.md 107)
+
+Four commits on the 0.5 line, each through `npm run verify`, `npm run e2e`
+(with `build:site`), `npm run ios:build` and `npm run ios:e2e`.
+
+- **The iPhone guard tells two builds of one version apart** (`d21e0c7`).
+  It compared `MARKETING_VERSION` only, so every TestFlight build of 0.5.0
+  was one build to it. The app keeps `CFBundleVersion` beside the mark
+  (`newestBuild`), and core's `writerCheckBuilt` reads a later build of
+  the same version as newer (`newer.json`'s `builds` and `checkBuilt`). The
+  mark's format is unchanged, so builds from before still read it and
+  leave the build alone; they are not protected from one another.
+- **Records read only today's shape** (`0840434`). Out of core, both apps,
+  the fixtures and the tools: the in-place unread records (`overlay`,
+  `Kept.stored`, `moved`), the positional re-merge in all three places,
+  the side keys of unreadable stores and the unread cooks, the `t` column,
+  and the three-way yolk answer with the optional fields of older records.
+  A store or a cook that cannot be read is dropped. `answerLikelihood` and
+  `updatePosterior` lose the yolk answer and the target with it;
+  `yolkProbit` stays as the decision's miss and the forecast's three. The
+  import tool reads the owner's older files itself (`readFitRecord`), old
+  answers and all, for the fit, which still scores them; a pre-0.5 file's
+  unread records follow the log rather than their old places.
+- **The log moves to v5** (`ea04ecb`): `aet.calibration.v5`,
+  `calibration.v5`, the store's `v` 5.
+- **The boot sweep** (`686be62`): `claimStorage` and `Stores.claim`
+  delete every retired key once the guard says this build may write, and
+  nothing under a newer mark. Web: `aet.calibration.v1`-`v4`,
+  `aet.calibration.v4.unread`, `aet.cook.unread`, `aet.cook.v1`-`v3`.
+  iOS: `calibration.v1`-`v4`, `calibration.v4.unread`, `cookInProgress`,
+  `cookInProgress.v2`, `cookInProgress.unread`, `share.v1`,
+  `share.attest.v1`, `coldStart`, `fromFridge`, `eggMassG`, `probeAsked`.
+
+Hand-written code (fixtures apart): 1,417 lines in, 2,310 out, the guard's
+95 among those in. By group, in/out: the web app 89/313, the iOS app
+130/362, core 292/301, tests 377/485 and their data 67/525 (the old
+answers' log and its two references, for a reference of the words' log),
+the tools and fixture makers 330/292, e2e 132/32. The fixtures regenerated
+14,643/14,383, most of it `calibration.json`'s three-way sequence gone and
+the learned posteriors of `decide`, `outcome`, `reach`, `certainty` and
+`running` now taught in words.
+
+**What moved.** Studies and tests that simulated cooks answering the old
+way now fold the five words, so `npm run decide` no longer reproduces
+INFERENCE.md §8's numbers to the digit. Phase C's recovery (`infer.test`
+3), noise-free, settles 17.5 s short in words where the old band settled
+12.2 s, since a word is a wider band than "just right": its bounds were
+re-measured (within 20 s from egg 2, settled within 18 s). The calibration
+fixture's resample case now sharpens the word sequence's end from flat,
+since that set sat at the threshold already. Server records already kept
+are untouched; the endpoint reads only today's shape, so a record without
+`yolkWord`, as a build before the five words wrote, is refused.

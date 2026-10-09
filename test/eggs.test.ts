@@ -22,14 +22,14 @@ import { EggRecord, MODEL_ID, parseRecord, resultsFile } from '../src/core/recor
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { recordAt } from '../tools/common.js';
 import {
-  Line, canonical, importResults, parseTrusted, readTrusted, sameEggKey, tagTrusted,
+  Line, canonical, importResults, parseTrusted, readFitRecord, readTrusted, sameEggKey, tagTrusted,
 } from '../tools/eggsImport.js';
 
 const UID = '5f0c3a52-7b1e-4d0a-9c33-2a8e61f0b7d4';
 
 function log(): EggRecord[] {
-  return [recordAt(0.3, 400, -1, 'runny'), recordAt(0.5, 430, 0, null), recordAt(0.6, 460, null, null),
-    recordAt(0.45, 420, 1, 'firm')];
+  return [recordAt(0.3, 400, 'runny', 'runny'), recordAt(0.5, 430, 'jammy', null), recordAt(0.6, 460, null, null),
+    recordAt(0.45, 420, 'fudgy', 'firm')];
 }
 
 /** A store as the apps keep one (src/ui/calibrationStore.ts `encodeKept`), less
@@ -39,9 +39,24 @@ function store(records: unknown[], unread: { at: number; record: unknown }[] = [
     log: records, ...(unread.length > 0 ? { unread: unread } : {}) });
 }
 
-function file(stored: string | null, aside: string[] = [], uid: string | null = UID): string {
-  return resultsFile({ app: 'ios', appVersion: '0.4.0', exported: '2026-10-05T10:00:00.000Z',
-    population: LITERATURE_POPULATION.id, uid: uid }, stored, aside);
+function file(stored: string | null, uid: string | null = UID): string {
+  return resultsFile({ app: 'ios', appVersion: '0.5.0', exported: '2026-10-05T10:00:00.000Z',
+    population: LITERATURE_POPULATION.id, uid: uid }, stored);
+}
+
+/** A results file as an app before 0.5 wrote one: the stored copies it could
+ *  not read beside the store, under `unread`. */
+function oldFile(stored: string, aside: string[]): string {
+  const file = JSON.parse(resultsFile({ app: 'ios', appVersion: '0.4.0', exported: '2026-10-05T10:00:00.000Z',
+    population: LITERATURE_POPULATION.id, uid: UID }, stored)) as Record<string, unknown>;
+  file['unread'] = aside.map((a) => {
+    try {
+      return JSON.parse(a) as unknown;
+    } catch {
+      return a;
+    }
+  });
+  return JSON.stringify(file);
 }
 
 test('1. every record comes back as it went in, in its place, under the file\'s ID', () => {
@@ -61,26 +76,42 @@ test('1. every record comes back as it went in, in its place, under the file\'s 
   assert.equal(importResults(file(store(records)), 'other-id').lines[0].record !== null, true);
   assert.equal((importResults(file(store(records)), 'other-id').lines[0].record as { uid: string }).uid, 'other-id');
   // No ID anywhere: refused, with what to do.
-  assert.throws(() => importResults(file(store(records), [], null)), /--uid/);
+  assert.throws(() => importResults(file(store(records), null)), /--uid/);
   assert.throws(() => importResults('{"file":2}'), /version/);
 });
 
-test('2. records set aside and copies kept aside come back; an egg seen twice is written once', () => {
+test('2. a file from before 0.5: what its app set aside follows the log; an egg seen twice is written once', () => {
   const records = log();
   const newer = { ...records[1], v: 2, fromTheFuture: true };
-  // The store as an older build left it: one record it could not read, in
-  // its place.
+  // The store as an older build left it: one record it could not read, set
+  // aside beside the log.
   const stored = store([records[0], records[2], records[3]], [{ at: 1, record: newer }]);
   // Aside: an older copy of the same log plus one egg the store lost, a cook
   // in progress, and text that never parsed.
-  const lost = recordAt(0.7, 480, 0, 'tender');
+  const lost = recordAt(0.7, 480, 'fudgy', 'tender');
   const older = store([records[0], lost]);
-  const got = importResults(file(stored, [older, '{"startedAt":1}', '{damaged']));
+  const got = importResults(oldFile(stored, [older, '{"startedAt":1}', '{damaged']));
   assert.deepEqual(got.lines.map((l) => l.seq), [0, 1, 2, 3, 4]);
-  assert.deepEqual((got.lines[1].record as { fromTheFuture?: boolean }).fromTheFuture, true, 'kept in its place');
+  assert.deepEqual((got.lines[3].record as { fromTheFuture?: boolean }).fromTheFuture, true, 'after the log');
   assert.deepEqual(parseRecord(got.lines[4].record), { ...lost, uid: UID });
   assert.equal(got.fromAside, 1);
   assert.equal(got.duplicates, 1, 'records[0] is in the older copy too');
+});
+
+test('2b. the fit reads a record from before 0.5: absent fields as null, the old yolk answer kept', () => {
+  const r = { ...log()[0], uid: UID } as Record<string, unknown>;
+  const old: Record<string, unknown> = { ...r, yolk: -1, egg: { mass_g: 68, massFrom: 'scale' } };
+  for (const key of ['yolkWord', 'model', 'probe', 'forecast']) delete old[key];
+  const read = readFitRecord(old);
+  assert.ok(read !== null);
+  assert.equal(read.yolk, -1);
+  assert.equal(read.model, null, 'a record from before E6 names no model');
+  assert.equal(read.record.yolkWord, null);
+  assert.equal(read.record.egg.sizeTable, null);
+  assert.equal(parseRecord(old), null, 'which the apps no longer read');
+  assert.equal(readFitRecord({ ...r, yolk: 0 }), null, 'never both yolk answers');
+  assert.equal(readFitRecord({ ...r, yolkWord: null, yolk: 2 }), null);
+  assert.deepEqual(readFitRecord(r), { record: parseRecord(r), yolk: null, model: MODEL_ID });
 });
 
 test('3. the trusted list: a file and the environment, comments and separators', () => {
@@ -114,7 +145,7 @@ test('4. one egg is one key, whichever app wrote it and in whatever key order', 
   delete absent['probe'];
   delete absent['forecast'];
   assert.equal(sameEggKey(absent), sameEggKey(r), 'an absent nullable field is a null one');
-  assert.notEqual(sameEggKey({ ...r, yolk: 1 }), sameEggKey(r));
+  assert.notEqual(sameEggKey({ ...r, yolkWord: null, yolk: 1 }), sameEggKey(r));
 });
 
 test('5. the command line: import, then emulate keeps the pull\'s copy of an egg shared too, trusted from the file', () => {

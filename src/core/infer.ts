@@ -24,11 +24,8 @@
  * yolk, since DECISIONS.md 92, the cook names the yolk they got in the
  * slider's own five words, and the latent is the delivered log10 dose less
  * the cook's taste offset; the answer says which of five bands it fell in,
- * cut where the slider's word changes (`YOLK_WORD_CUTS`). Before that the
- * cook said too soft, just right or too firm, and those answers are still
- * scored as they were: the latent less the dose the cook wanted, cut at
- * -+FEEDBACK_BAND. Either way it is seen through a Gaussian whose sd is the
- * cook's own `noise`. A particle
+ * cut where the slider's word changes (`YOLK_WORD_CUTS`). It is seen
+ * through a Gaussian whose sd is the cook's own `noise`. A particle
  * just outside the band is then a little wrong rather than exactly as wrong as
  * one a decade away - more information per answer, and no cliff for the filter
  * to fall over. A small `UNRELATED` share of every answer is uniform over the
@@ -73,11 +70,6 @@ import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
   cookTimeForLogWhiteDose,
 } from './doseGrid.js';
-
-/** What the cook reported about the YOLK before DECISIONS.md 92, against the
- *  level they asked for. No app asks it now; a record that holds one is
- *  scored as it always was. */
-export type Feedback = -1 | 0 | 1; // too soft | just right | too firm
 
 /**
  * What the cook reports about the YOLK after eating the egg (DECISIONS.md
@@ -132,8 +124,8 @@ export interface Posterior {
 
 /** Half-width of the "just right" band, log10 dose units. 0.28 decades is
  *  about 1.3 C of peak yolk temperature - roughly the finest distinction
- *  anyone can actually make by eating an egg. The yolk's two cutpoints sit at
- *  -+ this, so the probit keeps a hard band's meaning: a particle that
+ *  anyone can actually make by eating an egg. The decision's miss around the
+ *  level asked for (`yolkProbit`) cuts at -+ this, so a particle that
  *  delivered exactly what was wanted expects "just right". */
 export const FEEDBACK_BAND = 0.28;
 
@@ -417,10 +409,10 @@ export function createPrior(count: number, seed: number, pop: Population = LITER
 
 /* ---- the likelihood ---- */
 
-/** Probabilities of the three yolk answers, in the order too soft, just right,
- *  too firm, for one particle - before the unrelated share. Exported for the
- *  decision (decide.ts), which scores candidate times with the same arithmetic
- *  the filter learns with. */
+/** Probabilities of too soft, just right and too firm, against the level the
+ *  cook asked for, for one particle - before the unrelated share: the miss
+ *  the decision (decide.ts) scores candidate times on, and the forecast's
+ *  three. */
 export function yolkProbit(
   grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
 ): [number, number, number] {
@@ -470,10 +462,6 @@ export function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [n
   return [runny, tender > 0.0 ? tender : 0.0, firm];
 }
 
-function yolkIndex(f: Feedback): number {
-  return f + 1;
-}
-
 /**
  * The likelihood of one egg's answers under one particle: the product of the
  * yolk's, the white's and the thermometer's, any of which may be missing. A
@@ -481,24 +469,15 @@ function yolkIndex(f: Feedback): number {
  * anything else (INFERENCE.md section 3 says why a skip is still RECORDED).
  * The yolk and white are probabilities and the reading is a density, per
  * degree; each particle is scored on the same reading, so the units cancel in
- * the normalisation.
- *
- * The yolk is `yolkWord`, the yolk the cook got (DECISIONS.md 92), or on a
- * record from before it `yolk`, against the level asked for. A record holds
- * at most one (`parseRecord`); the old answer's arithmetic is exactly what
- * it was, so an old log replays to the same posterior.
+ * the normalisation. The yolk is the yolk the cook got, in the slider's five
+ * words (DECISIONS.md 92).
  */
 export function answerLikelihood(
-  grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
-  yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
-  yolkWord: YolkWord | null = null,
+  grid: DoseGrid, p: Particle, cookTime_s: number,
+  yolkWord: YolkWord | null, white: WhiteReport | null, probe_C: number | null = null,
 ): number {
   let l = 1.0;
   if (probe_C !== null) l *= probeLikelihood(grid, p, cookTime_s, probe_C);
-  if (yolk !== null) {
-    const probs = yolkProbit(grid, p, cookTime_s, logNominalTarget);
-    l *= withUnrelated(probs[yolkIndex(yolk)]);
-  }
   if (yolkWord !== null) {
     const probs = yolkWordProbit(grid, p, cookTime_s);
     l *= withUnrelatedWord(probs[yolkWordIndex(yolkWord)]);
@@ -518,10 +497,9 @@ export function effectiveSampleSize(post: Posterior): number {
 }
 
 /**
- * Fold in one egg: cooked for `cookTime_s`, aiming at a nominal yolk dose of
- * 10^`logNominalTarget`, with whatever the cook said about the yolk and the
- * white, and a probe reading at the centre's peak if they took one - any
- * of them may be null. Reweights by the joint likelihood, then resamples
+ * Fold in one egg: cooked for `cookTime_s`, with whatever the cook said about
+ * the yolk and the white, and a probe reading at the centre's peak if they
+ * took one - any of them may be null. Reweights by the joint likelihood, then resamples
  * through Liu and West's kernel if the particle set has degenerated.
  *
  * ONE fold per egg, not one per answer. The two answers can arrive in either
@@ -532,17 +510,14 @@ export function effectiveSampleSize(post: Posterior): number {
  * stood before the egg (record.ts, `foldRecord`).
  */
 export function updatePosterior(
-  post: Posterior, grid: DoseGrid, cookTime_s: number, logNominalTarget: number,
-  yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
-  yolkWord: YolkWord | null = null,
+  post: Posterior, grid: DoseGrid, cookTime_s: number,
+  yolkWord: YolkWord | null, white: WhiteReport | null, probe_C: number | null = null,
 ): void {
-  if (yolk === null && white === null && probe_C === null && yolkWord === null) return;
+  if (white === null && probe_C === null && yolkWord === null) return;
   const n = post.particles.length;
   let total = 0.0;
   for (let i = 0; i < n; i++) {
-    post.weights[i] *= answerLikelihood(
-      grid, post.particles[i], cookTime_s, logNominalTarget, yolk, white, probe_C, yolkWord,
-    );
+    post.weights[i] *= answerLikelihood(grid, post.particles[i], cookTime_s, yolkWord, white, probe_C);
     total += post.weights[i];
   }
   if (total <= 0.0) {
@@ -558,10 +533,9 @@ export function updatePosterior(
 
 /* ---- the predictive ---- */
 
-/** Posterior predictive probabilities of the three yolk answers - too soft,
- *  just right, too firm - for a cook of `cookTime_s` at this target. The same
- *  arithmetic the update scores with, unrelated share included, so what the
- *  model predicts and what it learns from cannot drift apart. */
+/** Posterior predictive probabilities of too soft, just right and too firm
+ *  for a cook of `cookTime_s` at this target, unrelated share included: the
+ *  forecast's three, and the miss the decision is made on (`yolkProbit`). */
 export function yolkAnswerProbabilities(
   post: Posterior, grid: DoseGrid, cookTime_s: number, logNominalTarget: number,
 ): [number, number, number] {

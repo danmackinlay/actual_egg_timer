@@ -80,19 +80,15 @@ struct ProbeConformance {
             let after = try step.object("after")
             let particles = try after.rows("particles")
             let rng = try #require(after["rng"] as? NSNumber, "malformed update \(i)")
-            let yolk = (step["yolk"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
+            let word = try step.optionalValue(YolkWord.self, "yolkWord")
             let white = try step.optionalValue(WhiteReport.self, "white")
             let probeC = try step.optionalNum("probe_C")
             let t = try step.num("cookTime_s")
-            let target = try step.num("logNominalTarget")
             try expectClose(
-                answerLikelihood(grid, post.particles[0], t, target, yolk: yolk, white: white, probeC: probeC),
+                answerLikelihood(grid, post.particles[0], t, yolkWord: word, white: white, probeC: probeC),
                 step.num("firstLikelihood"), "update \(i): the first particle's likelihood"
             )
-            updatePosterior(
-                &post, grid: grid, cookTimeS: t, logNominalTarget: target,
-                yolk: yolk, white: white, probeC: probeC
-            )
+            updatePosterior(&post, grid: grid, cookTimeS: t, yolkWord: word, white: white, probeC: probeC)
             let weights = try after.numbers("weights")
             #expect(post.particles.count == particles.count)
             for k in 0..<particles.count {

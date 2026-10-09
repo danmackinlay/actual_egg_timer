@@ -18,7 +18,7 @@ import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, correctedLater, loadBoilMemory, loadCook,
   loadSettings, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, settingsStoredElsewhere, storedCook,
-  storedCookText, takeOldCooks, takeUpEvents,
+  storedCookText, takeUpEvents,
 } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -34,8 +34,6 @@ const storage = new Map<string, string>();
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v4';
-const OLD_COOK_KEY = 'aet.cook.v2';
-const EARLIER_COOK_KEY = 'aet.cook.v3';
 const classes = sizeClassesFor('eu');
 
 /** A page opened on this storage: as boot() does, the settings are read
@@ -233,29 +231,15 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   assert.equal(storedCookText(), null, 'junk goes');
 });
 
-test('the 0.4 cook is read once, as stored, and its key deleted; the live site\'s is dropped', () => {
+test('a cook in a shape this build does not read is not read', () => {
   storage.clear();
-  // 0.4's shape (`aet.cook.v2`): a machine and a ticket.
-  const old = JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' });
-  storage.set(OLD_COOK_KEY, old);
-  assert.equal(loadCook(), null, 'never read as a running cook');
-  assert.deepEqual(takeOldCooks(), [old]);
-  assert.equal(storage.has(OLD_COOK_KEY), false, 'deleted');
-  assert.deepEqual(takeOldCooks(), [], 'once');
-  // An earlier 0.5 build's (`aet.cook.v3`): a running cook without the plan
-  // as it ran, which this build does not read either (review 1.3).
+  // A running cook without the plan as it ran (review 1.3).
   const { asRan: _dropped, ...earlier } = aCook();
-  const v3 = JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 });
-  storage.set(EARLIER_COOK_KEY, v3);
-  storage.set(COOK_KEY, v3);
+  storage.set(COOK_KEY, JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 }));
   assert.equal(loadCook(), null, 'without the plan as it ran, not read');
-  storage.delete(COOK_KEY);
-  storage.set(OLD_COOK_KEY, old);
-  assert.deepEqual(takeOldCooks(), [old, v3], 'each, oldest first');
-  assert.equal(storage.has(EARLIER_COOK_KEY), false, 'deleted');
-  storage.set('aet.cook.v1', JSON.stringify({ machine: { phase: 'COOKING' }, feedbackGiven: false }));
-  assert.equal(loadCook(), null);
-  assert.equal(storage.has('aet.cook.v1'), false, 'the superseded key is removed');
+  // 0.4's shape: a machine and a ticket.
+  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
+  assert.equal(loadCook(), null, 'never read as a running cook');
 });
 
 test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {

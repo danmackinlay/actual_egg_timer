@@ -348,61 +348,69 @@ lapses, the distribution certificate goes with it.
 
 ---
 
-## Never roll back past 0.4
+## Rolling back
 
-Once a 0.4 build has written a phone's log, a 0.3 build must not run on it
-again, and the same goes for the web: no Netlify rollback to a 0.3 deploy,
-and no older TestFlight build offered to testers. Both versions keep the log
-under the same key, `aet.calibration.v4` (`calibration.v4` on iOS), and 0.3
-writes every record back with only the fields it knows, so the first egg it
-logs strips 0.4's `model` and `forecast` from every record before it; 0.3
-also has no place for a record it cannot read, so one costs it the whole
-log. 0.3 cannot be patched, and it writes everything else whole too.
+**0.5 starts the results log fresh** (`DECISIONS.md` 107). It keeps the log
+under a new key, `aet.calibration.v5` on the web and `calibration.v5` on
+iOS, holding only today's record, and never reads 0.3's `v4`. At its first
+launch on a device it deletes `v4` with every other key the apps no longer
+use (the boot sweep, `RETIRED_KEYS` in `src/ui/store.ts` and `retiredKeys` in
+`ios/App/Store.swift`). So:
+
+- **Export before installing 0.5** to keep your own eggs: Settings, What
+  I've learned, Export my results, on the build you have now. `npm run eggs
+  -- import` reads that file for the fit, old answers and all. Nothing on the
+  device keeps them once 0.5 has run.
+- **A build before 0.5 run after 0.5** sees an empty log, its `v4` gone, and
+  starts learning again from the prior; what it then logs under `v4` the
+  next 0.5 launch deletes. 0.3 has no guard and still writes the settings,
+  the pans and the rest whole, dropping what 0.5 added: never offer it again
+  on a device 0.5 has run on, on the web or on a phone. A 0.4 build (never
+  shipped, `DECISIONS.md` 102) has the guard and writes nothing.
 
 **From 0.4 on, an older build leaves a newer one's stores alone**
 (`DECISIONS.md` 100). Each app keeps one mark, the newest version that has
 run on it: `aet.newest` in the web's localStorage, `newestVersion` in iOS's
-UserDefaults. A build writes its own version there before it writes
-anything else, and a build that finds a newer version there writes nothing
-for the rest of the session: no setting, pan, cook in progress, log, copy
-kept aside, language or sharing state. It logs and learns from no egg,
-sends and deletes nothing, and still times the egg; one line at the top of
-the screen (and of Settings) tells the cook to update. On the web a tab
-already open finds out from the newer tab's `storage` event, or at its own
-next write, whichever comes first.
+UserDefaults, with the build number (`CFBundleVersion`) beside it on iOS
+(`newestBuild`). A build writes its own version there before it writes
+anything else, and a build that finds a newer version there writes and
+deletes nothing for the rest of the session: no setting, pan, cook in
+progress, log, language or sharing state, and no sweep of old keys. It logs
+and learns from no egg, sends and deletes nothing, and still times the egg;
+one line at the top of the screen (and of Settings) tells the cook to update.
+On the web a tab already open finds out from the newer tab's `storage` event,
+or at its own next write, whichever comes first.
 
 The order is semantic versioning's (core's `writerCheck`,
 `src/core/newer.ts`): `0.4.0-alpha.1` < `0.4.0-alpha.2` < `0.4.0` <
 `0.5.0-alpha.1`. The web marks with `APP_VERSION`, so each alpha is a
-version of its own; iOS marks with `MARKETING_VERSION`, which has no
-pre-release, so every TestFlight build of one version counts as one. The
-mark's key and format (a version string) never change.
+version of its own. iOS marks with `MARKETING_VERSION`, which has no
+pre-release, so every TestFlight build of one version shares it; the build
+number beside it makes a later build of the same version newer
+(`writerCheckBuilt`). A build from before the build number was kept reads the
+mark alone and treats every build of its version as its own. The mark's key
+and format (a version string) never change.
 
 So what is now safe:
 
-- **Rolling back to any build from 0.4 on** costs nothing the newer build
-  stored: the older one writes none of it, whatever field or store the newer
-  one added. When the newer build comes back it finds everything as it left
-  it, and nothing the cook did on the older one (a setting, an egg) is kept.
+- **Rolling back to any build of 0.5**, on iOS from the first build that
+  keeps the build number, costs nothing the newer build stored: the older one
+  writes none of it, whatever field or store the newer one added. When the
+  newer build comes back it finds everything as it left it, and nothing the
+  cook did on the older one (a setting, an egg) is kept.
 - **Two tabs of two builds** on the web: the older stops writing as soon as
   the newer has run.
 
 What is still not safe:
 
-- **0.3**, on the web or on a phone: it has no guard, and does all of the
-  damage above. Never offer it again on a device a 0.4 build has run on.
-- **Within one iOS version**, two TestFlight builds are one version to the
-  guard: a build that changes a store's format needs a new
-  `MARKETING_VERSION`, not only a new build number.
+- **Any build before 0.5**, as above.
+- **An iOS build of 0.5.0 from before the build number was kept**: it sees
+  a later build of 0.5.0 as its own version, and writes.
 - **A rollback of the web's deploy** still serves the older build to every
   browser, and the older service worker replaces the newer one's cached
   build; the guard keeps the stores, not the build.
 
-So a release that changes what it stores must also move the version, and a
-web deploy must never go back to 0.3.
-
----
-
+So a web deploy must never go back before 0.5.
 ## What this is instead of
 
 **Free provisioning (a Personal Team) is not an option here**, and not merely

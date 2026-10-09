@@ -236,6 +236,13 @@ class Run {
     out('python3', ['-c', PLIST_RENAME, path, from, to]);
   }
 
+  /// Set keys in the prefs plist, with the app terminated: each value a
+  /// text, stored as data, as the app stores its stores.
+  setData(values) {
+    const path = `${this.data}/Library/Preferences/${BUNDLE}.plist`;
+    out('python3', ['-c', PLIST_SET_DATA, path, JSON.stringify(values)]);
+  }
+
   check(ok, what) {
     if (!ok) this.failures.push(what);
   }
@@ -271,6 +278,17 @@ path, a, b = sys.argv[1:4]
 with open(path, 'rb') as f:
     p = plistlib.load(f)
 p[b] = p.pop(a)
+with open(path, 'wb') as f:
+    plistlib.dump(p, f, fmt=plistlib.FMT_BINARY)
+`;
+
+const PLIST_SET_DATA = `
+import json, plistlib, sys
+path, values = sys.argv[1], json.loads(sys.argv[2])
+with open(path, 'rb') as f:
+    p = plistlib.load(f)
+for k, v in values.items():
+    p[k] = v.encode('utf-8')
 with open(path, 'wb') as f:
     plistlib.dump(p, f, fmt=plistlib.FMT_BINARY)
 `;
@@ -947,9 +965,9 @@ scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again
   run.check(egg.last.yolkWord === 'jammy' && egg.last.pulledBy === 'cook', 'the answer and the pull recorded');
   run.check(forecastOk(egg.last), 'the record has its forecast');
   run.check(egg.last.appVersion.endsWith(' (debug clock)'), `marked: ${egg.last.appVersion}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.length === 1);
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.length === 1);
   run.check(!('cookInProgress.v3' in prefs), 'no cook stored after Start again');
-  run.check(prefs['calibration.v4']?.log?.length === 1, 'the plist holds the one egg');
+  run.check(prefs['calibration.v5']?.log?.length === 1, 'the plist holds the one egg');
   run.note(
     `in ${Math.round(last.events.pulled.out_s - start)} s, cooled ${Math.round(last.events.cooledAt_s - last.events.pulled.out_s)} s`,
   );
@@ -1228,26 +1246,57 @@ scenario('reschedule', 'relaunched while heating past the guess: the pending pul
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
 });
 
-scenario('upgrade', "an earlier build's cook (cookInProgress) kept aside, its alarms left", async (run) => {
+scenario('unreadable', 'a cook and a results log this build cannot read: dropped, the alarms and the card gone, nothing kept aside', async (run) => {
   await started(run);
   run.terminate();
-  const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook);
-  run.check(stored['cookInProgress.v3'], 'the cook in the plist');
-  // What 0.3 and 0.4 wrote, under the key they wrote: this build's cook
-  // stands in for theirs, with the same alarm ids pending (a day out, on a
-  // frozen clock: still pending however long the plist takes).
-  run.renameKey('cookInProgress.v3', 'cookInProgress');
+  const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook && p['calibration.v5']);
+  run.check(stored['cookInProgress.v3'] && stored['calibration.v5'], 'the cook and the log in the plist');
+  run.setData({ 'cookInProgress.v3': '{"cook":{"id_ms":1}}', 'calibration.v5': '{damaged' });
   run.launch();
-  const kept = await run.until(/^restore kept aside cookInProgress$/, { from: run.launched, what: 'the old key kept aside' });
-  // The launch's own read-back, three seconds on (AppModel.appear).
-  await run.until(/^delivered /, { from: kept.i, what: 'the alarms read back' });
+  await run.until(/^restore unreadable$/, { from: run.launched, what: 'the cook dropped' });
+  await run.until(/^alarms cancelled$/, { from: run.launched, what: 'its alarms cancelled' });
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.v === 5);
+  run.check(!('cookInProgress.v3' in prefs), 'the cook gone');
+  run.check(prefs['calibration.v5']?.v === 5 && prefs['calibration.v5']?.log?.length === 0, 'the log written again, empty');
+  const aside = Object.keys(prefs).filter((k) => k.endsWith('.unread'));
+  run.check(aside.length === 0, `nothing kept aside: ${aside.join(', ')}`);
+  run.note('dropped, and nothing kept aside');
+});
+
+scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's cook among them, are deleted at launch; its alarms left; under a newer mark, not one", async (run) => {
+  await started(run);
+  run.terminate();
+  await run.prefs((p) => p['cookInProgress.v3']?.cook);
+  // What 0.3 and 0.4 wrote: this build's cook stands in for theirs, under
+  // their key, with the same alarm ids pending (a day out, on a frozen
+  // clock: still pending however long the plist takes).
+  run.renameKey('cookInProgress.v3', 'cookInProgress');
+  const old = {
+    'calibration.v4': '{"v":4,"log":[]}', 'calibration.v4.unread': '[]', 'cookInProgress.v2': '{}',
+    'cookInProgress.unread': '[]', 'share.v1': '{}', 'probeAsked': '1', 'coldStart': '1',
+  };
+  run.setData(old);
+  const keys = [...Object.keys(old), 'cookInProgress'];
+  run.launch();
+  const swept = await run.until(/^swept cookInProgress$/, { from: run.launched, what: 'the old cook swept' });
+  await run.until(/^delivered /, { from: swept.i, what: 'the alarms read back' });
   const lines = run.sinceLaunch();
+  run.check(keys.every((k) => has(lines, new RegExp(`^swept ${k.replaceAll('.', '\\.')}$`))), 'each swept');
   run.check(!has(lines, /^alarms cancelled$/), 'its alarms not cancelled');
   run.check(same(sorted(pending(lines)), ['cook.cool', 'cook.pull']), `pending ${pending(lines)}`);
   run.check(!has(lines, /^restore (HEATING|COOKING|PULL|COOLING|DONE)/), 'idle');
-  const prefs = await run.prefs((p) => Array.isArray(p['cookInProgress.unread']));
-  run.check(!('cookInProgress' in prefs) && !('cookInProgress.v3' in prefs), 'the old key gone');
-  run.check(prefs['cookInProgress.unread']?.length === 1, 'kept aside, once');
+  const prefs = await run.prefs((p) => keys.every((k) => !(k in p)));
+  run.check(keys.every((k) => !(k in prefs)), `gone: ${keys.filter((k) => k in prefs).join(', ')}`);
+  run.check(prefs['calibration.v5']?.v === 5, 'this build\'s log kept');
+  run.terminate();
+  // A newer build's mark: nothing deleted.
+  run.setData(old);
+  run.launch(['-newestVersion', '9.0.0']);
+  await run.until(/^newer note$/, { from: run.launched, what: 'the line shown' });
+  run.check(!has(run.sinceLaunch(), /^swept /), 'nothing swept under a newer mark');
+  const kept = await run.prefs((p) => Object.keys(old).every((k) => k in p));
+  run.check(Object.keys(old).every((k) => k in kept), 'each kept');
+  run.note(`${keys.length} swept, the old cook's alarms left; under 9.0.0, none`);
 });
 
 scenario('again-logs', 'Start again logs the unanswered egg before it clears the cook', async (run) => {
@@ -1261,8 +1310,8 @@ scenario('again-logs', 'Start again logs the unanswered egg before it clears the
   run.check(logged >= 0 && logged < index(lines, /^stored none$/), 'logged before the cook was cleared');
   const egg = eggLog(lines);
   run.check(egg?.last?.yolkWord === null && forecastOk(egg?.last), 'unanswered, with its forecast');
-  const prefs = await run.prefs((p) => p['calibration.v4']?.log?.length === 1 && !('cookInProgress.v3' in p));
-  run.check(prefs['calibration.v4']?.log?.length === 1, 'the plist holds the egg');
+  const prefs = await run.prefs((p) => p['calibration.v5']?.log?.length === 1 && !('cookInProgress.v3' in p));
+  run.check(prefs['calibration.v5']?.log?.length === 1, 'the plist holds the egg');
   run.check(!('cookInProgress.v3' in prefs), 'and no cook');
 });
 
@@ -1292,8 +1341,8 @@ scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg 
   const egg = eggLog(lines.slice(0, gone.i)).last;
   run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
   run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
-  const kept = prefs['calibration.v4']?.log;
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  const kept = prefs['calibration.v5']?.log;
   run.check(kept?.length === 1 && kept[0].egg.mass_g === egg.egg.mass_g, `the plist's egg: ${kept?.[0]?.egg?.mass_g} g`);
   run.note(`the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept, then forgotten`);
 });
@@ -1315,8 +1364,8 @@ scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected a
   const egg = eggLog(run.lines().slice(0, gone.i)).last;
   run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
   run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
-  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
-  run.check(prefs['calibration.v4']?.log?.[0]?.egg.mass_g === egg.egg.mass_g, 'the plist holds the corrected egg');
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v5']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  run.check(prefs['calibration.v5']?.log?.[0]?.egg.mass_g === egg.egg.mass_g, 'the plist holds the corrected egg');
   run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
 });
 
@@ -1558,6 +1607,32 @@ scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg
   run.check(/^\d+\.\d+\.\d+$/.test(marked.newestVersion ?? ''), `the mark: ${marked.newestVersion}`);
   run.check(!has(run.sinceLaunch(), /^newer note$/), 'no line');
   run.note(`the line shown; Done, answered, started again; nothing stored; then marked ${marked.newestVersion}`);
+});
+
+scenario('newer-build', 'a later build of the same version has run: read-only, as for a newer version; the same build writes', async (run) => {
+  // Marked by this build first, with its version and its build number.
+  run.launch();
+  const claimed = await run.until(/^stores /, { from: run.launched, what: 'the claim' });
+  const m = /^stores write mark none build none mine (\S+) build (\d+)$/.exec(claimed.text);
+  run.check(m !== null, `the first claim: ${claimed.text}`);
+  if (m === null) return;
+  const [, version, build] = m;
+  const marked = await run.prefs((p) => p.newestBuild === build);
+  run.check(marked.newestVersion === version && marked.newestBuild === build, `marked ${marked.newestVersion} build ${marked.newestBuild}`);
+  run.terminate();
+  // A later build of this version, as a launch argument (see newer-version).
+  const later = String(Number(build) + 1);
+  run.launch(['-newestVersion', version, '-newestBuild', later]);
+  const guarded = await run.until(/^stores /, { from: run.launched, what: 'the claim under a later build' });
+  run.check(guarded.text.startsWith(`stores readOnly mark ${version} build ${later} `), `the claim: ${guarded.text}`);
+  await run.until(/^newer note$/, { from: run.launched, what: 'the line shown' });
+  run.terminate();
+  // This build's own number again: it writes.
+  run.launch(['-newestVersion', version, '-newestBuild', build]);
+  const own = await run.until(/^stores /, { from: run.launched, what: 'the claim under its own build' });
+  run.check(own.text.startsWith('stores write '), `the claim: ${own.text}`);
+  run.check(!has(run.sinceLaunch(), /^newer note$/), 'no line');
+  run.note(`${version} build ${build}: read-only under build ${later}, writing under its own`);
 });
 
 // ------------------------------------------------------------------- main

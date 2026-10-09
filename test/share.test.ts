@@ -133,7 +133,7 @@ function page(log: EggRecord[], final = log.length) {
 }
 
 const LOG: EggRecord[] = [0, 1, 2].map((i) => ({
-  ...recordAt(0.41, 400 + i, 0, null), day: `2026-10-0${i + 1}`, id: 1759700000000 + i,
+  ...recordAt(0.41, 400 + i, 'jammy', null), day: `2026-10-0${i + 1}`, id: 1759700000000 + i,
 }));
 
 test('4. turning sharing on sends the log so far, in order, each copy carrying the id', async () => {

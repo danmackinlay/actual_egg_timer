@@ -265,8 +265,8 @@ the decision and the catalogue carries the sentence. `StartChoice` is an app typ
 At PULL the app asks the cook to say when the eggs came out - "They're in the ice
 bath", "They're under the tap", "They're out" - as the web app does, and the record
 calls that tap a measured pull; with no tap the grace runs out and the pull is only
-assumed. After the cook it asks how the YOLK was (too soft, just right, too firm) and
-how the WHITE was (runny, tender, firm), both every time and neither required. That is
+assumed. After the cook it asks which YOLK the cook got (runny, soft, jammy, fudgy,
+hard) and how the WHITE was (runny, tender, firm), both every time and neither required. That is
 not a poor interface for a rating — it is the whole measurement. Ordinal feedback is
 worth one to two bits per egg, and asking for a number out of ten would collect
 precision that is not there. The likelihood is INFERENCE.md §3's ordered probit.
@@ -388,10 +388,11 @@ planned later pulls at another moment. A cook core calls too old (`cookTooOld`:
 an hour past its end, or two hours still heating) is dropped instead of
 restored, its alarms cancelled and its card ended; that egg has been eaten, and
 if nobody answered about it, it is logged from its plan on its pot's surface. A
-cook an earlier build wrote (0.3's and 0.4's `cookInProgress`, an earlier 0.5
-build's `cookInProgress.v2`) is kept aside with the results
-(`cookInProgress.unread`, a list), its notifications left to ring and its card
-ended to go at its own end.
+cook this build cannot read is dropped, its alarms cancelled and its card
+ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
+earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every
+other key the app no longer uses (`Stores.retiredKeys`), its notifications
+left to ring and its card ended to go at its own end.
 
 ## The Live Activity
 

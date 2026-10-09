@@ -93,11 +93,11 @@ export function meanSolve(pz: NamedPosterior, level: number, setup: CookSetup = 
 export const decidePosteriors: NamedPosterior[] = (() => {
   const prior = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   const learned = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
-  // Three eggs: jammy just right with a firm white, soft with a runny white,
-  // and jammy again, the yolk alone.
-  updatePosterior(learned, DECIDE_GRID, 464, logYolkTarget(0.41), 0, 'firm');
-  updatePosterior(learned, DECIDE_GRID, 419, logYolkTarget(0.22), null, 'runny');
-  updatePosterior(learned, DECIDE_GRID, 470, logYolkTarget(0.41), 0, null);
+  // Three eggs: jammy called jammy with a firm white, a runny white alone at
+  // soft, and jammy again, the yolk alone.
+  updatePosterior(learned, DECIDE_GRID, 464, 'jammy', 'firm');
+  updatePosterior(learned, DECIDE_GRID, 419, null, 'runny');
+  updatePosterior(learned, DECIDE_GRID, 470, 'jammy', null);
   // A cook the model knows well, who likes a yolk a fifth of a decade firmer.
   const firmer = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   for (let i = 0; i < firmer.particles.length; i++) {

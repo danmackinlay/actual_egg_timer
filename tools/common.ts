@@ -12,10 +12,10 @@ import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { decisionGridRequest, decisionInputs } from '../src/core/decide.js';
 import { DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { Egg } from '../src/core/geometry.js';
-import { Feedback, WhiteReport, createPrior } from '../src/core/infer.js';
+import { WhiteReport, YolkWord, createPrior } from '../src/core/infer.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Calibration, EggRecord } from '../src/core/record.js';
+import { Calibration, EggRecord, MODEL_ID } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 
 /* ------------------------------------------------------------------ pots */
@@ -79,10 +79,10 @@ export function draw(probs: number[], u: number): number {
 /** A record of a 68 g egg cooked for `t` s in `setup`, pulled by the alarm,
  *  with these answers. */
 export function recordAt(
-  level: number, t: number, yolk: Feedback | null, white: WhiteReport | null, setup = appSetup(),
+  level: number, t: number, yolkWord: YolkWord | null, white: WhiteReport | null, setup = appSetup(),
 ): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
+    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: MODEL_ID,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
@@ -91,7 +91,7 @@ export function recordAt(
       waterLitres: setup.waterLitres, eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, yolkWord: null, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
+    yolkWord: yolkWord, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 
