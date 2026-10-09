@@ -95,12 +95,23 @@ gate could catch it.
       logic are checked by nothing else. Make both jobs blocking, and add
       `npm run e2e` / `npm run ios:e2e` to the CLAUDE.md rule for commits
       touching `src/ui` or `ios/App`. S.
-- [ ] **1.2 An iOS app test target.** `project.yml` has `testTargets: []`.
+- [x] **1.2 An iOS app test target.** `project.yml` has `testTargets: []`.
       Cook, AppModel, Planner, Store, DecisionGrids and AppClock import only
       Foundation, Observation and core, so they can move into an
       `EggTimerApp` target in `ios/EggTimerCore/Package.swift` and be tested
       by the `swift test` already in `verify`. Protocols for the six
       singletons, `AppClock` and `UserDefaults`. L, the base for 3.x.
+      *Done* (`55e690b`, `4344ba9`): those six and Calibration, Edits,
+      Presentation, SousVide, LanguageChoice, AlarmSoundChoice, Screenshots
+      and Perf are `EggTimerApp`, which the app links; `Copy` and
+      `CookActivity` are `EggTimerShared`, which the widget links too. What
+      they reach outside is a protocol the app fills at launch
+      (`Services`, `CookClock`, `KeyValueStore` with a `Stores.Pass` only
+      `Stores` makes); Alarm, Ringer, Sharing, LiveActivity, ResultsExport
+      and the views stay, each on a framework only an iPhone has.
+      `EggTimerAppTests` drives a cook to Done, a relaunch, the guard, Start
+      again's unanswered egg and every write through `Stores`, on a clock
+      the test moves. Everything there is `public`; narrowing it is 3.9's.
 - [x] **1.3 A cycle check**: a node test over `import … from './x.js'`
       that fails on any cycle in `src/`. S. *Done* (`38894b0`,
       `test/cycles.test.ts`): every static import, bare import and
