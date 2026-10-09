@@ -11,7 +11,7 @@ things stand is `PLAN.md`; which document holds what is its last section.
   `git log --oneline` before and after each commit.
 - **Never push.** Pushing deploys the web app; it is the owner's call.
   Agents working in a worktree commit on their branch and do not merge;
-  the session that sent them verifies and merges to local `main`.
+  the session that sent them verifies and merges into its version line.
 - **One gate: `npm run verify`** (the type checks, `npm test`, the Swift copy
   lint, fresh fixtures, `swift test`). Run it before every commit that
   touches code.
@@ -19,11 +19,12 @@ things stand is `PLAN.md`; which document holds what is its last section.
   unsigned; about a minute, so not in `verify`): run it too before a commit
   that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
 - **One logical change per commit.**
-- **Branches are named for their version line** (`DECISIONS.md` 64):
-  `main` is what is live, today the 0.3 line; the next minor version is
-  built on `0.4.x` (and so on), kept up to date by merging `main` into it,
-  and merged into `main` when it is released. A `0.3.x` is cut from the last
-  0.3 tag only if 0.3 needs a fix after 0.4 ships. A working branch an agent
+- **Branches are named for their version line** (`DECISIONS.md` 64, 102):
+  `main` is what is live, today the 0.3 line; the next release is built on
+  its own line, today `0.5.x`, kept up to date by merging `main` into it,
+  and merged into `main` when it is released. `0.4.x` is retired: 0.4 never
+  ships, and nothing more is committed there. A `0.3.x` is cut from the last
+  0.3 tag only if 0.3 needs a fix before 0.5 ships. A working branch an agent
   makes is named for what it does and merged into one of these.
 - **Versions and tags.** One version, `package.json`'s (`0.x.y-alpha.n`
   while alpha; no stability promised), held in step with iOS's
@@ -35,10 +36,18 @@ things stand is `PLAN.md`; which document holds what is its last section.
   `--follow-tags`. Never move or reuse a tag. Before wide deployment
   (`DECISIONS.md` 48) a storage format may change without a migration: bump
   its key.
-- **`PLAN.md` changes in the same commit as the work it describes.** Test and
-  check counts appear only in its status line; history goes to `LOGBOOK.md`,
-  which is a record and is appended to, never rewritten. An owner decision
-  goes to `DECISIONS.md` with its number, date and commit.
+- **`PLAN.md` is updated at merge, by the session that merges**
+  (`DECISIONS.md` 104), not in each working commit: a working branch says
+  what it did in its commits and `LOGBOOK.md`, and the merge brings `PLAN.md`
+  up to date. Test and check counts appear only in its status line; history
+  goes to `LOGBOOK.md`, which is a record and is appended to, never
+  rewritten. An owner decision goes to `DECISIONS.md` with its number, date
+  and commit.
+- **Comments say what the code does and why**, in the code's terms
+  (`DECISIONS.md` 105). A decision number appears in a comment only where
+  the code would otherwise look wrong (z ≈ 4.65 K), never as a changelog:
+  the history of a line is its commits, which cite `DECISIONS.md`, and
+  `LOGBOOK.md`.
 - **Support burden is not a constraint** (`DECISIONS.md` 14). The app is
   free: argue from the cook and the code, never from the questions a choice
   might generate.
