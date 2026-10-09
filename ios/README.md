@@ -453,11 +453,13 @@ nothing, and a record made under it carries ` (debug clock)` after its
 everything.
 
 ```sh
-npm run ios:e2e                    # every scenario, about five and a half minutes
+npm run ios:e2e                    # every scenario, about ten minutes
 npm run ios:e2e -- relaunch-*      # some; --list names them
 ```
 
-`tools/iosE2e.mjs` builds Debug, makes a simulator of its own, and for each
+`tools/iosE2e.ts` (TypeScript, compiled with the other tools by
+`tools/build.mjs`, which `npm run ios:e2e` runs first) builds Debug, makes a
+simulator of its own, and for each
 scenario installs afresh, drives the app by launch argument (`-uiScreen
 heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
 `App/Screenshots.swift`, never screen coordinates, the one screen's among

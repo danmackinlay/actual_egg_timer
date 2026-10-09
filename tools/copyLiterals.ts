@@ -173,7 +173,7 @@ const NOT_COPY: Record<string, string> = {
   launch: 'debug log (Screenshots.log), never shown',
   'launch+3s': 'debug log (Screenshots.log), never shown',
   // the debug clock (ios/App/AppClock.swift) and what the scripted checks
-  // read and tap with (tools/iosE2e.mjs)
+  // read and tap with (tools/iosE2e.ts)
   clockSpeed: 'debug launch argument',
   clockOffset: 'debug launch argument',
   clockEpoch: 'debug launch argument',
@@ -191,7 +191,7 @@ const NOT_COPY: Record<string, string> = {
   again: 'debug launch argument value',
   answer: 'debug launch argument value',
   update: 'debug log (Screenshots.log), never shown',
-  // the one screen's checks (tools/iosE2e.mjs): where each part sits, and
+  // the one screen's checks (tools/iosE2e.ts): where each part sits, and
   // what the idle screen shows
   slider: 'debug log name of a part of the screen, never shown',
   egg: 'debug log name of a part of the screen, never shown',

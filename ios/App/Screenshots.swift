@@ -96,7 +96,7 @@ import UIKit
 /// the stored cook and the log as written, the alarms scheduled, cancelled
 /// and read back, the rings, the Live Activities pushed and seen, the taps
 /// of `-uiDo`, and what the screen says, which the scripted checks read
-/// (`tools/iosE2e.mjs`). A line is `{"t":<cook time, epoch s>,"ev":"<the
+/// (`tools/iosE2e.ts`). A line is `{"t":<cook time, epoch s>,"ev":"<the
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
 /// `Codable` writes them, a field with no value left out.
 enum Screenshots {
