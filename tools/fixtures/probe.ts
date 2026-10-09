@@ -19,8 +19,8 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { lookupPeakYolk_C } from '../../src/core/doseGrid.js';
 import {
-  Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
-  Posterior, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
+  PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
+  Posterior, WhiteReport, YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../../src/core/infer.js';
 import {
@@ -29,7 +29,7 @@ import {
 } from '../../src/core/policy.js';
 
 import {
-  CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, NOMINAL_TARGET, PARTICLE_COUNT, PRIOR_SEED,
+  CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, PARTICLE_COUNT, PRIOR_SEED,
 } from './calibration.js';
 import { particleRows } from './shared.js';
 
@@ -67,20 +67,18 @@ export function probeFixture(): Record<string, unknown> {
 
   // A reading alone, hot; answers and a reading together; a reading far off,
   // which only the unrelated share survives; then answers alone.
-  const steps: { cookTime_s: number; yolk: Feedback | null; white: WhiteReport | null; probe_C: number | null }[] = [
-    { cookTime_s: 360, yolk: null, white: null, probe_C: peakAt(360) + 0.8 },
-    { cookTime_s: 420, yolk: 0, white: 'firm', probe_C: peakAt(420) - 0.5 },
-    { cookTime_s: 380, yolk: null, white: null, probe_C: peakAt(380) + 7 },
-    { cookTime_s: 400, yolk: -1, white: null, probe_C: null },
-    { cookTime_s: 350, yolk: null, white: 'tender', probe_C: peakAt(350) - 1.5 },
+  const steps: { cookTime_s: number; yolkWord: YolkWord | null; white: WhiteReport | null; probe_C: number | null }[] = [
+    { cookTime_s: 360, yolkWord: null, white: null, probe_C: peakAt(360) + 0.8 },
+    { cookTime_s: 420, yolkWord: 'jammy', white: 'firm', probe_C: peakAt(420) - 0.5 },
+    { cookTime_s: 380, yolkWord: null, white: null, probe_C: peakAt(380) + 7 },
+    { cookTime_s: 400, yolkWord: 'soft', white: null, probe_C: null },
+    { cookTime_s: 350, yolkWord: null, white: 'tender', probe_C: peakAt(350) - 1.5 },
   ];
   const post = createPrior(PARTICLE_COUNT, PRIOR_SEED);
   const updates = steps.map((s) => {
-    const firstLikelihood = answerLikelihood(
-      grid, post.particles[0], s.cookTime_s, NOMINAL_TARGET, s.yolk, s.white, s.probe_C,
-    );
-    updatePosterior(post, grid, s.cookTime_s, NOMINAL_TARGET, s.yolk, s.white, s.probe_C);
-    return { ...s, logNominalTarget: NOMINAL_TARGET, firstLikelihood: firstLikelihood, after: readout(post) };
+    const firstLikelihood = answerLikelihood(grid, post.particles[0], s.cookTime_s, s.yolkWord, s.white, s.probe_C);
+    updatePosterior(post, grid, s.cookTime_s, s.yolkWord, s.white, s.probe_C);
+    return { ...s, firstLikelihood: firstLikelihood, after: readout(post) };
   });
 
   const cooling = [

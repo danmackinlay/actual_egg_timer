@@ -1675,22 +1675,23 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
-  'old-cooks': {
-    what: 'a 0.4 cook under aet.cook.v2 and an earlier 0.5 one under v3: kept aside, the page idle',
+  'unreadable-stores': {
+    what: 'a cook and a results log this build cannot read: dropped, the page idle on the prior, nothing kept aside',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      const v2 = JSON.stringify({ machine: { phase: 'COOKING' }, ticket: { startedAt: Date.now() - 60000 } });
-      const v3 = JSON.stringify({ cook: { id_ms: Date.now() - 30000 }, answers: 'none' });
-      await tab.eval(`localStorage.setItem('aet.cook.v2', ${JSON.stringify(v2)});
-        localStorage.setItem('aet.cook.v3', ${JSON.stringify(v3)})`);
+      await tab.eval(`localStorage.setItem('aet.cook.v4', '{"cook":{"id_ms":1},"answers":"none"}');
+        localStorage.setItem('aet.calibration.v4', '{damaged')`);
       await tab.reload();
+      await tab.settle();
       const s = await tab.snap();
-      check(s.phase === 'IDLE' && s.stored === null, 'idle');
-      check((await tab.storage('aet.cook.v2')) === null && (await tab.storage('aet.cook.v3')) === null, 'the old keys gone');
-      const unread = await tab.storage('aet.cook.unread');
-      const kept = unread === null ? [] : JSON.parse(unread) as string[];
-      check(kept.includes(v2) && kept.includes(v3), `both kept aside, as stored: ${unread}`);
-      return `aet.cook.unread holds ${kept.length}`;
+      check(s.phase === 'IDLE' && s.stored === null, 'idle, the cook dropped');
+      check(s.log.length === 0, 'no egg');
+      const text = await tab.storage('aet.calibration.v4');
+      const store = text === null ? null : JSON.parse(text) as { v: number; log: unknown[] };
+      check(store !== null && store.v === 4 && store.log.length === 0, `the log written again, empty: ${text?.slice(0, 40)}`);
+      const keys = await tab.eval<string[]>('Object.keys(localStorage).sort()');
+      check(!keys.some((k) => k.endsWith('.unread')), `nothing kept aside: ${keys.join(', ')}`);
+      return `dropped; ${keys.join(', ')}`;
     },
   },
 

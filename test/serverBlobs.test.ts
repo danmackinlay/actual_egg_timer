@@ -33,7 +33,7 @@ test('the function, through the Blobs client: keep once, list, delete', async ()
   try {
     const post = (seq: number, context = PRODUCTION) => eggs(new Request(`${SITE}/api/eggs`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ seq: seq, record: { ...recordAt(0.41, 412, 0, null), uid: UID } }),
+      body: JSON.stringify({ seq: seq, record: { ...recordAt(0.41, 412, 'jammy', null), uid: UID } }),
     }), context);
     assert.equal((await post(0)).status, 201);
     assert.equal((await post(0)).status, 200, 'the conditional write says it did not write');

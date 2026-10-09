@@ -25,7 +25,6 @@ import {
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
-import { keepUnreadCook } from './calibrationStore.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
   stopAlarm,
@@ -43,7 +42,7 @@ import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
 import {
   clearCook, cookStoredElsewhere, correctedLater, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
-  saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
+  saveLeanHint, storedCookText, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
@@ -693,24 +692,15 @@ export function onPrimary(): void {
  * says so rather than letting someone walk away trusting a noise that will
  * not happen.
  *
- * A cook 0.3 or 0.4 wrote (`aet.cook.v2`), or an earlier 0.5 build without
- * the plan as it ran (`aet.cook.v3`), is a shape this build does not read: it
- * is kept aside as stored and its key deleted, and the page opens idle
- * (DECISIONS.md 81, 97). So is a cook under the current key that does not
- * read. One too old to pick back up (`cookTooOld`) ends as Start again would
- * end it, and the page opens idle.
+ * A cook under the current key that does not read is dropped, and the page
+ * opens idle. One too old to pick back up (`cookTooOld`) ends as Start again
+ * would end it, and the page opens idle.
  */
 export function restoreCook(): void {
-  for (const old of takeOldCooks()) keepUnreadCook(old);
   const text = storedCookText();
   const stored = loadCook();
   if (stored === null) {
-    // Another build's cook, most likely: kept aside, as stored, and exported
-    // with the results (DECISIONS.md 81). Its egg may be one nothing else holds.
-    if (text !== null) {
-      keepUnreadCook(text);
-      dropStoredCook();
-    }
+    if (text !== null) dropStoredCook();
     return;
   }
 

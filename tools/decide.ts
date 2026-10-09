@@ -19,8 +19,8 @@ import {
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, Particle, WhiteReport, YOLK_WORDS, answerLikelihood, createPrior, yolkWordBands,
-  withUnrelatedWord,
+  FEEDBACK_BAND, Particle, WhiteReport, YOLK_WORDS, YolkWord, createPrior, yolkWordBands, yolkWordProbit,
+  withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
@@ -75,11 +75,22 @@ const PRIOR = freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED);
 const lit464 = meanSolve(PRIOR, REF_EGG, SETUP, 0.41).sol.result.cookTime_s;
 const LEARNED: Record<string, Calibration> = {
   prior: PRIOR,
-  'one egg': replay(PRIOR, [recordAt(0.41, lit464, 0, 'firm')]),
+  'one egg': replay(PRIOR, [recordAt(0.41, lit464, 'jammy', 'firm')]),
   'three eggs, firmer': replay(PRIOR, [
-    recordAt(0.41, lit464, -1, 'firm'), recordAt(0.41, lit464 + 15, -1, 'firm'), recordAt(0.41, lit464 + 30, 0, 'firm'),
+    recordAt(0.41, lit464, 'soft', 'firm'), recordAt(0.41, lit464 + 15, 'soft', 'firm'),
+    recordAt(0.41, lit464 + 30, 'jammy', 'firm'),
   ]),
 };
+
+const WHITES: WhiteReport[] = ['runny', 'tender', 'firm'];
+
+/** What a cook `truth` says about an egg cooked for `t`, unrelated share
+ *  included: the white, and the yolk in the five words, drawn in that order. */
+function truthSays(grid: DoseGrid, truth: Particle, t: number, random: () => number): { white: WhiteReport; word: YolkWord } {
+  const white = WHITES[draw(whiteProbit(grid, truth, t).map(withUnrelated), random())];
+  const word = YOLK_WORDS[draw(yolkWordProbit(grid, truth, t).map(withUnrelatedWord), random())];
+  return { white: white, word: word };
+}
 
 /* ------------------------------------------------------------------ cost */
 
@@ -155,8 +166,9 @@ if (run('lean')) {
 /* ------------------------------------------------------ simulated cooks */
 
 /** Cooks drawn from the prior, each at one level, eggs at the time the app
- *  would choose, answers from the truth's own probit. Calls `each` before every
- *  egg is folded. One fixed surface for speed. */
+ *  would choose, answers from the truth's own probit: whether the yolk was
+ *  just right, for the hit, and the five words, which are folded. Calls `each`
+ *  before every egg is folded. One fixed surface for speed. */
 function simulate(
   cooks: number, eggs: number, particles: number, seed: number,
   each: (c: Calibration, d: Decision, hit: boolean, egg: number, grid: DoseGrid, target: number) => void,
@@ -178,10 +190,10 @@ function simulate(
         break;
       }
       const t = d.cookTime_s;
-      const y = draw(([-1, 0, 1] as Feedback[]).map((a) => answerLikelihood(grid, truth, t, target, a, null)), random());
-      const w = draw((['runny', 'tender', 'firm'] as WhiteReport[]).map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
-      each(cal, d, y === 1 && w !== 0, egg, grid, target);
-      updatePosterior(cal.posterior, grid, t, target, (y - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      const y = draw(yolkProbit(grid, truth, t, target).map(withUnrelated), random());
+      const said = truthSays(grid, truth, t, random);
+      each(cal, d, y === 1 && said.white !== 'runny', egg, grid, target);
+      updatePosterior(cal.posterior, grid, t, said.word, said.white);
       cal.eggsLogged += 1;
     }
   }
@@ -266,9 +278,8 @@ if (run('nudge')) {
           e.base += base.loss; e.nudged += nudged; e.rightBase += base.right; e.rightNudged += right; e.n += 1;
         }
       });
-      const yv = draw(([-1, 0, 1] as Feedback[]).map((a) => answerLikelihood(grid, truth, t, target, a, null)), random());
-      const wv = draw((['runny', 'tender', 'firm'] as WhiteReport[]).map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
-      updatePosterior(cal.posterior, grid, t, target, (yv - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[wv]);
+      const said = truthSays(grid, truth, t, random);
+      updatePosterior(cal.posterior, grid, t, said.word, said.white);
       cal.eggsLogged += 1;
     }
   }
@@ -331,7 +342,7 @@ if (run('runny')) {
   };
   const before = [at(PRIOR, grid0, 0.22), at(PRIOR, grid0, 0.41)];
   for (const sequence of ['E3', 'E5'] as const) {
-    for (const yolk of [null, 0] as (Feedback | null)[]) {
+    for (const yolk of [null, 'soft'] as (YolkWord | null)[]) {
       let cal = PRIOR;
       const log: EggRecord[] = [];
       for (let i = 0; i < 2; i++) {
@@ -342,7 +353,7 @@ if (run('runny')) {
       }
       const g = buildRequestedGrid(decisionGridRequest(decisionInputs(cal, REF_EGG, SETUP)));
       const after = [at(cal, g, 0.22), at(cal, g, 0.41)];
-      console.log(`${sequence}, ${yolk === null ? 'white only' : 'yolk just right too'}, cooked at ${log.map((r) => r.recommended_s.toFixed(0)).join(' and ')} s: `
+      console.log(`${sequence}, ${yolk === null ? 'white only' : 'yolk soft too'}, cooked at ${log.map((r) => r.recommended_s.toFixed(0)).join(' and ')} s: `
         + `soft ${before[0].cookTime_s.toFixed(0)} -> mean ${after[0].meanCookTime_s.toFixed(0)}, chosen ${after[0].cookTime_s.toFixed(0)} (${after[0].oddsTenths}/10); `
         + `jammy ${before[1].cookTime_s.toFixed(0)} -> mean ${after[1].meanCookTime_s.toFixed(0)}, chosen ${after[1].cookTime_s.toFixed(0)} (${after[1].oddsTenths}/10)`);
     }
@@ -362,8 +373,9 @@ function tenthsAt(profile: OddsProfile, level: number): string {
 if (run('reach')) {
   console.log('\n== reach: the odds at every level, what they cost, and the range they allow (node, this machine)');
   const many = replay(PRIOR, [
-    recordAt(0.41, lit464, 0, 'firm'), recordAt(0.41, lit464, 0, 'tender'), recordAt(0.41, lit464, 0, 'firm'),
-    recordAt(0.62, lit464 + 70, 0, 'firm'), recordAt(0.41, lit464, 0, 'firm'),
+    recordAt(0.41, lit464, 'jammy', 'firm'), recordAt(0.41, lit464, 'jammy', 'tender'),
+    recordAt(0.41, lit464, 'jammy', 'firm'), recordAt(0.62, lit464 + 70, 'fudgy', 'firm'),
+    recordAt(0.41, lit464, 'jammy', 'firm'),
   ]);
   const cals: [string, Calibration][] = [...Object.entries(LEARNED), ['five eggs, jammy right', many]];
   for (const pot of POTS) {
@@ -469,7 +481,7 @@ if (run('outcome')) {
       outcomeMs += performance.now() - t0;
       leansAtChoice[o.lean] += 1;
       const e = eggOf(truth, t, target);
-      const w = draw((['runny', 'tender', 'firm'] as WhiteReport[]).map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
+      const w = draw(whiteProbit(grid, truth, t).map(withUnrelated), random());
       byEgg[k] ??= { n: 0, inside: 0, under: 0, over: 0, width: 0 };
       const row = byEgg[k];
       row.n += 1;
@@ -485,7 +497,8 @@ if (run('outcome')) {
       const oj = predictOutcome(cal.posterior, grid, tj, target);
       const ej = eggOf(truth, tj, target);
       if (ej.yolk !== 1) misses.push({ soft: oj.pTooSoft, firm: oj.pTooFirm, wasFirm: ej.yolk === 2 });
-      updatePosterior(cal.posterior, grid, t, target, (e.yolk - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      const word = YOLK_WORDS[draw(yolkWordProbit(grid, truth, t).map(withUnrelatedWord), random())];
+      updatePosterior(cal.posterior, grid, t, word, WHITES[w]);
       cal.eggsLogged += 1;
     }
   }
@@ -567,7 +580,7 @@ if (run('certainty')) {
   };
   console.log('\n== certainty: what a cook is told at each word (58 g, fridge, boiling, ice; 1000 particles)');
   // Eggs answered in words: a 68 g egg at the literature's jammy, called Jammy.
-  const jammy = (): EggRecord => ({ ...recordAt(0.41, lit464, null, 'firm'), yolkWord: 'jammy' });
+  const jammy = (): EggRecord => recordAt(0.41, lit464, 'jammy', 'firm');
   const cals: [string, Calibration][] = [
     ['fresh install', PRIOR],
     ['one egg called jammy', replay(PRIOR, [jammy()])],
@@ -617,7 +630,7 @@ if (run('certainty')) {
       // right time as `predictCookTime` defines a particle's.
       const bands = yolkWordBands(lookupLogYolkDose(grid, truth.alpha_m2s, t) - truth.logDoseOffset, truth.noise);
       const got = draw(bands.map(withUnrelatedWord), random());
-      const white = draw(whites.map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
+      const white = draw(whiteProbit(grid, truth, t).map(withUnrelated), random());
       const right = predictCookTime({ particles: [truth], weights: [1], rng: 1 }, grid, target).median_s;
       byEgg[e] ??= { n: 0, very: 0, ballpark: 0, wild: 0, inWords: 0, asked: 0, pAsked: 0, inTime: 0, width: 0 };
       const row = byEgg[e];
@@ -634,7 +647,7 @@ if (run('certainty')) {
       cls.n += 1;
       cls.asked += got === r.words.asked ? 1 : 0;
       cls.near += Math.abs(got - r.words.asked) <= 1 ? 1 : 0;
-      updatePosterior(cal.posterior, grid, t, target, null, whites[white], null, YOLK_WORDS[got]);
+      updatePosterior(cal.posterior, grid, t, YOLK_WORDS[got], whites[white]);
       cal.eggsLogged += 1;
     }
   }

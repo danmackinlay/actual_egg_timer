@@ -103,7 +103,7 @@ const NOT_COPY: Record<string, string> = {
   // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',
-  'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4); "unread" holds any stored copy the app could not read, kept rather than overwritten.':
+  'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4).':
     'results file: its description of itself, inside the file, never on a screen',
   about: 'results file field name',
   file: 'results file field name',
@@ -112,7 +112,6 @@ const NOT_COPY: Record<string, string> = {
   exported: 'results file field name',
   model: 'results file field name',
   stored: 'results file field name',
-  unread: 'results file field name',
   '{}+{}': 'the app version a record carries: version, plus, build number',
   null: 'JSON null, in the results file',
   '"': 'JSON punctuation, in the results file',
@@ -209,7 +208,6 @@ const NOT_COPY: Record<string, string> = {
   'shown peak %.2f level %.3f planned peak %.2f': 'debug log (Screenshots.log), never shown',
   'stored none': 'debug log (Screenshots.log), never shown',
   'stored {}': 'debug log (Screenshots.log), never shown',
-  'restore kept aside {}': 'debug log (Screenshots.log), never shown',
   'restore unreadable': 'debug log (Screenshots.log), never shown',
   'restore too old': 'debug log (Screenshots.log), never shown',
   'restore {} events written {}': 'debug log (Screenshots.log), never shown',

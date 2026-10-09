@@ -19,15 +19,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { DoseGrid, GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
+import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
   Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
   RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
 } from '../src/core/record.js';
-import {
-  Feedback, LITERATURE_POPULATION, Particle, WhiteReport, YolkWord, answerLikelihood, yolkProbit,
-} from '../src/core/infer.js';
+import { LITERATURE_POPULATION, WhiteReport, YolkWord } from '../src/core/infer.js';
 import {
   BoilMemory, calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED, PULL_GRACE_SECONDS, phaseAt,
 } from '../src/core/policy.js';
@@ -37,21 +35,19 @@ import {
 } from '../src/core/running.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import {
-  DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime,
-} from '../src/core/solve.js';
+import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
   calibrationStoredElsewhere, clearCalibration, eggsBehind, exportResults, keptState, learn, loadCalibration, logEgg,
   recordSecondAnswer,
 } from '../src/ui/calibration.js';
-import { decodeKept, encodeKept, keepUnreadCook, keptAside, overlay } from '../src/ui/calibrationStore.js';
+import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { appSetup, gridFor, knowing } from '../tools/common.js';
 import {
-  OLD_POSTERIOR_FILE, PosteriorReference, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, oldLog,
-  seedOf, spread, summarise,
+  PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces,
+  seedOf, spread, summarise, wordLog,
 } from '../tools/posterior.js';
 
 // --------------------------------------------------------------------------
@@ -75,13 +71,13 @@ const COARSE = (alphaCentre: number, cookTime_s: number): GridSpec => ({
 
 /** A realistic record: the time is what the solver says for this egg. */
 function solvedRecord(
-  level: number, yolk: EggRecord['yolk'], mass_g = 62, over: Partial<CookSetup> = {},
+  level: number, yolkWord: YolkWord | null, mass_g = 62, over: Partial<CookSetup> = {},
 ): EggRecord {
   const egg = eggFromMass(mass_g / 1000);
   const setup = appSetup(over);
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: LITERATURE_POPULATION.id, model: null,
+    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: LITERATURE_POPULATION.id, model: MODEL_ID,
     egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
@@ -91,7 +87,7 @@ function solvedRecord(
       eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t + 4, pulledBy: 'cook',
-    cooled_s: 180, yolk: yolk, yolkWord: null, white: null, probe: null,
+    cooled_s: 180, yolkWord: yolkWord, white: null, probe: null,
     forecast: null,
     lang: 'en', register: 'modern', units: 'metric',
   };
@@ -120,21 +116,23 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
 // --------------------------------------------------------------------------
 
 test('1a. a record from an older app version of the same schema is accepted', () => {
-  const r = { ...solvedRecord(0.4, 0), appVersion: '0.0.1', app: 'ios' };
+  const r = { ...solvedRecord(0.4, 'jammy'), appVersion: '0.0.1', app: 'ios' };
   assert.notEqual(parseRecord(r), null);
 });
 
-test('1b. unknown fields are ignored and dropped; absent nullable fields read as null', () => {
-  const r = solvedRecord(0.4, 0) as unknown as Record<string, unknown>;
-  const raw: Record<string, unknown> = { ...r, futureField: 1 };
-  delete raw['yolk'];
-  delete raw['uid'];
-  delete raw['probe'];
-  const parsed = parseRecord(raw);
+test('1b. unknown fields are ignored and dropped; a field today\'s records write is never absent', () => {
+  const r = solvedRecord(0.4, 'jammy') as unknown as Record<string, unknown>;
+  const parsed = parseRecord({ ...r, futureField: 1 });
   assert.notEqual(parsed, null);
-  assert.equal(parsed?.yolk, null);
-  assert.equal(parsed?.uid, null);
   assert.equal('futureField' in (parsed as object), false);
+  for (const key of ['uid', 'model', 'yolkWord', 'white', 'probe', 'forecast']) {
+    const raw: Record<string, unknown> = { ...r };
+    delete raw[key];
+    assert.equal(parseRecord(raw), null, `no ${key}`);
+  }
+  // `id` alone may be absent: the iPhone app keeps none.
+  assert.equal(parseRecord({ ...r, id: 1759700000123 })?.id, 1759700000123);
+  assert.equal('id' in (parsed as object), false);
 });
 
 test('1c. the white\'s three answers load, a skip loads, and nothing else does', () => {
@@ -147,31 +145,27 @@ test('1c. the white\'s three answers load, a skip loads, and nothing else does',
   assert.equal(parseRecord({ ...base, white: 'set' }), null, 'E1\'s two-level answer, gone with D1');
 });
 
-test('1c2. the five yolk words load, a skip loads, and a record never holds both yolk answers', () => {
+test('1c2. the five yolk words load, a skip loads, and nothing else does', () => {
   const base = solvedRecord(0.3, null);
   for (const word of ['runny', 'soft', 'jammy', 'fudgy', 'hard']) {
-    const r = parseRecord({ ...base, yolkWord: word });
-    assert.equal(r?.yolkWord, word, word);
-    assert.equal(r?.yolk, null);
+    assert.equal(parseRecord({ ...base, yolkWord: word })?.yolkWord, word, word);
   }
   assert.equal(parseRecord({ ...base, yolkWord: null })?.yolkWord, null, 'skipped');
-  const old = parseRecord(solvedRecord(0.3, -1) as unknown as Record<string, unknown>);
-  assert.equal(old?.yolkWord, null, 'an old record has none, absent or null');
   assert.equal(parseRecord({ ...base, yolkWord: 'medium' }), null, 'not a yolk word');
   assert.equal(parseRecord({ ...base, yolkWord: 'Jammy' }), null, 'a key, not a word on screen');
   assert.equal(parseRecord({ ...base, yolkWord: 2 }), null, 'not an index');
-  assert.equal(parseRecord({ ...solvedRecord(0.3, 0), yolkWord: 'jammy' }), null, 'both at once');
-  // The forecast of the five: kept when there are five that sum to one,
-  // absent on a forecast from before them.
+  // The forecast of the five: kept when there are five that sum to one, null
+  // when there are none, and never left out.
   const f = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2] };
-  assert.equal(parseRecord({ ...base, forecast: f })?.forecast?.yolkWord, null);
+  assert.equal(parseRecord({ ...base, forecast: f }), null, 'no yolk words field');
+  assert.equal(parseRecord({ ...base, forecast: { ...f, yolkWord: null } })?.forecast?.yolkWord, null);
   const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
   assert.deepEqual(parseRecord({ ...base, forecast: { ...f, yolkWord: five } })?.forecast?.yolkWord, five);
   assert.equal(parseRecord({ ...base, forecast: { ...f, yolkWord: [0.5, 0.5] } }), null);
 });
 
 test('1d. one bad record refuses the whole log', () => {
-  const good = solvedRecord(0.4, 0);
+  const good = solvedRecord(0.4, 'jammy');
   assert.equal(parseLog([good, good])?.length, 2);
   assert.equal(parseLog([good, { ...good, level: 2 }]), null);
   assert.equal(parseLog({ 0: good }), null);
@@ -182,13 +176,13 @@ test('1e. the web app version is the package version', () => {
   assert.equal(APP_VERSION, pkg.version);
 });
 
-test('1f. the results file: the store spliced in as stored, damaged copies as text', () => {
+test('1f. the results file: the store spliced in as stored, a damaged one as text', () => {
   for (const s of ['', 'plain', 'a"b\\c/d', '\n\r\t\b\f\u0000\u001f\u007f', '‘curly’ café 🥚']) {
     assert.equal(jsonString(s), JSON.stringify(s), `escaped as JSON.stringify: ${JSON.stringify(s)}`);
   }
-  const store = JSON.stringify({ v: 4, p: 'x', folded: 0, log: [solvedRecord(0.4, 0)] });
+  const store = JSON.stringify({ v: 4, p: 'x', folded: 0, log: [solvedRecord(0.4, 'jammy')] });
   const meta = { app: 'web' as const, appVersion: APP_VERSION, exported: '2026-10-05T09:00:00.000Z', population: 'x', uid: null };
-  const text = resultsFile(meta, store, ['{damaged', '[1]', '7']);
+  const text = resultsFile(meta, store);
   // The store's characters are in the file unchanged.
   assert.ok(text.includes(`"stored":${store}`));
   const file = JSON.parse(text) as Record<string, unknown>;
@@ -196,8 +190,11 @@ test('1f. the results file: the store spliced in as stored, damaged copies as te
   assert.equal(file['model'], MODEL_ID);
   assert.equal(file['uid'], null);
   assert.deepEqual(file['stored'], JSON.parse(store));
-  assert.deepEqual(file['unread'], ['{damaged', [1], '7'], 'only an object or array is spliced');
-  assert.equal(JSON.parse(resultsFile(meta, null, []))['stored'], null);
+  assert.equal('unread' in file, false);
+  for (const [stored, spliced] of [['{damaged', '{damaged'], ['[1]', [1]], ['7', '7']] as const) {
+    assert.deepEqual(JSON.parse(resultsFile(meta, stored))['stored'], spliced, 'only an object or array is spliced');
+  }
+  assert.equal(JSON.parse(resultsFile(meta, null))['stored'], null);
   assert.equal(resultsFileName('2026-10-05'), 'actual-egg-timer-results-2026-10-05.json');
 });
 
@@ -206,7 +203,7 @@ test('1f. the results file: the store spliced in as stored, damaged copies as te
 // --------------------------------------------------------------------------
 
 test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
-  const log = [solvedRecord(0.3, -1), solvedRecord(0.5, 1, 70), solvedRecord(0.45, 0, 55), solvedRecord(0.25, null, 64)];
+  const log = [solvedRecord(0.3, 'soft'), solvedRecord(0.5, 'fudgy', 70), solvedRecord(0.45, 'jammy', 55), solvedRecord(0.25, null, 64)];
   log[0].white = 'runny';
   log[3].white = 'tender';
   const start = freshCalibration(64, 7);
@@ -219,50 +216,12 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
   assert.equal(c.eggsLogged, 4, 'a white alone is an egg the model learned from');
 });
 
-test('2a2. an old answer is scored as it was before the five yolk words, to rounding', () => {
-  // The three old yolk answers' arithmetic, pinned by the code before
-  // DECISIONS.md 92 (bb1cc9d) on a synthetic surface, so no physics and no
-  // sampling stand between the numbers and the claim. The file says how.
-  const pinned = JSON.parse(readFileSync('test/data/old-answers-likelihood.json', 'utf8')) as {
-    grid: DoseGrid; particles: Particle[]; times: number[]; targets: number[];
-    yolks: (Feedback | null)[]; whites: (WhiteReport | null)[]; probes: (number | null)[];
-    probit: number[]; likelihood: number[];
-  };
-  // Rounding, not a change of likelihood: Linux's exp and macOS's may differ
-  // in the last bit, and nothing here amplifies that past a few ulps.
-  const close = (x: number, y: number): boolean => Math.abs(x - y) <= 1e-12 * Math.max(Math.abs(x), Math.abs(y));
-  let i = 0;
-  let j = 0;
-  for (const p of pinned.particles) {
-    for (const t of pinned.times) {
-      for (const g of pinned.targets) {
-        const probs = yolkProbit(pinned.grid, p, t, g);
-        for (let k = 0; k < 3; k++, i++) {
-          assert.ok(close(probs[k], pinned.probit[i]), `yolkProbit ${i}: ${probs[k]} against ${pinned.probit[i]}`);
-        }
-        for (const y of pinned.yolks) {
-          for (const w of pinned.whites) {
-            if (y === null && w === null) continue;
-            for (const probe of pinned.probes) {
-              const l = answerLikelihood(pinned.grid, p, t, g, y, w, probe);
-              assert.ok(close(l, pinned.likelihood[j]), `answerLikelihood ${j}: ${l} against ${pinned.likelihood[j]}`);
-              j++;
-            }
-          }
-        }
-      }
-    }
-  }
-  assert.equal(i, pinned.probit.length);
-  assert.equal(j, pinned.likelihood.length);
-});
-
-test('2a3. the old log makes the right posterior: the filter against the exact one, in distribution', () => {
+test('2a3. a log makes the right posterior: the filter against the exact one, in distribution', () => {
   // A particle filter is random: resampling is discontinuous in the weights,
   // so a last-bit difference in exp can send the particles down another,
   // equally good path, and a posterior pinned particle by particle on one
   // machine is not the one another makes. What is checked is what the
-  // particles are a sample OF. The old answers' log is folded on fixed
+  // particles are a sample OF. Ten eggs answered in the words are folded on fixed
   // surfaces under SEEDS seeds the reference never used, and each summary -
   // the time-scale's and the taste's mean and 10/50/90% points, the white
   // offset's mean, the jammy time chosen and its odds - is averaged over
@@ -275,18 +234,17 @@ test('2a3. the old log makes the right posterior: the filter against the exact o
   // grown noisier is wrong even when it is right on average. None of it
   // fails on rounding. `npm run posterior -- reference` rewrites the
   // reference, and tools/posterior.ts says when.
-  const ref = JSON.parse(readFileSync(OLD_POSTERIOR_FILE, 'utf8')) as PosteriorReference;
+  const ref = JSON.parse(readFileSync(REFERENCE_FILE, 'utf8')) as PosteriorReference;
   assert.equal(ref.filter.particles, PARTICLE_COUNT, 'the reference was made at another particle count: rewrite it');
   const SEEDS = 60;
   const Z = 5;
-  const log = oldLog();
-  assert.ok(log.every((r) => r.yolkWord === null) && log.some((r) => r.yolk !== null), 'the old answers');
+  const log = wordLog();
   const surfaces = fixedSurfaces(log);
   const ds = decisionSurface();
   const rows: Summary[] = [];
   for (let k = 0; k < SEEDS; k++) {
     const c = foldOnSurfaces(freshCalibration(PARTICLE_COUNT, seedOf(ref.filter.seeds + k)), log, surfaces);
-    assert.equal(c.eggsLogged, 9);
+    assert.equal(c.eggsLogged, 10);
     rows.push(summarise(c.posterior, ds));
   }
   const now = spread(rows);
@@ -307,7 +265,7 @@ test('2a3. the old log makes the right posterior: the filter against the exact o
 });
 
 test('2b. an unanswered egg folds nothing and builds no surface', () => {
-  const answered = [solvedRecord(0.3, -1), solvedRecord(0.5, 1, 70)];
+  const answered = [solvedRecord(0.3, 'soft'), solvedRecord(0.5, 'fudgy', 70)];
   const withSkip = [answered[0], solvedRecord(0.4, null, 58), answered[1]];
   const start = freshCalibration(64, 7);
   assertIdentical(replay(start, withSkip, COARSE), replay(start, answered, COARSE), 'skip');
@@ -317,7 +275,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   // Not on the prior's mean, which is close to them but not them: the app solves
   // with DEFAULT_PARAMS until an egg has taught it anything, and the first
   // surface has always been built around what it solved with.
-  const r = solvedRecord(0.4, 0);
+  const r = solvedRecord(0.4, 'jammy');
   const q = gridRequestFor(freshCalibration(64, 7), r, calibrationGrid);
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
   assert.equal(q.tauAirScale, DEFAULT_PARAMS.tauAirScale);
@@ -326,7 +284,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
   // INFERENCE.md section 4. A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
-  const measured = { ...solvedRecord(0.35, -1), pulled_s: 0, pulledBy: 'cook' as const };
+  const measured = { ...solvedRecord(0.35, 'soft'), pulled_s: 0, pulledBy: 'cook' as const };
   measured.pulled_s = measured.recommended_s + 25;
   const assumed = { ...measured, pulledBy: 'timeout' as const, pulled_s: measured.recommended_s };
   assert.equal(recordCookTime_s(measured), measured.recommended_s + 25);
@@ -337,10 +295,7 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
     const viaRecord = freshCalibration(64, 7);
     foldRecord(viaRecord, r, surface);
     const direct = createPrior(64, 7);
-    updatePosterior(
-      direct, surface, recordCookTime_s(r), logYolkTarget(r.level),
-      -1, null,
-    );
+    updatePosterior(direct, surface, recordCookTime_s(r), 'soft', null);
     assertIdentical(viaRecord, { posterior: direct, eggsLogged: 1 }, r.pulledBy);
   }
   // And it matters: 25 s late is a different posterior. Its mean, not one
@@ -355,11 +310,11 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
 // --------------------------------------------------------------------------
 
 test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
-  const r = solvedRecord(0.4, 0);
+  const r = solvedRecord(0.4, 'jammy');
 
   assert.equal(decodeKept(null).path, 'fresh');
   assert.equal(decodeKept('{not json').path, 'fresh');
-  assert.equal(decodeKept('{"v":3,"log":[]}').path, 'fresh', 'not a v4');
+  assert.equal(decodeKept('{"v":3,"log":[]}').path, 'fresh', 'another format');
 
   const good = { base: null, calibration: freshCalibration(32, 3), log: [r], folded: 1 };
   const stored = JSON.parse(encodeKept(good)) as Record<string, unknown>;
@@ -377,83 +332,22 @@ test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
   const zeroNoise = { ...stored, cal: { ...(stored['cal'] as { sd: number[] }), sd: (stored['cal'] as { sd: number[] }).sd.map(() => 0) } };
   assert.equal(decodeKept(JSON.stringify(zeroNoise)).path, 'rebuild', 'a zero noise divides by zero');
 
-  // A record that does not read is set aside, not a reason to drop the log.
-  const badLog = { ...stored, log: [{ ...r, level: -1 }] };
-  const skipped = decodeKept(JSON.stringify(badLog));
-  assert.equal(skipped.path, 'rebuild');
-  assert.equal(skipped.loses, false);
-  assert.equal(skipped.kept.log.length, 0);
-  assert.deepEqual(skipped.kept.unread, [{ at: 0, record: { ...r, level: -1 } }]);
-
-  const notAList = { ...stored, log: { 0: r } };
-  const rebased = decodeKept(JSON.stringify(notAList));
-  assert.equal(rebased.path, 'rebased');
-  assert.equal(rebased.loses, true, 'kept aside before it is written over');
-  assert.equal(rebased.kept.log.length, 0);
-  assert.equal(rebased.kept.base?.eggsLogged, good.calibration.eggsLogged,
-    'what the refused eggs taught is kept, frozen');
+  // A record that does not read refuses the log, and what the log taught is
+  // kept as the base; so is a log that is not a list.
+  for (const log of [[r, { ...r, level: -1 }], [r, { ...r, yolk: -1, yolkWord: undefined }], { 0: r }]) {
+    const rebased = decodeKept(JSON.stringify({ ...stored, log: log }));
+    assert.equal(rebased.path, 'rebased');
+    assert.equal(rebased.kept.log.length, 0);
+    assert.equal(rebased.kept.base?.eggsLogged, good.calibration.eggsLogged,
+      'what the refused eggs taught is kept, frozen');
+  }
 
   const ahead = { ...stored, folded: 5 };
   assert.equal(decodeKept(JSON.stringify(ahead)).path, 'rebased');
-  assert.equal(decodeKept('{not json').loses, true);
-  assert.equal(decodeKept('{"v":5,"log":[]}').loses, true, 'a newer store is kept aside');
-  assert.equal(decodeKept(null).loses, false);
-});
-
-test('3a2. a newer build\'s record is skipped and kept in its place, and comes back', () => {
-  const a = solvedRecord(0.3, 0);
-  const b = solvedRecord(0.5, 1);
-  const c = solvedRecord(0.6, -1);
-  const newer = { ...b, v: 2, somethingNew: [1, 2] };
-  const k = { base: null, calibration: freshCalibration(32, 3), folded: 0, log: [a, b, c] };
-  const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
-  stored['log'] = [a, newer, c];
-  const older = decodeKept(JSON.stringify(stored));
-  assert.equal(older.path, 'rebuild', 'what the posterior absorbed is no longer the log');
-  assert.deepEqual(older.kept.log.map((r) => r.level), [0.3, 0.6]);
-  assert.deepEqual(older.kept.unread, [{ at: 1, record: newer }]);
-  // Written back by this build: the newer record goes with it, untouched.
-  const written = encodeKept(older.kept);
-  assert.deepEqual((JSON.parse(written) as { unread: unknown }).unread, [{ at: 1, record: newer }]);
-  const again = decodeKept(written);
-  assert.equal(again.path, 'loaded', 'set aside the same way: nothing to replay');
-  assert.deepEqual(again.kept.unread, [{ at: 1, record: newer }]);
-  // A build that can read it puts it back where it was, and replays.
-  const readable = JSON.parse(written) as Record<string, unknown>;
-  readable['unread'] = [{ at: 1, record: b }];
-  const back = decodeKept(JSON.stringify(readable));
-  assert.equal(back.path, 'rebuild');
-  assert.deepEqual(back.kept.log.map((r) => r.level), [0.3, 0.5, 0.6]);
-  assert.deepEqual(back.kept.unread, []);
-  // Appended after: the place of each unread record is among all of them.
-  const tail = JSON.parse(written) as Record<string, unknown>;
-  tail['unread'] = [{ at: 7, record: newer }, { at: 'x', record: newer }];
-  assert.deepEqual(decodeKept(JSON.stringify(tail)).kept.unread, [{ at: 2, record: newer }]);
-});
-
-test('3a2b. a later build\'s added fields are written back, not dropped', async () => {
-  storage.clear();
-  const a = solvedRecord(0.3, null);
-  const later = { ...a, addedLater: { by: 'a later build' }, egg: { ...a.egg, shellColour: 'brown' } };
-  const k = { base: null, calibration: freshCalibration(32, 3), folded: 0, log: [a] };
-  const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
-  stored['log'] = [later];
-  storage.set('aet.calibration.v4', JSON.stringify(stored));
-  loadCalibration();
-  // This build writes the store: an egg of its own, and the first one's
-  // answer, which it can still take while the egg is unfolded.
-  logEgg(solvedRecord(0.4, null));
-  assert.ok(await recordSecondAnswer(1, { white: 'firm' }));
-  const log = (JSON.parse(storage.get('aet.calibration.v4') as string) as { log: Record<string, unknown>[] }).log;
-  assert.deepEqual(log[0], later, 'written back as stored, at every depth');
-  assert.equal(log[1]['white'], 'firm');
-  assert.equal('addedLater' in log[1], false, 'an egg made here is as this build makes it');
-  assert.deepEqual(overlay({ x: 1, o: { y: 2, z: 3 } }, { o: { y: 5 }, w: [1] }), { x: 1, o: { y: 5, z: 3 }, w: [1] });
-  assert.deepEqual(overlay([1], { a: 1 }), { a: 1 });
 });
 
 test('3a3. a posterior folded under another model is replayed', () => {
-  const k = { base: null, calibration: freshCalibration(32, 3), folded: 1, log: [solvedRecord(0.4, 0)] };
+  const k = { base: null, calibration: freshCalibration(32, 3), folded: 1, log: [solvedRecord(0.4, 'jammy')] };
   const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
   assert.equal(stored['m'], MODEL_ID);
   assert.equal(decodeKept(JSON.stringify(stored)).path, 'loaded');
@@ -463,53 +357,23 @@ test('3a3. a posterior folded under another model is replayed', () => {
   assert.equal(older.kept.log.length, 1);
   const before = { ...stored };
   delete before['m'];
-  assert.equal(decodeKept(JSON.stringify(before)).path, 'rebuild', 'a store from before the model was kept');
+  assert.equal(decodeKept(JSON.stringify(before)).path, 'rebuild', 'a store that names no model');
 });
 
-test('3a4. a store this build cannot read is kept aside before it is written over, and exported', () => {
+test('3a4. a store this build cannot read is dropped; the export is the store as stored', () => {
   storage.clear();
   storage.set('aet.calibration.v4', '{damaged');
   loadCalibration();
-  assert.deepEqual(JSON.parse(storage.get('aet.calibration.v4.unread') as string), ['{damaged']);
-  assert.equal((JSON.parse(storage.get('aet.calibration.v4') as string) as { v: number }).v, 4);
-  // The store written in its place loads as it is: nothing more is kept aside.
-  loadCalibration();
-  assert.equal((JSON.parse(storage.get('aet.calibration.v4.unread') as string) as string[]).length, 1);
-  // The newest three, oldest first.
-  for (const s of ['{"v":5,"a":1}', '{"v":5,"a":2}', '{"v":5,"a":3}']) {
-    storage.set('aet.calibration.v4', s);
-    loadCalibration();
-  }
-  assert.deepEqual(JSON.parse(storage.get('aet.calibration.v4.unread') as string),
-    ['{"v":5,"a":1}', '{"v":5,"a":2}', '{"v":5,"a":3}']);
+  assert.equal((JSON.parse(storage.get('aet.calibration.v4') as string) as { v: number }).v, 4, 'written over');
+  assert.deepEqual([...storage.keys()], ['aet.calibration.v4'], 'nothing kept aside');
+  assert.equal(exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
+  logEgg(solvedRecord(0.4, 'jammy'));
   const exported = exportResults(null, Date.UTC(2026, 9, 5, 12));
   assert.ok(exported !== null);
   assert.match(exported.name, /^actual-egg-timer-results-2026-10-0[56]\.json$/);
-  const file = JSON.parse(exported.text) as { stored: { v: number }; unread: unknown[] };
-  assert.equal(file.stored.v, 4);
-  assert.deepEqual(file.unread, [{ v: 5, a: 1 }, { v: 5, a: 2 }, { v: 5, a: 3 }]);
+  assert.ok(exported.text.includes(`"stored":${storage.get('aet.calibration.v4') as string}`), 'the store as stored');
   clearCalibration();
-  assert.equal(storage.has('aet.calibration.v4.unread'), false, 'Start learning again deletes them too');
   assert.equal(exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
-});
-
-test('3a5. every unread cook is kept, two found at one boot included, and exported (review 3)', () => {
-  storage.clear();
-  loadCalibration();
-  // One kept by an earlier build, alone, as it kept the newest.
-  storage.set('aet.cook.unread', '{"machine":{"phase":"COOKING"}}');
-  keepUnreadCook('{"cook":{"id_ms":1}}');
-  keepUnreadCook('{damaged');
-  keepUnreadCook('{damaged');
-  assert.deepEqual(JSON.parse(storage.get('aet.cook.unread') as string),
-    ['{"machine":{"phase":"COOKING"}}', '{"cook":{"id_ms":1}}', '{damaged'], 'each once, oldest first');
-  assert.deepEqual(keptAside(), ['{"machine":{"phase":"COOKING"}}', '{"cook":{"id_ms":1}}', '{damaged']);
-  const exported = exportResults(null, Date.UTC(2026, 9, 8, 12));
-  assert.ok(exported !== null);
-  const file = JSON.parse(exported.text) as { unread: unknown[] };
-  assert.equal(file.unread.length, 3);
-  clearCalibration();
-  assert.equal(storage.has('aet.cook.unread'), false, 'Start learning again deletes them too');
 });
 
 test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {
@@ -553,8 +417,8 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   assert.equal(eggsBehind(), 0);
   const log = keptState().log;
   assert.equal(log.length, 4);
-  assert.deepEqual(log.map((r) => [r.yolk, r.yolkWord, r.white]),
-    [[null, 'runny', 'runny'], [null, null, 'tender'], [null, null, null], [null, 'fudgy', 'firm']]);
+  assert.deepEqual(log.map((r) => [r.yolkWord, r.white]),
+    [['runny', 'runny'], [null, 'tender'], [null, null], ['fudgy', 'firm']]);
 
   const rebuilt = replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log);
   assertIdentical(calib, rebuilt, 'incremental vs replay');
@@ -678,7 +542,7 @@ test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down'
   const calib = loadCalibration();
   other.loadCalibration();
   // This tab writes the egg down with the yolk.
-  const index = logEgg({ ...solvedRecord(0.4, 0), id: T });
+  const index = logEgg({ ...solvedRecord(0.4, 'jammy'), id: T });
   // The other tab hears, and leaves the egg to this one.
   assert.equal(other.calibrationStoredElsewhere(KEY), true);
   await other.learn();
@@ -692,7 +556,7 @@ test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down'
   // This tab folds the egg with both answers, and can still take a third.
   await learn(index);
   assert.equal(calib.eggsLogged, 1);
-  assert.deepEqual([keptState().log[0].yolk, keptState().log[0].white], [0, 'firm']);
+  assert.deepEqual([keptState().log[0].yolkWord, keptState().log[0].white], ['jammy', 'firm']);
   assert.equal(other.calibrationStoredElsewhere(KEY), true);
   assert.equal(await other.recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), false,
     'refused where it cannot be folded, and nothing written');
@@ -760,9 +624,8 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   assert.equal(r.pulledBy, 'cook');
   assert.ok(Math.abs(r.recommended_s - plan.cookTime_s) < 0.06);
   assert.equal(r.id, T0, 'the record\'s id is when Start was pressed');
-  // The yolk the cook got (DECISIONS.md 92), and never the old answer.
+  // The yolk the cook got (DECISIONS.md 92).
   assert.equal(r.yolkWord, 'jammy');
-  assert.equal(r.yolk, null);
   assert.notEqual(parseRecord(r), null);
 });
 
@@ -847,7 +710,7 @@ test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the
   const r = rec(stale.cook, stale.plan, null);
   assert.equal(r.pulledBy, 'timeout');
   assert.ok(Math.abs(r.pulled_s - stale.plan.cookTime_s) < 0.06);
-  assert.equal(r.yolk, null);
+  assert.equal(r.yolkWord, null);
   assert.notEqual(parseRecord(r), null);
   // A cold start nobody said was boiling never cooked anything it could time.
   const heating = ranTo(cookOf({ startMode: 'cold' }), later);

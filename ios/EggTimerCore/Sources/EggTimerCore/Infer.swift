@@ -5,17 +5,17 @@ import Foundation
 /// The model's constants are literature-derived, and the carryover term has no
 /// published measurement behind it at all. Rather than guess better, make the
 /// uncertainty explicit and let the cook's own eggs resolve it: after each cook
-/// they may say how the yolk was ("too soft", "just right", "too firm") and how
-/// the white was ("runny", "tender", "firm"), and we update a posterior.
+/// they may say which yolk they got, in the slider's five words, and how the
+/// white was ("runny", "tender", "firm"), and we update a posterior.
 ///
 /// METHOD: sequential Monte Carlo (a particle filter), NOT variational
 /// inference. There are five uncertain scalars here and a cached forward model,
 /// so particles give the exact posterior predictive with none of the machinery.
 ///
 /// THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
-/// yolk, the latent quantity is the delivered log10 dose minus the one the cook
-/// wanted; the answer says which side of two cutpoints, at -+`feedbackBand`, it
-/// fell, seen through a Gaussian whose sd is the cook's own `noise`. A small
+/// yolk, the latent quantity is the delivered log10 dose less the cook's taste
+/// offset; the answer says which of five bands it fell in (`yolkWordCuts`),
+/// seen through a Gaussian whose sd is the cook's own `noise`. A small
 /// `unrelated` share of every answer is uniform over the answers - what the
 /// fixed 0.8 / 0.1 of the first filter was standing in for.
 ///
@@ -28,15 +28,6 @@ import Foundation
 /// This file is a port of src/core/infer.ts, which is the reference and says
 /// more; fixtures/calibration.json and fixtures/record.json hold the two
 /// together particle by particle.
-
-/// What the cook reported about the YOLK before DECISIONS.md 92, against the
-/// level asked for. No app asks it now; a record that holds one is scored as
-/// it always was.
-public enum Feedback: Int, Sendable, Codable {
-    case tooSoft = -1
-    case justRight = 0
-    case tooHard = 1
-}
 
 /// What the cook reports about the YOLK after eating the egg (DECISIONS.md
 /// 92): the yolk they got, in the slider's own words, whatever they asked for.
@@ -105,8 +96,8 @@ public struct Posterior: Sendable, Codable {
     }
 }
 
-/// Half-width of the "just right" band, log10 dose units: the yolk's two
-/// cutpoints sit at -+ this.
+/// Half-width of the "just right" band, log10 dose units: the decision's miss
+/// around the level asked for (`yolkProbit`) cuts at -+ this.
 public let feedbackBand = 0.28
 
 /// The share of answers that have nothing to do with the egg, spread evenly
@@ -279,9 +270,9 @@ public func createPrior(count: Int, seed: Int32, population pop: Population = li
 
 // MARK: - The likelihood
 
-/// Too soft, just right, too firm, for one particle, before the unrelated share.
-/// Internal rather than private: the decision (Decide.swift) scores candidate
-/// times with the same arithmetic the filter learns with.
+/// Too soft, just right, too firm against the level asked for, for one
+/// particle, before the unrelated share: the miss the decision (Decide.swift)
+/// scores candidate times on, and the forecast's three.
 func yolkProbit(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double
 ) -> [Double] {
@@ -376,18 +367,13 @@ public func probeLikelihood(
 
 /// The likelihood of one egg's answers under one particle: the product of the
 /// yolk's, the white's and the thermometer's, any of which may be missing. The
-/// yolk is `yolkWord`, the yolk the cook got (DECISIONS.md 92), or on a record
-/// from before it `yolk`, scored exactly as it was.
+/// yolk is the yolk the cook got, in the slider's five words (DECISIONS.md 92).
 public func answerLikelihood(
-    _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double,
-    yolk: Feedback?, white: WhiteReport?, probeC: Double? = nil, yolkWord: YolkWord? = nil
+    _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double,
+    yolkWord: YolkWord?, white: WhiteReport?, probeC: Double? = nil
 ) -> Double {
     var l = 1.0
     if let probeC { l *= probeLikelihood(grid, p, cookTimeS, probeC) }
-    if let yolk {
-        let probs = yolkProbit(grid, p, cookTimeS, logNominalTarget)
-        l *= withUnrelated(probs[yolk.rawValue + 1])
-    }
     if let yolkWord {
         let probs = yolkWordProbit(grid, p, cookTimeS)
         l *= withUnrelatedWord(probs[yolkWord.index])
@@ -418,16 +404,14 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
 /// on the order it was tapped in. See src/core/infer.ts.
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
-    cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?,
-    probeC: Double? = nil, yolkWord: YolkWord? = nil
+    cookTimeS: Double, yolkWord: YolkWord?, white: WhiteReport?, probeC: Double? = nil
 ) {
-    if yolk == nil && white == nil && probeC == nil && yolkWord == nil { return }
+    if white == nil && probeC == nil && yolkWord == nil { return }
     let n = post.particles.count
     var total = 0.0
     for i in 0..<n {
         post.weights[i] *= answerLikelihood(
-            grid, post.particles[i], cookTimeS, logNominalTarget, yolk: yolk, white: white,
-            probeC: probeC, yolkWord: yolkWord
+            grid, post.particles[i], cookTimeS, yolkWord: yolkWord, white: white, probeC: probeC
         )
         total += post.weights[i]
     }

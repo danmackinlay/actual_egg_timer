@@ -30,12 +30,10 @@
 
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
-import {
-  DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget,
-} from './solve.js';
+import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
 import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
 import {
-  Feedback, LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
+  LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
   createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.js';
 import { PriorStart, priorStart } from './population.js';
@@ -130,8 +128,8 @@ export interface Forecast {
   /** P(runny), P(tender), P(firm). */
   white: number[];
   /** P(runny), P(soft), P(jammy), P(fudgy), P(hard): the yolk the cook will
-   *  say they got, which is the question asked since DECISIONS.md 92. Null
-   *  (or absent) on a forecast made before then. */
+   *  say they got, which is the question asked (DECISIONS.md 92). Null when
+   *  the outcome on screen had none. */
   yolkWord: number[] | null;
 }
 
@@ -195,16 +193,14 @@ export interface EggRecord {
    *  make one egg, not two, and only the page that wrote an egg down learns
    *  from it (src/ui/calibration.ts). Kept on the device and never sent
    *  (`sharedRecord`): to the millisecond, it says far more about the cook
-   *  than `day` does. Null, or absent, on a record from before it and on
-   *  the iPhone app's, which runs one cook at a time and has no need of it;
-   *  `parseRecord` leaves it out then, as Swift's encoder does. */
-  id?: number | null;
+   *  than `day` does. Absent on the iPhone app's, which runs one cook at a
+   *  time and has no need of it, and on a record as sent. */
+  id?: number;
   app: AppName;
   appVersion: string;
   prior: string;
-  /** `MODEL_ID` when the record was written; null on a record from before
-   *  E6, which kept no forecast. */
-  model: string | null;
+  /** `MODEL_ID` when the record was written. */
+  model: string;
   egg: RecordEgg;
   setup: RecordSetup;
   /** The doneness slider position the cook was RUN at, [0, 1]. */
@@ -219,13 +215,8 @@ export interface EggRecord {
   pulledBy: PulledBy;
   /** The counted cooling the app ran, s; 0 on the counter, where there is none. */
   cooled_s: number;
-  /** The yolk answer the cook gave before DECISIONS.md 92 - too soft, just
-   *  right or too firm, against `level` - or null. No app writes one now:
-   *  a record from before keeps it, and it is scored as it was. */
-  yolk: Feedback | null;
   /** The yolk the cook got, in the slider's words (DECISIONS.md 92), or null
-   *  when the question was on screen and the cook moved on without answering,
-   *  or on a record from before it. Never set beside `yolk`. */
+   *  when the question was on screen and the cook moved on without answering. */
   yolkWord: YolkWord | null;
   /** The white answer: runny, tender or firm, or null when the question was
    *  on screen and the cook moved on without answering. It is always asked. */
@@ -234,7 +225,7 @@ export interface EggRecord {
    *  taken. */
   probe: ProbeReading | null;
   /** What the app said at "Eggs in", or null: started before the odds were
-   *  known, no time chosen (the white never sets), or written before E6. */
+   *  known, or no time chosen (the white never sets). */
   forecast: Forecast | null;
   /** What the cook READ: an answer is a word, and words differ. */
   lang: string;
@@ -330,9 +321,7 @@ export interface CookFacts {
  * `pulledBy: 'cook'`, at the tap - and ASSUMED when the grace ran out:
  * `pulledBy: 'timeout'`, at the scheduled time. The time that ran is split
  * into what was recommended and the nudge added on purpose (INFERENCE.md
- * section 4). The old yolk answer against the level is never written now
- * (DECISIONS.md 92). `id` is written only when there is one, where the web
- * has always written it, so a record is stored as it was before.
+ * section 4). `id` is written only when there is one: the web's.
  */
 export function recordFor(f: CookFacts): EggRecord {
   const measured = f.out_s !== null && f.out_s > 0;
@@ -341,7 +330,7 @@ export function recordFor(f: CookFacts): EggRecord {
     v: RECORD_VERSION,
     uid: null,
     day: f.day,
-    id: f.id,
+    ...(f.id === null ? {} : { id: f.id }),
     app: f.app,
     appVersion: f.appVersion,
     prior: f.prior,
@@ -371,7 +360,6 @@ export function recordFor(f: CookFacts): EggRecord {
     pulled_s: measured ? f.out_s as number : f.cook_s,
     pulledBy: measured ? 'cook' : 'timeout',
     cooled_s: s.cooling === 'counter' ? 0 : f.cool_s,
-    yolk: null,
     yolkWord: f.yolkWord,
     white: f.white,
     probe: f.probe,
@@ -380,7 +368,6 @@ export function recordFor(f: CookFacts): EggRecord {
     register: registerOf(f.lang),
     units: f.units,
   };
-  if (f.id === null) delete r.id;
   return r;
 }
 
@@ -454,18 +441,23 @@ function answersOf(v: unknown, count: number): v is number[] {
  *  doubles add up to, far below any probability that means something. */
 const FORECAST_SUM_TOLERANCE = 1e-6;
 
-/** A forecast, or null if it is not one: a positive time, two sets of
- *  three probabilities and, from DECISIONS.md 92, five for the yolk's words,
- *  which an older forecast lacks. A fresh object with exactly the known
- *  fields. */
+/** Whether `o` has `key` at all: a field today's records always write,
+ *  null or not, is refused when it is missing. */
+function has(o: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(o, key);
+}
+
+/** A forecast, or null if it is not one: a positive time, two sets of three
+ *  probabilities, and five for the yolk's words or null. A fresh object with
+ *  exactly the known fields. */
 export function parseForecast(raw: unknown): Forecast | null {
-  if (!isObject(raw)) return null;
+  if (!isObject(raw) || !has(raw, 'yolkWord')) return null;
   const t = raw['cook_s'];
   if (!isFiniteNumber(t) || !(t > 0)) return null;
   const yolk = raw['yolk'];
   const white = raw['white'];
   if (!threeAnswers(yolk) || !threeAnswers(white)) return null;
-  const words = raw['yolkWord'] ?? null;
+  const words = raw['yolkWord'];
   if (words !== null && !answersOf(words, 5)) return null;
   return {
     cook_s: t, yolk: [yolk[0], yolk[1], yolk[2]], white: [white[0], white[1], white[2]],
@@ -482,13 +474,15 @@ function coldestOf(s: RecordSetup): number {
 /**
  * Whether a centre reading is physically possible at all for this cook: no
  * colder than the coldest thing the egg touched and no hotter than the water
- * boiled. The loader's test, so it is deliberately loose - a bound that
- * narrows later must not make an older record unreadable. The apps refuse far
+ * boiled. The loader's test, so it is deliberately loose; the apps refuse far
  * more at entry, against the physics of the cook (`plausibleProbeRange_C`).
  */
 function probePossible(s: RecordSetup, centre_C: number): boolean {
   return Number.isFinite(centre_C) && centre_C >= coldestOf(s) && centre_C <= s.boiling_C;
 }
+
+/** The nullable fields a record always carries, null or not. */
+const ALWAYS_WRITTEN = ['uid', 'model', 'yolkWord', 'white', 'probe', 'forecast'];
 
 /**
  * A record read back from storage, or null if it cannot be trusted.
@@ -496,18 +490,15 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
  * The rules are `loadCalibration`'s: finite, and positive where the physics
  * needs it, because a record that passes here is folded into the posterior, and
  * a zero mass or a NaN cook time reaches a solve as a plausible wrong answer.
- * Ranges are physical rather than the UI's `LIMITS`: a bound that narrows in a
- * later version must not make an older version's eggs unreadable.
+ * Ranges are physical rather than the UI's `LIMITS`, so a record never turns
+ * on a bound the UI moves.
  *
- * VERSION SKEW. The web app deploys on push and the iOS app ships when a build
- * does, so records from different app versions coexist. Any `appVersion` is
- * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
- * reinterpreted once a record has left the owner's devices, so unknown
- * fields are ignored here, and the nullable fields (`uid`, `id`, `egg.sizeTable`,
- * `yolk`, `white`, `probe`, E6's `model` and `forecast`, and DECISIONS.md
- * 92's `yolkWord` and `forecast.yolkWord`) may be absent and read as null -
- * which is also
- * what Swift's Codable does, and the fixtures hold the two to it.
+ * Only today's shape reads: every field `recordFor` writes is there, null or
+ * not, and only `id` may be absent (the iPhone app keeps none, and no record
+ * sent carries one). Fields this code does not know are ignored, so a record
+ * a newer build of the same schema wrote still reads. Any `appVersion` is
+ * accepted under `v: 1`; Swift's Codable reads the same, and the fixtures
+ * hold the two to it.
  *
  * Returns a fresh object with exactly the known fields, so what is folded is
  * what was checked.
@@ -515,24 +506,27 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
 export function parseRecord(raw: unknown): EggRecord | null {
   if (!isObject(raw)) return null;
   if (raw['v'] !== RECORD_VERSION) return null;
+  for (let i = 0; i < ALWAYS_WRITTEN.length; i++) {
+    if (!has(raw, ALWAYS_WRITTEN[i])) return null;
+  }
 
-  const uid = raw['uid'] ?? null;
+  const uid = raw['uid'];
   if (uid !== null && !nonEmptyString(uid)) return null;
   if (!isDay(raw['day'])) return null;
   // A moment, in whole milliseconds: what both apps' integers hold exactly.
-  const id = raw['id'] ?? null;
+  const id = has(raw, 'id') ? raw['id'] : null;
   if (id !== null && !(typeof id === 'number' && Number.isSafeInteger(id) && id > 0)) return null;
   if (!oneOf(raw['app'], ['web', 'ios'] as const)) return null;
   if (!nonEmptyString(raw['appVersion']) || !nonEmptyString(raw['prior'])) return null;
-  const model = raw['model'] ?? null;
-  if (model !== null && !nonEmptyString(model)) return null;
+  const model = raw['model'];
+  if (!nonEmptyString(model)) return null;
 
   const egg = raw['egg'];
-  if (!isObject(egg)) return null;
+  if (!isObject(egg) || !has(egg, 'sizeTable')) return null;
   if (!isFiniteNumber(egg['mass_g']) || !(egg['mass_g'] > 0)) return null;
   if (!oneOf(egg['massFrom'], ['scale', 'girth', 'width', 'class'] as const)) return null;
   // A class names its carton; nothing else has one.
-  const table = egg['sizeTable'] ?? null;
+  const table = egg['sizeTable'];
   if (egg['massFrom'] === 'class' ? !oneOf(table, ['eu', 'us'] as const) : table !== null) return null;
 
   const s = raw['setup'];
@@ -558,14 +552,9 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!oneOf(raw['pulledBy'], ['cook', 'timeout'] as const)) return null;
   if (!isFiniteNumber(raw['cooled_s']) || !(raw['cooled_s'] >= 0)) return null;
 
-  const yolk = raw['yolk'] ?? null;
-  if (yolk !== null && yolk !== -1 && yolk !== 0 && yolk !== 1) return null;
-  // The yolk the cook got (DECISIONS.md 92). One yolk answer or none: a
-  // record that says both was not written by either app.
-  const yolkWord = raw['yolkWord'] ?? null;
+  const yolkWord = raw['yolkWord'];
   if (yolkWord !== null && !oneOf(yolkWord, YOLK_WORDS)) return null;
-  if (yolk !== null && yolkWord !== null) return null;
-  const white = raw['white'] ?? null;
+  const white = raw['white'];
   if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
 
   if (!nonEmptyString(raw['lang']) || !nonEmptyString(raw['register'])) return null;
@@ -587,25 +576,26 @@ export function parseRecord(raw: unknown): EggRecord | null {
 
   // A reading at the centre: a number the egg could have been, and when
   // it was asked for, if that is known.
-  const rawProbe = raw['probe'] ?? null;
+  const rawProbe = raw['probe'];
   let probe: ProbeReading | null = null;
   if (rawProbe !== null) {
-    if (!isObject(rawProbe)) return null;
+    if (!isObject(rawProbe) || !has(rawProbe, 'after_s')) return null;
     const centre = rawProbe['centre_C'];
-    const after = rawProbe['after_s'] ?? null;
+    const after = rawProbe['after_s'];
     if (!isFiniteNumber(centre) || !probePossible(setup, centre)) return null;
     if (after !== null && !(isFiniteNumber(after) && after >= 0)) return null;
     probe = { centre_C: centre, after_s: after };
   }
 
-  const rawForecast = raw['forecast'] ?? null;
+  const rawForecast = raw['forecast'];
   const forecast = rawForecast === null ? null : parseForecast(rawForecast);
   if (rawForecast !== null && forecast === null) return null;
 
-  const out: EggRecord = {
+  return {
     v: RECORD_VERSION,
     uid: uid,
     day: raw['day'],
+    ...(id === null ? {} : { id: id }),
     app: raw['app'],
     appVersion: raw['appVersion'],
     prior: raw['prior'],
@@ -618,7 +608,6 @@ export function parseRecord(raw: unknown): EggRecord | null {
     pulled_s: raw['pulled_s'],
     pulledBy: raw['pulledBy'],
     cooled_s: raw['cooled_s'],
-    yolk: yolk as Feedback | null,
     yolkWord: yolkWord,
     white: white as WhiteReport | null,
     probe: probe,
@@ -627,10 +616,6 @@ export function parseRecord(raw: unknown): EggRecord | null {
     register: raw['register'],
     units: raw['units'],
   };
-  // Absent when there is none, as Swift writes it, so a record from before
-  // it is written back exactly as it was.
-  if (id !== null) out.id = id;
-  return out;
 }
 
 /** A record as sharing sends it, and as the server keeps it: under the
@@ -742,7 +727,7 @@ export function calibrationDoneness(c: Calibration, level: number): Doneness {
  *  a record - the cook, the recommendation and the pull are data for the fit -
  *  but it moves no particle and does not count as an egg the model learned from. */
 export function recordTeaches(r: EggRecord): boolean {
-  return r.yolk !== null || r.yolkWord !== null || r.white !== null || r.probe !== null;
+  return r.yolkWord !== null || r.white !== null || r.probe !== null;
 }
 
 /** The egg the fold sees. */
@@ -796,10 +781,7 @@ export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): 
  */
 export function foldRecord(c: Calibration, r: EggRecord, grid: DoseGrid): void {
   if (!recordTeaches(r)) return;
-  updatePosterior(
-    c.posterior, grid, recordCookTime_s(r), logYolkTarget(r.level), r.yolk, r.white,
-    r.probe === null ? null : r.probe.centre_C, r.yolkWord,
-  );
+  updatePosterior(c.posterior, grid, recordCookTime_s(r), r.yolkWord, r.white, r.probe === null ? null : r.probe.centre_C);
   c.eggsLogged += 1;
 }
 
@@ -834,10 +816,9 @@ export function replay(
  * the app. What it then does with what it read is the same decision in both,
  * and lives here: `loadDecision`, a pure function of the parts and of this
  * build's population and model. Every damaged part is refused, never read
- * around; a log is never written over (DECISIONS.md 81): a record this build
- * cannot read is set aside in its place and kept, a store it cannot use whole
- * is kept aside as stored before anything replaces it (`loses`), and a store
- * folded under another model or drawn from another population is replayed. */
+ * around: a store that cannot be read is dropped, a log that cannot be read
+ * leaves what it taught as the base, and a store folded under another model
+ * or drawn from another population is replayed. */
 
 /** What a launch found: `fresh`, nothing to use, so the prior; `rebuild`,
  *  the log good and the posterior not this build's to use, so the log is
@@ -847,10 +828,8 @@ export type LoadPath = 'fresh' | 'rebuild' | 'rebased' | 'loaded';
 
 /** What an app read from its store, part by part. */
 export interface StoreRead {
-  /** Whether anything was stored at all: a text that is not empty. */
-  stored: boolean;
-  /** Whether it is a store of this format, v4, that can be taken apart. */
-  v4: boolean;
+  /** Whether it is a store of this format that can be taken apart. */
+  readable: boolean;
   /** The base under the posterior: null where the store has none, else
    *  whether it read whole. */
   base: 'sound' | 'damaged' | null;
@@ -859,15 +838,12 @@ export interface StoreRead {
   /** How many records the posterior says it has absorbed, or null if that
    *  is not a whole number from zero. */
   folded: number | null;
-  /** How many records of the log this build reads, or null when the log is
-   *  not a list. */
+  /** How many records the log holds, or null when it is not a list of
+   *  records this build reads, every one (`parseLog`). */
   records: number | null;
-  /** Whether the records this build reads differ from the ones stored as
-   *  read: one has become unreadable, or one set aside readable again. */
-  moved: boolean;
-  /** The population the posterior was drawn from; the literature's when the
-   *  store does not say, as every store from before E7 was. */
-  population: string;
+  /** The population the posterior was drawn from, or null when the store
+   *  does not say. */
+  population: string | null;
   /** The model it was folded under, or null when the store does not say. */
   model: string | null;
 }
@@ -875,10 +851,6 @@ export interface StoreRead {
 /** What to keep, in the parts that were read. */
 export interface LoadDecision {
   path: LoadPath;
-  /** Whether keeping this loses something the store held - a log, or a
-   *  store this build cannot read at all - so the stored text is to be kept
-   *  aside, as stored, before anything is written over it. */
-  loses: boolean;
   /** The base: the stored base, the stored posterior, or none (null). */
   base: 'stored' | 'posterior' | null;
   /** The calibration: the stored posterior as it is, or `start` - a copy of
@@ -887,8 +859,7 @@ export interface LoadDecision {
   calibration: 'posterior' | 'start';
   /** How many records of the kept log the calibration has absorbed. */
   folded: number;
-  /** Whether the log as read is kept, with every record set aside in its
-   *  place; when not, the log starts again empty. */
+  /** Whether the log as read is kept; when not, the log starts again empty. */
   log: boolean;
 }
 
@@ -896,53 +867,54 @@ export interface LoadDecision {
  * What a launch does with the store it read, for a build that draws its
  * prior from `population` and folds under `model`:
  *
- *  - no v4 that can be read: `fresh`, the prior; lost, if anything was there.
- *  - the log not a list: `rebased`. Its records cannot be folded, but what
+ *  - no store of this format that can be read: `fresh`, the prior.
+ *  - the log unreadable: `rebased`. Its records cannot be folded, but what
  *    they taught is in the posterior, which becomes the base - or the base,
  *    if the posterior is damaged too.
  *  - the posterior damaged, the base damaged, the count damaged, another
- *    population, another model or none, or a record that changed sides:
- *    `rebuild`, the log folded again from the base, or the prior. A base
- *    cannot be replayed, so a sound one stays as it is.
+ *    population, another model or none: `rebuild`, the log folded again
+ *    from the base, or the prior. A base cannot be replayed, so a sound one
+ *    stays as it is.
  *  - a posterior that has absorbed more records than the log holds:
  *    `rebased`, on that posterior.
  *  - otherwise `loaded`.
  */
 export function loadDecision(read: StoreRead, population: string, model: string): LoadDecision {
-  if (!read.v4) {
-    return { path: 'fresh', loses: read.stored, base: null, calibration: 'start', folded: 0, log: false };
+  if (!read.readable) {
+    return { path: 'fresh', base: null, calibration: 'start', folded: 0, log: false };
   }
   if (read.records === null) {
     const base = read.posterior ? 'posterior' : read.base === 'sound' ? 'stored' : null;
-    return { path: 'rebased', loses: true, base: base, calibration: 'start', folded: 0, log: false };
+    return { path: 'rebased', base: base, calibration: 'start', folded: 0, log: false };
   }
   const base = read.base === 'sound' ? 'stored' : null;
   if (
     read.base === 'damaged' || !read.posterior || read.folded === null
-    || read.population !== population || read.model !== model || read.moved
+    || read.population !== population || read.model !== model
   ) {
-    return { path: 'rebuild', loses: false, base: base, calibration: 'start', folded: 0, log: true };
+    return { path: 'rebuild', base: base, calibration: 'start', folded: 0, log: true };
   }
   if (read.folded > read.records) {
-    return { path: 'rebased', loses: true, base: 'posterior', calibration: 'start', folded: 0, log: false };
+    return { path: 'rebased', base: 'posterior', calibration: 'start', folded: 0, log: false };
   }
-  return { path: 'loaded', loses: false, base: base, calibration: 'posterior', folded: read.folded, log: true };
+  return { path: 'loaded', base: base, calibration: 'posterior', folded: read.folded, log: true };
 }
 
 /* ---------------------------------------------------------- the results file */
 
-/* EXPORT. "Export my results", in Settings, saves everything a device keeps
- * about its eggs to a file the cook keeps (DECISIONS.md 81): the store EXACTLY
- * as stored - spliced in character for character, not parsed and written
- * again - and every stored copy the app could not read (the apps' `.unread`
- * side key), with enough beside them to say whose and which.
- * `npm run eggs -- import` reads it back for the fit.
+/* EXPORT. "Export my results", in Settings, saves what a device keeps about
+ * its eggs to a file the cook keeps (DECISIONS.md 81): the store EXACTLY as
+ * stored - spliced in character for character, not parsed and written again -
+ * with enough beside it to say whose and which. `npm run eggs -- import`
+ * reads it back for the fit.
  *
  * Both apps write it with these functions (Record.swift twins them), so the
  * same store makes the same file, which fixtures/record.json pins. Nothing
  * here reads a clock: the moment of the export is handed in. */
 
-/** The results file's own version. A reader refuses any other. */
+/** The results file's own version. A reader refuses any other. A file of
+ *  this version from before 0.5 also has `unread`, the stored copies its app
+ *  could not read; the import tool still reads those. */
 export const RESULTS_FILE_VERSION = 1;
 
 /** What a results file says beside the store. */
@@ -995,7 +967,7 @@ function isJsonContainer(s: string): boolean {
 }
 
 /** A stored text as it goes into the file: itself when it is a JSON object
- *  or array, a JSON string holding it when not, so a damaged copy is kept
+ *  or array, a JSON string holding it when not, so a damaged store is kept
  *  too. */
 function spliced(s: string): string {
   return isJsonContainer(s) ? s : jsonString(s);
@@ -1003,16 +975,11 @@ function spliced(s: string): string {
 
 /** What the file says it is, for whoever opens it. */
 const RESULTS_ABOUT = 'Actual Egg Timer: every result this device kept, as it keeps them. '
-  + '"stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4); '
-  + '"unread" holds any stored copy the app could not read, kept rather than overwritten.';
+  + '"stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4).';
 
-/**
- * The results file: the meta, the store (`stored`, null when there is none)
- * and every unread copy, in the order they were kept. One line of JSON.
- */
-export function resultsFile(meta: ResultsMeta, stored: string | null, unread: string[]): string {
-  const parts: string[] = [];
-  for (let i = 0; i < unread.length; i++) parts.push(spliced(unread[i]));
+/** The results file: the meta and the store (`stored`, null when there is
+ *  none). One line of JSON. */
+export function resultsFile(meta: ResultsMeta, stored: string | null): string {
   return '{"about":' + jsonString(RESULTS_ABOUT)
     + ',"file":' + String(RESULTS_FILE_VERSION)
     + ',"app":' + jsonString(meta.app)
@@ -1021,6 +988,5 @@ export function resultsFile(meta: ResultsMeta, stored: string | null, unread: st
     + ',"population":' + jsonString(meta.population)
     + ',"model":' + jsonString(MODEL_ID)
     + ',"uid":' + (meta.uid === null ? 'null' : jsonString(meta.uid))
-    + ',"stored":' + (stored === null ? 'null' : spliced(stored))
-    + ',"unread":[' + parts.join(',') + ']}';
+    + ',"stored":' + (stored === null ? 'null' : spliced(stored)) + '}';
 }

@@ -1023,23 +1023,23 @@
       "posterior": "learned",
       "note": "a runny white at soft",
       "level": 0.22,
-      "cookTime_s": 431.1874584801342,
+      "cookTime_s": 432.688259110119,
       "reading": {
         "words": {
           "asked": 1,
           "certainty": "ballpark",
-          "pAsked": 0.7834569404006262,
-          "pNear": 0.9782674284286506,
+          "pAsked": 0.691737698026976,
+          "pNear": 0.9777446262941161,
           "from": 1,
           "to": 2,
-          "pInterval": 0.9313912733405755,
+          "pInterval": 0.9440809572578117,
           "mostLikely": 1
         },
         "time": {
-          "low_s": 408.084477020584,
-          "high_s": 450.7611374422595
+          "low_s": 402.39494959338117,
+          "high_s": 450.0045684401812
         },
-        "at_s": 431.1874584801342
+        "at_s": 432.688259110119
       },
       "bracket": {
         "low": 0.11,
@@ -1051,23 +1051,51 @@
       "posterior": "learned",
       "note": "the same cook at jammy",
       "level": 0.41,
-      "cookTime_s": 470.02248745227575,
+      "cookTime_s": 469.73412410274693,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "ballpark",
-          "pAsked": 0.8236877468464019,
-          "pNear": 0.9724182419450834,
+          "pAsked": 0.7770210533553001,
+          "pNear": 0.9793961921642145,
           "from": 1,
-          "to": 2,
-          "pInterval": 0.9083260972634793,
+          "to": 3,
+          "pInterval": 0.9793961921642145,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 451.67104092683076,
-          "high_s": 490.3873507206845
+          "low_s": 445.3532374339011,
+          "high_s": 489.09671829815125
         },
-        "at_s": 470.02248745227575
+        "at_s": 469.73412410274693
+      },
+      "bracket": {
+        "low": 0.11,
+        "mark": 0.41,
+        "high": 0.81
+      }
+    },
+    {
+      "posterior": "consistent",
+      "note": "three jammy eggs just right",
+      "level": 0.41,
+      "cookTime_s": 458.8553176149146,
+      "reading": {
+        "words": {
+          "asked": 2,
+          "certainty": "ballpark",
+          "pAsked": 0.8642247836116014,
+          "pNear": 0.9798173862003178,
+          "from": 1,
+          "to": 2,
+          "pInterval": 0.9335677024524371,
+          "mostLikely": 2
+        },
+        "time": {
+          "low_s": 442.67352778611894,
+          "high_s": 477.82197233156694
+        },
+        "at_s": 458.8553176149146
       },
       "bracket": {
         "low": 0.11,
@@ -1077,53 +1105,25 @@
     },
     {
       "posterior": "consistent",
-      "note": "three jammy eggs just right",
-      "level": 0.41,
-      "cookTime_s": 461.41981747253067,
-      "reading": {
-        "words": {
-          "asked": 2,
-          "certainty": "veryCertain",
-          "pAsked": 0.9118299369089061,
-          "pNear": 0.9799039652376216,
-          "from": 2,
-          "to": 2,
-          "pInterval": 0.9118299369089061,
-          "mostLikely": 2
-        },
-        "time": {
-          "low_s": 451.31053410632376,
-          "high_s": 473.0325737266867
-        },
-        "at_s": 461.41981747253067
-      },
-      "bracket": {
-        "low": 0.315,
-        "mark": 0.41,
-        "high": 0.515
-      }
-    },
-    {
-      "posterior": "consistent",
       "note": "the same cook between the words: Jammy asked",
       "level": 0.47,
-      "cookTime_s": 476.3929507803192,
+      "cookTime_s": 473.72320598273177,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "ballpark",
-          "pAsked": 0.8121779575679969,
-          "pNear": 0.9799472099299812,
+          "pAsked": 0.7507281204364233,
+          "pNear": 0.9799263960279252,
           "from": 2,
           "to": 3,
-          "pInterval": 0.9650212052000942,
+          "pInterval": 0.959130969935599,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 465.86031204320534,
-          "high_s": 488.30680667453635
+          "low_s": 457.0874854280737,
+          "high_s": 493.2749179126222
         },
-        "at_s": 476.3929507803192
+        "at_s": 473.72320598273177
       },
       "bracket": {
         "low": 0.315,
@@ -1135,23 +1135,23 @@
       "posterior": "consistent",
       "note": "the same cook at fudgy",
       "level": 0.62,
-      "cookTime_s": 516.0456053872203,
+      "cookTime_s": 513.1346606500821,
       "reading": {
         "words": {
           "asked": 3,
           "certainty": "veryCertain",
-          "pAsked": 0.9382120943828764,
-          "pNear": 0.9799217644442707,
+          "pAsked": 0.9135906154826122,
+          "pNear": 0.9798537248867616,
           "from": 3,
           "to": 3,
-          "pInterval": 0.9382120943828764,
+          "pInterval": 0.9135906154826122,
           "mostLikely": 3
         },
         "time": {
-          "low_s": 504.60846799434876,
-          "high_s": 528.8919427085602
+          "low_s": 495.0599761511148,
+          "high_s": 534.28846999499
         },
-        "at_s": 516.0456053872203
+        "at_s": 513.1346606500821
       },
       "bracket": {
         "low": 0.515,

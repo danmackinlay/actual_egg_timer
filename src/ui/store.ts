@@ -24,11 +24,6 @@ export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from 
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v4';
-/** Cooks in shapes this build does not read, each read once, kept aside as
- *  stored and deleted (`takeOldCooks`), never converted (DECISIONS.md 48, 97):
- *  0.3's and 0.4's machine and ticket (`aet.cook.v2`), and a running cook
- *  without the plan as it ran (`aet.cook.v3`, running-cook review 1.3). */
-const OLD_COOK_KEYS = ['aet.cook.v2', 'aet.cook.v3'];
 /** The cook as the live site of 19 September stores it: a shape the ticket
  *  does not read. Dropped, not migrated. */
 const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
@@ -148,8 +143,7 @@ export function removeStorage(key: string): void {
  * (DECISIONS.md 100). An older build writes what it stores whole, from the
  * fields it knows, and drops what a newer one added, so a build that finds a
  * newer version here writes nothing at all for the rest of the page's life:
- * no setting, pan, cook, result, sharing state or copy kept aside. It still
- * times the egg. Whether it may write is core's `writerCheck`.
+ * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is core's `writerCheck`.
  *
  * The mark is written before anything else, and checked again before every
  * write: a tab of a newer build opened since, or a tab that cleared the
@@ -473,9 +467,9 @@ export function saveCook(cook: RunningCook, answers: KeptAnswers, leanHint_s: nu
 }
 
 /** The cook written down, whole, or null: none, or one this build cannot
- *  read (`readRunningCook`), which the caller keeps aside (`storedCookText`).
- *  One without a known `answers` is refused rather than read as unanswered,
- *  which would log its egg a second time. */
+ *  read (`readRunningCook`), which the caller drops. One without a known
+ *  `answers` is refused rather than read as unanswered, which would log its
+ *  egg a second time. */
 export function loadCook(): StoredCook | null {
   removeStorage(SUPERSEDED_COOK_KEY);
   return readStoredCook(readStorage(COOK_KEY));
@@ -503,24 +497,9 @@ export function clearCook(id_ms: number): void {
   if (raw === null || stored === undefined || stored === id_ms) removeStorage(COOK_KEY);
 }
 
-/** Forget whatever is written down: a cook this build cannot read, once
- *  kept aside. */
+/** Forget whatever is written down: a cook this build cannot read. */
 export function dropStoredCook(): void {
   removeStorage(COOK_KEY);
-}
-
-/** The cooks earlier builds wrote under the old keys (`aet.cook.v2`,
- *  `aet.cook.v3`), as stored, oldest key first: each read once and deleted,
- *  so the caller keeps them aside (DECISIONS.md 81, 97; review 2.6). Nothing
- *  else reads those keys. */
-export function takeOldCooks(): string[] {
-  const out: string[] = [];
-  for (const key of OLD_COOK_KEYS) {
-    const text = readStorage(key);
-    removeStorage(key);
-    if (text !== null) out.push(text);
-  }
-  return out;
 }
 
 /** Whether a change of storage (the page's `storage` event; a null key is
@@ -622,7 +601,7 @@ function betterPull(a: Pulled | null, b: Pulled | null): Pulled | null {
   return a.due_s <= b.due_s ? a : b;
 }
 
-/** The cook as stored, for keeping aside one this build cannot read. */
+/** The cook as stored, whichever tab wrote it. */
 export function storedCookText(): string | null {
   return readStorage(COOK_KEY);
 }

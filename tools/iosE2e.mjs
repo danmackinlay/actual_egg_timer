@@ -236,6 +236,13 @@ class Run {
     out('python3', ['-c', PLIST_RENAME, path, from, to]);
   }
 
+  /// Set keys in the prefs plist, with the app terminated: each value a
+  /// text, stored as data, as the app stores its stores.
+  setData(values) {
+    const path = `${this.data}/Library/Preferences/${BUNDLE}.plist`;
+    out('python3', ['-c', PLIST_SET_DATA, path, JSON.stringify(values)]);
+  }
+
   check(ok, what) {
     if (!ok) this.failures.push(what);
   }
@@ -271,6 +278,17 @@ path, a, b = sys.argv[1:4]
 with open(path, 'rb') as f:
     p = plistlib.load(f)
 p[b] = p.pop(a)
+with open(path, 'wb') as f:
+    plistlib.dump(p, f, fmt=plistlib.FMT_BINARY)
+`;
+
+const PLIST_SET_DATA = `
+import json, plistlib, sys
+path, values = sys.argv[1], json.loads(sys.argv[2])
+with open(path, 'rb') as f:
+    p = plistlib.load(f)
+for k, v in values.items():
+    p[k] = v.encode('utf-8')
 with open(path, 'wb') as f:
     plistlib.dump(p, f, fmt=plistlib.FMT_BINARY)
 `;
@@ -1188,26 +1206,21 @@ scenario('reschedule', 'relaunched while heating past the guess: the pending pul
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
 });
 
-scenario('upgrade', "an earlier build's cook (cookInProgress) kept aside, its alarms left", async (run) => {
+scenario('unreadable', 'a cook and a results log this build cannot read: dropped, the alarms and the card gone, nothing kept aside', async (run) => {
   await started(run);
   run.terminate();
-  const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook);
-  run.check(stored['cookInProgress.v3'], 'the cook in the plist');
-  // What 0.3 and 0.4 wrote, under the key they wrote: this build's cook
-  // stands in for theirs, with the same alarm ids pending (a day out, on a
-  // frozen clock: still pending however long the plist takes).
-  run.renameKey('cookInProgress.v3', 'cookInProgress');
+  const stored = await run.prefs((p) => p['cookInProgress.v3']?.cook && p['calibration.v4']);
+  run.check(stored['cookInProgress.v3'] && stored['calibration.v4'], 'the cook and the log in the plist');
+  run.setData({ 'cookInProgress.v3': '{"cook":{"id_ms":1}}', 'calibration.v4': '{damaged' });
   run.launch();
-  const kept = await run.until(/^restore kept aside cookInProgress$/, { from: run.launched, what: 'the old key kept aside' });
-  // The launch's own read-back, three seconds on (AppModel.appear).
-  await run.until(/^delivered /, { from: kept.i, what: 'the alarms read back' });
-  const lines = run.sinceLaunch();
-  run.check(!has(lines, /^alarms cancelled$/), 'its alarms not cancelled');
-  run.check(same(sorted(pending(lines)), ['cook.cool', 'cook.pull']), `pending ${pending(lines)}`);
-  run.check(!has(lines, /^restore (HEATING|COOKING|PULL|COOLING|DONE)/), 'idle');
-  const prefs = await run.prefs((p) => Array.isArray(p['cookInProgress.unread']));
-  run.check(!('cookInProgress' in prefs) && !('cookInProgress.v3' in prefs), 'the old key gone');
-  run.check(prefs['cookInProgress.unread']?.length === 1, 'kept aside, once');
+  await run.until(/^restore unreadable$/, { from: run.launched, what: 'the cook dropped' });
+  await run.until(/^alarms cancelled$/, { from: run.launched, what: 'its alarms cancelled' });
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.v === 4);
+  run.check(!('cookInProgress.v3' in prefs), 'the cook gone');
+  run.check(prefs['calibration.v4']?.v === 4 && prefs['calibration.v4']?.log?.length === 0, 'the log written again, empty');
+  const aside = Object.keys(prefs).filter((k) => k.endsWith('.unread'));
+  run.check(aside.length === 0, `nothing kept aside: ${aside.join(', ')}`);
+  run.note('dropped, and nothing kept aside');
 });
 
 scenario('again-logs', 'Start again logs the unanswered egg before it clears the cook', async (run) => {

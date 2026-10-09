@@ -1,0 +1,67 @@
+{
+  "about": "The posterior ten eggs answered in the five yolk words (tools/posterior.ts wordLog) make, for test/record.test.ts 2a3. Written by `npm run posterior -- reference` (tools/posterior.ts), and rewritten only when the likelihood, the prior, the decision or the filter is meant to change.",
+  "surfaces": "Each egg on calibrationGrid at 7 x 9, centred on the literature time-scale (tools/posterior.ts fixedSurfaces).",
+  "decision": "Jammy (0.41), 58 g from the fridge into the default pot then ice, on gridFor's surface at the literature values, leaning from the literature solve (tools/posterior.ts decisionSurface).",
+  "exact": {
+    "draws": 2000000,
+    "seed": 957127,
+    "batches": 20,
+    "ess": 9200,
+    "value": {
+      "alphaMean": 0.9497309226744762,
+      "alphaQ10": 0.9147848407527033,
+      "alphaQ50": 0.9493135216225341,
+      "alphaQ90": 0.9858367746616632,
+      "offsetMean": -0.036198025353137646,
+      "offsetQ10": -0.3008489989683428,
+      "offsetQ50": -0.03521473279039322,
+      "offsetQ90": 0.22783533739113293,
+      "whiteMean": 0.4275807765257086,
+      "time_s": 438.63756147229935,
+      "odds": 0.6643797113243313
+    },
+    "se": {
+      "alphaMean": 0.0002544778865741096,
+      "alphaQ10": 0.00048400000717357386,
+      "alphaQ50": 0.0003367532343658268,
+      "alphaQ90": 0.0005607631100701091,
+      "offsetMean": 0.0018603959168659921,
+      "offsetQ10": 0.003399220622280476,
+      "offsetQ50": 0.002651653444207465,
+      "offsetQ90": 0.003850515890709843,
+      "whiteMean": 0.0020427127442886554,
+      "time_s": 0.04953877746134168,
+      "odds": 0.0010853332263790713
+    }
+  },
+  "filter": {
+    "particles": 1000,
+    "seeds": 400,
+    "mean": {
+      "alphaMean": 0.9507711638727043,
+      "alphaQ10": 0.9183206944410236,
+      "alphaQ50": 0.9502196309865965,
+      "alphaQ90": 0.9837621806234383,
+      "offsetMean": -0.030136360934287912,
+      "offsetQ10": -0.2679355891744316,
+      "offsetQ50": -0.029243718575675412,
+      "offsetQ90": 0.20751967693139822,
+      "whiteMean": 0.41527444908517475,
+      "time_s": 438.4096320832308,
+      "odds": 0.6545001940922479
+    },
+    "sd": {
+      "alphaMean": 0.010491800597745817,
+      "alphaQ10": 0.013390608347539417,
+      "alphaQ50": 0.012649944747625241,
+      "alphaQ90": 0.013754611214254017,
+      "offsetMean": 0.08229743757074427,
+      "offsetQ10": 0.10576302481304899,
+      "offsetQ50": 0.09806774083425761,
+      "offsetQ90": 0.10637342990294187,
+      "whiteMean": 0.07675235529988052,
+      "time_s": 1.8868183293387764,
+      "odds": 0.060582392836315814
+    }
+  }
+}

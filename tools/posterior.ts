@@ -11,21 +11,21 @@
  *
  *   npm run posterior -- noise [seeds] [particles]
  *       the spread across seeds of what the app would show after a realistic
- *       log - the old answers' log (test/data/old-answers.json) and ten eggs
- *       answered in the five yolk words - each replayed exactly as the app
- *       replays it (`replay`, `calibrationGrid`, PARTICLE_COUNT particles),
+ *       log - ten eggs answered in the five yolk words (`wordLog`) - replayed
+ *       exactly as the app replays it (`replay`, `calibrationGrid`,
+ *       PARTICLE_COUNT particles),
  *       then decided exactly as the web app decides: the decision surface,
  *       the odds profile, its envelope, the jammy time for a 58 g egg from
  *       the fridge into boiling water and then ice. 50 seeds by default;
  *       about 7 s a seed, nearly all of it building the dose surfaces.
  *   npm run posterior -- reference
- *       rewrites test/data/old-answers-posterior.json, which test 2a3 checks
+ *       rewrites test/data/word-answers-posterior.json, which test 2a3 checks
  *       the filter against. See `writeReference`.
  *   npm run sbc [replications] [particles]
  *       simulation-based calibration (Talts et al. 2018). See `sbc`.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { decide, decideAt, decisionGridRequest, decisionInputs } from '../src/core/decide.js';
 import {
@@ -33,32 +33,22 @@ import {
 } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
-  Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle,
+  PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle,
   Posterior, WhiteReport, YOLK_WORDS, YolkWord, answerLikelihood, createPrior, whiteProbit,
-  withUnrelated, withUnrelatedWord, yolkProbit, yolkWordProbit,
+  withUnrelated, withUnrelatedWord, yolkWordProbit,
 } from '../src/core/infer.js';
 import { PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
 import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
 import {
-  Calibration, EggRecord, copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseLog,
+  Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   recordCookTime_s, recordMass_g, recordTeaches, replay,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { appSetup, draw, gridFor, rng } from './common.js';
 
-/* ------------------------------------------------------------ the old log */
+/* ------------------------------------------------------------ the log */
 
-export const OLD_ANSWERS_FILE = 'test/data/old-answers.json';
-export const OLD_POSTERIOR_FILE = 'test/data/old-answers-posterior.json';
-
-/** The log answered the old way (too soft / just right / too firm), as the
- *  code before DECISIONS.md 92 wrote it. */
-export function oldLog(): EggRecord[] {
-  const raw = JSON.parse(readFileSync(OLD_ANSWERS_FILE, 'utf8')) as { log: unknown[] };
-  const log = parseLog(raw.log);
-  if (log === null) throw new Error(`${OLD_ANSWERS_FILE}: the log does not parse`);
-  return log;
-}
+export const REFERENCE_FILE = 'test/data/word-answers-posterior.json';
 
 /** The surfaces the distributional checks score on: 7 x 9, as the old test
  *  had them. Coarse is fine: the filter and the reference score on the SAME
@@ -97,10 +87,9 @@ export function logLikelihoods(post: Posterior, log: EggRecord[], surfaces: (Dos
     if (g === null) continue;
     const r = log[k];
     const t = recordCookTime_s(r);
-    const target = logYolkTarget(r.level);
     const probe = r.probe === null ? null : r.probe.centre_C;
     for (let i = 0; i < post.particles.length; i++) {
-      out[i] += Math.log(answerLikelihood(g, post.particles[i], t, target, r.yolk, r.white, probe, r.yolkWord));
+      out[i] += Math.log(answerLikelihood(g, post.particles[i], t, r.yolkWord, r.white, probe));
     }
   }
   return out;
@@ -249,7 +238,7 @@ const EXACT_SEED = 0x0e9ac7;
 const REFERENCE_SEEDS = 400;
 
 /**
- * The reference for test 2a3: the old log's posterior, exactly (importance
+ * The reference for test 2a3: the word log's posterior, exactly (importance
  * sampling from the prior, no filter), and the filter's own distribution of
  * the same summaries over REFERENCE_SEEDS seeds. Regenerate it only on
  * purpose - when the likelihood, the prior, the decision or the filter is
@@ -257,7 +246,7 @@ const REFERENCE_SEEDS = 400;
  * a test pass is a test thrown away.
  */
 function writeReference(): void {
-  const log = oldLog();
+  const log = wordLog();
   const surfaces = fixedSurfaces(log);
   const ds = decisionSurface();
   const t0 = Date.now();
@@ -300,7 +289,7 @@ function writeReference(): void {
   printComparison(exact, se, filter.mean, filter.sd, REFERENCE_SEEDS);
 
   const ref: PosteriorReference = {
-    about: 'The posterior the old answers\' log (test/data/old-answers.json) makes, for test/record.test.ts 2a3. '
+    about: 'The posterior ten eggs answered in the five yolk words (tools/posterior.ts wordLog) make, for test/record.test.ts 2a3. '
       + 'Written by `npm run posterior -- reference` (tools/posterior.ts), and rewritten only when the likelihood, '
       + 'the prior, the decision or the filter is meant to change.',
     surfaces: 'Each egg on calibrationGrid at 7 x 9, centred on the literature time-scale (tools/posterior.ts fixedSurfaces).',
@@ -309,8 +298,8 @@ function writeReference(): void {
     exact: { draws: EXACT_DRAWS, seed: EXACT_SEED, batches: EXACT_BATCHES, ess: Math.round(1 / s2), value: exact, se: se },
     filter: { particles: PARTICLE_COUNT, seeds: REFERENCE_SEEDS, mean: filter.mean, sd: filter.sd },
   };
-  writeFileSync(OLD_POSTERIOR_FILE, `${JSON.stringify(ref, null, 2)}\n`);
-  console.log(`wrote ${OLD_POSTERIOR_FILE}`);
+  writeFileSync(REFERENCE_FILE, `${JSON.stringify(ref, null, 2)}\n`);
+  console.log(`wrote ${REFERENCE_FILE}`);
 }
 
 function printComparison(exact: Summary, se: Summary, mean: Summary, sd: Summary, seeds: number): void {
@@ -333,7 +322,7 @@ export function wordRecord(
   const setup = appSetup();
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-10-06', app: 'web', appVersion: '0.4.0', prior: '2026-09', model: null,
+    v: 1, uid: null, day: '2026-10-06', app: 'web', appVersion: '0.4.0', prior: '2026-09', model: MODEL_ID,
     egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge', ambient_C: setup.ambient_C,
@@ -341,7 +330,7 @@ export function wordRecord(
       cooling: setup.cooling, afterBoil: 'hold', waterLitres: setup.waterLitres, eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t + 3, pulledBy: 'cook', cooled_s: 180,
-    yolk: null, yolkWord: word, white: white,
+    yolkWord: word, white: white,
     probe: over.probe_C === undefined ? null : { centre_C: over.probe_C, after_s: 180 },
     forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
@@ -386,7 +375,7 @@ function describe(xs: number[], digits: number): string {
 }
 
 function noise(seeds: number, particles: number): void {
-  for (const [name, log] of [['the old answers (10 eggs)', oldLog()], ['ten eggs in the five words', wordLog()]] as const) {
+  for (const [name, log] of [['ten eggs in the five words', wordLog()]] as const) {
     const t0 = Date.now();
     const rows: { alpha: number; offset: number; time: number; mean: number; odds: number; tenths: number }[] = [];
     for (let k = 0; k < seeds; k++) {
@@ -427,7 +416,7 @@ function noise(seeds: number, particles: number): void {
  */
 export interface SbcScenario {
   name: string;
-  eggs: { level: number; mass_g: number; kind: 'word' | 'old' | 'probe' }[];
+  eggs: { level: number; mass_g: number; kind: 'word' | 'probe' }[];
 }
 
 export const SBC_SCENARIOS: SbcScenario[] = [
@@ -440,10 +429,10 @@ export const SBC_SCENARIOS: SbcScenario[] = [
     ],
   },
   {
-    name: 'three old answers and white, then a probe',
+    name: 'three yolk words and white, then a probe',
     eggs: [
-      { level: 0.41, mass_g: 62, kind: 'old' }, { level: 0.22, mass_g: 68, kind: 'old' },
-      { level: 0.62, mass_g: 58, kind: 'old' }, { level: 0.41, mass_g: 60.2, kind: 'probe' },
+      { level: 0.41, mass_g: 62, kind: 'word' }, { level: 0.22, mass_g: 68, kind: 'word' },
+      { level: 0.62, mass_g: 58, kind: 'word' }, { level: 0.41, mass_g: 60.2, kind: 'probe' },
     ],
   },
 ];
@@ -480,7 +469,6 @@ function probeReading(peak_C: number, u: () => number): number {
   return peak_C - h + PROBE_INSTRUMENT_SD_C * normalOf(u);
 }
 
-const FEEDBACKS: Feedback[] = [-1, 0, 1];
 const WHITES: WhiteReport[] = ['runny', 'tender', 'firm'];
 
 /** The records a cook `truth` would make, answering through the model. */
@@ -493,12 +481,8 @@ function simulateAnswers(scenario: SbcScenario, base: EggRecord[], surfaces: Dos
       return { ...r, white: null, probe: { centre_C: probeReading(lookupPeakYolk_C(g, truth.alpha_m2s, t), u), after_s: 180 } };
     }
     const white = WHITES[draw(whiteProbit(g, truth, t).map(withUnrelated), u())];
-    if (kind === 'old') {
-      const yolk = FEEDBACKS[draw(yolkProbit(g, truth, t, logYolkTarget(r.level)).map(withUnrelated), u())];
-      return { ...r, yolk: yolk, yolkWord: null, white: white };
-    }
     const word = YOLK_WORDS[draw(yolkWordProbit(g, truth, t).map(withUnrelatedWord), u())];
-    return { ...r, yolk: null, yolkWord: word, white: white };
+    return { ...r, yolkWord: word, white: white };
   });
 }
 

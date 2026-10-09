@@ -132,7 +132,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
 
 /* The owner's egg (DECISIONS.md 83 and 84; test/reach.test.ts 11): 58 g
  * from the fridge into boiling water and an ice bath, after one egg asked
- * soft that came out just right with a runny white. Soft was under 3/10 and
+ * soft that came out soft with a runny white. Soft was under 3/10 and
  * is chosen anyway, the slider resting there (83), a ballpark since the
  * `certainty` draft; its own choice is later than jammy's, and the time
  * decided there is no later than jammy's (84).
@@ -144,7 +144,7 @@ const ownerDecided = (() => {
   const first: Calibration = { posterior: post, eggsLogged: 0 };
   const firstGrid = coarseDecisionGrid(decisionInputs(first, OWNER_EGG, DECIDE_SETUP)).grid;
   const asked = solveCookTime(OWNER_EGG, DECIDE_SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
-  updatePosterior(post, firstGrid, asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  updatePosterior(post, firstGrid, asked.result.cookTime_s, 'soft', 'runny');
   const c: Calibration = { posterior: post, eggsLogged: 1 };
   const g = coarseDecisionGrid(decisionInputs(c, OWNER_EGG, DECIDE_SETUP));
   const profile = oddsProfile(c, OWNER_EGG, DECIDE_SETUP, g.grid);

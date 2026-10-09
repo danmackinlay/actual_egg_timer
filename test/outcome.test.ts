@@ -20,8 +20,8 @@ import {
   buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose, lookupLogYolkDose,
 } from '../src/core/doseGrid.js';
 import {
-  FEEDBACK_BAND, Feedback, Particle, Posterior, UNRELATED, WhiteReport, answerLikelihood,
-  createPrior, updatePosterior, whiteAnswerProbabilities, yolkAnswerProbabilities,
+  FEEDBACK_BAND, Particle, Posterior, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS, YolkWord,
+  createPrior, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated, yolkAnswerProbabilities,
 } from '../src/core/infer.js';
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
@@ -37,7 +37,7 @@ const JAMMY = logYolkTarget(0.41);
 
 function learned(): Posterior {
   const post = createPrior(400, 777);
-  for (const t of [464, 462, 463]) updatePosterior(post, GRID, t, JAMMY, 0, 'firm');
+  for (const t of [464, 462, 463]) updatePosterior(post, GRID, t, 'jammy', 'firm');
   return post;
 }
 
@@ -131,15 +131,22 @@ function normal(random: () => number): number {
 }
 
 /** One egg from the truth: the delivered log yolk dose - the time-scale's,
- *  and a draw of the cook's own noise - and the yolk answer it earns, through
- *  the same cutpoints the probit has, unrelated share and all. */
-function egg(truth: Particle, t: number, target: number, random: () => number): { dose: number; yolk: number } {
+ *  and a draw of the cook's own noise - and what it earns, through the same
+ *  cutpoints the probits have, unrelated share and all: the yolk against the
+ *  level asked for (0 too soft, 1 just right, 2 too firm), and the yolk in
+ *  the five words, which is what the cook is asked. */
+function egg(
+  truth: Particle, t: number, target: number, random: () => number,
+): { dose: number; yolk: number; word: YolkWord } {
   const dose = lookupLogYolkDose(GRID, truth.alpha_m2s, t) + truth.noise * normal(random);
   const latent = dose - (target + truth.logDoseOffset);
   const yolk = random() < UNRELATED
     ? Math.min(2, Math.floor(3 * random()))
     : latent < -FEEDBACK_BAND ? 0 : latent > FEEDBACK_BAND ? 2 : 1;
-  return { dose: dose, yolk: yolk };
+  let band = 0;
+  while (band < YOLK_WORD_CUTS.length && dose - truth.logDoseOffset > YOLK_WORD_CUTS[band]) band++;
+  const word = random() < UNRELATED ? YOLK_WORDS[Math.min(4, Math.floor(5 * random()))] : YOLK_WORDS[band];
+  return { dose: dose, yolk: yolk, word: word };
 }
 
 interface Tally { n: number; inside: number; under: number; over: number }
@@ -177,8 +184,7 @@ test('on simulated cooks the level range holds the egg about nine times in ten, 
       const t = decideAt(cal.posterior, cal.eggsLogged, GRID, mean, true, target).cookTime_s;
       const o: Outcome = predictOutcome(cal.posterior, GRID, t, target);
       const e = egg(truth, t, target, random);
-      const tw = (['runny', 'tender', 'firm'] as WhiteReport[]).map((w) => answerLikelihood(GRID, truth, t, target, null, w));
-      const w = draw(tw, random());
+      const w = draw(whiteProbit(GRID, truth, t).map(withUnrelated), random());
       const delivered = sliderFromYolkDose(10 ** e.dose);
       range.n += 1;
       if (delivered < o.levelLow) range.under += 1;
@@ -188,7 +194,7 @@ test('on simulated cooks the level range holds the egg about nine times in ten, 
       tally(1, o.pJustRight, e.yolk === 1);
       tally(2, o.pTooFirm, e.yolk === 2);
       tally(3, o.pWhiteRunny, w === 0);
-      updatePosterior(cal.posterior, GRID, t, target, (e.yolk - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(cal.posterior, GRID, t, e.word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
       cal.eggsLogged += 1;
     }
   }

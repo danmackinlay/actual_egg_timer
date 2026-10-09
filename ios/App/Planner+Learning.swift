@@ -39,8 +39,6 @@ extension Planner {
         if white != nil, given.white != nil { return }
         if probe != nil, given.probe != nil { return }
         var egg = kept.log[index]
-        // A record holds one yolk answer: never a word beside an old one.
-        if yolk != nil, egg.yolk != nil { return }
         if let yolk { egg.yolkWord = yolk; given.yolk = yolk }
         if let white { egg.white = white; given.white = white }
         if let probe { egg.probe = probe; given.probe = probe }
@@ -138,7 +136,6 @@ extension Planner {
         guard !Stores.readOnly, kept.log.indices.contains(index) else { return }
         let had = kept.log[index]
         var next = record
-        next.yolk = had.yolk
         next.yolkWord = had.yolkWord
         next.white = had.white
         next.probe = had.probe
@@ -177,9 +174,6 @@ extension Planner {
     func resumeAnswers(_ cooked: EggRecord) {
         guard answers == nil, let index = kept.log.indices.last else { return }
         let last = kept.log[index]
-        // Answered the old way, on a build before the five yolk words: its
-        // yolk question is not the one on screen, so it stays as answered.
-        guard last.yolk == nil else { return }
         var bare = last
         bare.yolkWord = nil
         bare.white = nil
@@ -285,8 +279,7 @@ extension Planner {
     /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
     /// the log through the app's own store, as if each had been cooked at the
     /// level and setup on screen, at its mean time, and answered as given
-    /// about the yolk - in the five words, or against the level as builds
-    /// before DECISIONS.md 92 did - and, where given, the white; then fold
+    /// about the yolk, in the five words, and, where given, the white; then fold
     /// them, as a relaunch folds eggs it finds unfolded. Only into an empty
     /// log, so a relaunch does not seed twice.
     func seed(_ answers: [SeedAnswer]) {
@@ -306,7 +299,7 @@ extension Planner {
                 ),
                 level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
                 cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
-                yolk: answer.yolk, yolkWord: answer.yolkWord, white: answer.white, lang: "en", units: .metric
+                yolkWord: answer.yolkWord, white: answer.white, lang: "en", units: .metric
             ))
         }
         Calibrations.save(kept)

@@ -134,8 +134,7 @@ struct InferenceConformance {
         let c = try loadCalibration()
         let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         let priorJSON = try c.file.object("prior")
-        let first = try c.file.rows("updates")[0]
-        let target = try first.num("logNominalTarget")
+        let target = try c.file.num("logNominalTarget")
         let post = try createPrior(
             count: Int(priorJSON.num("count")),
             seed: Int32(priorJSON.num("seed"))
@@ -143,46 +142,11 @@ struct InferenceConformance {
         try expectPosterior(post, priorJSON, "prior", grid, target)
     }
 
-    /// Replays the whole sequence: each egg's two answers folded jointly, either
-    /// of them possibly missing. Several updates drive the effective
-    /// sample size below n/2 and resample, which is the only part of the filter
-    /// that touches the RNG after the prior is drawn.
-    @Test("every update: one particle's likelihood, and the whole set")
-    func updates() throws {
-        let c = try loadCalibration()
-        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
-        let priorJSON = try c.file.object("prior")
-        let updates = try c.file.rows("updates")
-        var post = try createPrior(
-            count: Int(priorJSON.num("count")),
-            seed: Int32(priorJSON.num("seed"))
-        )
-        for (i, step) in updates.enumerated() {
-            let after = try step.object("after")
-            let feedback = (step["feedback"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
-            let white = try step.optionalValue(WhiteReport.self, "white")
-            let target = try step.num("logNominalTarget")
-            let cookTimeS = try step.num("cookTime_s")
-
-            try expectClose(
-                answerLikelihood(grid, post.particles[0], cookTimeS, target, yolk: feedback, white: white),
-                step.num("firstLikelihood"), "update \(i): the first particle's likelihood"
-            )
-
-            updatePosterior(
-                &post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target,
-                yolk: feedback, white: white
-            )
-            try expectPosterior(
-                post, after, "update \(i) (\(feedback.map { "\($0.rawValue)" } ?? "-") / \(white?.rawValue ?? "-"))",
-                grid, target
-            )
-        }
-    }
-
-    /// The same filter told the yolk the cook got, in five words (DECISIONS.md
-    /// 92), from the same prior: the first particle's five probabilities, the
-    /// posterior predictive, the first particle's likelihood, and the set.
+    /// The filter told the yolk the cook got, in five words (DECISIONS.md 92),
+    /// and the white, from the prior: the first particle's five probabilities,
+    /// the posterior predictive, the first particle's likelihood, and the set.
+    /// Folds that drive the effective sample size below n/2 resample, which is
+    /// the only part of the filter that touches the RNG after the prior.
     @Test("every five-word update: one particle's five, the predictive, and the whole set")
     func wordUpdates() throws {
         let c = try loadCalibration()
@@ -192,10 +156,10 @@ struct InferenceConformance {
             count: Int(priorJSON.num("count")),
             seed: Int32(priorJSON.num("seed"))
         )
+        let target = try c.file.num("logNominalTarget")
         for (i, step) in try c.file.rows("wordUpdates").enumerated() {
             let word = try step.optionalValue(YolkWord.self, "yolkWord")
             let white = try step.optionalValue(WhiteReport.self, "white")
-            let target = try step.num("logNominalTarget")
             let cookTimeS = try step.num("cookTime_s")
             let probit = yolkWordProbit(grid, post.particles[0], cookTimeS)
             for (k, p) in try step.numbers("firstProbit").enumerated() {
@@ -206,13 +170,10 @@ struct InferenceConformance {
                 expectClose(predictive[k], p, "word update \(i): the predictive's word \(k)")
             }
             try expectClose(
-                answerLikelihood(grid, post.particles[0], cookTimeS, target, yolk: nil, white: white, yolkWord: word),
+                answerLikelihood(grid, post.particles[0], cookTimeS, yolkWord: word, white: white),
                 step.num("firstLikelihood"), "word update \(i): the first particle's likelihood"
             )
-            updatePosterior(
-                &post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target,
-                yolk: nil, white: white, yolkWord: word
-            )
+            updatePosterior(&post, grid: grid, cookTimeS: cookTimeS, yolkWord: word, white: white)
             try expectPosterior(
                 post, step.object("after"), "word update \(i) (\(word?.rawValue ?? "-") / \(white?.rawValue ?? "-"))",
                 grid, target
@@ -230,7 +191,7 @@ struct InferenceConformance {
         let before = try step.object("before")
         let after = try step.object("after")
         let white = try #require(try step.optionalValue(WhiteReport.self, "white"), "whiteResample has no white answer")
-        let target = try c.file.rows("updates")[0].num("logNominalTarget")
+        let target = try c.file.num("logNominalTarget")
         // A particle set the reference constructed rather than one this
         // implementation could redraw - see `whiteResample` in tools/fixtures/calibration.ts.
         var post = try posterior(before)
@@ -240,7 +201,7 @@ struct InferenceConformance {
             "the fixture is meant to START above the resample threshold"
         )
         let cookTimeS = try step.num("cookTime_s")
-        updatePosterior(&post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target, yolk: nil, white: white)
+        updatePosterior(&post, grid: grid, cookTimeS: cookTimeS, yolkWord: nil, white: white)
         try expectPosterior(post, after, "whiteResample", grid, target)
     }
 

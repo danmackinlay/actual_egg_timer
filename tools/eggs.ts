@@ -45,14 +45,14 @@ import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/consta
 import { buildDoseGrid } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
-  FEEDBACK_BAND, Feedback, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
+  FEEDBACK_BAND, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
   PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
 } from '../src/core/infer.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
-  EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, parseRecord, recordCookTime_s,
+  EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.js';
@@ -62,7 +62,7 @@ import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
 import { countedTier, keyKey } from '../server/eggs.js';
 import { appSetup, rng } from './common.js';
 import {
-  Line, TRUSTED_ENV, TRUSTED_FILE, importResults, readTrusted, sameEggKey, tagTrusted,
+  Line, OldYolk, TRUSTED_ENV, TRUSTED_FILE, importResults, readFitRecord, readTrusted, sameEggKey, tagTrusted,
 } from './eggsImport.js';
 
 /** The time-scale axis of the emulator, in literature sds. */
@@ -280,7 +280,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       };
       const asked = u() < 0.9;
       const old = e < before;
-      const yolk = asked && old ? (answer(yp) - 1) as Feedback : null;
+      const yolk = asked && old ? (answer(yp) - 1) as OldYolk : null;
       const yolkWord = asked && !old ? YOLK_WORDS[answer(wordP)] : null;
       const white = u() < 0.8 ? (['runny', 'tender', 'firm'] as WhiteReport[])[answer(wp)] : null;
       let probe: EggRecord['probe'] = null;
@@ -291,7 +291,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
           : truly.peakYolk_C + PROBE_INSTRUMENT_SD_C * normal(u) - h;
         probe = { centre_C: recordProbe_C(reading), after_s: coolingSecondsFor(solved.result) };
       }
-      const record: EggRecord = {
+      const record: EggRecord & { yolk: OldYolk | null } = {
         v: RECORD_VERSION, uid: c.uid, day: `2026-11-${String(1 + (e % 28)).padStart(2, '0')}`,
         app: c.tier === 'attested' ? 'ios' : 'web', appVersion: 'simulated', prior: LITERATURE_POPULATION.id,
         model: old ? '2026-10-e8' : MODEL_ID,
@@ -310,7 +310,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
         probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
         forecast: null, lang: 'en', register: 'modern', units: 'metric',
       };
-      if (parseRecord(record) === null) throw new Error('a simulated record does not read');
+      if (readFitRecord(record) === null) throw new Error('a simulated record does not read');
       lines.push({ tier: c.tier, seq: e, record: record });
     }
   }
@@ -330,8 +330,8 @@ const CHECKED_EGGS = 12;
  *  every field, cooked the same day, are two eggs. Sharing sends an egg's
  *  place in the log as `seq`, and import keeps it, so the same egg pulled and
  *  imported has the same. */
-function eggKey(line: Line, r: EggRecord): string {
-  return `${line.seq}|${sameEggKey(r)}`;
+function eggKey(line: Line): string {
+  return `${line.seq}|${sameEggKey(line.record)}`;
 }
 
 function emulate(input: string, out: string): void {
@@ -351,21 +351,21 @@ function emulate(input: string, out: string): void {
   const exported = new Set<string>();
   const vouched = new Set<string>();
   for (const line of lines) {
-    const r = parseRecord(line.record);
-    if (r === null) continue;
-    if (line.source === 'export') exported.add(eggKey(line, r));
-    if (line.trusted === true) vouched.add(eggKey(line, r));
+    if (readFitRecord(line.record) === null) continue;
+    if (line.source === 'export') exported.add(eggKey(line));
+    if (line.trusted === true) vouched.add(eggKey(line));
   }
   const start = freshCalibration(1, 1);
   const alphaMin = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[0]);
   const alphaMax = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[Z_GRID.length - 1]);
   for (const line of lines) {
-    const r = parseRecord(line.record);
-    if (r === null || r.uid === null) { refused += 1; continue; }
-    const key = eggKey(line, r);
+    const read = readFitRecord(line.record);
+    if (read === null || read.record.uid === null) { refused += 1; continue; }
+    const r = read.record;
+    const key = eggKey(line);
     if (seen.has(key)) { twice += 1; continue; }
     seen.add(key);
-    if (!recordTeaches(r)) { silent += 1; continue; }
+    if (!recordTeaches(r) && read.yolk === null) { silent += 1; continue; }
     const t = recordCookTime_s(r);
     const q = gridRequestFor(start, r, () => ({
       alphaMin: alphaMin, alphaMax: alphaMax, alphaCount: Z_GRID.length, timeMin_s: t, timeMax_s: t + 1, timeCount: 2,
@@ -392,9 +392,9 @@ function emulate(input: string, out: string): void {
     }
     eggs.push({
       uid: r.uid, tier: line.tier, trusted: vouched.has(key), ...(exported.has(key) ? { source: 'export' } : {}),
-      seq: line.seq, day: r.day, app: r.app, model: r.model,
+      seq: line.seq, day: r.day, app: r.app, model: read.model,
       cook_s: t, level: r.level, logYolkTarget: logYolkTarget(r.level),
-      yolk: r.yolk, yolkWord: r.yolkWord === null ? null : yolkWordIndex(r.yolkWord),
+      yolk: read.yolk, yolkWord: r.yolkWord === null ? null : yolkWordIndex(r.yolkWord),
       white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,
       logYolk: column(g.logYolk), logWhite: column(g.logWhite), peak: column(g.peakYolk_C),

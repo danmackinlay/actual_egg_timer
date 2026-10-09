@@ -2,8 +2,7 @@
  * The web's guard against an older build writing over a newer one's stores
  * (src/ui/store.ts, `claimStorage`; DECISIONS.md 100): with a newer build's
  * mark in storage, the store layer writes nothing at all - the settings, the
- * pans, the cook, the log, the copies kept aside, the sharing state - and
- * sends nothing. With none, or an older one, the mark is brought up to this
+ * pans, the cook, the log, the sharing state - and sends nothing. With none, or an older one, the mark is brought up to this
  * build before anything else is written.
  *
  * In a file of its own: the guard is the store module's state for the life
@@ -18,10 +17,9 @@ import assert from 'node:assert/strict';
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
   DEFAULT_SETTINGS, claimStorage, clearBoilMemory, clearCook, dropStoredCook, loadBoilMemory, loadCook, loadSettings,
-  newerStoredElsewhere, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, storageReadOnly, takeOldCooks,
+  newerStoredElsewhere, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, storageReadOnly,
 } from '../src/ui/store.js';
 import { clearCalibration, keptState, loadCalibration, logEgg } from '../src/ui/calibration.js';
-import { keepUnread, keepUnreadCook } from '../src/ui/calibrationStore.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { loadShare, sendFinal, setSharing, retryDeletes } from '../src/ui/share.js';
 
@@ -99,14 +97,11 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   rememberTimeToBoil(loadBoilMemory(), 2, 500);
   clearBoilMemory();
   loadCook();
-  takeOldCooks();
   saveCook({ id_ms: 7 } as never, 'none', 12);
   saveLeanHint(7, 30);
   clearCook(7);
   dropStoredCook();
   loadCalibration();
-  keepUnread('{"a store":"kept aside"}');
-  keepUnreadCook('{"a cook":"kept aside"}');
   const sizeBefore = keptState().log.length;
   assert.equal(logEgg({ v: 1 } as never), -1, 'no egg is written down');
   assert.equal(keptState().log.length, sizeBefore, 'nor learned from');

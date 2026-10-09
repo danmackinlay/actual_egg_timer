@@ -29,8 +29,8 @@ import {
   gridRequestFor, recordTeaches, resultsFile, resultsFileName,
 } from '../core/record.js';
 import {
-  Decoded, Kept, decodeKept, encodeKept, freshKept, keepUnread, keptAside, readKeptText, removeEverything, startOf,
-  removeSuperseded, touchesKept, writeKeptText,
+  Decoded, Kept, decodeKept, encodeKept, freshKept, readKeptText, removeEverything, removeSuperseded, startOf,
+  touchesKept, writeKeptText,
 } from './calibrationStore.js';
 import { localDay } from './eggRecord.js';
 import { buildOffThread } from './offThread.js';
@@ -127,7 +127,6 @@ function current(): boolean {
  */
 function adopt(raw: string | null): void {
   const decoded = decodeKept(raw, activePopulation(), modelId);
-  if (decoded.loses && raw !== null) keepUnread(raw);
   const had = kept;
   const next = decoded.kept;
   if (keepsFolds(had, decoded)) {
@@ -175,14 +174,14 @@ function sameRecord(a: EggRecord | undefined, b: EggRecord | undefined): boolean
 }
 
 /** The same egg: the same cook, by `id`, whatever answers another tab has
- *  added to it since; the same record, for one written before ids. */
+ *  added to it since; the same record, for one without an id. */
 function sameEgg(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
   if (a === undefined || b === undefined) return false;
   const id = idOf(a);
   return id !== null && idOf(b) !== null ? id === idOf(b) : sameRecord(a, b);
 }
 
-/** The cook a record is of, or null for one written before ids. */
+/** The cook a record is of, or null for one without an id. */
 function idOf(r: EggRecord): number | null {
   return r.id ?? null;
 }
@@ -208,31 +207,23 @@ export function loadCalibration(model = MODEL_ID): Calibration {
   removeSuperseded();
   const raw = readKeptText();
   const decoded = decodeKept(raw, activePopulation(), modelId);
-  // Kept aside BEFORE anything is written over it.
-  if (decoded.loses && raw !== null) keepUnread(raw);
   kept = decoded.kept;
   seen = raw;
   if (decoded.path !== 'loaded') save();
   return kept.calibration;
 }
 
-/** How many results there are to export: every record, read or not, and
- *  every copy kept aside. */
-function resultsKept(): number {
-  return kept.log.length + (kept.unread?.length ?? 0) + keptAside().length;
-}
-
 /**
- * The results file (`resultsFile` in core): the store exactly as stored,
- * the copies kept aside, and the sharing ID if there is one. Its name is the
- * local day. Null when there is nothing in it to export.
+ * The results file (`resultsFile` in core): the store exactly as stored, and
+ * the sharing ID if there is one. Its name is the local day. Null when there
+ * is no egg to export.
  */
 export function exportResults(uid: string | null, now_ms: number): { name: string; text: string } | null {
-  if (resultsKept() === 0) return null;
+  if (kept.log.length === 0) return null;
   const text = resultsFile({
     app: 'web', appVersion: APP_VERSION, exported: new Date(now_ms).toISOString(),
     population: activePopulation().id, uid: uid,
-  }, readKeptText(), keptAside());
+  }, readKeptText());
   return { name: resultsFileName(localDay(now_ms)), text: text };
 }
 
@@ -273,7 +264,7 @@ export function logEgg(r: EggRecord): number {
     return kept.log.length - 1;
   }
   const had = kept.log[at];
-  const next: EggRecord = { ...r, yolk: had.yolk, yolkWord: had.yolkWord, white: had.white, probe: had.probe };
+  const next: EggRecord = { ...r, yolkWord: had.yolkWord, white: had.white, probe: had.probe };
   if (sameRecord(next, had)) return at;
   kept.log[at] = next;
   if (at < kept.folded) refoldFromStart();
@@ -447,7 +438,7 @@ export async function recordSecondAnswer(
   if (current() && !sameEgg(kept.log[index], had)) return false;
   const r = kept.log[index];
   if (r === undefined || index !== kept.log.length - 1) return false;
-  if (answer.yolkWord !== undefined && (r.yolkWord !== null || r.yolk !== null)) return false;
+  if (answer.yolkWord !== undefined && r.yolkWord !== null) return false;
   if (answer.white !== undefined && r.white !== null) return false;
   if (answer.probe !== undefined && r.probe !== null) return false;
   if (kept.folded <= index) {
@@ -472,8 +463,8 @@ export async function recordSecondAnswer(
   return true;
 }
 
-/** Forget every egg: the posterior, the base under it, the log and every copy
- *  kept aside - the cook asked for it, and confirmed. A run of
+/** Forget every egg: the posterior, the base under it and the log - the cook
+ *  asked for it, and confirmed. A run of
  *  wrong answers about how an egg was is otherwise undone only by clearing the
  *  site's storage, and the honest thing is to let someone take it back. The iOS
  *  app has the same. */

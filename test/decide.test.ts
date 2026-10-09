@@ -29,8 +29,8 @@ import {
 } from '../src/core/decide.js';
 import { DoseGrid, GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  CookTimePrediction, Feedback, Posterior, UNRELATED, predictCookTime, whiteAnswerProbabilities, whiteProbit,
-  yolkAnswerProbabilities, yolkProbit,
+  CookTimePrediction, Posterior, UNRELATED, YOLK_WORDS, YolkWord, predictCookTime, whiteAnswerProbabilities,
+  whiteProbit, yolkAnswerProbabilities, yolkWordProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -78,7 +78,7 @@ const PRIOR_GRID = gridFor(PRIOR, EGG, SETUP);
 
 /** One egg at the literature's jammy time, answered as a cook with the
  *  literature's kitchen would: just right, and a firm white. */
-const ONE_EGG = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 0, 'firm')], COARSE);
+const ONE_EGG = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 'jammy', 'firm')], COARSE);
 const ONE_EGG_GRID = gridFor(ONE_EGG, EGG, SETUP);
 
 // --------------------------------------------------------------------------
@@ -225,7 +225,7 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
       `L${level}: mean ${d.meanCookTime_s.toFixed(1)}, chosen ${d.cookTime_s.toFixed(1)}`);
   }
   // And with the white skipped: the yolk alone pins the time-scale enough.
-  const yolkOnly = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 0, null)], COARSE);
+  const yolkOnly = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 'jammy', null)], COARSE);
   const grid = gridFor(yolkOnly, EGG, SETUP);
   for (const level of [0.22, 0.41, 0.62]) {
     const d = decideFor(yolkOnly, grid, level);
@@ -267,9 +267,9 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
     widths.push((0.5 * (interval.high_s - interval.low_s)).toFixed(1));
     const t = d.cookTime_s;
     const truthGrid = buildRequestedGrid({ egg: EGG, setup: SETUP, tauAirScale: 1, spec: COARSE(ALPHA_DEFAULT, t) });
-    const y = yolkProbit(truthGrid, truth, t, logYolkTarget(0.41));
+    const y = yolkWordProbit(truthGrid, truth, t);
     const w = whiteProbit(truthGrid, truth, t);
-    const r = recordAt(0.41, t, y[0] > 0.5 ? -1 : y[2] > 0.5 ? 1 : 0, w[0] > 0.5 ? 'runny' : w[2] > 0.5 ? 'firm' : 'tender');
+    const r = recordAt(0.41, t, YOLK_WORDS[y.indexOf(Math.max(...y))], w[0] > 0.5 ? 'runny' : w[2] > 0.5 ? 'firm' : 'tender');
     foldRecord(c, r, buildRequestedGrid(gridRequestFor(c, r, COARSE)));
     const unanswered = recordAt(0.41, t, null, null);
     const before = JSON.stringify(c);
@@ -350,7 +350,7 @@ test('6c. one surface serves every level: the slider never waits for a grid', ()
 // --------------------------------------------------------------------------
 
 test('6d. the decided solution is the mean solve moved to the chosen time, and the mean solve itself at its own time', () => {
-  const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
+  const learned = replay(PRIOR, [recordAt(0.41, 464, 'jammy', 'firm')], COARSE);
   const params = calibrationParams(learned);
   const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
   const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logYolkTarget(0.41));
@@ -378,7 +378,7 @@ test('6e. the nudge: every whole second from -10 to +10 alike, and only where a 
   assert.equal(nudgeSeconds(-1), -NUDGE_MAX_S);
   assert.equal(nudgeSeconds(1), NUDGE_MAX_S);
 
-  const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
+  const learned = replay(PRIOR, [recordAt(0.41, 464, 'jammy', 'firm')], COARSE);
   const params = calibrationParams(learned);
   const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
   const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logYolkTarget(0.41));
@@ -405,7 +405,7 @@ test('7. two runny whites at soft: what the choice does at soft and at jammy', (
   const rows: string[] = [];
   const before = [decideFor(PRIOR, PRIOR_GRID, 0.22), decideFor(PRIOR, PRIOR_GRID, 0.41)];
   for (const sequence of ['E3', 'E5'] as const) {
-    for (const yolk of [null, 0] as (Feedback | null)[]) {
+    for (const yolk of [null, 'soft'] as (YolkWord | null)[]) {
       let cal = PRIOR;
       const log: EggRecord[] = [];
       for (let i = 0; i < 2; i++) {
@@ -415,7 +415,7 @@ test('7. two runny whites at soft: what the choice does at soft and at jammy', (
       }
       const grid = gridFor(cal, EGG, SETUP);
       const after = [decideFor(cal, grid, 0.22), decideFor(cal, grid, 0.41)];
-      rows.push(`${sequence}, ${yolk === null ? 'white only' : 'yolk just right too'}, cooked at ${log.map((r) => r.recommended_s.toFixed(0)).join(' and ')}: `
+      rows.push(`${sequence}, ${yolk === null ? 'white only' : 'yolk soft too'}, cooked at ${log.map((r) => r.recommended_s.toFixed(0)).join(' and ')}: `
         + `soft ${before[0].cookTime_s.toFixed(0)} -> mean ${after[0].meanCookTime_s.toFixed(0)}, chosen ${after[0].cookTime_s.toFixed(0)} (${after[0].oddsTenths}/10); `
         + `jammy ${before[1].cookTime_s.toFixed(0)} -> mean ${after[1].meanCookTime_s.toFixed(0)}, chosen ${after[1].cookTime_s.toFixed(0)} (${after[1].oddsTenths}/10)`);
       assert.ok(after[0].cookTime_s > before[0].cookTime_s + 15, rows.join('\n'));

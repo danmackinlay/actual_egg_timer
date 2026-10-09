@@ -78,7 +78,7 @@ test('3. a reader refuses a population it cannot trust', () => {
 });
 
 test('4. a posterior from another population is replayed; one from this one is kept', () => {
-  const log = [recordAt(0.41, 470, 0, 'tender')];
+  const log = [recordAt(0.41, 470, 'jammy', 'tender')];
   const kept = { base: null, calibration: freshCalibration(64, 3), folded: 1, log: log };
   kept.calibration.eggsLogged = 1;
   // Stored under the literature, read under it: kept as it is.
@@ -93,39 +93,28 @@ test('4. a posterior from another population is replayed; one from this one is k
   assert.equal(moved.kept.log.length, 1);
   assert.equal(moved.kept.calibration.eggsLogged, 0);
   assert.deepEqual(moved.kept.calibration.start, priorStart(SHIFTED));
-  // A store from before E7 has no population, and was drawn from the literature.
-  const old = JSON.parse(raw) as Record<string, unknown>;
-  delete old['p'];
-  assert.equal(decodeKept(JSON.stringify(old), LITERATURE_POPULATION).path, 'loaded');
-  assert.equal(decodeKept(JSON.stringify(old), SHIFTED).path, 'rebuild');
+  // A store that names no population is replayed, whichever this page has.
+  const none = JSON.parse(raw) as Record<string, unknown>;
+  delete none['p'];
+  assert.equal(decodeKept(JSON.stringify(none), LITERATURE_POPULATION).path, 'rebuild');
+  assert.equal(decodeKept(JSON.stringify(none), SHIFTED).path, 'rebuild');
 });
 
-test('5. a store from before 0.5, its carryover in every particle, is replayed, and its base kept', () => {
-  // Before DECISIONS.md 95 every particle carried `t`, learned or not. This
-  // build reads the store as it was, ignores `t`, and replays the log under
-  // its own model; a base cannot be replayed, and is kept as it is, less `t`.
-  const log = [recordAt(0.41, 470, 0, 'tender')];
+test('5. a store folded under another model is replayed, and its base kept as it is', () => {
+  // A base cannot be replayed. The counter's carryover is no column of the
+  // store: it is the physics' for every particle (DECISIONS.md 95).
+  const log = [recordAt(0.41, 470, 'jammy', 'tender')];
   const base = freshCalibration(64, 5);
   base.eggsLogged = 2;
   const kept = { base: base, calibration: freshCalibration(64, 3), folded: 1, log: log };
   kept.calibration.eggsLogged = 3;
-  const stored = JSON.parse(encodeKept(kept, LITERATURE_POPULATION, '2026-10-e9')) as Record<string, Record<string, number[]>>;
-  // What this build writes: `t` at 1.0 for every particle, so a build from
-  // before 0.5 still reads it.
-  assert.deepEqual(stored['cal']['t'], new Array<number>(64).fill(1.0));
-  // What a build from before 0.5 wrote.
-  stored['cal']['t'] = stored['cal']['t'].map((_, i) => 0.7 + 0.01 * i);
-  stored['base']['t'] = stored['base']['t'].map((_, i) => 1.3 - 0.01 * i);
-  const read = decodeKept(JSON.stringify(stored), LITERATURE_POPULATION);
+  const text = encodeKept(kept, LITERATURE_POPULATION, '2026-10-e9');
+  const stored = JSON.parse(text) as Record<string, Record<string, number[]>>;
+  assert.deepEqual(Object.keys(stored['cal']).sort(), ['a', 'n', 'o', 'rng', 'sd', 'w', 'wg', 'wo']);
+  const read = decodeKept(text, LITERATURE_POPULATION);
   assert.equal(read.path, 'rebuild');
-  assert.equal(read.loses, false);
   assert.equal(read.kept.log.length, 1);
   assert.notEqual(read.kept.base, null);
   assert.deepEqual(read.kept.base?.posterior.particles, base.posterior.particles);
   assert.equal(read.kept.base?.eggsLogged, 2);
-  // And a store with no `t` at all is read the same way.
-  delete stored['cal']['t'];
-  delete stored['base']['t'];
-  const without = decodeKept(JSON.stringify(stored), LITERATURE_POPULATION);
-  assert.deepEqual(without.kept.base?.posterior.particles, base.posterior.particles);
 });

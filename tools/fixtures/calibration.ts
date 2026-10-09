@@ -5,7 +5,7 @@
 import { eggFromMass } from '../../src/core/geometry.js';
 import { GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
+  FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
   WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
   yolkWordProbabilities, yolkWordProbit,
@@ -61,20 +61,6 @@ export const PARTICLE_COUNT = 64;
 export const PRIOR_SEED = 20260917;
 export const NOMINAL_TARGET = Math.log10(6.0);
 
-/* What the cook said about each egg: the yolk and the white, either of which
- * may be missing, folded jointly. A sequence with a repeat, a reversal, both
- * answers, each alone, all three whites, and enough agreement to drive
- * the effective sample size below n/2 and trigger a resample - which is the only
- * part of the filter that consumes the RNG after the prior.
- *
- * The cook times straddle the white's threshold on this surface: around
- * 340-380 s the particles disagree about the white, and 440-500 s puts it past
- * setting, so every answer is scored where it is likely and where it is not. */
-const FEEDBACK_SEQUENCE: (Feedback | null)[] = [-1, 0, -1, 1, 0, null, -1, 0, -1, 1, 1];
-const WHITE_SEQUENCE: (WhiteReport | null)[] = [
-  'runny', 'tender', 'runny', null, 'firm', 'runny', 'firm', 'tender', null, 'firm', 'runny',
-];
-
 function readout(post: ReturnType<typeof createPrior>) {
   const params = posteriorParams(post);
   const predicted = predictCookTime(post, CALIB_GRID, NOMINAL_TARGET);
@@ -94,35 +80,15 @@ function readout(post: ReturnType<typeof createPrior>) {
   };
 }
 
-const posterior = createPrior(PARTICLE_COUNT, PRIOR_SEED);
-const prior = readout(posterior);
+const prior = readout(createPrior(PARTICLE_COUNT, PRIOR_SEED));
 
-const COOK_TIMES_S = [360, 340, 380, 500, 355, 460, 345, 370, 440, 350, 365];
-const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
-  const cookTime_s = COOK_TIMES_S[i];
-  const white = WHITE_SEQUENCE[i];
-  // One particle's likelihood, the first, so a port that gets the probit wrong
-  // is told where before it is told that the whole set moved.
-  const firstLikelihood = answerLikelihood(
-    CALIB_GRID, posterior.particles[0], cookTime_s, NOMINAL_TARGET, feedback, white,
-  );
-  updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback, white);
-  return {
-    cookTime_s: cookTime_s,
-    logNominalTarget: NOMINAL_TARGET,
-    feedback: feedback,
-    white: white,
-    firstLikelihood: firstLikelihood,
-    after: readout(posterior),
-  };
-});
-
-/* The same filter, from the same prior, told the yolk the cook got in five
- * words (DECISIONS.md 92): every word, both ends, a word with no white and a
- * white with no word, at times from runny to past hard on this surface, so
- * each band is scored where it is likely and where it is not. Each step
- * writes the first particle's five probabilities and the posterior
- * predictive of the five, before the fold. */
+/* The filter, from the prior, told the yolk the cook got in five words
+ * (DECISIONS.md 92) and the white: every word, both ends, a word with no
+ * white and a white with no word, all three whites, at times from runny to
+ * past hard on this surface, so each band is scored where it is likely and
+ * where it is not. Each step writes the first particle's likelihood, its
+ * five probabilities and the posterior predictive of the five, before the
+ * fold. */
 const WORD_SEQUENCE: (YolkWord | null)[] = ['soft', 'jammy', 'runny', 'fudgy', 'jammy', null, 'hard', 'soft', 'jammy'];
 const WORD_WHITES: (WhiteReport | null)[] = ['tender', 'firm', 'runny', 'firm', null, 'tender', 'firm', null, 'firm'];
 const WORD_TIMES_S = [360, 420, 330, 520, 410, 380, 640, 350, 430];
@@ -132,13 +98,10 @@ const wordUpdates = WORD_SEQUENCE.map((word, i) => {
   const white = WORD_WHITES[i];
   const firstProbit = yolkWordProbit(CALIB_GRID, wordPosterior.particles[0], cookTime_s);
   const predictive = yolkWordProbabilities(wordPosterior, CALIB_GRID, cookTime_s);
-  const firstLikelihood = answerLikelihood(
-    CALIB_GRID, wordPosterior.particles[0], cookTime_s, NOMINAL_TARGET, null, white, null, word,
-  );
-  updatePosterior(wordPosterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, null, white, null, word);
+  const firstLikelihood = answerLikelihood(CALIB_GRID, wordPosterior.particles[0], cookTime_s, word, white);
+  updatePosterior(wordPosterior, CALIB_GRID, cookTime_s, word, white);
   return {
     cookTime_s: cookTime_s,
-    logNominalTarget: NOMINAL_TARGET,
     yolkWord: word,
     white: white,
     firstProbit: firstProbit,
@@ -153,15 +116,17 @@ const wordUpdates = WORD_SEQUENCE.map((word, i) => {
  * rather than only wherever the sequence above happens to cross the threshold.
  *
  * The input posterior is therefore synthetic: the particles are the real ones
- * from the end of the sequence above, with their weights sharpened by a power
- * until the effective sample size sits just over the threshold. It is written out
- * in full, so the port reads the same starting point rather than reproducing the
- * sharpening - the same reason the policy verdicts are built from synthetic
- * Solutions. What is being pinned is the branch, not the road to it. */
+ * from the end of the word sequence above, with their weights raised to a power,
+ * from flat upwards, until the effective sample size sits just over the
+ * threshold. It is written out in full, so the port reads the same starting
+ * point rather than reproducing the sharpening - the same reason the policy
+ * verdicts are built from synthetic Solutions. What is being pinned is the
+ * branch, not the road to it. */
 const WHITE_RESAMPLE_CASE = (() => {
+  const posterior = wordPosterior;
   const n = posterior.particles.length;
   const base = posterior.weights.slice();
-  let exponent = 1.0;
+  let exponent = 0.0;
   let weights = base.slice();
   for (let step = 0; step < 400; step++) {
     exponent += 0.05;
@@ -185,7 +150,7 @@ const WHITE_RESAMPLE_CASE = (() => {
   };
   const cookTime_s = 365;
   const white: WhiteReport = 'runny';
-  updatePosterior(post, CALIB_GRID, cookTime_s, NOMINAL_TARGET, null, white);
+  updatePosterior(post, CALIB_GRID, cookTime_s, null, white);
   return {
     cookTime_s: cookTime_s,
     white: white,
@@ -234,11 +199,12 @@ export const calibrationFixture = {
     yolkWordCuts: YOLK_WORD_CUTS.slice(),
   },
   whiteResample: WHITE_RESAMPLE_CASE,
+  // The target every readout's `predict` is made for.
+  logNominalTarget: NOMINAL_TARGET,
   prior: {
     count: PARTICLE_COUNT,
     seed: PRIOR_SEED,
     ...prior,
   },
-  updates: updates,
   wordUpdates: wordUpdates,
 };

@@ -87,6 +87,14 @@ public struct RecordEgg: Sendable, Codable, Equatable {
         case massFrom, sizeTable
     }
 
+    /// `sizeTable` must be there, null or not, as every record writes it.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        massG = try c.decode(Double.self, forKey: .massG)
+        massFrom = try c.decode(MassFrom.self, forKey: .massFrom)
+        sizeTable = try c.decode(SizeTable?.self, forKey: .sizeTable)
+    }
+
     /// Written as null rather than omitted, like the record's own nullables.
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -162,7 +170,7 @@ public struct ProbeReading: Sendable, Codable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         centreC = try c.decode(Double.self, forKey: .centreC)
-        afterS = try c.decodeIfPresent(Double.self, forKey: .afterS)
+        afterS = try c.decode(Double?.self, forKey: .afterS)
     }
 
     /// `after_s` is written as null rather than omitted, as every nullable
@@ -187,7 +195,7 @@ public struct Forecast: Sendable, Codable, Equatable {
     /// P(runny), P(tender), P(firm).
     public var white: [Double]
     /// P(runny) ... P(hard), the yolk the cook will say they got
-    /// (DECISIONS.md 92). Nil (or absent) on a forecast from before then.
+    /// (DECISIONS.md 92). Nil when the outcome on screen had none.
     public var yolkWord: [Double]?
 
     public init(cookS: Double, yolk: [Double], white: [Double], yolkWord: [Double]? = nil) {
@@ -207,7 +215,7 @@ public struct Forecast: Sendable, Codable, Equatable {
         cookS = try c.decode(Double.self, forKey: .cookS)
         yolk = try c.decode([Double].self, forKey: .yolk)
         white = try c.decode([Double].self, forKey: .white)
-        yolkWord = try c.decodeIfPresent([Double].self, forKey: .yolkWord)
+        yolkWord = try c.decode([Double]?.self, forKey: .yolkWord)
     }
 
     /// `yolkWord` is written as null rather than omitted, as every nullable
@@ -274,8 +282,8 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var app: AppName
     public var appVersion: String
     public var prior: String
-    /// `modelID` when the record was written; nil on one from before E6.
-    public var model: String?
+    /// `modelID` when the record was written.
+    public var model: String
     public var egg: RecordEgg
     public var setup: RecordSetup
     public var level: Double
@@ -284,12 +292,8 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var pulledS: Double
     public var pulledBy: PulledBy
     public var cooledS: Double
-    /// The yolk answer given before DECISIONS.md 92, against `level`, or nil.
-    /// No app writes one now; a record from before keeps it.
-    public var yolk: Feedback?
     /// The yolk the cook got, in the slider's words (DECISIONS.md 92), or nil
-    /// when the question was on screen and the cook moved on, or on a record
-    /// from before it. Never set beside `yolk`.
+    /// when the question was on screen and the cook moved on.
     public var yolkWord: YolkWord?
     /// Nil when the question was on screen and the cook moved on; it is
     /// always asked.
@@ -297,7 +301,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     /// A reading at the centre's peak, or nil: no probe, or not taken.
     public var probe: ProbeReading?
     /// What the app said at "Eggs in", or nil: started before the odds were
-    /// known, or written before E6.
+    /// known, or no time chosen.
     public var forecast: Forecast?
     public var lang: String
     public var register: String
@@ -305,9 +309,9 @@ public struct EggRecord: Sendable, Codable, Equatable {
 
     public init(
         uid: String? = nil, day: String, id: Int? = nil, app: AppName, appVersion: String,
-        prior: String = literaturePopulation.id, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
+        prior: String = literaturePopulation.id, model: String = modelID, egg: RecordEgg, setup: RecordSetup,
         level: Double, recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
-        cooledS: Double, yolk: Feedback? = nil, yolkWord: YolkWord? = nil, white: WhiteReport? = nil,
+        cooledS: Double, yolkWord: YolkWord? = nil, white: WhiteReport? = nil,
         probe: ProbeReading? = nil, forecast: Forecast? = nil,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
@@ -327,7 +331,6 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.pulledS = pulledS
         self.pulledBy = pulledBy
         self.cooledS = cooledS
-        self.yolk = yolk
         self.yolkWord = yolkWord
         self.white = white
         self.probe = probe
@@ -344,21 +347,22 @@ public struct EggRecord: Sendable, Codable, Equatable {
         case pulledS = "pulled_s"
         case pulledBy
         case cooledS = "cooled_s"
-        case yolk, yolkWord, white, probe, forecast, lang, register, units
+        case yolkWord, white, probe, forecast, lang, register, units
     }
 
-    /// Nullable fields may be absent and read as nil, which is what the
-    /// TypeScript loader does too.
+    /// Today's shape only, as the TypeScript loader reads it: every nullable
+    /// field must be there, null or not, but `id`, which this app never
+    /// writes.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         v = try c.decode(Int.self, forKey: .v)
-        uid = try c.decodeIfPresent(String.self, forKey: .uid)
+        uid = try c.decode(String?.self, forKey: .uid)
         day = try c.decode(String.self, forKey: .day)
         id = try c.decodeIfPresent(Int.self, forKey: .id)
         app = try c.decode(AppName.self, forKey: .app)
         appVersion = try c.decode(String.self, forKey: .appVersion)
         prior = try c.decode(String.self, forKey: .prior)
-        model = try c.decodeIfPresent(String.self, forKey: .model)
+        model = try c.decode(String.self, forKey: .model)
         egg = try c.decode(RecordEgg.self, forKey: .egg)
         setup = try c.decode(RecordSetup.self, forKey: .setup)
         level = try c.decode(Double.self, forKey: .level)
@@ -367,11 +371,10 @@ public struct EggRecord: Sendable, Codable, Equatable {
         pulledS = try c.decode(Double.self, forKey: .pulledS)
         pulledBy = try c.decode(PulledBy.self, forKey: .pulledBy)
         cooledS = try c.decode(Double.self, forKey: .cooledS)
-        yolk = try c.decodeIfPresent(Feedback.self, forKey: .yolk)
-        yolkWord = try c.decodeIfPresent(YolkWord.self, forKey: .yolkWord)
-        white = try c.decodeIfPresent(WhiteReport.self, forKey: .white)
-        probe = try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
-        forecast = try c.decodeIfPresent(Forecast.self, forKey: .forecast)
+        yolkWord = try c.decode(YolkWord?.self, forKey: .yolkWord)
+        white = try c.decode(WhiteReport?.self, forKey: .white)
+        probe = try c.decode(ProbeReading?.self, forKey: .probe)
+        forecast = try c.decode(Forecast?.self, forKey: .forecast)
         lang = try c.decode(String.self, forKey: .lang)
         register = try c.decode(String.self, forKey: .register)
         units = try c.decode(Units.self, forKey: .units)
@@ -400,7 +403,6 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(pulledS, forKey: .pulledS)
         try c.encode(pulledBy, forKey: .pulledBy)
         try c.encode(cooledS, forKey: .cooledS)
-        try c.encode(yolk, forKey: .yolk)
         try c.encode(yolkWord, forKey: .yolkWord)
         try c.encode(white, forKey: .white)
         try c.encode(probe, forKey: .probe)
@@ -502,8 +504,7 @@ public struct CookFacts: Sendable, Equatable {
 /// The record of one egg, from its facts: the pull MEASURED when the cook
 /// tapped out of PULL after egg-in, ASSUMED at the scheduled time when the
 /// grace ran out; the time that ran split into what was recommended and the
-/// nudge; never the old yolk answer (DECISIONS.md 92); `id` only when there
-/// is one. See src/core/record.ts.
+/// nudge; `id` only when there is one. See src/core/record.ts.
 public func recordFor(_ f: CookFacts) -> EggRecord {
     let measured = f.outS.flatMap { $0 > 0 ? $0 : nil }
     let s = f.setup
@@ -528,7 +529,6 @@ public func recordFor(_ f: CookFacts) -> EggRecord {
         pulledS: measured ?? f.cookS,
         pulledBy: measured == nil ? .timeout : .cook,
         cooledS: s.cooling == .counter ? 0 : f.coolS,
-        yolk: nil,
         yolkWord: f.yolkWord,
         white: f.white,
         probe: f.probe,
@@ -579,21 +579,18 @@ private func isDay(_ s: String) -> Bool {
 }
 
 /// Whether a decoded record can be trusted. Codable has already checked the
-/// types and the enumerations; these are the rules `parseRecord` applies on
-/// top, the same ones: finite, and positive where the physics needs it, with
-/// physical ranges rather than the UI's `Limits`, so a bound that narrows in a
-/// later version cannot make an older version's eggs unreadable. Any
-/// `appVersion` is accepted under v1 - see the TypeScript for why.
+/// types, the enumerations and that today's fields are all there; these are
+/// the rules `parseRecord` applies on top, the same ones: finite, and
+/// positive where the physics needs it, with physical ranges rather than the
+/// UI's `Limits`. Any `appVersion` is accepted under v1.
 public func validRecord(_ r: EggRecord) -> Bool {
     guard r.v == recordVersion else { return false }
     if let uid = r.uid, uid.isEmpty { return false }
     guard isDay(r.day), !r.appVersion.isEmpty, !r.prior.isEmpty else { return false }
     // A moment, in whole milliseconds, within what a double holds exactly.
     if let id = r.id, id <= 0 || id > 9_007_199_254_740_991 { return false }
-    if let model = r.model, model.isEmpty { return false }
+    guard !r.model.isEmpty else { return false }
     if let forecast = r.forecast, !validForecast(forecast) { return false }
-    // One yolk answer or none (DECISIONS.md 92).
-    if r.yolk != nil && r.yolkWord != nil { return false }
     guard r.egg.massG.isFinite, r.egg.massG > 0 else { return false }
     // A class names its carton; nothing else has one.
     guard (r.egg.massFrom == .sizeClass) == (r.egg.sizeTable != nil) else { return false }
@@ -676,7 +673,7 @@ public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
 /// unanswered egg is still a record, but it moves no particle and is not an egg
 /// the model learned from.
 public func recordTeaches(_ r: EggRecord) -> Bool {
-    r.yolk != nil || r.yolkWord != nil || r.white != nil || r.probe != nil
+    r.yolkWord != nil || r.white != nil || r.probe != nil
 }
 
 func recordEggOf(_ r: EggRecord) -> Egg {
@@ -720,17 +717,16 @@ public func gridRequestFor(
 public func foldRecord(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
     guard recordTeaches(r) else { return }
     updatePosterior(
-        &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r),
-        logNominalTarget: logYolkTarget(r.level), yolk: r.yolk, white: r.white,
-        probeC: r.probe?.centreC, yolkWord: r.yolkWord
+        &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r), yolkWord: r.yolkWord, white: r.white,
+        probeC: r.probe?.centreC
     )
     c.eggsLogged += 1
 }
 
 /// Rebuild a posterior from a starting point - the prior, or the posterior of a
-/// damaged log that had to be dropped - and a log. Each egg is what the app did when it was answered; an egg with no
-/// answer is skipped and builds no surface. `start` is a value, so it is never
-/// moved.
+/// damaged log that had to be dropped - and a log. Each egg is what the app
+/// did when it was answered; an egg with no answer is skipped and builds no
+/// surface. `start` is a value, so it is never moved.
 public func replay(
     _ start: Calibration, _ records: [EggRecord], grid: GridPolicy = productionGrid
 ) -> Calibration {
@@ -743,9 +739,9 @@ public func replay(
 
 // MARK: - The store, read
 
-// What a launch makes of the store (DECISIONS.md 81): each app reads its
-// store apart its own way, which is I/O; what it then keeps is this one
-// decision. See src/core/record.ts.
+// What a launch makes of the store: each app reads its store apart its own
+// way, which is I/O; what it then keeps is this one decision. A store that
+// cannot be read is dropped. See src/core/record.ts.
 
 /// What a launch found: nothing to use (`fresh`), a log to fold again
 /// (`rebuild`), a log that cannot be used and what it taught kept as the base
@@ -761,10 +757,8 @@ public enum StoredBase: String, Sendable {
 
 /// What an app read from its store, part by part.
 public struct StoreRead: Sendable, Equatable {
-    /// Whether anything was stored at all.
-    public var stored: Bool
-    /// Whether it is a v4 store that can be taken apart.
-    public var v4: Bool
+    /// Whether it is a store of this format that can be taken apart.
+    public var readable: Bool
     /// The base under the posterior: nil where the store has none.
     public var base: StoredBase?
     /// Whether the posterior read whole.
@@ -772,28 +766,24 @@ public struct StoreRead: Sendable, Equatable {
     /// How many records the posterior has absorbed, or nil if that is not a
     /// whole number from zero.
     public var folded: Int?
-    /// How many records of the log this build reads, or nil when the log is
-    /// not a list.
+    /// How many records the log holds, or nil when it is not a list of
+    /// records this build reads, every one.
     public var records: Int?
-    /// Whether the records this build reads differ from the ones stored as read.
-    public var moved: Bool
-    /// The population the posterior was drawn from; the literature's when
-    /// the store does not say.
-    public var population: String
+    /// The population the posterior was drawn from, or nil when the store
+    /// does not say.
+    public var population: String?
     /// The model it was folded under, or nil when the store does not say.
     public var model: String?
 
     public init(
-        stored: Bool, v4: Bool, base: StoredBase?, posterior: Bool, folded: Int?, records: Int?,
-        moved: Bool, population: String, model: String?
+        readable: Bool, base: StoredBase?, posterior: Bool, folded: Int?, records: Int?,
+        population: String?, model: String?
     ) {
-        self.stored = stored
-        self.v4 = v4
+        self.readable = readable
         self.base = base
         self.posterior = posterior
         self.folded = folded
         self.records = records
-        self.moved = moved
         self.population = population
         self.model = model
     }
@@ -813,21 +803,16 @@ public enum KeptCalibration: String, Sendable {
 /// What to keep, in the parts that were read.
 public struct LoadDecision: Sendable, Equatable {
     public var path: LoadPath
-    /// Whether the stored text is to be kept aside, as stored, before
-    /// anything is written over it.
-    public var loses: Bool
     /// The base: the stored one, the stored posterior, or none.
     public var base: KeptBase?
     public var calibration: KeptCalibration
     /// How many records of the kept log the calibration has absorbed.
     public var folded: Int
-    /// Whether the log as read is kept, with every record set aside in its
-    /// place; when not, it starts again empty.
+    /// Whether the log as read is kept; when not, it starts again empty.
     public var log: Bool
 
-    public init(path: LoadPath, loses: Bool, base: KeptBase?, calibration: KeptCalibration, folded: Int, log: Bool) {
+    public init(path: LoadPath, base: KeptBase?, calibration: KeptCalibration, folded: Int, log: Bool) {
         self.path = path
-        self.loses = loses
         self.base = base
         self.calibration = calibration
         self.folded = folded
@@ -838,30 +823,29 @@ public struct LoadDecision: Sendable, Equatable {
 /// What a launch does with the store it read, for a build that draws its
 /// prior from `population` and folds under `model`. See src/core/record.ts.
 public func loadDecision(_ read: StoreRead, population: String, model: String) -> LoadDecision {
-    guard read.v4 else {
-        return LoadDecision(path: .fresh, loses: read.stored, base: nil, calibration: .start, folded: 0, log: false)
+    guard read.readable else {
+        return LoadDecision(path: .fresh, base: nil, calibration: .start, folded: 0, log: false)
     }
     guard let records = read.records else {
         let base: KeptBase? = read.posterior ? .posterior : read.base == .sound ? .stored : nil
-        return LoadDecision(path: .rebased, loses: true, base: base, calibration: .start, folded: 0, log: false)
+        return LoadDecision(path: .rebased, base: base, calibration: .start, folded: 0, log: false)
     }
     let base: KeptBase? = read.base == .sound ? .stored : nil
     guard read.base != .damaged, read.posterior, let folded = read.folded,
-          read.population == population, read.model == model, !read.moved else {
-        return LoadDecision(path: .rebuild, loses: false, base: base, calibration: .start, folded: 0, log: true)
+          read.population == population, read.model == model else {
+        return LoadDecision(path: .rebuild, base: base, calibration: .start, folded: 0, log: true)
     }
     if folded > records {
-        return LoadDecision(path: .rebased, loses: true, base: .posterior, calibration: .start, folded: 0, log: false)
+        return LoadDecision(path: .rebased, base: .posterior, calibration: .start, folded: 0, log: false)
     }
-    return LoadDecision(path: .loaded, loses: false, base: base, calibration: .posterior, folded: folded, log: true)
+    return LoadDecision(path: .loaded, base: base, calibration: .posterior, folded: folded, log: true)
 }
 
 // MARK: - The results file
 
 // "Export my results" (DECISIONS.md 81): the store exactly as stored, spliced
-// in character for character, every stored copy the app could not read, and
-// enough beside them to say whose and which. `resultsFile` in
-// src/core/record.ts, held to it by `fixtures/record.json`.
+// in character for character, and enough beside it to say whose and which.
+// `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
 
 /// The results file's own version.
 public let resultsFileVersion = 1
@@ -912,7 +896,7 @@ public func jsonString(_ s: String) -> String {
 }
 
 /// A stored text as it goes into the file: itself when it is a JSON object
-/// or array, a JSON string holding it when not, so a damaged copy is kept too.
+/// or array, a JSON string holding it when not, so a damaged store is kept too.
 private func spliced(_ s: String) -> String {
     guard let data = s.data(using: .utf8), (try? JSONSerialization.jsonObject(with: data)) != nil else {
         return jsonString(s)
@@ -921,12 +905,11 @@ private func spliced(_ s: String) -> String {
 }
 
 private let resultsAbout = "Actual Egg Timer: every result this device kept, as it keeps them. "
-    + "\"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4); "
-    + "\"unread\" holds any stored copy the app could not read, kept rather than overwritten."
+    + "\"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4)."
 
-/// The results file: the meta, the store (nil when there is none) and every
-/// unread copy, in the order they were kept. One line of JSON.
-public func resultsFile(_ meta: ResultsMeta, stored: String?, unread: [String]) -> String {
+/// The results file: the meta and the store (nil when there is none). One
+/// line of JSON.
+public func resultsFile(_ meta: ResultsMeta, stored: String?) -> String {
     let fields: [(String, String)] = [
         ("about", jsonString(resultsAbout)),
         ("file", String(resultsFileVersion)),
@@ -937,7 +920,6 @@ public func resultsFile(_ meta: ResultsMeta, stored: String?, unread: [String]) 
         ("model", jsonString(modelID)),
         ("uid", meta.uid.map(jsonString) ?? "null"),
         ("stored", stored.map(spliced) ?? "null"),
-        ("unread", "[" + unread.map(spliced).joined(separator: ",") + "]"),
     ]
     return "{" + fields.map { "\"\($0.0)\":\($0.1)" }.joined(separator: ",") + "}"
 }
