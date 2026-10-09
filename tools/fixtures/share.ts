@@ -32,13 +32,13 @@ const POOL = [
   '77777777-7777-4777-8777-777777777777', '88888888-8888-4888-9888-888888888888',
   '99999999-9999-4999-a999-999999999999', 'aaaaaaaa-aaaa-4aaa-baaa-aaaaaaaaaaaa',
 ];
-const DAY_MS = 24 * 3600 * 1000;
-/** Now, for an answer: 6 October 2026, epoch ms. */
-const T = 1791244800000;
+const DAY_S = 24 * 3600;
+/** Now, for an answer: 6 October 2026, epoch s. */
+const T = 1791244800;
 
 type Move =
   | { turnOn: string } | { turnOff: true } | { forget: string } | { deleteAsked: true }
-  | { reconcile: number } | { answer: number; now: number } | { deleted: string };
+  | { reconcile: number } | { answer: number; now_s: number } | { deleted: string };
 
 function fresh(s: ShareState): string {
   return POOL[(s.uids.length + s.deleting.length) % POOL.length];
@@ -48,7 +48,8 @@ function moves(s: ShareState): Move[] {
   return [
     { turnOn: fresh(s) }, { turnOff: true }, { forget: fresh(s) }, { deleteAsked: true },
     { reconcile: 0 }, { reconcile: 2 },
-    { answer: 201, now: T }, { answer: 400, now: T }, { answer: 503, now: T }, { answer: 503, now: T + 4 * DAY_MS },
+    { answer: 201, now_s: T }, { answer: 400, now_s: T }, { answer: 503, now_s: T },
+    { answer: 503, now_s: T + 4 * DAY_S },
     { deleted: s.deleting.length > 0 ? s.deleting[0] : A },
   ];
 }
@@ -59,7 +60,7 @@ function apply(s: ShareState, m: Move): { next: ShareState; moved: boolean | nul
   if ('forget' in m) return { next: forgotten(s, m.forget), moved: null };
   if ('deleteAsked' in m) return { next: deletionAsked(s), moved: null };
   if ('reconcile' in m) return { next: reconciled(s, m.reconcile), moved: null };
-  if ('answer' in m) return answered(s, m.answer, m.now);
+  if ('answer' in m) return answered(s, m.answer, m.now_s);
   return { next: deletionConfirmed(s, m.deleted), moved: null };
 }
 
@@ -84,11 +85,11 @@ export function shareFixture() {
     { on: true, uid: A, sent: 2.5, seq: '4', busy: true },
     { on: true, uid: A, sent: 3, seq: 4, uids: [A, A, B], deleting: [A, null, A] },
     { on: true, uid: A, uids: 'not a list', deleting: {} },
-    { on: true, uid: A, busy: 2, busySince: 1e12 },
-    { on: true, uid: A, busy: 2, busySince: 781234567.25 },
-    { on: true, uid: A, busy: 'x', busySince: 'y' },
-    { on: true, uid: A, busySince: false },
-    { on: false, uid: null, sent: 3, seq: 4, busy: 2, busySince: 1e12, uids: [A], deleting: [A, B] },
+    { on: true, uid: A, busy: 2, busySince_s: 1e9 },
+    { on: true, uid: A, busy: 2, busySince_s: 1759541767.25 },
+    { on: true, uid: A, busy: 'x', busySince_s: 'y' },
+    { on: true, uid: A, busySince_s: false },
+    { on: false, uid: null, sent: 3, seq: 4, busy: 2, busySince_s: 1e9, uids: [A], deleting: [A, B] },
     { on: true, uid: 'nobody', sent: 3, uids: [B], deleting: [B] },
     { ...FRESH_SHARE, uids: [A, B], deleting: [A], extra: 'ignored' },
   ];
@@ -98,9 +99,9 @@ export function shareFixture() {
     FRESH_SHARE,
     { ...FRESH_SHARE, on: true, uid: A, sent: 2, seq: 3, uids: [A] },
     { ...FRESH_SHARE, uid: A, sent: 1, seq: 1, uids: [B, A] },
-    { ...FRESH_SHARE, on: true, uid: A, sent: 1, seq: 1, uids: [A], busy: 4, busySince: T },
+    { ...FRESH_SHARE, on: true, uid: A, sent: 1, seq: 1, uids: [A], busy: 4, busySince_s: T },
     // A clock set back since the first busy answer.
-    { ...FRESH_SHARE, on: true, uid: A, sent: 1, seq: 1, uids: [A], busy: 4, busySince: T + 10 * DAY_MS },
+    { ...FRESH_SHARE, on: true, uid: A, sent: 1, seq: 1, uids: [A], busy: 4, busySince_s: T + 10 * DAY_S },
     { ...FRESH_SHARE, deleting: [A, B] },
   ];
   const index = new Map<string, number>();

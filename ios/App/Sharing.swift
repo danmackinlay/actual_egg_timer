@@ -112,29 +112,33 @@ final class Sharing {
     /// A random version 4 UUID, lower case, as the server takes it.
     nonisolated static func newUid() -> String { UUID().uuidString.lowercased() }
 
-    /// Now, as core counts it: epoch ms. The system's clock, as every time
-    /// here is: sharing deals with the server and Apple, and sends nothing
-    /// under a debug build's altered clock (`AppClock`).
-    private static func nowMs() -> Double { AppClock.system.timeIntervalSince1970 * 1000 }
+    /// Now, epoch s. The system's clock, as every time here is: sharing
+    /// deals with the server and Apple, and sends nothing under a debug
+    /// build's altered clock (`AppClock`).
+    private static var nowS: Double { AppClock.system.timeIntervalSince1970 }
 
     // MARK: - Kept
 
-    /// What is kept, as `sharing.v1` has always held it: the JSON the web
-    /// stores, but with `busySince` a `Date` as JSONEncoder wrote one (seconds
-    /// since 2001), where core counts epoch ms, and with no key for an absent
-    /// value. Read back by core's `readShareState`, which keeps every id it can
-    /// from a damaged copy, so a deletion still pending is not lost with the
-    /// rest.
+    /// What is kept, as `sharing.v1` has always held it: core's JSON, but
+    /// with `busySince` a `Date` as JSONEncoder wrote one (seconds since
+    /// 2001), where core counts epoch s, and with no key for an absent value.
+    /// Read back by core's `readShareState`, which keeps every id it can from
+    /// a damaged copy, so a deletion still pending is not lost with the rest.
     private static func stored(_ s: ShareState) -> Data? {
         var o = s.jsonObject.filter { !($0.value is NSNull) }
-        if let ms = s.busySince { o["busySince"] = ms / 1000 - Date.timeIntervalBetween1970AndReferenceDate }
+        o["busySince_s"] = nil
+        if let since = s.busySinceS { o["busySince"] = since - Date.timeIntervalBetween1970AndReferenceDate }
         return try? JSONSerialization.data(withJSONObject: o)
     }
 
     private static func read(_ data: Data?) -> ShareState {
-        var s = readShareState(data.flatMap { try? JSONSerialization.jsonObject(with: $0) })
-        s.busySince = s.busySince.map { ($0 + Date.timeIntervalBetween1970AndReferenceDate) * 1000 }
-        return s
+        let raw = data.flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        guard var o = raw as? [String: Any] else { return readShareState(raw) }
+        // A number moved to epoch s; anything else left for core to refuse.
+        let since = o.removeValue(forKey: "busySince")
+        let number = (since as? NSNumber).flatMap { CFGetTypeID($0) == CFBooleanGetTypeID() ? nil : $0.doubleValue }
+        o["busySince_s"] = number.map { $0 + Date.timeIntervalBetween1970AndReferenceDate } ?? since
+        return readShareState(o)
     }
 
     private func save(_ next: ShareState) {
@@ -250,7 +254,7 @@ final class Sharing {
             // through either. The next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/eggs", body: body, assertion: assertion) else { return }
             guard gen == generation else { return }
-            let answer = answered(state, status: status, now: Self.nowMs())
+            let answer = answered(state, status: status, nowS: Self.nowS)
             save(answer.next)
             guard answer.moved else { return }
         }
