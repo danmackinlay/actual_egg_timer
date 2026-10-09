@@ -6122,3 +6122,16 @@ them was not proved by one. A capture is slower for it, about 3½ minutes
 where it was 1¼. Both sides of a comparison must be captured by the fixed
 harness: the harness is served from the tree being captured, so a "before"
 taken on a commit without this one is the old, racing capture.
+
+## 9 October 2026: three iOS bugs from the red team (REFACTOR-0.5 0.2 to 0.4)
+
+**0.2, the alarm's sound round the guard.** `AlarmSoundChoice.pick` wrote
+`UserDefaults` itself, so a build that had found a newer build's mark
+(`Stores.readOnly`) still wrote the sound. It writes through `Stores.set`
+now, and `test/iosStores.test.ts`, in `npm test`, reads the Swift of
+`ios/App`, `ios/Shared` and `ios/Widget` with its comments left out, and
+fails on a setter (`set` or `setValue` with `forKey:`) called on anything
+but `Stores`, or on `removeObject` or a persistent domain set or removed,
+anywhere but `Store.swift`. It failed on the old line and on nothing else.
+No debug hook needed an exception: the launch arguments are read, never
+written.

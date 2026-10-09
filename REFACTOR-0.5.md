@@ -37,11 +37,12 @@ then restructure.
       (5 commits on `8972a05`) was never merged. *Done:* `0.4.x`
       fast-forwarded to `774c459` (9 October 2026); `verify` and `ios:build`
       passed; no 0.5 commit fixed the guard itself, so nothing came across.
-- [ ] **0.2 iOS: the alarm sound bypasses the guard** ✔.
+- [x] **0.2 iOS: the alarm sound bypasses the guard** ✔.
       `ios/App/AlarmSoundChoice.swift:30` writes `UserDefaults` directly;
       `Store.swift` says every write goes through `Stores.set`. Route it, and
       add a lint that `UserDefaults.standard.set|removeObject` appears only in
-      `Store.swift`. S.
+      `Store.swift`. S. *Done:* through `Stores.set`; `test/iosStores.test.ts`
+      fails on any write to UserDefaults outside `Store.swift`.
 - [ ] **0.3 iOS forgets a corrected cook whose record could not be remade** ✔.
       `AppModel.remakeThenEnd` (`AppModel.swift:215`) forgets the stored cook
       and sends it final in a `defer`, so it runs when `correctedAsRan`
