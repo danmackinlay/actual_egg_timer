@@ -23,14 +23,9 @@ const decisionGrids = new Map<string, { inputs: DecisionInputs; grid: DoseGrid }
 const decisionBuilds = new Map<string, Promise<DoseGrid>>();
 const DECISION_GRIDS_KEPT = 6;
 
-/** A surface's key: core's (`inputsKey`), which iOS's caches and the plan use too. */
-export function decisionKey(inputs: DecisionInputs): string {
-  return inputsKey(inputs);
-}
-
 /** The surface for these inputs if it has been built, or null. */
 export function cachedDecisionGrid(inputs: DecisionInputs): DoseGrid | null {
-  return decisionGrids.get(decisionKey(inputs))?.grid ?? null;
+  return decisionGrids.get(inputsKey(inputs))?.grid ?? null;
 }
 
 /** What is built, as the page's model holds it (model.ts): every surface,
@@ -40,7 +35,7 @@ export function builtFor(c: Calibration): { surfaces: CookSurface[]; profiles: P
   const print = posteriorPrint(c);
   const surfaces: CookSurface[] = [];
   for (const { inputs, grid } of decisionGrids.values()) {
-    surfaces.push({ inputs: inputs, grid: grid, profile: profiles.get(`${decisionKey(inputs)}#${print}`)?.profile ?? null });
+    surfaces.push({ inputs: inputs, grid: grid, profile: profiles.get(`${inputsKey(inputs)}#${print}`)?.profile ?? null });
   }
   const odds: PotOdds[] = [];
   for (const [key, p] of profiles) if (key.endsWith(`#${print}`)) odds.push(p);
@@ -62,7 +57,7 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
   // A pot that cannot even be keyed cannot be built: rejected, as a build that throws is.
   let key: string;
   try {
-    key = decisionKey(inputs);
+    key = inputsKey(inputs);
   } catch (error: unknown) {
     return Promise.reject(error);
   }
@@ -114,7 +109,7 @@ function posteriorPrint(c: Calibration): string {
 }
 
 export function profileKey(inputs: DecisionInputs, c: Calibration): string {
-  return `${decisionKey(inputs)}#${posteriorPrint(c)}`;
+  return `${inputsKey(inputs)}#${posteriorPrint(c)}`;
 }
 
 /** The profile for this pot and posterior if it has been computed, or null. */

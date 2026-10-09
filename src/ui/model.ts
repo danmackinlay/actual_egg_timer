@@ -61,13 +61,10 @@ import type { UnitSystem } from '../core/units.js';
 import { chooseUnits } from '../core/units.js';
 import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.js';
 import { PotOdds, nudgeNow, solveIdle } from './answer.js';
-import { inputsKey } from '../core/decide.js';
 import { targetPeakYolk_C } from '../core/slider.js';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
 import type { KeptAnswers, Settings, StoredCook } from './store.js';
 import { REGION, REGIONAL_UNITS } from './units.js';
-
-export { NO_NEED } from './state.js';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,
  *  and the egg it aims for, once planned. */
@@ -738,10 +735,7 @@ function holdReading(m: Model): Model {
 
 /** The odds profile of the surface built for `inputs`, if it is in. */
 function profileIn(m: Model, inputs: DecisionInputs | null): OddsProfile | null {
-  if (inputs === null) return null;
-  const key = inputsKey(inputs);
-  for (const s of m.surfaces) if (inputsKey(s.inputs) === key) return s.profile;
-  return null;
+  return surfaceFor(m.surfaces, inputs)?.profile ?? null;
 }
 
 /**
