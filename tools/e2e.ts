@@ -190,7 +190,7 @@ const SCENARIOS: Record<string, Scenario> = {
         search: location.search }))()`);
       check(!a.mark && !a.handles, `eggs.test: ${JSON.stringify(a)}`);
       check(a.search === '?clock=60&at=+1h', 'the address left alone off this machine');
-      const asked = away.requests.filter((r) => r.url.includes('/dev/'));
+      const asked = away.requests().filter((r) => r.url.includes('/dev/'));
       check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
       const home = await h.ctx.open('/?clock=60&at=+1h');
       const b = await home.eval<{ mark: string | null; skew: number; search: string }>(`(() => ({

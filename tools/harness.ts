@@ -170,8 +170,11 @@ export interface TabOptions {
 /** One page, attached on the browser's socket. */
 export class Tab {
   readonly errors: string[] = [];
-  /** Every request the page made, as DevTools saw it leave. */
-  readonly requests: { url: string; method: string }[] = [];
+  /** Every request the tab made, as DevTools saw it leave, with the
+   *  document that made it (its loader). */
+  private sent: { url: string; method: string; loader: string }[] = [];
+  /** The document the tab is on now. */
+  private loader = '';
 
   private cdp: Cdp;
   readonly session: string;
@@ -197,8 +200,11 @@ export class Tab {
         const d = (params as { exceptionDetails: { text: string; exception?: { description?: string } } }).exceptionDetails;
         tab.errors.push(d.exception?.description ?? d.text);
       } else if (method === 'Network.requestWillBeSent') {
-        const r = (params as { request: { url: string; method: string } }).request;
-        tab.requests.push({ url: r.url, method: r.method });
+        const p = params as { loaderId: string; request: { url: string; method: string } };
+        tab.sent.push({ url: p.request.url, method: p.request.method, loader: p.loaderId });
+      } else if (method === 'Page.frameNavigated') {
+        const f = (params as { frame: { parentId?: string; loaderId: string } }).frame;
+        if (f.parentId === undefined) tab.loader = f.loaderId;
       }
     });
     await cdp.send('Runtime.enable', {}, sessionId);
@@ -322,9 +328,16 @@ export class Tab {
     return this.eval<number>('window.aetClock.now()');
   }
 
-  /** The requests to the sharing endpoint this page has made. */
+  /** The requests the document now in the tab made, from its own load on:
+   *  not those of a document before a reload, which a scenario may have
+   *  set going by planting stores under it. */
+  requests(): { url: string; method: string }[] {
+    return this.sent.filter((r) => r.loader === this.loader);
+  }
+
+  /** The requests to the sharing endpoint this document has made. */
   sends(): number {
-    return this.requests.filter((r) => r.url.includes('/api/eggs') && r.method !== 'GET').length;
+    return this.requests().filter((r) => r.url.includes('/api/eggs') && r.method !== 'GET').length;
   }
 
   /** Wait for the phase, and for the page to say it (a tick behind the
