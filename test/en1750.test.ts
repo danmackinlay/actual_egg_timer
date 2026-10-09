@@ -4,9 +4,9 @@
  * the record that says it was read.
  *
  * Placeholder parity and the length budgets are copy.test.ts's, which reads
- * every catalogue in copy/ and so this one too; 1a checks that it does. The
- * catalogue covers both apps' keys (1b), so every rule here binds iOS's
- * alarms and Live Activity as it binds the web's page.
+ * every catalogue in copy/ and so this one too; 1a checks that it does. Every
+ * twin, of either app's key, is held to every rule here; a key without one
+ * falls back to English and is listed by `npm run copy:queue` (1b).
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -24,7 +24,7 @@ import {
 import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
-import { catalogueTags, isCatalogueFile, translationTags } from '../tools/copyApproval.js';
+import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
 import { gridFor, knowing } from '../tools/common.js';
 
 type Entry = Record<string, unknown>;
@@ -73,18 +73,17 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
 /** Keys 1750 leaves to English on purpose: the app's name, which is a name. */
 const LEFT_TO_ENGLISH = new Set(['app.name']);
 
-test('1b. every key either app uses has its 1750 twin, and every twin is an English key', () => {
-  // The web's, and iOS's: the alarms, the alarm's status lines, the Live
-  // Activity and the Dynamic Island. So every rule below - the archaisms, the
-  // spellings, the long s - binds them too.
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    if (LEFT_TO_ENGLISH.has(key)) continue;
-    const apps = entry['apps'] as string[];
-    assert.ok(apps.length > 0, `${key}: used by no app`);
-    assert.ok(PERIOD.messages.has(key), `${key} (${apps.join(', ')}): no 1750 twin`);
-  }
+test('1b. every twin is an English key; a key without one is listed, not refused', () => {
+  // The twins may lag the English (DECISIONS.md 103): a key with no twin
+  // renders in English (1c), and `npm run copy:queue` lists it as missing
+  // unless its base says it is left to English on purpose. Every twin there
+  // is - the web's, and iOS's alarms, Live Activity and Dynamic Island - is
+  // held to every rule below: the archaisms, the spellings, the long s.
   for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
-  for (const key of LEFT_TO_ENGLISH) assert.ok(!PERIOD.messages.has(key), `${key}: left to English`);
+  for (const key of LEFT_TO_ENGLISH) {
+    assert.ok(!PERIOD.messages.has(key), `${key}: left to English`);
+    assert.equal(twinState(key, P_JSON, EN_JSON, readBases(PERIOD_LANGUAGE)), 'leftToEnglish', key);
+  }
 });
 
 test('1b2. the small surfaces keep to a few words of period flavour', () => {
