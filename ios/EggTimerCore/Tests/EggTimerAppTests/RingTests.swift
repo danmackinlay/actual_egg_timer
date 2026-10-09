@@ -1,4 +1,5 @@
 import Testing
+@testable import EggTimerApp
 import EggTimerCore
 
 /// The in-app alarm's decision: ring once per deadline, only while the app is

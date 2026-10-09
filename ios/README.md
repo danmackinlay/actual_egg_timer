@@ -403,7 +403,7 @@ and reads the pending count back from `UNUserNotificationCenter` rather than
 assuming — an egg timer that claims an alarm it has not got is worse than one
 with no alarm at all.
 
-A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the cook's alarm sound plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in EggTimerCore decides, under `swift test`.
+A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the cook's alarm sound plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in EggTimerApp decides, under `swift test`.
 
 The alarm sounds (`DECISIONS.md` 101) are files, `App/Sounds/alarm-<sound>-<moment>.caf`, one per sound and moment, which the notification plays once and `Ringer` loops. They are rendered from the web's `src/ui/alarmSounds.ts` by `npm run sounds` (macOS; `tools/sounds.ts`), never edited by hand: IMA4 at 22.05 kHz, whole periods of the pattern, under the 30 s past which iOS plays its default sound instead. Which sounds there are, their order, the default and their timing are `AlarmSound` and its functions in EggTimerCore, held to `src/core/sounds.ts` by `fixtures/sounds.json`; the cook's choice is `AlarmSoundChoice.swift`.
 

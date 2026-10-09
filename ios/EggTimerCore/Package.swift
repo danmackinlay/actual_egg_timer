@@ -1,12 +1,11 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// The logic both apps must agree on - the physics, the inference, the policy
-// above them - and the one decision only this app makes, when to ring for a
-// deadline no notification holds (`deadlineToRing`, beside `phaseAt`). No
-// SwiftUI, no Foundation beyond the maths, no I/O. The same restriction
-// src/core/ lives under, for the same reason - it can be tested headlessly and
-// reasoned about without a simulator.
+// The logic both apps must agree on - the physics, the inference, the
+// decisions above them - and nothing only one app uses. No SwiftUI, no
+// Foundation beyond the maths, no I/O. The same restriction src/core/ lives
+// under, for the same reason - it can be tested headlessly and reasoned about
+// without a simulator.
 //
 // The words are a second, smaller library in the same package. EggTimerCopy is
 // the catalogue renderer (src/core/copy.ts on the web), and it is separate only
@@ -18,10 +17,11 @@ import PackageDescription
 // catalogue as the app loads it (`tr`) and the Live Activity's contract; the
 // widget links it and not the physics. EggTimerApp is the app's logic: the
 // cook, the planner, the stores, the clock, the decision surfaces, the
-// corrections. It imports Foundation, Observation and the libraries here, and
-// reaches what only an iPhone has - notifications, sound, the Lock Screen,
-// sharing, VoiceOver - through protocols the app fills at launch
-// (`Services`), which the tests fill with fakes.
+// corrections, when to ring for a deadline no notification holds. It imports
+// Foundation, Observation and the libraries here, and reaches what only an
+// iPhone has - notifications, sound, the Lock Screen, sharing, VoiceOver -
+// through protocols the app fills at launch (`Services`), which the tests
+// fill with fakes.
 let package = Package(
     name: "EggTimerCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
