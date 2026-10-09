@@ -362,10 +362,13 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       simulation; 10 direct `render` and 13 `recompute` calls; ~10 boot-time
       callback registrations; `now.ts` booting on import. About 2.5k lines
       reshaped. L, after 1.1 and 3.1.
-- [ ] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
+- [x] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
       times today (settings, boil, calibration, share, cook) with its own
       "seen" copy each; `takeUpEvents` (domain logic in `store.ts`) into
-      core. M.
+      core. M. *Done:* `syncedKey` in `store.ts`, each store on it with
+      its own policy; e2e `two-tabs-settings`, `-pans`, `-log`,
+      `-sharing`, `-cook`. `takeUpEvents` is still in `store.ts`, to go
+      into core with the running cook's rework.
 - [ ] **3.9 iOS: `Cook` as a value `CookState` and a pure step**, with a
       thin `@Observable` shell running effects. It ends the god object
       (state, restore, plan loop, alarms, ringing, Live Activity, debug clock,

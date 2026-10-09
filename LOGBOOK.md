@@ -6663,3 +6663,45 @@ One commit each, each through `verify`, `build:site`, `e2e` and
 go; `design/running-cook-review.md` and `design/onescreen-review.md`
 become `archive/design/…`, and the status lines at PLAN.md 34, 53, 55, 59
 and 224 cite `archive/`. `studies/` wants a row.
+
+## 10 October 2026: one `syncedKey` for the stores kept across tabs (REFACTOR-0.5 3.8)
+
+`8e4b54c` (the key), `2000e38` (the scenarios).
+
+**The key.** The settings, the pans, the log, sharing and the cook each
+kept the text this page last read or wrote, read back after a write, and
+matched the `storage` event's key, five times over. `syncedKey<T>(key,
+parse, writesBack?)` in `src/ui/store.ts` does it once: `load` (what is
+stored, as this page's own), `peek` and `text` (nothing taken up),
+`takeUp` (another tab's write since, with the base it replaced, read
+lazily), `elsewhere(eventKey)`, `touches`, `write` (through the
+newer-build guard, read back) and `remove`, and `owns`: false after taking
+up a store `writesBack` refuses, until this page's own next load, write or
+removal. What each store does with another tab's write stays its own: the
+settings merged field by field against the base; the pans replaced, or
+blended into on this page's next boil; the log adopted, and not written
+back as it folds while it is another build's or another population's
+(`writesBack` is `path === 'loaded'`, which was calibration.ts's `ours`);
+sharing reconciled with the log, a new generation on a new id; the cook
+taken up only for this tab's own id (`takeUpStored`, `takeUpEvents`).
+`app.ts`'s one listener is unchanged. `takeUpEvents` stays in `store.ts`:
+core's running cook is being reworked on another branch, and it moves
+there with that.
+
+Two readings differ from before, neither reachable as a difference: a
+removal reads back rather than assuming null (they differ only under the
+guard, which refuses the removal and stops the take-up too); a cook
+started marks what is stored as seen, rather than nothing (another tab's
+cook, another id, was never taken up either way). The five files went
+from 2,832 lines to 2,856: the key is 87 with its comment, the uses 63
+fewer.
+
+**The scenarios.** `two-tabs-settings`, `-pans`, `-log`, `-sharing` and
+`-cook`: a second tab writes as a cook would (a size picked, a boil timed
+then Cancel, an egg to Jammy and folded, sharing on, the boil tapped), the
+first shows it, and once both settle has written nothing of that store
+(the cook: no copy of its own, only the lean beside the other's). All
+five passed against `560fa62` with only the snapshot's new `boilMemory`
+added, so they hold the behaviour as it was. One run of `two-tabs-sharing`
+there waited 60 s on a worker job in the hidden tab; it passed in 3 s on
+every run since, and 83 of 83 passed on the branch.
