@@ -88,13 +88,17 @@ then restructure.
 0.3 and 0.4 are the end-of-cook logic drifting between the apps, and no
 gate could catch it.
 
-- [ ] **1.1 The e2e suites can't fail anything** ✔. Both CI jobs are
+- [x] **1.1 The e2e suites can't fail anything** ✔. Both CI jobs are
       `continue-on-error: true` (`.github/workflows/verify.yml:80, 109`);
       neither is in `npm run verify`; CI runs only on a push. 56% of `src/ui`
       (cook, render, feedback, edit, clock, update) and all of the iOS app
       logic are checked by nothing else. Make both jobs blocking, and add
       `npm run e2e` / `npm run ios:e2e` to the CLAUDE.md rule for commits
       touching `src/ui` or `ios/App`. S.
+      *Done* (`06e6b63`, merged with 5.1 and 5.3): both jobs gate the run;
+      CLAUDE.md's rule has both suites (`edbe190`). Unproven until a push:
+      the hosted runners' Chrome audio, simulator runtimes and timings, and
+      `ubuntu-latest` moving to Ubuntu 26 on 19 October 2026.
 - [x] **1.2 An iOS app test target.** `project.yml` has `testTargets: []`.
       Cook, AppModel, Planner, Store, DecisionGrids and AppClock import only
       Foundation, Observation and core, so they can move into an
@@ -126,6 +130,8 @@ gate could catch it.
       (`tools/fixturesCheck.ts`) holds numbers to Swift's 1e-12 and all
       else exactly, lists what differs by path, and runs in CI's Linux
       `web` job; x86 and arm64 Linux pass against the macOS fixtures.
+      Tightened by 5.3 (`03e4f9c`): 1e-13 of each number's own value, at
+      every magnitude; Swift's 1e-12 stays in conformance only.
 - [x] **1.5 One compile per `verify`.** It runs `tsc` six times, from
       `rm -rf dist`. Project references (`tsc -b`: core, app, tools, tests)
       and run each step from that build. M. *Done:* three projects
@@ -557,18 +563,27 @@ Of `6eeff78..4ecc06a`, 121 commits. The equivalence discipline in core,
 107, the deletions, the review queue, the harnesses and 1.2 held up. What
 it found, in its order, with where each is being done:
 
-- [ ] **5.1 Gates before more restructure.** 1.1 was not done, yet 3.7
+- [x] **5.1 Gates before more restructure.** 1.1 was not done, yet 3.7
       and 1.2 went in behind it. And "85 of 85" overstated the web
       e2e: the 39 copy states assert nothing. Do 1.1 now, and either make
       the copy states assert or stop counting them as checks. The rest of
-      3.7 and 3.9 merge only after it.
+      3.7 and 3.9 merge only after it. *Done* (`917aa8e`): every copy
+      state checked as it is captured, the certainty line by the page's
+      own state, and a scenario that asserts nothing is not counted; the
+      six sous-vide copy states had been capturing the cold idle screen
+      since `d12a978` (`1e0fd3e`).
 - [ ] **5.2 iOS is not on `step`/`readoutAt`** (3.1, 3.3 reopened): 3.9
       deletes `Cook.swift`'s own orchestration, about 24 calls.
-- [ ] **5.3 The fixture check is too loose for TS against TS** (1.4): the
+- [x] **5.3 The fixture check is too loose for TS against TS** (1.4): the
       bound divides by max(|x|, 1), so 116 nonzero values under 1e-12 may
       change freely, sign included. A pure relative bound (about 1e-13,
       against a measured spread of 7.3e-15) with a denormal floor; Swift's
-      slack stays in conformance only.
+      slack stays in conformance only. *Done* (`03e4f9c`). Measured on
+      Linux: arm64 differs in one number by 1.8e-16; x86 in 4,105 of
+      60,193, by at most 9.1e-14, a 10% margin. The worst are particles'
+      `whiteOffset`s, whose error is absolute (resampling sums terms at
+      the prior's scale), and the 7 `seriesTheta` values at the surface,
+      where the true value is 0: follow-up 5.13.
 - [x] **5.4 CLAUDE.md's `ios:build` rule** named `ios/Shared`, which is
       gone, and not the package's `EggTimerApp`/`EggTimerShared`, which
       `verify` builds for macOS only. It now covers all of `ios/` but the
@@ -606,6 +621,11 @@ it found, in its order, with where each is being done:
       6 → 12 and 417 declarations made public wholesale; `#if DEBUG` 75 →
       89; 2.11's sweep a fixed list, not "any `aet.*` not current"; the
       `studies/` build outside `verify`.
+- [ ] **5.13 Quantities compared at their own scale.** A `whiteOffset`
+      within about 0.009 of zero, or `seriesTheta` at the surface, can fail
+      the Linux check on cancellation noise alone; none does today. Compare
+      each such field against its natural scale (the prior's spread; θ's
+      1), named per field, not the old max(|x|, 1) for everything.
 - [ ] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`
