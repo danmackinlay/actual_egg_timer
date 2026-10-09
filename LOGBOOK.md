@@ -7270,3 +7270,26 @@ asks for, is left to the session that merges.
 
 Gates at `3efb625` and at this entry: `verify` (440 tests), `npm run e2e` 85 of 85
 (46 behaviour, 39 copy/, 178 states checked).
+
+## 10 October 2026: the fixture check back at 1e-12; numbers agree in distribution (DECISIONS 109)
+
+The entry above holds `fixtures:check` to 1e-13 of each value at every
+magnitude, and measures its margins against that. That bound is reverted
+(`0fe3c2d`): the owner called it scope creep, "an excessively broad
+selection of platforms to test relatively simple functionality on". The
+check asks one thing, whether the TypeScript changed a fixture's numbers,
+and a real change moves them far past 1e-12. It is back to Swift's
+`conformanceTolerance`, 1e-12, relative above 1 and absolute below, and
+the field-by-field follow-up for particles' offsets and the surface's θ
+was stopped before it committed. `DECISIONS.md` 109 (`087b021`) makes it
+policy: last-bit drift between processors, libms or languages is not a
+finding, not a reason to tighten a check or test another platform, and
+not a question for the owner; the filter is tested as a distribution.
+CLAUDE.md carries the rule (`c6df210`). The x86 Linux figures above came
+from an emulated container (Rosetta, under OrbStack) and are noisy; they
+stand only as what was measured.
+
+Of the e2e jobs, "CI fails on either" is true of the workflow, not yet of
+a run: neither has run on GitHub's runners, and the first push is their
+first real run, which may well be red for the runner's reasons (the
+unknowns listed above) rather than the app's.

@@ -16,7 +16,8 @@ limit); `npm run e2e` drives the web app through 46 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one; CI fails on either. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 154 tests
+machine and a loaded one. CI is set to fail on either, though
+neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 154 tests
 in 40 suites for the core twin and 16 in 2 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
