@@ -28,7 +28,7 @@
  * today's scenarios. The commit must have the test API (this one and later):
  *
  *   git worktree add /tmp/aet-old <commit>
- *   (cd /tmp/aet-old && npm ci && npm run build:site && npm run build)
+ *   (cd /tmp/aet-old && npm ci && npm run build:site)
  *   npm run build && node dist/tools/e2e.js --tree /tmp/aet-old
  *
  * E2E_CPU_THROTTLE=<rate> slows every page's CPU that many times (DevTools'

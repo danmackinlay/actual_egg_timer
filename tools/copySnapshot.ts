@@ -1,84 +1,42 @@
 /**
- * Every word the web app renders, in every state tools/copy-snapshot.html
- * drives it through, written to a JSON file - or two such files compared.
+ * Every word the web app renders, in every state of the copy capture's
+ * scenarios (tools/copyScenarios.ts), written to a JSON file - or two such
+ * files compared.
  *
- *   npm run build
- *   node dist/tools/copySnapshot.js capture <out.json>
+ *   npm run build:site && npm run build
+ *   node dist/tools/copySnapshot.js capture <out.json> [--tree <dir>]
  *   node dist/tools/copySnapshot.js compare <before.json> <after.json>
  *
- * `capture` serves the repo root, opens the harness page in headless Chrome
- * over the DevTools protocol and waits for it to finish. It needs Chrome; set
- * CHROME to its binary if it is not where macOS or Linux put it. It is not
- * part of `npm test` for that reason. Run before and after a change that should not
+ * `capture` runs the scenarios in the one web harness (tools/harness.ts:
+ * the built site served, headless Chrome over the DevTools protocol), the
+ * same scenarios `npm run e2e` runs as `copy/…`. It needs Chrome; set CHROME
+ * to its binary if it is not where macOS or Linux put it. It is not part of
+ * `npm test` for that reason. Run before and after a change that should not
  * touch the words, it proves that no byte of what is rendered moved. Two
  * captures of one build are the same to the byte, on a quiet machine or a
- * loaded one (the harness waits for the app to settle; its header says how),
- * so one capture a side is the proof. SNAPSHOT_CPU_THROTTLE=<rate> slows the
- * page, to show it.
+ * loaded one (each step waits for the app to have nothing in hand), so one
+ * capture a side is the proof. E2E_CPU_THROTTLE=<rate> slows the page, to
+ * show it. `--tree <dir>` captures another checkout's build with this
+ * harness (harness.ts says how), so both sides are captured alike; a
+ * commit before the test API (src/ui/dev/test.ts) cannot be.
  *
  * `compare` exits non-zero on the first difference and says where it is.
  */
 
-import { spawn, ChildProcess } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
+import { CopyState, copyScenarios } from './copyScenarios.js';
+import { runScenarios, treeArg } from './harness.js';
 
-interface Snapshot {
-  name: string;
-  lang: string;
-  title: string;
-  innerText: string;
-  texts: string[];
-  attrs: string[];
-}
+type Snapshot = CopyState;
 
-/** SNAPSHOT_CPU_THROTTLE=<rate> slows the harness's page that many times
- *  (DevTools' `Emulation.setCPUThrottlingRate`, as E2E_CPU_THROTTLE does for
- *  `npm run e2e`), to show that a capture does not depend on the machine's
- *  speed. */
-const THROTTLE = Number(process.env['SNAPSHOT_CPU_THROTTLE'] ?? '1');
-
-async function capture(out: string): Promise<void> {
-  const port = 8391 + Math.floor(Math.random() * 500);
-  const debugPort = port + 1000;
-  const children: ChildProcess[] = [];
-  let chrome: Awaited<ReturnType<typeof launchChrome>> | null = null;
-  try {
-    children.push(spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], {
-      stdio: 'ignore',
-    }));
-    await waitForHttp(`http://127.0.0.1:${port}/index.html`);
-
-    chrome = await launchChrome([`http://127.0.0.1:${port}/tools/copy-snapshot.html`], debugPort);
-
-    const list = await (await waitForHttp(`http://127.0.0.1:${debugPort}/json`)).json() as {
-      type: string; url: string; webSocketDebuggerUrl: string;
-    }[];
-    const page = list.find((t) => t.type === 'page' && t.url.includes('copy-snapshot'));
-    if (page === undefined) throw new Error('the harness page did not open');
-    const cdp = await Cdp.open(page.webSocketDebuggerUrl);
-    if (THROTTLE > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
-
-    // The harness waits on the page, never a fixed time, so this is failure
-    // detection only: an hour, for a page slowed six times on a loaded machine.
-    let title = '';
-    for (let i = 0; i < 7200 && title !== 'done' && title !== 'failed'; i++) {
-      await sleep(500);
-      title = String(await cdp.evaluate('document.title'));
-    }
-    const status = String(await cdp.evaluate("document.getElementById('status').textContent"));
-    if (title !== 'done') throw new Error(`harness did not finish: ${status}`);
-    const encoded = String(await cdp.evaluate("document.getElementById('out').textContent"));
-    cdp.close();
-
-    const states = JSON.parse(decodeURIComponent(encoded)) as Snapshot[];
-    writeFileSync(out, `${JSON.stringify(states, null, 1)}\n`);
-    console.log(`${states.length} states -> ${out}`);
-  } finally {
-    for (const child of children) child.kill();
-    if (chrome !== null) await chrome.close();
-  }
+async function capture(out: string, tree: string): Promise<void> {
+  const states: Snapshot[] = [];
+  const scenarios = copyScenarios((s) => { states.push(...s); });
+  const failed = await runScenarios(scenarios, Object.keys(scenarios), tree);
+  if (failed > 0) throw new Error(`${failed} scenarios failed; nothing written`);
+  writeFileSync(out, `${JSON.stringify(states, null, 1)}\n`);
+  console.log(`${states.length} states -> ${out}`);
 }
 
 function compare(beforePath: string, afterPath: string): void {
@@ -114,12 +72,13 @@ function compare(beforePath: string, afterPath: string): void {
     + `${distinct.size} distinct`);
 }
 
-const [mode, a, b] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const [mode, a, b] = args;
 if (mode === 'capture' && a !== undefined) {
-  await capture(a);
+  await capture(a, treeArg(args));
 } else if (mode === 'compare' && a !== undefined && b !== undefined) {
   compare(a, b);
 } else {
-  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json>');
+  console.error('usage: copySnapshot.js capture <out.json> [--tree <dir>] | compare <before.json> <after.json>');
   process.exit(2);
 }

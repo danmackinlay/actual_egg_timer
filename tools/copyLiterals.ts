@@ -10,8 +10,8 @@
  * iOS screen without going through copy/, and what a wording change changed
  * is the catalogue's diff, which the review queue reads (tools/copyQueue.ts).
  *
- * The web half of the words is tools/copy-snapshot.html, which renders the
- * running app. What neither proves: that each key is rendered with the right
+ * The web half of the words is the copy capture (tools/copyScenarios.ts,
+ * tools/copySnapshot.ts), which renders the running app. What neither proves: that each key is rendered with the right
  * argument in the right slot, or on the right branch. Those are one-line call
  * sites, reviewed in the diff and built by xcodebuild; the renderer itself is
  * held to the web's by fixtures/copy.json.

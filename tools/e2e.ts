@@ -34,6 +34,7 @@
  */
 
 import { sleep } from './chrome.js';
+import { copyScenarios } from './copyScenarios.js';
 import {
   Cook, Failure, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
 } from './harness.js';
@@ -1516,7 +1517,7 @@ const SCENARIOS: Record<string, Scenario> = {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const all: Record<string, Scenario> = SCENARIOS;
+  const all: Record<string, Scenario> = { ...SCENARIOS, ...copyScenarios() };
   if (args.includes('--list')) {
     for (const [name, s] of Object.entries(all)) console.log(`${name.padEnd(26)} ${s.what}`);
     return;

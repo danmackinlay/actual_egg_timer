@@ -973,7 +973,18 @@ build from another checkout can be driven by today's scenarios (`npm run
 e2e -- --tree <dir>`, for a commit that has the test API; `tools/harness.ts`
 says how). Beyond it the harness watches the platform: the sounds scheduled
 on the audio clock, the writes to localStorage, and the requests, read off
-DevTools' network events. The whole suite takes about two minutes, so
+DevTools' network events.
+
+The copy capture runs on the same harness. Its scenarios
+(`tools/copyScenarios.ts`) are e2e scenarios named `copy/…`: settings
+planted, the app opened on the development clock stopped at 7:30 on a
+Saturday in London (the time zone pinned), its one random draw seeded
+(`?seed=`), and every word on screen, visible or not, captured after the
+boot and after each step, once the page is idle. `npm run copy:snapshot --
+capture <out.json>` writes those words, and `compare` proves two builds
+render the same ones; `npm run e2e` runs them too, so a step that no longer
+reaches its state fails there. The whole suite, 78 scenarios, takes about
+six minutes, so
 it is not in `npm run verify`; CI runs it as a job of its own on Linux
 (`.github/workflows/verify.yml`, `e2e`), not yet failing the workflow.
 

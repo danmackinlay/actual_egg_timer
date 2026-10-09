@@ -22,7 +22,7 @@
     "sbc": "node tools/build.mjs && node dist/tools/posterior.js sbc",
     "sounds": "node tools/build.mjs && node dist/tools/sounds.js",
     "copy:literals": "node tools/build.mjs && node dist/tools/copyLiterals.js",
-    "copy:snapshot": "node tools/build.mjs && node dist/tools/copySnapshot.js",
+    "copy:snapshot": "npm run build:site && node tools/build.mjs && node dist/tools/copySnapshot.js",
     "copy:queue": "node tools/build.mjs && node dist/tools/copyQueue.js queue",
     "copy:approve": "node tools/build.mjs && node dist/tools/copyQueue.js approve",
     "copy:review": "node tools/build.mjs && node dist/tools/copyReview.js",

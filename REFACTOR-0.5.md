@@ -149,7 +149,16 @@ gate could catch it.
       `whenIdle()` and an injected clock and random source (the nudge draws
       `Math.random()`, `answer.ts:93`), run the copy capture as e2e
       scenarios, and serve the harness from HEAD against any commit's
-      build. M.
+      build. M. *Done:* the app sets a person's timers, sends its worker
+      jobs and makes its requests through `src/ui/idle.ts`, and
+      `aetTest.whenIdle()` waits on its counts; the nudge draws from
+      `now.ts`'s `random()`, seeded by `?seed=`; the clock is the
+      development clock, stopped. `tools/copy-snapshot.html` is gone: its
+      39 scenarios are `copy/…` in `npm run e2e` (`tools/copyScenarios.ts`),
+      and `copySnapshot.js capture` writes their 172 states in the same
+      format. `--tree <dir>` serves another checkout's build to today's
+      harness, for any commit from this one on; a commit before it has no
+      test API and no counts, and would need the patching back.
 
 ## 2. Delete
 
