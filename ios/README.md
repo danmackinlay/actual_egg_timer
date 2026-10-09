@@ -59,6 +59,7 @@ anything both apps must agree on lives here, not in either app.
 | `texture.ts` | the texture bands, and the keys the note is said in | `textureFor`, `textureNoteKeys` | `Texture.swift` | `texture.json` |
 | `boil.ts` | boil memory: a boil remembered by volume, and the estimate for a volume | `rememberBoil`, `estimateTimeToBoil` | `Boil.swift` | `boil.json` |
 | `sounds.ts` | the alarm sounds: their order, the default, a stored choice read, each sound's timing | `readAlarmSound`, `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
+| `settings.ts` | the settings both apps keep, as one value, and a stored copy read back defensively | `Settings` (`AppSettings`), `DEFAULT_SETTINGS`, `readSettings` | `Settings.swift` | `settings.json` |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |

@@ -59,6 +59,8 @@
  *                              of events, effects and the readout
  *   fixtures/newer.json        which build may write: versions compared, and
  *                              the verdict on the newest-version mark
+ *   fixtures/settings.json     the settings both apps keep: the defaults, and
+ *                              a stored copy read back
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -100,6 +102,7 @@ import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
 import { newerFixture } from './fixtures/newer.js';
 import { stepFixture } from './fixtures/step.js';
+import { settingsFixture } from './fixtures/settings.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -136,6 +139,7 @@ const written: Record<string, unknown> = {
   running: runningFixture,
   step: stepFixture,
   newer: newerJson,
+  settings: settingsFixture,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that
@@ -211,5 +215,6 @@ const counts = [
   `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
   `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
   `${(newerJson['compare'] as unknown[]).length} version comparisons`,
+  `${settingsFixture.read.length} stored settings read`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

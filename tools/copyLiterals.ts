@@ -41,6 +41,12 @@ const NOT_COPY: Record<string, string> = {
   start: 'UserDefaults key',
   heatOff: 'UserDefaults key',
   cooling: 'UserDefaults key',
+  startTempMode: 'settings field name',
+  muted: 'settings field name',
+  alarm: 'settings field name',
+  customMinor_mm: 'settings field name',
+  measuredBy: 'settings field name',
+  weighedMass_g: 'settings field name',
   'cook.pull': 'notification identifier',
   'cook.cool': 'notification identifier',
   // SF Symbols

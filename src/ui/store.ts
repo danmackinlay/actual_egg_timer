@@ -9,12 +9,11 @@
  */
 
 import { SizeClass } from '../core/geometry.js';
-import { UnitSystem, readChosenUnits } from '../core/units.js';
 import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
-import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
-import { AlarmSound, DEFAULT_ALARM_SOUND, readAlarmSound } from '../core/sounds.js';
+import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
-import { DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin } from '../core/inputs.js';
+import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
+import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
 import { RunningCook, readRunningCook } from '../core/running.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 
@@ -39,82 +38,17 @@ export const RETIRED_KEYS = [
   'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
 ];
 
-type StartTempMode = 'fridge' | 'room' | 'custom';
-
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */
 export type UiStartMode = StartMode | 'sous';
 
-export interface Settings {
-  /** Index into the region's size classes, or -1 for a custom measured
-   *  diameter. Stored without the region: see `carrySizeIndex`. */
-  sizeIndex: number;
-  customMinor_mm: number;
-  /** Which of the three measurement boxes `customMinor_mm` came from. They are
-   *  one number in three units, so nothing else remembers - and a weighed egg
-   *  and a ruler-measured one are not equally sure (the record's `massFrom`). */
-  measuredBy: 'scale' | 'girth' | 'width';
-  startTempMode: StartTempMode;
-  customStart_C: number;
-  altitude_m: number;
+/** The settings are core's (`src/core/settings.ts`), but for the start on
+ *  screen, which may be a sous-vide; a sous-vide is never stored. */
+export interface Settings extends Omit<StoredSettings, 'startMode'> {
   startMode: UiStartMode;
-  afterBoil: HeatAfterBoil;
-  cooling: Cooling;
-  waterLitres: number;
-  eggCount: number;
-  /** Doneness slider position, [0, 1]. */
-  doneness: number;
-  /** No alarm, no blips. The countdown still runs. */
-  muted: boolean;
-  /** Which sound the alarm makes (`ALARM_SOUNDS`, DECISIONS.md 101). */
-  alarm: AlarmSound;
-  /** Metric or Imperial, as the COOK chose it, or null if they never have.
-   *  Not the system on screen: that is this or, failing it, the region's
-   *  default (`effectiveUnits`), and storing the result instead would turn a
-   *  default into a choice the cook never made. */
-  unitsChosen: UnitSystem | null;
-  /** The language the cook chose, or the units switch put on screen, or
-   *  null for the default (`src/core/language.ts`). Like the units, a
-   *  choice is kept apart from the default it overrides. */
-  language: LanguageState;
-  /** "I have a probe thermometer": ask for a reading at the middle of
-   *  the egg when the cooling ends. Off until the cook says so. */
-  probe: boolean;
-  /** The room as the cook measured it, C, or null for not measured, when a
-   *  room is assumed. Offered, and counted, only while `probe` is on
-   *  (`roomInUse`); kept while it is off, for when it comes back on. */
-  room_C: number | null;
 }
 
-/** The numbers a fresh install starts from come from core; the three settings
- *  that are purely a web-UI state - which temperature button is selected, which
- *  start mode, whether sound is off - are decided here. */
-export const DEFAULT_SETTINGS: Settings = {
-  sizeIndex: DEFAULTS.sizeIndex,
-  customMinor_mm: DEFAULTS.customMinor_mm,
-  // Read only for a measured egg, and set by whichever box is typed in. A
-  // settings record from the live site of 19 September has no field for it,
-  // and its diameter was typed into one of the same three boxes: the first,
-  // the scale, is the likely one and the one that is read. The record's
-  // `massFrom` has no "unknown" (record v1 is frozen), so it is a guess
-  // either way, and the likely one beats the literal one.
-  measuredBy: 'scale',
-  startTempMode: 'fridge',
-  customStart_C: DEFAULTS.customStart_C,
-  altitude_m: DEFAULTS.altitude_m,
-  startMode: 'cold',
-  afterBoil: 'hold',
-  cooling: 'ice',
-  waterLitres: DEFAULTS.waterLitres,
-  eggCount: DEFAULTS.eggCount,
-  doneness: DEFAULTS.doneness,
-  muted: false,
-  alarm: DEFAULT_ALARM_SOUND,
-  unitsChosen: null,
-  language: FRESH_LANGUAGE,
-  probe: false,
-  room_C: null,
-};
+export const DEFAULT_SETTINGS: Settings = CORE_DEFAULT_SETTINGS;
 
 /* ------------------------------------------------------------- raw storage */
 
@@ -362,37 +296,6 @@ export function loadSettings(classes: SizeClass[]): Settings {
   const raw = settingsStore.load();
   lastPanStart = storedPanStart(raw);
   return readSettings(raw, classes);
-}
-
-/** Settings as stored, each one checked, the defaults for anything missing. */
-function readSettings(raw: Record<string, unknown> | null, classes: SizeClass[]): Settings {
-  if (raw === null) return { ...DEFAULT_SETTINGS };
-  const d = DEFAULT_SETTINGS;
-  return {
-    sizeIndex: carrySizeIndex(clampNumber(raw['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex), classes),
-    customMinor_mm: clampNumber(raw['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
-    measuredBy: oneOf(raw['measuredBy'], ['scale', 'girth', 'width'] as const, d.measuredBy),
-    startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
-    customStart_C: clampNumber(raw['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
-    altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),
-    // Only a pan comes back. A stored 'sous', from before it stopped being
-    // saved, is read as the default, because nothing recorded the pan before it.
-    startMode: storedPanStart(raw),
-    afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
-    cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
-    waterLitres: clampNumber(raw['waterLitres'], LIMITS.waterLitres, d.waterLitres),
-    eggCount: Math.round(clampNumber(raw['eggCount'], LIMITS.eggCount, d.eggCount)),
-    doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
-    muted: raw['muted'] === true,
-    // Absent from every settings record before 9 October 2026: the default.
-    alarm: readAlarmSound(raw['alarm']),
-    unitsChosen: readChosenUnits(raw['unitsChosen']),
-    language: readLanguageState(raw['language'], LANGUAGES),
-    probe: raw['probe'] === true,
-    // Absent from every settings record before 5 October 2026: not measured.
-    room_C: typeof raw['room_C'] === 'number' && Number.isFinite(raw['room_C'])
-      ? clamp(raw['room_C'], LIMITS.room_C) : null,
-  };
 }
 
 /** Only the language, for choosing a catalogue before anything else is read:
