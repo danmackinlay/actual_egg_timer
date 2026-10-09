@@ -29,8 +29,8 @@ interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 interface Surface { budget: number; about: string }
 
 const SURFACES = JSON.parse(readFileSync('test/data/surfaces.json', 'utf8')) as Record<string, Surface>;
-/** Every catalogue: `copy/<tag>.json`, less the review queue's state beside
- *  them (`tools/copyApproval.ts`). The same rule as `tools/fixtures/copy.ts`. */
+/** Every catalogue: `copy/<tag>.json` (`tools/copyApproval.ts`). The same
+ *  rule as `tools/fixtures/copy.ts`. */
 const LOCALES = catalogueTags();
 const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
   l, JSON.parse(readFileSync(`copy/${l}.json`, 'utf8')) as CatalogueJson,

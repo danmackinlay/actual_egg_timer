@@ -294,9 +294,10 @@ diff. `CLAUDE.md` has the steps.
   `copy/en-US.json` entry it reaches and that entry's `base` (§2), each
   string within its surface's budget (`test/data/surfaces.json`); then
   `npm run fixtures`.
-- **Approval is stored.** `copy/approved.json` holds, per key, the English
-  the owner approved and its hash. It began from the English of `e3a81cb`
-  (the `notes` draft, 3 October 2026), the last time he read every string.
+- **Approval is stored.** `test/data/copy-review/approved.json` holds, per
+  key, the English the owner approved and its hash. It began from the
+  English of `e3a81cb` (the `notes` draft, 3 October 2026), the last time he
+  read every string.
   Every key whose English hashes otherwise (changed), that has no approval
   (added), or that has one and is gone from the English (removed) is the
   review queue: generated, never typed. `npm run copy:queue` prints it, each
@@ -320,11 +321,12 @@ A string the owner has approved (the `alarm.pull.*` bodies,
 as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
 it like the rest, and a change puts it back in the queue.
 
-**The twins may lag the English** (`DECISIONS.md` 103). A translation's twin
-need not be rewritten in the commit that changes its English; the twins are
-written in batches. Each translation has a sidecar, `copy/<tag>.base.json`
-(today `copy/en-x-1750.base.json`): per key with a twin, the hash of the
-English it was written against (`base`); per key left to English on
+**The twins may lag the English** (`DECISIONS.md` 103). A translation's
+twin need not be rewritten in the commit that changes its English; the
+twins are written in batches. Each translation has a sidecar,
+`<tag>.base.json` beside the approvals (today
+`test/data/copy-review/en-x-1750.base.json`): per key with a twin, the hash
+of the English it was written against (`base`); per key left to English on
 purpose, the hash of the English it was judged at (`english`, today only
 `app.name`). A twin whose English has moved since is stale, and keeps
 showing. A key with no twin that is not left to English is missing, and
@@ -332,10 +334,11 @@ renders in English (`src/core/copy.ts`). The queue and the page list both,
 and neither fails a build. Once a twin is rewritten,
 `npm run copy:approve -- --translation <tag> <key…|--all>` stamps it; a key
 named that has no twin is stamped as left to English. No app reads the
-sidecars, and the site build leaves them and `approved.json` out (the iOS
-bundle copies `copy/` whole, so they ride along there, unread). Czech (F5)
-gets the same by adding its catalogue and stamping it. A regional overlay
-may not lag: it keeps its own `base`, held by `copy.test.ts` 7a (§2).
+sidecars or the approvals, so they are kept out of `copy/`, which holds
+only catalogues (`en1750.test.ts` 1a): the site and the iOS bundle ship
+that folder whole. Czech (F5) gets the same by adding its catalogue and
+stamping it. A regional overlay may not lag: it keeps its own `base`, held
+by `copy.test.ts` 7a (§2).
 
 **Rules the drafts settled, which stand:**
 

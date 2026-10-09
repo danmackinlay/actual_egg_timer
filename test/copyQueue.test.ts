@@ -1,8 +1,8 @@
 /**
- * The review queue's state (tools/copyApproval.ts): copy/approved.json and
- * each translation's copy/<tag>.base.json are well formed, and the queue,
- * the twins' states and the stamps do what LANGUAGE.md section 3 says. What
- * is in the queue never fails here; a malformed file does.
+ * The review queue's state (tools/copyApproval.ts, in test/data/copy-review/):
+ * approved.json and each translation's <tag>.base.json are well formed, and
+ * the queue, the twins' states and the stamps do what LANGUAGE.md section 3
+ * says. What is in the queue never fails here; a malformed file does.
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -16,7 +16,7 @@ import {
   reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState,
 } from '../tools/copyApproval.js';
 
-test('1a. copy/approved.json is well formed: every hash its templates\'', () => {
+test('1a. the approvals are well formed: every hash its templates\'', () => {
   const json = JSON.parse(readFileSync(APPROVED_PATH, 'utf8')) as unknown;
   assert.deepEqual(approvedProblems(json), []);
   assert.ok(Object.keys(readApproved()).length > 0);

@@ -61,11 +61,10 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
   assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
-  // copy/ holds catalogues, `<tag>.json`, and the review queue's state:
-  // the approvals and each translation's bases.
-  const state = ['approved.json', ...translationTags().map((t) => `${t}.base.json`)];
+  // copy/ holds only catalogues, `<tag>.json`: the apps ship it whole, so
+  // the review queue's state is kept in test/data/copy-review/.
   for (const f of readdirSync('copy')) {
-    assert.ok(isCatalogueFile(f) || state.includes(f), `${f}: neither a catalogue nor the review queue's`);
+    assert.ok(isCatalogueFile(f), `${f}: not a catalogue, and the apps would ship it`);
   }
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
