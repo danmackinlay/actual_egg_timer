@@ -9,7 +9,7 @@ import Foundation
 /// same levels in the same order and land on the same ends of the range, or
 /// the two sliders offer different eggs. The posteriors are decide.json's.
 
-private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
+func profileOf(_ json: [String: Any]) throws -> OddsProfile {
     try OddsProfile(
         // Empty where the white never sets: no level to give odds on.
         points: json.rows("points", mayBeEmpty: true).map {

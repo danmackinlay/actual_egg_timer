@@ -47,7 +47,7 @@ function newerStores(): Map<string, string> {
     [NEWEST_KEY, '9.0.0'],
     ['aet.settings.v1', JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 1200, addedLater: true })],
     ['aet.boil.v1', JSON.stringify({ '2': 420 })],
-    ['aet.cook.v4', JSON.stringify({ cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
+    ['aet.cook.v5', JSON.stringify({ cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
     ['aet.cook.v2', JSON.stringify({ machine: { phase: 'COOKING' }, ticket: null, answers: 'none' })],
     ['aet.cook.unread', JSON.stringify(['a cook kept aside'])],
     ['aet.calibration.v4.unread', JSON.stringify(['a store kept aside'])],

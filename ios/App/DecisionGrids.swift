@@ -18,11 +18,10 @@ actor DecisionGrids {
     private var order: [String] = []
     private var building: [String: Task<DoseGrid, Never>] = [:]
 
+    /// A surface's key: core's (`inputsKey`), which the plan and the web's
+    /// caches use too.
     private static func key(_ inputs: DecisionInputs) -> String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
-        guard let data = try? encoder.encode(inputs) else { return "" }
-        return String(decoding: data, as: UTF8.self)
+        inputsKey(inputs)
     }
 
     func cached(_ inputs: DecisionInputs) -> DoseGrid? {

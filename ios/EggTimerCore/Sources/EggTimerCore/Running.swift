@@ -1,13 +1,15 @@
 import Foundation
 
-/// A running cook: its start, its choices and what it observed
-/// (design/one-screen.md section 3 and 4; DECISIONS.md 96 and 97).
+/// A running cook: its start and the log of everything since
+/// (design/one-screen.md section 3 and 4; DECISIONS.md 96 to 98).
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
-/// part is for, and held to it by `fixtures/running.json`. A cook is its
-/// start, its choices and its events; the plan (`replan`) is derived from
-/// them each time and never stored as truth. Times are epoch seconds, except
-/// the record's id, the web's milliseconds. Nothing here reads a clock.
+/// part is for, and held to it by `fixtures/running.json` and
+/// `fixtures/step.json`. A cook is its start (when the egg went in, and the
+/// choices then) and an append-only log; the cook as it stands is the log
+/// folded (`appendEntry`), and the plan (`replan`) is derived from it each
+/// time, never stored as truth. Times are epoch seconds, except the record's
+/// id, the web's milliseconds. Nothing here reads a clock.
 
 // MARK: - The types
 
@@ -49,6 +51,16 @@ public struct CookChoices: Sendable, Equatable {
         self.altitudeM = altitudeM
         self.level = level
     }
+
+    /// As the web stores it, for JSONSerialization.
+    public var jsonObject: [String: Any] {
+        [
+            "mass_kg": massKg, "massFrom": massFrom.rawValue, "sizeTable": sizeTable?.rawValue ?? NSNull(),
+            "eggFrom": eggFrom.rawValue, "customStart_C": customStartC, "room_C": roomC ?? NSNull(),
+            "startMode": startMode.rawValue, "afterBoil": afterBoil.rawValue, "cooling": cooling.rawValue,
+            "waterLitres": waterLitres, "eggCount": eggCount, "altitude_m": altitudeM, "level": level,
+        ]
+    }
 }
 
 /// The pull: when it was due, when the egg came out, and who said so.
@@ -66,10 +78,13 @@ public struct Pulled: Sendable, Equatable {
         self.by = by
         self.confirmed = confirmed
     }
+
+    var jsonObject: [String: Any] {
+        ["due_s": dueS, "out_s": outS, "by": by.rawValue, "confirmed": confirmed]
+    }
 }
 
-/// What was observed, as clock times. Never re-derived; kept when a
-/// correction makes one unread.
+/// What was observed, as clock times: the log's events folded.
 public struct CookEvents: Sendable, Equatable {
     public var boilAtS: Double?
     public var pulled: Pulled?
@@ -88,14 +103,17 @@ public struct CookEvents: Sendable, Equatable {
 
     /// A cook with nothing observed yet.
     public static let none = CookEvents()
+
+    var jsonObject: [String: Any] {
+        [
+            "boilAt_s": boilAtS ?? NSNull(), "pulled": pulled?.jsonObject ?? NSNull(),
+            "cooledAt_s": cooledAtS ?? NSNull(), "rangAt_s": rangAtS ?? NSNull(),
+        ]
+    }
 }
 
-/// The plan as the cook ran (running-cook review 1.3, 2.4): what the record
-/// says was said for this egg, and what Done shows, kept with the cook from
-/// the first plan on the pot's surface made once the egg is pulled
-/// (`keepAsRan`), and replaced only by a correction planned on the calibration
-/// before this egg (`asRanCorrected`). See `CookAsRan` in
-/// `src/core/running.ts`.
+/// The plan as the cook ran: what the record says was said for this egg, and
+/// what Done shows. See `CookAsRan` in `src/core/running.ts`.
 public struct CookAsRan: Sendable, Equatable {
     /// The cook's `correctedAtS` when it was taken (`asRanCurrent`).
     public var correctedAtS: Double?
@@ -137,89 +155,265 @@ public struct CookAsRan: Sendable, Equatable {
     }
 }
 
+/// When the egg went in and the choices, as at the press of Start.
+public struct CookStart: Sendable, Equatable {
+    public let atS: Double
+    public let choices: CookChoices
+
+    public init(atS: Double, choices: CookChoices) {
+        self.atS = atS
+        self.choices = choices
+    }
+}
+
+/// One thing that happened to a cook, as the log keeps it. See `CookEntry` in
+/// `src/core/running.ts`.
+public enum CookEntry: Sendable, Equatable {
+    case boil(atS: Double)
+    case correct(atS: Double, choices: CookChoices)
+    case start(atS: Double, startedAtS: Double)
+    case pulled(Pulled?)
+    case stands
+    case cooled(atS: Double?)
+    case rang(atS: Double?)
+    case stillIn(atS: Double)
+    case ran(CookAsRan?)
+    case answered(atS: Double, yolkWord: YolkWord?, white: WhiteReport?, probe: ProbeReading?)
+    case logged(atS: Double)
+    case ended(atS: Double)
+
+    /// Its kind, as the web writes it.
+    public var kind: String {
+        switch self {
+        case .boil: "boil"
+        case .correct: "correct"
+        case .start: "start"
+        case .pulled: "pulled"
+        case .stands: "stands"
+        case .cooled: "cooled"
+        case .rang: "rang"
+        case .stillIn: "stillIn"
+        case .ran: "ran"
+        case .answered: "answered"
+        case .logged: "logged"
+        case .ended: "ended"
+        }
+    }
+
+    /// As the web stores it, for JSONSerialization.
+    public var jsonObject: [String: Any] {
+        var o: [String: Any] = ["kind": kind]
+        switch self {
+        case let .boil(at), let .stillIn(at), let .logged(at), let .ended(at):
+            o["at_s"] = at
+        case let .correct(at, choices):
+            o["at_s"] = at
+            o["choices"] = choices.jsonObject
+        case let .start(at, startedAt):
+            o["at_s"] = at
+            o["startedAt_s"] = startedAt
+        case let .pulled(p):
+            o["pulled"] = p?.jsonObject ?? NSNull()
+        case .stands:
+            break
+        case let .cooled(at), let .rang(at):
+            o["at_s"] = at ?? NSNull()
+        case let .ran(r):
+            o["asRan"] = r?.jsonObject ?? NSNull()
+        case let .answered(at, yolk, white, probe):
+            o["at_s"] = at
+            o["yolkWord"] = yolk?.rawValue ?? NSNull()
+            o["white"] = white?.rawValue ?? NSNull()
+            o["probe"] = probe.map { ["centre_C": $0.centreC, "after_s": $0.afterS ?? NSNull()] as [String: Any] }
+                ?? NSNull()
+        }
+        return o
+    }
+}
+
+/// A running cook: what was fixed at the press, the start and the log, and
+/// the log folded, which only core sets (`appendEntry` and the moves over
+/// it). See `RunningCook` in `src/core/running.ts`.
 public struct RunningCook: Sendable, Equatable {
     /// When Start was pressed, whole ms since 1970: the record's id on the
     /// web. Never corrected.
-    public var idMs: Double
-    /// When the egg went in: correctable, never after now or the first event.
-    public var startedAtS: Double
-    public var choices: CookChoices
-    public var events: CookEvents
+    public internal(set) var idMs: Double
     /// The nudge this cook drew (E8): 0 when sharing was off at the start.
-    public var nudgeS: Double
+    public internal(set) var nudgeS: Double
     /// The pans as remembered at the start.
-    public var boilMemory: BoilMemory
-    public var units: Units
-    public var lang: String
-    /// Whether a measured pan was on file at the start.
-    public var boilRemembered: Bool
-    /// Since when the choices have said a cold start; nil while they say
-    /// boiling (`boilToRemember`).
-    public var coldSinceS: Double?
-    /// The first moment the choices said a boiling start: the start for a
-    /// cook begun hot, the first correction to boiling for one begun cold;
-    /// nil if they never have (`boilToRemember`).
-    public var firstHotAtS: Double?
-    /// When the choices or the start were last corrected; nil until they
-    /// are. A plan never puts the pull before it (`replan`).
-    public var correctedAtS: Double?
-    /// The plan as it ran, from the pull on; nil before it, and until a plan
-    /// on the pot's surface has been made since (`keepAsRan`).
-    public var asRan: CookAsRan?
+    public internal(set) var boilMemory: BoilMemory
+    public internal(set) var units: Units
+    public internal(set) var lang: String
+    public internal(set) var start: CookStart
+    public internal(set) var log: [CookEntry]
+    /// The log folded: when the egg went in, the choices, the events, when
+    /// last corrected, and the plan as it ran.
+    public internal(set) var startedAtS: Double
+    public internal(set) var choices: CookChoices
+    public internal(set) var events: CookEvents
+    public internal(set) var correctedAtS: Double?
+    public internal(set) var asRan: CookAsRan?
 
-    public init(
-        idMs: Double, startedAtS: Double, choices: CookChoices, events: CookEvents, nudgeS: Double,
-        boilMemory: BoilMemory, units: Units, lang: String, boilRemembered: Bool, coldSinceS: Double?,
-        firstHotAtS: Double?, correctedAtS: Double?, asRan: CookAsRan? = nil
+    init(
+        idMs: Double, start: CookStart, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String
     ) {
         self.idMs = idMs
-        self.startedAtS = startedAtS
-        self.choices = choices
-        self.events = events
         self.nudgeS = nudgeS
         self.boilMemory = boilMemory
         self.units = units
         self.lang = lang
-        self.boilRemembered = boilRemembered
-        self.coldSinceS = coldSinceS
-        self.firstHotAtS = firstHotAtS
-        self.correctedAtS = correctedAtS
-        self.asRan = asRan
+        self.start = start
+        self.log = []
+        self.startedAtS = start.atS
+        self.choices = start.choices
+        self.events = .none
+        self.correctedAtS = nil
+        self.asRan = nil
     }
 
-    /// The cook as the web stores it, for JSONSerialization: an absent value
-    /// is JSON's null, so that `readRunningCook` gives back the same cook.
+    /// The cook as the web stores it, for JSONSerialization: what was fixed
+    /// at the press, the start and the log, which are read back, and the cook
+    /// as it stands, written for whoever reads the store by eye and never read.
     public var jsonObject: [String: Any] {
-        let c = choices
-        let pulled: Any = events.pulled.map {
-            ["due_s": $0.dueS, "out_s": $0.outS, "by": $0.by.rawValue, "confirmed": $0.confirmed] as [String: Any]
-        } ?? NSNull()
-        return [
-            "id_ms": idMs,
-            "startedAt_s": startedAtS,
-            "choices": [
-                "mass_kg": c.massKg, "massFrom": c.massFrom.rawValue,
-                "sizeTable": c.sizeTable?.rawValue ?? NSNull(), "eggFrom": c.eggFrom.rawValue,
-                "customStart_C": c.customStartC, "room_C": c.roomC ?? NSNull(),
-                "startMode": c.startMode.rawValue, "afterBoil": c.afterBoil.rawValue,
-                "cooling": c.cooling.rawValue, "waterLitres": c.waterLitres, "eggCount": c.eggCount,
-                "altitude_m": c.altitudeM, "level": c.level,
-            ] as [String: Any],
-            "events": [
-                "boilAt_s": events.boilAtS ?? NSNull(), "pulled": pulled,
-                "cooledAt_s": events.cooledAtS ?? NSNull(), "rangAt_s": events.rangAtS ?? NSNull(),
-            ] as [String: Any],
-            "nudge_s": nudgeS,
-            "boilMemory": boilMemory,
-            "units": units.rawValue,
-            "lang": lang,
-            "boilRemembered": boilRemembered,
-            "coldSince_s": coldSinceS ?? NSNull(),
-            "firstHotAt_s": firstHotAtS ?? NSNull(),
-            "correctedAt_s": correctedAtS ?? NSNull(),
-            "asRan": asRan?.jsonObject ?? NSNull(),
+        [
+            "id_ms": idMs, "nudge_s": nudgeS, "boilMemory": boilMemory, "units": units.rawValue, "lang": lang,
+            "start": ["at_s": start.atS, "choices": start.choices.jsonObject] as [String: Any],
+            "log": log.map(\.jsonObject),
+            "startedAt_s": startedAtS, "choices": choices.jsonObject, "events": events.jsonObject,
+            "correctedAt_s": correctedAtS ?? NSNull(), "asRan": asRan?.jsonObject ?? NSNull(),
         ]
     }
+}
+
+// MARK: - The log
+
+/// The cook with one more entry in its log, folded in: the one place the
+/// cook as it stands changes.
+public func appendEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook {
+    var next = applyEntry(cook, entry)
+    next.log.append(entry)
+    return next
+}
+
+/// What one entry does to the cook as it stands.
+private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook {
+    var c = cook
+    switch entry {
+    case let .boil(at):
+        c.events.boilAtS = at
+    case let .correct(at, choices):
+        // After the pull the yolk wanted is not corrected (DECISIONS.md 98);
+        // Done on the counter and corrected to a counted cooling: that cooling
+        // ended here at the latest.
+        let e = cook.events
+        c.choices = choices
+        if e.pulled != nil { c.choices.level = cook.choices.level }
+        if e.pulled != nil, e.cooledAtS == nil, cook.choices.cooling == .counter, choices.cooling != .counter {
+            c.events.cooledAtS = at
+        }
+        c.correctedAtS = at
+    case let .start(at, startedAt):
+        c.startedAtS = startedAt
+        c.correctedAtS = at
+    case let .pulled(p):
+        c.events.pulled = p
+    case .stands:
+        c.events.pulled?.confirmed = true
+    case let .cooled(at):
+        c.events.cooledAtS = at
+    case let .rang(at):
+        c.events.rangAtS = at
+    case let .stillIn(at):
+        c.events.pulled = nil
+        c.events.cooledAtS = nil
+        c.events.rangAtS = nil
+        c.correctedAtS = at
+        c.asRan = nil
+    case let .ran(r):
+        c.asRan = r
+    case .answered, .logged, .ended:
+        break
+    }
+    return c
+}
+
+/// The cook folded from its start and log.
+private func foldCook(
+    idMs: Double, start: CookStart, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String,
+    log: [CookEntry]
+) -> RunningCook {
+    var cook = RunningCook(idMs: idMs, start: start, nudgeS: nudgeS, boilMemory: boilMemory, units: units, lang: lang)
+    for entry in log { cook = appendEntry(cook, entry) }
+    return cook
+}
+
+/// Since when the choices have said a cold start, and the first moment they
+/// said a boiling one, from the start and the corrections in the log. See
+/// `coldHistory` in `src/core/running.ts`.
+public func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Double?) {
+    var mode = cook.start.choices.startMode
+    var since: Double? = mode == .cold ? cook.start.atS : nil
+    var firstHot: Double? = mode == .hot ? cook.start.atS : nil
+    for entry in cook.log {
+        guard case let .correct(at, choices) = entry else { continue }
+        if choices.startMode == .cold {
+            if !(mode == .cold && since != nil) { since = at }
+        } else {
+            since = nil
+            if firstHot == nil { firstHot = at }
+        }
+        mode = choices.startMode
+    }
+    return (since, firstHot)
+}
+
+/// What has been said about the egg: the first yolk word, white and probe
+/// reading given, each kept once said.
+public struct CookAnswers: Sendable, Equatable {
+    public var yolkWord: YolkWord?
+    public var white: WhiteReport?
+    public var probe: ProbeReading?
+}
+
+private func answersIn(_ log: [CookEntry], count: Int) -> CookAnswers {
+    var a = CookAnswers()
+    for entry in log.prefix(count) {
+        guard case let .answered(_, yolk, white, probe) = entry else { continue }
+        if a.yolkWord == nil { a.yolkWord = yolk }
+        if a.white == nil { a.white = white }
+        if a.probe == nil { a.probe = probe }
+    }
+    return a
+}
+
+/// What has been said about the egg so far.
+public func answersOf(_ cook: RunningCook) -> CookAnswers {
+    answersIn(cook.log, count: cook.log.count)
+}
+
+/// What had been said when the egg's record was last written, or nil.
+public func answersLogged(_ cook: RunningCook) -> CookAnswers? {
+    guard let i = cook.log.lastIndex(where: { $0.kind == "logged" }) else { return nil }
+    return answersIn(cook.log, count: i)
+}
+
+/// Whether anything has been said about the egg.
+public func answered(_ cook: RunningCook) -> Bool {
+    let a = answersOf(cook)
+    return a.yolkWord != nil || a.white != nil || a.probe != nil
+}
+
+/// When the cook ended (Start again, Cancel, or too old), or nil while it runs.
+public func endedAtS(_ cook: RunningCook) -> Double? {
+    for entry in cook.log.reversed() {
+        if case let .ended(at) = entry { return at }
+    }
+    return nil
+}
+
+/// Whether a measured pan was on file at the start.
+public func boilRemembered(_ cook: RunningCook) -> Bool {
+    hasBoilMemory(cook.boilMemory)
 }
 
 // MARK: - The egg and the pot
@@ -240,7 +434,7 @@ public func eggStartOf(_ ch: CookChoices) -> Double {
 }
 
 /// The egg and the pot the solver is told, for these choices and a time to a
-/// rolling boil: the one assembly of both (once `Planner.setup` and `egg`).
+/// rolling boil: the one assembly of both.
 public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
     let eggStart = eggStartOf(ch)
     return CookPot(
@@ -261,17 +455,14 @@ public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
 
 // MARK: - The transitions
 
-/// A cook started at `nowMs` (epoch ms) with these choices, the nudge it
-/// drew and the pans as remembered now.
+/// A cook started at `nowS` with these choices, the nudge it drew and the
+/// pans as remembered now.
 public func startCook(
-    nowMs: Double, choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String
+    nowS: Double, choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String
 ) -> RunningCook {
-    let start = nowMs / 1000
-    return RunningCook(
-        idMs: nowMs.rounded(), startedAtS: start, choices: choices, events: .none, nudgeS: nudgeS,
-        boilMemory: boilMemory, units: units, lang: lang, boilRemembered: hasBoilMemory(boilMemory),
-        coldSinceS: choices.startMode == .cold ? start : nil, firstHotAtS: choices.startMode == .hot ? start : nil,
-        correctedAtS: nil
+    RunningCook(
+        idMs: (nowS * 1000).rounded(), start: CookStart(atS: nowS, choices: choices), nudgeS: nudgeS,
+        boilMemory: boilMemory, units: units, lang: lang
     )
 }
 
@@ -281,37 +472,13 @@ public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
     let e = cook.events
     if cook.choices.startMode != .cold || e.boilAtS != nil || e.pulled != nil { return cook }
     if !(nowS >= cook.startedAtS) { return cook }
-    var next = cook
-    next.events.boilAtS = nowS
-    return next
+    return appendEntry(cook, .boil(atS: nowS))
 }
 
-/// A correction at `nowS`: the choices replaced. The start and the events are
-/// kept, a pull that rang included (the plan undoes it if the correction moves
-/// the pull past now); after the pull, the level the egg was pulled at is kept
-/// (the slider only previews). Done on the counter and corrected to a counted
-/// cooling: that cooling ended here at the latest, so Done stays Done
-/// (onescreen review 2.1).
+/// A correction at `nowS`: the choices replaced, as if they had always been
+/// these. See `corrected` in `src/core/running.ts`.
 public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -> RunningCook {
-    var since: Double?
-    if choices.startMode == .cold {
-        if cook.choices.startMode == .cold, let kept = cook.coldSinceS {
-            since = kept
-        } else {
-            since = nowS
-        }
-    }
-    var next = cook
-    next.choices = choices
-    if cook.events.pulled != nil { next.choices.level = cook.choices.level }
-    if cook.firstHotAtS == nil, choices.startMode == .hot { next.firstHotAtS = nowS }
-    let e = cook.events
-    if e.pulled != nil, e.cooledAtS == nil, cook.choices.cooling == .counter, choices.cooling != .counter {
-        next.events.cooledAtS = nowS
-    }
-    next.coldSinceS = since
-    next.correctedAtS = nowS
-    return next
+    appendEntry(cook, .correct(atS: nowS, choices: choices))
 }
 
 /// The latest the start can be corrected to at `nowS`: now, or the first
@@ -332,37 +499,144 @@ public func earliestStartS(_ cook: RunningCook) -> Double {
 }
 
 /// The start corrected to `startedAtS` at `nowS`, or nil: refused when it is
-/// later than `latestStartS`, earlier than `earliestStartS`, or not a time. A
-/// pull that rang is kept, as by `corrected`.
+/// later than `latestStartS`, earlier than `earliestStartS`, or not a time.
 public func startCorrected(_ cook: RunningCook, startedAtS: Double, nowS: Double) -> RunningCook? {
     if !startedAtS.isFinite || startedAtS > latestStartS(cook, nowS: nowS) { return nil }
     if startedAtS < earliestStartS(cook) { return nil }
-    var next = cook
-    next.startedAtS = startedAtS
-    next.correctedAtS = nowS
-    return next
+    return appendEntry(cook, .start(atS: nowS, startedAtS: startedAtS))
 }
 
-/// The cook's answer when a plan asks (`askIfStillIn`), at `nowS`: the egg is
-/// still in the water. The pull the clock assumed is dropped, with its
-/// cooling, and the cook is planned again as told now.
+/// The cook's answer when a plan asks whether the egg is still in the water,
+/// at `nowS`: it is. The pull the clock assumed is dropped, with its cooling.
 public func stillIn(_ cook: RunningCook, nowS: Double) -> RunningCook {
     guard let p = cook.events.pulled, p.by == .timeout, !p.confirmed else { return cook }
-    var next = cook
-    next.asRan = nil
-    next.events.pulled = nil
-    next.events.cooledAtS = nil
-    next.events.rangAtS = nil
-    next.correctedAtS = nowS
-    return next
+    return appendEntry(cook, .stillIn(atS: nowS))
 }
 
 /// The other answer: the egg came out when the clock assumed. The pull stands.
 public func pullStands(_ cook: RunningCook) -> RunningCook {
     guard let p = cook.events.pulled, !p.confirmed else { return cook }
+    return appendEntry(cook, .stands)
+}
+
+/// Whether two sets of events are the same, every field.
+public func sameEvents(_ a: CookEvents, _ b: CookEvents) -> Bool {
+    a == b
+}
+
+/// The cook with its events made `events`: an entry logged for each that
+/// differs. The same cook when none does.
+public func writeEvents(_ cook: RunningCook, _ events: CookEvents) -> RunningCook {
     var next = cook
-    next.events.pulled?.confirmed = true
+    let e = cook.events
+    if let boil = events.boilAtS, events.boilAtS != e.boilAtS { next = appendEntry(next, .boil(atS: boil)) }
+    if events.pulled != e.pulled { next = appendEntry(next, .pulled(events.pulled)) }
+    if events.cooledAtS != next.events.cooledAtS { next = appendEntry(next, .cooled(atS: events.cooledAtS)) }
+    if events.rangAtS != e.rangAtS { next = appendEntry(next, .rang(atS: events.rangAtS)) }
     return next
+}
+
+/// The cook with `asRan` as its plan as it ran: logged if it differs.
+public func withAsRan(_ cook: RunningCook, _ asRan: CookAsRan?) -> RunningCook {
+    if asRan == cook.asRan { return cook }
+    return appendEntry(cook, .ran(asRan))
+}
+
+/// The cook a level asked for after the pull would have made, for the
+/// slider's preview: these choices, as if not yet pulled and never corrected.
+/// A cook for a plan and nothing else, never stored or stepped. See
+/// `levelPreview` in `src/core/running.ts`.
+public func levelPreview(_ cook: RunningCook, choices: CookChoices) -> RunningCook {
+    var c = cook
+    c.log = cook.log.filter { ["boil", "correct", "start"].contains($0.kind) }
+    c.choices = choices
+    c.correctedAtS = nil
+    c.asRan = nil
+    c.events.pulled = nil
+    c.events.cooledAtS = nil
+    c.events.rangAtS = nil
+    return c
+}
+
+/// One entry with every clock time in it moved by `by`.
+private func shiftedEntry(_ entry: CookEntry, by: Double) -> CookEntry {
+    switch entry {
+    case let .boil(at): .boil(atS: at + by)
+    case let .correct(at, choices): .correct(atS: at + by, choices: choices)
+    case let .start(at, startedAt): .start(atS: at + by, startedAtS: startedAt + by)
+    case let .pulled(p):
+        .pulled(p.map { Pulled(dueS: $0.dueS + by, outS: $0.outS + by, by: $0.by, confirmed: $0.confirmed) })
+    case .stands: .stands
+    case let .cooled(at): .cooled(atS: at.map { $0 + by })
+    case let .rang(at): .rang(atS: at.map { $0 + by })
+    case let .stillIn(at): .stillIn(atS: at + by)
+    case let .ran(r):
+        .ran(r.map {
+            var moved = $0
+            moved.correctedAtS = $0.correctedAtS.map { $0 + by }
+            return moved
+        })
+    case let .answered(at, yolk, white, probe): .answered(atS: at + by, yolkWord: yolk, white: white, probe: probe)
+    case let .logged(at): .logged(atS: at + by)
+    case let .ended(at): .ended(atS: at + by)
+    }
+}
+
+/// The cook with every clock time in it moved by `by` s, the press with
+/// them: what a development clock does to reach a moment without waiting.
+public func shiftedCook(_ cook: RunningCook, by: Double) -> RunningCook {
+    foldCook(
+        idMs: (cook.idMs + by * 1000).rounded(), start: CookStart(atS: cook.start.atS + by, choices: cook.start.choices),
+        nudgeS: cook.nudgeS, boilMemory: cook.boilMemory, units: cook.units, lang: cook.lang,
+        log: cook.log.map { shiftedEntry($0, by: by) }
+    )
+}
+
+// MARK: - Two copies of one cook
+
+private func earlier(_ a: Double?, _ b: Double?) -> Double? {
+    guard let a else { return b }
+    guard let b else { return a }
+    return min(a, b)
+}
+
+/// The pull to keep of two: the cook's tap over the clock's assumption, and of
+/// two alike the earlier out, then the earlier due.
+private func betterPull(_ a: Pulled?, _ b: Pulled?) -> Pulled? {
+    guard let a else { return b }
+    guard let b else { return a }
+    if a.by != b.by { return a.by == .cook ? a : b }
+    if a.outS != b.outS { return a.outS < b.outS ? a : b }
+    return a.dueS <= b.dueS ? a : b
+}
+
+/// `ours` with what another copy of the same cook saw taken up. See
+/// `takeUpEvents` in `src/core/running.ts`.
+public func takeUpEvents(_ ours: RunningCook, _ theirs: RunningCook) -> RunningCook {
+    guard theirs.idMs == ours.idMs else { return ours }
+    let same = ours.startedAtS == theirs.startedAtS && ours.choices == theirs.choices
+    let a = ours.events
+    let b = theirs.events
+    let boil = earlier(a.boilAtS, b.boilAtS)
+    let theirPull = same || b.pulled?.by == .cook ? b.pulled : nil
+    let pulled = betterPull(a.pulled, theirPull)
+    let cooled = earlier(pulled == a.pulled ? a.cooledAtS : nil, same && pulled == b.pulled ? b.cooledAtS : nil)
+    let rang = earlier(a.boilAtS == boil ? a.rangAtS : nil, same && b.boilAtS == boil ? b.rangAtS : nil)
+    let events = CookEvents(boilAtS: boil, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
+    func fits(_ r: CookAsRan?) -> Bool {
+        guard let r, let pulled else { return false }
+        return r.cookS == pulled.dueS - ours.startedAtS && r.correctedAtS == ours.correctedAtS
+    }
+    let asRan = fits(ours.asRan) ? ours.asRan : fits(theirs.asRan) ? theirs.asRan : nil
+    if events == a, asRan == ours.asRan { return ours }
+    return withAsRan(writeEvents(ours, events), asRan)
+}
+
+/// Whether copy `a` of a cook was corrected after copy `b` was.
+public func correctedLater(_ a: RunningCook, _ b: RunningCook) -> Bool {
+    guard let at = a.correctedAtS else { return false }
+    guard let bt = b.correctedAtS else { return true }
+    return at > bt
 }
 
 // MARK: - The stored cook
@@ -422,27 +696,15 @@ private func readChoices(_ raw: Any?) -> CookChoices? {
     )
 }
 
-private func readEvents(_ raw: Any?, startS: Double) -> CookEvents? {
-    guard let r = raw as? [String: Any] else { return nil }
-    guard let boil = numberOrNull(r["boilAt_s"]) else { return nil }
-    if let b = boil, b < startS { return nil }
-    var pulled: Pulled?
-    if !isNull(r["pulled"]) {
-        guard let p = r["pulled"] as? [String: Any],
-              let due = finite(p["due_s"]), due >= startS,
-              let out = finite(p["out_s"]), out >= due,
-              let by = (p["by"] as? String).flatMap(PulledBy.init(rawValue:)),
-              isJSONBool(p["confirmed"]), let confirmed = p["confirmed"] as? Bool,
-              by == .timeout || confirmed else { return nil }
-        pulled = Pulled(dueS: due, outS: out, by: by, confirmed: confirmed)
-    }
-    guard let cooled = numberOrNull(r["cooledAt_s"]) else { return nil }
-    if let c = cooled {
-        guard let pulled, c >= pulled.outS else { return nil }
-    }
-    guard let rang = numberOrNull(r["rangAt_s"]) else { return nil }
-    if let at = rang, at < startS { return nil }
-    return CookEvents(boilAtS: boil, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
+/// A pull, or nil: out before it was due, by nobody, or a cook's own tap
+/// unconfirmed.
+private func readPulled(_ raw: Any?) -> Pulled? {
+    guard let p = raw as? [String: Any],
+          let due = finite(p["due_s"]), let out = finite(p["out_s"]), out >= due,
+          let by = (p["by"] as? String).flatMap(PulledBy.init(rawValue:)),
+          isJSONBool(p["confirmed"]), let confirmed = p["confirmed"] as? Bool,
+          by == .timeout || confirmed else { return nil }
+    return Pulled(dueS: due, outS: out, by: by, confirmed: confirmed)
 }
 
 private func readBoilMemory(_ raw: Any?) -> BoilMemory? {
@@ -480,7 +742,7 @@ private func readForecast(_ raw: Any?) -> Forecast? {
 }
 
 /// The plan as it ran, or nil if any field is missing or out of kind.
-private func readAsRan(_ raw: Any?, startS: Double) -> CookAsRan? {
+private func readAsRan(_ raw: Any?) -> CookAsRan? {
     guard let r = raw as? [String: Any],
           let at = numberOrNull(r["correctedAt_s"]),
           let level = finite(r["level"]), level >= 0, level <= 1,
@@ -491,210 +753,195 @@ private func readAsRan(_ raw: Any?, startS: Double) -> CookAsRan? {
           isJSONBool(r["probeMoment"]), let probe = r["probeMoment"] as? Bool,
           let params = r["params"] as? [String: Any],
           let alpha = finite(params["alpha_m2s"]), alpha > 0 else { return nil }
-    if let a = at, a < startS { return nil }
     return CookAsRan(
         correctedAtS: at, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
         probeMoment: probe, params: ModelParams(alphaM2s: alpha)
     )
 }
 
+/// A probe reading as the log keeps one: `.some(nil)` for JSON's null, nil if
+/// it is not one.
+private func readProbe(_ raw: Any?) -> ProbeReading?? {
+    if isNull(raw) { return .some(nil) }
+    guard let r = raw as? [String: Any], let centre = finite(r["centre_C"]),
+          let after = numberOrNull(r["after_s"]) else { return nil }
+    return .some(ProbeReading(centreC: centre, afterS: after))
+}
+
+/// One entry of a stored log, or nil if it is not one.
+private func readEntry(_ raw: Any?) -> CookEntry? {
+    guard let r = raw as? [String: Any], let kind = r["kind"] as? String else { return nil }
+    let at = finite(r["at_s"])
+    switch kind {
+    case "boil": return at.map { .boil(atS: $0) }
+    case "stillIn": return at.map { .stillIn(atS: $0) }
+    case "logged": return at.map { .logged(atS: $0) }
+    case "ended": return at.map { .ended(atS: $0) }
+    case "correct":
+        guard let at, let choices = readChoices(r["choices"]) else { return nil }
+        return .correct(atS: at, choices: choices)
+    case "start":
+        guard let at, let startedAt = finite(r["startedAt_s"]) else { return nil }
+        return .start(atS: at, startedAtS: startedAt)
+    case "pulled":
+        if isNull(r["pulled"]) { return .pulled(nil) }
+        return readPulled(r["pulled"]).map { .pulled($0) }
+    case "stands": return .stands
+    case "cooled": return numberOrNull(r["at_s"]).map { .cooled(atS: $0) }
+    case "rang": return numberOrNull(r["at_s"]).map { .rang(atS: $0) }
+    case "ran":
+        if isNull(r["asRan"]) { return .ran(nil) }
+        return readAsRan(r["asRan"]).map { .ran($0) }
+    case "answered":
+        guard let at, let probe = readProbe(r["probe"]) else { return nil }
+        var yolk: YolkWord?
+        if !isNull(r["yolkWord"]) {
+            guard let w = (r["yolkWord"] as? String).flatMap(YolkWord.init(rawValue:)) else { return nil }
+            yolk = w
+        }
+        var white: WhiteReport?
+        if !isNull(r["white"]) {
+            guard let w = (r["white"] as? String).flatMap(WhiteReport.init(rawValue:)) else { return nil }
+            white = w
+        }
+        return .answered(atS: at, yolkWord: yolk, white: white, probe: probe)
+    default:
+        return nil
+    }
+}
+
+/// Whether the folded events are in order. See `foldInOrder` in
+/// `src/core/running.ts`.
+private func foldInOrder(_ cook: RunningCook) -> Bool {
+    let e = cook.events
+    let start = cook.startedAtS
+    if let b = e.boilAtS, b < start { return false }
+    if let p = e.pulled, p.dueS < start { return false }
+    if let c = e.cooledAtS {
+        guard let p = e.pulled, c >= p.outS else { return false }
+    }
+    if let r = e.rangAtS, r < start { return false }
+    if let at = cook.correctedAtS, at < start { return false }
+    if cook.asRan != nil, e.pulled == nil { return false }
+    if let at = cook.asRan?.correctedAtS, at < start { return false }
+    return true
+}
+
 /// A stored cook, parsed from its JSON and read defensively: whole, or nil.
-/// A shape this build cannot read is reported, not guessed at.
+/// What was fixed at the press, the start and the log are read, and the log
+/// folded again; the cook as it stood when written is not read.
 public func readRunningCook(_ raw: Any?) -> RunningCook? {
-    guard let r = raw as? [String: Any] else { return nil }
-    guard let id = finite(r["id_ms"]), id > 0,
-          let start = finite(r["startedAt_s"]), start > 0,
-          let choices = readChoices(r["choices"]),
-          let events = readEvents(r["events"], startS: start),
+    guard let r = raw as? [String: Any],
+          let id = finite(r["id_ms"]), id > 0,
           let nudge = finite(r["nudge_s"]),
           let memory = readBoilMemory(r["boilMemory"]),
           let units = (r["units"] as? String).flatMap(Units.init(rawValue:)),
           let lang = r["lang"] as? String, !lang.isEmpty,
-          isJSONBool(r["boilRemembered"]), let remembered = r["boilRemembered"] as? Bool,
-          let since = numberOrNull(r["coldSince_s"]),
-          let firstHot = numberOrNull(r["firstHotAt_s"]),
-          let correctedAt = numberOrNull(r["correctedAt_s"]) else { return nil }
-    if let at = correctedAt, at < start { return nil }
-    // The plan as it ran: present, null or whole, and only once pulled.
-    guard r.keys.contains("asRan") else { return nil }
-    var asRan: CookAsRan?
-    if !isNull(r["asRan"]) {
-        guard let ran = readAsRan(r["asRan"], startS: start), events.pulled != nil else { return nil }
-        asRan = ran
+          let start = r["start"] as? [String: Any],
+          let at = finite(start["at_s"]), at > 0,
+          let choices = readChoices(start["choices"]),
+          let rawLog = r["log"] as? [Any] else { return nil }
+    var log: [CookEntry] = []
+    for item in rawLog {
+        guard let entry = readEntry(item) else { return nil }
+        log.append(entry)
     }
-    return RunningCook(
-        idMs: id, startedAtS: start, choices: choices, events: events, nudgeS: nudge, boilMemory: memory,
-        units: units, lang: lang, boilRemembered: remembered, coldSinceS: since, firstHotAtS: firstHot,
-        correctedAtS: correctedAt, asRan: asRan
+    let cook = foldCook(
+        idMs: id, start: CookStart(atS: at, choices: choices), nudgeS: nudge, boilMemory: memory, units: units,
+        lang: lang, log: log
     )
+    return foldInOrder(cook) ? cook : nil
 }
 
 // MARK: - Stored to the bit
 
-// The cook in the web's stored shape, for JSONEncoder and JSONDecoder (Swift
-// only: the web's JSON.parse is exact). JSONSerialization reads a 17-digit
-// double back an ulp off, and an ulp in the mass is another decision
-// surface's key, so a cook stored through it rebuilt its surface on every
-// relaunch; JSONEncoder writes each double's shortest round-trip form and
-// JSONDecoder reads it back to the bit. Absent values are written as JSON's
-// null, as the web writes them. Decoding checks the shape only: a decoded
-// cook is still read through `readRunningCook(cook.jsonObject)`, which is
-// exact, since nothing in between is text.
+/// A JSON value, read and written exactly: what a stored cook goes through.
+/// JSONSerialization reads a 17-digit double back an ulp off, and an ulp in
+/// the mass is another decision surface's key, so a cook is written by
+/// JSONEncoder (each double's shortest round-trip form) and read by
+/// JSONDecoder (to the bit) into this, and then read whole by
+/// `readRunningCook`, the one reader, as the web reads it.
+enum JSONValue: Codable, Equatable {
+    case null
+    case bool(Bool)
+    case number(Double)
+    case string(String)
+    case array([JSONValue])
+    case object([String: JSONValue])
 
-extension CookChoices: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case massKg = "mass_kg", massFrom, sizeTable, eggFrom, customStartC = "customStart_C"
-        case roomC = "room_C", startMode, afterBoil, cooling, waterLitres, eggCount
-        case altitudeM = "altitude_m", level
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() {
+            self = .null
+        } else if let b = try? c.decode(Bool.self) {
+            self = .bool(b)
+        } else if let d = try? c.decode(Double.self) {
+            self = .number(d)
+        } else if let s = try? c.decode(String.self) {
+            self = .string(s)
+        } else if let a = try? c.decode([JSONValue].self) {
+            self = .array(a)
+        } else {
+            self = .object(try c.decode([String: JSONValue].self))
+        }
     }
 
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            massKg: try c.decode(Double.self, forKey: .massKg),
-            massFrom: try c.decode(MassFrom.self, forKey: .massFrom),
-            sizeTable: try c.decodeIfPresent(SizeTable.self, forKey: .sizeTable),
-            eggFrom: try c.decode(EggFrom.self, forKey: .eggFrom),
-            customStartC: try c.decode(Double.self, forKey: .customStartC),
-            roomC: try c.decodeIfPresent(Double.self, forKey: .roomC),
-            startMode: try c.decode(StartMode.self, forKey: .startMode),
-            afterBoil: try c.decode(HeatAfterBoil.self, forKey: .afterBoil),
-            cooling: try c.decode(Cooling.self, forKey: .cooling),
-            waterLitres: try c.decode(Double.self, forKey: .waterLitres),
-            eggCount: try c.decode(Double.self, forKey: .eggCount),
-            altitudeM: try c.decode(Double.self, forKey: .altitudeM),
-            level: try c.decode(Double.self, forKey: .level)
-        )
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .null: try c.encodeNil()
+        case let .bool(b): try c.encode(b)
+        case let .number(d): try c.encode(d)
+        case let .string(s): try c.encode(s)
+        case let .array(a): try c.encode(a)
+        case let .object(o): try c.encode(o)
+        }
     }
 
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(massKg, forKey: .massKg)
-        try c.encode(massFrom, forKey: .massFrom)
-        try c.encode(sizeTable, forKey: .sizeTable)
-        try c.encode(eggFrom, forKey: .eggFrom)
-        try c.encode(customStartC, forKey: .customStartC)
-        try c.encode(roomC, forKey: .roomC)
-        try c.encode(startMode, forKey: .startMode)
-        try c.encode(afterBoil, forKey: .afterBoil)
-        try c.encode(cooling, forKey: .cooling)
-        try c.encode(waterLitres, forKey: .waterLitres)
-        try c.encode(eggCount, forKey: .eggCount)
-        try c.encode(altitudeM, forKey: .altitudeM)
-        try c.encode(level, forKey: .level)
-    }
-}
-
-extension Pulled: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case dueS = "due_s", outS = "out_s", by, confirmed
-    }
-}
-
-extension CookEvents: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case boilAtS = "boilAt_s", pulled, cooledAtS = "cooledAt_s", rangAtS = "rangAt_s"
+    /// A value as this core's `jsonObject`s hold them: Swift's own types.
+    init(_ v: Any) {
+        if v is NSNull {
+            self = .null
+        } else if let n = v as? NSNumber {
+            // Swift's Bool bridges to CFBoolean, its numbers to other NSNumbers.
+            self = CFGetTypeID(n) == CFBooleanGetTypeID() ? .bool(n.boolValue) : .number(n.doubleValue)
+        } else if let s = v as? String {
+            self = .string(s)
+        } else if let a = v as? [Any] {
+            self = .array(a.map(JSONValue.init))
+        } else if let o = v as? [String: Any] {
+            self = .object(o.mapValues(JSONValue.init))
+        } else {
+            self = .null
+        }
     }
 
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            boilAtS: try c.decodeIfPresent(Double.self, forKey: .boilAtS),
-            pulled: try c.decodeIfPresent(Pulled.self, forKey: .pulled),
-            cooledAtS: try c.decodeIfPresent(Double.self, forKey: .cooledAtS),
-            rangAtS: try c.decodeIfPresent(Double.self, forKey: .rangAtS)
-        )
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(boilAtS, forKey: .boilAtS)
-        try c.encode(pulled, forKey: .pulled)
-        try c.encode(cooledAtS, forKey: .cooledAtS)
-        try c.encode(rangAtS, forKey: .rangAtS)
-    }
-}
-
-extension CookAsRan: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case correctedAtS = "correctedAt_s", level, cookS = "cook_s", nudgeS = "nudge_s", forecast
-        case peakYolkC = "peakYolk_C", probeMoment, params
-    }
-
-    private enum ParamsKeys: String, CodingKey {
-        case alphaM2s = "alpha_m2s"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        let p = try c.nestedContainer(keyedBy: ParamsKeys.self, forKey: .params)
-        self.init(
-            correctedAtS: try c.decodeIfPresent(Double.self, forKey: .correctedAtS),
-            level: try c.decode(Double.self, forKey: .level),
-            cookS: try c.decode(Double.self, forKey: .cookS),
-            nudgeS: try c.decode(Double.self, forKey: .nudgeS),
-            forecast: try c.decode(Forecast.self, forKey: .forecast),
-            peakYolkC: try c.decode(Double.self, forKey: .peakYolkC),
-            probeMoment: try c.decode(Bool.self, forKey: .probeMoment),
-            params: ModelParams(alphaM2s: try p.decode(Double.self, forKey: .alphaM2s))
-        )
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(correctedAtS, forKey: .correctedAtS)
-        try c.encode(level, forKey: .level)
-        try c.encode(cookS, forKey: .cookS)
-        try c.encode(nudgeS, forKey: .nudgeS)
-        try c.encode(forecast, forKey: .forecast)
-        try c.encode(peakYolkC, forKey: .peakYolkC)
-        try c.encode(probeMoment, forKey: .probeMoment)
-        var p = c.nestedContainer(keyedBy: ParamsKeys.self, forKey: .params)
-        try p.encode(params.alphaM2s, forKey: .alphaM2s)
+    /// As JSONSerialization gives it, for the readers.
+    var any: Any {
+        switch self {
+        case .null: NSNull()
+        case let .bool(b): b
+        case let .number(d): d
+        case let .string(s): s
+        case let .array(a): a.map(\.any)
+        case let .object(o): o.mapValues(\.any)
+        }
     }
 }
 
 extension RunningCook: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case idMs = "id_ms", startedAtS = "startedAt_s", choices, events, nudgeS = "nudge_s", boilMemory
-        case units, lang, boilRemembered, coldSinceS = "coldSince_s", firstHotAtS = "firstHotAt_s"
-        case correctedAtS = "correctedAt_s", asRan
-    }
-
     public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            idMs: try c.decode(Double.self, forKey: .idMs),
-            startedAtS: try c.decode(Double.self, forKey: .startedAtS),
-            choices: try c.decode(CookChoices.self, forKey: .choices),
-            events: try c.decode(CookEvents.self, forKey: .events),
-            nudgeS: try c.decode(Double.self, forKey: .nudgeS),
-            boilMemory: try c.decode(BoilMemory.self, forKey: .boilMemory),
-            units: try c.decode(Units.self, forKey: .units),
-            lang: try c.decode(String.self, forKey: .lang),
-            boilRemembered: try c.decode(Bool.self, forKey: .boilRemembered),
-            coldSinceS: try c.decodeIfPresent(Double.self, forKey: .coldSinceS),
-            firstHotAtS: try c.decodeIfPresent(Double.self, forKey: .firstHotAtS),
-            correctedAtS: try c.decodeIfPresent(Double.self, forKey: .correctedAtS),
-            asRan: try c.decodeIfPresent(CookAsRan.self, forKey: .asRan)
-        )
+        let value = try JSONValue(from: decoder)
+        guard let cook = readRunningCook(value.any) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "not a running cook")
+            )
+        }
+        self = cook
     }
 
     public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(idMs, forKey: .idMs)
-        try c.encode(startedAtS, forKey: .startedAtS)
-        try c.encode(choices, forKey: .choices)
-        try c.encode(events, forKey: .events)
-        try c.encode(nudgeS, forKey: .nudgeS)
-        try c.encode(boilMemory, forKey: .boilMemory)
-        try c.encode(units, forKey: .units)
-        try c.encode(lang, forKey: .lang)
-        try c.encode(boilRemembered, forKey: .boilRemembered)
-        try c.encode(coldSinceS, forKey: .coldSinceS)
-        try c.encode(firstHotAtS, forKey: .firstHotAtS)
-        try c.encode(correctedAtS, forKey: .correctedAtS)
-        try c.encode(asRan, forKey: .asRan)
+        try JSONValue(jsonObject).encode(to: encoder)
     }
 }
 
@@ -714,107 +961,106 @@ public struct CookSurface: Sendable {
     }
 }
 
+/// Where the slow hob's rule got to in one plan, handed to the next
+/// (`replan`'s `memo`). Opaque to the apps, which hand it back and never read
+/// it. See `SlowHobMemo` and `SlowHobPlace` in `src/core/running.ts`.
+public struct SlowHobMemo: Sendable, Equatable {
+    /// What the rule read, to the bit (`slowHobKey`).
+    let key: String
+    let steps: Int
+    let lastS: Double
+    let rampS: Double
+    /// The carried cook time at `rampS`; nil when no plan needed it.
+    let carriedS: Double?
+}
+
 /// Everything derived from a cook. Never stored as truth. `replan` in
 /// `src/core/running.ts` says what each part is.
 public struct CookPlan: Sendable {
     public let egg: Egg
     public let setup: CookSetup
-    public let provisional: Bool
-    public let lengthened: Bool
+    /// Nil while the slow hob has lengthened the guess (`guessLengthened`).
     public let inputs: DecisionInputs?
     public let answer: LevelAnswer
-    public let level: Double
     public let solution: Solution
     public let decided: DecidedAnswer?
     public let leanS: Double
     public let nudgeS: Double
     public let cookTimeS: Double
     public let overdue: Bool
-    public let askIfStillIn: Bool
     public let coolS: Double
     public let probeMoment: Bool
+    /// What `phaseAt` reads: `provisional` while the time to boil is a
+    /// guess, `asking` while the plan asks whether the egg is still in.
     public let deadlines: Deadlines
     /// While provisional, when the slow hob's rule next lengthens the guess:
     /// the app plans again once the clock is past it (`slowHobDue`).
     public let slowHobAtS: Double?
-    /// While provisional, where the slow hob's rule got to, for the next plan
-    /// to start from (`replan`'s `hint`); nil otherwise.
-    public let slowHob: SlowHobHint?
+    /// While provisional, where the slow hob's rule got to, for the next plan.
+    public let memo: SlowHobMemo?
     /// When the cook is too old to pick back up (`cookTooOld`).
     public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
 }
 
-/// Where the slow hob's rule got to in one plan, and what it was worked out
-/// under (review 2.1): handed to the next plan, which starts the rule there.
-/// The place kept is the last lengthening that did not creep, which the rule
-/// from the start passes through at any later moment. See `SlowHobHint` in
-/// `src/core/running.ts`.
-public struct SlowHobHint: Sendable, Equatable {
-    public let startedAtS: Double
-    public let choices: CookChoices
-    /// The remembered time to boil the rule starts from, s.
-    public let fromRampS: Double
-    /// The lean carried and the cook's nudge, s.
-    public let carryS: Double
-    public let params: ModelParams
-    public let whiteDoseMin: Double
-    public let steps: Int
-    public let lastS: Double
-    public let rampS: Double
-    /// The carried cook time at `rampS`; nil when no plan needed it.
-    public let carriedS: Double?
-
-    public init(
-        startedAtS: Double, choices: CookChoices, fromRampS: Double, carryS: Double, params: ModelParams,
-        whiteDoseMin: Double, steps: Int, lastS: Double, rampS: Double, carriedS: Double?
-    ) {
-        self.startedAtS = startedAtS
-        self.choices = choices
-        self.fromRampS = fromRampS
-        self.carryS = carryS
-        self.params = params
-        self.whiteDoseMin = whiteDoseMin
-        self.steps = steps
-        self.lastS = lastS
-        self.rampS = rampS
-        self.carriedS = carriedS
-    }
+/// Whether the slow hob has lengthened the guess: the pull moves with the
+/// clock, so no time left is shown from it.
+public func guessLengthened(_ plan: CookPlan) -> Bool {
+    plan.inputs == nil
 }
 
-/// Whether the slow hob's `hint` may be taken for `cook` under `c` with
-/// `leanHintS`, at `nowS`: still heating on a guess, the same start, choices,
-/// remembered time, lean and nudge, calibration parameters and white target,
-/// to the bit, and the clock past the place kept. Otherwise it is ignored.
-public func slowHobHintFits(
-    _ hint: SlowHobHint, _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double
-) -> Bool {
-    let ch = cook.choices
-    let e = cook.events
-    guard ch.startMode == .cold, e.boilAtS == nil, e.pulled == nil else { return false }
-    guard hint.startedAtS == cook.startedAtS, hint.choices == ch else { return false }
-    guard hint.fromRampS == estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) else { return false }
-    guard hint.carryS == leanHintS + cook.nudgeS else { return false }
+/// Whether the plan asks whether the egg is still in the water.
+public func asksIfStillIn(_ plan: CookPlan) -> Bool {
+    plan.deadlines.asking
+}
+
+/// The choices as a key: every field, numbers to the bit.
+private func choicesKey(_ ch: CookChoices) -> String {
+    [
+        ch.massFrom.rawValue, ch.sizeTable?.rawValue ?? "-", ch.eggFrom.rawValue, ch.startMode.rawValue,
+        ch.afterBoil.rawValue, ch.cooling.rawValue, numberKey(ch.massKg), numberKey(ch.customStartC),
+        ch.roomC.map(numberKey) ?? "-", numberKey(ch.waterLitres), numberKey(ch.eggCount), numberKey(ch.altitudeM),
+        numberKey(ch.level),
+    ].joined(separator: "|")
+}
+
+/// What the slow hob's rule reads, as a key.
+private func slowHobKey(_ cook: RunningCook, _ c: Calibration, leanHintS: Double) -> String {
     let p = calibrationParams(c)
-    guard hint.params.alphaM2s == p.alphaM2s else { return false }
-    guard hint.whiteDoseMin == calibrationDoneness(c, level: 1.0).whiteDoseMin else { return false }
-    return hint.steps == 0 || nowS > cook.startedAtS + hint.lastS
+    return [
+        numberKey(cook.startedAtS), choicesKey(cook.choices),
+        numberKey(estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)),
+        numberKey(leanHintS + cook.nudgeS), numberKey(p.alphaM2s),
+        numberKey(calibrationDoneness(c, level: 1.0).whiteDoseMin),
+    ].joined(separator: "/")
 }
 
-/// Whether the slow hob's moment has come at `nowS`, so the app plans again
-/// (both apps' tick): strictly past `slowHobAtS`, the one comparison
-/// `replan` lengthens by. At the moment itself the plan is the one the app
-/// holds, so a clock stopped exactly there plans nothing at every tick.
+/// Whether the slow hob's memo may be taken for `cook` under `c` with
+/// `leanHintS`, at `nowS`: still heating on a guess, worked out under the
+/// same start, choices, remembered time, lean and nudge, parameters and white
+/// target, and the clock past the place kept. Otherwise it is ignored.
+public func slowHobMemoFits(
+    _ memo: SlowHobMemo?, _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double
+) -> Bool {
+    guard let memo else { return false }
+    let e = cook.events
+    guard cook.choices.startMode == .cold, e.boilAtS == nil, e.pulled == nil else { return false }
+    guard memo.key == slowHobKey(cook, c, leanHintS: leanHintS) else { return false }
+    return memo.steps == 0 || nowS > cook.startedAtS + memo.lastS
+}
+
+/// Whether the slow hob's moment has come at `nowS`: strictly past
+/// `slowHobAtS`, the one comparison `replan` lengthens by.
 public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
     guard let at = plan.slowHobAtS else { return false }
     return nowS > at
 }
 
 /// Whether two decision surfaces' inputs are the same pot, egg and posterior:
-/// every number equal.
+/// the same key (`inputsKey`).
 public func sameDecisionInputs(_ a: DecisionInputs, _ b: DecisionInputs) -> Bool {
-    a == b
+    inputsKey(a) == inputsKey(b)
 }
 
 /// The most lengthenings one plan works through.
@@ -823,25 +1069,19 @@ public let slowHobMaxSteps = 100
 /// How long past its end a cook is still worth picking back up, s.
 public let restoreWindowS = 3600.0
 
-/// Whether a cook is too old to pick back up at `nowS`, from its plan. The
-/// tick asks it too, of the plan it holds, and ends the cook as Cancel would
-/// (running-cook review 2.2).
+/// Whether a cook is too old to pick back up at `nowS`, from its plan.
 public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
     nowS > plan.tooOldAtS
 }
 
 /// The id of the egg still open to correction: the stored running cook's,
-/// until it is too old to pick back up; nil when there is none. Every other
-/// logged egg is final.
+/// until it is too old to pick back up; nil when there is none.
 public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
     guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
     return cook.idMs
 }
 
-/// Whether the cook on a screen is still the egg open to correction: the
-/// stored cook is this one (`storedIdMs`, nil when nothing is stored) and it
-/// is not too old by this screen's plan. When not, the egg is final: end it as
-/// Start again does, or put its questions away, and log nothing more for it.
+/// Whether the cook on a screen is still the egg open to correction.
 public func cookStillOpen(_ cook: RunningCook, plan: CookPlan, storedIdMs: Double?, nowS: Double) -> Bool {
     storedIdMs == cook.idMs && !cookTooOld(plan, nowS: nowS)
 }
@@ -850,7 +1090,7 @@ public func cookStillOpen(_ cook: RunningCook, plan: CookPlan, storedIdMs: Doubl
 /// the slow hob's rule alone. See `replan` in `src/core/running.ts`.
 public func replan(
     _ cook: RunningCook, _ c: Calibration, surface: CookSurface?, leanHintS: Double, nowS: Double,
-    hint: SlowHobHint? = nil
+    memo: SlowHobMemo? = nil
 ) -> CookPlan {
     let ch = cook.choices
     let e = cook.events
@@ -863,22 +1103,20 @@ public func replan(
     let carry = leanHintS + cook.nudgeS
 
     // A tap after a late correction to cold runs on the remembered time,
-    // unless no pan was remembered (review 1.2).
+    // unless no pan was remembered.
     var ramp = estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
-    if let tap = tapAt, !(cook.boilRemembered && tappedAfterLateCold(cook)) { ramp = tap - start }
-    let fromRamp = ramp
-    // The slow hob's hint, taken only when it fits: the rule starts where it
+    if let tap = tapAt, !(boilRemembered(cook) && tappedAfterLateCold(cook)) { ramp = tap - start }
+    // The memo's place, taken only when it fits: the rule starts where it
     // got to, and its first place needs no solve.
-    var resume: SlowHobHint?
-    if provisional, let hint, slowHobHintFits(hint, cook, c, leanHintS: leanHintS, nowS: nowS) { resume = hint }
+    let resume = provisional && slowHobMemoFits(memo, cook, c, leanHintS: leanHintS, nowS: nowS) ? memo : nil
     if let resume { ramp = resume.rampS }
     var pot = cookSetupOf(ch, timeToBoilS: ramp)
-    // Nil while the hint stands for it: solved only if the plan stops there.
+    // Nil while the memo stands for it: solved only if the plan stops there.
     var found: LevelAnswer? = resume == nil
         ? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil) : nil
     var lengthened = false
     var slowHobAt: Double?
-    var slowHob: SlowHobHint?
+    var place: SlowHobMemo?
 
     if provisional {
         let heated = nowS - start
@@ -942,10 +1180,9 @@ public func replan(
             }
             step += 1
         }
-        slowHob = SlowHobHint(
-            startedAtS: start, choices: ch, fromRampS: fromRamp, carryS: carry, params: params,
-            whiteDoseMin: calibrationDoneness(c, level: 1.0).whiteDoseMin,
-            steps: keptSteps, lastS: keptLast, rampS: keptRamp, carriedS: keptCarried
+        place = SlowHobMemo(
+            key: slowHobKey(cook, c, leanHintS: leanHintS), steps: keptSteps, lastS: keptLast, rampS: keptRamp,
+            carriedS: keptCarried
         )
     }
 
@@ -995,7 +1232,7 @@ public func replan(
         overdue = true
     }
     // The pull that rang, held, unless the cook has told the plan something
-    // since that puts the pull after that moment (onescreen review 3).
+    // since that puts the pull after that moment.
     if pulled == nil, !provisional, let rang = e.rangAtS {
         let undone = told.map { $0 > rang && start + planned.result.cookTimeS > $0 } ?? false
         if !undone {
@@ -1006,11 +1243,9 @@ public func replan(
     let ran = solutionAt(egg: pot.egg, setup: pot.setup, params: params, solution: planned, cookTimeS: cookTime)
 
     // A pull the clock assumed, and a correction since that would, without
-    // it, pull after the correction or heat again: ask, rather than land in
-    // the cooling.
+    // it, pull after the correction or heat again: ask.
     var ask = false
     if let pulled, pulled.by == .timeout, !pulled.confirmed, let at = cook.correctedAtS, at >= pulled.outS {
-        // Only a correction that leaves the egg still to cook when it was made.
         ask = (cold && e.boilAtS == nil) || start + planned.result.cookTimeS > at
     }
 
@@ -1019,9 +1254,8 @@ public func replan(
     if ch.cooling != .counter {
         let out = pulled?.outS ?? cookEnd + pullGraceSeconds
         if pulled != nil, let cooled = e.cooledAtS {
-            // As it ran; but a cooling a correction ended (Done on the
-            // counter), not yet written down as counted, ends at the counted
-            // time if that is sooner.
+            // As it ran; but a cooling a correction ended, not yet written
+            // down as counted, ends at the counted time if that is sooner.
             let stamped = cooled == cook.correctedAtS && out + cool < cooled
             let end = stamped ? out + cool : cooled
             coolEnd = end
@@ -1050,15 +1284,14 @@ public func replan(
     }
 
     return CookPlan(
-        egg: pot.egg, setup: pot.setup, provisional: provisional, lengthened: lengthened, inputs: inputs,
-        answer: answer, level: answer.level, solution: ran, decided: decided, leanS: lean, nudgeS: nudge,
-        cookTimeS: cookTime, overdue: overdue, askIfStillIn: ask, coolS: cool,
+        egg: pot.egg, setup: pot.setup, inputs: inputs, answer: answer, solution: ran, decided: decided,
+        leanS: lean, nudgeS: nudge, cookTimeS: cookTime, overdue: overdue, coolS: cool,
         probeMoment: probeMomentFor(ran.result, cooling: ch.cooling),
         deadlines: Deadlines(
             cookEndS: cookEnd, coolEndS: coolEnd, provisional: provisional,
             outAtS: pulled?.by == .cook ? pulled?.outS : nil, asking: ask
         ),
-        slowHobAtS: slowHobAt, slowHob: slowHob, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
+        slowHobAtS: slowHobAt, memo: place, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
     )
 }
 
@@ -1066,19 +1299,13 @@ public func replan(
 /// Pull, and the pull it records is the one that rang.
 public func withOut(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> RunningCook {
     if cook.events.pulled != nil || phaseAt(plan.deadlines, nowS: nowS) != .pull { return cook }
-    var next = cook
-    next.events.pulled = Pulled(dueS: plan.deadlines.cookEndS, outS: nowS, by: .cook, confirmed: true)
-    return next
+    return appendEntry(cook, .pulled(Pulled(dueS: plan.deadlines.cookEndS, outS: nowS, by: .cook, confirmed: true)))
 }
 
-/// The events the clock alone decides, as of `nowS`, from the plan that rang:
-/// the pull rang, the grace ran out (unconfirmed) and the counted cooling
-/// ended. A ring the plan no longer holds is cleared, and a cooling a
-/// correction ended after its counted end is written down at that end.
+/// The events the clock alone decides, as of `nowS`, from the plan that rang.
+/// See `eventsDue` in `src/core/running.ts`.
 public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEvents {
-    // While the plan asks whether the egg is still in, the clock decides
-    // nothing (running-cook review 3).
-    if plan.askIfStillIn { return cook.events }
+    if asksIfStillIn(plan) { return cook.events }
     let d = plan.deadlines
     var pulled = cook.events.pulled
     var cooled = cook.events.cooledAtS
@@ -1096,27 +1323,22 @@ public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Cook
 // MARK: - The cook as it ran
 
 /// The plan as it ran, from `plan`: nil unless the cook is pulled, `plan` is
-/// on its pot's surface, and it is a plan of the cook as pulled (its cook
-/// time the pull's, to the bit).
+/// on its pot's surface, and it is a plan of the cook as pulled.
 private func asRanOf(_ cook: RunningCook, _ plan: CookPlan) -> CookAsRan? {
     guard let pulled = cook.events.pulled, plan.decided != nil, let forecast = plan.forecast,
           let inputs = plan.inputs, plan.cookTimeS == pulled.dueS - cook.startedAtS else { return nil }
     return CookAsRan(
-        correctedAtS: cook.correctedAtS, level: plan.level, cookS: plan.cookTimeS, nudgeS: plan.nudgeS,
+        correctedAtS: cook.correctedAtS, level: plan.answer.level, cookS: plan.cookTimeS, nudgeS: plan.nudgeS,
         forecast: forecast, peakYolkC: plan.solution.result.peakYolkC, probeMoment: plan.probeMoment,
         params: inputs.params
     )
 }
 
 /// The cook with the plan as it ran kept: taken from `plan` the first time
-/// the cook is pulled and `plan`, a plan of the cook as pulled, is on its
-/// surface. Otherwise the cook as it was. See `keepAsRan` in
-/// `src/core/running.ts`.
+/// the cook is pulled and `plan` is on its surface.
 public func keepAsRan(_ cook: RunningCook, plan: CookPlan) -> RunningCook {
     guard cook.asRan == nil, cook.events.pulled != nil, let ran = asRanOf(cook, plan) else { return cook }
-    var kept = cook
-    kept.asRan = ran
-    return kept
+    return appendEntry(cook, .ran(ran))
 }
 
 /// Whether the cook's plan as it ran is kept and taken since its last
@@ -1133,11 +1355,7 @@ public func asRanShown(_ cook: RunningCook, plan: CookPlan) -> CookAsRan? {
     return asRanOf(cook, plan)
 }
 
-/// The solve as the cook ran (onescreen review 2.2), for what Done says of the
-/// egg beside the peak (the texture note): the plan's egg and pot at the cook
-/// time that ran, on the parameters it ran under, so a plan made on a
-/// posterior that has folded this egg's answer never moves it. `plan.solution`
-/// itself when the plan is on those parameters at that time.
+/// The solve as the cook ran, for the texture note beside the peak.
 public func solutionAsRan(_ plan: CookPlan, ran: CookAsRan) -> Solution {
     if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, plan.cookTimeS == ran.cookS {
         return plan.solution
@@ -1152,8 +1370,7 @@ public func solutionAsRan(_ plan: CookPlan, ran: CookAsRan) -> Solution {
 
 /// A correction after the pull, as it ran: the corrected cook planned on
 /// `before`, the calibration before this egg, on that calibration's surface
-/// for the corrected pot; nil while `surface` is not that pot's. Before the
-/// pull, the cook as it was.
+/// for the corrected pot; nil while `surface` is not that pot's.
 public func asRanCorrected(
     _ cook: RunningCook, before: Calibration, surface: CookSurface?, nowS: Double
 ) -> RunningCook? {
@@ -1161,9 +1378,7 @@ public func asRanCorrected(
     guard let ran = asRanOf(cook, replan(cook, before, surface: surface, leanHintS: 0, nowS: nowS)) else {
         return nil
     }
-    var again = cook
-    again.asRan = ran
-    return again
+    return appendEntry(cook, .ran(ran))
 }
 
 // MARK: - The record, the memory
@@ -1187,9 +1402,7 @@ public struct RecordContext: Sendable, Equatable {
     }
 }
 
-/// Why `cookFactsFor` made no facts: no plan as it ran kept and `plan` not on
-/// its surface (plan on the surface `plan.inputs` asks for, `keepAsRan`, ask
-/// again), or one kept before a correction since (`asRanCorrected`).
+/// Why `cookFactsFor` made no facts.
 public enum FactsRefused: String, Sendable, Equatable {
     case noSurface, stale
 }
@@ -1200,10 +1413,8 @@ public struct CookFactsResult: Sendable, Equatable {
     public let refused: FactsRefused?
 }
 
-/// The facts `recordFor` makes the record of, from the cook as last corrected
-/// and its plan, with whichever answers have been given: the level, cook
-/// time, nudge and forecast from the plan as it ran when kept, else from
-/// `plan` on its surface; never from a plan with no surface.
+/// The facts `recordFor` makes the record of. See `cookFactsFor` in
+/// `src/core/running.ts`.
 public func cookFactsFor(
     _ cook: RunningCook, plan: CookPlan, context ctx: RecordContext, yolkWord: YolkWord?, white: WhiteReport?,
     probe: ProbeReading?
@@ -1216,20 +1427,21 @@ public func cookFactsFor(
     if let kept = cook.asRan {
         (level, cookS, nudgeS, forecast) = (kept.level, kept.cookS, kept.nudgeS, kept.forecast)
     } else if plan.decided != nil, let f = plan.forecast {
-        (level, cookS, nudgeS, forecast) = (plan.level, plan.cookTimeS, plan.nudgeS, f)
+        (level, cookS, nudgeS, forecast) = (plan.answer.level, plan.cookTimeS, plan.nudgeS, f)
     } else {
         return CookFactsResult(facts: nil, refused: .noSurface)
     }
     let pulled = cook.events.pulled
+    let remembered = boilRemembered(cook)
     return CookFactsResult(facts: CookFacts(
         app: ctx.app, appVersion: ctx.appVersion, prior: ctx.prior, day: ctx.day, id: ctx.id,
         massKg: plan.egg.massKg, massFrom: cook.choices.massFrom, sizeTable: cook.choices.sizeTable,
-        setup: plan.setup, eggFrom: cook.choices.eggFrom, boilRemembered: cook.boilRemembered,
+        setup: plan.setup, eggFrom: cook.choices.eggFrom, boilRemembered: remembered,
         level: level, cookS: cookS, nudgeS: nudgeS,
         outS: pulled?.by == .cook ? pulled.map { $0.outS - cook.startedAtS } : nil,
         coolS: plan.coolS, yolkWord: yolkWord, white: white, probe: probe, forecast: forecast,
         lang: cook.lang, units: cook.units,
-        boilTapped: cook.events.boilAtS != nil && !(cook.boilRemembered && tappedAfterLateCold(cook))
+        boilTapped: cook.events.boilAtS != nil && !(remembered && tappedAfterLateCold(cook))
     ), refused: nil)
 }
 
@@ -1239,9 +1451,7 @@ public struct BoilToRemember: Sendable, Equatable {
     public let seconds: Double
 }
 
-/// What the boil memory learns from this cook, written when it ends: the tap
-/// on a cold start, unless the cook was told to watch for it only after the
-/// water could already have boiled.
+/// What the boil memory learns from this cook, written when it ends.
 public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     let ch = cook.choices
     guard ch.startMode == .cold, let tap = cook.events.boilAtS else { return nil }
@@ -1250,38 +1460,32 @@ public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     return BoilToRemember(litres: ch.waterLitres, seconds: tap - cook.startedAtS)
 }
 
-/// When the cook began watching for the boil tapped at `tap`: when Start was
-/// pressed, for a tap before the choices first said boiling; otherwise when
-/// they last said cold.
+/// When the cook began watching for the boil tapped at `tap`.
 private func watchedFromS(_ cook: RunningCook, tap: Double) -> Double {
-    if let hot = cook.firstHotAtS, tap >= hot { return cook.coldSinceS ?? cook.startedAtS }
+    let h = coldHistory(cook)
+    if let hot = h.firstHotAtS, tap >= hot { return h.coldSinceS ?? cook.startedAtS }
     return cook.idMs / 1000
 }
 
 /// Whether the boil was tapped after a correction from boiling to cold made
 /// later than this water's remembered time to boil.
 private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
-    guard let tap = cook.events.boilAtS, let hot = cook.firstHotAtS, tap >= hot else { return false }
+    guard let tap = cook.events.boilAtS, let hot = coldHistory(cook).firstHotAtS, tap >= hot else { return false }
     let remembered = estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)
     return watchedFromS(cook, tap: tap) - cook.startedAtS > remembered
 }
 
-/// What a cook leaves when it ends, by Cancel or by Start again: the boil to
-/// remember, and whether it was cooked through and so is an egg to log.
+/// What a cook leaves when it ends, by Cancel or by Start again.
 public struct CookEnding: Sendable, Equatable {
     public let boil: BoilToRemember?
     public let finished: Bool
-    /// The record must be made again before the cook is forgotten (onescreen
-    /// review 1.2): corrected after the pull, its plan as it ran not yet
-    /// planned again (`asRanCurrent`). Make it (`asRanCorrected` on the
-    /// calibration before this egg), log it in place of the egg logged, then
-    /// forget the cook and send.
+    /// The record must be made again before the cook is forgotten.
     public let remake: Bool
 }
 
 public func cookEnding(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEnding {
     CookEnding(
-        boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, nowS: nowS) == .done,
+        boil: boilToRemember(cook), finished: !asksIfStillIn(plan) && phaseAt(plan.deadlines, nowS: nowS) == .done,
         remake: cook.events.pulled != nil && cook.asRan != nil && !asRanCurrent(cook)
     )
 }

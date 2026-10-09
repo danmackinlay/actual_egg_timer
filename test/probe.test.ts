@@ -38,7 +38,7 @@ import {
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
-import { RunningCook, eventsDue, replan, startCook, withBoil, withOut } from '../src/core/running.js';
+import { RunningCook, eventsDue, replan, startCook, withBoil, withOut, writeEvents } from '../src/core/running.js';
 import { appSetup, knowing } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
@@ -341,7 +341,7 @@ test('4c. the entry range holds every reading a kitchen could make, and not a ty
 
 /** A cook as the app runs one (src/core/running.ts), on a 68 g egg. */
 function runningCook(startMode: 'cold' | 'hot', cooling: 'ice' | 'tap'): RunningCook {
-  return startCook(1_000_000, {
+  return startCook(1_000, {
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
     startMode: startMode, afterBoil: 'hold', cooling: cooling, waterLitres: 2, eggCount: 2, altitude_m: 0,
     level: JAMMY,
@@ -358,7 +358,7 @@ test('5a. the cooling counts to the peak of the time that ran, from the egg out,
   assert.equal(replan(out, c, null, 0, pull + 5).deadlines.coolEnd_s, pull + 5 + plan.cool_s);
   // Timed out rather than tapped: the same length from the end of the grace.
   const late = pull + PULL_GRACE_SECONDS;
-  const timedOut = { ...hot, events: eventsDue(hot, plan, late) };
+  const timedOut = writeEvents(hot, eventsDue(hot, plan, late));
   assert.equal(timedOut.events.pulled?.by, 'timeout');
   assert.equal(replan(timedOut, c, null, 0, late).deadlines.coolEnd_s, late + plan.cool_s);
   // A cold start's tap re-solves the cook, and the peak, and the cooling with it.
@@ -374,6 +374,6 @@ test('5b. a cooling that has ended is kept as it ran', () => {
   const plan = replan(hot, c, null, 0, 1000);
   const pull = plan.deadlines.cookEnd_s;
   const out = withOut(hot, plan, pull + 5);
-  const ended = { ...out, events: { ...out.events, cooledAt_s: pull + 5 + 150 } };
+  const ended = writeEvents(out, { ...out.events, cooledAt_s: pull + 5 + 150 });
   assert.equal(replan(ended, c, null, 0, pull + 400).cool_s, 150);
 });

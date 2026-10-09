@@ -113,7 +113,7 @@ final class AppModel {
             afterBoil: setup?.afterBoil ?? (planner.heatOff ? .off : .hold),
             cooling: setup?.cooling ?? planner.cooling,
             whiteSets: plan?.solution.whiteSets ?? planner.solution?.whiteSets ?? true,
-            boilKnown: cook.running?.boilRemembered ?? planner.hasBoilMemory,
+            boilKnown: cook.running.map(boilRemembered) ?? planner.hasBoilMemory,
             probeWanted: cook.asksForProbe
         ))
     }

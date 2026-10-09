@@ -21,8 +21,8 @@ import { decisionGrid, oddsProfileFor } from '../src/ui/decisionGrids.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { appSetup } from '../tools/common.js';
 
-/** A pot whose build throws: no parameters to build the surface with, so
- *  `decisionGridRequest` meets a null `params`. */
+/** A pot that cannot be built: no parameters to key or build the surface
+ *  with, a null `params`. */
 function brokenInputs(): DecisionInputs {
   return {
     egg: eggFromMass(0.06), setup: appSetup(), params: null,

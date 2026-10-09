@@ -16,14 +16,14 @@ import {
   AlarmSound, BoilMemory, DEFAULTS, DEFAULT_ALARM_SOUND, LIMITS, Limit, carrySizeIndex, clamp, isWithin,
   readAlarmSound, rememberBoil,
 } from '../core/policy.js';
-import { CookAsRan, CookEvents, Pulled, RunningCook, readRunningCook, sameChoices } from '../core/running.js';
+import { RunningCook, readRunningCook } from '../core/running.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 
 export type { Limit } from '../core/policy.js';
 export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v4';
+const COOK_KEY = 'aet.cook.v5';
 const BOIL_KEY = 'aet.boil.v1';
 
 /**
@@ -32,11 +32,11 @@ const BOIL_KEY = 'aet.boil.v1';
  * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
  * 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
  * copies 0.4 kept aside of what it could not read, and the cooks in progress
- * before this one's shape (`aet.cook.v1`-`v3`).
+ * before this one's shape (`aet.cook.v1`-`v4`; `v5` keeps a cook's log).
  */
 export const RETIRED_KEYS = [
   'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
-  'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3',
+  'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
 ];
 
 type StartTempMode = 'fridge' | 'room' | 'custom';
@@ -609,81 +609,9 @@ export function saveLeanHint(id_ms: number, leanHint_s: number): void {
   cookStore.write(JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
 }
 
-/**
- * `ours` with what another tab wrote for the same cook taken up (running-cook
- * review 1.2): what it saw in the one pan that this tab has not. The two are
- * one cook, the same id, so neither copy corrects the other, and the events
- * are each the earliest seen: the boil tapped first; a pull by the cook over
- * one the clock assumed (`timeout`), and of two alike the earlier; the
- * cooling's end of the pull kept; the pull that rang, if it rang under the
- * boil kept; and the plan as it ran, if it is of the pull kept. `ours`, the
- * same object, when there is nothing to take up, and always for another
- * cook: a tab never takes up a cook another tab started (DECISIONS.md 97).
- * Taken up both ways, two tabs end with the same events.
- *
- * From a copy whose start or choices differ from ours (onescreen review
- * 1.1), only the cook's own observations: the boil tap and a pull the cook
- * tapped, which are what was seen in the pan whatever either tab was told.
- * Never what that copy's clock decided from a plan this tab has corrected
- * away from - the pull ringing, a pull it assumed when the grace ran out
- * (`timeout`), the cooling's end - which would end this tab's cook on
- * another's time.
- */
-export function takeUpEvents(ours: RunningCook, theirs: RunningCook): RunningCook {
-  if (theirs.id_ms !== ours.id_ms) return ours;
-  const same = sameCorrections(ours, theirs);
-  const a = ours.events;
-  const b = theirs.events;
-  const boil = earlier(a.boilAt_s, b.boilAt_s);
-  const theirPull = same || (b.pulled !== null && b.pulled.by === 'cook') ? b.pulled : null;
-  const pulled = betterPull(a.pulled, theirPull);
-  const cooled = earlier(
-    samePull(pulled, a.pulled) ? a.cooledAt_s : null, same && samePull(pulled, b.pulled) ? b.cooledAt_s : null,
-  );
-  const rang = earlier(a.boilAt_s === boil ? a.rangAt_s : null, same && b.boilAt_s === boil ? b.rangAt_s : null);
-  const events: CookEvents = { boilAt_s: boil, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
-  // The plan as it ran is of one pull's cook time, and of the cook as last
-  // corrected: ours if it still is, else theirs if it is.
-  const fits = (r: CookAsRan | null): boolean => r !== null && pulled !== null
-    && r.cook_s === pulled.due_s - ours.startedAt_s && r.correctedAt_s === ours.correctedAt_s;
-  const asRan = fits(ours.asRan) ? ours.asRan : fits(theirs.asRan) ? theirs.asRan : null;
-  if (JSON.stringify(events) === JSON.stringify(a) && asRan === ours.asRan) return ours;
-  return { ...ours, events: events, asRan: asRan };
-}
-
-/** Whether two copies of one cook were told the same: the same start and
- *  choices, so the same plan, and what either's clock decided is the other's
- *  too. */
-function sameCorrections(a: RunningCook, b: RunningCook): boolean {
-  return a.startedAt_s === b.startedAt_s && sameChoices(a.choices, b.choices);
-}
-
-/** Whether copy `a` of a cook was corrected after copy `b` was: a reload
- *  should restore the latest correction, so `a` is not written over by `b`
- *  (cook.ts, `persistCook`). */
-export function correctedLater(a: RunningCook, b: RunningCook): boolean {
-  return a.correctedAt_s !== null && (b.correctedAt_s === null || a.correctedAt_s > b.correctedAt_s);
-}
-
-function earlier(a: number | null, b: number | null): number | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return Math.min(a, b);
-}
-
-function samePull(a: Pulled | null, b: Pulled | null): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-/** The pull to keep of two: the cook's tap over the clock's assumption, and
- *  of two alike the earlier out, then the earlier due. */
-function betterPull(a: Pulled | null, b: Pulled | null): Pulled | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  if (a.by !== b.by) return a.by === 'cook' ? a : b;
-  if (a.out_s !== b.out_s) return a.out_s < b.out_s ? a : b;
-  return a.due_s <= b.due_s ? a : b;
-}
+/** What another tab wrote for this cook, taken up, and which copy a reload
+ *  restores: core's, over the two copies' logs (src/core/running.ts). */
+export { correctedLater, takeUpEvents } from '../core/running.js';
 
 /** The cook as stored, whichever tab wrote it. */
 export function storedCookText(): string | null {

@@ -31,7 +31,7 @@ import {
 } from '../src/core/policy.js';
 import {
   CookChoices, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, readRunningCook, replan, startCook, withBoil,
-  withOut,
+  withOut, writeEvents,
 } from '../src/core/running.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -577,7 +577,7 @@ const CHOICES: CookChoices = {
 };
 
 function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory = {}): RunningCook {
-  return startCook(T0, { ...CHOICES, ...over }, nudge_s, memory, 'metric', 'en');
+  return startCook(T0 / 1000, { ...CHOICES, ...over }, nudge_s, memory, 'metric', 'en');
 }
 
 /** The plan on its pot's surface, as an app makes it once the surface is in:
@@ -601,7 +601,7 @@ function rec(
 /** The cook planned at `now_s`, with what the clock decided by then. */
 function ranTo(cook: RunningCook, now_s: number): { cook: RunningCook; plan: CookPlan } {
   const plan = onSurface(cook, now_s);
-  const next = { ...cook, events: eventsDue(cook, plan, now_s) };
+  const next = writeEvents(cook, eventsDue(cook, plan, now_s));
   return { cook: next, plan: onSurface(next, now_s) };
 }
 

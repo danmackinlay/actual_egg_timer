@@ -8,11 +8,13 @@ import {
   PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
 } from '../../src/core/policy.js';
 import { oddsProfile } from '../../src/core/reach.js';
+import { decisionInputs, inputsKey } from '../../src/core/decide.js';
 import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobMemo,
+  SlowHobPlace, appendEntry, correctedLater, takeUpEvents, writeEvents,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
   earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, slowHobDue, solutionAsRan,
   startCook, startCorrected, stillIn, withBoil, withOut,
@@ -43,7 +45,7 @@ export const START_S = START_MS / 1000;
 export const MEMORY = { '2.0': 480, '3.0': 610 };
 
 export function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0): RunningCook {
-  return startCook(START_MS, { ...BASE_CHOICES, ...over }, nudge_s, MEMORY, 'metric', 'en');
+  return startCook(START_S, { ...BASE_CHOICES, ...over }, nudge_s, MEMORY, 'metric', 'en');
 }
 
 const setupChoices: CookChoices[] = [];
@@ -77,7 +79,18 @@ const setupChoices: CookChoices[] = [];
 const setups = setupChoices.map((choices, i) => {
   const timeToBoil_s = [480, 30, 7200, 611.25][i % 4];
   const pot = cookSetupOf(choices, timeToBoil_s);
-  return { choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup };
+  const inputs = decisionInputs(calibrationOf(named('learned')), pot.egg, pot.setup);
+  return {
+    choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup,
+    // The key's numbers in its order, as text that every reader parses to
+    // the bit (a JSON reader may read a 17-digit number an ulp off).
+    keyNumbers: [
+      pot.egg.radius_m, pot.egg.minorDiameter_m, pot.egg.mass_kg, pot.egg.volume_m3, pot.setup.eggStart_C,
+      pot.setup.ambient_C, pot.setup.boiling_C, pot.setup.timeToBoil_s, pot.setup.waterLitres, pot.setup.eggCount,
+      inputs.params.alpha_m2s, inputs.whiteDose_min,
+    ].map(String),
+    inputsKey: inputsKey(inputs),
+  };
 });
 
 /* ---------------------------------------------------------------- moves */
@@ -85,22 +98,16 @@ const setups = setupChoices.map((choices, i) => {
 const cold = cookOf();
 const hot = cookOf({ startMode: 'hot' }, -7);
 const tapped = withBoil(cold, START_S + 532.5);
-const pulled: RunningCook = {
-  ...tapped,
-  events: { ...tapped.events, pulled: { due_s: START_S + 851.2, out_s: START_S + 858.9, by: 'cook', confirmed: true } },
-};
-const cooled: RunningCook = { ...pulled, events: { ...pulled.events, cooledAt_s: START_S + 1031.9 } };
+const pulled = writeEvents(tapped, { ...tapped.events, pulled: { due_s: START_S + 851.2, out_s: START_S + 858.9, by: 'cook', confirmed: true } });
+const cooled = writeEvents(pulled, { ...pulled.events, cooledAt_s: START_S + 1031.9 });
 const hotTapped = withBoil(corrected(hot, { ...hot.choices, startMode: 'cold' }, START_S + 100), START_S + 500);
 /** The grace ran out on a hot start, and the counted cooling ended. */
-const timedOut: RunningCook = {
-  ...hot,
-  events: {
-    boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false },
-    cooledAt_s: START_S + 590, rangAt_s: START_S + 380,
-  },
-};
+const timedOut = writeEvents(hot, {
+  boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false },
+  cooledAt_s: START_S + 590, rangAt_s: START_S + 380,
+});
 /** The pull rang, the egg still in. */
-const rung: RunningCook = { ...hot, events: { ...hot.events, rangAt_s: START_S + 380 } };
+const rung = writeEvents(hot, { ...hot.events, rangAt_s: START_S + 380 });
 
 type Move =
   | { boil: number }
@@ -113,7 +120,7 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'the boil, tapped on a cold start', cook: cold, move: { boil: START_S + 532.5 } },
   { note: 'a second tap is not taken', cook: tapped, move: { boil: START_S + 540 } },
   { note: 'no boil to tap on a hot start', cook: hot, move: { boil: START_S + 60 } },
-  { note: 'no boil to tap after the pull', cook: { ...cold, events: pulled.events }, move: { boil: START_S + 900 } },
+  { note: 'no boil to tap after the pull', cook: writeEvents(cold, pulled.events), move: { boil: START_S + 900 } },
   { note: 'no tap before the start', cook: cold, move: { boil: START_S - 1 } },
   { note: 'boiling corrected to cold: cold from now', cook: hot, move: { correct: { ...hot.choices, startMode: 'cold' }, now: START_S + 240 } },
   { note: 'cold corrected to boiling: no longer cold', cook: tapped, move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 600 } },
@@ -121,8 +128,8 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'corrected back to cold: cold from the second correction', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), move: { correct: tapped.choices, now: START_S + 610 } },
   { note: 'boiling a second time: first said boiling at the first', cook: corrected(corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), tapped.choices, START_S + 610), move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 620 } },
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
-  { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: { ...cookOf({ cooling: 'counter' }), events: pulled.events }, move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
-  { note: 'done on the counter, another correction: nothing ended', cook: { ...cookOf({ cooling: 'counter' }), events: pulled.events }, move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
+  { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
+  { note: 'done on the counter, another correction: nothing ended', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
   { note: 'a correction after the pull rang: planned afresh', cook: rung, move: { correct: { ...hot.choices, mass_kg: 0.076 }, now: START_S + 385 } },
   { note: 'the start corrected after the pull rang: planned afresh', cook: rung, move: { start: START_S - 60, now: START_S + 385 } },
@@ -138,7 +145,7 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'the start to the boil tap itself', cook: tapped, move: { start: START_S + 532.5, now: START_S + 700 } },
   { note: 'the start after the boil tap: refused', cook: tapped, move: { start: START_S + 533, now: START_S + 700 } },
   { note: 'the start after a tap a correction to boiling left unread: refused', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), move: { start: START_S + 540, now: START_S + 700 } },
-  { note: 'the start after the pull was due: refused', cook: { ...hot, events: { ...hot.events, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false } } }, move: { start: START_S + 390, now: START_S + 500 } },
+  { note: 'the start after the pull was due: refused', cook: writeEvents(hot, { ...hot.events, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false } }), move: { start: START_S + 390, now: START_S + 500 } },
   { note: 'the start earlier, after the cooling ended', cook: cooled, move: { start: START_S - 30, now: START_S + 1200 } },
   { note: 'a start that is not a time: refused', cook: cold, move: { start: Number.NaN, now: START_S + 200 } },
   { note: 'the start two hours before Start was pressed: the earliest taken', cook: cold, move: { start: START_S - 7200, now: START_S + 200 } },
@@ -196,12 +203,12 @@ const keptCooled = keptOf(cooled, START_S + 1100);
 
 const READ_COOKS: { note: string; cook: RunningCook }[] = [
   { note: 'just started, cold', cook: cold },
-  { note: 'hot, nudged, imperial, in the English of 1750', cook: { ...hot, units: 'imperial', lang: 'en-x-1750' } },
+  { note: 'hot, nudged, imperial, in the English of 1750', cook: startCook(START_S, { ...BASE_CHOICES, startMode: 'hot' }, -7, MEMORY, 'imperial', 'en-x-1750') },
   { note: 'tapped', cook: tapped },
   { note: 'pulled by the cook', cook: pulled },
   { note: 'cooled', cook: cooled },
-  { note: 'pulled when the grace ran out, on the counter', cook: { ...hot, choices: { ...hot.choices, cooling: 'counter' }, events: { boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false }, cooledAt_s: null, rangAt_s: null } } },
-  { note: 'a measured egg and a measured room, no pans remembered', cook: { ...startCook(START_MS, { ...BASE_CHOICES, mass_kg: 0.0612, massFrom: 'girth', sizeTable: null, room_C: 23.5, eggFrom: 'room' }, 3, {}, 'metric', 'cs'), boilRemembered: false } },
+  { note: 'pulled when the grace ran out, on the counter', cook: writeEvents(cookOf({ startMode: 'hot', cooling: 'counter' }, -7), { boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false }, cooledAt_s: null, rangAt_s: null }) },
+  { note: 'a measured egg and a measured room, no pans remembered', cook: startCook(START_S, { ...BASE_CHOICES, mass_kg: 0.0612, massFrom: 'girth', sizeTable: null, room_C: 23.5, eggFrom: 'room' }, 3, {}, 'metric', 'cs') },
   { note: 'a tap kept unread on a cook corrected to boiling', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600) },
   { note: 'corrected to cold after the start', cook: hotTapped },
   { note: 'the grace ran out, the pull unconfirmed, the cooling ended', cook: timedOut },
@@ -211,74 +218,95 @@ const READ_COOKS: { note: string; cook: RunningCook }[] = [
   { note: 'the plan as it ran, then a correction: kept, stale', cook: corrected(keptCooled, { ...keptCooled.choices, mass_kg: 0.06 }, START_S + 1200) },
 ];
 
+/** Stored cooks to damage: the pulled cook (`[boil, pulled]` in its log), and
+ *  others whose logs hold the entry a row damages. */
+const answeredCook = appendEntry(cooled, {
+  kind: 'answered', at_s: START_S + 1100, yolkWord: 'jammy', white: null, probe: { centre_C: 66.4, after_s: 180 },
+});
+const FROM: Record<string, RunningCook> = {
+  pulled: pulled, cooled: cooled, kept: keptCooled, rung: rung, answered: answeredCook,
+  corrected: corrected(tapped, { ...tapped.choices, mass_kg: 0.076 }, START_S + 600),
+  moved: startCorrected(cold, START_S - 60, START_S + 10) as RunningCook,
+};
 const base = JSON.parse(JSON.stringify(pulled)) as unknown;
-const REFUSED: { note: string; path: string[]; value: unknown }[] = [
-  { note: 'no id', path: ['id_ms'], value: undefined },
-  { note: 'an id that is not a number', path: ['id_ms'], value: '1791363600000' },
-  { note: 'a start of zero', path: ['startedAt_s'], value: 0 },
-  { note: 'no choices', path: ['choices'], value: undefined },
-  { note: 'choices that are a list', path: ['choices'], value: [] },
-  { note: 'no mass', path: ['choices', 'mass_kg'], value: undefined },
-  { note: 'a mass of zero', path: ['choices', 'mass_kg'], value: 0 },
-  { note: 'a mass that is true', path: ['choices', 'mass_kg'], value: true },
-  { note: 'an unknown mass source', path: ['choices', 'massFrom'], value: 'guess' },
-  { note: 'a class with no carton', path: ['choices', 'sizeTable'], value: null },
-  { note: 'an unknown carton', path: ['choices', 'sizeTable'], value: 'uk' },
-  { note: 'an unknown egg source', path: ['choices', 'eggFrom'], value: 'counter' },
-  { note: 'no egg temperature of its own', path: ['choices', 'customStart_C'], value: null },
-  { note: 'a room that is a string', path: ['choices', 'room_C'], value: '20' },
-  { note: 'no room at all', path: ['choices', 'room_C'], value: undefined },
-  { note: 'sous-vide', path: ['choices', 'startMode'], value: 'sous' },
-  { note: 'an unknown burner', path: ['choices', 'afterBoil'], value: 'low' },
-  { note: 'no burner', path: ['choices', 'afterBoil'], value: undefined },
-  { note: 'an unknown cooling', path: ['choices', 'cooling'], value: 'fridge' },
-  { note: 'no water', path: ['choices', 'waterLitres'], value: 0 },
-  { note: 'no eggs', path: ['choices', 'eggCount'], value: 0 },
-  { note: 'no altitude', path: ['choices', 'altitude_m'], value: null },
-  { note: 'a level past hard', path: ['choices', 'level'], value: 1.01 },
-  { note: 'a level under runny', path: ['choices', 'level'], value: -0.01 },
-  { note: 'no events', path: ['events'], value: undefined },
-  { note: 'a boil before the start', path: ['events', 'boilAt_s'], value: START_S - 1 },
-  { note: 'a boil that is a string', path: ['events', 'boilAt_s'], value: 'soon' },
-  { note: 'no boil field', path: ['events', 'boilAt_s'], value: undefined },
-  { note: 'a pull that is a list', path: ['events', 'pulled'], value: [] },
-  { note: 'a pull due before the start', path: ['events', 'pulled', 'due_s'], value: START_S - 5 },
-  { note: 'out before it was due', path: ['events', 'pulled', 'out_s'], value: START_S + 851 },
-  { note: 'pulled by nobody', path: ['events', 'pulled', 'by'], value: null },
-  { note: 'a pull neither confirmed nor not', path: ['events', 'pulled', 'confirmed'], value: undefined },
-  { note: 'a pull confirmed as a number', path: ['events', 'pulled', 'confirmed'], value: 1 },
-  { note: "the cook's own tap, unconfirmed", path: ['events', 'pulled', 'confirmed'], value: false },
-  { note: 'no rang field', path: ['events', 'rangAt_s'], value: undefined },
-  { note: 'rang before the start', path: ['events', 'rangAt_s'], value: START_S - 1 },
-  { note: 'rang as a string', path: ['events', 'rangAt_s'], value: 'then' },
-  { note: 'no pull field', path: ['events', 'pulled'], value: undefined },
-  { note: 'cooled without a pull', path: ['events', 'pulled'], value: null, },
-  { note: 'cooled before the egg came out', path: ['events', 'cooledAt_s'], value: START_S + 858 },
-  { note: 'a nudge that is not a number', path: ['nudge_s'], value: null },
-  { note: 'pans that are a list', path: ['boilMemory'], value: [480] },
-  { note: 'a pan that is not a time', path: ['boilMemory', '2.0'], value: 'slow' },
-  { note: 'a pan of no time', path: ['boilMemory', '2.0'], value: 0 },
-  { note: 'unknown units', path: ['units'], value: 'si' },
-  { note: 'no language', path: ['lang'], value: '' },
-  { note: 'remembered as a number', path: ['boilRemembered'], value: 1 },
-  { note: 'no cold-since field', path: ['coldSince_s'], value: undefined },
-  { note: 'cold since a string', path: ['coldSince_s'], value: 'start' },
-  { note: 'no first-hot field', path: ['firstHotAt_s'], value: undefined },
-  { note: 'first hot as a boolean', path: ['firstHotAt_s'], value: true },
-  { note: 'no corrected field', path: ['correctedAt_s'], value: undefined },
-  { note: 'corrected before the start', path: ['correctedAt_s'], value: START_S - 1 },
-  { note: 'no field for the plan as it ran (an earlier 0.5 build\'s cook)', path: ['asRan'], value: undefined },
-  { note: 'the plan as it ran, with no pull', path: ['events', 'pulled'], value: null },
-  { note: 'the plan as it ran, a list', path: ['asRan'], value: [] },
-  { note: 'the plan as it ran, no forecast', path: ['asRan', 'forecast'], value: null },
-  { note: 'the plan as it ran, a forecast that is not one', path: ['asRan', 'forecast', 'yolk'], value: [0.5, 0.6, 0.1] },
-  { note: 'the plan as it ran, a level past hard', path: ['asRan', 'level'], value: 1.5 },
-  { note: 'the plan as it ran, no cook time', path: ['asRan', 'cook_s'], value: 0 },
-  { note: 'the plan as it ran, a nudge that is a string', path: ['asRan', 'nudge_s'], value: '3' },
-  { note: 'the plan as it ran, no peak yolk', path: ['asRan', 'peakYolk_C'], value: undefined },
-  { note: 'the plan as it ran, the probe moment a number', path: ['asRan', 'probeMoment'], value: 1 },
-  { note: 'the plan as it ran, a diffusivity of zero', path: ['asRan', 'params', 'alpha_m2s'], value: 0 },
-  { note: 'the plan as it ran, corrected before the start', path: ['asRan', 'correctedAt_s'], value: START_S - 1 },
+const BOIL = { kind: 'boil', at_s: START_S + 532.5 };
+const REFUSED: { note: string; from: string; path: string[]; value: unknown }[] = [
+  { note: 'no id', from: 'pulled', path: ['id_ms'], value: undefined },
+  { note: 'an id that is not a number', from: 'pulled', path: ['id_ms'], value: '1791363600000' },
+  { note: 'no start', from: 'pulled', path: ['start'], value: undefined },
+  { note: 'a start that is a list', from: 'pulled', path: ['start'], value: [] },
+  { note: 'a start of zero', from: 'pulled', path: ['start', 'at_s'], value: 0 },
+  { note: 'no choices', from: 'pulled', path: ['start', 'choices'], value: undefined },
+  { note: 'choices that are a list', from: 'pulled', path: ['start', 'choices'], value: [] },
+  { note: 'no mass', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: undefined },
+  { note: 'a mass of zero', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: 0 },
+  { note: 'a mass that is true', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: true },
+  { note: 'an unknown mass source', from: 'pulled', path: ['start', 'choices', 'massFrom'], value: 'guess' },
+  { note: 'a class with no carton', from: 'pulled', path: ['start', 'choices', 'sizeTable'], value: null },
+  { note: 'an unknown carton', from: 'pulled', path: ['start', 'choices', 'sizeTable'], value: 'uk' },
+  { note: 'an unknown egg source', from: 'pulled', path: ['start', 'choices', 'eggFrom'], value: 'counter' },
+  { note: 'no egg temperature of its own', from: 'pulled', path: ['start', 'choices', 'customStart_C'], value: null },
+  { note: 'a room that is a string', from: 'pulled', path: ['start', 'choices', 'room_C'], value: '20' },
+  { note: 'no room at all', from: 'pulled', path: ['start', 'choices', 'room_C'], value: undefined },
+  { note: 'sous-vide', from: 'pulled', path: ['start', 'choices', 'startMode'], value: 'sous' },
+  { note: 'an unknown burner', from: 'pulled', path: ['start', 'choices', 'afterBoil'], value: 'low' },
+  { note: 'no burner', from: 'pulled', path: ['start', 'choices', 'afterBoil'], value: undefined },
+  { note: 'an unknown cooling', from: 'pulled', path: ['start', 'choices', 'cooling'], value: 'fridge' },
+  { note: 'no water', from: 'pulled', path: ['start', 'choices', 'waterLitres'], value: 0 },
+  { note: 'no eggs', from: 'pulled', path: ['start', 'choices', 'eggCount'], value: 0 },
+  { note: 'no altitude', from: 'pulled', path: ['start', 'choices', 'altitude_m'], value: null },
+  { note: 'a level past hard', from: 'pulled', path: ['start', 'choices', 'level'], value: 1.01 },
+  { note: 'a level under runny', from: 'pulled', path: ['start', 'choices', 'level'], value: -0.01 },
+  { note: 'no log', from: 'pulled', path: ['log'], value: undefined },
+  { note: 'a log that is not a list', from: 'pulled', path: ['log'], value: { 0: BOIL } },
+  { note: 'an entry that is a number', from: 'pulled', path: ['log', '0'], value: 3 },
+  { note: 'an entry of a kind this build does not know', from: 'pulled', path: ['log', '0', 'kind'], value: 'heatOff' },
+  { note: 'a boil before the start', from: 'pulled', path: ['log', '0', 'at_s'], value: START_S - 1 },
+  { note: 'a boil that is a string', from: 'pulled', path: ['log', '0', 'at_s'], value: 'soon' },
+  { note: 'a boil with no time', from: 'pulled', path: ['log', '0', 'at_s'], value: undefined },
+  { note: 'a pull that is a list', from: 'pulled', path: ['log', '1', 'pulled'], value: [] },
+  { note: 'a pull due before the start', from: 'pulled', path: ['log', '1', 'pulled', 'due_s'], value: START_S - 5 },
+  { note: 'out before it was due', from: 'pulled', path: ['log', '1', 'pulled', 'out_s'], value: START_S + 851 },
+  { note: 'pulled by nobody', from: 'pulled', path: ['log', '1', 'pulled', 'by'], value: null },
+  { note: 'a pull neither confirmed nor not', from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: undefined },
+  { note: 'a pull confirmed as a number', from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: 1 },
+  { note: "the cook's own tap, unconfirmed", from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: false },
+  { note: 'no pull in a pull entry', from: 'pulled', path: ['log', '1', 'pulled'], value: undefined },
+  { note: 'a correction whose choices do not read', from: 'corrected', path: ['log', '1', 'choices', 'level'], value: 1.01 },
+  { note: 'a correction with no time', from: 'corrected', path: ['log', '1', 'at_s'], value: 'then' },
+  { note: 'corrected before the start', from: 'corrected', path: ['log', '1', 'at_s'], value: START_S - 1 },
+  { note: 'a start corrected to no time', from: 'moved', path: ['log', '0', 'startedAt_s'], value: null },
+  { note: 'rang before the start', from: 'rung', path: ['log', '0', 'at_s'], value: START_S - 1 },
+  { note: 'rang as a string', from: 'rung', path: ['log', '0', 'at_s'], value: 'then' },
+  { note: 'cooled without a pull', from: 'cooled', path: ['log', '1'], value: BOIL },
+  { note: 'cooled before the egg came out', from: 'cooled', path: ['log', '2', 'at_s'], value: START_S + 858 },
+  { note: 'an answer in a word not asked', from: 'answered', path: ['log', '3', 'yolkWord'], value: 'gooey' },
+  { note: 'a white answer not asked', from: 'answered', path: ['log', '3', 'white'], value: 'set' },
+  { note: 'a probe reading that is not one', from: 'answered', path: ['log', '3', 'probe', 'centre_C'], value: 'hot' },
+  { note: 'a nudge that is not a number', from: 'pulled', path: ['nudge_s'], value: null },
+  { note: 'pans that are a list', from: 'pulled', path: ['boilMemory'], value: [480] },
+  { note: 'a pan that is not a time', from: 'pulled', path: ['boilMemory', '2.0'], value: 'slow' },
+  { note: 'a pan of no time', from: 'pulled', path: ['boilMemory', '2.0'], value: 0 },
+  { note: 'unknown units', from: 'pulled', path: ['units'], value: 'si' },
+  { note: 'no language', from: 'pulled', path: ['lang'], value: '' },
+  { note: 'the plan as it ran, with no pull', from: 'kept', path: ['log', '1'], value: BOIL },
+  { note: 'the plan as it ran, a list', from: 'kept', path: ['log', '3', 'asRan'], value: [] },
+  { note: 'the plan as it ran, no forecast', from: 'kept', path: ['log', '3', 'asRan', 'forecast'], value: null },
+  { note: 'the plan as it ran, a forecast that is not one', from: 'kept', path: ['log', '3', 'asRan', 'forecast', 'yolk'], value: [0.5, 0.6, 0.1] },
+  { note: 'the plan as it ran, a level past hard', from: 'kept', path: ['log', '3', 'asRan', 'level'], value: 1.5 },
+  { note: 'the plan as it ran, no cook time', from: 'kept', path: ['log', '3', 'asRan', 'cook_s'], value: 0 },
+  { note: 'the plan as it ran, a nudge that is a string', from: 'kept', path: ['log', '3', 'asRan', 'nudge_s'], value: '3' },
+  { note: 'the plan as it ran, no peak yolk', from: 'kept', path: ['log', '3', 'asRan', 'peakYolk_C'], value: undefined },
+  { note: 'the plan as it ran, the probe moment a number', from: 'kept', path: ['log', '3', 'asRan', 'probeMoment'], value: 1 },
+  { note: 'the plan as it ran, a diffusivity of zero', from: 'kept', path: ['log', '3', 'asRan', 'params', 'alpha_m2s'], value: 0 },
+  { note: 'the plan as it ran, corrected before the start', from: 'kept', path: ['log', '3', 'asRan', 'correctedAt_s'], value: START_S - 1 },
+];
+
+/** Not refused: what is written beside the log is not read. */
+const IGNORED: { note: string; path: string[]; value: unknown }[] = [
+  { note: 'the cook as it stood, damaged beside its log: folded afresh', path: ['events', 'boilAt_s'], value: 'soon' },
+  { note: 'the start as it stood, missing: folded afresh', path: ['startedAt_s'], value: undefined },
+  { note: 'extra fields are ignored', path: ['ticket'], value: { old: true } },
 ];
 
 const rawReads: { note: string; raw: unknown }[] = [
@@ -286,16 +314,9 @@ const rawReads: { note: string; raw: unknown }[] = [
   { note: 'null', raw: null },
   { note: 'a list', raw: [base] },
   { note: 'a number', raw: 7 },
-  ...REFUSED.map((r) => {
-    // "Cooled without a pull" is the cooled cook's, with its pull taken away;
-    // the plan as it ran's are a cook that keeps one.
-    const from = r.note === 'cooled without a pull' ? JSON.parse(JSON.stringify(cooled)) as unknown
-      : r.note === 'the plan as it ran, with no pull'
-        ? JSON.parse(JSON.stringify({ ...keptCooled, events: { ...keptCooled.events, cooledAt_s: null } })) as unknown
-        : r.note.startsWith('the plan as it ran') ? JSON.parse(JSON.stringify(keptCooled)) as unknown : base;
-    return { note: r.note, raw: withAt(from, r.path, r.value) };
-  }),
-  { note: 'extra fields are ignored', raw: { ...(base as object), ticket: { old: true } } },
+  { note: "0.5's cook before the log (`aet.cook.v4`): its events whole, no start or log", raw: { ...(base as object), start: undefined, log: undefined } },
+  ...REFUSED.map((r) => ({ note: r.note, raw: withAt(FROM[r.from], r.path, r.value) })),
+  ...IGNORED.map((r) => ({ note: r.note, raw: withAt(base, r.path, r.value) })),
 ];
 const reads = rawReads.map((r) => ({ note: r.note, raw: r.raw, cook: readRunningCook(r.raw) }));
 
@@ -321,7 +342,7 @@ interface PlanCase {
   outs?: number[];
   dues?: number[];
   /** The slow hob's hint handed to the plan (review 2.1). */
-  hint?: SlowHobHint | null;
+  hint?: SlowHobMemo | null;
   /** Moments to ask whether the slow hob's moment has come (`slowHobDue`). */
   hobDue?: number[];
 }
@@ -343,16 +364,25 @@ function surfaceFor(posterior: string, of: RunningCook, hint: number, now_s: num
   };
 }
 
+/** The slow hob's memo as the fixtures write it: where the rule got to, and
+ *  the key of what it read, which a core whose numbers differ in their last
+ *  bits makes otherwise, and then works the rule from the start: the same
+ *  plan. */
+function memoJson(m: SlowHobMemo | null) {
+  if (m === null) return null;
+  const p = m as SlowHobPlace;
+  return { key: p.key, steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
+}
+
 function planJson(p: CookPlan) {
   const d = p.decided;
   return {
-    egg: { mass_kg: p.egg.mass_kg }, setup: p.setup, provisional: p.provisional, lengthened: p.lengthened,
+    egg: { mass_kg: p.egg.mass_kg }, setup: p.setup,
     inputs: p.inputs === null ? null : { params: p.inputs.params, whiteDose_min: p.inputs.whiteDose_min },
     answer: {
       level: p.answer.level, kind: p.answer.verdict.kind, snapTo: p.answer.verdict.snapTo,
       lowOdds: p.answer.lowOdds, cookTime_s: p.answer.solution.result.cookTime_s,
     },
-    level: p.level,
     solution: {
       reachable: p.solution.reachable, whiteSets: p.solution.whiteSets, cookTime_s: p.solution.result.cookTime_s,
       peakYolk_C: p.solution.result.peakYolk_C, peakYolkTime_s: p.solution.result.peakYolkTime_s,
@@ -361,8 +391,8 @@ function planJson(p: CookPlan) {
       level: d.level, cookTime_s: d.solution.result.cookTime_s, decision: d.decision, nudge_s: d.nudge_s,
       adviceWanted: d.adviceWanted,
     },
-    lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, askIfStillIn: p.askIfStillIn, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, slowHob: p.slowHob,
+    lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, cool_s: p.cool_s,
+    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, memo: memoJson(p.memo),
     tooOldAt_s: p.tooOldAt_s,
     certainty: p.certainty, forecast: p.forecast,
   };
@@ -404,7 +434,7 @@ function plan(pc: PlanCase): CookPlan {
   const g = surface === null ? null : coarseDecisionGrid(surface.inputs);
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
-    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: hint,
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: memoJson(hint),
     surface: surface === null || g === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
       grid: g.spec,
@@ -460,7 +490,7 @@ function recordOf(cook: RunningCook, p: CookPlan, now_s: number, i: number) {
 
 /** The cook with these events written down. */
 function withEvents(cook: RunningCook, events: RunningCook['events']): RunningCook {
-  return { ...cook, events: events };
+  return writeEvents(cook, events);
 }
 
 const S = START_S;
@@ -626,15 +656,15 @@ const S = START_S;
   const slow = cookOf();
   const at = S + 1000;
   const before = replan(slow, learned, null, 0, at);
-  const hint = before.slowHob;
+  const hint = before.memo;
   plan({ note: 'a slow hob, the last plan\'s hint: the plan from the start', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
   const next = replan(slow, learned, null, 0, at + 15, hint);
-  plan({ note: 'and the plan after it, with its hint', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 400, surface: 'none', hint: next.slowHob });
+  plan({ note: 'and the plan after it, with its hint', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 400, surface: 'none', hint: next.memo });
   plan({ note: 'the hint at the moment it was made: nothing more to lengthen', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at, surface: 'none', hint: hint });
   plan({ note: 'a hint for a lighter egg: ignored', posterior: 'learned', cook: corrected(slow, { ...slow.choices, mass_kg: 0.076 }, at + 10), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
   plan({ note: 'a hint made under another lean: ignored', posterior: 'learned', cook: slow, leanHint_s: 2, now_s: at + 15, surface: 'none', hint: hint });
   plan({ note: 'a hint made under another calibration: ignored', posterior: 'prior', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
-  plan({ note: 'a hint kept past the moment: ignored', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: S + (hint as SlowHobHint).last_s - 1, surface: 'none', hint: hint });
+  plan({ note: 'a hint kept past the moment: ignored', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: S + (hint as SlowHobPlace).last_s - 1, surface: 'none', hint: hint });
   plan({ note: 'a hint, the boil tapped since: ignored', posterior: 'learned', cook: withBoil(slow, at + 5), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
 }
 
@@ -743,7 +773,7 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('a tap, then corrected to boiling: unread, not remembered', corrected(withBoil(cold, S + 512), { ...cold.choices, startMode: 'hot' }, S + 600));
   remember('the start corrected four minutes earlier, then a tap', withBoil(startCorrected(cold, S - 240, S + 10) as RunningCook, S + 500));
   remember('the start corrected ten minutes earlier, then a tap: not remembered', withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500));
-  remember('no pans remembered: the default time', withBoil(corrected(startCook(START_MS, { ...BASE_CHOICES, startMode: 'hot' }, 0, {}, 'metric', 'en'), BASE_CHOICES, S + 470), S + 900));
+  remember('no pans remembered: the default time', withBoil(corrected(startCook(START_S, { ...BASE_CHOICES, startMode: 'hot' }, 0, {}, 'metric', 'en'), BASE_CHOICES, S + 470), S + 900));
   const t = withBoil(cold, S + 500);
   const stray = corrected(corrected(t, { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610);
   remember('a tap, then a stray cold -> hot -> cold: still remembered', stray);
@@ -751,7 +781,63 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('the start corrected ten minutes earlier, a tap, then a stray: not remembered', corrected(corrected(withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500), { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610));
 }
 
-export const runningFixture = {
+/* Two copies of one cook, as two tabs hold it (`takeUpEvents`, onescreen
+ * review 1.1): what each takes up from the other, both ways, and which a
+ * reload restores (`correctedLater`). */
+const takeUps: { note: string; ours: RunningCook; theirs: RunningCook }[] = [];
+{
+  const untapped = cookOf({}, -3);
+  const start = withBoil(untapped, S + 500);
+  const due = S + 900;
+  const byCook = writeEvents(start, {
+    ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
+  });
+  const byClock = writeEvents(start, {
+    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
+    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
+  });
+  const cooledByCook = writeEvents(byCook, { ...byCook.events, cooledAt_s: due + 204 });
+  const rangOnGuess = writeEvents(untapped, { ...untapped.events, rangAt_s: S + 700 });
+  const heavier = corrected(start, { ...start.choices, mass_kg: 0.076 }, S + 600);
+  const pair = (note: string, ours: RunningCook, theirs: RunningCook): void => {
+    takeUps.push({ note: note, ours: ours, theirs: theirs });
+  };
+  pair('one never saw the tap: it takes the other\'s', untapped, start);
+  pair('two taps: the first', withBoil(untapped, S + 520), start);
+  pair('the cook\'s tap out over the clock\'s assumption', byClock, byCook);
+  pair('the cooling\'s end of the pull kept', byClock, cooledByCook);
+  pair('all of it, at once', untapped, cooledByCook);
+  pair('a pull that rang under a guessed boil, not taken up with the real one', rangOnGuess, start);
+  pair('another cook: never taken up', untapped, startCook(S + 60, BASE_CHOICES, -3, MEMORY, 'metric', 'en'));
+  pair('a copy corrected otherwise: nothing its clock decided', heavier, byClock);
+  pair('a copy corrected otherwise: the boil and the cook\'s tap out, from any copy', corrected(untapped, heavier.choices, S + 600), cooledByCook);
+  pair('the same start and choices, corrected later: the same plan', corrected(start, start.choices, S + 610), byClock);
+  pair('the plan as it ran, of the pull kept', byCook, keptOf(byCook, due + 30));
+}
+
+/** Every running cook in the fixture as it is stored and read: what was fixed
+ *  at the press, the start and the log. The cook as it stands, which a store
+ *  writes beside them for whoever reads it by eye, is the log folded, and a
+ *  reader folds it again (`readRunningCook`). A raw text read is as written. */
+function stored(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(stored);
+  if (node === null || typeof node !== 'object') return node;
+  const o = node as Record<string, unknown>;
+  const isCook = 'id_ms' in o && 'start' in o && 'log' in o;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(o)) {
+    // A raw stored text is written as it was, damaged or not.
+    if (k === 'raw') {
+      out[k] = v;
+      continue;
+    }
+    if (isCook && (k === 'startedAt_s' || k === 'choices' || k === 'events' || k === 'correctedAt_s' || k === 'asRan')) continue;
+    out[k] = stored(v);
+  }
+  return out;
+}
+
+export const runningFixture = stored({
   about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, and the plan derived from it. src/core/running.ts.',
   constants: {
     slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
@@ -762,4 +848,8 @@ export const runningFixture = {
   reads: reads,
   plans: plans,
   remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
-};
+  takeUps: takeUps.map((t) => ({
+    note: t.note, ours: t.ours, theirs: t.theirs, oursAfter: takeUpEvents(t.ours, t.theirs), theirsAfter: takeUpEvents(t.theirs, t.ours),
+    later: [correctedLater(t.ours, t.theirs), correctedLater(t.theirs, t.ours)],
+  })),
+}) as Record<string, unknown[]> & { setups: unknown[]; moves: unknown[]; reads: unknown[] };

@@ -47,8 +47,11 @@
  *                              and every move from every reachable state
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
- *   fixtures/running.json      a running cook: its egg and pot, its moves, and
- *                              a stored one read back
+ *   fixtures/running.json      a running cook: its egg and pot, its moves, a
+ *                              stored one read back, its plan, two copies
+ *                              taken up
+ *   fixtures/step.json         the running cook as one state machine: traces
+ *                              of events, effects and the readout
  *   fixtures/newer.json        which build may write: versions compared, and
  *                              the verdict on the newest-version mark
  *
@@ -82,6 +85,7 @@ import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
 import { newerFixture } from './fixtures/newer.js';
+import { stepFixture } from './fixtures/step.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -112,6 +116,7 @@ const written: Record<string, unknown> = {
   share: shareJson,
   wording: wordingFixture(),
   running: runningFixture,
+  step: stepFixture,
   newer: newerJson,
 };
 /**
@@ -194,6 +199,7 @@ const counts = [
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
   `${shareJson.transitions.length} sharing moves`,
   `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
+  `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
   `${(newerJson['compare'] as unknown[]).length} version comparisons`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

@@ -373,14 +373,7 @@ final class Edits {
         if let start = startInHand, start != c.startedAtS {
             c = startCorrected(c, startedAtS: start, nowS: nowS) ?? c
         }
-        if c.events.pulled != nil, choices.level != c.choices.level {
-            c.choices = choices
-            c.correctedAtS = nil
-            c.events.pulled = nil
-            c.events.cooledAtS = nil
-            c.events.rangAtS = nil
-            return c
-        }
+        if c.events.pulled != nil, choices.level != c.choices.level { return levelPreview(c, choices: choices) }
         return corrected(c, choices: choices, nowS: nowS)
     }
 
@@ -399,12 +392,12 @@ final class Edits {
         let pulled = hand.events.pulled
         let params = pulled != nil ? ran?.params ?? calibrationParams(calibration) : calibrationParams(calibration)
         let timeS = pulled.map { $0.outS - hand.startedAtS } ?? made.cookTimeS
-        let white = calibrationDoneness(calibration, level: made.level).whiteDoseMin
+        let white = calibrationDoneness(calibration, level: made.answer.level).whiteDoseMin
         let view = await Task.detached(priority: .userInitiated) {
             previewSection(egg: made.egg, setup: made.setup, params: params, cookTimeS: timeS, whiteTargetMin: white)
         }.value
         guard gen == generation, pending || down != nil else { return }
-        aim = (made.level, made.solution.result.peakYolkC, made.solution)
+        aim = (made.answer.level, made.solution.result.peakYolkC, made.solution)
         model.aimView = view
     }
 

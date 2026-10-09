@@ -13,7 +13,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, startCook, withBoil } from '../src/core/running.js';
+import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, correctedLater, loadBoilMemory, loadCook,
@@ -33,7 +33,7 @@ const storage = new Map<string, string>();
 };
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v4';
+const COOK_KEY = 'aet.cook.v5';
 const classes = sizeClassesFor('eu');
 
 /** A page opened on this storage: as boot() does, the settings are read
@@ -108,11 +108,16 @@ test('choosing sous-vide still works within the session', () => {
   assert.equal(settings.startMode, 'sous');
 });
 
-/** A running cook, as core starts one (src/core/running.ts), the boil
+/** A running cook, as core starts one (src/core/running.ts), not yet
  *  tapped. */
-function aCook(id_ms = 1_791_363_600_000): RunningCook {
+function unboiled(id_ms = 1_791_363_600_000): RunningCook {
   const choices = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2 }, 'GB');
-  return withBoil(startCook(id_ms, choices, -3, { '2.0': 480 }, 'metric', 'en'), id_ms / 1000 + 500);
+  return startCook(id_ms / 1000, choices, -3, { '2.0': 480 }, 'metric', 'en');
+}
+
+/** The same, the boil tapped. */
+function aCook(id_ms = 1_791_363_600_000): RunningCook {
+  return withBoil(unboiled(id_ms), id_ms / 1000 + 500);
 }
 
 test('a cook comes back whole, with whether its egg was written down and the lean last decided', () => {
@@ -131,7 +136,7 @@ test('a cook comes back whole, with whether its egg was written down and the lea
 
 test('two tabs on one cook take up each other\'s events, never a copy that lacks them (review 1.2)', () => {
   const start = aCook();
-  const untapped: RunningCook = { ...start, events: { ...start.events, boilAt_s: null } };
+  const untapped = unboiled();
   const S = start.startedAt_s;
   // B never saw the tap: it takes A's, and A takes nothing from B.
   assert.equal(takeUpEvents(untapped, start).events.boilAt_s, start.events.boilAt_s);
@@ -142,23 +147,20 @@ test('two tabs on one cook take up each other\'s events, never a copy that lacks
   // The cook's tap out over the clock's assumption, whichever tab has it,
   // with the cooling's end of the pull kept.
   const due = S + 900;
-  const byCook: RunningCook = {
-    ...start, events: { ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true } },
-  };
-  const byClock: RunningCook = {
-    ...start,
-    events: {
-      ...start.events, rangAt_s: due, cooledAt_s: due + 220,
-      pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
-    },
-  };
+  const byCook = writeEvents(start, {
+    ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
+  });
+  const byClock = writeEvents(start, {
+    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
+    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
+  });
   assert.deepEqual(takeUpEvents(byClock, byCook).events, byCook.events);
   assert.equal(takeUpEvents(byCook, byClock), byCook);
-  const cooled = { ...byCook, events: { ...byCook.events, cooledAt_s: due + 204 } };
+  const cooled = writeEvents(byCook, { ...byCook.events, cooledAt_s: due + 204 });
   assert.deepEqual(takeUpEvents(byClock, cooled).events, cooled.events);
   assert.deepEqual(takeUpEvents(untapped, cooled).events, cooled.events, 'all of it, at once');
   // A pull that rang under a guessed boil is not taken up with the real one.
-  const rangOnGuess: RunningCook = { ...untapped, events: { ...untapped.events, rangAt_s: S + 700 } };
+  const rangOnGuess = writeEvents(untapped, { ...untapped.events, rangAt_s: S + 700 });
   assert.equal(takeUpEvents(rangOnGuess, start).events.rangAt_s, null);
   // Taken up both ways, the two copies agree.
   for (const [x, y] of [[byClock, cooled], [rangOnGuess, start], [later, byClock]]) {
@@ -175,26 +177,22 @@ test('a copy with other corrections gives only what the cook saw, never what its
   const due = S + 900;
   // B, never corrected, rang its own pull and its grace ran out; A was
   // corrected to a heavier egg at 600 s.
-  const corrected: RunningCook = { ...start, choices: { ...start.choices, mass_kg: 0.076 }, correctedAt_s: S + 600 };
-  const byClock: RunningCook = {
-    ...start,
-    events: {
-      ...start.events, rangAt_s: due, cooledAt_s: due + 220,
-      pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
-    },
-  };
+  const corrected = correctedTo(start, { ...start.choices, mass_kg: 0.076 }, S + 600);
+  const byClock = writeEvents(start, {
+    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
+    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
+  });
   assert.equal(takeUpEvents(corrected, byClock), corrected, 'nothing B\'s clock decided, either way round');
   assert.deepEqual(takeUpEvents(byClock, corrected).events, byClock.events);
   // The cook's own tap out, and the boil, are taken from any copy; a
   // cooling's end, which the plan decides, only from the same corrections.
-  const byCook: RunningCook = {
-    ...start,
-    events: { ...start.events, rangAt_s: due, cooledAt_s: due + 204, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true } },
-  };
-  const took = takeUpEvents({ ...corrected, events: { ...corrected.events, boilAt_s: null } }, byCook).events;
+  const byCook = writeEvents(start, {
+    ...start.events, rangAt_s: due, cooledAt_s: due + 204, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
+  });
+  const took = takeUpEvents(correctedTo(unboiled(), corrected.choices, S + 600), byCook).events;
   assert.deepEqual(took, { boilAt_s: start.events.boilAt_s, pulled: byCook.events.pulled, cooledAt_s: null, rangAt_s: null });
   // The same start and choices are the same plan, whenever corrected.
-  const back: RunningCook = { ...start, correctedAt_s: S + 610 };
+  const back = correctedTo(start, start.choices, S + 610);
   assert.deepEqual(takeUpEvents(back, byClock).events, byClock.events);
   // Which copy a reload restores: the one corrected last.
   assert.equal(correctedLater(corrected, start), true);
@@ -213,7 +211,7 @@ test('a cook kept without `answers` or the lean is refused, never read as unansw
   assert.equal(loadCook(), null, 'only what saveCook writes');
   storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'none' }));
   assert.equal(loadCook(), null, 'without the lean');
-  storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, startedAt_s: 'then' }, answers: 'none', leanHint_s: 0 }));
+  storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, start: { ...cook.start, at_s: 'then' } }, answers: 'none', leanHint_s: 0 }));
   assert.equal(loadCook(), null, 'a cook that does not read (`readRunningCook`)');
 });
 
@@ -233,10 +231,10 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
 
 test('a cook in a shape this build does not read is not read', () => {
   storage.clear();
-  // A running cook without the plan as it ran (review 1.3).
-  const { asRan: _dropped, ...earlier } = aCook();
+  // An earlier build's running cook: its events whole, no start or log.
+  const { start: _start, log: _log, ...earlier } = aCook();
   storage.set(COOK_KEY, JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 }));
-  assert.equal(loadCook(), null, 'without the plan as it ran, not read');
+  assert.equal(loadCook(), null, 'without its log, not read');
   // 0.4's shape: a machine and a ticket.
   storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
   assert.equal(loadCook(), null, 'never read as a running cook');

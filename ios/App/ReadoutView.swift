@@ -348,7 +348,7 @@ struct ReadoutView: View {
     /// label's place, the time since they were due out under it, and
     /// nothing past the question - not the cooling, nor Done - until it is
     /// answered (`PhaseActions`).
-    private var asking: Bool { phase != .idle && cook.plan?.askIfStillIn == true }
+    private var asking: Bool { phase != .idle && cook.plan.map(asksIfStillIn) == true }
 
     /// The web's clock face in every phase: the countdown (the time heated,
     /// counting up, once the slow hob has lengthened the guess), how late the
@@ -361,7 +361,7 @@ struct ReadoutView: View {
         // Once the slow hob has lengthened the guess, the pull is a guess
         // that keeps moving and would read 0:00 while the water still heats
         // (running-cook review 3): the time heated, counting up, instead.
-        case .heating where cook.plan?.lengthened == true:
+        case .heating where cook.plan.map(guessLengthened) == true:
             clockString(now.timeIntervalSince(cook.startedAt ?? now))
         case .heating, .cooking: clockString(cook.secondsToPull(at: now))
         case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
