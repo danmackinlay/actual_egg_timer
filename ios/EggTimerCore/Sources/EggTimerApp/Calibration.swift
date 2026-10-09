@@ -183,9 +183,7 @@ public enum Calibrations {
         if let data {
             Stores.set(data, forKey: key)
         }
-        #if DEBUG
         Screenshots.log(.log(count: k.log.count, folded: k.folded, last: k.log.last.map(Screenshots.Encoded.init)))
-        #endif
     }
 
     /// What is in storage, made safe to fold on top of. The store is read

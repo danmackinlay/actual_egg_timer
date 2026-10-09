@@ -90,10 +90,8 @@ public protocol LockScreenCard: Sendable {
     func endAll() async
     /// Every card ended to go at its own end: an earlier build's.
     func endAtTheirEnds() async
-    #if DEBUG
     /// Every card the system holds, to the debug log.
     @MainActor func logAll(_ when: String)
-    #endif
 }
 
 /// The decision surfaces and the odds at every level, built off the main
@@ -144,7 +142,5 @@ struct NoCard: LockScreenCard {
     func update(_ state: CookActivity.ContentState) async {}
     func endAll() async {}
     func endAtTheirEnds() async {}
-    #if DEBUG
     func logAll(_ when: String) {}
-    #endif
 }

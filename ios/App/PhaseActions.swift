@@ -46,9 +46,7 @@ struct PhaseActions: View {
                 .appFont(.footnote)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                #if DEBUG
-                .onChange(of: line, initial: true) { _, said in Screenshots.log(.slot(text: said)) }
-                #endif
+                .logged(.slot(text: line))
         } else if phase == .idle {
             VStack(spacing: 10) {
                 if let sousVide {

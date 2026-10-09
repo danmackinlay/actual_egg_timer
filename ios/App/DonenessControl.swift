@@ -84,12 +84,8 @@ struct DonenessControl: View {
                     .foregroundStyle(.secondary)
             }
         }
-        #if DEBUG
         // The texture note, for the scripted checks.
-        .onChange(of: donenessNote(r), initial: true) { _, note in
-            Screenshots.log(.note(text: note))
-        }
-        #endif
+        .logged(.note(text: donenessNote(r)))
     }
 
     /// The slider's heading.

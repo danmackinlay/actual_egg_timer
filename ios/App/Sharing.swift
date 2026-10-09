@@ -75,12 +75,7 @@ final class Sharing {
     /// The site the web app is served from, which hosts the endpoint
     /// (DECISIONS.md 51). A debug build can point elsewhere with
     /// `-shareServer <url>`, for a local `netlify dev`.
-    static var server: URL {
-        #if DEBUG
-        if let s = UserDefaults.standard.string(forKey: "shareServer"), let url = URL(string: s) { return url }
-        #endif
-        return URL(string: "https://actualeggtimer.netlify.app")!
-    }
+    static var server: URL { Screenshots.shareServer ?? URL(string: "https://actualeggtimer.netlify.app")! }
 
     private static let assertionHeader = "x-egg-assertion"
 

@@ -128,9 +128,7 @@ final class Ringer {
             log.notice("playing \(buffer.frameLength) frames at \(buffer.format.sampleRate) Hz\(loops ? ", looped" : "", privacy: .public)")
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
-            #if DEBUG
             if Screenshots.muteAudio { engine.mainMixerNode.outputVolume = 0 }
-            #endif
             do {
                 try engine.start()
                 player.scheduleBuffer(buffer, at: nil, options: loops ? .loops : [])

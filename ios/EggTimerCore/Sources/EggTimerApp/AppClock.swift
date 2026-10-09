@@ -82,6 +82,7 @@ public enum AppClock {
     #else
     public static func mark(_ appVersion: String) -> String { appVersion }
     public static func marked(_ appVersion: String) -> Bool { false }
+    public static func listen() {}
     #endif
 
     /// The system's clock, for what is not cook time: sharing's dealings with

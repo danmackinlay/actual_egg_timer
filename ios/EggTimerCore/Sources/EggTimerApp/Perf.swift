@@ -1,9 +1,9 @@
-#if DEBUG
 import Foundation
 import QuartzCore
 
-/// Debug builds only: how long what an input change sets running takes to
-/// reach the screen (`-perfProbe all`, Screenshots.swift). Prints lines that
+/// How long what an input change sets running takes to reach the screen
+/// (`-perfProbe all`, Screenshots.swift): on only under that launch
+/// argument, so never in a release build, which reads none. Prints lines that
 /// start "PERF", read with `xcrun simctl launch --console-pty`. LOGBOOK.md,
 /// 4 October 2026, has what it measured.
 ///
@@ -12,7 +12,7 @@ import QuartzCore
 /// words on a screen, and are built from as few literals as will do, each on
 /// copyLiterals' NOT_COPY list.
 public enum Perf {
-    public static let on = UserDefaults.standard.string(forKey: "perfProbe") != nil
+    public static let on = Screenshots.arguments?.string(forKey: "perfProbe") != nil
     nonisolated(unsafe) private static var inputAt = CACurrentMediaTime()
 
     /// What is timed on its own.
@@ -114,4 +114,3 @@ public enum Perf {
         line(["PERF", "\(Script.worstLateness)", ms(await watcher.value)])
     }
 }
-#endif

@@ -319,9 +319,7 @@ public final class Planner {
             onEdit()
             return
         }
-        #if DEBUG
         Perf.input()
-        #endif
         SettingsStore.save(self)
         solver.recompute()
     }

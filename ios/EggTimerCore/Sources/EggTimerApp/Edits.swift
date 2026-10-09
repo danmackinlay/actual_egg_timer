@@ -141,13 +141,11 @@ public final class Edits {
     /// dropped.
     @ObservationIgnored private var generation = 0
 
-    #if DEBUG
     /// Previews being planned.
     @ObservationIgnored private var previewing = 0
     /// Whether a change is settling, being previewed, or letting its aimed-for
     /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
     public var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
-    #endif
 
     /// A correction of when the eggs went in, in hand; nil for none, when
     /// the panel shows the cook's own (`shownStart`).
@@ -241,9 +239,7 @@ public final class Edits {
         changedAt = .now
         releaseTask?.cancel()
         releaseTask = nil
-        #if DEBUG
         Screenshots.log(.edit(group: group.map { "\($0)" }))
-        #endif
         // At once, the slider's own reading; the plan's follows.
         aim = (planner.settings.doneness, targetPeakYolkC(planner.settings.doneness), nil)
         if previewTask == nil {
@@ -252,10 +248,8 @@ public final class Edits {
                 try? await Task.sleep(for: Self.previewDelay)
                 guard let self, gen == self.generation else { return }
                 self.previewTask = nil
-                #if DEBUG
                 self.previewing += 1
                 defer { self.previewing -= 1 }
-                #endif
                 await self.preview()
             }
         }
@@ -298,9 +292,7 @@ public final class Edits {
     public func leaving() {
         down = nil
         guard pending else { return }
-        #if DEBUG
         Screenshots.log(.editLeaving)
-        #endif
         commit()
     }
 

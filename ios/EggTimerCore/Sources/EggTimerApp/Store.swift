@@ -128,9 +128,7 @@ public enum Stores {
     /// checks hold the store to what the log says was written.
     private static func wrote(_ value: Any?, forKey key: String) {
         store.set(value, forKey: key, Pass())
-        #if DEBUG
         Screenshots.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
-        #endif
     }
 
     public static func remove(_ key: String) {
