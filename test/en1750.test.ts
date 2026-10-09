@@ -24,6 +24,7 @@ import {
 import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
+import { catalogueTags, isCatalogueFile, translationTags } from '../tools/copyApproval.js';
 import { gridFor, knowing } from '../tools/common.js';
 
 type Entry = Record<string, unknown>;
@@ -58,9 +59,14 @@ function wordPattern(word: string): RegExp {
 
 test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
-  const catalogues = readdirSync('copy').filter((f) => f.endsWith('.json'));
-  assert.ok(catalogues.includes('en-x-1750.json'));
-  for (const f of catalogues) assert.match(f, /^[a-zA-Z0-9-]+\.json$/, `${f}: copy/ holds catalogues, <tag>.json, and nothing else`);
+  assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
+  assert.ok(translationTags().includes(PERIOD_LANGUAGE));
+  // copy/ holds catalogues, `<tag>.json`, and the review queue's state:
+  // the approvals and each translation's bases.
+  const state = ['approved.json', ...translationTags().map((t) => `${t}.base.json`)];
+  for (const f of readdirSync('copy')) {
+    assert.ok(isCatalogueFile(f) || state.includes(f), `${f}: neither a catalogue nor the review queue's`);
+  }
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 
