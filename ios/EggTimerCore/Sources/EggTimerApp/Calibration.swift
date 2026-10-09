@@ -96,8 +96,8 @@ public enum Calibrations {
         var v = 5
         /// The population the posterior was drawn from.
         var p: String
-        /// The `modelID` the posterior was folded under.
-        var m: String = modelID
+        /// The `likelihoodID` the posterior was folded under.
+        var m: String = likelihoodID
         var base: StoredPosterior?
         var cal: StoredPosterior
         var folded: Int
@@ -194,8 +194,7 @@ public enum Calibrations {
     /// damaged part is refused, never read around: a store this build cannot
     /// read is dropped, a log with a record it cannot read is dropped with
     /// what it taught kept as the base, and a posterior folded under another
-    /// model or drawn from another population is replayed - "a model change
-    /// is a replay".
+    /// likelihood or drawn from another population is replayed.
     ///
     /// Whatever comes back starts at this population's centre: the start is
     /// the population's, not stored.
@@ -224,9 +223,9 @@ public enum Calibrations {
             StoreRead(
                 readable: parts != nil, base: baseRead,
                 posterior: cal != nil, folded: parts?.folded.flatMap { $0 >= 0 ? $0 : nil },
-                records: log?.count, population: parts?.p, model: parts?.m
+                records: log?.count, population: parts?.p, likelihood: parts?.m
             ),
-            population: population.id, model: modelID
+            population: population.id, likelihood: likelihoodID
         )
         let keptBase: Calibration? = switch d.base {
         case .stored: base

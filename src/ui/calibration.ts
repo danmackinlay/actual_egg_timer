@@ -24,7 +24,7 @@ import { DoseGrid } from '../core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import { calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggRecord, MODEL_ID, ProbeReading,
+  Calibration, EggRecord, LIKELIHOOD_ID, ProbeReading,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
   gridRequestFor, recordTeaches, resultsFile, resultsFileName,
 } from '../core/record.js';
@@ -60,16 +60,16 @@ let draining: Promise<void> | null = null;
  *  Every other record is folded quietly. */
 let live = -1;
 let last: LiveFold | null = null;
-/** The model this page folds under: `MODEL_ID`, unless a test loads a
- *  second page as another build would be (`loadCalibration`). */
-let modelId = MODEL_ID;
+/** The likelihood this page folds under: `LIKELIHOOD_ID`, unless a test
+ *  loads a second page as another build would be (`loadCalibration`). */
+let likelihoodId = LIKELIHOOD_ID;
 /** The store: another tab's write is taken up before this one writes
  *  (`current`), since every tab writes the whole store, and a tab that wrote
  *  back what it loaded would undo every egg another tab logged since. One
  *  this page would not have written is folded in memory and not written
  *  back until this page's own next change: an egg logged, an answer given,
  *  everything forgotten (`owns`). */
-const store = keptStore(() => modelId);
+const store = keptStore(() => likelihoodId);
 /**
  * The eggs another tab wrote down while this page was open, by `id`. Only
  * the page that wrote an egg down folds it while it is the newest in the
@@ -80,7 +80,7 @@ const store = keptStore(() => modelId);
 let elsewhere = new Set<number>();
 
 function save(): void {
-  store.write(encodeKept(kept, activePopulation(), modelId));
+  store.write(encodeKept(kept, activePopulation(), likelihoodId));
 }
 
 /** Take up what another tab wrote, if it wrote anything since this one last
@@ -180,8 +180,8 @@ export function calibrationStoredElsewhere(key: string | null): boolean {
  *  returns is the one the app solves with, and it is folded into IN PLACE as
  *  eggs are learned, so the caller's reference stays current. If the posterior
  *  is behind the log, call `learn()` to catch it up. */
-export function loadCalibration(model = MODEL_ID): Calibration {
-  modelId = model;
+export function loadCalibration(likelihood = LIKELIHOOD_ID): Calibration {
+  likelihoodId = likelihood;
   elsewhere = new Set<number>();
   const decoded = store.load();
   kept = decoded.kept;

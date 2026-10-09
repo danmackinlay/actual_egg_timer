@@ -27,12 +27,14 @@ public let recordVersion = 1
 /// The code that made the record's forecast and chose its time: the
 /// likelihood, the decision and, from E8, the nudge. Changed whenever any of
 /// them changes, so the model as it shipped can be scored after the code has
-/// moved on (DECISIONS.md 37). See src/core/record.ts.
-///
-/// Also what tells a stored posterior it is out of date: both apps keep it
-/// beside the posterior (the store's `m`) and replay the log when it differs.
-/// A change to the physics changes the likelihood, so it changes this too.
+/// moved on (DECISIONS.md 37). The record's provenance; it never decides a
+/// replay. See src/core/record.ts.
 public let modelID = "2026-10-e10"
+
+/// What this code makes of a log: the prior's draw, the physics and the
+/// likelihood. Both apps keep it beside the posterior (the store's `m`) and
+/// replay the log when it differs. See src/core/record.ts.
+public let likelihoodID = "2026-10-e10"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -770,12 +772,13 @@ public struct StoreRead: Sendable, Equatable {
     /// The population the posterior was drawn from, or nil when the store
     /// does not say.
     public var population: String?
-    /// The model it was folded under, or nil when the store does not say.
-    public var model: String?
+    /// The `likelihoodID` it was folded under, or nil when the store does
+    /// not say.
+    public var likelihood: String?
 
     public init(
         readable: Bool, base: StoredBase?, posterior: Bool, folded: Int?, records: Int?,
-        population: String?, model: String?
+        population: String?, likelihood: String?
     ) {
         self.readable = readable
         self.base = base
@@ -783,7 +786,7 @@ public struct StoreRead: Sendable, Equatable {
         self.folded = folded
         self.records = records
         self.population = population
-        self.model = model
+        self.likelihood = likelihood
     }
 }
 
@@ -819,8 +822,8 @@ public struct LoadDecision: Sendable, Equatable {
 }
 
 /// What a launch does with the store it read, for a build that draws its
-/// prior from `population` and folds under `model`. See src/core/record.ts.
-public func loadDecision(_ read: StoreRead, population: String, model: String) -> LoadDecision {
+/// prior from `population` and folds under `likelihood`. See src/core/record.ts.
+public func loadDecision(_ read: StoreRead, population: String, likelihood: String) -> LoadDecision {
     guard read.readable else {
         return LoadDecision(path: .fresh, base: nil, calibration: .start, folded: 0, log: false)
     }
@@ -830,7 +833,7 @@ public func loadDecision(_ read: StoreRead, population: String, model: String) -
     }
     let base: KeptBase? = read.base == .sound ? .stored : nil
     guard read.base != .damaged, read.posterior, let folded = read.folded,
-          read.population == population, read.model == model else {
+          read.population == population, read.likelihood == likelihood else {
         return LoadDecision(path: .rebuild, base: base, calibration: .start, folded: 0, log: true)
     }
     if folded > records {

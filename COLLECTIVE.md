@@ -82,7 +82,8 @@ its absence means.
   tender and firm so the ticket can carry all six.
 - `model`: the code that made the forecast and chose the time, `MODEL_ID` in
   core, changed whenever the likelihood, the decision or the nudge changes.
-  Null (or absent) on records written before E6.
+  Null (or absent) on records written before E6. Provenance only: the
+  device replays its posterior on `LIKELIHOOD_ID`, which is never sent.
 - `prior` becomes the population the prior was drawn from, when E7 lands: the
   literature's id until a fit is published. It was the prior and the policy
   together; the policy is now `model`. No record has left the owner's devices
