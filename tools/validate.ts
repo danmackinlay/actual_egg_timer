@@ -3,8 +3,8 @@
  * from the core's exports, checks the model against published measurements,
  * and prints a markdown report.
  *
- * Run: npx tsc && node dist/tools/validate.js
- * Exits non-zero if any check fails, so it can gate a commit.
+ * Run: npm run validate
+ * Exits non-zero if any check fails; `npm run verify` runs it.
  *
  * Reference setup unless a row says otherwise: the reference egg (43.5 mm
  * minor diameter, ~62 g; not the app's 68 g EU Large), fridge-cold at 4 C,

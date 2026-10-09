@@ -881,11 +881,10 @@ half-minute of error.
 
 ```
 npm install
-npm run build      # tsc
-npm run check      # type checks: the app, core without DOM or Node, the site build
+npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest
 npm test           # node --test
-npm run verify     # the gate: check, test, copy:literals, fixtures:check and swift test
-npm run validate   # prints the validation table in §7
+npm run verify     # the gate: build, test, validate, copy:literals, fixtures:check and swift test
+npm run validate   # prints the validation table in §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
 npm run decide     # measures the choice of cook time (tools/decide.ts)
@@ -906,6 +905,15 @@ npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
 npm run e2e        # the web app driven end to end in headless Chrome (below)
 ```
+
+Every script that runs compiled code builds first, through `tools/build.mjs`:
+`tsc -b` over three projects (`tsconfig.core.json`, `tsconfig.app.json`, and
+`tsconfig.json` for the tests, tools and server), so `npm run verify`
+compiles once and each later step finds the build up to date. A file added,
+deleted or renamed, or a change to the installed packages, builds `dist/`
+from scratch, since `tsc -b` alone would keep a deleted file's output and
+not check again what imported it. `npm run build:site` ships the app's part
+of the same build.
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
 so a Netlify build compiles on the same Node the tests ran on. `engines.node` is

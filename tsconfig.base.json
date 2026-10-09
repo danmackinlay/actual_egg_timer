@@ -1,0 +1,30 @@
+// What the three projects share (tsconfig.core.json, tsconfig.app.json and
+// tsconfig.json). Composite, so `tsc -b` builds each once and each sees the
+// others through their declarations; all three write into dist/ by path.
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "isolatedModules": true,
+    "erasableSyntaxOnly": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM"]
+  }
+}

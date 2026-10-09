@@ -6440,3 +6440,55 @@ Checked, each commit: `npm run verify`, `npm run build:site` (`_site/copy/`
 the three catalogues), `npm run e2e` 38 of 38, `npm run ios:build`,
 `npm run ios:e2e` 41 of 41 (the bundle's `copy/` the three catalogues after
 the move).
+
+## 9 October 2026: one compile per verify, and validate in it (REFACTOR-0.5 1.5, 1.6)
+
+`npm run verify` ran `tsc` six times: three checks (the whole tree, core
+without the DOM or Node, the site's sources without Node), then a full
+compile from `rm -rf dist` for `npm test`, and again for `copy:literals`
+and for `fixtures`. Now there are three composite projects -
+`tsconfig.core.json` (no DOM, no Node), `tsconfig.app.json` (the DOM, no
+Node) and `tsconfig.json` (the tests, tools and server, referencing both)
+- and every script builds through `tools/build.mjs`, which runs `tsc -b`.
+`verify` compiles once; each later step finds the three projects up to
+date in about half a second and goes on.
+
+**What `tsc -b` gets wrong on its own** (tried in a copy of the tree):
+delete a core file that only a tool imports, and core is built again but
+the tools are "up to date with .d.ts files from its dependencies", so the
+build passes where a fresh one fails; the deleted file's output stays in
+`dist/`, so a deleted test still runs under `node --test
+dist/test/*.test.js` (why `npm test` started from `rm -rf dist`). And a
+changed `@types/node` is not seen by a project whose own files have not
+changed: a probe global changed from number to string built clean
+incrementally and failed fresh. So `build.mjs` keeps beside the build what
+it was built from - each project's files and options, the TypeScript
+version, the hash of `node_modules/.package-lock.json` - in
+`dist/.build.json`, and builds `dist/` from scratch when any of it
+differs. An edit to a file that already existed is left to `tsc -b`.
+
+**The site shares the build.** `build:site` builds the app's two projects
+and `sitePaths.mjs` copies their scripts into `_site/app`, each less its
+last line, which names its source map. `_site` came out byte for byte as
+`tsconfig.site.json` made it, `sw.js` and its build hash included, so
+that config is gone. Plain `tsc` still works for anyone who types it: it
+builds the tests, tools and server against the other two projects' built
+declarations, and fails loudly (TS6305) when they are not built, rather
+than compiling nothing.
+
+**`npm run validate`** (29 checks against README §7) takes about 4 s, so
+`verify` runs it after the tests, and CI's web job does too.
+
+**Times.** The compiling, alone, three times each and interleaved: the
+six `tsc` runs took 8.1, 9.4 and 10.3 s; the new build from an empty
+`dist/` and the three checks after it 3.7, 4.2 and 2.9 s; four checks of
+an up-to-date build 1.0 s. The whole of `verify` (before 1.6 added
+validate's 4 s), old and new interleaved on a machine whose load average
+ran from 80 to 590 under other agents: old 348, 245, 186 s from an empty
+`dist/` and 330, 217, 244 s warm; new 239, 261, 182 s and 234, 180, 172 s.
+The tests and `swift test` are most of it, so the load decides a run more than the compiles do; the
+saving to count on is the compiler's, 6-9 s a run.
+
+Agents adding a script: start it `node tools/build.mjs && node dist/…`,
+not `tsc && …`, which builds only the tests, tools and server and leaves
+a deleted file's output in place.

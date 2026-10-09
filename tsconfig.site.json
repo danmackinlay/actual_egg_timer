@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "_site/app",
-    "sourceMap": false,
-    "types": []
-  },
-  "include": ["src/**/*.ts"]
-}

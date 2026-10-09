@@ -1,9 +1,10 @@
+// Core: pure numerics, compiled without the DOM or Node's types (CLAUDE.md).
+// One of the three projects `npm run build` builds (tools/build.mjs).
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": [],
-    "noEmit": true
+    "types": []
   },
   "include": ["src/core/**/*.ts"]
 }

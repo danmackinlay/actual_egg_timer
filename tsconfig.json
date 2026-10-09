@@ -1,27 +1,12 @@
+// The tests, the tools and the server, on Node, over core and the app as
+// built by their own projects. `tsc -b` here builds all three into dist/;
+// every script does it through `node tools/build.mjs` (`npm run build`),
+// which also knows when an incremental build is not safe.
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "rootDir": ".",
-    "strict": true,
-    "noImplicitAny": true,
-    "noUncheckedIndexedAccess": false,
-    "exactOptionalPropertyTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "isolatedModules": true,
-    "erasableSyntaxOnly": true,
-    "sourceMap": true,
-    "skipLibCheck": true,
-    "lib": ["ES2022", "DOM"]
-  },
-  "include": ["src/**/*.ts", "test/**/*.ts", "tools/**/*.ts", "server/**/*.ts", "netlify/**/*.mts"]
+  "extends": "./tsconfig.base.json",
+  "include": ["test/**/*.ts", "tools/**/*.ts", "server/**/*.ts", "netlify/**/*.mts"],
+  "references": [
+    { "path": "./tsconfig.core.json" },
+    { "path": "./tsconfig.app.json" }
+  ]
 }

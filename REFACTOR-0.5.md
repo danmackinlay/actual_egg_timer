@@ -109,11 +109,18 @@ gate could catch it.
 - [ ] **1.4 Fixtures checkable on Linux**: round floats when written (e.g.
       12 significant digits) so `fixtures:check` isn't arm64-only and the
       diffs can be read. Swift already compares at 1e-12. S-M.
-- [ ] **1.5 One compile per `verify`.** It runs `tsc` six times, from
+- [x] **1.5 One compile per `verify`.** It runs `tsc` six times, from
       `rm -rf dist`. Project references (`tsc -b`: core, app, tools, tests)
-      and run each step from that build. M.
-- [ ] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
-      PLAN as if it were a gate. S.
+      and run each step from that build. M. *Done:* three projects
+      (`tsconfig.core.json`, `tsconfig.app.json`, `tsconfig.json` for the
+      tests, tools and server), built by `tools/build.mjs`, which every
+      script calls; it builds from scratch when a file is added, deleted or
+      renamed or the packages change, which `tsc -b` alone gets wrong.
+      `build:site` copies the app's part of that build (`sitePaths.mjs`),
+      byte for byte what `tsconfig.site.json` emitted, which is gone.
+- [x] **1.6 `npm run validate`**: in `verify`, or stop citing "29/29" in
+      PLAN as if it were a gate. S. *Done:* in `verify` and CI's web job;
+      it takes about 4 s.
 - [ ] **1.7 The e2e only through a test-facing `snapshot()`.** `tools/e2e.ts`
       imports live app modules 25 times and reads `state` directly, so the
       refactor it should protect breaks it. Load the dev clock (`now.ts`,
