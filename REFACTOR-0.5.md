@@ -137,11 +137,17 @@ gate could catch it.
       `main.ts` imports on localhost only; `build:site` leaves `src/ui/dev/`
       out, and `devServer.ts` serves it beside the site from `dist/`.
       `now.ts` keeps `nowMs()` and a hook for the clock.
-- [ ] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
+- [x] **1.8 iOS e2e: the ~12 fixed sleeps that assert that nothing
       happened** (`iosE2e.mjs:684, 692, 824, …`) pass vacuously on a slow
       runner: step, wait for settled, then assert. Emit the debug log as
       JSON lines, not free text matched by 106 regexes. Convert the file to
-      TS. M.
+      TS. M. *Done* (`630f5e0`, `599fdb4`, `2e0bf86`, `79e31da`, `55a45f5`,
+      `b439636`): `Screenshots.Event`, one JSON object a line; every step
+      waits for the app's `idle` (cook, planner, change in hand, taps, a
+      redraw), and the nine sleeps and the quiet-second reads became steps
+      and ticks; the plist read after the app says it wrote; `tools/iosE2e.ts`.
+      Under load it found two checks that had passed by luck (LOGBOOK, 10
+      October 2026).
 - [ ] **1.9 One web harness, and an app that says when it is idle.** The
       copy snapshot (`tools/copy-snapshot.html`) is a third harness with its
       own scenarios, its own frozen clock, and since `8da5b76` its own copy
