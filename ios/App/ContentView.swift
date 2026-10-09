@@ -146,7 +146,7 @@ struct ContentView: View {
         }
         #if DEBUG
         .onChange(of: path) { _, now in
-            Screenshots.log("view \(now.last.map { "\($0)" } ?? "egg")")
+            Screenshots.log(.view(page: now.last.map { "\($0)" } ?? "egg"))
         }
         #endif
         // 1750 is set in its period face, as on the web (`PeriodFace`):
@@ -309,13 +309,13 @@ struct ContentView: View {
 #if DEBUG
 extension View {
     /// The view's top in the window, pt, to the debug log whenever it moves
-    /// ("layout slider 312.0"): what the scripted checks read to see that
-    /// nothing moves at the start.
+    /// (`layout`, `"part":"slider","y":312`): what the scripted checks read
+    /// to see that nothing moves at the start.
     func logTop(_ name: String) -> some View {
         onGeometryChange(for: Double.self) { proxy in
             (proxy.frame(in: .global).minY * 2).rounded() / 2
         } action: { y in
-            Screenshots.log("layout \(name) \(y)")
+            Screenshots.log(.layout(part: name, y: y))
         }
     }
 }
@@ -336,7 +336,7 @@ struct NewerNote: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             #if DEBUG
-            .onAppear { Screenshots.log("newer note") }
+            .onAppear { Screenshots.log(.newerNote) }
             #endif
     }
 }

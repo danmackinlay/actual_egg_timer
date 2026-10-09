@@ -29,7 +29,7 @@ import Foundation
 /// in its container twenty times a second, and a line `<n> <at> <speed>`
 /// with a larger `n` than the last sets cook time to `at` and runs it on at
 /// `speed` (0 frozen), as if the phone had slept or been set (`step`; the
-/// debug log says `clock <n> at <at> speed <speed>` when it has). A script
+/// debug log says `clock`, with `n`, `at` and `speed`, when it has). A script
 /// freezes the clock at each moment it checks, rather than racing it.
 ///
 /// Under a running clock the notifications are scheduled at the scaled
@@ -199,7 +199,7 @@ enum AppClock {
         anchor = Anchor(system: Date().timeIntervalSince1970, app: step.at, speed: step.speed)
         wasAltered = true
         lock.unlock()
-        Screenshots.log("clock \(step.n) at \(String(format: "%.3f", step.at)) speed \(step.speed)")
+        Screenshots.log(.clock(n: step.n, at: step.at, speed: step.speed))
     }
     #else
     static let altered = false

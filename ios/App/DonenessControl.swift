@@ -85,7 +85,7 @@ struct DonenessControl: View {
         #if DEBUG
         // The texture note, for the scripted checks.
         .onChange(of: donenessNote(r), initial: true) { _, note in
-            Screenshots.log("note \(note)")
+            Screenshots.log(.note(text: note))
         }
         #endif
     }

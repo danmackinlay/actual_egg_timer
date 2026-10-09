@@ -266,7 +266,7 @@ final class Edits {
         releaseTask?.cancel()
         releaseTask = nil
         #if DEBUG
-        Screenshots.log("edit \(group.map { "\($0)" } ?? "-")")
+        Screenshots.log(.edit(group: group.map { "\($0)" }))
         #endif
         // At once, the slider's own reading; the plan's follows.
         aim = (planner.doneness, targetPeakYolkC(planner.doneness), nil)
@@ -319,7 +319,7 @@ final class Edits {
         down = nil
         guard pending else { return }
         #if DEBUG
-        Screenshots.log("edit leaving")
+        Screenshots.log(.editLeaving)
         #endif
         commit()
     }
@@ -419,7 +419,7 @@ final class Edits {
         }
         let start = startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
         #if DEBUG
-        Screenshots.log("edit committed \(touched.map { "\($0)" }.joined(separator: ",")) start \(start.map { String($0) } ?? "-")")
+        Screenshots.log(.editCommitted(fields: touched.map { "\($0)" }, start: start))
         #endif
         if start != nil || choices != running.choices { model.correct(choices, startedAtS: start) }
         // The start as the cook now has it: a correction refused leaves the
@@ -492,7 +492,7 @@ final class Edits {
         }
         startLimit = limit
         #if DEBUG
-        if let limit { Screenshots.log("start limit \(limit.kind) \(limit.atS)") }
+        if let limit { Screenshots.log(.startLimit(kind: "\(limit.kind)", at: limit.atS)) }
         #endif
         // The line under the start says why it went no further; VoiceOver
         // says it too, at each press it stops (the web's line is
@@ -501,7 +501,7 @@ final class Edits {
             let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
             UIAccessibility.post(notification: .announcement, argument: said)
             #if DEBUG
-            Screenshots.log("announce \(said)")
+            Screenshots.log(.announce(text: said))
             #endif
         }
         guard next != from else { return false }

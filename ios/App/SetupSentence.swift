@@ -67,9 +67,10 @@ struct SetupSentence: View {
             }
             #if DEBUG
             // What the sentence says, to the debug log whenever it changes
-            // (`sentence into cold water…`): what the scripted checks read.
+            // (`sentence`, `"text":"…into cold water…"`): what the scripted
+            // checks read.
             .onChange(of: plain(texts), initial: true) { _, said in
-                Screenshots.log("sentence \(said)")
+                Screenshots.log(.sentence(text: said))
             }
             #endif
     }
@@ -301,9 +302,9 @@ struct ClausePanel: View {
             .appFont(.subheadline)
             #if DEBUG
             // The start the panel shows, epoch s, to the debug log whenever
-            // it changes (`panel start 1791234567.0`).
+            // it changes (`panelStart`, `"at":1791234567`).
             .onChange(of: start, initial: true) { _, at in
-                Screenshots.log("panel start \(at)")
+                Screenshots.log(.panelStart(at: at))
             }
             #endif
             if let limit = edits.startLimit {

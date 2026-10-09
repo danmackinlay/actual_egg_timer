@@ -595,7 +595,7 @@ final class Cook {
     /// launch.
     func cancel(keepStored: Bool = false) {
         #if DEBUG
-        Screenshots.log("cook ended")
+        Screenshots.log(.cookEnded)
         #endif
         generation &+= 1
         Alarm.shared.cancel()
@@ -616,7 +616,7 @@ final class Cook {
               let stored = try? JSONDecoder().decode(Stored.self, from: data), stored.cook.idMs == idMs else { return }
         Stores.remove(savedKey)
         #if DEBUG
-        Screenshots.log("stored none")
+        Screenshots.log(.stored(value: nil))
         #endif
     }
 
@@ -746,15 +746,13 @@ final class Cook {
         }
         let before = plan?.deadlines
         #if DEBUG
-        Screenshots.log(
-            "plan pull \(next.deadlines.cookEndS) cooled \(next.deadlines.coolEndS.map { String($0) } ?? "-")"
-                + " lengthened \(next.lengthened) surface \(next.decided != nil)"
-                + " next \(next.slowHobAtS.map { String($0) } ?? "-")"
-                + " asking \(next.askIfStillIn) overdue \(next.overdue)"
-        )
-        Screenshots.log(
-            "verdict \(next.answer.verdict.kind) white sets \(next.solution.whiteSets) cook \(next.cookTimeS)"
-        )
+        Screenshots.log(.plan(
+            pull: next.deadlines.cookEndS, cooled: next.deadlines.coolEndS, lengthened: next.lengthened,
+            surface: next.decided != nil, next: next.slowHobAtS, asking: next.askIfStillIn, overdue: next.overdue
+        ))
+        Screenshots.log(.verdict(
+            kind: "\(next.answer.verdict.kind)", whiteSets: next.solution.whiteSets, cookS: next.cookTimeS
+        ))
         #endif
         let wasAsking = plan?.askIfStillIn
         plan = next
@@ -768,10 +766,7 @@ final class Cook {
         if phaseNow == .heating || phaseNow == .cooking || next.askIfStillIn { Ringer.shared.stop() }
         #if DEBUG
         // What Done shows: the peak as it ran once kept, else this plan's.
-        Screenshots.log(String(
-            format: "shown peak %.2f level %.3f planned peak %.2f",
-            shownPeakYolkC ?? .nan, shownLevel ?? .nan, next.solution.result.peakYolkC
-        ))
+        Screenshots.log(.shown(peak: shownPeakYolkC, level: shownLevel, plannedPeak: next.solution.result.peakYolkC))
         #endif
         if let o = made.outcome { outcome = o }
         ranSolution = made.ran
@@ -904,7 +899,7 @@ final class Cook {
         guard let running else {
             Stores.remove(Self.savedKey)
             #if DEBUG
-            Screenshots.log("stored none")
+            Screenshots.log(.stored(value: nil))
             #endif
             return
         }
@@ -912,7 +907,7 @@ final class Cook {
         if let data = try? JSONEncoder().encode(stored) {
             Stores.set(data, forKey: Self.savedKey)
             #if DEBUG
-            Screenshots.log("stored \(String(decoding: data, as: UTF8.self))")
+            Screenshots.log(.stored(value: Screenshots.Encoded(value: stored)))
             #endif
         }
     }
@@ -955,7 +950,7 @@ final class Cook {
               let cook = readRunningCook(stored.cook.jsonObject) else {
             Stores.remove(Self.savedKey)
             #if DEBUG
-            Screenshots.log("restore unreadable")
+            Screenshots.log(.restoreUnreadable)
             #endif
             Alarm.shared.cancel()
             activity { await LiveActivity.endAll() }
@@ -979,7 +974,7 @@ final class Cook {
             let remake = stored.feedbackGiven && ending.remake
             if !remake { Stores.remove(Self.savedKey) }
             #if DEBUG
-            Screenshots.log("restore too old")
+            Screenshots.log(.restoreTooOld)
             #endif
             // Always this build's own cook, so its alarms and its card are
             // this cook's, and there is nothing left for them to time
@@ -1007,7 +1002,7 @@ final class Cook {
             ))
         }
         #if DEBUG
-        Screenshots.log("restore \(phaseAt(made.plan.deadlines, nowS: now).rawValue) events written \(due != cook.events)")
+        Screenshots.log(.restore(phase: phaseAt(made.plan.deadlines, nowS: now).rawValue, eventsWritten: due != cook.events))
         #endif
         generation &+= 1
         reset()
@@ -1058,7 +1053,7 @@ final class Cook {
                 pushed = state
             }
             #if DEBUG
-            Screenshots.log("restored")
+            Screenshots.log(.restored)
             #endif
         }
         startTicking()
@@ -1117,7 +1112,7 @@ final class Cook {
         ) else { return }
         rung[due] = Self.at(due, d)
         #if DEBUG
-        Screenshots.log("ring \(due.rawValue)")
+        Screenshots.log(.ring(deadline: due.rawValue))
         #endif
         Ringer.shared.ring(due)
     }
@@ -1199,7 +1194,7 @@ final class Cook {
     /// checks wait for before they move the clock on.
     private func logIfSettled() {
         guard planning == nil, surfaceAsked == nil, busy == 0 else { return }
-        Screenshots.log("settled")
+        Screenshots.log(.settled)
     }
 
     /// The phase, to the debug log when it changes, and whether that left
@@ -1208,17 +1203,16 @@ final class Cook {
         let phase = phase(at: now)
         guard phase != loggedPhase else { return }
         loggedPhase = phase
-        Screenshots.log("phase \(phase.rawValue)")
+        Screenshots.log(.phase(phase: phase.rawValue))
         logIfSettled()
     }
 
     /// A card pushed, to the debug log, its end in cook time.
     private static func logCard(_ what: String, _ s: CookActivity.ContentState) {
-        Screenshots.log(
-            "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
-                + " up \(s.countsUp == true)"
-                + " cook \(s.cook?.doneness ?? "-")|\(s.cook?.peakYolk ?? "-")|\(s.cook?.eggMass ?? "-")|\(s.cook?.cooling ?? "-")"
-        )
+        Screenshots.log(.activity(
+            what: what, stage: s.stage.rawValue, ends: Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()),
+            up: s.countsUp == true, cook: [s.cook?.doneness, s.cook?.peakYolk, s.cook?.eggMass, s.cook?.cooling]
+        ))
     }
     #endif
 
@@ -1312,7 +1306,7 @@ final class Cook {
             guard !activityFinished else { return }
             activityFinished = true
             #if DEBUG
-            Screenshots.log("activity end done")
+            Screenshots.log(.activityEnd)
             #endif
             activity { await LiveActivity.endAll() }
             return

@@ -239,7 +239,7 @@ final class AppModel {
                 #endif
                 guard let made = remade else { continue }
                 #if DEBUG
-                Screenshots.log("as ran remade")
+                Screenshots.log(.asRanRemade)
                 #endif
                 relogCorrected(made, logged: logged)
                 Cook.forgetStored(idMs: stale.idMs)
@@ -248,7 +248,7 @@ final class AppModel {
             }
             unremade = true
             #if DEBUG
-            Screenshots.log("as ran not remade, kept stored")
+            Screenshots.log(.asRanNotRemade)
             #endif
         }
     }
@@ -312,7 +312,7 @@ final class AppModel {
             // pull not yet planned as it ran (`refreshAsRan`).
             held = Planner.Answers(yolk: yolk, white: white, probe: probe)
             #if DEBUG
-            Screenshots.log("answer held")
+            Screenshots.log(.answerHeld)
             #endif
         }
     }
@@ -378,7 +378,7 @@ final class AppModel {
               now.correctedAtS == running.correctedAtS else { return }
         cook.keepCorrectedAsRan(made.cook)
         #if DEBUG
-        Screenshots.log("as ran corrected")
+        Screenshots.log(.asRanCorrected)
         #endif
         relogCorrected(made, logged: logged)
         answerHeld()
@@ -427,7 +427,7 @@ final class AppModel {
             held = nil
             guard !cook.feedbackGiven else { return }
             #if DEBUG
-            Screenshots.log("answer held made")
+            Screenshots.log(.answerHeldMade)
             #endif
             cook.recordFeedbackGiven()
             Task { await planner.record(egg) }

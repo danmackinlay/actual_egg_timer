@@ -92,14 +92,12 @@ enum Stores {
                 if retiredCookKeys.contains(key) { retiredCook = true }
                 defaults.removeObject(forKey: key)
                 #if DEBUG
-                Screenshots.log("swept \(key)")
+                Screenshots.log(.swept(key: key))
                 #endif
             }
         }
         #if DEBUG
-        Screenshots.log(
-            "stores \(verdict.rawValue) mark \(mark ?? "none") build \(markBuild ?? "none") mine \(version) build \(build)"
-        )
+        Screenshots.log(.stores(verdict: verdict.rawValue, mark: mark, markBuild: markBuild, version: version, build: build))
         #endif
         return verdict
     }

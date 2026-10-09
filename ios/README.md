@@ -442,7 +442,7 @@ times as fast; 0 freezes it), or the older `-clockOffset -900` and
 clock through a relaunch. A clock so launched can be stepped while the app
 runs: a line `<n> <at> <speed>` written to `Library/Caches/aet.clock` in the
 app's container moves cook time to `at` and runs it on at `speed`, and the
-debug log says `clock <n> …` once it has. Under a running clock the
+debug log says `clock` with its `n` once it has. Under a running clock the
 notifications fire at the scaled interval; under a frozen one, which reaches
 no deadline by itself, a day later than that, so they stay pending and cover
 their deadlines. The Lock Screen card, which the system counts on its own
@@ -463,8 +463,9 @@ heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
 `App/Screenshots.swift`, never screen coordinates, the one screen's among
 them: `eggsIn@launch+1`, `set:size=3@30`, `drag:0.3/0.1@pull-60` and
 `release`, `start:+3`, `stillIn`, `stillOut`, `open:settings`), terminates
-and relaunches it, and asserts on the debug log (`Library/Caches/aet.log`:
-phases, plans, the stored cook, the egg log, alarms scheduled, read back and
+and relaunches it, and asserts on the debug log (`Library/Caches/aet.log`,
+one event a line, each a JSON object, `{"t":<cook time, epoch s>,"ev":"plan",
+"pull":…}`, its fields typed as `Screenshots.Event` declares them: phases, plans, the stored cook, the egg log, alarms scheduled, read back and
 delivered, rings, cards with their description, and `settled` when the cook
 has nothing under way; for the one screen also where the slider, the
 sentence and the egg sit, which egg is drawn, each change in hand and each

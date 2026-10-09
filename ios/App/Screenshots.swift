@@ -51,7 +51,7 @@ import EggTimerCore
 ///   frozen there (`AppClock`); `-clockSpeed 60` runs it fast. A clock so
 ///   launched is stepped from outside: a line `<n> <at> <speed>` written to
 ///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
-///   it on at `speed`, and the log says `clock <n> …` once it has. The
+///   it on at `speed`, and the log says `clock` with its `n` once it has. The
 ///   scripted checks freeze it at each moment they check. The older
 ///   `-clockSpeed 60 -clockOffset -900 -clockEpoch 1791234567`, passed again
 ///   at every launch, carries one fast clock on through a relaunch. Sharing
@@ -89,15 +89,28 @@ import EggTimerCore
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
 ///
-/// `log` writes a line with the clock in epoch seconds, cook time, to
-/// standard error and to `Library/Caches/aet.log` in the app's container:
-/// the phases, each plan, the stored cook and the log as written, the
-/// alarms scheduled, cancelled and read back, the rings, the Live
-/// Activities pushed and seen, and the taps of `-uiDo`, which the scripted
-/// checks read (`tools/iosE2e.mjs`).
+/// `log` writes one event as a line of JSON, to standard error and to
+/// `Library/Caches/aet.log` in the app's container: the phases, each plan,
+/// the stored cook and the log as written, the alarms scheduled, cancelled
+/// and read back, the rings, the Live Activities pushed and seen, the taps
+/// of `-uiDo`, and what the screen says, which the scripted checks read
+/// (`tools/iosE2e.mjs`). A line is `{"t":<cook time, epoch s>,"ev":"<the
+/// event>",<its fields>}`: `Event`'s case and its labelled values, as
+/// `Codable` writes them, a field with no value left out.
 enum Screenshots {
-    static func log(_ line: String) {
-        let text = Data("AET \(Int(AppClock.now.timeIntervalSince1970)) \(line)\n".utf8)
+    static func log(_ event: Event) {
+        let encoder = JSONEncoder()
+        encoder.nonConformingFloatEncodingStrategy = .convertToString(
+            positiveInfinity: "inf", negativeInfinity: "-inf", nan: "nan"
+        )
+        // `{"<case>":{<fields>}}`, as `Codable` writes an enum's case, made
+        // one object with the moment.
+        guard let data = try? encoder.encode(event), let json = String(data: data, encoding: .utf8),
+              let colon = json.firstIndex(of: ":") else { return }
+        let name = json[json.index(json.startIndex, offsetBy: 2)..<json.index(before: colon)]
+        let fields = json[json.index(after: colon)...].dropFirst().dropLast(2)
+        let t = String(format: "%.3f", AppClock.now.timeIntervalSince1970)
+        let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
         FileHandle.standardError.write(text)
         // And appended to Library/Caches/aet.log in the app's container, which
         // a simulator's host reads (`simctl get_app_container … data`).
@@ -160,6 +173,134 @@ enum Screenshots {
             answer.white = words.first.flatMap(WhiteReport.init(rawValue:))
             return answer
         }
+    }
+}
+
+extension Screenshots {
+    /// What the debug log says, one case an event, its values the line's
+    /// fields (`log`). Times are epoch s in cook time unless said; a value
+    /// that is none is left out of the line.
+    enum Event: Encodable, Equatable {
+        // The clock and the taps.
+        /// The clock stepped from outside (`AppClock.takeStep`): step `n`,
+        /// to `at`, running on at `speed` (0 frozen).
+        case clock(n: Int, at: Double, speed: Double)
+        /// A tap of `-uiDo` (`name`, as `boil`, `set`), as given (`raw`).
+        case action(name: String, raw: String)
+        case actionUnknown(raw: String)
+
+        // The cook.
+        case phase(phase: String)
+        /// The cook has nothing under way (`Cook.logIfSettled`).
+        case settled
+        /// A plan taken: its deadlines, whether the slow hob lengthened it,
+        /// whether it is on its pot's surface, when the slow hob lengthens it
+        /// next, whether it asks if the eggs are still in, and whether the
+        /// egg is overdue.
+        case plan(
+            pull: Double, cooled: Double?, lengthened: Bool, surface: Bool, next: Double?, asking: Bool,
+            overdue: Bool
+        )
+        case verdict(kind: String, whiteSets: Bool, cookS: Double)
+        /// What Done shows, the peak yolk as it ran once kept (°C), and the
+        /// plan's own.
+        case shown(peak: Double?, level: Double?, plannedPeak: Double)
+        /// The cook as stored, as the store holds it; none when cleared.
+        case stored(value: Encoded?)
+        /// A cook picked back up at launch, in this phase, and whether the
+        /// clock wrote events it found past.
+        case restore(phase: String, eventsWritten: Bool)
+        case restoreTooOld
+        case restoreUnreadable
+        /// A cook picked back up has its alarms and its card again.
+        case restored
+        case cookEnded
+        case ring(deadline: String)
+        /// A card pushed (`what`: `start`, `update`): its stage, its end,
+        /// whether it counts up, and what it says of the cook.
+        case activity(what: String, stage: String, ends: Int, up: Bool, cook: [String?])
+        case activityEnd
+        /// A card the system holds, read at launch (`when`: `launch`,
+        /// `launch+3s`).
+        case activitySeen(when: String, state: String, stage: String, ends: Int)
+
+        // The alarms.
+        /// An alarm asked for, for `at`, `inS` of the system's seconds on.
+        case scheduled(id: String, at: Double, inS: Double)
+        case notScheduled(id: String, error: String)
+        case alarmsCancelled
+        /// The alarms a read-back found pending, each with its moment.
+        case pending(alarms: [PendingAlarm])
+        /// Those it found delivered and still shown.
+        case delivered(ids: [String])
+
+        // The results log and the record.
+        /// The log as written: how many eggs, how many folded, and the last.
+        case log(count: Int, folded: Int, last: Encoded?)
+        case asRanCorrected
+        case asRanRemade
+        case asRanNotRemade
+        case answerHeld
+        case answerHeldMade
+
+        // The stores (`Stores.claim`).
+        case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
+        case swept(key: String)
+
+        // The idle screen.
+        /// An answer on screen: its time, whether it is decided on its pot's
+        /// surface, and whether it has its odds.
+        case answer(cookS: Double, decided: Bool, odds: Bool)
+
+        // Corrections while a cook runs (`Edits`).
+        /// A change in hand, on this group of controls.
+        case edit(group: String?)
+        case editLeaving
+        /// The change in hand committed: the fields it changed, and the start
+        /// if it moved it.
+        case editCommitted(fields: [String], start: Double?)
+        case startLimit(kind: String, at: Double)
+        case announce(text: String)
+
+        // The screen.
+        /// The page on top (`egg` for none pushed).
+        case view(page: String)
+        /// Where a part of the screen sits, pt from the window's top.
+        case layout(part: String, y: Double)
+        case newerNote
+        case sentence(text: String)
+        case panelStart(at: Double)
+        case readout(phase: String, big: String, sub: String)
+        /// One frame of the readout: the moment it was drawn for, and what
+        /// it drew, the certainty's time range none with no certainty.
+        case frame(at: Double, phase: String, big: String, sub: String, range: String?)
+        /// The certainty line's word and the time range it opens; none with
+        /// no line.
+        case certainty(word: String?, time: String?)
+        case white(shown: Bool)
+        case likely(shown: Bool)
+        /// The egg in cross-section: its reading (`aim`, `live`, `ran`) and
+        /// how set its yolk is, to a thousandth; no yolk with no egg drawn.
+        case egg(reading: String, yolk: Double?)
+        case slot(text: String)
+        case note(text: String)
+    }
+
+    /// A value the app stores as JSON, written into a line as it encodes.
+    struct Encoded: Encodable, Equatable {
+        let value: any Encodable
+
+        func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+
+        static func == (a: Encoded, b: Encoded) -> Bool {
+            (try? JSONEncoder().encode(a)) == (try? JSONEncoder().encode(b))
+        }
+    }
+
+    struct PendingAlarm: Encodable, Equatable {
+        let id: String
+        /// When it fires, cook time, whole s; none without an interval trigger.
+        let at: Int?
     }
 }
 
@@ -234,7 +375,7 @@ extension Screenshots {
                 let now = AppClock.now.timeIntervalSince1970
                 guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else { continue }
                 let action = left.remove(at: i).action
-                log("action \(action.raw)")
+                log(.action(name: action.name, raw: action.raw))
                 tap(action, model)
             }
         }
@@ -281,7 +422,7 @@ extension Screenshots {
         case "stillIn": model.stillIn()
         case "stillOut": model.stillOut()
         case "open": open?(action.arg ?? "")
-        default: log("action unknown \(action.name)")
+        default: log(.actionUnknown(raw: action.raw))
         }
     }
 
@@ -291,7 +432,7 @@ extension Screenshots {
     @MainActor
     private static func set(_ arg: String, _ planner: Planner) {
         let parts = arg.split(separator: "=", maxSplits: 1).map(String.init)
-        guard parts.count == 2 else { return log("action unknown set:\(arg)") }
+        guard parts.count == 2 else { return log(.actionUnknown(raw: "set:\(arg)")) }
         let value = parts[1]
         let number = Double(value) ?? .nan
         switch parts[0] {
@@ -306,7 +447,7 @@ extension Screenshots {
         case "eggs": planner.eggCount = Int(number)
         case "altitude": planner.altitudeM = number
         case "language": LanguageChoice.shared.pick(value)
-        default: log("action unknown set:\(arg)")
+        default: log(.actionUnknown(raw: "set:\(arg)"))
         }
     }
 }
