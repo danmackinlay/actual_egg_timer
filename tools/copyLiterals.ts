@@ -7,7 +7,8 @@
  * code (EggTimerApp, EggTimerShared) and the core, with `+`
  * concatenations joined and each `\(...)` interpolation reduced to `{}`,
  * must be a catalogue key, an argument's name in key position, or on the
- * NOT_COPY list below with the reason it is not words. So no word reaches an
+ * NOT_COPY list below with the reason it is not words, or a store's name or
+ * key (src/core/stores.ts). So no word reaches an
  * iOS screen without going through copy/, and what a wording change changed
  * is the catalogue's diff, which the review queue reads (tools/copyQueue.ts).
  *
@@ -22,6 +23,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
+import { STORE_LIST } from '../src/core/stores.js';
 
 const DIRS = [
   'ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared',
@@ -31,7 +33,6 @@ const DIRS = [
 /** Literals that are not words on a screen, and why. Exact raw text. */
 const NOT_COPY: Record<string, string> = {
   // storage keys and identifiers
-  boilMemory: 'UserDefaults key',
   cookInProgress: 'UserDefaults key',
   doneness: 'UserDefaults key',
   sizeIndex: 'UserDefaults key',
@@ -94,7 +95,6 @@ const NOT_COPY: Record<string, string> = {
   cooled_s: 'record field name',
   // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
-  'calibration.v5': 'UserDefaults key',
   'settings.v1': 'UserDefaults key',
   'surface|{}': 'a build\'s key in Cook, never shown',
   'before|{}': 'a build\'s key in Cook, never shown',
@@ -118,6 +118,7 @@ const NOT_COPY: Record<string, string> = {
   'cookInProgress.v3': 'UserDefaults key',
   'cookInProgress.v4': 'UserDefaults key',
   leanHint_s: 'stored cook field name',
+  v: 'a store\'s format, written inside it (src/core/stores.ts)',
   log: 'stored cook field name: its log',
   kind: 'stored cook field name: a log entry\'s kind',
   at_s: 'stored cook field name: a log entry\'s time',
@@ -177,10 +178,6 @@ const NOT_COPY: Record<string, string> = {
   probe: 'UserDefaults key',
   roomC: 'UserDefaults key',
   unitsChosen: 'UserDefaults key',
-  languageState: 'UserDefaults key',
-  newestVersion: 'UserDefaults key: the newest version that has run (DECISIONS.md 100)',
-  newestBuild: 'UserDefaults key: the build number of the newest version that has run',
-  alarmSound: 'UserDefaults key: the alarm sound chosen (DECISIONS.md 101)',
   'alarm-{}-{}.caf': 'bundle resource name: an alarm sound\'s file (tools/sounds.ts)',
   flip: 'notification userInfo key',
   unitsFlipped: 'notification name',
@@ -311,7 +308,6 @@ const NOT_COPY: Record<string, string> = {
   '2026-10-e10': 'the model and likelihood ids, never shown',
   '2026-09': 'the literature population\'s id, never shown',
   population: 'bundle resource name (Calibration.swift)',
-  'sharing.v1': 'UserDefaults key (Sharing.swift)',
   on: 'stored sharing state field (Share.swift)',
   sent: 'stored sharing state field',
   seq: 'stored sharing state field',
@@ -321,7 +317,6 @@ const NOT_COPY: Record<string, string> = {
   busySince: 'stored sharing state field',
   '0123456789abcdef': 'hex digits, to read a random ID (Share.swift), never shown',
   'sharing.attest.v1': 'UserDefaults key, retired (Store.swift)',
-  'sharing.attest.v2': 'UserDefaults key (Sharing.swift)',
   shareServer: 'debug launch argument (Sharing.swift)',
   'https://actualeggtimer.netlify.app': 'the endpoint\'s site, never shown',
   'x-egg-assertion': 'HTTP header name',
@@ -509,11 +504,14 @@ const now = [...sources().entries()].flatMap(([f, s]) => literals(s).map((l) => 
 const argumentNames = new Set([...en.messages.values()]
   .flatMap((m) => templatesOf(m).flatMap(placeholders).concat(m.kind === 'plural' ? [m.count] : [])));
 
+/** Every store's name and its keys: names in storage, never shown. */
+const storeNames = new Set(STORE_LIST.flatMap((s) => [s.name, s.web, s.ios]));
+
 const failures: string[] = [];
 let keys = 0;
 for (const l of now) {
   if (en.messages.has(l.text)) { keys += 1; continue; }
-  if (l.text in NOT_COPY) continue;
+  if (l.text in NOT_COPY || storeNames.has(l.text)) continue;
   if (l.argument && argumentNames.has(l.text)) continue;
   failures.push(`${l.file}: "${l.text}" is still a literal`);
 }
