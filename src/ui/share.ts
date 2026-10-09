@@ -20,6 +20,7 @@ import {
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
 import { request } from './idle.js';
+import { send } from './send.js';
 import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
@@ -98,8 +99,6 @@ export interface ShareHost {
   /** How many of the log's eggs are final: all, unless the last is the egg
    *  on screen, whose answers may still come. */
   finalCount(): number;
-  /** Redraw what is said about sharing. */
-  changed(): void;
 }
 
 let state: ShareState = { ...FRESH_SHARE };
@@ -115,7 +114,7 @@ let again = false;
 function save(next: ShareState): void {
   state = next;
   store.write(JSON.stringify(state));
-  if (host !== null) host.changed();
+  send({ kind: 'shared' });
 }
 
 /** Another tab's state, taken up: whether there was one. A change of id or
@@ -140,9 +139,7 @@ function current(): ShareState {
  *  tab that cleared it all): taken up now, if it touched sharing. Says
  *  whether it did. */
 export function shareStoredElsewhere(key: string | null): boolean {
-  if (!takeUp(store.elsewhere(key))) return false;
-  if (host !== null) host.changed();
-  return true;
+  return takeUp(store.elsewhere(key));
 }
 
 /**

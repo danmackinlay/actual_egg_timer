@@ -160,7 +160,7 @@ test('4. a cold cook in each phase: Heating, Cooking, the pull, the cooling, Don
   assert.equal(done.section?.reading, 'ran', 'the egg as it ran');
   assert.equal(done.certainty, null, 'nothing more to say of a time that has passed');
 
-  const after = go(m, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null, storedId_ms: m.cook!.id_ms }, coolEnd + 5);
+  const after = go({ ...m, storedId_ms: m.cook!.id_ms }, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, coolEnd + 5);
   const answered = view(after, (coolEnd + 5) * 1000, memo);
   assert.equal(answered.kind, 'running');
   if (answered.kind === 'running') assert.equal(answered.readout.notes, null, 'what was said stays said');

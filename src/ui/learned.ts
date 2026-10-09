@@ -7,6 +7,7 @@ import { BoilMemory } from '../core/boil.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import { showInfo } from './info.js';
+import { send } from './send.js';
 import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.js';
 import { formatClock } from './countdown.js';
 import { show } from './units.js';
@@ -76,16 +77,16 @@ function onForgetKept(): void {
   page().forget.focus();
 }
 
-/** Wire Forget and its confirmation. `forget` takes it all back - the
+/** Wire Forget and its confirmation, which takes it all back - the
  *  posterior and the pan - and redraws; a run of wrong answers about how the
  *  eggs were was otherwise undone only by clearing the site's storage - README
  *  11.5 listed that as a known gap from the day the iOS app got its own
  *  version of this button. */
-export function wireForget(forget: () => void): void {
+export function wireForget(): void {
   page().forget.addEventListener('click', onForgetAsked);
   page().forgetYes.addEventListener('click', () => {
     page().forgetConfirm.hidden = true;
-    forget();
+    send({ kind: 'forget' });
     // The button has gone with what it forgot; the note that says so now has
     // the focus.
     page().learnedNote.focus();
@@ -93,25 +94,24 @@ export function wireForget(forget: () => void): void {
   page().forgetNo.addEventListener('click', onForgetKept);
 }
 
-/**
- * Wire "Export my results": `results` is the file to save, or null when
- * there is nothing in it, which the note under the button then says. The
- * file is made here and saved as a download, with no network: a link to a
- * Blob of it, clicked and let go.
- */
-export function wireExport(results: () => { name: string; text: string } | null): void {
-  page().exportResults.addEventListener('click', () => {
-    const file = results();
-    page().exportNote.hidden = file !== null;
-    if (file === null) return;
-    const url = URL.createObjectURL(new Blob([file.text], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // Long enough for the browser to have started the download.
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  });
+/** Wire "Export my results". */
+export function wireExport(): void {
+  page().exportResults.addEventListener('click', () => send({ kind: 'export' }));
+}
+
+/** The results file saved, or null when there is nothing in it, which the
+ *  note under the button then says. Saved as a download, with no network: a
+ *  link to a Blob of it, clicked and let go. */
+export function saveResults(file: { name: string; text: string } | null): void {
+  page().exportNote.hidden = file !== null;
+  if (file === null) return;
+  const url = URL.createObjectURL(new Blob([file.text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Long enough for the browser to have started the download.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

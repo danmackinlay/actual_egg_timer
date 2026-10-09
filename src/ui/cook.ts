@@ -21,13 +21,12 @@
  */
 
 import { DecisionInputs, inputsKey, nudgeSeconds } from '../core/decide.js';
-import { WhiteReport, YolkWord } from '../core/infer.js';
-import { EggRecord, ProbeReading } from '../core/record.js';
+import { EggRecord } from '../core/record.js';
 import { RunningCook, answered } from '../core/running.js';
 import { isSousVide, learning, phaseNow, state } from './state.js';
 import { Effect, Msg, update } from './model.js';
 import { currentInputs, wantedProfiles } from './answer.js';
-import { calibrationBefore, keepRecord } from './calibration.js';
+import { calibrationBefore, exportResults, keepRecord } from './calibration.js';
 import {
   Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
   setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
@@ -40,12 +39,12 @@ import {
 import { page, selectRadio } from './dom.js';
 import { commitEdit, endEdits, startEdits } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
-import { probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
-import { renderCalibNote, renderLearned } from './learned.js';
+import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
+import { renderCalibNote, renderLearned, saveResults } from './learned.js';
 import { draw, drawnNothing, forgetDrawnWords } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
-import { sendFinal, shareState } from './share.js';
+import { deleteSent, sendFinal, setSharing, shareState } from './share.js';
 import { clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, storageReadOnly, takeUpEvents } from './store.js';
 import { unitSystem, useUnits } from './units.js';
 import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
@@ -124,6 +123,7 @@ function apply(msg: Msg, now: number): void {
   state.profiles = built.profiles;
   state.sharing = shareState().on;
   state.readOnly = storageReadOnly();
+  state.storedId_ms = state.cook === null ? null : storedId();
   const [next, effects] = update(state, msg, now);
   Object.assign(state, next);
   useUnits(state.settings.unitsChosen);
@@ -151,7 +151,7 @@ export function dispatch(msg: Msg): void {
       const now = nowMs();
       if (state.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
         const taken = cookStore.takeUp();
-        if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs, storedId_ms: storedId() }, now);
+        if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs }, now);
       }
       apply(next, now);
     }
@@ -215,6 +215,9 @@ function perform(effects: Effect[]): void {
         break;
       case 'questionsReset':
         resetFeedback();
+        break;
+      case 'answerTaken':
+        answerTaken(e.yolkWord, e.white);
         break;
       case 'thanks':
         page().calibNote.textContent = t('feedback.thanks');
@@ -286,6 +289,18 @@ function perform(effects: Effect[]): void {
         break;
       case 'forgetAll':
         forgetAll();
+        break;
+      case 'export':
+        saveResults(exportResults(shareState().uid, nowMs()));
+        break;
+      case 'setSharing':
+        // Drawn again at once, and again once what it sends has gone.
+        void setSharing(e.on).then(() => send({ kind: 'shared' }));
+        send({ kind: 'shared' });
+        break;
+      case 'deleteShared':
+        void deleteSent().then(() => send({ kind: 'shareDeleted', confirmed: shareState().deleting.length === 0 }));
+        send({ kind: 'shared' });
         break;
     }
   }
@@ -546,24 +561,6 @@ export function onStillOut(): void {
   dispatch({ kind: 'stillOut' });
 }
 
-/** An answer at Done (feedback.ts): whether the cook took it. */
-export function answerCook(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): boolean {
-  if (state.cook === null) return false;
-  const said = answersGiven(state.cook);
-  dispatch({ kind: 'answered', yolkWord: yolk, white: white, probe: probe, storedId_ms: storedId() });
-  return state.cook !== null && !state.closed && answersGiven(state.cook) > said;
-}
-
-/** A probe reading at Done (feedback.ts), in C. */
-export function probeCook(reading_C: number | null): void {
-  if (state.cook !== null) dispatch({ kind: 'probe', reading_C: reading_C, storedId_ms: storedId() });
-}
-
-/** How many answers a cook's log holds. */
-function answersGiven(cook: RunningCook): number {
-  return cook.log.filter((e) => e.kind === 'answered').length;
-}
-
 /** A surface, a profile or a calibration a cook wanted, landed. */
 function cookLanded(): void {
   dispatch({ kind: 'landed' });
@@ -576,8 +573,7 @@ function cookLanded(): void {
  *  egg is still open, its questions going if not. */
 export function cookElsewhere(key: string | null): void {
   if (!cookStore.touches(key) || state.cook === null) return;
-  const id = storedId();
-  dispatch({ kind: 'elsewhere', theirs: cookStore.takeUp()?.theirs ?? null, storedId_ms: id });
+  dispatch({ kind: 'elsewhere', theirs: cookStore.takeUp()?.theirs ?? null });
 }
 
 /** The page is looked at again (shown, focused): the ticker, which stops at

@@ -123,7 +123,9 @@ interface Screen {
 }
 
 /** What the page shows. */
-export type View = { mute: { label: string; pressed: boolean } } & (
+/** On every screen: the mute, and the line that says a newer build's stores
+ *  are left alone. */
+export type View = { mute: { label: string; pressed: boolean }; newer: boolean } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
    *  slider, the boiling point beside the altitude, the start, the
@@ -149,10 +151,11 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
+  const newer = m.readOnly;
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
-      mute: mute, kind: 'unsolved',
+      mute: mute, newer: newer, kind: 'unsolved',
       reading: isSousVide(m) ? { level: shown.doneness, bath_C: SOUS_VIDE_BATH_C }
         : { level: shown.doneness, peakYolk_C: targetPeakYolk_C(shown.doneness) },
       statBoil: show('boilingPoint', boilingPoint_C(m)),
@@ -170,17 +173,17 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   // When the eggs went in, in the start's panel, while a cook runs: the
   // sentence never says it.
   const startedAt = m.cook === null || m.controlsStart_s === null ? null : timeOfDay(m.controlsStart_s * 1000);
-  const blank = { mute: mute, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
+  const blank = { mute: mute, newer: newer, kind: 'blank' as const, learning: learningOn, sentence: sentence, startedAt: startedAt };
   // Sous-vide is answered honestly and separately: no cook to run, no
   // clock to start, and a start time that has already been and gone.
-  if (isSousVide(m)) return { mute: mute, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
+  if (isSousVide(m)) return { mute: mute, newer: newer, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
   if (m.cook === null) {
     const sol = m.solution;
     if (sol === null) return blank;
-    return { mute: mute, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
+    return { mute: mute, newer: newer, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
   }
   if (m.plan === null) return blank;
-  return { mute: mute, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
+  return { mute: mute, newer: newer, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
 }
 
 /* -------------------------------------------------------------- screens */

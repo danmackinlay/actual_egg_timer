@@ -14,11 +14,11 @@ import {
 } from '../core/running.js';
 import { ModelParams } from '../core/solve.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
-import { ProbeReading } from '../core/record.js';
 import { parse, stepPast } from '../core/units.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import type { Model } from './model.js';
+import { send } from './send.js';
 import { state } from './state.js';
 import { disableSteppers, setStepRule } from './stepper.js';
 import { measure, show } from './units.js';
@@ -34,17 +34,6 @@ export function answeredHere(m: Model): boolean {
 export function pickedUpAfterReload(m: Model): boolean {
   return m.questions === 'away' || (m.reloaded && !answeredHere(m));
 }
-
-/** What the questions need of the page: an answer stepped into the cook
- *  (cook.ts), and whether it was taken - not if the egg is final, or the
- *  question was answered already; and a probe reading, scored and stepped
- *  in by `update` (model.ts). */
-export interface FeedbackHost {
-  answer(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): boolean;
-  probe(reading_C: number | null): void;
-}
-
-let host: FeedbackHost | null = null;
 
 /** Mark which answer of a row was given, and put the row out of reach. The
  *  pressed button stays legible - it is the record of what was said. */
@@ -77,15 +66,26 @@ export function resetFeedback(): void {
  * changes nothing. One given before the egg's record can be made waits in
  * the cook's log until it can. The readout is left describing the egg that
  * was eaten; the recalibrated model shows up on the next "Start again".
+ * Taken, its row settles on the button pressed (`answerTaken`).
  */
-function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
-  const cook = state.cook;
-  if (host === null || cook === null) return;
-  const said = answersOf(cook);
-  if ((yolk !== null && said.yolkWord !== null) || (white !== null && said.white !== null)) return;
-  if (!host.answer(yolk, white, null)) return;
-  settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
-  page().calibNote.textContent = t('feedback.learning');
+function onAnswer(yolk: YolkWord | null, white: WhiteReport | null): void {
+  send({ kind: 'answered', yolkWord: yolk, white: white, probe: null });
+}
+
+/** An answer taken: its row settles on the button that gave it. */
+export function answerTaken(yolk: YolkWord | null, white: WhiteReport | null): void {
+  const selector = yolk !== null ? 'button.fb' : 'button.wb';
+  const buttons = page().feedback.querySelectorAll<HTMLButtonElement>(selector);
+  for (let i = 0; i < buttons.length; i++) {
+    const b = buttons[i];
+    if (yolk !== null ? b.dataset['yolk'] === yolk : whiteOf(b) === white) settleRow(selector, b);
+  }
+}
+
+/** The white a button of the white's row says. */
+function whiteOf(button: HTMLButtonElement): WhiteReport {
+  const raw = button.dataset['white'];
+  return raw === 'runny' ? 'runny' : raw === 'tender' ? 'tender' : 'firm';
 }
 
 /* ------------------------------------------------------------ thermometer */
@@ -139,11 +139,11 @@ export function probePending(m: Model, phase: Phase, wanted: boolean): boolean {
  */
 function onProbeSave(): void {
   const cooked = state.cook;
-  if (host === null || cooked === null || page().probeReading.disabled) return;
+  if (cooked === null || page().probeReading.disabled) return;
   if (answersOf(cooked).probe !== null) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
-  host.probe(parse(measure('probeTemp'), Number(typed)));
+  send({ kind: 'probe', reading_C: parse(measure('probeTemp'), Number(typed)) });
 }
 
 /** A reading refused: the range it should be in, said under it. */
@@ -167,8 +167,7 @@ export function retryProbe(): void {
 }
 
 /** Wire both rows of answers and the probe's entry. Once, at boot. */
-export function wireFeedback(h: FeedbackHost): void {
-  host = h;
+export function wireFeedback(): void {
   // Whole degrees, in the units on screen when pressed.
   setStepRule(page().probeReading, (value, up) => stepPast(measure('probeTemp'), value, up));
   page().probeSave.addEventListener('click', onProbeSave);
@@ -181,16 +180,12 @@ export function wireFeedback(h: FeedbackHost): void {
     fbButtons[i].addEventListener('click', () => {
       const raw = fbButtons[i].dataset['yolk'];
       const word = YOLK_WORDS.find((w) => w === raw);
-      if (word !== undefined) onAnswer(word, null, fbButtons[i]);
+      if (word !== undefined) onAnswer(word, null);
     });
   }
 
   const whiteButtons = page().feedback.querySelectorAll<HTMLButtonElement>('button.wb');
   for (let i = 0; i < whiteButtons.length; i++) {
-    whiteButtons[i].addEventListener('click', () => {
-      const raw = whiteButtons[i].dataset['white'];
-      const white: WhiteReport = raw === 'runny' ? 'runny' : raw === 'tender' ? 'tender' : 'firm';
-      onAnswer(null, white, whiteButtons[i]);
-    });
+    whiteButtons[i].addEventListener('click', () => onAnswer(null, whiteOf(whiteButtons[i])));
   }
 }

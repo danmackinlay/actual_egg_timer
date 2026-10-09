@@ -117,10 +117,10 @@ export function forgetAll(): void {
   const calib = clearCalibration();
   // The log is gone, and with it any egg cooked on the development clock.
   forgetDevClockUse();
-  // The next egg is a new cook's, under a new id (share.ts).
-  forgetShare();
   clearBoilMemory();
   send({ kind: 'calibration', calib: calib, boilMemory: {} });
+  // The next egg is a new cook's, under a new id (share.ts).
+  forgetShare();
 }
 
 /** Eggs written down but not yet folded, folded off the main thread, and the
@@ -170,7 +170,8 @@ export function finalEggs(): number {
 
 /** The Settings section, with how many final eggs are still to go. */
 export function drawShare(): void {
-  renderShare(Math.max(0, finalEggs() - shareState().sent));
+  const s = shareState();
+  renderShare(s, Math.max(0, finalEggs() - s.sent), state.deletedHere);
 }
 
 /**

@@ -17,6 +17,7 @@ import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin } from '../core/inputs.js';
 import { RunningCook, readRunningCook } from '../core/running.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
+import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
@@ -163,11 +164,10 @@ export function removeStorage(key: string): void {
 const NEWEST_KEY = 'aet.newest';
 
 /** This build's version, once `claimStorage` has been called; until then
- *  (tests, tools) every write goes through unguarded. */
+ *  (tests, tools) every write goes through unguarded. The page's own: the
+ *  browser's storage is one for the page. */
 let mine: string | null = null;
 let readOnly = false;
-/** Told once, when this page stops writing. */
-let onReadOnly: (() => void) | null = null;
 
 /**
  * Before anything is read for writing back, or written: compare the mark
@@ -175,11 +175,11 @@ let onReadOnly: (() => void) | null = null;
  * than what is there; then, if this build may write, delete the keys no
  * build from this one on reads (`RETIRED_KEYS`). A build that finds a newer
  * mark deletes nothing. Says what this page does with the stores from now on.
+ * When it stops writing, then or later, the page is told once (`leftAlone`).
  */
-export function claimStorage(version: string, readOnlyNow: (() => void) | null = null): WriterVerdict {
+export function claimStorage(version: string): WriterVerdict {
   mine = version;
   readOnly = false;
-  onReadOnly = readOnlyNow;
   mayWrite();
   for (const key of RETIRED_KEYS) if (readStorage(key) !== null) removeStorage(key);
   return readOnly ? 'readOnly' : 'write';
@@ -198,8 +198,7 @@ function mayWrite(): boolean {
   if (readOnly) return false;
   const mark = readStorage(NEWEST_KEY);
   if (writerCheck(mark, mine) === 'readOnly') {
-    readOnly = true;
-    if (onReadOnly !== null) onReadOnly();
+    leftAlone();
     return false;
   }
   if (mark !== mine && parseVersion(mine) !== null) {
@@ -218,9 +217,20 @@ function mayWrite(): boolean {
 export function newerStoredElsewhere(key: string | null): boolean {
   if (mine === null || readOnly || (key !== null && key !== NEWEST_KEY)) return false;
   if (writerCheck(readStorage(NEWEST_KEY), mine) === 'write') return false;
-  readOnly = true;
-  if (onReadOnly !== null) onReadOnly();
+  leftAlone();
   return true;
+}
+
+/**
+ * A newer build has run in this browser, found at boot or told of later:
+ * what this page stores is left alone from now on. The page is told (the
+ * `stores` message): the line at the top of every view says so, and the
+ * questions after an egg, sharing and "Start learning again" go, since
+ * nothing they do could be kept. The timer runs as before.
+ */
+function leftAlone(): void {
+  readOnly = true;
+  send({ kind: 'stores' });
 }
 
 /* ------------------------------------------- a store kept across the tabs */

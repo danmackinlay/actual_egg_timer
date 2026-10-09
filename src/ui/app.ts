@@ -24,10 +24,10 @@
 
 import { nudgeSeconds } from '../core/decide.js';
 import { stepPast } from '../core/units.js';
-import { exportResults, keptState, loadCalibration } from './calibration.js';
+import { keptState, loadCalibration } from './calibration.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  answerCook, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, probeCook, reset, restoreCook, startRunner,
+  cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -36,9 +36,8 @@ import { onInput, onToggleMute } from './input.js';
 import { renderCalibNote, wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
 import { renderVersion } from './render.js';
-import { send } from './send.js';
 import { buildClauses } from './sentence.js';
-import { loadShare, retryDeletes, sendFinal, shareState } from './share.js';
+import { loadShare, retryDeletes, sendFinal } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
 import { learning, sizeClasses, state } from './state.js';
@@ -50,15 +49,14 @@ import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, learnBehind, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
-import { markDevClockUse, nowMs, random } from './now.js';
+import { markDevClockUse, random } from './now.js';
 
 export function boot(): void {
   bindDom();
   // Before anything is written: whether a newer build has run here, and the
   // mark brought up to this one if not (DECISIONS.md 100), and then the keys
   // no build reads any more deleted.
-  claimStorage(APP_VERSION, leaveStoresAlone);
-  page().newerNote.hidden = !storageReadOnly();
+  claimStorage(APP_VERSION);
   // The development clock's mark, for a clock set as the page loaded.
   markDevClockUse();
   state.settings = loadSettings(sizeClasses);
@@ -95,8 +93,8 @@ export function boot(): void {
   page().secondary.addEventListener('click', reset);
   page().stillOut.addEventListener('click', onStillOut);
   page().mute.addEventListener('click', onToggleMute);
-  wireForget(() => send({ kind: 'forget' }));
-  wireExport(() => exportResults(shareState().uid, nowMs()));
+  wireForget();
+  wireExport();
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
@@ -107,20 +105,15 @@ export function boot(): void {
   startRunner();
   renderVersion();
 
-  wireFeedback({ answer: answerCook, probe: probeCook });
+  wireFeedback();
 
   renderCalibNote(learning(state));
   restoreCook();
   // Sharing, if the cook turned it on: every egg in the log is final but the
   // stored running cook's, which may still be answered or corrected
   // (`finalEggs`). A deletion not yet confirmed is asked again first.
-  // Turning sharing on or off moves the time by the nudge, so the egg page
-  // is solved again with the section redrawn.
-  wireShare(() => {
-    drawShare();
-    send({ kind: 'solve' });
-  });
-  loadShare({ log: () => keptState().log, finalCount: finalEggs, changed: drawShare });
+  wireShare();
+  loadShare({ log: () => keptState().log, finalCount: finalEggs });
   drawShare();
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
@@ -147,21 +140,4 @@ export function boot(): void {
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(() => state.cook === null);
-  booted = true;
-}
-
-/** Whether `boot` has drawn the page, so a redraw has something to draw. */
-let booted = false;
-
-/**
- * A newer build has run in this browser, found at boot or told of later:
- * what this page stores is left alone from now on (store.ts). The line at
- * the top of every view says so. The timer runs as before; the questions
- * after an egg, sharing and "Start learning again" go, since nothing they do
- * could be kept.
- */
-function leaveStoresAlone(): void {
-  if (!booted) return;
-  page().newerNote.hidden = false;
-  send({ kind: 'stores' });
 }

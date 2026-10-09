@@ -48,6 +48,7 @@ export function forgetDrawnWords(d: Drawn): void {
 export function draw(v: View, d: Drawn): void {
   page().mute.textContent = v.mute.label;
   page().mute.setAttribute('aria-pressed', v.mute.pressed ? 'true' : 'false');
+  page().newerNote.hidden = !v.newer;
   if (v.kind === 'unsolved') {
     drawReading(v.reading);
     page().statBoil.textContent = v.statBoil;

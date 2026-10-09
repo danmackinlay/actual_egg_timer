@@ -128,7 +128,7 @@ function fake(answers: (number | 'offline')[] = []): Transport & { posts: Record
 }
 
 function page(log: EggRecord[], final = log.length) {
-  const h = { log: () => log, finalCount: () => final, changed: () => {} };
+  const h = { log: () => log, finalCount: () => final };
   return h;
 }
 

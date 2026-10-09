@@ -47,6 +47,8 @@ export function emptyModel(): Model {
     calib: null!,
     sharing: false,
     readOnly: false,
+    storedId_ms: null,
+    deletedHere: false,
     profiles: [],
     idleAnswer: null,
     solution: null,

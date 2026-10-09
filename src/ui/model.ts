@@ -111,6 +111,13 @@ export interface Model extends CookState {
    *  those stores, taken before each message. */
   sharing: boolean;
   readOnly: boolean;
+  /** The stored cook's id as this tab reads it, for whether its egg is
+   *  still open (this cook's own when storage does not work): the runner's
+   *  view, taken before each message while a cook runs. */
+  storedId_ms: number | null;
+  /** A deletion of what was shared, asked for on this page, confirmed: said
+   *  under the switch until sharing is turned on again. */
+  deletedHere: boolean;
   /** The odds profiles built on the calibration as it stands, for any pot:
    *  the runner's view of its caches, like `surfaces`. */
   profiles: PotOdds[];
@@ -184,9 +191,7 @@ export interface Model extends CookState {
   probeHeld: boolean;
 }
 
-/** What happened. `storedId_ms` is the stored cook's id as this tab reads
- *  it (this cook's own when storage does not work), for whether its egg is
- *  still open. */
+/** What happened. */
 export type Msg =
   /* The running cook. */
   | { kind: 'start'; choices: CookChoices; nudge_s: number; units: Units; lang: string; leanHint_s: number }
@@ -196,13 +201,10 @@ export type Msg =
   | { kind: 'correct'; choices: CookChoices; startedAt_s: number | null }
   | { kind: 'tick' }
   | { kind: 'landed' }
-  | {
-    kind: 'answered'; yolkWord: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null;
-    storedId_ms: number | null;
-  }
-  | { kind: 'elsewhere'; theirs: StoredCook | null; storedId_ms: number | null }
+  | { kind: 'answered'; yolkWord: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null }
+  | { kind: 'elsewhere'; theirs: StoredCook | null }
   /** A probe reading typed at Done, C; null for what is not a number. */
-  | { kind: 'probe'; reading_C: number | null; storedId_ms: number | null }
+  | { kind: 'probe'; reading_C: number | null }
   | { kind: 'restore'; stored: StoredCook }
   /** A correction in hand, planned or let go (edit.ts); `level`, the slider
    *  back at the cook's own after a level only previewed. */
@@ -242,6 +244,15 @@ export type Msg =
    *  sharing section drawn again. */
   | { kind: 'stores' }
   | { kind: 'forget' }
+  /** "Export my results". */
+  | { kind: 'export' }
+  /** Sharing turned on or off, or what was shared asked to be deleted, in
+   *  Settings; a deletion asked here, done (`confirmed`: every id); what
+   *  sharing holds changed. */
+  | { kind: 'shareOn'; on: boolean }
+  | { kind: 'shareDelete' }
+  | { kind: 'shareDeleted'; confirmed: boolean }
+  | { kind: 'shared' }
   /** A new nudge drawn (`nudgeSeconds`), after a cook. */
   | { kind: 'nudge'; draw: number }
   /** The idle page solved again: the controls settled, a surface or a
@@ -264,6 +275,8 @@ export type Effect =
   | { kind: 'questionsReset' }
   | { kind: 'thanks' }
   | { kind: 'learning' }
+  /** An answer taken: its row settles on the button pressed. */
+  | { kind: 'answerTaken'; yolkWord: YolkWord | null; white: WhiteReport | null }
   /** A probe reading refused, with the range it should be in, C; or taken. */
   | { kind: 'probeRefused'; low_C: number; high_C: number }
   | { kind: 'probeTaken'; reading_C: number }
@@ -297,7 +310,12 @@ export type Effect =
   | { kind: 'shareDrawn' }
   /** A new nudge to draw; everything learned to forget. */
   | { kind: 'drawNudge' }
-  | { kind: 'forgetAll' };
+  | { kind: 'forgetAll' }
+  /** The results file saved; sharing turned on or off; what was shared
+   *  deleted. */
+  | { kind: 'export' }
+  | { kind: 'setSharing'; on: boolean }
+  | { kind: 'deleteShared' };
 
 /** The LOCAL date of a moment, ms. A day, not a timestamp. */
 export function localDay(ms: number): string {
@@ -447,8 +465,8 @@ function doneByEvents(cook: RunningCook): boolean {
 
 /** Whether the egg on screen is still the one open to answers and
  *  corrections; if not, it is final here. */
-function stillOpen(m: Model, storedId_ms: number | null, now_s: number): boolean {
-  return m.cook !== null && m.plan !== null && !m.closed && cookStillOpen(m.cook, m.plan, storedId_ms, now_s);
+function stillOpen(m: Model, now_s: number): boolean {
+  return m.cook !== null && m.plan !== null && !m.closed && cookStillOpen(m.cook, m.plan, m.storedId_ms, now_s);
 }
 
 /**
@@ -461,7 +479,7 @@ function stillOpen(m: Model, storedId_ms: number | null, now_s: number): boolean
  * an answer like the others. When the record cannot be made yet (no
  * surface), the reading is held, to be read again when one lands.
  */
-function probeRead(m: Model, reading_C: number | null, storedId_ms: number | null, now_s: number): [Model, Effect[]] {
+function probeRead(m: Model, reading_C: number | null, now_s: number): [Model, Effect[]] {
   const cook = m.cook;
   const plan = m.plan;
   if (cook === null || plan === null) return [m, []];
@@ -482,11 +500,14 @@ function probeRead(m: Model, reading_C: number | null, storedId_ms: number | nul
   // the record scores as the pull.
   const coolEnd = plan.deadlines.coolEnd_s;
   const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cook.startedAt_s : null);
-  const [next, effects] = updateCook(free, {
-    kind: 'answered', yolkWord: null, white: null, probe: probe, storedId_ms: storedId_ms,
-  }, now_s);
+  const [next, effects] = updateCook(free, { kind: 'answered', yolkWord: null, white: null, probe: probe }, now_s);
   const taken = next.cook !== null && !next.closed && answersOf(next.cook).probe !== null;
   return [next, taken ? [...effects, { kind: 'probeTaken', reading_C: reading_C }] : effects];
+}
+
+/** How many answers a cook's log holds. */
+function answersGiven(cook: RunningCook): number {
+  return cook.log.filter((e) => e.kind === 'answered').length;
 }
 
 /** The egg final here: its questions go, and nothing more is written or
@@ -752,6 +773,17 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       return solved(m, [{ kind: 'notesDrawn' }, { kind: 'shareDrawn' }]);
     case 'forget':
       return [m, [{ kind: 'forgetAll' }]];
+    case 'export':
+      return [m, [{ kind: 'export' }]];
+    case 'shareOn':
+      return [{ ...m, deletedHere: false }, [{ kind: 'setSharing', on: msg.on }]];
+    case 'shareDelete':
+      return [m, [{ kind: 'deleteShared' }]];
+    case 'shareDeleted':
+      return solved({ ...m, deletedHere: msg.confirmed }, [{ kind: 'shareDrawn' }]);
+    case 'shared':
+      // Turning sharing on or off moves the time by the nudge.
+      return solved(m, [{ kind: 'shareDrawn' }]);
     case 'nudge':
       return solve({ ...m, nudgeDraw: msg.draw });
     case 'aim': {
@@ -831,17 +863,24 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     case 'landed':
       return m.cook === null ? [m, []] : stepCook(m, { kind: 'surfaceLanded', now_s: now_s }, now_s);
     case 'answered': {
-      if (m.cook === null) return [m, []];
-      if (!stillOpen(m, msg.storedId_ms, now_s)) return [close(m), []];
-      return stepCook(m, {
+      // A question answered once stays answered.
+      const cook = m.cook;
+      if (cook === null) return [m, []];
+      const said = answersOf(cook);
+      if ((msg.yolkWord !== null && said.yolkWord !== null) || (msg.white !== null && said.white !== null)) return [m, []];
+      if (!stillOpen(m, now_s)) return [close(m), []];
+      const [next, effects] = stepCook(m, {
         kind: 'answered', now_s: now_s, yolkWord: msg.yolkWord, white: msg.white, probe: msg.probe,
       }, now_s);
+      const taken = next.cook !== null && !next.closed && answersGiven(next.cook) > answersGiven(cook);
+      if (!taken || (msg.yolkWord === null && msg.white === null)) return [next, effects];
+      return [next, [...effects, { kind: 'answerTaken', yolkWord: msg.yolkWord, white: msg.white }, { kind: 'learning' }]];
     }
     case 'probe':
-      return probeRead(m, msg.reading_C, msg.storedId_ms, now_s);
+      return probeRead(m, msg.reading_C, now_s);
     case 'elsewhere': {
       if (m.cook === null || m.plan === null || m.closed) return [m, []];
-      if (phaseOf(m, now_s) === 'DONE' && !stillOpen(m, msg.storedId_ms, now_s)) return [close(m), []];
+      if (phaseOf(m, now_s) === 'DONE' && !stillOpen(m, now_s)) return [close(m), []];
       return msg.theirs === null ? [m, []] : takeUp(m, msg.theirs, now_s);
     }
     default:

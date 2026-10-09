@@ -4,22 +4,19 @@
  * (learned.ts). What sharing does is share.ts; this only says it.
  */
 
+import { ShareState } from '../core/share.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
-import { deleteSent, setSharing, shareState } from './share.js';
+import { send } from './send.js';
 import { storageReadOnly } from './store.js';
 
-/** Set once a deletion this page asked for has been confirmed, so the note
- *  can say so until the page goes. */
-let deletedHere = false;
-
 /**
- * Draw the section as sharing now stands. `waiting` is how many final eggs
+ * Draw the section as sharing `s` stands. `waiting` is how many final eggs
  * have not gone yet: shown only when some have gone, since before the first
- * one "Nothing sent yet" says it.
+ * one "Nothing sent yet" says it. `deletedHere`: a deletion this page asked
+ * for has been confirmed, said until sharing is turned on again.
  */
-export function renderShare(waiting: number): void {
-  const s = shareState();
+export function renderShare(s: Readonly<ShareState>, waiting: number, deletedHere: boolean): void {
   page().shareSetting.checked = s.on;
   // While a newer build's results are left alone (store.ts) nothing is sent
   // or deleted, so the switch cannot be moved.
@@ -44,14 +41,9 @@ export function renderShare(waiting: number): void {
   if (page().shareConfirm.hidden) page().shareDelete.hidden = s.uids.length === 0 || frozen;
 }
 
-/** Wire the switch and the deletion. Once, at boot; `redraw` draws the
- *  section again with the app's count of what is waiting. */
-export function wireShare(redraw: () => void): void {
-  page().shareSetting.addEventListener('change', () => {
-    deletedHere = false;
-    void setSharing(page().shareSetting.checked).then(redraw);
-    redraw();
-  });
+/** Wire the switch and the deletion. Once, at boot. */
+export function wireShare(): void {
+  page().shareSetting.addEventListener('change', () => send({ kind: 'shareOn', on: page().shareSetting.checked }));
   page().shareDelete.addEventListener('click', () => {
     page().shareDelete.hidden = true;
     page().shareConfirm.hidden = false;
@@ -59,19 +51,14 @@ export function wireShare(redraw: () => void): void {
   });
   page().shareDeleteNo.addEventListener('click', () => {
     page().shareConfirm.hidden = true;
-    redraw();
+    send({ kind: 'shared' });
     page().shareDelete.focus();
   });
   page().shareDeleteYes.addEventListener('click', () => {
     page().shareConfirm.hidden = true;
-    const done = deleteSent().then(() => {
-      deletedHere = shareState().deleting.length === 0;
-      redraw();
-    });
-    redraw();
+    send({ kind: 'shareDelete' });
     // The button has gone with what it deletes; the note that says so has
     // the focus.
     page().shareNote.focus();
-    void done;
   });
 }

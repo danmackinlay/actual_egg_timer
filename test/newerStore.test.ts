@@ -24,6 +24,11 @@ import {
 import { clearCalibration, keptState, loadCalibration, logEgg } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { loadShare, sendFinal, setSharing, retryDeletes } from '../src/ui/share.js';
+import { sendTo } from '../src/ui/send.js';
+
+/** How many times the page was told its stores are left alone. */
+let told = 0;
+sendTo((msg) => { if (msg.kind === 'stores') told += 1; });
 
 /** localStorage, in memory, with every write in order. */
 const storage = new Map<string, string>();
@@ -88,8 +93,8 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   for (const [k, v] of newerStores()) storage.set(k, v);
   const before = new Map(storage);
   writes.length = 0;
-  let told = 0;
-  assert.equal(claimStorage(APP_VERSION, () => { told += 1; }), 'readOnly');
+  told = 0;
+  assert.equal(claimStorage(APP_VERSION), 'readOnly');
   assert.equal(storageReadOnly(), true);
   assert.equal(told, 1);
 
@@ -109,7 +114,7 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   assert.equal(logEgg({ v: 1 } as never), -1, 'no egg is written down');
   assert.equal(keptState().log.length, sizeBefore, 'nor learned from');
   const posts: string[] = [];
-  loadShare({ log: () => [], finalCount: () => 0, changed: () => undefined },
+  loadShare({ log: () => [], finalCount: () => 0 },
     { post: async (b) => { posts.push(b); return 200; }, remove: async (u) => { posts.push(u); return 200; } });
   await retryDeletes();
   await setSharing(true);
@@ -154,8 +159,8 @@ test('4. another tab of a newer build: this page stops writing at its event, or 
 
   // The event not yet here: the next write finds the mark first.
   storage.clear();
-  let told = 0;
-  claimStorage(APP_VERSION, () => { told += 1; });
+  told = 0;
+  claimStorage(APP_VERSION);
   storage.set(NEWEST_KEY, '9.0.0');
   writes.length = 0;
   saveSettings({ ...DEFAULT_SETTINGS, altitude_m: 20 });
