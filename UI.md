@@ -274,11 +274,12 @@ there.
 
 ## 6. How wording is reviewed
 
-In place, on a phone (`DECISIONS.md` 25): a named draft goes into both apps,
-the owner uses it and says what to put back. The draft under review is
-`tidy` (`LANGUAGE.md` §3). The web was meant to be judged on a deploy preview
-first; that needs a pushed branch, which is the owner's call, so iOS followed
-without waiting.
+In place, on a phone (`DECISIONS.md` 25): a wording change goes into both
+apps, the owner uses it and says what to put back. What he has yet to read
+is the review queue, which `npm run copy:review` lays out as one page beside
+the apps (`LANGUAGE.md` §3, `DECISIONS.md` 106). The web was meant to be
+judged on a deploy preview first; that needs a pushed branch, which is the
+owner's call, so iOS followed without waiting.
 
 ## 7. Two tiers: the (i), and Help
 
