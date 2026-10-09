@@ -53,7 +53,7 @@ struct DonenessControl: View {
                     .frame(height: 10)
                     .padding(.horizontal, thumbInset)
                 YolkSlider(
-                    value: Binding(get: { planner.doneness }, set: { planner.doneness = $0 }),
+                    value: Binding(get: { planner.settings.doneness }, set: { planner.settings.doneness = $0 }),
                     range: Limits.doneness, step: 0.01,
                     label: tr("controls.doneness"), valueText: donenessValue(r), inset: $thumbInset,
                     onTouch: { down in
@@ -235,8 +235,8 @@ struct SliderReading {
         solution = sousVide ? nil : planner.solution
         profile = sousVide ? nil : planner.shownProfile
         words = sousVide ? nil : planner.heldCertainty?.words
-        peakYolkC = planner.solution?.result.peakYolkC ?? targetPeakYolkC(planner.doneness)
-        level = planner.doneness
+        peakYolkC = planner.solution?.result.peakYolkC ?? targetPeakYolkC(planner.settings.doneness)
+        level = planner.settings.doneness
         noteSolution = planner.solution
     }
 }

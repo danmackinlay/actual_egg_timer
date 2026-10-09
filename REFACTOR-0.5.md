@@ -353,7 +353,7 @@ each app strings them together in its own order. The after-pull correction
 is written three times (`cook.ts:342`, `AppModel.swift:366`,
 `Cook.swift:308`). 0.3 and 0.4 above are that drift.
 
-- [ ] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
+- [x] **3.1 `step(cook, event, env) → {cook, plan, need, effects}`** in
       core. Events: start, boil, correct, correctStart, out, stillIn,
       pullStands, tick, surfaceLanded, answered, startAgain. Effects:
       persist, askSurface, arm/cancel alarms, ring, log record, forget,
@@ -373,7 +373,8 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       of it): 3.7 and 3.9.
       *Open until 3.9 lands* (the red team of `4ecc06a`): nothing on iOS
       calls `step`, and `Cook.swift` still strings the pieces together
-      itself, a second orchestration nothing holds to the first.
+      itself, a second orchestration nothing holds to the first. *Closed* by
+      3.9 (`ea2aab9`).
 - [x] **3.2 `RunningCook` as start + choices + an append-only event log.**
       Today it has 13 fields, four of them partial correction history
       (`coldSince_s`, `firstHotAt_s`, `correctedAt_s`, `boilRemembered`)
@@ -384,15 +385,15 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       the log. Stored as `aet.cook.v5` and `cookInProgress.v4`, the earlier
       keys swept. `takeUpEvents` and `correctedLater` moved into core from
       the web's store (two copies of one cook, `running.json` `takeUps`).
-- [ ] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
+- [x] **3.3 The readout in core**: `readoutAt(cook, plan, now) → {keys,
       digits, sign, args}`. The web has it pure and tested (`phaseView.ts`);
       iOS spreads it over `ReadoutView`, `PhaseActions` and `AppModel.keys`
       (47 phase branches in views). M.
       *Done* in core (`readoutAt`, `readout.ts`, `Readout.swift`), held
       for every trace step; the web's `phaseView` renders it. iOS's views
       move onto it in 3.9. The spoken line is which line to say, since iOS
-      speaks none of the web's `spoken.*` keys. *Open until 3.9 lands*: nothing
-      on iOS calls `readoutAt` yet.
+      speaks none of the web's `spoken.*` keys. iOS's readout and buttons are
+      `readoutAt` since 3.9 (`ea2aab9`).
 - [x] **3.4 One `inputsKey()` in core** with explicit number formatting,
       used by `replan` and both caches, in place of 17-field `===` checks,
       `JSON.stringify(inputs)` with field order that matters, and iOS's
@@ -462,15 +463,42 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       record making), the four closures AppModel wires in backwards, `generation`
       tokens (24 in Cook, 21 in Sharing), and `stillOpen` decoding
       UserDefaults on every tick. L, after 1.2 and 3.1.
-- [ ] **3.10 iOS: Planner as `choices: CookChoices`**, not 13 controls
+      *Done for the running cook* (10 October 2026, `ea2aab9`, `ef043f4`):
+      `Cook` holds core's `CookState` and steps it, one event at a time off
+      the main actor; it runs the effects, builds what `need` asks for, and
+      the readout and buttons are `readoutAt`. Its plan loop, record making
+      and own too-old handling, AppModel's four closures, remake and held
+      answers, Cook's `generation` tokens and `stillOpen`'s read of the store
+      went; whether a tick has anything to decide is core's `tickDue`.
+      *Not done:* Sharing's 21 `generation` tokens; `Cook` is ~990 lines,
+      not thin: it still runs the alarms, the ring and the Live Activity
+      itself (as effects) and writes the debug log; PhaseActions keeps a
+      layout per phase (its words are the readout's).
+- [x] **3.10 iOS: Planner as `choices: CookChoices`**, not 13 controls
       mapped by hand six times; `SolveLoop` and `Learning` as types in place
       of extensions that need ~15 bookkeeping vars left internal. M.
-- [ ] **3.11 Settings as one value read by a core `readSettings`**, fixtured,
+      *Done* (`58f236a`): `Planner.settings` (core's `AppSettings`), choices
+      made from it and back (`adopt`), `Controls` gone (`AppSettings.same`,
+      `take`); `SolveLoop` and `Learning` with their bookkeeping private.
+- [x] **3.11 Settings as one value read by a core `readSettings`**, fixtured,
       in place of 14 literal keys written 2-3 times on iOS and
       `readSettings` clamping on the web. Free under D48. M.
-- [ ] **3.12 iOS: time as Double seconds** in app logic, `Date` only at
+      *Done* (`9cc0f26`, `09ef6ae`): `src/core/settings.ts` and
+      `Settings.swift` (`AppSettings`), `fixtures/settings.json`; the web's
+      store reads with it; iOS keeps one value, `settings.v1`, the fourteen
+      keys swept.
+- [x] **3.12 iOS: time as Double seconds** in app logic, `Date` only at
       SwiftUI and the system (58 conversions, 30 in Cook; `Attest` stored as
       seconds since 2001, unlike every other time). One `localDay`. S-M.
+      *Done but one* (`6537cad`, `bbfb216`): the
+      alarms and the ring's on-screen time in cook seconds, `Date` made in
+      Alarm, Ringer and the views; `Attest`'s times epoch seconds under
+      `sharing.attest.v2`; one `localDay`. *Not done:* `sharing.v1` still
+      keeps the share state's `busySince` as seconds since 2001 (Sharing.swift
+      `stored`/`read`): a new key would drop the share id and a deletion not
+      yet confirmed. *Closed as it stands:* that is the conversion at the
+      store's edge, where this item puts `Date`; the app's logic has the
+      time in seconds, and the stored format need not change.
 
 ### Storage and model ids
 
@@ -575,7 +603,7 @@ it found, in its order, with where each is being done:
       own state, and a scenario that asserts nothing is not counted; the
       six sous-vide copy states had been capturing the cold idle screen
       since `d12a978` (`1e0fd3e`).
-- [ ] **5.2 iOS is not on `step`/`readoutAt`** (3.1, 3.3 reopened): 3.9
+- [x] **5.2 iOS is not on `step`/`readoutAt`** (3.1, 3.3 reopened): 3.9
       deletes `Cook.swift`'s own orchestration, about 24 calls.
 - [x] **5.3 ~~The fixture check is too loose for TS against TS** (1.4): the
       bound divides by max(|x|, 1), so 116 nonzero values under 1e-12 may
@@ -591,10 +619,12 @@ it found, in its order, with where each is being done:
       gone, and not the package's `EggTimerApp`/`EggTimerShared`, which
       `verify` builds for macOS only. It now covers all of `ios/` but the
       core twin, the e2e rule is in it, and the stale paths are fixed.
-- [ ] **5.5 iOS 0.3 and 0.4 tested, not only driven**: Swift tests for
+- [x] **5.5 iOS 0.3 and 0.4 tested, not only driven**: Swift tests for
       both; `remakeThenEnd` retries once, not four times on the same
       inputs; and whether a relaunch within the hour brings back a cook
-      dismissed with Start again (the web keeps it off screen).
+      dismissed with Start again (the web keeps it off screen). *Done*
+      (`7e9baf4`): through the real `AppModel` with fakes; a failed remake
+      is tried once; the relaunch case tested.
 - [ ] **5.6 One logical change per commit.** *The scenario:* e2e
       `later-answer-refolds` (`452069f`). `83ba983`, `60c9982` and
       `d231a5b` put behaviour changes inside refactor commits. That can't be
@@ -638,7 +668,7 @@ it found, in its order, with where each is being done:
       the two cores alike, not the two apps; review findings got a core pin
       or a scenario that could not fail, not a test where the bug was.
       Each test is named by its behaviour. The holes, and when:
-  - [ ] *Hole 1, in 3.9:* iOS's end of cook through the real `AppModel`
+  - [x] *Hole 1, in 3.9* (`7e9baf4`): iOS's end of cook through the real `AppModel`
         in `EggTimerAppTests`: an answer held at Start again is logged
         with it (today only `yolkWord == nil`); a failed remake leaves the
         cook stored, not final; a correction at Done, then Start again,

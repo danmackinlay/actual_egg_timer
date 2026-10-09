@@ -285,8 +285,8 @@ struct RoomField: View {
                 // rounded display is never parsed back over it.
                 if typed == shown { return }
                 if typed.isEmpty {
-                    if planner.roomC != nil { planner.setRoom(nil) }
-                } else if let value = parseTyped(typed), let si = parse(m, value), si != planner.roomC {
+                    if planner.settings.roomC != nil { planner.setRoom(nil) }
+                } else if let value = parseTyped(typed), let si = parse(m, value), si != planner.settings.roomC {
                     planner.setRoom(si)
                 }
             }
@@ -294,7 +294,7 @@ struct RoomField: View {
     }
 
     private var shown: String {
-        guard let room = planner.roomC else { return "" }
+        guard let room = planner.settings.roomC else { return "" }
         let m = planner.measure(.roomTemp)
         return fieldText(m, display(m, room))
     }

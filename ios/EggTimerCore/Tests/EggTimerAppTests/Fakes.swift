@@ -63,15 +63,15 @@ final class TestClock: CookClock, @unchecked Sendable {
 @MainActor
 final class FakeAlarm: AlarmScheduling {
     var authorized = true
-    private(set) var scheduled: [(pullAt: Date, coolDoneAt: Date?)] = []
+    private(set) var scheduled: [(pullS: Double?, cooledS: Double?)] = []
     private(set) var cancels = 0
     private var pending: Set<RingDeadline> = []
 
     func activate() {}
     func authorize() async -> Bool { authorized }
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {
-        scheduled.append((pullAt, coolDoneAt))
-        pending = coolDoneAt == nil ? [.pull] : [.pull, .cooled]
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
+        scheduled.append((pullS, cooledS))
+        pending = Set([pullS.map { _ in RingDeadline.pull }, cooledS.map { _ in RingDeadline.cooled }].compactMap { $0 })
     }
     func cancel() {
         cancels += 1
@@ -84,7 +84,7 @@ final class FakeAlarm: AlarmScheduling {
 final class FakeRinger: AlarmRinging {
     private(set) var rung: [RingDeadline] = []
     private(set) var stops = 0
-    var onScreenSince: Date?
+    var onScreenSinceS: Double?
     func activate() {}
     func ring(_ deadline: RingDeadline) { rung.append(deadline) }
     func stop() { stops += 1 }

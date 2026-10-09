@@ -43,8 +43,8 @@ import Observation
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
 /// - `-perfProbe all`: after the first solve, tap, hold and drag the inputs
 ///   on a script and print how long each takes to reach the screen
-///   (`Perf.swift`). `-altitudeM 0 -waterLitres 1.5 -doneness 0.5` start it
-///   from the same place each time.
+///   (`Perf.swift`). `-settings.v1 <hex>`, the settings as stored, as JSON
+///   in hex (`SettingsStore`), starts it from the same place each time.
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
@@ -79,11 +79,11 @@ import Observation
 /// - `-muteAudio YES`: the ring at no volume and notifications without
 ///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
 /// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
-///   ran in this launch, as if the app were killed before it landed: the
-///   stale cook a relaunch then finds (`AppModel.refreshAsRan`).
+///   ran while the cook runs in this launch, as if the app were killed
+///   before it landed: the stale cook a relaunch then finds (`Cook`).
 /// - `-uiFailRemake YES`: an ended cook's record is never made again in this
-///   launch (`AppModel.remakeThenEnd`), as if it could not be: the cook left
-///   stored for the next launch.
+///   launch, as if it could not be: the cook left stored for the next launch
+///   (`Cook`).
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -111,7 +111,7 @@ public enum Screenshots {
               let colon = json.firstIndex(of: ":") else { return }
         let name = json[json.index(json.startIndex, offsetBy: 2)..<json.index(before: colon)]
         let fields = json[json.index(after: colon)...].dropFirst().dropLast(2)
-        let t = String(format: "%.3f", AppClock.now.timeIntervalSince1970)
+        let t = String(format: "%.3f", AppClock.nowS)
         let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
         output(event, text)
     }
@@ -143,13 +143,14 @@ public enum Screenshots {
     /// Mac's speakers; everything else about the ring and the alarms is as is.
     public static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
     /// `-uiHoldAsRan YES`: a correction after the pull never has its record
-    /// made again in this launch (`AppModel.refreshAsRan`), as if the app were
-    /// killed before it landed, so a script can find the stale cook stored
-    /// at the next launch.
-    public static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
-    /// `-uiFailRemake YES`: every try at an ended cook's record made again
-    /// comes back with none (`AppModel.remakeThenEnd`).
-    public static var failRemake: Bool { UserDefaults.standard.bool(forKey: "uiFailRemake") }
+    /// made again while the cook runs in this launch (`Cook`), as if the app
+    /// were killed before it landed, so a script can find the stale cook
+    /// stored at the next launch. Read at launch; a test sets it.
+    nonisolated(unsafe) public static var holdAsRan = UserDefaults.standard.bool(forKey: "uiHoldAsRan")
+    /// `-uiFailRemake YES`: an ended cook's record is never made again in
+    /// this launch (`Cook`): the cook stays stored for the next. Read at
+    /// launch; a test sets it.
+    nonisolated(unsafe) public static var failRemake = UserDefaults.standard.bool(forKey: "uiFailRemake")
     public static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     public static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
     public static var doneAgo: Double {
@@ -398,7 +399,7 @@ extension Screenshots {
                 for i in left.indices {
                     if let due = left[i].action.due(model.cook.running, model.cook.plan) { left[i].due = due }
                 }
-                let now = AppClock.now.timeIntervalSince1970
+                let now = AppClock.nowS
                 guard let i = left.firstIndex(where: { $0.due.map { now >= $0 } ?? false }) else {
                     nothingDue &+= 1
                     continue
@@ -425,7 +426,7 @@ extension Screenshots {
     @MainActor public static var open: ((String) -> Void)?
 
     /// The clock at this launch, cook time: what `launch` counts from.
-    public static let launchedAtS = AppClock.now.timeIntervalSince1970
+    public static let launchedAtS = AppClock.nowS
 
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
@@ -449,7 +450,7 @@ extension Screenshots {
             dragging += 1
             Task { @MainActor in
                 for level in levels {
-                    model.planner.doneness = level
+                    model.planner.settings.doneness = level
                     try? await Task.sleep(for: .milliseconds(50))
                 }
                 dragging -= 1
@@ -477,16 +478,16 @@ extension Screenshots {
         let value = parts[1]
         let number = Double(value) ?? .nan
         switch parts[0] {
-        case "level": planner.doneness = number
+        case "level": planner.settings.doneness = number
         case "size": planner.chooseSize(Int(number))
         case "mass": planner.weigh(number)
-        case "from": if let v = EggFrom(rawValue: value) { planner.startTemp = v }
+        case "from": if let v = EggFrom(rawValue: value) { planner.settings.startTempMode = v }
         case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
-        case "cooling": if let v = Cooling(rawValue: value) { planner.cooling = v }
+        case "cooling": if let v = Cooling(rawValue: value) { planner.settings.cooling = v }
         case "heatOff": planner.heatOff = value == "1"
-        case "water": planner.waterLitres = number
-        case "eggs": planner.eggCount = Int(number)
-        case "altitude": planner.altitudeM = number
+        case "water": planner.settings.waterLitres = number
+        case "eggs": planner.settings.eggCount = Int(number)
+        case "altitude": planner.settings.altitudeM = number
         case "language": Services.language.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
@@ -516,8 +517,8 @@ extension Screenshots {
     /// Once the app has caught up with step `n`, `idle`: the cook has
     /// ticked at the new moment, and after the last tap; `-uiDo` has looked
     /// and found nothing more due, and is moving no slider; nothing is under
-    /// way in the cook, the planner, a change in hand or a record made
-    /// again; and the page has been drawn since, at the new moment. A script
+    /// way in the cook (a record made again among it), the planner or a
+    /// change in hand; and the page has been drawn since, at the new moment. A script
     /// waits for it after every step, so that what it checks next, that
     /// something did not happen as much as that it did, is checked once the
     /// app is done however slow the machine, never after a span of the
@@ -544,8 +545,7 @@ extension Screenshots {
             || (driving && nothingDue <= looks) || dragging > 0
             || !model.cook.isSettled
             || model.edits.underWay
-            || planner.task != nil || planner.settleTask != nil || !planner.profilesAsked.isEmpty || planner.draining
-            || model.remaking > 0
+            || planner.solver.busy || planner.learner.draining
     }
 
     /// The page drawn again: once a pass of the screen has followed.
