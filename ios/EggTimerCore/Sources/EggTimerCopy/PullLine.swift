@@ -3,13 +3,12 @@
 /// "the cooling", which is this app's word and not the cook's.
 ///
 /// `cooling` is `Cooling`'s raw value (`ice`, `tap` or `counter`), as a String
-/// because the widget, which draws the card, does not link the physics. Nil,
-/// or anything else, is the ice bath: an activity begun by a build that did not
-/// carry the cooling was an ice bath's.
+/// because the widget, which draws the card, does not link the physics.
+/// Anything else is the ice bath.
 ///
 /// Here, and not in the app, so `swift test` holds which line each cooling
 /// gets (`PullLineTests`); the iOS app project has no test target.
-public func pullLineKey(cooling: String?) -> String {
+public func pullLineKey(cooling: String) -> String {
     switch cooling {
     case "tap": "alarm.pull.bodyTap"
     case "counter": "alarm.pull.bodyCounter"

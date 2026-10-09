@@ -217,9 +217,10 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       passes them over. Delete; keep only iOS ending old Live Activity cards.
       Cost: a 0.3 user mid-cook at the deploy loses one unanswered egg.
       OWNER (amends 81/97). S.
-- [ ] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
+- [x] **2.7 `CookActivity`'s legacy fields** (`doneness`, `peakYolk`,
       `eggMass`, `cooling`, optional `countsUp`/`cook`/`lang`): a Live Activity
-      lives 8-12 hours. S.
+      lives 8-12 hours. S. *A card 0.3 began is no longer read
+      (`ios/README.md`).*
 - [x] **2.8 The second guard.** D81's in-place unread records, `overlay` /
       `Kept.stored`, `moved` and the positional re-merge (written three
       times: TS, Swift, `eggsImport.ts`) defend against an older build

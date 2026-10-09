@@ -392,7 +392,10 @@ cook this build cannot read is dropped, its alarms cancelled and its card
 ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
 earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every
 other key the app no longer uses (`Stores.retiredKeys`), its notifications
-left to ring and its card ended to go at its own end.
+left to ring and its card ended to go at its own end. A card is read in this
+build's shape only (`Shared/CookActivity.swift`): one 0.3 began, with its
+description in the attributes, is not read, and lasts as long as the system
+lets any card.
 
 ## The Live Activity
 
