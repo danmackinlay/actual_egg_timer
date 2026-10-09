@@ -50,11 +50,12 @@ public enum Stores {
     /// 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
     /// copies 0.4 kept aside of what it could not read, the cooks in progress
     /// before this one's shape, the sharing keys of an earlier 0.4 build, and
-    /// settings no build reads any more, the settings a key each among them.
+    /// settings no build reads any more, the settings a key each among them,
+    /// and sharing's key kept with its dates as seconds since 2001.
     public static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
-        "share.v1", "share.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
+        "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
         // The settings before they were one value (`SettingsStore`).
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
         "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
