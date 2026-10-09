@@ -614,6 +614,40 @@ October 2026; core for both apps, which still call the pieces until 3.7 and
 - Stored under new keys (`DECISIONS.md` 48): `aet.cook.v5` and
   `cookInProgress.v4`, the earlier ones swept at boot.
 
+*As built, the web on `step`* (`REFACTOR-0.5.md` 3.7, 10 October 2026):
+- **One model** (`src/ui/model.ts`): `Model` extends core's `CookState`
+  (`cook`, `plan`, `leanHint_s`) with the page's state (the settings and
+  controls, the pans, the calibration, the idle answer, the nudge) and what
+  the web keeps around the step: `need`, cooks `ending` (ended before their
+  record could be made, stepped as each surface lands, off screen), the
+  calibration `before` an egg, the pull's alarm, and this tab's bookkeeping
+  for the stored cook (`written`, `works`, `closed`) and the questions
+  (`questions`, `reloaded`). One instance, `state` (`state.ts`).
+- **`update(model, msg, now) → [model, effects]`**, pure: the messages are
+  Start, the primary button (by phase: the boil, the egg out, "still in",
+  Start again), Cancel, "No" to "still in", a correction, a tick, a surface
+  landed, an answer, another tab's write and a reload. Each is a `step`
+  (two for a correction of the start and the choices), with the web's own
+  rules: another tab's copy taken up (`takeUpEvents`) and planned on, the
+  pull rung here if this tab never rang it; an egg no longer open
+  (`cookStillOpen`) closed here, its questions away, nothing more written
+  or logged; a reload rings nothing.
+- **cook.ts runs the effects** (`dispatch`): takes up another tab's write
+  before any message, writes the cook (only when it changed, else the lean
+  beside it), sets the alarm ahead on the audio clock (none while the time
+  to boil is a guess), rings, silences, remembers the boil, keeps the record
+  (`keepRecord`: logged and folded, or the one logged replaced and folded
+  again, a later answer from the fold before it), forgets and sends what is
+  final; builds what `need` asks (the surface, the calibration before this
+  egg and a surface on it); runs the ticker short of Done and wakes at
+  `wakeAt_s` at Done; and draws the page.
+- **Retired**: `takeUpStored`, `endCook`, `logFinished`, `remakeThenEnd`,
+  `refreshAsRan`, `relogCorrected`, `correctedAsRan`, the web's plan loop
+  (`planFor`, `plannedWithEvents`, `notice`) and its record making on an
+  answer, the held answers and feedback.ts's answer states. A probe reading
+  still asks for the egg's record to score it, and waits for a surface when
+  that cannot be made.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 
@@ -726,7 +760,7 @@ ended, since nothing then knows what they ring for; it is dropped.
   corrected away from: its ring, a pull it assumed when the grace ran out,
   a cooling's end. And a copy corrected less recently than the one stored
   is not written over it: the tab writes what it saw into the stored copy
-  (`correctedLater`, `persistCook`), so a reload restores the latest
+  (`correctedLater`, cook.ts's `persist`), so a reload restores the latest
   correction, while each tab still runs its own cook (`DECISIONS.md` 97).
 - **iOS notifications.** On any plan whose deadlines moved,
   `Alarm.schedule` cancels and re-adds the pull and cooled alarms (the

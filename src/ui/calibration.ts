@@ -29,7 +29,7 @@ import {
   gridRequestFor, recordTeaches, resultsFile, resultsFileName,
 } from '../core/record.js';
 import { Decoded, Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
-import { localDay } from './eggRecord.js';
+import { localDay } from './model.js';
 import { buildOffThread } from './offThread.js';
 import { activePopulation } from './population.js';
 import { APP_VERSION } from './version.js';
@@ -432,6 +432,45 @@ export async function recordSecondAnswer(
   foldRecord(again, r, o.grid);
   assign(kept.calibration, again);
   save();
+  return true;
+}
+
+/**
+ * A cook's record (core `step`'s `log`), kept and learned from: written down
+ * and folded (`logEgg`, `learn`) if the egg is not in the log; otherwise the
+ * one logged under its id made the record's, its first answers kept - its
+ * facts replaced (`logEgg`), and each answer it adds folded as a later
+ * answer (`recordSecondAnswer`), or, where that can no longer be done, the
+ * log folded again from where it starts. Whether it was kept: never while a
+ * newer build's stores are left alone.
+ */
+export async function keepRecord(r: EggRecord): Promise<boolean> {
+  if (storageReadOnly()) return false;
+  const at = eggLogged(idOf(r));
+  if (at < 0) {
+    const index = logEgg(r);
+    if (index < 0) return false;
+    await learn(index);
+    return true;
+  }
+  const had = kept.log[at];
+  const second: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading } = {};
+  if (had.yolkWord === null && r.yolkWord !== null) second.yolkWord = r.yolkWord;
+  if (had.white === null && r.white !== null) second.white = r.white;
+  if (had.probe === null && r.probe !== null) second.probe = r.probe;
+  logEgg(r);
+  if (second.yolkWord === undefined && second.white === undefined && second.probe === undefined) {
+    await learn();
+    return true;
+  }
+  if (!(await recordSecondAnswer(at, second))) {
+    const now = kept.log[at];
+    if (now === undefined || idOf(now) !== idOf(r)) return false;
+    Object.assign(now, second);
+    if (at < kept.folded) refoldFromStart();
+    save();
+  }
+  await learn();
   return true;
 }
 

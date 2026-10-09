@@ -3,8 +3,10 @@
  * together. `boot()` reads the state from storage, draws the page and wires
  * every event; what each part holds and does is its own module:
  *
- * - state.ts: the page's state, and the egg, the pot and the time to boil
- *   it derives;
+ * - model.ts: the page's model, and `update`, how a message moves the
+ *   running cook over core's `step`;
+ * - state.ts: the model's one instance, and the egg, the pot and the time to
+ *   boil it derives;
  * - answer.ts: the solve, the decided time, the nudge, and the worker's
  *   surfaces and profiles asked for;
  * - update.ts: a change taken up - the idle page solved again, the settings
@@ -12,8 +14,9 @@
  * - render.ts: the egg page drawn from the state;
  * - controls.ts and input.ts: the controls written from the settings, and
  *   read back into them;
- * - cook.ts: the cook under way, its ticker and alarms, and one picked back
- *   up after a reload.
+ * - cook.ts: `update`'s effects carried out - the cook written down, its
+ *   alarms, its record, what it waits for built - its ticker, and one picked
+ *   back up after a reload.
  */
 
 import { stepPast } from '../core/units.js';
@@ -22,21 +25,21 @@ import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './
 import { setAlarmSound, setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  cookElsewhere, cookOpen, correctCook, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset,
-  restoreCook,
+  answerCook, cookElsewhere, cookLanded, cookWants, correctCook, lookAgain, onPrimary, onStillOut, reset, restoreCook,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
 import { wireInfoButtons } from './info.js';
 import { onInput, onToggleMute } from './input.js';
-import { renderCalibNote, renderLearned, wireExport, wireForget } from './learned.js';
+import { renderCalibNote, wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
 import { render, renderMute, renderVersion } from './render.js';
 import { buildClauses } from './sentence.js';
 import { loadShare, retryDeletes, sendFinal, shareState } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
-import { learning, phaseNow, sizeClasses, state } from './state.js';
+import { learning, sizeClasses, state } from './state.js';
+import { activePopulation } from './population.js';
 import { setStepRule, wireSteppers } from './stepper.js';
 import { claimStorage, loadBoilMemory, loadSettings, newerStoredElsewhere, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
@@ -66,7 +69,10 @@ export function boot(): void {
   // A surface or a profile the screen wants, landed: the idle page is
   // solved again with it, or the running cook planned again.
   whenAnswerLands(recompute);
-  whenCookSurfaceLands(replanCook);
+  whenCookSurfaceLands(cookWants, cookLanded);
+  // For the egg's record: this build, and the population of the prior.
+  state.appVersion = APP_VERSION;
+  state.prior = activePopulation().id;
 
   buildSizeOptions();
   buildTicks();
@@ -103,16 +109,7 @@ export function boot(): void {
   renderMute();
   renderVersion();
 
-  wireFeedback({
-    cook: () => state.cook,
-    plan: () => state.plan,
-    phase: () => phaseNow(nowMs()),
-    calib: () => state.calib,
-    persist: persistCook,
-    learned: () => renderLearned(learning()),
-    redraw: () => render(nowMs()),
-    open: cookOpen,
-  });
+  wireFeedback({ answer: answerCook });
 
   renderCalibNote(learning());
   restoreCook();

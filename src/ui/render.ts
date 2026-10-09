@@ -35,7 +35,7 @@ import { formatClock } from './countdown.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 import {
-  answersNow, cookShown, pickedUpAfterReload, probePending, probeWanted, renderProbe, renderTarget,
+  answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted, renderProbe, renderTarget,
 } from './feedback.js';
 import { showInfo } from './info.js';
 import { renderCalibNote } from './learned.js';
@@ -425,11 +425,10 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
-  const said = answersNow().kind;
   // Nor while a newer build's results are left alone (store.ts): no answer
   // could be kept.
-  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload' || view.asking || storageReadOnly();
-  if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
+  page().feedback.hidden = phase !== 'DONE' || state.questions === 'away' || view.asking || storageReadOnly();
+  if (!page().feedback.hidden && !answeredHere()) renderCalibNote(learning());
   renderProbe(phase, shown);
   if (!page().feedback.hidden) renderTarget(shown);
 
