@@ -24,10 +24,10 @@
 
 import { nudgeSeconds } from '../core/decide.js';
 import { stepPast } from '../core/units.js';
-import { keptState, loadCalibration } from './calibration.js';
+import { openLearner } from './calibration.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
+  Stores, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -37,13 +37,13 @@ import { renderCalibNote, wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
 import { renderVersion } from './render.js';
 import { buildClauses } from './sentence.js';
-import { loadShare, retryDeletes, sendFinal } from './share.js';
+import { openSharing } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
 import { learning, sizeClasses, state } from './state.js';
 import { activePopulation } from './population.js';
 import { setStepRule, wireSteppers } from './stepper.js';
-import { claimStorage, loadBoilMemory, loadSettings, newerStoredElsewhere, storageReadOnly } from './store.js';
+import { claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, learnBehind, storedElsewhere } from './update.js';
@@ -59,11 +59,19 @@ export function boot(): void {
   claimStorage(APP_VERSION);
   // The development clock's mark, for a clock set as the page loaded.
   markDevClockUse();
-  state.settings = loadSettings(sizeClasses);
+  // The stores, opened: the runner holds them (cook.ts). Sharing, if the
+  // cook turned it on: every egg in the log is final but the stored running
+  // cook's, which may still be answered or corrected (`finalEggs`).
+  const learner = openLearner();
+  const stores: Stores = {
+    settings: openSettings(sizeClasses), pans: openPans(), cooks: openCooks(), learner: learner,
+    sharing: openSharing({ log: () => learner.keptState().log, finalCount: () => finalEggs(stores) }),
+  };
+  state.settings = stores.settings.load();
   state.controls = { ...state.settings };
   useUnits(state.settings.unitsChosen);
-  state.boilMemory = loadBoilMemory();
-  state.calib = loadCalibration();
+  state.boilMemory = stores.pans.load();
+  state.calib = learner.calibration();
   // This page's nudge (E8), drawn at boot rather than as a module loads, so
   // a script's seed (now.ts) is in place for it.
   state.nudgeDraw = nudgeSeconds(random());
@@ -102,27 +110,25 @@ export function boot(): void {
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
   // From here on every change to the page is a message (send.ts).
-  startRunner();
+  startRunner(stores);
   renderVersion();
 
   wireFeedback();
 
   renderCalibNote(learning(state));
   restoreCook();
-  // Sharing, if the cook turned it on: every egg in the log is final but the
-  // stored running cook's, which may still be answered or corrected
-  // (`finalEggs`). A deletion not yet confirmed is asked again first.
+  // A deletion not yet confirmed is asked again before anything is sent.
   wireShare();
-  loadShare({ log: () => keptState().log, finalCount: finalEggs });
-  drawShare();
-  void retryDeletes().then(sendFinal);
-  window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
+  drawShare(stores);
+  const resend = (): void => { void stores.sharing.retryDeletes().then(stores.sharing.sendFinal); };
+  resend();
+  window.addEventListener('online', resend);
   window.addEventListener('storage', (event) => {
     // A newer build's tab has run: this page writes nothing from now on
     // (`claimStorage`), and takes up nothing more either.
     newerStoredElsewhere(event.key);
     if (storageReadOnly()) return;
-    storedElsewhere(event.key);
+    storedElsewhere(stores, event.key);
     cookElsewhere(event.key);
   });
   // A cook left at DONE an hour or more ends when the page is next looked at.
@@ -136,7 +142,7 @@ export function boot(): void {
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.
-  learnBehind();
+  learnBehind(learner);
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(() => state.cook === null);

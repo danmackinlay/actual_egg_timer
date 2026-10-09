@@ -26,7 +26,7 @@ import { RunningCook, answered } from '../core/running.js';
 import { isSousVide, learning, phaseNow, state } from './state.js';
 import { Effect, Msg, update } from './model.js';
 import { currentInputs, wantedProfiles } from './answer.js';
-import { calibrationBefore, exportResults, keepRecord } from './calibration.js';
+import type { Learner } from './calibration.js';
 import {
   Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
   setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
@@ -44,14 +44,30 @@ import { renderCalibNote, renderLearned, saveResults } from './learned.js';
 import { draw, drawnNothing, forgetDrawnWords } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
-import { deleteSent, sendFinal, setSharing, shareState } from './share.js';
+import type { Sharing } from './share.js';
 import {
-  KeptAnswers, clearCook, cookStore, correctedLater, rememberTimeToBoil, saveCook, saveLeanHint, storageReadOnly, takeUpEvents,
+  CookStore, KeptAnswers, PansStore, SettingsStore, correctedLater, storageReadOnly, takeUpEvents,
 } from './store.js';
 import { unitSystem, useUnits } from './units.js';
 import { drawShare, followLanguage, forgetAll, saveNow, saveSoon, solveSoon } from './update.js';
 import { showEgg } from './views.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
+
+/** The stores this page keeps: opened at boot (app.ts), and held here. */
+export interface Stores {
+  settings: SettingsStore;
+  pans: PansStore;
+  cooks: CookStore;
+  learner: Learner;
+  sharing: Sharing;
+}
+
+let stores!: Stores;
+
+/** The stores, for the test API's snapshot (dev/test.ts). */
+export function pageStores(): Stores {
+  return stores;
+}
 
 /** The ticker while a cook short of Done runs, and the page's wake at Done. */
 const clock = {
@@ -107,7 +123,7 @@ export function flushDraw(): void {
  *  open: its own when storage does not work. */
 function storedId(): number | null {
   if (!state.works) return state.cook === null ? null : state.cook.id_ms;
-  return cookStore.peek()?.cook.id_ms ?? null;
+  return stores.cooks.peek()?.cook.id_ms ?? null;
 }
 
 /** The messages about the running cook, before which another tab's write
@@ -123,7 +139,7 @@ function apply(msg: Msg, now: number): void {
   const built = builtFor(state.calib);
   state.surfaces = built.surfaces;
   state.profiles = built.profiles;
-  state.sharing = shareState().on;
+  state.sharing = stores.sharing.state().on;
   state.readOnly = storageReadOnly();
   state.storedId_ms = state.cook === null ? null : storedId();
   const [next, effects] = update(state, msg, now);
@@ -152,7 +168,7 @@ export function dispatch(msg: Msg): void {
       const next = queue.shift()!;
       const now = nowMs();
       if (state.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
-        const taken = cookStore.takeUp();
+        const taken = stores.cooks.takeUp();
         if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs }, now);
       }
       apply(next, now);
@@ -164,9 +180,11 @@ export function dispatch(msg: Msg): void {
   requestDraw();
 }
 
-/** The runner, plugged in for `send` and for the development clock's
- *  moves, and the sound as the settings have it: once, at boot. */
-export function startRunner(): void {
+/** The runner, with the stores it holds, plugged in for `send` and for the
+ *  development clock's moves, and the sound as the settings have it: once,
+ *  at boot. */
+export function startRunner(s: Stores): void {
+  stores = s;
   sendTo(dispatch);
   onClockChange(clockMoved);
   muted = state.settings.muted;
@@ -183,10 +201,10 @@ function perform(effects: Effect[]): void {
         persist(e.cook, e.answers, e.leanHint_s);
         break;
       case 'persistLean':
-        saveLeanHint(e.id_ms, e.leanHint_s);
+        stores.cooks.saveLeanHint(e.id_ms, e.leanHint_s);
         break;
       case 'persistEnded':
-        if (cookStore.peek()?.cook.id_ms === e.cook.id_ms) saveCook(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
+        if (stores.cooks.peek()?.cook.id_ms === e.cook.id_ms) stores.cooks.save(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
         break;
       case 'ring':
         if (e.moment === 'pull') {
@@ -203,19 +221,19 @@ function perform(effects: Effect[]): void {
         stopAlarm();
         break;
       case 'rememberBoil':
-        send({ kind: 'pans', boilMemory: rememberTimeToBoil(state.boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
+        send({ kind: 'pans', boilMemory: stores.pans.remember(state.boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
         break;
       case 'log':
         logRecord(e.record);
         break;
       case 'forget':
-        clearCook(e.id_ms);
+        stores.cooks.clear(e.id_ms);
         break;
       case 'sendFinal':
         // After the page has booted, since this can come of a restore.
         queueMicrotask(() => {
-          drawShare();
-          void sendFinal();
+          drawShare(stores);
+          void stores.sharing.sendFinal();
         });
         break;
       case 'blip':
@@ -246,8 +264,8 @@ function perform(effects: Effect[]): void {
         endEdits();
         break;
       case 'save':
-        if (e.soon) saveSoon();
-        else saveNow();
+        if (e.soon) saveSoon(stores.settings);
+        else saveNow(stores.settings);
         break;
       case 'solveSoon':
         solveSoon();
@@ -286,7 +304,7 @@ function perform(effects: Effect[]): void {
         renderLearned(learning(state));
         break;
       case 'shareDrawn':
-        drawShare();
+        drawShare(stores);
         break;
       case 'drawNudge':
         // A new page or a new cook, a new nudge (E8, DECISIONS.md 61): a
@@ -296,18 +314,20 @@ function perform(effects: Effect[]): void {
         send({ kind: 'nudge', draw: nudgeSeconds(random()) });
         break;
       case 'forgetAll':
-        forgetAll();
+        forgetAll(stores);
         break;
       case 'export':
-        saveResults(exportResults(shareState().uid, nowMs()));
+        saveResults(stores.learner.exportResults(stores.sharing.state().uid, nowMs()));
         break;
       case 'setSharing':
         // Drawn again at once, and again once what it sends has gone.
-        void setSharing(e.on).then(() => send({ kind: 'shared' }));
+        void stores.sharing.setSharing(e.on).then(() => send({ kind: 'shared' }));
         send({ kind: 'shared' });
         break;
       case 'deleteShared':
-        void deleteSent().then(() => send({ kind: 'shareDeleted', confirmed: shareState().deleting.length === 0 }));
+        void stores.sharing.deleteSent().then(() => {
+          send({ kind: 'shareDeleted', confirmed: stores.sharing.state().deleting.length === 0 });
+        });
         send({ kind: 'shared' });
         break;
     }
@@ -327,13 +347,13 @@ function perform(effects: Effect[]): void {
  * The page is told when whether a write reads back changes.
  */
 function persist(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): void {
-  const stored = cookStore.peek();
+  const stored = stores.cooks.peek();
   let written: string | null;
   if (stored !== null && stored.cook.id_ms === cook.id_ms && correctedLater(stored.cook, cook)) {
     const kept = stored.answers === 'beforeReload' ? stored.answers : answers;
-    written = saveCook(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
+    written = stores.cooks.save(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
   } else {
-    written = saveCook(cook, answers, leanHint_s);
+    written = stores.cooks.save(cook, answers, leanHint_s);
   }
   if ((written !== null) !== state.works) send({ kind: 'persisted', works: written !== null });
 }
@@ -342,7 +362,7 @@ function persist(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): v
  *  told whether it was. */
 function logRecord(record: EggRecord): void {
   const id = record.id ?? null;
-  void keepRecord(record).then((kept) => send({ kind: 'kept', id_ms: id, kept: kept }));
+  void stores.learner.keepRecord(record).then((kept) => send({ kind: 'kept', id_ms: id, kept: kept }));
 }
 
 /* ------------------------------------------------------------ the needs */
@@ -443,7 +463,7 @@ function askBefore(id: number): void {
   const key = `before|${id}`;
   if (building.has(key)) return;
   building.add(key);
-  calibrationBefore(id).then((calibration) => {
+  stores.learner.calibrationBefore(id).then((calibration) => {
     building.delete(key);
     dispatch({ kind: 'before', id_ms: id, calibration: calibration, surface: null });
   }, (error: unknown) => {
@@ -521,7 +541,7 @@ function startCookNow(): void {
   primeAudio();
   stopAlarm();
   resetFeedback();
-  cookStore.load();
+  stores.cooks.load();
   dispatch({ kind: 'begin', units: unitSystem(), lang: activeLocale() });
 }
 
@@ -548,8 +568,8 @@ function cookLanded(): void {
  *  Heating when another taps the boil (review 1.2); at Done, whether this
  *  egg is still open, its questions going if not. */
 export function cookElsewhere(key: string | null): void {
-  if (!cookStore.touches(key) || state.cook === null) return;
-  dispatch({ kind: 'elsewhere', theirs: cookStore.takeUp()?.theirs ?? null });
+  if (!stores.cooks.touches(key) || state.cook === null) return;
+  dispatch({ kind: 'elsewhere', theirs: stores.cooks.takeUp()?.theirs ?? null });
 }
 
 /** The page is looked at again (shown, focused): the ticker, which stops at
@@ -569,9 +589,9 @@ export function lookAgain(): void {
  * dropped.
  */
 export function restoreCook(): void {
-  const stored = cookStore.load();
+  const stored = stores.cooks.load();
   if (stored === null) {
-    if (cookStore.text() !== null) cookStore.remove();
+    if (stores.cooks.text() !== null) stores.cooks.remove();
     return;
   }
   dispatch({ kind: 'restore', stored: stored });

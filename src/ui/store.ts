@@ -355,23 +355,79 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
 
 /* -------------------------------------------------------------- settings */
 
-/** The pan method last saved - what a save made in sous-vide writes in its
- *  place (`saveSettings`). Read with the settings, and kept up by every save
- *  of a pan, so a save need not read storage back to find it. */
-let lastPanStart: StartMode = 'cold';
-/** The settings as stored, each tab's change taken up by the others before
- *  they write (`takenUp`). */
-const settingsStore = syncedKey(SETTINGS_KEY, parseObject);
-/** The size table the settings were read against (`loadSettings`). */
-let settingsClasses: SizeClass[] = [];
+/** A page's settings as stored (`openSettings`). */
+export type SettingsStore = ReturnType<typeof openSettings>;
 
-/** `classes` is the table the app is showing now, which need not be the one
- *  the record was saved against. */
-export function loadSettings(classes: SizeClass[]): Settings {
-  settingsClasses = classes;
-  const raw = settingsStore.load();
-  lastPanStart = storedPanStart(raw);
-  return readSettings(raw, classes);
+/**
+ * The settings as stored, each tab's change taken up by the others before
+ * they write (`takenUp`), read against `classes`, the table the app is
+ * showing now, which need not be the one the record was saved against. One
+ * per page, opened at boot (app.ts) and held by the runner (cook.ts).
+ */
+export function openSettings(classes: SizeClass[]) {
+  const store = syncedKey(SETTINGS_KEY, parseObject);
+  /** The pan method last saved - what a save made in sous-vide writes in
+   *  its place (`save`). Read with the settings, and kept up by every save
+   *  of a pan, so a save need not read storage back to find it. */
+  let lastPanStart: StartMode = 'cold';
+
+  /** The settings as stored, from now on what this page has seen. */
+  function load(): Settings {
+    const raw = store.load();
+    lastPanStart = storedPanStart(raw);
+    return readSettings(raw, classes);
+  }
+
+  /** Sous-vide is never remembered. Its answer is a start time in the past
+   *  - a 58 °C bath wants most of a day - so an app that reopened on it
+   *  would greet the cook by telling them they are 22 hours late, which is a
+   *  bad first choice. It is still a choice for as long as the page is open;
+   *  what is saved in its place is whatever pan was saved before it, cold
+   *  or hot, so a reload comes back to the last pan the cook used. */
+  function save(settings: Settings): Settings {
+    const next = takenUp(settings, store.takeUp());
+    if (next.startMode !== 'sous') lastPanStart = next.startMode;
+    store.write(JSON.stringify({ ...next, startMode: lastPanStart }));
+    return next;
+  }
+
+  /**
+   * The settings with what another tab wrote since this page last read or
+   * wrote them taken up: each setting this page has not changed since then
+   * becomes the other tab's, and each one it has changed stays its own. The
+   * settings given, as they are, when no other tab wrote; what is written
+   * is what comes back, so the page shows it.
+   */
+  function takenUp(ours: Settings, taken: Taken<Record<string, unknown> | null> | null): Settings {
+    if (taken === null) return ours;
+    const baseRaw = taken.base();
+    const theirRaw = taken.theirs;
+    const base = readSettings(baseRaw, classes);
+    const theirs = readSettings(theirRaw, classes);
+    const next: Settings = { ...ours };
+    const into = next as unknown as Record<string, unknown>;
+    for (const key of Object.keys(ours) as (keyof Settings)[]) {
+      if (key !== 'startMode' && sameSetting(ours[key], base[key])) into[key] = theirs[key];
+    }
+    // The pan: a sous-vide on screen is this page's alone and never written,
+    // and the pan under it is whichever was saved last.
+    const pan = ours.startMode === 'sous' ? lastPanStart : ours.startMode;
+    if (pan === storedPanStart(baseRaw)) {
+      lastPanStart = storedPanStart(theirRaw);
+      if (ours.startMode !== 'sous') next.startMode = lastPanStart;
+    }
+    return next;
+  }
+
+  /** Another tab changed storage (the page's `storage` event; a null key is
+   *  a tab that cleared it all): the settings with what it wrote taken up
+   *  (`takenUp`), or null if it did not touch them. */
+  function elsewhere(key: string | null, ours: Settings): Settings | null {
+    const taken = store.elsewhere(key);
+    return taken === null ? null : takenUp(ours, taken);
+  }
+
+  return { load, save, elsewhere };
 }
 
 /** Settings as stored, each one checked, the defaults for anything missing. */
@@ -408,61 +464,12 @@ function readSettings(raw: Record<string, unknown> | null, classes: SizeClass[])
 /** Only the language, for choosing a catalogue before anything else is read:
  *  the page paints nothing until its words are in. */
 export function loadLanguage(): LanguageState {
-  const raw = settingsStore.peek();
+  const raw = parseObject(readStorage(SETTINGS_KEY));
   return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
-}
-
-/** Sous-vide is never remembered. Its answer is a start time in the past - a
- *  58 °C bath wants most of a day - so an app that reopened on it would greet
- *  the cook by telling them they are 22 hours late, which is a bad first
- *  choice. It is still a choice for as long as the page is open; what is saved
- *  in its place is whatever pan was saved before it, cold or hot, so a reload
- *  comes back to the last pan the cook used. `loadSettings` comes first. */
-export function saveSettings(settings: Settings): Settings {
-  const next = takenUp(settings, settingsStore.takeUp());
-  if (next.startMode !== 'sous') lastPanStart = next.startMode;
-  settingsStore.write(JSON.stringify({ ...next, startMode: lastPanStart }));
-  return next;
-}
-
-/**
- * The settings with what another tab wrote since this page last read or
- * wrote them taken up: each setting this page has not changed since then
- * becomes the other tab's, and each one it has changed stays its own. The
- * settings given, as they are, when no other tab wrote; what is written is
- * what comes back, so the page shows it.
- */
-function takenUp(ours: Settings, taken: Taken<Record<string, unknown> | null> | null): Settings {
-  if (taken === null) return ours;
-  const baseRaw = taken.base();
-  const theirRaw = taken.theirs;
-  const base = readSettings(baseRaw, settingsClasses);
-  const theirs = readSettings(theirRaw, settingsClasses);
-  const next: Settings = { ...ours };
-  const into = next as unknown as Record<string, unknown>;
-  for (const key of Object.keys(ours) as (keyof Settings)[]) {
-    if (key !== 'startMode' && sameSetting(ours[key], base[key])) into[key] = theirs[key];
-  }
-  // The pan: a sous-vide on screen is this page's alone and never written,
-  // and the pan under it is whichever was saved last.
-  const pan = ours.startMode === 'sous' ? lastPanStart : ours.startMode;
-  if (pan === storedPanStart(baseRaw)) {
-    lastPanStart = storedPanStart(theirRaw);
-    if (ours.startMode !== 'sous') next.startMode = lastPanStart;
-  }
-  return next;
 }
 
 function sameSetting(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
-}
-
-/** Another tab changed storage (the page's `storage` event; a null key is a
- *  tab that cleared it all): the settings with what it wrote taken up
- *  (`takenUp`), or null if it did not touch them. */
-export function settingsStoredElsewhere(key: string | null, ours: Settings): Settings | null {
-  const taken = settingsStore.elsewhere(key);
-  return taken === null ? null : takenUp(ours, taken);
 }
 
 /** The pan method in a stored record: cold or hot, and cold for anything else,
@@ -477,13 +484,37 @@ function storedPanStart(raw: Record<string, unknown> | null): StartMode {
  *  is core policy, re-exported above. What is left here is getting them in and
  *  out of localStorage, and refusing to load a value that is not a boil. */
 
+/** A page's pans as stored (`openPans`). */
+export type PansStore = ReturnType<typeof openPans>;
+
 /** The pans as stored: another tab's write is taken up before this page
  *  writes, so that a "Forget everything" in another tab is not undone by
- *  this one's next measured boil. */
-const boilStore = syncedKey(BOIL_KEY, readBoilMemory);
-
-export function loadBoilMemory(): BoilMemory {
-  return boilStore.load();
+ *  this one's next measured boil. One per page, opened at boot (app.ts) and
+ *  held by the runner (cook.ts). */
+export function openPans() {
+  const store = syncedKey(BOIL_KEY, readBoilMemory);
+  return {
+    /** The pans as stored, from now on what this page has seen. */
+    load: (): BoilMemory => store.load(),
+    /** Record a measured boil and write it through, blended into the pans
+     *  as stored now, if another tab changed them. The blend itself - so
+     *  that one odd run (lid off, pan half empty) does not dominate - is
+     *  `rememberBoil`. */
+    remember(memory: BoilMemory, litres: number, seconds: number): BoilMemory {
+      const taken = store.takeUp();
+      const now = taken === null ? memory : taken.theirs;
+      const updated = rememberBoil(now, clampLitres(litres), seconds);
+      if (updated === now) return now;
+      store.write(JSON.stringify(updated));
+      return updated;
+    },
+    /** Another tab changed storage: the pans as it left them, or null if it
+     *  did not touch them. */
+    elsewhere: (key: string | null): BoilMemory | null => store.elsewhere(key)?.theirs ?? null,
+    /** Forget every measured pan. Paired with the calibration reset: someone
+     *  taking their learning back usually means the whole kitchen. */
+    clear: (): void => store.remove(),
+  };
 }
 
 function readBoilMemory(text: string | null): BoilMemory {
@@ -495,32 +526,6 @@ function readBoilMemory(text: string | null): BoilMemory {
     if (isWithin(seconds, LIMITS.timeToBoil_s)) out[key] = seconds;
   }
   return out;
-}
-
-/** Record a measured boil and write it through. The blend itself - so that one
- *  odd run (lid off, pan half empty) does not dominate - is `rememberBoil`. */
-export function rememberTimeToBoil(
-  memory: BoilMemory, litres: number, seconds: number,
-): BoilMemory {
-  // Blended into the pans as stored now, if another tab changed them.
-  const taken = boilStore.takeUp();
-  const now = taken === null ? memory : taken.theirs;
-  const updated = rememberBoil(now, clampLitres(litres), seconds);
-  if (updated === now) return now;
-  boilStore.write(JSON.stringify(updated));
-  return updated;
-}
-
-/** Another tab changed storage: the pans as it left them, or null if it did
- *  not touch them. */
-export function boilStoredElsewhere(key: string | null): BoilMemory | null {
-  return boilStore.elsewhere(key)?.theirs ?? null;
-}
-
-/** Forget every measured pan. Paired with the calibration reset: someone
- *  taking their learning back usually means the whole kitchen. */
-export function clearBoilMemory(): void {
-  boilStore.remove();
 }
 
 function clampLitres(litres: number): number {
@@ -553,29 +558,54 @@ export interface StoredCook {
  *  answered before a reload, which is what it is when it is read back. */
 export type KeptAnswers = 'none' | 'beforeReload';
 
+/** The cook as stored (`openCooks`), and what is written beside it. */
+export interface CookStore extends SyncedKey<StoredCook | null> {
+  /** Write the cook down; the text that reads back. */
+  save(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): string | null;
+  /** Forget the cook written down, if it is the one started at `id_ms`: a
+   *  cook another tab started and wrote since is that tab's, and stays. */
+  clear(id_ms: number): void;
+  /** The lean last decided, a cache, written beside the stored cook if it
+   *  is the one started at `id_ms`, without writing the cook: a plan alone
+   *  never writes a tab's copy of the cook over another's (running-cook
+   *  review 1.2). */
+  saveLeanHint(id_ms: number, leanHint_s: number): void;
+}
+
 /**
- * The cook as stored, whichever tab wrote it. What this tab last read or
- * wrote there is what it has seen; another tab's write is taken up
- * (model.ts, `elsewhere`) only when it is of this tab's own cook, by id,
- * since each tab runs the cook it started, and then only what that tab saw
- * in the pan (`takeUpEvents`).
+ * The cook as stored, whichever tab wrote it, or null: none, or one this
+ * build cannot read (`readStoredCook`), which the caller drops. What this
+ * tab last read or wrote there is what it has seen; another tab's write is
+ * taken up (model.ts, `elsewhere`) only when it is of this tab's own cook,
+ * by id, since each tab runs the cook it started, and then only what that
+ * tab saw in the pan (`takeUpEvents`). One per page, opened at boot
+ * (app.ts) and held by the runner (cook.ts).
  */
-export const cookStore: SyncedKey<StoredCook | null> = syncedKey(COOK_KEY, readStoredCook);
-
-/** Write the cook down; the text that reads back. */
-export function saveCook(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): string | null {
-  return cookStore.write(JSON.stringify({ cook: cook, answers: answers, leanHint_s: leanHint_s }));
+export function openCooks(): CookStore {
+  const key = syncedKey(COOK_KEY, readStoredCook);
+  /** The stored record's cook's id, read as little as it takes. */
+  const idIn = (raw: Record<string, unknown> | null): unknown => {
+    const cook = raw === null ? null : raw['cook'];
+    return cook !== null && typeof cook === 'object' ? (cook as Record<string, unknown>)['id_ms'] : undefined;
+  };
+  return {
+    ...key,
+    save: (cook, answers, leanHint_s) => key.write(JSON.stringify({ cook: cook, answers: answers, leanHint_s: leanHint_s })),
+    clear(id_ms) {
+      const raw = parseObject(key.text());
+      const stored = idIn(raw);
+      if (raw === null || stored === undefined || stored === id_ms) key.remove();
+    },
+    saveLeanHint(id_ms, leanHint_s) {
+      const raw = parseObject(key.text());
+      if (raw === null || raw['leanHint_s'] === leanHint_s || idIn(raw) !== id_ms) return;
+      key.write(JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
+    },
+  };
 }
 
-/** The cook written down, whole, or null: none, or one this build cannot
- *  read (`readRunningCook`), which the caller drops. One without a known
- *  `answers` is refused rather than read as unanswered, which would log its
- *  egg a second time. */
-export function loadCook(): StoredCook | null {
-  return cookStore.peek();
-}
-
-/** A stored cook's text read as `loadCook` reads it. */
+/** A stored cook's text, read: one without a known `answers` is refused
+ *  rather than read as unanswered, which would log its egg a second time. */
 export function readStoredCook(text: string | null): StoredCook | null {
   const raw = parseObject(text);
   if (raw === null) return null;
@@ -588,42 +618,6 @@ export function readStoredCook(text: string | null): StoredCook | null {
   return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
-/** Forget the cook written down, if it is the one started at `id_ms`: a
- *  cook another tab started and wrote since is that tab's, and stays. */
-export function clearCook(id_ms: number): void {
-  const raw = parseObject(cookStore.text());
-  const cook = raw === null ? null : raw['cook'];
-  const stored = cook !== null && typeof cook === 'object' ? (cook as Record<string, unknown>)['id_ms'] : undefined;
-  if (raw === null || stored === undefined || stored === id_ms) cookStore.remove();
-}
-
-/** Forget whatever is written down: a cook this build cannot read. */
-export function dropStoredCook(): void {
-  cookStore.remove();
-}
-
-/** The stored cook as it is now, whichever tab wrote it, or null: what
- *  sharing holds back (`openEggId`). */
-export function storedCook(): RunningCook | null {
-  return cookStore.peek()?.cook ?? null;
-}
-
-/** The lean last decided, a cache, written beside the stored cook if it is
- *  the one started at `id_ms`, without writing the cook: a plan alone never
- *  writes a tab's copy of the cook over another's (running-cook review 1.2). */
-export function saveLeanHint(id_ms: number, leanHint_s: number): void {
-  const raw = parseObject(cookStore.text());
-  if (raw === null || raw['leanHint_s'] === leanHint_s) return;
-  const cook = raw['cook'];
-  if (cook === null || typeof cook !== 'object' || (cook as Record<string, unknown>)['id_ms'] !== id_ms) return;
-  cookStore.write(JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
-}
-
 /** What another tab wrote for this cook, taken up, and which copy a reload
  *  restores: core's, over the two copies' logs (src/core/running.ts). */
 export { correctedLater, takeUpEvents } from '../core/running.js';
-
-/** The cook as stored, whichever tab wrote it. */
-export function storedCookText(): string | null {
-  return cookStore.text();
-}

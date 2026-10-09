@@ -26,12 +26,10 @@ import { CopyArgs } from '../../core/copy.js';
 import { BoilMemory } from '../../core/boil.js';
 import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
 import { EggRecord } from '../../core/record.js';
-import { eggsBehind, keptState } from '../calibration.js';
-import { flushDraw } from '../cook.js';
+import { flushDraw, pageStores } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
 import { inHand } from '../idle.js';
 import { isDevHost, nowMs, useRandom } from '../now.js';
-import { shareState } from '../share.js';
 import { phaseNow, state } from '../state.js';
 import { Settings } from '../store.js';
 import { finalEggs } from '../update.js';
@@ -91,7 +89,8 @@ function snapshot(): Snapshot {
   const now = nowMs();
   const plan = state.plan;
   const primary = document.getElementById('primary');
-  const share = shareState();
+  const stores = pageStores();
+  const share = stores.sharing.state();
   return {
     now_ms: now,
     phase: phaseNow(state, now),
@@ -115,10 +114,10 @@ function snapshot(): Snapshot {
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
     stored: localStorage.getItem('aet.cook.v5'),
-    log: keptState().log,
+    log: stores.learner.keptState().log,
     eggsLogged: state.calib.eggsLogged,
-    eggsBehind: eggsBehind(),
-    finalEggs: finalEggs(),
+    eggsBehind: stores.learner.eggsBehind(),
+    finalEggs: finalEggs(stores),
     share: { on: share.on, sent: share.sent },
     inHand: inHand(),
   };
