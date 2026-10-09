@@ -6705,3 +6705,26 @@ five passed against `560fa62` with only the snapshot's new `boilMemory`
 added, so they hold the behaviour as it was. One run of `two-tabs-sharing`
 there waited 60 s on a worker job in the hidden tab; it passed in 3 s on
 every run since, and 83 of 83 passed on the branch.
+
+## 10 October 2026: `certainty-mid-cook` failed when the cook began late in a minute
+
+The web scenario failed about one run in five, waiting 60 s for the likely
+time range to move. Nothing in the app read the real clock. The stopped
+development clock starts at the real time, so the cold cook began at the
+real clock's second; the range is said as times of day to the minute, and
+the scenario stepped 65 s from 16:00, in which the slow hob's guess moved
+about 38 s. Whether either end crossed a minute hung on that second: with
+the clock pinned (`?at=`), starts 18-28 s into a minute failed every time
+and the rest passed every time. The wait was for "a tick after the clock
+moves", but the step's `focus` already plans the slow hob's moment; the
+tick was never what it waited on.
+
+The scenario now steps to 20:00, four minutes on, as the iOS
+`certainty-mid-cook` does, settles, and checks the guess (the provisional
+pull) moved a minute or more before checking the line moved: a change in
+the physics that slows the guess fails there, saying so, rather than
+flaking. Every second from 0 to 55 s passed pinned; 30 of 30 alone, 10 of
+10 throttled six times, 12 of 12 four at once; 83 of 83 in the suite.
+No other web scenario asserts that a time of day said to the minute
+changes across a step shorter than a minute. The iOS scenario steps four
+minutes, so it never had the fault.
