@@ -380,7 +380,7 @@ test('7a. an overlay says only what its region says differently, against today\'
       }
       const fields = Object.keys(entry).sort().join(',');
       if (fields !== 'base,text') failures.push(`${tag} ${key}: has ${fields}, not just base and text`);
-      // Written against the English as it is: a draft that changed the English
+      // Written against the English as it is: a wording change to the English
       // and not this would leave the region reading the old meaning.
       if (entry['base'] !== english['text']) failures.push(`${tag} ${key}: written against "${String(entry['base'])}", but English now says "${String(english['text'])}"`);
       if (entry['text'] === english['text']) failures.push(`${tag} ${key}: says what English says`);
