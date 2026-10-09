@@ -7118,3 +7118,44 @@ verify and ios:build after every commit between.
 
 **Left.** `CLAUDE.md` line 58 still names `policy.ts` among the modules
 above the physics; it should name `inputs.ts`, `slider.ts` and the rest.
+
+## 10 October 2026: the web's page through `update`, drawn from a pure `view` (REFACTOR-0.5 3.7)
+
+Branch `web-view-update-3.7`: `60c9982` (the idle page and the view),
+`b63088c` (0.5.x merged in), `909b553` (the probe reading).
+
+- **Every change to the page is a message** (`src/ui/model.ts`): the
+  controls read (input.ts builds a new `Settings`; `controls` is a copy of
+  the settings while idle, never the same object), the units, the language,
+  the mute and the sound, another tab's settings, the pans, eggs folded,
+  everything forgotten, a new nudge, the solve. The idle solve is pure
+  (answer.ts, `solveIdle`): the surfaces and odds profiles built are in the
+  model, taken before each message as the cook's surfaces were, and the
+  surface and profiles still wanted are effects the runner asks the worker
+  for. What the runner's modules once registered at boot (the solve on a
+  landing, the cook's landing, the correction) they now send (send.ts).
+- **`view(model, now)`** (src/ui/view.ts): the page as plain data - the
+  unsolved instant (only what the eye is on while dragging), idle, sous-vide
+  and running screens - and render.ts, now only the writer, draws it once an
+  animation frame (`nextFrame`, counted as in hand; the test API's snapshot
+  draws a pending frame first). The certainty held while a new pot's surface
+  builds and the live egg are in the model, carried in `update`; the egg
+  previews in a memo, and what is on the page in `Drawn`, both handed in.
+- **The probe reading** is a message: scored on the record as a step makes
+  it (`cookFactsFor`, `recordFor`, the step's context), held while that
+  cannot be made; eggRecord.ts went. No e2e scenario drove the probe, so
+  `probe-reading` does now; it passes on the build before as well.
+
+Found on the way: a cook's surface was asked for again by every message
+while it built, and each ask stepped the cook when it landed; with more
+messages that cost seconds (280 landings after the start's − pressed 140
+times by keyboard, `start-time` twice as slow). It is asked once now.
+
+Proof: the copy capture of 172 states is byte for byte the build before
+(47,063 strings) after the page change. Gates on the last commit: `verify`
+(438 tests, five new for the view), `build:site`, `e2e` 85 of 85.
+`src/ui/` 8,701 lines on 0.5.x, 9,182 after: the view's structs (view.ts,
+531) and the idle page in `update` added, render.ts 645 to 193.
+
+Left for 3.7 is listed under it in `REFACTOR-0.5.md`: edit.ts's gesture,
+the stores' module state, the boot-time callbacks, `now.ts`.
