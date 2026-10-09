@@ -18,6 +18,8 @@ tools/shape-study/results*.json
 dist/
 node_modules/
 _site/
+# The review queue's page, written by npm run copy:review
+copy-review.html
 .netlify/
 
 # Swift package build products

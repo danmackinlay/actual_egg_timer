@@ -26,6 +26,7 @@
     "copy:snapshot": "tsc && node dist/tools/copySnapshot.js",
     "copy:queue": "tsc && node dist/tools/copyQueue.js queue",
     "copy:approve": "tsc && node dist/tools/copyQueue.js approve",
+    "copy:review": "tsc && node dist/tools/copyReview.js",
     "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/ && test -z \"$(git ls-files --others --exclude-standard -- fixtures/)\"",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "npm run check && npm test && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
