@@ -113,7 +113,7 @@ export function writerCheck(storedMark: string | null, mine: string): WriterVerd
 
 /** A build number as Apple writes one (`CFBundleVersion`): one to three
  *  integers joined by dots, or null for anything else. */
-export function parseBuild(text: string): number[] | null {
+function parseBuild(text: string): number[] | null {
   if (!/^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){0,2}$/.test(text)) return null;
   const parts = text.split('.').map(Number);
   for (let i = 0; i < parts.length; i++) {

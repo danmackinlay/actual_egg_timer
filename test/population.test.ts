@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { LITERATURE_POPULATION, Population, createPrior } from '../src/core/infer.js';
-import { LITERATURE_START, parsePopulation, priorStart } from '../src/core/population.js';
+import { parsePopulation, priorStart } from '../src/core/population.js';
 import { calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider } from '../src/core/solve.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
@@ -32,7 +32,7 @@ test('1. the published file reads, and the literature is the default prior', () 
   const a = createPrior(200, CALIBRATION_SEED);
   const b = createPrior(200, CALIBRATION_SEED, LITERATURE_POPULATION);
   assert.deepEqual(a, b);
-  assert.deepEqual(LITERATURE_START, { alpha_m2s: DEFAULT_PARAMS.alpha_m2s, whiteOffset: 0 });
+  assert.deepEqual(priorStart(LITERATURE_POPULATION), { alpha_m2s: DEFAULT_PARAMS.alpha_m2s, whiteOffset: 0 });
   const c = freshCalibration(64, 7);
   assert.deepEqual(calibrationParams(c), DEFAULT_PARAMS, 'before any egg, the literature values');
   assert.deepEqual(calibrationDoneness(c, 0.22), donenessFromSlider(0.22));
@@ -85,7 +85,7 @@ test('4. a posterior from another population is replayed; one from this one is k
   const raw = encodeKept(kept, LITERATURE_POPULATION);
   const same = decodeKept(raw, LITERATURE_POPULATION);
   assert.equal(same.path, 'loaded');
-  assert.deepEqual(same.kept.calibration.start, LITERATURE_START);
+  assert.deepEqual(same.kept.calibration.start, priorStart(LITERATURE_POPULATION));
   // Read under a new population: the log is folded again from its prior.
   const moved = decodeKept(raw, SHIFTED);
   assert.equal(moved.path, 'rebuild');

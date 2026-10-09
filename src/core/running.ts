@@ -112,7 +112,7 @@ export interface CookEvents {
 }
 
 /** A cook with nothing observed yet. */
-export const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
+const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
 
 /**
  * The plan as the cook ran (running-cook review 1.3, 2.4): what the record
@@ -200,7 +200,7 @@ export interface CookPot {
 
 /** The egg's temperature as it goes in, C: a preset's (`startTempPreset_C`,
  *  which a measured room moves), or the cook's own number. */
-export function eggStartOf(ch: CookChoices): number {
+function eggStartOf(ch: CookChoices): number {
   if (ch.eggFrom === 'custom') return ch.customStart_C;
   return startTempPreset_C(ch.eggFrom, ch.room_C);
 }

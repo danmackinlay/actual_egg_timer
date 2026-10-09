@@ -247,13 +247,17 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       both running cooks); only `tools/fixtures/reach.ts` passes `false`, and
       the doc at `reach.ts:395` says otherwise. Remove it and its fixture
       rows. S.
-- [ ] **2.13 Exports used only in their own file or only by tests**:
+- [x] **2.13 Exports used only in their own file or only by tests**:
       `NO_EVENTS`, `eggStartOf`, `likelyTimeRange`, `oddsAtLevel`,
       `slowHobHintFits`, `posteriorAlphaRelSd`, `posteriorMeanOffset`,
       `LITERATURE_START`, `volumeKey`, `jsonString`, the unit constants,
       `yolkWordIndex`, `yolkWordBands`, `templatesOf`; web `controlsChoices`;
       `machine.ts` (23 lines) into `phaseView.ts`. Finishes SHIP-0.5 E's
-      last item. S.
+      last item. S. *Kept exported: what a tool imports (`posteriorMeanOffset`,
+      `yolkWord*`, `templatesOf`), what a test checks as a unit of its own
+      (`oddsAtLevel`, `slowHobHintFits`, `posteriorAlphaRelSd`, `volumeKey`,
+      `jsonString`, and the like in `server/` and `src/ui/now.ts`), every type
+      an exported function names, and `tools/fixtures/` (another branch's).*
 - [x] **2.14 The three-way yolk answer** (−1/0/1): never written now, still a
       branch in `answerLikelihood` with ~115 fixture rows. Kept by D81 for
       the owner's log; it goes only with a one-off rewrite of that log.

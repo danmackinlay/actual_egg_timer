@@ -390,14 +390,15 @@ answer did not make. Waiting on the owner.
 - [x] `CLAUDE.md`'s "`rm -rf dist/test` first if a test file was deleted"
       is stale (`npm test` starts with `rm -rf dist`): the owner's file.
       Deleted at the owner's word, 7 October 2026.
-- [ ] Exports used only in their own file: trace and trim, with B.
+- [x] Exports used only in their own file: trace and trim, with B.
       `src/ui/` done with B: eight values no other file imports are no
       longer exported (`resultsKept`, `shellPoint`, `SECTION_BOX`,
       `pathData`, `yolkAt`, `probeOffered`, `fetchTransport`,
       `renderBracket`). Kept: `heatAt` and `parseHex`, which
       `tools/egg-section.html` imports; `serve`, which `sw.js` calls; and
       the types that name an exported function's argument or result.
-      `src/core/`, `tools/` and `server/` not traced.
+      `src/core/`, `tools/` and `server/` traced with `REFACTOR-0.5.md`
+      2.13.
 
 ## Open for the owner
 

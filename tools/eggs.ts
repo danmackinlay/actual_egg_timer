@@ -148,7 +148,7 @@ function importFile(input: string, out: string, uid: string | null): void {
  *  cook's spread about it, the taste's spread (its mean is 0 by convention),
  *  and the noise and firm gap as lognormals. Cook effects are Student-t with
  *  4 degrees of freedom, as the fit has them, so a few cooks are far out. */
-export interface Truth {
+interface Truth {
   muZ: number;
   tauZ: number;
   lag: number;
@@ -163,7 +163,7 @@ export interface Truth {
 /** The truth the simulated cooks are drawn from by default: a kitchen 7%
  *  faster than the literature, whites that set a quarter of a decade later,
  *  and spreads a little under the literature prior's. */
-export const SIMULATED_TRUTH: Truth = {
+const SIMULATED_TRUTH: Truth = {
   muZ: 0.6, tauZ: 0.35, lag: 0.25, tauW: 0.3, tauT: 0.12,
   noiseMedian: 0.18, noiseLogSd: 0.35, gapMedian: 1.0, gapLogSd: 0.25,
 };

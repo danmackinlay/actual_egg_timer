@@ -66,7 +66,7 @@ export interface Run {
   probe_C: number;
 }
 
-export function eggFor(mass_kg: number, th: Theta): Egg {
+function eggFor(mass_kg: number, th: Theta): Egg {
   const base = eggFromMass(mass_kg);
   const scale = Math.pow(mass_kg / DEFAULT_EGG_MASS_KG, th.sizeExponent);
   return {

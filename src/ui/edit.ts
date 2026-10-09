@@ -53,7 +53,7 @@ import { pressAndHold } from './stepper.js';
 
 /** How long a tap's change settles before it is committed, and how long the
  *  aimed-for egg stays after the last change, ms (design section 5). */
-export const SETTLE_MS = 1500;
+const SETTLE_MS = 1500;
 /** A − or + pressed this long has begun to repeat (stepper.ts): a hold, so
  *  it commits on release. */
 const HELD_MS = 400;
