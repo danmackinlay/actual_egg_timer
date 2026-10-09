@@ -1,6 +1,6 @@
 /**
- * The page's clock: every read of the current time in src/ui/ is `nowMs()`.
- * On the live site, and anywhere but a page served from this machine, it is
+ * The page's clock: every read of the current time in src/ui/ is `nowMs()`,
+ * or `realMs()` for what is not a span of the cook. On the live site, and anywhere but a page served from this machine, it is
  * `Date.now()` and nothing else: the rest of this module never runs.
  *
  * For development, a page served from localhost or 127.0.0.1 can run a clock
@@ -33,7 +33,8 @@
  * time away is 1 s of audio at x60; on a stopped clock, 60 s, as on the real
  * one, until the clock is next moved). What does not: the beeps' own rhythm, a
  * sound for a person, and the timers that are not spans of the cook (the
- * solve's and the settings' coalescing, a request's timeout).
+ * solve's and the settings' coalescing, a request's timeout, the hourly look
+ * for a new build, which reads `realMs()`).
  */
 
 import { readStorage, removeStorage, writeStorage } from './store.js';
@@ -131,6 +132,13 @@ const listeners: (() => void)[] = [];
 /** The current time, ms since 1970: the real one, or the development clock. */
 export function nowMs(): number {
   return dev === null ? Date.now() : devTime(dev, Date.now());
+}
+
+/** The real time, ms since 1970, whatever the development clock says: for
+ *  what is not a span of the cook (offline.ts, the hourly look for a new
+ *  build). */
+export function realMs(): number {
+  return Date.now();
 }
 
 /** The cook's seconds to the real second, for what runs in real ones (the

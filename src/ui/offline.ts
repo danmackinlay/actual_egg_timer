@@ -25,7 +25,7 @@
  */
 
 import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.js';
-import { nowMs } from './now.js';
+import { realMs } from './now.js';
 
 const LOOK_EVERY_MS = 60 * 60 * 1000;
 
@@ -71,10 +71,12 @@ export function startOffline(noCookRunning: () => boolean): void {
         if (installing.state === 'installed') offer();
       });
     });
-    let looked_ms = nowMs();
+    // An hour on the wall, not of the cook: a development clock run fast or
+    // shifted (now.ts) would look at every return to the page, or never.
+    let looked_ms = realMs();
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && nowMs() - looked_ms > LOOK_EVERY_MS) {
-        looked_ms = nowMs();
+      if (document.visibilityState === 'visible' && realMs() - looked_ms > LOOK_EVERY_MS) {
+        looked_ms = realMs();
         look(true);
       }
       offer();

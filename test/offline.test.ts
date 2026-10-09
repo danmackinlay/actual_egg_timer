@@ -1,7 +1,8 @@
 /**
  * Opening with no signal: which file answers which address
  * (src/ui/serviceWorker.ts), and the build's list of files and its name that
- * tools/precache.mjs writes into sw.js.
+ * tools/precache.mjs writes into sw.js; and the page's hourly look for a
+ * new build (src/ui/offline.ts), which goes by the real clock.
  *
  * The worker itself runs only in a browser; it was checked there, offline,
  * in the built site (LOGBOOK, 3 October 2026).
@@ -128,5 +129,96 @@ test('4. a site without the compiled worker fails the build', () => {
     assert.throws(() => execFileSync(process.execPath, ['tools/precache.mjs', dir], { stdio: 'pipe' }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/** A storage the page's modules can read and write. */
+function memoryStorage(): Storage {
+  const m = new Map<string, string>();
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => { m.set(k, v); },
+    removeItem: (k: string) => { m.delete(k); },
+  } as unknown as Storage;
+}
+
+test('5. the hourly look for a new build goes by the real clock, never the development one', async () => {
+  // A page on localhost with the development clock stopped (now.ts): the
+  // cook's time moves only when a script moves it.
+  let real_ms = 1_790_000_000_000;
+  const realDateNow = Date.now;
+  const g = globalThis as Record<string, unknown>;
+  const saved = ['window', 'location', 'history', 'sessionStorage', 'localStorage', 'document', 'fetch']
+    .map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)] as const);
+  const savedNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Date.now = () => real_ms;
+  try {
+    g['window'] = { localStorage: memoryStorage(), location: { reload: () => { /* not here */ } } };
+    g['location'] = { hostname: 'localhost', search: '?clock=0', href: 'http://localhost/?clock=0' };
+    g['history'] = { state: null, replaceState: () => { /* the address */ } };
+    g['sessionStorage'] = memoryStorage();
+    g['localStorage'] = memoryStorage();
+    const now = await import('../src/ui/now.js');
+    const clock = (g['window'] as { aetClock: import('../src/ui/now.js').ClockHandle }).aetClock;
+    assert.equal(clock.state()?.speed, 0);
+
+    const onDocument = new Map<string, (() => void)[]>();
+    const document = {
+      body: null,
+      visibilityState: 'visible',
+      querySelector: () => ({ content: 'sw.js' }),
+      addEventListener: (type: string, f: () => void) => { onDocument.set(type, [...(onDocument.get(type) ?? []), f]); },
+    };
+    g['document'] = document;
+    let heads = 0;
+    let updates = 0;
+    g['fetch'] = () => { heads += 1; return Promise.resolve({ status: 200 }); };
+    const registration = {
+      waiting: null, installing: null, addEventListener: () => { /* no new build here */ },
+      update: () => { updates += 1; return Promise.resolve(); },
+    };
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true, writable: true,
+      value: {
+        serviceWorker: {
+          controller: {}, addEventListener: () => { /* no take-over here */ },
+          register: () => Promise.resolve(registration),
+        },
+      },
+    });
+    const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
+    const comeBack = async (): Promise<void> => {
+      for (const f of onDocument.get('visibilitychange') ?? []) f();
+      await settle();
+    };
+
+    const { startOffline } = await import('../src/ui/offline.js');
+    startOffline(() => true);
+    await settle();
+    // Loading asks only whether the worker is still served.
+    assert.deepEqual([heads, updates], [1, 0]);
+
+    // Two hours on the development clock, none on the real one: no look.
+    clock.shift('+2h');
+    assert.ok(now.nowMs() - real_ms >= 7_200_000);
+    await comeBack();
+    assert.deepEqual([heads, updates], [1, 0], 'the development clock moved, the real one did not');
+
+    // An hour and a minute of real time, the development clock stopped: a look.
+    real_ms += 61 * 60_000;
+    await comeBack();
+    assert.deepEqual([heads, updates], [2, 1], 'an hour went by on the real clock');
+    // And not again within the hour.
+    real_ms += 30 * 60_000;
+    await comeBack();
+    assert.deepEqual([heads, updates], [2, 1]);
+  } finally {
+    Date.now = realDateNow;
+    for (const [k, d] of saved) {
+      if (d === undefined) delete g[k];
+      else Object.defineProperty(globalThis, k, d);
+    }
+    if (savedNavigator === undefined) delete g['navigator'];
+    else Object.defineProperty(globalThis, 'navigator', savedNavigator);
   }
 });
