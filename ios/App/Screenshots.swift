@@ -253,8 +253,9 @@ extension Screenshots {
         // The stores (`Stores.claim`).
         case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
         case swept(key: String)
-        /// A key written to the store (`Stores`).
-        case wrote(key: String)
+        /// A key written to the store (`Stores`), and its value if it is a
+        /// number or a text.
+        case wrote(key: String, number: Double?, text: String?)
 
         // The idle screen.
         /// An answer on screen: its time, whether it is decided on its pot's

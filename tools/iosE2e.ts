@@ -404,7 +404,7 @@ type Event = { t: number } & (
   | { ev: 'answerHeldMade' }
   | { ev: 'stores'; verdict: string; mark?: string; markBuild?: string; version: string; build: string }
   | { ev: 'swept'; key: string }
-  | { ev: 'wrote'; key: string }
+  | { ev: 'wrote'; key: string; number?: number; text?: string }
   | { ev: 'answer'; cookS: number; decided: boolean; odds: boolean }
   | { ev: 'edit'; group?: string }
   | { ev: 'editLeaving' }
@@ -1847,9 +1847,12 @@ scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the a
   simctl('launch', udid, 'com.apple.Preferences');
   const c = await run.until(is('editCommitted', (e) => e.fields.join(',') === 'level'), { from: t.i, what: 'committed on leaving', timeoutS: 15 });
   await run.until(storedAs((s) => s.cook.choices.level === 0.3), { from: c.i, what: 'the cook stored' });
-  const prefs = await run.prefs((p) => p.doneness === 0.3, 10);
-  run.check(prefs.doneness === 0.3, `the setting written: ${prefs.doneness}`);
+  // The next cook's setting, written to the store as the app says; then in
+  // its file, which the system writes when it will, so waited for in full.
+  await run.until(is('wrote', (e) => e.key === 'doneness' && e.number === 0.3), { from: c.i, what: 'the setting written' });
   run.terminate();
+  const prefs = await run.prefs((p) => p.doneness === 0.3);
+  run.check(prefs.doneness === 0.3, `the setting in the file: ${prefs.doneness}`);
   const r = await relaunched(run, run.t0 + 40, ['-uiDo', 'set:size=3@50,set:water=1@50']);
   run.check(lastStored(r.lines)?.cook.choices.level === 0.3, 'relaunched with the change');
   t = await tapAt(run, run.t0 + 50, 'set');
@@ -1944,6 +1947,10 @@ async function warmUp(): Promise<void> {
       .catch(() => null);
     warm.terminate();
     if (hit?.ev === 'pending') return;
+    // What the launch got to, for a device that will not warm up.
+    const seen = warm.lines().map((e) => e.ev);
+    console.log(`ios:e2e: warm-up ${attempt}: ${hit ? say(hit) : 'no alarms read back'}; `
+      + `${seen.length} events, the last ${seen.slice(-8).join(', ') || 'none'}`);
     if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
   }
 }

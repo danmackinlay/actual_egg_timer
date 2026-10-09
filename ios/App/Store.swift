@@ -112,7 +112,7 @@ enum Stores {
     private static func wrote(_ value: Any?, forKey key: String, in defaults: UserDefaults) {
         defaults.set(value, forKey: key)
         #if DEBUG
-        Screenshots.log(.wrote(key: key))
+        Screenshots.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
         #endif
     }
 
