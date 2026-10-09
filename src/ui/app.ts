@@ -27,7 +27,7 @@ import { stepPast } from '../core/units.js';
 import { exportResults, keptState, loadCalibration } from './calibration.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  answerCook, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
+  answerCook, cookElsewhere, dispatch, lookAgain, onPrimary, onStillOut, probeCook, reset, restoreCook, startRunner,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -107,7 +107,7 @@ export function boot(): void {
   startRunner();
   renderVersion();
 
-  wireFeedback({ answer: answerCook });
+  wireFeedback({ answer: answerCook, probe: probeCook });
 
   renderCalibNote(learning(state));
   restoreCook();

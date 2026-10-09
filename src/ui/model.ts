@@ -48,9 +48,10 @@ import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
 import {
-  answered, asRanCurrent, asRanShown, asksIfStillIn, cookStillOpen, endedAt_s, phaseAt, takeUpEvents,
+  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookStillOpen, endedAt_s, phaseAt,
+  plausibleProbeRange_C, takeUpEvents,
 } from '../core/running.js';
-import { calibrationParams } from '../core/record.js';
+import { calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';
 import { step } from '../core/step.js';
 import type { UnitSystem } from '../core/units.js';
@@ -200,6 +201,8 @@ export type Msg =
     storedId_ms: number | null;
   }
   | { kind: 'elsewhere'; theirs: StoredCook | null; storedId_ms: number | null }
+  /** A probe reading typed at Done, C; null for what is not a number. */
+  | { kind: 'probe'; reading_C: number | null; storedId_ms: number | null }
   | { kind: 'restore'; stored: StoredCook }
   /** A correction in hand, planned or let go (edit.ts); `level`, the slider
    *  back at the cook's own after a level only previewed. */
@@ -257,9 +260,13 @@ export type Effect =
   | { kind: 'sendFinal' }
   | { kind: 'blip' }
   /** The questions empty again, for the next egg; "thank you" for the egg
-   *  kept. */
+   *  kept; "learning" for an answer taken. */
   | { kind: 'questionsReset' }
   | { kind: 'thanks' }
+  | { kind: 'learning' }
+  /** A probe reading refused, with the range it should be in, C; or taken. */
+  | { kind: 'probeRefused'; low_C: number; high_C: number }
+  | { kind: 'probeTaken'; reading_C: number }
   /** A cook begun or ended: its correction's bookkeeping (edit.ts). */
   | { kind: 'editsStart' }
   | { kind: 'editsEnd' }
@@ -442,6 +449,44 @@ function doneByEvents(cook: RunningCook): boolean {
  *  corrections; if not, it is final here. */
 function stillOpen(m: Model, storedId_ms: number | null, now_s: number): boolean {
   return m.cook !== null && m.plan !== null && !m.closed && cookStillOpen(m.cook, m.plan, storedId_ms, now_s);
+}
+
+/**
+ * A probe reading typed at Done. Scored against the egg's record as core
+ * makes it (`cookFactsFor`, `recordFor`: the record a step logs, with the
+ * same context): refused, with the range it should be in, when no
+ * believable kitchen could have made it for this cook
+ * (`plausibleProbeRange_C`), bounded by the model the cook ran under, not
+ * one that has since folded this egg's own answer (review 2.4); otherwise
+ * an answer like the others. When the record cannot be made yet (no
+ * surface), the reading is held, to be read again when one lands.
+ */
+function probeRead(m: Model, reading_C: number | null, storedId_ms: number | null, now_s: number): [Model, Effect[]] {
+  const cook = m.cook;
+  const plan = m.plan;
+  if (cook === null || plan === null) return [m, []];
+  const free: Model = { ...m, probeHeld: false };
+  if (answersOf(cook).probe !== null) return [free, []];
+  const env = envFor(m, cook, now_s);
+  const made = cookFactsFor(cook, plan, {
+    app: env.app, appVersion: env.appVersion, prior: env.prior, day: env.day, id: cook.id_ms,
+  }, null, null, null);
+  if (made.facts === null) return [{ ...m, probeHeld: true }, [{ kind: 'learning' }]];
+  const record = recordFor(made.facts);
+  const params = asRanShown(cook, plan)?.params ?? calibrationParams(m.calib);
+  const [low, high] = plausibleProbeRange_C(plan.egg, plan.setup, params, recordCookTime_s(record));
+  if (reading_C === null || reading_C < low || reading_C > high) {
+    return [free, [{ kind: 'probeRefused', low_C: low, high_C: high }]];
+  }
+  // When it was asked for: the end of the counted cooling, from the moment
+  // the record scores as the pull.
+  const coolEnd = plan.deadlines.coolEnd_s;
+  const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cook.startedAt_s : null);
+  const [next, effects] = updateCook(free, {
+    kind: 'answered', yolkWord: null, white: null, probe: probe, storedId_ms: storedId_ms,
+  }, now_s);
+  const taken = next.cook !== null && !next.closed && answersOf(next.cook).probe !== null;
+  return [next, taken ? [...effects, { kind: 'probeTaken', reading_C: reading_C }] : effects];
 }
 
 /** The egg final here: its questions go, and nothing more is written or
@@ -792,6 +837,8 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
         kind: 'answered', now_s: now_s, yolkWord: msg.yolkWord, white: msg.white, probe: msg.probe,
       }, now_s);
     }
+    case 'probe':
+      return probeRead(m, msg.reading_C, msg.storedId_ms, now_s);
     case 'elsewhere': {
       if (m.cook === null || m.plan === null || m.closed) return [m, []];
       if (phaseOf(m, now_s) === 'DONE' && !stillOpen(m, msg.storedId_ms, now_s)) return [close(m), []];

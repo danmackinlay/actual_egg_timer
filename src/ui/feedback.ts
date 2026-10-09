@@ -10,14 +10,12 @@
  */
 
 import {
-  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown, plausibleProbeRange_C,
+  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown,
 } from '../core/running.js';
 import { ModelParams } from '../core/solve.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
-import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
+import { ProbeReading } from '../core/record.js';
 import { parse, stepPast } from '../core/units.js';
-import { calibrationParams, eggLogged, keptState } from './calibration.js';
-import { eggRecordFor } from './eggRecord.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import type { Model } from './model.js';
@@ -39,9 +37,11 @@ export function pickedUpAfterReload(m: Model): boolean {
 
 /** What the questions need of the page: an answer stepped into the cook
  *  (cook.ts), and whether it was taken - not if the egg is final, or the
- *  question was answered already. */
+ *  question was answered already; and a probe reading, scored and stepped
+ *  in by `update` (model.ts). */
 export interface FeedbackHost {
   answer(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): boolean;
+  probe(reading_C: number | null): void;
 }
 
 let host: FeedbackHost | null = null;
@@ -131,47 +131,28 @@ export function probePending(m: Model, phase: Phase, wanted: boolean): boolean {
 }
 
 /**
- * A reading typed at DONE, in the cook's units. Refused, with the range it
- * should be in, when no believable kitchen could have made it for this cook
- * (`plausibleProbeRange_C`); otherwise stepped into the cook with whatever
- * else has been said about it.
- *
- * The reading is scored against the egg's record: as logged once an answer
- * has logged it, as iOS does (running-cook review 3), and otherwise the
- * record made now. When that cannot be made yet (`cookFactsFor` refuses:
- * no surface), the reading stays in its field and is read again when a
- * surface lands (`retryProbe`).
+ * A reading typed at DONE, in the cook's units, handed to the cook: scored
+ * and stepped in by `update` (model.ts), which says whether it was refused
+ * (`probeRefused`) or taken (`probeTaken`). When the egg's record cannot be
+ * made yet (no surface), the reading stays in its field and is read again
+ * when a surface lands (`retryProbe`).
  */
 function onProbeSave(): void {
   const cooked = state.cook;
-  const plan = state.plan;
-  if (host === null || cooked === null || plan === null || page().probeReading.disabled) return;
+  if (host === null || cooked === null || page().probeReading.disabled) return;
   if (answersOf(cooked).probe !== null) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
-  const reading_C = parse(measure('probeTemp'), Number(typed));
-  const logged = eggLogged(cooked.id_ms);
-  const record = logged >= 0 ? keptState().log[logged] : eggRecordFor(cooked, plan, null);
-  if (record === null) {
-    state.probeHeld = true;
-    page().calibNote.textContent = t('feedback.learning');
-    return;
-  }
-  // Bounded by the model the cook ran under, not one that has since folded
-  // this egg's own answer (2.4).
-  const params = cookShown(cooked, plan)?.params ?? calibrationParams(state.calib);
-  const [low, high] = plausibleProbeRange_C(plan.egg, plan.setup, params, recordCookTime_s(record));
-  if (reading_C === null || reading_C < low || reading_C > high) {
-    page().probeNote.textContent = t('probe.refused', {
-      low: show('probeTemp', low), high: show('probeTemp', high),
-    });
-    return;
-  }
-  // When it was asked for: the end of the counted cooling, from the moment
-  // the record scores as the pull.
-  const coolEnd = plan.deadlines.coolEnd_s;
-  const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cooked.startedAt_s : null);
-  if (!host.answer(null, null, probe)) return;
+  host.probe(parse(measure('probeTemp'), Number(typed)));
+}
+
+/** A reading refused: the range it should be in, said under it. */
+export function probeRefused(low_C: number, high_C: number): void {
+  page().probeNote.textContent = t('probe.refused', { low: show('probeTemp', low_C), high: show('probeTemp', high_C) });
+}
+
+/** A reading taken: the field settles on it. */
+export function probeTaken(reading_C: number): void {
   page().probeReading.disabled = true;
   disableSteppers(page().probeReading, true);
   page().probeSave.disabled = true;
@@ -182,9 +163,7 @@ function onProbeSave(): void {
 /** A surface landed: a reading held for want of the egg's record is read
  *  again. */
 export function retryProbe(): void {
-  if (!state.probeHeld) return;
-  state.probeHeld = false;
-  onProbeSave();
+  if (state.probeHeld) onProbeSave();
 }
 
 /** Wire both rows of answers and the probe's entry. Once, at boot. */

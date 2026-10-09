@@ -40,7 +40,7 @@ import {
 import { page, selectRadio } from './dom.js';
 import { commitEdit, endEdits, startEdits } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
-import { resetFeedback, retryProbe } from './feedback.js';
+import { probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
 import { renderCalibNote, renderLearned } from './learned.js';
 import { draw, drawnNothing, forgetDrawnWords } from './render.js';
 import { view, viewMemo } from './view.js';
@@ -112,7 +112,7 @@ function storedId(): number | null {
 /** The messages about the running cook, before which another tab's write
  *  for it is taken up. */
 const ABOUT_THE_COOK = new Set<Msg['kind']>([
-  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'answered', 'restore',
+  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'answered', 'probe', 'restore',
 ]);
 
 /** Take up what `msg` did, and do what it asks: the runner's view of its
@@ -217,6 +217,15 @@ function perform(effects: Effect[]): void {
         break;
       case 'thanks':
         page().calibNote.textContent = t('feedback.thanks');
+        break;
+      case 'learning':
+        page().calibNote.textContent = t('feedback.learning');
+        break;
+      case 'probeRefused':
+        probeRefused(e.low_C, e.high_C);
+        break;
+      case 'probeTaken':
+        probeTaken(e.reading_C);
         break;
       case 'editsStart':
         startEdits();
@@ -542,6 +551,11 @@ export function answerCook(yolk: YolkWord | null, white: WhiteReport | null, pro
   const said = answersGiven(state.cook);
   dispatch({ kind: 'answered', yolkWord: yolk, white: white, probe: probe, storedId_ms: storedId() });
   return state.cook !== null && !state.closed && answersGiven(state.cook) > said;
+}
+
+/** A probe reading at Done (feedback.ts), in C. */
+export function probeCook(reading_C: number | null): void {
+  if (state.cook !== null) dispatch({ kind: 'probe', reading_C: reading_C, storedId_ms: storedId() });
 }
 
 /** How many answers a cook's log holds. */

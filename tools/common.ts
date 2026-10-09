@@ -14,7 +14,9 @@ import { DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { Egg } from '../src/core/geometry.js';
 import { WhiteReport, YolkWord, createPrior } from '../src/core/infer.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID } from '../src/core/record.js';
+import { CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID, ProbeReading, recordFor } from '../src/core/record.js';
+import { CookPlan, RunningCook, cookFactsFor } from '../src/core/running.js';
+import { APP_VERSION } from '../src/ui/version.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 
 /* ------------------------------------------------------------------ pots */
@@ -139,4 +141,23 @@ export function gridFor(c: Calibration, egg: Egg, setup: CookSetup): DoseGrid {
   return buildRequestedGrid({
     ...q, spec: { ...q.spec, alphaCount: 9, timeMax_s: q.spec.timeMin_s + 20 * (count - 1), timeCount: count },
   });
+}
+
+/** The web's record of one egg, from its cook and plan, as a step logs it
+ *  (core `cookFactsFor`, `recordFor`): this build, the literature's
+ *  population, the local day the cook started and its id; null when core
+ *  refuses the facts (no plan as it ran and no surface, or one a correction
+ *  has made stale). */
+export function webRecordFor(
+  cook: RunningCook, plan: CookPlan, yolk: YolkWord | null, white: WhiteReport | null = null,
+  probe: ProbeReading | null = null,
+): EggRecord | null {
+  const d = new Date(cook.startedAt_s * 1000);
+  const pad2 = (n: number): string => (n < 10 ? `0${n}` : String(n));
+  const ctx = {
+    app: 'web' as const, appVersion: APP_VERSION, prior: LITERATURE_POPULATION.id,
+    day: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`, id: cook.id_ms,
+  };
+  const made = cookFactsFor(cook, plan, ctx, yolk, white, probe);
+  return made.facts === null ? null : recordFor(made.facts);
 }
