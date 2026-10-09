@@ -21,7 +21,7 @@ import PackageDescription
 // corrections. It imports Foundation, Observation and the libraries here, and
 // reaches what only an iPhone has - notifications, sound, the Lock Screen,
 // sharing, VoiceOver - through protocols the app fills at launch
-// (`Services`).
+// (`Services`), which the tests fill with fakes.
 let package = Package(
     name: "EggTimerCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
@@ -49,6 +49,7 @@ let package = Package(
         .target(name: "EggTimerCopy"),
         .target(name: "EggTimerShared", dependencies: ["EggTimerCopy"]),
         .target(name: "EggTimerApp", dependencies: ["EggTimerCore", "EggTimerCopy", "EggTimerShared"]),
-        .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"])
+        .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"]),
+        .testTarget(name: "EggTimerAppTests", dependencies: ["EggTimerApp", "EggTimerCore", "EggTimerCopy", "EggTimerShared"])
     ]
 )

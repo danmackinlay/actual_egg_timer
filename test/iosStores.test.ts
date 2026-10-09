@@ -4,7 +4,9 @@
  * build's mark turns read-only: a write anywhere else would go round that
  * guard. So outside Store.swift no Swift in the app, its logic, its shared
  * code or its widget sets or removes a default itself; it calls
- * `Stores.set` and `Stores.remove`.
+ * `Stores.set` and `Stores.remove`. The runtime twin is
+ * `everyWriteGoesThroughStores` in ios/EggTimerCore/Tests/EggTimerAppTests:
+ * a whole cook writes only through `Stores`, and never UserDefaults itself.
  *
  * Read from the source, comments left out: a call to UserDefaults' setters
  * (`set(_:forKey:)`, `setValue(_:forKey:)`) on anything but `Stores`, or to
