@@ -24,7 +24,7 @@ import { DecisionInputs, inputsKey, nudgeSeconds } from '../core/decide.js';
 import { EggRecord } from '../core/record.js';
 import { RunningCook, answered } from '../core/running.js';
 import { isSousVide, learning, phaseNow, state } from './state.js';
-import { Effect, Msg, update } from './model.js';
+import { EditTimer, Effect, Msg, update } from './model.js';
 import { currentInputs, wantedProfiles } from './answer.js';
 import type { Learner } from './calibration.js';
 import {
@@ -37,7 +37,7 @@ import {
   builtFor, cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
 } from './decisionGrids.js';
 import { page, selectRadio } from './dom.js';
-import { commitEdit, endEdits, startEdits } from './edit.js';
+import { showStartLimit } from './edit.js';
 import { cancelSoon, nextFrame, soon } from './idle.js';
 import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
 import { renderCalibNote, renderLearned, saveResults } from './learned.js';
@@ -80,6 +80,22 @@ const clock = {
  *  inputs settle. */
 const building = new Set<string>();
 const asking = { decisionHandle: 0, profiles: new Set<string>() };
+
+/** The timers of a correction in hand, as set (model.ts, `EditTimer`). */
+const EDIT_TIMERS: EditTimer[] = ['settle', 'preview', 'release'];
+const editTimers: Record<EditTimer, number> = { settle: 0, preview: 0, release: 0 };
+
+/** A correction's timer set for `at_ms`, real ms, or stopped: when it comes
+ *  round, a message. */
+function editTimer(timer: EditTimer, at_ms: number | null): void {
+  cancelSoon(editTimers[timer]);
+  editTimers[timer] = 0;
+  if (at_ms === null) return;
+  editTimers[timer] = soon(() => {
+    editTimers[timer] = 0;
+    dispatch({ kind: 'editTimer', timer: timer });
+  }, Math.max(0, at_ms - performance.now()));
+}
 
 /** Messages sent while one is being taken up: taken up after it, in turn,
  *  before the page is drawn. */
@@ -257,11 +273,14 @@ function perform(effects: Effect[]): void {
       case 'probeTaken':
         probeTaken(e.reading_C);
         break;
-      case 'editsStart':
-        startEdits();
+      case 'editTimer':
+        editTimer(e.timer, e.at_ms);
         break;
-      case 'editsEnd':
-        endEdits();
+      case 'editTimersOff':
+        for (const timer of EDIT_TIMERS) editTimer(timer, null);
+        break;
+      case 'startLimit':
+        showStartLimit(e.limit);
         break;
       case 'save':
         if (e.soon) saveSoon(stores.settings);
@@ -526,10 +545,6 @@ export function onPrimary(): void {
     startCookNow();
     return;
   }
-  // A correction still settling is committed first: the button acts on the
-  // cook as the controls say it is.
-  commitEdit();
-  stopAlarm();
   dispatch({ kind: 'primary' });
 }
 

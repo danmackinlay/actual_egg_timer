@@ -90,13 +90,13 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   p.land(S + 401);
   assert.deepEqual(kinds(p.go({ kind: 'tick' }, p.pull + 1)), ['persist', 'ring:pull']);
   assert.equal(p.m.pull_s, null, 'rung: no alarm left');
-  assert.deepEqual(kinds(p.go({ kind: 'primary' }, p.pull + 3)), ['persist', 'silence'], 'the egg out');
+  assert.deepEqual(kinds(p.go({ kind: 'primary' }, p.pull + 3)), ['silence', 'persist', 'silence'], 'the egg out');
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const end = p.go({ kind: 'primary' }, p.coolEnd + 10);
   assert.equal(p.m.cook, null, 'Start again at Done');
-  assert.deepEqual(kinds(end).slice(0, 5), ['rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
-  assert.deepEqual(kinds(end).slice(5), [
-    'editsEnd', 'silence', 'questionsReset', 'controlsDrawn', 'drawNudge', 'shareDrawn',
+  assert.deepEqual(kinds(end).slice(0, 6), ['silence', 'rememberBoil', 'silence', 'log', 'forget', 'sendFinal'], 'a finished egg is logged');
+  assert.deepEqual(kinds(end).slice(6), [
+    'editTimersOff', 'startLimit', 'silence', 'questionsReset', 'controlsDrawn', 'drawNudge', 'shareDrawn',
   ], 'and the page goes back to the settings, with a new nudge');
   assert.deepEqual(p.m.controls, p.m.settings, 'the controls show the settings again');
   assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');

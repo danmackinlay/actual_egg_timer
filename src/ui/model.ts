@@ -15,8 +15,9 @@
  * the language, the sound, another tab's settings, a pan measured, an egg
  * learned, everything forgotten: each a message, the page solved again after
  * it (`solve`). While a cook runs the controls are its own choices, never
- * the settings, which another tab may have changed since (DECISIONS.md 97);
- * correcting it is edit.ts's.
+ * the settings, which another tab may have changed since (DECISIONS.md 97):
+ * a change to them is a correction, held in hand until it is committed
+ * (`Edit`; the gestures are edit.ts's).
  *
  * The cook is core's `CookState` (src/core/step.ts): `update` hands it to
  * `step` with each thing that happened. What is the web's own, around it:
@@ -43,26 +44,28 @@ import type { Outcome } from '../core/outcome.js';
 import type { Solution } from '../core/solve.js';
 import type { CertaintyReading } from '../core/certainty.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
-import { EggSection, SectionView, advanceSection, createSection } from '../core/section.js';
+import { EggSection, SectionView, advanceSection, createSection, previewSection } from '../core/section.js';
 import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
 import {
-  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookStillOpen, endedAt_s, phaseAt,
-  plausibleProbeRange_C, takeUpEvents,
+  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookStillOpen, corrected, earliestStart_s,
+  endedAt_s, latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
+  takeUpEvents,
 } from '../core/running.js';
-import { calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
+import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';
-import { step } from '../core/step.js';
+import { step, surfaceFor } from '../core/step.js';
 import type { UnitSystem } from '../core/units.js';
 import { chooseUnits } from '../core/units.js';
 import type { LanguageState } from '../core/language.js';
 import { effectiveLanguage, languageAfterFlip } from '../core/language.js';
 import { PotOdds, nudgeNow, solveIdle } from './answer.js';
 import { inputsKey } from '../core/decide.js';
-import { NO_NEED, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
+import { targetPeakYolk_C } from '../core/slider.js';
+import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
 import type { KeptAnswers, Settings, StoredCook } from './store.js';
-import { REGIONAL_UNITS } from './units.js';
+import { REGION, REGIONAL_UNITS } from './units.js';
 
 export { NO_NEED } from './state.js';
 
@@ -74,6 +77,44 @@ export interface Aim {
   solution: Solution | null;
   section: SectionView | null;
 }
+
+/** A correction in hand mid-cook, and the gesture making it (design/one-
+ *  screen.md sections 3 to 5): see "A correction in hand" below. */
+export interface Edit {
+  /** The controls as last drawn from the cook, or committed: a field that
+   *  differs from this is one the cook changed. */
+  base: Settings;
+  /** Whether the controls hold a change not yet committed. */
+  pending: boolean;
+  /** The control the change in hand came from (edit.ts, `groupOf`), so
+   *  touching another commits it. */
+  group: number | null;
+  /** The controls and the start as the change in hand left them: what is
+   *  committed, without it, when another control's change comes. */
+  inHand: InHand | null;
+  /** A finger down on a control: when (real ms), on which, and whether it
+   *  is the slider. */
+  down: { at_ms: number; group: number; slider: boolean } | null;
+  /** When the last change came, real ms. */
+  changed_ms: number;
+  /** The slider moved after the pull, previewed and not corrected: it goes
+   *  back to the cook's level when the aimed-for egg goes. */
+  previewedLevel: boolean;
+  /** A plan of the aimed-for egg asked for and not yet made. */
+  previewing: boolean;
+}
+
+interface InHand {
+  controls: Settings;
+  start: number | null;
+}
+
+/** The timers of a correction in hand: the settle before it is committed,
+ *  the plan of the egg it aims for, and the aimed-for egg let go. */
+export type EditTimer = 'settle' | 'preview' | 'release';
+
+/** Where the start's − and + stopped, for the line under them. */
+export type StartLimit = { kind: 'now' | 'boil' | 'pull' | 'earliest'; at_s: number };
 
 /** What a running cook's plan last said of how sure, on its pot's
  *  surface: its outcome (null until decided), its certainty, and its pot's
@@ -137,10 +178,13 @@ export interface Model extends CookState {
   /** The controls changed since the idle page was last solved: the slider's
    *  reading is the level's own until the solve lands. */
   unsolved: boolean;
-  /** While a correction is in hand mid-cook (edit.ts), the slider's reading
-   *  for it, from a plan of the cook as it would be, and the egg it aims for
+  /** While a correction is in hand mid-cook, the slider's reading for it,
+   *  from a plan of the cook as it would be, and the egg it aims for
    *  (`previewSection`), once planned; null otherwise. */
   aim: Aim | null;
+  /** The correction in hand and its gesture, while a cook runs; null while
+   *  idle. */
+  edit: Edit | null;
   /** When the eggs went in, as the controls show it while a cook runs; null
    *  while idle. */
   controlsStart_s: number | null;
@@ -212,22 +256,25 @@ export type Msg =
   /** A probe reading typed at Done, C; null for what is not a number. */
   | { kind: 'probe'; reading_C: number | null }
   | { kind: 'restore'; stored: StoredCook }
-  /** A correction in hand, planned or let go (edit.ts); `level`, the slider
-   *  back at the cook's own after a level only previewed. */
-  | { kind: 'aim'; aim: Aim | null; level: number | null }
-  /** When the eggs went in, as the start's − and + have it (edit.ts), or as
-   *  the cook has it again. */
-  | { kind: 'startInHand'; at_s: number | null }
+  /** A finger down on a control (edit.ts, `groupOf`), or lifted; the page
+   *  hidden or gone, which commits a change still settling; a timer of the
+   *  correction in hand come round. Real ms. */
+  | { kind: 'fingerDown'; group: number; slider: boolean; real_ms: number }
+  | { kind: 'fingerUp'; real_ms: number }
+  | { kind: 'commit' }
+  | { kind: 'editTimer'; timer: EditTimer }
+  /** The start's − or +: a minute earlier or later, as far as the cook
+   *  allows. */
+  | { kind: 'startStep'; up: boolean; group: number | null; real_ms: number }
   /** The egg of the cook `id_ms` kept in the log, or not (`keepRecord`). */
   | { kind: 'kept'; id_ms: number | null; kept: boolean }
   /* The page. */
   /** Start, on the idle page: the cook the settings describe, at the time
    *  on screen, in these units and words. */
   | { kind: 'begin'; units: Units; lang: string }
-  /** The controls as the page now shows them (input.ts). */
-  | { kind: 'controls'; controls: Settings }
-  /** Fields of the settings a correction changed, for the next cook. */
-  | { kind: 'touched'; fields: Partial<Settings> }
+  /** The controls as the page now shows them (input.ts), changed on
+   *  `group` (edit.ts, `groupOf`) at `real_ms`. */
+  | { kind: 'controls'; controls: Settings; group: number | null; real_ms: number }
   | { kind: 'units'; system: UnitSystem }
   | { kind: 'language'; next: LanguageState }
   | { kind: 'mute' }
@@ -292,9 +339,12 @@ export type Effect =
   /** A probe reading refused, with the range it should be in, C; or taken. */
   | { kind: 'probeRefused'; low_C: number; high_C: number }
   | { kind: 'probeTaken'; reading_C: number }
-  /** A cook begun or ended: its correction's bookkeeping (edit.ts). */
-  | { kind: 'editsStart' }
-  | { kind: 'editsEnd' }
+  /** A timer of the correction in hand set for `at_ms` (real), or with
+   *  null, stopped; all of them stopped; the line under the start's time,
+   *  why a press went no further, or nothing. */
+  | { kind: 'editTimer'; timer: EditTimer; at_ms: number | null }
+  | { kind: 'editTimersOff' }
+  | { kind: 'startLimit'; limit: StartLimit | null }
   /** The settings written: coalesced (a drag), or now. */
   | { kind: 'save'; soon: boolean }
   /** The idle page solved again once the controls settle. */
@@ -540,6 +590,19 @@ function probeRead(m: Model, reading_C: number | null, now_s: number): [Model, E
   return [next, taken ? [...effects, { kind: 'probeTaken', reading_C: reading_C }] : effects];
 }
 
+/** The primary button, by the phase. */
+function pressed(m: Model, now_s: number): [Model, Effect[]] {
+  const phase = phaseOf(m, now_s);
+  if (phase === 'ASKING') return stepCook(m, { kind: 'stillIn', now_s: now_s }, now_s);
+  if (phase === 'HEATING') {
+    const [next, effects] = stepCook(m, { kind: 'boil', now_s: now_s }, now_s);
+    return [next, [...effects, { kind: 'blip' }]];
+  }
+  if (phase === 'PULL') return stepCook(m, { kind: 'out', now_s: now_s }, now_s);
+  if (phase === 'DONE') return stepCook(m, { kind: 'startAgain', now_s: now_s }, now_s);
+  return [m, []];
+}
+
 /** How many answers a cook's log holds. */
 function answersGiven(cook: RunningCook): number {
   return cook.log.filter((e) => e.kind === 'answered').length;
@@ -578,7 +641,7 @@ function written(m: Model, effects: Effect[]): [Model, Effect[]] {
 
 function updateAny(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
   const page = updatePage(m, msg, now_s);
-  if (page !== null) return page;
+  if (page !== null) return around(m, page[0], page[1]);
   if (msg.kind === 'before') {
     const next = withBefore(m, msg);
     return next === m ? [m, []] : updateAny(next, { kind: 'landed' }, now_s);
@@ -660,7 +723,7 @@ function copySection(s: EggSection): EggSection {
  * The controls follow a cook begun or ended. Begun: they show its own
  * choices, never the settings (review 2.5) - at the start, where they are the
  * same, and after a reload, where another tab may have changed the settings
- * since. Ended: they show the settings again (another tab may have changed
+ * since - with nothing in hand. Ended: whatever was in hand goes with it; they show the settings again (another tab may have changed
  * them meanwhile), the alarm stops, the questions start empty, a new cook
  * gets a new nudge (and the idle page is solved again with it), and the egg
  * just finished is final once it is forgotten: no answer can be added to
@@ -668,16 +731,15 @@ function copySection(s: EggSection): EggSection {
  */
 function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
   if (was.cook === null && m.cook !== null) {
-    const next: Model = {
-      ...m, controls: settingsOfChoices(m.settings, m.cook.choices, sizeClasses), controlsStart_s: m.cook.startedAt_s,
-    };
-    return [next, [...effects, { kind: 'controlsDrawn' }, { kind: 'editsStart' }]];
+    const controls = settingsOfChoices(m.settings, m.cook.choices, sizeClasses);
+    const next: Model = { ...m, controls: controls, controlsStart_s: m.cook.startedAt_s, aim: null, edit: freshEdit(controls) };
+    return [next, [...effects, { kind: 'controlsDrawn' }, { kind: 'editTimersOff' }, { kind: 'startLimit', limit: null }]];
   }
   if (was.cook !== null && m.cook === null) {
-    const next: Model = { ...m, controls: { ...m.settings }, controlsStart_s: null, aim: null };
+    const next: Model = { ...m, controls: { ...m.settings }, controlsStart_s: null, aim: null, edit: null };
     return [next, [
-      ...effects, { kind: 'editsEnd' }, { kind: 'silence' }, { kind: 'questionsReset' }, { kind: 'controlsDrawn' },
-      { kind: 'drawNudge' }, { kind: 'shareDrawn' },
+      ...effects, { kind: 'editTimersOff' }, { kind: 'startLimit', limit: null }, { kind: 'silence' },
+      { kind: 'questionsReset' }, { kind: 'controlsDrawn' }, { kind: 'drawNudge' }, { kind: 'shareDrawn' },
     ]];
   }
   return [m, effects];
@@ -752,19 +814,17 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
         kind: 'start', choices: idleChoices(at), nudge_s: nudgeNow(at), units: msg.units, lang: msg.lang,
         leanHint_s: chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s,
       }, now_s);
-      return around(m, next, [...effects, ...more]);
+      return [next, [...effects, ...more]];
     }
     case 'controls': {
       // While a cook runs the controls are its correction in hand, written
-      // to the settings when it is committed (edit.ts), not before.
-      if (m.cook !== null) return [{ ...m, controls: msg.controls }, []];
+      // to the settings when it is committed, not before.
+      if (m.cook !== null) return handChanged({ ...m, controls: msg.controls }, msg.group, msg.real_ms, now_s);
       return [
         { ...m, controls: msg.controls, settings: { ...msg.controls }, unsolved: true },
         [{ kind: 'save', soon: true }, { kind: 'solveSoon' }],
       ];
     }
-    case 'touched':
-      return [{ ...m, settings: { ...m.settings, ...msg.fields } }, [{ kind: 'save', soon: false }]];
     case 'units': {
       // The cook picks a system, stored as their choice. A cook's own switch
       // from metric to Imperial, in modern English, is also a switch into
@@ -824,8 +884,16 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       return solved(m, [{ kind: 'notesDrawn' }]);
     case 'relabelled':
       return solved(m, [{ kind: 'wordsForgotten' }, { kind: 'notesDrawn' }]);
-    case 'startInHand':
-      return [{ ...m, controlsStart_s: msg.at_s }, []];
+    case 'fingerDown':
+      return fingerDown(m, msg.group, msg.slider, msg.real_ms, now_s);
+    case 'fingerUp':
+      return fingerUp(m, msg.real_ms, now_s);
+    case 'commit':
+      return commit(m, null, now_s);
+    case 'editTimer':
+      return msg.timer === 'settle' ? commit(m, null, now_s) : msg.timer === 'preview' ? preview(m, now_s) : release(m);
+    case 'startStep':
+      return startStep(m, msg.up, msg.group, msg.real_ms, now_s);
     case 'persisted':
       return [{ ...m, works: msg.works }, []];
     case 'stores':
@@ -845,12 +913,6 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       return solved(m, [{ kind: 'shareDrawn' }]);
     case 'nudge':
       return solve({ ...m, nudgeDraw: msg.draw });
-    case 'aim': {
-      // A level the slider only previewed after the pull goes back to the
-      // cook's own as the aim goes.
-      if (msg.level === null) return [{ ...m, aim: msg.aim }, []];
-      return [{ ...m, aim: msg.aim, controls: { ...m.controls, doneness: msg.level } }, [{ kind: 'donenessDrawn' }]];
-    }
     case 'kept': {
       // The egg kept and learned from: if its cook is still on screen at
       // Done, thanked for, or, if it could not be kept, its questions put
@@ -893,15 +955,12 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       return [next, effects.filter((e) => e.kind !== 'ring')];
     }
     case 'primary': {
-      const phase = phaseOf(m, now_s);
-      if (phase === 'ASKING') return stepCook(m, { kind: 'stillIn', now_s: now_s }, now_s);
-      if (phase === 'HEATING') {
-        const [next, effects] = stepCook(m, { kind: 'boil', now_s: now_s }, now_s);
-        return [next, [...effects, { kind: 'blip' }]];
-      }
-      if (phase === 'PULL') return stepCook(m, { kind: 'out', now_s: now_s }, now_s);
-      if (phase === 'DONE') return stepCook(m, { kind: 'startAgain', now_s: now_s }, now_s);
-      return [m, []];
+      // A correction still settling is committed first: the button acts on
+      // the cook as the controls say it is. The alarm stops.
+      if (m.cook === null) return [m, []];
+      const [at, first] = commit(m, null, now_s);
+      const [next, effects] = pressed(at, now_s);
+      return [next, [...first, { kind: 'silence' }, ...effects]];
     }
     case 'cancel':
       return stepCook(m, { kind: 'startAgain', now_s: now_s }, now_s);
@@ -945,4 +1004,278 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     default:
       return [m, []];
   }
+}
+
+/* ------------------------------------------------- a correction in hand */
+
+/*
+ * Corrections mid-cook (DECISIONS.md 96 to 98; design/one-screen.md sections
+ * 3 to 5): every control on the one screen stays open after Start, and a
+ * change to one is a correction, "it was always like this" - the cook's
+ * choices replaced (core `corrected`) and the whole cook planned again from
+ * its start.
+ *
+ * A change is not committed at every step (review 2.4): each would stamp the
+ * cook, plan again, write it and the settings, and a drag through an overdue
+ * level would ring mid-drag. While the cook's finger is on a control the
+ * change is in hand: the controls and the sentence show it, and the egg in
+ * cross-section shows the egg it aims for, from a plan of the cook as it
+ * would be that stores nothing and rings nothing (`preview`). It is
+ * committed
+ *
+ * - on release, for the slider, and for a − or + held long enough to repeat;
+ * - after a tap's settle (`SETTLE_MS`, about 1.5 s, design section 5) for
+ *   anything else - a choice in a clause's panel, a − or + pressed once, a
+ *   number typed - the settle starting again with each change;
+ * - at once when another control is touched, or the primary button pressed:
+ *   the change in hand alone, as it was before the other control's, whether a
+ *   finger or the keyboard moves on (onescreen review 3);
+ * - and when the page is hidden or goes, so a reload or a closed tab inside
+ *   the settle loses nothing.
+ *
+ * Overdue is decided only on commit, by the plan of the committed cook
+ * (`correct`). The aimed-for egg stays for a settle after the last change,
+ * then the live egg comes back.
+ *
+ * A running cook's controls read its own choices (review 2.5): what they show
+ * is `controls`, drawn from the cook (`settingsOfChoices`), and a correction
+ * is the fields the cook changed on them, laid over the cook's own choices,
+ * so a field nobody touched keeps the cook's value to the bit and changing a
+ * setting back gives back the old plan exactly. The same fields are written
+ * to the settings, for the next cook (design section 7, 22).
+ */
+
+/** How long a tap's change settles before it is committed, and how long the
+ *  aimed-for egg stays after the last change, ms (design section 5). */
+const SETTLE_MS = 1500;
+/** A − or + pressed this long has begun to repeat (stepper.ts): a hold, so
+ *  it commits on release. */
+const HELD_MS = 400;
+/** How long a burst of changes waits before the aimed-for egg is planned,
+ *  ms: a plan is tens of milliseconds, too long for every pixel of a drag. */
+const PREVIEW_MS = 90;
+
+/** The settings a cook's choices are made of, and the choice each makes. */
+const FIELDS: { settings: (keyof Settings)[]; choices: (keyof CookChoices)[] }[] = [
+  { settings: ['sizeIndex', 'customMinor_mm', 'measuredBy'], choices: ['mass_kg', 'massFrom', 'sizeTable'] },
+  { settings: ['startTempMode'], choices: ['eggFrom'] },
+  { settings: ['customStart_C'], choices: ['customStart_C'] },
+  { settings: ['probe', 'room_C'], choices: ['room_C'] },
+  { settings: ['startMode'], choices: ['startMode'] },
+  { settings: ['afterBoil'], choices: ['afterBoil'] },
+  { settings: ['cooling'], choices: ['cooling'] },
+  { settings: ['waterLitres'], choices: ['waterLitres'] },
+  { settings: ['eggCount'], choices: ['eggCount'] },
+  { settings: ['altitude_m'], choices: ['altitude_m'] },
+  { settings: ['doneness'], choices: ['level'] },
+];
+
+/** Nothing in hand, on controls drawn afresh from the cook. */
+function freshEdit(controls: Settings): Edit {
+  return {
+    base: { ...controls }, pending: false, group: null, inHand: null, down: null, changed_ms: 0, previewedLevel: false,
+    previewing: false,
+  };
+}
+
+/** `m` with its correction's bookkeeping changed; nothing while idle. */
+function withEdit(m: Model, f: (e: Edit) => Partial<Edit>): Model {
+  return m.edit === null ? m : { ...m, edit: { ...m.edit, ...f(m.edit) } };
+}
+
+/**
+ * A control's value changed while a cook runs, on `group`, the controls
+ * having taken it in: the change is in hand until it is committed. Another
+ * control's change, with no finger down to have committed the one in hand
+ * first (the keyboard): that one is committed as it was, without this, which
+ * then settles in its turn. The slider's own reading at once; the plan's
+ * follows.
+ */
+function handChanged(m: Model, group: number | null, real_ms: number, now_s: number): [Model, Effect[]] {
+  if (m.cook === null || m.edit === null) return [m, []];
+  let next = m;
+  let effects: Effect[] = [];
+  const e = m.edit;
+  if (e.pending && e.group !== null && group !== null && group !== e.group) [next, effects] = commit(m, e.inHand, now_s);
+  const ed = next.edit;
+  if (ed === null) return [next, effects];
+  const level = next.controls.doneness;
+  next = {
+    ...next,
+    edit: {
+      ...ed, pending: true, group: group, inHand: { controls: { ...next.controls }, start: next.controlsStart_s },
+      changed_ms: real_ms, previewing: true,
+    },
+    aim: { level: level, peakYolk_C: targetPeakYolk_C(level), solution: null, section: next.aim?.section ?? null },
+  };
+  effects.push({ kind: 'editTimer', timer: 'release', at_ms: null });
+  if (!ed.previewing) effects.push({ kind: 'editTimer', timer: 'preview', at_ms: real_ms + PREVIEW_MS });
+  if (ed.down === null) effects.push({ kind: 'editTimer', timer: 'settle', at_ms: real_ms + SETTLE_MS });
+  return [next, effects];
+}
+
+/** The choices `controls` say, laid over the cook's own: each field the
+ *  cook changed (against `base`), and the cook's for the rest. */
+function choicesInHand(
+  cook: RunningCook, base: Settings, controls: Settings,
+): { choices: CookChoices; touched: (keyof Settings)[] } {
+  const now = choicesOf(controls, REGION);
+  const next: CookChoices = { ...cook.choices };
+  const into = next as unknown as Record<string, unknown>;
+  const touched: (keyof Settings)[] = [];
+  for (const f of FIELDS) {
+    if (f.settings.every((k) => controls[k] === base[k])) continue;
+    touched.push(...f.settings);
+    for (const c of f.choices) into[c] = now[c];
+  }
+  return { choices: next, touched: touched };
+}
+
+/** The cook as the change in hand would make it, for its preview: a
+ *  correction; but after the pull a new level only previews (DECISIONS.md
+ *  98), the egg that level aims for in this pot, so it is planned as if not
+ *  yet pulled. */
+function cookInHand(cook: RunningCook, choices: CookChoices, start: number | null, now_s: number): RunningCook {
+  if (start !== null && start !== cook.startedAt_s) cook = startCorrected(cook, start, now_s) ?? cook;
+  if (cook.events.pulled !== null && choices.level !== cook.choices.level) return levelPreview(cook, choices);
+  return corrected(cook, choices, now_s);
+}
+
+/** The egg the change in hand aims for, and the slider's reading for it:
+ *  planned, held on the drawing, stored nowhere. */
+function preview(m: Model, now_s: number): [Model, Effect[]] {
+  const at = withEdit(m, () => ({ previewing: false }));
+  const e = at.edit;
+  const cook = at.cook;
+  if (cook === null || e === null || !(e.pending || e.down !== null)) return [at, []];
+  const hand = cookInHand(cook, choicesInHand(cook, e.base, at.controls).choices, at.controlsStart_s, now_s);
+  const plan = replan(hand, at.calib, surfaceFor(at.surfaces, at.plan?.inputs ?? null), at.leanHint_s, now_s);
+  const pulled = hand.events.pulled;
+  const params = pulled !== null && at.plan !== null
+    ? asRanShown(cook, at.plan)?.params ?? calibrationParams(at.calib)
+    : calibrationParams(at.calib);
+  const time_s = pulled === null ? plan.cookTime_s : pulled.out_s - hand.startedAt_s;
+  const white = calibrationDoneness(at.calib, plan.answer.level).whiteDose_min;
+  return [{
+    ...at, aim: {
+      level: plan.answer.level, peakYolk_C: plan.solution.result.peakYolk_C, solution: plan.solution,
+      section: previewSection(plan.egg, plan.setup, params, time_s, white),
+    },
+  }, []];
+}
+
+/**
+ * Commit the change in hand: the cook corrected (`correct`), and the fields
+ * it changed written to the settings for the next cook. After the pull the
+ * level is not corrected (DECISIONS.md 98): the slider only previewed, and
+ * goes back to the level the egg was pulled at; nothing is written for it.
+ * The aimed-for egg stays until a settle after the last change. `upTo`, the
+ * controls as the change in hand left them, commits that change alone when
+ * another control's has already come (the keyboard), so two changes are two
+ * commits however they are made.
+ */
+function commit(m: Model, upTo: InHand | null, now_s: number): [Model, Effect[]] {
+  const e = m.edit;
+  const cook = m.cook;
+  if (e === null || !e.pending || cook === null) return [m, []];
+  const effects: Effect[] = [{ kind: 'editTimer', timer: 'settle', at_ms: null }];
+  const controls = upTo === null ? m.controls : upTo.controls;
+  const startInHand = upTo === null ? m.controlsStart_s : upTo.start;
+  let { choices, touched } = choicesInHand(cook, e.base, controls);
+  const base = { ...controls };
+  let previewedLevel = e.previewedLevel;
+  if (cook.events.pulled !== null && choices.level !== cook.choices.level) {
+    choices = { ...choices, level: cook.choices.level };
+    touched = touched.filter((k) => k !== 'doneness');
+    base.doneness = e.base.doneness;
+    previewedLevel = true;
+  }
+  let next: Model = { ...m, edit: { ...e, pending: false, group: null, inHand: null, base: base, previewedLevel: previewedLevel } };
+  const start = startInHand !== null && startInHand !== cook.startedAt_s ? startInHand : null;
+  if (start !== null || !sameChoices(choices, cook.choices)) {
+    const [after, more] = updateCook(next, { kind: 'correct', choices: choices, startedAt_s: start }, now_s);
+    next = after;
+    effects.push(...more);
+  }
+  // The start as the cook now has it: a correction refused leaves the cook's.
+  // Unless the change come since is the start's own.
+  if (upTo === null || m.controlsStart_s === upTo.start) {
+    next = { ...next, controlsStart_s: next.cook === null ? null : next.cook.startedAt_s };
+  }
+  if (touched.length > 0) {
+    const fields: Record<string, unknown> = {};
+    for (const k of touched) fields[k] = controls[k];
+    next = { ...next, settings: { ...next.settings, ...(fields as Partial<Settings>) } };
+    effects.push({ kind: 'save', soon: false });
+  }
+  // The aimed-for egg goes a settle after the last change.
+  effects.push({ kind: 'editTimer', timer: 'release', at_ms: e.changed_ms + SETTLE_MS });
+  return [next, effects];
+}
+
+/** The aimed-for egg let go, unless a finger is down or another change is
+ *  in hand by then; and a level the slider only previewed after the pull
+ *  back at the cook's. */
+function release(m: Model): [Model, Effect[]] {
+  const e = m.edit;
+  if (e === null || e.pending || e.down !== null) return [m, []];
+  if (!e.previewedLevel) return [m.aim === null ? m : { ...m, aim: null }, []];
+  const next: Model = { ...m, aim: null, edit: { ...e, previewedLevel: false }, controls: { ...m.controls, doneness: e.base.doneness } };
+  return [next, [{ kind: 'donenessDrawn' }]];
+}
+
+/** A finger down on a control: another than the one with a change in hand
+ *  commits it; the gesture begins. */
+function fingerDown(m: Model, group: number, slider: boolean, real_ms: number, now_s: number): [Model, Effect[]] {
+  const e = m.edit;
+  if (m.cook === null || e === null) return [m, []];
+  const [next, effects] = e.pending && group !== e.group ? commit(m, null, now_s) : [m, []];
+  return [withEdit(next, () => ({ down: { at_ms: real_ms, group: group, slider: slider } })), effects];
+}
+
+/** The finger lifts: a drag of the slider, or a − or + held, commits now;
+ *  a tap settles first. */
+function fingerUp(m: Model, real_ms: number, now_s: number): [Model, Effect[]] {
+  const e = m.edit;
+  if (e === null) return [m, []];
+  const next = withEdit(m, () => ({ down: null }));
+  const down = e.down;
+  if (down === null || !e.pending) return [next, []];
+  if (down.slider || real_ms - down.at_ms >= HELD_MS) return commit(next, null, now_s);
+  return [next, [{ kind: 'editTimer', timer: 'settle', at_ms: real_ms + SETTLE_MS }]];
+}
+
+/** Which of the cook's limits `latest` is: the boil pressed, the pull, or
+ *  now (`latestStart_s`). */
+function latestLimit(cook: RunningCook, latest: number): StartLimit['kind'] {
+  const e = cook.events;
+  if (e.boilAt_s !== null && e.boilAt_s === latest) return 'boil';
+  if ((e.pulled !== null && e.pulled.due_s === latest) || (e.cooledAt_s !== null && e.cooledAt_s === latest)) return 'pull';
+  return 'now';
+}
+
+/** The start a minute earlier or later, as far as the cook allows (core
+ *  `earliestStart_s`, `latestStart_s`), and the line under it says why a
+ *  press went no further: a correction in hand like any other, and
+ *  committed the same way. */
+function startStep(m: Model, up: boolean, group: number | null, real_ms: number, now_s: number): [Model, Effect[]] {
+  const cook = m.cook;
+  const from = m.controlsStart_s;
+  if (cook === null || m.edit === null || from === null) return [m, []];
+  const earliest = earliestStart_s(cook);
+  const latest = latestStart_s(cook, now_s);
+  let next = from + (up ? 60 : -60);
+  let limit: StartLimit | null = null;
+  if (next >= latest) {
+    next = latest;
+    limit = { kind: latestLimit(cook, latest), at_s: latest };
+  }
+  if (next <= earliest) {
+    next = earliest;
+    limit = { kind: 'earliest', at_s: earliest };
+  }
+  const effects: Effect[] = [{ kind: 'startLimit', limit: limit }];
+  if (next === from) return [m, effects];
+  const [after, more] = handChanged({ ...m, controlsStart_s: next }, group, real_ms, now_s);
+  return [after, [...effects, ...more]];
 }

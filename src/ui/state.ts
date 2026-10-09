@@ -58,6 +58,7 @@ export function emptyModel(): Model {
     profile: null,
     unsolved: false,
     aim: null,
+    edit: null,
     controlsStart_s: null,
     nudgeDraw: 0,
     held: null,

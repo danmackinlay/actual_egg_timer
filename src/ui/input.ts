@@ -14,7 +14,7 @@ import { DEFAULTS } from '../core/inputs.js';
 import { LANGUAGES, languageAfterPick } from '../core/language.js';
 import { labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
-import { cookControlsChanged } from './edit.js';
+import { groupOf } from './edit.js';
 import { send } from './send.js';
 import { state } from './state.js';
 import { LIMITS, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber } from './store.js';
@@ -136,8 +136,7 @@ export function onInput(event: Event): void {
     }
     return;
   }
-  send({ kind: 'controls', controls: readInputs(target) });
+  // While a cook runs, a correction in hand on the control it came from.
+  send({ kind: 'controls', controls: readInputs(target), group: groupOf(target), real_ms: performance.now() });
   echoInputs(target);
-  // A running cook is corrected, in time (edit.ts).
-  if (state.cook !== null) cookControlsChanged(target);
 }
