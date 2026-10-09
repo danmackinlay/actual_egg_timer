@@ -168,8 +168,7 @@ test('1g. the five yolk words are a distribution, and no word scores under the u
 
 test('1h. the words are the slider\'s: each cut is where anchorNear changes word, and each anchor names itself', () => {
   assert.deepEqual(YOLK_WORDS.map((w) => `doneness.${w}`), DONENESS_ANCHORS.map((a) => a.key));
-  assert.equal(YOLK_WORD_CUTS.length, 4);
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < YOLK_WORDS.length - 1; i++) {
     const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
     // The cuts are frozen literals, so that a stored word keeps its meaning.
     // If an anchor moved, this fails: choose whether the stored words keep

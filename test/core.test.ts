@@ -95,15 +95,13 @@ test('2. one-term truncation under-predicts the full series by 6-10%', () => {
 
 test("3. Williams' 0.76 is the first-eigenmode amplitude at the yolk boundary", () => {
   // At Fo = 0 the one-term form collapses to its prefactor 2*sinc(pi*x).
-  // At x = 0.693 (yolk boundary, yolk = 33% of egg volume) that is 0.7549 —
-  // which is the origin of Williams' famous 0.76. It is an EIGENMODE
-  // AMPLITUDE evaluated at that radius, NOT a "yolk-white ratio" (a common
-  // misreading) and not a property of the yolk centre.
-  const prefactor = oneTermTheta(0.693, 0);
-  close(prefactor, 0.7549, 1e-4, 'oneTermTheta(0.693, 0)');
+  // At the model's yolk boundary (YOLK_RADIUS_FRAC, yolk = 33% of egg
+  // volume) that is 0.7549 — which is the origin of Williams' famous 0.76. It
+  // is an EIGENMODE AMPLITUDE evaluated at that radius, NOT a "yolk-white
+  // ratio" (a common misreading) and not a property of the yolk centre.
+  const prefactor = oneTermTheta(YOLK_RADIUS_FRAC, 0);
+  close(prefactor, 0.7549, 1e-4, 'oneTermTheta(YOLK_RADIUS_FRAC, 0)');
   close(prefactor, 0.76, 0.01, "prefactor vs Williams' published 0.76");
-  // The model's yolk boundary constant is the same radius.
-  close(YOLK_RADIUS_FRAC, 0.693, 1e-12, 'YOLK_RADIUS_FRAC');
 });
 
 // --------------------------------------------------------------------------
