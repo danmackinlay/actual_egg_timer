@@ -283,6 +283,16 @@ public struct RunningCook: Sendable, Equatable {
             "correctedAt_s": correctedAtS ?? NSNull(), "asRan": asRan?.jsonObject ?? NSNull(),
         ]
     }
+
+    /// The cook as it is stored (`storedCook`): what was fixed at the press,
+    /// the start and the log, and no more, since the rest is the log folded.
+    var storedObject: [String: Any] {
+        [
+            "id_ms": idMs, "nudge_s": nudgeS, "boilMemory": boilMemory, "units": units.rawValue, "lang": lang,
+            "start": ["at_s": start.atS, "choices": start.choices.jsonObject] as [String: Any],
+            "log": log.map(\.jsonObject),
+        ]
+    }
 }
 
 // MARK: - The phases and deadlines
@@ -990,6 +1000,64 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
         lang: lang, log: log
     )
     return foldInOrder(cook) ? cook : nil
+}
+
+// MARK: - The cook as stored
+
+/// Whether the egg had been written down with an answer when the cook was
+/// stored. See `KeptAnswers` in `src/core/running.ts`.
+public enum KeptAnswers: String, Sendable {
+    case unanswered = "none"
+    case beforeReload
+}
+
+/// A cook in progress as both apps store it (`StoreRegistry.cook`): the cook,
+/// whether its egg was answered, and the lean last decided. Written by
+/// JSONEncoder and read by JSONDecoder, to the bit, through `JSONValue`, and
+/// read whole by `readStoredCook`.
+public struct StoredCook: Sendable, Equatable {
+    public let cook: RunningCook
+    public let answers: KeptAnswers
+    public let leanHintS: Double
+
+    public init(cook: RunningCook, answers: KeptAnswers, leanHintS: Double) {
+        self.cook = cook
+        self.answers = answers
+        self.leanHintS = leanHintS
+    }
+
+    /// As both apps store it, for JSONSerialization. See `storedCook`.
+    public var jsonObject: [String: Any] {
+        stamped(StoreRegistry.cook, [
+            "cook": cook.storedObject, "answers": answers.rawValue, "leanHint_s": leanHintS,
+        ])
+    }
+}
+
+/// A stored cook read back, parsed JSON: whole, or nil. See `readStoredCook`
+/// in `src/core/running.ts`.
+public func readStoredCook(_ raw: Any?) -> StoredCook? {
+    guard let o = inFormat(StoreRegistry.cook, raw),
+          let cook = readRunningCook(o["cook"]),
+          let answers = (o["answers"] as? String).flatMap(KeptAnswers.init(rawValue:)),
+          let hint = finite(o["leanHint_s"]) else { return nil }
+    return StoredCook(cook: cook, answers: answers, leanHintS: hint)
+}
+
+extension StoredCook: Codable {
+    public init(from decoder: Decoder) throws {
+        let value = try JSONValue(from: decoder)
+        guard let stored = readStoredCook(value.any) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "not a stored cook")
+            )
+        }
+        self = stored
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try JSONValue(jsonObject).encode(to: encoder)
+    }
 }
 
 // MARK: - Stored to the bit

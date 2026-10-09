@@ -47,6 +47,7 @@ import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, lowOdd
 import { CertaintyReading, certaintyAt } from './certainty.js';
 import { predictOutcome } from './outcome.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from './infer.js';
+import { STORES, inFormat, stamped } from './stores.js';
 import {
   AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationDoneness,
   calibrationParams, forecastOf, parseForecast,
@@ -182,11 +183,11 @@ export type CookEntry =
 
 /**
  * A running cook. What is stored is what was fixed at the press (the id, the
- * nudge, the pans, the units and language), the start and the log; the rest
- * is the log folded, kept beside it so a plan need not fold it again, and
- * written down with it for whoever reads a store by eye, but never read back:
- * `readRunningCook` folds the log afresh. Only core makes one (`startCook`,
- * `appendEntry` and the moves over it).
+ * nudge, the pans, the units and language), the start and the log
+ * (`storedCook`); the rest is the log folded, kept beside it so a plan need
+ * not fold it again, and folded afresh from a stored cook
+ * (`readRunningCook`). Only core makes one (`startCook`, `appendEntry` and
+ * the moves over it).
  */
 export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
@@ -1030,11 +1031,10 @@ function foldInOrder(cook: RunningCook): boolean {
 
 /**
  * A stored cook, read defensively: whole, or null. What was fixed at the
- * press, the start and the log are read, and the log folded again; the cook
- * as it stood when written is not read. A cook is what the calibration learns
- * from and what the alarms ring for, so a shape this build cannot read is
- * reported, not guessed at or patched from the controls; the app drops it.
- * Extra fields are ignored.
+ * press, the start and the log are read, and the log folded again. A cook is
+ * what the calibration learns from and what the alarms ring for, so a shape
+ * this build cannot read is reported, not guessed at or patched from the
+ * controls; the app drops it. Extra fields are ignored.
  */
 export function readRunningCook(raw: unknown): RunningCook | null {
   if (!isObject(raw)) return null;
@@ -1063,6 +1063,47 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   }
   const cook = foldCook(id, { at_s: at, choices: choices }, nudge, memory, units, lang, log);
   return foldInOrder(cook) ? cook : null;
+}
+
+/** Whether the egg had been written down with an answer when the cook was
+ *  stored: a cook stored as answered is read back as answered, so its egg
+ *  is never logged a second time. */
+export type KeptAnswers = 'none' | 'beforeReload';
+
+/** A cook in progress as both apps store it (`STORES.cook`), so a reload or
+ *  a relaunch does not lose the egg: the cook, whether its egg was answered,
+ *  and the lean last decided, the interim while its surface is rebuilt. */
+export interface StoredCook {
+  cook: RunningCook;
+  answers: KeptAnswers;
+  leanHint_s: number;
+}
+
+/** A stored cook as it is written: the cook's id, nudge, pans, units,
+ *  language, start and log, and no more, since the rest is the log folded. */
+export function storedCook(s: StoredCook): Record<string, unknown> {
+  const c = s.cook;
+  return stamped(STORES.cook, {
+    cook: {
+      id_ms: c.id_ms, nudge_s: c.nudge_s, boilMemory: c.boilMemory, units: c.units, lang: c.lang, start: c.start,
+      log: c.log,
+    },
+    answers: s.answers,
+    leanHint_s: s.leanHint_s,
+  });
+}
+
+/** A stored cook read back, parsed JSON: whole, or null for one in another
+ *  format, one whose cook does not read (`readRunningCook`), and one without
+ *  a known `answers`, which read as unanswered would log its egg twice. */
+export function readStoredCook(raw: unknown): StoredCook | null {
+  const o = inFormat(STORES.cook, raw);
+  if (o === null) return null;
+  const cook = readRunningCook(o['cook']);
+  const answers = o['answers'];
+  const hint = o['leanHint_s'];
+  if (cook === null || (answers !== 'none' && answers !== 'beforeReload') || !isNumber(hint)) return null;
+  return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
 /* ---------------------------------------------------------------- the plan */

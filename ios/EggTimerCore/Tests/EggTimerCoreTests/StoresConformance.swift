@@ -31,6 +31,33 @@ struct StoresConformance {
         }
     }
 
+    /// The text as it lies in storage, through JSONDecoder, as the app reads
+    /// it (`Cook`): what reads, and nothing else.
+    @Test("a running cook's store, as text, reads as the reference reads it")
+    func cooks() throws {
+        for c in try Fixtures.list("stores.json", "cooks") {
+            let about = try c.str("about")
+            let read = try? JSONDecoder().decode(StoredCook.self, from: Data(c.str("text").utf8))
+            if let want = c["read"] as? [String: Any] {
+                let got = try #require(read, "\(about): refused")
+                #expect(sameJSON(got.jsonObject, want, relative: conformanceTolerance), "\(about)")
+            } else {
+                #expect(read == nil, "\(about): read")
+            }
+        }
+    }
+
+    @Test("a stored cook written by JSONEncoder reads back the same cook, to the bit")
+    func cooksRoundTrip() throws {
+        for c in try Fixtures.list("stores.json", "cooks") {
+            guard let read = try? JSONDecoder().decode(StoredCook.self, from: Data(c.str("text").utf8)) else { continue }
+            let about = try c.str("about")
+            let back = try JSONDecoder().decode(StoredCook.self, from: JSONEncoder().encode(read))
+            #expect(back == read, "\(about)")
+            #expect(back.cook.events == read.cook.events)
+        }
+    }
+
     @Test("what is stamped reads back in its format")
     func stampedReadsBack() throws {
         let data = try JSONSerialization.data(withJSONObject: stamped(StoreRegistry.cook, ["answers": "none"]))

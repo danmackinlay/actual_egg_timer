@@ -118,6 +118,8 @@ const NOT_COPY: Record<string, string> = {
   'cookInProgress.v3': 'UserDefaults key',
   'cookInProgress.v4': 'UserDefaults key',
   leanHint_s: 'stored cook field name',
+  answers: 'stored cook field name: whether its egg was answered',
+  none: 'stored cook field value: its egg not answered',
   v: 'a store\'s format, written inside it (src/core/stores.ts)',
   log: 'stored cook field name: its log',
   kind: 'stored cook field name: a log entry\'s kind',
@@ -131,6 +133,7 @@ const NOT_COPY: Record<string, string> = {
   logged: 'stored cook log entry kind',
   ended: 'stored cook log entry kind',
   'not a running cook': 'decoding error, never shown',
+  'not a stored cook': 'decoding error, never shown',
   // what a step asks the app to do (Step.swift, `CookEffect.kind`): names
   // for the tests, never shown
   persist: 'effect kind',
