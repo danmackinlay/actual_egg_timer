@@ -1,5 +1,5 @@
 /**
- * The calibration's store: what is kept (`Kept`), its format in storage (v4),
+ * The calibration's store: what is kept (`Kept`), its format in storage (v5),
  * reading it apart and writing it. What to keep of a store is core's
  * (`loadDecision`, src/core/record.ts); the state that holds what is kept, and
  * folds it, is calibration.ts.
@@ -18,9 +18,10 @@ import {
 import { activePopulation } from './population.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
-/** The posterior, the base under it, and the log. v4: a particle of six
- *  numbers, and records of today's shape only. */
-const KEY = 'aet.calibration.v4';
+/** The posterior, the base under it, and the log: a particle of six numbers,
+ *  and records of today's shape only. v5: the log started fresh in 0.5, and
+ *  0.3's v4 is never read (DECISIONS.md 107). */
+const KEY = 'aet.calibration.v5';
 
 /** Every store before this one, deleted rather than read: the v1 and v2
  *  posteriors, which have no log behind them (v2 is what the live site of 19
@@ -75,8 +76,8 @@ interface StoredPosterior {
   rng: number;
 }
 
-interface StoredV4 {
-  v: 4;
+interface StoredV5 {
+  v: 5;
   /** The population the posterior was drawn from. */
   p: string;
   /** The `MODEL_ID` the posterior was folded under. */
@@ -157,8 +158,8 @@ function readPosterior(raw: unknown): Calibration | null {
 }
 
 export function encodeKept(k: Kept, pop: Population = activePopulation(), model = MODEL_ID): string {
-  const stored: StoredV4 = {
-    v: 4,
+  const stored: StoredV5 = {
+    v: 5,
     p: pop.id,
     m: model,
     base: k.base === null ? null : storedPosterior(k.base),
@@ -213,8 +214,8 @@ export function decodeKept(
 
 function decodeParts(raw: string | null, pop: Population, model: string): Decoded {
   const obj = parseJSON(raw);
-  const readable = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 4;
-  const s = (readable ? obj : {}) as Partial<Record<keyof StoredV4, unknown>>;
+  const readable = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 5;
+  const s = (readable ? obj : {}) as Partial<Record<keyof StoredV5, unknown>>;
   // A base the store leaves out is read as a damaged one; this app always
   // writes one, null when there is none.
   const base = readable && s.base !== null ? readPosterior(s.base) : null;

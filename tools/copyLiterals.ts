@@ -94,6 +94,7 @@ const NOT_COPY: Record<string, string> = {
   cooled_s: 'record field name',
   // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
+  'calibration.v5': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
   // the running cook as stored (Cook.swift; design/one-screen.md section 4)

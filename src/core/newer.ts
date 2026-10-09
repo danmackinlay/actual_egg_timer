@@ -4,7 +4,7 @@
  * An older build can damage what a newer one stored: it writes the settings,
  * the pans, the sharing state, the cook in progress and the store around the
  * log whole, from the fields it knows, and drops what the newer one added
- * (ios/RELEASING.md, "Never roll back"). So each app keeps one mark, the
+ * (ios/RELEASING.md, "Rolling back"). So each app keeps one mark, the
  * newest version that has run on it, and a build that finds a newer version
  * there writes nothing for the rest of the session: it times the egg and
  * leaves the stores alone, until the newer build is back.

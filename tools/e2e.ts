@@ -1680,15 +1680,15 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.eval(`localStorage.setItem('aet.cook.v4', '{"cook":{"id_ms":1},"answers":"none"}');
-        localStorage.setItem('aet.calibration.v4', '{damaged')`);
+        localStorage.setItem('aet.calibration.v5', '{damaged')`);
       await tab.reload();
       await tab.settle();
       const s = await tab.snap();
       check(s.phase === 'IDLE' && s.stored === null, 'idle, the cook dropped');
       check(s.log.length === 0, 'no egg');
-      const text = await tab.storage('aet.calibration.v4');
+      const text = await tab.storage('aet.calibration.v5');
       const store = text === null ? null : JSON.parse(text) as { v: number; log: unknown[] };
-      check(store !== null && store.v === 4 && store.log.length === 0, `the log written again, empty: ${text?.slice(0, 40)}`);
+      check(store !== null && store.v === 5 && store.log.length === 0, `the log written again, empty: ${text?.slice(0, 40)}`);
       const keys = await tab.eval<string[]>('Object.keys(localStorage).sort()');
       check(!keys.some((k) => k.endsWith('.unread')), `nothing kept aside: ${keys.join(', ')}`);
       return `dropped; ${keys.join(', ')}`;

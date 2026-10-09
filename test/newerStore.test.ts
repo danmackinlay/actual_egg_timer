@@ -49,7 +49,8 @@ function newerStores(): Map<string, string> {
     ['aet.cook.v2', JSON.stringify({ machine: { phase: 'COOKING' }, ticket: null, answers: 'none' })],
     ['aet.cook.unread', JSON.stringify(['a cook kept aside'])],
     ['aet.calibration.v4.unread', JSON.stringify(['a store kept aside'])],
-    ['aet.calibration.v4', JSON.stringify({ v: 9, whatever: 'a later store' })],
+    ['aet.calibration.v5', JSON.stringify({ v: 9, whatever: 'a later store' })],
+    ['aet.calibration.v4', JSON.stringify({ v: 4, log: [] })],
     ['aet.calibration', 'a key this build would tidy away'],
     // Sharing off, with a deletion still to ask for, which this build would
     // send at once if it could.

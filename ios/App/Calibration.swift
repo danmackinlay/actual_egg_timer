@@ -50,9 +50,10 @@ struct ResultsExport: Transferable {
 }
 
 enum Calibrations {
-    /// The posterior, the base under it, and the log. v4: a particle of six
-    /// numbers, and records of today's shape only.
-    private static let key = "calibration.v4"
+    /// The posterior, the base under it, and the log: a particle of six
+    /// numbers, and records of today's shape only. v5: the log started fresh
+    /// in 0.5, and 0.3's v4 is never read (DECISIONS.md 107).
+    private static let key = "calibration.v5"
 
     /// Carried on every record: the web app deploys on push and this one ships
     /// when a build does, and the fit has to know which version said what -
@@ -108,8 +109,8 @@ enum Calibrations {
         var w: [Double]
     }
 
-    private struct StoredV4: Encodable {
-        var v = 4
+    private struct StoredV5: Encodable {
+        var v = 5
         /// The population the posterior was drawn from.
         var p: String
         /// The `modelID` the posterior was folded under.
@@ -120,7 +121,7 @@ enum Calibrations {
         var log: [EggRecord]
     }
 
-    /// The parts of a stored v4 read one at a time, so a damaged part is refused
+    /// The parts of a stored v5 read one at a time, so a damaged part is refused
     /// on its own instead of taking the rest down with it. The log is read by
     /// `StoredLog`, separately, for the same reason.
     private struct StoredParts: Decodable {
@@ -194,7 +195,7 @@ enum Calibrations {
     }
 
     static func save(_ k: Kept) {
-        let data = try? JSONEncoder().encode(StoredV4(
+        let data = try? JSONEncoder().encode(StoredV5(
             p: population.id, base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded, log: k.log))
         if let data {
             Stores.set(data, forKey: key)
@@ -227,7 +228,7 @@ enum Calibrations {
 
     private static func decode(_ v4: Data?) -> (Kept, path: LoadPath) {
         let decoder = JSONDecoder()
-        let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }.flatMap { $0.v == 4 ? $0 : nil }
+        let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }.flatMap { $0.v == 5 ? $0 : nil }
         let base = calibration(parts?.base)
         let cal = calibration(parts?.cal)
         // A base the store leaves out is none: this app leaves it out when
