@@ -11,9 +11,8 @@ import { readFileSync } from 'node:fs';
 
 import { LITERATURE_POPULATION, Population, createPrior } from '../src/core/infer.js';
 import { parsePopulation, priorStart } from '../src/core/population.js';
-import { calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.js';
+import { CALIBRATION_SEED, calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider } from '../src/core/solve.js';
-import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { recordAt } from '../tools/common.js';
 

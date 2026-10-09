@@ -31,7 +31,7 @@
  * need more is left that much quieter.
  */
 
-import { AlarmMoment, AlarmSound, alarmPeriod_s } from '../core/policy.js';
+import { AlarmMoment, AlarmSound, alarmPeriod_s } from '../core/sounds.js';
 
 /** The hen's recordings, relative to the page (and to `assets/` in the
  *  repository for `npm run sounds`). */
@@ -39,6 +39,22 @@ export const RECORDINGS: Record<AlarmMoment, string> = {
   pull: 'assets/sounds/hen-alarm.mp3',
   cooled: 'assets/sounds/hen-song.mp3',
 };
+
+/* -------------------------------------------------------- the iOS files */
+
+/* How long the files `npm run sounds` renders for iOS are: an iPhone fact,
+ * so not core's. The app plays what is rendered and never computes this. */
+
+/** iOS plays the default sound instead of a notification sound this long or
+ *  longer, s (UNNotificationSound). */
+export const NOTIFICATION_SOUND_MAX_S = 30;
+
+/** How many periods the iOS notification's sound holds: whole periods only,
+ *  so the in-app ring can loop the same file, and with a second to spare
+ *  under `NOTIFICATION_SOUND_MAX_S`. */
+export function notificationRepeats(sound: AlarmSound, moment: AlarmMoment): number {
+  return Math.floor((NOTIFICATION_SOUND_MAX_S - 1) / alarmPeriod_s(sound, moment));
+}
 
 /** The highest a levelled sample may reach: -1 dBFS. */
 export const PEAK = 0.891;

@@ -11,7 +11,8 @@ import assert from 'node:assert/strict';
 
 import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
-import { EggRecord } from '../src/core/record.js';
+import { EggRecord, MODEL_ID, parseRecord } from '../src/core/record.js';
+import { readFitRecord } from '../tools/eggsImport.js';
 import { recordAt } from '../tools/common.js';
 import { SYNTH, makeAssertion } from './attest.js';
 
@@ -239,4 +240,19 @@ test('7. the yolk the cook got (DECISIONS.md 92) is kept, and capped like everyt
   };
   assert.ok(JSON.stringify(longest).length < MAX_RECORD_BYTES * 0.75, `${JSON.stringify(longest).length} bytes`);
   assert.equal((await send(store, post('/api/eggs', { seq: 3, record: longest }))).status, 201);
+});
+
+test('8. the model a record names is its provenance: any is kept as sent, and the fit reads it back', async () => {
+  // The store's likelihood id stays on the device and is never sent, so a
+  // new one changes nothing here; a new MODEL_ID is a new name on new
+  // records, and those already kept under the older names still read.
+  const store = new MemoryStore();
+  const models = ['2026-10-e6', '2026-10-e8', '2026-10-e9', MODEL_ID, 'a-later-model'];
+  for (let seq = 0; seq < models.length; seq++) {
+    const sent = egg(UID, { model: models[seq] });
+    assert.equal((await send(store, post('/api/eggs', { seq: seq, record: sent }))).status, 201, models[seq]);
+    const kept = JSON.parse(store.blobs.get(recordKey('open', UID, seq)) ?? 'null') as unknown;
+    assert.equal(parseRecord(kept)?.model, models[seq], `${models[seq]}: the loader reads it`);
+    assert.equal(readFitRecord(kept)?.model, models[seq], `${models[seq]}: the fit reads it`);
+  }
 });

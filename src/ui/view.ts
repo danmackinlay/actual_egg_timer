@@ -15,11 +15,12 @@
 import { CertaintyReading, WordCertainty } from '../core/certainty.js';
 import { midSentence } from '../core/copy.js';
 import { Egg } from '../core/geometry.js';
-import { Phase, anchorNear, targetPeakYolk_C, textureFor, textureNoteKeys } from '../core/policy.js';
+import { anchorNear, targetPeakYolk_C } from '../core/slider.js';
+import { textureFor, textureNoteKeys } from '../core/texture.js';
 import { CookSetup } from '../core/protocol.js';
 import type { Outcome } from '../core/outcome.js';
 import { OddsProfile } from '../core/reach.js';
-import { CookPlan, RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
+import { CookPlan, Phase, RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
 import { SectionView, previewSection, sectionView } from '../core/section.js';
 import { ModelParams, Solution } from '../core/solve.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';

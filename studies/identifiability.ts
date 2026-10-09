@@ -31,7 +31,7 @@ import {
   Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, T_ICE_BATH_C,
 } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/policy.js';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
 
 /* ------------------------------------------------------- Robin eigenmodes */
 

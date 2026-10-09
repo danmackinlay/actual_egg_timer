@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { parseCatalogue } from '../src/core/copy.js';
-import { targetPeakYolk_C } from '../src/core/policy.js';
+import { targetPeakYolk_C } from '../src/core/slider.js';
 import { CookSurface } from '../src/core/running.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
 import { formatClock } from '../src/ui/countdown.js';

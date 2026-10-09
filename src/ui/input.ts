@@ -9,7 +9,8 @@
 import { eggFromMass } from '../core/geometry.js';
 import { Cooling } from '../core/protocol.js';
 import { Quantity, parse } from '../core/units.js';
-import { ALARM_SOUNDS, DEFAULTS, readAlarmSound } from '../core/policy.js';
+import { ALARM_SOUNDS, readAlarmSound } from '../core/sounds.js';
+import { DEFAULTS } from '../core/inputs.js';
 import { LANGUAGES, languageAfterPick } from '../core/language.js';
 import { labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';

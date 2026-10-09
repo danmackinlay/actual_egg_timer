@@ -3,7 +3,7 @@
  * measured time to boil - and the way to take it back (Settings).
  */
 
-import { BoilMemory } from '../core/policy.js';
+import { BoilMemory } from '../core/boil.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import { showInfo } from './info.js';

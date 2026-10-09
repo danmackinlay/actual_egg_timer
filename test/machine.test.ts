@@ -19,10 +19,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { PULL_GRACE_SECONDS, Phase, phaseAt } from '../src/core/policy.js';
 import { Cooling, StartMode } from '../src/core/protocol.js';
 import {
-  CookChoices, CookPlan, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil, withOut, writeEvents,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, Phase, RunningCook, eventsDue, guessLengthened, phaseAt, replan,
+  startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { coolingStartsIn_s } from '../src/ui/phaseView.js';
 import { knowing } from '../tools/common.js';

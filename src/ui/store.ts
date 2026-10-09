@@ -4,7 +4,7 @@
  * Everything here must survive localStorage being absent, disabled, full, or
  * throwing (Safari private mode throws on setItem).
  *
- * The BOUNDS and the DEFAULTS are core policy (`src/core/policy.ts`), so the
+ * The BOUNDS and the DEFAULTS are core's (`src/core/inputs.ts`), so the
  * two apps share one set. This module applies them; it does not decide them.
  */
 
@@ -12,15 +12,15 @@ import { SizeClass } from '../core/geometry.js';
 import { UnitSystem, readChosenUnits } from '../core/units.js';
 import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
-import {
-  AlarmSound, BoilMemory, DEFAULTS, DEFAULT_ALARM_SOUND, LIMITS, Limit, carrySizeIndex, clamp, isWithin,
-  readAlarmSound, rememberBoil,
-} from '../core/policy.js';
+import { AlarmSound, DEFAULT_ALARM_SOUND, readAlarmSound } from '../core/sounds.js';
+import { BoilMemory, rememberBoil } from '../core/boil.js';
+import { DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin } from '../core/inputs.js';
 import { RunningCook, readRunningCook } from '../core/running.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 
-export type { Limit } from '../core/policy.js';
-export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
+export type { Limit } from '../core/inputs.js';
+export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
+export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v5';

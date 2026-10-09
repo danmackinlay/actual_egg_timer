@@ -37,11 +37,10 @@ import {
   Posterior, WhiteReport, YOLK_WORDS, YolkWord, answerLikelihood, createPrior, whiteProbit,
   withUnrelated, withUnrelatedWord, yolkWordProbit,
 } from '../src/core/infer.js';
-import { PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
 import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
 import {
-  Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
-  recordCookTime_s, recordMass_g, recordTeaches, replay,
+  Calibration, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationGrid, copyCalibration, foldRecord, freshCalibration,
+  gridRequestFor, recordCookTime_s, recordMass_g, recordTeaches, replay,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { appSetup, draw, gridFor, rng } from './common.js';

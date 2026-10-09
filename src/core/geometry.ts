@@ -65,7 +65,7 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
  *  `sizeClassesFor`. Both tables put the same class at the same index for as
  *  far as the shorter one goes (Small, Medium, Large, Extra large), which is
  *  what lets a stored index keep its name when the table changes underneath it
- *  (`carrySizeIndex` in policy.ts).
+ *  (`carrySizeIndex` in inputs.ts).
  *
  *  The name is a catalogue key, one per class per table: an American Large and
  *  an EU Large are different eggs, and a language may want to say so. The

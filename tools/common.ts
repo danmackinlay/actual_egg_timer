@@ -13,9 +13,8 @@ import { decisionGridRequest, decisionInputs } from '../src/core/decide.js';
 import { DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { Egg } from '../src/core/geometry.js';
 import { WhiteReport, YolkWord, createPrior } from '../src/core/infer.js';
-import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Calibration, EggRecord, MODEL_ID } from '../src/core/record.js';
+import { CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 
 /* ------------------------------------------------------------------ pots */

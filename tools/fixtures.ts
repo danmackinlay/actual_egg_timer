@@ -17,17 +17,21 @@
  *   fixtures/scenarios.json    whole cooks, solved end to end
  *   fixtures/section.json      the egg in cross-section, a tick at a time, and
  *                              the egg the settings aim for
- *   fixtures/policy.json       the decisions above the physics - snapping, the
- *                              refusal verdict, texture bands, the calibration
- *                              grid's geometry, the bounds and defaults, both
- *                              size-class tables, the phase rule, what a
- *                              sharing sender makes of the endpoint's answer
+ *   fixtures/inputs.json       what a cook enters and a fresh install starts
+ *                              from: bounds, defaults, both size-class tables,
+ *                              the room, the egg-temperature buttons
+ *   fixtures/slider.json       the doneness slider: snapping, the nearest
+ *                              label, which words can be reached, the verdict
+ *   fixtures/texture.json      the texture bands and the note's keys
+ *   fixtures/boil.json         boil memory: a boil remembered, and estimated
+ *   fixtures/sounds.json       the alarm sounds and their timing
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
  *   fixtures/calibration.json  the particle filter, particle by particle
  *   fixtures/record.json       the record (INFERENCE.md section 4): which records
- *                              a loader trusts, and a replayed log
+ *                              a loader trusts, and a replayed log; the
+ *                              calibration grid, and the filter's size and seed
  *   fixtures/decide.json       decision surfaces and the time chosen on one
  *   fixtures/outcome.json      the predicted outcome at the chosen time
  *   fixtures/certainty.json    how sure, in words: the word asked, the class,
@@ -44,12 +48,13 @@
  *   fixtures/probe.json        the probe reading
  *   fixtures/language.json     the switch into the English of 1750 and out
  *   fixtures/share.json        sharing's state: what a stored copy reads as,
- *                              and every move from every reachable state
+ *                              every move from every reachable state, and what
+ *                              a sender makes of the endpoint's answer
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
  *   fixtures/running.json      a running cook: its egg and pot, its moves, a
  *                              stored one read back, its plan, two copies
- *                              taken up
+ *                              taken up, and the phase at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
  *   fixtures/newer.json        which build may write: versions compared, and
@@ -58,16 +63,25 @@
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
  * reads it.
+ *
+ * Each is JSON laid out one row per line (`fixtureLayout`,
+ * tools/fixtureCompare.ts): a case, a step of a trace, a particle a line, so
+ * that a diff names the rows that changed.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 
+import { fixtureLayout } from './fixtureCompare.js';
 import { english } from './fixtures/shared.js';
 import { coreFixture } from './fixtures/core.js';
 import { scenariosFixture } from './fixtures/scenarios.js';
 import { sectionFixture } from './fixtures/section.js';
 import { calibrationFixture } from './fixtures/calibration.js';
-import { policyFixture } from './fixtures/policy.js';
+import { inputsFixture } from './fixtures/inputs.js';
+import { sliderFixture } from './fixtures/slider.js';
+import { textureFixture } from './fixtures/texture.js';
+import { boilFixture } from './fixtures/boil.js';
+import { soundsFixture } from './fixtures/sounds.js';
 import { sousvideFixture } from './fixtures/sousvide.js';
 import { sousvideCopyFixture } from './fixtures/sousvideCopy.js';
 import { recordFixture } from './fixtures/record.js';
@@ -99,7 +113,11 @@ const written: Record<string, unknown> = {
   scenarios: scenariosFixture,
   section: sectionFixture,
   calibration: calibrationFixture,
-  policy: policyFixture,
+  inputs: inputsFixture,
+  slider: sliderFixture,
+  texture: textureFixture,
+  boil: boilFixture,
+  sounds: soundsFixture,
   sousvide: sousvideFixture,
   sousvideCopy: sousvideCopyFixture,
   record: recordFixture,
@@ -150,21 +168,13 @@ function shareRepeatedParticles(root: unknown): unknown {
   return walk(root, []);
 }
 
-/** Two-space JSON with each particle on one line: six numbers a particle,
- *  thousands of particles, would otherwise be most of the fixtures' lines. */
-function fixtureText(fixture: unknown): string {
-  return JSON.stringify(shareRepeatedParticles(fixture), null, 2)
-    .replace(/\{\n\s*"alpha_m2s": [^\n]*(?:,\n\s*"[A-Za-z0-9_]+": [^\n{}[\]]*)*\n\s*\}/g,
-      (block) => block.replace(/\n\s*/g, ' '));
-}
-
 // Every fixture's first key is `about`: what it pins and the core module that
 // answers. The line saying where it came from is added here, the same for all.
 for (const [name, fixture] of Object.entries(written)) {
   const about = (fixture as { about?: unknown }).about;
   if (typeof about !== 'string') throw new Error(`fixtures/${name}.json has no about`);
   const stamped = { ...(fixture as object), about: `${about} Generated by tools/fixtures/${name}.ts (npm run fixtures): do not hand-edit.` };
-  writeFileSync(`fixtures/${name}.json`, `${fixtureText(stamped)}\n`);
+  writeFileSync(`fixtures/${name}.json`, fixtureLayout(shareRepeatedParticles(stamped)));
 }
 
 const counts = [
@@ -177,9 +187,9 @@ const counts = [
   `${calibrationFixture.grid.logYolk.length} grid cells`,
   `${calibrationFixture.wordUpdates.length} calibration updates`,
   `${calibrationFixture.wordUpdates.filter((u) => u.white !== null).length} white answers`,
-  `${policyFixture.slider.cases.length} snap`,
-  `${policyFixture.verdict.length} verdicts`,
-  `${policyFixture.texture.length} textures`,
+  `${sliderFixture.cases.length} snap`,
+  `${sliderFixture.verdict.length} verdicts`,
+  `${textureFixture.cases.length} textures`,
   `${sousvideFixture.cases.length} sous-vide`,
   `${sousvideCopyFixture.duration.length + sousvideCopyFixture.startPhrase.length} sous-vide copy`,
   `${copyFixture.render.length} copy renders`,

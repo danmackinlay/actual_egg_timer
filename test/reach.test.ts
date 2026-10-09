@@ -33,8 +33,8 @@ import { createPrior, updatePosterior, yolkWordProbabilities } from '../src/core
 import { Egg, eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from '../src/core/solve.js';
-import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { anchorNear, snapUp, verdictFor } from '../src/core/slider.js';
+import { CALIBRATION_SEED, Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
   ADVICE_GAIN, AdviceFacts, LevelOdds, OddsProfile, adviceWanted, askedNear, envelopeBounds, lowOddsAt, oddsAtLevel,
   answerAt, decideAnswer, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,

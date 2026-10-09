@@ -19,12 +19,13 @@
  * never change a phase.
  */
 
-import { PULL_GRACE_SECONDS, phaseAt } from '../../src/core/policy.js';
 import { DecisionInputs } from '../../src/core/decide.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { Calibration } from '../../src/core/record.js';
-import { CookChoices, CookPlan, CookSurface, RunningCook, endedAt_s, readRunningCook } from '../../src/core/running.js';
+import {
+  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt, readRunningCook,
+} from '../../src/core/running.js';
 import { Readout, ReadoutProbe, readoutAt } from '../../src/core/readout.js';
 import { CookEnv, CookEvent, CookState, CookStep, step } from '../../src/core/step.js';
 

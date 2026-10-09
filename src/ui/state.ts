@@ -19,8 +19,8 @@
 
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
-import { Phase, phaseAt, roomInUse } from '../core/policy.js';
-import { CookChoices, CookPot, cookSetupOf } from '../core/running.js';
+import { roomInUse } from '../core/inputs.js';
+import { CookChoices, CookPot, Phase, cookSetupOf, phaseAt } from '../core/running.js';
 import type { CookNeed } from '../core/step.js';
 import type { Learning } from './learned.js';
 import type { Model } from './model.js';

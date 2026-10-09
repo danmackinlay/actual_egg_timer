@@ -43,7 +43,7 @@ struct SousVideConformance {
     ///
     /// The dose targets come from the fixture rather than from
     /// `donenessFromSlider` here on purpose. The slider is already pinned by
-    /// `fixtures/policy.json`, and reading it again would make a failure in that
+    /// `fixtures/slider.json`, and reading it again would make a failure in that
     /// mapping surface as a sous-vide failure as well.
     @Test("equilibration, both hold times, the total and which one binds")
     func cases() throws {

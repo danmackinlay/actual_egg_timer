@@ -35,8 +35,8 @@
  *   and forgotten.
  */
 
-import type { AlarmMoment, AlarmSound, BoilMemory } from '../core/policy.js';
-import { phaseAt } from '../core/policy.js';
+import type { AlarmMoment, AlarmSound } from '../core/sounds.js';
+import type { BoilMemory } from '../core/boil.js';
 import type { Decision, DecisionInputs } from '../core/decide.js';
 import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.js';
 import type { Outcome } from '../core/outcome.js';
@@ -48,7 +48,7 @@ import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
 import {
-  answered, asRanCurrent, asRanShown, asksIfStillIn, cookStillOpen, endedAt_s, takeUpEvents,
+  answered, asRanCurrent, asRanShown, asksIfStillIn, cookStillOpen, endedAt_s, phaseAt, takeUpEvents,
 } from '../core/running.js';
 import { calibrationParams } from '../core/record.js';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';

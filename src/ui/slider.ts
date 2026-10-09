@@ -6,7 +6,7 @@
  * track shows - none once a cook is running - is the caller's to say.
  */
 
-import { anchorNear, anchorReachable } from '../core/policy.js';
+import { anchorNear, anchorReachable } from '../core/slider.js';
 import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
 import { OddsProfile, shadingOf } from '../core/reach.js';
 import { WordCertainty, wordBracket } from '../core/certainty.js';

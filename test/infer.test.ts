@@ -29,9 +29,10 @@ import {
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT, anchorNear, calibrationGrid } from '../src/core/policy.js';
+import { anchorNear } from '../src/core/slider.js';
 import {
-  Calibration, EggRecord, MODEL_ID, calibrationDoneness, calibrationParams, freshCalibration, replay,
+  CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid,
+  calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { appSetup, draw, rng } from '../tools/common.js';

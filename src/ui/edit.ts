@@ -38,10 +38,10 @@ import {
   CookChoices, RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, replan, sameChoices,
   startCorrected,
 } from '../core/running.js';
+import { targetPeakYolk_C } from '../core/slider.js';
 import { surfaceFor } from './decisionGrids.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { previewSection } from '../core/section.js';
-import { targetPeakYolk_C } from '../core/policy.js';
 import { t, timeOfDay } from './copy.js';
 import { cookShown } from './feedback.js';
 import { page } from './dom.js';

@@ -361,7 +361,8 @@ fit's training data cannot drift between the two.
   odds were known. `model` (E6) is `MODEL_ID`, the code that made the
   forecast and chose the time - the likelihood, the decision and, from E8,
   the nudge - changed whenever they change. A replay says what the current
-  code would have forecast; only these say what the app said.
+  code would have forecast; only these say what the app said. It is
+  provenance only: what decides a replay is `LIKELIHOOD_ID` (below).
 - `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the
@@ -381,7 +382,13 @@ did. The stored posterior is a cache of that replay, written at full precision
 (a cache that rounds is one a replay can never match) with a count of how many
 records it has absorbed; an answer is written to the log BEFORE its surface is
 built, so an app killed mid-fold folds it on the next launch instead of losing
-it.
+it. Beside it is the `LIKELIHOOD_ID` it was folded under (the store's `m`):
+the prior's draw, the physics and the likelihood, which is what a replay
+reads. A store under another one is replayed. It moves only when the fold
+does, so a change to the decision alone (a new `MODEL_ID` and nothing else)
+replays nothing; `test/record.test.ts` pins what the fold makes of a fixed
+log to it, so a change to the fold fails until it moves. A new likelihood
+is a new model, so `MODEL_ID` moves with it.
 
 **The frozen base.** The owner's v2 posterior was learned from real eggs with no
 log behind it. E1 kept it as the BASE, with the posterior `replay(base, log)`. A

@@ -31,13 +31,12 @@
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
 import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
-import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
+import { DoseGrid, GridPolicy, GridRequest, GridSpec, buildRequestedGrid } from './doseGrid.js';
 import {
   LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
   createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.js';
 import { PriorStart, priorStart } from './population.js';
-import { calibrationGrid } from './policy.js';
 import { Outcome } from './outcome.js';
 import { registerOf } from './language.js';
 
@@ -64,11 +63,21 @@ export const RECORD_VERSION = 1;
  *  particle (DECISIONS.md 95), which draws another prior from the same seed.
  *  Records from before E6 carry none.
  *
- *  It is also what tells a stored posterior it is out of date: both apps
- *  keep it beside the posterior (the store's `m`) and replay the log when it
- *  differs, so the posterior is always what THIS code makes of the log. A
- *  change to the physics changes the likelihood, so it changes this too. */
+ *  It is the record's provenance (`model`, sent with each record, read by the
+ *  fit) and never decides a replay: `LIKELIHOOD_ID` does. A new likelihood
+ *  is a new model too, since the forecast is the posterior's, so this moves
+ *  whenever that does; a change to the decision or the nudge alone moves
+ *  only this. */
 export const MODEL_ID = '2026-10-e10';
+
+/** What THIS code makes of a log: the prior's draw from a population, the
+ *  physics and the likelihood, which together are the fold. Both apps keep it
+ *  beside the posterior (the store's `m`) and replay the log when it differs
+ *  (`loadDecision`), so the posterior is always this code's. Moved only when
+ *  the fold moves: a change to the decision alone leaves every posterior as
+ *  it was. test/record.test.ts pins a digest of a fixed log's replay to it,
+ *  so a change to the fold fails there until this moves. */
+export const LIKELIHOOD_ID = '2026-10-e10';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -641,6 +650,41 @@ export function parseLog(raw: unknown): EggRecord[] | null {
   return out;
 }
 
+/* ------------------------------------------------------- the calibration */
+
+/** Particles in the filter, and the seed they start from. Both apps must agree
+ *  or two identical kitchens learn two different things from the same egg. */
+export const PARTICLE_COUNT = 1000;
+export const CALIBRATION_SEED = 0x5eed1e;
+
+/** The calibration grid's alpha bounds, as factors of the posterior's centre. */
+export const CALIBRATION_ALPHA_LOW = 0.55;
+export const CALIBRATION_ALPHA_HIGH = 1.8;
+
+/**
+ * Where to build the dose surface for one logged outcome.
+ *
+ * The most consequential choice in the calibration. The grid is handed
+ * to `buildDoseGrid` by the CALLER, so its bounds decide what the particle
+ * filter can see and therefore what the posterior becomes: two apps with
+ * different grids learn different things from the same egg. It was duplicated
+ * by hand in both apps, agreeing only by luck of maintenance.
+ *
+ * The bounds bracket the plausible answer rather than the whole domain: alpha
+ * within a factor of ~2 of where the posterior currently sits, and cook times
+ * from a third of what was cooked to a bit over double it.
+ */
+export function calibrationGrid(alphaCentre: number, cookTime_s: number): GridSpec {
+  return {
+    alphaMin: alphaCentre * CALIBRATION_ALPHA_LOW,
+    alphaMax: alphaCentre * CALIBRATION_ALPHA_HIGH,
+    alphaCount: 21,
+    timeMin_s: Math.max(60, cookTime_s * 0.35),
+    timeMax_s: cookTime_s * 2.4,
+    timeCount: 32,
+  };
+}
+
 /* ------------------------------------------------------------------- fold */
 
 /** A posterior and the number of eggs that taught it. The count is part of the
@@ -813,10 +857,10 @@ export function replay(
  * UserDefaults) and reads it apart in its own way: that is I/O, and stays in
  * the app. What it then does with what it read is the same decision in both,
  * and lives here: `loadDecision`, a pure function of the parts and of this
- * build's population and model. Every damaged part is refused, never read
- * around: a store that cannot be read is dropped, a log that cannot be read
- * leaves what it taught as the base, and a store folded under another model
- * or drawn from another population is replayed. */
+ * build's population and likelihood. Every damaged part is refused, never
+ * read around: a store that cannot be read is dropped, a log that cannot be
+ * read leaves what it taught as the base, and a store folded under another
+ * likelihood or drawn from another population is replayed. */
 
 /** What a launch found: `fresh`, nothing to use, so the prior; `rebuild`,
  *  the log good and the posterior not this build's to use, so the log is
@@ -842,8 +886,9 @@ export interface StoreRead {
   /** The population the posterior was drawn from, or null when the store
    *  does not say. */
   population: string | null;
-  /** The model it was folded under, or null when the store does not say. */
-  model: string | null;
+  /** The `LIKELIHOOD_ID` it was folded under, or null when the store does
+   *  not say. */
+  likelihood: string | null;
 }
 
 /** What to keep, in the parts that were read. */
@@ -863,21 +908,21 @@ export interface LoadDecision {
 
 /**
  * What a launch does with the store it read, for a build that draws its
- * prior from `population` and folds under `model`:
+ * prior from `population` and folds under `likelihood`:
  *
  *  - no store of this format that can be read: `fresh`, the prior.
  *  - the log unreadable: `rebased`. Its records cannot be folded, but what
  *    they taught is in the posterior, which becomes the base - or the base,
  *    if the posterior is damaged too.
  *  - the posterior damaged, the base damaged, the count damaged, another
- *    population, another model or none: `rebuild`, the log folded again
+ *    population, another likelihood or none: `rebuild`, the log folded again
  *    from the base, or the prior. A base cannot be replayed, so a sound one
  *    stays as it is.
  *  - a posterior that has absorbed more records than the log holds:
  *    `rebased`, on that posterior.
  *  - otherwise `loaded`.
  */
-export function loadDecision(read: StoreRead, population: string, model: string): LoadDecision {
+export function loadDecision(read: StoreRead, population: string, likelihood: string): LoadDecision {
   if (!read.readable) {
     return { path: 'fresh', base: null, calibration: 'start', folded: 0, log: false };
   }
@@ -888,7 +933,7 @@ export function loadDecision(read: StoreRead, population: string, model: string)
   const base = read.base === 'sound' ? 'stored' : null;
   if (
     read.base === 'damaged' || !read.posterior || read.folded === null
-    || read.population !== population || read.model !== model
+    || read.population !== population || read.likelihood !== likelihood
   ) {
     return { path: 'rebuild', base: base, calibration: 'start', folded: 0, log: true };
   }

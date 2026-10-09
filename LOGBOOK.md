@@ -7024,3 +7024,97 @@ Gates: `verify` (429 tests), `build:site`, `e2e` 84 of 84 (83 and
 `done-wakes`). `src/ui/` 8,795 lines before, 8,679 after; the cook's part
 (cook, feedback, state, eggRecord; model added) 1,450 to 1,296. Still to
 do for 3.7 is listed under it in `REFACTOR-0.5.md`.
+
+## 10 October 2026: the model id split, and the fixtures a row a line (REFACTOR-0.5 3.14, 3.19)
+
+Branch `red-team-3.14-3.19-ids-and-fixtures`.
+
+- **Two ids** (3.14). `MODEL_ID` is the record's provenance (`model`, sent
+  with each record, read by the fit; `DECISIONS.md` 37) and nothing else.
+  `LIKELIHOOD_ID` (`likelihoodID`) is what both apps keep beside the
+  posterior as the store's `m`, and what `loadDecision` compares
+  (`StoreRead.likelihood`): the prior's draw, the physics and the
+  likelihood. A change to the decision or the nudge alone now moves
+  `MODEL_ID` and replays nothing; a new likelihood moves both. Both are
+  `2026-10-e10` today, so no store replays on this build.
+  `test/record.test.ts` 2e replays six eggs from six pots (every kind of
+  answer, a probe, a counter, 95 C water) at the apps' prior, 1000
+  particles and the full grid, and pins each dimension's weighted mean and
+  sd, the ESS and the generator's state to `LIKELIHOOD_ID` at 1e-9; a
+  change to the fold fails there and prints the numbers to pin. 4.6 s.
+  The record's shape is unchanged, so records already on the server read
+  (`server.test` 8: any model id kept as sent, read back by `parseRecord`
+  and `readFitRecord`).
+- **A row a line** (3.19). Every generated fixture is still JSON, laid out
+  by `fixtureLayout` (`tools/fixtureCompare.ts`): a case, a step of a
+  trace, a particle each start a line and are written whole on it up to
+  8000 characters; longer rows open and their rows go a line each; lists
+  of numbers are one line; `, ` and `: ` separate so `git diff
+  --word-diff` finds the value. Swift's loader reads it unchanged.
+  `fixtures:check` fails on a fixture committed in another layout and
+  writes its committed values in this one, so a branch from before that
+  regenerates fixtures is caught at merge. Against the previous commit's
+  fixtures: no difference and no number even within tolerance, the same
+  JSON key for key, in all 23; `swift test` passes. 3.83 MB in 145,507
+  lines to 2.46 MB in 8,483 (`step.json` 24,403 to 450 lines,
+  `running.json` 38,675 to 280; the longest line 7,723 characters).
+
+Each through `verify`, `ios:build`, `e2e` (83 of 83) and `ios:e2e` (48 of
+48), and again on `0.5.x` merged in (the app's logic as `EggTimerApp`).
+The first `e2e` run, beside `ios:e2e` building, reported 82 of 83 with its
+failure line lost from the log; run again alone, 83 of 83, twice.
+
+What one could trip on: `fixtures:check` compares with git's index, so a
+regenerated fixture must be staged before `verify`. A new `LIKELIHOOD_ID`
+string that differs from `MODEL_ID` is a new Swift literal for
+`copy:literals`' list.
+
+## 10 October 2026: policy.ts by subject, and core only what both apps agree on (REFACTOR-0.5 3.15, 3.17)
+
+**policy.ts is gone.** Its ten subjects now live with what each decides, in
+both cores alike: `inputs.ts` (bounds, defaults, the egg-temperature
+buttons, the room in use, a stored size carried into a table),
+`slider.ts` (snapping, the nearest label, which words can be reached, the
+target temperature, the refusal verdict), `texture.ts`, `boil.ts` and
+`sounds.ts`, each with its Swift twin and its fixture; the phases and
+deadlines (`phaseAt`, `Deadlines`, the pull's grace, the slow hob, the
+counted cooling, the probe's range) to `running.ts`; `shareReply` and
+`shareGivesUp` to `share.ts`; the calibration grid and the filter's size
+and seed to `record.ts`. `RingDeadline`, the twin of `AlarmMoment`, is in
+Sounds.swift.
+
+**The fixtures moved, not changed.** policy.json became inputs, slider,
+texture, boil and sounds.json; its phase, share and calibration sections
+joined running.json (`phase`), share.json (`answers`) and record.json
+(`calibrationGrid`, `calibration`). A script compared each of policy.json's
+30 sections with its new place, as JSON, and found every one identical;
+the three files that gained sections are otherwise as committed but for
+their about lines, and probe.json's about now names running.ts.
+PolicyConformance.swift and test/policy.test.ts are split the same way
+(the Swift suites keep their names; one test added, that the grid's alpha
+factors are the same).
+
+**What left core (3.17), call sites first.**
+
+- `deadlineToRing`: called only by iOS's `Cook.ringIfDue`; the web has no
+  notifications and rings at every deadline. It sat in EggTimerCore so
+  that `swift test` could reach it; EggTimerApp is under `swift test` now
+  (1.2), so it is there, internal, and RingTests is in EggTimerAppTests.
+- `NOTIFICATION_SOUND_MAX_S` and `notificationRepeats`: called only by
+  `tools/sounds.ts` and `test/alarmSounds.test.ts`, which render and check
+  the iOS files; the Swift twin was called by nothing but its conformance
+  test. They are in `src/ui/alarmSounds.ts`, beside the samples the
+  renderer takes from there, and sounds.json lost their two columns.
+- Kept: `effectiveUnits` (web `src/ui/units.ts`, iOS `Planner.units`) and
+  `languageOf` (web `controls.ts`, iOS `SettingsView`) are one-liners, but
+  core calls both itself (`chooseUnits`; `copy`, `format`, `language`), so
+  a twin is needed whatever the apps do, and neither has a fixture to drop.
+  Everything else policy.ts exported has a caller in both apps, or in core.
+
+**Behaviour unchanged.** `npm run verify`, `npm run ios:build`, `npm run
+e2e` (83 scenarios) and `npm run ios:e2e` (48, muted, its own simulator)
+green on 3.15 and again at the end, on 0.5.x merged in and 3.17 done;
+verify and ios:build after every commit between.
+
+**Left.** `CLAUDE.md` line 58 still names `policy.ts` among the modules
+above the physics; it should name `inputs.ts`, `slider.ts` and the rest.

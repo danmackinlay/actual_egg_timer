@@ -39,7 +39,7 @@ Each is settled here unless §6 lists it as the owner's.
     only if new, so a retry is harmless and nothing is overwritten (append
     only). 201 stored, 200 already had it, 400 refused, 413 too big, 415
     not JSON, 429 rate-limited. What a sender makes of an answer is
-    `shareReply` in `src/core/policy.ts`: it waits on no answer, and on an
+    `shareReply` in `src/core/share.ts`: it waits on no answer, and on an
     answer about the way to the server (403, 404, 408, 429, a 5xx) for at
     most five tries and three days (`shareGivesUp`); an answer about the
     request itself (400, 409, 413, 415, any other 4xx) skips the egg.
@@ -82,7 +82,8 @@ its absence means.
   tender and firm so the ticket can carry all six.
 - `model`: the code that made the forecast and chose the time, `MODEL_ID` in
   core, changed whenever the likelihood, the decision or the nudge changes.
-  Null (or absent) on records written before E6.
+  Null (or absent) on records written before E6. Provenance only: the
+  device replays its posterior on `LIKELIHOOD_ID`, which is never sent.
 - `prior` becomes the population the prior was drawn from, when E7 lands: the
   literature's id until a fit is published. It was the prior and the policy
   together; the policy is now `model`. No record has left the owner's devices

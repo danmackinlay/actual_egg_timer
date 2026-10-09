@@ -13,7 +13,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { LIMITS } from '../src/core/policy.js';
+import { LIMITS } from '../src/core/inputs.js';
 import {
   SIZE_CLASSES, US_SIZE_CLASSES, eggFromMass, eggFromMinorDiameter,
 } from '../src/core/geometry.js';

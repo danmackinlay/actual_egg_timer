@@ -155,13 +155,15 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 @Suite("The record")
 struct RecordConformance {
     /// Stamped into every iOS record, so a record from either app names the
-    /// same schema and the same prior.
-    @Test("the record's version and prior are the reference's")
+    /// same schema, prior and model; and the likelihood beside the stored
+    /// posterior, so either app replays on the same change.
+    @Test("the record's version, prior, model and likelihood are the reference's")
     func identity() throws {
         let file = try Fixtures.load("record.json")
         #expect(try recordVersion == Int(file.num("version")))
         #expect(try literaturePopulation.id == file.str("prior"))
         #expect(try modelID == file.str("model"))
+        #expect(try likelihoodID == file.str("likelihood"))
     }
 
     @Test("which records a loader trusts, case by case")
@@ -228,7 +230,7 @@ struct RecordConformance {
     func load() throws {
         let section = try Fixtures.object("record.json", "load")
         let population = try section.str("population")
-        let model = try section.str("model")
+        let likelihood = try section.str("likelihood")
         for c in try Fixtures.list("record.json", "load.cases") {
             let why = try c.str("why")
             let r = try c.object("read")
@@ -236,7 +238,7 @@ struct RecordConformance {
                 readable: r.flag("readable"), base: r.optionalValue(StoredBase.self, "base"),
                 posterior: r.flag("posterior"), folded: r.optionalNum("folded").map { Int($0) },
                 records: r.optionalNum("records").map { Int($0) },
-                population: r.optionalStr("population"), model: r.optionalStr("model")
+                population: r.optionalStr("population"), likelihood: r.optionalStr("likelihood")
             )
             let d = try c.object("decision")
             let want = try LoadDecision(
@@ -244,7 +246,7 @@ struct RecordConformance {
                 base: d.optionalValue(KeptBase.self, "base"), calibration: d.value(KeptCalibration.self, "calibration"),
                 folded: Int(d.num("folded")), log: d.flag("log")
             )
-            #expect(loadDecision(read, population: population, model: model) == want, "\(why)")
+            #expect(loadDecision(read, population: population, likelihood: likelihood) == want, "\(why)")
         }
     }
 
@@ -380,5 +382,41 @@ struct ReplayConformance {
         let before = start
         _ = try replay(start, Array(fixtureLog().prefix(2)), grid: fixtureGrid())
         #expect(identical(start, before))
+    }
+}
+
+@Suite("The calibration grid matches the reference implementation")
+struct CalibrationGridConformance {
+    /// The one that matters most: these six numbers are handed to
+    /// `buildDoseGrid`, so they decide what the filter can see and therefore
+    /// what the posterior becomes.
+    @Test("the alpha factors are the same factors")
+    func factors() throws {
+        let grid = try Fixtures.object("record.json", "calibrationGrid")
+        #expect(try calibrationAlphaLow == grid.num("alphaLow"))
+        #expect(try calibrationAlphaHigh == grid.num("alphaHigh"))
+    }
+
+    @Test("extent and resolution, including the floor on a short cook")
+    func cases() throws {
+        for c in try Fixtures.list("record.json", "calibrationGrid.cases") {
+            let alphaCentre = try c.num("alphaCentre")
+            let cookTimeS = try c.num("cookTime_s")
+            let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
+            let what = "grid(alpha \(alphaCentre), cook \(cookTimeS))"
+            try expectClose(g.alphaMin, c.num("alphaMin"), "\(what) alphaMin")
+            try expectClose(g.alphaMax, c.num("alphaMax"), "\(what) alphaMax")
+            try expectClose(Double(g.alphaCount), c.num("alphaCount"), "\(what) alphaCount")
+            try expectClose(g.timeMinS, c.num("timeMin_s"), "\(what) timeMinS")
+            try expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
+            try expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
+        }
+    }
+
+    @Test("the particle count and seed are the same kitchen")
+    func particles() throws {
+        let calibration = try Fixtures.object("record.json", "calibration")
+        try expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
+        try expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
     }
 }

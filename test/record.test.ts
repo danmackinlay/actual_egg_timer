@@ -21,17 +21,15 @@ import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
-  parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
-  RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
+  CALIBRATION_SEED, Calibration, EggRecord, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION,
+  calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, jsonString, parseLog, parseRecord,
+  recordCookTime_s, recordMass_g, replay, resultsFile, resultsFileName,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION, WhiteReport, YolkWord } from '../src/core/infer.js';
+import { BoilMemory } from '../src/core/boil.js';
 import {
-  BoilMemory, calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED, PULL_GRACE_SECONDS, phaseAt,
-} from '../src/core/policy.js';
-import {
-  CookChoices, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, readRunningCook, replan, startCook, withBoil,
-  withOut, writeEvents,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, readRunningCook,
+  replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -44,7 +42,7 @@ import {
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { APP_VERSION } from '../src/ui/version.js';
-import { appSetup, gridFor, knowing } from '../tools/common.js';
+import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';
 import {
   PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces,
   seedOf, spread, summarise, wordLog,
@@ -304,6 +302,65 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
   assert.notEqual(posteriorParams(a.posterior).alpha_m2s, posteriorParams(b.posterior).alpha_m2s);
 });
 
+/* What the fold makes of a fixed log - the apps' prior, particle count and
+ * grid, five eggs from five pots with every kind of answer - pinned to the
+ * LIKELIHOOD_ID it was made under. A change to the prior's draw, the physics
+ * or the likelihood moves these numbers and fails here, until the id moves
+ * (and with it MODEL_ID, in both apps) so that every stored posterior is
+ * replayed; then pin what the test prints. A change to the decision alone
+ * moves nothing here and needs no replay. Each posterior dimension's weighted
+ * mean and sd, the effective sample size, and the generator's state after
+ * the last resample, held to 1e-9: a last-bit difference between machines is
+ * far below that, and a change to the fold far above it. */
+const LIKELIHOOD_PIN = {
+  id: '2026-10-e10',
+  fold: [
+    1.733475504969895e-7, 9.459606411996515e-9, -0.10266916794051935, 0.23986487262527864, 0.43535072327788293,
+    0.16273697926501188, 0.1905431350941683, 0.4135274983436036, 0.9715919290968168, 0.36025047224995055,
+    609.4639698430659, -2016908570, 6,
+  ],
+};
+
+function foldDigest(c: Calibration): number[] {
+  const post = c.posterior;
+  const out: number[] = [];
+  const dims: ((p: typeof post.particles[number]) => number)[] = [
+    (p) => p.alpha_m2s, (p) => p.logDoseOffset, (p) => p.noise, (p) => p.whiteOffset, (p) => p.whiteFirmGap,
+  ];
+  for (const dim of dims) {
+    let mean = 0;
+    for (let i = 0; i < post.particles.length; i++) mean += post.weights[i] * dim(post.particles[i]);
+    let variance = 0;
+    for (let i = 0; i < post.particles.length; i++) variance += post.weights[i] * (dim(post.particles[i]) - mean) ** 2;
+    out.push(mean, Math.sqrt(variance));
+  }
+  let squares = 0;
+  for (const w of post.weights) squares += w * w;
+  out.push(1 / squares, post.rng, c.eggsLogged);
+  return out;
+}
+
+test('2e. the likelihood id is pinned to what its fold makes of a fixed log', () => {
+  const probed = recordAt(0.45, 430, 'fudgy', null, appSetup({ cooling: 'tap', afterBoil: 'off' }));
+  probed.probe = { centre_C: 66.4, after_s: 120 };
+  const log = [
+    recordAt(0.3, 400, 'soft', 'runny'),
+    recordAt(0.5, 455, 'jammy', 'tender', appSetup({ startMode: 'cold', cooling: 'counter' })),
+    probed,
+    recordAt(0.6, 480, 'hard', 'firm', appSetup({ waterLitres: 1, eggCount: 4, boiling_C: 95 })),
+    recordAt(0.2, 380, 'runny', null),
+    recordAt(0.4, 420, null, 'tender'),
+  ];
+  const got = foldDigest(replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log));
+  const pin = `pin: { id: '${LIKELIHOOD_ID}', fold: [${got.join(', ')}] }`;
+  assert.equal(LIKELIHOOD_ID, LIKELIHOOD_PIN.id, `LIKELIHOOD_ID moved: ${pin}`);
+  assert.equal(got.length, LIKELIHOOD_PIN.fold.length, pin);
+  for (let i = 0; i < got.length; i++) {
+    const error = Math.abs(got[i] - LIKELIHOOD_PIN.fold[i]) / Math.max(Math.abs(LIKELIHOOD_PIN.fold[i]), 1e-300);
+    assert.ok(error <= 1e-9, `the fold moved (number ${i}, ${error.toExponential(1)}): move LIKELIHOOD_ID; ${pin}`);
+  }
+});
+
 // --------------------------------------------------------------------------
 // 3. The web app's keeping
 // --------------------------------------------------------------------------
@@ -345,10 +402,10 @@ test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
   assert.equal(decodeKept(JSON.stringify(ahead)).path, 'rebased');
 });
 
-test('3a3. a posterior folded under another model is replayed', () => {
+test('3a3. a posterior folded under another likelihood is replayed', () => {
   const k = { base: null, calibration: freshCalibration(32, 3), folded: 1, log: [solvedRecord(0.4, 'jammy')] };
   const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
-  assert.equal(stored['m'], MODEL_ID);
+  assert.equal(stored['m'], LIKELIHOOD_ID);
   assert.equal(decodeKept(JSON.stringify(stored)).path, 'loaded');
   const older = decodeKept(JSON.stringify({ ...stored, m: '2026-09-e5' }));
   assert.equal(older.path, 'rebuild');
@@ -356,7 +413,7 @@ test('3a3. a posterior folded under another model is replayed', () => {
   assert.equal(older.kept.log.length, 1);
   const before = { ...stored };
   delete before['m'];
-  assert.equal(decodeKept(JSON.stringify(before)).path, 'rebuild', 'a store that names no model');
+  assert.equal(decodeKept(JSON.stringify(before)).path, 'rebuild', 'a store that names no likelihood');
 });
 
 test('3a4. a store this build cannot read is dropped; the export is the store as stored', () => {
@@ -424,15 +481,15 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   await learn();
   assertIdentical(keptState().calibration, rebuilt, 'the app rebuilt it from the log');
 
-  // And across an upgrade: a posterior folded under another model is folded
-  // again, and comes out as a replay of the log under this one.
+  // And across an upgrade: a posterior folded under another likelihood is
+  // folded again, and comes out as a replay of the log under this one.
   const upgraded = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v5', JSON.stringify({ ...upgraded, m: '2026-10-e6' }));
   loadCalibration();
   assert.equal(eggsBehind(), 4);
   await learn();
-  assertIdentical(keptState().calibration, rebuilt, 'replayed on a model change');
-  assert.equal((JSON.parse(storage.get('aet.calibration.v5') as string) as { m: string }).m, MODEL_ID);
+  assertIdentical(keptState().calibration, rebuilt, 'replayed on a likelihood change');
+  assert.equal((JSON.parse(storage.get('aet.calibration.v5') as string) as { m: string }).m, LIKELIHOOD_ID);
 });
 
 test('3c. forget everything clears the log, the base and the posterior', () => {
@@ -473,7 +530,7 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   storage.clear();
   const KEY = 'aet.calibration.v5';
   const NEWER = '2026-10-e99';
-  // A second page, a newer build's: the same code under another model, as
+  // A second page, a newer build's: the same code under another likelihood, as
   // the service worker leaves an old window on the build it opened with.
   const newer = await import(new URL('../src/ui/calibration.js?tab=newer', import.meta.url).href) as
     typeof import('../src/ui/calibration.js');
@@ -483,7 +540,7 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   logEgg(solvedRecord(0.3, null));
   logEgg(solvedRecord(0.5, null));
   await learn();
-  // The newer build opens: it replays the log under its own model and writes.
+  // The newer build opens: it replays the log under its own likelihood and writes.
   newer.loadCalibration(NEWER);
   await newer.learn();
   assert.equal((JSON.parse(storage.get(KEY) as string) as { m: string }).m, NEWER);
@@ -509,11 +566,12 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   assert.equal(await listen(8), 0, 'taking up the other build\'s store writes nothing');
   assert.equal(keptState().log.length, 2);
   assert.equal(keptState().folded, 2, 'what this page folded is kept, not replayed');
-  // A page's own change is written, under its own model, and taken up by the
-  // other without a write back; the other folds only the egg that is new.
+  // A page's own change is written, under its own likelihood, and taken up
+  // by the other without a write back; the other folds only the egg that is
+  // new.
   logEgg(solvedRecord(0.6, null));
   const written = storage.get(KEY);
-  assert.equal((JSON.parse(written as string) as { m: string }).m, MODEL_ID);
+  assert.equal((JSON.parse(written as string) as { m: string }).m, LIKELIHOOD_ID);
   assert.equal(newer.calibrationStoredElsewhere(KEY), true);
   assert.equal(newer.eggsBehind(), 1, 'one egg to fold, not the whole log again');
   await newer.learn();
@@ -738,3 +796,37 @@ test('4e. the same egg logged again keeps its facts as last corrected, and the a
   assertIdentical(keptState().calibration, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), keptState().log),
     'the corrected egg, folded once');
 });
+
+// --------------------------------------------------------------------------
+// 5. The calibration grid: the bounds that decide the posterior
+// --------------------------------------------------------------------------
+
+test('5a. the grid brackets the cook that was actually performed', () => {
+  const g = calibrationGrid(1.4e-7, 441);
+  assert.ok(g.alphaMin < 1.4e-7 && g.alphaMax > 1.4e-7, 'grid does not contain its centre');
+  assert.ok(g.timeMin_s < 441 && g.timeMax_s > 441, 'grid does not contain the cook');
+  assert.equal(g.alphaCount, 21);
+  assert.equal(g.timeCount, 32);
+});
+
+test('5b. a very short cook still gets a grid with a floor on it', () => {
+  // 0.35 * 60 is 21 s, which is not a cook. The floor is what stops the
+  // interpolation domain collapsing on a fast egg.
+  const g = calibrationGrid(1.4e-7, 60);
+  assert.ok(g.timeMin_s >= 60, `time floor collapsed to ${g.timeMin_s}`);
+  assert.ok(g.timeMax_s > g.timeMin_s, 'grid has no width');
+});
+
+test('5c. the grid scales with the cook rather than sitting at fixed seconds', () => {
+  const short = calibrationGrid(1.4e-7, 400);
+  const long = calibrationGrid(1.4e-7, 800);
+  assert.ok(long.timeMax_s > short.timeMax_s, 'grid did not follow the cook');
+  close(long.timeMax_s / short.timeMax_s, 2, 1e-12, 'grid scaling');
+});
+
+function close(actual: number, expected: number, tol: number, what: string): void {
+  assert.ok(
+    Math.abs(actual - expected) <= tol,
+    `${what}: expected ${expected} +/- ${tol}, got ${actual} (delta ${actual - expected})`,
+  );
+}

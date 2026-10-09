@@ -14,7 +14,8 @@
 import { CopyRef } from './copy.js';
 import { CERTAINTY_MASS, Certainty, CertaintyReading, WordCertainty } from './certainty.js';
 import { Outcome, WHITE_RISK } from './outcome.js';
-import { Phase, Verdict } from './policy.js';
+import { Phase } from './running.js';
+import { Verdict } from './slider.js';
 import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { EggFrom, Forecast } from './record.js';
 import { DONENESS_ANCHORS } from './solve.js';

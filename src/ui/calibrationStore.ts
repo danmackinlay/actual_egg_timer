@@ -10,10 +10,9 @@
 
 import { Particle, Population } from '../core/infer.js';
 import { priorStart } from '../core/population.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT } from '../core/policy.js';
 import {
-  Calibration, EggRecord, LoadPath, MODEL_ID, copyCalibration, freshCalibration as freshFrom, loadDecision,
-  parseLog,
+  CALIBRATION_SEED, Calibration, EggRecord, LIKELIHOOD_ID, LoadPath, PARTICLE_COUNT, copyCalibration,
+  freshCalibration as freshFrom, loadDecision, parseLog,
 } from '../core/record.js';
 import { activePopulation } from './population.js';
 import { SyncedKey, syncedKey } from './store.js';
@@ -74,7 +73,7 @@ interface StoredV5 {
   v: 5;
   /** The population the posterior was drawn from. */
   p: string;
-  /** The `MODEL_ID` the posterior was folded under. */
+  /** The `LIKELIHOOD_ID` the posterior was folded under. */
   m: string;
   base: StoredPosterior | null;
   cal: StoredPosterior;
@@ -151,11 +150,11 @@ function readPosterior(raw: unknown): Calibration | null {
   return { posterior: { particles: particles, weights: weights, rng: s.rng }, eggsLogged: s.n };
 }
 
-export function encodeKept(k: Kept, pop: Population = activePopulation(), model = MODEL_ID): string {
+export function encodeKept(k: Kept, pop: Population = activePopulation(), likelihood = LIKELIHOOD_ID): string {
   const stored: StoredV5 = {
     v: 5,
     p: pop.id,
-    m: model,
+    m: likelihood,
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
@@ -189,7 +188,7 @@ function parseJSON(raw: string | null): unknown {
  * never read around: a store that cannot be read is dropped, a log with a
  * record that does not read is dropped with what it taught kept as the base,
  * and a posterior drawn from another population than `pop` or folded under
- * another model is replayed.
+ * another likelihood is replayed.
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.
@@ -197,16 +196,16 @@ function parseJSON(raw: string | null): unknown {
  * Pure, so the tests can walk every path without a browser.
  */
 export function decodeKept(
-  raw: string | null, pop: Population = activePopulation(), model = MODEL_ID,
+  raw: string | null, pop: Population = activePopulation(), likelihood = LIKELIHOOD_ID,
 ): Decoded {
-  const decoded = decodeParts(raw, pop, model);
+  const decoded = decodeParts(raw, pop, likelihood);
   const start = priorStart(pop);
   decoded.kept.calibration.start = { ...start };
   if (decoded.kept.base !== null) decoded.kept.base.start = { ...start };
   return decoded;
 }
 
-function decodeParts(raw: string | null, pop: Population, model: string): Decoded {
+function decodeParts(raw: string | null, pop: Population, likelihood: string): Decoded {
   const obj = parseJSON(raw);
   const readable = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 5;
   const s = (readable ? obj : {}) as Partial<Record<keyof StoredV5, unknown>>;
@@ -223,8 +222,8 @@ function decodeParts(raw: string | null, pop: Population, model: string): Decode
     folded: typeof folded === 'number' && Number.isInteger(folded) && folded >= 0 ? folded : null,
     records: log === null ? null : log.length,
     population: typeof s.p === 'string' ? s.p : null,
-    model: typeof s.m === 'string' ? s.m : null,
-  }, pop.id, model);
+    likelihood: typeof s.m === 'string' ? s.m : null,
+  }, pop.id, likelihood);
   const keptBase = d.base === 'stored' ? base : d.base === 'posterior' ? cal : null;
   return {
     kept: {
@@ -240,12 +239,12 @@ function decodeParts(raw: string | null, pop: Population, model: string): Decode
 /* ------------------------------------------------------------- the storage */
 
 /** The store, kept across the tabs (store.ts), read as a load reads it
- *  (`decodeKept`) under the model `model()` names. A store taken up that
- *  this page would not have written as it is - another build's, folded
- *  under another model or drawn from another population, or one another
- *  tab emptied - is not written back as this page folds it, only with this
- *  page's own next change, so that two builds open in two tabs never answer
- *  each other's every write with one of their own. */
-export function keptStore(model: () => string): SyncedKey<Decoded> {
-  return syncedKey(KEY, (text) => decodeKept(text, activePopulation(), model()), (d) => d.path === 'loaded');
+ *  (`decodeKept`) under the likelihood `likelihood()` names. A store taken
+ *  up that this page would not have written as it is - another build's,
+ *  folded under another likelihood or drawn from another population, or
+ *  one another tab emptied - is not written back as this page folds it,
+ *  only with this page's own next change, so that two builds open in two
+ *  tabs never answer each other's every write with one of their own. */
+export function keptStore(likelihood: () => string): SyncedKey<Decoded> {
+  return syncedKey(KEY, (text) => decodeKept(text, activePopulation(), likelihood()), (d) => d.path === 'loaded');
 }

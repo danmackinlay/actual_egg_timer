@@ -8,7 +8,8 @@
 import { eggFromMinorDiameter } from '../core/geometry.js';
 import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C } from '../core/sousvide.js';
 import { Measure, Quantity, displayText, nudgeFrom, sizeClassLabel } from '../core/units.js';
-import { SLIDER_STEPS, startTempPreset_C } from '../core/policy.js';
+import { SLIDER_STEPS } from '../core/slider.js';
+import { startTempPreset_C } from '../core/inputs.js';
 import { languageOf } from '../core/format.js';
 import { activeLocale, t } from './copy.js';
 import { page, selectRadio } from './dom.js';
