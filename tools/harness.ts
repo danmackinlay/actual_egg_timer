@@ -17,8 +17,8 @@
  * them to it from the build (devServer.ts).
  *
  * Beyond that API the harness watches the platform, not the app: before the
- * app runs, each page counts the sounds made, each ring (one looped buffer,
- * DECISIONS.md 101) and each blip (an oscillator), and when each is set to
+ * app runs, each page counts the sounds made, each ring (one looped buffer)
+ * and each blip (an oscillator), and when each is set to
  * start on the audio clock (`__osc`), and what it wrote to localStorage
  * (`__writes`); its requests are read off DevTools' network events. An
  * exception thrown in a page fails its scenario.
