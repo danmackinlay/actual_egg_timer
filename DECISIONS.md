@@ -748,20 +748,23 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `REFACTOR-0.5.md` 4.3, and confirmed: "All correct"). 0.5 forked from
     0.4 before 0.4 shipped, so the two were one line in practice and every
     fix was built twice (`0.4.x-newer-version-guard`, `0.5.x-…`). The
-    guard (100) ships in 0.5. CLAUDE.md's branch rule changes with it.
+    guard (100) ships in 0.5. CLAUDE.md's branch rule changes with it. Recorded `9bec001`; CLAUDE.md
+    `ffa7972`.
 103. **The English of 1750 may lag the English** (the same worklist, 4.6;
     confirmed). A wording change may ship without its 1750 twin; the twins
     are written in batches. A missing key falls back to the English
     (`src/core/copy.ts`), and a twin written against older English is
     listed for review and still shown, never a failed build. Czech (F5)
-    gets the same rule.
+    gets the same rule. Recorded `9bec001`; built with the review queue,
+    `d198678`.
 104. **`PLAN.md` is updated at merge, by the session that merges**, not in
     each working commit (the worklist, 4.1; confirmed): it was touched by a
     quarter of all commits and was the commonest merge conflict across
-    worktrees. A CLAUDE.md change.
+    worktrees. A CLAUDE.md change. Recorded `9bec001`; CLAUDE.md `ffa7972`.
 105. **Comments say what the code does and why** (the worklist, 2.3;
     confirmed). A decision number appears in a comment only where the code
-    would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
+    would otherwise look wrong (z ≈ 4.65 K), never as a changelog. Recorded
+    `9bec001`; CLAUDE.md `ffa7972`.
 106. **The copy drafts give way to a review queue** (the worklist, 2.2;
     confirmed: "Yes, including CLAUDE.md"). What the owner approved is
     stored, as a hash of each key's English (`copy/approved.json`, from
@@ -771,7 +774,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     against, so a stale twin is listed rather than blocking (103); a page
     shows the queue for review on a phone. `tools/drafts/` and the draft
     proofs go; the no-literals lint and the surfaces' budgets stay.
-    9 October 2026.
+    9 October 2026. Recorded `9bec001`; built `d198678`. The stored
+    hashes and the 1750 base now live in `test/data/copy-review/`
+    (`4c7d1b5`), so iOS no longer ships them.
 107. **The results log starts fresh in 0.5, and 81's protection goes**
     (the worklist, 2.6, 2.8, 2.9 and 2.14; the owner: "The data is not
     so important that we should be excessively complicated in order to
@@ -790,10 +795,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     stored), replaying the posterior when `MODEL_ID` changes, the
     newer-build guard (100), and the import tool reading the owner's
     older files. Export from a current build before installing 0.5 to
-    keep your own eggs. 9 October 2026.
+    keep your own eggs. 9 October 2026. Recorded `cd0c260`; built `7583ab6`.
     Confirmed to the 0.5 foundations session the same day ("Yes, sweep v4
     too"): the boot sweep of retired keys deletes `v4` with the rest, on
-    every device 0.5 runs on.
+    every device 0.5 runs on. `6eeff78`.
 108. **The start time leaves the setup sentence; it stays correctable in
     the start's panel** (the owner, 9 October 2026, of "set in cold water
     at 19:42": "I think it wastes screen real estate with useless
@@ -802,4 +807,5 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     The sentence says "into cold water, brought to the boil" before and
     during a cook; pressing the start clause opens its panel, where "Eggs
     in at 19:42" with − and + still corrects the start (97's question 20,
-    moved). The four "…at {time}" start clauses go.
+    moved). The four "…at {time}" start clauses go. Recorded `7a09eb7`; built
+    `dbfa28d`.
