@@ -1370,6 +1370,28 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
+  'done-wakes': {
+    what: 'a page left at Done, never looked at again, ends its cook an hour past the end and logs the egg (REFACTOR-0.5 3.7)',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 25);
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s - 2);
+      // An hour of the cook in a second of the page's, from here on, with no
+      // look: the tick takes it to Done and stops, and the page wakes itself
+      // when the plan says the cook is too old.
+      await tab.eval('window.aetClock.speed(3600)');
+      await tab.until("__snap().phase === 'IDLE'", 'ended by the wake');
+      s = await tab.snap();
+      check(s.stored === null && s.log.length === 1 && s.log[0].yolkWord === null,
+        `forgotten, the egg logged unanswered: ${s.stored === null}, ${s.log.length}`);
+      return 'Done, then idle an hour on with no look; the egg logged unanswered';
+    },
+  },
+
   'final-egg': {
     what: 'review 2.3: an egg final by the clock takes no more answers',
     run: async (h) => {

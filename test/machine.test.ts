@@ -1,5 +1,5 @@
 /**
- * A cook as the web runs it (src/ui/cook.ts): core's running cook planned at
+ * A cook as `step`'s tick runs it (src/core/step.ts): core's running cook planned at
  * the start, planned again only when something new is known - an event the
  * clock decided (`eventsDue`), the slow hob's moment, the boil tapped, the egg
  * out - and its phase read from the plan and the clock (`phaseAt`) on every

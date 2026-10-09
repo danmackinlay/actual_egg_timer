@@ -546,7 +546,7 @@ export type KeptAnswers = 'none' | 'beforeReload';
 /**
  * The cook as stored, whichever tab wrote it. What this tab last read or
  * wrote there is what it has seen; another tab's write is taken up
- * (cook.ts, `takeUpStored`) only when it is of this tab's own cook, by id,
+ * (model.ts, `elsewhere`) only when it is of this tab's own cook, by id,
  * since each tab runs the cook it started, and then only what that tab saw
  * in the pan (`takeUpEvents`).
  */

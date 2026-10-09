@@ -10,13 +10,16 @@
  * for its numbers' last digits is put back as committed, so the check leaves
  * the tree as it found it; one that disagrees is left as written, for
  * `git diff`, and the differences are listed by path. A fixture git does not
- * know fails, as one the check cannot compare.
+ * know fails, as one the check cannot compare, and so does one committed in
+ * another layout than one row per line (`fixtureLayout`), say by a branch
+ * from before it: it is written in this one, its values unchanged, to be
+ * committed.
  */
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { compareFixtures, FIXTURE_TOLERANCE } from './fixtureCompare.js';
+import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout } from './fixtureCompare.js';
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 
@@ -36,7 +39,15 @@ for (const file of tracked) {
   if (fresh === committed) continue;
   const { close, largest, differences } = compareFixtures(JSON.parse(committed), JSON.parse(fresh));
   if (differences.length === 0) {
-    writeFileSync(file, committed);
+    // The committed values, laid out as the generator lays them out: the
+    // committed file itself, unless it was committed in another layout.
+    const relaid = fixtureLayout(JSON.parse(committed));
+    writeFileSync(file, relaid);
+    if (relaid !== committed) {
+      failed = true;
+      console.error(`${file}: the same values, not laid out one row per line; written so, to be committed`);
+      continue;
+    }
     console.log(`${file}: ${close} numbers differ in their last digits (at most ${largest.toExponential(1)}), within ${FIXTURE_TOLERANCE}; kept as committed`);
     continue;
   }

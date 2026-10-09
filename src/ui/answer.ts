@@ -11,7 +11,7 @@
 
 import { DecisionInputs, decisionInputs, nudgeSeconds } from '../core/decide.js';
 import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges } from '../core/reach.js';
-import { CookSurface, sameDecisionInputs } from '../core/running.js';
+import { CookSurface } from '../core/running.js';
 import {
   cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
 } from './decisionGrids.js';
@@ -29,8 +29,9 @@ const asking = {
   /** Re-solve the idle page (`recompute`, update.ts), which solves with this
    *  module and so is handed in by `boot()` rather than imported. */
   landed: (): void => {},
-  /** Plan the running cook again (cook.ts), when a surface or a profile its
-   *  plan wants lands. */
+  /** Whether a cook (cook.ts) wants the surface for these inputs, and what
+   *  to do when it lands. */
+  cookWants: (_inputs: DecisionInputs): boolean => false,
   cookLanded: (): void => {},
 };
 
@@ -40,10 +41,10 @@ export function whenAnswerLands(recompute: () => void): void {
   asking.landed = recompute;
 }
 
-/** What to do when a surface or a profile the running cook's plan wants
- *  lands. */
-export function whenCookSurfaceLands(replanCook: () => void): void {
-  asking.cookLanded = replanCook;
+/** What to do when a surface or a profile a cook wants lands (cook.ts). */
+export function whenCookSurfaceLands(wants: (inputs: DecisionInputs) => boolean, landed: () => void): void {
+  asking.cookWants = wants;
+  asking.cookLanded = landed;
 }
 
 /* --------------------------------------------------------------- solving */
@@ -89,23 +90,20 @@ export function decided(answer: LevelAnswer, timeToBoil_s: number): DecidedAnswe
 
 /* -------------------------------------------------------------- the nudge */
 
-/** This page's nudge (E8, DECISIONS.md 61): a whole number of seconds from
- *  -10 to +10, drawn when the page boots and again after each cook, so the
- *  time on screen holds still while the cook looks at it. Drawn by `boot()`
- *  (app.ts), not as this module loads, so a script's seed (now.ts) is in
- *  place for the first draw. */
-const nudge = { draw: 0 };
-
-/** A new page or a new cook, a new nudge. */
+/** A new page or a new cook, a new nudge (E8, DECISIONS.md 61): a whole
+ *  number of seconds from -10 to +10, drawn when the page boots and again
+ *  after each cook, so the time on screen holds still while the cook looks at
+ *  it. Drawn by `boot()` (app.ts), not as this module loads, so a script's
+ *  seed (now.ts) is in place for the first draw. */
 export function drawNudge(): void {
-  nudge.draw = nudgeSeconds(random());
+  state.nudgeDraw = nudgeSeconds(random());
 }
 
 /** The nudge the time takes now: the draw while sharing is on, and none
  *  while it is off - the consent covers it, and nothing else does. A cook
  *  started now keeps it (`startCook`). */
 export function nudgeNow(): number {
-  return shareState().on ? nudge.draw : 0;
+  return shareState().on ? state.nudgeDraw : 0;
 }
 
 /** How long the inputs must sit still before a decision surface is asked for,
@@ -156,7 +154,7 @@ export function askForProfile(inputs: DecisionInputs): void {
   // is asked for again the next time the screen wants it.
   oddsProfileFor(inputs, state.calib).then(() => {
     asking.profiles.delete(key);
-    if (cookWants(inputs)) {
+    if (asking.cookWants(inputs)) {
       asking.cookLanded();
       return;
     }
@@ -170,12 +168,6 @@ export function askForProfile(inputs: DecisionInputs): void {
 
 /* ------------------------------------------------------- a cook under way */
 
-/** Whether the running cook's plan reads the surface for `inputs`. */
-function cookWants(inputs: DecisionInputs): boolean {
-  const wanted = state.plan === null ? null : state.plan.inputs;
-  return wanted !== null && sameDecisionInputs(wanted, inputs);
-}
-
 /** The surface for `inputs` as far as it is in: the grid, with the odds
  *  profile if that is in too; null until the grid is. */
 export function surfaceFor(inputs: DecisionInputs | null): CookSurface | null {
@@ -185,14 +177,14 @@ export function surfaceFor(inputs: DecisionInputs | null): CookSurface | null {
   return { inputs: inputs, grid: grid, profile: cachedOddsProfile(inputs, state.calib) };
 }
 
-/** Ask the worker for what the running cook's plan wants and has not got -
- *  its pot's surface, then the odds profile on it - and plan the cook again
- *  as each lands, if it still wants it. A new pot mid-cook (the boil tapped)
- *  is asked for at once: the egg is already in the water. */
+/** Ask the worker for what a cook wants and has not got - its pot's
+ *  surface, then the odds profile on it - and step the cook as each lands,
+ *  if it still wants it. A new pot mid-cook (the boil tapped) is asked for
+ *  at once: the egg is already in the water. */
 export function askForCookSurface(inputs: DecisionInputs): void {
   if (cachedDecisionGrid(inputs) === null) {
     decisionGrid(inputs).then(() => {
-      if (cookWants(inputs)) asking.cookLanded();
+      if (asking.cookWants(inputs)) asking.cookLanded();
     }, (error: unknown) => console.warn('decision surface failed', error));
     return;
   }

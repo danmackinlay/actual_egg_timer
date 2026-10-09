@@ -8,10 +8,11 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, CookFacts, EggRecord, MODEL_ID,
-  PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, ResultsMeta, StoreRead, calibrationDoneness, calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision,
-  parseRecord, probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay,
-  resultsFile, resultsFileName,
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, CookFacts, EggRecord, LIKELIHOOD_ID,
+  MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, ResultsMeta, StoreRead, calibrationDoneness,
+  calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
+  probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
+  resultsFileName,
 } from '../../src/core/record.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
@@ -451,7 +452,7 @@ recordCases.push({
  * both apps, character for character. A store spliced in as it is, a missing
  * store, damaged and bare stores kept as strings, and every character the
  * escaping treats specially. */
-const STORE_TEXT = JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: MODEL_ID, folded: 1, log: [REPLAY_LOG[0]] });
+const STORE_TEXT = JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: LIKELIHOOD_ID, folded: 1, log: [REPLAY_LOG[0]] });
 const RESULTS_CASES: { meta: ResultsMeta; stored: string | null }[] = [
   {
     meta: { app: 'web', appVersion: '0.4.0-alpha.1', exported: '2026-10-05T09:41:07.250Z', population: LITERATURE_POPULATION.id, uid: null },
@@ -570,16 +571,16 @@ const probeWhen = [recordFor(FACTS_BASE), recordFor({ ...FACTS_BASE, out_s: null
 );
 
 /* What a launch makes of the store it read (`loadDecision`): every path, and
- * which wins where two apply. The build's own population and model are named
- * here, not taken from the code, so a new `MODEL_ID` does not move these.
- * Each case is a change to a sound store of three records, two folded. */
+ * which wins where two apply. The build's own population and likelihood are
+ * named here, not taken from the code, so a new `LIKELIHOOD_ID` does not move
+ * these. Each case is a change to a sound store of three records, two folded. */
 const LOAD_POPULATION = 'this-population';
-const LOAD_MODEL = 'this-model';
+const LOAD_LIKELIHOOD = 'this-likelihood';
 const SOUND_STORE: StoreRead = {
-  readable: true, base: null, posterior: true, folded: 2, records: 3, population: LOAD_POPULATION, model: LOAD_MODEL,
+  readable: true, base: null, posterior: true, folded: 2, records: 3, population: LOAD_POPULATION, likelihood: LOAD_LIKELIHOOD,
 };
 const NOT_A_STORE: Partial<StoreRead> = {
-  readable: false, base: null, posterior: false, folded: null, records: null, population: null, model: null,
+  readable: false, base: null, posterior: false, folded: null, records: null, population: null, likelihood: null,
 };
 const LOAD_CASES: { why: string; over: Partial<StoreRead> }[] = [
   { why: 'nothing stored, or nothing of this format: dropped', over: { ...NOT_A_STORE } },
@@ -591,24 +592,24 @@ const LOAD_CASES: { why: string; over: Partial<StoreRead> }[] = [
   { why: 'the log unreadable on a base: the posterior still', over: { records: null, base: 'sound' } },
   { why: 'the log unreadable, the posterior damaged: the base', over: { records: null, posterior: false, base: 'sound' } },
   { why: 'the log unreadable, nothing sound: the prior', over: { records: null, posterior: false, base: 'damaged' } },
-  { why: 'the log unreadable, another model: still rebased', over: { records: null, model: 'another-model' } },
+  { why: 'the log unreadable, another likelihood: still rebased', over: { records: null, likelihood: 'another-likelihood' } },
   { why: 'the posterior damaged: the log again from the prior', over: { posterior: false } },
   { why: 'the posterior damaged on a base: the log again from the base', over: { posterior: false, base: 'sound' } },
   { why: 'the base damaged: dropped, and the log again from the prior', over: { base: 'damaged' } },
   { why: 'the count damaged', over: { folded: null } },
   { why: 'drawn from another population', over: { population: 'another-population' } },
-  { why: 'folded under another model', over: { model: 'another-model' } },
-  { why: 'no model named', over: { model: null } },
+  { why: 'folded under another likelihood', over: { likelihood: 'another-likelihood' } },
+  { why: 'no likelihood named', over: { likelihood: null } },
   { why: 'no population named', over: { population: null } },
-  { why: 'another model, on a base: the base stays', over: { model: 'another-model', base: 'sound' } },
+  { why: 'another likelihood, on a base: the base stays', over: { likelihood: 'another-likelihood', base: 'sound' } },
   { why: 'a posterior ahead of its log: rebased on it', over: { folded: 4 } },
   { why: 'ahead of an empty log', over: { folded: 1, records: 0 } },
   { why: 'ahead, on a base: the posterior becomes the base', over: { folded: 4, base: 'sound' } },
-  { why: 'ahead, and another model: replayed first', over: { folded: 4, model: 'another-model' } },
+  { why: 'ahead, and another likelihood: replayed first', over: { folded: 4, likelihood: 'another-likelihood' } },
 ];
 const loadCases = LOAD_CASES.map((c) => {
   const read: StoreRead = { ...SOUND_STORE, ...c.over };
-  return { why: c.why, read: read, decision: loadDecision(read, LOAD_POPULATION, LOAD_MODEL) };
+  return { why: c.why, read: read, decision: loadDecision(read, LOAD_POPULATION, LOAD_LIKELIHOOD) };
 });
 
 export const recordFixture = {
@@ -616,6 +617,7 @@ export const recordFixture = {
   version: RECORD_VERSION,
   prior: LITERATURE_POPULATION.id,
   model: MODEL_ID,
+  likelihood: LIKELIHOOD_ID,
   cases: recordCases,
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
@@ -628,8 +630,8 @@ export const recordFixture = {
   made: factsCases,
   probeWhen: probeWhen,
   // What a launch makes of the store it read (`loadDecision`), for a build
-  // of this population and model.
-  load: { population: LOAD_POPULATION, model: LOAD_MODEL, cases: loadCases },
+  // of this population and likelihood.
+  load: { population: LOAD_POPULATION, likelihood: LOAD_LIKELIHOOD, cases: loadCases },
   resultsFile: {
     version: RESULTS_FILE_VERSION,
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),

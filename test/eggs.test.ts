@@ -18,7 +18,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { EggRecord, MODEL_ID, parseRecord, resultsFile } from '../src/core/record.js';
+import { EggRecord, LIKELIHOOD_ID, MODEL_ID, parseRecord, resultsFile } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { recordAt } from '../tools/common.js';
 import {
@@ -35,7 +35,7 @@ function log(): EggRecord[] {
 /** A store as the apps keep one (src/ui/calibrationStore.ts `encodeKept`), less
  *  the posterior the import never reads. */
 function store(records: unknown[], unread: { at: number; record: unknown }[] = []): string {
-  return JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: MODEL_ID, base: null, cal: null, folded: 0,
+  return JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: LIKELIHOOD_ID, base: null, cal: null, folded: 0,
     log: records, ...(unread.length > 0 ? { unread: unread } : {}) });
 }
 

@@ -155,13 +155,15 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 @Suite("The record")
 struct RecordConformance {
     /// Stamped into every iOS record, so a record from either app names the
-    /// same schema and the same prior.
-    @Test("the record's version and prior are the reference's")
+    /// same schema, prior and model; and the likelihood beside the stored
+    /// posterior, so either app replays on the same change.
+    @Test("the record's version, prior, model and likelihood are the reference's")
     func identity() throws {
         let file = try Fixtures.load("record.json")
         #expect(try recordVersion == Int(file.num("version")))
         #expect(try literaturePopulation.id == file.str("prior"))
         #expect(try modelID == file.str("model"))
+        #expect(try likelihoodID == file.str("likelihood"))
     }
 
     @Test("which records a loader trusts, case by case")
@@ -228,7 +230,7 @@ struct RecordConformance {
     func load() throws {
         let section = try Fixtures.object("record.json", "load")
         let population = try section.str("population")
-        let model = try section.str("model")
+        let likelihood = try section.str("likelihood")
         for c in try Fixtures.list("record.json", "load.cases") {
             let why = try c.str("why")
             let r = try c.object("read")
@@ -236,7 +238,7 @@ struct RecordConformance {
                 readable: r.flag("readable"), base: r.optionalValue(StoredBase.self, "base"),
                 posterior: r.flag("posterior"), folded: r.optionalNum("folded").map { Int($0) },
                 records: r.optionalNum("records").map { Int($0) },
-                population: r.optionalStr("population"), model: r.optionalStr("model")
+                population: r.optionalStr("population"), likelihood: r.optionalStr("likelihood")
             )
             let d = try c.object("decision")
             let want = try LoadDecision(
@@ -244,7 +246,7 @@ struct RecordConformance {
                 base: d.optionalValue(KeptBase.self, "base"), calibration: d.value(KeptCalibration.self, "calibration"),
                 folded: Int(d.num("folded")), log: d.flag("log")
             )
-            #expect(loadDecision(read, population: population, model: model) == want, "\(why)")
+            #expect(loadDecision(read, population: population, likelihood: likelihood) == want, "\(why)")
         }
     }
 

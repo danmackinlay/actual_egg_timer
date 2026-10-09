@@ -63,11 +63,21 @@ export const RECORD_VERSION = 1;
  *  particle (DECISIONS.md 95), which draws another prior from the same seed.
  *  Records from before E6 carry none.
  *
- *  It is also what tells a stored posterior it is out of date: both apps
- *  keep it beside the posterior (the store's `m`) and replay the log when it
- *  differs, so the posterior is always what THIS code makes of the log. A
- *  change to the physics changes the likelihood, so it changes this too. */
+ *  It is the record's provenance (`model`, sent with each record, read by the
+ *  fit) and never decides a replay: `LIKELIHOOD_ID` does. A new likelihood
+ *  is a new model too, since the forecast is the posterior's, so this moves
+ *  whenever that does; a change to the decision or the nudge alone moves
+ *  only this. */
 export const MODEL_ID = '2026-10-e10';
+
+/** What THIS code makes of a log: the prior's draw from a population, the
+ *  physics and the likelihood, which together are the fold. Both apps keep it
+ *  beside the posterior (the store's `m`) and replay the log when it differs
+ *  (`loadDecision`), so the posterior is always this code's. Moved only when
+ *  the fold moves: a change to the decision alone leaves every posterior as
+ *  it was. test/record.test.ts pins a digest of a fixed log's replay to it,
+ *  so a change to the fold fails there until this moves. */
+export const LIKELIHOOD_ID = '2026-10-e10';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -847,10 +857,10 @@ export function replay(
  * UserDefaults) and reads it apart in its own way: that is I/O, and stays in
  * the app. What it then does with what it read is the same decision in both,
  * and lives here: `loadDecision`, a pure function of the parts and of this
- * build's population and model. Every damaged part is refused, never read
- * around: a store that cannot be read is dropped, a log that cannot be read
- * leaves what it taught as the base, and a store folded under another model
- * or drawn from another population is replayed. */
+ * build's population and likelihood. Every damaged part is refused, never
+ * read around: a store that cannot be read is dropped, a log that cannot be
+ * read leaves what it taught as the base, and a store folded under another
+ * likelihood or drawn from another population is replayed. */
 
 /** What a launch found: `fresh`, nothing to use, so the prior; `rebuild`,
  *  the log good and the posterior not this build's to use, so the log is
@@ -876,8 +886,9 @@ export interface StoreRead {
   /** The population the posterior was drawn from, or null when the store
    *  does not say. */
   population: string | null;
-  /** The model it was folded under, or null when the store does not say. */
-  model: string | null;
+  /** The `LIKELIHOOD_ID` it was folded under, or null when the store does
+   *  not say. */
+  likelihood: string | null;
 }
 
 /** What to keep, in the parts that were read. */
@@ -897,21 +908,21 @@ export interface LoadDecision {
 
 /**
  * What a launch does with the store it read, for a build that draws its
- * prior from `population` and folds under `model`:
+ * prior from `population` and folds under `likelihood`:
  *
  *  - no store of this format that can be read: `fresh`, the prior.
  *  - the log unreadable: `rebased`. Its records cannot be folded, but what
  *    they taught is in the posterior, which becomes the base - or the base,
  *    if the posterior is damaged too.
  *  - the posterior damaged, the base damaged, the count damaged, another
- *    population, another model or none: `rebuild`, the log folded again
+ *    population, another likelihood or none: `rebuild`, the log folded again
  *    from the base, or the prior. A base cannot be replayed, so a sound one
  *    stays as it is.
  *  - a posterior that has absorbed more records than the log holds:
  *    `rebased`, on that posterior.
  *  - otherwise `loaded`.
  */
-export function loadDecision(read: StoreRead, population: string, model: string): LoadDecision {
+export function loadDecision(read: StoreRead, population: string, likelihood: string): LoadDecision {
   if (!read.readable) {
     return { path: 'fresh', base: null, calibration: 'start', folded: 0, log: false };
   }
@@ -922,7 +933,7 @@ export function loadDecision(read: StoreRead, population: string, model: string)
   const base = read.base === 'sound' ? 'stored' : null;
   if (
     read.base === 'damaged' || !read.posterior || read.folded === null
-    || read.population !== population || read.model !== model
+    || read.population !== population || read.likelihood !== likelihood
   ) {
     return { path: 'rebuild', base: base, calibration: 'start', folded: 0, log: true };
   }

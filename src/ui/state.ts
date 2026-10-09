@@ -1,6 +1,7 @@
 /**
- * The page's state, in one place (`state`), and what it derives: the egg and
- * the pot on screen, how the cook starts, and the time to a rolling boil.
+ * The page's model, in one place (`state`, a `Model`: model.ts), and what it
+ * derives: the egg and the pot on screen, how the cook starts, and the time
+ * to a rolling boil.
  *
  * The app is the timer. It measures the time to a rolling boil rather than
  * asking the user to stopwatch it elsewhere, which is the one measurement the
@@ -17,16 +18,11 @@
 
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
-import { Solution } from '../core/solve.js';
-import { BoilMemory } from '../core/boil.js';
 import { roomInUse } from '../core/inputs.js';
-import { Decision } from '../core/decide.js';
-import { DecidedAnswer, OddsProfile } from '../core/reach.js';
 import { MassFrom } from '../core/record.js';
-import { Outcome } from '../core/outcome.js';
-import { CookChoices, CookPlan, CookPot, Phase, RunningCook, cookSetupOf, phaseAt } from '../core/running.js';
-import { Calibration } from './calibration.js';
+import { CookChoices, CookPot, Phase, cookSetupOf, phaseAt } from '../core/running.js';
 import { Learning } from './learned.js';
+import { Model, NO_NEED } from './model.js';
 import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';
 import { REGION } from './units.js';
 
@@ -37,70 +33,10 @@ import { REGION } from './units.js';
  *  since it was saved. */
 export const sizeClasses = sizeClassesFor(REGION);
 
-/** What the page holds: the setup, what has been learned, the cook under way
- *  and the answer on screen. */
-interface PageState {
-  settings: Settings;
-  /** What the controls show and write (design/one-screen.md section 4,
-   *  review 2.5): the settings themselves while idle, the same object; while
-   *  a cook runs, its own choices over a copy of them (`settingsOfChoices`),
-   *  never the settings, which another tab may have changed since. */
-  controls: Settings;
-  boilMemory: BoilMemory;
-  /** Posterior over the model's uncertain constants, learned from how the
-   *  user's own eggs actually turn out. Before any feedback this is the prior
-   *  mean, i.e. the literature values. */
-  calib: Calibration;
-  /** The solve behind the time on screen while idle. */
-  solution: Solution | null;
-  /** The choice behind the time on screen while idle: the odds, and how
-   *  far it leaned from the mean solve. Null until the
-   *  setup's decision surface has been built, and on the sous-vide screen. */
-  decision: Decision | null;
-  /** What the egg at the chosen time will be like (src/core/outcome.ts): the
-   *  white's line; how sure I am, and the bracket under the slider drawn from
-   *  it, are `chosen`'s.
-   *  Read at the decided time on the same surface, whenever `decision` is, and
-   *  null whenever it is. */
-  outcome: Outcome | null;
-  /** The whole of the answer on screen as core decided it (`decideAnswer`),
-   *  whose parts `solution`, `decision` and `outcome` are: the advice reads
-   *  the level it was decided at and whether it is wanted. Null whenever
-   *  `decision` is. */
-  chosen: DecidedAnswer | null;
-  /** The odds at every level for the pot on screen and the posterior as it
-   *  stands (reach.ts): the track's shading, and the range the slider offers.
-   *  Null until it has been worked out, which follows the pot's surface; until
-   *  then the physical limits are the whole rule, as they were before. */
-  profile: OddsProfile | null;
-  /** The warning line while idle: a refusal when the requested doneness had to
-   *  be moved, or the level's low odds (`warningKey`); empty otherwise. */
-  idleWarning: string;
-  /** The cook under way (src/core/running.ts): its start, its choices and
-   *  what it observed, as stored under `aet.cook.v5`; null while idle. */
-  cook: RunningCook | null;
-  /** Everything derived from `cook` (`replan`), planned again only when
-   *  something new is known - an event, a surface landing, the slow hob's
-   *  moment, a reload - never on every tick. Null exactly when `cook` is. */
-  plan: CookPlan | null;
-  /** The lean last decided for the cook under way, s: the interim a plan
-   *  carries while its pot's surface is being built (`carriedSolution`). A
-   *  cache, stored with the cook, never truth. */
-  leanHint_s: number;
-  /** While a correction is in hand mid-cook (edit.ts), the slider's reading
-   *  for it, from a plan of the cook as it would be, which stores nothing
-   *  and rings nothing: the level, its peak yolk and the solve, null until
-   *  that plan is made. Null when no correction is in hand. */
-  aim: { level: number; peakYolk_C: number; solution: Solution | null } | null;
-  /** When the eggs went in, as the controls show it while a cook runs: the
-   *  cook's start, or a correction to it in hand (edit.ts), epoch s. Null
-   *  while idle. */
-  controlsStart_s: number | null;
-}
-
-/** The page's state. The first three are read from storage by `boot()`
- *  (app.ts), not when this module is imported, so a test can import it. */
-export const state: PageState = {
+/** The page's model (model.ts). The settings, the pans and the calibration
+ *  are read from storage by `boot()` (app.ts), not when this module is
+ *  imported, so a test can import it. */
+export const state: Model = {
   settings: null!,
   controls: null!,
   boilMemory: null!,
@@ -111,11 +47,25 @@ export const state: PageState = {
   chosen: null,
   profile: null,
   idleWarning: '',
+  aim: null,
+  controlsStart_s: null,
+  nudgeDraw: 0,
   cook: null,
   plan: null,
   leanHint_s: 0,
-  aim: null,
-  controlsStart_s: null,
+  need: NO_NEED,
+  ending: [],
+  before: [],
+  surfaces: [],
+  appVersion: '',
+  prior: '',
+  pull_s: null,
+  written: null,
+  works: true,
+  closed: false,
+  questions: 'open',
+  reloaded: false,
+  probeHeld: false,
 };
 
 /* --------------------------------------------------------------- physics */

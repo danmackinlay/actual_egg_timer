@@ -6982,6 +6982,93 @@ Debug build's e2e relies on all of them, so the package's targets do get
 arguments: both are now under `ios/EggTimerCore/Sources`, and the rule
 should cover `EggTimerApp` and `EggTimerShared`.
 
+## 10 October 2026: the web's running cook on core's `step` (REFACTOR-0.5 3.7)
+
+The web now runs the cook as core's state machine. Branch
+`worktree-agent-a2af49e5bd9aad7be`, commit `83ba983`.
+
+- **One model** (`src/ui/model.ts`): `Model` extends core's `CookState`
+  with the page's state and what the web keeps around the step: `need`,
+  cooks `ending` (ended before their record could be made, stepped as each
+  surface lands, off screen), the calibration `before` an egg, the pull's
+  alarm, and this tab's bookkeeping for the stored cook (`written`,
+  `works`, `closed`) and the questions (`questions`, `reloaded`). What
+  cook.ts (`clock`, `written`), feedback.ts (the answer states, the held
+  answers) and answer.ts (the nudge) held at module level is in it.
+- **`update(model, msg, now) → [model, effects]`**, pure, over `step`: the
+  primary button reads the phase; a correction of the start and the
+  choices is two steps; another tab's copy is taken up (`takeUpEvents`) and
+  planned on, and the pull it rang rings here if this tab never rang it; an
+  egg no longer open closes here (nothing more written or logged); a reload
+  rings nothing.
+- **cook.ts is the effect runner** (`dispatch`): another tab's write taken
+  up before every message, then the effects, the needs (the surface, the
+  calibration before this egg and a surface on it), the ticker short of
+  Done, a wake at `wakeAt_s` at Done, and the page drawn.
+- **The record** goes through `keepRecord` (calibration.ts): logged and
+  folded, or the egg logged replaced, a later answer folded from the fold
+  before it (`recordSecondAnswer`), and where that cannot be (another egg
+  logged since, the fold gone), the log folded again from its start rather
+  than the answer refused. A probe reading still asks for the record to be
+  scored, and waits for a surface when there is none.
+
+Two things that are new, both what `step` asks for: a page left at Done
+ends its cook at its too-old moment without being looked at (e2e
+`done-wakes`; it ended at the next look before); and an answer the record
+could not yet be made for is kept in the stored cook across a reload (it
+was held in memory). The wake is armed on the clock of the moment, not
+again when the development clock is moved, so `final-egg` still answers an
+egg made final by a shift.
+
+Gates: `verify` (429 tests), `build:site`, `e2e` 84 of 84 (83 and
+`done-wakes`). `src/ui/` 8,795 lines before, 8,679 after; the cook's part
+(cook, feedback, state, eggRecord; model added) 1,450 to 1,296. Still to
+do for 3.7 is listed under it in `REFACTOR-0.5.md`.
+
+## 10 October 2026: the model id split, and the fixtures a row a line (REFACTOR-0.5 3.14, 3.19)
+
+Branch `red-team-3.14-3.19-ids-and-fixtures`.
+
+- **Two ids** (3.14). `MODEL_ID` is the record's provenance (`model`, sent
+  with each record, read by the fit; `DECISIONS.md` 37) and nothing else.
+  `LIKELIHOOD_ID` (`likelihoodID`) is what both apps keep beside the
+  posterior as the store's `m`, and what `loadDecision` compares
+  (`StoreRead.likelihood`): the prior's draw, the physics and the
+  likelihood. A change to the decision or the nudge alone now moves
+  `MODEL_ID` and replays nothing; a new likelihood moves both. Both are
+  `2026-10-e10` today, so no store replays on this build.
+  `test/record.test.ts` 2e replays six eggs from six pots (every kind of
+  answer, a probe, a counter, 95 C water) at the apps' prior, 1000
+  particles and the full grid, and pins each dimension's weighted mean and
+  sd, the ESS and the generator's state to `LIKELIHOOD_ID` at 1e-9; a
+  change to the fold fails there and prints the numbers to pin. 4.6 s.
+  The record's shape is unchanged, so records already on the server read
+  (`server.test` 8: any model id kept as sent, read back by `parseRecord`
+  and `readFitRecord`).
+- **A row a line** (3.19). Every generated fixture is still JSON, laid out
+  by `fixtureLayout` (`tools/fixtureCompare.ts`): a case, a step of a
+  trace, a particle each start a line and are written whole on it up to
+  8000 characters; longer rows open and their rows go a line each; lists
+  of numbers are one line; `, ` and `: ` separate so `git diff
+  --word-diff` finds the value. Swift's loader reads it unchanged.
+  `fixtures:check` fails on a fixture committed in another layout and
+  writes its committed values in this one, so a branch from before that
+  regenerates fixtures is caught at merge. Against the previous commit's
+  fixtures: no difference and no number even within tolerance, the same
+  JSON key for key, in all 23; `swift test` passes. 3.83 MB in 145,507
+  lines to 2.46 MB in 8,483 (`step.json` 24,403 to 450 lines,
+  `running.json` 38,675 to 280; the longest line 7,723 characters).
+
+Each through `verify`, `ios:build`, `e2e` (83 of 83) and `ios:e2e` (48 of
+48), and again on `0.5.x` merged in (the app's logic as `EggTimerApp`).
+The first `e2e` run, beside `ios:e2e` building, reported 82 of 83 with its
+failure line lost from the log; run again alone, 83 of 83, twice.
+
+What one could trip on: `fixtures:check` compares with git's index, so a
+regenerated fixture must be staged before `verify`. A new `LIKELIHOOD_ID`
+string that differs from `MODEL_ID` is a new Swift literal for
+`copy:literals`' list.
+
 ## 10 October 2026: policy.ts by subject, and core only what both apps agree on (REFACTOR-0.5 3.15, 3.17)
 
 **policy.ts is gone.** Its ten subjects now live with what each decides, in
