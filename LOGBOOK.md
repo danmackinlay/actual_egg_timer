@@ -7270,3 +7270,77 @@ asks for, is left to the session that merges.
 
 Gates at `3efb625` and at this entry: `verify` (440 tests), `npm run e2e` 85 of 85
 (46 behaviour, 39 copy/, 178 states checked).
+
+## 10 October 2026: iOS on core's `step`, the planner on one settings value, settings read by core, time in seconds (REFACTOR-0.5 3.9 to 3.12)
+
+Branch `ios-on-step-3.9`, from `0.5.x` at `4ecc06a`.
+
+- **Settings as one value, read by core** (3.11). `src/core/settings.ts`:
+  `Settings`, `DEFAULT_SETTINGS` and `readSettings`, every field checked,
+  a number clamped and anything not a finite number the default (a number
+  stored as text is no longer read as the number); `Settings.swift`
+  (`AppSettings`, since SwiftUI has a `Settings`), held by
+  `fixtures/settings.json`, 32 stored copies against both size tables. The
+  value is the union of what the apps keep: the web's measured egg and mute,
+  iOS's weighed egg. The web's `store.ts` reads with it. iOS keeps it whole
+  as JSON under `settings.v1` (`SettingsStore`), a correction's fields laid
+  over the settings as last read or written; the fourteen keys go, swept at
+  launch. The iOS checks give settings at launch as one data argument,
+  `-settings.v1 <hex>` (a `<hex>` launch argument is data to UserDefaults;
+  JSON text in one is dropped).
+- **The cook on `step`** (3.9). `Cook` holds core's `CookState` and feeds
+  `step` each event, one at a time, off the main actor, each with its own
+  moment; it carries out the effects (the cook stored, the alarms the plan
+  sets, a ring where no notification holds the deadline at its moment, a
+  ring stopped, the boil remembered, the egg logged through
+  `Learning.logRecord`, the cook forgotten, sharing told), builds what
+  `need` asks for, and keeps the card. A cook that ends before its record
+  can be made waits off the screen, stored, until it is logged. The readout
+  and the buttons are `readoutAt`. The ticker steps only when core's
+  `tickDue` says the clock has something to decide (step asks it too).
+  `Stored` is unchanged: `{cook, feedbackGiven, leanHint_s}` under
+  `cookInProgress.v4`, its cook read by core's `readRunningCook`;
+  `feedbackGiven` is now `answered(cook)`.
+- **The planner** (3.10): `Planner.settings` is the `AppSettings` value; a
+  cook's choices are made from it and back; `Edits` measures a correction
+  field by field on it. The idle solve is `SolveLoop`, the learning
+  `Learning`, each with its own bookkeeping.
+- **Time** (3.12): app logic in cook seconds; `Date` in Alarm, Ringer, the
+  card and the views. The Attest's dates are epoch seconds under
+  `sharing.attest.v2` (v1 swept; a key made before is made again).
+- **Core**: `step` compares cooks by their logs (`sameCook`) in both
+  languages, rather than by identity in TypeScript and by value in Swift;
+  `tickDue` exported. The fixtures came out the same.
+
+**Behaviour.** The 48 iOS scenarios pass unchanged but for the settings'
+launch argument and where they read the stored settings. What is new: a
+stored settings value is written whole; the questions at Done after a
+relaunch show what was said and leave the rest open, from the cook's own
+log; a remake that cannot be made is tried once, not four times.
+
+**Tests** (`EggTimerAppTests`, through the real AppModel, fakes and a
+store in memory): a cook to Done and Start again; the pull rung without
+notifications, once; a relaunch past the pull's grace; a relaunch too old;
+a correction and its undoing; an overdue correction rung though a
+notification held the old pull (it bit with the old coverage rule); the
+still-in question; answers at Done logging the egg once; an answer held at
+Start again logged with it; a failed remake leaving the cook stored and
+the egg not final, made at the next launch without the cook coming back
+(it bit with the forget of before); a correction at Done then Start again;
+a cook dismissed with Start again staying dismissed; the settings as one
+value.
+
+**Lines.** `EggTimerApp` 5,671 before, 4,853 after; `ios/App` 5,031 to
+5,015; `Cook.swift` 1,309 to 993 and `AppModel.swift` 462 to 170; the
+planner's three files 1,220 to 1,104 (`Planner`, `SolveLoop`, `Learning`).
+The tests 569 to 892. Core gains `settings.ts` and `Settings.swift`.
+
+Gates on each commit: `verify`, `ios:build`, `ios:e2e` 48 of 48; `e2e` 85
+of 85 on the settings reader.
+
+**Left.** 3.9: Sharing's `generation` tokens; `Cook` still runs the
+alarms, the ring and the card itself. 3.12: `sharing.v1` keeps
+`busySince` as seconds since 2001. **For PLAN's map at merge:**
+`fixtures/settings.json`, `settings.ts`/`Settings.swift`, and iOS's
+`SolveLoop.swift` and `Learning.swift` in place of the planner's
+extensions.

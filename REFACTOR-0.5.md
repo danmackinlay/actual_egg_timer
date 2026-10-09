@@ -459,15 +459,40 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       record making), the four closures AppModel wires in backwards, `generation`
       tokens (24 in Cook, 21 in Sharing), and `stillOpen` decoding
       UserDefaults on every tick. L, after 1.2 and 3.1.
-- [ ] **3.10 iOS: Planner as `choices: CookChoices`**, not 13 controls
+      *Done for the running cook* (10 October 2026, `ea2aab9`, `ef043f4`):
+      `Cook` holds core's `CookState` and steps it, one event at a time off
+      the main actor; it runs the effects, builds what `need` asks for, and
+      the readout and buttons are `readoutAt`. Its plan loop, record making
+      and own too-old handling, AppModel's four closures, remake and held
+      answers, Cook's `generation` tokens and `stillOpen`'s read of the store
+      went; whether a tick has anything to decide is core's `tickDue`.
+      *Not done:* Sharing's 21 `generation` tokens; `Cook` is ~990 lines,
+      not thin: it still runs the alarms, the ring and the Live Activity
+      itself (as effects) and writes the debug log; PhaseActions keeps a
+      layout per phase (its words are the readout's).
+- [x] **3.10 iOS: Planner as `choices: CookChoices`**, not 13 controls
       mapped by hand six times; `SolveLoop` and `Learning` as types in place
       of extensions that need ~15 bookkeeping vars left internal. M.
-- [ ] **3.11 Settings as one value read by a core `readSettings`**, fixtured,
+      *Done* (`58f236a`): `Planner.settings` (core's `AppSettings`), choices
+      made from it and back (`adopt`), `Controls` gone (`AppSettings.same`,
+      `take`); `SolveLoop` and `Learning` with their bookkeeping private.
+- [x] **3.11 Settings as one value read by a core `readSettings`**, fixtured,
       in place of 14 literal keys written 2-3 times on iOS and
       `readSettings` clamping on the web. Free under D48. M.
+      *Done* (`9cc0f26`, `09ef6ae`): `src/core/settings.ts` and
+      `Settings.swift` (`AppSettings`), `fixtures/settings.json`; the web's
+      store reads with it; iOS keeps one value, `settings.v1`, the fourteen
+      keys swept.
 - [ ] **3.12 iOS: time as Double seconds** in app logic, `Date` only at
       SwiftUI and the system (58 conversions, 30 in Cook; `Attest` stored as
       seconds since 2001, unlike every other time). One `localDay`. S-M.
+      *Done but one* (`6537cad`, `bbfb216`): the
+      alarms and the ring's on-screen time in cook seconds, `Date` made in
+      Alarm, Ringer and the views; `Attest`'s times epoch seconds under
+      `sharing.attest.v2`; one `localDay`. *Not done:* `sharing.v1` still
+      keeps the share state's `busySince` as seconds since 2001 (Sharing.swift
+      `stored`/`read`): a new key would drop the share id and a deletion not
+      yet confirmed, so it wants its own decision.
 
 ### Storage and model ids
 
