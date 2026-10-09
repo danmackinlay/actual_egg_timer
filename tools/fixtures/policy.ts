@@ -15,6 +15,8 @@ import {
   anchorNear, anchorReachable, calibrationGrid,
   carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor,
   textureNoteKeys, verdictFor, roomInUse, shareGivesUp, shareReply, startTempPreset_C,
+  ALARM_RING_S, ALARM_SOUNDS, AlarmMoment, DEFAULT_ALARM_SOUND, NOTIFICATION_SOUND_MAX_S, alarmPeriod_s,
+  alarmRepeats, notificationRepeats, readAlarmSound,
 } from '../../src/core/policy.js';
 
 /* The decisions above the physics. None of it is expensive, so the cases
@@ -236,6 +238,26 @@ export const policyFixture = {
     givesUp: [0, 1, 4, 5, 6, 50].flatMap((tries) => [
       -1, 0, 3600, SHARE_WAIT_S - 1, SHARE_WAIT_S, SHARE_WAIT_S + 1, 30 * 24 * 3600,
     ].map((waited_s) => ({ tries: tries, waited_s: waited_s, givesUp: shareGivesUp(tries, waited_s) }))),
+  },
+  /* The alarm sounds: the picker's order, the default, what a stored value
+   * reads as (a near miss in case, a retired sound, not a string, absent),
+   * and each sound's timing at both moments. */
+  alarm: {
+    sounds: ALARM_SOUNDS,
+    default: DEFAULT_ALARM_SOUND,
+    ring_s: ALARM_RING_S,
+    notificationMax_s: NOTIFICATION_SOUND_MAX_S,
+    read: ['timer', 'cuckoo', 'hen', 'Hen', 'beeps', '', 3, true, null].map((stored) => ({
+      stored: stored,
+      sound: readAlarmSound(stored),
+    })),
+    timing: ALARM_SOUNDS.flatMap((sound) => (['pull', 'cooled'] as AlarmMoment[]).map((moment) => ({
+      sound: sound,
+      moment: moment,
+      period_s: alarmPeriod_s(sound, moment),
+      repeats: alarmRepeats(sound, moment),
+      notificationRepeats: notificationRepeats(sound, moment),
+    }))),
   },
   phase: {
     coolingSeconds: COOLING_SECONDS,

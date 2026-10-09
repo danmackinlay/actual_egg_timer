@@ -2848,6 +2848,98 @@
       }
     ]
   },
+  "alarm": {
+    "sounds": [
+      "timer",
+      "cuckoo",
+      "hen"
+    ],
+    "default": "timer",
+    "ring_s": 40,
+    "notificationMax_s": 30,
+    "read": [
+      {
+        "stored": "timer",
+        "sound": "timer"
+      },
+      {
+        "stored": "cuckoo",
+        "sound": "cuckoo"
+      },
+      {
+        "stored": "hen",
+        "sound": "hen"
+      },
+      {
+        "stored": "Hen",
+        "sound": "timer"
+      },
+      {
+        "stored": "beeps",
+        "sound": "timer"
+      },
+      {
+        "stored": "",
+        "sound": "timer"
+      },
+      {
+        "stored": 3,
+        "sound": "timer"
+      },
+      {
+        "stored": true,
+        "sound": "timer"
+      },
+      {
+        "stored": null,
+        "sound": "timer"
+      }
+    ],
+    "timing": [
+      {
+        "sound": "timer",
+        "moment": "pull",
+        "period_s": 2.6,
+        "repeats": 15,
+        "notificationRepeats": 11
+      },
+      {
+        "sound": "timer",
+        "moment": "cooled",
+        "period_s": 2.6,
+        "repeats": 15,
+        "notificationRepeats": 11
+      },
+      {
+        "sound": "cuckoo",
+        "moment": "pull",
+        "period_s": 2.2,
+        "repeats": 18,
+        "notificationRepeats": 13
+      },
+      {
+        "sound": "cuckoo",
+        "moment": "cooled",
+        "period_s": 2.2,
+        "repeats": 18,
+        "notificationRepeats": 13
+      },
+      {
+        "sound": "hen",
+        "moment": "pull",
+        "period_s": 1.6,
+        "repeats": 25,
+        "notificationRepeats": 18
+      },
+      {
+        "sound": "hen",
+        "moment": "cooled",
+        "period_s": 4.4,
+        "repeats": 9,
+        "notificationRepeats": 6
+      }
+    ]
+  },
   "phase": {
     "coolingSeconds": 180,
     "pullGraceSeconds": 20,
