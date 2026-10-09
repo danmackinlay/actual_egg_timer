@@ -31,7 +31,7 @@ final class Ringer {
     /// When the app last came on screen, in cook time (`AppClock`); nil while
     /// it is in the background.
     /// A deadline that passed before this is not rung (see `deadlineToRing`).
-    private(set) var onScreenSince: Date?
+    private(set) var onScreenSinceS: Double?
 
     private var engine: AVAudioEngine?
     private var buzzing: Task<Void, Never>?
@@ -39,7 +39,7 @@ final class Ringer {
     private let log = Logger(subsystem: "name.danmackinlay.actualeggtimer", category: "ring")
 
     private init() {
-        onScreenSince = UIApplication.shared.applicationState == .background ? nil : AppClock.now
+        onScreenSinceS = UIApplication.shared.applicationState == .background ? nil : AppClock.nowS
         let centre = NotificationCenter.default
         // Foreground and background rather than active and inactive: a system
         // prompt, Control Centre or a banner makes the app inactive while it is
@@ -47,13 +47,13 @@ final class Ringer {
         centre.addObserver(
             forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
         ) { _ in
-            MainActor.assumeIsolated { Ringer.shared.onScreenSince = AppClock.now }
+            MainActor.assumeIsolated { Ringer.shared.onScreenSinceS = AppClock.nowS }
         }
         centre.addObserver(
             forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
         ) { _ in
             MainActor.assumeIsolated {
-                Ringer.shared.onScreenSince = nil
+                Ringer.shared.onScreenSinceS = nil
                 Ringer.shared.stop()
             }
         }
@@ -68,7 +68,7 @@ final class Ringer {
         stop()
         // It cannot sound from the background anyway: the app has no
         // background audio mode, and the screen said "keep the app open".
-        guard onScreenSince != nil else { return }
+        guard onScreenSinceS != nil else { return }
         log.notice("ringing for \(deadline.rawValue, privacy: .public): no notification holds it")
 
         let sound = AlarmSoundChoice.shared.sound

@@ -18,6 +18,8 @@ public enum Limits {
     /// Hens' eggs: an EU XL is 73 g and up, most under 80; above 90 is a
     /// double-yolker or another bird, which this model does not describe.
     public static let massG = 25.0...90.0
+    /// A measured egg's minor diameter, mm: the web's measured egg.
+    public static let minorMm = 30.0...60.0
     public static let eggTempC = -2.0...40.0
     /// A kitchen's air, measured with the probe (the room setting): colder
     /// than 5 C is a cellar, hotter than 40 C a kitchen nobody cooks in.
@@ -108,6 +110,8 @@ public enum Defaults {
     /// Index into the region's size classes - 'Large' in both tables, 68 g in
     /// the EU one and 60.2 g on an American carton.
     public static let sizeIndex = 2
+    /// The web's measured egg, mm.
+    public static let customMinorMm = 44.0
     public static let customStartC = 12.0
     public static let altitudeM = 0.0
     public static let waterLitres = 2.0

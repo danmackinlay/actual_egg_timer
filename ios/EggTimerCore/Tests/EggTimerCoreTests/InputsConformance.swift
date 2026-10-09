@@ -16,6 +16,7 @@ struct DefaultsConformance {
     func defaults() throws {
         let d = try Fixtures.object("inputs.json", "defaults")
         try expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
+        try expectClose(Defaults.customMinorMm, d.num("customMinor_mm"), "customMinor_mm")
         try expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
         try expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
         try expectClose(Defaults.waterLitres, d.num("waterLitres"), "waterLitres")
@@ -60,6 +61,7 @@ struct DefaultsConformance {
         let limits = try Fixtures.object("inputs.json", "limits")
         let pairs: [(String, ClosedRange<Double>)] = [
             ("mass_g", Limits.massG),
+            ("minor_mm", Limits.minorMm),
             ("eggTemp_C", Limits.eggTempC),
             ("room_C", Limits.roomC),
             ("altitude_m", Limits.altitudeM),

@@ -433,10 +433,7 @@ type Found<E extends Event = Event> = E & { i: number };
 /// The prefs plist as read, each data value that is JSON parsed: the keys a
 /// check reads.
 interface Prefs {
-  start?: string;
-  waterLitres?: number;
-  eggCount?: number;
-  doneness?: number;
+  'settings.v1'?: { startMode?: string; waterLitres?: number; eggCount?: number; doneness?: number };
   newestVersion?: string;
   newestBuild?: string;
   'cookInProgress.v4'?: Stored;
@@ -596,8 +593,15 @@ const canon = (v: unknown): string => JSON.stringify(v, (_k, x: unknown) => (x &
   ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 const sorted = (a: string[] | null): string[] | null => (a ? [...a].sort() : a);
 
-/// A hot start: the planner's stored inputs, which load only with a level.
-const HOT = ['-doneness', '0.41', '-altitudeM', '0', '-waterLitres', '2', '-eggCount', '2', '-start', 'hot'];
+/// The settings as stored (`settings.v1`, core's `readSettings`), given at
+/// launch: what is not given is the default. A launch argument whose value
+/// is `<hex>` is data to UserDefaults, as the app stores the value.
+function settingsArg(over: Record<string, unknown>): string[] {
+  return ['-settings.v1', `<${Buffer.from(JSON.stringify(over), 'utf8').toString('hex')}>`];
+}
+/// A hot start's settings.
+const HOT_SETTINGS = { doneness: 0.41, altitude_m: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
+const HOT = settingsArg(HOT_SETTINGS);
 /// A cold cook's taps to Done: the boil at 5:00, out 3 s into the pull.
 const TO_DONE = 'boil@300,out@pull+3';
 
@@ -770,7 +774,7 @@ scenario('egg-readings', 'C3 step 2: the egg aimed for at idle (softer and firme
 async function likelyStill(run: Run, args: string[]): Promise<void> {
   const levels = [0.5, 0.6, 0.8, 0.9];
   const uiDo = levels.map((l, k) => `set:level=${l}@launch+${k + 1}`).join(',');
-  const first = await idle(run, [...args, '-doneness', '0.6', '-uiDo', uiDo]);
+  const first = await idle(run, [...args, ...settingsArg({ doneness: 0.6 }), '-uiDo', uiDo]);
   const seen = [];
   for (let k = 0; k < levels.length; k += 1) {
     const i = await run.step(run.t0 + k + 1);
@@ -849,8 +853,8 @@ scenario('owner-case', "C3 step 3: boiling corrected to cold, as the owner neede
   const card = lastCard(after.lines);
   run.check(card?.what === 'update' && card.stage === 'heating', `the card in place: ${card?.what} ${card?.stage} (was ${card0?.stage})`);
   run.check(card && card0 && card.ends !== card0.ends, 'the card ends at the corrected pull');
-  const prefs = await run.prefs((p) => p.start === 'cold');
-  run.check(prefs.start === 'cold', `the next cook's setting: ${prefs.start}`);
+  const prefs = await run.prefs((p) => p['settings.v1']?.startMode === 'cold');
+  run.check(prefs['settings.v1']?.startMode === 'cold', `the next cook's setting: ${prefs['settings.v1']?.startMode}`);
   run.terminate();
   const r = await relaunched(run, run.t0 + 90);
   run.check(restoredIn(r.restore, 'HEATING'), say(r.restore));
@@ -1007,9 +1011,10 @@ scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its w
   const after = await corrected(run, t.i);
   run.check(after.cook?.choices.waterLitres === 1, `the cook's water: ${after.cook?.choices.waterLitres}`);
   run.check(after.plan.pull !== plan0.pull, `the pull moved: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
-  const prefs = await run.prefs((p) => p.waterLitres === 1);
-  run.check(prefs.waterLitres === 1, `the next cook's water: ${prefs.waterLitres}`);
-  run.check(prefs.eggCount === undefined || prefs.eggCount === 2, `only what changed written: eggs ${prefs.eggCount}`);
+  const prefs = await run.prefs((p) => p['settings.v1']?.waterLitres === 1);
+  const written = prefs['settings.v1'];
+  run.check(written?.waterLitres === 1, `the next cook's water: ${written?.waterLitres}`);
+  run.check(written?.eggCount === 2, `only what changed written: eggs ${written?.eggCount}`);
   const i = await run.step(after.plan.pull + 1);
   await run.until(phaseIs('PULL'), { from: i, what: 'the pull' });
   await run.until(is('view', (e) => e.page === 'egg'), { from: i, what: "the egg's page at the pull" });
@@ -1389,7 +1394,7 @@ scenario('final-egg', 'Done, relaunched near the hour: ended at it, a later answ
   run.check(egg?.count === 1, `one egg logged, not ${egg?.count}`);
   run.check(egg?.last?.yolkWord === null, `logged unanswered: ${egg?.last?.yolkWord}`);
   run.check(forecastOk(egg?.last), 'with its forecast');
-  // An answer taken is stored with the cook at once (`recordFeedbackGiven`).
+  // An answer taken is stored with the cook at once (the cook's log).
   const afterTap = run.lines().slice(tap.i);
   run.check(!has(afterTap, storedAs((s) => s.feedbackGiven === true)), 'the Runny not stored');
   run.check(!lines.some(is('log', (e) => e.last?.yolkWord === 'runny')), 'the Runny not logged');
@@ -1657,7 +1662,7 @@ scenario('again-held', 'red team 0.4: Done, corrected, Jammy held for the record
 
 
 scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
-  await started(run, [...HOT, '-cooling', 'counter', '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);
+  await started(run, [...settingsArg({ ...HOT_SETTINGS, cooling: 'counter' }), '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);
   const plan0 = planIn(run.lines());
   let i = await run.step(plan0.pull + 1);
   await run.until(phaseIs('PULL'), { from: i, what: 'phase PULL' });
@@ -1855,10 +1860,10 @@ scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the a
   await run.until(storedAs((s) => s.cook.choices.level === 0.3), { from: c.i, what: 'the cook stored' });
   // The next cook's setting, written to the store as the app says; then in
   // its file, which the system writes when it will, so waited for in full.
-  await run.until(is('wrote', (e) => e.key === 'doneness' && e.number === 0.3), { from: c.i, what: 'the setting written' });
+  await run.until(is('wrote', (e) => e.key === 'settings.v1'), { from: c.i, what: 'the setting written' });
   run.terminate();
-  const prefs = await run.prefs((p) => p.doneness === 0.3);
-  run.check(prefs.doneness === 0.3, `the setting in the file: ${prefs.doneness}`);
+  const prefs = await run.prefs((p) => p['settings.v1']?.doneness === 0.3);
+  run.check(prefs['settings.v1']?.doneness === 0.3, `the setting in the file: ${prefs['settings.v1']?.doneness}`);
   const r = await relaunched(run, run.t0 + 40, ['-uiDo', 'set:size=3@50,set:water=1@50']);
   run.check(lastStored(r.lines)?.cook.choices.level === 0.3, 'relaunched with the change');
   t = await tapAt(run, run.t0 + 50, 'set');

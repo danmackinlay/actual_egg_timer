@@ -65,25 +65,25 @@ public enum Perf {
             try? await Task.sleep(for: .seconds(6))
             await run(.tapAltitude) {
                 for _ in 0..<5 {
-                    planner.altitudeM += 50
+                    planner.settings.altitudeM += 50
                     try? await Task.sleep(for: .milliseconds(700))
                 }
             }
             await run(.holdAltitude) {
                 for _ in 0..<20 {
-                    planner.altitudeM += 50
+                    planner.settings.altitudeM += 50
                     try? await Task.sleep(for: .milliseconds(100))
                 }
             }
             await run(.tapWater) {
                 for _ in 0..<4 {
-                    planner.waterLitres += 0.25
+                    planner.settings.waterLitres += 0.25
                     try? await Task.sleep(for: .milliseconds(700))
                 }
             }
             await run(.dragDoneness) {
                 for i in 0..<94 {
-                    planner.doneness = 0.3 + 0.4 * Double(i) / 93
+                    planner.settings.doneness = 0.3 + 0.4 * Double(i) / 93
                     try? await Task.sleep(for: .milliseconds(16))
                 }
             }

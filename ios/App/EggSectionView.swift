@@ -68,7 +68,7 @@ struct EggSectionView: View {
         guard phase != .idle, let running = model.cook.running, let plan = model.cook.plan else {
             // Idle: the egg the controls aim for, at the time on screen.
             guard !planner.isSousVide, let solution = planner.solution else { return (nil, .aim) }
-            let level = planner.doneness
+            let level = planner.settings.doneness
             return (cache.preview(
                 egg: planner.egg, setup: planner.setup, params: calibrationParams(calibration),
                 cookTimeS: solution.result.cookTimeS,

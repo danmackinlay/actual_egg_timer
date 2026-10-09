@@ -40,14 +40,15 @@ final class Sharing {
         /// again rather than attested again.
         var attestation: String?
         var status: Status
-        /// When Apple made `attestation`, set with it. Its certificate is
-        /// good for a few days, so one posted later is refused.
-        var madeAt: Date?
+        /// When Apple made `attestation`, epoch s, set with it. Its
+        /// certificate is good for a few days, so one posted later is
+        /// refused.
+        var madeAtS: Double?
         /// How many busy answers - the server's or Apple's - or signatures
         /// the phone could not make it has had, and when the first came:
         /// what `shareGivesUp` bounds. Absent when there are none.
         var busy: Int?
-        var busySince: Date?
+        var busySinceS: Double?
     }
 
     /// How old an attestation may be and still be refused for itself: one
@@ -68,7 +69,7 @@ final class Sharing {
     @ObservationIgnored private var again = false
 
     private static let stateKey = "sharing.v1"
-    private static let attestKey = "sharing.attest.v1"
+    private static let attestKey = "sharing.attest.v2"
 
     private init() {}
 
@@ -302,7 +303,7 @@ final class Sharing {
                 let made = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
                 guard gen == generation else { return .later }
                 a.attestation = made
-                a.madeAt = AppClock.system
+                a.madeAtS = AppClock.system.timeIntervalSince1970
                 saveAttest(a)
             }
             let body = try JSONEncoder().encode(["uid": uid, "keyId": keyId, "attestation": a.attestation ?? ""])
@@ -314,13 +315,14 @@ final class Sharing {
             case .kept:
                 a.status = .attested
                 a.busy = nil
-                a.busySince = nil
+                a.busySinceS = nil
             case .busy:
                 // Busy, limited or out of reach (403, 404, 408, 429, 5xx):
                 // the next run, for a while.
                 return waited(a)
             case .refused:
-                if status == 400, let made = a.madeAt, AppClock.system.timeIntervalSince(made) > Self.attestationFresh {
+                if status == 400, let made = a.madeAtS,
+                   AppClock.system.timeIntervalSince1970 - made > Self.attestationFresh {
                     // Posted days after Apple made it - the phone was offline -
                     // and refused, most likely for its certificate's date: a
                     // new key, attested now, on the next run.
@@ -355,7 +357,7 @@ final class Sharing {
             let made = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash)
             if gen == generation, var a = attest, a.uid == uid, a.busy != nil {
                 a.busy = nil
-                a.busySince = nil
+                a.busySinceS = nil
                 saveAttest(a)
             }
             return .key(made.base64EncodedString())
@@ -379,18 +381,18 @@ final class Sharing {
     /// is, must not stop its sharing for good.
     private func waited(_ attest: Attest) -> Attested {
         var a = attest
-        let now = AppClock.system
-        let since = a.busySince ?? now
+        let now = AppClock.system.timeIntervalSince1970
+        let since = a.busySinceS ?? now
         let busy = (a.busy ?? 0) + 1
-        if shareGivesUp(tries: busy, waitedS: now.timeIntervalSince(since)) {
+        if shareGivesUp(tries: busy, waitedS: now - since) {
             a.status = .failed
             a.busy = nil
-            a.busySince = nil
+            a.busySinceS = nil
             saveAttest(a)
             return .open
         }
         a.busy = busy
-        a.busySince = since
+        a.busySinceS = since
         saveAttest(a)
         return .later
     }

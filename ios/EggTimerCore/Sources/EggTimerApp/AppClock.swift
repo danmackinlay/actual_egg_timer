@@ -45,6 +45,9 @@ public enum AppClock {
 
     /// Now, in cook time.
     public static var now: Date { source.now }
+    /// Now, in cook time, epoch s: the app's logic keeps every time so, and
+    /// makes a `Date` only for the system and the screen.
+    public static var nowS: Double { source.now.timeIntervalSince1970 }
     /// A moment on the system's clock, in cook time.
     public static func app(_ system: Date) -> Date { source.app(system) }
     /// A moment in cook time, on the system's clock: when it will come.
@@ -85,6 +88,13 @@ public enum AppClock {
     /// the server and Apple, and the card's own dates, which the system
     /// counts.
     public static var system: Date { Date() }
+}
+
+/// The local calendar day of a moment, epoch s, YYYY-MM-DD: a day, not a
+/// timestamp (the record's `day`).
+public func localDay(_ s: Double) -> String {
+    let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: Date(timeIntervalSince1970: s))
+    return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
 }
 
 /// What cook time is read from (`AppClock`): the launch's clock in the app,

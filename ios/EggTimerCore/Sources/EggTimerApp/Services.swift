@@ -38,7 +38,9 @@ public protocol AlarmScheduling: AnyObject {
     func activate()
     /// Whether alarms may be set, asking the cook the first time.
     func authorize() async -> Bool
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling)
+    /// These alarms and no others, at these moments, epoch s in cook time:
+    /// none for a deadline that is nil.
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling)
     func cancel()
     /// The deadlines a notification holds, pending or delivered.
     func pendingDeadlines() async -> Set<RingDeadline>
@@ -47,8 +49,9 @@ public protocol AlarmScheduling: AnyObject {
 /// The in-app ring, for a deadline no notification holds (`Ringer`).
 @MainActor
 public protocol AlarmRinging: AnyObject {
-    /// Since when the app has been on screen, or nil while it is not.
-    var onScreenSince: Date? { get }
+    /// Since when the app has been on screen, epoch s in cook time, or nil
+    /// while it is not.
+    var onScreenSinceS: Double? { get }
     func activate()
     func ring(_ deadline: RingDeadline)
     func stop()
@@ -122,10 +125,10 @@ public protocol AlarmSoundChoosing: AnyObject {
 final class Unwired: AlarmScheduling, AlarmRinging, ResultSharing {
     func activate() {}
     func authorize() async -> Bool { false }
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool, cooling: Cooling) {}
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {}
     func cancel() {}
     func pendingDeadlines() async -> Set<RingDeadline> { [] }
-    var onScreenSince: Date? { nil }
+    var onScreenSinceS: Double? { nil }
     func ring(_ deadline: RingDeadline) {}
     func stop() {}
     func preview(_ sound: AlarmSound) {}

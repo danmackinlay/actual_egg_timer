@@ -248,21 +248,20 @@ public enum Calibrations {
     /// The results file (`resultsFile` in EggTimerCore): the store exactly as
     /// stored, and the sharing ID if there is one. Read from storage when it
     /// is asked for, so it is what is stored then.
-    public static func exportText(uid: String?, now: Date = AppClock.now) -> String {
+    public static func exportText(uid: String?, nowS: Double = AppClock.nowS) -> String {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let stored = Stores.store.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
         return resultsFile(
-            ResultsMeta(app: .ios, appVersion: appVersion, exported: iso.string(from: now),
+            ResultsMeta(app: .ios, appVersion: appVersion, exported: iso.string(from: Date(timeIntervalSince1970: nowS)),
                         population: population.id, uid: uid),
             stored: stored
         )
     }
 
     /// The results file's name, for the local day.
-    public static func exportName(now: Date = AppClock.now) -> String {
-        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: now)
-        return resultsFileName(day: String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0))
+    public static func exportName(nowS: Double = AppClock.nowS) -> String {
+        resultsFileName(day: localDay(nowS))
     }
 
     /// Forget every egg: the posterior, the base under it and the log. A run

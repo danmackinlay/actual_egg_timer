@@ -155,14 +155,14 @@ struct SetupFacts {
     /// own choices while one runs (`AppModel`'s edits).
     @MainActor init(_ planner: Planner) {
         units = planner.units
-        mass = planner.sizeClasses.indices.contains(planner.sizeIndex)
-            ? classMass(planner.sizeClasses[planner.sizeIndex], units: units)
+        mass = planner.sizeClasses.indices.contains(planner.settings.sizeIndex)
+            ? classMass(planner.sizeClasses[planner.settings.sizeIndex], units: units)
             : showIn(units, .mass, planner.eggMassG)
-        from = planner.startTemp
-        customC = planner.customStartC
+        from = planner.settings.startTempMode
+        customC = planner.settings.customStartC
         start = planner.start
         heatOff = planner.heatOff
-        cooling = planner.cooling
+        cooling = planner.settings.cooling
     }
 }
 
@@ -267,7 +267,7 @@ struct ClausePanel: View {
             .segmented()
             if let edits, let start = edits.shownStart { startedAt(edits, start) }
         case .cooling:
-            Picker(tr("controls.cooling"), selection: $planner.cooling) {
+            Picker(tr("controls.cooling"), selection: $planner.settings.cooling) {
                 Text(tr("controls.cooling.ice")).tag(Cooling.ice)
                 Text(tr("controls.cooling.tap")).tag(Cooling.tap)
                 Text(tr("controls.cooling.counter")).tag(Cooling.counter)
@@ -352,10 +352,10 @@ struct ClausePanel: View {
         MenuChoice(
             label: tr("controls.size"),
             choices: planner.sizeClasses.indices.map { (sizeLabel(planner.sizeClasses[$0]), $0) } + [(
-                tr("controls.size.measured", ["mass": .text(planner.show(.mass, planner.weighedMassG))]),
+                tr("controls.size.measured", ["mass": .text(planner.show(.mass, planner.settings.weighedMassG))]),
                 -1
             )],
-            selection: Binding(get: { planner.sizeIndex }, set: { planner.chooseSize($0) })
+            selection: Binding(get: { planner.settings.sizeIndex }, set: { planner.chooseSize($0) })
         )
     }
 
@@ -365,16 +365,16 @@ struct ClausePanel: View {
     /// there for anyone who knows better.
     private var from: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker(tr("controls.eggFrom"), selection: $planner.startTemp) {
+            Picker(tr("controls.eggFrom"), selection: $planner.settings.startTempMode) {
                 Text(tr("controls.eggFrom.fridge")).tag(EggFrom.fridge)
                 Text(tr("controls.eggFrom.room")).tag(EggFrom.room)
                 Text(tr("controls.eggFrom.custom")).tag(EggFrom.custom)
             }
             .segmented()
-            if planner.startTemp == .custom {
+            if planner.settings.startTempMode == .custom {
                 StepperRow(
                     label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
-                    value: $planner.customStartC, show: { planner.show(.eggTemp, $0) }, field: .customStart
+                    value: $planner.settings.customStartC, show: { planner.show(.eggTemp, $0) }, field: .customStart
                 )
                 .appFont(.subheadline)
             }
