@@ -445,11 +445,15 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       together by hand. Not one envelope for everything: that would rewrite
       the 200 KB posterior on each slider move and break per-key cross-tab
       sync. M.
-- [ ] **3.14 Split `MODEL_ID`**: provenance (D37) and a likelihood id (the
+- [x] **3.14 Split `MODEL_ID`**: provenance (D37) and a likelihood id (the
       store's `m`, which forces a replay). A decision-only change (82aff4b,
       the nudge) replayed every posterior. Pin a digest of a fixed-log
       replay in a test, so a likelihood change fails until the id moves.
       S-M.
+      *Done* (10 October 2026): `MODEL_ID` is the record's `model` only;
+      `LIKELIHOOD_ID` (the same value today) is the store's `m` and what
+      `loadDecision` compares, in both apps. `test/record.test.ts` 2e pins
+      a six-egg replay at the apps' prior, count and grid to it at 1e-9.
 
 ### Core, smaller
 
@@ -470,9 +474,13 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       drifted (Running 967 Swift code lines against 727 TS; Share 162
       against 91). Not the whole core: running TS in JavaScriptCore loses
       the JIT, and a surface would take seconds. M-L.
-- [ ] **3.19 Fixtures as one row per line**, and event traces (3.1) in
+- [x] **3.19 Fixtures as one row per line**, and event traces (3.1) in
       place of whole plans per row: 2.6 MB, and since 1 October 11× the
       churn of the code they pin. M.
+      *Done* (10 October 2026): still JSON, a row a line (`fixtureLayout`;
+      `step.json` a step a line), every value as it was; 3.83 MB in
+      145,507 lines to 2.46 MB in 8,483. `running.json`'s 85 `plans` rows
+      stay while the apps call the pieces (3.7, 3.9).
 
 ## 4. Process
 
