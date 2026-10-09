@@ -6122,3 +6122,43 @@ them was not proved by one. A capture is slower for it, about 3½ minutes
 where it was 1¼. Both sides of a comparison must be captured by the fixed
 harness: the harness is served from the tree being captured, so a "before"
 taken on a commit without this one is the old, racing capture.
+
+## 9 October 2026: the copy snapshot proved repeatable, the advice's notes, the slow hob's one comparison
+
+**The copy snapshot.** The harness that waits for the app to settle
+(`8da5b76`) is enough: no further source of variation was found, so it is
+left as it stands. Before it, two captures of one build differed in 12 of
+172 states, all from a surface landing before or after a step (the
+certainty block, the second cook's time, a spoken minute, the pull read
+from a plan not yet replaced). The rest was checked and holds: the time is
+`Date.now` frozen and stepped, which the app's clock is while no `?clock=`
+is given (`now.ts`); the moment is 7:30 local time, so a time of day reads
+the same in any zone; the nudge's draw is seeded, and moves nothing while
+sharing is off; a sharing id is drawn only at Forget everything and is
+never shown. `copySnapshot.js` gains `SNAPSHOT_CPU_THROTTLE`, as `npm run
+e2e` has `E2E_CPU_THROTTLE`, and waits an hour rather than ten minutes.
+Proved on the build with the two commits below: three captures with only
+other agents' work running (load 25 to 95, about 3½ minutes each), three
+under 18 `yes` hogs on 18 cores with the page throttled six times (load 170
+to 700, about 6 minutes each), and three of `0.5.x` at `37ba148`: all nine
+byte for byte the same (`af4bc67…`), so neither change moved a rendered
+string, and plain `compare` of a quiet capture against a loaded one says
+identical. One capture a side is the proof now; no pooling.
+
+**The advice's notes.** `advice.toggle`, `help.reliable.forYou`,
+`advice.ice`, `advice.moreWater`, `outcome.range` and `outcome.range.one`
+said the retired odds of "just right" and the bracket's 5% and 95% points.
+They now say the wild guess, the priced change raising the chance of the
+word asked by `ADVICE_GAIN`, and the bracket as the interval's first and
+last words. A plain edit of the notes, no draft (`DECISIONS.md` 106).
+
+**The slow hob's one comparison.** The apps' tick planned again at `now >=
+slowHobAt_s`, core lengthened at `heated > fire`: a clock stopped exactly
+on the moment planned the same plan at every tick. Core now has
+`slowHobDue(plan, now_s)`, `now_s > slowHobAt_s`, and `replan` lengthens by
+the same test in the same arithmetic (`now_s > start + fire`, which is how
+`slowHobAt_s` is made; the hint fits at `now_s > start + last_s`), so a plan
+made at the moment is the plan already made, to the bit, in both cores.
+Strict because core already was: no fixture's plan or deadline moved, and
+`running.json` gains two plans asking it either side of their moments. The
+web's tick calls it; iOS's (`Cook.swift`) is the iOS agent's to change.

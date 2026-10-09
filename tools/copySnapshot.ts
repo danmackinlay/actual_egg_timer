@@ -11,7 +11,11 @@
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
  * CHROME to its binary if it is not where macOS or Linux put it. It is not
  * part of `npm test` for that reason. Run before and after a change that should not
- * touch the words, it proves that no byte of what is rendered moved.
+ * touch the words, it proves that no byte of what is rendered moved. Two
+ * captures of one build are the same to the byte, on a quiet machine or a
+ * loaded one (the harness waits for the app to settle; its header says how),
+ * so one capture a side is the proof. SNAPSHOT_CPU_THROTTLE=<rate> slows the
+ * page, to show it.
  *
  * `compare` exits non-zero on the first difference and says where it is.
  *
@@ -41,6 +45,12 @@ interface Snapshot {
   attrs: string[];
 }
 
+/** SNAPSHOT_CPU_THROTTLE=<rate> slows the harness's page that many times
+ *  (DevTools' `Emulation.setCPUThrottlingRate`, as E2E_CPU_THROTTLE does for
+ *  `npm run e2e`), to show that a capture does not depend on the machine's
+ *  speed. */
+const THROTTLE = Number(process.env['SNAPSHOT_CPU_THROTTLE'] ?? '1');
+
 async function capture(out: string): Promise<void> {
   const port = 8391 + Math.floor(Math.random() * 500);
   const debugPort = port + 1000;
@@ -60,9 +70,12 @@ async function capture(out: string): Promise<void> {
     const page = list.find((t) => t.type === 'page' && t.url.includes('copy-snapshot'));
     if (page === undefined) throw new Error('the harness page did not open');
     const cdp = await Cdp.open(page.webSocketDebuggerUrl);
+    if (THROTTLE > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
 
+    // The harness waits on the page, never a fixed time, so this is failure
+    // detection only: an hour, for a page slowed six times on a loaded machine.
     let title = '';
-    for (let i = 0; i < 1200 && title !== 'done' && title !== 'failed'; i++) {
+    for (let i = 0; i < 7200 && title !== 'done' && title !== 'failed'; i++) {
       await sleep(500);
       title = String(await cdp.evaluate('document.title'));
     }
