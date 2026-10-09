@@ -415,7 +415,7 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ### Each app as an effect runner over it
 
-- [ ] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
+- [x] **3.7 Web: one `Model`, `update(model, msg, now) → [model, effects]`,
       `view(model, now)`** as pure structs (extending `phaseView`) plus a
       DOM writer once per animation frame. It ends: `state` written from
       five modules; `controls` that *is* `settings` while idle (an alias
@@ -439,13 +439,18 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       previews and what is drawn in caches handed in; `render` asks for
       nothing and steps nothing; the probe scored on core's record (e2e
       `probe-reading`); the modules under the runner send through send.ts.
-      *Not done:* edit.ts's gesture (the correction in hand, the finger,
-      its timers) and the stores' state (calibration.ts's fold, share.ts,
-      `syncedKey`'s last-seen text, `lastPanStart`) are still module state;
-      the runner writes `written`, `works` and `before` outside `update`;
-      the boot-time callbacks of the stores and Settings' sections
-      (`claimStorage`, `loadShare`, `wireShare`, `wireFeedback`,
-      `wireForget`) and `now.ts` booting on import stay.
+      *The rest* (`136a32c`..`d584880`): the correction in hand and its
+      gesture in the model (`Edit`), through `update`; the stores as
+      objects opened at boot and held by the runner (`openLearner`,
+      `openSharing`, `openSettings`, `openPans`, `openCooks`); `written`,
+      `works` and `before` set by `update`; the boot-time callbacks
+      messages; the development clock's hook set at boot; the model kept
+      by the runner alone (`state` gone), its views of caches and stores
+      handed to `update` (`Seen`); the controls, units, notes, learned and
+      share sections drawn from the view (`Sections`). What stays, on
+      purpose: the newest-build mark is store.ts's module state (the
+      browser's storage is one per page); the test API and the start's −
+      and + read the model through the runner (`pageModel`).
 - [x] **3.8 Web: one `syncedKey<T>`** for cross-tab sync, written five
       times today (settings, boil, calibration, share, cook) with its own
       "seen" copy each; `takeUpEvents` (domain logic in `store.ts`) into
@@ -592,18 +597,22 @@ it found, in its order, with where each is being done:
       both; `remakeThenEnd` retries once, not four times on the same
       inputs; and whether a relaunch within the hour brings back a cook
       dismissed with Start again (the web keeps it off screen).
-- [ ] **5.6 One logical change per commit.** `83ba983`, `60c9982` and
+- [ ] **5.6 One logical change per commit.** *The scenario:* e2e
+      `later-answer-refolds` (`452069f`). `83ba983`, `60c9982` and
       `d231a5b` put behaviour changes inside refactor commits. That can't be
       undone, but "a later answer re-folds the log" gets a named
       scenario, and from now on a behaviour change is its own commit.
-- [ ] **5.7 The web's pure core unit-tested**: one `update` test per
+- [x] **5.7 The web's pure core unit-tested**: one `update` test per
       message kind (about 12 of 27 are sent today), and `view` per
-      section, with 3.7.
+      section, with 3.7. *Done* (`fa86090`, `38c57bd`): test/update.test.ts,
+      every kind of message; view.test.ts 6, the sections.
 - [ ] **5.8 3.7 half old, half new**: `update.ts` is an effect helper
       (to `effects.ts`); `cook.ts` writes the model outside `update`; the
       settings, units, notes, learned and share sections are still DOM
       effects; `state` is read in 8 modules; the module `let`s moved, not
-      reduced (49 → 50).
+      reduced (49 → 50). *Done* (`070117e`, `38c57bd`, `a9a339a`): the
+      runner keeps the model and nothing else reads it but through
+      `pageModel` (2 modules); `^let ` in src/ui 51 → 35.
 - [x] **5.9 `PLAN.md` stale across 11 merges** (against 104), and
       CLAUDE.md's `policy.ts`, 106's `copy/approved.json`, and 102-108
       without commits: brought up to date.
@@ -611,6 +620,7 @@ it found, in its order, with where each is being done:
       reviews, "REFACTOR-0.5 N.N" in `Package.swift`, `ios/README` and
       e2e descriptions, 29 "review N.N" labels in `tools/fixtures/step.ts`.
       Each working branch cleans what it touches; 2.4 sweeps the rest.
+      *src/ui and tools/e2e.ts done* (`33fc8c1`).
 - [ ] **5.11 Smaller**: exports reachable only from tests and fixtures
       (`coldHistory`, `slowHobMemoFits`, `sameAsRan`,
       `sameDecisionInputs`); stale comments (`decide.ts:113`,
@@ -640,7 +650,7 @@ it found, in its order, with where each is being done:
         with it (today only `yolkWord == nil`); a failed remake leaves the
         cook stored, not final; a correction at Done, then Start again,
         logs the corrected egg.
-  - [ ] *Hole 2, in 3.7:* the web's effect runner (`cook.ts`) against a
+  - [x] *Hole 2, in 3.7* (`01ff934`, `86977ef`): the web's effect runner (`cook.ts`) against a
         fake store: the log written before the cook is forgotten; a failed
         remake keeps the cook stored; send-final only after logging; no
         surface asked twice.
@@ -648,7 +658,9 @@ it found, in its order, with where each is being done:
         app's real load path, the web's store and iOS's `Stored`
         (`Cook.swift`) then `readRunningCook`, both accepting or refusing
         the same rows.
-  - [ ] *Holes 4-6, after the gates (1.1):* `edit.ts` and `update.ts` (a
+  - [ ] *Holes 4-6, after the gates (1.1):* 4 and 5 done (`fa86090`,
+        `b6a0be3`, `1cf2c41`); `test/views.test.ts`'s import of every
+        module is test/modulesLoad.test.ts (`3fd8aaa`). `edit.ts` and `update.ts` (a
         preview never commits; a settle commits once; forget-all in
         another tab is not undone; the open egg is the stored one); the
         web's ticker and ring (`clock.ts`: one ring per deadline, none in
