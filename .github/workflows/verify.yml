@@ -12,7 +12,8 @@
 # apple, on macOS: the Swift core against the committed fixtures (`swift
 # test`, against the Foundation the apps are built with), then `npm run
 # ios:build`, the app and its widget built for the simulator, unsigned,
-# which `swift test` does not reach.
+# in Debug and in Release, which compiles what `#if DEBUG` leaves out and
+# `swift test` does not reach.
 #
 # ios-e2e, on macOS, once apple has passed: `npm run ios:e2e`, the app driven
 # through its scenarios on a simulator of the script's own, its clock

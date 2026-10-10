@@ -33,7 +33,7 @@
     "ios:upload": "node tools/iosUpload.mjs",
     "ios:e2e": "node tools/build.mjs && node dist/tools/iosE2e.js",
     "ios:release":"node tools/iosArchive.mjs && node tools/iosUpload.mjs",
-    "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
+    "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -configuration Release -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
     "build:site": "node tools/buildSite.mjs",
     "serve:site": "python3 -m http.server 8080 --directory _site",
     "serve:dev": "npm run build:site && node tools/build.mjs && node dist/tools/devServer.js",
