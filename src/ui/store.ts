@@ -15,7 +15,7 @@ import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
 import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
-import { STORES, inFormat, stamped } from '../core/stores.js';
+import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 import { send } from './send.js';
 
@@ -28,19 +28,10 @@ const SETTINGS_KEY = STORES.settings.web;
 const COOK_KEY = STORES.cook.web;
 const BOIL_KEY = STORES.boilMemory.web;
 
-/**
- * Every key an earlier build of this app wrote that this one does not read,
- * deleted at boot (`claimStorage`) rather than left in storage being neither
- * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
- * 0.3 and 0.4 (`v4`), the
- * copies 0.4 kept aside of what it could not read, and the cooks in progress
- * before this one's shape (`aet.cook.v1`-`v5`).
- */
-export const RETIRED_KEYS = [
-  'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
-  'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
-  'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1',
-];
+/** Every key this build keeps (src/core/stores.ts). Any other key of this
+ *  app's (`aet.`) is an earlier build's, which this one neither reads nor
+ *  collects, and is deleted at boot (`claimStorage`). */
+const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web])));
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */
@@ -108,17 +99,33 @@ let readOnly = false;
 /**
  * Before anything is read for writing back, or written: compare the mark
  * with this build, and write this build's version there if it is not older
- * than what is there; then, if this build may write, delete the keys no
- * build from this one on reads (`RETIRED_KEYS`). A build that finds a newer
- * mark deletes nothing. Says what this page does with the stores from now on.
- * When it stops writing, then or later, the page is told once (`leftAlone`).
+ * than what is there; then, if this build may write, delete every key of
+ * this app's that this build does not keep (`KEPT_KEYS`). A build that finds
+ * a newer mark deletes nothing. Says what this page does with the stores
+ * from now on. When it stops writing, then or later, the page is told once
+ * (`leftAlone`).
  */
 export function claimStorage(version: string): WriterVerdict {
   mine = version;
   readOnly = false;
-  mayWrite();
-  for (const key of RETIRED_KEYS) if (readStorage(key) !== null) removeStorage(key);
+  if (!mayWrite()) return 'readOnly';
+  for (const key of storageKeys()) if (key.startsWith('aet.') && !KEPT_KEYS.has(key)) removeStorage(key);
   return readOnly ? 'readOnly' : 'write';
+}
+
+/** Every key in storage now; none if there is no storage. */
+function storageKeys(): string[] {
+  const keys: string[] = [];
+  try {
+    const storage = window.localStorage;
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key !== null) keys.push(key);
+    }
+  } catch {
+    /* no storage: nothing to delete. */
+  }
+  return keys;
 }
 
 /** Whether a newer build has run here since this page started: if so this

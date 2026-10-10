@@ -1596,11 +1596,11 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'retired-keys': {
-    what: 'the keys no build reads, 0.3\'s log among them, are deleted at boot; under a newer build\'s mark, not one',
+    what: 'every key of the app\'s this build does not keep, 0.3\'s log among them, is deleted at boot; under a newer build\'s mark, not one',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const old = ['aet.calibration.v3', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.unread',
-        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4', 'aet.cook.v5'];
+        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1', 'aet.never.written'];
       const plant = `for (const k of ${JSON.stringify(old)}) localStorage.setItem(k, '{"v":4,"log":[]}')`;
       const keys = 'Object.keys(localStorage).sort()';
       await tab.eval(plant);

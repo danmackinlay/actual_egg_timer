@@ -3,9 +3,10 @@
  * (src/ui/store.ts, `claimStorage`; DECISIONS.md 100): with a newer build's
  * mark in storage, the store layer writes nothing at all - the settings, the
  * pans, the cook, the log, the sharing state - sends nothing, and deletes
- * none of the keys it no longer reads. With none, or an older one, the mark
+ * none of the keys it does not keep. With none, or an older one, the mark
  * is brought up to this build before anything else is written, and then
- * those keys are deleted.
+ * every key of the app's that is not in the table of stores
+ * (src/core/stores.ts) is deleted.
  *
  * In a file of its own: the guard is the store module's state for the life
  * of the page, and node runs each test file in a process of its own.
@@ -18,13 +19,13 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
-  DEFAULT_SETTINGS, claimStorage, RETIRED_KEYS, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly,
+  DEFAULT_SETTINGS, claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly,
 } from '../src/ui/store.js';
 import { openLearner } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { openSharing } from '../src/ui/share.js';
 import { sendTo } from '../src/ui/send.js';
-import { STORES, stamped } from '../src/core/stores.js';
+import { STORES, STORE_LIST, stamped } from '../src/core/stores.js';
 
 /** How many times the page was told its stores are left alone. */
 let told = 0;
@@ -38,6 +39,8 @@ const writes: string[] = [];
     getItem: (k: string) => storage.get(k) ?? null,
     setItem: (k: string, v: string) => { writes.push(k); storage.set(k, v); },
     removeItem: (k: string) => { writes.push(`-${k}`); storage.delete(k); },
+    get length() { return storage.size; },
+    key: (i: number) => [...storage.keys()][i] ?? null,
   },
 };
 
@@ -133,24 +136,35 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   assert.deepEqual(storage, before, 'every store as the newer build left it');
 });
 
-test('3b. the keys no build reads any more are deleted at the claim, after the mark, and nothing else', () => {
+/** Keys earlier builds wrote and this one does not keep: 0.3's log and
+ *  cook, 0.4's copies kept aside, and the keys of 0.5 before the table of
+ *  stores, with formats in them. */
+const EARLIER = [
+  'aet.calibration.v1', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.v2', 'aet.cook.unread',
+  'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1', 'aet.later.v1',
+];
+/** Every key this build keeps. */
+const KEPT = STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web]));
+
+test('3b. a key of an earlier build is deleted at the claim, after the mark; every key this build keeps, and any other app\'s, stays', () => {
   storage.clear();
-  for (const key of RETIRED_KEYS) storage.set(key, 'an earlier build\'s');
-  storage.set(SETTINGS, JSON.stringify(stamped(STORES.settings, { ...DEFAULT_SETTINGS })));
-  storage.set('aet.later.v1', 'a store this build has never heard of');
+  for (const key of [...EARLIER, ...KEPT, 'other.app']) storage.set(key, 'a value');
+  storage.delete(NEWEST_KEY);
   writes.length = 0;
   assert.equal(claimStorage(APP_VERSION), 'write');
-  assert.deepEqual(writes, [NEWEST_KEY, ...RETIRED_KEYS.map((k) => `-${k}`)]);
-  assert.deepEqual([...storage.keys()].sort(), ['aet.later.v1', NEWEST_KEY, SETTINGS].sort());
-  assert.ok(RETIRED_KEYS.includes('aet.calibration.v4'), '0.3\'s log among them (DECISIONS.md 107)');
-  // Under a newer build's mark, not one.
+  assert.deepEqual(writes, [NEWEST_KEY, ...EARLIER.map((k) => `-${k}`)]);
+  assert.deepEqual([...storage.keys()].sort(), [...KEPT, 'other.app'].sort());
+});
+
+test('3c. a build the guard has made read-only deletes nothing', () => {
   storage.clear();
-  for (const key of RETIRED_KEYS) storage.set(key, 'an earlier build\'s');
+  for (const key of [...EARLIER, ...KEPT]) storage.set(key, 'a value');
   storage.set(NEWEST_KEY, '9.0.0');
+  const before = new Map(storage);
   writes.length = 0;
   assert.equal(claimStorage(APP_VERSION), 'readOnly');
   assert.deepEqual(writes, []);
-  assert.equal(storage.size, RETIRED_KEYS.length + 1);
+  assert.deepEqual(storage, before);
 });
 
 test('4. another tab of a newer build: this page stops writing at its event, or at its next write before it', () => {
