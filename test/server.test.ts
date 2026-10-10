@@ -2,7 +2,7 @@
  * The collection endpoint (server/eggs.ts; COLLECTIVE.md section 1), driven
  * against a map standing in for Netlify Blobs: an egg kept once and only
  * once, in the tier its assertion earns (attested only under a key from
- * Apple's production environment, DECISIONS.md 68), refused when a phone's loader would
+ * Apple's production environment), refused when a phone's loader would
  * refuse it, and every trace of an id gone on DELETE.
  */
 

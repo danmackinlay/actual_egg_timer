@@ -1,6 +1,6 @@
 /**
  * The fit's records from a results file, and the owner's trusted IDs
- * (tools/eggsImport.ts, `npm run eggs -- import`; DECISIONS.md 81 and 82).
+ * (tools/eggsImport.ts, `npm run eggs -- import`).
  *
  * A round trip with no fixture: records made here, kept in a store the way
  * both apps keep one, written into a results file by core's own

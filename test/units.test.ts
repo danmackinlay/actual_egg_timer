@@ -105,7 +105,7 @@ test('2a. the steps are LANGUAGE.md §4\'s table', () => {
   assert.deepEqual([imperial('water', 'GB').unit, imperial('water', null).unit], ['pt', 'pt']);
   assert.equal(measureFor('water', 'imperial', 'us').unit, 'qt', 'the region is not case-sensitive');
   assert.equal(measureFor('water', 'metric', 'US').unit, 'L', 'metric is litres everywhere');
-  // The owner's step for the egg's − and + (4 October 2026).
+  // The owner's step for the egg's − and +.
   assert.deepEqual([measureFor('mass', 'metric', null).unit, measureFor('mass', 'metric', null).step], ['g', 0.5]);
 });
 

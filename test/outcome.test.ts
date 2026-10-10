@@ -92,7 +92,7 @@ test('the level range keeps the noise: it is wider than the particles alone, and
   };
   // About 1.2 times as wide here, from seed to seed 1.12-1.36 at 400
   // particles and 1.17-1.24 at 4000, measured on the 80% range (LOGBOOK.md,
-  // 6 October 2026); the bracket is the 90% range since the certainty draft.
+  // 6 October 2026); the range here is the 90% one.
   assert.ok(o.levelHigh - o.levelLow > 1.1 * (q(LEVEL_HIGH_Q) - q(LEVEL_LOW_Q)), `${o.levelLow}-${o.levelHigh} against ${q(LEVEL_LOW_Q)}-${q(LEVEL_HIGH_Q)}`);
   // With next to no noise the mixture is the particles, and its points are
   // theirs, to within the step between neighbouring particles.
@@ -211,8 +211,7 @@ test('on simulated cooks the level range holds the egg about nine times in ten, 
   console.log(`# outcome, ${range.n} eggs: inside the range ${share(range.inside)}, under ${share(range.under)}, over ${share(range.over)}; `
     + `ECE too soft ${eces[0].toFixed(4)}, just right ${eces[1].toFixed(4)}, too firm ${eces[2].toFixed(4)}, runny ${eces[3].toFixed(4)}`);
   const inside = range.inside / range.n;
-  // 87.7% inside, 6.1% under and 6.2% over with the 90% range (the
-  // `certainty` draft, 8 October 2026).
+  // 87.7% inside, 6.1% under and 6.2% over with the 90% range.
   assert.ok(Math.abs(inside - (LEVEL_HIGH_Q - LEVEL_LOW_Q)) < 0.05, `inside ${inside}`);
   assert.ok(range.under / range.n > 0.02 && range.under / range.n < 0.1, `under ${range.under}`);
   assert.ok(range.over / range.n > 0.02 && range.over / range.n < 0.1, `over ${range.over}`);

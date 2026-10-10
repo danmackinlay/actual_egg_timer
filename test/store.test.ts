@@ -180,7 +180,7 @@ test('two tabs on one cook take up each other\'s events, never a copy that lacks
   for (const [x, y] of [[byClock, cooled], [rangOnGuess, start], [later, byClock]]) {
     assert.deepEqual(takeUpEvents(x, y).events, takeUpEvents(y, x).events);
   }
-  // Another cook is never taken up (DECISIONS.md 97).
+  // Another cook is never taken up.
   const other = aCook(start.id_ms + 60_000);
   assert.equal(takeUpEvents(untapped, other), untapped);
 });

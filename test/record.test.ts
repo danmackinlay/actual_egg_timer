@@ -442,7 +442,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
 
   // Then the app's own path, on real 21 x 32 surfaces: the yolk then the white;
   // the white alone; nothing; the white then the yolk. The yolk is the yolk
-  // the cook got (DECISIONS.md 92).
+  // the cook got.
   const answers: { first: { yolkWord?: YolkWord; white?: 'runny' | 'tender' | 'firm' };
     second: { yolkWord?: YolkWord; white?: 'runny' | 'tender' | 'firm' } | null }[] = [
     { first: { yolkWord: 'runny' }, second: { white: 'runny' } },
@@ -636,7 +636,7 @@ function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory
 }
 
 /** The plan on its pot's surface, as an app makes it once the surface is in:
- *  a record is never made from a plan with no surface (review 1.3). */
+ *  a record is never made from a plan with no surface. */
 function onSurface(cook: RunningCook, now_s: number): CookPlan {
   const first = replan(cook, C4, null, 0, now_s);
   const inputs = first.inputs;
@@ -671,7 +671,7 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   assert.equal(r.pulledBy, 'cook');
   assert.ok(Math.abs(r.recommended_s - plan.cookTime_s) < 0.06);
   assert.equal(r.id, T0, 'the record\'s id is when Start was pressed');
-  // The yolk the cook got (DECISIONS.md 92).
+  // The yolk the cook got.
   assert.equal(r.yolkWord, 'jammy');
   assert.notEqual(parseRecord(r), null);
 });
@@ -725,7 +725,7 @@ test('4b4. a nudged cook is recorded as the time recommended and the nudge, apar
 test('4b5. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
   const cook = cookOf();
   const interim = replan(cook, C4, null, 0, S0);
-  assert.equal(webRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record (review 1.3)');
+  assert.equal(webRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record');
   const inputs = interim.inputs;
   assert.ok(inputs !== null);
   const surface = { inputs: inputs, grid: gridFor(C4, inputs.egg, inputs.setup), profile: null };

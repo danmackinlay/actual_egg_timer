@@ -1,5 +1,5 @@
 /**
- * How sure the timer is, in words (src/core/certainty.ts, DECISIONS.md 93).
+ * How sure the timer is, in words (src/core/certainty.ts).
  *
  * What is checked here is the definition: the word asked is the slider's
  * word and the band its nominal dose falls in; the classes are what they say

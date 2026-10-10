@@ -1,5 +1,5 @@
 /**
- * The alarm sounds (`src/ui/alarmSounds.ts`, DECISIONS.md 101): the periods
+ * The alarm sounds (`src/ui/alarmSounds.ts`): the periods
  * the web plays and `npm run sounds` renders for iOS, and the iOS files
  * themselves held to the timing in core.
  *

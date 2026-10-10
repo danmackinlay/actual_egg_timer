@@ -19,7 +19,7 @@ export interface SyntheticKey {
 
 /** The development attestation at the top level (a build from Xcode), and
  *  a production one beside it (TestFlight and the App Store), under the same
- *  made-up root. Only production counts as a genuine copy (DECISIONS.md 68). */
+ *  made-up root. Only production counts as a genuine copy. */
 export interface Synthetic extends SyntheticKey {
   appId: string;
   root: string;

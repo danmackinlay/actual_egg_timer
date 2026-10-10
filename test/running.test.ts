@@ -345,13 +345,13 @@ test('14. the boil memory learns the tap the cook was watching for, and only tha
   assert.deepEqual(boilToRemember(early), { litres: 2, seconds: 520 }, 'told cold before it could have boiled');
   const late = withBoil(corrected(hot, CHOICES, S + 481), S + 700);
   assert.equal(boilToRemember(late), null, 'told cold after the 480 s this water takes: used, not remembered');
-  assert.equal(planned(late, S + 700).setup.timeToBoil_s, 480, 'and the cook runs on the remembered time (review 1.2)');
+  assert.equal(planned(late, S + 700).setup.timeToBoil_s, 480, 'and the cook runs on the remembered time');
   assert.equal(planned(early, S + 520).setup.timeToBoil_s, 520, 'a tap the cook watched for is the ramp');
   const unread = corrected(withBoil(cold, S + 512), { ...CHOICES, startMode: 'hot' }, S + 600);
   assert.equal(boilToRemember(unread), null);
 });
 
-/* ----------------------------- archive/design/one-screen-review.md's calls */
+/* --------------------------------- late corrections, and the end of a cook */
 
 const CTX: RecordContext = { app: 'web', appVersion: '0.5.0-alpha.1', prior: '2026-09', day: '2026-10-07', id: START_MS };
 
@@ -435,7 +435,7 @@ test('17. a plan the cook did not cause never moves a pull already due', () => {
   // Written once, and the grace runs out on it.
   assert.equal(eventsDue(rung, landed, at + 5).rangAt_s, at);
   assert.equal(eventsDue(rung, landed, at + PULL_GRACE_SECONDS).pulled?.due_s, at);
-  // What the cook says after it (onescreen review 3): the ring kept while
+  // What the cook says after it: the ring kept while
   // the corrected pull is still due, so the grace ends where it began;
   // undone, and cleared, when the pull moves past the correction.
   const lighter = corrected(rung, { ...hot.choices, mass_kg: 0.048 }, at + 4);
@@ -543,7 +543,7 @@ test('22. the start has a lower bound, two hours before Start was pressed', () =
   assert.equal(earliestStart_s(earlier), earliestStart_s(cold));
 });
 
-/* ---------------------------- archive/design/running-cook-review.md's calls */
+/* ------------------------- the memo, the open question, the cook as it ran */
 
 test("23. the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
   // A cold start never tapped, planned as the app plans it, at twenty moments
@@ -751,8 +751,8 @@ test('26b. Done and the record show the cook as it ran, whatever a later posteri
   assert.equal(asRanCurrent(fixed), true);
   assert.deepEqual(fixed.asRan, keepAsRan(withAsRan(corr, null), planned(corr, due + 1200)).asRan, 'planned on C');
   assert.notEqual(fixed.asRan?.peakYolk_C, ran.peakYolk_C, 'a lighter egg peaks lower');
-  // What Done says beside the peak reads the cook as it ran too (onescreen
-  // review 2.2), and an ending with a stale record makes it again first (1.2).
+  // What Done says beside the peak reads the cook as it ran too, and an
+  // ending with a stale record makes it again first.
   const sol = solutionAsRan(after, ran);
   assert.equal(sol.result.peakYolk_C, ran.peakYolk_C, 'the solve as it ran peaks where the cook did');
   assert.notEqual(sol.result.peakYolk_C, after.solution.result.peakYolk_C);

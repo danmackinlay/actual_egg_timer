@@ -38,7 +38,7 @@ test('1. the published file reads, and the literature is the default prior', () 
 });
 
 test('1b. a population file from before 0.5, with a spread for the carryover, reads as one without', () => {
-  // The web may hold an old file in its cache (DECISIONS.md 95).
+  // The web may hold an old file in its cache.
   const file = { id: 'x', prior: { ...SHIFTED, id: undefined } };
   const old = { id: 'x', prior: { ...SHIFTED, id: undefined, tauAirScale: { median: 1.12, logSd: 0.3 } } };
   assert.deepEqual(parsePopulation(old), parsePopulation(file));
@@ -48,7 +48,7 @@ test('1b. a population file from before 0.5, with a spread for the carryover, re
 test('2. a fitted population moves the prior and where a new cook starts', () => {
   const c = freshCalibration(4000, 11, SHIFTED);
   assert.deepEqual(c.start, priorStart(SHIFTED));
-  // The carryover stays at the physics whatever the population (DECISIONS.md 95).
+  // The carryover stays at the physics whatever the population.
   assert.deepEqual(calibrationParams(c), { alpha_m2s: 1.81e-7 });
   assert.equal(calibrationDoneness(c, 0.22).whiteDose_min, WHITE_DOSE_TARGET * 10 ** 0.21);
   // The particles are drawn from it: the medians and spreads come back.
@@ -101,7 +101,7 @@ test('4. a posterior from another population is replayed; one from this one is k
 
 test('5. a store folded under another model is replayed, and its base kept as it is', () => {
   // A base cannot be replayed. The counter's carryover is no column of the
-  // store: it is the physics' for every particle (DECISIONS.md 95).
+  // store: it is the physics' for every particle.
   const log = [recordAt(0.41, 470, 'jammy', 'tender')];
   const base = freshCalibration(64, 5);
   base.eggsLogged = 2;
