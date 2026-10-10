@@ -126,7 +126,8 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
          Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
     case .probeTemp:
         // Typed to a tenth, as a probe shows it; the − and + move in whole
-        // degrees from the peak the cook was started at (5 October 2026).
+        // degrees from the peak the cook was started at: a tenth at a time is
+        // no help to a cook with a probe in hand.
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1, nudge: (1, 1)),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1, nudge: (1, 1)))
     case .roomTemp:
@@ -136,7 +137,7 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
     case .mass:
-        // Half grams, the owner's step for the − and + (4 October 2026),
+        // Half grams, the owner's step for the − and +,
         // shown without a ".0": 58 g, 58.5 g.
         (Limits.massG, Step(unit: .grams, num: 1, den: 2, decimals: 1, trim: true),
          Step(unit: .ounces, num: 1, den: 10, decimals: 1))

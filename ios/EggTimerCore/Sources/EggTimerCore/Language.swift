@@ -4,8 +4,7 @@ import EggTimerCopy
 /// Which catalogue the cook reads, and the one rule that moves it without
 /// being asked: an English UI switched from metric to Imperial goes into the
 /// English of 1750 (LANGUAGE.md section 6). Switching back to metric changes
-/// nothing about the language; the cook leaves 1750 with the picker
-/// (DECISIONS.md 77).
+/// nothing about the language; the cook leaves 1750 with the picker.
 ///
 /// Transliterated from `src/core/language.ts`, and held to it by
 /// `fixtures/language.json`. Here rather than in EggTimerCopy because the rule
@@ -19,9 +18,9 @@ import EggTimerCopy
 ///
 /// Like the units, the cook's own choice is kept apart from the default.
 /// `chosen` is what the cook picked, or nil if they never have, in which case
-/// the app speaks `defaultLanguage`. A state stored before 5 October 2026 may
-/// also carry `flippedFrom`, what the units switch replaced, for a switch back
-/// that no longer happens; a read ignores it.
+/// the app speaks `defaultLanguage`. A stored state may also carry
+/// `flippedFrom`, what the units switch replaced, which nothing reads; a read
+/// ignores it.
 ///
 /// No I/O. The app keeps this in UserDefaults, as the JSON the web stores.
 

@@ -228,7 +228,7 @@ public func midSentence(_ text: String, locale: String) -> String {
 
 /// The regional overlays that ship, `copy/<tag>.json`: each holds only the
 /// words its region says differently from its language's own catalogue. The
-/// English catalogue is Australian (DECISIONS.md 55), and an American reads
+/// English catalogue is Australian, and an American reads
 /// `en-US` over it. The web's `OVERLAYS` in src/core/copy.ts.
 public let overlays: [String] = ["en-US"]
 

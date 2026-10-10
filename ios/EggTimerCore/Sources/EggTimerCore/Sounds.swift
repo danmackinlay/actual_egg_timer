@@ -1,6 +1,6 @@
 import Foundation
 
-/// The alarm sounds a cook can choose in Settings (DECISIONS.md 101), in the
+/// The alarm sounds a cook can choose in Settings, in the
 /// order the picker lists them; the one a fresh install rings with; a stored
 /// choice read back; and each sound's timing. Transliterated from
 /// `src/core/sounds.ts`, whose comment has the reasons, and held to it by

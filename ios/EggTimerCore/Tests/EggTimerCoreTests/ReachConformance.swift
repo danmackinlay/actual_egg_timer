@@ -146,7 +146,7 @@ struct ReachConformance {
     }
 
     /// The answer with its time decided (`decideAnswer`), as both apps show
-    /// it: for each profile's pot, the owner's egg (DECISIONS.md 83 and 84)
+    /// it: for each profile's pot, the owner's egg
     /// and a pot whose white never sets. The profile is the fixture's, so this
     /// holds the decision alone; `profiles()` holds the profile.
     @Test("the decided answer: the envelope, the nudge, the outcome, the certainty and the advice")

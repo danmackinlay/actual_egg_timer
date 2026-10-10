@@ -141,7 +141,7 @@ struct InferenceConformance {
         try expectPosterior(post, priorJSON, "prior", grid, target)
     }
 
-    /// The filter told the yolk the cook got, in five words (DECISIONS.md 92),
+    /// The filter told the yolk the cook got, in five words,
     /// and the white, from the prior: the first particle's five probabilities,
     /// the posterior predictive, the first particle's likelihood, and the set.
     /// Folds that drive the effective sample size below n/2 resample, which is

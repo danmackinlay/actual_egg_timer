@@ -8,13 +8,13 @@ import Foundation
 /// level - the mean solve there, decided on the pot's decision surface - so
 /// the two cannot disagree, and how sure the app is there in words: the
 /// chance of the word asked, which shades the track, and `certaintyAt`'s
-/// class, which dots it (DECISIONS.md 97). The levels are the two physical
+/// class, which dots it. The levels are the two physical
 /// edges on the slider's grid, every `profileStep` positions between them,
 /// and, once an egg has taught something and a level is not a wild guess, a
 /// bisection on the slider's own grid at each end of the range that is not.
 /// Outside that range, and inside the physical edges, the app warns that the
 /// level is a wild guess so far; it never refuses it, and only what the pan
-/// cannot deliver moves the slider (DECISIONS.md 83). With every level a wild
+/// cannot deliver moves the slider. With every level a wild
 /// guess, or before the first egg, nothing is warned of.
 ///
 /// The profile also holds the time monotone in the level (DECISIONS.md 84):
@@ -29,8 +29,7 @@ import Foundation
 /// What the screen shows at a level, once the pot's surface is built, is
 /// `decideAnswer`: the decision held by the envelope, the nudge, the solve,
 /// the outcome and the certainty at the time given, and whether advice is
-/// wanted. Both apps call it; until 6 October 2026 each wrote it out for
-/// itself.
+/// wanted. Both apps call it, so a rule about the time lands in both at once.
 
 /// Slider positions between profile points.
 public let profileStep = 5
@@ -64,8 +63,8 @@ public struct OddsProfile: Sendable, Equatable {
     /// Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
     /// the white never sets.
     public let points: [LevelOdds]
-    /// The best odds of any point. The advice was measured against it until
-    /// 8 October 2026.
+    /// The best odds of any point: `npm run decide -- reach` reports it; no
+    /// screen reads it.
     public let best: Double
     /// The best `pAsked` of any point: what the shading is relative to.
     public let bestAsked: Double
@@ -283,7 +282,8 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
 /// true when the profile has a range that is not a wild guess and the level is
 /// softer than its softest or firmer than its firmest. False with no profile,
 /// or one that warns of nothing. It moves nothing: what the pan cannot deliver
-/// is `verdictFor`'s. The name is older than the rule.
+/// is `verdictFor`'s. It reads the certainty's class, not the odds its name
+/// says.
 public func lowOddsAt(_ profile: OddsProfile?, level: Double) -> Bool {
     guard let profile, let softest = profile.softest, let hardest = profile.hardest else { return false }
     // A level a hair off its end - 35 * 0.01 is not 35 / 100 - is that end.
@@ -332,7 +332,7 @@ public func answerAt(
 // MARK: - The shading
 
 /// How strongly the track is shaded at a level: the chance of the word asked
-/// there over the best level's (DECISIONS.md 97), 0 to 1.
+/// there over the best level's, 0 to 1.
 public struct Shade: Sendable, Equatable {
     public let level: Double
     public let strength: Double
@@ -468,7 +468,7 @@ public func protocolAdvice(
 
 /// The answer at a level, with its time decided on the pot's surface: what
 /// the screen shows, and what a cook started now carries. Both apps' one
-/// copy of it (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
+/// copy of it.
 public struct DecidedAnswer: Sendable {
     /// The level decided for: the answer's (`LevelAnswer.level`), after any
     /// snap. The advice is priced here, against the chance of the word asked
@@ -495,11 +495,11 @@ public struct DecidedAnswer: Sendable {
 
 /// Decide an answer: the time for `sol`, the mean solve at `level` (an
 /// `answerAt`'s solution and level), on `grid`, this pot's decision surface;
-/// held within the envelope of `profile`, or by nothing while it is nil
-/// (DECISIONS.md 84); then moved by `nudgeS`, the nudge the app drew, where
+/// held within the envelope of `profile`, or by nothing while it is nil;
+/// then moved by `nudgeS`, the nudge the app drew, where
 /// a time is chosen for (E8). The solve is re-read at the time given and the
 /// outcome predicted there. A level the odds warn of is decided at that level
-/// like any other (DECISIONS.md 83).
+/// like any other.
 public func decideAnswer(
     _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, solution sol: Solution, level: Double,
     profile: OddsProfile?, nudgeS: Double

@@ -42,12 +42,12 @@ public struct Outcome: Sendable, Codable, Equatable {
     public let pTooFirm: Double
     /// P(the cook answers runny / tender / firm) about the white. Sum to 1.
     /// The screens read only the first; a record keeps all three as the
-    /// forecast made at "Eggs in" (DECISIONS.md 37).
+    /// forecast made at "Eggs in".
     public let pWhiteRunny: Double
     public let pWhiteTender: Double
     public let pWhiteFirm: Double
     /// P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
-    /// question asked since DECISIONS.md 92. No screen reads them; a record
+    /// question the cook is asked. No screen reads them; a record
     /// keeps them as the forecast. Nil only on an outcome a running cook kept
     /// from a build before them.
     public let pYolkWord: [Double]?

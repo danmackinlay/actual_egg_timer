@@ -27,7 +27,7 @@ public let recordVersion = 1
 /// The code that made the record's forecast and chose its time: the
 /// likelihood, the decision and, from E8, the nudge. Changed whenever any of
 /// them changes, so the model as it shipped can be scored after the code has
-/// moved on (DECISIONS.md 37). The record's provenance; it never decides a
+/// moved on. The record's provenance; it never decides a
 /// replay. See src/core/record.ts.
 public let modelID = "2026-10-e10"
 
@@ -184,7 +184,7 @@ public struct ProbeReading: Sendable, Codable, Equatable {
     }
 }
 
-/// What the app said at "Eggs in" (DECISIONS.md 37): each answer's
+/// What the app said at "Eggs in": each answer's
 /// probability at the time the cook was started at, unrelated share
 /// included. See src/core/record.ts.
 public struct Forecast: Sendable, Codable, Equatable {
@@ -196,8 +196,8 @@ public struct Forecast: Sendable, Codable, Equatable {
     public var yolk: [Double]
     /// P(runny), P(tender), P(firm).
     public var white: [Double]
-    /// P(runny) ... P(hard), the yolk the cook will say they got
-    /// (DECISIONS.md 92). Nil when the outcome on screen had none.
+    /// P(runny) ... P(hard), the yolk the cook will say they got, which is
+    /// the question asked. Nil when the outcome on screen had none.
     public var yolkWord: [Double]?
 
     public init(cookS: Double, yolk: [Double], white: [Double], yolkWord: [Double]? = nil) {
@@ -294,7 +294,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var pulledS: Double
     public var pulledBy: PulledBy
     public var cooledS: Double
-    /// The yolk the cook got, in the slider's words (DECISIONS.md 92), or nil
+    /// The yolk the cook got, in the slider's words, or nil
     /// when the question was on screen and the cook moved on.
     public var yolkWord: YolkWord?
     /// Nil when the question was on screen and the cook moved on; it is
@@ -452,7 +452,8 @@ public struct CookFacts: Sendable, Equatable {
     /// Whether a measured pan was on file at "Eggs in"; read on a hot start.
     public var boilRemembered: Bool
     /// On a cold start, whether its own boil tap set its time to boil; nil is
-    /// true. False after a late correction to cold (DECISIONS.md 98).
+    /// true. False after a late correction to cold, which runs on the
+    /// remembered pan.
     public var boilTapped: Bool?
     /// The doneness the cook was RUN at.
     public var level: Double
@@ -876,7 +877,7 @@ public func loadDecision(_ read: StoreRead, population: String, likelihood: Stri
 
 // MARK: - The results file
 
-// "Export my results" (DECISIONS.md 81): the store exactly as stored, spliced
+// "Export my results": the store exactly as stored, spliced
 // in character for character, and enough beside it to say whose and which.
 // `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
 
