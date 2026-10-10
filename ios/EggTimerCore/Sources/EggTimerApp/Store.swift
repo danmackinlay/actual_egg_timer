@@ -54,14 +54,16 @@ public enum Stores {
     /// and sharing's key kept with its dates as seconds since 2001.
     public static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
         "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
         // The settings before they were one value (`SettingsStore`).
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
         "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
     ]
     /// The keys where an earlier build kept its cook in progress.
-    private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2", "cookInProgress.v3"]
+    private static let retiredCookKeys: Set<String> = [
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4",
+    ]
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
@@ -136,6 +138,12 @@ public enum Stores {
     public static func remove(_ key: String) {
         guard !readOnly else { return }
         store.removeObject(forKey: key, Pass())
+    }
+
+    /// A store's key on this app (core's `StoreRegistry`).
+    public static func key(_ store: StoreSpec) -> String {
+        guard let key = store.ios else { preconditionFailure("\(store.name) is not kept on iOS") }
+        return key
     }
 }
 

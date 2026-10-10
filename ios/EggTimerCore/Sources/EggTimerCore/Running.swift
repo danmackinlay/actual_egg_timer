@@ -271,22 +271,10 @@ public struct RunningCook: Sendable, Equatable {
         self.asRan = nil
     }
 
-    /// The cook as the web stores it, for JSONSerialization: what was fixed
-    /// at the press, the start and the log, which are read back, and the cook
-    /// as it stands, written for whoever reads the store by eye and never read.
+    /// The cook as both apps store it (`storedCook`), for JSONSerialization:
+    /// what was fixed at the press, the start and the log, and no more, since
+    /// the rest is the log folded.
     public var jsonObject: [String: Any] {
-        [
-            "id_ms": idMs, "nudge_s": nudgeS, "boilMemory": boilMemory, "units": units.rawValue, "lang": lang,
-            "start": ["at_s": start.atS, "choices": start.choices.jsonObject] as [String: Any],
-            "log": log.map(\.jsonObject),
-            "startedAt_s": startedAtS, "choices": choices.jsonObject, "events": events.jsonObject,
-            "correctedAt_s": correctedAtS ?? NSNull(), "asRan": asRan?.jsonObject ?? NSNull(),
-        ]
-    }
-
-    /// The cook as it is stored (`storedCook`): what was fixed at the press,
-    /// the start and the log, and no more, since the rest is the log folded.
-    var storedObject: [String: Any] {
         [
             "id_ms": idMs, "nudge_s": nudgeS, "boilMemory": boilMemory, "units": units.rawValue, "lang": lang,
             "start": ["at_s": start.atS, "choices": start.choices.jsonObject] as [String: Any],
@@ -1029,7 +1017,7 @@ public struct StoredCook: Sendable, Equatable {
     /// As both apps store it, for JSONSerialization. See `storedCook`.
     public var jsonObject: [String: Any] {
         stamped(StoreRegistry.cook, [
-            "cook": cook.storedObject, "answers": answers.rawValue, "leanHint_s": leanHintS,
+            "cook": cook.jsonObject, "answers": answers.rawValue, "leanHint_s": leanHintS,
         ])
     }
 }
@@ -1067,7 +1055,7 @@ extension StoredCook: Codable {
 /// the mass is another decision surface's key, so a cook is written by
 /// JSONEncoder (each double's shortest round-trip form) and read by
 /// JSONDecoder (to the bit) into this, and then read whole by
-/// `readRunningCook`, the one reader, as the web reads it.
+/// `readStoredCook`, the one reader, as the web reads it.
 enum JSONValue: Codable, Equatable {
     case null
     case bool(Bool)
@@ -1133,22 +1121,6 @@ enum JSONValue: Codable, Equatable {
         case let .array(a): a.map(\.any)
         case let .object(o): o.mapValues(\.any)
         }
-    }
-}
-
-extension RunningCook: Codable {
-    public init(from decoder: Decoder) throws {
-        let value = try JSONValue(from: decoder)
-        guard let cook = readRunningCook(value.any) else {
-            throw DecodingError.dataCorrupted(
-                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "not a running cook")
-            )
-        }
-        self = cook
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        try JSONValue(jsonObject).encode(to: encoder)
     }
 }
 

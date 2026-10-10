@@ -52,11 +52,9 @@ func choicesOf(_ json: [String: Any]) throws -> CookChoices {
 }
 
 /// A cook as it is stored: what was fixed at the press, the start and the
-/// log, as the fixtures write every cook, without the cook as it stands.
+/// log, as the fixtures write every cook.
 func storedJSON(_ cook: RunningCook?) -> [String: Any]? {
-    guard var o = cook?.jsonObject else { return nil }
-    for key in ["startedAt_s", "choices", "events", "correctedAt_s", "asRan"] { o[key] = nil }
-    return o
+    cook?.jsonObject
 }
 
 /// A cook the fixture writes, read as the app will read it.
@@ -171,16 +169,15 @@ struct RunningConformance {
             cook.boilMemory = ["\(choices.waterLitres)": 300 + 600 * draw.next()]
             cooks.append(cook)
         }
-        for cook in cooks {
-            let data = try JSONEncoder().encode(cook)
-            let back = try JSONDecoder().decode(RunningCook.self, from: data)
-            #expect(back == cook)
-            // What the app reads through: the same cook, nothing in between
-            // being text.
-            #expect(readRunningCook(back.jsonObject) == cook)
+        for (i, cook) in cooks.enumerated() {
+            let stored = StoredCook(cook: cook, answers: i % 2 == 0 ? .unanswered : .beforeReload, leanHintS: draw.next())
+            let data = try JSONEncoder().encode(stored)
+            let back = try JSONDecoder().decode(StoredCook.self, from: data)
+            #expect(back == stored)
+            #expect(back.cook == cook)
             // The web's keys and nulls: what JSONSerialization makes of it is
-            // the cook's own JSON, to its last bit but one.
-            #expect(sameJSON(try JSONSerialization.jsonObject(with: data), cook.jsonObject, ulps: 4))
+            // the store's own JSON, to its last bit but one.
+            #expect(sameJSON(try JSONSerialization.jsonObject(with: data), stored.jsonObject, ulps: 4))
         }
     }
 

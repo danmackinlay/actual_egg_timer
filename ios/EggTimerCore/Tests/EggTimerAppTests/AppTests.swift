@@ -487,6 +487,34 @@ struct AppTests {
         await world.until("the solves") { !planner.solver.busy && !again.solver.busy }
     }
 
+    /// The table of stored cooks both apps are held to (fixtures/stores.json,
+    /// from core's `readStoredCook`), each row's text put where this app
+    /// keeps its cook and read as a relaunch reads it: the same rows taken,
+    /// the same cooks, and the same refused, as the web's store
+    /// (test/store.test.ts).
+    @Test func theStoredCookTableReadsAsTheWebReadsIt() throws {
+        let url = World.copyFolder.deletingLastPathComponent().appendingPathComponent("fixtures/stores.json")
+        let fixture = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let rows = try #require(fixture["cooks"] as? [[String: Any]])
+        #expect(rows.count > 20)
+        for row in rows {
+            let about = row["about"] as? String ?? ""
+            let world = World(store: MemoryStore([Cook.savedKey: Data((row["text"] as? String ?? "").utf8)]))
+            let read = world.store.data(forKey: Cook.savedKey).flatMap(Cook.readStored)
+            guard let want = row["read"] as? [String: Any] else {
+                #expect(read == nil, "\(about): read")
+                continue
+            }
+            let got = try #require(read, "\(about): refused")
+            let cook = try #require(want["cook"] as? [String: Any])
+            #expect(got.cook.idMs == (cook["id_ms"] as? NSNumber)?.doubleValue, "\(about)")
+            #expect(got.cook.log.count == (cook["log"] as? [Any])?.count, "\(about)")
+            #expect(got.answers.rawValue == want["answers"] as? String, "\(about)")
+            let hint = try #require((want["leanHint_s"] as? NSNumber)?.doubleValue)
+            #expect(abs(got.leanHintS - hint) <= 1e-12 * max(1, abs(hint)), "\(about)")
+        }
+    }
+
     /// Under a newer build's mark this build writes nothing at all, and
     /// still times the egg.
     @Test func aNewerMarkWritesNothing() async throws {

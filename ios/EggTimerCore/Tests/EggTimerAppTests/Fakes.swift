@@ -213,8 +213,6 @@ struct World {
 
     /// The cook as stored, if one is.
     var stored: RunningCook? {
-        guard let data = store.data(forKey: Cook.savedKey),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        return readRunningCook(object["cook"])
+        store.data(forKey: Cook.savedKey).flatMap(Cook.readStored)?.cook
     }
 }

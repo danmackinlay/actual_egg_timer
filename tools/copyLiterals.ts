@@ -132,8 +132,8 @@ const NOT_COPY: Record<string, string> = {
   answered: 'stored cook log entry kind',
   logged: 'stored cook log entry kind',
   ended: 'stored cook log entry kind',
-  'not a running cook': 'decoding error, never shown',
   'not a stored cook': 'decoding error, never shown',
+  '{} is not kept on iOS': 'precondition message, never shown',
   // what a step asks the app to do (Step.swift, `CookEffect.kind`): names
   // for the tests, never shown
   persist: 'effect kind',
