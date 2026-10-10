@@ -337,9 +337,8 @@ export function stopAlarm(): void {
 }
 
 /**
- * The pull's alarm, scheduled ahead on the audio clock (running-cook review
- * 1.1): a tab hidden or throttled keeps its audio clock running when its
- * timers do not, so the pull rings on time even if no tick sees it. `at_ms`
+ * The pull's alarm, scheduled ahead on the audio clock: a tab hidden or
+ * throttled keeps its audio clock running when its timers do not, so the pull rings on time even if no tick sees it. `at_ms`
  * is the pull's deadline by the wall clock, or null for none; each plan sets
  * it, and the beeps are scheduled again only when it moves. Nothing is
  * scheduled for a time already past, muted, or before the Start tap primed

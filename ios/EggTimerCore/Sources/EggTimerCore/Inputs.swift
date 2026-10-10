@@ -75,8 +75,8 @@ public func startTempPresetC(_ preset: StartTempPreset, roomC: Double?) -> Doubl
 
 /// The room the model is told about, C, or nil to assume one: the cook's
 /// measured room, from Settings, which is offered - and so counts - only while
-/// they have said they have a probe thermometer (the owner's request of
-/// 5 October 2026, DECISIONS.md 79). A setting out of sight changes nothing.
+/// they have said they have a probe thermometer; without one the room is
+/// assumed. A setting out of sight changes nothing.
 /// Clamped, like everything typed or stored.
 public func roomInUse(probe: Bool, roomC: Double?) -> Double? {
     guard probe, let roomC, roomC.isFinite else { return nil }

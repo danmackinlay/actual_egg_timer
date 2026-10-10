@@ -3,7 +3,7 @@ import Foundation
 @testable import EggTimerCore
 
 /// Conformance against `fixtures/newer.json`, generated from
-/// `src/core/newer.ts`: which build may write (DECISIONS.md 100). The two
+/// `src/core/newer.ts`: which build may write. The two
 /// apps must order versions alike, or one would guard against a build the
 /// other thinks is older.
 

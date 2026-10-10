@@ -234,7 +234,7 @@ export function templatesOf(message: Message): string[] {
 /**
  * The regional overlays that ship, `copy/<tag>.json`: each holds only the
  * words its region says differently from its language's own catalogue. The
- * English catalogue is Australian (DECISIONS.md 55), and an American reads
+ * English catalogue is Australian, and an American reads
  * `en-US` over it: "counter" for the bench, "running water" for the cold tap.
  */
 export const OVERLAYS: readonly string[] = ['en-US'];

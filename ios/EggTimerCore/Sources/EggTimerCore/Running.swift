@@ -1,7 +1,7 @@
 import Foundation
 
 /// A running cook: its start and the log of everything since
-/// (design/one-screen.md section 3 and 4; DECISIONS.md 96 to 98).
+/// (design/one-screen.md section 3 and 4).
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
 /// part is for, and held to it by `fixtures/running.json` and
@@ -434,7 +434,8 @@ private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook 
     case let .boil(at):
         c.events.boilAtS = at
     case let .correct(at, choices):
-        // After the pull the yolk wanted is not corrected (DECISIONS.md 98);
+        // After the pull the yolk wanted is not corrected: it was not a
+        // mistake, and the slider only previews.
         // Done on the counter and corrected to a counted cooling: that cooling
         // ended here at the latest.
         let e = cook.events

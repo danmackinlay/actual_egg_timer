@@ -722,7 +722,7 @@ async function idle(run: Run, args: string[] = []): Promise<Layout> {
   return stillLayout(run);
 }
 
-scenario('one-layout', 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
+scenario('one-layout', 'one layout from idle to Done; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
   const before = await idle(run, ['-uiDo', `eggsIn@launch+1,${TO_DONE}`]);
   for (const part of PARTS) run.check(part in before, `idle: no ${part}`);
   let i = await run.step(run.t0 + 1);
@@ -743,7 +743,7 @@ scenario('one-layout', 'C3 step 1: one layout from idle to Done; the slider, the
   run.note(`slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
 });
 
-scenario('egg-readings', 'C3 step 2: the egg aimed for at idle (softer and firmer differ), live from raw at the start, as it ran at Done', async (run) => {
+scenario('egg-readings', 'the egg aimed for at idle (softer and firmer differ), live from raw at the start, as it ran at Done', async (run) => {
   await idle(run, [...HOT, '-uiDo',
     'set:level=0.1@launch+1,set:level=0.95@launch+2,set:level=0.41@launch+3,eggsIn@launch+4,out@pull+2']);
   const at = async (s: number): Promise<{ reading: string; yolk: number }> => {
@@ -845,7 +845,7 @@ async function hotStarted(run: Run, uiDo: string): Promise<Plan> {
 /// The words a key says in English, from the catalogue.
 const EN = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, { text: string }> }).messages;
 
-scenario('owner-case', "C3 step 3: boiling corrected to cold, as the owner needed: Heating again, the pull later, the settings and the card follow", async (run) => {
+scenario('owner-case', "boiling corrected to cold, as the owner needed: Heating again, the pull later, the settings and the card follow", async (run) => {
   const plan0 = await hotStarted(run, 'set:start=cold@60');
   const card0 = lastCard(run.lines());
   const tap = await tapAt(run, run.t0 + 60, 'set');
@@ -868,7 +868,7 @@ scenario('owner-case', "C3 step 3: boiling corrected to cold, as the owner neede
   run.note(`the pull ${(after.plan.pull - plan0.pull).toFixed(0)} s later; card ${card0?.stage} -> ${card?.stage}`);
 });
 
-scenario('cold-to-hot-after-tap', 'C3 step 3: cold corrected to boiling after the boil was pressed: the tap kept, the pull sooner', async (run) => {
+scenario('cold-to-hot-after-tap', 'cold corrected to boiling after the boil was pressed: the tap kept, the pull sooner', async (run) => {
   await started(run, ['-uiDo', 'boil@300,set:start=hot@boil+60']);
   const was = await boiled(run);
   const tap = num(storedIn(run.lines()).cook.events.boilAt_s);
@@ -880,7 +880,7 @@ scenario('cold-to-hot-after-tap', 'C3 step 3: cold corrected to boiling after th
   run.note(`the pull ${(after.plan.pull - was.pull).toFixed(0)} s`);
 });
 
-scenario('heavier-lighter', 'C3 step 3: a heavier egg pulls later, a lighter sooner, each committed after the settle; back exactly', async (run) => {
+scenario('heavier-lighter', 'a heavier egg pulls later, a lighter sooner, each committed after the settle; back exactly', async (run) => {
   const plan0 = await hotStarted(run, 'set:size=3@30,set:size=1@40,set:size=2@50');
   let t = await tapAt(run, run.t0 + 30, 'set');
   // Nothing yet: a tap settles first.
@@ -903,7 +903,7 @@ scenario('heavier-lighter', 'C3 step 3: a heavier egg pulls later, a lighter soo
   run.note(`heavier +${(heavier - plan0.pull).toFixed(1)} s, lighter ${(lighter - plan0.pull).toFixed(1)} s, back exactly`);
 });
 
-scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled', async (run) => {
+scenario('overdue-and-back', 'a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled', async (run) => {
   const plan0 = await hotStarted(run, '');
   // The taps at moments of the cook as first planned, from its start: a tap
   // anchored on the pull would follow the pull the first one moves. Set by
@@ -920,7 +920,7 @@ scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue
   after = await corrected(run, t.i);
   await run.until(phaseIs('COOKING'), { from: t.i, what: 'Cooking again' });
   // The ring the plan no longer holds, cleared by the clock's next look
-  // (core `eventsDue`; onescreen review 3).
+  // (core `eventsDue`).
   const cleared = await run.until(storedAs((s) => s.cook.events.rangAt_s === null), { from: t.i, what: 'the ring undone' });
   const ev = lastStored(run.lines().slice(0, cleared.i + 1))?.cook.events;
   run.check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
@@ -929,7 +929,7 @@ scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue
   run.note('overdue: Pull and a ring at once; back within the grace: Cooking, nothing written, the alarm set again');
 });
 
-scenario('drag-no-ring', 'C3 step 3: a drag through an overdue level rings nothing before release; the egg shows the aim while held', async (run) => {
+scenario('drag-no-ring', 'a drag through an overdue level rings nothing before release; the egg shows the aim while held', async (run) => {
   const plan0 = await hotStarted(run, 'drag:0.3/0.1/0@pull-60,drag:0.2/0.41@pull-57,release@pull-56,drag:0@pull-50,release@pull-49');
   const level = storedIn(run.lines()).cook.choices.level;
   let t = await tapAt(run, plan0.pull - 60, 'drag');
@@ -953,7 +953,7 @@ scenario('drag-no-ring', 'C3 step 3: a drag through an overdue level rings nothi
   run.note('held through runny: no ring, the aim drawn; back and released: nothing; released runny: rang');
 });
 
-scenario('start-time', "C3 step 3: the start corrected in its clause's panel a minute at a time, stopped with its reason at now, the boil pressed, and two hours back", async (run) => {
+scenario('start-time', "the start corrected in its clause's panel a minute at a time, stopped with its reason at now, the boil pressed, and two hours back", async (run) => {
   const cook = await started(run, ['-uiDo', 'open:clause-start@140,start:+3@150,boil@240,start:+5@boil+60,start:-140@boil+70']);
   const id = cook.cook.id_ms / 1000;
   let t = await tapAt(run, run.t0 + 140, 'open');
@@ -976,13 +976,13 @@ scenario('start-time', "C3 step 3: the start corrected in its clause's panel a m
   const early = await run.until(is('startLimit', (e) => e.kind === 'earliest'), { from: t.i, what: 'the limit two hours back' });
   after = await corrected(run, t.i);
   run.check(near(after.cook?.startedAt_s, id - 7200, EXACT), `two hours back: ${num(after.cook?.startedAt_s) - id}`);
-  // Said to VoiceOver too, at each (onescreen review 3).
+  // Said to VoiceOver too, at each.
   const said = run.lines().filter(is('announce')).map((l) => l.text);
   run.check(said.length >= 3 && said[0] === EN['controls.startedAt.latestNow'].text, `announced: ${JSON.stringify(said)}`);
   run.note(`limits: ${[now, boil, early].map((l) => `${l.kind} +${(l.at - run.t0).toFixed(0)} s`).join(', ')}`);
 });
 
-scenario('sentence-no-time', "DECISIONS 108: the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does", async (run) => {
+scenario('sentence-no-time', "the sentence never says when the eggs went in, idle, heating, cooking or corrected to the heat off; the start's panel does", async (run) => {
   await idle(run, ['-uiDo', 'eggsIn@launch+1,boil@300,open:clause-start@310,set:heatOff=1@320']);
   const said = (lines: Event[]): string[] => lines.filter(is('sentence')).map((l) => l.text);
   const idleSaid = said(run.lines()).at(-1) ?? '';
@@ -1009,7 +1009,7 @@ scenario('sentence-no-time', "DECISIONS 108: the sentence never says when the eg
   run.note(`"${idleSaid}"; "${after.at(-1)}"`);
 });
 
-scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its water corrects the cook and the next cook's; the pull brings the egg back", async (run) => {
+scenario('settings-mid-cook', "Settings open while a cook runs; its water corrects the cook and the next cook's; the pull brings the egg back", async (run) => {
   const plan0 = await hotStarted(run, 'open:settings@10,set:water=1@20');
   let t = await tapAt(run, run.t0 + 10, 'open');
   await run.until(is('view', (e) => e.page === 'settings'), { from: t.i, what: 'Settings open' });
@@ -1027,7 +1027,7 @@ scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its w
   run.note(`water 2 → 1 L: the pull ${(after.plan.pull - plan0.pull).toFixed(1)} s; the egg's page at the pull`);
 });
 
-scenario('record-corrected-at-done', 'C3 step 3: a correction at Done changes the record, planned on the calibration before this egg; back, the first to the bit', async (run) => {
+scenario('record-corrected-at-done', 'a correction at Done changes the record, planned on the calibration before this egg; back, the first to the bit', async (run) => {
   await hotStarted(run, 'out@pull+2,answer:runny@cooled+5,set:size=3@cooled+10,set:size=2@cooled+20');
   const cooling = await toCooling(run, 2);
   let i = await run.step(cooledAt(cooling) + 1);
@@ -1056,7 +1056,7 @@ scenario('record-corrected-at-done', 'C3 step 3: a correction at Done changes th
   run.note(`heavier: ${heavier.egg.mass_g} g, a new forecast, Runny kept; back: the first record to the bit, ${peak1.toFixed(2)} °C`);
 });
 
-scenario('slider-after-pull', 'C3 step 3: after the pull the slider only previews: no correction, the record as it was, back to its level', async (run) => {
+scenario('slider-after-pull', 'after the pull the slider only previews: no correction, the record as it was, back to its level', async (run) => {
   await hotStarted(run, 'out@pull+2,answer:jammy@cooled+5,drag:0.6/0.9@cooled+10,release@cooled+12');
   const cooling = await toCooling(run, 2);
   let i = await run.step(cooledAt(cooling) + 1);
@@ -1096,13 +1096,13 @@ async function asked(run: Run, uiDo: string): Promise<{ plan0: Plan; after: Corr
   return { plan0, after };
 }
 
-scenario('still-in-yes', 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it; yes: timed again', async (run) => {
+scenario('still-in-yes', 'a correction after the grace ran out asks "still in the water?"; nothing past it; yes: timed again', async (run) => {
   const { plan0, after } = await asked(run, 'stillIn@pull+700');
   run.check(has(after.lines, is('alarmsCancelled')) && Object.keys(scheduled(after.lines)).length === 0,
     `nothing scheduled while it asks: ${JSON.stringify(scheduled(after.lines))}`);
   const card = lastCard(after.lines);
   run.check(card?.stage === 'pull', `the card shows the pull while it asks: ${card?.stage}`);
-  // No caveat about the pull it doubts (onescreen review 3).
+  // No caveat about the pull it doubts.
   const white = lastOf(await screen(run), 'white');
   run.check(white?.shown === false, `the white's line under the question: ${say(white)}`);
   // The cooling's counted end passes under the question: nothing, once the
@@ -1121,7 +1121,7 @@ scenario('still-in-yes', 'C3 step 4: a correction after the grace ran out asks "
   run.note(`still in: ${heating.phase}; the card ${card?.stage} while it asked`);
 });
 
-scenario('still-in-no', 'C3 step 4: "still in the water?" answered no: the pull stands, confirmed, and the record is made for cold water', async (run) => {
+scenario('still-in-no', '"still in the water?" answered no: the pull stands, confirmed, and the record is made for cold water', async (run) => {
   const { plan0 } = await asked(run, 'stillOut@pull+40');
   const t = await tapAt(run, plan0.pull + 40, 'stillOut');
   const out = await run.until(storedAs((s) => s.cook.events.pulled?.confirmed === true), { from: t.i, what: 'the pull confirmed' });
@@ -1135,7 +1135,7 @@ scenario('still-in-no', 'C3 step 4: "still in the water?" answered no: the pull 
   run.note(`out: ${phases(lines).at(-1) ?? 'COOLING'}, the pull confirmed, the record corrected`);
 });
 
-scenario('running-lines', 'C3 step 5: corrected to cold and left heating, the slow hob counts the time heated up, on the clock and the card', async (run) => {
+scenario('running-lines', 'corrected to cold and left heating, the slow hob counts the time heated up, on the clock and the card', async (run) => {
   await hotStarted(run, 'set:start=cold@300');
   const t = await tapAt(run, run.t0 + 300, 'set');
   const after = await corrected(run, t.i);
@@ -1150,7 +1150,7 @@ scenario('running-lines', 'C3 step 5: corrected to cold and left heating, the sl
   run.note(`${said.phase} ${said.big} | ${said.sub}`);
 });
 
-scenario('white-unset', 'C3 step 5: a correction the white never sets in gets the longest time the pan can give, and the slot says so', async (run) => {
+scenario('white-unset', 'a correction the white never sets in gets the longest time the pan can give, and the slot says so', async (run) => {
   await hotStarted(run, 'set:heatOff=1@20,set:size=0@30,set:eggs=1@40,set:water=0.5@50');
   for (const s of [20, 30, 40, 50]) {
     const t = await tapAt(run, run.t0 + s, 'set');
@@ -1569,7 +1569,7 @@ async function answeredAtDone(run: Run, uiDo: string): Promise<{ cooling: Plan; 
   return { cooling, first: lastEgg(run.lines()) };
 }
 
-scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg corrected and Start again pressed while it settles: the corrected egg logged, then the cook forgotten', async (run) => {
+scenario('start-again-corrected', 'Jammy at Done, the egg corrected and Start again pressed while it settles: the corrected egg logged, then the cook forgotten', async (run) => {
   const { cooling, first } = await answeredAtDone(run, 'set:size=3@cooled+10,again@cooled+12');
   // On to Start again while the change is in hand, not once it has settled.
   const t = await tapAt(run, cooledAt(cooling) + 10, 'set', { idle: false });
@@ -1587,7 +1587,7 @@ scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg 
   run.note(`the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept, then forgotten`);
 });
 
-scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected at Done, killed before its record was made again, relaunched too old: the corrected egg logged', async (run) => {
+scenario('too-old-corrected', 'an answered egg corrected at Done, killed before its record was made again, relaunched too old: the corrected egg logged', async (run) => {
   // `-uiHoldAsRan YES`: the record is never made again in this launch, as if
   // the app were killed before it landed.
   const { cooling, first } = await answeredAtDone(run, '');
@@ -1609,7 +1609,7 @@ scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected a
   run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
 });
 
-scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start again, the record not made again: the cook left stored, and the next launch makes it', async (run) => {
+scenario('again-not-remade', 'Jammy at Done, corrected, Start again, the record not made again: the cook left stored, and the next launch makes it', async (run) => {
   // `-uiHoldAsRan YES`: the correction is not made again while the cook runs,
   // so Start again must; `-uiFailRemake YES`: it cannot be, in this launch.
   await started(run, [...HOT, '-uiHoldAsRan', 'YES', '-uiFailRemake', 'YES', '-uiDo',
@@ -1644,7 +1644,7 @@ scenario('again-not-remade', 'red team 0.3: Jammy at Done, corrected, Start agai
   run.note(`left stored at Start again; the next launch logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept`);
 });
 
-scenario('again-held', 'red team 0.4: Done, corrected, Jammy held for the record, Start again: the egg logged with Jammy, not unanswered', async (run) => {
+scenario('again-held', 'Done, corrected, Jammy held for the record, Start again: the egg logged with Jammy, not unanswered', async (run) => {
   // `-uiHoldAsRan YES`: the corrected record is never planned as it ran in
   // this launch, so the answer is held until Start again.
   await started(run, [...HOT, '-uiHoldAsRan', 'YES', '-uiDo',
@@ -1667,7 +1667,7 @@ scenario('again-held', 'red team 0.4: Done, corrected, Jammy held for the record
 });
 
 
-scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
+scenario('done-stays-done', 'on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
   await started(run, [...settingsArg({ ...HOT_SETTINGS, cooling: 'counter' }), '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);
   const plan0 = planIn(run.lines());
   let i = await run.step(plan0.pull + 1);
@@ -1695,7 +1695,7 @@ scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the o
   run.note(`Done kept; the record's ice bath ${egg.cooled_s?.toFixed?.(0)} s`);
 });
 
-scenario('answered-pull-stands', 'onescreen review 2.1: a pull the clock assumed, Jammy at Done, then cold water: the pull confirmed, nothing asked, still Done', async (run) => {
+scenario('answered-pull-stands', 'a pull the clock assumed, Jammy at Done, then cold water: the pull confirmed, nothing asked, still Done', async (run) => {
   await started(run, [...HOT, '-uiDo', 'answer:jammy@cooled+5,set:start=cold@cooled+10']);
   const plan0 = planIn(run.lines());
   let i = await run.step(plan0.pull + 21);
@@ -1716,7 +1716,7 @@ scenario('answered-pull-stands', 'onescreen review 2.1: a pull the clock assumed
 });
 
 
-scenario('grace-correction', 'onescreen review 3: a lighter egg 15 s into the pull keeps the pull that rang and its grace; nothing rings again', async (run) => {
+scenario('grace-correction', 'a lighter egg 15 s into the pull keeps the pull that rang and its grace; nothing rings again', async (run) => {
   const plan0 = await hotStarted(run, 'set:size=1@pull+15');
   let i = await run.step(plan0.pull + 1);
   await run.until(phaseIs('PULL'), { from: i, what: 'phase PULL' });
@@ -1737,7 +1737,7 @@ scenario('grace-correction', 'onescreen review 3: a lighter egg 15 s into the pu
 });
 
 
-scenario('done-note-as-ran', 'onescreen review 2.2: Runny at Done, relaunched: the texture note reads the cook as it ran', async (run) => {
+scenario('done-note-as-ran', 'Runny at Done, relaunched: the texture note reads the cook as it ran', async (run) => {
   await started(run, [...HOT, '-uiDo', 'out@pull+2,answer:runny@cooled+5']);
   const cooling = await toCooling(run, 2);
   let i = await run.step(cooledAt(cooling) + 1);
@@ -1762,7 +1762,7 @@ const certaintyNow = (lines: Event[]): { word: string; time: string } | null => 
   return l?.word !== undefined ? { word: l.word, time: l.time ?? '' } : null;
 };
 
-scenario('certainty-mid-cook', 'onescreen review 2.3: once cooking, the range opened is when to take the eggs out, as times of day; under a lengthening slow hob it moves with the guess', async (run) => {
+scenario('certainty-mid-cook', 'once cooking, the range opened is when to take the eggs out, as times of day; under a lengthening slow hob it moves with the guess', async (run) => {
   const before = EN['certainty.timeOut'].text.split('{low}')[0];
   const idle = EN['certainty.time'].text.split('{low}')[0];
   await hotStarted(run, 'set:start=cold@300');
@@ -1818,7 +1818,7 @@ function frameWrong(f: Frame, lines: Event[], start: number): string | null {
   return null;
 }
 
-scenario('one-moment', 'REFACTOR-0.5 0.5: each frame of the readout reads one moment, the TimelineView\'s: stepped across a second, and run fast', async (run) => {
+scenario('one-moment', 'each frame of the readout reads one moment, the TimelineView\'s: stepped across a second, and run fast', async (run) => {
   const stored = await started(run);
   const start = startOf(stored);
   run.check(stored.cook.choices.startMode === 'cold', `a cold start: ${stored.cook.choices.startMode}`);
@@ -1856,7 +1856,7 @@ scenario('one-moment', 'REFACTOR-0.5 0.5: each frame of the readout reads one mo
 });
 
 
-scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
+scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
   await hotStarted(run, 'drag:0.3@30');
   let t = await tapAt(run, run.t0 + 30, 'drag');
   await run.until(is('edit', (e) => e.group === 'level'), { from: t.i, what: 'the change in hand' });
@@ -1880,7 +1880,7 @@ scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the a
   run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
 });
 
-scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg timed to Done, answered and started again, and nothing stored; without it, the mark", async (run) => {
+scenario('newer-version', "a newer build's mark: the line, an egg timed to Done, answered and started again, and nothing stored; without it, the mark", async (run) => {
   // A newer build's mark, as a launch argument, on a fresh install:
   // UserDefaults reads it first, and an edit of the plist can be undone by
   // the system's cached copy. Nothing at all may then be stored.

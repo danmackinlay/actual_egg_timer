@@ -73,7 +73,7 @@ struct ReadoutView: View {
                 }
 
                 // The time's two lines sit close under the digits
-                // (DECISIONS.md 99, UI.md section 8, as the web): the boil
+                // (UI.md section 8, as the web): the boil
                 // line about 10 pt under the digits' baseline, which digits
                 // never reach below, and the certainty word's press target
                 // directly under the boil line.
@@ -106,7 +106,7 @@ struct ReadoutView: View {
         }
     }
 
-    /// The Learning mark (E8, DECISIONS.md 58), as on the web: small, in the
+    /// The Learning mark (E8), as on the web: small, in the
     /// panel's corner, over the time it is about, while sharing is on - the
     /// time may then be nudged a few seconds. Never in sous-vide, which has no
     /// time to nudge. Its (i) opens under the phase label.
@@ -153,7 +153,7 @@ struct ReadoutView: View {
     }
 
     /// How sure I am of the time on screen, beneath it (UI.md section 8, the
-    /// web's `renderOdds`; DECISIONS.md 93 and 97): the class as a line the
+    /// web's `renderOdds`): the class as a line the
     /// cook presses, which opens in place the 90% interval in the slider's
     /// words, "most likely" when it is not already said (`mostLikelyOpened`),
     /// the likely time range and, while idle, the way to Help's "How sure I
@@ -182,7 +182,7 @@ struct ReadoutView: View {
                 // Two lines' room in every phase, the word and "most
                 // likely", so nothing under it moves when they come or go,
                 // nor at the start; the word at its top, close under the
-                // boil line (DECISIONS.md 99); the second line hanging its
+                // boil line; the second line hanging its
                 // x-height into the panel's foot (`hang`).
                 Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 // Wherever "most likely" can show, the room the line takes
@@ -295,7 +295,7 @@ struct ReadoutView: View {
     /// forecast as it ran (`Cook.asRan`), not a plan made since on a
     /// posterior that has learned from this egg.
     /// Never under "Are the eggs still in the water?": not a caveat about the
-    /// pull the question doubts (onescreen review 3).
+    /// pull the question doubts.
     private func whiteRunny(_ o: Outcome?) -> Bool {
         if asking { return false }
         if phase != .idle, let ran = cook.asRan { return forecastWhiteAtRisk(ran.forecast) }
@@ -312,7 +312,7 @@ struct ReadoutView: View {
 
     /// What pressing the certainty line opens: the interval, "most likely"
     /// when it is not already said, and the likely time range in the clock's
-    /// own terms (core `timeRangeWords`, onescreen review 2.3): while idle
+    /// own terms (core `timeRangeWords`): while idle
     /// whole times, m:ss as the clock shows them; once a cook runs, the times
     /// of day to take the eggs out, not whole times under a clock counting
     /// down, and for a reading held over a plan that has moved since (a slow
@@ -331,7 +331,7 @@ struct ReadoutView: View {
 
     /// The grace ran out unanswered, so I assumed the eggs came out, and a
     /// correction since would cook them longer: the plan asks whether they
-    /// are still in the water (DECISIONS.md 98), the question in the phase
+    /// are still in the water, the question in the phase
     /// label's place, the time since they were due out under it, and
     /// nothing past the question - not the cooling, nor Done - until it is
     /// answered (`PhaseActions`).

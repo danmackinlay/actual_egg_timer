@@ -93,7 +93,7 @@ public func targetPeakYolkC(_ level: Double) -> Double {
 ///                           offer, so there is nowhere to snap to.
 ///
 /// A level the pan can deliver is never refused, however low its odds: those
-/// are warned of instead (`lowOddsAt`, Reach.swift; DECISIONS.md 83).
+/// are warned of instead (`lowOddsAt`, Reach.swift).
 public enum RefusalKind: String, Sendable {
     case none
     case tooSoftForWhite

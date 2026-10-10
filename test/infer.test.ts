@@ -472,7 +472,7 @@ function nextTimes(cal: Calibration): { soft: number; jammy: number; softWhiteBo
 }
 
 /** Two eggs at soft, white runny, from a fresh prior, on the app's own grid.
- *  At 4000 particles (DECISIONS.md 94): at the app's 1000, how far jammy
+ *  At 4000 particles: at the app's 1000, how far jammy
  *  moves against soft (5b) is 0.38-1.14 from seed to seed, and a test of
  *  it on one seed tests the seed; at 4000, 0.69-0.85. */
 const TWO_RUNNY_PARTICLES = 4 * PARTICLE_COUNT;

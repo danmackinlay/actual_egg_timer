@@ -70,7 +70,7 @@ public struct TimeRangeWords: Sendable, Equatable {
     public let ofDay: Bool
 }
 
-/// The likely time range in the clock's own terms (onescreen review 2.3):
+/// The likely time range in the clock's own terms:
 /// before Start, whole times (`certainty.time`); once a cook runs, when to
 /// take the eggs out, as times of day (`certainty.timeOut`), the start plus
 /// the range, and for a reading held over a plan it was not read on (a slow
@@ -122,9 +122,9 @@ public func mostLikelyOpened(_ w: WordCertainty) -> Bool {
 
 // MARK: - The outcome
 
-/// The direction ("Probably just right. If not, a little firm.") retired
-/// with the certainty draft (DECISIONS.md 97); the line under the time is
-/// `certaintyKey`'s.
+/// No line gives a direction ("Probably just right. If not, a little
+/// firm."): the cook names the yolk they got, and "just right" is not what
+/// they are asked. The line under the time is `certaintyKey`'s.
 
 /// Whether the white gets its line.
 public func whiteAtRisk(_ o: Outcome) -> Bool {
@@ -204,7 +204,8 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     let standing = f.afterBoil == .off
     switch f.phase {
     case .idle:
-        // The time to boil, guessed or remembered, alike (DECISIONS.md 99).
+        // The time to boil, guessed or remembered, says no certainty of its
+        // own: the certainty line speaks for both.
         let subline = cold ? "readout.sub.coldAssumes" : (standing ? "readout.sub.standing" : "readout.sub.hot")
         let hint = !f.whiteSets
             ? "action.hint.whiteNeverSets"

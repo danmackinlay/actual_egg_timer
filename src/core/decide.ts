@@ -18,7 +18,7 @@
  *     P(too soft) + P(too firm) + RUNNY_WHITE_LOSS * P(runny)
  *
  * over the posterior, and the recommendation is the candidate that minimises
- * it. RUNNY_WHITE_LOSS is 3: the owner's number (DECISIONS.md 7), a
+ * it. RUNNY_WHITE_LOSS is 3: the owner's number, a
  * constant, and a per-cook slider only if someone asks.
  *
  * NOT BEFORE THE FIRST EGG. Under the prior alone the choice runs far from the
@@ -381,7 +381,7 @@ export interface TimeBounds {
  *
  * A chosen time is then held within `bounds`, where the pot's odds profile
  * gives them, so that a softer level is never given a later time than a
- * firmer one (reach.ts, "the envelope"; DECISIONS.md 84). The odds are read
+ * firmer one (reach.ts, "the envelope"). The odds are read
  * at the time held. The literature's time is never moved: before the first
  * egg it is already monotone in the level (test/reach.test.ts).
  */

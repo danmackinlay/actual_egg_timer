@@ -188,7 +188,7 @@ function withAt(raw: unknown, path: string[], value: unknown): unknown {
 }
 
 /** `cook` with the plan as it ran kept, from its plan at `now_s` on the
- *  learned posterior's coarse surface (review 1.3). */
+ *  learned posterior's coarse surface. */
 function keptOf(cook: RunningCook, now_s: number): RunningCook {
   const c = calibrationOf(named('learned'));
   const inputs = replan(cook, c, null, 0, now_s).inputs;
@@ -340,7 +340,7 @@ interface PlanCase {
   surface: SurfaceAsk;
   outs?: number[];
   dues?: number[];
-  /** The slow hob's hint handed to the plan (review 2.1). */
+  /** The slow hob's hint handed to the plan. */
   hint?: SlowHobMemo | null;
   /** Moments to ask whether the slow hob's moment has come (`slowHobDue`). */
   hobDue?: number[];
@@ -566,7 +566,7 @@ const S = START_S;
   const owner = corrected(h0, { ...h0.choices, startMode: 'cold' }, S + 240);
   plan({ note: "the owner's case: boiling corrected to cold, back to heating", posterior: 'learned', cook: owner, leanHint_s: hint, now_s: S + 240, surface: 'own' });
   plan({ note: "the owner's case, then the tap", posterior: 'learned', cook: withBoil(owner, S + 560), leanHint_s: hint, now_s: S + 560, surface: 'own' });
-  // Corrected to cold later than this water takes to boil (review 1.2): the
+  // Corrected to cold later than this water takes to boil: the
   // tap may be long after the boil, so the remembered time is the ramp.
   const lateCold = corrected(h0, { ...h0.choices, startMode: 'cold' }, S + 500);
   plan({ note: 'boiling corrected to cold after the water could have boiled, then a tap: the remembered time', posterior: 'learned', cook: withBoil(lateCold, S + 600), leanHint_s: hint, now_s: S + 600, surface: 'own' });
@@ -586,10 +586,10 @@ const S = START_S;
   const counterOut = withEvents(counter, withOut(counter, cp, cEnd + 4).events);
   plan({ note: 'hot, on the counter, out: done', posterior: 'learned', cook: counterOut, leanHint_s: 0, now_s: cEnd + 30, surface: 'own', dues: [cEnd + 30] });
   // Corrected to ice ten minutes later: the counted cooling, long ended, so
-  // Done at once (review 2.3).
+  // Done at once.
   plan({ note: 'the counter corrected to ice ten minutes after the out: the counted time, Done at once', posterior: 'learned', cook: corrected(counterOut, h0.choices, cEnd + 604), leanHint_s: 0, now_s: cEnd + 604, surface: 'own', dues: [cEnd + 605] });
 
-  // The grace runs out, then the owner's case (review 1.1): the pull stands
+  // The grace runs out, then the owner's case: the pull stands
   // until the cook says whether the egg is still in the water.
   const timedOut = withEvents(h0, eventsDue(h0, pull, end + 21));
   const asked = corrected(timedOut, { ...h0.choices, startMode: 'cold' }, end + 30);
@@ -602,7 +602,7 @@ const S = START_S;
   plan({ note: 'the grace ran out, then a lighter egg: nothing asked', posterior: 'learned', cook: corrected(timedOut, { ...h0.choices, mass_kg: 0.048 }, end + 30), leanHint_s: hint, now_s: end + 30, surface: 'own' });
 
   // The pull rings on the interim plan, before the surface lands; the
-  // surface lands in the grace and does not move it (review 3).
+  // surface lands in the grace and does not move it.
   const interim = plan({ note: 'hot, the interim plan, before its surface', posterior: 'learned', cook: h0, leanHint_s: 0, now_s: S + 1, surface: 'none' });
   const iEnd = interim.deadlines.cookEnd_s;
   const rang = withEvents(h0, eventsDue(h0, interim, iEnd + 2));
@@ -630,7 +630,7 @@ const S = START_S;
   plan({ note: 'a cold start never tapped, twelve hours on: abandoned', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 12 * 3600, surface: 'none' });
   plan({ note: 'heating just short of two hours: the guess at the most, not yet abandoned', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 7170, surface: 'none' });
   plan({ note: 'heating a little before that: still lengthening', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 7100, surface: 'none' });
-  // A cook done long ago: too old, so its egg is final (review 2.1).
+  // A cook done long ago: too old, so its egg is final.
   const longAgo = cookOf({ startMode: 'hot', cooling: 'tap' });
   const lp = replan(longAgo, calibrationOf(named('learned')), null, 0, S + 1);
   const ranOut = withEvents(longAgo, eventsDue(longAgo, lp, S + 5 * 3600));
@@ -648,7 +648,7 @@ const S = START_S;
 }
 
 {
-  // The slow hob's hint (review 2.1): a plan started where the last one got
+  // The slow hob's hint: a plan started where the last one got
   // to is the plan from the start; one made under anything else is ignored.
   // Last, so no case before them moves.
   const learned = calibrationOf(named('learned'));
@@ -686,7 +686,7 @@ const S = START_S;
 }
 
 {
-  // The cook as it ran (review 1.3, 2.4): the pull written on the interim
+  // The cook as it ran: the pull written on the interim
   // plan, no surface yet; kept when the surface lands; a relaunch three hours
   // on with no surface; a correction at Done, stale until planned again on
   // the calibration before this egg. Last, so no case before them moves.
@@ -710,9 +710,9 @@ const S = START_S;
 }
 
 {
-  // The onescreen review (9 October 2026). Last, so no case before them moves.
+  // Corrections at Done and in the grace. Last, so no case before them moves.
   const learned = calibrationOf(named('learned'));
-  // 2.1: Done on the counter, then the cooling corrected to ice a minute on:
+  // Done on the counter, then the cooling corrected to ice a minute on:
   // Done kept, the ice bath ended by the correction; ten minutes on, the
   // counted time.
   const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
@@ -728,7 +728,7 @@ const S = START_S;
   const iCool = replan(iOut, learned, null, 0, ip.deadlines.cookEnd_s + 3);
   const iDone = withEvents(iOut, eventsDue(iOut, iCool, (iCool.deadlines.coolEnd_s as number) + 1));
   plan({ note: 'the ice bath ended, then a much lighter egg: the cooling as it ran', posterior: 'learned', cook: corrected(iDone, { ...ice.choices, mass_kg: 0.04 }, (iCool.deadlines.coolEnd_s as number) + 30), leanHint_s: 0, now_s: (iCool.deadlines.coolEnd_s as number) + 31, surface: 'own' });
-  // Review 3: a correction in the grace. A lighter egg leaves the pull due:
+  // A correction in the grace. A lighter egg leaves the pull due:
   // the pull that rang, held, its grace's end kept. A heavier one moves it
   // past the correction: the ring undone. Back to cold, unwatched: heating.
   const h = cookOf({ startMode: 'hot' }, -7);
@@ -780,8 +780,8 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('the start corrected ten minutes earlier, a tap, then a stray: not remembered', corrected(corrected(withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500), { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610));
 }
 
-/* Two copies of one cook, as two tabs hold it (`takeUpEvents`, onescreen
- * review 1.1): what each takes up from the other, both ways, and which a
+/* Two copies of one cook, as two tabs hold it (`takeUpEvents`): what each
+ * takes up from the other, both ways, and which a
  * reload restores (`correctedLater`). */
 const takeUps: { note: string; ours: RunningCook; theirs: RunningCook }[] = [];
 {

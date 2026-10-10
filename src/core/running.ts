@@ -1,6 +1,6 @@
 /**
  * A running cook: its start, its choices and what it observed
- * (design/one-screen.md section 3 and 4; DECISIONS.md 96, 97 and 98).
+ * (design/one-screen.md section 3 and 4).
  *
  * A cook is its START (when the egg went in, and the choices then: what the
  * sentence, the slider and Settings' pot rows say) and a LOG of everything
@@ -124,7 +124,7 @@ const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, 
  * reload with no surface yet, or a posterior that has since folded this egg's
  * own answer. Taken from the first plan on the pot's surface made once the
  * egg is pulled (`keepAsRan`), and replaced only by a correction, planned on
- * the calibration before this egg (`asRanCorrected`, DECISIONS.md 98). Never
+ * the calibration before this egg (`asRanCorrected`). Never
  * taken from a plan with no surface. The rest of the record (the pot, the
  * pull, the cooling) does not depend on the calibration once the egg is out,
  * and is the plan's.
@@ -387,7 +387,7 @@ function applyEntry(cook: RunningCook, entry: CookEntry): RunningCook {
     case 'correct': {
       // After the pull the yolk wanted is not corrected: it was not a
       // mistake, so the record keeps the level the egg was pulled at, and the
-      // slider only previews (DECISIONS.md 98). Done on the counter and
+      // slider only previews. Done on the counter and
       // corrected to a counted cooling: that cooling ended here at the
       // latest, so Done stays Done and the plan takes the counted time if it
       // is sooner (`replan`, `eventsDue`).
@@ -450,8 +450,7 @@ function foldCook(
  * - `coldSince_s`: the press for a cook begun cold, the moment of the
  *   correction for one corrected to cold, and null while they say boiling. A
  *   boil tapped on a cook told it was cold only after the water could have
- *   boiled is used for the cook and not remembered (`boilToRemember`,
- *   DECISIONS.md 97).
+ *   boiled is used for the cook and not remembered (`boilToRemember`).
  * - `firstHotAt_s`: the press for a cook begun hot, the first correction to
  *   boiling for one begun cold, and null if they never have. A tap made
  *   before it was made in the cold the cook began with, so a stray
@@ -716,7 +715,7 @@ export function withAsRan(cook: RunningCook, asRan: CookAsRan | null): RunningCo
 
 /**
  * The cook a level asked for after the pull would have made, for the slider's
- * preview (DECISIONS.md 98): these choices, as if not yet pulled and never
+ * preview: these choices, as if not yet pulled and never
  * corrected, so the plan is the egg that level aims for in this pot. Its
  * corrections stay in its log, so the pot's ramp reads as the cook's own. A
  * cook for a plan and nothing else: its fold is not its log's, and it is
@@ -812,7 +811,7 @@ function sameCorrections(a: RunningCook, b: RunningCook): boolean {
  * the cooling's end of the pull kept; the pull that rang, if it rang under
  * the boil kept; and the plan as it ran, if it is of the pull kept. `ours`,
  * the same object, when there is nothing to take up, and always for another
- * cook: a tab never takes up a cook another tab started (DECISIONS.md 97).
+ * cook: a tab never takes up a cook another tab started.
  * Taken up both ways, two copies end with the same events.
  *
  * From a copy whose start or choices differ from ours, only the cook's own
@@ -1326,7 +1325,7 @@ export function cookStillOpen(cook: RunningCook, plan: CookPlan, storedId_ms: nu
  * ramp - but not a tap after a correction from boiling to cold made later
  * than this water's remembered time to boil, which may have come long after
  * the water boiled unseen: that cook runs on the remembered time, and on the
- * tap only when no pan was remembered (DECISIONS.md 98). Otherwise the
+ * tap only when no pan was remembered. Otherwise the
  * remembered one for the water (the memory as it was at the start), and while
  * the cook is still heating, the SLOW HOB'S RULE, as a function of how long
  * it has heated: whenever the pull would come within SLOW_HOB_WHEN_LEFT_S,
@@ -1720,7 +1719,7 @@ export function solutionAsRan(plan: CookPlan, ran: CookAsRan): Solution {
 }
 
 /**
- * A correction after the pull, as it ran (DECISIONS.md 98; design/one-screen.md
+ * A correction after the pull, as it ran (design/one-screen.md
  * section 4, "Never from its own outcome"): the corrected cook planned on
  * `before`, the calibration before this egg - the fold's own starting point
  * once the egg is answered, the calibration as it stands while it is not -
@@ -1773,7 +1772,7 @@ export interface CookFactsResult {
 
 /**
  * The facts `recordFor` makes the record of, from the cook as last corrected
- * and its plan, with whichever answers have been given (DECISIONS.md 97, 8):
+ * and its plan, with whichever answers have been given:
  * the egg, the pot with the time to boil in force, the level it ran at, the
  * cook time that ran and the nudge in it, the pull the cook tapped, the
  * cooling as it ran, and what the app said for that cook at that time.
@@ -1846,7 +1845,7 @@ export interface BoilToRemember {
 
 /**
  * What the boil memory learns from this cook, written when it ends rather
- * than at the tap, so it is the cook as last corrected (DECISIONS.md 97, 9):
+ * than at the tap, so it is the cook as last corrected:
  * the tap on a cold start, for the water as corrected - or nothing. Not a tap
  * the cook was told to watch for only after the water could already have
  * boiled - corrected from boiling to cold, or the start corrected earlier,

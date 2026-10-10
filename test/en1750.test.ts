@@ -72,7 +72,7 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
 const LEFT_TO_ENGLISH = new Set(['app.name']);
 
 test('1b. every twin is an English key; a key without one is listed, not refused', () => {
-  // The twins may lag the English (DECISIONS.md 103): a key with no twin
+  // The twins may lag the English: a key with no twin
   // renders in English (1c), and `npm run copy:queue` lists it as missing
   // unless its base says it is left to English on purpose. Every twin there
   // is - the web's, and iOS's alarms, Live Activity and Dynamic Island - is
@@ -157,7 +157,7 @@ test('1g. the long s only in the title, and the title reads without it', () => {
 });
 
 test('1h. the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {
-  // The yolk the cook got (DECISIONS.md 92) is answered in the ticks' own
+  // The yolk the cook got is answered in the ticks' own
   // words, five and distinct; the white's three are distinct too.
   const yolk = ['doneness.runny', 'doneness.soft', 'doneness.jammy', 'doneness.fudgy', 'doneness.hard']
     .map((k) => render(PERIOD, k));
@@ -209,7 +209,7 @@ test('2a. tags: 1750 in any region, and modern English is English without it', (
 test('2b. metric to Imperial in English goes into 1750, and back to metric stays there', () => {
   const imperial = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.equal(effectiveLanguage(imperial), PERIOD_LANGUAGE);
-  assert.deepEqual(flip(imperial, 'imperialToMetric'), imperial, 'the owner, DECISIONS.md 77');
+  assert.deepEqual(flip(imperial, 'imperialToMetric'), imperial, 'back to metric leaves 1750 alone');
   const chosen = languageAfterPick(FRESH_LANGUAGE, 'en');
   assert.equal(effectiveLanguage(flip(chosen, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
@@ -245,7 +245,7 @@ test('2g. a stored state is read defensively, and an old one still reads', () =>
   assert.deepEqual(readLanguageState({ chosen: 'xx' }, known), FRESH_LANGUAGE);
   const stored = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.deepEqual(readLanguageState(JSON.parse(JSON.stringify(stored)), known), stored);
-  // Stored before DECISIONS.md 77: what the switch replaced, now ignored.
+  // A stored `flippedFrom`, what the switch replaced, is ignored.
   assert.deepEqual(readLanguageState({ chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: null } }, known),
     { chosen: PERIOD_LANGUAGE });
 });

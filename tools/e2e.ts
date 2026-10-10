@@ -316,7 +316,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'one-layout': {
-    what: 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
+    what: 'one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.until("__snap().chosen !== null", 'the time decided');
@@ -350,7 +350,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'egg-readings': {
-    what: 'C3 step 2: the egg aimed for at idle (softer and firmer differ), the live egg from raw at the start, the egg as it ran at Done',
+    what: 'the egg aimed for at idle (softer and firmer differ), the live egg from raw at the start, the egg as it ran at Done',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const centre = async (): Promise<{ reading: string; fill: string }> => tab.eval(`(() => {
@@ -393,7 +393,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'owner-case': {
-    what: 'C3 step 3: boiling corrected to cold after Start, as the owner needed: back to Heating, the pull later, the settings follow',
+    what: 'boiling corrected to cold after Start, as the owner needed: back to Heating, the pull later, the settings follow',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -420,7 +420,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'cold-to-hot-after-tap': {
-    what: 'C3 step 3: cold corrected to boiling after the boil was pressed: the tap kept, unread, the pot a boiling start',
+    what: 'cold corrected to boiling after the boil was pressed: the tap kept, unread, the pot a boiling start',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'cold');
@@ -442,7 +442,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'heavier-lighter': {
-    what: 'C3 step 3: a heavier egg mid-cook pulls later, a lighter one sooner; each a correction, committed after the settle',
+    what: 'a heavier egg mid-cook pulls later, a lighter one sooner; each a correction, committed after the settle',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -474,7 +474,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'overdue-and-back': {
-    what: 'C3 step 3: a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled',
+    what: 'a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
@@ -506,7 +506,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'drag-no-ring': {
-    what: 'C3 step 3: a drag through an overdue level rings nothing before release; the egg shows the aim while held',
+    what: 'a drag through an overdue level rings nothing before release; the egg shows the aim while held',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -542,7 +542,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'start-time': {
-    what: "C3 step 3: the start corrected in its clause's panel, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back",
+    what: "the start corrected in its clause's panel, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back",
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
@@ -625,7 +625,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'settings-mid-cook': {
-    what: 'C3 step 3: Settings is open while a cook runs; its water corrects the cook; the pull brings the egg back',
+    what: 'Settings is open while a cook runs; its water corrects the cook; the pull brings the egg back',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -686,7 +686,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'record-corrected-at-done': {
-    what: 'C3 step 3: a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
+    what: 'a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -728,7 +728,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'slider-after-pull': {
-    what: 'C3 step 3: after the pull the slider only previews: no correction, no record changed, and back to the level the egg ran at',
+    what: 'after the pull the slider only previews: no correction, no record changed, and back to the level the egg ran at',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
@@ -760,7 +760,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'still-in-water': {
-    what: 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it rings or shows; each answer',
+    what: 'a correction after the grace ran out asks "still in the water?"; nothing past it rings or shows; each answer',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const words = (key: string): Promise<string> => tab.words(key);
@@ -816,7 +816,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'running-lines': {
-    what: 'C3 step 5: corrected to cold and left heating, the slow hob counts the time heated up; a correction the white never sets in says so',
+    what: 'corrected to cold and left heating, the slow hob counts the time heated up; a correction the white never sets in says so',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');

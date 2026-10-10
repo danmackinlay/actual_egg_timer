@@ -1,6 +1,6 @@
 import Foundation
 
-/// How sure the timer is, in words (DECISIONS.md 93): from the predicted
+/// How sure the timer is, in words: from the predicted
 /// spread of the five yolk words at the time on screen, read against the word
 /// asked, a class (very certain, a ballpark, a wild guess), the 90% interval
 /// in words and the most likely word; and a likely time range, the right cook

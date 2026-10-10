@@ -90,9 +90,8 @@ function whiteOf(button: HTMLButtonElement): WhiteReport {
 /* ------------------------------------------------------------ thermometer */
 
 /**
- * What the screen shows of the cook it was cooked for (running-cook review
- * 2.4): the level, the peak yolk, whether the cooling ends at the peak (so a
- * probe reading is asked for), and the model's parameters the egg is drawn
+ * What the screen shows of the cook it was cooked for: the level, the peak
+ * yolk, whether the cooling ends at the peak (so a probe reading is asked for), and the model's parameters the egg is drawn
  * with and a reading is bounded by. Once the egg is out, the plan as it ran
  * (`asRanShown`), kept with the cook, so neither a reload, a surface landing
  * nor this egg's own answer folded moves "You asked for"; until then, or

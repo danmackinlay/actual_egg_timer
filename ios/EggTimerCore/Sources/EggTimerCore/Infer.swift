@@ -29,8 +29,7 @@ import Foundation
 /// more; fixtures/calibration.json and fixtures/record.json hold the two
 /// together particle by particle.
 
-/// What the cook reports about the YOLK after eating the egg (DECISIONS.md
-/// 92): the yolk they got, in the slider's own words, whatever they asked for.
+/// What the cook reports about the YOLK after eating the egg: the yolk they got, in the slider's own words, whatever they asked for.
 /// Each is the doneness anchor of the same place in `donenessAnchors`, softest
 /// first, so `index` is its place.
 public enum YolkWord: String, Sendable, Codable, CaseIterable {
@@ -229,8 +228,7 @@ public struct Population: Sendable, Equatable {
 }
 
 /// The literature's population: the prior every cook drew from before E7,
-/// number for number, less the carryover, which left the particle in 0.5
-/// (DECISIONS.md 95).
+/// number for number, less the carryover, which is not a particle.
 public let literaturePopulation = Population(
     id: "2026-09",
     alphaM2s: LogNormal(median: Constants.alphaDefault, logSd: Constants.alphaRelSD),
@@ -367,7 +365,7 @@ public func probeLikelihood(
 
 /// The likelihood of one egg's answers under one particle: the product of the
 /// yolk's, the white's and the thermometer's, any of which may be missing. The
-/// yolk is the yolk the cook got, in the slider's five words (DECISIONS.md 92).
+/// yolk is the yolk the cook got, in the slider's five words.
 public func answerLikelihood(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double,
     yolkWord: YolkWord?, white: WhiteReport?, probeC: Double? = nil

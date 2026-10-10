@@ -1,5 +1,5 @@
 /**
- * Which build may write (src/core/newer.ts, DECISIONS.md 100): the version
+ * Which build may write (src/core/newer.ts): the version
  * ordering and the verdict on a stored mark. The Swift twin is held to the
  * same answers by fixtures/newer.json.
  *

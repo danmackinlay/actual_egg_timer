@@ -40,7 +40,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             // The egg screen's line, again where the settings that will not
-            // be kept are changed (`Stores`, DECISIONS.md 100).
+            // be kept are changed (`Stores`).
             if Stores.readOnly {
                 Section { NewerNote() }
             }
@@ -84,7 +84,7 @@ struct SettingsView: View {
                 .labelsHidden()
             }
 
-            // The alarm's sound (DECISIONS.md 101). Choosing one plays it.
+            // The alarm's sound. Choosing one plays it.
             Section {
                 InfoRow(name: about("controls.alarm"), more: [tr("controls.alarm.more")]) {
                     Text(tr("controls.alarm"))
@@ -197,8 +197,8 @@ struct SettingsView: View {
             Text(learnedNote)
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
-            // Every result kept here, to a file through the share sheet
-            // (DECISIONS.md 81). Offered on an empty log too, which says
+            // Every result kept here, to a file through the share sheet.
+            // Offered on an empty log too, which says
             // there is nothing to save.
             if Calibrations.resultsKept(planner.kept) > 0 {
                 ShareLink(
@@ -281,7 +281,7 @@ struct SettingsView: View {
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
-            // The random number, to quote by email (DECISIONS.md 67), as the
+            // The random number, to quote by email, as the
             // web's `#shareId`: whole, selectable, and only while there is
             // one. Fixed-width in the system face, so the 1750 face's figures
             // never draw its 0 as an o.

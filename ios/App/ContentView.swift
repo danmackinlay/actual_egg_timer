@@ -65,7 +65,7 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: 22) {
                     // A newer version has run on this phone, and this one
-                    // leaves every store alone (`Stores`, DECISIONS.md 100):
+                    // leaves every store alone (`Stores`):
                     // said first, before a setting is changed that will not
                     // be kept.
                     if Stores.readOnly { NewerNote() }
@@ -273,7 +273,7 @@ struct ContentView: View {
     // MARK: - The egg and the setup sentence
 
     /// The egg in cross-section and the setup sentence beside it, from the
-    /// top, in every phase (DECISIONS.md 52, 91): the egg on the left costs
+    /// top, in every phase: the egg on the left costs
     /// the column no height of its own. Under both, the choice of the clause
     /// that is open. A clause the sentence no longer has - sous-vide drops
     /// two - closes with it. Sous-vide draws no egg: it starts no cook.
@@ -349,7 +349,7 @@ extension View {
 }
 
 /// A newer version of the app has run on this phone, and this one leaves
-/// every store alone (`Stores`, DECISIONS.md 100): the line that says so, at
+/// every store alone (`Stores`): the line that says so, at
 /// the top of the egg screen and of Settings, in the warning's colour.
 struct NewerNote: View {
     var body: some View {

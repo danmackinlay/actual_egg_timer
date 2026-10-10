@@ -73,8 +73,8 @@ export const priorFixture = {
     drawn('published', published),
     drawn('literature', fileOf(LITERATURE_POPULATION)),
     drawn('shifted', { ...fileOf(SHIFTED), fitted: '2026-11-01', covariance: [[1, 0], [0, 1]] }),
-    // A file from before 0.5, with a spread for the carryover, which left the
-    // particle (DECISIONS.md 95): read, and the spread ignored.
+    // A file from before 0.5, with a spread for the carryover, which is not a
+    // particle: read, and the spread ignored.
     drawn('before 0.5', { id: LITERATURE_POPULATION.id, prior: { ...fileOf(LITERATURE_POPULATION)['prior'] as object, tauAirScale: { median: 1, logSd: 0.35 } } }),
   ],
   refused: REFUSED.map((r) => {

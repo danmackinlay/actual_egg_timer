@@ -1,6 +1,6 @@
 /**
  * The web's guard against an older build writing over a newer one's stores
- * (src/ui/store.ts, `claimStorage`; DECISIONS.md 100): with a newer build's
+ * (src/ui/store.ts, `claimStorage`): with a newer build's
  * mark in storage, the store layer writes nothing at all - the settings, the
  * pans, the cook, the log, the sharing state - sends nothing, and deletes
  * none of the keys it does not keep. With none, or an older one, the mark

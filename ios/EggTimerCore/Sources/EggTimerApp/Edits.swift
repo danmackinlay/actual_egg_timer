@@ -76,14 +76,14 @@ extension CookChoices {
     }
 }
 
-/// Corrections mid-cook (DECISIONS.md 96 to 98; design/one-screen.md sections
-/// 3 to 5; the web's src/ui/edit.ts): every control stays open after Start,
+/// Corrections mid-cook (design/one-screen.md sections 3 to 5; the web's
+/// src/ui/edit.ts): every control stays open after Start,
 /// showing the cook's own choices (the planner holds them while a cook runs,
 /// `Planner.adopt`), and a change to one is a correction, "it was always like
 /// this" - the cook's choices replaced (core `corrected`) and the whole cook
 /// planned again from its start.
 ///
-/// A change is not committed at every step (review 2.4): each would stamp
+/// A change is not committed at every step: each would stamp
 /// the cook, plan again, reschedule the alarms, push the card and write the
 /// settings, and a drag through an overdue level would ring mid-drag. While
 /// the cook's finger is on a control the change is in hand: the controls and
@@ -288,7 +288,7 @@ public final class Edits {
 
     /// The app leaves the screen (`scenePhase` no longer active): what is in
     /// hand is committed now, so a kill from the app switcher inside the
-    /// settle loses nothing (onescreen review 3); a finger down then is gone.
+    /// settle loses nothing; a finger down then is gone.
     public func leaving() {
         down = nil
         guard pending else { return }
@@ -325,8 +325,8 @@ public final class Edits {
     }
 
     /// The cook as the change in hand would make it, for its preview: a
-    /// correction; but after the pull a new level only previews (DECISIONS.md
-    /// 98), the egg that level aims for in this pot, so it is planned as if
+    /// correction; but after the pull a new level only previews, the egg
+    /// that level aims for in this pot, so it is planned as if
     /// not yet pulled.
     private func cookInHand(_ cook: RunningCook, _ choices: CookChoices, nowS: Double) -> RunningCook {
         var c = cook
@@ -363,7 +363,7 @@ public final class Edits {
 
     /// Commit the change in hand: the cook corrected, and the fields it
     /// changed written to the settings for the next cook. After the pull the
-    /// level is not corrected (DECISIONS.md 98): the slider only previewed,
+    /// level is not corrected: the slider only previewed,
     /// and goes back to the level the egg was pulled at; nothing is written
     /// for it. The aimed-for egg stays until a settle after the last change.
     func commit(except: ControlField? = nil) {

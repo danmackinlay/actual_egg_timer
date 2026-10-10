@@ -147,7 +147,7 @@ const NOT_COPY: Record<string, string> = {
   // `inputsKey`; Running.swift): machine text, never shown
   '|': 'key separator',
   '{}|{}|{}': 'key: the pot\'s three kinds',
-  // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
+  // the results file (Record.swift, `resultsFile`): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',
   'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4).':
@@ -252,7 +252,7 @@ const NOT_COPY: Record<string, string> = {
   stillOut: 'debug launch argument value',
   open: 'debug launch argument value',
   uiScrollAnchor: 'debug launch argument',
-  // the one screen's review on iOS (archive/design/onescreen-review.md), its checks
+  // the record as it ran, held back or failed on purpose, for the e2e's checks
   uiHoldAsRan: 'debug launch argument',
   uiFailRemake: 'debug launch argument',
   // the face of 1750 (ios/App/PeriodFace.swift)

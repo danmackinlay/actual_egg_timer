@@ -30,8 +30,7 @@ struct DonenessControl: View {
         VStack(alignment: .leading, spacing: 6) {
             // On one line while both fit whole; at the largest text sizes the
             // peak goes under the heading, rather than the heading breaking
-            // as "Done-" beside it, which read as the phase (onescreen
-            // review 3).
+            // as "Done-" beside it, which would read as the phase.
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     heading.fixedSize()
@@ -214,8 +213,8 @@ struct SliderReading {
             words = whiteSets && before ? cook.heldCertainty?.words : nil
             peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
             level = ran?.level ?? plan.answer.level
-            // The note too, once the egg is out (`Cook.ranSolution`, onescreen
-            // review 2.2): beside the peak, not from a plan made since on a
+            // The note too, once the egg is out (`Cook.ranSolution`): beside
+            // the peak, not from a plan made since on a
             // posterior that has folded this egg's answer.
             noteSolution = ran != nil ? cook.ranSolution ?? plan.solution : plan.solution
             // A change in hand: the heading and the texture are its own

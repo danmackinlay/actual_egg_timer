@@ -54,13 +54,12 @@ export const RECORD_VERSION = 1;
 /** The code that made the record's forecast and chose its time: the
  *  likelihood, the decision and, from E8, the nudge. Changed whenever any of
  *  them changes, so that the model as it SHIPPED can be scored after the code
- *  has moved on (DECISIONS.md 37); a replay can only say what the current code
+ *  has moved on; a replay can only say what the current code
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
  *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
- *  sharing (DECISIONS.md 61); '2026-10-e9' asks the cook which yolk they got,
- *  in five words, and forecasts those five (DECISIONS.md 92); '2026-10-e10'
- *  holds the counter's carryover at 1.0 instead of carrying it in the
- *  particle (DECISIONS.md 95), which draws another prior from the same seed.
+ *  sharing; '2026-10-e9' asks the cook which yolk they got, in five words,
+ *  and forecasts those five; '2026-10-e10' holds the counter's carryover at
+ *  1.0 instead of carrying it in the particle, which draws another prior from the same seed.
  *  Records from before E6 carry none.
  *
  *  It is the record's provenance (`model`, sent with each record, read by the
@@ -89,7 +88,7 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
 /** Where the solve's time to boil came from. `measured` is this cook's own boil
  *  tap, and every finished cold start has one, because neither app leaves
  *  HEATING without it; but a tap after a late correction to cold is not
- *  trusted, and that cook runs on the `remembered` pan (`DECISIONS.md` 98). A hot start never times the pan, so it cooks on the
+ *  trusted, and that cook runs on the `remembered` pan. A hot start never times the pan, so it cooks on the
  *  `remembered` pan, or on the `default` guess when no pan has ever been
  *  measured. With the heat off, records from before 27 September took the
  *  pan's whole cooling curve from this number (the standing method's pan
@@ -120,7 +119,7 @@ export interface ProbeReading {
 }
 
 /**
- * What the app said at "Eggs in" (DECISIONS.md 37): the probability of each
+ * What the app said at "Eggs in": the probability of each
  * answer the cook could give, at the time the cook was started at, unrelated
  * share included - `predictOutcome`'s, not the odds in tenths. Kept so that
  * the model as shipped can be scored by proper scoring rules after the code
@@ -137,7 +136,7 @@ export interface Forecast {
   /** P(runny), P(tender), P(firm). */
   white: number[];
   /** P(runny), P(soft), P(jammy), P(fudgy), P(hard): the yolk the cook will
-   *  say they got, which is the question asked (DECISIONS.md 92). Null when
+   *  say they got, which is the question asked. Null when
    *  the outcome on screen had none. */
   yolkWord: number[] | null;
 }
@@ -224,7 +223,7 @@ export interface EggRecord {
   pulledBy: PulledBy;
   /** The counted cooling the app ran, s; 0 on the counter, where there is none. */
   cooled_s: number;
-  /** The yolk the cook got, in the slider's words (DECISIONS.md 92), or null
+  /** The yolk the cook got, in the slider's words, or null
    *  when the question was on screen and the cook moved on without answering. */
   yolkWord: YolkWord | null;
   /** The white answer: runny, tender or firm, or null when the question was
@@ -296,8 +295,8 @@ export interface CookFacts {
   boilRemembered: boolean;
   /** On a cold start, whether this cook's own boil tap set its time to boil.
    *  Absent is true, as on every cold start before 0.5; false when the tap
-   *  came after a late correction to cold and the remembered pan was used
-   *  (`DECISIONS.md` 98). Not read on a hot start. */
+   *  came after a late correction to cold and the remembered pan was used.
+   *  Not read on a hot start. */
   boilTapped?: boolean;
   /** The doneness the cook was RUN at, [0, 1]. */
   level: number;
@@ -946,7 +945,7 @@ export function loadDecision(read: StoreRead, population: string, likelihood: st
 /* ---------------------------------------------------------- the results file */
 
 /* EXPORT. "Export my results", in Settings, saves what a device keeps about
- * its eggs to a file the cook keeps (DECISIONS.md 81): the store EXACTLY as
+ * its eggs to a file the cook keeps: the store EXACTLY as
  * stored - spliced in character for character, not parsed and written again -
  * with enough beside it to say whose and which. `npm run eggs -- import`
  * reads it back for the fit.

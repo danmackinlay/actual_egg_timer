@@ -258,7 +258,8 @@ public struct TimeBounds: Sendable, Equatable {
 /// Decide, from the parts. The time is chosen when `applies` and at least one
 /// egg has taught something; otherwise it is `meanCookTimeS`. A chosen time is
 /// then held within `bounds`, so a softer level is never given a later time
-/// than a firmer one (DECISIONS.md 84), and the odds are read at the time held.
+/// than a firmer one (Reach.swift, the envelope), and the odds are read at
+/// the time held.
 public func decideAt(
     _ post: Posterior, eggsLogged: Int, grid: DoseGrid, meanCookTimeS: Double, applies: Bool,
     logNominalTarget: Double, bounds: TimeBounds? = nil

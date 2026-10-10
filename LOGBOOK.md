@@ -7641,3 +7641,41 @@ that are rules there (stage by name, fixtures never regenerated for Swift),
 and those since fixed (the copy capture that was not repeatable, the
 harness counting oscillators). The log's own lists stay as written. The
 freezing of this log per version is dropped, the owner's call.
+
+## 10 October 2026: the comment sweep (REFACTOR-0.5 2.4, 5.10)
+
+Comments, test messages, fixture labels and e2e descriptions across
+`src/`, `ios/` (Swift, tests, `Package.swift`, `ios/README.md`), `tools/`
+and `test/` say what the code does and why (`DECISIONS.md` 105), in six
+commits by area (`f22f934` core, `886f339` the Swift twin, `04fed00` the iOS
+app, `424827b` web, `d7ec3d5` tools and fixtures, `4cd6310` tests). No
+behaviour changed.
+
+- **What went**: decision numbers where the code reads right without them,
+  "review N.N" and "onescreen review" items, "C3 step N", "red team 0.N",
+  "REFACTOR-0.5 N.N", and dated history ("until 5 October", "since the
+  certainty draft", "older than the rule", "it used to"). Where a citation
+  carried the reason, the reason was written out (`lowOddsAt` reads the
+  certainty, not the odds its name says; `decideAnswer` is one function
+  so a rule about the time lands in both apps at once).
+- **What stayed**, where the code would otherwise look wrong: the loss
+  ratio of 3 (7; `decide.ts`, `Decide.swift`), the carryover left
+  unlearned (95; `infer.ts`), the time held monotone in the level against
+  each level's own choice (84; `reach.ts`, `Reach.swift`), a format bumped
+  with no migration (48; `stores.ts`), 0.3's log never read and swept (107;
+  `Calibration.swift`, `Store.swift`), and a test holding a known limit the
+  owner left (18; `infer.test.ts`). LOGBOOK dates on measurements stay:
+  they say where the numbers are written down.
+- **Fixture labels**: `step.json`'s 29 review-item `covers` and six
+  `screenOnly` keys, and two of `record.json`'s `why`, named by behaviour
+  and regenerated; Swift's conformance passes on them. Nothing reads them,
+  so the e2e was not run.
+- **Counted** with `git grep -nE "review [0-9]|REFACTOR|DECISIONS\.md|worklist [0-9]"`:
+  258 lines in the swept paths before, 9 after (17 and 266 with
+  `ios/RELEASING.md` and `ios/project.yml`, left out of the sweep). 427
+  lines out, 394 in.
+- **Left**: test ordinals ("1c2.", "3c2.") number each file's outline,
+  and Swift's conformance cites some; they stay.
+
+Gates: `verify` before each commit and at the last, `ios:build` on the
+iOS app's commit and the last.

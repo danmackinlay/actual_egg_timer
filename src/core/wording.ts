@@ -64,8 +64,7 @@ export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): Copy
 /* ---------------------------------------------------------- the certainty */
 
 /**
- * HOW SURE, IN WORDS (DECISIONS.md 93 and 97; design/one-screen.md section 6).
- * Under the time, where the direction was until the `certainty` draft: the
+ * HOW SURE, IN WORDS (design/one-screen.md section 6). Under the time: the
  * class `certaintyAt` gives the time on screen, as a line the cook can
  * press. Pressing it opens, in place, the 90% interval in the slider's words,
  * the most likely word and the likely time range. "Most likely" also shows
@@ -137,7 +136,7 @@ export interface TimeRangeWords {
 }
 
 /**
- * The likely time range in the clock's own terms (onescreen review 2.3).
+ * The likely time range in the clock's own terms.
  * Before Start the clock shows the whole time, so the range is of whole
  * times ("I think the right time is between 6:24 and 9:21."). Once a cook
  * runs the clock counts down to the pull, and a range of whole times under
@@ -180,14 +179,11 @@ export function timeRangeWords(
  * THE RANGE. The bracket under the slider, for a screen reader: it is
  * drawn from the certainty's 90% interval (`wordBracket`), so it says that
  * interval's first and last words, the ones "9 times in 10" names. The
- * words stand alone after a colon (LANGUAGE.md section 5). Until 8 October
- * 2026 it said the outcome's level range, the egg without the cook's taste,
- * as the nearest words, and could name others.
+ * words stand alone after a colon (LANGUAGE.md section 5).
  *
- * The direction ("Probably just right. If not, a little firm.") and its lean
- * retired with the `certainty` draft (DECISIONS.md 97): the yolk is answered
- * in words since DECISIONS.md 92, and "just right" is no longer what the
- * cook is asked.
+ * No line gives a direction ("Probably just right. If not, a little firm."):
+ * the cook names the yolk they got in words, and "just right" is not what
+ * they are asked.
  */
 
 /** Whether the white gets its line. */
@@ -224,7 +220,7 @@ export interface PhaseFacts {
   /** Idle only: whether the white sets at all, so there is a cook to start. */
   whiteSets: boolean;
   /** Idle only: whether this pan's time to boil is remembered, not guessed.
-   *  Since DECISIONS.md 99 the line says the time alike either way, and the
+   *  The line says the time alike either way, and the
    *  apps show the (i) on whether it is remembered; read by nothing here. */
   boilKnown: boolean;
   /** Cooling only: whether the countdown ends in a probe reading. */
@@ -268,7 +264,7 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
       return {
         label: 'readout.phase.total',
         // The time to boil, guessed or remembered, says no certainty of its
-        // own: the certainty line below speaks for both (DECISIONS.md 99).
+        // own: the certainty line below speaks for both.
         subline: cold ? 'readout.sub.coldAssumes' : standing ? 'readout.sub.standing' : 'readout.sub.hot',
         action: cold ? 'action.startHeating' : 'action.eggsIn',
         hint: !f.whiteSets

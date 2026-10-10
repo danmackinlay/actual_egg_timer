@@ -68,10 +68,10 @@ anything both apps must agree on lives here, not in either app.
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer); what a sender makes of the endpoint's answer, and when it stops waiting | `shareReply`, `shareGivesUp`, `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
 | `stores.ts` | every store either app keeps: its name, its key on each app, and the format written inside it; a stored value read only in its own format | `STORES`, `stamped`, `inFormat` | `StoreRegistry.swift` | `stores.json` |
-| `newer.ts` | which build may write: versions ordered, and the verdict on the newest-version mark (`DECISIONS.md` 100) | `compareVersions`, `writerCheck` | `Newer.swift` | `newer.json` |
+| `newer.ts` | which build may write: versions ordered, and the verdict on the newest-version mark | `compareVersions`, `writerCheck` | `Newer.swift` | `newer.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
-The Swift core leaves out what no app calls (`DECISIONS.md` 41): the
+The Swift core leaves out what no app calls: the
 measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,
 `biotNumber`, `boilingPointApprox`, `saltBoilingElevation`,
 `zFromActivationEnergy`) and the inference read-outs. The TypeScript keeps
@@ -96,8 +96,8 @@ Chebyshev form rather than Foundation's `erfc`, which is more accurate.
 Foundation's would be *better* and would diverge from the reference — quietly,
 in the fourth decimal place. The port's job is to agree.
 
-One real finding, from when the Swift core still had `erfcTheta` (it went on
-28 September with the rest of the API no app calls, D4): at the centre it evaluates
+One real finding, in `erfcTheta`, a science check the Swift core leaves out:
+at the centre it evaluates
 `1 - total/x` with `x` clamped to 1e-9, so a one-ulp difference in `erfc` is
 amplified by 1e9. The two implementations differ by ~1e-8 there and by nothing
 anywhere else. That is the expression, not either implementation, and the model
@@ -172,9 +172,8 @@ not the code declining to work.
 
 ## The app's logic, file by file
 
-Above the core, the package has two libraries of the app's own (REFACTOR-0.5
-1.2), so that what the app does with the core is run by `swift test` as well,
-on a Mac, with no simulator. `ios/App` keeps the screens and what only an
+Above the core, the package has two libraries of the app's own, so that
+what the app does with the core is run by `swift test` as well, on a Mac, with no simulator. `ios/App` keeps the screens and what only an
 iPhone has.
 
 | library | file | what it is |
@@ -254,14 +253,14 @@ three are the model refusing to lie:
   in too little water and the start button goes dead, because that pan never
   sets the white.
 - **One screen, open to correction.** Setting up and boiling are one layout
-  (`UI.md` §3; `DECISIONS.md` 91, 96 to 98): the slider and the setup
+  (`UI.md` §3): the slider and the setup
   sentence stay on screen while the egg cooks, showing the cook's own
   choices, and every clause, the slider and Settings' pot rows correct it -
   "it was always like this", the cook planned again from its start, the
   alarms and the Lock Screen card following. `Edits.swift` decides when a
   change is committed (on release of a drag or a held − or +, after a 1.5-s
   settle of a tap). Beside the sentence, `EggSectionView.swift` draws the egg
-  in cross-section (`EggSection` in core; `DECISIONS.md` 52): the egg aimed
+  in cross-section (`EggSection` in core): the egg aimed
   for while idle and while a change is in hand, the live egg while it cooks,
   and the egg as it ran at Done, the web's egg drawn the same way.
   `-sectionAhead <s>` on a debug build draws it that far on, for a screenshot
@@ -358,14 +357,14 @@ each launch until the server confirms. It is the app's only network call:
 `URLSession`, HTTPS, to `actualeggtimer.netlify.app` (a debug build can point
 it at `npm run serve:dev` with `-shareServer`).
 
-What iOS has that the web cannot is App Attest (`DECISIONS.md` 60). The first
+What iOS has that the web cannot is App Attest. The first
 time an id sends, the phone makes a key in its Secure Enclave and has Apple
 attest it, bound to the id (`clientDataHash = SHA256(uid)`); every egg then
 carries an assertion over its body, and the server files it in the attested
-tier, which outweighs the web in the fit (`DECISIONS.md` 2). No entitlement is
+tier, which outweighs the web in the fit. No entitlement is
 set: a development build uses Apple's sandbox, TestFlight and the App Store
 use production, and the server takes both, but files a development build's
-eggs in the open tier, as if unsigned (`DECISIONS.md` 68): only a build
+eggs in the open tier, as if unsigned: only a build
 from TestFlight or the App Store counts as genuine. The simulator cannot attest at
 all, so its eggs go to the open tier; that path was checked end to end, and
 the attested one has not yet run on a phone.
@@ -407,7 +406,7 @@ with no alarm at all.
 
 A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the cook's alarm sound plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in EggTimerApp decides, under `swift test`.
 
-The alarm sounds (`DECISIONS.md` 101) are files, `App/Sounds/alarm-<sound>-<moment>.caf`, one per sound and moment, which the notification plays once and `Ringer` loops. They are rendered from the web's `src/ui/alarmSounds.ts` by `npm run sounds` (macOS; `tools/sounds.ts`), never edited by hand: IMA4 at 22.05 kHz, whole periods of the pattern, under the 30 s past which iOS plays its default sound instead. Which sounds there are, their order, the default and their timing are `AlarmSound` and its functions in EggTimerCore, held to `src/core/sounds.ts` by `fixtures/sounds.json`; the cook's choice is `AlarmSoundChoice.swift`.
+The alarm sounds are files, `App/Sounds/alarm-<sound>-<moment>.caf`, one per sound and moment, which the notification plays once and `Ringer` loops. They are rendered from the web's `src/ui/alarmSounds.ts` by `npm run sounds` (macOS; `tools/sounds.ts`), never edited by hand: IMA4 at 22.05 kHz, whole periods of the pattern, under the 30 s past which iOS plays its default sound instead. Which sounds there are, their order, the default and their timing are `AlarmSound` and its functions in EggTimerCore, held to `src/core/sounds.ts` by `fixtures/sounds.json`; the cook's choice is `AlarmSoundChoice.swift`.
 
 Both fire at **`.timeSensitive`** interruption level, which is what gets them
 through a Focus mode. An egg is time-sensitive in the literal sense the name was

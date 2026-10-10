@@ -1,4 +1,4 @@
-/// Which build may write: the newest that has run (DECISIONS.md 100).
+/// Which build may write: the newest that has run.
 ///
 /// Transliterated from `src/core/newer.ts`, and held to it by
 /// `fixtures/newer.json`. An older build can damage what a newer one stored,

@@ -13,8 +13,7 @@
  * the slider rests on the level the time and the bracket are for, whose
  * middle leaves the thumb only by the lean the white asks for once a time is
  * chosen; the owner's own egg goes to soft and says so; and the time never
- * falls as the level rises (DECISIONS.md 84). Only the stripes move the
- * slider (DECISIONS.md 83). What the screen shows at a level is one function,
+ * falls as the level rises. Only the stripes move the slider. What the screen shows at a level is one function,
  * `decideAnswer`, which both apps call: the decision held by the envelope,
  * the nudge where a time is chosen, the solve, the outcome and the certainty
  * at the time given, and whether advice is wanted.
@@ -430,8 +429,8 @@ test('10. the far left: the slider rests on the level the time and the bracket a
 
 test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
   // One egg: soft asked, the yolk soft and the white runny, as on the
-  // owner's phone (5 October 2026), where it put 3/10 at jammy. Since the
-  // `certainty` draft soft is a ballpark there and is not dotted: soft or a
+  // owner's phone (5 October 2026), where it put 3/10 at jammy. Soft is a
+  // ballpark there and is not dotted: soft or a
   // neighbour 9 times in 10, and most likely jammy, which the line says.
   const egg = eggFromMass(0.058);
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
@@ -453,7 +452,7 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   console.log(`# 58 g, fridge, boiling, ice, one egg: physical ${p.physicalSoftest}, surer than a guess from ${p.softest}; soft ${d.oddsTenths}/10 at ${d.cookTime_s.toFixed(0)} s (its own choice ${own.cookTime_s.toFixed(0)} s), bracket ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)}, ${sure.certainty}, most likely ${sure.mostLikely}; jammy ${dj.oddsTenths}/10 at ${dj.cookTime_s.toFixed(0)} s (its own ${ownJammy.cookTime_s.toFixed(0)} s)`);
   // Soft's own choice, against its own target, is later than jammy's: the
   // white's weight. The envelope gives it no later than jammy's
-  // (DECISIONS.md 84), and jammy, which nothing firmer undercuts, keeps its own.
+  // and jammy, which nothing firmer undercuts, keeps its own.
   assert.ok(own.cookTime_s > ownJammy.cookTime_s + 15, 'unheld, soft would be the firmer egg');
   assert.ok(d.cookTime_s <= dj.cookTime_s, `soft ${d.cookTime_s} against jammy ${dj.cookTime_s}`);
   assert.equal(dj.cookTime_s, ownJammy.cookTime_s);
@@ -559,12 +558,11 @@ test('14. one decided answer for both apps: the soft yolk chosen again and held 
   const jammy = answerAt(c, egg, SETUP, 0.41, p);
   const d = decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, p, 0);
   const dj = decideAnswer(c, egg, SETUP, grid, jammy.solution, jammy.level, p, 0);
-  // DECISIONS.md 83: soft is decided at soft, not moved. It was warned of
-  // under 3/10; since the `certainty` draft it is a ballpark, and not dotted.
+  // Soft is decided at soft, not moved: a ballpark, and not dotted.
   assert.equal(soft.lowOdds, false);
   assert.equal(d.level, 0.22);
   assert.equal(d.certainty.words.certainty, 'ballpark');
-  // DECISIONS.md 84: its own choice is later than jammy's; the time it is
+  // Its own choice is later than jammy's; the time it is
   // given is not.
   const own = decide(c, grid, soft.solution, logYolkTarget(0.22));
   assert.ok(own.cookTime_s > dj.decision.cookTime_s, 'unheld, soft would be the firmer egg');

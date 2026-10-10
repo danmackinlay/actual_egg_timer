@@ -131,7 +131,7 @@ test('6. the page on localhost: the clock asked for, its handle, and the log mar
   assert.ok(m.nowMs() - Date.now() > 7_190_000);
   assert.equal(m.devClockUsed(), true);
   // Marked once the app may write (app.ts, after `claimStorage`), not as the
-  // module loads (DECISIONS.md 100).
+  // module loads.
   assert.equal(local.get('aet.devClock.used'), undefined);
   m.markDevClockUse();
   assert.equal(local.get('aet.devClock.used'), '1');

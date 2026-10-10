@@ -154,7 +154,7 @@ test('section 7. the egg the settings aim for is the egg as eaten: the yolk at t
     advanceSection(live, EGG, setup, end, r.cookTime_s);
     assert.deepEqual(sectionView(live, WHITE_DOSE_TARGET), aimed);
     // At the yolk's peak, which is Done, the dose is not all in: softer than
-    // asked, which is why the aimed-for egg is not shown there (DECISIONS.md 98).
+    // asked, which is why the aimed-for egg is not shown there.
     const peak = createSection(EGG, setup, DEFAULT_PARAMS);
     advanceSection(peak, EGG, setup, r.peakYolkTime_s, r.cookTime_s);
     assert.ok(sectionView(peak, WHITE_DOSE_TARGET).set[CENTRE] < aimed.set[CENTRE] - 0.03);

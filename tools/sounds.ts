@@ -1,5 +1,5 @@
 /**
- * The files the iOS app rings with (DECISIONS.md 101).
+ * The files the iOS app rings with.
  *
  * Run: npm run sounds (macOS: it needs afconvert)
  *

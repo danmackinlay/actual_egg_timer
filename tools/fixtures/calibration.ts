@@ -81,8 +81,8 @@ function readout(post: ReturnType<typeof createPrior>) {
 
 const prior = readout(createPrior(PARTICLE_COUNT, PRIOR_SEED));
 
-/* The filter, from the prior, told the yolk the cook got in five words
- * (DECISIONS.md 92) and the white: every word, both ends, a word with no
+/* The filter, from the prior, told the yolk the cook got in five words and
+ * the white: every word, both ends, a word with no
  * white and a white with no word, all three whites, at times from runny to
  * past hard on this surface, so each band is scored where it is likely and
  * where it is not. Each step writes the first particle's likelihood, its

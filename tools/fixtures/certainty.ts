@@ -1,5 +1,5 @@
 /**
- * fixtures/certainty.json: how sure the timer is, in words (DECISIONS.md 93).
+ * fixtures/certainty.json: how sure the timer is, in words.
  */
 
 import {

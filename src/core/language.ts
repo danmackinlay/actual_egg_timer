@@ -2,8 +2,7 @@
  * Which catalogue the cook reads, and the one rule that moves it without
  * being asked: an English UI switched from metric to Imperial goes into the
  * English of 1750 (LANGUAGE.md section 6). Switching back to metric changes
- * nothing about the language; the cook leaves 1750 with the picker
- * (DECISIONS.md 77).
+ * nothing about the language; the cook leaves 1750 with the picker.
  *
  * The English of 1750 is a language with a tag of its own, `en-x-1750`: the
  * strings come from `copy/en-x-1750.json`, and the formats from the region,
@@ -12,9 +11,9 @@
  *
  * Like the units (`chooseUnits` in `units.ts`), the cook's own choice is kept
  * apart from the default. `chosen` is what the cook picked, or null if they
- * never have, in which case the app speaks `DEFAULT_LANGUAGE`. A state stored
- * before 5 October 2026 may also carry `flippedFrom`, what the units switch
- * replaced, for a switch back that no longer happens; a read ignores it.
+ * never have, in which case the app speaks `DEFAULT_LANGUAGE`. A stored state
+ * may also carry `flippedFrom`, what the units switch replaced, which nothing
+ * reads; a read ignores it.
  *
  * No I/O. The web keeps this in its settings, iOS in UserDefaults.
  */

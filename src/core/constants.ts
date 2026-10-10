@@ -116,7 +116,7 @@ export const RAMP_R = 3.0;
  *  and would make the pan look 2.2 times quicker to cool; a weak one
  *  (r = 1.5), 2.7 times slower. How fast a lidded pan cools with the burner
  *  off depends on the water and the pan, so it comes from the water volume
- *  (see panTimeConstant), and the hob drops out. DECISIONS.md 11. */
+ *  (see panTimeConstant), and the hob drops out. */
 export const TAU_STANDING_REF_S = 480.0 / Math.log(1.5);
 
 /** The water volume TAU_STANDING_REF_S is quoted at, litres. Williams' pan is
@@ -164,7 +164,7 @@ export const TAU_STANDING_SCALE = 1.0;
  *  Bi = h*R/k ~ 0.6, so the shell is neither clamped nor at the egg's mean,
  *  and the boundary is Newton's law at the shell itself (protocol.ts).
  *  What is not still air - a draught, an extractor fan, an egg cup - is the
- *  kitchen, which the apps do not learn (DECISIONS.md 95). */
+ *  kitchen, which the apps do not learn. */
 export const H_AIR = 15.0;
 
 /** Water an egg carries out of the pan on its shell, kg per m^2 of shell:
