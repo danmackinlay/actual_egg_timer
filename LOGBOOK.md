@@ -7679,3 +7679,35 @@ behaviour changed.
 
 Gates: `verify` before each commit and at the last, `ios:build` on the
 iOS app's commit and the last.
+
+## 10 October 2026: the egg's panel at the accessibility text sizes
+
+Two layout fixes, parked in an older worktree against code since
+restructured, put into today's (`MeasureField` in `ios/App/Controls.swift`,
+`MenuChoice` in `ios/App/PeriodFace.swift`). The parked slow-hob tick in
+`Cook.swift` was left out: core's `tickDue` does that job now. The parked
+diff itself could not be read from this worktree (the isolation refused a
+`git -C` into another), so the fixes were written from the brief.
+
+- **The measure field** (`54d6886`): at the accessibility sizes the
+  stepper keeps its size while the number grows, so beside its label the
+  weight's field was too narrow for "68", which showed as "…". There the
+  label goes above, as the egg size's goes above its menu, the field takes
+  the width the unit and the stepper leave, and the unit keeps its size.
+- **The size menu** (`4d84ccd`): at the accessibility sizes the system's
+  menu button is as wide as its longest choice. With the panel fixing its
+  size, "Measured — 68 g" pushed the whole page past both edges of the
+  screen. Any narrower, it wraps and cuts off the second line. There, in
+  modern English, the button is the app's own, as 1750's is, opening the
+  system's inline list, with the same accessibility label and value; the
+  panel no longer fixes the menu's size, so 1750's button wraps too.
+- **Seen** on an iPhone 17 Pro, iOS 27.0, at
+  `accessibility-extra-extra-extra-large`, with `-uiScreen clause-egg
+  -uiDo set:mass=68@launch+1 -uiScrollAnchor 0.6` (and `set:size=3` for
+  "Extra large — 76 g", and `-uiLanguage en-x-1750`): "68" whole beside its
+  unit, the menu wrapped onto two lines inside the panel, the page the
+  screen's width. At the default size the screen is as it was. Opening
+  the menu by a tap was not checked: the simulator's input tool was
+  refused.
+
+Gates: `verify` and `ios:build` before each commit, `ios:e2e` 48 of 48.

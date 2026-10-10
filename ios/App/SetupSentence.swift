@@ -315,15 +315,14 @@ struct ClausePanel: View {
     private var egg: some View {
         VStack(alignment: .leading, spacing: 10) {
             // At the accessibility sizes the size's name over its menu: side
-            // by side, the menu, which does not wrap, left the name a column
-            // a letter wide, or nothing.
-            // "Extra large — 76 g" otherwise wraps onto two lines, and
-            // UIKit's button then cuts the second off.
+            // by side, the menu left the name a column a letter wide, or
+            // nothing. There the menu's button wraps its choice rather than
+            // run past the screen (`MenuChoice`).
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(tr("controls.size"))
                         .accessibilityHidden(true)
-                    sizeMenu.fixedSize()
+                    sizeMenu
                 }
             } else {
                 LabeledContent(tr("controls.size")) {

@@ -185,7 +185,11 @@ private struct BarTitle: ViewModifier {
 /// and its list takes no other; so in 1750 the button is the app's own and
 /// its list a popover of the app's own, as the system's looks: the choices
 /// in a column, a tick at the one chosen, closed by a choice. In modern
-/// English it is the system's menu, as before.
+/// English it is the system's menu, as before, except at the accessibility
+/// sizes: there the system's button is as wide as its longest choice, wider
+/// than the screen for "Extra large — 76 g", and any narrower it wraps the
+/// choice and cuts off the second line. So there the button is the app's
+/// own, which wraps, over the system's list.
 struct MenuChoice<Tag: Hashable>: View {
     let label: String
     let choices: [(title: String, tag: Tag)]
@@ -196,14 +200,26 @@ struct MenuChoice<Tag: Hashable>: View {
     var body: some View {
         if isPeriod(Copy.activeLocale) {
             period
-        } else {
-            Picker(label, selection: $selection) {
-                ForEach(choices.indices, id: \.self) { i in
-                    Text(choices[i].title).tag(choices[i].tag)
-                }
+        } else if size.isAccessibilitySize {
+            Menu {
+                Picker(label, selection: $selection) { options }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+            } label: {
+                button
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
+            .accessibilityLabel(label)
+            .accessibilityValue(chosen)
+        } else {
+            Picker(label, selection: $selection) { options }
+                .pickerStyle(.menu)
+                .labelsHidden()
+        }
+    }
+
+    private var options: some View {
+        ForEach(choices.indices, id: \.self) { i in
+            Text(choices[i].title).tag(choices[i].tag)
         }
     }
 
@@ -211,19 +227,28 @@ struct MenuChoice<Tag: Hashable>: View {
         choices.first { $0.tag == selection }?.title ?? ""
     }
 
+    /// The choice and the menu's chevron, the choice wrapping onto as many
+    /// lines as it needs.
+    private var button: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Text(chosen)
+                .appFont(.body)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.footnote.weight(.semibold))
+                .accessibilityHidden(true)
+        }
+        .foregroundStyle(.tint)
+        // The system's button's height, so the row is as tall.
+        .padding(.vertical, 5)
+    }
+
     private var period: some View {
         Button {
             open = true
         } label: {
-            HStack(spacing: 5) {
-                Text(chosen).appFont(.body)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.footnote.weight(.semibold))
-                    .accessibilityHidden(true)
-            }
-            .foregroundStyle(.tint)
-            // The system's button's height, so the row is as tall.
-            .padding(.vertical, 5)
+            button
         }
         .buttonStyle(.borderless)
         .accessibilityLabel(label)
