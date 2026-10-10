@@ -78,10 +78,13 @@ then restructure.
       (`src/ui/offline.ts:74`, `nowMs()`), against `now.ts`'s own rule. S.
       *Done* (`3d20a8c`): `now.ts` gains `realMs()`, which `offline.ts`
       reads; `test/offline.test.ts` 5.
-- [ ] **0.8 The two apps accept different stored cooks.** TS refuses a cook
+- [x] **0.8 The two apps accept different stored cooks.** TS refuses a cook
       with no `asRan` key (`running.ts:502`); Swift's Codable path turns it
       into nil, so `Running.swift:520`'s check cannot be reached. Comes free
-      with 3.4. S.
+      with 3.4. S. *Done* (`d0b21b4`, `f0bc033`, `5a1ee25`): one envelope
+      and one reader in core (`storedCook`, `readStoredCook`); iOS's
+      `Stored` gone; the table of stored cooks (`fixtures/stores.json`)
+      through both apps' load paths, the same rows taken.
 
 ## 1. Gates: make the code safe to change
 
@@ -285,7 +288,9 @@ eggs they have logged. It stays (`DECISIONS.md` 81). The rest:
       build may write: delete any `aet.*` key not on the current list (iOS: a
       retired-keys list, including the orphaned `probeAsked`). It replaces
       the per-store deletions, and `loadCook()` removing `aet.cook.v1` on
-      every read across 15 call sites. S.
+      every read across 15 call sites. S. *Generalised* (`d467ece`,
+      `0891d85`): the web deletes any `aet.` key the table of stores does
+      not list; iOS the retired list less any key the table keeps.
 
 ### Dead code and parameters
 
@@ -509,13 +514,16 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
 
 ### Storage and model ids
 
-- [ ] **3.13 One registry of stores in core**: name and format number,
+- [x] **3.13 One registry of stores in core**: name and format number,
       fixtured to Swift, with the version inside the payload, not the key
       (except the frozen calibration store). Today `aet.cook.v4` and
       `cookInProgress.v3` hold the same `RunningCook` and must be bumped
       together by hand. Not one envelope for everything: that would rewrite
       the 200 KB posterior on each slider move and break per-key cross-tab
-      sync. M.
+      sync. M. *Done* (`a1ca9f7`, `9d4c79d`, `3e25016`): `stores.ts` and
+      `StoreRegistry.swift`, `stores.json`; settings, cook, pans and iOS's
+      language with `v` inside; sharing's keys still name their formats
+      (Sharing.swift was another branch's).
 - [x] **3.14 Split `MODEL_ID`**: provenance (D37) and a likelihood id (the
       store's `m`, which forces a replay). A decision-only change (82aff4b,
       the nudge) replayed every posterior. Pin a digest of a fixed-log
@@ -664,7 +672,7 @@ it found, in its order, with where each is being done:
       e2e descriptions, 29 "review N.N" labels in `tools/fixtures/step.ts`.
       Each working branch cleans what it touches; 2.4 sweeps the rest.
       *src/ui and tools/e2e.ts done* (`33fc8c1`).
-- [ ] **5.11 Smaller**: exports reachable only from tests and fixtures
+- [x] **5.11 Smaller**: exports reachable only from tests and fixtures
       (`coldHistory`, `slowHobMemoFits`, `sameAsRan`,
       `sameDecisionInputs`); stale comments (`decide.ts:113`,
       `Running.swift:384`); `step` compares cooks with `===` in TS and
@@ -681,9 +689,11 @@ it found, in its order, with where each is being done:
       `decide.ts`'s comment; `nonisolated(unsafe)` 16 -> 5, each kept with
       its reason (`961284f`); `public` in EggTimerApp 347 -> 232
       (`0925e75`); `#if DEBUG` in ios/ 83 -> 27 (`f482273`, `49aefac`);
-      3.16. *Left:* `readProbe`, the folded legacy fields and 2.11's
-      sweep, with the storage registry (3.13).
-- [ ] **5.12 The tests sit where the code is already safe** (the red
+      3.16. *And with the storage registry (3.13):* `readProbe` `{ value }`
+      or null (`748ceea`); the folded fields no longer written, the cook's
+      format 6 (`d0b21b4`, `f0bc033`, `5a1ee25`); 2.11's sweep from the
+      table of stores (`d467ece`, `0891d85`).
+- [x] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`
       0/19, `update.ts` 0/12, `controls.ts` 0/12, `input.ts` 0/7,
@@ -701,7 +711,7 @@ it found, in its order, with where each is being done:
         fake store: the log written before the cook is forgotten; a failed
         remake keeps the cook stored; send-final only after logging; no
         surface asked twice.
-  - [ ] *Hole 3, with 0.8:* one table of raw stored blobs through each
+  - [x] *Hole 3, with 0.8* (`f0bc033`, `5a1ee25`): one table of raw stored blobs through each
         app's real load path, the web's store and iOS's `Stored`
         (`Cook.swift`) then `readRunningCook`, both accepting or refusing
         the same rows.
