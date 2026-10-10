@@ -121,5 +121,5 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **`xcrun simctl spawn <udid> defaults` is not the app's UserDefaults**: it
   writes a domain the app reads but cannot delete. Drive the app to make the
   state.
-- More that cost an hour: `LOGBOOK.md` ("Things that cost an hour to find
-  out") and `ios/RELEASING.md`.
+- More that cost an hour: `GOTCHAS.md`, and `ios/RELEASING.md` for
+  releasing.

@@ -581,9 +581,10 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       working commit: it is touched by 25% of commits and is a merge hotspot
       across worktrees and the QA agent. `DECISIONS.md` 104; in CLAUDE.md at
       `f7b8a34`.
-- [ ] **4.2 ~~LOGBOOK frozen per version~~** *The freezing is dropped* (the
+- [x] **4.2 ~~LOGBOOK frozen per version~~** *The freezing is dropped* (the
       owner, 10 October 2026: ceremony); the gathering into `GOTCHAS.md`
-      stands. (`LOGBOOK-0.4.md`); its "Things that
+      stands. *Done:* `GOTCHAS.md`, the obsolete and the ones CLAUDE.md
+      holds left out. (`LOGBOOK-0.4.md`); its "Things that
       cost an hour" (twice, at :78 and :6059, and inline three more times)
       into one edited `GOTCHAS.md`. S.
 - [x] **4.3 Fewer version lines.** 0.4 hasn't shipped and 0.5 forked from

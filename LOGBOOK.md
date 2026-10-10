@@ -7630,3 +7630,14 @@ key list; iOS lost `Stored` and the second read of the cook, but gained
 Gates on the merged tree (`8778cb9` and this entry): `verify` (495 tests,
 validate 28/28, 161 + 29 Swift tests), `ios:build`, `e2e` 86 of 86 (47
 behaviour, 39 copy/), `ios:e2e` 48 of 48.
+
+## 10 October 2026: things that cost an hour, gathered (REFACTOR-0.5 4.2)
+
+`GOTCHAS.md` gathers the "Things that cost an hour" from this log (the list
+under the first entries, and the asides of 6 and 8 October and 9 and 10
+October) by subject, and is where a new one goes. Left out: the two
+`CLAUDE.md` holds (the simulator's `Slider`, `simctl … defaults`), those
+that are rules there (stage by name, fixtures never regenerated for Swift),
+and those since fixed (the copy capture that was not repeatable, the
+harness counting oscillators). The log's own lists stay as written. The
+freezing of this log per version is dropped, the owner's call.

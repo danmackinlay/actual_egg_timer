@@ -524,6 +524,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `ios/README.md` | the Swift port, module by module, and the iOS app |
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
+| `GOTCHAS.md` | things that cost an hour to find out, gathered |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
 | `REFACTOR-0.5.md` | the 0.5 red team's worklist: what is wrong now, the gates, what to delete, the restructure, the process; ticked as it lands |
