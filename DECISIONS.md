@@ -426,6 +426,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     boils" in 1750). Every English, en-US and 1750 included, and the
     privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
     The `boiling` draft, `89d5aa1`; the privacy page, `7bf35a6`.
+    Amended by 111: "a full rolling boil" is the water's state, and fine.
 79. **The feedback reminds the cook what they asked for, the probe reading
     steps, and a probe owner can give the room.** Three requests, in both
     apps: the probe's highest reading gets a − and + like every other
@@ -836,3 +837,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     upgrade lasts until the system ends it ("approved"); and nothing of
     0.3's settings, pans or language carried over ("users can forgive us
     this"). CLAUDE.md's branch rule changes with it.
+111. **"A full rolling boil" is the state of the water; "boil" is not the
+    cooking of an egg** (the owner, 10 October 2026, reading the review
+    queue: "'A full rolling boil' is an acceptable description of the state
+    of the pan. 'boil' is not acceptable as a metonym for cooking an egg").
+    Amends 78, whose `boiling` draft (`89d5aa1`) had turned every "full
+    rolling boil" describing the water into "boiling hard (all over)": seven
+    strings say "a full rolling boil" again, in en and en-US. Still out:
+    "the boil", "boil times", "signal the boil". In the same reading, the
+    English of 1750 says "ice chest" for "fridge", and the owner rewrote
+    `help.odds.p1`, `help.odds.aside` and `help.learn.aside` ("the yolk you
+    got" read oddly).

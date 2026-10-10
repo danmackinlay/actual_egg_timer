@@ -276,10 +276,10 @@ cost in Czech (§5).
 - Sous-vide is not "a bath". "Ice bath" stays.
 - "Pan" only where it means the pot. The boil-time memory is keyed by water
   volume, so it is "how long your water takes to boil", not "your pan".
-- "Boil" is never a noun (`DECISIONS.md` 78): water is "boiling hard", not
-  "at a full boil", and the setting is "Once it’s boiling". "Brought to
-  the boil" and "to the boil" stay, and so does the button's name, "Full
-  rolling boil", wherever text names it.
+- "Boil" is never a metonym for cooking an egg (`DECISIONS.md` 78, 111):
+  not "the boil", "boil times" or "signal the boil". The state of the
+  water is "a full rolling boil", the standard phrase, as the button's name
+  says; "brought to the boil", "to the boil" and "Once it’s boiling" stay.
 - The (i) is short enough to read standing at the hob; the whole story goes to
   Help (`UI.md` §7).
 - Wording is judged in place on a phone, not approved row by row in a table
