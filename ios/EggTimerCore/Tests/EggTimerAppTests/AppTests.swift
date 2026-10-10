@@ -520,6 +520,34 @@ struct AppTests {
         }
     }
 
+    /// At launch every key an earlier build wrote is swept, and every key
+    /// this build keeps, and any key not the app's, stays.
+    @Test func anEarlierBuildsKeysAreSweptAndThisBuildsKept() {
+        var values: [String: Any] = ["AppleLanguages": ["en"]]
+        for key in Stores.retiredKeys { values[key] = Data("an earlier build's".utf8) }
+        for store in StoreRegistry.all { if let key = store.ios { values[key] = Data("this build's".utf8) } }
+        values[Stores.markKey] = "0.4.0"
+        let world = World(store: MemoryStore(values))
+        #expect(!Stores.readOnly)
+        let kept = Set(StoreRegistry.all.compactMap(\.ios))
+        #expect(!Stores.sweptKeys.isEmpty)
+        for key in Stores.retiredKeys { #expect(world.store.object(forKey: key) == nil, "\(key) swept") }
+        for key in kept { #expect(world.store.object(forKey: key) != nil, "\(key) kept") }
+        #expect(world.store.object(forKey: "AppleLanguages") != nil)
+        #expect(Set(Stores.retiredKeys).isDisjoint(with: kept), "no key both retired and kept")
+        #expect(Stores.takeRetiredCook(), "an earlier build's cook among them")
+    }
+
+    /// A build that finds a newer build's mark sweeps nothing.
+    @Test func aReadOnlyBuildSweepsNothing() {
+        var values: [String: Any] = [Stores.markKey: "9.0.0", Stores.buildKey: "1"]
+        for key in Stores.retiredKeys { values[key] = Data("an earlier build's".utf8) }
+        let world = World(store: MemoryStore(values))
+        #expect(Stores.readOnly)
+        #expect(world.store.writes.isEmpty)
+        #expect(world.store.values.count == values.count)
+    }
+
     /// Under a newer build's mark this build writes nothing at all, and
     /// still times the egg.
     @Test func aNewerMarkWritesNothing() async throws {

@@ -44,14 +44,14 @@ public enum Stores {
     /// before it was kept reads only the mark, and leaves this alone.
     public static let buildKey = key(StoreRegistry.newestBuild)
 
-    /// Every key an earlier build wrote that this one does not read, deleted
-    /// at launch (`claim`) rather than left on the phone being neither read
-    /// nor collected: the posteriors before the log (`v1`-`v3`), the log of
-    /// 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
-    /// copies 0.4 kept aside of what it could not read, the cooks in progress
-    /// before this one's shape, the sharing keys of an earlier 0.4 build, and
-    /// settings no build reads any more, the settings a key each among them,
-    /// and sharing's key kept with its dates as seconds since 2001.
+    /// Every key an earlier build wrote: the posteriors before the log
+    /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
+    /// 0.5, DECISIONS.md 107), the copies 0.4 kept aside of what it could not
+    /// read, the cooks in progress before this one's shape, the sharing keys
+    /// of an earlier 0.4 build, settings no build reads any more, the
+    /// settings a key each among them, sharing's key kept with its dates as
+    /// seconds since 2001, and 0.5's keys with a format in them, from before
+    /// the table of stores.
     public static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
@@ -61,6 +61,14 @@ public enum Stores {
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
         "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
     ]
+    /// The keys deleted at launch (`claim`) rather than left on the phone
+    /// being neither read nor collected: every key an earlier build wrote
+    /// that no store of this build is kept under (core's `StoreRegistry`).
+    public static var sweptKeys: [String] {
+        let kept = Set(StoreRegistry.all.compactMap(\.ios))
+        return retiredKeys.filter { !kept.contains($0) }
+    }
+
     /// The keys where an earlier build kept its cook in progress.
     private static let retiredCookKeys: Set<String> = [
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4",
@@ -108,7 +116,7 @@ public enum Stores {
         }
         // A build that finds a newer mark deletes nothing.
         if verdict == .write {
-            for key in retiredKeys where defaults.object(forKey: key) != nil {
+            for key in sweptKeys where defaults.object(forKey: key) != nil {
                 if retiredCookKeys.contains(key) { retiredCook = true }
                 defaults.removeObject(forKey: key, Pass())
                 #if DEBUG
