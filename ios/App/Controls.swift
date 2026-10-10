@@ -121,6 +121,11 @@ struct CountValue: View {
 /// 58.5, not from the 58.5 the field rounds it to on to 59. It repeats while
 /// held. A step ends the typing, so the field shows the number stepped to
 /// rather than what was half typed.
+///
+/// At the accessibility sizes the stepper keeps its size while the number
+/// grows, so beside the label the field was left too narrow for "68", which
+/// showed as "…". There the label goes above, as the egg size's does over
+/// its menu, and the field takes the width the unit and the stepper leave.
 struct MeasureField: View {
     let label: String
     let measure: Measure
@@ -128,40 +133,59 @@ struct MeasureField: View {
     let set: (Double) -> Void
     var field: ControlField? = nil
     @Environment(\.editGesture) private var gesture
+    @Environment(\.dynamicTypeSize) private var size
     @State private var text = ""
     @FocusState private var focused: Bool
 
     var body: some View {
-        LabeledContent(label) {
-            HStack(spacing: 6) {
-                TextField(label, text: $text)
-                    .systemFigures()
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(maxWidth: 72)
-                    .focused($focused)
-                    .onChange(of: text) {
-                        guard focused else { return }
-                        if let typed = parseTyped(text), let si = parse(measure, typed) { set(si) }
-                    }
-                Text(tr(measure.unitKey))
-                    .foregroundStyle(.secondary)
-                Stepper(label) {
-                    step(up: true)
-                } onDecrement: {
-                    step(up: false)
-                } onEditingChanged: { on in
-                    if let field { gesture.touch(field, on) }
+        Group {
+            if size.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 4) {
+                    // The field, named by the same words, says it.
+                    Text(label)
+                        .accessibilityHidden(true)
+                    controls(large: true)
                 }
-                    .labelsHidden()
-                    .accessibilityValue(spoken)
+            } else {
+                LabeledContent(label) {
+                    controls(large: false)
+                }
             }
         }
         .onAppear { text = shown }
         .onChange(of: value) { if !focused { text = shown } }
         .onChange(of: measure) { text = shown }
         .onChange(of: focused) { if !focused { text = shown } }
+    }
+
+    /// The field, its unit and the stepper; `large`, at the accessibility
+    /// sizes, with the field as wide as the row leaves and the unit whole.
+    private func controls(large: Bool) -> some View {
+        HStack(spacing: 6) {
+            TextField(label, text: $text)
+                .systemFigures()
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: large ? .infinity : 72)
+                .focused($focused)
+                .onChange(of: text) {
+                    guard focused else { return }
+                    if let typed = parseTyped(text), let si = parse(measure, typed) { set(si) }
+                }
+            Text(tr(measure.unitKey))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: large, vertical: large)
+            Stepper(label) {
+                step(up: true)
+            } onDecrement: {
+                step(up: false)
+            } onEditingChanged: { on in
+                if let field { gesture.touch(field, on) }
+            }
+                .labelsHidden()
+                .accessibilityValue(spoken)
+        }
     }
 
     /// One press: the next point of the step's grid past the stored value,
