@@ -89,6 +89,12 @@ releasing has its own in `ios/RELEASING.md`.
   rounded to the nearest sample, the timer's strikes came out up to 7% off
   in loudness, as their modes added or cancelled.
 
+- **GitHub's Chrome is in en-US**, so the app there defaults to Imperial
+  units, US egg sizes and a 12-hour clock: a scenario written on a metric
+  machine fails only in CI. Each tab is given a locale (`DEFAULT_LOCALE` in
+  `tools/harness.ts`); `AET_LOCALE=en-US npm run e2e -- <names>` reproduces
+  a runner's. `--lang` does not reach the page on macOS.
+
 ## Elsewhere
 
 - **JAX computes in single precision unless told**

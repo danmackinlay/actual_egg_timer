@@ -176,6 +176,9 @@ export interface TabOptions {
 }
 
 /** One page, attached on the browser's socket. */
+/** The locale a tab is given when its scenario names none. */
+export const DEFAULT_LOCALE = process.env['AET_LOCALE'] ?? 'en-AU';
+
 export class Tab {
   readonly errors: string[] = [];
   /** Every request the tab made, as DevTools saw it leave, with the
@@ -222,12 +225,14 @@ export class Tab {
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390, height: 844, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
-    if (options.locale !== undefined) {
-      await cdp.send('Emulation.setLocaleOverride', { locale: options.locale }, sessionId);
-      await cdp.send('Emulation.setUserAgentOverride', {
-        userAgent: String(await tab.eval('navigator.userAgent')), acceptLanguage: options.locale,
-      }, sessionId);
-    }
+    // Every tab has a locale, so a scenario reads the same on any machine:
+    // the app takes its units, its egg sizes and its clock from the region,
+    // and a runner's Chrome would otherwise be in its own (en-US on GitHub's).
+    const locale = options.locale ?? DEFAULT_LOCALE;
+    await cdp.send('Emulation.setLocaleOverride', { locale: locale }, sessionId);
+    await cdp.send('Emulation.setUserAgentOverride', {
+      userAgent: String(await tab.eval('navigator.userAgent')), acceptLanguage: locale,
+    }, sessionId);
     if (options.timezone !== undefined) {
       await cdp.send('Emulation.setTimezoneOverride', { timezoneId: options.timezone }, sessionId);
     }
