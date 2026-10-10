@@ -30,6 +30,7 @@ import EggTimerCore
 /// "Start learning again" keeps it.
 public enum Stores {
     /// Where everything is kept: UserDefaults in the app; a test's own.
+    /// Unsafe, but set only at launch, or by a test before it runs anything.
     nonisolated(unsafe) public static var store: any KeyValueStore = UserDefaults.standard
 
     /// What a write to the store needs, and only `Stores` can make: so no
@@ -65,7 +66,8 @@ public enum Stores {
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
-    /// Screen, and nothing will update it again.
+    /// Screen, and nothing will update it again. Unsafe, but written and
+    /// read once each, at launch on the main actor (`claim`, `Cook.restore`).
     nonisolated(unsafe) private static var retiredCook = false
 
     /// Once: whether the launch's sweep deleted an earlier build's cook.

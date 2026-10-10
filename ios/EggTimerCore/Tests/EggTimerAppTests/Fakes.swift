@@ -151,7 +151,7 @@ struct World {
 
     /// One set of surfaces for every test: they are a pure function of the
     /// pot, and a build is seconds.
-    nonisolated(unsafe) static let grids = DecisionGrids()
+    static let grids = DecisionGrids()
 
     init(store: MemoryStore = MemoryStore(), at nowS: Double = 1_791_234_567) {
         self.store = store

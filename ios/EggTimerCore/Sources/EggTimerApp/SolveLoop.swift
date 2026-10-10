@@ -139,7 +139,7 @@ public final class SolveLoop {
             let question = asked
             let snapshot = inputSnapshot
             let inputs = snapshot.inputs
-            let answer = await Self.solve(snapshot, inputs: inputs)
+            let answer = await Self.solve(snapshot, inputs: inputs, grids: Services.grids)
             // The time is chosen on this pot's decision surface. The surface
             // does not depend on the slider, so a drag is answered from the one
             // already built and the time never jumps mid-drag; a new pot shows
@@ -287,8 +287,10 @@ public final class SolveLoop {
     /// Solve for a snapshot of the inputs. The odds at every level, if this
     /// pot's are in, set the slider's ends (Reach.swift); if not, the physical
     /// limits do.
-    private nonisolated static func solve(_ snapshot: InputSnapshot, inputs: DecisionInputs) async -> Answer {
-        let profile = await Services.grids.cachedProfile(inputs, snapshot.calibration)
+    private nonisolated static func solve(
+        _ snapshot: InputSnapshot, inputs: DecisionInputs, grids: any DecisionSurfaces
+    ) async -> Answer {
+        let profile = await grids.cachedProfile(inputs, snapshot.calibration)
         return await solve(
             egg: snapshot.egg, setup: snapshot.setup, level: snapshot.level,
             calibration: snapshot.calibration, profile: profile
@@ -320,7 +322,7 @@ public final class SolveLoop {
             let question = asked
             let snapshot = inputSnapshot
             let inputs = snapshot.inputs
-            var answer = await Self.solve(snapshot, inputs: inputs)
+            var answer = await Self.solve(snapshot, inputs: inputs, grids: Services.grids)
             // The time on screen is the chosen one whenever this pot's surface
             // is already built, so "Eggs in" starts on that one too. A
             // surface still to build is not waited for: the mean is what the

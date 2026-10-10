@@ -13,7 +13,7 @@ import QuartzCore
 /// copyLiterals' NOT_COPY list.
 public enum Perf {
     public static let on = Screenshots.arguments?.string(forKey: "perfProbe") != nil
-    nonisolated(unsafe) private static var inputAt = CACurrentMediaTime()
+    @MainActor private static var inputAt = CACurrentMediaTime()
 
     /// What is timed on its own.
     public enum Stage { case answerAt, grid, profile }
@@ -25,7 +25,7 @@ public enum Perf {
     /// The scripted inputs.
     public enum Script { case tapAltitude, holdAltitude, tapWater, dragDoneness, inputsDone, worstLateness, done }
 
-    public static func input() { inputAt = CACurrentMediaTime() }
+    @MainActor public static func input() { inputAt = CACurrentMediaTime() }
 
     private static func line(_ parts: [String]) {
         print(parts.joined(separator: " "))
@@ -36,7 +36,7 @@ public enum Perf {
     }
 
     /// An answer on screen: when, and what it was.
-    public static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
+    @MainActor public static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
         guard on else { return }
         var events: [Event] = [.landed]
         if interim { events.append(.interim) }

@@ -1,6 +1,7 @@
 import EggTimerCore
 import Foundation
 import Observation
+import os
 
 /// Launch arguments that put a debug build on a given screen, so screenshots
 /// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
@@ -138,12 +139,16 @@ public enum Screenshots {
     }
 
     #if DEBUG
-
     /// Where a line goes: standard error, and appended to
     /// Library/Caches/aet.log in the app's container, which a simulator's
     /// host reads (`simctl get_app_container … data`). The tests take the
-    /// events instead, and write nothing to the Mac's own Caches.
-    nonisolated(unsafe) public static var output: (Event, Data) -> Void = { _, text in
+    /// events instead, and write nothing to the Mac's own Caches. Behind a
+    /// lock, since a line is written from any thread (the clock's steps).
+    public static var output: @Sendable (Event, Data) -> Void {
+        get { outputSet.withLock { $0 } }
+        set { outputSet.withLock { $0 = newValue } }
+    }
+    private static let outputSet = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
         FileHandle.standardError.write(text)
         guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
         let url = dir.appendingPathComponent("aet.log")
@@ -154,7 +159,7 @@ public enum Screenshots {
         } else {
             try? text.write(to: url)
         }
-    }
+    })
     #endif
 
     /// Whether the app is in the foreground, where the page is drawn
@@ -170,11 +175,11 @@ public enum Screenshots {
     /// made again while the cook runs in this launch (`Cook`), as if the app
     /// were killed before it landed, so a script can find the stale cook
     /// stored at the next launch. Read at launch; a test sets it.
-    nonisolated(unsafe) public static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
+    @MainActor public static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
     /// `-uiFailRemake YES`: an ended cook's record is never made again in
     /// this launch (`Cook`): the cook stays stored for the next. Read at
     /// launch; a test sets it.
-    nonisolated(unsafe) public static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
+    @MainActor public static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
     public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
     public static var doneAgo: Double { number("doneAgo") ?? 2 }

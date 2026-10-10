@@ -20,12 +20,12 @@ public enum Services {
     @MainActor public static var alarm: any AlarmScheduling = Unwired()
     @MainActor public static var ringer: any AlarmRinging = Unwired()
     @MainActor public static var sharing: any ResultSharing = Unwired()
-    /// Called off the main actor, in the order the cook made its calls
-    /// (`Cook.activity`).
-    nonisolated(unsafe) public static var card: any LockScreenCard = NoCard()
+    /// Read on the main actor, called off it in the order the cook made its
+    /// calls (`CookCard`).
+    @MainActor public static var card: any LockScreenCard = NoCard()
     /// Said to VoiceOver, at once: the start's limit reached (`Edits`).
     @MainActor public static var announce: (String) -> Void = { _ in }
-    nonisolated(unsafe) public static var grids: any DecisionSurfaces = DecisionGrids.shared
+    @MainActor public static var grids: any DecisionSurfaces = DecisionGrids.shared
     @MainActor public static var language: any LanguageChoosing = LanguageChoice.shared
     @MainActor public static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
 }
