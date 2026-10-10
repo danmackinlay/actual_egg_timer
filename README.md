@@ -6,7 +6,7 @@ A boiled-egg timer that computes the time from physics instead of reciting it: t
 heat conduction in a sphere, coupled to Arrhenius denaturation kinetics, with the pan
 ramp and the cooling step treated as part of the cook.
 
-**Alpha** (version `0.3.0-alpha.1`): no stability is promised. Anything may
+**Alpha** (version `0.5.0-alpha.1`): no stability is promised. Anything may
 change between versions, including what the app remembers of your cooks.
 
 It is a static web app with zero runtime dependencies. All of the physics lives in
@@ -16,6 +16,9 @@ headlessly and ported to Swift more or less mechanically.
 This document exists so that you can **check the model rather than trust it**. Every
 number quoted below is either derived here or reproducible from the code, and the
 places where the model is weak are named as such.
+
+To review the words the apps show, see **[Reviewing the
+words](#reviewing-the-words)** in §9.
 
 If you are extending this, start with **[§11 Open problems and what to read
 next](#11-open-problems-and-what-to-read-next)** — the unresolved discrepancies, the
@@ -942,6 +945,32 @@ between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant
 to port to Swift essentially unchanged.
+
+### Reviewing the words
+
+Every word either app shows is a key in `copy/en.json`, and what the owner
+has approved is recorded per key (`test/data/copy-review/approved.json`), so
+the words not yet read are a list the tools make, not one anybody keeps.
+The rules the words are held to, and the machinery, are `LANGUAGE.md` §3.
+
+1. **See what is waiting.** `npm run copy:queue` prints every key changed,
+   added or removed since it was approved, with both Englishes and the apps
+   that show it, and the 1750 twins that are stale or missing.
+2. **Read it on a phone.** `npm run copy:review` writes `copy-review.html`,
+   one file with no script and no network: for each key, the approved
+   English against today's word by word, the 1750 twin, the US English, the
+   surface's length budget against the longest rendering, and which apps
+   say it. Send it to the phone (AirDrop, or open it from a synced folder).
+3. **Read it in place.** A string is judged where it appears, in the apps,
+   not only in the table (`UI.md` §6). `npm run copy:snapshot -- capture
+   <out.json>` renders every web screen the copy scenarios reach, for a
+   read of every string rather than only the queue's.
+4. **Change what is wrong** in `copy/en.json` (and its 1750 twin, or leave
+   the twin to lag), then `npm run fixtures`.
+5. **Approve what is right**: `npm run copy:approve -- <key…>`, or `--all`
+   for the whole queue, and commit `test/data/copy-review/`. A 1750 twin is
+   stamped with `--translation en-x-1750 <key…>`. Approval is the owner's
+   word; no script or agent gives it.
 
 ### Checking the web app end to end
 
