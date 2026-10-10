@@ -541,7 +541,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       length to `src/ui/alarmSounds.ts`. `effectiveUnits` and `languageOf`
       stay: core calls both itself (`chooseUnits`; `copy`, `format`,
       `language`), and neither has a fixture of its own.
-- [ ] **3.18 Generate the Swift data layer** (types, defensive readers,
+- [ ] **3.18 Generate the Swift data layer** *Deferred* (the owner, 10
+      October 2026), unless drift between the copies keeps recurring; the
+      conformance fixtures catch it meanwhile. (types, defensive readers,
       Codable, `jsonObject`) from the TS interfaces: that is where the copies
       drifted (Running 967 Swift code lines against 727 TS; Share 162
       against 91). Not the whole core: running TS in JavaScriptCore loses
@@ -560,7 +562,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       working commit: it is touched by 25% of commits and is a merge hotspot
       across worktrees and the QA agent. `DECISIONS.md` 104; in CLAUDE.md at
       `f7b8a34`.
-- [ ] **4.2 LOGBOOK frozen per version** (`LOGBOOK-0.4.md`); its "Things that
+- [ ] **4.2 ~~LOGBOOK frozen per version~~** *The freezing is dropped* (the
+      owner, 10 October 2026: ceremony); the gathering into `GOTCHAS.md`
+      stands. (`LOGBOOK-0.4.md`); its "Things that
       cost an hour" (twice, at :78 and :6059, and inline three more times)
       into one edited `GOTCHAS.md`. S.
 - [x] **4.3 Fewer version lines.** 0.4 hasn't shipped and 0.5 forked from

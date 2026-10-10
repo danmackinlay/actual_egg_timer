@@ -82,7 +82,7 @@ These counts are the only ones in the documents. If you want a number, run
    phone's settings start from the defaults, as its log does), the planner
    holds them as one value (3.10), and its logic keeps time in seconds
    (3.12); its end-of-cook fixes are under Swift tests (5.5). The test suite is trimmed by behaviour (5.12;
-   `npm test` about half the time). Next: the smaller items (5.11), 0.8, 3.13, 3.16, 3.18, 2.4 and 4.2, and what is left of 3.9 (Sharing's
+   `npm test` about half the time). Next: the smaller items (5.11), 0.8, 3.13, 3.16, 2.4 and 4.2's `GOTCHAS.md` (3.18 deferred), and what is left of 3.9 (Sharing's
    `generation` tokens; `Cook` still runs the alarms, ring and card
    itself).
 
