@@ -34,9 +34,9 @@ public struct Kept: Sendable {
 
 public enum Calibrations {
     /// The posterior, the base under it, and the log: a particle of six
-    /// numbers, and records of today's shape only. v5: the log started fresh
-    /// in 0.5, and 0.3's v4 is never read (DECISIONS.md 107).
-    private static let key = "calibration.v5"
+    /// numbers, and records of today's shape only. The log started fresh in
+    /// 0.5, and 0.3's v4 is never read (DECISIONS.md 107).
+    private static let key = Stores.key(StoreRegistry.calibration)
 
     /// Carried on every record: the web app deploys on push and this one ships
     /// when a build does, and the fit has to know which version said what -
@@ -93,7 +93,7 @@ public enum Calibrations {
     }
 
     private struct StoredV5: Encodable {
-        var v = 5
+        var v = StoreRegistry.calibration.format
         /// The population the posterior was drawn from.
         var p: String
         /// The `likelihoodID` the posterior was folded under.
@@ -207,7 +207,8 @@ public enum Calibrations {
 
     private static func decode(_ v4: Data?) -> (Kept, path: LoadPath) {
         let decoder = JSONDecoder()
-        let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }.flatMap { $0.v == 5 ? $0 : nil }
+        let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }
+            .flatMap { $0.v == StoreRegistry.calibration.format ? $0 : nil }
         let base = calibration(parts?.base)
         let cal = calibration(parts?.cal)
         // A base the store leaves out is none: this app leaves it out when

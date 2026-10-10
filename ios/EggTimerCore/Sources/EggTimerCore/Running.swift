@@ -271,16 +271,14 @@ public struct RunningCook: Sendable, Equatable {
         self.asRan = nil
     }
 
-    /// The cook as the web stores it, for JSONSerialization: what was fixed
-    /// at the press, the start and the log, which are read back, and the cook
-    /// as it stands, written for whoever reads the store by eye and never read.
+    /// The cook as both apps store it (`storedCook`), for JSONSerialization:
+    /// what was fixed at the press, the start and the log, and no more, since
+    /// the rest is the log folded.
     public var jsonObject: [String: Any] {
         [
             "id_ms": idMs, "nudge_s": nudgeS, "boilMemory": boilMemory, "units": units.rawValue, "lang": lang,
             "start": ["at_s": start.atS, "choices": start.choices.jsonObject] as [String: Any],
             "log": log.map(\.jsonObject),
-            "startedAt_s": startedAtS, "choices": choices.jsonObject, "events": events.jsonObject,
-            "correctedAt_s": correctedAtS ?? NSNull(), "asRan": asRan?.jsonObject ?? NSNull(),
         ]
     }
 }
@@ -794,12 +792,17 @@ private func isNull(_ v: Any?) -> Bool {
     v is NSNull
 }
 
-/// A finite number or JSON's null, as `.some(nil)`; anything else, or a
-/// missing key, `nil`.
-private func numberOrNull(_ v: Any?) -> Double?? {
-    if isNull(v) { return .some(nil) }
+/// A value read where JSON's null is allowed: `value` is nil for the null.
+private struct OrNull<T> {
+    let value: T?
+}
+
+/// A finite number or JSON's null, as `.value`; anything else, or a missing
+/// key, nil.
+private func numberOrNull(_ v: Any?) -> OrNull<Double>? {
+    if isNull(v) { return OrNull(value: nil) }
     guard let d = finite(v) else { return nil }
-    return .some(d)
+    return OrNull(value: d)
 }
 
 private func readChoices(_ raw: Any?) -> CookChoices? {
@@ -824,7 +827,7 @@ private func readChoices(_ raw: Any?) -> CookChoices? {
           let altitude = finite(r["altitude_m"]),
           let level = finite(r["level"]), level >= 0, level <= 1 else { return nil }
     return CookChoices(
-        massKg: mass, massFrom: massFrom, sizeTable: table, eggFrom: eggFrom, customStartC: custom, roomC: room,
+        massKg: mass, massFrom: massFrom, sizeTable: table, eggFrom: eggFrom, customStartC: custom, roomC: room.value,
         startMode: start, afterBoil: after, cooling: cooling, waterLitres: water, eggCount: count,
         altitudeM: altitude, level: level
     )
@@ -888,18 +891,18 @@ private func readAsRan(_ raw: Any?) -> CookAsRan? {
           let params = r["params"] as? [String: Any],
           let alpha = finite(params["alpha_m2s"]), alpha > 0 else { return nil }
     return CookAsRan(
-        correctedAtS: at, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
+        correctedAtS: at.value, level: level, cookS: cook, nudgeS: nudge, forecast: forecast, peakYolkC: peak,
         probeMoment: probe, params: ModelParams(alphaM2s: alpha)
     )
 }
 
-/// A probe reading as the log keeps one: `.some(nil)` for JSON's null, nil if
-/// it is not one.
-private func readProbe(_ raw: Any?) -> ProbeReading?? {
-    if isNull(raw) { return .some(nil) }
+/// A probe reading as the log keeps one, or none (JSON's null), as `.value`;
+/// nil if it is neither.
+private func readProbe(_ raw: Any?) -> OrNull<ProbeReading>? {
+    if isNull(raw) { return OrNull(value: nil) }
     guard let r = raw as? [String: Any], let centre = finite(r["centre_C"]),
           let after = numberOrNull(r["after_s"]) else { return nil }
-    return .some(ProbeReading(centreC: centre, afterS: after))
+    return OrNull(value: ProbeReading(centreC: centre, afterS: after.value))
 }
 
 /// One entry of a stored log, or nil if it is not one.
@@ -921,8 +924,8 @@ private func readEntry(_ raw: Any?) -> CookEntry? {
         if isNull(r["pulled"]) { return .pulled(nil) }
         return readPulled(r["pulled"]).map { .pulled($0) }
     case "stands": return .stands
-    case "cooled": return numberOrNull(r["at_s"]).map { .cooled(atS: $0) }
-    case "rang": return numberOrNull(r["at_s"]).map { .rang(atS: $0) }
+    case "cooled": return numberOrNull(r["at_s"]).map { .cooled(atS: $0.value) }
+    case "rang": return numberOrNull(r["at_s"]).map { .rang(atS: $0.value) }
     case "ran":
         if isNull(r["asRan"]) { return .ran(nil) }
         return readAsRan(r["asRan"]).map { .ran($0) }
@@ -938,7 +941,7 @@ private func readEntry(_ raw: Any?) -> CookEntry? {
             guard let w = (r["white"] as? String).flatMap(WhiteReport.init(rawValue:)) else { return nil }
             white = w
         }
-        return .answered(atS: at, yolkWord: yolk, white: white, probe: probe)
+        return .answered(atS: at, yolkWord: yolk, white: white, probe: probe.value)
     default:
         return nil
     }
@@ -987,6 +990,64 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
     return foldInOrder(cook) ? cook : nil
 }
 
+// MARK: - The cook as stored
+
+/// Whether the egg had been written down with an answer when the cook was
+/// stored. See `KeptAnswers` in `src/core/running.ts`.
+public enum KeptAnswers: String, Sendable {
+    case unanswered = "none"
+    case beforeReload
+}
+
+/// A cook in progress as both apps store it (`StoreRegistry.cook`): the cook,
+/// whether its egg was answered, and the lean last decided. Written by
+/// JSONEncoder and read by JSONDecoder, to the bit, through `JSONValue`, and
+/// read whole by `readStoredCook`.
+public struct StoredCook: Sendable, Equatable {
+    public let cook: RunningCook
+    public let answers: KeptAnswers
+    public let leanHintS: Double
+
+    public init(cook: RunningCook, answers: KeptAnswers, leanHintS: Double) {
+        self.cook = cook
+        self.answers = answers
+        self.leanHintS = leanHintS
+    }
+
+    /// As both apps store it, for JSONSerialization. See `storedCook`.
+    public var jsonObject: [String: Any] {
+        stamped(StoreRegistry.cook, [
+            "cook": cook.jsonObject, "answers": answers.rawValue, "leanHint_s": leanHintS,
+        ])
+    }
+}
+
+/// A stored cook read back, parsed JSON: whole, or nil. See `readStoredCook`
+/// in `src/core/running.ts`.
+public func readStoredCook(_ raw: Any?) -> StoredCook? {
+    guard let o = inFormat(StoreRegistry.cook, raw),
+          let cook = readRunningCook(o["cook"]),
+          let answers = (o["answers"] as? String).flatMap(KeptAnswers.init(rawValue:)),
+          let hint = finite(o["leanHint_s"]) else { return nil }
+    return StoredCook(cook: cook, answers: answers, leanHintS: hint)
+}
+
+extension StoredCook: Codable {
+    public init(from decoder: Decoder) throws {
+        let value = try JSONValue(from: decoder)
+        guard let stored = readStoredCook(value.any) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "not a stored cook")
+            )
+        }
+        self = stored
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try JSONValue(jsonObject).encode(to: encoder)
+    }
+}
+
 // MARK: - Stored to the bit
 
 /// A JSON value, read and written exactly: what a stored cook goes through.
@@ -994,7 +1055,7 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
 /// the mass is another decision surface's key, so a cook is written by
 /// JSONEncoder (each double's shortest round-trip form) and read by
 /// JSONDecoder (to the bit) into this, and then read whole by
-/// `readRunningCook`, the one reader, as the web reads it.
+/// `readStoredCook`, the one reader, as the web reads it.
 enum JSONValue: Codable, Equatable {
     case null
     case bool(Bool)
@@ -1060,22 +1121,6 @@ enum JSONValue: Codable, Equatable {
         case let .array(a): a.map(\.any)
         case let .object(o): o.mapValues(\.any)
         }
-    }
-}
-
-extension RunningCook: Codable {
-    public init(from decoder: Decoder) throws {
-        let value = try JSONValue(from: decoder)
-        guard let cook = readRunningCook(value.any) else {
-            throw DecodingError.dataCorrupted(
-                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "not a running cook")
-            )
-        }
-        self = cook
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        try JSONValue(jsonObject).encode(to: encoder)
     }
 }
 

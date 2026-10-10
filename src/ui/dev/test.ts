@@ -24,7 +24,8 @@
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
 import { BoilMemory } from '../../core/boil.js';
-import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
+import { Phase, RunningCook, guessLengthened, readStoredCook } from '../../core/running.js';
+import { STORES } from '../../core/stores.js';
 import { EggRecord } from '../../core/record.js';
 import { flushDraw, pageModel, pageStores } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
@@ -65,8 +66,10 @@ export interface Snapshot {
   /** Whether the white sets at the time on screen: the running cook's
    *  plan's, else the idle answer's; null with neither. */
   whiteSets: boolean | null;
-  /** The running cook as stored (`aet.cook.v5`), its text. */
+  /** The running cook as stored, its text, and the cook it reads as, folded
+   *  from its log (core's `readStoredCook`), or null. */
   stored: string | null;
+  storedCook: RunningCook | null;
   /** The results log, how many of it are folded in, how many still to
    *  fold, and how many are final. */
   log: EggRecord[];
@@ -85,6 +88,15 @@ export interface TestApi {
 }
 
 const text = (id: string): string => document.getElementById(id)?.textContent ?? '';
+
+/** The cook stored as `text` reads, or null. */
+function storedCookOf(text: string | null): RunningCook | null {
+  try {
+    return text === null ? null : readStoredCook(JSON.parse(text))?.cook ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function snapshot(): Snapshot {
   // The page as the model now stands, not a frame behind it.
@@ -118,7 +130,8 @@ function snapshot(): Snapshot {
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
     whiteSets: plan !== null ? plan.solution.whiteSets : m.solution?.whiteSets ?? null,
-    stored: localStorage.getItem('aet.cook.v5'),
+    stored: localStorage.getItem(STORES.cook.web),
+    storedCook: storedCookOf(localStorage.getItem(STORES.cook.web)),
     log: stores.learner.keptState().log,
     eggsLogged: m.calib.eggsLogged,
     eggsBehind: stores.learner.eggsBehind(),

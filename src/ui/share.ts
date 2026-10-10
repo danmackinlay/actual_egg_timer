@@ -21,6 +21,7 @@ import {
 } from '../core/share.js';
 import { request } from './idle.js';
 import { send } from './send.js';
+import { STORES } from '../core/stores.js';
 import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
@@ -131,7 +132,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
    *  acts (`current`). A tab loaded yesterday must not send under an id
    *  another tab has since deleted, nor write back the deletions it never
    *  saw. */
-  const store = syncedKey('aet.share.v1', readShare);
+  const store = syncedKey(STORES.share.web, readShare);
   let state: ShareState = reconciled(store.load(), host.log().length);
   /** Bumped by every change of id, so a send in flight for an old one lands
    *  on nothing. */

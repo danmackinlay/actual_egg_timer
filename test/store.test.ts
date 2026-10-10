@@ -11,9 +11,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
+import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
+import { STORES, stamped } from '../src/core/stores.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
@@ -30,8 +32,12 @@ const storage = new Map<string, string>();
   },
 };
 
-const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v5';
+const SETTINGS_KEY = STORES.settings.web;
+const BOIL_KEY = STORES.boilMemory.web;
+
+/** Settings as a build of this format stores them. */
+const settingsText = (o: object): string => JSON.stringify(stamped(STORES.settings, { ...o }));
+const COOK_KEY = STORES.cook.web;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
 const settings = openSettings(classes);
@@ -80,9 +86,15 @@ test('sous-vide with no pan before it comes back as cold', () => {
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'cold');
 });
 
+test('settings stored in no format, as 0.3 stored them, read as a fresh install\'s', () => {
+  freshPage();
+  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 }));
+  assert.equal(settings.load().altitude_m, DEFAULT_SETTINGS.altitude_m);
+});
+
 test('a stored sous-vide from an older build loads as cold', () => {
   freshPage();
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'sous', altitude_m: 600 }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, startMode: 'sous', altitude_m: 600 }));
   const back = settings.load();
   assert.equal(back.startMode, 'cold');
   assert.equal(back.altitude_m, 600);
@@ -94,7 +106,7 @@ test('a measured egg saved before measuredBy existed is read as weighed', () => 
   freshPage();
   const old: Record<string, unknown> = { ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44 };
   delete old['measuredBy'];
-  storage.set(SETTINGS_KEY, JSON.stringify(old));
+  storage.set(SETTINGS_KEY, settingsText(old));
   const back = settings.load();
   assert.equal(back.measuredBy, 'scale');
   assert.equal(back.customMinor_mm, 44);
@@ -203,18 +215,34 @@ test('a copy with other corrections gives only what the cook saw, never what its
   assert.equal(correctedLater(start, start), false);
 });
 
-test('a cook kept without `answers` or the lean is refused, never read as unanswered', () => {
-  // Read as unanswered, an egg already in the log would be logged again.
+/** The stored cooks both apps are held to, as text (fixtures/stores.json):
+ *  what each reads as, as it is stored, or null. iOS runs the same rows
+ *  through `Cook` (EggTimerAppTests). */
+const STORED_COOKS = (JSON.parse(readFileSync('fixtures/stores.json', 'utf8')) as {
+  cooks: { about: string; text: string; read: unknown }[];
+}).cooks;
+
+test('the web\'s store takes or refuses each stored cook of the table both apps are held to', () => {
+  assert.ok(STORED_COOKS.length > 20);
+  for (const row of STORED_COOKS) {
+    storage.clear();
+    storage.set(COOK_KEY, row.text);
+    const loaded = cooks.load();
+    const read = loaded === null ? null : JSON.parse(JSON.stringify(storedCook(loaded))) as unknown;
+    assert.deepEqual(read, row.read, row.about);
+  }
+});
+
+test('a cook is stored without the cook as it stands: its start and log, which a reload folds again', () => {
   storage.clear();
   const cook = aCook();
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, leanHint_s: 0, feedbackGiven: true }));
-  assert.equal(cooks.peek(), null);
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'live', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'only what saveCook writes');
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'none' }));
-  assert.equal(cooks.peek(), null, 'without the lean');
-  storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, start: { ...cook.start, at_s: 'then' } }, answers: 'none', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'a cook that does not read (`readRunningCook`)');
+  cooks.save(cook, 'none', 0);
+  const stored = JSON.parse(storage.get(COOK_KEY) ?? '{}') as { v: number; cook: Record<string, unknown> };
+  assert.equal(stored.v, STORES.cook.format);
+  for (const field of ['startedAt_s', 'choices', 'events', 'correctedAt_s', 'asRan']) {
+    assert.ok(!(field in stored.cook), `${field} not written`);
+  }
+  assert.deepEqual(cooks.peek()?.cook, cook);
 });
 
 test('Cancel forgets the stored cook only if it is this tab\'s', () => {
@@ -231,17 +259,6 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   assert.equal(cooks.text(), null, 'junk goes');
 });
 
-test('a cook in a shape this build does not read is not read', () => {
-  storage.clear();
-  // An earlier build's running cook: its events whole, no start or log.
-  const { start: _start, log: _log, ...earlier } = aCook();
-  storage.set(COOK_KEY, JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'without its log, not read');
-  // 0.4's shape: a machine and a ticket.
-  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
-  assert.equal(cooks.peek(), null, 'never read as a running cook');
-});
-
 test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {
   const eu = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2, doneness: 0.62 }, 'GB');
   assert.deepEqual([eu.mass_kg, eu.massFrom, eu.sizeTable, eu.level], [sizeClassesFor('GB')[2].mass_kg, 'class', 'eu', 0.62]);
@@ -255,21 +272,12 @@ test('the settings as a cook\'s choices: the carton\'s class or the measured egg
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26, probe: true }, 'GB').room_C, 26);
 });
 
-test('junk under the cook\'s key is never a crash', () => {
-  storage.clear();
-  for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ cook: 3, answers: 'none', leanHint_s: 0 })]) {
-    storage.set(COOK_KEY, junk);
-    assert.equal(cooks.peek(), null, junk);
-    assert.equal((cooks.peek()?.cook ?? null), null, junk);
-  }
-});
-
 test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {
   freshPage();
   const mine = settings.load();
   // Another tab, loaded earlier, changes the altitude and turns the sound off.
   const theirs = { ...DEFAULT_SETTINGS, altitude_m: 900, muted: true };
-  storage.set(SETTINGS_KEY, JSON.stringify(theirs));
+  storage.set(SETTINGS_KEY, settingsText(theirs));
   // This page, before it hears, moves the slider and saves.
   mine.doneness = 0.8;
   const saved = settings.save(mine);
@@ -278,8 +286,8 @@ test('another tab\'s settings are taken up: what this page changed stays its own
   assert.deepEqual([stored.altitude_m, stored.muted, stored.doneness], [900, true, 0.8], 'nothing undone');
   // The page's storage event: taken up once, keeping a change not yet saved.
   saved.eggCount = 3;
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...stored, cooling: 'tap' }));
-  assert.equal(settings.elsewhere('aet.boil.v1', saved), null);
+  storage.set(SETTINGS_KEY, settingsText({ ...stored, cooling: 'tap' }));
+  assert.equal(settings.elsewhere(BOIL_KEY, saved), null);
   const heard = settings.elsewhere(SETTINGS_KEY, saved);
   assert.deepEqual([heard?.cooling, heard?.eggCount, heard?.altitude_m], ['tap', 3, 900]);
   assert.equal(settings.elsewhere(SETTINGS_KEY, saved), null, 'once');
@@ -289,7 +297,7 @@ test('a sous-vide on screen stays this page\'s when another tab saves a pan', ()
   freshPage();
   settings.save(settingsWith({ startMode: 'cold' }));
   const mine = settingsWith({ startMode: 'sous' });
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
   const saved = settings.save(mine);
   assert.equal(saved.startMode, 'sous');
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'hot', 'the other tab\'s pan, the last saved');
@@ -297,14 +305,13 @@ test('a sous-vide on screen stays this page\'s when another tab saves a pan', ()
 
 test('"Forget everything" in another tab is not undone by this one\'s next measured boil', () => {
   storage.clear();
-  const BOIL_KEY = 'aet.boil.v1';
   let memory = pans.load();
   memory = pans.remember(memory, 2, 600);
   assert.equal(pans.elsewhere(BOIL_KEY), null, 'its own write is nothing new');
   // Another tab forgets every pan; this one has not heard, and times a boil.
   storage.delete(BOIL_KEY);
   memory = pans.remember(memory, 1.5, 420);
-  assert.deepEqual(Object.keys(JSON.parse(storage.get(BOIL_KEY) ?? '{}') as object), Object.keys(memory));
+  assert.deepEqual(Object.keys((JSON.parse(storage.get(BOIL_KEY) ?? '{}') as { pans: object }).pans), Object.keys(memory));
   assert.equal(Object.keys(memory).length, 1, 'only the pan timed since');
   // And when it hears, it follows.
   storage.delete(BOIL_KEY);
@@ -318,10 +325,10 @@ test('the alarm sound comes back as stored, and anything else, or nothing, is th
   assert.equal(settings.load().alarm, 'timer', 'a fresh install');
   settings.save(settingsWith({ alarm: 'hen' }));
   assert.equal(settings.load().alarm, 'hen');
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
   assert.equal(settings.load().alarm, 'timer', 'a sound this version does not offer');
   const before = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
   delete before['alarm'];
-  storage.set(SETTINGS_KEY, JSON.stringify(before));
+  storage.set(SETTINGS_KEY, settingsText(before));
   assert.equal(settings.load().alarm, 'timer', 'a record from before the choice');
 });

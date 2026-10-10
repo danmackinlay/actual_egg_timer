@@ -27,6 +27,7 @@
  */
 
 import { clockChanged, isDevHost, nowMs, useClock } from '../now.js';
+import { STORES } from '../../core/stores.js';
 import { readStorage, removeStorage, writeStorage } from '../store.js';
 
 export interface DevClock {
@@ -40,7 +41,7 @@ export interface DevClock {
 /** sessionStorage: this tab's clock, kept across a reload. */
 const CLOCK_KEY = 'aet.devClock';
 /** localStorage: the log here may hold an egg cooked on a made-up clock. */
-const USED_KEY = 'aet.devClock.used';
+const USED_KEY = STORES.devClockUsed.web;
 
 /** A span as `?at=` takes it, ms: `+7m40s`, `-15m`, `1h`, `90s`, or bare
  *  seconds (`-90`). Null if it does not read. */

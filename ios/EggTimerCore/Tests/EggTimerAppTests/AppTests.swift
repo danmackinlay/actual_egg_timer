@@ -466,18 +466,23 @@ struct AppTests {
     // MARK: - Stores
 
     /// The settings are one value, read by core's `readSettings`: a control
-    /// changed while idle writes it whole, and the next launch reads it back;
-    /// the keys of before are swept.
+    /// changed while idle writes it whole, in its format, and the next launch
+    /// reads it back; the keys of before are swept, and settings in no format
+    /// are not read.
     @Test func theSettingsAreOneValue() async throws {
-        let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot"]))
+        let unformatted = try JSONSerialization.data(withJSONObject: ["waterLitres": 5])
+        let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot", SettingsStore.key: unformatted]))
         #expect(world.store.object(forKey: "doneness") == nil)
         let planner = Planner()
         planner.load()
         #expect(planner.settings.doneness == Defaults.doneness)
+        #expect(planner.settings.waterLitres == AppSettings.defaults.waterLitres)
         planner.settings.waterLitres = 3
         planner.start = .hot
         let data = try #require(world.store.data(forKey: SettingsStore.key))
-        let stored = readSettings(try JSONSerialization.jsonObject(with: data), classes: planner.sizeClasses)
+        let raw = try JSONSerialization.jsonObject(with: data)
+        #expect(inFormat(StoreRegistry.settings, raw) != nil)
+        let stored = readSettings(raw, classes: planner.sizeClasses)
         #expect(stored.waterLitres == 3)
         #expect(stored.startMode == .hot)
         let again = Planner()
@@ -485,6 +490,62 @@ struct AppTests {
         #expect(again.settings.waterLitres == 3)
         #expect(again.start == .hot)
         await world.until("the solves") { !planner.solver.busy && !again.solver.busy }
+    }
+
+    /// The table of stored cooks both apps are held to (fixtures/stores.json,
+    /// from core's `readStoredCook`), each row's text put where this app
+    /// keeps its cook and read as a relaunch reads it: the same rows taken,
+    /// the same cooks, and the same refused, as the web's store
+    /// (test/store.test.ts).
+    @Test func theStoredCookTableReadsAsTheWebReadsIt() throws {
+        let url = World.copyFolder.deletingLastPathComponent().appendingPathComponent("fixtures/stores.json")
+        let fixture = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let rows = try #require(fixture["cooks"] as? [[String: Any]])
+        #expect(rows.count > 20)
+        for row in rows {
+            let about = row["about"] as? String ?? ""
+            let world = World(store: MemoryStore([Cook.savedKey: Data((row["text"] as? String ?? "").utf8)]))
+            let read = world.store.data(forKey: Cook.savedKey).flatMap(Cook.readStored)
+            guard let want = row["read"] as? [String: Any] else {
+                #expect(read == nil, "\(about): read")
+                continue
+            }
+            let got = try #require(read, "\(about): refused")
+            let cook = try #require(want["cook"] as? [String: Any])
+            #expect(got.cook.idMs == (cook["id_ms"] as? NSNumber)?.doubleValue, "\(about)")
+            #expect(got.cook.log.count == (cook["log"] as? [Any])?.count, "\(about)")
+            #expect(got.answers.rawValue == want["answers"] as? String, "\(about)")
+            let hint = try #require((want["leanHint_s"] as? NSNumber)?.doubleValue)
+            #expect(abs(got.leanHintS - hint) <= 1e-12 * max(1, abs(hint)), "\(about)")
+        }
+    }
+
+    /// At launch every key an earlier build wrote is swept, and every key
+    /// this build keeps, and any key not the app's, stays.
+    @Test func anEarlierBuildsKeysAreSweptAndThisBuildsKept() {
+        var values: [String: Any] = ["AppleLanguages": ["en"]]
+        for key in Stores.retiredKeys { values[key] = Data("an earlier build's".utf8) }
+        for store in StoreRegistry.all { if let key = store.ios { values[key] = Data("this build's".utf8) } }
+        values[Stores.markKey] = "0.4.0"
+        let world = World(store: MemoryStore(values))
+        #expect(!Stores.readOnly)
+        let kept = Set(StoreRegistry.all.compactMap(\.ios))
+        #expect(!Stores.sweptKeys.isEmpty)
+        for key in Stores.retiredKeys { #expect(world.store.object(forKey: key) == nil, "\(key) swept") }
+        for key in kept { #expect(world.store.object(forKey: key) != nil, "\(key) kept") }
+        #expect(world.store.object(forKey: "AppleLanguages") != nil)
+        #expect(Set(Stores.retiredKeys).isDisjoint(with: kept), "no key both retired and kept")
+        #expect(Stores.takeRetiredCook(), "an earlier build's cook among them")
+    }
+
+    /// A build that finds a newer build's mark sweeps nothing.
+    @Test func aReadOnlyBuildSweepsNothing() {
+        var values: [String: Any] = [Stores.markKey: "9.0.0", Stores.buildKey: "1"]
+        for key in Stores.retiredKeys { values[key] = Data("an earlier build's".utf8) }
+        let world = World(store: MemoryStore(values))
+        #expect(Stores.readOnly)
+        #expect(world.store.writes.isEmpty)
+        #expect(world.store.values.count == values.count)
     }
 
     /// Under a newer build's mark this build writes nothing at all, and
@@ -513,10 +574,7 @@ struct AppTests {
     /// `Stores`, each write the one `Stores` logged; UserDefaults itself is
     /// never touched.
     @Test func everyWriteGoesThroughStores() async throws {
-        let keys = [
-            Cook.savedKey, "calibration.v5", "boilMemory", SettingsStore.key, "newestVersion",
-            "newestBuild", "languageState", "alarmSound",
-        ]
+        let keys = StoreRegistry.all.compactMap(\.ios)
         let standard = UserDefaults.standard
         let before = keys.map { standard.object(forKey: $0).map { "\($0)" } }
 
@@ -544,6 +602,8 @@ struct AppTests {
         #expect(!set.isEmpty)
         #expect(set == wrote)
         #expect(Set(world.store.writes.map(\.key)).isSuperset(of: [Cook.savedKey, "calibration.v5"]))
+        // Every key written is in the table of stores.
+        #expect(Set(world.store.writes.map(\.key)).isSubset(of: Set(keys)))
         #expect(keys.map { standard.object(forKey: $0).map { "\($0)" } } == before)
     }
 }

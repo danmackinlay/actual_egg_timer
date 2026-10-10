@@ -14,30 +14,24 @@ import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
-import { RunningCook, readRunningCook } from '../core/running.js';
+import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
+import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
+export type { KeptAnswers, StoredCook } from '../core/running.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
-const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v5';
-const BOIL_KEY = 'aet.boil.v1';
+const SETTINGS_KEY = STORES.settings.web;
+const COOK_KEY = STORES.cook.web;
+const BOIL_KEY = STORES.boilMemory.web;
 
-/**
- * Every key an earlier build of this app wrote that this one does not read,
- * deleted at boot (`claimStorage`) rather than left in storage being neither
- * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
- * 0.3 and 0.4 (`v4`), the
- * copies 0.4 kept aside of what it could not read, and the cooks in progress
- * before this one's shape (`aet.cook.v1`-`v4`; `v5` keeps a cook's log).
- */
-export const RETIRED_KEYS = [
-  'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
-  'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
-];
+/** Every key this build keeps (src/core/stores.ts). Any other key of this
+ *  app's (`aet.`) is an earlier build's, which this one neither reads nor
+ *  collects, and is deleted at boot (`claimStorage`). */
+const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web])));
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */
@@ -94,7 +88,7 @@ export function removeStorage(key: string): void {
  * storage, is seen at this page's next write even if its `storage` event
  * has not yet arrived. Never removed: "Start learning again" keeps it.
  */
-const NEWEST_KEY = 'aet.newest';
+const NEWEST_KEY = STORES.newest.web;
 
 /** This build's version, once `claimStorage` has been called; until then
  *  (tests, tools) every write goes through unguarded. The page's own: the
@@ -105,17 +99,33 @@ let readOnly = false;
 /**
  * Before anything is read for writing back, or written: compare the mark
  * with this build, and write this build's version there if it is not older
- * than what is there; then, if this build may write, delete the keys no
- * build from this one on reads (`RETIRED_KEYS`). A build that finds a newer
- * mark deletes nothing. Says what this page does with the stores from now on.
- * When it stops writing, then or later, the page is told once (`leftAlone`).
+ * than what is there; then, if this build may write, delete every key of
+ * this app's that this build does not keep (`KEPT_KEYS`). A build that finds
+ * a newer mark deletes nothing. Says what this page does with the stores
+ * from now on. When it stops writing, then or later, the page is told once
+ * (`leftAlone`).
  */
 export function claimStorage(version: string): WriterVerdict {
   mine = version;
   readOnly = false;
-  mayWrite();
-  for (const key of RETIRED_KEYS) if (readStorage(key) !== null) removeStorage(key);
+  if (!mayWrite()) return 'readOnly';
+  for (const key of storageKeys()) if (key.startsWith('aet.') && !KEPT_KEYS.has(key)) removeStorage(key);
   return readOnly ? 'readOnly' : 'write';
+}
+
+/** Every key in storage now; none if there is no storage. */
+function storageKeys(): string[] {
+  const keys: string[] = [];
+  try {
+    const storage = window.localStorage;
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key !== null) keys.push(key);
+    }
+  } catch {
+    /* no storage: nothing to delete. */
+  }
+  return keys;
 }
 
 /** Whether a newer build has run here since this page started: if so this
@@ -298,7 +308,7 @@ export type SettingsStore = ReturnType<typeof openSettings>;
  * per page, opened at boot (app.ts) and held by the runner (cook.ts).
  */
 export function openSettings(classes: SizeClass[]) {
-  const store = syncedKey(SETTINGS_KEY, parseObject);
+  const store = syncedKey(SETTINGS_KEY, (text) => inFormat(STORES.settings, parseObject(text)));
   /** The pan method last saved - what a save made in sous-vide writes in
    *  its place (`save`). Read with the settings, and kept up by every save
    *  of a pan, so a save need not read storage back to find it. */
@@ -320,7 +330,7 @@ export function openSettings(classes: SizeClass[]) {
   function save(settings: Settings): Settings {
     const next = takenUp(settings, store.takeUp());
     if (next.startMode !== 'sous') lastPanStart = next.startMode;
-    store.write(JSON.stringify({ ...next, startMode: lastPanStart }));
+    store.write(JSON.stringify(stamped(STORES.settings, { ...next, startMode: lastPanStart })));
     return next;
   }
 
@@ -366,7 +376,7 @@ export function openSettings(classes: SizeClass[]) {
 /** Only the language, for choosing a catalogue before anything else is read:
  *  the page paints nothing until its words are in. */
 export function loadLanguage(): LanguageState {
-  const raw = parseObject(readStorage(SETTINGS_KEY));
+  const raw = inFormat(STORES.settings, parseObject(readStorage(SETTINGS_KEY)));
   return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
 }
 
@@ -407,7 +417,7 @@ export function openPans() {
       const now = taken === null ? memory : taken.theirs;
       const updated = rememberBoil(now, clampLitres(litres), seconds);
       if (updated === now) return now;
-      store.write(JSON.stringify(updated));
+      store.write(JSON.stringify(stamped(STORES.boilMemory, { pans: updated })));
       return updated;
     },
     /** Another tab changed storage: the pans as it left them, or null if it
@@ -420,9 +430,10 @@ export function openPans() {
 }
 
 function readBoilMemory(text: string | null): BoilMemory {
-  const raw = parseObject(text);
+  const pans = inFormat(STORES.boilMemory, parseObject(text))?.['pans'];
   const out: BoilMemory = {};
-  if (raw === null) return out;
+  if (pans === null || typeof pans !== 'object' || Array.isArray(pans)) return out;
+  const raw = pans as Record<string, unknown>;
   for (const key of Object.keys(raw)) {
     const seconds = Number(raw[key]);
     if (isWithin(seconds, LIMITS.timeToBoil_s)) out[key] = seconds;
@@ -436,29 +447,16 @@ function clampLitres(litres: number): number {
 
 /* ------------------------------------------------------------ the cook */
 
-/**
+/*
  * A cook in progress, so a reload does not lose the egg
- * (design/one-screen.md section 4, "What is stored").
- *
- * A running cook is its start, its choices and its events, all clock times
- * (src/core/running.ts), so writing it down is all a reload needs: the plan
- * is derived from it again. With it, whether its egg has been written down,
- * and the lean last decided, the interim while its surface is rebuilt.
+ * (design/one-screen.md section 4, "What is stored"): core's `StoredCook`,
+ * written and read as iOS writes and reads it (`storedCook`,
+ * `readStoredCook`). The plan is derived from it again.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. Whether a cook is still
  * worth restoring is core's `cookTooOld`, asked of its plan by the caller.
  */
-export interface StoredCook {
-  cook: RunningCook;
-  answers: KeptAnswers;
-  leanHint_s: number;
-}
-
-/** Whether the egg has been written down with an answer, as a cook keeps it
- *  (src/ui/feedback.ts): an egg answered on the page that wrote it is kept as
- *  answered before a reload, which is what it is when it is read back. */
-export type KeptAnswers = 'none' | 'beforeReload';
 
 /** The cook as stored (`openCooks`), and what is written beside it. */
 export interface CookStore extends SyncedKey<StoredCook | null> {
@@ -475,7 +473,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
 
 /**
  * The cook as stored, whichever tab wrote it, or null: none, or one this
- * build cannot read (`readStoredCook`), which the caller drops. What this
+ * build cannot read (core's `readStoredCook`), which the caller drops. What this
  * tab last read or wrote there is what it has seen; another tab's write is
  * taken up (model.ts, `elsewhere`) only when it is of this tab's own cook,
  * by id, since each tab runs the cook it started, and then only what that
@@ -483,7 +481,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
  * (app.ts) and held by the runner (cook.ts).
  */
 export function openCooks(): CookStore {
-  const key = syncedKey(COOK_KEY, readStoredCook);
+  const key = syncedKey(COOK_KEY, (text) => readStoredCook(parseObject(text)));
   /** The stored record's cook's id, read as little as it takes. */
   const idIn = (raw: Record<string, unknown> | null): unknown => {
     const cook = raw === null ? null : raw['cook'];
@@ -491,7 +489,9 @@ export function openCooks(): CookStore {
   };
   return {
     ...key,
-    save: (cook, answers, leanHint_s) => key.write(JSON.stringify({ cook: cook, answers: answers, leanHint_s: leanHint_s })),
+    save: (cook, answers, leanHint_s) => key.write(JSON.stringify(storedCook({
+      cook: cook, answers: answers, leanHint_s: leanHint_s,
+    }))),
     clear(id_ms) {
       const raw = parseObject(key.text());
       const stored = idIn(raw);
@@ -503,20 +503,6 @@ export function openCooks(): CookStore {
       key.write(JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
     },
   };
-}
-
-/** A stored cook's text, read: one without a known `answers` is refused
- *  rather than read as unanswered, which would log its egg a second time. */
-export function readStoredCook(text: string | null): StoredCook | null {
-  const raw = parseObject(text);
-  if (raw === null) return null;
-  const cook = readRunningCook(raw['cook']);
-  if (cook === null) return null;
-  const answers = raw['answers'];
-  if (answers !== 'none' && answers !== 'beforeReload') return null;
-  const hint = raw['leanHint_s'];
-  if (typeof hint !== 'number' || !Number.isFinite(hint)) return null;
-  return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
 /** What another tab wrote for this cook, taken up, and which copy a reload

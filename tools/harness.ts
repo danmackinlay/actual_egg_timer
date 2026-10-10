@@ -115,6 +115,7 @@ export interface Snap {
   peakYolk_C: number | null;
   whiteSets: boolean | null;
   stored: string | null;
+  storedCook: Cook | null;
   log: Rec[];
   eggsLogged: number;
   eggsBehind: number;

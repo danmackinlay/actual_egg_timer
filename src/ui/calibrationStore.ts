@@ -15,11 +15,12 @@ import {
   freshCalibration as freshFrom, loadDecision, parseLog,
 } from '../core/record.js';
 import { activePopulation } from './population.js';
+import { STORES, inFormat } from '../core/stores.js';
 import { SyncedKey, syncedKey } from './store.js';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
  *  and records of today's shape only. An earlier key's store is never read. */
-const KEY = 'aet.calibration.v5';
+const KEY = STORES.calibration.web;
 
 /** Everything that is kept, and the one invariant that holds it together:
  *  `calibration` is `replay(base ?? prior, log.slice(0, folded))`. */
@@ -151,7 +152,7 @@ function readPosterior(raw: unknown): Calibration | null {
 
 export function encodeKept(k: Kept, pop: Population = activePopulation(), likelihood = LIKELIHOOD_ID): string {
   const stored: StoredV5 = {
-    v: 5,
+    v: STORES.calibration.format,
     p: pop.id,
     m: likelihood,
     base: k.base === null ? null : storedPosterior(k.base),
@@ -206,7 +207,7 @@ export function decodeKept(
 
 function decodeParts(raw: string | null, pop: Population, likelihood: string): Decoded {
   const obj = parseJSON(raw);
-  const readable = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 5;
+  const readable = inFormat(STORES.calibration, obj) !== null;
   const s = (readable ? obj : {}) as Partial<Record<keyof StoredV5, unknown>>;
   // A base the store leaves out is read as a damaged one; this app always
   // writes one, null when there is none.

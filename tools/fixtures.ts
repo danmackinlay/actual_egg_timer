@@ -61,6 +61,8 @@
  *                              the verdict on the newest-version mark
  *   fixtures/settings.json     the settings both apps keep: the defaults, and
  *                              a stored copy read back
+ *   fixtures/stores.json       every store either app keeps: its name, format
+ *                              and keys, and what reads as in its format
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -103,6 +105,7 @@ import { runningFixture } from './fixtures/running.js';
 import { newerFixture } from './fixtures/newer.js';
 import { stepFixture } from './fixtures/step.js';
 import { settingsFixture } from './fixtures/settings.js';
+import { storesFixture } from './fixtures/stores.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -140,6 +143,7 @@ const written: Record<string, unknown> = {
   step: stepFixture,
   newer: newerJson,
   settings: settingsFixture,
+  stores: storesFixture,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that

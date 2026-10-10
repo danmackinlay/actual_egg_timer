@@ -40,29 +40,40 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    static let markKey = "newestVersion"
+    static let markKey = key(StoreRegistry.newest)
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    static let buildKey = "newestBuild"
+    static let buildKey = key(StoreRegistry.newestBuild)
 
-    /// Every key an earlier build wrote that this one does not read, deleted
-    /// at launch (`claim`) rather than left on the phone being neither read
-    /// nor collected: the posteriors before the log (`v1`-`v3`), the log of
-    /// 0.3 and 0.4 (`v4`; the log starts fresh in 0.5, DECISIONS.md 107), the
-    /// copies 0.4 kept aside of what it could not read, the cooks in progress
-    /// before this one's shape, the sharing keys of an earlier 0.4 build, and
-    /// settings no build reads any more, the settings a key each among them,
-    /// and sharing's key kept with its dates as seconds since 2001.
+    /// Every key an earlier build wrote: the posteriors before the log
+    /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
+    /// 0.5, DECISIONS.md 107), the copies 0.4 kept aside of what it could not
+    /// read, the cooks in progress before this one's shape, the sharing keys
+    /// of an earlier 0.4 build, settings no build reads any more, the
+    /// settings a key each among them, sharing's key kept with its dates as
+    /// seconds since 2001, and 0.5's keys with a format in them, from before
+    /// the table of stores.
     static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
+        "settings.v1",
         "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
         // The settings before they were one value (`SettingsStore`).
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
         "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
     ]
+    /// The keys deleted at launch (`claim`) rather than left on the phone
+    /// being neither read nor collected: every key an earlier build wrote
+    /// that no store of this build is kept under (core's `StoreRegistry`).
+    static var sweptKeys: [String] {
+        let kept = Set(StoreRegistry.all.compactMap(\.ios))
+        return retiredKeys.filter { !kept.contains($0) }
+    }
+
     /// The keys where an earlier build kept its cook in progress.
-    private static let retiredCookKeys: Set<String> = ["cookInProgress", "cookInProgress.v2", "cookInProgress.v3"]
+    private static let retiredCookKeys: Set<String> = [
+        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4",
+    ]
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
@@ -107,7 +118,7 @@ public enum Stores {
         }
         // A build that finds a newer mark deletes nothing.
         if verdict == .write {
-            for key in retiredKeys where defaults.object(forKey: key) != nil {
+            for key in sweptKeys where defaults.object(forKey: key) != nil {
                 if retiredCookKeys.contains(key) { retiredCook = true }
                 defaults.removeObject(forKey: key, Pass())
                 #if DEBUG
@@ -137,6 +148,12 @@ public enum Stores {
         guard !readOnly else { return }
         store.removeObject(forKey: key, Pass())
     }
+
+    /// A store's key on this app (core's `StoreRegistry`).
+    static func key(_ store: StoreSpec) -> String {
+        guard let key = store.ios else { preconditionFailure("\(store.name) is not kept on iOS") }
+        return key
+    }
 }
 
 /// UserDefaults' reads, and its writes with a `Stores.Pass`: what the app
@@ -159,17 +176,21 @@ extension UserDefaults: KeyValueStore {
     public func removeObject(forKey key: String, _ pass: Stores.Pass) { removeObject(forKey: key) }
 }
 
-/// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
+/// Where a boil memory is kept: as the web keeps it, JSON in its format, the
+/// pans under `pans`. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
 enum BoilMemories {
-    private static let key = "boilMemory"
+    private static let key = Stores.key(StoreRegistry.boilMemory)
 
     static func load() -> BoilMemory {
-        (Stores.store.dictionary(forKey: key) as? BoilMemory) ?? [:]
+        let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        return (inFormat(StoreRegistry.boilMemory, raw)?["pans"] as? BoilMemory) ?? [:]
     }
 
     public static func save(_ memory: BoilMemory) {
-        Stores.set(memory, forKey: key)
+        let stored = stamped(StoreRegistry.boilMemory, ["pans": memory])
+        guard let data = try? JSONSerialization.data(withJSONObject: stored, options: [.sortedKeys]) else { return }
+        Stores.set(data, forKey: key)
     }
 
     /// Forget every measured pan. Paired with the calibration reset: someone
@@ -183,7 +204,7 @@ enum BoilMemories {
 /// as JSON under one key, read by core's `readSettings`, which the web reads
 /// its own with. Nobody wants to re-enter their altitude every morning.
 enum SettingsStore {
-    public static let key = "settings.v1"
+    public static let key = Stores.key(StoreRegistry.settings)
 
     /// The settings as last read or written: what a save of some fields is
     /// laid over, so the rest stay as they were.
@@ -193,7 +214,7 @@ enum SettingsStore {
     @MainActor
     public static func read(classes: [SizeClass]) -> AppSettings {
         let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
-        saved = readSettings(raw, classes: classes)
+        saved = readSettings(inFormat(StoreRegistry.settings, raw), classes: classes)
         return saved
     }
 
@@ -220,7 +241,8 @@ enum SettingsStore {
     @MainActor
     private static func write(_ s: AppSettings) {
         saved = s
-        guard let data = try? JSONSerialization.data(withJSONObject: s.jsonObject, options: [.sortedKeys]) else { return }
+        let stored = stamped(StoreRegistry.settings, s.jsonObject)
+        guard let data = try? JSONSerialization.data(withJSONObject: stored, options: [.sortedKeys]) else { return }
         Stores.set(data, forKey: key)
     }
 }

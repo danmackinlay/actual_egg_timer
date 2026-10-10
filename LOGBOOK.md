@@ -7542,3 +7542,91 @@ minute on and at the most lengthenings, since `slowHobMemoFits` is no
 longer exported (a guess moved alone was not enough: a plan that
 lengthens again from the place converges on the same one). On the merge:
 `verify` (489 tests, 156 + 26 Swift tests), `ios:build`.
+
+## 10 October 2026: one table of stores, formats inside, the sweep from it, one stored cook (REFACTOR-0.5 3.13, 2.11, 0.8, 5.11, 5.12 hole 3)
+
+Branch `stores-registry`, from 0.5.x at `0d156c3`, with 0.5.x merged in at
+`270334a` and `83962d2`.
+
+- **readProbe** (`748ceea`, 5.11): a probe field reads as `{ value }` or
+  null in TypeScript, never `undefined`; Swift's `readProbe` and
+  `numberOrNull` say the same with `OrNull<T>?` in place of `T??`.
+- **The table of stores** (`a1ca9f7`, 3.13): `src/core/stores.ts`, twinned
+  in `StoreRegistry.swift`, fixtured in `fixtures/stores.json`. A row a
+  store: its name, its format, its key on each app. The format is written
+  inside what is stored as `v` (`stamped`) and a store is read only in its
+  own (`inFormat`), so a change of shape is one number for both apps and
+  the key stays. As registered:
+
+  | store | format | web | iOS |
+  |---|---|---|---|
+  | newest | none (a version) | `aet.newest` | `newestVersion` |
+  | newestBuild | none (a build) | - | `newestBuild` |
+  | settings | 1 | `aet.settings` | `settings` |
+  | cook | 6 | `aet.cook` | `cook` |
+  | boilMemory | 1 (pans under `pans`) | `aet.boilMemory` | `boilMemory` |
+  | calibration | 5 (and in its key) | `aet.calibration.v5` | `calibration.v5` |
+  | share | none (in its key) | `aet.share.v1` | `sharing.v1` |
+  | shareAttest | none (in its key) | - | `sharing.attest.v2` |
+  | languageState | 1 | - | `languageState` |
+  | alarmSound | none (a name) | - | `alarmSound` |
+  | devClockUsed | none (a flag) | `aet.devClock.used` | - |
+
+  Sharing's keys keep their formats in them: Sharing.swift was another
+  branch's, and the web's share follows iOS's. The log keeps the key it
+  began with and has its format inside as well. The Swift literal lint
+  takes a store's name or key as not words.
+- **One stored cook** (`d0b21b4`, `f0bc033`, `5a1ee25`; 0.8, 5.11, hole 3):
+  core's `storedCook`/`readStoredCook`, one envelope for both apps:
+  `{ v: 6, cook, answers, leanHint_s }`, the cook its id, nudge, pans,
+  units, language, start and log. The folded cook (`startedAt_s`,
+  `choices`, `events`, `correctedAt_s`, `asRan`) is no longer written by
+  either app. iOS's own `Stored` (with `feedbackGiven`) is gone: Cook
+  decodes core's `StoredCook` through JSONDecoder and `readStoredCook`,
+  and RunningCook is no longer Codable. The table of stored cooks as text
+  (41 rows: cooks at each stage, the folded cook beside the log with and
+  without `asRan`, both apps' shapes from before, every refusal) is run
+  through the web store's load (`store.test.ts`) and Cook's
+  (`AppTests.theStoredCookTableReadsAsTheWebReadsIt`): the same rows taken
+  and refused. Before, the two could not agree on any row: the web wrote
+  `answers`, iOS `feedbackGiven`, and each refused the other's.
+- **Every store on the table** (`9d4c79d` web, `3e25016` iOS): the
+  settings to `aet.settings`/`settings`, the pans to `aet.boilMemory` and,
+  on iOS, from a plist dictionary to the web's JSON; the language state
+  stamped. Each app's tests, the e2e suites and the copy capture name keys
+  from the table. `two-tabs-cook` had watched `aet.cook.v4`, which nothing
+  wrote, so it could not fail; it watches the cook's key now.
+- **The sweeps** (`d467ece` web, `0891d85` iOS; 2.11 generalised): the web
+  deletes at boot every `aet.` key the table does not list (in place of a
+  fixed list); iOS deletes the retired list less any key the table keeps
+  (UserDefaults holds the system's keys and launch arguments, so not by
+  prefix). Both only once the guard says this build may write.
+  `newerStore.test.ts` 3b/3c and AppTests: an earlier build's keys swept, a
+  current key and another app's kept, a read-only build sweeping nothing.
+
+**What a phone or browser upgrading from 0.3 keeps.** In a browser:
+nothing of 0.3's stores. The log (`aet.calibration.v4`) and a cook in
+progress (`aet.cook.v2`) went already (107); the settings
+(`aet.settings.v1`) and the pans (`aet.boil.v1`), which 0.5 read until
+now, are swept and start from the defaults. On an iPhone: the log and a
+cook in progress went already (107; a running cook's card is ended); the
+settings keys went with 3.11; the language (`languageState`, no format
+inside) now reads as the default, so a cook in the English of 1750 is put
+back in English, and the pans (`boilMemory`, a plist dictionary) read as
+none until the next measured boil writes over them. The newest-build mark
+and the alarm sound are kept. A 0.5 alpha keeps its log and its sharing
+state; its settings, pans and a cook in progress go.
+
+**Lines** (0.5.x at `83962d2` -> this branch, all lines / code lines):
+the web's stores (`store.ts`, `calibrationStore.ts`) 773/443 -> 760/441;
+iOS's (`Store.swift`, `Calibration.swift`, `LanguageChoice.swift`,
+`AlarmSoundChoice.swift` and Cook.swift's stored cook) 1,290/820 ->
+1,312/834; the apps together 2,063/1,263 -> 2,072/1,275. Core gained the
+table (88 + 58) and the stored cook (+42 TS, +45 Swift with `OrNull`).
+The apps did not shrink: the web lost its own cook reader and the fixed
+key list; iOS lost `Stored` and the second read of the cook, but gained
+`sweptKeys`, `Stores.key` and the pans as JSON in their format.
+
+Gates on the merged tree (`8778cb9` and this entry): `verify` (495 tests,
+validate 28/28, 161 + 29 Swift tests), `ios:build`, `e2e` 86 of 86 (47
+behaviour, 39 copy/), `ios:e2e` 48 of 48.

@@ -575,25 +575,21 @@ public final class Cook {
 
     // MARK: - Surviving a relaunch
 
-    /// What is stored: the cook, whether it has been answered about, and the
-    /// last decided lean. The alarms are with the system and the card on the
-    /// Lock Screen, so a force-quit leaves both counting down: the cook is
-    /// picked back up to match them.
-    private struct Stored: Codable {
-        var cook: RunningCook
-        var feedbackGiven: Bool
-        var leanHintS: Double
+    /// What is stored is core's `StoredCook`, as the web stores it: the
+    /// cook, whether its egg has been answered, and the last decided lean.
+    /// The alarms are with the system and the card on the Lock Screen, so a
+    /// force-quit leaves both counting down: the cook is picked back up to
+    /// match them.
+    static let savedKey = Stores.key(StoreRegistry.cook)
 
-        private enum CodingKeys: String, CodingKey {
-            case cook, feedbackGiven, leanHintS = "leanHint_s"
-        }
+    /// A stored cook's data as this app reads it, whole, or nil.
+    static func readStored(_ data: Data) -> StoredCook? {
+        try? JSONDecoder().decode(StoredCook.self, from: data)
     }
-
-    static let savedKey = "cookInProgress.v4"
 
     private func persist(_ cook: RunningCook?, leanHintS: Double) {
         guard let cook else { return }
-        let stored = Stored(cook: cook, feedbackGiven: answered(cook), leanHintS: leanHintS)
+        let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
             Stores.set(data, forKey: Self.savedKey)
             #if DEBUG
@@ -604,8 +600,8 @@ public final class Cook {
 
     /// The stored cook forgotten, unless another cook is stored now.
     static func forgetStored(idMs: Double) {
-        if let data = Stores.store.data(forKey: savedKey),
-           let stored = try? JSONDecoder().decode(Stored.self, from: data), stored.cook.idMs != idMs { return }
+        if let data = Stores.store.data(forKey: savedKey), let stored = readStored(data),
+           stored.cook.idMs != idMs { return }
         Stores.remove(savedKey)
         #if DEBUG
         Screenshots.log(.stored(value: nil))
@@ -624,8 +620,7 @@ public final class Cook {
         if Stores.takeRetiredCook() { card.endAtTheirEnds() }
         guard let data = Stores.store.data(forKey: Self.savedKey) else { return }
         // A cook this build cannot read whole is dropped, with what timed it.
-        guard let stored = try? JSONDecoder().decode(Stored.self, from: data),
-              let cook = readRunningCook(stored.cook.jsonObject) else {
+        guard let stored = Self.readStored(data) else {
             Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log(.restoreUnreadable)
@@ -634,6 +629,7 @@ public final class Cook {
             card.endAll()
             return
         }
+        let cook = stored.cook
         let now = AppClock.nowS
         let was = CookState(cook: cook, plan: nil, leanHintS: stored.leanHintS)
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
