@@ -11,14 +11,14 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 489 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 495 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 47 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. CI is set to fail on either, though
-neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 156 tests
-in 41 suites for the core twin and 26 in 2 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
+neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 161 tests
+for the core twin and 29 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
@@ -53,7 +53,7 @@ These counts are the only ones in the documents. If you want a number, run
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
    (`archive/design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (now `aet.cook.v5`, `cookInProgress.v4`; `design/one-screen.md` §4),
+   on it (now core's stored cook, `aet.cook` and `cook`; `design/one-screen.md` §4),
    and red-teamed as built (`archive/design/running-cook-review.md`): core's, the
    web's and iOS's findings fixed, before the one screen; certainty in words (93, D1),
    for the owner on a phone. The one screen is built in both apps (C3,
@@ -84,9 +84,15 @@ These counts are the only ones in the documents. If you want a number, run
    (3.12); its end-of-cook fixes are under Swift tests (5.5). `Cook` holds the
    state and hands effects to four small runners (alarms, card, surfaces,
    log), Sharing has no `generation` tokens, and core's sharing API is in
-   seconds with the stored formats unchanged (3.9, 3.16). The test suite is trimmed by behaviour (5.12;
-   `npm test` about half the time). Next: the smaller items (5.11), 0.8, 3.13, 3.16, 2.4 and 4.2's `GOTCHAS.md` (3.18 deferred), and what is left of 3.9 (PhaseActions'
-   layout per phase).
+   seconds with the stored formats unchanged (3.9, 3.16). Every store is in one
+   table in core, its format inside the payload; the boot sweep deletes
+   what the table does not list; and both apps read one stored cook through
+   core alike, held by a table of 41 raw texts (3.13, 2.11, 0.8). A 0.3
+   install starts from the defaults: settings, pans and the 1750 language
+   choice go with the log (48, 107). The test suite is trimmed by behaviour (5.12;
+   `npm test` about half the time). Next: the comment
+   sweep (2.4), `GOTCHAS.md` (4.2), and the worklists cut to what is open;
+   3.18 is deferred, and PhaseActions' layout per phase (3.9) is left.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -475,10 +481,11 @@ checked, fixed or deleted. Start the QA pass here.
   the iOS simulator, not yet on a phone or on Netlify.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
-  (`aet.settings.v1`, `aet.cook.v5`, `aet.calibration.v5`, `aet.boil.v1`,
-  `aet.share.v1`; iOS's `sharing.v1` and `sharing.attest.v1`; record v1) may
-  change without a migration; bump the key's version so an old value is
-  dropped rather than misread. Back-compat starts when the owner says the app
+  (core's table of stores, `src/core/stores.ts`, each with its format
+  inside the payload but the results log's and sharing's, in their keys)
+  may change without a migration; bump the store's format so an old value
+  is dropped rather than misread, and the boot sweep deletes any key the
+  table does not list. Back-compat starts when the owner says the app
   is widely deployed, and not before. What has been SENT is another matter:
   the server's records are parsed by the same `parseRecord`, and a field
   reinterpreted there would misread every egg already kept.
