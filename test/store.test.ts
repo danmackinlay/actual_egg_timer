@@ -136,7 +136,7 @@ test('a cook comes back whole, with whether its egg was written down and the lea
   assert.deepEqual(cooks.peek(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
 });
 
-test('two tabs on one cook take up each other\'s events, never a copy that lacks them (review 1.2)', () => {
+test('two tabs on one cook take up each other\'s events, never a copy that lacks them', () => {
   const start = aCook();
   const untapped = unboiled();
   const S = start.startedAt_s;
@@ -173,7 +173,7 @@ test('two tabs on one cook take up each other\'s events, never a copy that lacks
   assert.equal(takeUpEvents(untapped, other), untapped);
 });
 
-test('a copy with other corrections gives only what the cook saw, never what its clock decided (onescreen review 1.1)', () => {
+test('a copy with other corrections gives only what the cook saw, never what its clock decided', () => {
   const start = aCook();
   const S = start.startedAt_s;
   const due = S + 900;

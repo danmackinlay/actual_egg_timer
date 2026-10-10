@@ -327,12 +327,8 @@ check(
   `pan time constant at 2 L (${TAU_STANDING_REF_S.toFixed(1)} s) is the old rule's at an 8-minute boil`,
   panTimeConstant(2), oldRuleTau(480), 1e-9, 's',
 );
-check(
-  'a 1 L pan cannot stand its way to hard',
-  solveCookTime(REFERENCE_EGG, standingSetup(240, 1), DEFAULT_PARAMS, donenessFromSlider(1.0))
-    .hardestLevel < 1 ? 1 : 0,
-  1, 0, '',
-);
+// That a litre cannot stand its way to hard, and three litres can, is
+// test/core.test.ts 15b; the table above shows it.
 
 
 // --------------------------------------------------------------------------
