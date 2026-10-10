@@ -142,7 +142,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        // The cook's sound (DECISIONS.md 101): whole periods of it, under the
+        // The cook's sound: whole periods of it, under the
         // 30 s past which iOS plays its default instead (tools/sounds.ts).
         content.sound = UNNotificationSound(
             named: UNNotificationSoundName(AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment))

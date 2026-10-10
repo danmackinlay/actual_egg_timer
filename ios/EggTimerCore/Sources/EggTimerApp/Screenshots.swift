@@ -25,7 +25,7 @@ import os
 ///   eggs into the log through the app's own store, each cooked at the level
 ///   and setup on screen, and fold them (`Planner.seed`). A learned state
 ///   without cooking. `got-` and one of the five words is the yolk the cook
-///   got (DECISIONS.md 92): `got-runny` to `got-hard`. An answer about the
+///   got: `got-runny` to `got-hard`. An answer about the
 ///   white follows a slash: `got-jammy/firm`, `got-soft/tender`.
 /// - `-uiScreen certainty-open`: open what the certainty line under the time
 ///   says when pressed.

@@ -81,12 +81,12 @@ final class SolveLoop {
 
     /// Re-solve for the inputs as they stand.
     ///
-    /// A THROTTLE, as the web's `scheduleSolve` is, not a debounce. It used to
-    /// cancel the solve in flight and wait out 90 ms afresh on every change,
-    /// so a stepper held down (a change every 100 ms) or a drag landed nothing
-    /// at all until the finger stopped: measured on the simulator, the time on
+    /// A THROTTLE, as the web's `scheduleSolve` is, not a debounce. A debounce
+    /// cancels the solve in flight and waits out 90 ms afresh on every change,
+    /// so a stepper held down (a change every 100 ms) or a drag lands nothing
+    /// at all until the finger stops: measured on the simulator, the time on
     /// screen froze for the whole two seconds of a hold (LOGBOOK.md, 4 October
-    /// 2026). Now one solve loop runs at a time. A change while it solves is
+    /// 2026). So one solve loop runs at a time. A change while it solves is
     /// picked up when it finishes; the answer it just got is shown meanwhile,
     /// a step behind, without the snap (`applyInterim`).
     func recompute() {
@@ -193,7 +193,7 @@ final class SolveLoop {
     /// out - this pot's, and those of the changes the advice would price - are
     /// listed in `missing`. Once this pot's profile is in, the time is held by
     /// it, so a softer level never gets a later time than a firmer one
-    /// (DECISIONS.md 84); until then a level has its own choice.
+    /// (the envelope, Reach.swift); until then a level has its own choice.
     private nonisolated static func decided(
         _ answer: Answer, grid: DoseGrid, _ snapshot: InputSnapshot
     ) async -> Answer {

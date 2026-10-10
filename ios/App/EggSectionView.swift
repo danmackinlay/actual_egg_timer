@@ -3,12 +3,11 @@ import EggTimerCore
 import EggTimerApp
 
 /// The egg in cross-section, beside the setup sentence in every phase: how
-/// set each layer is, ring by ring (`DECISIONS.md` 52). The web's is
+/// set each layer is, ring by ring. The web's is
 /// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
 /// same outline, the same rings and the same colours (`Palette`).
 ///
-/// It has two readings (design/one-screen.md section 5; DECISIONS.md 91, 97
-/// and 98), which the debug log names as the web's drawing does:
+/// It has two readings (design/one-screen.md section 5), which the debug log names as the web's drawing does:
 ///
 /// - `aim`, the egg the settings on screen aim for, as eaten at the end of
 ///   the cooling (`previewSection`), so the yolk reads the level asked: idle,

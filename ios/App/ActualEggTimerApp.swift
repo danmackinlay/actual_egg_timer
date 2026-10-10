@@ -14,7 +14,7 @@ struct ActualEggTimerApp: App {
         Services.announce = { UIAccessibility.post(notification: .announcement, argument: $0) }
         Screenshots.appActive = { UIApplication.shared.applicationState == .active }
         // Before anything is written: whether a newer build has run on this
-        // phone, and the mark brought up to this one if not (DECISIONS.md 100),
+        // phone, and the mark brought up to this one if not,
         // and then the keys no build reads any more deleted.
         Stores.claim()
         // The cook's language, before anything is drawn in it.

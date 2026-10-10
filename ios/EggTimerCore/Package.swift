@@ -11,7 +11,7 @@ import PackageDescription
 // the catalogue renderer (src/core/copy.ts on the web), and it is separate only
 // so that the widget extension can link it without linking the physics.
 //
-// Above the core, two libraries of the app's own (REFACTOR-0.5 1.2), so that
+// Above the core, two libraries of the app's own, so that
 // what the app does with the core is tested by `swift test` too, without a
 // simulator. EggTimerShared is what the app and its widget both compile: the
 // catalogue as the app loads it (`tr`) and the Live Activity's contract; the

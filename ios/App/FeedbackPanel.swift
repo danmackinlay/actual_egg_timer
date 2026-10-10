@@ -6,7 +6,7 @@ import EggTimerShared
 
 /// At Done: the two questions, both always on screen and neither required
 /// (INFERENCE.md section 3) - the yolk the cook got, in the slider's own five
-/// words, and the white next to it (DECISIONS.md 92) - and under them the
+/// words, and the white next to it - and under them the
 /// probe reading, optional too, whenever this cook had a moment to probe.
 /// Ordered words are not a poor interface for a rating - they are the whole
 /// measurement: a number out of ten would collect precision that is not

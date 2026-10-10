@@ -6,13 +6,13 @@ import EggTimerApp
 
 /// Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
 /// turns it on sends every egg in the log to the collection endpoint, the
-/// ones from before it was on included (DECISIONS.md 59), and can delete
+/// ones from before it was on included, and can delete
 /// everything this phone has sent. What it keeps, and how each step moves it,
 /// is core's (`ShareState`, `src/core/share.ts`), which the web moves alike;
 /// this holds it, writes it through and does the talking, as the web's
 /// `src/ui/share.ts` does.
 ///
-/// What iOS adds is App Attest (DECISIONS.md 60). When an id first sends, the
+/// What iOS adds is App Attest. When an id first sends, the
 /// phone makes a key in its Secure Enclave and has Apple attest it, bound to
 /// the id (`clientDataHash = SHA256(uid)`), and posts the attestation; every
 /// egg then carries an assertion - the key's signature over the body sent -
@@ -72,8 +72,8 @@ final class Sharing {
 
     // MARK: - The server
 
-    /// The site the web app is served from, which hosts the endpoint
-    /// (DECISIONS.md 51). A debug build can point elsewhere with
+    /// The site the web app is served from, which hosts the endpoint. A
+    /// debug build can point elsewhere with
     /// `-shareServer <url>`, for a local `netlify dev`.
     static var server: URL { Screenshots.shareServer ?? URL(string: "https://actualeggtimer.netlify.app")! }
 

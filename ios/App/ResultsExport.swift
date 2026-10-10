@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import EggTimerApp
 
 /// "Export my results" as the share sheet takes it: a file, written when the
-/// cook picks where it goes, from what is stored then (DECISIONS.md 81). The
+/// cook picks where it goes, from what is stored then. The
 /// text is `Calibrations.exportText`, in EggTimerApp; the share sheet's side
 /// of it is the app's.
 struct ResultsExport: Transferable {

@@ -9,7 +9,7 @@ import EggTimerCore
 /// This file applies the rules; it does not decide them.
 
 /// The newest version of the app that has run on this phone, and whether
-/// this one may write (DECISIONS.md 100).
+/// this one may write.
 ///
 /// An older build writes what it stores whole, from the fields it knows, and
 /// drops what a newer build added there. So the mark holds the newest
