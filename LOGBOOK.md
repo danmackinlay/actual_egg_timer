@@ -7423,6 +7423,62 @@ Proof: the copy capture of 178 states, this harness driving the build at
 `build:site`, `e2e` 86 of 86 (47 behaviour, 39 copy/, every state
 checked, none asserting nothing).
 
+## 10 October 2026: the suite's deletions and renames (REFACTOR-0.5 5.12)
+
+Branch `test-suite-trim` from 0.5.x at `0d156c3`, `b04c875`..`0831021`.
+The red team's audit found `npm test` spending its time where the code
+was already held; this takes it out without losing what was checked.
+
+- **The tick trace through `step`** (`b04c875`): test/machine.test.ts
+  walked a cook with a tick loop of its own (citing cook.ts's `onTick`,
+  gone since 3.7, and planning without the slow hob's memo). step.test.ts
+  now ticks core's `step` once a second: each cooling rings the pull at
+  its second, stays in Pull for the whole grace, then cools or is Done,
+  which rings once (the counter rest rings pull then Done); the cook's
+  tap out counts the cooling from the tap; a cold start heats through
+  1,400 s of a slow hob, ringing nothing, and a tap past the measured
+  ramp's pull is the pull. "Cooling starts on its own" went into the
+  readout test. The step tests' driver built the same surface four times
+  a start, since no odds profile is built there and a step goes on asking
+  for one; it now lands only what is new, and step.test.ts fell from
+  about 20 s to 5.
+- **The slow hob's memo as one property** (`ece25d7`): running.test.ts
+  23, 24 and 29 (47 s) are one test at twenty moments drawn with a fixed
+  seed over the two hours, squared so half fall in the first half hour
+  where the guess lengthens: the last plan's memo taken and the plan the
+  one from the start; at the first ten, the memo offered under each of
+  24's changes, refused or taken as the rule reads it, the plan from the
+  start either way; at each plan's own moment nothing due, a plan made
+  then keeping it, and a millisecond past it moving on; 29's ends. About
+  11 s. Breaking the memo's key check fails it at once.
+- **Restatements** (`4938b32`): `YOLK_RADIUS_FRAC == 0.693` (Williams'
+  prefactor is now taken at the constant), `LEAN_RATIO == 1.5`,
+  `YOLK_WORD_CUTS.length == 4` (the cuts walked between each two words),
+  and Swift's `PullLineTests.keys`, which restated `pullLineKey`'s switch:
+  each cooling's line is held to be named for it instead, so a swapped
+  or misspelt arm still fails.
+- **One copy of each** (`0218a1a`): the boiling point against 100 - h/300
+  and Z_YOLK from Vega's activation energy stay in `npm run validate`
+  (core.test.ts 7b keeps that the boiling point falls; 9b, now numbered
+  after 9's removal, holds Z_YOLK to 0.02 K of 4.65 through the tenfold
+  rate); the 1 L pan stays in core.test.ts 15b, with the three litres
+  that can, and leaves validate's table and README section 7: **28/28**,
+  not 29/29.
+- **Titles** (`0831021`): twenty titles named a review item or a decision
+  number; each now says the behaviour. record.test.ts 4b4 and 4b5 and
+  copy.test.ts's two 1e are in order. No living document cited a number
+  that moved.
+
+`npm test`, the tree at `0d156c3` and this one built side by side and run
+in turn on this machine, with other agents' builds keeping the load
+average between 16 and 38 on 18 cores: 110 and 99 s before, 49 and 66 s
+after (93 s before at the start, at a load of 7 to 20). Tests 493 → 488.
+In test/, tools/validate.ts and the Swift tests, 388 lines out and 276 in
+(21 of each the move of running.test.ts 27, 24 the retitles): 112 fewer.
+
+Gates on `0831021`: `verify` (488 tests, validate 28/28, `swift test`
+156 and 26).
+
 ## 10 October 2026: iOS's Cook a thin runner, sharing in seconds, the app logic smaller (REFACTOR-0.5 3.9, 3.16, 5.11)
 
 Branch `ios-thin-and-tidy`, from 0.5.x at `0d156c3`.
@@ -7479,6 +7535,10 @@ guards; the runners' types and comments added about as much.
 
 Gates on `0925e75`: `verify` (494 tests, validate 29/29, 157 + 26 Swift
 tests), `ios:build`, a Release build of the app, `ios:e2e` 48 of 48 (and
-on `49aefac`), `e2e` 86 of 86 (47 behaviour, 39 copy/). Not yet merged
-with 0.5.x at `270334a` (the test trim), whose running.test.ts and
-step.test.ts touch the tests changed in `e5c71da`.
+on `49aefac`), `e2e` 86 of 86 (47 behaviour, 39 copy/). Then 0.5.x at
+`270334a` merged in (the test trim): its seeded slow-hob property (23)
+asks whether a plan takes a memo by one made wrong on purpose, its guess a
+minute on and at the most lengthenings, since `slowHobMemoFits` is no
+longer exported (a guess moved alone was not enough: a plan that
+lengthens again from the place converges on the same one). On the merge:
+`verify` (489 tests, 156 + 26 Swift tests), `ios:build`.

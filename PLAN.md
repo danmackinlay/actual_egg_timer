@@ -11,13 +11,13 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 493 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 488 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 47 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. CI is set to fail on either, though
-neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 157 tests
+neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 156 tests
 in 41 suites for the core twin and 26 in 2 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -81,8 +81,8 @@ These counts are the only ones in the documents. If you want a number, run
    by core's `readSettings` as the web's are (3.11, `settings.v1`; a 0.3
    phone's settings start from the defaults, as its log does), the planner
    holds them as one value (3.10), and its logic keeps time in seconds
-   (3.12); its end-of-cook fixes are under Swift tests (5.5). Next: the test
-   deletions (5.12) and the smaller items (5.11), 3.13, 3.16, 3.18, 2.4 and 4.2, and what is left of 3.9 (Sharing's
+   (3.12); its end-of-cook fixes are under Swift tests (5.5). The test suite is trimmed by behaviour (5.12;
+   `npm test` about half the time). Next: the smaller items (5.11), 0.8, 3.13, 3.16, 3.18, 2.4 and 4.2, and what is left of 3.9 (Sharing's
    `generation` tokens; `Cook` still runs the alarms, ring and card
    itself).
 

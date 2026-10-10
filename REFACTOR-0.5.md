@@ -712,7 +712,9 @@ it found, in its order, with where each is being done:
         on screen, the certainty line where expected). 4 and 5 are with
         the 3.7 agent and 6 with the gates agent, so each merges once the
         gates are in.
-  - [ ] *The deletions and renames, after 3.7 and 3.9 merge* (about 350
+  - [x] *The deletions and renames* (`b04c875`, `ece25d7`, `4938b32`,
+        `0218a1a`, `0831021`; validate 28/28; `npm test` about half the
+        time, 112 lines fewer), *after 3.7 and 3.9 merge* (about 350
         lines, some 40% of `npm test`'s time): `test/machine.test.ts` for
         one step-driven tick trace in `step.test.ts` (the counter rest
         rings PULL then DONE; a cold start stays HEATING);

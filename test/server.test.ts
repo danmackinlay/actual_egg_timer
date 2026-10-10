@@ -168,7 +168,7 @@ test('4. an iPhone from TestFlight or the App Store attests once, and its eggs g
   assert.equal((await send(store, post('/api/eggs', nokey, { 'x-egg-assertion': '!!' }))).status, 200);
 });
 
-test('5. a development build attests, but its eggs go to the open tier, as if unsigned (DECISIONS.md 68)', async () => {
+test('5. a development build attests, but its eggs go to the open tier, as if unsigned', async () => {
   const store = new MemoryStore();
   const attest = { uid: SYNTH.uid, keyId: SYNTH.keyId, attestation: SYNTH.attestation };
   // The key is verified and kept, so the path can be tried on the owner's phone.
@@ -196,7 +196,7 @@ test('6. the tier a kept record counts in, for the fit: attested only under a ke
   assert.equal(countedTier('open', { environment: 'production' }), 'open', 'an unsigned egg stays open');
 });
 
-test('7. the yolk the cook got (DECISIONS.md 92) is kept, and capped like everything else', async () => {
+test('7. the yolk the cook got is kept, and capped like everything else', async () => {
   const store = new MemoryStore();
   const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
   const forecast = { cook_s: 412, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: five };
