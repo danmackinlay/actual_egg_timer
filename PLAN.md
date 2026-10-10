@@ -5,7 +5,7 @@ same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
 **Where things stand, 10 October 2026, on `0.5.x`** (forked from
-`0.4.x` at `8972a05`; its worklist is `SHIP-0.5.md`). Both apps are complete for one
+`0.4.x` at `8972a05`; its worklist was `archive/SHIP-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
@@ -45,7 +45,7 @@ These counts are the only ones in the documents. If you want a number, run
    endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
    It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
 
-5. **0.5**, on this line: `SHIP-0.5.md`. The foundations are built (A,
+5. **0.5**, on this line (`archive/SHIP-0.5.md`, done). The foundations are built (A,
    B): the counter's carryover held at 1.0 (`DECISIONS.md` 95), the
    review's refactors into core (90), the certainty word's arithmetic
    (93), the web's god files split; both apps driven after them. The one
@@ -61,38 +61,20 @@ These counts are the only ones in the documents. If you want a number, run
    (`archive/design/onescreen-review.md`): core's and the web's findings fixed
    (`DECISIONS.md` 99), and iOS's on the same core (9 October 2026). 0.5 is
    the next release and `0.4.x` is retired (`DECISIONS.md` 102).
-6. **The 0.5 red team's worklist**, `REFACTOR-0.5.md`: what is wrong now
-   (section 0), the gates that make the code safe to change (1), what to
-   delete (2), the restructure (3), the process (4), and the red team of
-   the work so far (5), with the owner's decisions marked (`DECISIONS.md`
-   102-108). Done (9-10 October): the bugs 0.2-0.7; the gates 1.2-1.9 (an
-   iOS app test target with the logic in a package, the cycle check,
-   fixtures checked on Linux, one compile per verify, the e2e through a
-   snapshot, the iOS e2e settled and in TypeScript, one web harness);
-   the deletions 2.1-2.18 but the comment sweep (2.4); and of the
-   restructure, core's `step`, its log and `readoutAt` (3.1-3.6), one
-   `syncedKey` (3.8), the model id split (3.14), `policy.ts` by subject
-   (3.15, 3.17) and fixtures a row a line (3.19). The web's page goes
-   through `update` and a pure view drawn once a frame, its stores are
-   objects the runner holds, and nothing but the runner keeps the model
-   (3.7); every message has a unit test, and the runner is tested on fake
-   stores (5.7, 5.8). The e2e now gate CI (1.1, 5.1). iOS runs the cook on core's
-   `step` and its readout is `readoutAt` (3.9), its settings one value read
-   by core's `readSettings` as the web's are (3.11, `settings.v1`; a 0.3
-   phone's settings start from the defaults, as its log does), the planner
-   holds them as one value (3.10), and its logic keeps time in seconds
-   (3.12); its end-of-cook fixes are under Swift tests (5.5). `Cook` holds the
-   state and hands effects to four small runners (alarms, card, surfaces,
-   log), Sharing has no `generation` tokens, and core's sharing API is in
-   seconds with the stored formats unchanged (3.9, 3.16). Every store is in one
-   table in core, its format inside the payload; the boot sweep deletes
-   what the table does not list; and both apps read one stored cook through
-   core alike, held by a table of 41 raw texts (3.13, 2.11, 0.8). A 0.3
-   install starts from the defaults: settings, pans and the 1750 language
-   choice go with the log (48, 107). The test suite is trimmed by behaviour (5.12;
-   `npm test` about half the time). Next: the comment
-   sweep (2.4), `GOTCHAS.md` (4.2), and the worklists cut to what is open;
-   3.18 is deferred, and PhaseActions' layout per phase (3.9) is left.
+6. **The 0.5 red team's worklist is done** (9-10 October;
+   `archive/REFACTOR-0.5.md`, its decisions `DECISIONS.md` 102-109). The
+   e2e gate CI, and `ios:build` compiles Release too. Core holds the
+   running cook as one `step` with its readout, the stores' table, and one
+   stored cook both apps read alike; the web's page goes through `update`
+   and a pure view, iOS's `Cook` steps core's state and hands effects to
+   small runners, and both keep settings as one value read by core. The
+   suite tests the apps' wiring as well as core, and comments say what the
+   code does. A 0.3 install starts from the defaults: settings, pans and
+   the 1750 language choice go with the log (48, 107). Left, not blocking
+   0.5: iOS's `PhaseActions` keeps a layout per phase (3.9), and the Swift
+   data layer generated from the TypeScript is deferred unless the copies
+   keep drifting (3.18). A7's time range, the right cook time's 90%
+   interval, stays as built until real eggs say how it reads.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -212,7 +194,7 @@ The one queue. Nothing else in the documents waits on the owner.
     The time can step once, a second or so after a new pot, when its odds
     arrive.
 15. **How sure I am, in words, on a phone** (8 October 2026, `DECISIONS.md`
-    93 and 97; `SHIP-0.5.md` D1), both apps and both Englishes: the line
+    93 and 97; `archive/SHIP-0.5.md` D1), both apps and both Englishes: the line
     below the time ("Very certain", "A ballpark figure", "A wild guess"),
     what pressing it opens, "Most likely" under it, the warning on a
     dotted level, and Help's "How sure I am"; the words, and their 1750
@@ -227,7 +209,7 @@ The one queue. Nothing else in the documents waits on the owner.
     guess a change of setup makes surer: on the model a fresh install
     never gets it (`UI.md` §8).
 16. **The one screen, on a phone** (8 October
-    2026, `DECISIONS.md` 91, 96 to 98; `SHIP-0.5.md` C3), in both apps: the
+    2026, `DECISIONS.md` 91, 96 to 98; `archive/SHIP-0.5.md` C3), in both apps: the
     web, and iOS with the same words (iOS also retires the line under its
     running sentence, `cook.summary`).
     One layout from setup to Done: start an egg and change anything - the
@@ -307,7 +289,7 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   whether the field should show when the probe setting is off (it does
   now, whenever the cooling ends at the peak).
 
-- **0.5** (`SHIP-0.5.md`): the counter's carryover fixed at 1.0
+- **0.5** (`archive/SHIP-0.5.md`): the counter's carryover fixed at 1.0
   (`DECISIONS.md` 95); the review's refactors into core (90); certainty in
   words, "very certain", "ballpark" or "wild guess", with the 90% interval
   on a tap (93); one screen for setting up and boiling, the egg in
@@ -526,9 +508,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
-| `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
-| `REFACTOR-0.5.md` | the 0.5 red team's worklist: what is wrong now, the gates, what to delete, the restructure, the process; ticked as it lands |
-| `archive/` | closed records: the 0.4 review and the three design reviews of 0.5, kept for their findings |
+| `archive/` | closed records: the 0.4 review, the three design reviews of 0.5, and the 0.5 worklists (`archive/SHIP-0.5.md`, `REFACTOR-0.5.md`), kept for their findings |
 | `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), outside the default build; each names the document that quotes it |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
 | `archive/design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |

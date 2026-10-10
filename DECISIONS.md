@@ -571,7 +571,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     tidy-ups (the shape study's quick results, `vercel.json`, WORKLIST and
     FOLLOWUP, finished drafts, the fit's tests in CI). 0.4 ships without
     them. 6 October 2026.
-    Built on the 0.5 line (`SHIP-0.5.md` A2-A6, A8, B): `2b4db15`
+    Built on the 0.5 line (`archive/SHIP-0.5.md` A2-A6, A8, B): `2b4db15`
     (`decideAnswer`), `18b428a` (`recordFor`), `f531e4d`
     (`loadDecision`), `f8c9e74` (sharing's state), `37de3ab`
     (`oddsProfile`), `0ac5c80` (the fit in CI), `5633510` and `3dcb123`
@@ -620,7 +620,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Jammy."), and a likely time range. The 3/10 warning, the lean line and
     the ticks' colours are restated in these terms. Built with the one
     screen (91). 0.4 keeps today's odds. 6 October 2026.
-    Its arithmetic built in core, no words yet: `781bfa8` (`SHIP-0.5.md`
+    Its arithmetic built in core, no words yet: `781bfa8` (`archive/SHIP-0.5.md`
     A7).
 94. **The apps keep 1000 particles** ("let's not raise the particle count
     for the users. That is costly. we can raise it in testing if that is
@@ -639,7 +639,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     taste offset. In 0.5 it leaves the particle and the population fit and
     is held at 1.0; that changes the stored posterior, so `MODEL_ID` moves
     and stored posteriors are replayed. `INFERENCE.md` §2 is corrected now.
-    6 October 2026. Built `97a51cd` (`SHIP-0.5.md` A1).
+    6 October 2026. Built `97a51cd` (`archive/SHIP-0.5.md` A1).
 96. **Every change after the start is a correction; everything stays
     open** (the owner, answering `design/one-screen.md`: "they should be
     able to change everything in principle", "leave the displays as
@@ -747,7 +747,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     apps, the `alarm` draft). 9 October 2026.
 102. **0.4 does not ship; 0.5 is the next release, and `0.4.x` retires**
     (the owner, 9 October 2026, through the 0.5 red team's worklist,
-    `REFACTOR-0.5.md` 4.3, and confirmed: "All correct"). 0.5 forked from
+    `archive/REFACTOR-0.5.md` 4.3, and confirmed: "All correct"). 0.5 forked from
     0.4 before 0.4 shipped, so the two were one line in practice and every
     fix was built twice (`0.4.x-newer-version-guard`, `0.5.x-…`). The
     guard (100) ships in 0.5. CLAUDE.md's branch rule changes with it. Recorded `9bec001`; CLAUDE.md

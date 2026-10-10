@@ -565,7 +565,7 @@ it Done, and a deadline past and not moved keeps the notification's cover
 when the alarms are scheduled again, so neither a cooling's end a
 correction wrote nor a pull its notification rang rings in the app.
 
-*As built, the state machine* (`REFACTOR-0.5.md` 3.1-3.6 and 3.16, 10
+*As built, the state machine* (`archive/REFACTOR-0.5.md` 3.1-3.6 and 3.16, 10
 October 2026; core for both apps, which still call the pieces until 3.7 and
 3.9 move them onto it):
 - **The cook is its start and a log** (3.2). `RunningCook` stores what was
@@ -614,7 +614,7 @@ October 2026; core for both apps, which still call the pieces until 3.7 and
 - Stored under new keys (`DECISIONS.md` 48): `aet.cook.v5` and
   `cookInProgress.v4`, the earlier ones swept at boot.
 
-*As built, the web on `step`* (`REFACTOR-0.5.md` 3.7, 10 October 2026):
+*As built, the web on `step`* (`archive/REFACTOR-0.5.md` 3.7, 10 October 2026):
 - **One model** (`src/ui/model.ts`): `Model` extends core's `CookState`
   (`cook`, `plan`, `leanHint_s`) with the page's state (the settings and
   controls, the pans, the calibration, the idle answer, the nudge) and what
@@ -917,7 +917,7 @@ commit each):
    `calibration.ts` refolds a corrected egg, and `logEgg` keeps the
    last-corrected record for an id.
 
-   *As built (web, 8 October 2026; `SHIP-0.5.md` C3, `LOGBOOK.md`).* Steps 6
+   *As built (web, 8 October 2026; `archive/SHIP-0.5.md` C3, `LOGBOOK.md`).* Steps 6
    and 7 as listed, in eight commits, each driven by `npm run e2e`. Where
    it departs from the text above, or chose where the text was silent:
    - **Nothing moves at the start** (§2), so the clock keeps its idle size
@@ -1007,7 +1007,7 @@ commit each):
     `SettingsView.swift`; `Screenshots.swift` launch arguments for a
     correction mid-cook.
 
-    *As built (iOS, 8 October 2026; `SHIP-0.5.md` C3, `LOGBOOK.md`).* Step
+    *As built (iOS, 8 October 2026; `archive/SHIP-0.5.md` C3, `LOGBOOK.md`).* Step
     10 as listed, in six commits after core's, each checked by new `npm run ios:e2e`
     scenarios, the web's where iOS can drive them (15 new, 31 in all, the
     same seconds as the web's: the owner's case 213 s later, a heavier egg
@@ -1083,7 +1083,7 @@ rules out, hence the colon. The bracket, the lean line, the 3/10 warning
 and the track's shading are restated in the same terms (§7, 13-17).
 
 As built in today's layout, the `certainty` draft (8 October 2026,
-`SHIP-0.5.md` D1): the words, the interval, "Most likely" and the time
+`archive/SHIP-0.5.md` D1): the words, the interval, "Most likely" and the time
 range are `UI.md` §8; the one screen (C3) keeps them where they are. Its
 follow-up the same day made question 14's "one interval" exact: the
 bracket is the words' interval drawn (core's `wordBracket`, whole words

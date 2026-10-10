@@ -236,7 +236,7 @@ gate could catch it.
       History is in the commit message, which cites `DECISIONS.md`; the
       narrative goes to `LOGBOOK.md`. The 0.4 sweep (WORKLIST §8.1) kept the
       citations, and 0.5 added 279 lines of them back.
-- [ ] **2.4 The sweep**, the 0.5 files first: `src/core/running.ts` (33
+- [x] **2.4 The sweep**, the 0.5 files first: `src/core/running.ts` (33
       citations), `ios/App/Cook.swift` (26), `src/ui/cook.ts` (19),
       `src/core/record.ts` (17), `render.ts`, `reach.ts`, `Record.swift`,
       `Running.swift`. "review N.N", dated "until 5 October" and "older than
@@ -668,7 +668,7 @@ it found, in its order, with where each is being done:
 - [x] **5.9 `PLAN.md` stale across 11 merges** (against 104), and
       CLAUDE.md's `policy.ts`, 106's `copy/approved.json`, and 102-108
       without commits: brought up to date.
-- [ ] **5.10 D105 in new code**: 24 lines in `src/ui` cite decisions or
+- [x] **5.10 D105 in new code**: 24 lines in `src/ui` cite decisions or
       reviews, "REFACTOR-0.5 N.N" in `Package.swift`, `ios/README` and
       e2e descriptions, 29 "review N.N" labels in `tools/fixtures/step.ts`.
       Each working branch cleans what it touches; 2.4 sweeps the rest.
