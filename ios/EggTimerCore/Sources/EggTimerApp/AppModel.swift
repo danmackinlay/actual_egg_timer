@@ -164,7 +164,7 @@ public final class AppModel {
     }
 
     /// A correction committed (`Edits.commit`).
-    public func correct(_ choices: CookChoices, startedAtS: Double?) {
+    func correct(_ choices: CookChoices, startedAtS: Double?) {
         cook.correct(choices: choices, startedAtS: startedAtS)
     }
 }

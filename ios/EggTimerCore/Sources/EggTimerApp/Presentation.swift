@@ -22,7 +22,7 @@ public func warningText(_ v: Verdict, lowOdds: Bool, level: Double, setup: CookS
 
 /// The phone's region: which carton's size classes, and which Imperial unit
 /// water is in. Region only, as `Locale` reports it.
-public let deviceRegion: String? = Locale.current.region?.identifier
+let deviceRegion: String? = Locale.current.region?.identifier
 
 /// The system this phone starts in, before the cook chooses.
 ///
@@ -30,7 +30,7 @@ public let deviceRegion: String? = Locale.current.region?.identifier
 /// 16 the temperature unit a cook can set in Settings, which reaches `Locale`
 /// as its `mu` keyword and so `UnitTemperature(forLocale:)`. Which of them
 /// wins is core policy (`regionalUnits`); this only reads them.
-public func platformUnits() -> UnitSystem {
+func platformUnits() -> UnitSystem {
     let locale = Locale.current
     let system: MeasurementSystemName = switch locale.measurementSystem {
     case .us: .us
@@ -57,7 +57,7 @@ extension Notification.Name {
     /// system on screen, with the `UnitsFlip` raw value under "flip".
     /// `LanguageChoice` observes it: an English UI switched from metric to
     /// Imperial goes into the English of 1750 (LANGUAGE.md §6).
-    public static let unitsFlipped = Notification.Name("unitsFlipped")
+    static let unitsFlipped = Notification.Name("unitsFlipped")
 }
 
 // MARK: - Presentation helpers

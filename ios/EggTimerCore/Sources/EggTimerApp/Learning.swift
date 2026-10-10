@@ -33,7 +33,7 @@ public final class Learning {
     /// button is pressed lands on nothing rather than on the fresh prior.
     private var generation = 0
     /// Whether a fold is under way.
-    public private(set) var draining = false
+    private(set) var draining = false
 
     private var kept: Kept {
         get { planner.kept }
@@ -45,7 +45,7 @@ public final class Learning {
     /// folds it again at the next launch rather than losing it; then learned
     /// from, if it says anything. In place of the egg logged last when
     /// `replaces`: a later answer, or a correction after the pull.
-    public func logRecord(_ record: EggRecord, replaces: Bool) {
+    func logRecord(_ record: EggRecord, replaces: Bool) {
         // A newer build's results are left alone (`Stores`): nothing is
         // written down, so nothing is learned either.
         guard !Stores.readOnly else { return }
@@ -75,7 +75,7 @@ public final class Learning {
     ///   (`folded.before`), as a second answer refolds from.
     /// - Otherwise (folded before a relaunch): the log replayed up to it, a
     ///   surface per egg, off the main actor.
-    public func calibrationBefore(_ index: Int?) async -> Calibration {
+    func calibrationBefore(_ index: Int?) async -> Calibration {
         guard let index, index < kept.folded else { return kept.calibration }
         if let done = folded, done.index == index { return done.before }
         var c = Calibrations.start(kept.base)
@@ -91,7 +91,7 @@ public final class Learning {
     /// and corrected, and the posterior folded again from before it: from
     /// the calibration held before its fold when this process folded it,
     /// else from where the log's replay starts.
-    public func replaceLogged(_ index: Int, _ record: EggRecord) {
+    func replaceLogged(_ index: Int, _ record: EggRecord) {
         guard kept.log.indices.contains(index), kept.log[index] != record else { return }
         kept.log[index] = record
         if index < kept.folded {
@@ -123,7 +123,7 @@ public final class Learning {
     /// One drain at a time: a call made while one runs returns at once, and the
     /// running one picks up whatever was appended, because it reads the log
     /// again after every egg.
-    public func drain() async {
+    func drain() async {
         guard !draining else { return }
         draining = true
         planner.learning = true
@@ -186,7 +186,7 @@ public final class Learning {
     /// about the yolk, in the five words, and, where given, the white; then fold
     /// them, as a relaunch folds eggs it finds unfolded. Only into an empty
     /// log, so a relaunch does not seed twice.
-    public func seed(_ answers: [SeedAnswer]) {
+    func seed(_ answers: [SeedAnswer]) {
         let p = planner
         guard kept.log.isEmpty, !answers.isEmpty, !p.isSousVide else { return }
         let (egg, setup, calibration) = (p.egg, p.setup, p.calibration)

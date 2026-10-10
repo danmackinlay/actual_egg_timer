@@ -30,6 +30,7 @@ import EggTimerCore
 /// "Start learning again" keeps it.
 public enum Stores {
     /// Where everything is kept: UserDefaults in the app; a test's own.
+    /// Unsafe, but set only at launch, or by a test before it runs anything.
     nonisolated(unsafe) public static var store: any KeyValueStore = UserDefaults.standard
 
     /// What a write to the store needs, and only `Stores` can make: so no
@@ -39,10 +40,10 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    public static let markKey = "newestVersion"
+    static let markKey = "newestVersion"
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    public static let buildKey = "newestBuild"
+    static let buildKey = "newestBuild"
 
     /// Every key an earlier build wrote that this one does not read, deleted
     /// at launch (`claim`) rather than left on the phone being neither read
@@ -52,7 +53,7 @@ public enum Stores {
     /// before this one's shape, the sharing keys of an earlier 0.4 build, and
     /// settings no build reads any more, the settings a key each among them,
     /// and sharing's key kept with its dates as seconds since 2001.
-    public static let retiredKeys = [
+    static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
         "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
@@ -65,11 +66,12 @@ public enum Stores {
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
-    /// Screen, and nothing will update it again.
+    /// Screen, and nothing will update it again. Unsafe, but written and
+    /// read once each, at launch on the main actor (`claim`, `Cook.restore`).
     nonisolated(unsafe) private static var retiredCook = false
 
     /// Once: whether the launch's sweep deleted an earlier build's cook.
-    public static func takeRetiredCook() -> Bool {
+    static func takeRetiredCook() -> Bool {
         defer { retiredCook = false }
         return retiredCook
     }
@@ -128,9 +130,7 @@ public enum Stores {
     /// checks hold the store to what the log says was written.
     private static func wrote(_ value: Any?, forKey key: String) {
         store.set(value, forKey: key, Pass())
-        #if DEBUG
         Screenshots.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
-        #endif
     }
 
     public static func remove(_ key: String) {
@@ -161,10 +161,10 @@ extension UserDefaults: KeyValueStore {
 
 /// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
-public enum BoilMemories {
+enum BoilMemories {
     private static let key = "boilMemory"
 
-    public static func load() -> BoilMemory {
+    static func load() -> BoilMemory {
         (Stores.store.dictionary(forKey: key) as? BoilMemory) ?? [:]
     }
 
@@ -182,7 +182,7 @@ public enum BoilMemories {
 /// The inputs, remembered between launches: one value, core's `AppSettings`,
 /// as JSON under one key, read by core's `readSettings`, which the web reads
 /// its own with. Nobody wants to re-enter their altitude every morning.
-public enum SettingsStore {
+enum SettingsStore {
     public static let key = "settings.v1"
 
     /// The settings as last read or written: what a save of some fields is

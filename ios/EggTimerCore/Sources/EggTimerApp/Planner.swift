@@ -46,9 +46,9 @@ public final class Planner {
     private let sizeTableInUse = sizeTableFor(region: deviceRegion)
     /// Where the egg's mass came from, for the record: the carton's class, or the
     /// slider - which is a scale as far as this screen is concerned.
-    public var massFrom: MassFrom { sizeClasses.indices.contains(settings.sizeIndex) ? .sizeClass : .scale }
+    var massFrom: MassFrom { sizeClasses.indices.contains(settings.sizeIndex) ? .sizeClass : .scale }
     /// Whose carton, for a class; nil for a weighed egg.
-    public var sizeTable: SizeTable? { massFrom == .sizeClass ? sizeTableInUse : nil }
+    var sizeTable: SizeTable? { massFrom == .sizeClass ? sizeTableInUse : nil }
 
     /// A class from the menu, or -1 for Weighed, which goes back to the mass
     /// last weighed - the one its menu item names - as the web's "Measured
@@ -121,7 +121,7 @@ public final class Planner {
     /// The system this phone starts in: its temperature preference, then its
     /// measurement system, then its region (`regionalUnits`). Read once, like
     /// the size classes.
-    public let regionalUnits = platformUnits()
+    let regionalUnits = platformUnits()
 
     /// The system on screen: the cook's choice (`settings.unitsChosen`, never
     /// a default stored as one), else the phone's.
@@ -190,7 +190,7 @@ public final class Planner {
     public var calibration: Calibration { kept.calibration }
 
     /// A new cook, a new nudge.
-    public func redrawNudge() {
+    func redrawNudge() {
         nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
     }
     /// True while the dose surface is being rebuilt after an outcome.
@@ -203,12 +203,12 @@ public final class Planner {
     /// The choice behind the time on screen: the odds, and how far it leaned
     /// from the mean solve. Nil until this pot's decision surface has been
     /// built, and on the sous-vide screen.
-    public var decision: Decision?
+    var decision: Decision?
     /// The odds at every level for the pot on screen and the posterior as it
     /// stands (Reach.swift): the track's shading, and the range the slider
     /// offers. Nil until it has been worked out, after this pot's surface;
     /// until then the physical limits are the whole rule.
-    public var oddsProfile: OddsProfile?
+    var oddsProfile: OddsProfile?
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
     /// the decided time on the decision's own surface): the white's line. Nil
     /// whenever `decision` is.
@@ -221,13 +221,13 @@ public final class Planner {
     /// This launch's nudge (E8, DECISIONS.md 61): a whole number of seconds
     /// from -10 to +10, drawn at launch and again after each cook, so the
     /// time on screen holds still while the cook looks at it.
-    public var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
+    var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
     /// The nudge the time takes now: the draw while sharing is on, none while
     /// it is off - the consent covers it, and nothing else does.
-    public var nudgeS: Double { Services.sharing.state.on ? nudgeDraw : 0 }
+    var nudgeS: Double { Services.sharing.state.on ? nudgeDraw : 0 }
     /// The nudge the time on screen took (`appliedNudge`): what a cook started
     /// now carries, and its record keeps apart from the time recommended.
-    public var appliedNudgeS: Double = 0
+    var appliedNudgeS: Double = 0
     /// Under a wild guess, what would make this cook more reliable, as
     /// catalogue keys in the order shown; empty when there is nothing to say.
     public var advice: [String] = []
@@ -235,17 +235,17 @@ public final class Planner {
     /// the word asked is a wild guess at the time on screen, and a change the
     /// model can price makes it surer. Never in sous-vide, or where the white
     /// never sets (`DecidedAnswer.adviceWanted`).
-    public var adviceShown = false
+    var adviceShown = false
     /// What the white's line is about, and what a cook
     /// started now is timed by: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
     /// never sets, and in sous-vide.
-    public var shownOutcome: Outcome? {
+    var shownOutcome: Outcome? {
         guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
         return outcome
     }
     /// How sure I am of the choice on screen, under the same conditions.
-    public var shownCertainty: CertaintyReading? {
+    var shownCertainty: CertaintyReading? {
         guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
         return certainty
     }
@@ -257,13 +257,13 @@ public final class Planner {
     /// does not blank them for the second that takes and bring them back.
     /// Display only: what a cook started now carries is `decision` and
     /// `shownOutcome`, which are nil until the surface lands.
-    public struct Held {
+    struct Held {
         public var profile: OddsProfile?
         public var outcome: Outcome?
         public var certainty: CertaintyReading?
-        public var adviceShown = false
+        var adviceShown = false
     }
-    public var held = Held()
+    var held = Held()
 
     /// Take what is on screen into `held`, wherever it is this pot's own.
     public func hold() {
@@ -295,7 +295,7 @@ public final class Planner {
 
     /// The idle screen's solve (`SolveLoop`), and the learning from each egg
     /// (`Learning`): each with its own bookkeeping.
-    @ObservationIgnored public private(set) var solver: SolveLoop!
+    @ObservationIgnored private(set) var solver: SolveLoop!
     @ObservationIgnored public private(set) var learner: Learning!
 
     public init() {
@@ -319,28 +319,26 @@ public final class Planner {
             onEdit()
             return
         }
-        #if DEBUG
         Perf.input()
-        #endif
         SettingsStore.save(self)
         solver.recompute()
     }
 
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.
-    public var applying = false
-    public var boilMemory: BoilMemory = [:]
+    var applying = false
+    var boilMemory: BoilMemory = [:]
     private var loaded = false
     /// Set while a cook runs: a change to a control is then a correction in
     /// hand (`Edits.controlsChanged`), and is neither saved nor solved for.
-    @ObservationIgnored public var onEdit: (() -> Void)?
+    @ObservationIgnored var onEdit: (() -> Void)?
 
     /// The controls set to a running cook's own choices, as they stood when
     /// it was stored (a relaunch): what the controls show while it runs
     /// (design/one-screen.md section 4, review 2.5). Neither saved nor
     /// solved for: a correction writes the settings it changes. The room is
     /// left as it is, since the choices hold only the room in use.
-    public func adopt(_ c: CookChoices) {
+    func adopt(_ c: CookChoices) {
         applying = true
         defer { applying = false }
         var next = settings
@@ -372,7 +370,7 @@ public final class Planner {
     /// to completion. `Cook` already avoids exactly this by doing its restore
     /// from `onAppear`; this does the same, and is idempotent so a second
     /// `onAppear` costs nothing.
-    public func load() {
+    func load() {
         guard !loaded else { return }
         loaded = true
         // Load with saving suppressed. Each assignment would otherwise fire
@@ -399,7 +397,7 @@ public final class Planner {
     /// The cook as the controls choose it, in SI: core's `CookChoices`, which
     /// a cook started now holds as its own (the web's `choicesOf`). Sous-vide
     /// is neither start, and says hot here; nothing starts one.
-    public var choices: CookChoices {
+    var choices: CookChoices {
         let s = settings
         return CookChoices(
             massKg: eggMassG / 1000, massFrom: massFrom, sizeTable: sizeTable, eggFrom: s.startTempMode,
@@ -411,7 +409,7 @@ public final class Planner {
 
     /// The egg and the pot the solver is told, from core (`cookSetupOf`), with
     /// this pan's remembered time to boil: the one assembly both apps share.
-    public var pot: CookPot { cookSetupOf(choices, timeToBoilS: timeToBoilS) }
+    var pot: CookPot { cookSetupOf(choices, timeToBoilS: timeToBoilS) }
 
     public var egg: Egg { pot.egg }
 
@@ -457,7 +455,7 @@ public final class Planner {
     /// cook ends (`cookEnding`): the cook as last corrected, not the tap.
     /// Blended with whatever was already known, so one odd run - lid off, pan
     /// half empty - does not dominate.
-    public func rememberBoil(_ boil: BoilToRemember) {
+    func rememberBoil(_ boil: BoilToRemember) {
         boilMemory = EggTimerCore.rememberBoil(boilMemory, litres: boil.litres, seconds: boil.seconds)
         BoilMemories.save(boilMemory)
     }

@@ -69,10 +69,10 @@ enum LiveActivity {
         }
     }
 
-    #if DEBUG
     /// Every card the system holds for the app, its state, stage and end
     /// (in cook time), to the debug log (`Screenshots.log`).
     static func logAll(_ when: String) {
+        guard Screenshots.logging else { return }
         for activity in Activity<CookActivity>.activities {
             let s = activity.content.state
             Screenshots.log(.activitySeen(
@@ -81,7 +81,6 @@ enum LiveActivity {
             ))
         }
     }
-    #endif
 
     private static func content(
         _ state: CookActivity.ContentState
@@ -100,7 +99,5 @@ struct LiveActivityCard: LockScreenCard {
     func update(_ state: CookActivity.ContentState) async { await LiveActivity.update(state) }
     func endAll() async { await LiveActivity.endAll() }
     func endAtTheirEnds() async { await LiveActivity.endAtTheirEnds() }
-    #if DEBUG
     @MainActor func logAll(_ when: String) { LiveActivity.logAll(when) }
-    #endif
 }

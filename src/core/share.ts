@@ -22,7 +22,9 @@
  *   holds. `deleting`: ids whose deletion the server has not yet confirmed,
  *   asked again at every load until it does.
  * - `busy`: how many busy answers the egg at `sent` has had, and
- *   `busySince`, when the first came (epoch ms; null when none has).
+ *   `busySince_s`, when the first came (epoch s; null when none has). Each
+ *   app stores it in its own unit and converts where it reads and writes
+ *   its store: the web as epoch ms, iOS as seconds since 2001.
  *
  * WHEN AN EGG GOES: once it is final - when the cook has moved on from it, so
  * no answer can be added - one at a time, in order (`nextToSend`). What the
@@ -103,11 +105,11 @@ export interface ShareState {
   uids: string[];
   deleting: string[];
   busy: number;
-  busySince: number | null;
+  busySince_s: number | null;
 }
 
 export const FRESH_SHARE: ShareState = {
-  on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: [], busy: 0, busySince: null,
+  on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: [], busy: 0, busySince_s: null,
 };
 
 /** A cook's id as both apps make it and the server takes it: a version 4
@@ -131,9 +133,10 @@ function ids(v: unknown): string[] {
   return out;
 }
 
-/** A stored state, parsed from its JSON and read defensively: anything
- *  damaged reads as off, and every id that can be read is kept, so a deletion
- *  can still reach it. Without an id there is nothing sent to count. */
+/** A stored state, parsed from its JSON, in this shape (`busySince_s` in
+ *  epoch s), and read defensively: anything damaged reads as off, and every
+ *  id that can be read is kept, so a deletion can still reach it. Without an
+ *  id there is nothing sent to count. */
 export function readShareState(raw: unknown): ShareState {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     return { ...FRESH_SHARE, uids: [], deleting: [] };
@@ -142,7 +145,7 @@ export function readShareState(raw: unknown): ShareState {
   const uid = isUid(r['uid']) ? r['uid'] : null;
   const uids = ids(r['uids']);
   if (uid !== null && !uids.includes(uid)) uids.push(uid);
-  const since = r['busySince'];
+  const since = r['busySince_s'];
   return {
     on: r['on'] === true && uid !== null,
     uid: uid,
@@ -151,7 +154,7 @@ export function readShareState(raw: unknown): ShareState {
     uids: uids,
     deleting: ids(r['deleting']),
     busy: uid === null ? 0 : count(r['busy']),
-    busySince: uid !== null && typeof since === 'number' && Number.isFinite(since) ? since : null,
+    busySince_s: uid !== null && typeof since === 'number' && Number.isFinite(since) ? since : null,
   };
 }
 
@@ -161,7 +164,7 @@ export function readShareState(raw: unknown): ShareState {
  *  is none; otherwise it is not used. */
 export function turnedOn(s: ShareState, fresh: string): ShareState {
   if (s.uid !== null) return { ...s, on: true };
-  return { ...s, on: true, uid: fresh, sent: 0, seq: 0, uids: [...s.uids, fresh], busy: 0, busySince: null };
+  return { ...s, on: true, uid: fresh, sent: 0, seq: 0, uids: [...s.uids, fresh], busy: 0, busySince_s: null };
 }
 
 /** Sharing turned off: nothing is deleted; that is the other button. */
@@ -174,8 +177,8 @@ export function turnedOff(s: ShareState): ShareState {
  *  made when it is turned on if not. The old id stays in `uids` for
  *  deletion. */
 export function forgotten(s: ShareState, fresh: string): ShareState {
-  if (!s.on) return { ...s, uid: null, sent: 0, seq: 0, busy: 0, busySince: null };
-  return { ...s, uid: fresh, sent: 0, seq: 0, uids: [...s.uids, fresh], busy: 0, busySince: null };
+  if (!s.on) return { ...s, uid: null, sent: 0, seq: 0, busy: 0, busySince_s: null };
+  return { ...s, uid: fresh, sent: 0, seq: 0, uids: [...s.uids, fresh], busy: 0, busySince_s: null };
 }
 
 /** "Delete what I've sent": sharing goes off, every id this device has used
@@ -189,7 +192,7 @@ export function deletionAsked(s: ShareState): ShareState {
 /** A log shorter than what was sent has been dropped and begun again (a
  *  damaged log, `decodeKept`): what it holds now is new. */
 export function reconciled(s: ShareState, logLength: number): ShareState {
-  return s.sent > logLength ? { ...s, sent: 0, busy: 0, busySince: null } : s;
+  return s.sent > logLength ? { ...s, sent: 0, busy: 0, busySince_s: null } : s;
 }
 
 /** The index in the log of the next egg to send, or null when there is none
@@ -212,16 +215,16 @@ export interface ShareAnswered {
  *  the state with it. Kept or refused, it does; busy, it waits - counted,
  *  unless it has waited long enough, when it is passed over as if refused,
  *  so that one egg cannot hold up the rest for good. No answer at all is not
- *  an answer: the caller leaves the state as it is. `now` is epoch ms. */
-export function answered(s: ShareState, status: number, now: number): ShareAnswered {
+ *  an answer: the caller leaves the state as it is. `now_s` is epoch s. */
+export function answered(s: ShareState, status: number, now_s: number): ShareAnswered {
   if (shareReply(status) === 'busy') {
-    const since = s.busySince ?? now;
+    const since = s.busySince_s ?? now_s;
     const busy = s.busy + 1;
-    if (!shareGivesUp(busy, (now - since) / 1000)) {
-      return { next: { ...s, busy: busy, busySince: since }, moved: false };
+    if (!shareGivesUp(busy, now_s - since)) {
+      return { next: { ...s, busy: busy, busySince_s: since }, moved: false };
     }
   }
-  return { next: { ...s, sent: s.sent + 1, seq: s.seq + 1, busy: 0, busySince: null }, moved: true };
+  return { next: { ...s, sent: s.sent + 1, seq: s.seq + 1, busy: 0, busySince_s: null }, moved: true };
 }
 
 /** Whether a deletion the server answered `status` is done: 200, or 400, an

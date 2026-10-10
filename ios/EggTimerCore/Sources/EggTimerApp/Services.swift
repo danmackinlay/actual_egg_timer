@@ -20,14 +20,14 @@ public enum Services {
     @MainActor public static var alarm: any AlarmScheduling = Unwired()
     @MainActor public static var ringer: any AlarmRinging = Unwired()
     @MainActor public static var sharing: any ResultSharing = Unwired()
-    /// Called off the main actor, in the order the cook made its calls
-    /// (`Cook.activity`).
-    nonisolated(unsafe) public static var card: any LockScreenCard = NoCard()
+    /// Read on the main actor, called off it in the order the cook made its
+    /// calls (`CookCard`).
+    @MainActor public static var card: any LockScreenCard = NoCard()
     /// Said to VoiceOver, at once: the start's limit reached (`Edits`).
     @MainActor public static var announce: (String) -> Void = { _ in }
-    nonisolated(unsafe) public static var grids: any DecisionSurfaces = DecisionGrids.shared
+    @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
     @MainActor public static var language: any LanguageChoosing = LanguageChoice.shared
-    @MainActor public static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
+    @MainActor static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
 }
 
 /// The cook's alarms, with the system (`Alarm`, UserNotifications): set at
@@ -90,10 +90,8 @@ public protocol LockScreenCard: Sendable {
     func endAll() async
     /// Every card ended to go at its own end: an earlier build's.
     func endAtTheirEnds() async
-    #if DEBUG
     /// Every card the system holds, to the debug log.
     @MainActor func logAll(_ when: String)
-    #endif
 }
 
 /// The decision surfaces and the odds at every level, built off the main
@@ -144,7 +142,5 @@ struct NoCard: LockScreenCard {
     func update(_ state: CookActivity.ContentState) async {}
     func endAll() async {}
     func endAtTheirEnds() async {}
-    #if DEBUG
     func logAll(_ when: String) {}
-    #endif
 }

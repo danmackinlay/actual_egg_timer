@@ -44,14 +44,9 @@ struct EggSectionView: View {
             EggOutline.draw(view, in: context, size: size, scheme: scheme)
         }
         .accessibilityHidden(true)
-        #if DEBUG
-        .onChange(of: Self.summary(view, reading), initial: true) { _, said in
-            Screenshots.log(said)
-        }
-        #endif
+        .logged(Self.summary(view, reading))
     }
 
-    #if DEBUG
     /// The reading and how set the yolk is, its rings' mean, for the log.
     private static func summary(_ view: SectionView?, _ reading: EggReading) -> Screenshots.Event {
         guard let view else { return .egg(reading: reading.rawValue, yolk: nil) }
@@ -59,7 +54,6 @@ struct EggSectionView: View {
         let mean = yolk.isEmpty ? 0 : yolk.reduce(0, +) / Double(yolk.count)
         return .egg(reading: reading.rawValue, yolk: (mean * 1000).rounded() / 1000)
     }
-    #endif
 
     /// What to draw, and which reading it is.
     private func section() -> (SectionView?, EggReading) {
@@ -89,11 +83,7 @@ struct EggSectionView: View {
                 whiteTargetMin: whiteTarget
             ), .ran)
         }
-        #if DEBUG
         let clock = now.addingTimeInterval(Screenshots.sectionAhead).timeIntervalSince1970
-        #else
-        let clock = now.timeIntervalSince1970
-        #endif
         // In the water until the cook said the eggs were out, or until the
         // grace ran out with nobody saying, and on through the carryover.
         let assumedOut = plan.deadlines.cookEndS + pullGraceSeconds

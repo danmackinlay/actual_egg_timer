@@ -46,9 +46,7 @@ struct PhaseActions: View {
                 .appFont(.footnote)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                #if DEBUG
-                .onChange(of: line, initial: true) { _, said in Screenshots.log(.slot(text: said)) }
-                #endif
+                .logged(.slot(text: line))
         } else if phase == .idle {
             VStack(spacing: 10) {
                 if let sousVide {
@@ -280,13 +278,13 @@ struct PhaseActions: View {
     /// assumed. An egg timer that claims an alarm it has
     /// not got is worse than one with no alarm at all.
     private var alarmLine: String {
-        switch cook.alarmAuthorized {
+        switch cook.alarms.authorized {
         case .none:
             return tr("readout.alarm.setting")
         case .some(false):
             return tr("readout.alarm.denied")
         case .some(true):
-            guard cook.pendingAlarms > 0 else {
+            guard cook.alarms.pending > 0 else {
                 return tr("readout.alarm.failed")
             }
             let pull = cook.plan.map { Date(timeIntervalSince1970: $0.deadlines.cookEndS) } ?? now

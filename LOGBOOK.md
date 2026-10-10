@@ -7478,3 +7478,67 @@ In test/, tools/validate.ts and the Swift tests, 388 lines out and 276 in
 
 Gates on `0831021`: `verify` (488 tests, validate 28/28, `swift test`
 156 and 26).
+
+## 10 October 2026: iOS's Cook a thin runner, sharing in seconds, the app logic smaller (REFACTOR-0.5 3.9, 3.16, 5.11)
+
+Branch `ios-thin-and-tidy`, from 0.5.x at `0d156c3`.
+
+- **One time unit** (`ea1bbea`, 3.16): core's sharing state is in epoch
+  seconds, `answered(s, status, now_s)` and `busySince_s`. The stored
+  formats did not change and the keys were not bumped, since a new key
+  would drop the share id and any deletion not yet confirmed: the web's
+  `aet.share.v1` keeps `busySince` in whole ms (`readShare`,
+  `storedShare`), iOS's `sharing.v1` as seconds since 2001, each converted
+  where its store is read and written.
+- **Exports only an app calls** (`e5c71da`): `coldHistory`,
+  `slowHobMemoFits` and `sameAsRan` internal, `sameDecisionInputs` gone, in
+  both languages; no fixture read any. Their tests now go through what
+  they decide: the boil remembered, and a slow-hob memo made wrong on
+  purpose, which changes the plan only if it is read.
+- **Sharing without generation tokens** (`f9dffb7`): what landed late was
+  dropped by a counter bumped at every change of id; it is now dropped by
+  the value it stood for, whether the run's id is still the one sent
+  under, with sharing on. One race moves: an answer landing after sharing
+  is turned off and on again is taken, where the egg used to be posted
+  again (and answered 200). No test names it: Sharing is in the app
+  target, which has no harness.
+- **The debug machinery in one place** (`f482273`): launch arguments read
+  through `Screenshots.arguments`, none in a release build; `log` an
+  autoclosure that a release build never evaluates; `Perf`, `logAll` and
+  `AppClock.listen` in every build; the views' log lines through
+  `logged(_:)`. A release build of the app had not compiled since
+  `58f236a` (SolveLoop's release branch read the planner from a static
+  function); it does now (checked with `xcodebuild -configuration
+  Release`).
+- **Cook thin** (`49aefac`, 3.9): Cook holds the state, steps it and hands
+  each effect on: `CookAlarms` (the alarms with the system, read back, and
+  the ring), `CookCard` (the Lock Screen card, its calls in order),
+  `CookSurfaces` (what a step waits for, built off the main actor) and
+  `CookLog` (the phase, the plans, the record made again). The stored
+  cook's reading is untouched for the storage registry's branch, but for
+  `card.endAll()`/`card.endAtTheirEnds()` in place of the old queue in
+  `restore`.
+- **Isolation** (`961284f`): `nonisolated(unsafe)` 16 -> 5, main-actor
+  state marked so, what any thread reads behind a lock; each kept has its
+  reason. **`public`** (`0925e75`): only what the app and the widget use.
+
+Counted before (`0d156c3`) and after: Cook.swift 993 -> 670;
+Sharing.swift 423 -> 421; EggTimerApp 4,853 -> 4,959 (the four runners,
+430 lines with their comments, against Cook's 323 and the debug sites');
+the package's sources 14,081 -> 14,187 (core twin 8,363 -> 8,359);
+ios/App 5,015 -> 4,949; the app's logic and screens together (ios/App,
+EggTimerApp, EggTimerShared) 10,161 -> 10,205. Lines with `public` in
+EggTimerApp 341 -> 232 (with EggTimerShared 374 -> 265);
+`nonisolated(unsafe)` 16 -> 5; `#if DEBUG` in ios/ 83 -> 27. The split did
+not make the app smaller: what it removed was `#if DEBUG` and repeated
+guards; the runners' types and comments added about as much.
+
+Gates on `0925e75`: `verify` (494 tests, validate 29/29, 157 + 26 Swift
+tests), `ios:build`, a Release build of the app, `ios:e2e` 48 of 48 (and
+on `49aefac`), `e2e` 86 of 86 (47 behaviour, 39 copy/). Then 0.5.x at
+`270334a` merged in (the test trim): its seeded slow-hob property (23)
+asks whether a plan takes a memo by one made wrong on purpose, its guess a
+minute on and at the most lengthenings, since `slowHobMemoFits` is no
+longer exported (a guess moved alone was not enough: a plan that
+lengthens again from the place converges on the same one). On the merge:
+`verify` (489 tests, 156 + 26 Swift tests), `ios:build`.

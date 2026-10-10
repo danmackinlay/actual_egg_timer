@@ -10,8 +10,8 @@ import Foundation
 /// App Attest is the app's alone.
 ///
 /// No I/O, no clock, no randomness: a new id and the time are the caller's,
-/// passed in. `busySince` is epoch ms, as the web keeps it; the app converts
-/// at its storage.
+/// passed in. Every time is epoch s; the app converts `busySinceS` to what
+/// its store keeps where it reads and writes it.
 
 public struct ShareState: Sendable, Equatable {
     public var on: Bool
@@ -21,11 +21,11 @@ public struct ShareState: Sendable, Equatable {
     public var uids: [String]
     public var deleting: [String]
     public var busy: Int
-    public var busySince: Double?
+    public var busySinceS: Double?
 
     public init(
         on: Bool = false, uid: String? = nil, sent: Int = 0, seq: Int = 0, uids: [String] = [],
-        deleting: [String] = [], busy: Int = 0, busySince: Double? = nil
+        deleting: [String] = [], busy: Int = 0, busySinceS: Double? = nil
     ) {
         self.on = on
         self.uid = uid
@@ -34,17 +34,18 @@ public struct ShareState: Sendable, Equatable {
         self.uids = uids
         self.deleting = deleting
         self.busy = busy
-        self.busySince = busySince
+        self.busySinceS = busySinceS
     }
 
     public static let fresh = ShareState()
 
-    /// The state as the web stores it, for JSONSerialization: an absent value
-    /// is JSON's null, so that `readShareState` gives back the same state.
+    /// The state as core's JSON has it, for JSONSerialization: an absent
+    /// value is JSON's null, so that `readShareState` gives back the same
+    /// state.
     public var jsonObject: [String: Any] {
         [
             "on": on, "uid": uid ?? NSNull(), "sent": sent, "seq": seq, "uids": uids,
-            "deleting": deleting, "busy": busy, "busySince": busySince ?? NSNull(),
+            "deleting": deleting, "busy": busy, "busySince_s": busySinceS ?? NSNull(),
         ]
     }
 }
@@ -131,16 +132,17 @@ private func ids(_ v: Any?) -> [String] {
     return out
 }
 
-/// A stored state, parsed from its JSON and read defensively: anything
-/// damaged reads as off, and every id that can be read is kept, so a deletion
-/// can still reach it. Without an id there is nothing sent to count.
+/// A stored state, parsed from its JSON, in core's shape (`busySince_s` in
+/// epoch s), and read defensively: anything damaged reads as off, and every
+/// id that can be read is kept, so a deletion can still reach it. Without an
+/// id there is nothing sent to count.
 public func readShareState(_ raw: Any?) -> ShareState {
     guard let r = raw as? [String: Any] else { return .fresh }
     let uid = (r["uid"] as? String).flatMap { isUid($0) ? $0 : nil }
     var uids = ids(r["uids"])
     if let uid, !uids.contains(uid) { uids.append(uid) }
     let on = isJSONBool(r["on"]) && (r["on"] as? NSNumber)?.boolValue == true
-    let since = jsonNumber(r["busySince"])
+    let since = jsonNumber(r["busySince_s"])
     return ShareState(
         on: on && uid != nil,
         uid: uid,
@@ -149,7 +151,7 @@ public func readShareState(_ raw: Any?) -> ShareState {
         uids: uids,
         deleting: ids(r["deleting"]),
         busy: uid == nil ? 0 : count(r["busy"]),
-        busySince: uid != nil && since?.isFinite == true ? since : nil
+        busySinceS: uid != nil && since?.isFinite == true ? since : nil
     )
 }
 
@@ -166,7 +168,7 @@ public func turnedOn(_ s: ShareState, fresh: String) -> ShareState {
         next.seq = 0
         next.uids.append(fresh)
         next.busy = 0
-        next.busySince = nil
+        next.busySinceS = nil
     }
     return next
 }
@@ -186,7 +188,7 @@ public func forgotten(_ s: ShareState, fresh: String) -> ShareState {
     next.sent = 0
     next.seq = 0
     next.busy = 0
-    next.busySince = nil
+    next.busySinceS = nil
     if s.on {
         next.uid = fresh
         next.uids.append(fresh)
@@ -211,7 +213,7 @@ public func reconciled(_ s: ShareState, logLength: Int) -> ShareState {
     var next = s
     next.sent = 0
     next.busy = 0
-    next.busySince = nil
+    next.busySinceS = nil
     return next
 }
 
@@ -235,22 +237,22 @@ public struct ShareAnswered: Sendable, Equatable {
 /// the state with it. Kept or refused, it does; busy, it waits - counted,
 /// unless it has waited long enough, when it is passed over as if refused, so
 /// that one egg cannot hold up the rest for good. No answer at all is not an
-/// answer: the caller leaves the state as it is. `now` is epoch ms.
-public func answered(_ s: ShareState, status: Int, now: Double) -> ShareAnswered {
+/// answer: the caller leaves the state as it is. `nowS` is epoch s.
+public func answered(_ s: ShareState, status: Int, nowS: Double) -> ShareAnswered {
     var next = s
     if shareReply(status) == .busy {
-        let since = s.busySince ?? now
+        let since = s.busySinceS ?? nowS
         let busy = s.busy + 1
-        if !shareGivesUp(tries: busy, waitedS: (now - since) / 1000) {
+        if !shareGivesUp(tries: busy, waitedS: nowS - since) {
             next.busy = busy
-            next.busySince = since
+            next.busySinceS = since
             return ShareAnswered(next: next, moved: false)
         }
     }
     next.sent += 1
     next.seq += 1
     next.busy = 0
-    next.busySince = nil
+    next.busySinceS = nil
     return ShareAnswered(next: next, moved: true)
 }
 

@@ -86,20 +86,13 @@ struct ReadoutView: View {
                         .padding(.bottom, Self.underBaseline - Self.descender)
 
                     sublineLine
-                        #if DEBUG
                         // What the readout says, for the scripted checks.
-                        .onChange(of: Screenshots.Event.readout(phase: phase.rawValue, big: bigTime, sub: subline),
-                                  initial: true) { _, said in
-                            Screenshots.log(said)
-                        }
+                        .logged(.readout(phase: phase.rawValue, big: bigTime, sub: subline))
                         // One frame whole: the moment it was drawn for, to
                         // the millisecond, with the time, the line under it
                         // and the certainty's time range it drew, so a check
                         // can see that all of them are of that one moment.
-                        .onChange(of: frame, initial: true) { _, said in
-                            Screenshots.log(said)
-                        }
-                        #endif
+                        .logged(frame)
                     certaintyLine
                 }
             }
@@ -248,23 +241,15 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
-        #if DEBUG
         // What the line says, and what a press would open last (the time
         // range), whether open or not; and whether the white's line shows:
         // for the scripted checks.
-        .onChange(of: Screenshots.Event.certainty(
+        .logged(.certainty(
             word: sure.map { tr(certaintyKey($0.words.certainty)) }, time: sure.map { opened($0).last ?? "" }
-        ), initial: true) { _, said in
-            Screenshots.log(said)
-        }
-        .onChange(of: whiteRunny(o), initial: true) { _, shown in
-            Screenshots.log(.white(shown: shown))
-        }
+        ))
+        .logged(.white(shown: whiteRunny(o)))
         // Whether "Most likely" shows under the word, unpressed.
-        .onChange(of: sure.map { mostLikelyShown($0.words) } ?? false, initial: true) { _, shown in
-            Screenshots.log(.likely(shown: shown))
-        }
-        #endif
+        .logged(.likely(shown: sure.map { mostLikelyShown($0.words) } ?? false))
     }
 
     /// How sure I am, in this phase: while idle, the choice on screen's;
@@ -367,7 +352,6 @@ struct ReadoutView: View {
         return r.sign + clockString(r.clockS)
     }
 
-    #if DEBUG
     /// This frame as the debug log says it: its moment, epoch s, the phase,
     /// the time, the line under it, and the certainty's time range.
     private var frame: Screenshots.Event {
@@ -376,7 +360,6 @@ struct ReadoutView: View {
             range: certainty.map { opened($0).last ?? "" }
         )
     }
-    #endif
 
     /// The line under the clock: core's key, with this phase's arguments.
     /// While a cook runs every number it takes is a time, as a clock.
