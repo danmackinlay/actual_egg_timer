@@ -9,6 +9,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { STORES } from '../src/core/stores.js';
+
 import { sizeClassesFor } from '../src/core/geometry.js';
 import { startCook } from '../src/core/running.js';
 import { Stores, performStored } from '../src/ui/cook.js';
@@ -81,14 +83,14 @@ test('everything forgotten in another tab is not undone by this tab\'s next meas
   take();
   assert.deepEqual(Object.keys(m.boilMemory), ['2.0']);
   // Another tab forgets everything, and this page hears of it.
-  storage.delete('aet.boil.v1');
-  storedElsewhere(s, 'aet.boil.v1', m.settings);
+  storage.delete(STORES.boilMemory.web);
+  storedElsewhere(s, STORES.boilMemory.web, m.settings);
   take();
   assert.deepEqual(m.boilMemory, {}, 'taken up');
   // The next boil measured here: only it is kept.
   performStored({ kind: 'rememberBoil', boil: { litres: 1.5, seconds: 420 } }, s, m.boilMemory, (msg) => sent.push(msg));
   take();
-  assert.deepEqual(Object.keys(JSON.parse(storage.get('aet.boil.v1') ?? '{}') as object), ['1.5']);
+  assert.deepEqual(Object.keys((JSON.parse(storage.get(STORES.boilMemory.web) ?? '{}') as { pans: object }).pans), ['1.5']);
   assert.deepEqual(Object.keys(m.boilMemory), ['1.5']);
   sendTo(() => undefined);
 });

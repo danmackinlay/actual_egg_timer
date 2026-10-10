@@ -29,6 +29,7 @@
 
 import { readFileSync } from 'node:fs';
 
+import { STORES, stamped } from '../src/core/stores.js';
 import { Failure, Harness, Scenario, Snap, Tab, check } from './harness.js';
 
 /** One state's words, as `copySnapshot.js compare` reads them. */
@@ -320,8 +321,9 @@ async function capture(h: Harness, sc: CopyScenario): Promise<CopyState[]> {
   // app boots on them.
   const tab = await h.ctx.open('/privacy/', h.origin, { locale: sc.lang ?? 'en-GB', timezone: ZONE, boot: false });
   await tab.eval(`(() => { localStorage.clear();
-    localStorage.setItem('aet.settings.v1', ${JSON.stringify(JSON.stringify(sc.settings))});
-    ${sc.boil === undefined ? '' : `localStorage.setItem('aet.boil.v1', ${JSON.stringify(JSON.stringify(sc.boil))});`} })()`);
+    localStorage.setItem('${STORES.settings.web}', ${JSON.stringify(JSON.stringify(stamped(STORES.settings, { ...sc.settings })))});
+    ${sc.boil === undefined ? '' : `localStorage.setItem('${STORES.boilMemory.web}',
+      ${JSON.stringify(JSON.stringify(stamped(STORES.boilMemory, { pans: sc.boil })))});`} })()`);
   await tab.goto(`${h.origin}/?clock=0&at=${encodeURIComponent(T0)}&seed=${SEED}`);
   await tab.settle();
   const out = [await words(tab, `${sc.name} / start`)];

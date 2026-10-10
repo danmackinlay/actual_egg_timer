@@ -15,7 +15,7 @@ import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
 import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
-import { STORES } from '../core/stores.js';
+import { STORES, inFormat, stamped } from '../core/stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 import { send } from './send.js';
 
@@ -24,9 +24,9 @@ export type { KeptAnswers, StoredCook } from '../core/running.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
-const SETTINGS_KEY = 'aet.settings.v1';
+const SETTINGS_KEY = STORES.settings.web;
 const COOK_KEY = STORES.cook.web;
-const BOIL_KEY = 'aet.boil.v1';
+const BOIL_KEY = STORES.boilMemory.web;
 
 /**
  * Every key an earlier build of this app wrote that this one does not read,
@@ -39,7 +39,7 @@ const BOIL_KEY = 'aet.boil.v1';
 export const RETIRED_KEYS = [
   'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
   'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
-  'aet.cook.v5',
+  'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1',
 ];
 
 /** The Start control offers one more option than the solver understands.
@@ -97,7 +97,7 @@ export function removeStorage(key: string): void {
  * storage, is seen at this page's next write even if its `storage` event
  * has not yet arrived. Never removed: "Start learning again" keeps it.
  */
-const NEWEST_KEY = 'aet.newest';
+const NEWEST_KEY = STORES.newest.web;
 
 /** This build's version, once `claimStorage` has been called; until then
  *  (tests, tools) every write goes through unguarded. The page's own: the
@@ -301,7 +301,7 @@ export type SettingsStore = ReturnType<typeof openSettings>;
  * per page, opened at boot (app.ts) and held by the runner (cook.ts).
  */
 export function openSettings(classes: SizeClass[]) {
-  const store = syncedKey(SETTINGS_KEY, parseObject);
+  const store = syncedKey(SETTINGS_KEY, (text) => inFormat(STORES.settings, parseObject(text)));
   /** The pan method last saved - what a save made in sous-vide writes in
    *  its place (`save`). Read with the settings, and kept up by every save
    *  of a pan, so a save need not read storage back to find it. */
@@ -323,7 +323,7 @@ export function openSettings(classes: SizeClass[]) {
   function save(settings: Settings): Settings {
     const next = takenUp(settings, store.takeUp());
     if (next.startMode !== 'sous') lastPanStart = next.startMode;
-    store.write(JSON.stringify({ ...next, startMode: lastPanStart }));
+    store.write(JSON.stringify(stamped(STORES.settings, { ...next, startMode: lastPanStart })));
     return next;
   }
 
@@ -369,7 +369,7 @@ export function openSettings(classes: SizeClass[]) {
 /** Only the language, for choosing a catalogue before anything else is read:
  *  the page paints nothing until its words are in. */
 export function loadLanguage(): LanguageState {
-  const raw = parseObject(readStorage(SETTINGS_KEY));
+  const raw = inFormat(STORES.settings, parseObject(readStorage(SETTINGS_KEY)));
   return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
 }
 
@@ -410,7 +410,7 @@ export function openPans() {
       const now = taken === null ? memory : taken.theirs;
       const updated = rememberBoil(now, clampLitres(litres), seconds);
       if (updated === now) return now;
-      store.write(JSON.stringify(updated));
+      store.write(JSON.stringify(stamped(STORES.boilMemory, { pans: updated })));
       return updated;
     },
     /** Another tab changed storage: the pans as it left them, or null if it
@@ -423,9 +423,10 @@ export function openPans() {
 }
 
 function readBoilMemory(text: string | null): BoilMemory {
-  const raw = parseObject(text);
+  const pans = inFormat(STORES.boilMemory, parseObject(text))?.['pans'];
   const out: BoilMemory = {};
-  if (raw === null) return out;
+  if (pans === null || typeof pans !== 'object' || Array.isArray(pans)) return out;
+  const raw = pans as Record<string, unknown>;
   for (const key of Object.keys(raw)) {
     const seconds = Number(raw[key]);
     if (isWithin(seconds, LIMITS.timeToBoil_s)) out[key] = seconds;

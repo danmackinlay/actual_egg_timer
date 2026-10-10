@@ -17,6 +17,8 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+import { STORES } from '../src/core/stores.js';
 import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
@@ -515,7 +517,7 @@ test('3d. another tab\'s egg is taken up, not written over', () => {
   const stored = decodeKept(storage.get('aet.calibration.v5') as string).kept;
   assert.deepEqual(stored.log.map((r) => r.level), [0.3, 0.4, 0.5]);
   assert.equal(cal.storedElsewhere('aet.calibration.v5'), false, 'nothing new since');
-  assert.equal(cal.storedElsewhere('aet.settings.v1'), false);
+  assert.equal(cal.storedElsewhere(STORES.settings.web), false);
   // The other tab forgets everything: this one follows, in the calibration
   // the app holds, and a late answer to its egg is refused.
   storage.delete('aet.calibration.v5');

@@ -24,6 +24,7 @@ import { openLearner } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { openSharing } from '../src/ui/share.js';
 import { sendTo } from '../src/ui/send.js';
+import { STORES, stamped } from '../src/core/stores.js';
 
 /** How many times the page was told its stores are left alone. */
 let told = 0;
@@ -40,7 +41,8 @@ const writes: string[] = [];
   },
 };
 
-const NEWEST_KEY = 'aet.newest';
+const NEWEST_KEY = STORES.newest.web;
+const SETTINGS = STORES.settings.web;
 const GONE = '0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab';
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
@@ -53,8 +55,10 @@ const cooks = openCooks();
 function newerStores(): Map<string, string> {
   return new Map([
     [NEWEST_KEY, '9.0.0'],
-    ['aet.settings.v1', JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 1200, addedLater: true })],
-    ['aet.boil.v1', JSON.stringify({ '2': 420 })],
+    [SETTINGS, JSON.stringify(stamped(STORES.settings, { ...DEFAULT_SETTINGS, altitude_m: 1200, addedLater: true }))],
+    [STORES.boilMemory.web, JSON.stringify(stamped(STORES.boilMemory, { pans: { '2': 420 } }))],
+    [STORES.cook.web, JSON.stringify({ v: 7, cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
+    ['aet.settings.v1', JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 })],
     ['aet.cook.v5', JSON.stringify({ cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
     ['aet.cook.v2', JSON.stringify({ machine: { phase: 'COOKING' }, ticket: null, answers: 'none' })],
     ['aet.cook.unread', JSON.stringify(['a cook kept aside'])],
@@ -77,7 +81,7 @@ test('1. no mark: the mark is the first thing written, then the stores as before
   assert.deepEqual(writes, [NEWEST_KEY]);
   settings.save({ ...DEFAULT_SETTINGS, altitude_m: 300 });
   assert.equal(storageReadOnly(), false);
-  assert.ok(storage.has('aet.settings.v1'));
+  assert.ok(storage.has(SETTINGS));
 });
 
 test('2. an older mark is brought up to this build; its own is left as it is', () => {
@@ -88,7 +92,7 @@ test('2. an older mark is brought up to this build; its own is left as it is', (
   assert.equal(storage.get(NEWEST_KEY), APP_VERSION);
   writes.length = 0;
   settings.save({ ...DEFAULT_SETTINGS, altitude_m: 300 });
-  assert.deepEqual(writes, ['aet.settings.v1'], 'the mark is not written again');
+  assert.deepEqual(writes, [SETTINGS], 'the mark is not written again');
 });
 
 test('3. a newer mark: nothing is written, removed, logged or sent, and the timer\'s reads still work', async () => {
@@ -132,12 +136,12 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
 test('3b. the keys no build reads any more are deleted at the claim, after the mark, and nothing else', () => {
   storage.clear();
   for (const key of RETIRED_KEYS) storage.set(key, 'an earlier build\'s');
-  storage.set('aet.settings.v1', JSON.stringify(DEFAULT_SETTINGS));
+  storage.set(SETTINGS, JSON.stringify(stamped(STORES.settings, { ...DEFAULT_SETTINGS })));
   storage.set('aet.later.v1', 'a store this build has never heard of');
   writes.length = 0;
   assert.equal(claimStorage(APP_VERSION), 'write');
   assert.deepEqual(writes, [NEWEST_KEY, ...RETIRED_KEYS.map((k) => `-${k}`)]);
-  assert.deepEqual([...storage.keys()].sort(), ['aet.later.v1', NEWEST_KEY, 'aet.settings.v1'].sort());
+  assert.deepEqual([...storage.keys()].sort(), ['aet.later.v1', NEWEST_KEY, SETTINGS].sort());
   assert.ok(RETIRED_KEYS.includes('aet.calibration.v4'), '0.3\'s log among them (DECISIONS.md 107)');
   // Under a newer build's mark, not one.
   storage.clear();
@@ -152,7 +156,7 @@ test('3b. the keys no build reads any more are deleted at the claim, after the m
 test('4. another tab of a newer build: this page stops writing at its event, or at its next write before it', () => {
   storage.clear();
   claimStorage(APP_VERSION);
-  assert.equal(newerStoredElsewhere('aet.settings.v1'), false, 'not the mark');
+  assert.equal(newerStoredElsewhere(SETTINGS), false, 'not the mark');
   storage.set(NEWEST_KEY, '9.0.0');
   assert.equal(newerStoredElsewhere(NEWEST_KEY), true);
   assert.equal(storageReadOnly(), true);
@@ -179,5 +183,5 @@ test('4. another tab of a newer build: this page stops writing at its event, or 
   assert.equal(newerStoredElsewhere(null), false);
   writes.length = 0;
   settings.save({ ...DEFAULT_SETTINGS, altitude_m: 30 });
-  assert.deepEqual(writes, [NEWEST_KEY, 'aet.settings.v1']);
+  assert.deepEqual(writes, [NEWEST_KEY, SETTINGS]);
 });

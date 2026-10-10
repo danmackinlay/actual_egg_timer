@@ -8,6 +8,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { STORES } from '../src/core/stores.js';
+
 import { REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare } from '../src/ui/share.js';
 import {
   FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone,
@@ -247,7 +249,7 @@ test('8. another tab\'s change is taken up before this one acts: a stale tab nei
   assert.deepEqual(readShare(storage.get('aet.share.v1') ?? null).deleting, [uid], 'the deletion is still to be asked');
   // The page's storage event: taken up once, and only for this key.
   storage.set('aet.share.v1', JSON.stringify({ ...FRESH_SHARE, deleting: [uid, B] }));
-  assert.equal(sh.storedElsewhere('aet.settings.v1'), false);
+  assert.equal(sh.storedElsewhere(STORES.settings.web), false);
   assert.equal(sh.storedElsewhere('aet.share.v1'), true);
   assert.equal(sh.storedElsewhere('aet.share.v1'), false);
   assert.deepEqual(sh.state().deleting, [uid, B]);

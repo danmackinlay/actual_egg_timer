@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
-import { STORES } from '../src/core/stores.js';
+import { STORES, stamped } from '../src/core/stores.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
@@ -32,7 +32,11 @@ const storage = new Map<string, string>();
   },
 };
 
-const SETTINGS_KEY = 'aet.settings.v1';
+const SETTINGS_KEY = STORES.settings.web;
+const BOIL_KEY = STORES.boilMemory.web;
+
+/** Settings as a build of this format stores them. */
+const settingsText = (o: object): string => JSON.stringify(stamped(STORES.settings, { ...o }));
 const COOK_KEY = STORES.cook.web;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
@@ -82,9 +86,15 @@ test('sous-vide with no pan before it comes back as cold', () => {
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'cold');
 });
 
+test('settings stored in no format, as 0.3 stored them, read as a fresh install\'s', () => {
+  freshPage();
+  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 }));
+  assert.equal(settings.load().altitude_m, DEFAULT_SETTINGS.altitude_m);
+});
+
 test('a stored sous-vide from an older build loads as cold', () => {
   freshPage();
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'sous', altitude_m: 600 }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, startMode: 'sous', altitude_m: 600 }));
   const back = settings.load();
   assert.equal(back.startMode, 'cold');
   assert.equal(back.altitude_m, 600);
@@ -96,7 +106,7 @@ test('a measured egg saved before measuredBy existed is read as weighed', () => 
   freshPage();
   const old: Record<string, unknown> = { ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44 };
   delete old['measuredBy'];
-  storage.set(SETTINGS_KEY, JSON.stringify(old));
+  storage.set(SETTINGS_KEY, settingsText(old));
   const back = settings.load();
   assert.equal(back.measuredBy, 'scale');
   assert.equal(back.customMinor_mm, 44);
@@ -267,7 +277,7 @@ test('another tab\'s settings are taken up: what this page changed stays its own
   const mine = settings.load();
   // Another tab, loaded earlier, changes the altitude and turns the sound off.
   const theirs = { ...DEFAULT_SETTINGS, altitude_m: 900, muted: true };
-  storage.set(SETTINGS_KEY, JSON.stringify(theirs));
+  storage.set(SETTINGS_KEY, settingsText(theirs));
   // This page, before it hears, moves the slider and saves.
   mine.doneness = 0.8;
   const saved = settings.save(mine);
@@ -276,8 +286,8 @@ test('another tab\'s settings are taken up: what this page changed stays its own
   assert.deepEqual([stored.altitude_m, stored.muted, stored.doneness], [900, true, 0.8], 'nothing undone');
   // The page's storage event: taken up once, keeping a change not yet saved.
   saved.eggCount = 3;
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...stored, cooling: 'tap' }));
-  assert.equal(settings.elsewhere('aet.boil.v1', saved), null);
+  storage.set(SETTINGS_KEY, settingsText({ ...stored, cooling: 'tap' }));
+  assert.equal(settings.elsewhere(BOIL_KEY, saved), null);
   const heard = settings.elsewhere(SETTINGS_KEY, saved);
   assert.deepEqual([heard?.cooling, heard?.eggCount, heard?.altitude_m], ['tap', 3, 900]);
   assert.equal(settings.elsewhere(SETTINGS_KEY, saved), null, 'once');
@@ -287,7 +297,7 @@ test('a sous-vide on screen stays this page\'s when another tab saves a pan', ()
   freshPage();
   settings.save(settingsWith({ startMode: 'cold' }));
   const mine = settingsWith({ startMode: 'sous' });
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
   const saved = settings.save(mine);
   assert.equal(saved.startMode, 'sous');
   assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'hot', 'the other tab\'s pan, the last saved');
@@ -295,14 +305,13 @@ test('a sous-vide on screen stays this page\'s when another tab saves a pan', ()
 
 test('"Forget everything" in another tab is not undone by this one\'s next measured boil', () => {
   storage.clear();
-  const BOIL_KEY = 'aet.boil.v1';
   let memory = pans.load();
   memory = pans.remember(memory, 2, 600);
   assert.equal(pans.elsewhere(BOIL_KEY), null, 'its own write is nothing new');
   // Another tab forgets every pan; this one has not heard, and times a boil.
   storage.delete(BOIL_KEY);
   memory = pans.remember(memory, 1.5, 420);
-  assert.deepEqual(Object.keys(JSON.parse(storage.get(BOIL_KEY) ?? '{}') as object), Object.keys(memory));
+  assert.deepEqual(Object.keys((JSON.parse(storage.get(BOIL_KEY) ?? '{}') as { pans: object }).pans), Object.keys(memory));
   assert.equal(Object.keys(memory).length, 1, 'only the pan timed since');
   // And when it hears, it follows.
   storage.delete(BOIL_KEY);
@@ -316,10 +325,10 @@ test('the alarm sound comes back as stored, and anything else, or nothing, is th
   assert.equal(settings.load().alarm, 'timer', 'a fresh install');
   settings.save(settingsWith({ alarm: 'hen' }));
   assert.equal(settings.load().alarm, 'hen');
-  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
+  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, alarm: 'beeps' }));
   assert.equal(settings.load().alarm, 'timer', 'a sound this version does not offer');
   const before = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
   delete before['alarm'];
-  storage.set(SETTINGS_KEY, JSON.stringify(before));
+  storage.set(SETTINGS_KEY, settingsText(before));
   assert.equal(settings.load().alarm, 'timer', 'a record from before the choice');
 });
