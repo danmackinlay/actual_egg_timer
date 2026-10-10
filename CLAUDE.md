@@ -20,11 +20,11 @@ things stand is `PLAN.md`; its last section says which document holds what.
   already been tested at needs no rerun, and a slow suite may wait for the
   next change if it runs before anything is pushed.
 - **One logical change per commit.**
-- **Branches are named for their version line** (`DECISIONS.md` 64, 102).
-  `main` is live (0.3); the next release is built on `0.5.x`, which merges
-  `main` in and is merged into `main` on release. `0.4.x` is retired. A
-  `0.3.x` is cut from the last 0.3 tag only for a 0.3 fix. An agent's branch
-  is named for what it does.
+- **Branches are named for their version line** (`DECISIONS.md` 64, 102,
+  110). `main` is live (0.5) and takes 0.5's work. A release large enough to
+  need its own line is built on one (`0.6.x`), which merges `main` in and is
+  merged into `main` on release. `0.3.x` (at `v0.3.4-alpha.1`) and `0.4.x`
+  are history. An agent's branch is named for what it does.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the

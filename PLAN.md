@@ -4,11 +4,12 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 10 October 2026, on `0.5.x`** (forked from
-`0.4.x` at `8972a05`; its worklist was `archive/SHIP-0.5.md`). Both apps are complete for one
+**Where things stand, 10 October 2026: 0.5 is released** (`v0.5.0-alpha.1`,
+`main`; `DECISIONS.md` 110; 0.3 kept on `0.3.x`; the worklists were
+`archive/SHIP-0.5.md` and `archive/REFACTOR-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
-both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
+both, and deployed on the web. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 495 tests, all passing (5b pins E3's known
@@ -16,11 +17,11 @@ limit); `npm run e2e` drives the web app through 47 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
 ios:e2e` the iOS app through 48 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. CI is set to fail on either, though
-neither has yet run on GitHub's runners: the first push is their first run. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 161 tests
-for the core twin and 29 for the app's package, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
-call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
-`.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
+machine and a loaded one. CI runs both and fails on either; each
+passed on GitHub's runners on 10 October. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 161 tests
+for the core twin and 29 for the app's package, and the fit's pytest 9. **0.5 pushed to `main` on 10 October**, the owner's
+call: Netlify serves it at actualeggtimer.netlify.app, and every job of
+`.github/workflows/verify.yml` passed on it. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
 uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
 (`ios/RELEASING.md`). The words the owner has not yet read are the review

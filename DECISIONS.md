@@ -825,3 +825,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     say so in the commit. The filter is tested as a distribution
     (`record.test.ts` 2a3, `npm run sbc`), never by matching draws.
     Recorded with the revert of the 1e-13 bound, `0fe3c2d`.
+110. **0.5 is released: `main` is the 0.5 line, and 0.3 a historical branch**
+    (the owner, 10 October 2026: "I am happy to make 0.5.x the main branch
+    and relegate 0.3.x to a historical branch", conditional on the tests
+    passing; the push authorised). `0.3.x` keeps 0.3 at `v0.3.4-alpha.1`
+    (`f31e8aa`); `main` moves to `0.5.x` once CI passes on it, tagged
+    `v0.5.0-alpha.1`, and the web app deploys from it. The owner exported
+    his results first (107). Kept with it: iOS's Live Activity card in this
+    build's shape only (`e1e0b36`), so a 0.3 card on the Lock Screen at the
+    upgrade lasts until the system ends it ("approved"); and nothing of
+    0.3's settings, pans or language carried over ("users can forgive us
+    this"). CLAUDE.md's branch rule changes with it.
