@@ -14,16 +14,18 @@ import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
-import { RunningCook, readRunningCook } from '../core/running.js';
+import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
+import { STORES } from '../core/stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
+export type { KeptAnswers, StoredCook } from '../core/running.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v5';
+const COOK_KEY = STORES.cook.web;
 const BOIL_KEY = 'aet.boil.v1';
 
 /**
@@ -32,11 +34,12 @@ const BOIL_KEY = 'aet.boil.v1';
  * read nor collected: the posteriors before the log (`v1`-`v3`), the log of
  * 0.3 and 0.4 (`v4`), the
  * copies 0.4 kept aside of what it could not read, and the cooks in progress
- * before this one's shape (`aet.cook.v1`-`v4`; `v5` keeps a cook's log).
+ * before this one's shape (`aet.cook.v1`-`v5`).
  */
 export const RETIRED_KEYS = [
   'aet.calibration.v1', 'aet.calibration.v2', 'aet.calibration.v3', 'aet.calibration.v4',
   'aet.calibration.v4.unread', 'aet.cook.unread', 'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4',
+  'aet.cook.v5',
 ];
 
 /** The Start control offers one more option than the solver understands.
@@ -436,29 +439,16 @@ function clampLitres(litres: number): number {
 
 /* ------------------------------------------------------------ the cook */
 
-/**
+/*
  * A cook in progress, so a reload does not lose the egg
- * (design/one-screen.md section 4, "What is stored").
- *
- * A running cook is its start, its choices and its events, all clock times
- * (src/core/running.ts), so writing it down is all a reload needs: the plan
- * is derived from it again. With it, whether its egg has been written down,
- * and the lean last decided, the interim while its surface is rebuilt.
+ * (design/one-screen.md section 4, "What is stored"): core's `StoredCook`,
+ * written and read as iOS writes and reads it (`storedCook`,
+ * `readStoredCook`). The plan is derived from it again.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. Whether a cook is still
  * worth restoring is core's `cookTooOld`, asked of its plan by the caller.
  */
-export interface StoredCook {
-  cook: RunningCook;
-  answers: KeptAnswers;
-  leanHint_s: number;
-}
-
-/** Whether the egg has been written down with an answer, as a cook keeps it
- *  (src/ui/feedback.ts): an egg answered on the page that wrote it is kept as
- *  answered before a reload, which is what it is when it is read back. */
-export type KeptAnswers = 'none' | 'beforeReload';
 
 /** The cook as stored (`openCooks`), and what is written beside it. */
 export interface CookStore extends SyncedKey<StoredCook | null> {
@@ -475,7 +465,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
 
 /**
  * The cook as stored, whichever tab wrote it, or null: none, or one this
- * build cannot read (`readStoredCook`), which the caller drops. What this
+ * build cannot read (core's `readStoredCook`), which the caller drops. What this
  * tab last read or wrote there is what it has seen; another tab's write is
  * taken up (model.ts, `elsewhere`) only when it is of this tab's own cook,
  * by id, since each tab runs the cook it started, and then only what that
@@ -483,7 +473,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
  * (app.ts) and held by the runner (cook.ts).
  */
 export function openCooks(): CookStore {
-  const key = syncedKey(COOK_KEY, readStoredCook);
+  const key = syncedKey(COOK_KEY, (text) => readStoredCook(parseObject(text)));
   /** The stored record's cook's id, read as little as it takes. */
   const idIn = (raw: Record<string, unknown> | null): unknown => {
     const cook = raw === null ? null : raw['cook'];
@@ -491,7 +481,9 @@ export function openCooks(): CookStore {
   };
   return {
     ...key,
-    save: (cook, answers, leanHint_s) => key.write(JSON.stringify({ cook: cook, answers: answers, leanHint_s: leanHint_s })),
+    save: (cook, answers, leanHint_s) => key.write(JSON.stringify(storedCook({
+      cook: cook, answers: answers, leanHint_s: leanHint_s,
+    }))),
     clear(id_ms) {
       const raw = parseObject(key.text());
       const stored = idIn(raw);
@@ -503,20 +495,6 @@ export function openCooks(): CookStore {
       key.write(JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
     },
   };
-}
-
-/** A stored cook's text, read: one without a known `answers` is refused
- *  rather than read as unanswered, which would log its egg a second time. */
-export function readStoredCook(text: string | null): StoredCook | null {
-  const raw = parseObject(text);
-  if (raw === null) return null;
-  const cook = readRunningCook(raw['cook']);
-  if (cook === null) return null;
-  const answers = raw['answers'];
-  if (answers !== 'none' && answers !== 'beforeReload') return null;
-  const hint = raw['leanHint_s'];
-  if (typeof hint !== 'number' || !Number.isFinite(hint)) return null;
-  return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
 /** What another tab wrote for this cook, taken up, and which copy a reload

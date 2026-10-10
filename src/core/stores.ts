@@ -40,7 +40,7 @@ export type StoreName =
   | 'newest' | 'newestBuild' | 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share' | 'shareAttest'
   | 'languageState' | 'alarmSound' | 'devClockUsed';
 
-export const STORES: Record<StoreName, StoreSpec> = {
+export const STORES = {
   /** The newest version that has run, and on iOS its build (newer.ts):
    *  under these keys for good, since an older build must find them. */
   newest: { name: 'newest', format: null, web: 'aet.newest', ios: 'newestVersion' },
@@ -66,7 +66,7 @@ export const STORES: Record<StoreName, StoreSpec> = {
   /** The web's development clock has been used here: what is logged may hold
    *  an egg cooked on a made-up clock, which is never sent. */
   devClockUsed: { name: 'devClockUsed', format: null, web: 'aet.devClock.used', ios: null },
-};
+} as const satisfies Record<StoreName, StoreSpec>;
 
 /** The table in one order, for the fixture and the sweeps. */
 export const STORE_LIST: StoreSpec[] = [

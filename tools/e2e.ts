@@ -35,11 +35,22 @@
  * when, never by waiting for it to play.
  */
 
+import { readStoredCook } from '../src/core/running.js';
+import { STORES } from '../src/core/stores.js';
 import { sleep } from './chrome.js';
 import { copyScenarios } from './copyScenarios.js';
 import {
   Cook, Failure, Harness, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
 } from './harness.js';
+
+/** Where the page keeps its running cook. */
+const COOK_KEY = STORES.cook.web;
+
+/** The cook a stored text reads as, folded from its log as the page reads
+ *  it (core's `readStoredCook`), or null. */
+function cookIn(text: string): Cook | null {
+  return (readStoredCook(JSON.parse(text))?.cook ?? null) as Cook | null;
+}
 
 /** Every page but those checking the address or sharing: the clock stopped. */
 const STOPPED = '/?clock=0';
@@ -146,7 +157,7 @@ async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Promise<Sn
   if (was !== null && was === (await tab.now()) / 1000) {
     throw new Failure('two corrections at one moment: no cook makes them; step the clock between them');
   }
-  await tab.until(`await (async () => { const s = __snap(); const c = s.stored === null ? null : JSON.parse(s.stored).cook;
+  await tab.until(`await (async () => { const s = __snap(); const c = s.storedCook;
     return c !== null && c.correctedAt_s !== ${JSON.stringify(was)} && s.cook.correctedAt_s === c.correctedAt_s; })()`,
   'a correction committed', ms);
   return tab.snap();
@@ -175,7 +186,7 @@ async function later(tab: Tab): Promise<void> {
 }
 
 function storedCook(s: Snap): Cook | null {
-  return s.stored === null ? null : (JSON.parse(s.stored) as { cook: Cook }).cook;
+  return s.storedCook;
 }
 
 /** Two tabs open and idle, each on its stopped clock, and how many writes
@@ -1121,10 +1132,10 @@ const SCENARIOS: Record<string, Scenario> = {
       const w0 = (await tab.writes()).length;
       await pick(tab, '#size', '1');
       await tab.click('#coolTap');
-      await tab.until("JSON.parse(localStorage.getItem('aet.cook.v5')).cook.choices.cooling === 'tap'", 'the second committed');
+      await tab.until("__snap().storedCook?.choices.cooling === 'tap'", 'the second committed');
       await tab.settle();
-      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === 'aet.cook.v5')
-        .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook.choices);
+      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === COOK_KEY)
+        .map((w) => cookIn(w.value)?.choices).filter((c) => c !== undefined);
       const firstAlone = cooks.some((c) => c.mass_kg !== s.cook?.choices.mass_kg && c.cooling === 'ice');
       check(firstAlone, `the first committed without the second: ${JSON.stringify(cooks.map((c) => [c.mass_kg, c.cooling]))}`);
       return `the size kept across a reload; then ${cooks.length} writes, the first change alone first`;
@@ -1294,9 +1305,8 @@ const SCENARIOS: Record<string, Scenario> = {
       await b.settle();
       const stored = storedCook(await a.snap());
       check(stored?.events.boilAt_s !== null, 'the tap still stored');
-      const bWrites = (await b.writes()).filter((w) => w.key === 'aet.cook.v5')
-        .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook);
-      check(bWrites.every((c) => c.events.boilAt_s !== null), 'B never wrote a cook without the tap');
+      const bWrites = (await b.writes()).filter((w) => w.key === COOK_KEY).map((w) => cookIn(w.value));
+      check(bWrites.every((c) => c !== null && c.events.boilAt_s !== null), 'B never wrote a cook without the tap');
       await a.reload();
       const sa = await a.snap();
       check(sa.phase === 'COOKING', `A reloaded to ${sa.phase}`);
@@ -1383,10 +1393,10 @@ const SCENARIOS: Record<string, Scenario> = {
       const sb = await b.phase('COOKING');
       check(sb.cook?.events.boilAt_s === sa.cook?.events.boilAt_s, 'B has A\'s tap');
       const cookOf = (text: string): string => JSON.stringify((JSON.parse(text) as { cook: Cook }).cook);
-      const written = await settled(b, a, 'aet.cook.v4', from);
+      const written = await settled(b, a, COOK_KEY, from);
       // B's lean, a cache, may be written beside a cook A stored; a cook of
       // B's own, never.
-      const aCooks = new Set((await a.writes()).filter((w) => w.key === 'aet.cook.v4').map((w) => cookOf(w.value)));
+      const aCooks = new Set((await a.writes()).filter((w) => w.key === COOK_KEY).map((w) => cookOf(w.value)));
       const back = written.filter((w) => !aCooks.has(cookOf(w)));
       check(back.length === 0, `B wrote its copy of the cook back: ${back.length}`);
       return `A tapped the boil: B took it up; of B's ${written.length} writes of the cook, 0 its own copy`;
@@ -1561,7 +1571,7 @@ const SCENARIOS: Record<string, Scenario> = {
     what: 'a cook and a results log this build cannot read: dropped, the page idle on the prior, nothing kept aside',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
-      await tab.eval(`localStorage.setItem('aet.cook.v5', '{"cook":{"id_ms":1},"answers":"none"}');
+      await tab.eval(`localStorage.setItem('${COOK_KEY}', '{"v":${STORES.cook.format},"cook":{"id_ms":1},"answers":"none"}');
         localStorage.setItem('aet.calibration.v5', '{damaged')`);
       await tab.reload();
       await tab.settle();
@@ -1582,7 +1592,7 @@ const SCENARIOS: Record<string, Scenario> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const old = ['aet.calibration.v3', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.unread',
-        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4'];
+        'aet.cook.v1', 'aet.cook.v2', 'aet.cook.v3', 'aet.cook.v4', 'aet.cook.v5'];
       const plant = `for (const k of ${JSON.stringify(old)}) localStorage.setItem(k, '{"v":4,"log":[]}')`;
       const keys = 'Object.keys(localStorage).sort()';
       await tab.eval(plant);
@@ -1612,13 +1622,13 @@ const SCENARIOS: Record<string, Scenario> = {
       const D = 20 * 60;
       await tab.goto(`${h.origin}/privacy/`, false);
       await tab.eval(`(() => {
-        const o = JSON.parse(localStorage.getItem('aet.cook.v5'));
+        const o = JSON.parse(localStorage.getItem('${COOK_KEY}'));
         const c = o.cook;
         c.id_ms -= ${D * 1000};
         // The press and its start; the log is read, the rest folded from it.
         c.start.at_s -= ${D};
         for (const e of c.log) if (typeof e.at_s === 'number') e.at_s -= ${D};
-        localStorage.setItem('aet.cook.v5', JSON.stringify(o));
+        localStorage.setItem('${COOK_KEY}', JSON.stringify(o));
       })()`).catch(() => undefined);
       await tab.goto(`${h.origin}/`);
       await tab.phase('DONE');

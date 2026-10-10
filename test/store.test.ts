@@ -11,9 +11,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
+import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
+import { STORES } from '../src/core/stores.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
@@ -31,7 +33,7 @@ const storage = new Map<string, string>();
 };
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v5';
+const COOK_KEY = STORES.cook.web;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
 const settings = openSettings(classes);
@@ -203,18 +205,34 @@ test('a copy with other corrections gives only what the cook saw, never what its
   assert.equal(correctedLater(start, start), false);
 });
 
-test('a cook kept without `answers` or the lean is refused, never read as unanswered', () => {
-  // Read as unanswered, an egg already in the log would be logged again.
+/** The stored cooks both apps are held to, as text (fixtures/stores.json):
+ *  what each reads as, as it is stored, or null. iOS runs the same rows
+ *  through `Cook` (EggTimerAppTests). */
+const STORED_COOKS = (JSON.parse(readFileSync('fixtures/stores.json', 'utf8')) as {
+  cooks: { about: string; text: string; read: unknown }[];
+}).cooks;
+
+test('the web\'s store takes or refuses each stored cook of the table both apps are held to', () => {
+  assert.ok(STORED_COOKS.length > 20);
+  for (const row of STORED_COOKS) {
+    storage.clear();
+    storage.set(COOK_KEY, row.text);
+    const loaded = cooks.load();
+    const read = loaded === null ? null : JSON.parse(JSON.stringify(storedCook(loaded))) as unknown;
+    assert.deepEqual(read, row.read, row.about);
+  }
+});
+
+test('a cook is stored without the cook as it stands: its start and log, which a reload folds again', () => {
   storage.clear();
   const cook = aCook();
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, leanHint_s: 0, feedbackGiven: true }));
-  assert.equal(cooks.peek(), null);
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'live', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'only what saveCook writes');
-  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'none' }));
-  assert.equal(cooks.peek(), null, 'without the lean');
-  storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, start: { ...cook.start, at_s: 'then' } }, answers: 'none', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'a cook that does not read (`readRunningCook`)');
+  cooks.save(cook, 'none', 0);
+  const stored = JSON.parse(storage.get(COOK_KEY) ?? '{}') as { v: number; cook: Record<string, unknown> };
+  assert.equal(stored.v, STORES.cook.format);
+  for (const field of ['startedAt_s', 'choices', 'events', 'correctedAt_s', 'asRan']) {
+    assert.ok(!(field in stored.cook), `${field} not written`);
+  }
+  assert.deepEqual(cooks.peek()?.cook, cook);
 });
 
 test('Cancel forgets the stored cook only if it is this tab\'s', () => {
@@ -231,17 +249,6 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   assert.equal(cooks.text(), null, 'junk goes');
 });
 
-test('a cook in a shape this build does not read is not read', () => {
-  storage.clear();
-  // An earlier build's running cook: its events whole, no start or log.
-  const { start: _start, log: _log, ...earlier } = aCook();
-  storage.set(COOK_KEY, JSON.stringify({ cook: earlier, answers: 'none', leanHint_s: 0 }));
-  assert.equal(cooks.peek(), null, 'without its log, not read');
-  // 0.4's shape: a machine and a ticket.
-  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' }));
-  assert.equal(cooks.peek(), null, 'never read as a running cook');
-});
-
 test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {
   const eu = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2, doneness: 0.62 }, 'GB');
   assert.deepEqual([eu.mass_kg, eu.massFrom, eu.sizeTable, eu.level], [sizeClassesFor('GB')[2].mass_kg, 'class', 'eu', 0.62]);
@@ -253,15 +260,6 @@ test('the settings as a cook\'s choices: the carton\'s class or the measured egg
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, startMode: 'sous' }, 'GB').startMode, 'hot', 'sous-vide is a hot pan to the solver');
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26 }, 'GB').room_C, null, 'the room counts only with the probe on');
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26, probe: true }, 'GB').room_C, 26);
-});
-
-test('junk under the cook\'s key is never a crash', () => {
-  storage.clear();
-  for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ cook: 3, answers: 'none', leanHint_s: 0 })]) {
-    storage.set(COOK_KEY, junk);
-    assert.equal(cooks.peek(), null, junk);
-    assert.equal((cooks.peek()?.cook ?? null), null, junk);
-  }
 });
 
 test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {
