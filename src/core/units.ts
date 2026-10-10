@@ -156,9 +156,8 @@ interface QuantitySpec {
  * LANGUAGE.md §4's table, which is the spec for Imperial. The metric steps are
  * what the web inputs already offered, rounded to what they already showed, so
  * a metric cook sees nothing move: 1 mm round the girth, 0.5 mm across,
- * 50 m, 0.25 L. The iOS altitude stepper moved in 100 m; it now takes the
- * table. The egg's mass steps in half grams, the owner's step for the − and +
- * beside it (4 October 2026), and is shown without a ".0": 58 g, 58.5 g.
+ * 50 m, 0.25 L. The egg's mass steps in half grams, the owner's step for the
+ * − and + beside it, and is shown without a ".0": 58 g, 58.5 g.
  */
 const SPECS: Record<Quantity, QuantitySpec> = {
   temperature: {
@@ -172,8 +171,7 @@ const SPECS: Record<Quantity, QuantitySpec> = {
     imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
   },
   // Typed to a tenth, as a probe shows it; the − and + move in whole degrees
-  // from the peak the cook was started at (the owner's request of 5 October
-  // 2026), since a tenth at a time is no help to a cook with a probe in hand.
+  // from the peak the cook was started at, since a tenth at a time is no help to a cook with a probe in hand.
   probeTemp: {
     limit: null,
     metric: { unit: 'C', num: 1, den: 10, decimals: 1, nudge: { num: 1, den: 1 } },
@@ -453,7 +451,7 @@ export function effectiveUnits(chosen: UnitSystem | null, regional: UnitSystem):
 /** An explicit change of system, in the direction it went.
  *  `languageAfterFlip` listens for `metricToImperial`: it is the switch into the English of 1750
  *  (LANGUAGE.md §6), and only a cook's own choice may throw it. `imperialToMetric`
- *  moves no language (DECISIONS.md 77). */
+ *  moves no language. */
 export type UnitsFlip = 'metricToImperial' | 'imperialToMetric';
 
 export interface UnitsChoice {

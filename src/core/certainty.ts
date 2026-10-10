@@ -1,8 +1,8 @@
 /**
- * How sure the timer is, in words (DECISIONS.md 93; INFERENCE.md section 8,
+ * How sure the timer is, in words (INFERENCE.md section 8,
  * "How sure, in words").
  *
- * Since DECISIONS.md 92 the cook names the yolk they got in the slider's five
+ * The cook names the yolk they got in the slider's five
  * words, and the outcome already carries the posterior predictive of those
  * five words at the chosen time (`yolkWordProbabilities`, the record's
  * `forecast.yolkWord`). This reads that spread against the word the cook
@@ -43,8 +43,7 @@
  * "between Jammy and Fudgy".
  *
  * THE BRACKET. Under the slider the same interval is drawn
- * (`wordBracket`; DECISIONS.md 97, question 14: "the bracket draws the 90%
- * the words say, so the two agree"). Each word has a band on the slider:
+ * (`wordBracket`), so the bracket and the words agree. Each word has a band on the slider:
  * the levels whose nearest anchor it is, from the midpoint with the anchor
  * below to the midpoint with the anchor above, 0 and 1 at the ends - the
  * same edges `anchorNear` and `YOLK_WORD_CUTS` have. The bracket runs from
@@ -53,8 +52,8 @@
  * mark sits at the most likely word's anchor, where that word's tick is.
  * The most likely word is always inside the interval: a word outside a run
  * holding 0.9 holds at most 0.1, and the five cannot all be that small.
- * Until 8 October 2026 the bracket was the outcome's level range, the egg
- * without the cook's taste, and could name other words than these.
+ * It is not the outcome's level range: that is the egg without the cook's
+ * taste, and could name other words than these.
  *
  * THE TIME RANGE. The 90% credible interval of the right cook time for the
  * level asked: `predictCookTime` at the 5% and 95% points, the same per-

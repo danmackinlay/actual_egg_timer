@@ -9,8 +9,8 @@
  *
  * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and
  * P(runny), P(tender), P(firm) for the white: the posterior predictive of what
- * the cook will say, and, since the cook names the yolk they got
- * (DECISIONS.md 92), the five yolk words' too. The decision, the odds and the
+ * the cook will say, and, since the cook names the yolk they got, the five
+ * yolk words' too. The decision, the odds and the
  * lean still read the miss around the level asked for, which is what the
  * first three are,
  * through the probit the filter learns with, unrelated share included - the
@@ -80,11 +80,10 @@ import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
 export const LEAN_RATIO = 1.5;
 
 /** The quantiles the level range is read at: a 90% interval, the mass the
- *  certainty's words are read at (`CERTAINTY_MASS`, certainty.ts). It was
- *  80% until the `certainty` draft. No screen draws the range since 8
- *  October 2026: the bracket under the slider is the words' own interval
+ *  certainty's words are read at (`CERTAINTY_MASS`, certainty.ts). No screen
+ *  draws the range: the bracket under the slider is the words' own interval
  *  (`wordBracket`, certainty.ts), the cook's taste included, so that the two
- *  agree (DECISIONS.md 97, question 14). The range is kept as the egg
+ *  agree. The range is kept as the egg
  *  itself, without the taste, which `npm run decide -- outcome` measures. */
 export const LEVEL_LOW_Q = 0.05;
 export const LEVEL_HIGH_Q = 0.95;
@@ -110,12 +109,12 @@ export interface Outcome {
   pTooFirm: number;
   /** P(the cook answers runny / tender / firm) about the white. Sum to 1. The
    *  screens read only the first; a record keeps all three as the forecast
-   *  the app made at "Eggs in" (DECISIONS.md 37). */
+   *  the app made at "Eggs in". */
   pWhiteRunny: number;
   pWhiteTender: number;
   pWhiteFirm: number;
   /** P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
-   *  question the cook is asked (DECISIONS.md 92). Sum to 1. No screen reads
+   *  question the cook is asked. Sum to 1. No screen reads
    *  them; a record keeps them as the forecast. Null only on an outcome a
    *  cook carried from a build before them (the web's `restoreOutcome`). */
   pYolkWord: number[] | null;

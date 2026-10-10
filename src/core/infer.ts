@@ -21,7 +21,7 @@
  * posterior over egg temperature.
  *
  * THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
- * yolk, since DECISIONS.md 92, the cook names the yolk they got in the
+ * yolk, the cook names the yolk they got in the
  * slider's own five words, and the latent is the delivered log10 dose less
  * the cook's taste offset; the answer says which of five bands it fell in,
  * cut where the slider's word changes (`YOLK_WORD_CUTS`). It is seen
@@ -71,8 +71,7 @@ import {
 } from './doseGrid.js';
 
 /**
- * What the cook reports about the YOLK after eating the egg (DECISIONS.md
- * 92): the yolk they got, in the slider's own words, whatever they asked
+ * What the cook reports about the YOLK after eating the egg: the yolk they got, in the slider's own words, whatever they asked
  * for. Each is the doneness anchor of the same place in `DONENESS_ANCHORS`
  * (`doneness.runny` ... `doneness.hard`), and covers the levels that
  * anchor's word names.
@@ -366,9 +365,8 @@ export interface Population {
 }
 
 /** The literature's population: the prior every cook drew from before E7,
- *  number for number, less the carryover, which left the particle in 0.5
- *  (DECISIONS.md 95; a prior drawn from it is not the old one, and
- *  `LIKELIHOOD_ID` says so). '2026-09' is the id E1's records gave it. */
+ *  number for number, less the carryover, which is not a particle (a prior
+ *  drawn from it is not the one drawn with it, and `LIKELIHOOD_ID` says so). '2026-09' is the id E1's records gave it. */
 export const LITERATURE_POPULATION: Population = {
   id: '2026-09',
   alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },
@@ -469,7 +467,7 @@ export function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [n
  * The yolk and white are probabilities and the reading is a density, per
  * degree; each particle is scored on the same reading, so the units cancel in
  * the normalisation. The yolk is the yolk the cook got, in the slider's five
- * words (DECISIONS.md 92).
+ * words.
  */
 export function answerLikelihood(
   grid: DoseGrid, p: Particle, cookTime_s: number,

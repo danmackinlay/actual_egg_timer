@@ -173,8 +173,7 @@ export function sectionView(s: EggSection, whiteTarget_min: number): SectionView
 }
 
 /**
- * The egg the settings aim for (design/one-screen.md section 5; DECISIONS.md
- * 98): one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
+ * The egg the settings aim for (design/one-screen.md section 5): one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
  * shown at the end of the cooling, the egg as eaten: carried through the
  * whole carryover (`CARRYOVER_WINDOW`), as `simulate` counts it, so the yolk
  * reads the level the slider asked for. At the yolk centre's peak, which is

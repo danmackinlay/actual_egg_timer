@@ -425,7 +425,7 @@ export function step(state: CookState, event: CookEvent, env: CookEnv): CookStep
       if (!ended && phase === 'HEATING') w.cook = withBoil(held, now_s);
       break;
     case 'correct':
-      // After the pull the yolk wanted only previews (DECISIONS.md 98): a
+      // After the pull the yolk wanted only previews: a
       // change of it alone corrects nothing.
       if (!ended && !sameChoices(event.choices, held.choices)
         && !(held.events.pulled !== null && sameChoices({ ...event.choices, level: held.choices.level }, held.choices))) {

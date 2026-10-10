@@ -1,5 +1,5 @@
 /**
- * Which build may write: the newest that has run (DECISIONS.md 100).
+ * Which build may write: the newest that has run.
  *
  * An older build can damage what a newer one stored: it writes the settings,
  * the pans, the sharing state, the cook in progress and the store around the

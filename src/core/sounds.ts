@@ -1,5 +1,5 @@
 /**
- * The alarm sounds a cook can choose in Settings (DECISIONS.md 101), in the
+ * The alarm sounds a cook can choose in Settings, in the
  * order both pickers list them; the one a fresh install rings with; a stored
  * choice read back; and each sound's timing. Both apps ring the same patterns
  * for the same time. The wind-up timer is the default because it is what

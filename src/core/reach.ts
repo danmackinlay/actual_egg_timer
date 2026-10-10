@@ -1,11 +1,9 @@
 /**
  * The odds at every level the slider offers, and what follows from them:
  * which levels the app warns of, how the track is shaded, and when the app
- * says how to make an egg more reliable. Since the `certainty` draft
- * (DECISIONS.md 93 and 97) the warning and the shading read how sure the
- * app is in words (certainty.ts) at each level's time, and since its
- * follow-up (8 October 2026) the advice does too: the odds of "just right"
- * are left to the time chosen.
+ * says how to make an egg more reliable. The warning, the shading and the
+ * advice read how sure the app is in words (certainty.ts) at each level's
+ * time: the odds of "just right" are left to the time chosen.
  *
  * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
  * same number for every level the pot can deliver, computed exactly as the app
@@ -58,16 +56,15 @@
  * points, as the slider is on a drag, is held between those two points'
  * times (`envelopeBounds`). So the time is monotone at the points, and
  * within about a second of it between them: the choice can dip inside the
- * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does
- * (archive/REVIEW-0.4.x.md, and DECISIONS.md 84, which accepts it). A drag
- * costs what it did: its own decision, and a look-up. What
+ * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does. In exchange a drag
+ * costs no more than without the envelope: its own decision, and a look-up. What
  * the sampling misses is a dip in the choices narrower than the step between
  * points; the time it gives there is within one step's change of the
  * choice, a few seconds. A bisection point is held between its neighbours,
  * so it changes no time the profile already gave.
  *
  * Until the profile is built - the first moments with a new pot - a level
- * has its own choice, as it had before 5 October 2026, and the time can move
+ * has its own choice, and the time can move
  * once when the profile lands. Before the first egg nothing is held: the time
  * is the literature's, which rises with the level already.
  *
@@ -80,22 +77,19 @@
  * both apps call: the time decided at the level answered (`answerAt`), held
  * by the envelope where the profile is in, moved by the nudge where a time is
  * chosen, the solve re-read there, the outcome and the certainty there, and
- * whether the word asked is a wild guess there, so advice is looked for. Until 6 October 2026 each
- * app wrote it out for itself, and DECISIONS.md 84 had to land twice
- * (archive/REVIEW-0.4.x.md, "Bloat and factoring" 1).
+ * whether the word asked is a wild guess there, so advice is looked for. One
+ * function, so a rule about the time lands in both apps at once.
  *
  * THE WARNING. A level that is a wild guess at its time (`certaintyAt`'s
  * class: the word asked and its neighbours together under 9 times in 10) is
  * not refused: the slider rests there, and the app says it is a wild guess
- * so far (`lowOddsAt`, whose name is older than the rule). The levels it
+ * so far (`lowOddsAt`, which reads the certainty, not the odds its name
+ * says). The levels it
  * warns of are those softer than the softest level that is not a wild guess,
  * and firmer than the firmest - the dots on the track. Only what the pan
  * cannot deliver at all is refused (`verdictFor`, the stripes), and the
  * slider moves out of it. A wild guess inside the range is not warned of;
- * only the ends are, as only the ends are dotted. Until 5 October 2026 the
- * ends were a wall the slider snapped back to (DECISIONS.md 20, amended by
- * 83); until the `certainty` draft they were where the odds of "just right"
- * fell under 3/10 (DECISIONS.md 97, design/one-screen.md section 7, 16).
+ * only the ends are, as only the ends are dotted.
  *
  * WHEN EVERY LEVEL IS A WILD GUESS there is no warning at all, and no dots:
  * there is no surer level to point to. And there is none before the first
@@ -143,8 +137,8 @@ export interface OddsProfile {
   /** Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
    *  the white never sets: there is no level to give odds on. */
   points: LevelOdds[];
-  /** The best odds of any point. The advice was measured against it until
-   *  8 October 2026; `npm run decide -- reach` still reports it. */
+  /** The best odds of any point: `npm run decide -- reach` reports it; no
+   *  screen reads it. */
   best: number;
   /** The best `pAsked` of any point: what the shading is relative to. */
   bestAsked: number;
@@ -362,8 +356,7 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
  * softer than its softest or firmer than its firmest. False with no profile,
  * or one that warns of nothing (the header, "when every level is a wild
  * guess"). It moves nothing: what the pan cannot deliver is `verdictFor`'s.
- * The name is older than the rule: until the `certainty` draft the dots were
- * the levels under 3/10.
+ * It reads the certainty's class, not the odds its name says.
  */
 export function lowOddsAt(profile: OddsProfile | null, level: number): boolean {
   if (profile === null || profile.softest === null || profile.hardest === null) return false;
@@ -409,10 +402,9 @@ export function answerAt(
 /* ------------------------------------------------------------ the shading */
 
 /** How strongly the track is shaded at a level: the chance of the word asked
- *  there, over the best level's (DECISIONS.md 97; design/one-screen.md
- *  section 7, 17), 0 to 1. Relative, so a fresh install, never very certain
- *  anywhere, still shows where this pan works best. Until the `certainty`
- *  draft it was the odds of "just right". */
+ *  there, over the best level's (design/one-screen.md section 7, 17), 0 to
+ *  1. Relative, so a fresh install, never very certain anywhere, still shows
+ *  where this pan works best. */
 export interface Shade {
   level: number;
   strength: number;
@@ -437,8 +429,7 @@ export function shadingOf(profile: OddsProfile): Shade[] {
 /* ------------------------------------------------------------ the advice */
 
 /**
- * WHEN TO ADVISE (DECISIONS.md 97; the `certainty` draft's follow-up, 8
- * October 2026). The way to Help's advice shows when the word asked is a
+ * WHEN TO ADVISE. The way to Help's advice shows when the word asked is a
  * wild guess at the time on screen (`certaintyAt`'s class, `adviceWanted`)
  * and a change of setup the model can price makes it surer: its profile,
  * at the level on screen, gives the word asked a chance higher than the
@@ -623,13 +614,12 @@ export interface DecidedAnswer {
  * Decide an answer: the time for `sol`, the mean solve at `level` (an
  * `answerAt`'s solution and level), on `grid`, this pot's decision surface;
  * held within the envelope of `profile`, the pot's odds profile, or by
- * nothing while it is null (DECISIONS.md 84); then moved by `nudge_s`, the
+ * nothing while it is null; then moved by `nudge_s`, the
  * nudge the app drew, where a time is chosen for (E8). The solve is re-read
  * at the time given and the outcome and the certainty read there, so the
  * time shown, the time started, the words under it and the bracket agree.
  *
- * A level the odds warn of is decided at that level like any other
- * (DECISIONS.md 83): the warning is `answerAt`'s, and moves nothing here.
+ * A level the odds warn of is decided at that level like any other: the warning is `answerAt`'s, and moves nothing here.
  */
 export function decideAnswer(
   c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, sol: Solution, level: number,

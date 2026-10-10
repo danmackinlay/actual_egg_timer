@@ -95,7 +95,7 @@ export function targetPeakYolk_C(level: number): number {
  *                           offer, so there is nowhere to snap to.
  *
  * A level the pan can deliver is never refused, however low its odds: those
- * are warned of instead (`lowOddsAt`, reach.ts; DECISIONS.md 83).
+ * are warned of instead (`lowOddsAt`, reach.ts).
  */
 export type RefusalKind = 'none' | 'tooSoftForWhite' | 'harderThanPanReaches' | 'whiteNeverSets';
 
