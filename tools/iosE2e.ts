@@ -32,7 +32,7 @@ import { dirname } from 'node:path';
 
 import type { EggRecord } from '../src/core/record.js';
 import { type RunningCook, type StoredCook, readStoredCook } from '../src/core/running.js';
-import { STORES } from '../src/core/stores.js';
+import { STORES, stamped } from '../src/core/stores.js';
 
 const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';
@@ -363,8 +363,9 @@ with open(path, 'wb') as f:
 /// `readStoredCook`): the cook folded from its log.
 type Stored = StoredCook;
 
-/// Where the app keeps its cook.
+/// Where the app keeps its cook and its settings.
 const COOK = STORES.cook.ios;
+const SETTINGS = STORES.settings.ios;
 
 /// A stored cook as the log or the plist has it, read; null if it does not.
 const storedOf = (raw: unknown): Stored | null => readStoredCook(raw);
@@ -437,7 +438,7 @@ type Found<E extends Event = Event> = E & { i: number };
 /// The prefs plist as read, each data value that is JSON parsed: the keys a
 /// check reads.
 interface Prefs {
-  'settings.v1'?: { startMode?: string; waterLitres?: number; eggCount?: number; doneness?: number };
+  [SETTINGS]?: { startMode?: string; waterLitres?: number; eggCount?: number; doneness?: number };
   newestVersion?: string;
   newestBuild?: string;
   [COOK]?: { v?: number; cook?: unknown };
@@ -597,11 +598,12 @@ const canon = (v: unknown): string => JSON.stringify(v, (_k, x: unknown) => (x &
   ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 const sorted = (a: string[] | null): string[] | null => (a ? [...a].sort() : a);
 
-/// The settings as stored (`settings.v1`, core's `readSettings`), given at
+/// The settings as stored (core's `stamped` and `readSettings`), given at
 /// launch: what is not given is the default. A launch argument whose value
 /// is `<hex>` is data to UserDefaults, as the app stores the value.
 function settingsArg(over: Record<string, unknown>): string[] {
-  return ['-settings.v1', `<${Buffer.from(JSON.stringify(over), 'utf8').toString('hex')}>`];
+  const text = JSON.stringify(stamped(STORES.settings, over));
+  return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
 }
 /// A hot start's settings.
 const HOT_SETTINGS = { doneness: 0.41, altitude_m: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
@@ -857,8 +859,8 @@ scenario('owner-case', "C3 step 3: boiling corrected to cold, as the owner neede
   const card = lastCard(after.lines);
   run.check(card?.what === 'update' && card.stage === 'heating', `the card in place: ${card?.what} ${card?.stage} (was ${card0?.stage})`);
   run.check(card && card0 && card.ends !== card0.ends, 'the card ends at the corrected pull');
-  const prefs = await run.prefs((p) => p['settings.v1']?.startMode === 'cold');
-  run.check(prefs['settings.v1']?.startMode === 'cold', `the next cook's setting: ${prefs['settings.v1']?.startMode}`);
+  const prefs = await run.prefs((p) => p[SETTINGS]?.startMode === 'cold');
+  run.check(prefs[SETTINGS]?.startMode === 'cold', `the next cook's setting: ${prefs[SETTINGS]?.startMode}`);
   run.terminate();
   const r = await relaunched(run, run.t0 + 90);
   run.check(restoredIn(r.restore, 'HEATING'), say(r.restore));
@@ -1015,8 +1017,8 @@ scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its w
   const after = await corrected(run, t.i);
   run.check(after.cook?.choices.waterLitres === 1, `the cook's water: ${after.cook?.choices.waterLitres}`);
   run.check(after.plan.pull !== plan0.pull, `the pull moved: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
-  const prefs = await run.prefs((p) => p['settings.v1']?.waterLitres === 1);
-  const written = prefs['settings.v1'];
+  const prefs = await run.prefs((p) => p[SETTINGS]?.waterLitres === 1);
+  const written = prefs[SETTINGS];
   run.check(written?.waterLitres === 1, `the next cook's water: ${written?.waterLitres}`);
   run.check(written?.eggCount === 2, `only what changed written: eggs ${written?.eggCount}`);
   const i = await run.step(after.plan.pull + 1);
@@ -1864,10 +1866,10 @@ scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the a
   await run.until(storedAs((s) => s.cook.choices.level === 0.3), { from: c.i, what: 'the cook stored' });
   // The next cook's setting, written to the store as the app says; then in
   // its file, which the system writes when it will, so waited for in full.
-  await run.until(is('wrote', (e) => e.key === 'settings.v1'), { from: c.i, what: 'the setting written' });
+  await run.until(is('wrote', (e) => e.key === SETTINGS), { from: c.i, what: 'the setting written' });
   run.terminate();
-  const prefs = await run.prefs((p) => p['settings.v1']?.doneness === 0.3);
-  run.check(prefs['settings.v1']?.doneness === 0.3, `the setting in the file: ${prefs['settings.v1']?.doneness}`);
+  const prefs = await run.prefs((p) => p[SETTINGS]?.doneness === 0.3);
+  run.check(prefs[SETTINGS]?.doneness === 0.3, `the setting in the file: ${prefs[SETTINGS]?.doneness}`);
   const r = await relaunched(run, run.t0 + 40, ['-uiDo', 'set:size=3@50,set:water=1@50']);
   run.check(lastStored(r.lines)?.cook.choices.level === 0.3, 'relaunched with the change');
   t = await tapAt(run, run.t0 + 50, 'set');

@@ -466,18 +466,23 @@ struct AppTests {
     // MARK: - Stores
 
     /// The settings are one value, read by core's `readSettings`: a control
-    /// changed while idle writes it whole, and the next launch reads it back;
-    /// the keys of before are swept.
+    /// changed while idle writes it whole, in its format, and the next launch
+    /// reads it back; the keys of before are swept, and settings in no format
+    /// are not read.
     @Test func theSettingsAreOneValue() async throws {
-        let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot"]))
+        let unformatted = try JSONSerialization.data(withJSONObject: ["waterLitres": 5])
+        let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot", SettingsStore.key: unformatted]))
         #expect(world.store.object(forKey: "doneness") == nil)
         let planner = Planner()
         planner.load()
         #expect(planner.settings.doneness == Defaults.doneness)
+        #expect(planner.settings.waterLitres == AppSettings.defaults.waterLitres)
         planner.settings.waterLitres = 3
         planner.start = .hot
         let data = try #require(world.store.data(forKey: SettingsStore.key))
-        let stored = readSettings(try JSONSerialization.jsonObject(with: data), classes: planner.sizeClasses)
+        let raw = try JSONSerialization.jsonObject(with: data)
+        #expect(inFormat(StoreRegistry.settings, raw) != nil)
+        let stored = readSettings(raw, classes: planner.sizeClasses)
         #expect(stored.waterLitres == 3)
         #expect(stored.startMode == .hot)
         let again = Planner()
@@ -541,10 +546,7 @@ struct AppTests {
     /// `Stores`, each write the one `Stores` logged; UserDefaults itself is
     /// never touched.
     @Test func everyWriteGoesThroughStores() async throws {
-        let keys = [
-            Cook.savedKey, "calibration.v5", "boilMemory", SettingsStore.key, "newestVersion",
-            "newestBuild", "languageState", "alarmSound",
-        ]
+        let keys = StoreRegistry.all.compactMap(\.ios)
         let standard = UserDefaults.standard
         let before = keys.map { standard.object(forKey: $0).map { "\($0)" } }
 
@@ -572,6 +574,8 @@ struct AppTests {
         #expect(!set.isEmpty)
         #expect(set == wrote)
         #expect(Set(world.store.writes.map(\.key)).isSuperset(of: [Cook.savedKey, "calibration.v5"]))
+        // Every key written is in the table of stores.
+        #expect(Set(world.store.writes.map(\.key)).isSubset(of: Set(keys)))
         #expect(keys.map { standard.object(forKey: $0).map { "\($0)" } } == before)
     }
 }

@@ -20,7 +20,7 @@ public final class LanguageChoice: LanguageChoosing {
     /// Under its own key, not "language": a launch argument of that name
     /// would shadow it (UserDefaults' argument domain), and the debug builds
     /// take one (`-uiLanguage`, Screenshots.swift).
-    private static let key = "languageState"
+    private static let key = Stores.key(StoreRegistry.languageState)
 
     public private(set) var state = LanguageState.fresh
     private var observer: NSObjectProtocol?
@@ -63,12 +63,15 @@ public final class LanguageChoice: LanguageChoosing {
 
     private static func read() -> LanguageState {
         guard let data = Stores.store.data(forKey: key),
-              let raw = try? JSONSerialization.jsonObject(with: data) else { return .fresh }
+              let raw = inFormat(StoreRegistry.languageState, try? JSONSerialization.jsonObject(with: data)) else {
+            return .fresh
+        }
         return readLanguageState(raw, known: languages)
     }
 
     private static func write(_ state: LanguageState) {
-        guard let data = try? JSONSerialization.data(withJSONObject: state.jsonObject) else { return }
+        let stored = stamped(StoreRegistry.languageState, state.jsonObject)
+        guard let data = try? JSONSerialization.data(withJSONObject: stored) else { return }
         Stores.set(data, forKey: key)
     }
 }

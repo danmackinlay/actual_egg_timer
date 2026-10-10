@@ -39,10 +39,10 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    public static let markKey = "newestVersion"
+    public static let markKey = key(StoreRegistry.newest)
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    public static let buildKey = "newestBuild"
+    public static let buildKey = key(StoreRegistry.newestBuild)
 
     /// Every key an earlier build wrote that this one does not read, deleted
     /// at launch (`claim`) rather than left on the phone being neither read
@@ -55,6 +55,7 @@ public enum Stores {
     public static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
+        "settings.v1",
         "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
         // The settings before they were one value (`SettingsStore`).
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
@@ -167,17 +168,21 @@ extension UserDefaults: KeyValueStore {
     public func removeObject(forKey key: String, _ pass: Stores.Pass) { removeObject(forKey: key) }
 }
 
-/// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
+/// Where a boil memory is kept: as the web keeps it, JSON in its format, the
+/// pans under `pans`. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
 public enum BoilMemories {
-    private static let key = "boilMemory"
+    private static let key = Stores.key(StoreRegistry.boilMemory)
 
     public static func load() -> BoilMemory {
-        (Stores.store.dictionary(forKey: key) as? BoilMemory) ?? [:]
+        let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        return (inFormat(StoreRegistry.boilMemory, raw)?["pans"] as? BoilMemory) ?? [:]
     }
 
     public static func save(_ memory: BoilMemory) {
-        Stores.set(memory, forKey: key)
+        let stored = stamped(StoreRegistry.boilMemory, ["pans": memory])
+        guard let data = try? JSONSerialization.data(withJSONObject: stored, options: [.sortedKeys]) else { return }
+        Stores.set(data, forKey: key)
     }
 
     /// Forget every measured pan. Paired with the calibration reset: someone
@@ -191,7 +196,7 @@ public enum BoilMemories {
 /// as JSON under one key, read by core's `readSettings`, which the web reads
 /// its own with. Nobody wants to re-enter their altitude every morning.
 public enum SettingsStore {
-    public static let key = "settings.v1"
+    public static let key = Stores.key(StoreRegistry.settings)
 
     /// The settings as last read or written: what a save of some fields is
     /// laid over, so the rest stay as they were.
@@ -201,7 +206,7 @@ public enum SettingsStore {
     @MainActor
     public static func read(classes: [SizeClass]) -> AppSettings {
         let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
-        saved = readSettings(raw, classes: classes)
+        saved = readSettings(inFormat(StoreRegistry.settings, raw), classes: classes)
         return saved
     }
 
@@ -228,7 +233,8 @@ public enum SettingsStore {
     @MainActor
     private static func write(_ s: AppSettings) {
         saved = s
-        guard let data = try? JSONSerialization.data(withJSONObject: s.jsonObject, options: [.sortedKeys]) else { return }
+        let stored = stamped(StoreRegistry.settings, s.jsonObject)
+        guard let data = try? JSONSerialization.data(withJSONObject: stored, options: [.sortedKeys]) else { return }
         Stores.set(data, forKey: key)
     }
 }
