@@ -7,7 +7,7 @@
  *   npm run eggs -- pull <out.jsonl>
  *       every record in the live store, one per line: { tier, seq, record }.
  *       The tier is the one it counts in: attested only under a key from
- *       Apple's production environment (`countedTier`, DECISIONS.md 68).
+ *       Apple's production environment (`countedTier`).
  *       Needs NETLIFY_AUTH_TOKEN (a personal access token) and
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
@@ -16,7 +16,7 @@
  *       Nothing pulled is trusted, whatever its ID: anyone who learned an
  *       ID could have posted under it (tools/eggsImport.ts).
  *   npm run eggs -- import <results.json> [<out.jsonl>] [--uid <id>]
- *       a results file ("Export my results", DECISIONS.md 81) as records in
+ *       a results file ("Export my results") as records in
  *       the same shape, open and marked `source: 'export'`, under the file's
  *       random ID or `--uid`, and `trusted` if that ID is on the list;
  *       fit/data/imported.jsonl unless told. To fit on both, put the pull
@@ -91,7 +91,7 @@ async function pull(out: string): Promise<void> {
   const store = getStore({ name: 'eggs', siteID: siteID, token: token, consistency: 'strong' });
   const { blobs } = await store.list({ prefix: 'records/' });
   // Each id's App Attest key, read once: a record counts as attested only if
-  // its key is from production, as the server files it (DECISIONS.md 68).
+  // its key is from production, as the server files it.
   const keys = new Map<string, { environment: string } | null>();
   const lines: Line[] = [];
   let demoted = 0;
@@ -245,7 +245,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
     const alpha = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * c.z);
     const eggs = 3 + Math.floor(u() * 8);
     // A quarter of the cooks answered their first two eggs on a build from
-    // before the five yolk words (DECISIONS.md 92): too soft, just right or
+    // before the five yolk words: too soft, just right or
     // too firm. The rest name the yolk they got.
     const before = u() < 0.25 ? 2 : 0;
     for (let e = 0; e < eggs; e++) {

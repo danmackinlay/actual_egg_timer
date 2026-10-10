@@ -28,7 +28,7 @@ import { referenceSetup } from '../common.js';
  * port that forgets a check - or adds one - disagrees on a named case. Second,
  * the replay: a log of fifteen eggs from both apps - answered or not, pulled by
  * the cook or by the clock, some with a probe reading, the yolk in the five
- * words (DECISIONS.md 92) - folded from a fresh prior with every particle and
+ * words - folded from a fresh prior with every particle and
  * weight written out after each egg, and the tail of the same log folded again
  * from the state after the second egg, which is what a phone whose damaged log
  * was dropped starts from.
@@ -59,7 +59,7 @@ interface EggSpec {
   level: number;
   pulledBy: EggRecord['pulledBy'];
   late_s: number;
-  /** The yolk the cook got, in five words (DECISIONS.md 92). */
+  /** The yolk the cook got, in five words. */
   yolkWord: EggRecord['yolkWord'];
   white: EggRecord['white'];
   /** A probe reading, as degrees off the peak the literature values
@@ -372,7 +372,7 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a pull at zero', mutate: (r) => { r['pulled_s'] = 0; } },
   { why: 'an unknown puller', mutate: (r) => { r['pulledBy'] = 'alarm'; } },
   { why: 'negative cooling', mutate: (r) => { r['cooled_s'] = -1; } },
-  { why: 'the yolk the cook got (DECISIONS.md 92)', mutate: (r) => { r['yolkWord'] = 'runny'; } },
+  { why: 'the yolk the cook got: runny', mutate: (r) => { r['yolkWord'] = 'runny'; } },
   { why: 'each of the five yolk words, hard', mutate: (r) => { r['yolkWord'] = 'hard'; } },
   { why: 'a fudgy yolk', mutate: (r) => { r['yolkWord'] = 'fudgy'; } },
   { why: 'the yolk word skipped', mutate: (r) => { r['yolkWord'] = null; } },
@@ -448,7 +448,7 @@ recordCases.push({
   forecast: null,
 });
 
-/* The results file (DECISIONS.md 81): the same store makes the same file in
+/* The results file: the same store makes the same file in
  * both apps, character for character. A store spliced in as it is, a missing
  * store, damaged and bare stores kept as strings, and every character the
  * escaping treats specially. */
@@ -479,7 +479,7 @@ const RESULTS_CASES: { meta: ResultsMeta; stored: string | null }[] = [
 /* The record made from a cook's facts (`recordFor`): what both apps write
  * down, for every branch - the boil tapped or not, a pull tapped late, on
  * time, early or not at all, each cooling, a probe reading or none, the
- * answers given or not, a measured room (DECISIONS.md 79), the web's `id`
+ * answers given or not, a measured room, the web's `id`
  * and iOS's none. Sous-vide runs no cook in either app, so it makes no
  * record. Each case is a change to one base cook. */
 const FACTS_BASE: CookFacts = {
@@ -544,7 +544,7 @@ const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
   { why: 'measured round the middle', over: { massFrom: 'girth', mass_kg: 0.0553017 } },
   { why: 'measured across', over: { massFrom: 'width', mass_kg: 0.06849999 } },
   {
-    why: 'a measured room, and an egg left out in it (DECISIONS.md 79)',
+    why: 'a measured room, and an egg left out in it',
     over: { setup: referenceSetup({ eggStart_C: 23.5, ambient_C: 23.5 }), eggFrom: 'room' },
   },
   { why: 'a typed egg temperature', over: { setup: referenceSetup({ eggStart_C: 8 }), eggFrom: 'custom' } },

@@ -110,7 +110,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     near: [0, 0.1, 0.12, 0.13, 0.3, 0.33, 0.41, 0.5, 0.53, 0.625, 0.8, 0.82, 0.99, 1].map((level) => ({
       level: level, pAsked: askedNear(profile, level),
     })),
-    // The envelope (DECISIONS.md 84): the bounds at a level - at a point,
+    // The envelope: the bounds at a level - at a point,
     // between two, outside them all, a hundredth not held exactly - and the
     // time the app gives there, its answer decided within them. No bound
     // above is null: JSON has no infinity.
@@ -128,12 +128,11 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   };
 });
 
-/* The owner's egg (DECISIONS.md 83 and 84; test/reach.test.ts 11): 58 g
- * from the fridge into boiling water and an ice bath, after one egg asked
- * soft that came out soft with a runny white. Soft was under 3/10 and
- * is chosen anyway, the slider resting there (83), a ballpark since the
- * `certainty` draft; its own choice is later than jammy's, and the time
- * decided there is no later than jammy's (84).
+/* The owner's egg (test/reach.test.ts 11): 58 g from the fridge into
+ * boiling water and an ice bath, after one egg asked soft that came out soft
+ * with a runny white. Soft is chosen, the slider resting there, a ballpark;
+ * its own choice is later than jammy's, and the time decided there is no
+ * later than jammy's.
  * Every slider position from the softest the white allows to fudgy, so the
  * time is seen never to fall as the level rises. */
 const OWNER_EGG = eggFromMass(0.058);

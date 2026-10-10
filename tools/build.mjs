@@ -7,8 +7,7 @@
 // compiled code starts here; when nothing has changed, `tsc -b` finds the
 // three up to date in half a second and compiles nothing.
 //
-// `tsc -b` is right about an edit, but it misses two things (both tried,
-// 9 October 2026):
+// `tsc -b` is right about an edit, but it misses two things (both tried):
 //
 // - A file deleted, renamed, or no longer included. Its own project is
 //   built again, but a project downstream that still imports it is not

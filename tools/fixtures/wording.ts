@@ -105,7 +105,7 @@ export function wordingFixture(): Record<string, unknown> {
     })),
   };
 
-  // The likely time range in the clock's own terms (onescreen review 2.3):
+  // The likely time range in the clock's own terms:
   // idle, whole times; running, when to take the eggs out, on the plan the
   // reading was read on and held over one that moved (a slow hob).
   const sure: CertaintyReading = { words: wordCertainty(SPREADS[0], 2), time: { low_s: 384.25, high_s: 561.5 }, at_s: 452.75 };

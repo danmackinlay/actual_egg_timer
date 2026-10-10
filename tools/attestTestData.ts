@@ -2,7 +2,7 @@
  * test/data/appAttestSynthetic.json: two App Attest attestations made the
  * way a phone makes them, for this app, under a root this script makes up -
  * one from the development environment and one from production, since only
- * production counts as a genuine copy (DECISIONS.md 68) - so the server's
+ * production counts as a genuine copy - so the server's
  * whole path (attest, then eggs with assertions, into the tier each earns)
  * can be tested, which Apple's own sample cannot do: it is for Apple's
  * example app, with a raw challenge rather than SHA256 of a cook's id.

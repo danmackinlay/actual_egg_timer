@@ -1,6 +1,6 @@
 /**
- * fixtures/newer.json: which build may write (src/core/newer.ts,
- * DECISIONS.md 100), for the Swift port to be held to.
+ * fixtures/newer.json: which build may write (src/core/newer.ts), for the
+ * Swift port to be held to.
  *
  *  - `parse`: strings that are versions and strings that are not, and what
  *    each parses to.

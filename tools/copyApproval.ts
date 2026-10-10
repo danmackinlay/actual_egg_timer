@@ -23,7 +23,7 @@
  * key the translation lacks is missing unless it is left to English at
  * today's English (`app.name`). A stale twin keeps showing and a missing one
  * falls back to English (src/core/copy.ts); both are listed, and neither
- * fails a build (DECISIONS.md 103). A malformed file does.
+ * fails a build: the twins may lag the English. A malformed file does.
  *
  * The overlays (copy/en-US.json) keep their own `base`, the English text
  * itself, which copy.test.ts 7a holds to today's.

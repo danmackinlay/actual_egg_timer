@@ -9,8 +9,8 @@
  *    what each move does to it. Czech has no catalogue yet; it stands for "a
  *    language that is not English", which the switch must never move.
  *  - `reads`: stored states, well and badly formed, and what a defensive read
- *    makes of each, including states stored with the `flippedFrom` that the
- *    switch back to metric used before 5 October 2026 (DECISIONS.md 77).
+ *    makes of each, including states stored with a `flippedFrom`, which a
+ *    read ignores.
  */
 
 import {

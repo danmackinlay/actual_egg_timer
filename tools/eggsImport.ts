@@ -1,19 +1,19 @@
 /**
  * The fit's records from outside the live store: a results file read back
- * ("Export my results", DECISIONS.md 81), and the owner's list of the random
- * IDs they vouch for (DECISIONS.md 82). `tools/eggs.ts` is the command line;
+ * ("Export my results"), and the owner's list of the random IDs they vouch
+ * for. `tools/eggs.ts` is the command line;
  * this is what it does, apart, so test/eggs.test.ts can run it.
  *
  * OLDER RECORDS. The apps read only today's record (core's `parseRecord`),
  * but the owner's results files from before 0.5 hold older ones: fields a
  * record then could leave out, and the yolk answered too soft, just right or
- * too firm against the level asked for, before the five words (DECISIONS.md
- * 92). The fit still reads them (`readFitRecord`), here and not in core.
+ * too firm against the level asked for, before the five words. The fit still
+ * reads them (`readFitRecord`), here and not in core.
  *
  * THE TRUSTED LIST is the owner's own random IDs: results they cooked and
  * rated themselves, which the fit gives the attested tier's full weight
- * whatever tier they arrived in - an iPhone build from Xcode is open
- * (DECISIONS.md 68), and so is the web. It is never committed: it would tie
+ * whatever tier they arrived in - an iPhone build from Xcode is open, and so
+ * is the web. It is never committed: it would tie
  * the owner to their records in a public repository. It is read from
  * `fit/trusted.local.txt` (gitignored; `fit/trusted.example.txt` shows the
  * shape) and from `EGGFIT_TRUSTED`, and the two are pooled.
@@ -104,8 +104,8 @@ export function canonical(v: unknown): string {
   return JSON.stringify(v) ?? 'null';
 }
 
-/** The yolk answered against the level asked for, before the five words
- *  (DECISIONS.md 92): too soft, just right or too firm. */
+/** The yolk answered against the level asked for, before the five words:
+ *  too soft, just right or too firm. */
 export type OldYolk = -1 | 0 | 1;
 
 /** A record as the fit reads it: today's record, the yolk answered the old
