@@ -175,7 +175,7 @@ test('the reading is the model\'s own predictive and its right-time interval at 
   assert.ok(after.time.high_s - after.time.low_s < (fresh.time.high_s - fresh.time.low_s) / 2);
 });
 
-test('the time range in the clock\'s own terms: whole times idle, when to take them out once cooking (onescreen review 2.3)', () => {
+test('the time range in the clock\'s own terms: whole times idle, when to take them out once cooking', () => {
   const sure = {
     words: wordCertainty([0.01, 0.01, 0.94, 0.03, 0.01], 2), time: { low_s: 384, high_s: 561 }, at_s: 452,
   };

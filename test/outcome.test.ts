@@ -23,7 +23,7 @@ import {
   FEEDBACK_BAND, Particle, Posterior, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS, YolkWord,
   createPrior, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated, yolkAnswerProbabilities,
 } from '../src/core/infer.js';
-import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
+import { LEVEL_HIGH_Q, LEVEL_LOW_Q, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { logYolkTarget, sliderFromYolkDose } from '../src/core/solve.js';
@@ -114,7 +114,6 @@ test('the clamps: under the runny end reads 0, past the hard end reads 1', () =>
 });
 
 test('the lean: three misses in five one way, and nothing on the line', () => {
-  assert.equal(LEAN_RATIO, 1.5);
   assert.equal(leanOf(0.375, 0.25), 'balanced');
   assert.equal(leanOf(0.376, 0.25), 'soft');
   assert.equal(leanOf(0.25, 0.376), 'firm');

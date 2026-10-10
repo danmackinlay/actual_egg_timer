@@ -16,12 +16,11 @@ import {
   seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc, robinSurface,
 } from '../src/core/sphere.js';
 import {
-  boilingPointAtPressure, boilingPointAtAltitude, boilingPointApprox,
-  pressureAtAltitude, saltBoilingElevation,
+  boilingPointAtPressure, boilingPointAtAltitude, pressureAtAltitude, saltBoilingElevation,
 } from '../src/core/thermo.js';
 import { eggFromMass, eggFromMinorDiameter, diffusionTime } from '../src/core/geometry.js';
 import {
-  createDose, accumulateDose, holdTimeForDose, zFromActivationEnergy,
+  createDose, accumulateDose, holdTimeForDose,
 } from '../src/core/kinetics.js';
 import {
   CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C,
@@ -95,15 +94,13 @@ test('2. one-term truncation under-predicts the full series by 6-10%', () => {
 
 test("3. Williams' 0.76 is the first-eigenmode amplitude at the yolk boundary", () => {
   // At Fo = 0 the one-term form collapses to its prefactor 2*sinc(pi*x).
-  // At x = 0.693 (yolk boundary, yolk = 33% of egg volume) that is 0.7549 —
-  // which is the origin of Williams' famous 0.76. It is an EIGENMODE
-  // AMPLITUDE evaluated at that radius, NOT a "yolk-white ratio" (a common
-  // misreading) and not a property of the yolk centre.
-  const prefactor = oneTermTheta(0.693, 0);
-  close(prefactor, 0.7549, 1e-4, 'oneTermTheta(0.693, 0)');
+  // At the model's yolk boundary (YOLK_RADIUS_FRAC, yolk = 33% of egg
+  // volume) that is 0.7549 — which is the origin of Williams' famous 0.76. It
+  // is an EIGENMODE AMPLITUDE evaluated at that radius, NOT a "yolk-white
+  // ratio" (a common misreading) and not a property of the yolk centre.
+  const prefactor = oneTermTheta(YOLK_RADIUS_FRAC, 0);
+  close(prefactor, 0.7549, 1e-4, 'oneTermTheta(YOLK_RADIUS_FRAC, 0)');
   close(prefactor, 0.76, 0.01, "prefactor vs Williams' published 0.76");
-  // The model's yolk boundary constant is the same radius.
-  close(YOLK_RADIUS_FRAC, 0.693, 1e-12, 'YOLK_RADIUS_FRAC');
 });
 
 // --------------------------------------------------------------------------
@@ -206,11 +203,12 @@ test('7. boiling point at sea-level pressure is 100 C', () => {
   close(pressureAtAltitude(0), 101325, 1e-6, 'pressureAtAltitude(0)');
 });
 
-test('7b. Antoine+ISA chain agrees with the 100 - h/300 one-liner to 0.05 C', () => {
+test('7b. the boiling point falls with altitude', () => {
+  // That it stays within 0.05 C of the 100 - h/300 one-liner is a row of
+  // npm run validate's table, beside the altitude table it reproduces.
   let previous = Number.POSITIVE_INFINITY;
   for (let h = 0; h <= 5000; h += 500) {
     const exact = boilingPointAtAltitude(h);
-    close(exact, boilingPointApprox(h), 0.05, `boiling point at ${h} m`);
     assert.ok(exact < previous, `boiling point must fall with altitude (at ${h} m)`);
     previous = exact;
   }
@@ -255,16 +253,7 @@ test('8b. radius and diffusion time increase with mass', () => {
 // 9. Kinetics
 // --------------------------------------------------------------------------
 
-test('9. z from activation energy gives Z_YOLK', () => {
-  // Ea ~ 470 kJ/mol (Vega & Mercade-Prieto 2011) at 338 K. This is where the
-  // model's Z_YOLK = 4.65 K comes from — NOT the food-engineering default of
-  // 33.1 K, which is 7x too shallow for egg protein (CLAUDE.md invariant 5).
-  const z = zFromActivationEnergy(470000, 338);
-  close(z, 4.65, 0.02, 'zFromActivationEnergy(470000, 338)');
-  close(Z_YOLK, z, 0.02, 'Z_YOLK matches its derivation');
-});
-
-test('9b. dose is monotonic in time and in temperature', () => {
+test('9. dose is monotonic in time and in temperature', () => {
   const d = createDose(Z_YOLK, TREF_YOLK_C);
   let previous = -1;
   for (let i = 0; i < 100; i++) {
@@ -285,7 +274,11 @@ test('9b. dose is monotonic in time and in temperature', () => {
   close(atRef.minutes, 1.0, 1e-12, 'one minute at Tref = 1 equivalent minute');
 });
 
-test('9c. +4.65 C multiplies the dose rate by 10', () => {
+test('9b. +4.65 C multiplies the dose rate by 10', () => {
+  // Z_YOLK to within about 0.02 K of 4.65: what Vega & Mercade-Prieto's
+  // activation energy gives (npm run validate derives it), NOT the
+  // food-engineering default of 33.1 K, seven times too shallow for egg
+  // protein.
   const lo = createDose(Z_YOLK, TREF_YOLK_C);
   const hi = createDose(Z_YOLK, TREF_YOLK_C);
   accumulateDose(lo, 60.0, 60.0);

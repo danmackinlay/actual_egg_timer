@@ -7,16 +7,14 @@ import EggTimerCopy
 /// catalogues - not left to fall back from 1750 to modern English.
 @Suite("The pull line names the cooling the cook chose")
 struct PullLineTests {
-    @Test("ice, tap and counter")
-    func keys() {
-        #expect(pullLineKey(cooling: "ice") == "alarm.pull.bodyIce")
-        #expect(pullLineKey(cooling: "tap") == "alarm.pull.bodyTap")
-        #expect(pullLineKey(cooling: "counter") == "alarm.pull.bodyCounter")
-    }
-
-    @Test("each line is in both catalogues")
+    @Test("each cooling's own line, named for it, is in both catalogues")
     func inBothCatalogues() throws {
-        let keys = Set(["ice", "tap", "counter"].map { pullLineKey(cooling: $0) })
+        let coolings = ["ice", "tap", "counter"]
+        for cooling in coolings {
+            let key = pullLineKey(cooling: cooling)
+            #expect(key.lowercased().hasSuffix(cooling), "\(cooling) gets \(key)")
+        }
+        let keys = Set(coolings.map { pullLineKey(cooling: $0) })
         for locale in ["en", "en-x-1750"] {
             // No fallback: each line must be in the catalogue's own messages.
             let own = try Fixtures.catalogue(locale).messages

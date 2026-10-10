@@ -104,7 +104,7 @@ test('a cold start heating: counts down to the plan\'s pull on the cook\'s pot, 
   assert.equal(v.secondaryVisible, true);
 });
 
-test('a slow hob: once the guess is lengthened, the time heated counts up, never a time left (review 3)', () => {
+test('a slow hob: once the guess is lengthened, the time heated counts up, never a time left', () => {
   const cook = cookOf();
   for (const heated of [900, 1000, 1500]) {
     const now_s = S + heated;
