@@ -665,6 +665,9 @@ it found, in its order, with where each is being done:
       `studies/` build outside `verify`. *Done:* the studies type-checked
       (`297e3aa`); `sameCook` alike in both (`7de8775`); `Running.swift`'s
       comment. The rest after the refactor, with 5.12's deletions.
+      *Tabled* (the owner, 10 October 2026): the `public` declarations cut
+      to what the app uses, and the `#if DEBUG` blocks gathered; they help
+      reading the package, not the cook.
 - [ ] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`

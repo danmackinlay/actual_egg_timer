@@ -16,7 +16,9 @@ things stand is `PLAN.md`; its last section says which document holds what.
   `npm run ios:build` too for anything under `ios/` outside the core twin
   (`verify` builds the package for macOS only). Before merging a change to
   either app's screens or the logic under them, `npm run e2e` and
-  `npm run ios:e2e`; CI fails on both.
+  `npm run ios:e2e`; CI fails on both. A merge whose tree the branch has
+  already been tested at needs no rerun, and a slow suite may wait for the
+  next change if it runs before anything is pushed.
 - **One logical change per commit.**
 - **Branches are named for their version line** (`DECISIONS.md` 64, 102).
   `main` is live (0.3); the next release is built on `0.5.x`, which merges
