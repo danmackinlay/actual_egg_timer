@@ -25,9 +25,9 @@ public enum Services {
     @MainActor public static var card: any LockScreenCard = NoCard()
     /// Said to VoiceOver, at once: the start's limit reached (`Edits`).
     @MainActor public static var announce: (String) -> Void = { _ in }
-    @MainActor public static var grids: any DecisionSurfaces = DecisionGrids.shared
+    @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
     @MainActor public static var language: any LanguageChoosing = LanguageChoice.shared
-    @MainActor public static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
+    @MainActor static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
 }
 
 /// The cook's alarms, with the system (`Alarm`, UserNotifications): set at

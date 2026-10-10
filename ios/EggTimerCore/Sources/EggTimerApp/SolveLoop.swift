@@ -14,7 +14,7 @@ import EggTimerCore
 /// "Eggs in" cancels it (`currentSolution`), and a detached loop would go on
 /// solving for a result thrown away.
 @MainActor
-public final class SolveLoop {
+final class SolveLoop {
     /// The planner it solves for, which holds it: the two live as long as the
     /// app, and a solve in flight keeps both.
     private let planner: Planner
@@ -89,7 +89,7 @@ public final class SolveLoop {
     /// 2026). Now one solve loop runs at a time. A change while it solves is
     /// picked up when it finishes; the answer it just got is shown meanwhile,
     /// a step behind, without the snap (`applyInterim`).
-    public func recompute() {
+    func recompute() {
         asked &+= 1
         // A pot's surface is built only once the inputs have sat still.
         settleTask?.cancel()
@@ -313,7 +313,7 @@ public final class SolveLoop {
     /// Applied like any other answer, so a snap moves the slider before the
     /// caller reads the choices for its cook. Loops only if the inputs move
     /// again while it solves.
-    public func currentSolution() async -> Solution? {
+    func currentSolution() async -> Solution? {
         while true {
             if planner.isSousVide { return nil }
             if let solution = planner.solution, answered == asked { return solution }

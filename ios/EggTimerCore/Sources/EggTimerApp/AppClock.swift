@@ -56,7 +56,7 @@ public enum AppClock {
     /// A moment on the system's clock, in cook time.
     public static func app(_ system: Date) -> Date { source.app(system) }
     /// A moment in cook time, on the system's clock: when it will come.
-    public static func real(_ app: Date) -> Date { source.real(app) }
+    static func real(_ app: Date) -> Date { source.real(app) }
     /// `real` undone, for the debug log.
     public static func fromReal(_ system: Date) -> Date { source.fromReal(system) }
     /// The system's seconds from now until a moment in cook time.
@@ -98,7 +98,7 @@ public enum AppClock {
 
 /// The local calendar day of a moment, epoch s, YYYY-MM-DD: a day, not a
 /// timestamp (the record's `day`).
-public func localDay(_ s: Double) -> String {
+func localDay(_ s: Double) -> String {
     let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: Date(timeIntervalSince1970: s))
     return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
 }

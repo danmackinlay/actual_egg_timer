@@ -15,7 +15,7 @@ public enum ControlField: Hashable, CaseIterable {
 
 extension AppSettings {
     /// Whether `field` says the same in both.
-    public func same(_ field: ControlField, _ o: AppSettings) -> Bool {
+    func same(_ field: ControlField, _ o: AppSettings) -> Bool {
         switch field {
         case .level: doneness == o.doneness
         case .mass: sizeIndex == o.sizeIndex && weighedMassG == o.weighedMassG
@@ -38,7 +38,7 @@ extension AppSettings {
     }
 
     /// `field` as `o` has it: the settings each control makes.
-    public mutating func take(_ field: ControlField, from o: AppSettings) {
+    mutating func take(_ field: ControlField, from o: AppSettings) {
         switch field {
         case .level: doneness = o.doneness
         case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
@@ -58,7 +58,7 @@ extension AppSettings {
 
 extension CookChoices {
     /// `field` as `o` has it: the choices each control makes.
-    public mutating func take(_ field: ControlField, from o: CookChoices) {
+    mutating func take(_ field: ControlField, from o: CookChoices) {
         switch field {
         case .level: level = o.level
         case .mass: massKg = o.massKg; massFrom = o.massFrom; sizeTable = o.sizeTable
@@ -109,14 +109,14 @@ extension CookChoices {
 public final class Edits {
     /// How long a tap's change settles before it is committed, and how long
     /// the aimed-for egg stays after the last change (design section 5).
-    public static let settle: Duration = .milliseconds(1500)
+    static let settle: Duration = .milliseconds(1500)
     /// A − or + held this long has begun to repeat: a hold, committed on
     /// release.
-    public static let held: Duration = .milliseconds(400)
+    static let held: Duration = .milliseconds(400)
     /// How long a burst of changes waits before the aimed-for egg is planned.
-    public static let previewDelay: Duration = .milliseconds(90)
+    static let previewDelay: Duration = .milliseconds(90)
 
-    @ObservationIgnored public weak var model: AppModel?
+    @ObservationIgnored weak var model: AppModel?
 
     /// The controls as last drawn from the cook, or committed; nil while
     /// idle. A field that differs from this is one the cook changed.
@@ -145,11 +145,11 @@ public final class Edits {
     @ObservationIgnored private var previewing = 0
     /// Whether a change is settling, being previewed, or letting its aimed-for
     /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
-    public var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
+    var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
 
     /// A correction of when the eggs went in, in hand; nil for none, when
     /// the panel shows the cook's own (`shownStart`).
-    public private(set) var startInHand: Double?
+    private(set) var startInHand: Double?
     /// Why the start's − or + went no further, and the time it stopped at.
     public private(set) var startLimit: (kind: StartLimit, atS: Double)?
     /// The slider's reading of a change in hand: its level and peak yolk at
@@ -179,7 +179,7 @@ public final class Edits {
 
     /// A cook is running and its controls are drawn from it afresh (a start,
     /// a relaunch): nothing is in hand.
-    public func begin() {
+    func begin() {
         guard let planner else { return }
         clearTasks()
         generation &+= 1
@@ -226,7 +226,7 @@ public final class Edits {
     /// A control's value changed while a cook runs (the planner, after the
     /// control has taken it in), or the start's time (`group` given): the
     /// change is in hand until it is committed.
-    public func controlsChanged(_ given: ControlField? = nil) {
+    func controlsChanged(_ given: ControlField? = nil) {
         guard let planner, cook?.running != nil, base != nil else { return }
         let now = planner.settings
         let field = given ?? (seen.map { now.changed(from: $0).first } ?? nil)
@@ -366,7 +366,7 @@ public final class Edits {
     /// level is not corrected (DECISIONS.md 98): the slider only previewed,
     /// and goes back to the level the egg was pulled at; nothing is written
     /// for it. The aimed-for egg stays until a settle after the last change.
-    public func commit(except: ControlField? = nil) {
+    func commit(except: ControlField? = nil) {
         settleTask?.cancel()
         settleTask = nil
         guard pending, let model, let planner, let running = model.cook.running, let base else { return }

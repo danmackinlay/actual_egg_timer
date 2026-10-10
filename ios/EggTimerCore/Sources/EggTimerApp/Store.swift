@@ -40,10 +40,10 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    public static let markKey = "newestVersion"
+    static let markKey = "newestVersion"
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    public static let buildKey = "newestBuild"
+    static let buildKey = "newestBuild"
 
     /// Every key an earlier build wrote that this one does not read, deleted
     /// at launch (`claim`) rather than left on the phone being neither read
@@ -53,7 +53,7 @@ public enum Stores {
     /// before this one's shape, the sharing keys of an earlier 0.4 build, and
     /// settings no build reads any more, the settings a key each among them,
     /// and sharing's key kept with its dates as seconds since 2001.
-    public static let retiredKeys = [
+    static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.unread",
         "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
@@ -71,7 +71,7 @@ public enum Stores {
     nonisolated(unsafe) private static var retiredCook = false
 
     /// Once: whether the launch's sweep deleted an earlier build's cook.
-    public static func takeRetiredCook() -> Bool {
+    static func takeRetiredCook() -> Bool {
         defer { retiredCook = false }
         return retiredCook
     }
@@ -161,10 +161,10 @@ extension UserDefaults: KeyValueStore {
 
 /// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
-public enum BoilMemories {
+enum BoilMemories {
     private static let key = "boilMemory"
 
-    public static func load() -> BoilMemory {
+    static func load() -> BoilMemory {
         (Stores.store.dictionary(forKey: key) as? BoilMemory) ?? [:]
     }
 
@@ -182,7 +182,7 @@ public enum BoilMemories {
 /// The inputs, remembered between launches: one value, core's `AppSettings`,
 /// as JSON under one key, read by core's `readSettings`, which the web reads
 /// its own with. Nobody wants to re-enter their altitude every morning.
-public enum SettingsStore {
+enum SettingsStore {
     public static let key = "settings.v1"
 
     /// The settings as last read or written: what a save of some fields is

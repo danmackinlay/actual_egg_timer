@@ -104,7 +104,7 @@ import os
 public enum Screenshots {
     /// Where launch arguments are read: UserDefaults, whose argument domain
     /// holds them, in a debug build; none in a release build.
-    public static var arguments: UserDefaults? {
+    static var arguments: UserDefaults? {
         #if DEBUG
         return .standard
         #else
@@ -144,7 +144,7 @@ public enum Screenshots {
     /// host reads (`simctl get_app_container … data`). The tests take the
     /// events instead, and write nothing to the Mac's own Caches. Behind a
     /// lock, since a line is written from any thread (the clock's steps).
-    public static var output: @Sendable (Event, Data) -> Void {
+    static var output: @Sendable (Event, Data) -> Void {
         get { outputSet.withLock { $0 } }
         set { outputSet.withLock { $0 = newValue } }
     }
@@ -175,11 +175,11 @@ public enum Screenshots {
     /// made again while the cook runs in this launch (`Cook`), as if the app
     /// were killed before it landed, so a script can find the stale cook
     /// stored at the next launch. Read at launch; a test sets it.
-    @MainActor public static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
+    @MainActor static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
     /// `-uiFailRemake YES`: an ended cook's record is never made again in
     /// this launch (`Cook`): the cook stays stored for the next. Read at
     /// launch; a test sets it.
-    @MainActor public static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
+    @MainActor static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
     public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
     public static var doneAgo: Double { number("doneAgo") ?? 2 }
@@ -205,7 +205,7 @@ public enum Screenshots {
 
 #if DEBUG
 extension Screenshots {
-    public static var seedEggs: [SeedAnswer] {
+    static var seedEggs: [SeedAnswer] {
         guard let list = arguments?.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             // Split at the dash and the slash, or at anything else that is
@@ -353,7 +353,7 @@ extension Screenshots {
     public struct PendingAlarm: Encodable, Equatable {
         public let id: String
         /// When it fires, cook time, whole s; none without an interval trigger.
-        public let at: Int?
+        let at: Int?
 
         public init(id: String, at: Int?) {
             self.id = id
@@ -365,16 +365,16 @@ extension Screenshots {
 #if DEBUG
 extension Screenshots {
     /// One tap of `-uiDo`: what, with its argument, and when.
-    public struct Action {
-        public let raw: String
+    struct Action {
+        let raw: String
         public let name: String
-        public let arg: String?
-        public let anchor: String
-        public let afterS: Double
+        let arg: String?
+        let anchor: String
+        let afterS: Double
 
         /// The moment it is due, epoch s, cook time; nil until it can be.
         /// `launch` is the clock at this launch, before any cook.
-        public func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
+        func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
             if anchor == "launch" { return Screenshots.launchedAtS + afterS }
             guard let cook, let plan else { return nil }
             let base: Double?
@@ -390,7 +390,7 @@ extension Screenshots {
     }
 
     /// `-uiDo`'s taps, in order; one that does not read is left out.
-    public static var actions: [Action] {
+    static var actions: [Action] {
         guard let list = arguments?.string(forKey: "uiDo") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             let parts = entry.split(separator: "@", maxSplits: 1).map(String.init)
@@ -460,7 +460,7 @@ extension Screenshots {
     @MainActor public static var open: ((String) -> Void)?
 
     /// The clock at this launch, cook time: what `launch` counts from.
-    public static let launchedAtS = AppClock.nowS
+    static let launchedAtS = AppClock.nowS
 
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
@@ -540,11 +540,11 @@ extension Screenshots {
 
     @MainActor public static let probe = Probe()
     /// The app's model, for what `idle(after:)` waits on (`drive`).
-    @MainActor public static weak var model: AppModel?
+    @MainActor static weak var model: AppModel?
     @MainActor private static var drawing: [CheckedContinuation<Void, Never>] = []
 
     /// Step `n` taken (`AppClock.takeStep`, off the main actor).
-    public static func stepped(_ n: Int) {
+    static func stepped(_ n: Int) {
         Task { @MainActor in await idle(after: n) }
     }
 
@@ -603,7 +603,7 @@ extension Screenshots {
 
 /// One seeded egg's answers: the yolk the cook got in the five words, and
 /// the white, if given.
-public struct SeedAnswer {
+struct SeedAnswer {
     public var yolkWord: YolkWord?
     public var white: WhiteReport?
 }

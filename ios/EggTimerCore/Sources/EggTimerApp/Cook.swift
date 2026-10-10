@@ -35,7 +35,7 @@ import EggTimerShared
 public final class Cook {
     /// The cook on screen, its plan and the lean: core's `CookState`, the cook
     /// nil while idle. A cook ended is never on screen.
-    public private(set) var state = CookState(cook: nil, plan: nil, leanHintS: 0)
+    private(set) var state = CookState(cook: nil, plan: nil, leanHintS: 0)
     /// What it waits for; nil for nothing.
     private var need: CookNeed?
 
@@ -86,10 +86,10 @@ public final class Cook {
     @ObservationIgnored private var busy = 0
     /// Ticks taken: a step's `idle` waits for a tick at its moment
     /// (`Screenshots.idle(after:)`).
-    @ObservationIgnored public private(set) var ticks = 0
+    @ObservationIgnored private(set) var ticks = 0
     @ObservationIgnored private var log = CookLog()
 
-    public init(planner: Planner, edits: Edits? = nil) {
+    init(planner: Planner, edits: Edits? = nil) {
         self.planner = planner
         self.edits = edits
         alarms.onScreen = { [weak self] in (self?.running, self?.asksForProbe ?? false) }
@@ -122,10 +122,10 @@ public final class Cook {
     public var answers: CookAnswers? { running.map(answersOf) }
 
     /// Whether the egg on screen is in the log.
-    public var logged: Bool { running.map { answersLogged($0) != nil } ?? false }
+    var logged: Bool { running.map { answersLogged($0) != nil } ?? false }
 
     /// Whether this cook will ask for a probe reading when its cooling ends.
-    public var asksForProbe: Bool { plan?.probeMoment == true && planner.settings.probe }
+    var asksForProbe: Bool { plan?.probeMoment == true && planner.settings.probe }
 
     /// The plan as it ran, once the egg is out (`asRanShown`): what Done and
     /// the cooling show, whatever a later plan on a newer posterior reads.
@@ -150,7 +150,7 @@ public final class Cook {
 
     /// This egg's record as core makes it now, with what has been said, or
     /// nil when core refuses it (no forecast yet).
-    public func eggRecord() -> EggRecord? {
+    func eggRecord() -> EggRecord? {
         guard let running, let plan else { return nil }
         let said = answersOf(running)
         return cookFactsFor(
@@ -171,8 +171,8 @@ public final class Cook {
     /// Whether the ticker runs, and whether nothing is under way: no step,
     /// nothing being built, no start, restore or read-back. What a step's
     /// `idle` and the tests wait for.
-    public var ticking: Bool { ticker != nil }
-    public var isSettled: Bool {
+    var ticking: Bool { ticker != nil }
+    var isSettled: Bool {
         stepping == nil && jobs.isEmpty && surfaces.idle && busy == 0 && alarms.readingBack == 0
     }
 
@@ -182,7 +182,7 @@ public final class Cook {
     /// remembered and the lean the time on screen took. Its first plan reads
     /// the surface the screen chose on, when it is built, so the egg is timed
     /// as the screen said. Returns once the cook is planned.
-    public func start(
+    func start(
         choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: UnitSystem, lang: String,
         leanHintS: Double
     ) async {
@@ -199,25 +199,25 @@ public final class Cook {
 
     /// "Full rolling boil". Tapping at first bubbles under-measures the boil
     /// by 15-25%, which is why the button says what it says.
-    public func boil() { send(.event(.boil(nowS: AppClock.nowS))) }
+    func boil() { send(.event(.boil(nowS: AppClock.nowS))) }
     /// The egg out of the water, at the pull.
-    public func pulledOut() { send(.event(.out(nowS: AppClock.nowS))) }
+    func pulledOut() { send(.event(.out(nowS: AppClock.nowS))) }
     /// "Still in the water?" Yes, and no: the pull the clock assumed stands.
-    public func stillIn() { send(.event(.stillIn(nowS: AppClock.nowS))) }
-    public func stillOut() { send(.event(.pullStands(nowS: AppClock.nowS))) }
+    func stillIn() { send(.event(.stillIn(nowS: AppClock.nowS))) }
+    func stillOut() { send(.event(.pullStands(nowS: AppClock.nowS))) }
     /// Cancel, or Start again: core decides what the cook leaves.
-    public func end() { send(.event(.startAgain(nowS: AppClock.nowS))) }
+    func end() { send(.event(.startAgain(nowS: AppClock.nowS))) }
 
     /// A correction committed (`Edits`): the start and the choices replaced,
     /// two steps, the start first.
-    public func correct(choices: CookChoices, startedAtS: Double?) {
+    func correct(choices: CookChoices, startedAtS: Double?) {
         let now = AppClock.nowS
         if let s = startedAtS { send(.event(.correctStart(nowS: now, startedAtS: s))) }
         send(.event(.correct(nowS: now, choices: choices)))
     }
 
     /// An answer at Done.
-    public func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?) {
+    func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?) {
         guard running != nil else { return }
         // An egg too old takes no answer: the clock ends it first.
         let now = AppClock.nowS
@@ -227,14 +227,14 @@ public final class Cook {
 
     /// Looked at again (back in the foreground): the clock decides what is
     /// due, a cook too old ended among it.
-    public func lookAgain() {
+    func lookAgain() {
         guard running != nil else { return }
         send(.event(.tick(nowS: AppClock.nowS)))
     }
 
     /// The cooking with a probe setting changed: the cooling's alarm, if it
     /// is still to come, asks for the reading or not.
-    public func probeSettingChanged() {
+    func probeSettingChanged() {
         guard phase != .done else { return }
         alarms.again()
     }
@@ -242,7 +242,7 @@ public final class Cook {
     /// A plan of `hand`, the cook as a change in hand would make it, for its
     /// preview: on the surfaces built, the lean as it stands. Stores nothing
     /// and rings nothing.
-    public func previewPlan(_ hand: RunningCook, nowS: Double) async -> CookPlan {
+    func previewPlan(_ hand: RunningCook, nowS: Double) async -> CookPlan {
         let c = planner.calibration
         let surface = surfaceFor(surfaces.all(c), plan?.inputs)
         let lean = state.leanHintS
@@ -617,7 +617,7 @@ public final class Cook {
     /// first answer, so a relaunch never shows idle over a running cook. The
     /// clock writes what it decided while the app was away; one too old ends
     /// as Start again ends it. Called by the view, not from `init`.
-    public func restore() {
+    func restore() {
         guard running == nil, ending.isEmpty else { return }
         // An earlier build's cook, its key deleted at launch: its
         // notifications are left, and its card ended at its own end.
