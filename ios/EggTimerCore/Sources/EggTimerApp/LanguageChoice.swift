@@ -32,11 +32,9 @@ public final class LanguageChoice: LanguageChoosing {
     /// first frame is already in the cook's language.
     public func start() {
         state = Self.read()
-        #if DEBUG
         if let tag = Screenshots.language, languages.contains(tag) {
             state = languageAfterPick(state, tag)
         }
-        #endif
         Copy.use(effectiveLanguage(state))
         guard observer == nil else { return }
         // Posted synchronously from the main actor, so the block runs there.

@@ -8,7 +8,7 @@ import EggTimerCore
 /// waits for one. Two asks for the same pot share one build, and the build is
 /// not cancelled with the solve that asked for it: a pot that comes back should
 /// not be built twice. The web app keeps the same cache (`decisionGrid`).
-public actor DecisionGrids: DecisionSurfaces {
+actor DecisionGrids: DecisionSurfaces {
     public static let shared = DecisionGrids()
 
     /// The pot on screen, the one before, and a cold start's measured ramp.
@@ -24,20 +24,16 @@ public actor DecisionGrids: DecisionSurfaces {
         inputsKey(inputs)
     }
 
-    public func cached(_ inputs: DecisionInputs) -> DoseGrid? {
+    func cached(_ inputs: DecisionInputs) -> DoseGrid? {
         done[Self.key(inputs)]
     }
 
-    public func grid(_ inputs: DecisionInputs) async -> DoseGrid {
+    func grid(_ inputs: DecisionInputs) async -> DoseGrid {
         let key = Self.key(inputs)
         if let grid = done[key] { return grid }
         if let running = building[key] { return await running.value }
         let build = Task.detached(priority: .userInitiated) {
-            #if DEBUG
             Perf.time(.grid) { buildDecisionGrid(inputs) }
-            #else
-            buildDecisionGrid(inputs)
-            #endif
         }
         building[key] = build
         let grid = await build.value
@@ -65,7 +61,7 @@ public actor DecisionGrids: DecisionSurfaces {
     /// A cheap summary of where the posterior stands: the count and the
     /// weighted sums of every dimension. Any fold moves at least one of them.
     /// The web app's `posteriorPrint`.
-    public nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
+    nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
         var a = 0.0, b = 0.0, d = 0.0, e = 0.0
         let post = c.posterior
         for (p, w) in zip(post.particles, post.weights) {
@@ -77,7 +73,7 @@ public actor DecisionGrids: DecisionSurfaces {
         return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
     }
 
-    public func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
+    func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
         profiles[Self.profileKey(inputs, c)]
     }
 
@@ -92,11 +88,7 @@ public actor DecisionGrids: DecisionSurfaces {
         if let p = profiles[key] { return p }
         if let running = profileBuilds[key] { return await running.value }
         let build = Task.detached(priority: .userInitiated) {
-            #if DEBUG
             Perf.time(.profile) { oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface) }
-            #else
-            oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface)
-            #endif
         }
         profileBuilds[key] = build
         let p = await build.value

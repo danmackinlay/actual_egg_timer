@@ -16,7 +16,6 @@ import { decisionInputs, inputsKey, numberKey } from '../src/core/decide.js';
 import { EggRecord } from '../src/core/record.js';
 import {
   CookChoices, CookSurface, PULL_GRACE_SECONDS, Phase, cookSetupOf, guessLengthened, phaseAt, readRunningCook,
-  sameDecisionInputs,
 } from '../src/core/running.js';
 import { coolingStartsIn_s, readoutAt } from '../src/core/readout.js';
 import { CookEffect, CookEnv, CookEvent, CookState, CookStep, step, surfaceFor } from '../src/core/step.js';
@@ -235,7 +234,6 @@ test('8. the surface key: equal exactly when the inputs are, numbers to the bit'
   assert.equal(inputsKey(a), inputsKey(JSON.parse(JSON.stringify(a)) as typeof a));
   const nudged = { ...a, setup: { ...a.setup, eggStart_C: a.setup.eggStart_C + 1e-12 } };
   assert.notEqual(inputsKey(nudged), inputsKey(a));
-  assert.equal(sameDecisionInputs(nudged, a), false);
   const { afterBoil: _held, ...noBurner } = a.setup;
   assert.equal(inputsKey({ ...a, setup: noBurner }), inputsKey(a), 'no burner is the heat held');
   assert.equal(numberKey(0), numberKey(-0));

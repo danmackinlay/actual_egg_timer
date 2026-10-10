@@ -62,9 +62,6 @@ final class Sharing {
     /// What sharing needs of the planner, read when it needs it
     /// (`ShareHost`, in EggTimerApp).
     @ObservationIgnored private var host: ShareHost?
-    /// Bumped by every change of id, so a send in flight for an old one lands
-    /// on nothing.
-    @ObservationIgnored private var generation = 0
     @ObservationIgnored private var run: Task<Void, Never>?
     @ObservationIgnored private var again = false
 
@@ -78,12 +75,7 @@ final class Sharing {
     /// The site the web app is served from, which hosts the endpoint
     /// (DECISIONS.md 51). A debug build can point elsewhere with
     /// `-shareServer <url>`, for a local `netlify dev`.
-    static var server: URL {
-        #if DEBUG
-        if let s = UserDefaults.standard.string(forKey: "shareServer"), let url = URL(string: s) { return url }
-        #endif
-        return URL(string: "https://actualeggtimer.netlify.app")!
-    }
+    static var server: URL { Screenshots.shareServer ?? URL(string: "https://actualeggtimer.netlify.app")! }
 
     private static let assertionHeader = "x-egg-assertion"
 
@@ -112,29 +104,33 @@ final class Sharing {
     /// A random version 4 UUID, lower case, as the server takes it.
     nonisolated static func newUid() -> String { UUID().uuidString.lowercased() }
 
-    /// Now, as core counts it: epoch ms. The system's clock, as every time
-    /// here is: sharing deals with the server and Apple, and sends nothing
-    /// under a debug build's altered clock (`AppClock`).
-    private static func nowMs() -> Double { AppClock.system.timeIntervalSince1970 * 1000 }
+    /// Now, epoch s. The system's clock, as every time here is: sharing
+    /// deals with the server and Apple, and sends nothing under a debug
+    /// build's altered clock (`AppClock`).
+    private static var nowS: Double { AppClock.system.timeIntervalSince1970 }
 
     // MARK: - Kept
 
-    /// What is kept, as `sharing.v1` has always held it: the JSON the web
-    /// stores, but with `busySince` a `Date` as JSONEncoder wrote one (seconds
-    /// since 2001), where core counts epoch ms, and with no key for an absent
-    /// value. Read back by core's `readShareState`, which keeps every id it can
-    /// from a damaged copy, so a deletion still pending is not lost with the
-    /// rest.
+    /// What is kept, as `sharing.v1` has always held it: core's JSON, but
+    /// with `busySince` a `Date` as JSONEncoder wrote one (seconds since
+    /// 2001), where core counts epoch s, and with no key for an absent value.
+    /// Read back by core's `readShareState`, which keeps every id it can from
+    /// a damaged copy, so a deletion still pending is not lost with the rest.
     private static func stored(_ s: ShareState) -> Data? {
         var o = s.jsonObject.filter { !($0.value is NSNull) }
-        if let ms = s.busySince { o["busySince"] = ms / 1000 - Date.timeIntervalBetween1970AndReferenceDate }
+        o["busySince_s"] = nil
+        if let since = s.busySinceS { o["busySince"] = since - Date.timeIntervalBetween1970AndReferenceDate }
         return try? JSONSerialization.data(withJSONObject: o)
     }
 
     private static func read(_ data: Data?) -> ShareState {
-        var s = readShareState(data.flatMap { try? JSONSerialization.jsonObject(with: $0) })
-        s.busySince = s.busySince.map { ($0 + Date.timeIntervalBetween1970AndReferenceDate) * 1000 }
-        return s
+        let raw = data.flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        guard var o = raw as? [String: Any] else { return readShareState(raw) }
+        // A number moved to epoch s; anything else left for core to refuse.
+        let since = o.removeValue(forKey: "busySince")
+        let number = (since as? NSNumber).flatMap { CFGetTypeID($0) == CFBooleanGetTypeID() ? nil : $0.doubleValue }
+        o["busySince_s"] = number.map { $0 + Date.timeIntervalBetween1970AndReferenceDate } ?? since
+        return readShareState(o)
     }
 
     private func save(_ next: ShareState) {
@@ -176,7 +172,6 @@ final class Sharing {
 
     func setSharing(_ on: Bool) {
         guard !Stores.readOnly, on != state.on else { return }
-        generation &+= 1
         save(on ? turnedOn(state, fresh: Self.newUid()) : turnedOff(state))
         if on { sendFinal() }
     }
@@ -184,11 +179,17 @@ final class Sharing {
     /// Forget everything: paired with the calibration's reset. The next egg
     /// is a new cook's, under a new id and, when it sends, a new key.
     func forget() {
-        generation &+= 1
         save(forgotten(state, fresh: Self.newUid()))
     }
 
     // MARK: - Sending
+
+    /// Whether `uid` is still the id this phone sends under: sharing not
+    /// turned off, nor everything forgotten or deleted, since a run began
+    /// sending for it. What lands for an id no longer sent under - an
+    /// answer, a key, an attestation - lands on nothing, so a deletion
+    /// cannot be undone by a send or an attestation landing after it.
+    private func sending(_ uid: String) -> Bool { state.on && state.uid == uid }
 
     /// Send every final egg not yet sent, one at a time. A call while a run
     /// is going asks it to go round again.
@@ -222,10 +223,9 @@ final class Sharing {
             // build, and a debug install shares again after Forget
             // everything.
             guard !AppClock.marked(log[at].appVersion) else { return }
-            let gen = generation
             if attestedFor != uid {
-                let key = await attestedKey(for: uid, generation: gen)
-                guard gen == generation else { return }
+                let key = await attestedKey(for: uid)
+                guard sending(uid) else { return }
                 switch key {
                 case .key(let id): keyId = id
                 case .open: keyId = nil
@@ -239,18 +239,18 @@ final class Sharing {
             guard let body = try? Self.body(seq: s.seq, record: copy) else { return }
             var assertion: String?
             if let signing = keyId {
-                switch await self.assertion(keyId: signing, body: body, uid: uid, generation: gen) {
+                switch await self.assertion(keyId: signing, body: body, uid: uid) {
                 case .key(let a): assertion = a
                 case .open: keyId = nil
                 case .later: return
                 }
             }
-            guard gen == generation else { return }
+            guard sending(uid) else { return }
             // No answer: offline, most likely, so nothing else would get
             // through either. The next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/eggs", body: body, assertion: assertion) else { return }
-            guard gen == generation else { return }
-            let answer = answered(state, status: status, now: Self.nowMs())
+            guard sending(uid) else { return }
+            let answer = answered(state, status: status, nowS: Self.nowS)
             save(answer.next)
             guard answer.moved else { return }
         }
@@ -278,10 +278,9 @@ final class Sharing {
     }
 
     /// This id's attested key, attesting it if it has not been. Nothing is
-    /// kept or sent once the generation has moved on - sharing turned off,
-    /// or everything deleted, while Apple was answering - so a deletion
-    /// cannot be undone by an attestation landing after it.
-    private func attestedKey(for uid: String, generation gen: Int) async -> Attested {
+    /// kept or sent once the id is no longer sent under (`sending`) -
+    /// sharing turned off, or everything deleted, while Apple was answering.
+    private func attestedKey(for uid: String) async -> Attested {
         let service = DCAppAttestService.shared
         guard service.isSupported else { return .open }
         var a = attest?.uid == uid ? attest! : Attest(uid: uid, keyId: nil, attestation: nil, status: .pending)
@@ -293,7 +292,7 @@ final class Sharing {
         do {
             if a.keyId == nil {
                 let made = try await service.generateKey()
-                guard gen == generation else { return .later }
+                guard sending(uid) else { return .later }
                 a.keyId = made
                 saveAttest(a)
             }
@@ -301,7 +300,7 @@ final class Sharing {
             if a.attestation == nil {
                 let hash = Data(SHA256.hash(data: Data(uid.utf8)))
                 let made = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
-                guard gen == generation else { return .later }
+                guard sending(uid) else { return .later }
                 a.attestation = made
                 a.madeAtS = AppClock.system.timeIntervalSince1970
                 saveAttest(a)
@@ -310,7 +309,7 @@ final class Sharing {
             // No answer: offline, so no egg would get through either. The
             // next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/attest", body: body) else { return .later }
-            guard gen == generation else { return .later }
+            guard sending(uid) else { return .later }
             switch shareReply(status) {
             case .kept:
                 a.status = .attested
@@ -337,10 +336,10 @@ final class Sharing {
         } catch let error as DCError where error.code == .serverUnavailable {
             // Apple's service is busy, or out of reach: the next run, for a
             // while.
-            guard gen == generation else { return .later }
+            guard sending(uid) else { return .later }
             return waited(a)
         } catch {
-            guard gen == generation else { return .later }
+            guard sending(uid) else { return .later }
             a.status = .failed
         }
         saveAttest(a)
@@ -351,24 +350,24 @@ final class Sharing {
     /// holds (`invalidKey`) is given up on for this id, which then sends open;
     /// anything else waits for the next run, counted, as a busy attestation
     /// does (`waited`).
-    private func assertion(keyId: String, body: Data, uid: String, generation gen: Int) async -> Attested {
+    private func assertion(keyId: String, body: Data, uid: String) async -> Attested {
         let hash = Data(SHA256.hash(data: body))
         do {
             let made = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash)
-            if gen == generation, var a = attest, a.uid == uid, a.busy != nil {
+            if sending(uid), var a = attest, a.uid == uid, a.busy != nil {
                 a.busy = nil
                 a.busySinceS = nil
                 saveAttest(a)
             }
             return .key(made.base64EncodedString())
         } catch let error as DCError where error.code == .invalidKey {
-            if gen == generation, var a = attest, a.uid == uid {
+            if sending(uid), var a = attest, a.uid == uid {
                 a.status = .failed
                 saveAttest(a)
             }
             return .open
         } catch {
-            guard gen == generation, let a = attest, a.uid == uid else { return .later }
+            guard sending(uid), let a = attest, a.uid == uid else { return .later }
             return waited(a)
         }
     }
@@ -403,7 +402,6 @@ final class Sharing {
     /// any egg already on its way has landed.
     func deleteSent() async {
         guard !Stores.readOnly else { return }
-        generation &+= 1
         save(deletionAsked(state))
         saveAttest(nil)
         await run?.value

@@ -10,7 +10,9 @@ import assert from 'node:assert/strict';
 
 import { STORES } from '../src/core/stores.js';
 
-import { REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare } from '../src/ui/share.js';
+import {
+  REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare, storedShare,
+} from '../src/ui/share.js';
 import {
   FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone,
   forgotten, isUid, nextToSend, reconciled, shareGivesUp, shareReply, turnedOff, turnedOn,
@@ -44,11 +46,20 @@ test('2. what storage holds is read defensively, and every readable id is kept',
   assert.deepEqual(readShare('[1]'), FRESH_SHARE);
   assert.equal(readShare(JSON.stringify({ on: true, uid: 'nobody' })).on, false, 'on, with no id, is off');
   const s = readShare(JSON.stringify({ on: true, uid: A, sent: 3, seq: -1, uids: [B, 'x', 7], deleting: [B] }));
-  assert.deepEqual(s, { on: true, uid: A, sent: 3, seq: 0, uids: [B, A], deleting: [B], busy: 0, busySince: null });
+  assert.deepEqual(s, { on: true, uid: A, sent: 3, seq: 0, uids: [B, A], deleting: [B], busy: 0, busySince_s: null });
   const waiting = readShare(JSON.stringify({ on: true, uid: A, busy: 2, busySince: 1e12 }));
-  assert.deepEqual([waiting.busy, waiting.busySince], [2, 1e12]);
+  assert.deepEqual([waiting.busy, waiting.busySince_s], [2, 1e9], 'stored in ms, kept in s');
   const damaged = readShare(JSON.stringify({ on: true, uid: A, busy: 'x', busySince: 'y' }));
-  assert.deepEqual([damaged.busy, damaged.busySince], [0, null]);
+  assert.deepEqual([damaged.busy, damaged.busySince_s], [0, null]);
+});
+
+test('2b. what is written is what was always stored, busySince in whole ms, and reads back', () => {
+  const s: ShareState = { ...turnedOn(FRESH_SHARE, A), sent: 2, seq: 3, busy: 1, busySince_s: 1791244800.25 };
+  const stored = JSON.parse(storedShare(s)) as Record<string, unknown>;
+  assert.deepEqual(Object.keys(stored), ['on', 'uid', 'sent', 'seq', 'uids', 'deleting', 'busy', 'busySince']);
+  assert.equal(stored['busySince'], 1791244800250);
+  assert.deepEqual(readShare(storedShare(s)), s);
+  assert.equal(JSON.parse(storedShare(FRESH_SHARE)).busySince, null);
 });
 
 test('3. on, off, forget, delete: the id lives as long as the log it sends', () => {
@@ -79,29 +90,29 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
 });
 
 test('3b. a busy server is waited on, counted, and given up on after five busy answers and three days', () => {
-  const DAY = 24 * 3600 * 1000;
+  const DAY = 24 * 3600;
   let s: ShareState = { ...turnedOn(FRESH_SHARE, A), sent: 2, seq: 7 };
-  const at = [0, 1, 2, 2.9, 3.5].map((d) => 1e12 + d * DAY);
+  const at = [0, 1, 2, 2.9, 3.5].map((d) => 1e9 + d * DAY);
   for (const now of at.slice(0, 4)) {
     const r = answered(s, 503, now);
     assert.equal(r.moved, false);
     s = r.next;
   }
-  assert.deepEqual([s.sent, s.seq, s.busy, s.busySince], [2, 7, 4, 1e12], 'counted from the first');
+  assert.deepEqual([s.sent, s.seq, s.busy, s.busySince_s], [2, 7, 4, 1e9], 'counted from the first');
   const after = answered(s, 429, at[4]);
   assert.equal(after.moved, true, 'the fifth, three days on: passed over');
-  assert.deepEqual([after.next.sent, after.next.seq, after.next.busy, after.next.busySince], [3, 8, 0, null]);
+  assert.deepEqual([after.next.sent, after.next.seq, after.next.busy, after.next.busySince_s], [3, 8, 0, null]);
   // Many busy answers in one afternoon are only an afternoon.
-  let t: ShareState = { ...s, busy: 0, busySince: null };
+  let t: ShareState = { ...s, busy: 0, busySince_s: null };
   for (let i = 0; i < 20; i++) {
-    const r = answered(t, 500, 1e12 + i * 60_000);
+    const r = answered(t, 500, 1e9 + i * 60);
     assert.equal(r.moved, false);
     t = r.next;
   }
-  assert.equal(answered({ ...s, busySince: at[4] - DAY }, 500, at[4]).moved, false, 'four, then a fifth only a day on');
+  assert.equal(answered({ ...s, busySince_s: at[4] - DAY }, 500, at[4]).moved, false, 'four, then a fifth only a day on');
   assert.deepEqual(answered({ ...s, busy: 3 }, 201, at[4]).next.busy, 0, 'kept: the count starts again');
   assert.deepEqual(reconciled({ ...s, sent: 9 }, 2).busy, 0, 'a new log, a new count');
-  assert.deepEqual(forgotten(s, B).busySince, null, 'a new cook, a new count');
+  assert.deepEqual(forgotten(s, B).busySince_s, null, 'a new cook, a new count');
 });
 
 /** A transport that records what it was sent and answers from a script. */
@@ -159,7 +170,7 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
 test('5. a refused egg is passed over; a busy server or none stops the run until the next', async () => {
   storage.clear();
   const t = fake([500]);
-  sh = openSharing(page(LOG), t, () => 1e12);
+  sh = openSharing(page(LOG), t, () => 1e9);
   await sh.setSharing(true);
   assert.deepEqual([sh.state().sent, sh.state().busy], [0, 1], '500: try again later, counted');
   t.post = fake(['offline']).post;
@@ -175,13 +186,13 @@ test('5. a refused egg is passed over; a busy server or none stops the run until
 
 test('5b. an egg the server stays busy for, or out of reach, is passed over in the end, and the rest go', async () => {
   storage.clear();
-  let clock = 1e12;
+  let clock = 1e9;
   // Down, then a bad deploy (404), then a firewall (403): all waited on.
   const t = fake([503, 404, 404, 403, 503, 201, 201]);
   sh = openSharing(page(LOG), t, () => clock);
   await sh.setSharing(true);
   for (let run = 1; run < 5; run++) {
-    clock += 24 * 3600 * 1000;
+    clock += 24 * 3600;
     await sh.sendFinal();
   }
   assert.deepEqual([sh.state().sent, sh.state().seq], [3, 3], 'the first given up on the fifth try, four days on');
@@ -238,7 +249,7 @@ test('8. another tab\'s change is taken up before this one acts: a stale tab nei
   assert.equal(t.posts.length, 3);
   assert.equal(sh.storedElsewhere('aet.share.v1'), false, 'nothing new');
   // Another tab, loaded later, deletes everything sent.
-  storage.set('aet.share.v1', JSON.stringify(deletionAsked(readShare(storage.get('aet.share.v1') ?? null))));
+  storage.set('aet.share.v1', storedShare(deletionAsked(readShare(storage.get('aet.share.v1') ?? null))));
   // This tab, still showing sharing on, finishes an egg before it hears.
   log.push({ ...LOG[0], day: '2026-10-04' });
   await sh.sendFinal();
@@ -248,7 +259,7 @@ test('8. another tab\'s change is taken up before this one acts: a stale tab nei
   sh.forget();
   assert.deepEqual(readShare(storage.get('aet.share.v1') ?? null).deleting, [uid], 'the deletion is still to be asked');
   // The page's storage event: taken up once, and only for this key.
-  storage.set('aet.share.v1', JSON.stringify({ ...FRESH_SHARE, deleting: [uid, B] }));
+  storage.set('aet.share.v1', storedShare({ ...FRESH_SHARE, deleting: [uid, B] }));
   assert.equal(sh.storedElsewhere(STORES.settings.web), false);
   assert.equal(sh.storedElsewhere('aet.share.v1'), true);
   assert.equal(sh.storedElsewhere('aet.share.v1'), false);
@@ -271,7 +282,7 @@ test('9. two tabs sending the same egg move the cursor once', async () => {
   await new Promise((r) => setTimeout(r, 0));
   // Meanwhile the other tab sent egg 0 and moved on.
   const s = readShare(storage.get('aet.share.v1') ?? null);
-  storage.set('aet.share.v1', JSON.stringify({ ...s, sent: 1, seq: 1 }));
+  storage.set('aet.share.v1', storedShare({ ...s, sent: 1, seq: 1 }));
   release(200);
   await sending;
   assert.deepEqual([sh.state().sent, sh.state().seq], [1, 1], 'not 2: the other tab already moved it');

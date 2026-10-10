@@ -482,7 +482,7 @@ private func foldCook(
 /// Since when the choices have said a cold start, and the first moment they
 /// said a boiling one, from the start and the corrections in the log. See
 /// `coldHistory` in `src/core/running.ts`.
-public func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Double?) {
+func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Double?) {
     var mode = cook.start.choices.startMode
     var since: Double? = mode == .cold ? cook.start.atS : nil
     var firstHot: Double? = mode == .hot ? cook.start.atS : nil
@@ -1219,7 +1219,7 @@ private func slowHobKey(_ cook: RunningCook, _ c: Calibration, leanHintS: Double
 /// `leanHintS`, at `nowS`: still heating on a guess, worked out under the
 /// same start, choices, remembered time, lean and nudge, parameters and white
 /// target, and the clock past the place kept. Otherwise it is ignored.
-public func slowHobMemoFits(
+func slowHobMemoFits(
     _ memo: SlowHobMemo?, _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double
 ) -> Bool {
     guard let memo else { return false }
@@ -1234,12 +1234,6 @@ public func slowHobMemoFits(
 public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
     guard let at = plan.slowHobAtS else { return false }
     return nowS > at
-}
-
-/// Whether two decision surfaces' inputs are the same pot, egg and posterior:
-/// the same key (`inputsKey`).
-public func sameDecisionInputs(_ a: DecisionInputs, _ b: DecisionInputs) -> Bool {
-    inputsKey(a) == inputsKey(b)
 }
 
 /// The most lengthenings one plan works through.
@@ -1368,7 +1362,7 @@ public func replan(
     let mean = found ?? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil)
     let inputs = lengthened ? nil : decisionInputs(c, egg: pot.egg, setup: pot.setup)
     var s: CookSurface?
-    if let inputs, let surface, sameDecisionInputs(surface.inputs, inputs) { s = surface }
+    if let inputs, let surface, inputsKey(surface.inputs) == inputsKey(inputs) { s = surface }
     let profile = s?.profile
     let answer = LevelAnswer(
         solution: mean.solution, verdict: mean.verdict, level: mean.level,

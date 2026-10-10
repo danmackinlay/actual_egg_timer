@@ -1,9 +1,9 @@
-#if DEBUG
 import Foundation
 import QuartzCore
 
-/// Debug builds only: how long what an input change sets running takes to
-/// reach the screen (`-perfProbe all`, Screenshots.swift). Prints lines that
+/// How long what an input change sets running takes to reach the screen
+/// (`-perfProbe all`, Screenshots.swift): on only under that launch
+/// argument, so never in a release build, which reads none. Prints lines that
 /// start "PERF", read with `xcrun simctl launch --console-pty`. LOGBOOK.md,
 /// 4 October 2026, has what it measured.
 ///
@@ -11,21 +11,21 @@ import QuartzCore
 /// produced it, because that is what the cook waits for. Its lines are not
 /// words on a screen, and are built from as few literals as will do, each on
 /// copyLiterals' NOT_COPY list.
-public enum Perf {
-    public static let on = UserDefaults.standard.string(forKey: "perfProbe") != nil
-    nonisolated(unsafe) private static var inputAt = CACurrentMediaTime()
+enum Perf {
+    public static let on = Screenshots.arguments?.string(forKey: "perfProbe") != nil
+    @MainActor private static var inputAt = CACurrentMediaTime()
 
     /// What is timed on its own.
-    public enum Stage { case answerAt, grid, profile }
+    enum Stage { case answerAt, grid, profile }
 
     /// What lands: an answer, and whether it is a step behind, its time
     /// chosen, with its odds, or a moment the main actor was late.
-    public enum Event { case landed, interim, chosen, odds, late }
+    enum Event { case landed, interim, chosen, odds, late }
 
     /// The scripted inputs.
-    public enum Script { case tapAltitude, holdAltitude, tapWater, dragDoneness, inputsDone, worstLateness, done }
+    enum Script { case tapAltitude, holdAltitude, tapWater, dragDoneness, inputsDone, worstLateness, done }
 
-    public static func input() { inputAt = CACurrentMediaTime() }
+    @MainActor static func input() { inputAt = CACurrentMediaTime() }
 
     private static func line(_ parts: [String]) {
         print(parts.joined(separator: " "))
@@ -36,7 +36,7 @@ public enum Perf {
     }
 
     /// An answer on screen: when, and what it was.
-    public static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
+    @MainActor static func landed(question: Int, interim: Bool, chosen: Bool, odds: Bool, cookS: Double) {
         guard on else { return }
         var events: [Event] = [.landed]
         if interim { events.append(.interim) }
@@ -46,7 +46,7 @@ public enum Perf {
     }
 
     /// How long one stage took, wherever it runs.
-    public static func time<T>(_ stage: Stage, _ body: () -> T) -> T {
+    static func time<T>(_ stage: Stage, _ body: () -> T) -> T {
         guard on else { return body() }
         let t0 = CACurrentMediaTime()
         let out = body()
@@ -114,4 +114,3 @@ public enum Perf {
         line(["PERF", "\(Script.worstLateness)", ms(await watcher.value)])
     }
 }
-#endif

@@ -9,6 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isDeepStrictEqual } from 'node:util';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { LIMITS, START_TEMP_PRESETS_C } from '../src/core/inputs.js';
@@ -21,10 +22,10 @@ import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../src/core/infer.js';
 import {
   CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
-  SLOW_HOB_EXTRA_S, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, coldHistory, cookEnding,
+  SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, coolingSecondsFor, corrected, earliestStart_s, eventsDue,
   guessLengthened, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands, readRunningCook, replan, slowHobDue,
-  slowHobMemoFits, solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
+  solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { gridFor, knowing, rng } from '../tools/common.js';
 
@@ -72,25 +73,25 @@ test('2. the boil is tapped once, on a cold start still heating, and not before 
   assert.equal(withBoil(out, S + 900), out);
 });
 
-test('3. a correction keeps the start and the events, and says since when the cook was told cold', () => {
+test('3. a correction keeps the start and the events; the tap is read by when the cook was told cold', () => {
   const tapped = withBoil(cookOf(), S + 500);
-  assert.equal(coldHistory(tapped).coldSince_s, S, 'cold from the start');
+  const remembered = { litres: 2, seconds: 500 };
+  assert.deepEqual(boilToRemember(tapped), remembered, 'cold from the start: the tap is the boil');
   const heavier = corrected(tapped, { ...CHOICES, mass_kg: 0.076 }, S + 600);
-  assert.deepEqual([heavier.startedAt_s, heavier.events, coldHistory(heavier).coldSince_s], [S, tapped.events, S]);
-  assert.equal(coldHistory(tapped).firstHotAt_s, null, 'never said boiling');
+  assert.deepEqual([heavier.startedAt_s, heavier.events, boilToRemember(heavier)], [S, tapped.events, remembered]);
   const boiling = corrected(tapped, { ...CHOICES, startMode: 'hot' }, S + 600);
   assert.equal(boiling.events.boilAt_s, S + 500, 'the tap is kept, unread');
-  assert.equal(coldHistory(boiling).coldSince_s, null);
-  assert.equal(coldHistory(boiling).firstHotAt_s, S + 600);
+  assert.equal(boilToRemember(boiling), null, 'said boiling: nothing to remember');
   const back = corrected(boiling, CHOICES, S + 610);
   assert.equal(back.events.boilAt_s, S + 500);
-  assert.equal(coldHistory(back).coldSince_s, S + 610, 'told cold again only now');
-  assert.equal(coldHistory(back).firstHotAt_s, S + 600, 'but the tap came before the choices first said boiling (review 2.2)');
-  assert.deepEqual(boilToRemember(back), boilToRemember(tapped), 'so changing back gives back the boil memory too');
-  assert.equal(coldHistory(corrected(corrected(back, { ...CHOICES, startMode: 'hot' }, S + 620), CHOICES, S + 630)).firstHotAt_s, S + 600);
-  const owner = corrected(cookOf({ startMode: 'hot' }), CHOICES, S + 240);
-  assert.equal(coldHistory(owner).coldSince_s, S + 240, "the owner's case: boiling corrected to cold");
-  assert.equal(coldHistory(owner).firstHotAt_s, S, 'begun boiling');
+  assert.deepEqual(boilToRemember(back), remembered, 'told cold again, but the tap came before the choices first said boiling');
+  assert.deepEqual(
+    boilToRemember(corrected(corrected(back, { ...CHOICES, startMode: 'hot' }, S + 620), CHOICES, S + 630)), remembered,
+    'only the first boiling counts',
+  );
+  // The owner's case: begun boiling, corrected to cold at 240 s, tapped at 600 s.
+  const owner = withBoil(corrected(cookOf({ startMode: 'hot' }), CHOICES, S + 240), S + 600);
+  assert.deepEqual(boilToRemember(owner), { litres: 2, seconds: 600 }, 'watched from the correction to cold');
 });
 
 test('4. the start is corrected to no later than now or the first event, an unread one included', () => {
@@ -556,6 +557,13 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
   // stopped there plans nothing more; a millisecond past it, it is due and
   // moves on.
   const random = rng(20261010);
+  // Whether a plan takes a memo: one made wrong on purpose - its guess a
+  // minute on, and at the most lengthenings, so the plan stops there -
+  // changes the plan only if it is read.
+  const takes = (memo: SlowHobPlace, k: RunningCook, c: typeof C, lean: number, now: number): boolean => {
+    const wrong: SlowHobPlace = { ...memo, steps: SLOW_HOB_MAX_STEPS, ramp_s: memo.ramp_s + 60 };
+    return !isDeepStrictEqual(replan(k, c, null, lean, now, wrong), replan(k, c, null, lean, now));
+  };
   const cooks = [cookOf(), cookOf({ mass_kg: 0.048, level: 0 })];
   const last = cooks.map((k) => replan(k, C, null, 0, S + 1));
   const other = knowing({ particles: 200, eggsLogged: 5, taste: 0.1, alphaFactor: 1.05 });
@@ -580,7 +588,7 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
     const k = cooks[j];
     const tag = `cook ${j} at ${(t - S).toFixed(1)} s`;
     const fresh = replan(k, C, null, 0, t);
-    assert.equal(slowHobMemoFits(last[j].memo, k, C, 0, t), true, `${tag}: the last plan's memo taken`);
+    assert.equal(takes(last[j].memo as SlowHobPlace, k, C, 0, t), true, `${tag}: the last plan's memo taken`);
     assert.deepEqual(replan(k, C, null, 0, t, last[j].memo), fresh, tag);
     const place = fresh.memo as SlowHobPlace;
     // Offered elsewhere at the first ten moments: the place a memo keeps is
@@ -589,7 +597,7 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
     if (i < elsewhere.length) {
       const [name, offer] = elsewhere[i];
       const [ck, cc, lean, now, fits] = offer(k, t, place);
-      assert.equal(slowHobMemoFits(place, ck, cc, lean, now), fits, `${tag}, ${name}`);
+      assert.equal(takes(place, ck, cc, lean, now), fits, `${tag}, ${name}`);
       assert.deepEqual(replan(ck, cc, null, lean, now, place), replan(ck, cc, null, lean, now), `${tag}, ${name}`);
     }
     const at = fresh.slowHobAt_s as number;

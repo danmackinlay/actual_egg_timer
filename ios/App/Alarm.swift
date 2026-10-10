@@ -47,19 +47,12 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        #if DEBUG
-        if Screenshots.muteAudio {
-            completionHandler([.banner, .list])
-            return
-        }
-        #endif
-        completionHandler([.banner, .sound, .list])
+        completionHandler(Screenshots.muteAudio ? [.banner, .list] : [.banner, .sound, .list])
     }
 
     /// Ask once. Returns false if the user has said no, in which case the cook
     /// still runs - it just cannot shout.
     func authorize() async -> Bool {
-        #if DEBUG
         // Screenshots of a phase (Screenshots.swift) run on a fresh simulator,
         // where the system would ask, and its alert would be in the picture.
         if Screenshots.noAlarmPrompt { return false }
@@ -68,7 +61,6 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         if Screenshots.provisionalAlarms {
             return (try? await centre.requestAuthorization(options: [.alert, .sound, .provisional])) ?? false
         }
-        #endif
         let settings = await centre.notificationSettings()
         switch settings.authorizationStatus {
         case .authorized, .provisional, .ephemeral:
@@ -110,9 +102,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func cancel() {
-        #if DEBUG
         Screenshots.log(.alarmsCancelled)
-        #endif
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
 
@@ -126,7 +116,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     func pendingDeadlines() async -> Set<RingDeadline> {
         let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
         let pending = await centre.pendingNotificationRequests()
-        #if DEBUG
+        if Screenshots.logging {
         // Its moment in cook time, though a pending interval trigger's
         // `nextTriggerDate()` is now plus the interval, so it drifts by the
         // time since it was scheduled: `scheduled` says when it fires.
@@ -138,7 +128,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // scripted checks read to see one fire.
         let delivered = await centre.deliveredNotifications().map(\.request.identifier).filter { ours[$0] != nil }
         Screenshots.log(.delivered(ids: delivered.sorted()))
-        #endif
+        }
         return Set(pending.compactMap { ours[$0.identifier] })
     }
 
@@ -147,9 +137,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // clock, the cook's interval scaled (`AppClock`).
         let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
-        #if DEBUG
         Screenshots.log(.scheduled(id: id, at: date.timeIntervalSince1970, inS: seconds))
-        #endif
 
         let content = UNMutableNotificationContent()
         content.title = title
@@ -159,9 +147,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         content.sound = UNNotificationSound(
             named: UNNotificationSoundName(AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment))
         )
-        #if DEBUG
         if Screenshots.muteAudio { content.sound = nil }
-        #endif
         // An egg is time-sensitive in the literal sense the name was coined
         // for: thirty seconds late is a different egg. This level is what lets
         // the alarm through a Focus mode, and it is why the app carries the
@@ -176,13 +162,9 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // duration, and a clock that changes underneath it - a timezone, a
         // leap second, the user editing the time - must not move the egg.
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
-        #if DEBUG
         centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
             if let error { Screenshots.log(.notScheduled(id: id, error: error.localizedDescription)) }
         }
-        #else
-        centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
-        #endif
     }
 }
 

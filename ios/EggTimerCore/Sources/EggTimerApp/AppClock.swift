@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// The app's clock: every read of the current time a cook depends on, and
 /// every wait measured in cook time, goes through here (`now`, `sleep`,
@@ -40,8 +41,12 @@ import Foundation
 /// is marked in its `appVersion` (`mark`) and never sent.
 public enum AppClock {
     /// The clock cook time is read from: the launch's (`LaunchClock`), or a
-    /// test's.
-    nonisolated(unsafe) public static var source: any CookClock = LaunchClock.Source()
+    /// test's. Behind a lock, since it is read from any thread.
+    public static var source: any CookClock {
+        get { sourceSet.withLock { $0 } }
+        set { sourceSet.withLock { $0 = newValue } }
+    }
+    private static let sourceSet = OSAllocatedUnfairLock<any CookClock>(initialState: LaunchClock.Source())
 
     /// Now, in cook time.
     public static var now: Date { source.now }
@@ -51,7 +56,7 @@ public enum AppClock {
     /// A moment on the system's clock, in cook time.
     public static func app(_ system: Date) -> Date { source.app(system) }
     /// A moment in cook time, on the system's clock: when it will come.
-    public static func real(_ app: Date) -> Date { source.real(app) }
+    static func real(_ app: Date) -> Date { source.real(app) }
     /// `real` undone, for the debug log.
     public static func fromReal(_ system: Date) -> Date { source.fromReal(system) }
     /// The system's seconds from now until a moment in cook time.
@@ -82,6 +87,7 @@ public enum AppClock {
     #else
     public static func mark(_ appVersion: String) -> String { appVersion }
     public static func marked(_ appVersion: String) -> Bool { false }
+    public static func listen() {}
     #endif
 
     /// The system's clock, for what is not cook time: sharing's dealings with
@@ -92,7 +98,7 @@ public enum AppClock {
 
 /// The local calendar day of a moment, epoch s, YYYY-MM-DD: a day, not a
 /// timestamp (the record's `day`).
-public func localDay(_ s: Double) -> String {
+func localDay(_ s: Double) -> String {
     let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: Date(timeIntervalSince1970: s))
     return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
 }
@@ -115,41 +121,33 @@ public protocol CookClock: Sendable {
 enum LaunchClock {
     #if DEBUG
     /// Where the clock stands: cook time `app` at the system's `system`,
-    /// running on at `speed` (0 frozen).
+    /// running on at `speed` (0 frozen); and whether this launch's clock was
+    /// ever not the system's.
     private struct Anchor {
         var system: Double
         var app: Double
         var speed: Double
+        var altered: Bool
     }
 
-    private static let lock = NSLock()
-
     /// The clock as launched, then as last stepped.
-    nonisolated(unsafe) private static var anchor: Anchor = {
+    private static let anchor = OSAllocatedUnfairLock<Anchor>(initialState: {
         let d = UserDefaults.standard
         let launched = Date().timeIntervalSince1970
         let speed = d.object(forKey: "clockSpeed") == nil ? 1 : max(0, d.double(forKey: "clockSpeed"))
         let at = d.object(forKey: "clockAt") == nil ? launched : d.double(forKey: "clockAt")
-        return Anchor(system: launched, app: at, speed: speed)
-    }()
+        return Anchor(system: launched, app: at, speed: speed, altered: speed != 1 || at != launched)
+    }())
 
-    /// Whether this launch's clock was ever not the system's.
-    nonisolated(unsafe) private static var wasAltered: Bool = {
-        let a = anchor
-        return a.speed != 1 || a.app != a.system
-    }()
-
-    private static func read<T>(_ f: (Anchor) -> T) -> T {
-        lock.lock()
-        defer { lock.unlock() }
-        return f(anchor)
+    private static func read<T: Sendable>(_ f: @Sendable (Anchor) -> T) -> T {
+        anchor.withLock { f($0) }
     }
 
     /// How many seconds of cook time pass in one of the system's, now.
     static var speed: Double { read { $0.speed } }
 
     /// Whether this launch's clock is, or has been, not the system's.
-    static var altered: Bool { read { _ in wasAltered } }
+    static var altered: Bool { read { $0.altered } }
 
     /// A moment on the system's clock, in cook time: under a frozen clock,
     /// its moment, whatever the system's.
@@ -225,7 +223,10 @@ enum LaunchClock {
     }
 
     /// The last step taken; one already in the file at launch is not taken.
+    /// Unsafe, but only ever touched by `listen` before the poll starts and
+    /// then on the poll's queue.
     nonisolated(unsafe) private static var lastStep = 0
+    /// Unsafe, but set once, by `listen` at launch on the main actor.
     nonisolated(unsafe) private static var poll: DispatchSourceTimer?
 
     /// Start reading steps, if this launch's clock can take them. Once, at
@@ -253,10 +254,7 @@ enum LaunchClock {
     private static func takeStep() {
         guard let step = readStep(), step.n > lastStep else { return }
         lastStep = step.n
-        lock.lock()
-        anchor = Anchor(system: Date().timeIntervalSince1970, app: step.at, speed: step.speed)
-        wasAltered = true
-        lock.unlock()
+        anchor.withLock { $0 = Anchor(system: Date().timeIntervalSince1970, app: step.at, speed: step.speed, altered: true) }
         Screenshots.log(.clock(n: step.n, at: step.at, speed: step.speed))
         Screenshots.stepped(step.n)
     }

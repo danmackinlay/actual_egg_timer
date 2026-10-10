@@ -474,6 +474,13 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       not thin: it still runs the alarms, the ring and the Live Activity
       itself (as effects) and writes the debug log; PhaseActions keeps a
       layout per phase (its words are the readout's).
+      *Done but one* (`ios-thin-and-tidy`, `f9dffb7`, `49aefac`): Sharing's
+      `generation` tokens went for a value, whether the id a run sends
+      under is still the one sent under (`sending`); `Cook` holds the
+      state, steps it and hands each effect on, to `CookAlarms` (the
+      alarms and the ring), `CookCard` (the Lock Screen card),
+      `CookSurfaces` (what a step waits for) and `CookLog` (the debug log):
+      993 -> 670 lines. *Not done:* PhaseActions' layout per phase.
 - [x] **3.10 iOS: Planner as `choices: CookChoices`**, not 13 controls
       mapped by hand six times; `SolveLoop` and `Learning` as types in place
       of extensions that need ~15 bookkeeping vars left internal. M.
@@ -529,11 +536,15 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       module, a Swift twin and a fixture; the phases to `running`, the
       replies to `share`, the calibration grid to `record`. Every fixture
       value moved unchanged.
-- [ ] **3.16 One time unit**: `startCook(now_ms)` and `share.answered(now)`
+- [x] **3.16 One time unit**: `startCook(now_ms)` and `share.answered(now)`
       take ms, everything else seconds. S.
       *Half done:* the running cook's API is seconds (`startCook(now_s)`;
       the record's id stays ms). `share.answered` still takes ms: its
       stored `busySince` is ms, a format change of its own.
+      *Done* (`ea1bbea`): `answered(s, status, now_s)` and
+      `busySince_s` in core; each store keeps its own unit, converted
+      where it is read and written (the web's ms, iOS's seconds since
+      2001), and the keys are not bumped.
 - [x] **3.17 Core only what the apps must agree on.** `deadlineToRing` is
       iOS-only logic in EggTimerCore with no twin; one-liners
       (`effectiveUnits`, `languageOf`) don't earn a twin. S.
@@ -541,7 +552,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       length to `src/ui/alarmSounds.ts`. `effectiveUnits` and `languageOf`
       stay: core calls both itself (`chooseUnits`; `copy`, `format`,
       `language`), and neither has a fixture of its own.
-- [ ] **3.18 Generate the Swift data layer** (types, defensive readers,
+- [ ] **3.18 Generate the Swift data layer** *Deferred* (the owner, 10
+      October 2026), unless drift between the copies keeps recurring; the
+      conformance fixtures catch it meanwhile. (types, defensive readers,
       Codable, `jsonObject`) from the TS interfaces: that is where the copies
       drifted (Running 967 Swift code lines against 727 TS; Share 162
       against 91). Not the whole core: running TS in JavaScriptCore loses
@@ -560,7 +573,9 @@ is written three times (`cook.ts:342`, `AppModel.swift:366`,
       working commit: it is touched by 25% of commits and is a merge hotspot
       across worktrees and the QA agent. `DECISIONS.md` 104; in CLAUDE.md at
       `f7b8a34`.
-- [ ] **4.2 LOGBOOK frozen per version** (`LOGBOOK-0.4.md`); its "Things that
+- [ ] **4.2 ~~LOGBOOK frozen per version~~** *The freezing is dropped* (the
+      owner, 10 October 2026: ceremony); the gathering into `GOTCHAS.md`
+      stands. (`LOGBOOK-0.4.md`); its "Things that
       cost an hour" (twice, at :78 and :6059, and inline three more times)
       into one edited `GOTCHAS.md`. S.
 - [x] **4.3 Fewer version lines.** 0.4 hasn't shipped and 0.5 forked from
@@ -661,6 +676,13 @@ it found, in its order, with where each is being done:
       `studies/` build outside `verify`. *Done:* the studies type-checked
       (`297e3aa`); `sameCook` alike in both (`7de8775`); `Running.swift`'s
       comment. The rest after the refactor, with 5.12's deletions.
+      *iOS and core done* (`ios-thin-and-tidy`): the four exports internal
+      or gone in both languages (`e5c71da`), none needed by a fixture;
+      `decide.ts`'s comment; `nonisolated(unsafe)` 16 -> 5, each kept with
+      its reason (`961284f`); `public` in EggTimerApp 347 -> 232
+      (`0925e75`); `#if DEBUG` in ios/ 83 -> 27 (`f482273`, `49aefac`);
+      3.16. *Left:* `readProbe`, the folded legacy fields and 2.11's
+      sweep, with the storage registry (3.13).
 - [ ] **5.12 The tests sit where the code is already safe** (the red
       team's audit of the suite at `4ecc06a`). Core is 98% covered (400 of
       408 functions); `src/ui` 253 of 479, with `cook.ts` 0/33, `edit.ts`

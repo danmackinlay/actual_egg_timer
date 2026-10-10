@@ -14,7 +14,7 @@ import EggTimerCore
 /// "Eggs in" cancels it (`currentSolution`), and a detached loop would go on
 /// solving for a result thrown away.
 @MainActor
-public final class SolveLoop {
+final class SolveLoop {
     /// The planner it solves for, which holds it: the two live as long as the
     /// app, and a solve in flight keeps both.
     private let planner: Planner
@@ -89,7 +89,7 @@ public final class SolveLoop {
     /// 2026). Now one solve loop runs at a time. A change while it solves is
     /// picked up when it finishes; the answer it just got is shown meanwhile,
     /// a step behind, without the snap (`applyInterim`).
-    public func recompute() {
+    func recompute() {
         asked &+= 1
         // A pot's surface is built only once the inputs have sat still.
         settleTask?.cancel()
@@ -139,7 +139,7 @@ public final class SolveLoop {
             let question = asked
             let snapshot = inputSnapshot
             let inputs = snapshot.inputs
-            let answer = await Self.solve(snapshot, inputs: inputs)
+            let answer = await Self.solve(snapshot, inputs: inputs, grids: Services.grids)
             // The time is chosen on this pot's decision surface. The surface
             // does not depend on the slider, so a drag is answered from the one
             // already built and the time never jumps mid-drag; a new pot shows
@@ -275,15 +275,9 @@ public final class SolveLoop {
     private nonisolated static func solve(
         egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, profile: OddsProfile? = nil
     ) async -> Answer {
-        #if DEBUG
         let a = Perf.time(.answerAt) { answerAt(
             calibration, egg: egg, setup: setup, level: level, profile: profile
         ) }
-        #else
-        let a = answerAt(
-            calibration, egg: planner.egg, setup: planner.setup, level: level, profile: profile
-        )
-        #endif
         return Answer(
             solution: a.solution, verdict: a.verdict, lowOdds: a.lowOdds, setup: setup, level: a.level,
             profile: profile
@@ -293,8 +287,10 @@ public final class SolveLoop {
     /// Solve for a snapshot of the inputs. The odds at every level, if this
     /// pot's are in, set the slider's ends (Reach.swift); if not, the physical
     /// limits do.
-    private nonisolated static func solve(_ snapshot: InputSnapshot, inputs: DecisionInputs) async -> Answer {
-        let profile = await Services.grids.cachedProfile(inputs, snapshot.calibration)
+    private nonisolated static func solve(
+        _ snapshot: InputSnapshot, inputs: DecisionInputs, grids: any DecisionSurfaces
+    ) async -> Answer {
+        let profile = await grids.cachedProfile(inputs, snapshot.calibration)
         return await solve(
             egg: snapshot.egg, setup: snapshot.setup, level: snapshot.level,
             calibration: snapshot.calibration, profile: profile
@@ -317,7 +313,7 @@ public final class SolveLoop {
     /// Applied like any other answer, so a snap moves the slider before the
     /// caller reads the choices for its cook. Loops only if the inputs move
     /// again while it solves.
-    public func currentSolution() async -> Solution? {
+    func currentSolution() async -> Solution? {
         while true {
             if planner.isSousVide { return nil }
             if let solution = planner.solution, answered == asked { return solution }
@@ -326,7 +322,7 @@ public final class SolveLoop {
             let question = asked
             let snapshot = inputSnapshot
             let inputs = snapshot.inputs
-            var answer = await Self.solve(snapshot, inputs: inputs)
+            var answer = await Self.solve(snapshot, inputs: inputs, grids: Services.grids)
             // The time on screen is the chosen one whenever this pot's surface
             // is already built, so "Eggs in" starts on that one too. A
             // surface still to build is not waited for: the mean is what the
@@ -348,14 +344,12 @@ public final class SolveLoop {
     }
 
     private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
-        #if DEBUG
         Perf.landed(question: question, interim: !snap, chosen: answer.decision != nil, odds: answer.profile != nil, cookS: answer.solution.result.cookTimeS)
         // What the idle screen shows, for the scripted checks: the time, and
         // whether it is decided on this pot's surface.
         Screenshots.log(.answer(
             cookS: answer.solution.result.cookTimeS, decided: answer.decision != nil, odds: answer.profile != nil
         ))
-        #endif
         planner.solution = answer.solution
         answered = question
         planner.decision = answer.decision

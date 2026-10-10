@@ -1,11 +1,15 @@
-#if DEBUG
 import EggTimerCore
 import Foundation
 import Observation
+import os
 
 /// Launch arguments that put a debug build on a given screen, so screenshots
 /// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
-/// settings`). Debug builds only; a release build has none of this.
+/// settings`), and the debug log the scripted checks read. Debug builds only:
+/// a release build reads no launch argument (`arguments`), so every flag here
+/// is off and `log` writes nothing, and it has none of the taps, the waits
+/// and the seeds (the `#if DEBUG` part below). What the rest of the app asks
+/// of this, it asks in every build, and need not say which it is in.
 ///
 /// - `-uiScreen settings`, `help`, `help-reliable`: push that page.
 /// - `-uiScreen clause-egg`, `clause-from`, `clause-start`, `clause-cooling`:
@@ -98,7 +102,24 @@ import Observation
 /// `Codable` writes them, in the order of their names, a field with no value
 /// left out.
 public enum Screenshots {
-    public static func log(_ event: Event) {
+    /// Where launch arguments are read: UserDefaults, whose argument domain
+    /// holds them, in a debug build; none in a release build.
+    static var arguments: UserDefaults? {
+        #if DEBUG
+        return .standard
+        #else
+        return nil
+        #endif
+    }
+
+    /// Whether the debug log is written, for what does work only to log.
+    public static var logging: Bool { arguments != nil }
+
+    /// One event to the debug log; in a release build, nothing, and the
+    /// event is never made.
+    public static func log(_ event: @autoclosure () -> Event) {
+        #if DEBUG
+        let event = event()
         let encoder = JSONEncoder()
         // The same event the same line, every time, to read and to diff.
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
@@ -114,13 +135,20 @@ public enum Screenshots {
         let t = String(format: "%.3f", AppClock.nowS)
         let text = Data("{\"t\":\(t),\"ev\":\"\(name)\"\(fields.isEmpty ? "" : ",")\(fields)}\n".utf8)
         output(event, text)
+        #endif
     }
 
+    #if DEBUG
     /// Where a line goes: standard error, and appended to
     /// Library/Caches/aet.log in the app's container, which a simulator's
     /// host reads (`simctl get_app_container … data`). The tests take the
-    /// events instead, and write nothing to the Mac's own Caches.
-    nonisolated(unsafe) public static var output: (Event, Data) -> Void = { _, text in
+    /// events instead, and write nothing to the Mac's own Caches. Behind a
+    /// lock, since a line is written from any thread (the clock's steps).
+    static var output: @Sendable (Event, Data) -> Void {
+        get { outputSet.withLock { $0 } }
+        set { outputSet.withLock { $0 = newValue } }
+    }
+    private static let outputSet = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
         FileHandle.standardError.write(text)
         guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
         let url = dir.appendingPathComponent("aet.log")
@@ -131,50 +159,54 @@ public enum Screenshots {
         } else {
             try? text.write(to: url)
         }
-    }
+    })
+    #endif
 
     /// Whether the app is in the foreground, where the page is drawn
     /// (`idle(after:)`): UIApplication's, set by the app.
     @MainActor public static var appActive: () -> Bool = { true }
 
-    public static var provisionalAlarms: Bool { UserDefaults.standard.bool(forKey: "provisionalAlarms") }
+    public static var provisionalAlarms: Bool { arguments?.bool(forKey: "provisionalAlarms") ?? false }
     /// `-muteAudio YES`: the in-app ring plays at no volume and notifications
     /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
     /// Mac's speakers; everything else about the ring and the alarms is as is.
-    public static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
+    public static var muteAudio: Bool { arguments?.bool(forKey: "muteAudio") ?? false }
     /// `-uiHoldAsRan YES`: a correction after the pull never has its record
     /// made again while the cook runs in this launch (`Cook`), as if the app
     /// were killed before it landed, so a script can find the stale cook
     /// stored at the next launch. Read at launch; a test sets it.
-    nonisolated(unsafe) public static var holdAsRan = UserDefaults.standard.bool(forKey: "uiHoldAsRan")
+    @MainActor static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
     /// `-uiFailRemake YES`: an ended cook's record is never made again in
     /// this launch (`Cook`): the cook stays stored for the next. Read at
     /// launch; a test sets it.
-    nonisolated(unsafe) public static var failRemake = UserDefaults.standard.bool(forKey: "uiFailRemake")
-    public static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
-    public static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
-    public static var doneAgo: Double {
-        UserDefaults.standard.object(forKey: "doneAgo") == nil ? 2 : UserDefaults.standard.double(forKey: "doneAgo")
-    }
-    public static var answerAfter: Double {
-        UserDefaults.standard.object(forKey: "uiAnswerAfter") == nil
-            ? 3 : UserDefaults.standard.double(forKey: "uiAnswerAfter")
-    }
+    @MainActor static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
+    public static var scene: String? { arguments?.string(forKey: "uiScreen") }
+    public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
+    public static var doneAgo: Double { number("doneAgo") ?? 2 }
+    public static var answerAfter: Double { number("uiAnswerAfter") ?? 3 }
     /// `-uiAnswer`'s yolk and white, either possibly nil; nil when not given.
     public static var answer: (yolk: YolkWord?, white: WhiteReport?)? {
-        guard let raw = UserDefaults.standard.string(forKey: "uiAnswer") else { return nil }
+        guard let raw = arguments?.string(forKey: "uiAnswer") else { return nil }
         let parts = raw.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
         return (YolkWord(rawValue: parts[0]), parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil)
     }
-    public static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
-    public static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
-    public static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
-    public static var scrollAnchor: Double? {
-        UserDefaults.standard.object(forKey: "uiScrollAnchor") == nil
-            ? nil : UserDefaults.standard.double(forKey: "uiScrollAnchor")
+    public static var language: String? { arguments?.string(forKey: "uiLanguage") }
+    public static var noAlarmPrompt: Bool { arguments?.bool(forKey: "noAlarmPrompt") ?? false }
+    public static var sectionAhead: Double { arguments?.double(forKey: "sectionAhead") ?? 0 }
+    public static var scrollAnchor: Double? { number("uiScrollAnchor") }
+    /// `-shareServer`: where sharing sends, in place of the live site.
+    public static var shareServer: URL? { arguments?.string(forKey: "shareServer").flatMap(URL.init(string:)) }
+
+    /// A number given as a launch argument, or nil when none is.
+    private static func number(_ key: String) -> Double? {
+        arguments.flatMap { $0.object(forKey: key) == nil ? nil : $0.double(forKey: key) }
     }
-    public static var seedEggs: [SeedAnswer] {
-        guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
+}
+
+#if DEBUG
+extension Screenshots {
+    static var seedEggs: [SeedAnswer] {
+        guard let list = arguments?.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             // Split at the dash and the slash, or at anything else that is
             // not a letter.
@@ -188,6 +220,7 @@ public enum Screenshots {
         }
     }
 }
+#endif
 
 extension Screenshots {
     /// What the debug log says, one case an event, its values the line's
@@ -320,7 +353,7 @@ extension Screenshots {
     public struct PendingAlarm: Encodable, Equatable {
         public let id: String
         /// When it fires, cook time, whole s; none without an interval trigger.
-        public let at: Int?
+        let at: Int?
 
         public init(id: String, at: Int?) {
             self.id = id
@@ -329,18 +362,19 @@ extension Screenshots {
     }
 }
 
+#if DEBUG
 extension Screenshots {
     /// One tap of `-uiDo`: what, with its argument, and when.
-    public struct Action {
-        public let raw: String
+    struct Action {
+        let raw: String
         public let name: String
-        public let arg: String?
-        public let anchor: String
-        public let afterS: Double
+        let arg: String?
+        let anchor: String
+        let afterS: Double
 
         /// The moment it is due, epoch s, cook time; nil until it can be.
         /// `launch` is the clock at this launch, before any cook.
-        public func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
+        func due(_ cook: RunningCook?, _ plan: CookPlan?) -> Double? {
             if anchor == "launch" { return Screenshots.launchedAtS + afterS }
             guard let cook, let plan else { return nil }
             let base: Double?
@@ -356,8 +390,8 @@ extension Screenshots {
     }
 
     /// `-uiDo`'s taps, in order; one that does not read is left out.
-    public static var actions: [Action] {
-        guard let list = UserDefaults.standard.string(forKey: "uiDo") else { return [] }
+    static var actions: [Action] {
+        guard let list = arguments?.string(forKey: "uiDo") else { return [] }
         return list.split(separator: ",").compactMap { entry in
             let parts = entry.split(separator: "@", maxSplits: 1).map(String.init)
             let what = parts[0].split(separator: ":", maxSplits: 1).map(String.init)
@@ -426,7 +460,7 @@ extension Screenshots {
     @MainActor public static var open: ((String) -> Void)?
 
     /// The clock at this launch, cook time: what `launch` counts from.
-    public static let launchedAtS = AppClock.nowS
+    static let launchedAtS = AppClock.nowS
 
     @MainActor
     private static func tap(_ action: Action, _ model: AppModel) {
@@ -506,11 +540,11 @@ extension Screenshots {
 
     @MainActor public static let probe = Probe()
     /// The app's model, for what `idle(after:)` waits on (`drive`).
-    @MainActor public static weak var model: AppModel?
+    @MainActor static weak var model: AppModel?
     @MainActor private static var drawing: [CheckedContinuation<Void, Never>] = []
 
     /// Step `n` taken (`AppClock.takeStep`, off the main actor).
-    public static func stepped(_ n: Int) {
+    static func stepped(_ n: Int) {
         Task { @MainActor in await idle(after: n) }
     }
 
@@ -569,7 +603,7 @@ extension Screenshots {
 
 /// One seeded egg's answers: the yolk the cook got in the five words, and
 /// the white, if given.
-public struct SeedAnswer {
+struct SeedAnswer {
     public var yolkWord: YolkWord?
     public var white: WhiteReport?
 }

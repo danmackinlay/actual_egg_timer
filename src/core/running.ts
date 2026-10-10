@@ -457,7 +457,7 @@ function foldCook(
  *   before it was made in the cold the cook began with, so a stray
  *   cold -> hot -> cold after it does not stop it being remembered.
  */
-export function coldHistory(cook: RunningCook): { coldSince_s: number | null; firstHotAt_s: number | null } {
+function coldHistory(cook: RunningCook): { coldSince_s: number | null; firstHotAt_s: number | null } {
   let mode = cook.start.choices.startMode;
   let since: number | null = mode === 'cold' ? cook.start.at_s : null;
   let firstHot: number | null = mode === 'hot' ? cook.start.at_s : null;
@@ -697,7 +697,7 @@ function sameNumbers(a: number[] | null, b: number[] | null): boolean {
 }
 
 /** Whether two plans as they ran are the same, every field. */
-export function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
+function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
   if (a === null || b === null) return a === b;
   const f = a.forecast;
   const g = b.forecast;
@@ -1183,14 +1183,7 @@ function slowHobKey(cook: RunningCook, c: Calibration, leanHint_s: number): stri
  *  start, no tap, no pull); worked out under the same start, choices,
  *  remembered time, lean and nudge, parameters and white target; and the
  *  clock past the place kept, so that the rule from the start would get
- *  there too. Otherwise the plan works the rule from the start. */
-export function slowHobMemoFits(
-  memo: SlowHobMemo | null, cook: RunningCook, c: Calibration, leanHint_s: number, now_s: number,
-): boolean {
-  return memoPlace(memo, cook, c, leanHint_s, now_s) !== null;
-}
-
-/** The memo's place when it fits (`slowHobMemoFits`), or null. */
+ *  there too. Otherwise null, and the plan works the rule from the start. */
 function memoPlace(
   memo: SlowHobMemo | null, cook: RunningCook, c: Calibration, leanHint_s: number, now_s: number,
 ): SlowHobPlace | null {
@@ -1276,12 +1269,6 @@ export function guessLengthened(plan: CookPlan): boolean {
  */
 export function slowHobDue(plan: CookPlan, now_s: number): boolean {
   return plan.slowHobAt_s !== null && now_s > plan.slowHobAt_s;
-}
-
-/** Whether two decision surfaces' inputs are the same pot, egg and
- *  posterior: the same key (`inputsKey`). */
-export function sameDecisionInputs(a: DecisionInputs, b: DecisionInputs): boolean {
-  return inputsKey(a) === inputsKey(b);
 }
 
 /** The most lengthenings one plan works through, so a plan's cost is
@@ -1500,7 +1487,7 @@ export function replan(
 
   const mean = found !== null ? found : answerAt(c, pot.egg, pot.setup, ch.level, null);
   const inputs = lengthened ? null : decisionInputs(c, pot.egg, pot.setup);
-  const s = inputs !== null && surface !== null && sameDecisionInputs(surface.inputs, inputs) ? surface : null;
+  const s = inputs !== null && surface !== null && inputsKey(surface.inputs) === inputsKey(inputs) ? surface : null;
   const profile = s === null ? null : s.profile;
   const answer: LevelAnswer = { ...mean, lowOdds: lowOddsAt(profile, mean.level) };
 

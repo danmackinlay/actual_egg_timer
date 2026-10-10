@@ -102,7 +102,11 @@ public enum Copy {
     /// The folder the catalogues are read from, when it is not the bundle's:
     /// the repository's copy/, for the tests, which have no app bundle. Set
     /// before the first word is rendered.
-    nonisolated(unsafe) public static var folder: URL?
+    public static var folder: URL? {
+        get { folderSet.withLock { $0 } }
+        set { folderSet.withLock { $0 = newValue } }
+    }
+    private static let folderSet = OSAllocatedUnfairLock<URL?>(initialState: nil)
 
     private static func url(_ locale: String) -> URL? {
         guard let folder else { return Bundle.main.url(forResource: locale, withExtension: "json", subdirectory: "copy") }

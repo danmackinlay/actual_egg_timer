@@ -88,9 +88,7 @@ struct ContentView: View {
                     }
                     .id(tick)
                     DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
-                        #if DEBUG
                         .logTop("slider")
-                        #endif
                     setup(phase: outerPhase, every: every, tick: tick)
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
@@ -113,11 +111,9 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            #if DEBUG
             // `-uiScrollAnchor 0.7`: open scrolled that far down the page,
             // for a screenshot at the largest text sizes.
             .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
-            #endif
             .barTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -293,17 +289,13 @@ struct ContentView: View {
                     }
                     .id(tick)
                     .frame(width: size.width, height: size.height)
-                    #if DEBUG
                     .logTop("egg")
-                    #endif
                 }
                 SetupSentence(
                     planner: planner, open: $openClause,
                     onTap: { model.edits.touchedElsewhere() }
                 )
-                #if DEBUG
                 .logTop("sentence")
-                #endif
             }
             if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
                 ClausePanel(planner: planner, clause: clause, edits: running == nil ? nil : model.edits) {
@@ -323,20 +315,34 @@ struct ContentView: View {
     }
 }
 
-#if DEBUG
+/// What the screen says, to the debug log, for the scripted checks
+/// (`Screenshots.log`). A release build works none of it out and watches
+/// nothing.
 extension View {
+    /// `event` to the debug log whenever it changes.
+    func logged(_ event: @autoclosure () -> Screenshots.Event) -> some View {
+        #if DEBUG
+        onChange(of: event(), initial: true) { _, said in Screenshots.log(said) }
+        #else
+        self
+        #endif
+    }
+
     /// The view's top in the window, pt, to the debug log whenever it moves
     /// (`layout`, `"part":"slider","y":312`): what the scripted checks read
     /// to see that nothing moves at the start.
     func logTop(_ name: String) -> some View {
+        #if DEBUG
         onGeometryChange(for: Double.self) { proxy in
             (proxy.frame(in: .global).minY * 2).rounded() / 2
         } action: { y in
             Screenshots.log(.layout(part: name, y: y))
         }
+        #else
+        self
+        #endif
     }
 }
-#endif
 
 #Preview {
     ContentView()
@@ -352,8 +358,6 @@ struct NewerNote: View {
             .foregroundStyle(.orange)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
-            #if DEBUG
             .onAppear { Screenshots.log(.newerNote) }
-            #endif
     }
 }

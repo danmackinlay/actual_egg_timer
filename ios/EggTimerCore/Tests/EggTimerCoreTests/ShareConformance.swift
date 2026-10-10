@@ -21,7 +21,7 @@ private func state(_ raw: Any?) throws -> ShareState {
         uids: try #require(o["uids"] as? [String]),
         deleting: try #require(o["deleting"] as? [String]),
         busy: Int(try o.num("busy")),
-        busySince: try o.optionalNum("busySince")
+        busySinceS: try o.optionalNum("busySince_s")
     )
 }
 
@@ -71,7 +71,7 @@ struct ShareConformance {
             } else if move["reconcile"] != nil {
                 after = reconciled(before, logLength: Int(try move.num("reconcile")))
             } else if move["answer"] != nil {
-                let r = answered(before, status: Int(try move.num("answer")), now: try move.num("now"))
+                let r = answered(before, status: Int(try move.num("answer")), nowS: try move.num("now_s"))
                 after = r.next
                 moved = r.moved
             } else {

@@ -30,6 +30,7 @@ import EggTimerCore
 /// "Start learning again" keeps it.
 public enum Stores {
     /// Where everything is kept: UserDefaults in the app; a test's own.
+    /// Unsafe, but set only at launch, or by a test before it runs anything.
     nonisolated(unsafe) public static var store: any KeyValueStore = UserDefaults.standard
 
     /// What a write to the store needs, and only `Stores` can make: so no
@@ -39,10 +40,10 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    public static let markKey = key(StoreRegistry.newest)
+    static let markKey = key(StoreRegistry.newest)
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    public static let buildKey = key(StoreRegistry.newestBuild)
+    static let buildKey = key(StoreRegistry.newestBuild)
 
     /// Every key an earlier build wrote: the posteriors before the log
     /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
@@ -52,7 +53,7 @@ public enum Stores {
     /// settings a key each among them, sharing's key kept with its dates as
     /// seconds since 2001, and 0.5's keys with a format in them, from before
     /// the table of stores.
-    public static let retiredKeys = [
+    static let retiredKeys = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
         "settings.v1",
@@ -64,7 +65,7 @@ public enum Stores {
     /// The keys deleted at launch (`claim`) rather than left on the phone
     /// being neither read nor collected: every key an earlier build wrote
     /// that no store of this build is kept under (core's `StoreRegistry`).
-    public static var sweptKeys: [String] {
+    static var sweptKeys: [String] {
         let kept = Set(StoreRegistry.all.compactMap(\.ios))
         return retiredKeys.filter { !kept.contains($0) }
     }
@@ -76,11 +77,12 @@ public enum Stores {
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
-    /// Screen, and nothing will update it again.
+    /// Screen, and nothing will update it again. Unsafe, but written and
+    /// read once each, at launch on the main actor (`claim`, `Cook.restore`).
     nonisolated(unsafe) private static var retiredCook = false
 
     /// Once: whether the launch's sweep deleted an earlier build's cook.
-    public static func takeRetiredCook() -> Bool {
+    static func takeRetiredCook() -> Bool {
         defer { retiredCook = false }
         return retiredCook
     }
@@ -139,9 +141,7 @@ public enum Stores {
     /// checks hold the store to what the log says was written.
     private static func wrote(_ value: Any?, forKey key: String) {
         store.set(value, forKey: key, Pass())
-        #if DEBUG
         Screenshots.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
-        #endif
     }
 
     public static func remove(_ key: String) {
@@ -150,7 +150,7 @@ public enum Stores {
     }
 
     /// A store's key on this app (core's `StoreRegistry`).
-    public static func key(_ store: StoreSpec) -> String {
+    static func key(_ store: StoreSpec) -> String {
         guard let key = store.ios else { preconditionFailure("\(store.name) is not kept on iOS") }
         return key
     }
@@ -179,10 +179,10 @@ extension UserDefaults: KeyValueStore {
 /// Where a boil memory is kept: as the web keeps it, JSON in its format, the
 /// pans under `pans`. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
-public enum BoilMemories {
+enum BoilMemories {
     private static let key = Stores.key(StoreRegistry.boilMemory)
 
-    public static func load() -> BoilMemory {
+    static func load() -> BoilMemory {
         let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
         return (inFormat(StoreRegistry.boilMemory, raw)?["pans"] as? BoilMemory) ?? [:]
     }
@@ -203,7 +203,7 @@ public enum BoilMemories {
 /// The inputs, remembered between launches: one value, core's `AppSettings`,
 /// as JSON under one key, read by core's `readSettings`, which the web reads
 /// its own with. Nobody wants to re-enter their altitude every morning.
-public enum SettingsStore {
+enum SettingsStore {
     public static let key = Stores.key(StoreRegistry.settings)
 
     /// The settings as last read or written: what a save of some fields is

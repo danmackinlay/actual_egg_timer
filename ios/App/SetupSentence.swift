@@ -67,14 +67,10 @@ struct SetupSentence: View {
                     }
                 }
             }
-            #if DEBUG
             // What the sentence says, to the debug log whenever it changes
             // (`sentence`, `"text":"…into cold water…"`): what the scripted
             // checks read.
-            .onChange(of: plain(texts), initial: true) { _, said in
-                Screenshots.log(.sentence(text: said))
-            }
-            #endif
+            .logged(.sentence(text: plain(texts)))
     }
 
     /// The clauses the sentence has now, in the template's order.
@@ -302,13 +298,9 @@ struct ClausePanel: View {
                 .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
             }
             .appFont(.subheadline)
-            #if DEBUG
             // The start the panel shows, epoch s, to the debug log whenever
             // it changes (`panelStart`, `"at":1791234567`).
-            .onChange(of: start, initial: true) { _, at in
-                Screenshots.log(.panelStart(at: at))
-            }
-            #endif
+            .logged(.panelStart(at: start))
             if let limit = edits.startLimit {
                 Text(tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
                     .appFont(.caption)

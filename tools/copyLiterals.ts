@@ -319,6 +319,7 @@ const NOT_COPY: Record<string, string> = {
   deleting: 'stored sharing state field',
   busy: 'stored sharing state field',
   busySince: 'stored sharing state field',
+  busySince_s: 'sharing state field, in core\'s JSON',
   '0123456789abcdef': 'hex digits, to read a random ID (Share.swift), never shown',
   'sharing.attest.v1': 'UserDefaults key, retired (Store.swift)',
   shareServer: 'debug launch argument (Sharing.swift)',

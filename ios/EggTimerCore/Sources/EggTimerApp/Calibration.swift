@@ -26,9 +26,9 @@ public struct Kept: Sendable {
     /// Where the replay starts when it is not the prior: only ever the posterior
     /// of a log that was damaged and had to be dropped. Nil on every healthy
     /// phone.
-    public var base: Calibration?
+    var base: Calibration?
     public var calibration: Calibration
-    public var folded: Int
+    var folded: Int
     public var log: [EggRecord]
 }
 
@@ -53,7 +53,7 @@ public enum Calibrations {
     /// `fixtures/population.json` from the repo, bundled, which is the
     /// literature's until a fit of shared eggs publishes another. A bundle
     /// without it, or with one that does not read, draws from the literature.
-    public static let population: Population = {
+    static let population: Population = {
         guard let url = Bundle.main.url(forResource: "population", withExtension: "json"),
               let data = try? Data(contentsOf: url), let p = parsePopulation(data) else {
             return literaturePopulation
@@ -61,11 +61,11 @@ public enum Calibrations {
         return p
     }()
 
-    public static func fresh() -> Calibration {
+    static func fresh() -> Calibration {
         freshCalibration(count: particleCount, seed: calibrationSeed, population: population)
     }
 
-    public static func freshKept() -> Kept {
+    static func freshKept() -> Kept {
         Kept(base: nil, calibration: fresh(), folded: 0, log: [])
     }
 
@@ -183,9 +183,7 @@ public enum Calibrations {
         if let data {
             Stores.set(data, forKey: key)
         }
-        #if DEBUG
         Screenshots.log(.log(count: k.log.count, folded: k.folded, last: k.log.last.map(Screenshots.Encoded.init)))
-        #endif
     }
 
     /// What is in storage, made safe to fold on top of. The store is read
@@ -198,7 +196,7 @@ public enum Calibrations {
     ///
     /// Whatever comes back starts at this population's centre: the start is
     /// the population's, not stored.
-    public static func load() -> Kept {
+    static func load() -> Kept {
         var (kept, path) = decode(Stores.store.data(forKey: key))
         let start = priorStart(population)
         kept.calibration.start = start

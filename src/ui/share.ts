@@ -25,6 +25,9 @@ import { STORES } from '../core/stores.js';
 import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
+/** Now, epoch s, as core counts it. */
+const nowS = (): number => nowMs() / 1000;
+
 /** How the page reaches the endpoint: a status for each call, or a throw
  *  when the network does not answer. */
 export interface Transport {
@@ -75,7 +78,7 @@ export function newUid(fill: (bytes: Uint8Array) => void = (b) => { crypto.getRa
 }
 
 /** What storage holds, read defensively (core's `readShareState`): text that
- *  is not JSON reads as nothing stored. */
+ *  is not JSON reads as nothing stored. Stored, `busySince` is epoch ms. */
 export function readShare(raw: string | null): ShareState {
   let o: unknown = null;
   try {
@@ -83,7 +86,15 @@ export function readShare(raw: string | null): ShareState {
   } catch {
     o = null;
   }
-  return readShareState(o);
+  if (o === null || typeof o !== 'object' || Array.isArray(o)) return readShareState(o);
+  const { busySince: ms, ...rest } = o as Record<string, unknown>;
+  return readShareState({ ...rest, busySince_s: typeof ms === 'number' ? ms / 1000 : null });
+}
+
+/** The state as storage holds it: `busySince` in whole epoch ms. */
+export function storedShare(s: ShareState): string {
+  const { busySince_s: since, ...rest } = s;
+  return JSON.stringify({ ...rest, busySince: since === null ? null : Math.round(since * 1000) });
 }
 
 /* ---------------------------------------------------------------- state */
@@ -116,7 +127,7 @@ export type Sharing = ReturnType<typeof openSharing>;
  * and held by the runner (cook.ts). Every change is told to the page (the
  * `shared` message).
  */
-export function openSharing(host: ShareHost, transport: Transport = fetchTransport, clock: () => number = nowMs) {
+export function openSharing(host: ShareHost, transport: Transport = fetchTransport, clock: () => number = nowS) {
   /** The state as stored: another tab's write is taken up before this one
    *  acts (`current`). A tab loaded yesterday must not send under an id
    *  another tab has since deleted, nor write back the deletions it never
@@ -131,7 +142,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
 
   function save(next: ShareState): void {
     state = next;
-    store.write(JSON.stringify(state));
+    store.write(storedShare(state));
     send({ kind: 'shared' });
   }
 

@@ -110,8 +110,8 @@ const DECISION_TIME_MIN_S = 20;
 export interface DecisionInputs {
   egg: Egg;
   setup: CookSetup;
-  /** The posterior mean time-scale and carryover scale, which centre the grid,
-   *  as `calibrationParams` has them. */
+  /** The posterior mean diffusivity, which centres the grid, as
+   *  `calibrationParams` has it. */
   params: ModelParams;
   /** The white's target, as `calibrationDoneness` has it: it says where the
    *  softest level is. */
