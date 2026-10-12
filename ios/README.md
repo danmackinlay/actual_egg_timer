@@ -268,8 +268,9 @@ three are the model refusing to lie:
 - **A cold start is provisional until you tap the boil.** The countdown says so.
   `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
   uses — so one deadline covers the ramp and the boil together, and tapping
-  "Full rolling boil" re-solves the cook and moves it. The button names a full
-  rolling boil because tapping at first bubbles under-measures by 15-25%. If the
+  "Rolling boil" re-solves the cook and moves it. The button, with the hint
+  above it, asks for the whole surface rolling because tapping at first
+  bubbles under-measures by 15-25%. If the
   hob is slower than assumed, the estimate is pushed out rather than counting
   down to an alarm for an egg that has not started cooking.
 

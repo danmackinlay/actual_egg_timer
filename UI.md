@@ -92,7 +92,7 @@ phase (the 1750 title page, when it is shown, above it all):
   under whichever is there, while idle, and opens Help at its reliability
   section, which lists the changes that would help this setup (`advice.*`).
 - The hint, then **the action**: "Start heating" on a cold start, "Eggs in"
-  otherwise, Full rolling boil, the pull, Start again (the table below). In
+  otherwise, Rolling boil, the pull, Start again (the table below). In
   sous-vide it is dead, with the bath's hint above. Cancel under it while a
   cook runs. At Done the bar carries the questions after an egg, so it ends
   the page rather than sticking to the bottom of the screen.
@@ -135,7 +135,7 @@ the next cook.
 **The start's time.** The sentence never says when the eggs went in: the
 countdown already does (`DECISIONS.md` 108). While a cook runs the start
 clause's panel has "Eggs in at" (`controls.startedAt`) with a − and a +, a
-minute at a time, no later than now, the press of Full rolling boil or the
+minute at a time, no later than now, the press of Rolling boil or the
 pull, no earlier than two hours before Start. When a press goes no further
 the line under it says why (`controls.startedAt.latestNow`, `.latestBoil`,
 `.latestPull`, `.earliest`). Sous-vide is not offered in the panel.

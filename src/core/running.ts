@@ -99,7 +99,7 @@ export interface Pulled {
 /** What was observed, as clock times: the log's events folded. Kept when a
  *  correction makes one unread. */
 export interface CookEvents {
-  /** Full rolling boil, tapped. */
+  /** Rolling boil, tapped. */
   boilAt_s: number | null;
   pulled: Pulled | null;
   /** The counted cooling ended. Never written on the counter, where nothing
@@ -583,7 +583,7 @@ export function startCook(
   return freshCook(Math.round(now_s * 1000), { at_s: now_s, choices: choices }, nudge_s, boilMemory, units, lang);
 }
 
-/** Full rolling boil, tapped at `now_s`: taken only on a cold start still
+/** Rolling boil, tapped at `now_s`: taken only on a cold start still
  *  heating - no tap yet, no pull - and not before the start. Otherwise the
  *  cook as it was. */
 export function withBoil(cook: RunningCook, now_s: number): RunningCook {

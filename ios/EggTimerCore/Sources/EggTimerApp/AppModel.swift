@@ -140,7 +140,7 @@ public final class AppModel {
 
     // MARK: - Buttons that move the cook on
 
-    /// Full rolling boil, the egg out, and the answers to "still in the
+    /// Rolling boil, the egg out, and the answers to "still in the
     /// water?": a correction still settling is committed first, so the
     /// button acts on the cook as the controls say it is.
     public func boil() {

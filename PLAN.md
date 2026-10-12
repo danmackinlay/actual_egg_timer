@@ -148,8 +148,9 @@ The one queue. Nothing else in the documents waits on the owner.
     gesture, never "tap"; the "random ID" (1750: a "cypher"), in Settings,
     the consent and the privacy page; and "boil" never a noun
     (`DECISIONS.md` 78), so the setting is "Once it’s boiling" and water is
-    "boiling hard". The button stays "Full rolling boil", and "brought to
-    the boil" stays.
+    "boiling hard". The button was "Full rolling boil", and is
+    "Rolling boil" since 12 October (`DECISIONS.md` 112); "brought to the
+    boil" stays.
 
 11. **The feedback and the room, on a phone** (5 October 2026,
     `DECISIONS.md` 79), in both apps. After a

@@ -16,7 +16,7 @@ the first draft of this file in `DECISIONS.md` 96:
 - The egg in cross-section shows **the live egg**, and while the cook's
   finger is on a control, **the egg those settings aim for**.
 - "Heat off now" is not in 0.5. It may come later as an event, a button
-  like Full rolling boil, not as a setting.
+  like Rolling boil, not as a setting.
 
 So a cook is its start, its setup and its observed events, and everything
 else is derived from them each time. §3 is that model, §4 is the state that
@@ -36,7 +36,7 @@ Both apps share one layout (`UI.md` §3).
 | Phase | Readout | Middle | Bottom |
 |---|---|---|---|
 | Idle (Settings, Help at top) | "Total time", the time, the method line, the direction with its (i), the white's line | the slider with its heading, bracket and texture note; the tappable sentence and its panel | the slot, the hint, Start |
-| Heating | "Heating", the total left (a guess), elapsed and the expected boil, the direction as at "Eggs in" | the egg in cross-section beside the frozen sentence and `cook.summary` | the hint with its (i), **Full rolling boil**, Cancel |
+| Heating | "Heating", the total left (a guess), elapsed and the expected boil, the direction as at "Eggs in" | the egg in cross-section beside the frozen sentence and `cook.summary` | the hint with its (i), **Rolling boil**, Cancel |
 | Cooking | "Keep it boiling" (or the heat-off label), time to the pull | as Heating | the hint, Cancel |
 | Pull | "Eggs out now", the grace | as Heating | the button naming the cooling, Cancel |
 | Cooling | the countdown to the yolk's peak | as Heating | Cancel |
@@ -65,7 +65,7 @@ today. The column, top to bottom, in every phase:
    runs, the start clause also says when the egg went in, so that time can
    be corrected too (§7, 20).
 6. **The slot**: a refusal, a warning, the welcome, the advice link.
-7. **The hint and the action**: Start, Full rolling boil, the pull, Start
+7. **The hint and the action**: Start, Rolling boil, the pull, Start
    again. Cancel under it while a cook runs.
 
 Heating, as a 390-pt column. `_x_` is a tappable clause and `( )` is the egg.
@@ -85,7 +85,7 @@ Heating, as a 390-pt column. `_x_` is a tappable clause and `( )` is the egg.
  │ ○ │   _into cold water, brought to the boil_,
   ╰──╯   _then an ice bath_.
         wait for the whole surface to roll (i)
-             [  Full rolling boil  ]
+             [  Rolling boil  ]
                     Cancel
 ```
 
@@ -113,7 +113,7 @@ egg in 0.5.
 - **The setup**: everything the sentence, the slider and Settings' pot rows
   say. It is the same value the idle screen edits.
 - **The events**: what the cook observed or the clock decided. The boil
-  tapped (Full rolling boil). The pull, meaning when it was due and when the
+  tapped (Rolling boil). The pull, meaning when it was due and when the
   egg came out, by the cook's tap or by the grace running out. The cooling
   ended. Each is a clock time and none is ever re-derived.
 
@@ -146,7 +146,7 @@ back restores it.
   in the start's panel, with its limit shown, as a typed mass is clamped
   (`LIMITS`). An event the setup no longer reads still counts, and the
   panel has to say why: a cook who pressed Start as the pan went on,
-  tapped Full rolling boil, put the eggs in then and corrects to boiling
+  tapped Rolling boil, put the eggs in then and corrects to boiling
   cannot move the start past that tap, because changing back to cold would
   read a boil before the egg went in. The start can go to the tap itself,
   no further; the panel names the tap as the limit, so the cook does not
@@ -168,7 +168,7 @@ back restores it.
   rule lengthens it. That rule moves from both apps into core as a function
   of the time heating so far (`SLOW_HOB_*`).
 - **Boiling → cold (the owner's case).** The cook is back in Heating. The
-  countdown is a guess again until Full rolling boil, and always later than
+  countdown is a guess again until Rolling boil, and always later than
   before. When the correction comes later than this water's remembered
   time to boil, the water may already have boiled, and a tap then would
   record a ramp too long by the delay (a jammy egg a minute over for a
@@ -270,7 +270,7 @@ export interface Pulled {
 /** What was observed, as clock times. Never re-derived; kept when a
  *  correction makes one unread. */
 export interface CookEvents {
-  boilAt_s: number | null;      // Full rolling boil
+  boilAt_s: number | null;      // Rolling boil
   pulled: Pulled | null;
   cooledAt_s: number | null;    // the counted cooling ended; never written
                                 // on the counter (C2: see below)

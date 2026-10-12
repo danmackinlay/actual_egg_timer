@@ -41,7 +41,7 @@ struct AppTests {
         #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
         #expect(world.card.calls.contains(.start(.heating)))
 
-        // Full rolling boil, five minutes in.
+        // Rolling boil, five minutes in.
         world.clock.set(t0 + 300)
         cook.boil()
         await world.settled(cook)

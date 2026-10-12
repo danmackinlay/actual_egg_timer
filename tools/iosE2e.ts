@@ -631,7 +631,7 @@ async function started(run: Run, args: string[] = [], opts: LaunchOptions = {}):
   return storedIn(run.sinceLaunch());
 }
 
-/// Step to 5:00, where `-uiDo boil@300` taps Full rolling boil: the plan
+/// Step to 5:00, where `-uiDo boil@300` taps Rolling boil: the plan
 /// once cooking.
 async function boiled(run: Run): Promise<Plan> {
   const i = await run.step(run.t0 + 300);

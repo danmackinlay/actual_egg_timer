@@ -197,8 +197,9 @@ public final class Cook {
         await stepping?.value
     }
 
-    /// "Full rolling boil". Tapping at first bubbles under-measures the boil
-    /// by 15-25%, which is why the button says what it says.
+    /// "Rolling boil". Tapping at first bubbles under-measures the time to
+    /// boil by 15-25%, which is why the button and the hint above it ask
+    /// for the whole surface rolling.
     func boil() { send(.event(.boil(nowS: AppClock.nowS))) }
     /// The egg out of the water, at the pull.
     func pulledOut() { send(.event(.out(nowS: AppClock.nowS))) }
