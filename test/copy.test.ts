@@ -222,6 +222,28 @@ test('3c. every string a reader sees has curly apostrophes and quotes, never str
   assert.deepEqual(failures, []);
 });
 
+/** U+00A0. The other tests read it as a space (tools/text.ts); this one is about it. */
+const NBSP = ' ';
+
+test('3d. a measure never breaks across a line: format.* joins value and unit with a no-break space', () => {
+  const failures: string[] = [];
+  let checked = 0;
+  for (const [locale, json] of JSONS) {
+    for (const [key, entry] of Object.entries(json.messages)) {
+      if (!key.startsWith('format.')) continue;
+      for (const field of ['text', ...PLURAL_CATEGORIES]) {
+        const t = entry[field];
+        if (typeof t !== 'string') continue;
+        checked += 1;
+        if (!t.includes(`{value}${NBSP}`) || t.includes(' ')) failures.push(`${locale} ${key}.${field}: ${JSON.stringify(t)}`);
+      }
+    }
+  }
+  assert.deepEqual(failures, []);
+  assert.ok(checked >= 22, `${checked} templates: the English and its 1750 twins at least`);
+  assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
+});
+
 test('4a. every language uses exactly the English placeholders', () => {
   for (const [locale, json] of JSONS) {
     if (locale === 'en') continue;
