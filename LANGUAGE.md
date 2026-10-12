@@ -752,7 +752,7 @@ whole catalogue is for their review (`DECISIONS.md` 17).
   *Authorities*, as in the Dictionary; Units are *Measures*, and Metric is
   *Metrick* (the metre is forty years off, and Johnson's *metrick* is of
   verse, which is the joke); the counter is *the table*; *Cancel* is *Leave
-  off*; *Full rolling boil* is *It boils in earnest*; *Heat off, lid on* is
+  off*; *Rolling boil* is *It boils in earnest*; *Heat off, lid on* is
   *Fire out, lid on*; *Custom* is *Your own*; a recipe is a *receipt*; the
   sizes are Small, *Middling*, Large, *Very large*, *Largest*. Words with
   no period form stay: fridge, sous-vide, probe thermometer, tap.

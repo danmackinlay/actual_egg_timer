@@ -84,7 +84,7 @@ async function start(tab: Tab, mode: 'cold' | 'hot'): Promise<Snap> {
   return tab.phase(mode === 'cold' ? 'HEATING' : 'COOKING');
 }
 
-/** Full rolling boil, tapped, and the measured pot's time decided. */
+/** Rolling boil, tapped, and the measured pot's time decided. */
 async function boil(tab: Tab): Promise<Snap> {
   await tab.click('#primary');
   await tab.phase('COOKING');

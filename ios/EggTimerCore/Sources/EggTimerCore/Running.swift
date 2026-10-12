@@ -599,7 +599,7 @@ public func startCook(
     )
 }
 
-/// Full rolling boil, tapped at `nowS`: taken only on a cold start still
+/// Rolling boil, tapped at `nowS`: taken only on a cold start still
 /// heating, and not before the start.
 public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
     let e = cook.events

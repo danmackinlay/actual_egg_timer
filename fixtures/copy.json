@@ -281,7 +281,7 @@
     {"locale": "en", "key": "controls.size.measured", "args": {"mass": "2.4 oz"}, "text": "Measured — 2.4 oz"},
     {"locale": "en", "key": "controls.eggFrom.hint", "args": {"fridge": "39 °F", "room": "68 °F"}, "text": "I assume 39 °F for a fridge and 68 °F for a room. Pick Custom if yours differ."},
     {"locale": "en", "key": "controls.start.sousVide", "args": {"bath": "136 °F"}, "text": "Sous-vide 136 °F"},
-    {"locale": "en", "key": "controls.startedAt.latestBoil", "args": {"time": "7:50"}, "text": "I can’t move it later than 7:50, when you pressed Full rolling boil."},
+    {"locale": "en", "key": "controls.startedAt.latestBoil", "args": {"time": "7:50"}, "text": "I can’t move it later than 7:50, when you pressed Rolling boil."},
     {"locale": "en", "key": "controls.startedAt.latestPull", "args": {"time": "7:52"}, "text": "I can’t move it later than 7:52, when the eggs were due out."},
     {"locale": "en", "key": "controls.startedAt.earliest", "args": {"time": "5:42"}, "text": "I can’t move it earlier than 5:42, two hours before I started timing."},
     {"locale": "en", "key": "help.unsure.sousVide", "args": {"floor": "140 °F"}, "text": "Below 140 °F, a sous-vide white stays liquid and moves around inside the shell. I don’t account for that, so my times are unreliable there. At those temperatures I estimate the white takes hours or even days to set, if it sets at all."},

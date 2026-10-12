@@ -73,8 +73,9 @@ things stand is `PLAN.md`; its last section says which document holds what.
 4. **Sum 40 series terms**, never one: one term is 8.4% low at realistic Fo.
 5. **z ≈ 4.65 K for eggs**, never the food-engineering 33.1 K, which is seven
    times too shallow.
-6. The boil button says **"Full rolling boil"**: tapping at first bubbles
-   under-measures the boil by 15-25%.
+6. The boil button says **"Rolling boil"**, under the hint "wait for the
+   whole surface to roll": tapping at first bubbles under-measures the time
+   to boil by 15-25% (`DECISIONS.md` 112).
 7. **Never step the surface temperature discontinuously.** A truncated modal
    basis cannot represent it: an instant 100 -> 2 C drop read the yolk
    centre as 12.5 C when it was 49.3 C. Every change of medium blends
