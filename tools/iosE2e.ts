@@ -34,6 +34,7 @@ import { askedWord, wordBandHigh, wordBandLow } from '../src/core/certainty.js';
 import type { EggRecord } from '../src/core/record.js';
 import { type RunningCook, type StoredCook, readStoredCook } from '../src/core/running.js';
 import { STORES, stamped } from '../src/core/stores.js';
+import { asRead } from './text.js';
 
 const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';
@@ -223,8 +224,9 @@ class Run {
 
   /// The debug log so far, an event a line (`Screenshots.log`): { t (cook
   /// time, epoch s), ev (what happened), and its fields }, a field with no
-  /// value left out. Read on from where the last read stopped; a line still
-  /// being written is left for the next.
+  /// value left out, each string as it reads: a measure's no-break space as
+  /// a space (`asRead`). Read on from where the last read stopped; a line
+  /// still being written is left for the next.
   lines(): Event[] {
     const path = `${this.data}/Library/Caches/aet.log`;
     if (!existsSync(path)) return [];
@@ -238,7 +240,7 @@ class Run {
         for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
           if (line === '') continue;
           try {
-            this.log.push(JSON.parse(line) as Event);
+            this.log.push(JSON.parse(line, (_, v: unknown) => (typeof v === 'string' ? asRead(v) : v)) as Event);
           } catch {
             throw new Error(`the debug log's line ${this.log.length + 1} is not JSON: ${line.slice(0, 200)}`);
           }

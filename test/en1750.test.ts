@@ -25,6 +25,7 @@ import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
+import { asRead } from '../tools/text.js';
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
@@ -187,7 +188,7 @@ test('1j. Help\'s links are the English links: the same URLs, in the same markdo
 test('1k. formats come from the region: the register is not a format', () => {
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'US', null), 'en-US');
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'GB', null), 'en-GB');
-  assert.equal(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US'), '1,234.5 °F');
+  assert.equal(asRead(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US')), '1,234.5 °F');
 });
 
 // --------------------------------------------------------------------------

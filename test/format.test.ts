@@ -26,6 +26,7 @@ import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy
 import { show, useUnits } from '../src/ui/units.js';
 import { spokenClock } from '../src/ui/countdown.js';
 import { sousVideCopy } from '../src/ui/sousvide.js';
+import { asRead } from '../tools/text.js';
 
 const NBSP = ' ';
 const NNBSP = ' ';
@@ -191,9 +192,9 @@ test('5b. English numbers and clocks by region', () => {
   useCatalogue(EN);
   try {
     forceFormatLocale('en-US');
-    assert.equal(show('altitude', 1500), '1,500 m');
+    assert.equal(asRead(show('altitude', 1500)), '1,500 m');
     forceFormatLocale('en-GB');
-    assert.equal(show('water', 2), '2.00 L', 'unchanged');
+    assert.equal(asRead(show('water', 2)), '2.00 L', 'unchanged');
   } finally {
     forceFormatLocale(null);
   }
@@ -210,7 +211,7 @@ test('6a. forced to cs-CZ, the web renders the pseudo catalogue with Czech numbe
     assert.equal(formatLocale(), 'cs-CZ');
     assert.equal(show('water', 1.5), '1,50 [l:many]', 'fractional litres are many');
     assert.equal(show('altitude', 1250), `1${NBSP}250 [m]`);
-    assert.equal(show('boilingPoint', 99.74), '99,7 °C', 'a key the pseudo lacks falls back, numbers stay Czech');
+    assert.equal(asRead(show('boilingPoint', 99.74)), '99,7 °C', 'a key the pseudo lacks falls back, numbers stay Czech');
     assert.equal(spokenClock(1), '1 [s:one]');
     assert.equal(spokenClock(3 * 60 + 2), '3 [min:few] + 2 [s:few]');
     assert.equal(spokenClock(5 * 60 + 21), '5 [min:other] + 21 [s:other]');
@@ -219,7 +220,7 @@ test('6a. forced to cs-CZ, the web renders the pseudo catalogue with Czech numbe
     // Wednesday 1 October 2025, 15:05 UTC, and 81,760 s earlier is 16:22:20
     // the day before.
     const copy = sousVideCopy(BATH, Date.UTC(2025, 9, 1, 15, 5));
-    assert.equal(copy.subline, '[subline] 16:22 · 22 h 43 min · 58 °C');
+    assert.equal(asRead(copy.subline), '[subline] 16:22 · 22 h 43 min · 58 °C');
     assert.equal(copy.headline, 'Yesterday', 'a key the pseudo lacks is English');
   } finally {
     forceFormatLocale(null);

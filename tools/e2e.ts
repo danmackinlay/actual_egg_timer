@@ -43,6 +43,7 @@ import { copyScenarios } from './copyScenarios.js';
 import {
   Cook, Failure, Harness, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
 } from './harness.js';
+import { asRead } from './text.js';
 
 /** Where the page keeps its stores (src/core/stores.ts). */
 const COOK_KEY = STORES.cook.web;
@@ -260,10 +261,13 @@ async function clockAt(tab: Tab, at_s: number): Promise<string> {
   return tab.timeOfDay(at_s * 1000);
 }
 
-/** The setup sentence's words, and its start clause's. */
+/** The setup sentence's words, and its start clause's, as they read: a
+ *  measure's no-break space as a space (`asRead`). */
 async function sentenceSays(tab: Tab): Promise<{ sentence: string; clause: string }> {
-  return tab.eval(`(() => ({ sentence: document.getElementById('sentence').textContent,
+  const said = await tab.eval<{ sentence: string; clause: string }>(`(() => ({
+    sentence: document.getElementById('sentence').textContent,
     clause: document.querySelector('#sentence .clause[aria-controls="panelStart"]').textContent }))()`);
+  return { sentence: asRead(said.sentence), clause: asRead(said.clause) };
 }
 
 /** A person's next tap, a few seconds on. */
