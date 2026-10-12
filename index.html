@@ -143,11 +143,12 @@
           <div class="slider__blocked" id="donenessBlockedSoft"></div>
           <div class="slider__blocked slider__blocked--hard" id="donenessBlockedHard"></div>
         </div>
-        <!-- The likely range of the yolk (src/core/outcome.ts): its 10-90%
-             delivered doneness on the slider's scale, with a mark at the
-             middle, under the thumb and clear of the odds shading on the
-             track above. Drawn for the eye; #donenessRange says it in words. -->
-        <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden><div class="slider__median" id="donenessMedian"></div></div></div>
+        <!-- The bracket (core's wordBracket): the certainty's 90% interval in
+             words on the slider's scale, its line heavier over the most
+             likely word's band, under the thumb and clear of the odds
+             shading on the track above. Drawn for the eye; #donenessRange
+             says it in words. -->
+        <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden><div class="slider__likely" id="donenessLikelyBand"></div></div></div>
         <input type="range" id="doneness" value="0.41" aria-describedby="donenessRange">
         <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
       </div>

@@ -422,12 +422,12 @@ body:not([data-start="sous"]) #certaintyMore { margin-top: calc(8px + var(--cert
   cursor: pointer;
 }
 
-/* The likely range of the yolk (src/core/outcome.ts): a bracket just under
-   the track, in the thumb's column, so it reads with the thumb and never
-   over the odds shading. Its ends are ticks, so a narrow range still reads
-   as a range, and a short mark stands at its middle. The foreground colour,
-   not the accent or the odds' yolk, so it reads as a different thing from
-   both, in either scheme. */
+/* The bracket (core's wordBracket): the certainty's 90% interval in words, a
+   cup just under the track, in the thumb's column, so it reads with the thumb
+   and never over the odds shading. Its ends are ticks, so a narrow range
+   still reads as a range, and its line is heavier over the most likely
+   word's band. The foreground colour, not the accent or the odds' yolk, so
+   it reads as a different thing from both, in either scheme. */
 .slider__range { position: absolute; left: 17px; right: 17px; top: 38px; height: 7px; pointer-events: none; }
 .slider__bracket {
   position: absolute;
@@ -439,12 +439,19 @@ body:not([data-start="sous"]) #certaintyMore { margin-top: calc(8px + var(--cert
   opacity: 0.7;
   pointer-events: none;
 }
-.slider__median {
+/* The most likely word's band: the cup's bottom line, twice as thick, from
+   --from to --to, fractions of the cup's outer width (src/ui/slider.ts). The
+   cup's border lies outside the box this is placed in, so the calc lays it
+   from the outer edge; it shares the cup's opacity, so where the two overlap
+   the ink is one. Its bottom corners round as the cup's do, so at the cup's
+   ends it fills the corner and never runs past it. */
+.slider__likely {
   position: absolute;
   bottom: -2px;
-  width: 2px;
-  height: 11px;
-  margin-left: -1px;
+  height: 4px;
+  left: calc((100% + 4px) * var(--from, 0) - 2px);
+  width: calc((100% + 4px) * (var(--to, 1) - var(--from, 0)));
+  border-radius: 2px 2px 3px 3px;
   background: var(--fg);
 }
 .slider__ticks { position: absolute; left: 17px; right: 17px; top: 50px; height: 20px; }

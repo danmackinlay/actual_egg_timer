@@ -70,7 +70,7 @@ function findDom() {
     donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
     donenessTicks: el<HTMLDivElement>('donenessTicks'),
     donenessBracket: el<HTMLDivElement>('donenessBracket'),
-    donenessMedian: el<HTMLDivElement>('donenessMedian'),
+    donenessLikelyBand: el<HTMLDivElement>('donenessLikelyBand'),
     donenessRange: el<HTMLSpanElement>('donenessRange'),
     donenessPeak: el<HTMLSpanElement>('donenessPeak'),
     size: el<HTMLSelectElement>('size'),

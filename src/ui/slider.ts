@@ -9,7 +9,7 @@
 import { anchorNear, anchorReachable } from '../core/slider.js';
 import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
 import { OddsProfile, shadingOf } from '../core/reach.js';
-import { WordCertainty, wordBracket } from '../core/certainty.js';
+import { WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.js';
 import { rangeWords } from '../core/wording.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
@@ -90,9 +90,12 @@ export function renderBareScale(): void {
 
 /** The bracket under the track: the certainty's 90% interval in words,
  *  drawn from the outer edge of its first word's band on the slider to the
- *  outer edge of its last's, with a mark at the most likely word
- *  (`wordBracket`); and the same words for a screen reader. Nothing without
- *  a reading: no decision yet, no white, sous-vide, or a cook under way. */
+ *  outer edge of its last's (`wordBracket`), its line heavier over the most
+ *  likely word's own band (`wordBandLow`, `wordBandHigh`); and the same
+ *  words for a screen reader. The heavy stretch is whole words wide, as the
+ *  bracket is, so the thumb sits inside it whenever the most likely word is
+ *  the word asked. Nothing without a reading: no decision yet, no white,
+ *  sous-vide, or a cook under way. */
 function renderBracket(w: WordCertainty | null): void {
   page().donenessBracket.hidden = w === null;
   if (w === null) {
@@ -101,9 +104,15 @@ function renderBracket(w: WordCertainty | null): void {
   }
   const b = wordBracket(w);
   placeBand(page().donenessBracket, b.low, b.high);
+  // The band as fractions of the bracket's outer width, which styles.css
+  // lays from the bracket's outer edge. It is one of the interval's words,
+  // so it lies inside the bracket; the clamp keeps it there regardless.
   const span = b.high - b.low;
-  const middle = span > 0 ? (b.mark - b.low) / span : 0.5;
-  page().donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
+  const from = span > 0 ? (wordBandLow(w.mostLikely) - b.low) / span : 0;
+  const to = span > 0 ? (wordBandHigh(w.mostLikely) - b.low) / span : 1;
+  const band = page().donenessLikelyBand.style;
+  band.setProperty('--from', String(clampNumber(from, { lo: 0, hi: 1 }, 0)));
+  band.setProperty('--to', String(clampNumber(to, { lo: 0, hi: 1 }, 1)));
   const words = rangeWords(w);
   const args: Record<string, string> = {};
   for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
