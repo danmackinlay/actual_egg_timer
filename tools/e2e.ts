@@ -115,7 +115,15 @@ interface Layout {
   primary: Box | null;
   secondary: Box | null;
   level: string;
+  row: RowFit;
 }
+
+/** How the row of buttons was laid out, read from the probe (the row at
+ *  its widest, with Cancel, never seen; styles.css "actions"): whether it
+ *  wrapped, the main button over Cancel; and the widths that decide it, px:
+ *  the widest main button's words with its padding, the gap, Cancel's, and
+ *  the row's. */
+interface RowFit { stacked: boolean; main: number; gap: number; cancel: number; room: number }
 
 async function layout(tab: Tab): Promise<Layout> {
   return tab.eval<Layout>(`(() => {
@@ -124,6 +132,16 @@ async function layout(tab: Tab): Promise<Layout> {
     const top = (id) => document.getElementById(id).getBoundingClientRect().top + window.scrollY;
     const box = (id) => { const r = document.getElementById(id).getBoundingClientRect();
       return r.height > 0 ? { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, left: r.left } : null; };
+    const probe = document.querySelector('.buttons__probe');
+    const probeMain = probe.querySelector('.buttons__main').getBoundingClientRect();
+    const probeCancel = probe.querySelector('.sizer--cancel').getBoundingClientRect();
+    // A sizer's words at their own width, as the flex basis takes them, and
+    // its padding and border.
+    const own = (e) => { const range = document.createRange(); range.selectNodeContents(e);
+      const st = getComputedStyle(e); const px = (k) => parseFloat(st[k]) || 0;
+      return range.getBoundingClientRect().width + px('paddingLeft') + px('paddingRight')
+        + px('borderLeftWidth') + px('borderRightWidth'); };
+    const st = getComputedStyle(probe);
     return {
       shown: ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'].map(on),
       top: { actions: top('actions'), doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
@@ -132,6 +150,13 @@ async function layout(tab: Tab): Promise<Layout> {
       primary: box('primary'),
       secondary: box('secondary'),
       level: document.getElementById('doneness').value,
+      row: {
+        stacked: probeCancel.top >= probeMain.bottom - 0.5,
+        main: Math.max(...[...probe.querySelectorAll('.sizer--main')].map(own)),
+        gap: parseFloat(st.columnGap) || 0,
+        cancel: probeCancel.width,
+        room: probe.clientWidth - (parseFloat(st.paddingLeft) || 0) - (parseFloat(st.paddingRight) || 0),
+      },
     };
   })()`);
 }
@@ -142,18 +167,32 @@ function actionUnderTime(l: Layout, when: string): void {
     `${when}: the action not between the time and the slider: readout ends ${l.readoutEnd}, action ${l.top.actions}, slider ${l.top.doneness}`);
 }
 
-/** One layout from idle to Done at a screen `width` px wide, where the row
- *  of buttons is side by side (`stacked` false) or stacked: in every phase
+/** One layout from idle to Done at a screen `width` px wide: in every phase
  *  the action is under the time, as tall as at idle, and what is under it
- *  as far below it; side by side, Cancel is on the main button's left and
- *  nothing is left empty under the row; stacked, Cancel is under it. */
-function oneLayout(width: number, stacked: boolean): Scenario['run'] {
+ *  as far below it. The row of buttons is side by side or stacked as the
+ *  widest main button and Cancel fit or not, which turns on the fonts the
+ *  machine has (GitHub's Linux Chrome sets the words wider than a Mac's):
+ *  the page's own choice is read, checked against the widths, and held to
+ *  `want` if given. Side by side, Cancel is on the main button's left and
+ *  nothing is left empty under the row; stacked, Cancel is under it, and
+ *  its room is kept at idle, so only the block's height is held. */
+function oneLayout(width: number, want: 'side by side' | 'stacked' | null): Scenario['run'] {
   return async (h) => {
     const tab = await h.ctx.open(STOPPED);
     await tab.viewport(width);
     await tab.until("__snap().chosen !== null", 'the time decided');
     await tab.settle();
     const idle = await layout(tab);
+    const fit = idle.row;
+    const stacked = fit.stacked;
+    const need = fit.main + fit.gap + fit.cancel;
+    const widths = `the widest main button ${fit.main.toFixed(1)} + ${fit.gap} + Cancel ${fit.cancel.toFixed(1)} `
+      + `= ${need.toFixed(1)} px in ${fit.room.toFixed(1)}`;
+    // The row stacks where the two do not fit, and only there.
+    check(near(need, fit.room, 1) || stacked === need > fit.room,
+      `${stacked ? 'stacked' : 'side by side'} at ${width} px: ${widths}`);
+    check(want === null || want === (stacked ? 'stacked' : 'side by side'),
+      `${stacked ? 'stacked' : 'side by side'} at ${width} px, not ${want}: ${widths}`);
     const seen: [string, Layout][] = [['idle', idle]];
     let s = await start(tab, 'cold');
     await tab.until('__snap().deadlines !== null', 'planned');
@@ -173,6 +212,7 @@ function oneLayout(width: number, stacked: boolean): Scenario['run'] {
     }
     const block = (l: Layout): number => l.actionsEnd - l.top.actions;
     for (const [when, l] of seen) {
+      check(l.row.stacked === stacked, `${when}: the row ${l.row.stacked ? 'stacked' : 'side by side'}, idle's not`);
       check(l.shown.every((x) => x.visible), `${when}: ${JSON.stringify(l.shown)}`);
       actionUnderTime(l, when);
       // Nothing under the block moves: the block is as tall as at idle, and
@@ -193,7 +233,7 @@ function oneLayout(width: number, stacked: boolean): Scenario['run'] {
       check(stacked ? c.top >= p.bottom : c.left < p.left && c.top < p.bottom,
         `Heating at ${width} px: Cancel at ${c.left},${c.top}, the main button at ${p.left},${p.top} to ${p.bottom}`);
     }
-    return `${width} px, ${stacked ? 'stacked' : 'side by side'}: the action ${block(idle).toFixed(0)} px tall, `
+    return `${width} px, ${stacked ? 'stacked' : 'side by side'} (${widths}): the action ${block(idle).toFixed(0)} px tall, `
       + `the slider ${(idle.top.doneness - idle.top.actions).toFixed(0)} px under its top, idle to Done`;
   };
 }
@@ -398,13 +438,13 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'one-layout': {
-    what: 'one layout from idle to Done; the action under the time, Cancel beside the main button, nothing empty under the row, nothing below it moving',
-    run: oneLayout(390, false),
+    what: 'one layout from idle to Done at 390 px; the action under the time, nothing below it moving; Cancel beside the main button and nothing empty under the row, or, where the fonts set the words too wide for that, the two stacked',
+    run: oneLayout(390, null),
   },
 
   'one-layout-narrow': {
     what: 'at 320 px the main button and Cancel stack, and the action keeps its height from idle to Done, so nothing below it moves',
-    run: oneLayout(320, true),
+    run: oneLayout(320, 'stacked'),
   },
 
   'egg-readings': {

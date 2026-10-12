@@ -20,7 +20,8 @@
 //   --device <udid>, --keep              a device already booted; keep it
 //
 // AET_E2E_WAIT=<s> how long a wait for the app gives up after (default 60);
-// AET_E2E_LOG=1 prints a failing scenario's log.
+// AET_E2E_LOG=1 prints a failing scenario's log; AET_LOCALE=en-US launches
+// the app in that locale rather than en-AU (`localeArgs`).
 //
 // Compiled with the other tools (tools/build.mjs), which the npm script runs
 // first. Needs Xcode, xcodegen and python3; not in `npm run verify`.
@@ -45,6 +46,32 @@ const WAIT_S = Number(process.env['AET_E2E_WAIT'] ?? 60);
 /// How long the system is given to deliver the one notification a scenario
 /// waits for, past its moment, the host's s.
 const DELIVERY_SLACK_S = 15;
+
+/// The locale every launch is given, as the web harness gives each tab one
+/// (`DEFAULT_LOCALE`, tools/harness.ts), and overridden the same way
+/// (`AET_LOCALE=en-US`). A device `simctl create` makes copies the host's
+/// locale, so GitHub's runner, in en-US, would otherwise open the app in
+/// Imperial units on the US carton, and this Mac in its own.
+const LOCALE = process.env['AET_LOCALE'] ?? 'en-AU';
+
+/// `tag`, a language and a region (`en-AU`), as launch arguments: the
+/// argument domain is read before the device's own preferences, so the app's
+/// `Locale.current`, its region and preferred languages are the tag's. The
+/// unit and clock preferences are given too, since the device's, copied from
+/// the host as well, win over the locale's: Fahrenheit, inches and the US
+/// system in the US, Celsius and metric elsewhere; the clock the locale's own.
+function localeArgs(tag: string): string[] {
+  const m = /^([a-z]{2,3})-([A-Z]{2})$/.exec(tag);
+  if (!m) throw new Error(`AET_LOCALE ${tag}: a language and a region, as en-AU`);
+  const us = m[2] === 'US';
+  return [
+    '-AppleLocale', `${m[1]}_${m[2]}`, '-AppleLanguages', `(${tag})`,
+    '-AppleTemperatureUnit', us ? 'Fahrenheit' : 'Celsius',
+    '-AppleMeasurementUnits', us ? 'Inches' : 'Centimeters', '-AppleMetricUnits', us ? 'NO' : 'YES',
+    '-AppleICUForce24HourTime', 'NO', '-AppleICUForce12HourTime', 'NO',
+  ];
+}
+const LOCALE_ARGS = localeArgs(LOCALE);
 
 const argv = process.argv.slice(2);
 const flag = (name: string): boolean => {
@@ -117,7 +144,7 @@ function createDevice(): string {
   if (types.length === 0) throw new Error(`no iPhone for iOS ${runtime.version}`);
   const type = types.find((t) => t.name === 'iPhone 17 Pro') ?? types[types.length - 1]!;
   const id = simctl('create', `AET e2e ${process.pid}`, type.identifier, runtime.identifier);
-  console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version})`);
+  console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version}), the app in ${LOCALE}`);
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
@@ -186,7 +213,7 @@ class Run {
     // Silent: the ring and the notifications' sound would otherwise play on
     // the Mac's speakers (-muteAudio is debug-only, like the clock).
     simctl('launch', udid, BUNDLE, '-clockAt', String(at), '-clockSpeed', String(speed), '-muteAudio', 'YES',
-      ...prompt, ...args);
+      ...LOCALE_ARGS, ...prompt, ...args);
   }
 
   terminate(): void {
@@ -222,13 +249,19 @@ class Run {
     return this.step(this.at);
   }
 
+  get logPath(): string {
+    return `${this.data}/Library/Caches/aet.log`;
+  }
+
   /// The debug log so far, an event a line (`Screenshots.log`): { t (cook
   /// time, epoch s), ev (what happened), and its fields }, a field with no
   /// value left out, each string as it reads: a measure's no-break space as
-  /// a space (`asRead`). Read on from where the last read stopped; a line
-  /// still being written is left for the next.
+  /// a space (`asRead`). Read on from where the last read stopped, a whole
+  /// line at a time: the bytes after the last newline are a line still being
+  /// written, read once it ends. A whole line that is not JSON fails, and
+  /// fails the same at the next read, which starts from the same byte.
   lines(): Event[] {
-    const path = `${this.data}/Library/Caches/aet.log`;
+    const path = this.logPath;
     if (!existsSync(path)) return [];
     const fd = openSync(path, 'r');
     try {
@@ -237,20 +270,28 @@ class Run {
         const buffer = Buffer.alloc(size - this.logBytes);
         readSync(fd, buffer, 0, buffer.length, this.logBytes);
         const end = buffer.lastIndexOf(0x0a) + 1;
+        const read: Event[] = [];
         for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
           if (line === '') continue;
           try {
-            this.log.push(JSON.parse(line, (_, v: unknown) => (typeof v === 'string' ? asRead(v) : v)) as Event);
+            read.push(JSON.parse(line, (_, v: unknown) => (typeof v === 'string' ? asRead(v) : v)) as Event);
           } catch {
-            throw new Error(`the debug log's line ${this.log.length + 1} is not JSON: ${line.slice(0, 200)}`);
+            throw new Error(`the debug log's line ${this.log.length + read.length + 1} is not JSON: ${line.slice(0, 200)}`);
           }
         }
+        this.log.push(...read);
         this.logBytes += end;
       }
     } finally {
       closeSync(fd);
     }
     return this.log.slice();
+  }
+
+  /// The debug log's text as it stands, a line each, for a failure to show
+  /// whether or not each line reads.
+  text(): string[] {
+    return existsSync(this.logPath) ? readFileSync(this.logPath, 'utf8').split('\n').filter((l) => l !== '') : [];
   }
 
   /// The lines since the last launch.
@@ -2122,7 +2163,7 @@ async function main(): Promise<void> {
         for (const f of run.failures) console.log(`        ${f}`);
         for (const n of run.notes) console.log(`        note: ${n}`);
         if (process.env['AET_E2E_LOG']) {
-          console.log(run.lines().map((l) => `        | ${JSON.stringify(l).slice(0, 240)}`).join('\n'));
+          console.log(run.text().map((l) => `        | ${l.slice(0, 240)}`).join('\n'));
         }
       }
     }
