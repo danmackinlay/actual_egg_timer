@@ -848,3 +848,13 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     English of 1750 says "ice chest" for "fridge", and the owner rewrote
     `help.odds.p1`, `help.odds.aside` and `help.learn.aside` ("the yolk you
     got" read oddly).
+112. **The button says "Rolling boil"** (the owner, 12 October 2026: "we
+    could abbreviate 'Full rolling boil' to 'Rolling boil' on the button
+    text to save some space and lose very little information"; "yes, go
+    ahead"). With the action under the time, the button shares a row with
+    Cancel, and the hint directly above it, "wait for the whole surface to
+    roll", now carries what "Full" was for: a press at first bubbles
+    under-measures the time to boil by 15-25%. Every string that names the
+    button follows it (78); the water's state is still "a full rolling boil"
+    (111); the 1750 button stays "It boils in earnest". Amends CLAUDE.md's
+    invariant 6.
