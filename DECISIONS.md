@@ -860,3 +860,24 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     button follows it (78); the water's state is still "a full rolling boil"
     (111); the 1750 button stays "It boils in earnest". Amends CLAUDE.md's
     invariant 6.
+113. **The action sits under the time, in one row** (the owner, 12 October
+    2026, from 0.5 on his phone: the button "should be directly below the
+    timer, and all other settings below that"; of the room first kept for
+    Cancel, "the space might otherwise signal to the user that there is
+    nothing below there to scroll to"; "rework it as one row"). In every
+    phase and both apps the order is the time, the hint, the action, the
+    doneness slider, the setup sentence. The action is one row: Cancel, or
+    a phase's second button, small on the left, the main button filling the
+    rest; one button alone fills the row. The row is one button high in
+    every phase, so nothing below it moves and nothing is left empty; it
+    stacks only where it cannot fit (a 320 px web page, the largest iOS
+    text sizes), with the room of both. Built `action-under-time`, merged
+    `273e49f`.
+114. **The bracket marks the most likely word's band, not a point** (the
+    owner, 12 October 2026: "yes this seems good"). The mark at the most
+    likely word's anchor sat away from the thumb at about a third of the
+    slider's positions though the word was the one asked, because anchors
+    are points and the thumb moves freely; the band holds the thumb
+    whenever the most likely word is the one asked, and sits beside it,
+    honestly, when it is not. Core's `wordBandLow`/`wordBandHigh`; no core
+    change. Built `bracket-likely-band`, merged `9630354`.
