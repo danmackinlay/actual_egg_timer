@@ -50,7 +50,7 @@ export interface Snapshot {
   feedback: boolean;
   target: string;
   /** The phases' labels as this page words them. */
-  labels: Record<'heating' | 'pull' | 'done' | 'coolingIce' | 'cookingBoiling', string>;
+  labels: Record<'heating' | 'pull' | 'done' | 'coolingIce' | 'coolingBowl' | 'cookingBoiling', string>;
   settings: Settings;
   /** The pans remembered: litres to the time to boil, s. */
   boilMemory: BoilMemory;
@@ -118,7 +118,8 @@ function snapshot(): Snapshot {
     target: text('feedbackTarget'),
     labels: {
       heating: t('readout.phase.heating'), pull: t('readout.phase.pull'), done: t('readout.phase.done'),
-      coolingIce: t('readout.phase.coolingIce'), cookingBoiling: t('readout.phase.cookingBoiling'),
+      coolingIce: t('readout.phase.coolingIce'), coolingBowl: t('readout.phase.coolingBowl'),
+      cookingBoiling: t('readout.phase.cookingBoiling'),
     },
     settings: m.settings,
     boilMemory: m.boilMemory,

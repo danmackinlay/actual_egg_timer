@@ -1179,6 +1179,72 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
+  bowl: {
+    what: 'a bowl of water: chosen, its water, the count and the temperature set; the sentence, the plan, the pull, the cooling and the record',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.click('#startHot');
+      await tab.until("__snap().settings.startMode === 'hot' && __snap().chosen !== null", 'a hot start decided');
+      const minutes = (digits: string): number => {
+        const [m, sec] = digits.split(':').map(Number);
+        return 60 * m + sec;
+      };
+      const ice = minutes((await tab.snap()).digits);
+      // The bowl and its numbers, each as typed into its field.
+      const type = async (id: string, value: string, settled: string): Promise<void> => {
+        await tab.eval(`(() => { const e = document.getElementById(${JSON.stringify(id)});
+          e.value = ${JSON.stringify(value)}; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await tab.until(settled, `${id} at ${value}`);
+      };
+      await tab.click('#sentence .clause[aria-controls="panelCooling"]');
+      await tab.click('#coolBowl');
+      await tab.until("__snap().settings.cooling === 'bowl'", 'the bowl chosen');
+      const shown = await tab.eval<{ bowl: boolean; water: boolean; placeholder: string }>(`(() => ({
+        bowl: !document.getElementById('bowlFields').hidden, water: !document.getElementById('coolingWaterField').hidden,
+        placeholder: document.getElementById('coolingWater').placeholder }))()`);
+      check(shown.bowl && shown.water && shown.placeholder === '20',
+        `the bowl's rows, its temperature greyed at the room: ${JSON.stringify(shown)}`);
+      await type('bowlLitres', '1', '__snap().settings.bowlLitres === 1');
+      await type('eggCount', '4', '__snap().settings.eggCount === 4');
+      await type('coolingWater', '12', '__snap().settings.bowlWater_C === 12');
+      await tab.settle();
+      await tab.until('__snap().chosen !== null', 'the bowl decided');
+      let s = await tab.snap();
+      const { sentence } = await sentenceSays(tab);
+      check(sentence.startsWith('4 × 68 g eggs') && sentence.includes('then into a bowl with 1 L of water at 12 °C.'),
+        `the sentence: ${sentence}`);
+      const bowl = minutes(s.digits);
+      check(bowl < ice && ice - bowl < 60, `the bowl cooks shorter than ice, by seconds: ${bowl} s against ${ice} s`);
+      // In, out at the pull, into the bowl.
+      await tab.click('#primary');
+      await tab.phase('COOKING');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      const ch = s.cook?.choices as unknown as Record<string, unknown>;
+      check(ch['cooling'] === 'bowl' && ch['bowlLitres'] === 1 && ch['bowlWater_C'] === 12 && ch['eggCount'] === 4,
+        `the cook's own bowl: ${JSON.stringify(ch)}`);
+      const d = deadlines(s);
+      await tab.shiftTo(d.cookEnd_s + 2);
+      s = await tab.phase('PULL');
+      check(s.primary === 'In the bowl of water', `the pull: ${s.primary}`);
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      check(s.label === 'Leave them in the bowl', `the cooling: ${s.label}`);
+      const d2 = deadlines(s);
+      const counted = d2.coolEnd_s - (storedCook(s)?.events.pulled?.out_s ?? NaN);
+      check(counted > 120 && counted < 600, `the cooling counted to the yolk's peak in the bowl: ${counted.toFixed(0)} s`);
+      await tab.shiftTo(d2.coolEnd_s + 1);
+      await tab.phase('DONE');
+      await tab.click('#primary');
+      await tab.until('__snap().log.length === 1', 'the egg logged');
+      s = await tab.snap();
+      const setup = (s.log[0] as unknown as { setup: Record<string, unknown> }).setup;
+      check(setup['cooling'] === 'bowl' && setup['bowlLitres'] === 1 && setup['coolingWater_C'] === 12 && setup['eggCount'] === 4,
+        `the record's bowl: ${JSON.stringify(setup)}`);
+      return `ice ${ice} s, the bowl ${bowl} s; cooling counted ${counted.toFixed(0)} s; recorded in 1 L at 12 °C`;
+    },
+  },
+
   cancel: {
     what: 'Cancel while heating and while cooking: nothing logged, the cook gone, the boil remembered',
     run: async (h) => {

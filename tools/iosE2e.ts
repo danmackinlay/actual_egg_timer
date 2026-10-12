@@ -1223,6 +1223,34 @@ scenario('hot', 'a hot start to Done; Start again logs it unanswered', async (ru
   run.check(egg?.last!.setup.startMode === 'hot', 'a hot start recorded');
 });
 
+scenario('bowl', 'a bowl of water, its water, four eggs and its temperature: the sentence, the cook, the card, the cooling and the record', async (run) => {
+  const bowl = settingsArg({ ...HOT_SETTINGS, cooling: 'bowl', bowlLitres: 1, bowlWater_C: 12, eggCount: 4 });
+  const cook = await started(run, [...bowl, '-uiDo', 'out@pull+2,again@cooled+5']);
+  const ch = cook.cook.choices;
+  run.check(
+    ch.cooling === 'bowl' && ch.bowlLitres === 1 && ch.bowlWater_C === 12 && ch.eggCount === 4,
+    `the cook's own bowl: ${JSON.stringify(ch)}`,
+  );
+  const said = run.lines().filter(is('sentence')).map((l) => l.text).at(-1) ?? '';
+  run.check(said.startsWith('4 × 68 g eggs') && said.includes('then into a bowl with 1 L of water at 12 °C.'),
+    `the sentence: "${said}"`);
+  const cooling = await toCooling(run, 2);
+  const counted = cooledAt(cooling) - (storedIn(run.lines()).cook.events.pulled?.out_s ?? NaN);
+  run.check(counted > 120 && counted < 600, `the cooling counted to the yolk's peak in the bowl: ${counted.toFixed(0)} s`);
+  const card = run.lines().filter(is('activity')).at(-1);
+  run.check(card?.cook.includes('bowl') === true, `the card's cooling, for its pull line: ${JSON.stringify(card?.cook)}`);
+  let i = await run.step(cooledAt(cooling) + 1);
+  await run.until(phaseIs('DONE'), { from: i, what: 'phase DONE' });
+  i = await run.step(cooledAt(cooling) + 5);
+  await run.until(storedNone, { from: i, what: 'Start again' });
+  const setup = eggLog(run.lines())?.last?.setup;
+  run.check(
+    setup?.cooling === 'bowl' && setup.bowlLitres === 1 && setup.coolingWater_C === 12 && setup.eggCount === 4,
+    `the record's bowl: ${JSON.stringify(setup)}`,
+  );
+  run.note(`"${said}"; cooling counted ${counted.toFixed(0)} s`);
+});
+
 scenario('cancel', 'Cancel while heating: nothing stored, the alarms and the card gone', async (run) => {
   await started(run, ['-uiDo', 'cancel@120']);
   const i = await run.step(run.t0 + 120);
