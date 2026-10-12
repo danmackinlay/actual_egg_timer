@@ -4,15 +4,13 @@ import EggTimerCopy
 import EggTimerApp
 import EggTimerShared
 
-/// Under the controls, in every phase: the one slot for a longer line, and
-/// the hint and the button that move the cook on.
+/// Under the controls, in every phase: the one slot for a longer line.
 ///
 /// A function of the clock, like the readout: the egg screen's `TimelineView`
 /// hands over the date it drew for, and the phase at that date.
-struct PhaseActions: View {
+struct PhaseSlot: View {
     let model: AppModel
     let phase: Phase
-    let now: Date
     /// What the sous-vide screen says at `now`, or nil for a pan and while a
     /// cook runs.
     let sousVide: SousVideCopy?
@@ -21,13 +19,8 @@ struct PhaseActions: View {
     private var cook: Cook { model.cook }
 
     var body: some View {
-        VStack(spacing: 18) {
-            slot
-            action
-        }
+        slot
     }
-
-    // MARK: - The slot
 
     /// The one place for a longer line (UI.md section 2). While idle: the
     /// refusal or that the level is a wild guess, or the sous-vide warning,
@@ -77,6 +70,112 @@ struct PhaseActions: View {
         }
     }
 
+    /// The running plan's warning: a refusal, or a wild guess at the
+    /// level, in its own pot's words.
+    private var runningWarning: String? {
+        guard let plan = cook.plan else { return nil }
+        let a = plan.answer
+        return warningText(
+            a.verdict, lowOdds: a.lowOdds, level: a.level, setup: plan.setup,
+            water: planner.show(.water, plan.setup.waterLitres)
+        )
+    }
+}
+
+/// Directly under the time, in every phase: the hint and the button that
+/// move the cook on, and Cancel under them while a cook runs.
+///
+/// The block keeps the room of a hint, a button and Cancel, whichever of
+/// them a phase shows (`room`), and the room left over goes under the
+/// buttons: so the slider and the sentence below stay put as the buttons
+/// come and go, and nothing moves at the start. Only what is more than the
+/// room moves them: "still in the water?", and the hint's (i) opened.
+///
+/// A function of the clock, like the readout: the egg screen's `TimelineView`
+/// hands over the date it drew for, and the phase at that date.
+struct PhaseActions: View {
+    let model: AppModel
+    let phase: Phase
+    let now: Date
+    /// What the sous-vide screen says at `now`, or nil for a pan and while a
+    /// cook runs.
+    let sousVide: SousVideCopy?
+
+    private var planner: Planner { model.planner }
+    private var cook: Cook { model.cook }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            room
+            action
+        }
+    }
+
+    // MARK: - The room
+
+    /// The tallest the block is from idle to the pull, laid out and hidden:
+    /// the tallest hint (idle's with the widest time, Heating's with its
+    /// (i), Cooking's with the alarm's line), over the tallest primary
+    /// button's words, over Cancel at its largest. At every text size, so
+    /// the room grows with the words it holds.
+    private var room: some View {
+        let idle = model.keys(.idle)
+        let cooking = model.keys(.cooking)
+        let boiling = planner.show(.temperature, planner.boilingC)
+        return VStack(spacing: 10) {
+            ZStack {
+                hintRoom
+                VStack(spacing: 4) {
+                    Text(cooking.hint.map { tr($0, ["boiling": .text(boiling)]) } ?? " ")
+                    Text(alarmLine)
+                }
+            }
+            .appFont(.footnote)
+            .multilineTextAlignment(.center)
+            Button {} label: {
+                ZStack {
+                    Text(tr(idle.action ?? "action.eggsIn"))
+                    Text(tr("action.fullBoil"))
+                    Text(tr(pulledKey(planner.settings.cooling)))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            Button(tr("action.cancel")) {}
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity)
+        }
+        .hidden()
+        .accessibilityHidden(true)
+    }
+
+    /// The hint's line, as tall as the tallest it is above a primary
+    /// button: idle's, with the widest time, or Heating's, with its (i).
+    private var hintRoom: some View {
+        let widest = clockString(59 * 60 + 59)
+        return ZStack {
+            Text(model.keys(.idle).hint.map { tr($0, ["time": .text(widest)]) } ?? " ")
+            InfoRow(name: tr("action.hint.heating.info"), more: [], alignment: .center) {
+                Text(model.keys(.heating).hint.map { tr($0) } ?? " ")
+            }
+        }
+        .appFont(.footnote)
+        .multilineTextAlignment(.center)
+        .hidden()
+        .accessibilityHidden(true)
+    }
+
+    /// A hint over a primary button, in the hint's room and at its foot, so
+    /// the button sits at one height idle, heating and at the pull.
+    private func hintLine<V: View>(@ViewBuilder _ hint: () -> V) -> some View {
+        ZStack(alignment: .bottom) {
+            hintRoom
+            hint()
+        }
+    }
+
     // MARK: - The action
 
     @ViewBuilder
@@ -119,11 +218,13 @@ struct PhaseActions: View {
     private var phaseAction: some View {
         switch phase {
         case .idle where sousVide != nil:
-            VStack(spacing: 8) {
-                Text(sousVide?.hint ?? "")
-                    .appFont(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                hintLine {
+                    Text(sousVide?.hint ?? "")
+                        .appFont(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 // Dead rather than absent. There is nothing to start, and a
                 // button that has gone missing looks like a layout accident
                 // where one that will not press is the answer.
@@ -136,11 +237,13 @@ struct PhaseActions: View {
             }
 
         case .idle:
-            VStack(spacing: 8) {
-                Text(idleHint)
-                    .appFont(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                hintLine {
+                    Text(idleHint)
+                        .appFont(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 Button {
                     model.eggsIn()
                 } label: {
@@ -157,15 +260,17 @@ struct PhaseActions: View {
             VStack(spacing: 10) {
                 // What a full rolling boil looks like, and why the tap
                 // matters, in its (i).
-                InfoRow(
-                    name: tr("action.hint.heating.info"),
-                    more: [tr("action.hint.heating.more")],
-                    alignment: .center
-                ) {
-                    Text(readout?.hint.map { tr($0.key) } ?? "")
-                        .appFont(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                hintLine {
+                    InfoRow(
+                        name: tr("action.hint.heating.info"),
+                        more: [tr("action.hint.heating.more")],
+                        alignment: .center
+                    ) {
+                        Text(readout?.hint.map { tr($0.key) } ?? "")
+                            .appFont(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
                 }
                 // Invariant 6: tapping at first bubbles under-measures the boil
                 // by 15-25%, so the button names the thing to wait for.
@@ -189,11 +294,13 @@ struct PhaseActions: View {
                 // The web's hint: when the cooling starts on its own. Not on
                 // the counter, where the grace runs out into Done and the line
                 // under the time already says the yolk is still cooking.
-                if let hint = readout?.hint {
-                    Text(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
-                        .appFont(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                hintLine {
+                    if let hint = readout?.hint {
+                        Text(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
+                            .appFont(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
                 }
                 // The web app's button, in its words: the cook's tap is the
                 // nearest thing to when the egg left the water that the app will
@@ -252,17 +359,6 @@ struct PhaseActions: View {
     /// `readoutAt`): the buttons and the hint. Nil idle.
     private var readout: Readout? {
         phase == .idle ? nil : cook.readout(atS: now.timeIntervalSince1970)
-    }
-
-    /// The running plan's warning: a refusal, or a wild guess at the
-    /// level, in its own pot's words.
-    private var runningWarning: String? {
-        guard let plan = cook.plan else { return nil }
-        let a = plan.answer
-        return warningText(
-            a.verdict, lowOdds: a.lowOdds, level: a.level, setup: plan.setup,
-            water: planner.show(.water, plan.setup.waterLitres)
-        )
     }
 
     /// What Start is about to ask of the cook, above the button.
