@@ -233,12 +233,13 @@ by the build system instead).
 The screen carries the whole model, laid out as the web's (UI.md):
 
 - the doneness slider, with the peak yolk in its heading
-- one tappable sentence for what changes from egg to egg: the egg (a size class
-  or a weight), fridge, room or custom, cold start (the default), boiling water
-  or a 58 °C bath, and ice bath, cold tap or the counter
+- one tappable sentence for what changes from egg to egg: how many eggs and the
+  egg (a size class or a weight), fridge, room (with the room's temperature) or
+  custom, cold start (the default), boiling water or a 58 °C bath, and ice bath,
+  cold tap, a bowl of water or the counter
 - a pushed **Settings** page for the kitchen: units, language, altitude, water,
-  the number of eggs, keep boiling or heat off with the lid on, the probe, and what
-  it has learned; and a **Help** page
+  keep boiling or heat off with the lid on, the probe, the room, and what it has
+  learned; and a **Help** page
 
 The kitchen's settings are a page away because the defaults are right for most
 people most mornings, and a first-time user should not have to answer six
