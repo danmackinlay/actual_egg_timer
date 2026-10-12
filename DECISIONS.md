@@ -442,6 +442,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     stands. The record's `ambient_C` already holds the room, so no record
     format changed. The `feedback2` draft; built on the
     `probe-target-room` branch.
+    Amended by 115: the room is shown without the probe, in the panel of
+    "at room temperature" and in Settings.
+
 80. **The soft end of the slider stays as it is** ("this seems fine for
     now"): below about level 0.3, once a few results are learned, the time
     leans firmer to set the white (decision 7), so the bracket's median sits
@@ -881,3 +884,22 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     whenever the most likely word is the one asked, and sits beside it,
     honestly, when it is not. Core's `wordBandLow`/`wordBandHigh`; no core
     change. Built `bracket-likely-band`, merged `9630354`.
+115. **A bowl of still water is a fourth cooling** (the owner, 12 October
+    2026, from his brother's request; "We should ship the feature then I'll
+    gather it in my own beta testing"). The eggs go into a bowl and are
+    left; the bowl warms by exactly the heat they give up, and the egg's
+    surface follows it, blended over `TAU_PLUNGE`, as the ice bath and
+    running water are held (`design/bowl.md`, `studies/bowl.ts`): once
+    volume, count and water temperature are given, about -2 to +6 s at
+    jammy, surer than the air and about as sure as running water. The
+    bowl's volume is asked (2 L by default); the water's temperature is
+    optional, the room's by default, and so is running water's, 15 °C by
+    default ("optional with default"). No warning for a crowded bowl ("low
+    leverage"). The cooling choices are a list, fastest first. The egg
+    count moves into the setup sentence and the egg's panel. The room is
+    shown without the probe (amends 79), in the panel of "at room
+    temperature" and in Settings, on the two tests the owner set: its
+    leverage (-4.8 s a degree for eggs left out, about a size class across
+    a kitchen's range) and a natural place. Built `bowl-cooling`, merged
+    `4f3251b`. Whether ice and running water should take free convection
+    in place of a held surface waits on the owner's probe readings.
