@@ -681,7 +681,7 @@ async function relaunched(
 }
 
 /// The parts of the screen whose place is logged (ContentView.logTop).
-const PARTS = ['slider', 'sentence', 'egg'] as const;
+const PARTS = ['action', 'slider', 'sentence', 'egg'] as const;
 type Part = typeof PARTS[number];
 type Layout = Partial<Record<Part, number>>;
 
@@ -722,9 +722,16 @@ async function idle(run: Run, args: string[] = []): Promise<Layout> {
   return stillLayout(run);
 }
 
-scenario('one-layout', 'one layout from idle to Done; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
+/// The action directly under the time, above the slider (UI.md section 3).
+function actionAbove(run: Run, l: Layout, when: string): void {
+  run.check(l.action != null && l.slider != null && l.action < l.slider,
+    `${when}: the action not above the slider: action ${l.action}, slider ${l.slider}`);
+}
+
+scenario('one-layout', 'one layout from idle to Done; the action under the time; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
   const before = await idle(run, ['-uiDo', `eggsIn@launch+1,${TO_DONE}`]);
   for (const part of PARTS) run.check(part in before, `idle: no ${part}`);
+  actionAbove(run, before, 'idle');
   let i = await run.step(run.t0 + 1);
   const heating = await run.until(phaseIs('HEATING'), { from: i, what: 'phase HEATING' });
   await run.settled(heating.i);
@@ -733,14 +740,15 @@ scenario('one-layout', 'one layout from idle to Done; the slider, the sentence a
     run.check(near(after[part], before[part], 2), `${part} moved at the start: ${before[part]} -> ${after[part]}`);
   }
   // Boiled at 5:00 (from the start, a second after the launch), out 3 s
-  // into the pull, and on to Done: the three parts in every phase.
+  // into the pull, and on to Done: the four parts in every phase.
   run.t0 += 1;
   await toDone(run);
   const done = await stillLayout(run);
   for (const part of PARTS) run.check(part in done, `Done: no ${part}`);
+  actionAbove(run, done, 'Done');
   const phasesSeen = phases(run.lines());
   run.check(same(phasesSeen, ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phasesSeen}`);
-  run.note(`slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
+  run.note(`action ${before.action}, slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
 });
 
 scenario('egg-readings', 'the egg aimed for at idle (softer and firmer differ), live from raw at the start, as it ran at Done', async (run) => {

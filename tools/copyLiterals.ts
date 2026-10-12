@@ -233,6 +233,7 @@ const NOT_COPY: Record<string, string> = {
   update: 'debug log (Screenshots.log), never shown',
   // the one screen's checks (tools/iosE2e.ts): where each part sits, and
   // what the idle screen shows
+  action: 'debug log name of a part of the screen, never shown',
   slider: 'debug log name of a part of the screen, never shown',
   egg: 'debug log name of a part of the screen, never shown',
   sentence: 'debug log name of a part of the screen, never shown',

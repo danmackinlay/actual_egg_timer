@@ -99,10 +99,12 @@ function deadlines(s: Snap): { cookEnd_s: number; coolEnd_s: number } {
 }
 
 /** What the one screen shows: whether each of its parts is on screen, where
- *  the slider, the sentence and the egg are, and the slider's value. */
+ *  the action, the slider, the sentence and the egg are, where the readout
+ *  ends, and the slider's value. */
 interface Layout {
   shown: { id: string; visible: boolean }[];
-  top: Record<'doneness' | 'sentence' | 'eggSection', number>;
+  top: Record<'actions' | 'doneness' | 'sentence' | 'eggSection', number>;
+  readoutEnd: number;
   level: string;
 }
 
@@ -113,10 +115,17 @@ async function layout(tab: Tab): Promise<Layout> {
     const top = (id) => document.getElementById(id).getBoundingClientRect().top + window.scrollY;
     return {
       shown: ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'].map(on),
-      top: { doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
+      top: { actions: top('actions'), doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
+      readoutEnd: document.getElementById('readout').getBoundingClientRect().bottom + window.scrollY,
       level: document.getElementById('doneness').value,
     };
   })()`);
+}
+
+/** The action directly under the time, above the slider (UI.md section 3). */
+function actionUnderTime(l: Layout, when: string): void {
+  check(l.readoutEnd <= l.top.actions && l.top.actions < l.top.doneness,
+    `${when}: the action not between the time and the slider: readout ends ${l.readoutEnd}, action ${l.top.actions}, slider ${l.top.doneness}`);
 }
 
 /** The slider moved to `level` as a finger does: pressed, moved, and (unless
@@ -316,7 +325,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'one-layout': {
-    what: 'one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
+    what: 'one layout from idle to Done; the action under the time; the slider, the sentence and the egg stay, and nothing moves at the start',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.until("__snap().chosen !== null", 'the time decided');
@@ -329,8 +338,11 @@ const SCENARIOS: Record<string, Scenario> = {
       const heating = await layout(tab);
       check(heating.shown.every((x) => x.visible), `Heating: ${JSON.stringify(heating.shown)}`);
       check(heating.level === String(s.cook?.choices.level), `the slider at the cook's level: ${heating.level}`);
-      // Nothing moves at the start: the slider and the sentence stay put.
-      for (const id of ['doneness', 'sentence', 'eggSection'] as const) {
+      actionUnderTime(idle, 'idle');
+      actionUnderTime(heating, 'Heating');
+      // Nothing moves at the start: the action, the slider and the sentence
+      // stay put.
+      for (const id of ['actions', 'doneness', 'sentence', 'eggSection'] as const) {
         check(near(idle.top[id], heating.top[id], 2), `${id} moved at the start: ${idle.top[id]} -> ${heating.top[id]}`);
       }
       const notes = [`idle→Heating: sentence at ${heating.top.sentence.toFixed(0)} px`];
@@ -343,6 +355,7 @@ const SCENARIOS: Record<string, Scenario> = {
         s = await tab.phase(want);
         const l = await layout(tab);
         check(l.shown.every((x) => x.visible), `${want}: ${JSON.stringify(l.shown)}`);
+        actionUnderTime(l, want);
         notes.push(`${want} ✓`);
       }
       return notes.join(', ');

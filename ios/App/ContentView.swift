@@ -93,6 +93,7 @@ struct ContentView: View {
                                 certaintyOpen: $certaintyOpen
                             )
                             PhaseActions(model: model, phase: phase, now: now, sousVide: said)
+                                .logTop("action")
                         }
                     }
                     .id(tick)
