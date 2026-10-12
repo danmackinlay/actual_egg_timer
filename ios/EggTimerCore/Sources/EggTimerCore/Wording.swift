@@ -22,6 +22,7 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
         switch cooling {
         case .counter: return CopyRef("refusal.counter")
         case .tap: return CopyRef("refusal.tap")
+        case .bowl: return CopyRef("refusal.bowl")
         case .ice: return CopyRef("refusal.ice")
         }
     }
@@ -194,6 +195,7 @@ public func pulledKey(_ cooling: Cooling) -> String {
     switch cooling {
     case .ice: "action.pulled.ice"
     case .tap: "action.pulled.tap"
+    case .bowl: "action.pulled.bowl"
     case .counter: "action.pulled.counter"
     }
 }
@@ -234,7 +236,8 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
         )
     case .cooling:
         return PhaseKeys(
-            label: f.cooling == .ice ? "readout.phase.coolingIce" : "readout.phase.coolingTap",
+            label: f.cooling == .ice ? "readout.phase.coolingIce"
+                : f.cooling == .bowl ? "readout.phase.coolingBowl" : "readout.phase.coolingTap",
             subline: f.probeWanted ? "readout.sub.coolingProbe" : "readout.sub.coolingPeak",
             action: nil, hint: nil
         )
@@ -251,7 +254,8 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
 /// One clause of the setup sentence: its words in the sentence, the name of
 /// the control it opens, and that control's value. A nil `value` is the
 /// argument itself (the egg's mass, or the cook's own temperature). The app
-/// supplies `mass`, `temp` and `bath`.
+/// supplies `count` and `mass` (the egg), `temp` (the egg's own, or the
+/// cooling water's), `bath` (sous-vide) and `water` (the bowl's).
 public struct ClauseKeys: Sendable, Equatable {
     public let text: String
     public let label: String
@@ -270,13 +274,20 @@ public struct ClauseFacts: Sendable {
     public var sousVide: Bool
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
+    /// Whether the cook gave the temperature of the water the eggs cool in,
+    /// running or in a bowl. Read only for those two.
+    public var coolingWaterGiven: Bool
 
-    public init(eggFrom: EggFrom, startMode: StartMode, sousVide: Bool, afterBoil: HeatAfterBoil, cooling: Cooling) {
+    public init(
+        eggFrom: EggFrom, startMode: StartMode, sousVide: Bool, afterBoil: HeatAfterBoil, cooling: Cooling,
+        coolingWaterGiven: Bool = false
+    ) {
         self.eggFrom = eggFrom
         self.startMode = startMode
         self.sousVide = sousVide
         self.afterBoil = afterBoil
         self.cooling = cooling
+        self.coolingWaterGiven = coolingWaterGiven
     }
 }
 
@@ -306,7 +317,16 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
     }
     let cooling: ClauseKeys = switch f.cooling {
     case .ice: ClauseKeys(text: "setup.cooling.ice", label: "controls.cooling", value: "controls.cooling.ice")
-    case .tap: ClauseKeys(text: "setup.cooling.tap", label: "controls.cooling", value: "controls.cooling.tap")
+    case .tap:
+        ClauseKeys(
+            text: f.coolingWaterGiven ? "setup.cooling.tapAt" : "setup.cooling.tap",
+            label: "controls.cooling", value: "controls.cooling.tap"
+        )
+    case .bowl:
+        ClauseKeys(
+            text: f.coolingWaterGiven ? "setup.cooling.bowlAt" : "setup.cooling.bowl",
+            label: "controls.cooling", value: "controls.cooling.bowl"
+        )
     case .counter:
         ClauseKeys(text: "setup.cooling.counter", label: "controls.cooling", value: "controls.cooling.counter")
     }

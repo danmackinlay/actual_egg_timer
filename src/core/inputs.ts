@@ -37,6 +37,12 @@ export const LIMITS = {
   room_C: { lo: 5, hi: 40 },
   altitude_m: { lo: -400, hi: 5000 },
   waterLitres: { lo: 0.25, hi: 12 },
+  /** A bowl of water to cool the eggs in: half a litre covers two eggs in a
+   *  cereal bowl; eight is a washing-up bowl. */
+  bowlLitres: { lo: 0.5, hi: 8 },
+  /** The water the eggs cool in, running or in a bowl: just above freezing to
+   *  a warm summer's tap. */
+  coolingWater_C: { lo: 1, hi: 40 },
   eggCount: { lo: 1, hi: 24 },
   doneness: { lo: 0, hi: 1 },
   /** Across every table. The table in use is shorter than this outside the
@@ -120,6 +126,9 @@ export const DEFAULTS = {
   customStart_C: 12,
   altitude_m: 0,
   waterLitres: 2,
+  /** A mixing bowl: within 3 s of any other volume for one to six eggs
+   *  (design/bowl.md section 2.7). */
+  bowlLitres: 2,
   eggCount: 2,
   doneness: 0.41,
 };

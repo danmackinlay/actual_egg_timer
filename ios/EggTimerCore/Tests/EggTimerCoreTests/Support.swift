@@ -46,7 +46,8 @@ func cookSetup(_ json: [String: Any]) throws -> CookSetup {
         eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
         boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"),
         cooling: json.value(Cooling.self, "cooling"),
-        waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
+        waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount"),
+        coolingWaterC: json.optionalNum("coolingWater_C"), bowlLitres: json.optionalNum("bowlLitres")
     )
 }
 

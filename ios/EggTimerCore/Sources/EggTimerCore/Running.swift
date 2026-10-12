@@ -26,6 +26,13 @@ public struct CookChoices: Sendable, Equatable {
     public var startMode: StartMode
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
+    /// Running water's temperature, C, or nil to assume mains water. Read
+    /// only for `tap`.
+    public var tapWaterC: Double?
+    /// The bowl's water, litres, and its temperature, C, or nil to assume
+    /// the room. Read only for `bowl`.
+    public var bowlLitres: Double
+    public var bowlWaterC: Double?
     public var waterLitres: Double
     public var eggCount: Double
     public var altitudeM: Double
@@ -35,7 +42,8 @@ public struct CookChoices: Sendable, Equatable {
     public init(
         massKg: Double, massFrom: MassFrom, sizeTable: SizeTable?, eggFrom: EggFrom, customStartC: Double,
         roomC: Double?, startMode: StartMode, afterBoil: HeatAfterBoil, cooling: Cooling, waterLitres: Double,
-        eggCount: Double, altitudeM: Double, level: Double
+        eggCount: Double, altitudeM: Double, level: Double,
+        tapWaterC: Double? = nil, bowlLitres: Double = Defaults.bowlLitres, bowlWaterC: Double? = nil
     ) {
         self.massKg = massKg
         self.massFrom = massFrom
@@ -46,6 +54,9 @@ public struct CookChoices: Sendable, Equatable {
         self.startMode = startMode
         self.afterBoil = afterBoil
         self.cooling = cooling
+        self.tapWaterC = tapWaterC
+        self.bowlLitres = bowlLitres
+        self.bowlWaterC = bowlWaterC
         self.waterLitres = waterLitres
         self.eggCount = eggCount
         self.altitudeM = altitudeM
@@ -58,6 +69,7 @@ public struct CookChoices: Sendable, Equatable {
             "mass_kg": massKg, "massFrom": massFrom.rawValue, "sizeTable": sizeTable?.rawValue ?? NSNull(),
             "eggFrom": eggFrom.rawValue, "customStart_C": customStartC, "room_C": roomC ?? NSNull(),
             "startMode": startMode.rawValue, "afterBoil": afterBoil.rawValue, "cooling": cooling.rawValue,
+            "tapWater_C": tapWaterC ?? NSNull(), "bowlLitres": bowlLitres, "bowlWater_C": bowlWaterC ?? NSNull(),
             "waterLitres": waterLitres, "eggCount": eggCount, "altitude_m": altitudeM, "level": level,
         ]
     }
@@ -348,7 +360,7 @@ public func plausibleProbeRangeC(
         params: ModelParams(alphaM2s: params.alphaM2s * spread),
         cookTimeS: cookTimeS
     )
-    let bath = coolingMediumC(setup.cooling, ambientC: setup.ambientC)
+    let bath = coolingMediumC(setup)
     let floor = min(setup.eggStartC, setup.ambientC, bath)
     let lo = min(slow.peakYolkC, fast.peakYolkC) - probeMarginC
     let hi = max(slow.peakYolkC, fast.peakYolkC) + probeMarginC
@@ -581,7 +593,12 @@ public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
             cooling: ch.cooling,
             waterLitres: ch.waterLitres,
             afterBoil: ch.afterBoil,
-            eggCount: ch.eggCount
+            eggCount: ch.eggCount,
+            // The water the eggs cool in: running water's temperature if
+            // given; a bowl's volume, and its temperature if given. An
+            // absent temperature is assumed where it is read (`coolingMediumC`).
+            coolingWaterC: ch.cooling == .tap ? ch.tapWaterC : ch.cooling == .bowl ? ch.bowlWaterC : nil,
+            bowlLitres: ch.cooling == .bowl ? ch.bowlLitres : nil
         )
     )
 }
@@ -823,6 +840,9 @@ private func readChoices(_ raw: Any?) -> CookChoices? {
           let start = (r["startMode"] as? String).flatMap(StartMode.init(rawValue:)),
           let after = (r["afterBoil"] as? String).flatMap(HeatAfterBoil.init(rawValue:)),
           let cooling = (r["cooling"] as? String).flatMap(Cooling.init(rawValue:)),
+          let tapWater = numberOrNull(r["tapWater_C"]),
+          let bowlLitres = finite(r["bowlLitres"]), bowlLitres > 0,
+          let bowlWater = numberOrNull(r["bowlWater_C"]),
           let water = finite(r["waterLitres"]), water > 0,
           let count = finite(r["eggCount"]), count > 0,
           let altitude = finite(r["altitude_m"]),
@@ -830,7 +850,7 @@ private func readChoices(_ raw: Any?) -> CookChoices? {
     return CookChoices(
         massKg: mass, massFrom: massFrom, sizeTable: table, eggFrom: eggFrom, customStartC: custom, roomC: room.value,
         startMode: start, afterBoil: after, cooling: cooling, waterLitres: water, eggCount: count,
-        altitudeM: altitude, level: level
+        altitudeM: altitude, level: level, tapWaterC: tapWater.value, bowlLitres: bowlLitres, bowlWaterC: bowlWater.value
     )
 }
 
@@ -1201,7 +1221,8 @@ private func choicesKey(_ ch: CookChoices) -> String {
         ch.massFrom.rawValue, ch.sizeTable?.rawValue ?? "-", ch.eggFrom.rawValue, ch.startMode.rawValue,
         ch.afterBoil.rawValue, ch.cooling.rawValue, numberKey(ch.massKg), numberKey(ch.customStartC),
         ch.roomC.map(numberKey) ?? "-", numberKey(ch.waterLitres), numberKey(ch.eggCount), numberKey(ch.altitudeM),
-        numberKey(ch.level),
+        numberKey(ch.level), ch.tapWaterC.map(numberKey) ?? "-", numberKey(ch.bowlLitres),
+        ch.bowlWaterC.map(numberKey) ?? "-",
     ].joined(separator: "|")
 }
 

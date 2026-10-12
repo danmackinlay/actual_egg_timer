@@ -77,7 +77,7 @@ function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: strin
   };
   const keys = clauseKeys({
     eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
-    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling,
+    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling, coolingWaterGiven: false,
   });
   const words = (k: ClauseKeys, own: string) => ({
     text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),

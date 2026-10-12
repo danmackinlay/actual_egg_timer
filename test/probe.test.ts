@@ -341,7 +341,7 @@ test('4c. the entry range holds every reading a kitchen could make, and not a ty
 function runningCook(startMode: 'cold' | 'hot', cooling: 'ice' | 'tap'): RunningCook {
   return startCook(1_000, {
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
-    startMode: startMode, afterBoil: 'hold', cooling: cooling, waterLitres: 2, eggCount: 2, altitude_m: 0,
+    startMode: startMode, afterBoil: 'hold', cooling: cooling, tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0,
     level: JAMMY,
   }, 0, { '2.0': 480 }, 'metric', 'en');
 }

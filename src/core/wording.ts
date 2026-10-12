@@ -22,6 +22,11 @@ import { DONENESS_ANCHORS } from './solve.js';
 
 /* ----------------------------------------------------------- the refusal */
 
+/** A yolk too soft for the white, blamed on each cooling. */
+const REFUSAL_KEYS: Record<Cooling, string> = {
+  ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter',
+};
+
 /**
  * The refusal's sentence, or null when there is nothing worth saying. The app
  * adds `limit` (the doneness word the slider stops at) and, for
@@ -38,7 +43,7 @@ export function refusalKey(v: Verdict, cooling: Cooling): CopyRef | null {
     case 'whiteNeverSets': return { key: 'refusal.whiteNeverSets', args: {} };
     case 'harderThanPanReaches': return { key: 'refusal.harderThanPan', args: {} };
     case 'tooSoftForWhite':
-      return { key: cooling === 'counter' ? 'refusal.counter' : cooling === 'tap' ? 'refusal.tap' : 'refusal.ice', args: {} };
+      return { key: REFUSAL_KEYS[cooling], args: {} };
   }
 }
 
@@ -242,9 +247,20 @@ export interface PhaseKeys {
 }
 
 /** Where the eggs go at the pull, as the button says it. */
+const PULLED_KEYS: Record<Cooling, string> = {
+  ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter',
+};
+
 function pulledKey(cooling: Cooling): string {
-  return cooling === 'ice' ? 'action.pulled.ice' : cooling === 'tap' ? 'action.pulled.tap' : 'action.pulled.counter';
+  return PULLED_KEYS[cooling];
 }
+
+/** The label while the cooling counts down. Never the counter's, which has
+ *  no counted cooling. */
+const COOLING_LABELS: Record<Cooling, string> = {
+  ice: 'readout.phase.coolingIce', tap: 'readout.phase.coolingTap', bowl: 'readout.phase.coolingBowl',
+  counter: 'readout.phase.coolingTap',
+};
 
 /**
  * The readout's keys. The one instruction the cook has to act on while it
@@ -253,8 +269,8 @@ function pulledKey(cooling: Cooling): string {
  * and a pan taken off the heat when the model expected a boil under-cooks by
  * minutes. With the heat off, the idle subline names the water, the most
  * load-bearing number in that cook; on a hot start the time to boil plays no
- * part and is not mentioned. A counted cooling is the ice bath or the tap; a
- * counter rest has no cooling phase.
+ * part and is not mentioned. A counted cooling is the ice bath, running water
+ * or a bowl; a counter rest has no cooling phase.
  */
 export function phaseKeys(f: PhaseFacts): PhaseKeys {
   const cold = f.startMode === 'cold';
@@ -296,7 +312,7 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
       };
     case 'COOLING':
       return {
-        label: f.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap',
+        label: COOLING_LABELS[f.cooling],
         subline: f.probeWanted ? 'readout.sub.coolingProbe' : 'readout.sub.coolingPeak',
         action: null,
         hint: null,
@@ -316,7 +332,8 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
 /** One clause of the setup sentence: its words in the sentence, the name of
  *  the control it opens, and that control's value. A null `value` is the
  *  argument itself (the egg's mass, or the cook's own temperature). The app
- *  supplies `mass`, `temp` and `bath`. */
+ *  supplies `count` and `mass` (the egg), `temp` (the egg's own, or the
+ *  cooling water's), `bath` (sous-vide) and `water` (the bowl's). */
 export interface ClauseKeys {
   text: string;
   label: string;
@@ -332,6 +349,9 @@ export interface ClauseFacts {
   sousVide: boolean;
   afterBoil: HeatAfterBoil;
   cooling: Cooling;
+  /** Whether the cook gave the temperature of the water the eggs cool in,
+   *  running or in a bowl. Read only for those two. */
+  coolingWaterGiven: boolean;
 }
 
 /** The setup sentence's keys. The start clause carries the boil, and the
@@ -350,11 +370,16 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
     : f.startMode === 'cold'
       ? { text: standing ? 'setup.start.coldStanding' : 'setup.start.cold', label: 'controls.start', value: 'controls.start.cold' }
       : { text: standing ? 'setup.start.hotStanding' : 'setup.start.hot', label: 'controls.start', value: 'controls.start.hot' };
+  // Running water and a bowl name the water's temperature only when the cook
+  // gave it: one assumed is the (i)'s to say, not the sentence's.
+  const at = f.coolingWaterGiven;
   const cooling: ClauseKeys = f.cooling === 'ice'
     ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.cooling.ice' }
     : f.cooling === 'tap'
-      ? { text: 'setup.cooling.tap', label: 'controls.cooling', value: 'controls.cooling.tap' }
-      : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.cooling.counter' };
+      ? { text: at ? 'setup.cooling.tapAt' : 'setup.cooling.tap', label: 'controls.cooling', value: 'controls.cooling.tap' }
+      : f.cooling === 'bowl'
+        ? { text: at ? 'setup.cooling.bowlAt' : 'setup.cooling.bowl', label: 'controls.cooling', value: 'controls.cooling.bowl' }
+        : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.cooling.counter' };
   return {
     egg: { text: 'setup.egg', label: 'controls.egg', value: null },
     from: from,

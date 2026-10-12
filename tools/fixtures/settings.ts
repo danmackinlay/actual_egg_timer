@@ -20,21 +20,22 @@ const STORED: { about: string; stored: unknown }[] = [
       sizeIndex: 4, customMinor_mm: 47.5, measuredBy: 'girth', weighedMass_g: 71.25, startTempMode: 'custom',
       customStart_C: 18.5, altitude_m: 1200, startMode: 'hot', afterBoil: 'off', cooling: 'counter',
       waterLitres: 3.5, eggCount: 6, doneness: 0.73, muted: true, alarm: 'hen', unitsChosen: 'imperial',
-      language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5,
+      language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5, tapWater_C: 12.5, bowlLitres: 1.5, bowlWater_C: 17,
     },
   },
+  { about: 'a bowl of water, its temperature left blank', stored: { cooling: 'bowl', bowlLitres: 3, bowlWater_C: null } },
   {
     about: 'every number past its bounds, low',
     stored: {
       sizeIndex: -7, customMinor_mm: 1, weighedMass_g: 3, customStart_C: -40, altitude_m: -9000, waterLitres: 0,
-      eggCount: 0, doneness: -1, room_C: -20,
+      eggCount: 0, doneness: -1, room_C: -20, tapWater_C: -5, bowlLitres: 0.1, bowlWater_C: 0,
     },
   },
   {
     about: 'every number past its bounds, high',
     stored: {
       sizeIndex: 99, customMinor_mm: 900, weighedMass_g: 400, customStart_C: 99, altitude_m: 90000,
-      waterLitres: 80, eggCount: 1000, doneness: 7, room_C: 300,
+      waterLitres: 80, eggCount: 1000, doneness: 7, room_C: 300, tapWater_C: 90, bowlLitres: 50, bowlWater_C: 41,
     },
   },
   {
@@ -51,7 +52,8 @@ const STORED: { about: string; stored: unknown }[] = [
     about: 'numbers as text, true and false, null: not numbers',
     stored: {
       sizeIndex: '1', customMinor_mm: '50', weighedMass_g: true, customStart_C: null, altitude_m: '100',
-      waterLitres: false, eggCount: '4', doneness: '0.9', room_C: '20',
+      waterLitres: false, eggCount: '4', doneness: '0.9', room_C: '20', tapWater_C: '15', bowlLitres: true,
+      bowlWater_C: '20',
     },
   },
   {

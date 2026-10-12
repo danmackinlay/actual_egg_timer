@@ -14,6 +14,8 @@ import { createDose, accumulateDose, holdTimeForDose } from '../../src/core/kine
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, seriesTheta, erfc,
 } from '../../src/core/sphere.js';
+import { CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.js';
+import { appSetup } from '../common.js';
 
 /** Sample points chosen to sit where the model actually lives, plus the edges
  *  that break naive implementations: x = 0 (the sinc singularity), tiny Fo
@@ -70,8 +72,18 @@ const rampedStep = (() => {
   return samples;
 })();
 
+/** What each cooling starts at, and a bowl as it warms: the cook's water or
+ *  the one assumed, an ice bath and the air, and a bowl with no water. */
+const COOLING_SETUPS: CookSetup[] = [
+  appSetup(), appSetup({ cooling: 'counter', ambient_C: 26 }), appSetup({ cooling: 'tap' }),
+  appSetup({ cooling: 'tap', coolingWater_C: 24 }), appSetup({ cooling: 'bowl', bowlLitres: 2 }),
+  appSetup({ cooling: 'bowl', bowlLitres: 2, ambient_C: 27 }), appSetup({ cooling: 'bowl', bowlLitres: 0.5, coolingWater_C: 9, eggCount: 6 }),
+  appSetup({ cooling: 'bowl', bowlLitres: 4, coolingWater_C: 31, eggCount: 1 }), appSetup({ cooling: 'bowl' }),
+];
+const BOWL_MEANS: Array<[number, number, number]> = [[68, 83.1, 83.1], [68, 83.1, 61.4], [53, 79.6, 40.2], [76, 85, 20]];
+
 export const coreFixture = {
-  about: 'Pure functions: the sphere, geometry, boiling and the dose, with the constants they use. src/core/sphere.ts, geometry.ts, thermo.ts, kinetics.ts.',
+  about: 'Pure functions: the sphere, geometry, boiling, what the egg cools in and the dose, with the constants they use. src/core/sphere.ts, geometry.ts, thermo.ts, protocol.ts, kinetics.ts.',
   constants: {
     MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
     TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
@@ -100,6 +112,13 @@ export const coreFixture = {
     pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: pressureAtAltitude(h) })),
     boilingPointAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: boilingPointAtAltitude(h) })),
     boilingPointAtPressure: PRESSURE_CASES_PA.map((p) => ({ pressure_Pa: p, value: boilingPointAtPressure(p) })),
+  },
+  protocol: {
+    coolingMedium: COOLING_SETUPS.map((setup) => ({ setup: setup, value: coolingMedium_C(setup) })),
+    bowlTemperature: COOLING_SETUPS.flatMap((setup) => BOWL_MEANS.map(([g, atPull, now]) => ({
+      setup: setup, mass_g: g, meanAtPull_C: atPull, mean_C: now,
+      value: bowlTemperature(eggFromMass(g / 1000), setup, atPull, now),
+    }))),
   },
   kinetics: {
     holdTimeForDose: [55, 60, 63, 65, 70, 80].map((held) => ({

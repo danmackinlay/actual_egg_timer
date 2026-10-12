@@ -143,6 +143,15 @@ const TRACES: TraceDef[] = [
     ],
   },
   {
+    note: 'a bowl of water: out at the pull, the cooling counted in a bowl that warms, then answered',
+    covers: ['e2e bowl', 'ios bowl'],
+    app: 'web', posterior: 'learned', before: 'learned',
+    steps: [
+      start({ startMode: 'hot', cooling: 'bowl', bowlLitres: 1, bowlWater_C: 13, eggCount: 3 }, S, 4), land(clock(1)),
+      tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }), tick(cooled(1)), answer(cooled(15), 'jammy', 'firm'),
+    ],
+  },
+  {
     note: 'Cancel while heating: nothing logged, nothing remembered, the alarms gone',
     covers: ['ios cancel'],
     app: 'ios', posterior: 'learned', before: 'learned',

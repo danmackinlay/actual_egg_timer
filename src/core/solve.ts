@@ -12,7 +12,7 @@ import {
   CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.js';
 import {
-  createSphere, stepSphere, temperatureAt, centreTemperature,
+  createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
 } from './sphere.js';
 import { Dose, createDose, accumulateDose } from './kinetics.js';
 
@@ -128,8 +128,10 @@ export function simulate(
   let prevYolk = setup.eggStart_C;
   let peakDoseRate = 0.0;
   // Captured when the egg leaves the water: an ice bath or a tap blends out of
-  // it. On the counter the surface needs nothing but the egg's own state.
+  // it, and a bowl warms by what the egg's mean has fallen since. On the
+  // counter the surface needs nothing but the egg's own state.
   let waterAtPull = initialSurface;
+  let meanAtPull = setup.eggStart_C;
 
   const endTime = cookTime_s + CARRYOVER_WINDOW;
   while (t < endTime) {
@@ -138,8 +140,11 @@ export function simulate(
     if (tNext < cookTime_s) {
       next = bathTemperature(egg, setup, tNext);
     } else {
-      if (!pullRecorded) waterAtPull = sphere.surface_C;
-      next = coolingTemperature(sphere, egg, setup, tNext - cookTime_s, DT_SIM, waterAtPull);
+      if (!pullRecorded) {
+        waterAtPull = sphere.surface_C;
+        meanAtPull = meanTemperature(sphere);
+      }
+      next = coolingTemperature(sphere, egg, setup, tNext - cookTime_s, DT_SIM, waterAtPull, meanAtPull);
     }
     stepSphere(sphere, DT_SIM, next);
     t = tNext;

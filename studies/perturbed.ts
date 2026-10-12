@@ -21,7 +21,7 @@ import {
   YOLK_RADIUS_FRAC, DT_SIM, CARRYOVER_WINDOW, TAU_PLUNGE,
 } from '../src/core/constants.js';
 import {
-  SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, robinSurface,
+  SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, robinSurface,
 } from '../src/core/sphere.js';
 import {
   CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
@@ -83,10 +83,10 @@ function eggFor(mass_kg: number, th: Theta): Egg {
  *  time constant scaled by `tauAirScale`. */
 function cooling(
   sphere: SphereState, egg: Egg, setup: CookSetup, elapsed_s: number, dt_s: number,
-  waterAtPull_C: number, tauAirScale: number,
+  waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
 ): number {
   if (setup.cooling !== 'counter') {
-    return coolingTemperature(sphere, egg, setup, elapsed_s, dt_s, waterAtPull_C);
+    return coolingTemperature(sphere, egg, setup, elapsed_s, dt_s, waterAtPull_C, meanAtPull_C);
   }
   const before = elapsed_s > dt_s ? elapsed_s - dt_s : 0.0;
   const drying = wetShellDrop_C(egg) * (Math.exp(-before / TAU_PLUNGE) - Math.exp(-elapsed_s / TAU_PLUNGE));
@@ -117,6 +117,7 @@ export function runPerturbed(
   let yolk = 0.0;
   let white = 0.0;
   let waterAtPull = sphere.surface_C;
+  let meanAtPull = setup.eggStart_C;
   let pulled = false;
   let probe_C = Number.NaN;
   const probeAt = cook_s + probe.after_s;
@@ -130,9 +131,10 @@ export function runPerturbed(
     } else {
       if (!pulled) {
         waterAtPull = sphere.surface_C;
+        meanAtPull = meanTemperature(sphere);
         pulled = true;
       }
-      next = cooling(sphere, egg, setup, tNext - cook_s, DT_SIM, waterAtPull, tauAirScale);
+      next = cooling(sphere, egg, setup, tNext - cook_s, DT_SIM, waterAtPull, meanAtPull, tauAirScale);
     }
     stepSphere(sphere, DT_SIM, next);
     t = tNext;

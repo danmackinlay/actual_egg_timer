@@ -187,6 +187,11 @@ export interface RecordSetup {
   afterBoil: HeatAfterBoil;
   waterLitres: number;
   eggCount: number;
+  /** As `CookSetup` has them: the water the eggs cooled in as the cook gave
+   *  it, C, only when they gave it, for running water or a bowl; and the
+   *  bowl's water, litres, for a bowl and only there. */
+  coolingWater_C?: number;
+  bowlLitres?: number;
 }
 
 export interface EggRecord {
@@ -361,6 +366,7 @@ export function recordFor(f: CookFacts): EggRecord {
       afterBoil: s.afterBoil ?? 'hold',
       waterLitres: s.waterLitres,
       eggCount: s.eggCount,
+      ...coolingWaterRecorded(s),
     },
     level: f.level,
     recommended_s: f.cook_s - f.nudge_s,
@@ -377,6 +383,17 @@ export function recordFor(f: CookFacts): EggRecord {
     units: f.units,
   };
   return r;
+}
+
+/** The water the eggs cooled in, as a record carries it: only what the
+ *  cooling reads, so a record of an ice bath never says a bowl. */
+function coolingWaterRecorded(s: CookSetup): { coolingWater_C?: number; bowlLitres?: number } {
+  const out: { coolingWater_C?: number; bowlLitres?: number } = {};
+  if ((s.cooling === 'tap' || s.cooling === 'bowl') && s.coolingWater_C !== undefined) {
+    out.coolingWater_C = s.coolingWater_C;
+  }
+  if (s.cooling === 'bowl' && s.bowlLitres !== undefined) out.bowlLitres = s.bowlLitres;
+  return out;
 }
 
 /**
@@ -476,7 +493,7 @@ export function parseForecast(raw: unknown): Forecast | null {
 /** The coolest thing this cook's egg ever touched, C: the fridge, the room or
  *  the cooling water, whichever is lowest. */
 function coldestOf(s: RecordSetup): number {
-  return Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s.cooling, s.ambient_C));
+  return Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s));
 }
 
 /**
@@ -541,7 +558,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isObject(s)) return null;
   if (!oneOf(s['startMode'], ['cold', 'hot'] as const)) return null;
   if (!oneOf(s['eggFrom'], ['fridge', 'room', 'custom'] as const)) return null;
-  if (!oneOf(s['cooling'], ['ice', 'tap', 'counter'] as const)) return null;
+  if (!oneOf(s['cooling'], ['ice', 'tap', 'bowl', 'counter'] as const)) return null;
   if (!oneOf(s['afterBoil'], ['hold', 'off'] as const)) return null;
   if (!isFiniteNumber(s['eggStart_C']) || !isFiniteNumber(s['ambient_C'])) return null;
   if (!isFiniteNumber(s['boiling_C']) || !(s['boiling_C'] > 0)) return null;
@@ -549,6 +566,13 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!oneOf(s['timeToBoilFrom'], ['measured', 'remembered', 'default'] as const)) return null;
   if (!isFiniteNumber(s['waterLitres']) || !(s['waterLitres'] > 0)) return null;
   if (!isFiniteNumber(s['eggCount']) || !(s['eggCount'] >= 1)) return null;
+  // The water the eggs cooled in: a temperature only for running water or a
+  // bowl, and a bowl always says how much water it held.
+  const water = has(s, 'coolingWater_C') ? s['coolingWater_C'] : undefined;
+  const bowl = has(s, 'bowlLitres') ? s['bowlLitres'] : undefined;
+  const watered = s['cooling'] === 'tap' || s['cooling'] === 'bowl';
+  if (water !== undefined && !(watered && isFiniteNumber(water))) return null;
+  if (s['cooling'] === 'bowl' ? !(isFiniteNumber(bowl) && bowl > 0) : bowl !== undefined) return null;
 
   const level = raw['level'];
   if (!isFiniteNumber(level) || level < 0 || level > 1) return null;
@@ -580,6 +604,8 @@ export function parseRecord(raw: unknown): EggRecord | null {
     afterBoil: s['afterBoil'],
     waterLitres: s['waterLitres'],
     eggCount: s['eggCount'],
+    ...(water === undefined ? {} : { coolingWater_C: water as number }),
+    ...(bowl === undefined ? {} : { bowlLitres: bowl as number }),
   };
 
   // A reading at the centre: a number the egg could have been, and when
@@ -788,6 +814,8 @@ function recordSetupOf(r: EggRecord): CookSetup {
     afterBoil: r.setup.afterBoil,
     waterLitres: r.setup.waterLitres,
     eggCount: r.setup.eggCount,
+    ...(r.setup.coolingWater_C === undefined ? {} : { coolingWater_C: r.setup.coolingWater_C }),
+    ...(r.setup.bowlLitres === undefined ? {} : { bowlLitres: r.setup.bowlLitres }),
   };
 }
 

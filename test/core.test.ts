@@ -23,14 +23,15 @@ import {
   createDose, accumulateDose, holdTimeForDose,
 } from '../src/core/kinetics.js';
 import {
-  CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C,
+  CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
+  coolingMedium_C, coolingTemperature, initialSurfaceTemperature,
 } from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose, DEFAULT_PARAMS,
 } from '../src/core/solve.js';
 import {
   H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S, H_AIR, K_EGG, C_EGG,
-  ALPHA_DEFAULT, DT_SIM,
+  ALPHA_DEFAULT, DT_SIM, C_WATER, T_COLD_TAP_C, TAU_PLUNGE,
 } from '../src/core/constants.js';
 import { referenceSetup } from '../tools/common.js';
 
@@ -656,4 +657,107 @@ test('17c. the counter is slow cooling, not a lid', () => {
   close(counter.peakYolk_C, 75.27, 0.15, 'counter peak yolk vs finite volumes');
   assert.ok(83.9 - counter.peakYolk_C > 7, 'the counter takes more than 7 C off the insulated ceiling');
   assert.ok(counter.peakYolk_C - ice.peakYolk_C > 9, 'and is still far above the ice bath');
+});
+
+// --------------------------------------------------------------------------
+// 18. A bowl of still water
+// --------------------------------------------------------------------------
+
+/** The cook `simulate` runs, step by step, returning the drive the surface
+ *  was given after the pull, the egg's mean at the pull and the sphere. */
+function bowlRun(setup: CookSetup, cook_s: number, after_s: number) {
+  const egg = REFERENCE_EGG;
+  const sphere = createSphere(egg.radius_m, ALPHA_DEFAULT, setup.eggStart_C, initialSurfaceTemperature(egg, setup));
+  let t = 0.0;
+  let waterAtPull = sphere.surface_C;
+  let meanAtPull = setup.eggStart_C;
+  let pulled = false;
+  const drive: number[] = [];
+  while (t < cook_s + after_s) {
+    const tNext = t + DT_SIM;
+    let next: number;
+    if (tNext < cook_s) {
+      next = bathTemperature(egg, setup, tNext);
+    } else {
+      if (!pulled) {
+        pulled = true;
+        waterAtPull = sphere.surface_C;
+        meanAtPull = meanTemperature(sphere);
+      }
+      next = coolingTemperature(sphere, egg, setup, tNext - cook_s, DT_SIM, waterAtPull, meanAtPull);
+      drive.push(next);
+    }
+    stepSphere(sphere, DT_SIM, next);
+    t = tNext;
+  }
+  return { sphere: sphere, meanAtPull: meanAtPull, waterAtPull: waterAtPull, drive: drive };
+}
+
+test('18a. the bowl gains exactly what the eggs lose, and settles where the heat balance says', () => {
+  // Four eggs into a litre at 15 C, left three hours: the egg and the water
+  // end at one temperature, the mixture's, (N m c Tpull + V c_w T0) / (N m c +
+  // V c_w), which nothing in the model is told.
+  const setup = referenceSetup({ cooling: 'bowl', bowlLitres: 1, coolingWater_C: 15 });
+  const run = bowlRun(setup, 444, 3 * 3600);
+  const eggs = setup.eggCount * REFERENCE_EGG.mass_kg * C_EGG;
+  const water = 1 * C_WATER;
+  const mixed = (eggs * run.meanAtPull + water * 15) / (eggs + water);
+  const bowl = bowlTemperature(REFERENCE_EGG, setup, run.meanAtPull, meanTemperature(run.sphere));
+  close(meanTemperature(run.sphere), mixed, 0.01, 'the egg settles at the mixture');
+  close(bowl, mixed, 0.01, 'and so does the bowl');
+  // Heat out of the eggs is heat into the water, at any moment.
+  const early = bowlRun(setup, 444, 120);
+  const lost = eggs * (early.meanAtPull - meanTemperature(early.sphere));
+  const gained = water * (bowlTemperature(REFERENCE_EGG, setup, early.meanAtPull, meanTemperature(early.sphere)) - 15);
+  close(gained, lost, 1e-9 * lost, 'two minutes in: what the water gained against what the eggs lost');
+});
+
+test('18b. the surface never steps at the pull: it leaves the boiling water for the bowl over TAU_PLUNGE', () => {
+  const setup = referenceSetup({ cooling: 'bowl', bowlLitres: 2 });
+  const run = bowlRun(setup, 444, 60);
+  // The step that straddles the pull ends half a step out, so its drive is
+  // the water's at the pull, blended toward the bowl by exp(-dt/2/TAU) at most.
+  const start = coolingMedium_C(setup);
+  assert.equal(start, setup.ambient_C, 'a bowl with no temperature given is at the room');
+  const firstGap = run.waterAtPull - run.drive[0];
+  assert.ok(firstGap >= 0 && firstGap <= (run.waterAtPull - start) * (1 - Math.exp(-DT_SIM / TAU_PLUNGE)) + 1e-9,
+    `first step falls ${firstGap} C, no more than the blend allows`);
+  // No step falls further than the blend toward the bowl as it started: the
+  // bowl only rises. (To a thousandth of a degree: in the step that straddles
+  // the pull the egg is still drawing the pan's heat, and that thousandth is
+  // the bowl lending it, which the model does not bother to refuse.)
+  for (let i = 1; i < run.drive.length; i++) {
+    const fall = run.drive[i - 1] - run.drive[i];
+    assert.ok(fall <= (run.waterAtPull - start) * (1 - Math.exp(-DT_SIM / TAU_PLUNGE)) + 1e-3, `step ${i} falls ${fall} C`);
+  }
+  // A minute out, the surface sits on the bowl, which has warmed.
+  const bowl = bowlTemperature(REFERENCE_EGG, setup, run.meanAtPull, meanTemperature(run.sphere));
+  assert.ok(bowl > start + 0.5, `the bowl has warmed: ${bowl} C`);
+  close(run.drive[run.drive.length - 1], bowl, 0.05, 'the surface follows the bowl');
+});
+
+test('18c. a bowl that never warms is running water at its temperature', () => {
+  const doneness = donenessFromSlider(0.41);
+  const ocean = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'bowl', bowlLitres: 1e6, coolingWater_C: 20 }), DEFAULT_PARAMS, doneness);
+  const tap = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'tap', coolingWater_C: 20 }), DEFAULT_PARAMS, doneness);
+  close(ocean.result.cookTime_s, tap.result.cookTime_s, 1.0, 'a million litres against running water at 20 C');
+  close(ocean.result.peakYolk_C, tap.result.peakYolk_C, 0.01, 'and the peak');
+  // Running water with no temperature given is mains water.
+  const mains = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'tap' }), DEFAULT_PARAMS, doneness);
+  const given = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'tap', coolingWater_C: T_COLD_TAP_C }), DEFAULT_PARAMS, doneness);
+  assert.equal(mains.result.cookTime_s, given.result.cookTime_s);
+});
+
+test('18d. less water warms more and cooks shorter, by seconds, not minutes', () => {
+  const doneness = donenessFromSlider(0.41);
+  const cook = (litres: number) => solveCookTime(
+    REFERENCE_EGG, referenceSetup({ cooling: 'bowl', bowlLitres: litres, coolingWater_C: 20 }), DEFAULT_PARAMS, doneness,
+  ).result.cookTime_s;
+  const small = cook(0.5);
+  const big = cook(4);
+  const never = cook(1e6);
+  assert.ok(small < big && big <= never, `0.5 L ${small} s, 4 L ${big} s, no warming ${never} s`);
+  // Four eggs in half a litre is the crowded end, and still within half a
+  // minute of a bowl that never warms (design/bowl.md section 2.5).
+  assert.ok(never - small < 30, `the crowded bowl is ${never - small} s short`);
 });

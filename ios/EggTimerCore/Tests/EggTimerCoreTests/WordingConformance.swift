@@ -127,7 +127,8 @@ struct WordingConformance {
             let k = try clauseKeys(ClauseFacts(
                 eggFrom: row.value(EggFrom.self, "eggFrom"), startMode: row.value(StartMode.self, "startMode"),
                 sousVide: row.flag("sousVide"),
-                afterBoil: row.value(HeatAfterBoil.self, "afterBoil"), cooling: row.value(Cooling.self, "cooling")
+                afterBoil: row.value(HeatAfterBoil.self, "afterBoil"), cooling: row.value(Cooling.self, "cooling"),
+                coolingWaterGiven: row.flag("coolingWaterGiven")
             ))
             #expect(k.count == keys.count)
             for clause in Clause.allCases {

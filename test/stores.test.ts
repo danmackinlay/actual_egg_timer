@@ -13,7 +13,7 @@ import { CookChoices, readStoredCook, startCook, storedCook, withBoil } from '..
 
 const CHOICES: CookChoices = {
   mass_kg: 0.0625, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
-  startMode: 'cold', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.41,
+  startMode: 'cold', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.41,
 };
 
 test('every store is listed once, under its own name, and kept by at least one app', () => {

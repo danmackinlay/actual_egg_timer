@@ -257,7 +257,7 @@ function run(
       }
       const after = tNext - cook_s;
       if (method.kind === 'ice') {
-        next = coolingTemperature(sphere, egg, { ...setup, cooling: 'ice' }, after, DT_SIM, waterAtPull);
+        next = coolingTemperature(sphere, egg, { ...setup, cooling: 'ice' }, after, DT_SIM, waterAtPull, meanAtPull);
       } else if (method.kind === 'tap') {
         next = method.water_C + (waterAtPull - method.water_C) * Math.exp(-after / TAU_PLUNGE);
       } else if (method.kind === 'air') {

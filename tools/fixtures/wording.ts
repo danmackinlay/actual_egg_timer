@@ -22,7 +22,7 @@ import { WHITE_RISK } from '../../src/core/outcome.js';
 const PHASES: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
 const STARTS: StartMode[] = ['hot', 'cold'];
 const AFTER: HeatAfterBoil[] = ['hold', 'off'];
-const COOLINGS: Cooling[] = ['ice', 'tap', 'counter'];
+const COOLINGS: Cooling[] = ['ice', 'tap', 'bowl', 'counter'];
 const FROMS: EggFrom[] = ['fridge', 'room', 'custom'];
 const KINDS: RefusalKind[] = ['none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets'];
 
@@ -139,8 +139,11 @@ export function wordingFixture(): Record<string, unknown> {
   ))));
 
   const clauses = FROMS.flatMap((eggFrom) => STARTS.flatMap((startMode) => [false, true].flatMap(
-    (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.map((cooling) => {
-      const facts = { eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling };
+    (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.flatMap((cooling) => [false, true].map((given) => {
+      const facts = {
+        eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling,
+        coolingWaterGiven: given,
+      };
       const k = clauseKeys(facts);
       for (const c of Object.values(k)) {
         known(c.text);
@@ -148,7 +151,7 @@ export function wordingFixture(): Record<string, unknown> {
         known(c.value);
       }
       return { ...facts, keys: k };
-    })),
+    }))),
   )));
 
   return {

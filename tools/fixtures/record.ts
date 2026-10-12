@@ -104,6 +104,8 @@ function recordOf(e: EggSpec): EggRecord {
       afterBoil: setup.afterBoil ?? 'hold',
       waterLitres: setup.waterLitres,
       eggCount: setup.eggCount,
+      ...(setup.coolingWater_C === undefined ? {} : { coolingWater_C: setup.coolingWater_C }),
+      ...(setup.bowlLitres === undefined ? {} : { bowlLitres: setup.bowlLitres }),
     },
     level: e.level,
     recommended_s: recommended,
@@ -148,6 +150,12 @@ const REPLAY_LOG: EggRecord[] = [
     app: 'web', mass_g: 55.3, massFrom: 'girth', eggFrom: 'custom',
     over: { eggStart_C: 8, cooling: 'tap' },
     level: 0.4, pulledBy: 'cook', late_s: 31.5, yolkWord: 'fudgy', white: null,
+  }),
+  // A bowl of water, four eggs in a litre and a half from a cold tap.
+  recordOf({
+    app: 'ios', mass_g: 62, massFrom: 'class', eggFrom: 'fridge',
+    over: { eggCount: 4, cooling: 'bowl', bowlLitres: 1.5, coolingWater_C: 11 },
+    level: 0.41, pulledBy: 'cook', late_s: 4, yolkWord: 'jammy', white: 'firm',
   }),
   // Rested on the counter, the only cook that reaches the carryover.
   recordOf({
@@ -361,6 +369,24 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'no water', mutate: (r) => { setupPart(r)['waterLitres'] = 0; } },
   { why: 'no eggs in the pan', mutate: (r) => { setupPart(r)['eggCount'] = 0; } },
   { why: 'an unknown cooling', mutate: (r) => { setupPart(r)['cooling'] = 'snow'; } },
+  {
+    why: 'a bowl of water, its temperature given',
+    mutate: (r) => { setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 1.5; setupPart(r)['coolingWater_C'] = 11; },
+  },
+  { why: 'a bowl at the room', mutate: (r) => { setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 2; } },
+  { why: 'a bowl that does not say how much water', mutate: (r) => { setupPart(r)['cooling'] = 'bowl'; } },
+  { why: 'a bowl of no water', mutate: (r) => { setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 0; } },
+  { why: 'running water at its own temperature', mutate: (r) => { setupPart(r)['cooling'] = 'tap'; setupPart(r)['coolingWater_C'] = 22.5; } },
+  { why: 'a water temperature of null', mutate: (r) => { setupPart(r)['cooling'] = 'tap'; setupPart(r)['coolingWater_C'] = null; } },
+  { why: 'a water temperature for an ice bath', mutate: (r) => { setupPart(r)['coolingWater_C'] = 9; } },
+  { why: 'a bowl for an ice bath', mutate: (r) => { setupPart(r)['bowlLitres'] = 2; } },
+  {
+    why: 'a probe reading as cold as the bowl it cooled in',
+    mutate: (r) => {
+      setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 2; setupPart(r)['coolingWater_C'] = 3;
+      r['probe'] = { centre_C: 3, after_s: null };
+    },
+  },
   { why: 'an unknown burner', mutate: (r) => { setupPart(r)['afterBoil'] = 'simmer'; } },
   { why: 'a level past hard', mutate: (r) => { r['level'] = 1.5; } },
   { why: 'a level as a boolean', mutate: (r) => { r['level'] = true; } },
@@ -523,6 +549,16 @@ const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
   { why: 'nobody tapped: the grace ran out', over: { out_s: null } },
   { why: 'a tap at egg-in measures nothing', over: { out_s: 0 } },
   { why: 'under the tap', over: { setup: referenceSetup({ cooling: 'tap' }), cool_s: 240.5 } },
+  { why: 'under running water at its own temperature', over: { setup: referenceSetup({ cooling: 'tap', coolingWater_C: 21 }), cool_s: 250 } },
+  {
+    why: 'in a bowl of water, its temperature given',
+    over: { setup: referenceSetup({ cooling: 'bowl', bowlLitres: 1.5, coolingWater_C: 12 }), cool_s: 205.5 },
+  },
+  { why: 'in a bowl at the room', over: { setup: referenceSetup({ cooling: 'bowl', bowlLitres: 2 }), cool_s: 201 } },
+  {
+    why: 'an ice bath says nothing of a bowl it was not',
+    over: { setup: referenceSetup({ cooling: 'ice', bowlLitres: 2, coolingWater_C: 14 }) },
+  },
   { why: 'rested on the counter: no counted cooling', over: { setup: referenceSetup({ cooling: 'counter' }), out_s: null } },
   { why: 'rested on the counter, tapped out', over: { setup: referenceSetup({ cooling: 'counter' }) } },
   { why: 'nudged later', over: { nudge_s: 10, cook_s: 412.75 } },

@@ -52,6 +52,7 @@ struct SectionConformance {
                 #expect((section.outAtS == nil) == (out == nil), "out or not, \(at)")
                 if let out, let swiftOut = section.outAtS { expectClose(swiftOut, out, "out at, \(at)") }
                 expectClose(section.waterAtPullC, try tick.num("waterAtPull_C"), "water at pull, \(at)")
+                expectClose(section.meanAtPullC, try tick.num("meanAtPull_C"), "mean at pull, \(at)")
                 expectClose(section.sphere.surfaceC, try tick.num("surface_C"), "surface, \(at)")
                 let dose = try tick.numbers("dose_min")
                 for i in 0..<dose.count {

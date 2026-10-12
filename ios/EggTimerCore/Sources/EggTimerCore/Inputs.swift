@@ -26,6 +26,12 @@ public enum Limits {
     public static let roomC = 5.0...40.0
     public static let altitudeM = -400.0...5000.0
     public static let waterLitres = 0.25...12.0
+    /// A bowl of water to cool the eggs in: half a litre covers two eggs in a
+    /// cereal bowl; eight is a washing-up bowl.
+    public static let bowlLitres = 0.5...8.0
+    /// The water the eggs cool in, running or in a bowl: just above freezing
+    /// to a warm summer's tap.
+    public static let coolingWaterC = 1.0...40.0
     public static let eggCount = 1.0...24.0
     public static let doneness = 0.0...1.0
     /// Across every table. The table in use is shorter than this outside the
@@ -115,6 +121,8 @@ public enum Defaults {
     public static let customStartC = 12.0
     public static let altitudeM = 0.0
     public static let waterLitres = 2.0
+    /// A mixing bowl: within 3 s of any other volume for one to six eggs.
+    public static let bowlLitres = 2.0
     public static let eggCount = 2
     public static let doneness = 0.41
     /// The reference egg, an EU Large. The app takes its default from the

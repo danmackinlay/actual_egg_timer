@@ -305,7 +305,7 @@ test('5a. a size class shows its own mass in either system, and keeps its region
 test('5b. the record says which system the cook was reading, and stays SI', () => {
   const cook = startCook(1_750_000_000, {
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge', customStart_C: 12, room_C: null,
-    startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
+    startMode: 'hot', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
   }, 0, {}, 'imperial', 'en');
   const c = knowing({ particles: 50, eggsLogged: 0 });
   // On its pot's surface: no record is made from a plan with none.

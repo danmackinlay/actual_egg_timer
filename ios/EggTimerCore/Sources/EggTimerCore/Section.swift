@@ -26,6 +26,9 @@ public struct EggSection: Sendable {
     /// The water's temperature as the egg left it: an ice bath or a tap
     /// blends out of it.
     public private(set) var waterAtPullC: Double
+    /// The egg's mean temperature as it left the water: a bowl warms by what
+    /// it has fallen since.
+    public private(set) var meanAtPullC: Double
     /// Sample radii, r/R: the yolk's from the centre out, then the white's.
     public let x: [Double]
     /// Whether each sample is yolk.
@@ -66,6 +69,7 @@ public struct EggSection: Sendable {
         self.tS = 0.0
         self.outAtS = nil
         self.waterAtPullC = surface
+        self.meanAtPullC = setup.eggStartC
         self.x = x
         self.yolk = yolk
         self.outer = outer
@@ -87,10 +91,11 @@ public struct EggSection: Sendable {
                 if outAtS == nil {
                     outAtS = out
                     waterAtPullC = sphere.surfaceC
+                    meanAtPullC = sphere.meanTemperature
                 }
                 next = Protocols.coolingTemperature(
                     sphere: sphere, egg: egg, setup: setup, elapsedSincePullS: tNext - out,
-                    dtS: Constants.dtSim, waterAtPullC: waterAtPullC
+                    dtS: Constants.dtSim, waterAtPullC: waterAtPullC, meanAtPullC: meanAtPullC
                 )
             } else {
                 next = Protocols.bathTemperature(egg, setup, tS: tNext)

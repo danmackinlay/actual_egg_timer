@@ -75,6 +75,13 @@ export interface CookChoices {
   startMode: StartMode;
   afterBoil: HeatAfterBoil;
   cooling: Cooling;
+  /** Running water's temperature, C, or null to assume mains water. Read
+   *  only for 'tap'. */
+  tapWater_C: number | null;
+  /** The bowl's water, litres, and its temperature, C, or null to assume the
+   *  room. Read only for 'bowl'. */
+  bowlLitres: number;
+  bowlWater_C: number | null;
   waterLitres: number;
   eggCount: number;
   altitude_m: number;
@@ -304,7 +311,7 @@ export function plausibleProbeRange_C(
   const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
   const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread }, cookTime_s);
   const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread }, cookTime_s);
-  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup.cooling, setup.ambient_C));
+  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup));
   const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
   const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
   return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];
@@ -569,8 +576,22 @@ export function cookSetupOf(ch: CookChoices, timeToBoil_s: number): CookPot {
       cooling: ch.cooling,
       waterLitres: ch.waterLitres,
       eggCount: ch.eggCount,
+      ...coolingWaterOf(ch),
     },
   };
+}
+
+/** What the setup says of the water the eggs cool in: for running water its
+ *  temperature, if the cook gave one; for a bowl its volume, and its
+ *  temperature if given. Nothing for ice or the air, and nothing assumed: an
+ *  absent temperature is assumed where it is read (`coolingMedium_C`), so
+ *  the pots that never had these fields keep the setups they had. */
+function coolingWaterOf(ch: CookChoices): { coolingWater_C?: number; bowlLitres?: number } {
+  if (ch.cooling === 'tap') return ch.tapWater_C === null ? {} : { coolingWater_C: ch.tapWater_C };
+  if (ch.cooling !== 'bowl') return {};
+  return ch.bowlWater_C === null
+    ? { bowlLitres: ch.bowlLitres }
+    : { coolingWater_C: ch.bowlWater_C, bowlLitres: ch.bowlLitres };
 }
 
 /* ------------------------------------------------------- the transitions */
@@ -872,6 +893,9 @@ function readChoices(raw: unknown): CookChoices | null {
   const start = raw['startMode'];
   const after = raw['afterBoil'];
   const cooling = raw['cooling'];
+  const tapWater = raw['tapWater_C'];
+  const bowlLitres = raw['bowlLitres'];
+  const bowlWater = raw['bowlWater_C'];
   const water = raw['waterLitres'];
   const count = raw['eggCount'];
   const altitude = raw['altitude_m'];
@@ -884,7 +908,10 @@ function readChoices(raw: unknown): CookChoices | null {
   if (room !== null && !isNumber(room)) return null;
   if (start !== 'cold' && start !== 'hot') return null;
   if (after !== 'hold' && after !== 'off') return null;
-  if (cooling !== 'ice' && cooling !== 'tap' && cooling !== 'counter') return null;
+  if (cooling !== 'ice' && cooling !== 'tap' && cooling !== 'bowl' && cooling !== 'counter') return null;
+  if (tapWater !== null && !isNumber(tapWater)) return null;
+  if (!isNumber(bowlLitres) || !(bowlLitres > 0)) return null;
+  if (bowlWater !== null && !isNumber(bowlWater)) return null;
   if (!isNumber(water) || !(water > 0)) return null;
   if (!isNumber(count) || !(count > 0)) return null;
   if (!isNumber(altitude)) return null;
@@ -892,7 +919,8 @@ function readChoices(raw: unknown): CookChoices | null {
   return {
     mass_kg: mass, massFrom: massFrom, sizeTable: massFrom === 'class' ? table as SizeTable : null,
     eggFrom: eggFrom, customStart_C: custom, room_C: room, startMode: start, afterBoil: after,
-    cooling: cooling, waterLitres: water, eggCount: count, altitude_m: altitude, level: level,
+    cooling: cooling, tapWater_C: tapWater, bowlLitres: bowlLitres, bowlWater_C: bowlWater,
+    waterLitres: water, eggCount: count, altitude_m: altitude, level: level,
   };
 }
 
@@ -1159,6 +1187,8 @@ function choicesKey(ch: CookChoices): string {
     ch.massFrom, ch.sizeTable ?? '-', ch.eggFrom, ch.startMode, ch.afterBoil, ch.cooling,
     numberKey(ch.mass_kg), numberKey(ch.customStart_C), ch.room_C === null ? '-' : numberKey(ch.room_C),
     numberKey(ch.waterLitres), numberKey(ch.eggCount), numberKey(ch.altitude_m), numberKey(ch.level),
+    ch.tapWater_C === null ? '-' : numberKey(ch.tapWater_C), numberKey(ch.bowlLitres),
+    ch.bowlWater_C === null ? '-' : numberKey(ch.bowlWater_C),
   ].join('|');
 }
 

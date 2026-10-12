@@ -628,7 +628,7 @@ const S0 = T0 / 1000;
 const C4 = knowing({ particles: 200, eggsLogged: 0 });
 const CHOICES: CookChoices = {
   mass_kg: 0.062, massFrom: 'scale', sizeTable: null, eggFrom: 'fridge', customStart_C: 12, room_C: null,
-  startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
+  startMode: 'hot', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
 };
 
 function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory = {}): RunningCook {

@@ -77,6 +77,14 @@ public func inputsKey(_ inputs: DecisionInputs) -> String {
     ]
     var key = "\(s.startMode.rawValue)|\(s.afterBoil.rawValue)|\(s.cooling.rawValue)"
     for n in numbers { key += "|" + numberKey(n) }
+    // The water the eggs cool in, after the rest and only where the cooling
+    // reads it: running water's temperature when given, and a bowl's always,
+    // "-" when assumed, then its litres. decide.ts says why.
+    if s.cooling == .tap, let water = s.coolingWaterC { key += "|" + numberKey(water) }
+    if s.cooling == .bowl {
+        key += "|" + (s.coolingWaterC.map(numberKey) ?? "-")
+        key += "|" + (s.bowlLitres.map(numberKey) ?? "-")
+    }
     return key
 }
 

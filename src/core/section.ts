@@ -26,7 +26,7 @@ import {
   CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.js';
 import {
-  SphereState, createSphere, stepSphere, temperatureAt,
+  SphereState, createSphere, meanTemperature, stepSphere, temperatureAt,
 } from './sphere.js';
 import { Dose, createDose, accumulateDose } from './kinetics.js';
 import { ModelParams, sliderFromYolkDose } from './solve.js';
@@ -55,6 +55,9 @@ export interface EggSection {
   /** The water's temperature as the egg left it: an ice bath or a tap
    *  blends out of it. */
   waterAtPull_C: number;
+  /** The egg's mean temperature as it left the water: a bowl warms by what
+   *  it has fallen since. */
+  meanAtPull_C: number;
   /** Sample radii, r/R: the yolk's first, from the centre out, then the
    *  white's. */
   x: number[];
@@ -97,6 +100,7 @@ export function createSection(egg: Egg, setup: CookSetup, params: ModelParams): 
     t_s: 0.0,
     outAt_s: null,
     waterAtPull_C: surface,
+    meanAtPull_C: setup.eggStart_C,
     x: x,
     yolk: yolk,
     outer: outer,
@@ -125,8 +129,9 @@ export function advanceSection(
       if (s.outAt_s === null) {
         s.outAt_s = out;
         s.waterAtPull_C = s.sphere.surface_C;
+        s.meanAtPull_C = meanTemperature(s.sphere);
       }
-      next = coolingTemperature(s.sphere, egg, setup, tNext - out, DT_SIM, s.waterAtPull_C);
+      next = coolingTemperature(s.sphere, egg, setup, tNext - out, DT_SIM, s.waterAtPull_C, s.meanAtPull_C);
     }
     stepSphere(s.sphere, DT_SIM, next);
     s.t_s = tNext;
