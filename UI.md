@@ -70,6 +70,20 @@ phase (the 1750 title page, when it is shown, above it all):
 - **How sure I am**: a line of words the cook presses, and the runny-white
   line when it applies (§8). It keeps its room in every phase; it goes at
   the pull, when the time it was about has passed.
+- The hint, then **the action**, directly under the time it runs (the
+  owner, 12 October 2026): "Start heating" on a cold start, "Eggs in"
+  otherwise, Full rolling boil, the pull, Start again (the table below). In
+  sous-vide it is dead, with the bath's hint above. Cancel under it while a
+  cook runs. The block keeps the room of a hint, a primary button and
+  Cancel in every phase, and what a phase leaves empty is under its
+  buttons, so the slider and everything below stay put as the buttons come
+  and go: nothing moves at the start, cold or hot, nor at the pull, the
+  cooling or Done. The hint holds the room of the tallest hint over a
+  primary (two lines on the web, or the (i); on iOS idle's, with the
+  widest time, or Heating's with its (i)), at its foot, so the primary
+  button sits at one height from idle to the pull. Only "still in the
+  water?", with its two answers and Cancel, and the hint's (i) opened go
+  past the room and move what is below.
 - **The doneness slider.** The heading reads `controls.doneness` at its start
   and the peak yolk at its end (`controls.doneness.peak`; in sous-vide the
   water, `controls.doneness.bath`), in the cook's units. The track is the
@@ -91,11 +105,7 @@ phase (the 1750 title page, when it is shown, above it all):
   surer (§8, "the advice") the link "How to make this more reliable →" goes
   under whichever is there, while idle, and opens Help at its reliability
   section, which lists the changes that would help this setup (`advice.*`).
-- The hint, then **the action**: "Start heating" on a cold start, "Eggs in"
-  otherwise, Full rolling boil, the pull, Start again (the table below). In
-  sous-vide it is dead, with the bath's hint above. Cancel under it while a
-  cook runs. At Done the bar carries the questions after an egg, so it ends
-  the page rather than sticking to the bottom of the screen.
+- **The questions after an egg**, at Done, end the page (below).
 
 **The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98; web
 `src/ui/eggSection.ts` and `render.ts`, iOS `EggSectionView.swift`). An
@@ -547,10 +557,14 @@ the thumb when the finger lifts; the web's thumb moves at once.
     growing at the largest standard size, since each sits under its level.
   - *Settings* is the navigation bar's in every phase; the pull pops it, and
     Help, back to the egg's page.
-- **The action bar** on the web is opaque, fading in over its top 20 px, and
-  stuck to the bottom of the page's column rather than fixed over it, so what
-  scrolls under it is hidden and the last line always scrolls clear; at Done
-  it ends the page instead.
+- **The action's room** is reckoned differently. The web's is the room of a
+  hint's two lines (or the (i)), a primary and a secondary button in CSS
+  (`#actions` in `styles.css`), so a hint longer than two lines (at a large
+  browser text size) grows it. iOS lays the tallest hints and button words
+  out hidden under the block (`PhaseActions.room`), so the room grows with
+  the text size and the language, and holds Cooking's alarm line too. In
+  both the block is in the column, scrolled with it, never stuck to the
+  screen.
 - **The Lock Screen and Dynamic Island** are iOS's alone: the pull names the
   cooling, word for word as the alarm does, the card ends when the cooling
   does, and it carries no odds (`DECISIONS.md` 32, 33).

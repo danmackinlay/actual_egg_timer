@@ -7711,3 +7711,53 @@ diff itself could not be read from this worktree (the isolation refused a
   refused.
 
 Gates: `verify` and `ios:build` before each commit, `ios:e2e` 48 of 48.
+
+## 12 October 2026: the action under the time
+
+The owner, using 0.5 on his phone: the main button sits directly below the
+time display, with everything else below it, since what it does is tied to
+the timer. He confirmed the whole block moves (the hint, the primary, and
+Cancel or the phase's second button), in every phase, idle included, in
+both apps. Branch `action-under-time`, from `main` at `3758e7b`.
+
+- **Web** (`53a8899`): `#actions` sits after `#readout`, no longer a bar
+  stuck to the bottom of the screen; the questions after an egg
+  (`#feedback`) leave it and end the page after the slot. The column's
+  `min-height` and the bar's gradient go; `main` takes the safe-area
+  padding at its foot.
+- **iOS** (`db3c4a0`): the readout and `PhaseActions` share one
+  `TimelineView`; the slot is `PhaseSlot`, under the setup, with the
+  questions at Done after it.
+- **Nothing moves at the start, nor after.** With the block above the
+  slider, every button that came or went would have moved the slider and
+  the sentence: Cancel appearing at the start would break `one-layout` in both
+  suites (`DECISIONS.md` 91, design/one-screen.md §2). So the block keeps
+  the room of a hint, a primary and Cancel in every phase, and what a phase
+  leaves empty is under its buttons. The web reckons the room in CSS
+  (`#actions` min-height, from the buttons' own sizes and the hint's two
+  lines or the (i)); iOS lays the tallest hints and button words out
+  hidden under the block (`PhaseActions.room`), so it follows the text
+  size and the language. The hint sits at the foot of its room, so the
+  primary keeps one height from idle to the pull (on iOS the (i) is taller
+  than a line of footnote, and the button moved 14 pt at the start until
+  the hint's room held it, `hintLine`). Only "still in the water?" and the
+  heating hint's (i) opened go past the room. The cost: an empty band
+  under Start idle (Cancel's room, 56 px on the web) and a larger one
+  under Cancel while cooking or cooling and under Start again at Done.
+- **Where things are now.** Web, 390 px: the readout 60 to 266, the block
+  280 to 441 in every phase, the slider at 481 (was under the readout).
+  At 320 px the block is the same 161 px. iOS, iPhone 17 Pro: the action
+  at 358.5 pt, where the slider was; the slider from 358.5 to 536.5, and
+  at the largest text size from 618 (`UI.md` §8) to 1900.5, held still
+  across "Most likely" (`likely-still-largest`).
+- **e2e** (`5a8830c`): `one-layout` in both suites now checks the action is
+  between the time and the slider and stays put at the start (web: every
+  phase to Done; iOS: idle and Done, through `logTop("action")`).
+- **Seen**: web screenshots through the e2e harness (cold and hot, idle to
+  Done, and 320 px idle and Heating); iOS on a simulator of its own (idle,
+  Heating, a hot start's Cooking, Done, and idle and Heating at
+  `accessibility-extra-extra-extra-large`). The pull on iOS and 1750 were
+  not photographed.
+
+Gates: `verify` and `ios:build` before each commit; `e2e` 86 of 86,
+`ios:e2e` 48 of 48 on the last commit.
