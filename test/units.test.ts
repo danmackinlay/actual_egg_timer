@@ -187,7 +187,7 @@ test('3c. and through the egg: mass and girth come back through the one diameter
   }
 });
 
-test('3c2. grams show only the decimals they need; every other measure keeps its own', () => {
+test('3c2. grams and the bowl show only the decimals they need; every other measure keeps its own', () => {
   const g = measureFor('mass', 'metric', null);
   assert.equal(g.trim, true);
   assert.equal(displayText(g, 58), '58');
@@ -197,10 +197,15 @@ test('3c2. grams show only the decimals they need; every other measure keeps its
   assert.equal(rendered(g, 58), '58 g');
   assert.equal(rendered(g, 58.5), '58.5 g');
   for (const m of everyMeasure()) {
-    if (m.quantity === 'mass' && m.unit === 'g') continue;
+    if ((m.quantity === 'mass' && m.unit === 'g') || m.quantity === 'bowl') continue;
     assert.equal(m.trim, false, `${m.quantity} in ${m.unit}`);
   }
   assert.equal(displayText(measureFor('water', 'metric', null), 2), '2.00');
+  // The bowl's water is said in the setup sentence: "with 1.5 L of water".
+  const bowl = measureFor('bowl', 'metric', null);
+  assert.equal(displayText(bowl, 2), '2');
+  assert.equal(displayText(bowl, 1.5), '1.5');
+  assert.equal(displayText(bowl, 1.25), '1.25');
 });
 
 test('3d. a stored value at a limit shows as the input\'s bound, never a step outside it', () => {
