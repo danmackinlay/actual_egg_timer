@@ -681,8 +681,10 @@ async function relaunched(
 }
 
 /// The parts of the screen whose place is logged (ContentView.logTop).
-const PARTS = ['action', 'slider', 'sentence', 'egg'] as const;
+const PARTS = ['action', 'main', 'slider', 'sentence', 'egg'] as const;
 type Part = typeof PARTS[number];
+/// The parts under the action, which its buttons coming and going never move.
+const BELOW = ['slider', 'sentence', 'egg'] as const;
 type Layout = Partial<Record<Part, number>>;
 
 /// Where each part of the screen last sat, pt from the window's top
@@ -728,28 +730,79 @@ function actionAbove(run: Run, l: Layout, when: string): void {
     `${when}: the action not above the slider: action ${l.action}, slider ${l.slider}`);
 }
 
-scenario('one-layout', 'one layout from idle to Done; the action under the time; the slider, the sentence and the egg stay, nothing moves at the start', async (run) => {
-  const before = await idle(run, ['-uiDo', `eggsIn@launch+1,${TO_DONE}`]);
+/// Under the action's row, at the default text size where it is one row,
+/// nothing empty: the slider the stack's spacing (22 pt) under the main
+/// button's foot.
+function nothingEmpty(run: Run, l: Layout, when: string): void {
+  run.check(l.main != null && l.slider != null && near(l.slider - l.main, 22, 1),
+    `${when}: ${num(l.slider) - num(l.main) - 22} pt empty under the row (main button's foot ${l.main}, slider ${l.slider})`);
+}
+
+scenario('one-layout', 'one layout from idle to Done; the action under the time in one row, nothing empty under it, nothing below it moving in any phase', async (run) => {
+  await oneLayout(run, [], false);
+});
+
+scenario('one-layout-largest', 'the same at the largest text size, in 1750, where the row stacks: nothing below it moves in any phase', async (run) => {
+  await oneLayout(run, [
+    '-UIPreferredContentSizeCategoryName', 'UICTContentSizeCategoryAccessibilityXXXL', '-uiLanguage', 'en-x-1750',
+  ], true);
+});
+
+/// One layout from idle to Done, launched with `args`: the action above the
+/// slider, and nothing under it moving in any phase; where the row is not
+/// `stacked`, nothing empty under it.
+async function oneLayout(run: Run, args: string[], stacked: boolean): Promise<void> {
+  const before = await idle(run, [...args, '-uiDo', `eggsIn@launch+1,${TO_DONE}`]);
+  const nothingEmptyUnless = (l: Layout, when: string): void => {
+    if (!stacked) nothingEmpty(run, l, when);
+  };
   for (const part of PARTS) run.check(part in before, `idle: no ${part}`);
   actionAbove(run, before, 'idle');
+  nothingEmptyUnless(before, 'idle');
   let i = await run.step(run.t0 + 1);
   const heating = await run.until(phaseIs('HEATING'), { from: i, what: 'phase HEATING' });
   await run.settled(heating.i);
   const after = await stillLayout(run);
-  for (const part of PARTS) {
-    run.check(near(after[part], before[part], 2), `${part} moved at the start: ${before[part]} -> ${after[part]}`);
+  // At the default size the readout is one height idle and heating, so
+  // nothing moves at all; at the largest its line can wrap again.
+  if (!stacked) run.check(near(after.action, before.action, 2), `the action moved at the start: ${before.action} -> ${after.action}`);
+  for (const part of BELOW) {
+    const was = num(before[part]) - num(before.action);
+    const is = num(after[part]) - num(after.action);
+    run.check(near(is, was, 2), `${part} moved under the action at the start: ${was} -> ${is} pt`);
   }
+  nothingEmptyUnless(after, 'Heating');
   // Boiled at 5:00 (from the start, a second after the launch), out 3 s
-  // into the pull, and on to Done: the four parts in every phase.
+  // into the pull, and on to Done: the parts in every phase, and the
+  // slider, the sentence and the egg never anywhere else.
   run.t0 += 1;
   await toDone(run);
   const done = await stillLayout(run);
   for (const part of PARTS) run.check(part in done, `Done: no ${part}`);
   actionAbove(run, done, 'Done');
+  nothingEmptyUnless(done, 'Done');
+  // Each frame's places, as the log gives them a frame at a time: what is
+  // under the action as far under its top as at idle. The action itself
+  // follows the readout, which at the largest sizes is not one height in
+  // every phase.
+  const now: Layout = { ...before };
+  const moved: string[] = [];
+  const lines = run.lines().slice(heating.i);
+  lines.forEach((e, k) => {
+    if (e.ev === 'layout') now[e.part as Part] = e.y;
+    const next = lines[k + 1];
+    if (next !== undefined && next.t === e.t) return;
+    for (const part of BELOW) {
+      const was = num(before[part]) - num(before.action);
+      const is = num(now[part]) - num(now.action);
+      if (!near(is, was, 2)) moved.push(`${part} ${was} -> ${is} pt under the action at ${e.t}`);
+    }
+  });
+  run.check(moved.length === 0, `moved under the action: ${moved.slice(0, 6).join('; ')}`);
   const phasesSeen = phases(run.lines());
   run.check(same(phasesSeen, ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phasesSeen}`);
-  run.note(`action ${before.action}, slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
-});
+  run.note(`action ${before.action}, main button's foot ${before.main}, slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle to Done`);
+}
 
 scenario('egg-readings', 'the egg aimed for at idle (softer and firmer differ), live from raw at the start, as it ran at Done', async (run) => {
   await idle(run, [...HOT, '-uiDo',

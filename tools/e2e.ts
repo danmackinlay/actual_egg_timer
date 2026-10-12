@@ -98,13 +98,20 @@ function deadlines(s: Snap): { cookEnd_s: number; coolEnd_s: number } {
   return { cookEnd_s: d.cookEnd_s, coolEnd_s: d.coolEnd_s ?? NaN };
 }
 
+/** A box on the page, px from its top and left. */
+interface Box { top: number; bottom: number; left: number }
+
 /** What the one screen shows: whether each of its parts is on screen, where
  *  the action, the slider, the sentence and the egg are, where the readout
- *  ends, and the slider's value. */
+ *  and the action end, the action's two buttons (null when not shown), and
+ *  the slider's value. */
 interface Layout {
   shown: { id: string; visible: boolean }[];
   top: Record<'actions' | 'doneness' | 'sentence' | 'eggSection', number>;
   readoutEnd: number;
+  actionsEnd: number;
+  primary: Box | null;
+  secondary: Box | null;
   level: string;
 }
 
@@ -113,10 +120,15 @@ async function layout(tab: Tab): Promise<Layout> {
     const on = (id) => { const e = document.getElementById(id); const r = e.getBoundingClientRect();
       return { id: id, visible: r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' }; };
     const top = (id) => document.getElementById(id).getBoundingClientRect().top + window.scrollY;
+    const box = (id) => { const r = document.getElementById(id).getBoundingClientRect();
+      return r.height > 0 ? { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, left: r.left } : null; };
     return {
       shown: ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'].map(on),
       top: { actions: top('actions'), doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
       readoutEnd: document.getElementById('readout').getBoundingClientRect().bottom + window.scrollY,
+      actionsEnd: document.getElementById('actions').getBoundingClientRect().bottom + window.scrollY,
+      primary: box('primary'),
+      secondary: box('secondary'),
       level: document.getElementById('doneness').value,
     };
   })()`);
@@ -126,6 +138,62 @@ async function layout(tab: Tab): Promise<Layout> {
 function actionUnderTime(l: Layout, when: string): void {
   check(l.readoutEnd <= l.top.actions && l.top.actions < l.top.doneness,
     `${when}: the action not between the time and the slider: readout ends ${l.readoutEnd}, action ${l.top.actions}, slider ${l.top.doneness}`);
+}
+
+/** One layout from idle to Done at a screen `width` px wide, where the row
+ *  of buttons is side by side (`stacked` false) or stacked: in every phase
+ *  the action is under the time, as tall as at idle, and what is under it
+ *  as far below it; side by side, Cancel is on the main button's left and
+ *  nothing is left empty under the row; stacked, Cancel is under it. */
+function oneLayout(width: number, stacked: boolean): Scenario['run'] {
+  return async (h) => {
+    const tab = await h.ctx.open(STOPPED);
+    await tab.viewport(width);
+    await tab.until("__snap().chosen !== null", 'the time decided');
+    await tab.settle();
+    const idle = await layout(tab);
+    const seen: [string, Layout][] = [['idle', idle]];
+    let s = await start(tab, 'cold');
+    await tab.until('__snap().deadlines !== null', 'planned');
+    await tab.settle();
+    const heating = await layout(tab);
+    seen.push(['HEATING', heating]);
+    check(heating.level === String(s.cook?.choices.level), `the slider at the cook's level: ${heating.level}`);
+    await tab.shift(300);
+    s = await boil(tab);
+    for (const want of ['COOKING', 'PULL', 'COOLING', 'DONE']) {
+      if (want === 'PULL') await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      if (want === 'COOLING') await tab.click('#primary');
+      if (want === 'DONE') await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      s = await tab.phase(want);
+      await tab.settle();
+      seen.push([want, await layout(tab)]);
+    }
+    const block = (l: Layout): number => l.actionsEnd - l.top.actions;
+    for (const [when, l] of seen) {
+      check(l.shown.every((x) => x.visible), `${when}: ${JSON.stringify(l.shown)}`);
+      actionUnderTime(l, when);
+      // Nothing under the block moves: the block is as tall as at idle, and
+      // the slider, the sentence and the egg as far under its top.
+      check(near(block(l), block(idle), 1), `${when}: the action ${block(l)} px tall, idle ${block(idle)}`);
+      for (const id of ['doneness', 'sentence', 'eggSection'] as const) {
+        check(near(l.top[id] - l.top.actions, idle.top[id] - idle.top.actions, 1),
+          `${when}: ${id} moved under the action: ${idle.top[id] - idle.top.actions} -> ${l.top[id] - l.top.actions} px`);
+      }
+      if (!stacked && l.primary !== null) {
+        check(near(l.actionsEnd, l.primary.bottom, 1), `${when}: ${l.actionsEnd - l.primary.bottom} px empty under the row`);
+      }
+    }
+    const p = heating.primary;
+    const c = heating.secondary;
+    check(p !== null && c !== null, 'Heating: the main button and Cancel');
+    if (p !== null && c !== null) {
+      check(stacked ? c.top >= p.bottom : c.left < p.left && c.top < p.bottom,
+        `Heating at ${width} px: Cancel at ${c.left},${c.top}, the main button at ${p.left},${p.top} to ${p.bottom}`);
+    }
+    return `${width} px, ${stacked ? 'stacked' : 'side by side'}: the action ${block(idle).toFixed(0)} px tall, `
+      + `the slider ${(idle.top.doneness - idle.top.actions).toFixed(0)} px under its top, idle to Done`;
+  };
 }
 
 /** The slider moved to `level` as a finger does: pressed, moved, and (unless
@@ -325,41 +393,13 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'one-layout': {
-    what: 'one layout from idle to Done; the action under the time; the slider, the sentence and the egg stay, and nothing moves at the start',
-    run: async (h) => {
-      const tab = await h.ctx.open(STOPPED);
-      await tab.until("__snap().chosen !== null", 'the time decided');
-      await tab.settle();
-      const idle = await layout(tab);
-      check(idle.shown.every((x) => x.visible), `idle: ${JSON.stringify(idle.shown)}`);
-      let s = await start(tab, 'cold');
-      await tab.until('__snap().deadlines !== null', 'planned');
-      await tab.settle();
-      const heating = await layout(tab);
-      check(heating.shown.every((x) => x.visible), `Heating: ${JSON.stringify(heating.shown)}`);
-      check(heating.level === String(s.cook?.choices.level), `the slider at the cook's level: ${heating.level}`);
-      actionUnderTime(idle, 'idle');
-      actionUnderTime(heating, 'Heating');
-      // Nothing moves at the start: the action, the slider and the sentence
-      // stay put.
-      for (const id of ['actions', 'doneness', 'sentence', 'eggSection'] as const) {
-        check(near(idle.top[id], heating.top[id], 2), `${id} moved at the start: ${idle.top[id]} -> ${heating.top[id]}`);
-      }
-      const notes = [`idle→Heating: sentence at ${heating.top.sentence.toFixed(0)} px`];
-      await tab.shift(300);
-      s = await boil(tab);
-      for (const want of ['COOKING', 'PULL', 'COOLING', 'DONE']) {
-        if (want === 'PULL') await tab.shiftTo(deadlines(s).cookEnd_s + 2);
-        if (want === 'COOLING') await tab.click('#primary');
-        if (want === 'DONE') await tab.shiftTo(deadlines(s).coolEnd_s + 2);
-        s = await tab.phase(want);
-        const l = await layout(tab);
-        check(l.shown.every((x) => x.visible), `${want}: ${JSON.stringify(l.shown)}`);
-        actionUnderTime(l, want);
-        notes.push(`${want} ✓`);
-      }
-      return notes.join(', ');
-    },
+    what: 'one layout from idle to Done; the action under the time, Cancel beside the main button, nothing empty under the row, nothing below it moving',
+    run: oneLayout(390, false),
+  },
+
+  'one-layout-narrow': {
+    what: 'at 320 px the main button and Cancel stack, and the action keeps its height from idle to Done, so nothing below it moves',
+    run: oneLayout(320, true),
   },
 
   'egg-readings': {
