@@ -448,6 +448,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     right of the thumb; the direction sentence says so. Not hatched or
     skipped, and the 3× runny-white cost is unchanged. 5 October 2026.
     Amended by 84: the soft end still leans late.
+    Amended by 97 (question 14): the bracket is the certainty line's
+    interval in words, and its most likely word is marked.
 81. **The owner's results are kept, and can be exported**: "build an
     export function", and protect the log. Amends 48 for this one store:
     **the results log's storage key and its record format change only
