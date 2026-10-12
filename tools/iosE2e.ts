@@ -248,12 +248,18 @@ class Run {
     return this.step(this.at);
   }
 
+  get logPath(): string {
+    return `${this.data}/Library/Caches/aet.log`;
+  }
+
   /// The debug log so far, an event a line (`Screenshots.log`): { t (cook
   /// time, epoch s), ev (what happened), and its fields }, a field with no
-  /// value left out. Read on from where the last read stopped; a line still
-  /// being written is left for the next.
+  /// value left out. Read on from where the last read stopped, a whole line
+  /// at a time: the bytes after the last newline are a line still being
+  /// written, read once it ends. A whole line that is not JSON fails, and
+  /// fails the same at the next read, which starts from the same byte.
   lines(): Event[] {
-    const path = `${this.data}/Library/Caches/aet.log`;
+    const path = this.logPath;
     if (!existsSync(path)) return [];
     const fd = openSync(path, 'r');
     try {
@@ -262,20 +268,28 @@ class Run {
         const buffer = Buffer.alloc(size - this.logBytes);
         readSync(fd, buffer, 0, buffer.length, this.logBytes);
         const end = buffer.lastIndexOf(0x0a) + 1;
+        const read: Event[] = [];
         for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
           if (line === '') continue;
           try {
-            this.log.push(JSON.parse(line) as Event);
+            read.push(JSON.parse(line) as Event);
           } catch {
-            throw new Error(`the debug log's line ${this.log.length + 1} is not JSON: ${line.slice(0, 200)}`);
+            throw new Error(`the debug log's line ${this.log.length + read.length + 1} is not JSON: ${line.slice(0, 200)}`);
           }
         }
+        this.log.push(...read);
         this.logBytes += end;
       }
     } finally {
       closeSync(fd);
     }
     return this.log.slice();
+  }
+
+  /// The debug log's text as it stands, a line each, for a failure to show
+  /// whether or not each line reads.
+  text(): string[] {
+    return existsSync(this.logPath) ? readFileSync(this.logPath, 'utf8').split('\n').filter((l) => l !== '') : [];
   }
 
   /// The lines since the last launch.
@@ -2147,7 +2161,7 @@ async function main(): Promise<void> {
         for (const f of run.failures) console.log(`        ${f}`);
         for (const n of run.notes) console.log(`        note: ${n}`);
         if (process.env['AET_E2E_LOG']) {
-          console.log(run.lines().map((l) => `        | ${JSON.stringify(l).slice(0, 240)}`).join('\n'));
+          console.log(run.text().map((l) => `        | ${l.slice(0, 240)}`).join('\n'));
         }
       }
     }
