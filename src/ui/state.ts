@@ -165,6 +165,12 @@ export function currentEgg(m: Model): Egg {
   return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).egg;
 }
 
+/** The room the controls' pot is solved in, C (`ambientFor`): the cook's,
+ *  or the one assumed. A bowl with no temperature given is at it. */
+export function currentAmbient_C(m: Model): number {
+  return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).setup.ambient_C;
+}
+
 /** The room as the cook gave it, or null to assume one (`roomInUse`), as
  *  the controls say. */
 export function room_C(m: Model): number | null {

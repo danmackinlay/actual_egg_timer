@@ -108,6 +108,7 @@ export function boot(): void {
   wireInfoButtons();
   wireSteppers();
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
+  setStepRule(page().coolingWater, (value, up) => stepPast(measure('coolingWater'), value, up));
   wireViews();
   // From here on every change to the page is a message (send.ts).
   startRunner(stores, initial);

@@ -250,13 +250,42 @@
           <button type="button" class="panel__close" data-copy="setup.close"></button>
         </div>
         <p id="moreCooling" class="disclosed" hidden data-copy="controls.cooling.more"></p>
-        <div class="seg">
+        <!-- Four choices, one to a line, fastest first: a list holds four
+             names at any width and text size, where four segments on a
+             phone would not (UI.md section 4). -->
+        <div class="seg seg--list">
           <input type="radio" name="cooling" id="coolIce" value="ice">
           <label for="coolIce" data-copy="controls.cooling.ice"></label>
           <input type="radio" name="cooling" id="coolTap" value="tap">
           <label for="coolTap" data-copy="controls.cooling.tap"></label>
+          <input type="radio" name="cooling" id="coolBowl" value="bowl">
+          <label for="coolBowl" data-copy="controls.cooling.bowl"></label>
           <input type="radio" name="cooling" id="coolCounter" value="counter">
           <label for="coolCounter" data-copy="controls.cooling.counter"></label>
+        </div>
+        <!-- The water the eggs cool in: running water's temperature, and a
+             bowl's water and temperature, each shown with its own choice.
+             A temperature is optional, and empty until set, when it shows
+             the one assumed, greyed (src/core/protocol.ts, coolingMedium_C). -->
+        <div id="bowlFields" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="bowlLitres" data-copy="controls.bowl"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreBowl" data-label="controls.bowl"></button>
+            </span>
+            <span class="unit"><input type="number" id="bowlLitres" data-stepper inputmode="decimal"><span id="unitBowl"></span></span>
+          </div>
+          <p id="moreBowl" class="disclosed" hidden data-copy="controls.bowl.more"></p>
+        </div>
+        <div id="coolingWaterField" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="coolingWater" data-copy="controls.coolingWater"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreCoolingWater" data-label="controls.coolingWater"></button>
+            </span>
+            <span class="unit"><input type="number" id="coolingWater" data-stepper inputmode="decimal"><span id="unitCoolingWater"></span></span>
+          </div>
+          <p id="moreCoolingWater" class="disclosed" hidden></p>
         </div>
       </div>
     </div>

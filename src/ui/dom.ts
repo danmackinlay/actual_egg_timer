@@ -125,6 +125,13 @@ function findDom() {
     feedbackTarget: el<HTMLParagraphElement>('feedbackTarget'),
     roomTemp: el<HTMLInputElement>('roomTemp'),
     unitRoom: el<HTMLSpanElement>('unitRoom'),
+    bowlFields: el<HTMLDivElement>('bowlFields'),
+    bowlLitres: el<HTMLInputElement>('bowlLitres'),
+    unitBowl: el<HTMLSpanElement>('unitBowl'),
+    coolingWaterField: el<HTMLDivElement>('coolingWaterField'),
+    coolingWater: el<HTMLInputElement>('coolingWater'),
+    unitCoolingWater: el<HTMLSpanElement>('unitCoolingWater'),
+    moreCoolingWater: el<HTMLParagraphElement>('moreCoolingWater'),
     moreRoom: el<HTMLParagraphElement>('moreRoom'),
     unitsPeriod: el<HTMLParagraphElement>('unitsPeriod'),
   };

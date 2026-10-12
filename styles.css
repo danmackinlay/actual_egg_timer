@@ -686,6 +686,13 @@ input[data-stepper]::-webkit-outer-spin-button { -webkit-appearance: none; margi
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+/* A segmented group too long for one row: the same choices, one to a line,
+   read from the left like a list. */
+.seg--list { flex-direction: column; }
+.seg--list label { justify-content: flex-start; padding: 6px 14px; }
+
+/* A number's label and its (i), on the left of a row in a clause's panel. */
+.prow__head { display: flex; align-items: center; gap: 2px; min-width: 0; }
 
 /* ------------------------------------------------------------------ slot */
 

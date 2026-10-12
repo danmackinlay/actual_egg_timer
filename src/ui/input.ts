@@ -86,6 +86,18 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
   read.cooling = radioValue('cooling', 'ice') as Cooling;
   const litres = field(page().litres, 'water');
   if (litres !== null) read.waterLitres = litres;
+  const bowl = field(page().bowlLitres, 'bowl');
+  if (bowl !== null) read.bowlLitres = bowl;
+  // The water's temperature, running or in the bowl, whichever is chosen:
+  // an emptied field is "not given", and the temperature is assumed again.
+  if (source === page().coolingWater) {
+    const blank = page().coolingWater.value.trim() === '';
+    const water = readField(page().coolingWater, 'coolingWater');
+    if (blank || water !== null) {
+      if (read.cooling === 'tap') read.tapWater_C = water;
+      else if (read.cooling === 'bowl') read.bowlWater_C = water;
+    }
+  }
   const eggCount = clampNumber(page().eggCount.value, LIMITS.eggCount, NaN);
   if (!Number.isNaN(eggCount)) read.eggCount = Math.round(eggCount);
   const doneness = clampNumber(page().doneness.value, LIMITS.doneness, NaN);
