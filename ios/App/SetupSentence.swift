@@ -434,6 +434,21 @@ struct ClausePanel: View {
                 )
                 .appFont(.subheadline)
             }
+            // An egg left out is at the room's temperature: the room setting,
+            // here where it counts most, as in Settings. Optional, greyed at
+            // the room assumed until set.
+            if planner.settings.startTempMode == .room {
+                VStack(alignment: .leading, spacing: 6) {
+                    InfoRow("controls.room", more: [tr("controls.room.more", [
+                        "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
+                    ])])
+                    HStack {
+                        Spacer(minLength: 0)
+                        RoomField(planner: planner)
+                    }
+                }
+                .appFont(.subheadline)
+            }
             Text(tr("controls.eggFrom.hint", [
                 "fridge": .text(planner.show(.temperature, startTempPresetC(.fridge, roomC: planner.roomInUseC))),
                 "room": .text(planner.show(.temperature, startTempPresetC(.room, roomC: planner.roomInUseC))),

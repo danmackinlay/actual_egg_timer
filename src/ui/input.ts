@@ -105,10 +105,12 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
   read.probe = page().probeSetting.checked;
   // The room, measured: an emptied field is "not measured", and the room is
   // assumed again. Read only when it is the one being edited (`readField`).
-  if (source === page().roomTemp) {
-    if (page().roomTemp.value.trim() === '') read.room_C = null;
+  // In Settings, or beside "at room temperature".
+  for (const input of [page().roomTemp, page().roomTempFrom]) {
+    if (source !== input) continue;
+    if (input.value.trim() === '') read.room_C = null;
     else {
-      const room = readField(page().roomTemp, 'roomTemp');
+      const room = readField(input, 'roomTemp');
       if (room !== null) read.room_C = room;
     }
   }

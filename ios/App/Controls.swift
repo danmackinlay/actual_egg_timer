@@ -288,8 +288,8 @@ struct NudgeField: View {
     }
 }
 
-/// The room in Settings, measured with the probe: empty until set, when the
-/// room is assumed; emptied again, it is assumed again. The planner holds it
+/// The room, in Settings and beside "at room temperature": empty until set,
+/// when the room is assumed; emptied again, it is assumed again. The planner holds it
 /// in SI (`roomC`); the field holds what the cook typed or stepped to, and
 /// shows the stored room again whenever it is not being typed in.
 struct RoomField: View {

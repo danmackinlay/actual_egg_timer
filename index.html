@@ -222,6 +222,19 @@
           <label for="customTemp" data-copy="controls.eggTemp"></label>
           <span class="unit"><input type="number" id="customTemp" data-stepper inputmode="decimal"><span id="unitTemp"></span></span>
         </div>
+        <!-- An egg left out is at the room's temperature: the room setting,
+             here where it counts most, as in Settings. Optional, and empty
+             until set, when it shows the room assumed, greyed. -->
+        <div id="roomFromField" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="roomTempFrom" data-copy="controls.room"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreRoomFrom" data-label="controls.room"></button>
+            </span>
+            <span class="unit"><input type="number" id="roomTempFrom" data-stepper inputmode="decimal"><span id="unitRoomFrom"></span></span>
+          </div>
+          <p id="moreRoomFrom" class="disclosed" hidden></p>
+        </div>
         <p class="hint" id="startTempHint"></p>
       </div>
 
