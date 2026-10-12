@@ -82,14 +82,22 @@ struct PhaseSlot: View {
     }
 }
 
-/// Directly under the time, in every phase: the hint and the button that
-/// move the cook on, and Cancel under them while a cook runs.
+/// Directly under the time, in every phase: the hint, and under it one row
+/// of buttons that move the cook on.
 ///
-/// The block keeps the room of a hint, a button and Cancel, whichever of
-/// them a phase shows (`room`), and the room left over goes under the
-/// buttons: so the slider and the sentence below stay put as the buttons
-/// come and go, and nothing moves at the start. Only what is more than the
-/// room moves them: "still in the water?", and the hint's (i) opened.
+/// The row is Cancel on the left, small, at its own width, and the phase's
+/// main button filling the rest, on the right where the thumb rests, with
+/// room between them; a phase with only the main button gives it the whole
+/// row, and one with only Cancel leaves the rest empty. The row is as tall
+/// in every phase, the main button's height, so nothing below it moves.
+/// Where the widest main button and Cancel do not fit side by side (at the
+/// accessibility text sizes, in 1750's longer words), they stack, the main
+/// button over Cancel, and the stack keeps the room of both in every phase.
+/// The choice is made on the widest words the row can hold, never on the
+/// phase's own, so it is the same in every phase. The hint keeps the room
+/// of the tallest hint, its own at its foot. Only "still in the water?",
+/// with its two answers and Cancel, and the heating hint's (i) opened go
+/// past the room.
 ///
 /// A function of the clock, like the readout: the egg screen's `TimelineView`
 /// hands over the date it drew for, and the phase at that date.
@@ -104,61 +112,39 @@ struct PhaseActions: View {
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
+    /// Between Cancel and the main button: room enough that a wet thumb
+    /// reaching for the one does not land on the other.
+    private static let gap: CGFloat = 20
+
     var body: some View {
-        ZStack(alignment: .top) {
-            room
-            action
+        VStack(spacing: 10) {
+            if let r = readout, r.asking {
+                asking(r)
+            } else {
+                ZStack(alignment: .bottom) {
+                    hintRoom
+                    hint
+                }
+                buttons(main: main, cancel: cancels)
+            }
         }
     }
 
-    // MARK: - The room
+    // MARK: - The hint
 
-    /// The tallest the block is from idle to the pull, laid out and hidden:
-    /// the tallest hint (idle's with the widest time, Heating's with its
-    /// (i), Cooking's with the alarm's line), over the tallest primary
-    /// button's words, over Cancel at its largest. At every text size, so
-    /// the room grows with the words it holds.
-    private var room: some View {
-        let idle = model.keys(.idle)
-        let cooking = model.keys(.cooking)
-        let boiling = planner.show(.temperature, planner.boilingC)
-        return VStack(spacing: 10) {
-            ZStack {
-                hintRoom
-                VStack(spacing: 4) {
-                    Text(cooking.hint.map { tr($0, ["boiling": .text(boiling)]) } ?? " ")
-                    Text(alarmLine)
-                }
-            }
-            .appFont(.footnote)
-            .multilineTextAlignment(.center)
-            Button {} label: {
-                ZStack {
-                    Text(tr(idle.action ?? "action.eggsIn"))
-                    Text(tr("action.fullBoil"))
-                    Text(tr(pulledKey(planner.settings.cooling)))
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            Button(tr("action.cancel")) {}
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-        }
-        .hidden()
-        .accessibilityHidden(true)
-    }
-
-    /// The hint's line, as tall as the tallest it is above a primary
-    /// button: idle's, with the widest time, or Heating's, with its (i).
+    /// The hint's room, as tall as the tallest it is: idle's, with the
+    /// widest time; Heating's, with its (i); Cooking's, with the alarm's line.
     private var hintRoom: some View {
         let widest = clockString(59 * 60 + 59)
+        let boiling = planner.show(.temperature, planner.boilingC)
         return ZStack {
             Text(model.keys(.idle).hint.map { tr($0, ["time": .text(widest)]) } ?? " ")
             InfoRow(name: tr("action.hint.heating.info"), more: [], alignment: .center) {
                 Text(model.keys(.heating).hint.map { tr($0) } ?? " ")
+            }
+            VStack(spacing: 4) {
+                Text(model.keys(.cooking).hint.map { tr($0, ["boiling": .text(boiling)]) } ?? " ")
+                Text(alarmLine)
             }
         }
         .appFont(.footnote)
@@ -167,24 +153,173 @@ struct PhaseActions: View {
         .accessibilityHidden(true)
     }
 
-    /// A hint over a primary button, in the hint's room and at its foot, so
-    /// the button sits at one height idle, heating and at the pull.
-    private func hintLine<V: View>(@ViewBuilder _ hint: () -> V) -> some View {
-        ZStack(alignment: .bottom) {
-            hintRoom
-            hint()
+    /// The phase's hint, at the foot of its room.
+    @ViewBuilder
+    private var hint: some View {
+        switch phase {
+        case .idle:
+            footnote(sousVide?.hint ?? idleHint)
+        case .heating:
+            // What a full rolling boil looks like, and why the tap matters,
+            // in its (i).
+            InfoRow(
+                name: tr("action.hint.heating.info"),
+                more: [tr("action.hint.heating.more")],
+                alignment: .center
+            ) {
+                footnote(readout?.hint.map { tr($0.key) } ?? "")
+            }
+        case .cooking:
+            VStack(spacing: 4) {
+                // The web's hint: what the hob must do until the pull.
+                Text(readout?.hint.map {
+                    tr($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
+                } ?? "")
+                // Whether the alarm is really set: iOS's own line, since the
+                // web's alarm is the open tab.
+                Text(alarmLine)
+            }
+            .appFont(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+        case .pull:
+            // The web's hint: when the cooling starts on its own. Not on the
+            // counter, where the grace runs out into Done and the line under
+            // the time already says the yolk is still cooking.
+            if let hint = readout?.hint {
+                footnote(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
+            }
+        default:
+            EmptyView()
         }
     }
 
-    // MARK: - The action
+    private func footnote(_ text: String) -> some View {
+        Text(text)
+            .appFont(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+    }
+
+    // MARK: - The row
+
+    /// The phase's main button: its words, what it does, and whether it is
+    /// the accent's (Start again is not) or dead.
+    private struct Main {
+        let title: String
+        var prominent = true
+        var disabled = false
+        let action: () -> Void
+    }
+
+    /// The phase's main button, if it has one.
+    private var main: Main? {
+        switch phase {
+        case .idle where sousVide != nil:
+            // Dead rather than absent. There is nothing to start, and a
+            // button that has gone missing looks like a layout accident
+            // where one that will not press is the answer.
+            return Main(title: tr("action.eggsIn"), disabled: true) {}
+        case .idle:
+            return Main(
+                title: tr(model.keys(.idle).action ?? "action.eggsIn"),
+                disabled: model.starting || planner.solution == nil || planner.solution?.whiteSets == false
+            ) { model.eggsIn() }
+        case .heating:
+            // Invariant 6: tapping at first bubbles under-measures the boil
+            // by 15-25%, so the button names the thing to wait for.
+            return Main(title: tr(readout?.primary ?? "action.fullBoil")) { model.boil() }
+        case .pull:
+            // The cook's tap is the nearest thing to when the egg left the
+            // water that the app will ever know, and the record calls it a
+            // measured pull. Without it the grace runs out and the pull is
+            // only assumed.
+            return Main(title: tr(readout?.primary ?? pulledKey(.ice))) { model.pulledOut() }
+        case .done:
+            return Main(title: tr(readout?.primary ?? "action.startAgain"), prominent: false) { model.startAgain() }
+        default:
+            return nil
+        }
+    }
+
+    /// Whether the phase has Cancel: every phase of a cook under way.
+    private var cancels: Bool {
+        phase != .idle && phase != .done
+    }
+
+    /// The main button and Cancel side by side, or stacked where the widest
+    /// of them do not fit (above). Each way holds, hidden, the widest the
+    /// row can be, so the choice and the height are the same in every phase.
+    private func buttons(main: Main?, cancel: Bool) -> some View {
+        ViewThatFits(in: .horizontal) {
+            ZStack {
+                HStack(spacing: Self.gap) { cancelButton; mainShape }
+                    .hidden()
+                    .accessibilityHidden(true)
+                HStack(spacing: Self.gap) {
+                    if cancel { cancelButton }
+                    if let main { mainButton(main) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            ZStack(alignment: .top) {
+                VStack(spacing: 10) { mainShape; cancelButton }
+                    .hidden()
+                    .accessibilityHidden(true)
+                VStack(spacing: 10) {
+                    if let main { mainButton(main) }
+                    if cancel { cancelButton }
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
 
     @ViewBuilder
-    private var action: some View {
-        if let r = readout, r.asking {
-            asking(r)
+    private func mainButton(_ main: Main) -> some View {
+        if main.prominent {
+            Button(action: main.action) {
+                Text(main.title).frame(maxWidth: .infinity).onAccent()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(main.disabled)
+            .logBottom("main")
         } else {
-            phaseAction
+            Button(action: main.action) {
+                Text(main.title).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .disabled(main.disabled)
+            .logBottom("main")
         }
+    }
+
+    /// The main button at its widest: the words of every main button that
+    /// can stand beside Cancel, laid over one another.
+    private var mainShape: some View {
+        Button {} label: {
+            ZStack {
+                Text(tr(model.keys(.idle).action ?? "action.eggsIn"))
+                Text(tr("action.fullBoil"))
+                Text(tr(pulledKey(planner.settings.cooling)))
+                Text(tr("action.startAgain"))
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+
+    /// Cancel: small, grey, at its own width, so it reads as the way out and
+    /// not the way on.
+    private var cancelButton: some View {
+        Button(tr("action.cancel"), role: .destructive) {
+            model.cancel()
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
     }
 
     /// "Are the eggs still in the water?" (`ReadoutView`): the two answers as
@@ -206,152 +341,7 @@ struct PhaseActions: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
-            Button(tr("action.cancel"), role: .destructive) {
-                model.cancel()
-            }
-            .buttonStyle(.bordered)
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    @ViewBuilder
-    private var phaseAction: some View {
-        switch phase {
-        case .idle where sousVide != nil:
-            VStack(spacing: 10) {
-                hintLine {
-                    Text(sousVide?.hint ?? "")
-                        .appFont(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                // Dead rather than absent. There is nothing to start, and a
-                // button that has gone missing looks like a layout accident
-                // where one that will not press is the answer.
-                Button {} label: {
-                    Text(tr("action.eggsIn")).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(true)
-            }
-
-        case .idle:
-            VStack(spacing: 10) {
-                hintLine {
-                    Text(idleHint)
-                        .appFont(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                Button {
-                    model.eggsIn()
-                } label: {
-                    Text(tr(model.keys(.idle).action ?? "action.eggsIn"))
-                        .frame(maxWidth: .infinity)
-                        .onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(model.starting || planner.solution == nil || planner.solution?.whiteSets == false)
-            }
-
-        case .heating:
-            VStack(spacing: 10) {
-                // What a full rolling boil looks like, and why the tap
-                // matters, in its (i).
-                hintLine {
-                    InfoRow(
-                        name: tr("action.hint.heating.info"),
-                        more: [tr("action.hint.heating.more")],
-                        alignment: .center
-                    ) {
-                        Text(readout?.hint.map { tr($0.key) } ?? "")
-                            .appFont(.footnote)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                // Invariant 6: tapping at first bubbles under-measures the boil
-                // by 15-25%, so the button names the thing to wait for.
-                Button {
-                    model.boil()
-                } label: {
-                    Text(tr(readout?.primary ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(tr("action.cancel"), role: .destructive) {
-                    model.cancel()
-                }
-                .buttonStyle(.bordered)
-                .frame(maxWidth: .infinity)
-            }
-
-        case .pull:
-            VStack(spacing: 10) {
-                // The web's hint: when the cooling starts on its own. Not on
-                // the counter, where the grace runs out into Done and the line
-                // under the time already says the yolk is still cooking.
-                hintLine {
-                    if let hint = readout?.hint {
-                        Text(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
-                            .appFont(.footnote)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                // The web app's button, in its words: the cook's tap is the
-                // nearest thing to when the egg left the water that the app will
-                // ever know, and the record calls it a measured pull. Without it
-                // the grace runs out and the pull is only assumed.
-                Button {
-                    model.pulledOut()
-                } label: {
-                    Text(tr(readout?.primary ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(tr("action.cancel"), role: .destructive) {
-                    model.cancel()
-                }
-                .buttonStyle(.bordered)
-                .frame(maxWidth: .infinity)
-            }
-
-        case .done:
-            Button(tr(readout?.primary ?? "action.startAgain")) {
-                model.startAgain()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
-
-        default:
-            VStack(spacing: 10) {
-                if phase == .cooking {
-                    VStack(spacing: 4) {
-                        // The web's hint: what the hob must do until the pull.
-                        Text(readout?.hint.map {
-                            tr($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
-                        } ?? "")
-                        // Whether the alarm is really set: iOS's own line,
-                        // since the web's alarm is the open tab.
-                        Text(alarmLine)
-                    }
-                    .appFont(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                }
-                Button(tr("action.cancel"), role: .destructive) {
-                    model.cancel()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-            }
+            cancelButton
         }
     }
 

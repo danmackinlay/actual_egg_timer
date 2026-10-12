@@ -350,6 +350,21 @@ extension View {
         self
         #endif
     }
+
+    /// The view's foot in the window, pt, to the debug log whenever it moves,
+    /// as `logTop` logs a top: what the scripted checks read to see that no
+    /// empty room is left under the action's row.
+    func logBottom(_ name: String) -> some View {
+        #if DEBUG
+        onGeometryChange(for: Double.self) { proxy in
+            (proxy.frame(in: .global).maxY * 2).rounded() / 2
+        } action: { y in
+            Screenshots.log(.layout(part: name, y: y))
+        }
+        #else
+        self
+        #endif
+    }
 }
 
 #Preview {
