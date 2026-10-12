@@ -961,23 +961,57 @@ html[lang$="-x-1750"] input[type="number"] {
 
 /* ---------------------------------------------------------------- actions */
 
-/* Directly under the time, in every phase: the hint, the button, and Cancel
-   under it while a cook runs. The block keeps the room of all three - the
-   hint's two lines (or its (i)), the primary and a secondary, at whatever
-   size the text is - whichever of them a phase shows, and the room left
-   over goes under the buttons. So the slider and the sentence below stay
-   put as the buttons come and go: nothing moves at the start, from Start
-   heating to Full rolling boil and Cancel, or from Eggs in to Cancel alone.
-   Only what is more than the room moves them: "still in the water?", with
-   its two answers and Cancel, and the hint's (i) opened. */
-#actions {
-  margin: 14px 0 0;
-  min-height: calc(
-    max(32px, 2 * 1.35 * 0.8125rem) + 6px
-    + max(64px, 1.35 * 1.375rem + 28px) + 8px
-    + max(48px, 1.35 * 1rem + 22px)
-  );
+/* Directly under the time, in every phase: the hint, and one row of
+   buttons. The row is Cancel on the left, at its own width, and the main
+   button filling the rest, on the right where the thumb rests, with room
+   between them for a wet thumb; with only the main button, it fills the
+   row; with only Cancel, the rest is empty. The row is as tall as the main
+   button in every phase, so nothing under it moves and nothing is left
+   empty under it.
+
+   Where the widest main button and Cancel do not fit side by side (a narrow
+   screen, a larger text size, 1750's words), the row wraps: the main button
+   over Cancel. The choice is the widest main button's, never the phase's
+   own: the main button's cell holds the words of every main button that
+   can stand beside Cancel, laid out at no height (.buttons__widths), so it
+   wraps in every phase or in none. And the probe, the same row with Cancel
+   in every phase, never seen, sits in the same grid cell, so the block
+   keeps the stack's height in every phase too: Start heating alone, idle,
+   with Cancel's room under it. Only "still in the water?", with its two
+   answers and Cancel, and the hint's (i) opened go past it. */
+#actions { margin: 14px 0 0; }
+.buttons { display: grid; }
+.buttons > * { grid-area: 1 / 1; }
+/* Reversed, so the main button, first for a screen reader and the keyboard,
+   is drawn on the right; packed to the left, where Cancel alone sits. */
+.buttons__row {
+  display: flex;
+  flex-flow: row-reverse wrap;
+  justify-content: flex-end;
+  align-items: center;
+  align-content: flex-start;
+  gap: 10px 24px;
 }
+.buttons__probe { visibility: hidden; }
+/* As tall as the main button, with it or without. */
+.buttons__main {
+  flex: 1 1 auto;
+  max-width: 100%;
+  min-height: max(64px, 1.35 * 1.375rem + 28px);
+}
+.buttons__row > button.secondary {
+  flex: none;
+  width: auto;
+  margin: 0;
+  padding: 10px 20px;
+}
+/* The words a button may hold, set as that button sets them. */
+.sizer { display: block; white-space: nowrap; }
+.sizer--main { font-size: 1.375rem; font-weight: 650; padding: 14px; min-height: 64px; }
+.sizer--cancel { font-size: 1rem; padding: 10px 20px; border: 1px solid transparent; min-height: 48px; }
+.buttons__probe .buttons__main { display: grid; }
+.buttons__probe .buttons__main > .sizer { grid-area: 1 / 1; }
+.buttons__widths { display: block; height: 0; overflow: hidden; visibility: hidden; }
 
 /* The hint holds two lines, or the (i)'s height, whichever is more, and
    sits at the foot of that room, next to the button it is about. */

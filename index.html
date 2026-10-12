@@ -115,18 +115,51 @@
   </section>
 
   <!-- ------------------------------------------------------------ actions -->
-  <!-- The hint and the button that move the cook on, directly under the
-       time they run, in every phase: Start, Full rolling boil, the pull,
-       Start again, and Cancel under them while a cook runs. The block keeps
-       the room of a hint, a button and Cancel (styles.css), so the slider
-       and the sentence under it stay put as the buttons come and go. -->
+  <!-- Directly under the time it runs, in every phase: the hint, and under
+       it one row, Cancel on the left at its own width and the phase's main
+       button filling the rest, on the right; with only the main button,
+       it fills the row. Where the widest main button and Cancel do not fit
+       side by side, they stack. The words of every main button that can
+       stand beside Cancel are laid out hidden (the sizers), so the row's
+       choice and its height are the same in every phase, and nothing under
+       it moves (styles.css). -->
   <div id="actions">
     <p id="primaryHint"><span id="primaryHintText"></span><button type="button" id="hintInfo" class="info" aria-expanded="false" aria-controls="hintMore" data-name="action.hint.heating.info" hidden></button></p>
     <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
-    <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
-    <!-- "Still in the water?", the other answer: the primary says yes. -->
-    <button type="button" id="stillOut" class="secondary" hidden data-copy="ask.stillIn.no"></button>
-    <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
+    <div class="buttons">
+      <!-- The row at its widest, with Cancel, never seen: as tall as the
+           row, or as the stack where the row does not fit. -->
+      <div class="buttons__row buttons__probe" aria-hidden="true">
+        <span class="buttons__main">
+          <span class="sizer sizer--main" data-copy="action.startHeating"></span>
+          <span class="sizer sizer--main" data-copy="action.eggsIn"></span>
+          <span class="sizer sizer--main" data-copy="action.fullBoil"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.ice"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.tap"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.counter"></span>
+          <span class="sizer sizer--main" data-copy="action.startAgain"></span>
+        </span>
+        <span class="sizer sizer--cancel" data-copy="action.cancel"></span>
+      </div>
+      <div class="buttons__row">
+        <!-- The main button, as wide as the widest of the sizers asks. -->
+        <div class="buttons__main">
+          <span class="buttons__widths" aria-hidden="true">
+            <span class="sizer sizer--main" data-copy="action.startHeating"></span>
+            <span class="sizer sizer--main" data-copy="action.eggsIn"></span>
+            <span class="sizer sizer--main" data-copy="action.fullBoil"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.ice"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.tap"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.counter"></span>
+            <span class="sizer sizer--main" data-copy="action.startAgain"></span>
+          </span>
+          <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
+        </div>
+        <!-- "Still in the water?", the other answer: the primary says yes. -->
+        <button type="button" id="stillOut" class="secondary" hidden data-copy="ask.stillIn.no"></button>
+        <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
+      </div>
+    </div>
   </div>
 
   <!-- ----------------------------------------------------------- the egg -->
