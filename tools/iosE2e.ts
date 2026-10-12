@@ -30,6 +30,7 @@ import {
 } from 'node:fs';
 import { dirname } from 'node:path';
 
+import { askedWord, wordBandHigh, wordBandLow } from '../src/core/certainty.js';
 import type { EggRecord } from '../src/core/record.js';
 import { type RunningCook, type StoredCook, readStoredCook } from '../src/core/running.js';
 import { STORES, stamped } from '../src/core/stores.js';
@@ -426,6 +427,7 @@ type Event = { t: number } & (
   | { ev: 'certainty'; word?: string; time?: string }
   | { ev: 'white'; shown: boolean }
   | { ev: 'likely'; shown: boolean }
+  | { ev: 'bracket'; low: number; high: number; likelyLow: number; likelyHigh: number }
   | { ev: 'egg'; reading: string; yolk?: number }
   | { ev: 'slot'; text: string }
   | { ev: 'note'; text: string }
@@ -776,7 +778,8 @@ scenario('egg-readings', 'the egg aimed for at idle (softer and firmer differ), 
 /// The level moved, idle, from one where "Most likely" shows under the
 /// certainty word to one where it does not and back, a word asked very
 /// certain to a ballpark: the slider never moves (UI.md section 8, "Nothing
-/// jumps"). On a fresh install 0.5 and 0.8 show it, 0.6 and 0.9 do not.
+/// jumps"). On a fresh install 0.5 and 0.8 show it, 0.6 and 0.9 do not. At
+/// each, the bracket's heavy stretch is the most likely word's band.
 async function likelyStill(run: Run, args: string[]): Promise<void> {
   const levels = [0.5, 0.6, 0.8, 0.9];
   const uiDo = levels.map((l, k) => `set:level=${l}@launch+${k + 1}`).join(',');
@@ -787,7 +790,26 @@ async function likelyStill(run: Run, args: string[]): Promise<void> {
     const set = await run.until(tapped('set'), { from: i, what: `the level set to ${levels[k]}` });
     await run.until(is('answer', (e) => e.decided && e.odds), { from: set.i, what: 'decided' });
     const lines = await screen(run);
-    seen.push({ level: levels[k], likely: lastOf(lines, 'likely')?.shown === true, slider: layoutOf(lines).slider });
+    const level = levels[k]!;
+    const likely = lastOf(lines, 'likely')?.shown === true;
+    seen.push({ level: level, likely: likely, slider: layoutOf(lines).slider });
+    // The bracket's heavy stretch is the most likely word's whole band,
+    // inside the bracket: the word asked's, around the thumb, unless "Most
+    // likely" names another under the line.
+    const b = lastOf(lines, 'bracket');
+    if (b === undefined) {
+      run.check(false, `no bracket drawn at ${level}`);
+      continue;
+    }
+    const word = [0, 1, 2, 3, 4].find((w) => near(wordBandLow(w), b.likelyLow, 1e-9) && near(wordBandHigh(w), b.likelyHigh, 1e-9));
+    run.check(word !== undefined, `at ${level} the band ${b.likelyLow}-${b.likelyHigh} is no word's`);
+    run.check(b.low <= b.likelyLow && b.likelyHigh <= b.high, `at ${level} the band overruns the bracket ${b.low}-${b.high}`);
+    if (likely) {
+      run.check(word !== askedWord(level), `at ${level} "Most likely" shows, and the band is the word asked's`);
+    } else {
+      run.check(word === askedWord(level) && b.likelyLow <= level && level <= b.likelyHigh,
+        `at ${level} the band ${b.likelyLow}-${b.likelyHigh} is not around the thumb`);
+    }
   }
   run.check(seen.some((s) => s.likely) && seen.some((s) => !s.likely),
     `"Most likely" never came and went: ${seen.map((s) => `${s.level} ${s.likely}`).join(', ')}`);
