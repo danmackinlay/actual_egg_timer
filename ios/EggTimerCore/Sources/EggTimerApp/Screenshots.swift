@@ -144,8 +144,9 @@ public enum Screenshots {
     /// Where a line goes: standard error, and appended to
     /// Library/Caches/aet.log in the app's container, which a simulator's
     /// host reads (`simctl get_app_container … data`). The tests take the
-    /// events instead, and write nothing to the Mac's own Caches. Behind a
-    /// lock, since a line is written from any thread (the clock's steps).
+    /// events instead, and write nothing to the Mac's own Caches. The
+    /// closure is swapped behind a lock; a line is written from any thread
+    /// (the clock's steps), so each is appended whole (`append`).
     static var output: @Sendable (Event, Data) -> Void {
         get { outputSet.withLock { $0 } }
         set { outputSet.withLock { $0 = newValue } }
@@ -153,15 +154,29 @@ public enum Screenshots {
     private static let outputSet = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
         FileHandle.standardError.write(text)
         guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
-        let url = dir.appendingPathComponent("aet.log")
-        if let handle = try? FileHandle(forWritingTo: url) {
-            handle.seekToEndOfFile()
-            handle.write(text)
-            try? handle.close()
-        } else {
-            try? text.write(to: url)
-        }
+        append(text, to: dir.appendingPathComponent("aet.log"))
     })
+
+    /// `text` added at the file's end in one `write` to a descriptor opened
+    /// `O_APPEND`, so the system moves to the end and writes as one step.
+    /// A seek to the end and a write after it are two, and two threads
+    /// between them write at the same offset: the later line overwrites the
+    /// start of the earlier, which the host read as half a line.
+    static func append(_ text: Data, to url: URL) {
+        let fd = Darwin.open(url.path, O_WRONLY | O_APPEND | O_CREAT, 0o644)
+        guard fd >= 0 else { return }
+        defer { Darwin.close(fd) }
+        text.withUnsafeBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            var done = 0
+            while done < bytes.count {
+                let n = Darwin.write(fd, base + done, bytes.count - done)
+                if n < 0, errno == EINTR { continue }
+                if n <= 0 { return }
+                done += n
+            }
+        }
+    }
     #endif
 
     /// Whether the app is in the foreground, where the page is drawn
