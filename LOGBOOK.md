@@ -7940,3 +7940,75 @@ The owner's decisions of 12 October on `design/bowl.md`, built on
 
 Gates: `verify` before each commit, `ios:build` on each that touched the
 app; `e2e` and `ios:e2e` whole at the end.
+
+## 12 October 2026: the e2e harnesses as reliable on GitHub as on a Mac
+
+GitHub's run 38239753237 on `main` at `ed02b9e` failed web `one-layout`
+and iOS `bowl`, both passing on a Mac; run 38020517600 at `0a8aae6` failed
+iOS `one-moment` once. Branch `ci-e2e-fixes`, from `main`.
+
+- **Web `one-layout`: "idle: 58 px empty under the row"** (`9dc9b22`). The
+  58 px is Cancel's 48 and the row's 10-px gap: on GitHub's Linux Chrome
+  the action row stacked at 390 px, and a stack keeps Cancel's room at
+  idle by design. The words are wider there: `system-ui` is DejaVu Sans or
+  Liberation Sans, not SF. Measured in Chrome on this Mac, the widest main
+  button ("Under running water") and Cancel, with the 24-px gap, against
+  the row's 358 px at 390: SF 235.5 + 24 + 91.9 = 351.4, fits by 6.6 px;
+  Liberation Sans 243.1 + 24 + 91.8 = 358.9, over by 0.9; DejaVu Sans
+  286.6 + 24 + 96.2 = 406.8, over by 48.8. `oneLayout` now reads the
+  page's own choice from the probe row, checks it against those widths
+  (stacked exactly where they do not fit), checks it is the same in every
+  phase, and holds that case's rule: one row, nothing empty under it and
+  nothing below moving; stacked, the block one height and nothing below
+  moving. `one-layout-narrow` still requires the stack at 320 px. The
+  widths are in the result line, so the next CI run says which it was.
+  Checked stacked at 390 px by widening the text for one run (letter
+  spacing 2.5 px): `one-layout` passed on the stacked rule.
+- **iOS `bowl`: "4 × 2.1 oz eggs …, 1 qt of water at 54 °F"**
+  (`b584230`). `simctl create` copies the host's locale into the device,
+  and its unit and clock preferences with it (`AppleTemperatureUnit`,
+  `AppleMeasurementUnits`, `AppleMetricUnits`,
+  `AppleICUForce24HourTime`); the runner is en-US. Those preferences win
+  over `-AppleLocale` alone: a probe binary on this Mac read en_US, metric
+  and °C under `-AppleLocale en_US`. Every launch now carries
+  `-AppleLocale`, `-AppleLanguages` and the four preferences for the
+  locale, en-AU unless `AET_LOCALE` says otherwise, as the web harness
+  pins each tab. Reproduced first: `AET_LOCALE=en-US` failed `bowl` with
+  CI's sentence word for word, and so did `main`'s harness on a device
+  whose preferences were set to en_US, Fahrenheit and inches before boot;
+  on that same device, with the pin, `bowl`, `sentence-no-time`,
+  `start-time` and `certainty-mid-cook` passed in grams, litres, °C and
+  "11:10 pm".
+- **iOS `one-moment`: "line 69 is not JSON: ting","state":"active",…"**
+  (`40c31af`, `276e195`). Not a line still being written: the reader
+  already read only to the last newline, and the fragment stood as a
+  whole line six seconds later (reported then as line 70, since the
+  throwing read had kept the good lines before it without moving its
+  byte offset, so the next read kept them twice). It was the tail of an
+  `activitySeen` line (`"stage":"heating"`), logged at launch+3s, with a
+  shorter line from another thread written over its start: the lock
+  around `Screenshots.output` guarded only the closure's swap, and the
+  writer opened the file, seeked to its end and wrote, two steps. It now
+  appends each line in one `write` to a descriptor opened `O_APPEND`;
+  `DebugLogTests` writes 2,000 lines of different lengths from
+  `concurrentPerform` and reads each back whole, and fails with the old
+  seek and write in its place. The reader keeps a read's lines only once
+  all of them parse, so a bad line fails loudly with the same number each
+  time; and `AET_E2E_LOG`'s printout shows the log's text instead of
+  reading it through the parser again, which had thrown outside the
+  scenario and ended the run with the rest unrun.
+- **Not changed: the stack itself.** Two things for the owner. The web's
+  sizers lack the bowl's "In the bowl of water", the fourth pull label,
+  added after the row (`index.html`, both the probe and the main
+  button's widths); it is narrower than "Under running water" in SF,
+  Liberation and DejaVu (225.8, 233.3, 278.5 px), so it changes no
+  decision today. And the web sizes the row on every pull label, where
+  iOS sizes it on the idle action, Rolling boil, Start again and the
+  pull label of the cooling chosen (`PhaseActions.mainShape`). Sized as
+  iOS does, the row on DejaVu with the ice bath is 208.2 + 24 + 96.2 =
+  328.4 px and stays one row at 390 px; with running water or the bowl it
+  still stacks there.
+
+Gates: `verify` before each code commit (501 tests, validate 29/29, the
+copy lint, fixtures fresh, `swift test` 163 and 30); `e2e` 91 of 91,
+`ios:e2e` 50 of 50 on the last code.
