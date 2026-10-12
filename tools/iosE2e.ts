@@ -20,7 +20,8 @@
 //   --device <udid>, --keep              a device already booted; keep it
 //
 // AET_E2E_WAIT=<s> how long a wait for the app gives up after (default 60);
-// AET_E2E_LOG=1 prints a failing scenario's log.
+// AET_E2E_LOG=1 prints a failing scenario's log; AET_LOCALE=en-US launches
+// the app in that locale rather than en-AU (`localeArgs`).
 //
 // Compiled with the other tools (tools/build.mjs), which the npm script runs
 // first. Needs Xcode, xcodegen and python3; not in `npm run verify`.
@@ -44,6 +45,32 @@ const WAIT_S = Number(process.env['AET_E2E_WAIT'] ?? 60);
 /// How long the system is given to deliver the one notification a scenario
 /// waits for, past its moment, the host's s.
 const DELIVERY_SLACK_S = 15;
+
+/// The locale every launch is given, as the web harness gives each tab one
+/// (`DEFAULT_LOCALE`, tools/harness.ts), and overridden the same way
+/// (`AET_LOCALE=en-US`). A device `simctl create` makes copies the host's
+/// locale, so GitHub's runner, in en-US, would otherwise open the app in
+/// Imperial units on the US carton, and this Mac in its own.
+const LOCALE = process.env['AET_LOCALE'] ?? 'en-AU';
+
+/// `tag`, a language and a region (`en-AU`), as launch arguments: the
+/// argument domain is read before the device's own preferences, so the app's
+/// `Locale.current`, its region and preferred languages are the tag's. The
+/// unit and clock preferences are given too, since the device's, copied from
+/// the host as well, win over the locale's: Fahrenheit, inches and the US
+/// system in the US, Celsius and metric elsewhere; the clock the locale's own.
+function localeArgs(tag: string): string[] {
+  const m = /^([a-z]{2,3})-([A-Z]{2})$/.exec(tag);
+  if (!m) throw new Error(`AET_LOCALE ${tag}: a language and a region, as en-AU`);
+  const us = m[2] === 'US';
+  return [
+    '-AppleLocale', `${m[1]}_${m[2]}`, '-AppleLanguages', `(${tag})`,
+    '-AppleTemperatureUnit', us ? 'Fahrenheit' : 'Celsius',
+    '-AppleMeasurementUnits', us ? 'Inches' : 'Centimeters', '-AppleMetricUnits', us ? 'NO' : 'YES',
+    '-AppleICUForce24HourTime', 'NO', '-AppleICUForce12HourTime', 'NO',
+  ];
+}
+const LOCALE_ARGS = localeArgs(LOCALE);
 
 const argv = process.argv.slice(2);
 const flag = (name: string): boolean => {
@@ -116,7 +143,7 @@ function createDevice(): string {
   if (types.length === 0) throw new Error(`no iPhone for iOS ${runtime.version}`);
   const type = types.find((t) => t.name === 'iPhone 17 Pro') ?? types[types.length - 1]!;
   const id = simctl('create', `AET e2e ${process.pid}`, type.identifier, runtime.identifier);
-  console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version})`);
+  console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version}), the app in ${LOCALE}`);
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
@@ -185,7 +212,7 @@ class Run {
     // Silent: the ring and the notifications' sound would otherwise play on
     // the Mac's speakers (-muteAudio is debug-only, like the clock).
     simctl('launch', udid, BUNDLE, '-clockAt', String(at), '-clockSpeed', String(speed), '-muteAudio', 'YES',
-      ...prompt, ...args);
+      ...LOCALE_ARGS, ...prompt, ...args);
   }
 
   terminate(): void {

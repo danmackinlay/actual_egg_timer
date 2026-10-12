@@ -89,11 +89,18 @@ releasing has its own in `ios/RELEASING.md`.
   rounded to the nearest sample, the timer's strikes came out up to 7% off
   in loudness, as their modes added or cancelled.
 
-- **GitHub's Chrome is in en-US**, so the app there defaults to Imperial
-  units, US egg sizes and a 12-hour clock: a scenario written on a metric
-  machine fails only in CI. Each tab is given a locale (`DEFAULT_LOCALE` in
-  `tools/harness.ts`); `AET_LOCALE=en-US npm run e2e -- <names>` reproduces
-  a runner's. `--lang` does not reach the page on macOS.
+- **GitHub's Chrome and simulators are in en-US**, so both apps there
+  default to Imperial units, US egg sizes and a 12-hour clock: a scenario
+  written on a metric machine fails only in CI. Each tab is given a locale
+  (`DEFAULT_LOCALE` in `tools/harness.ts`), and each iOS launch one
+  (`localeArgs` in `tools/iosE2e.ts`); `AET_LOCALE=en-US npm run e2e --
+  <names>`, or `ios:e2e`, reproduces a runner's. `--lang` does not reach the
+  page on macOS. On iOS, `simctl create` copies the host's locale and its
+  unit and clock preferences into the device, and those preferences win
+  over `-AppleLocale` alone: under `-AppleLocale en_US` a device made on a
+  metric Mac stays in Celsius. The launch gives
+  `-AppleTemperatureUnit`, `-AppleMeasurementUnits`, `-AppleMetricUnits` and
+  the two `-AppleICUForce…HourTime` too.
 
 ## Elsewhere
 
