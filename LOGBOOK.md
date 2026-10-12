@@ -7940,3 +7940,49 @@ The owner's decisions of 12 October on `design/bowl.md`, built on
 
 Gates: `verify` before each commit, `ios:build` on each that touched the
 app; `e2e` and `ios:e2e` whole at the end.
+
+## 12 October 2026: a measure never breaks across a line
+
+In the setup sentence a number could end one line and its unit start the
+next ("with 1.5 / L of water"; the egg's "68 / g" always could). Branch
+`unit-nbsp`, from `main` at `ed02b9e`.
+
+- **The words** (`a963189`): the 11 `format.*` keys, `format.celsius` to
+  `format.pints`, join `{value}` to the unit with a no-break space, U+00A0,
+  in `copy/en.json` and in the 1750 twins, written as the JSON escape
+  ` ` so the catalogue shows it (a literal one is invisible in a
+  diff). `copy/en-US.json` overrides none of them. The twins are stamped
+  against the new English; the English is in the owner's queue, 11
+  changed. The queue prints the approved and the new text alike, since the
+  two differ only in a space it does not mark.
+- **The tests** (`431be23`): a test of what a string says no longer cares
+  which space joins value and unit. `tools/text.ts`'s `asRead` reads U+00A0
+  as a space; the text readers in `units.test.ts` (`rendered`, `labelOf`)
+  and `inputs.test.ts` (`labelOf`), and the unit-bearing assertions of
+  `format.test.ts` 5b and 6a and `en1750.test.ts` 1k, compare through it,
+  their expected strings unchanged. Czech's grouping no-break space
+  (`format.test.ts` 1a, 4b, 6a) is still compared raw. The e2e harnesses
+  read through it in one place each: the web's setup sentence
+  (`sentenceSays`), and every string of the iOS debug log (`Run.lines`).
+  `copyScenarios.ts` compares no text with an expected string, and its
+  checks (raw keys, placeholders, straight quotes) do not see the space,
+  so it is unchanged; a before-and-after `copy:snapshot` across this change
+  shows the 11 formats' renderings in `innerText` as changed, which they
+  are. Swift's tests assert no unit strings of their own (the conformance
+  suites read the fixtures, regenerated).
+- **The one test that cares**: `copy.test.ts` 3d, every catalogue's
+  `format.*` template has `{value}` then U+00A0 and no ordinary space.
+- **Seen**: the web at 390 and 320 px with a bowl of 1.5 L, "68 g" and
+  "1.5 L" each on one line; at a column of 269 px the old plain space puts
+  "1.5" and "L" on two lines and the no-break space carries "1.5 L" down
+  whole. No width of the sentence's column from 200 to 420 px breaks a
+  measure. The accessible names read "with 1.5 L of water" and "Egg: 68 g,
+  change": a no-break space is a space to a screen reader. iOS on an
+  iPhone 17e at the default size, extra-large and accessibility-medium
+  (`-uiDo set:cooling=bowl@launch+1,set:bowlLitres=1.5@launch+2`): "with"
+  ends a line and "1.5 L of water" starts the next. VoiceOver itself was
+  not driven.
+
+Gates: `verify` before each commit; `e2e` 91 of 91 (a first run, beside
+`ios:e2e`, lost the three two-tabs scenarios to "not idle after 60 s";
+alone, all pass); `ios:e2e` 50 of 50.
