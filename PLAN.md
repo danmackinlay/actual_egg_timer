@@ -12,13 +12,13 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, and deployed on the web. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 495 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 47 scenarios in headless
+layout (`UI.md`). `npm test` runs 501 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 50 scenarios in headless
 Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
-ios:e2e` the iOS app through 48 on a simulator, each
+ios:e2e` the iOS app through 50 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. CI runs both and fails on either; each
-passed on GitHub's runners on 10 October. `npm run validate` passes 28/28 (in `verify`), `swift test` passes 161 tests
+passed on GitHub's runners on 10 October. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 163 tests
 for the core twin and 29 for the app's package, and the fit's pytest 9. **0.5 pushed to `main` on 10 October**, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and every job of
 `.github/workflows/verify.yml` passed on it. The iOS app runs from Xcode on the owner's
