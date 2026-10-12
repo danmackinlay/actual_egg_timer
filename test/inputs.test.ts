@@ -21,6 +21,7 @@ import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src
 import { parseCatalogue, render } from '../src/core/copy.js';
 import { sizeClassLabel } from '../src/core/units.js';
 import { T_ROOM_C } from '../src/core/constants.js';
+import { asRead } from '../tools/text.js';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
@@ -49,7 +50,7 @@ function className(c: SizeClass): string {
 
 function labelOf(c: SizeClass): string {
   const label = sizeClassLabel(c, 'metric');
-  return render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) });
+  return asRead(render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) }));
 }
 
 test('6c. the default size is Large in both tables, and a shared index is a shared name', () => {

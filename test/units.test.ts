@@ -26,6 +26,7 @@ import {
 import { parseRecord } from '../src/core/record.js';
 import { replan, startCook } from '../src/core/running.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
+import { asRead } from '../tools/text.js';
 
 /** The units' definitions, written out here rather than imported, so the
  *  conversions are checked against them. */
@@ -58,8 +59,9 @@ function grid(m: Measure): number[] {
   return values;
 }
 
+/** A measure as the cook reads it: value and unit. */
 function rendered(m: Measure, si: number): string {
-  return render(EN, m.formatKey, { value: displayText(m, si) });
+  return asRead(render(EN, m.formatKey, { value: displayText(m, si) }));
 }
 
 // --------------------------------------------------------------------------
@@ -296,7 +298,7 @@ test('4c. a choice is stored as a choice, and only a change of system is a flip'
 
 function labelOf(table: typeof SIZE_CLASSES, i: number, system: UnitSystem): string {
   const label = sizeClassLabel(table[i], system);
-  return render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) });
+  return asRead(render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) }));
 }
 
 test('5a. a size class shows its own mass in either system, and keeps its region\'s name', () => {
