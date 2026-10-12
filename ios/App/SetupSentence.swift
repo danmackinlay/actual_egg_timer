@@ -145,6 +145,11 @@ struct SetupFacts {
     var start: StartChoice
     var heatOff: Bool
     var cooling: Cooling
+    /// The bowl's water, with its unit.
+    var water: String
+    /// The temperature of the water the eggs cool in as the cook gave it, C,
+    /// for running water or a bowl; nil when assumed, or for another cooling.
+    var coolingWaterC: Double?
     var units: UnitSystem
 
     /// The setup on the controls: the settings while idle, a running cook's
@@ -159,6 +164,8 @@ struct SetupFacts {
         start = planner.start
         heatOff = planner.heatOff
         cooling = planner.settings.cooling
+        water = showIn(units, .bowl, planner.settings.bowlLitres)
+        coolingWaterC = planner.coolingWaterC
     }
 }
 
@@ -176,18 +183,24 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
         "temp": .text(showIn(f.units, .eggTemp, f.customC)),
         "bath": .text(showIn(f.units, .temperature, sousVideBathC)),
     ]
+    // The cooling clause's temperature is the water's, not the egg's.
+    let coolingArgs: CopyArgs = [
+        "water": .text(f.water),
+        "temp": .text(f.coolingWaterC.map { showIn(f.units, .coolingWater, $0) } ?? ""),
+    ]
     let keys = clauseKeys(ClauseFacts(
         eggFrom: f.from, startMode: f.start == .cold ? .cold : .hot, sousVide: f.start == .sousVide,
-        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling
+        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling, coolingWaterGiven: f.coolingWaterC != nil
     ))
     /// A nil value is the argument itself: the mass, or the cook's own
     /// temperature.
     let own: [Clause: String] = [.egg: f.mass, .from: showIn(f.units, .eggTemp, f.customC)]
     return keys.reduce(into: [:]) { out, entry in
         let (clause, k) = entry
+        let with = clause == .cooling ? coolingArgs : args
         out[clause] = ClauseText(
-            text: tr(k.text, args), label: tr(k.label),
-            value: k.value.map { tr($0, args) } ?? own[clause] ?? ""
+            text: tr(k.text, with), label: tr(k.label),
+            value: k.value.map { tr($0, with) } ?? own[clause] ?? ""
         )
     }
 }
@@ -262,14 +275,52 @@ struct ClausePanel: View {
             }
             .segmented()
             if let edits, let start = edits.shownStart { startedAt(edits, start) }
-        case .cooling:
-            Picker(tr("controls.cooling"), selection: $planner.settings.cooling) {
-                Text(tr("controls.cooling.ice")).tag(Cooling.ice)
-                Text(tr("controls.cooling.tap")).tag(Cooling.tap)
-                Text(tr("controls.cooling.counter")).tag(Cooling.counter)
-            }
-            .segmented()
+        case .cooling: cooling
         }
+    }
+
+    /// Four ways to cool the eggs, one to a line, fastest first: four names
+    /// fit no phone's width as segments (`ListChoice`). Under them, with its
+    /// own choice, a bowl's water, and the temperature of running water or
+    /// of the bowl, which is optional and shows greyed the one assumed.
+    private var cooling: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ListChoice(
+                label: tr("controls.cooling"),
+                choices: [
+                    (tr("controls.cooling.ice"), Cooling.ice), (tr("controls.cooling.tap"), Cooling.tap),
+                    (tr("controls.cooling.bowl"), Cooling.bowl), (tr("controls.cooling.counter"), Cooling.counter),
+                ],
+                selection: $planner.settings.cooling
+            )
+            if planner.settings.cooling == .bowl {
+                InfoRow("controls.bowl", more: [tr("controls.bowl.more")])
+                HStack {
+                    Spacer(minLength: 0)
+                    StepperValue(
+                        label: tr("controls.bowl"), measure: planner.measure(.bowl),
+                        value: $planner.settings.bowlLitres, show: { planner.show(.bowl, $0) }, field: .bowlLitres
+                    )
+                }
+            }
+            if planner.settings.cooling == .tap || planner.settings.cooling == .bowl {
+                InfoRow("controls.coolingWater", more: [coolingWaterMore])
+                HStack {
+                    Spacer(minLength: 0)
+                    CoolingWaterField(planner: planner)
+                }
+            }
+        }
+        .appFont(.subheadline)
+    }
+
+    /// What the (i) beside the water's temperature says: the temperature
+    /// assumed when it is left blank, and why it may be otherwise.
+    private var coolingWaterMore: String {
+        let assumed = planner.show(.temperature, planner.coolingWaterAssumedC)
+        return planner.settings.cooling == .tap
+            ? tr("controls.coolingWater.tap.more", ["water": .text(assumed)])
+            : tr("controls.coolingWater.bowl.more", ["room": .text(assumed)])
     }
 
     /// When the eggs went in, while a cook runs (design/one-screen.md

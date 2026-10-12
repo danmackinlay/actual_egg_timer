@@ -152,6 +152,28 @@ public final class Planner {
         settings.roomC = c.map { clamp($0, to: Limits.roomC) }
     }
 
+    /// The temperature of the water the eggs cool in, for the cooling chosen,
+    /// as the cook gave it: running water's or the bowl's; nil is "not
+    /// given", and it is assumed (`coolingMediumC`). Clamped like anything
+    /// typed. Nothing for ice or the air.
+    public var coolingWaterC: Double? {
+        settings.cooling == .tap ? settings.tapWaterC : settings.cooling == .bowl ? settings.bowlWaterC : nil
+    }
+
+    public func setCoolingWater(_ c: Double?) {
+        let clamped = c.map { clamp($0, to: Limits.coolingWaterC) }
+        if settings.cooling == .tap { settings.tapWaterC = clamped }
+        if settings.cooling == .bowl { settings.bowlWaterC = clamped }
+    }
+
+    /// What the water the eggs cool in is taken to be when the cook gives
+    /// none, C: mains water running, the room in a bowl.
+    public var coolingWaterAssumedC: Double {
+        var s = setup
+        s.coolingWaterC = nil
+        return coolingMediumC(s)
+    }
+
     /// The room the model is told about, or nil to assume one.
     public var roomInUseC: Double? { roomInUse(roomC: settings.roomC) }
 
@@ -352,6 +374,9 @@ public final class Planner {
         next.startMode = c.startMode
         next.afterBoil = c.afterBoil
         next.cooling = c.cooling
+        next.tapWaterC = c.tapWaterC
+        next.bowlLitres = c.bowlLitres
+        next.bowlWaterC = c.bowlWaterC
         next.waterLitres = c.waterLitres
         next.eggCount = Int(c.eggCount.rounded())
         next.altitudeM = c.altitudeM
@@ -401,7 +426,8 @@ public final class Planner {
             massKg: eggMassG / 1000, massFrom: massFrom, sizeTable: sizeTable, eggFrom: s.startTempMode,
             customStartC: s.customStartC, roomC: roomInUseC, startMode: coldStart ? .cold : .hot,
             afterBoil: s.afterBoil, cooling: s.cooling, waterLitres: s.waterLitres,
-            eggCount: Double(s.eggCount), altitudeM: s.altitudeM, level: s.doneness
+            eggCount: Double(s.eggCount), altitudeM: s.altitudeM, level: s.doneness,
+            tapWaterC: s.tapWaterC, bowlLitres: s.bowlLitres, bowlWaterC: s.bowlWaterC
         )
     }
 

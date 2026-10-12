@@ -370,6 +370,7 @@
     "alarm.pull.title": { "text": "Out with them" },
     "alarm.pull.bodyIce": { "text": "Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
     "alarm.pull.bodyTap": { "text": "Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
+    "alarm.pull.bodyBowl": { "text": "Commit them at once to the basin; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
     "alarm.cooled.title": { "text": "Cooling ended" },
     "alarm.pull.bodyCounter": { "text": "Take them from the water, and let them cool in the open air." },
     "alarm.cooled.body": { "text": "The heat has run its course; the egg is such as you desired." },

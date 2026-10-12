@@ -37,7 +37,9 @@ import os
 ///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
 ///   from the launch), `set:<control>=<value>` (a control changed as a tap
 ///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
-///   `water`, `eggs`, `altitude`, and `language`, a tag as the picker
+///   `water`, `bowlLitres`, `coolingWater` (the temperature of running water
+///   or the bowl, whichever is chosen; empty for none), `eggs`, `altitude`,
+///   and `language`, a tag as the picker
 ///   would pick it), `drag:<levels>` and `release` (the
 ///   slider held and moved, then let go), `start:+3` (the start's + or −
 ///   pressed so many times), `stillIn` and `stillOut` (the two answers to
@@ -520,6 +522,8 @@ extension Screenshots {
         case "cooling": if let v = Cooling(rawValue: value) { planner.settings.cooling = v }
         case "heatOff": planner.heatOff = value == "1"
         case "water": planner.settings.waterLitres = number
+        case "bowlLitres": planner.settings.bowlLitres = number
+        case "coolingWater": planner.setCoolingWater(value.isEmpty ? nil : number)
         case "eggs": planner.settings.eggCount = Int(number)
         case "altitude": planner.settings.altitudeM = number
         case "language": Services.language.pick(value)

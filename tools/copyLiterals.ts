@@ -241,6 +241,7 @@ const NOT_COPY: Record<string, string> = {
   '=': 'debug launch argument separator',
   size: 'debug launch argument value',
   altitude: 'debug launch argument value',
+  coolingWater: 'debug launch argument value',
   language: 'debug launch argument value',
   '1':'debug launch argument value',
   '{}|{}|{}|{}': 'cache key, never shown',
