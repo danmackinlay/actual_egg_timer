@@ -65,16 +65,12 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* A column at least a screen tall, so the action bar, last in it, sits at the
-   bottom of a short page and stays there over a long one (#actions). In a
-   column the margins between its parts add up rather than overlap; the
-   Settings and Help, which have no bar, stay a plain block (views). */
+/* A column: the margins between the egg's parts add up rather than
+   overlap. Settings and Help stay a plain block (views). */
 main {
   max-width: 32rem;
   margin: 0 auto;
-  padding: 6px 16px 0;
-  min-height: 100vh;
-  min-height: 100dvh;
+  padding: 6px 16px calc(32px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
 }
@@ -862,19 +858,15 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 /* ---------------------------------------------------------------- views */
 
 /* Settings and Help are pages of their own; the egg's parts, and the
-   button at the bottom, step aside while one is open. In every phase
+   buttons under the time, step aside while one is open. In every phase
    (design/one-screen.md section 2): while a cook runs, Settings' pot rows
    correct it as the sentence does, and what does not belong to the cook -
    what I have learned, and sharing - waits for it to end. */
 .page { display: none; }
 body[data-view="settings"] #settings,
 body[data-view="help"] #help { display: block; }
-body:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
-body:not([data-view="egg"]) main {
-  display: block;
-  min-height: 0;
-  padding-bottom: calc(32px + env(safe-area-inset-bottom));
-}
+body:not([data-view="egg"]) :is(#readout, #actions, #controls, #slot, #feedback) { display: none; }
+body:not([data-view="egg"]) main { display: block; }
 body:not([data-phase="IDLE"]) :is(#learned, #share) { display: none; }
 
 #navBack { display: none; }
@@ -969,36 +961,73 @@ html[lang$="-x-1750"] input[type="number"] {
 
 /* ---------------------------------------------------------------- actions */
 
-/* Stuck to the bottom of the screen, and opaque, so what scrolls beneath it
-   is hidden rather than read through the hint; only its top 20 px fade in.
-   It is in the page's flow, not fixed over it, so the page ends where it
-   begins: the last line scrolls clear of it at any height, in any phase. */
-#actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  margin: auto -16px 0;
-  background: linear-gradient(transparent, var(--bg) 20px);
-  padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
-}
-#actions > * { max-width: 32rem; margin-left: auto; margin-right: auto; }
-/* At Done the bar carries the questions after an egg, too tall to stick over
-   the one screen's slider and sentence: it ends the page instead, as the
-   last thing in the column, scrolled to like the rest. */
-body[data-phase="DONE"] #actions { position: static; }
+/* Directly under the time, in every phase: the hint, and one row of
+   buttons. The row is Cancel on the left, at its own width, and the main
+   button filling the rest, on the right where the thumb rests, with room
+   between them for a wet thumb; with only the main button, it fills the
+   row; with only Cancel, the rest is empty. The row is as tall as the main
+   button in every phase, so nothing under it moves and nothing is left
+   empty under it.
 
+   Where the widest main button and Cancel do not fit side by side (a narrow
+   screen, a larger text size, 1750's words), the row wraps: the main button
+   over Cancel. The choice is the widest main button's, never the phase's
+   own: the main button's cell holds the words of every main button that
+   can stand beside Cancel, laid out at no height (.buttons__widths), so it
+   wraps in every phase or in none. And the probe, the same row with Cancel
+   in every phase, never seen, sits in the same grid cell, so the block
+   keeps the stack's height in every phase too: Start heating alone, idle,
+   with Cancel's room under it. Only "still in the water?", with its two
+   answers and Cancel, and the hint's (i) opened go past it. */
+#actions { margin: 14px 0 0; }
+.buttons { display: grid; }
+.buttons > * { grid-area: 1 / 1; }
+/* Reversed, so the main button, first for a screen reader and the keyboard,
+   is drawn on the right; packed to the left, where Cancel alone sits. */
+.buttons__row {
+  display: flex;
+  flex-flow: row-reverse wrap;
+  justify-content: flex-end;
+  align-items: center;
+  align-content: flex-start;
+  gap: 10px 24px;
+}
+.buttons__probe { visibility: hidden; }
+/* As tall as the main button, with it or without. */
+.buttons__main {
+  flex: 1 1 auto;
+  max-width: 100%;
+  min-height: max(64px, 1.35 * 1.375rem + 28px);
+}
+.buttons__row > button.secondary {
+  flex: none;
+  width: auto;
+  margin: 0;
+  padding: 10px 20px;
+}
+/* The words a button may hold, set as that button sets them. */
+.sizer { display: block; white-space: nowrap; }
+.sizer--main { font-size: 1.375rem; font-weight: 650; padding: 14px; min-height: 64px; }
+.sizer--cancel { font-size: 1rem; padding: 10px 20px; border: 1px solid transparent; min-height: 48px; }
+.buttons__probe .buttons__main { display: grid; }
+.buttons__probe .buttons__main > .sizer { grid-area: 1 / 1; }
+.buttons__widths { display: block; height: 0; overflow: hidden; visibility: hidden; }
+
+/* The hint holds two lines, or the (i)'s height, whichever is more, and
+   sits at the foot of that room, next to the button it is about. */
 #primaryHint {
   display: flex;
   justify-content: center;
   align-items: center;
+  align-content: flex-end;
   flex-wrap: wrap;
   margin: 0 auto 6px;
   text-align: center;
   font-size: 0.8125rem;
   color: var(--dim);
-  min-height: 1.1em;
+  min-height: max(32px, 2.7em);
 }
-#actions .disclosed { margin-bottom: 10px; background: var(--panel); }
+#actions .disclosed { margin-bottom: 10px; }
 
 button.primary {
   background: var(--accent);
@@ -1065,7 +1094,7 @@ body[data-phase="PULL"] #readout { animation: flash 1s steps(2, end) infinite; }
 }
 
 /* ---- calibration feedback, shown only when the egg is finished ---- */
-#feedback { margin-top: 10px; }
+#feedback { margin-top: 16px; }
 #feedbackAsk, #whiteAsk {
   margin: 0 0 8px;
   text-align: center;

@@ -15,12 +15,13 @@ enum Route: Hashable {
 /// section 2), and the phase machine that runs it.
 ///
 /// One layout from idle to Done, top to bottom: the time, with the line
-/// under it and how sure I am; the doneness slider; the egg in cross-section
-/// beside the setup sentence, whose clauses open their choices in place under
-/// both; one slot for the longer line; and the action. At the start nothing
-/// moves and nothing goes: only the readout's words and the buttons change.
-/// Settings and Help are rare visits, so they sit in the bar at the top, out
-/// of the thumb's way.
+/// under it and how sure I am; the hint and the action, with Cancel while a
+/// cook runs; the doneness slider; the egg in cross-section beside the setup
+/// sentence, whose clauses open their choices in place under both; one slot
+/// for the longer line; and at Done the questions after an egg. At the start
+/// nothing moves and nothing goes: only the readout's words and the buttons
+/// change. Settings and Help are rare visits, so they sit in the bar at the
+/// top, out of the thumb's way.
 struct ContentView: View {
     @State private var model = AppModel()
     @State private var path: [Route] = []
@@ -77,14 +78,23 @@ struct ContentView: View {
                     // TimelineView is what redraws them: it asks for a new body
                     // once a `tick`, and hands over the date it drew for -
                     // which is the date the phase is computed from.
+                    // The action sits directly under the time it runs, in
+                    // every phase, and holds its room (`PhaseActions`), so
+                    // the slider and the sentence stay put as its buttons
+                    // come and go.
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
                         let phase = cook.phase(atS: now.timeIntervalSince1970)
-                        ReadoutView(
-                            model: model, phase: phase, now: now,
-                            sousVide: sousVideAt(now, sousVide, phase: phase),
-                            certaintyOpen: $certaintyOpen
-                        )
+                        let said = sousVideAt(now, sousVide, phase: phase)
+                        VStack(spacing: 22) {
+                            ReadoutView(
+                                model: model, phase: phase, now: now,
+                                sousVide: said,
+                                certaintyOpen: $certaintyOpen
+                            )
+                            PhaseActions(model: model, phase: phase, now: now, sousVide: said)
+                                .logTop("action")
+                        }
                     }
                     .id(tick)
                     DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
@@ -94,14 +104,12 @@ struct ContentView: View {
                         let now = moment(context.date)
                         let phase = cook.phase(atS: now.timeIntervalSince1970)
                         VStack(spacing: 18) {
-                            PhaseActions(
-                                model: model, phase: phase, now: now,
-                                sousVide: sousVideAt(now, sousVide, phase: phase)
-                            )
+                            PhaseSlot(model: model, phase: phase, sousVide: sousVideAt(now, sousVide, phase: phase))
                             // Inside the TimelineView for the same reason as
                             // the readout: reaching DONE changes no stored
                             // property, so nothing outside would redraw and
-                            // the question would never appear.
+                            // the question would never appear. At Done the
+                            // questions end the page.
                             // Not while a newer build's results are left
                             // alone (`Stores`): no answer could be kept.
                             if phase == .done && !Stores.readOnly { FeedbackPanel(model: model) }
@@ -335,6 +343,21 @@ extension View {
         #if DEBUG
         onGeometryChange(for: Double.self) { proxy in
             (proxy.frame(in: .global).minY * 2).rounded() / 2
+        } action: { y in
+            Screenshots.log(.layout(part: name, y: y))
+        }
+        #else
+        self
+        #endif
+    }
+
+    /// The view's foot in the window, pt, to the debug log whenever it moves,
+    /// as `logTop` logs a top: what the scripted checks read to see that no
+    /// empty room is left under the action's row.
+    func logBottom(_ name: String) -> some View {
+        #if DEBUG
+        onGeometryChange(for: Double.self) { proxy in
+            (proxy.frame(in: .global).maxY * 2).rounded() / 2
         } action: { y in
             Screenshots.log(.layout(part: name, y: y))
         }

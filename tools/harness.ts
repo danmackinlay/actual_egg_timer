@@ -241,6 +241,13 @@ export class Tab {
     return tab;
   }
 
+  /** The tab's screen `width` px wide (844 tall), as a narrower phone's. */
+  async viewport(width: number): Promise<void> {
+    await this.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: width, height: 844, deviceScaleFactor: 1, mobile: false,
+    }, this.session);
+  }
+
   /** An expression's value in the page, awaited, as a user's gesture (so a
    *  click primes the audio, as the Start tap does). */
   async eval<T>(expression: string): Promise<T> {

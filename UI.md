@@ -70,6 +70,31 @@ phase (the 1750 title page, when it is shown, above it all):
 - **How sure I am**: a line of words the cook presses, and the runny-white
   line when it applies (§8). It keeps its room in every phase; it goes at
   the pull, when the time it was about has passed.
+- The hint, then **the action**, directly under the time it runs (the
+  owner, 12 October 2026): "Start heating" on a cold start, "Eggs in"
+  otherwise, Rolling boil, the pull, Start again (the table below). In
+  sous-vide it is dead, with the bath's hint above. The buttons are **one
+  row** (the owner, 12 October 2026): while a cook runs, Cancel on the
+  left, small and plainly secondary at its own width (iOS's grey pill, the
+  web's outlined button), and the main button filling the rest, on the
+  right where the thumb rests, with room between them for a wet thumb (20
+  pt, 24 px); no confirmation. A phase with only the main button gives it
+  the whole row (Start heating, Start again); one with only Cancel
+  (Cooking, Cooling) leaves the rest empty. The row is the main button's
+  height in every phase, so nothing under it moves and nothing is left
+  empty under it. Where the widest main button that can stand beside
+  Cancel (every main button's words, the pull's three included) and
+  Cancel do not fit side by side, the row stacks, the main button over
+  Cancel: on iOS at the accessibility text sizes and in 1750's longer
+  words (`ViewThatFits`), on the web on a narrow screen such as 320 px
+  (the row wraps). The choice is made on the widest words, never the
+  phase's own, so it is the same in every phase, and the stack keeps the
+  room of both buttons in every phase: there, Start heating has Cancel's
+  room under it. The hint holds the room of the tallest hint (two lines on
+  the web, or the (i); on iOS idle's with the widest time, Heating's with
+  its (i), or Cooking's with the alarm's line), at its foot. Only "still in
+  the water?", with its two answers and Cancel, and the hint's (i) opened
+  go past the room and move what is below.
 - **The doneness slider.** The heading reads `controls.doneness` at its start
   and the peak yolk at its end (`controls.doneness.peak`; in sous-vide the
   water, `controls.doneness.bath`), in the cook's units. The track is the
@@ -91,11 +116,7 @@ phase (the 1750 title page, when it is shown, above it all):
   surer (§8, "the advice") the link "How to make this more reliable →" goes
   under whichever is there, while idle, and opens Help at its reliability
   section, which lists the changes that would help this setup (`advice.*`).
-- The hint, then **the action**: "Start heating" on a cold start, "Eggs in"
-  otherwise, Rolling boil, the pull, Start again (the table below). In
-  sous-vide it is dead, with the bath's hint above. Cancel under it while a
-  cook runs. At Done the bar carries the questions after an egg, so it ends
-  the page rather than sticking to the bottom of the screen.
+- **The questions after an egg**, at Done, end the page (below).
 
 **The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98; web
 `src/ui/eggSection.ts` and `render.ts`, iOS `EggSectionView.swift`). An
@@ -547,10 +568,18 @@ the thumb when the finger lifts; the web's thumb moves at once.
     growing at the largest standard size, since each sits under its level.
   - *Settings* is the navigation bar's in every phase; the pull pops it, and
     Help, back to the egg's page.
-- **The action bar** on the web is opaque, fading in over its top 20 px, and
-  stuck to the bottom of the page's column rather than fixed over it, so what
-  scrolls under it is hidden and the last line always scrolls clear; at Done
-  it ends the page instead.
+- **The action's row** is chosen and held differently. iOS lays a hidden
+  row of Cancel and the main button at its widest words under the row it
+  shows, and a hidden stack under the stack, and `ViewThatFits` takes the
+  row where the hidden row fits (`PhaseActions.buttons`). The web is CSS
+  alone (`.buttons` in `styles.css`): the main button's cell holds every
+  main button's words at no height, so the row wraps in every phase or in
+  none, and a hidden probe row with Cancel in the same grid cell holds the
+  stack's height in every phase. The web's hint room is two lines or the
+  (i), so a hint longer than two lines (at a large browser text size)
+  grows it; iOS lays the tallest hints out hidden, with Cooking's alarm
+  line, which the web has not. In both the block is in the column,
+  scrolled with it, never stuck to the screen.
 - **The Lock Screen and Dynamic Island** are iOS's alone: the pull names the
   cooling, word for word as the alarm does, the card ends when the cooling
   does, and it carries no odds (`DECISIONS.md` 32, 33).

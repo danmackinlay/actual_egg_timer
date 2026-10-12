@@ -58,7 +58,7 @@
   <!-- ------------------------------------------------------------ top bar -->
   <!-- The ways out to the other views, and sound, which works in every
        phase. Settings and Help are rare visits, so they sit at the top, out of
-       the thumb's way; Start is at the bottom, in it. -->
+       the thumb's way; Start is under the time it runs. -->
   <header id="topbar">
     <button type="button" id="navBack" class="navlink navlink--back" data-copy="nav.back"></button>
     <a href="#settings" id="settingsLink" class="navlink" data-copy="controls.settings"></a>
@@ -113,6 +113,54 @@
     </div>
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
   </section>
+
+  <!-- ------------------------------------------------------------ actions -->
+  <!-- Directly under the time it runs, in every phase: the hint, and under
+       it one row, Cancel on the left at its own width and the phase's main
+       button filling the rest, on the right; with only the main button,
+       it fills the row. Where the widest main button and Cancel do not fit
+       side by side, they stack. The words of every main button that can
+       stand beside Cancel are laid out hidden (the sizers), so the row's
+       choice and its height are the same in every phase, and nothing under
+       it moves (styles.css). -->
+  <div id="actions">
+    <p id="primaryHint"><span id="primaryHintText"></span><button type="button" id="hintInfo" class="info" aria-expanded="false" aria-controls="hintMore" data-name="action.hint.heating.info" hidden></button></p>
+    <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
+    <div class="buttons">
+      <!-- The row at its widest, with Cancel, never seen: as tall as the
+           row, or as the stack where the row does not fit. -->
+      <div class="buttons__row buttons__probe" aria-hidden="true">
+        <span class="buttons__main">
+          <span class="sizer sizer--main" data-copy="action.startHeating"></span>
+          <span class="sizer sizer--main" data-copy="action.eggsIn"></span>
+          <span class="sizer sizer--main" data-copy="action.fullBoil"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.ice"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.tap"></span>
+          <span class="sizer sizer--main" data-copy="action.pulled.counter"></span>
+          <span class="sizer sizer--main" data-copy="action.startAgain"></span>
+        </span>
+        <span class="sizer sizer--cancel" data-copy="action.cancel"></span>
+      </div>
+      <div class="buttons__row">
+        <!-- The main button, as wide as the widest of the sizers asks. -->
+        <div class="buttons__main">
+          <span class="buttons__widths" aria-hidden="true">
+            <span class="sizer sizer--main" data-copy="action.startHeating"></span>
+            <span class="sizer sizer--main" data-copy="action.eggsIn"></span>
+            <span class="sizer sizer--main" data-copy="action.fullBoil"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.ice"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.tap"></span>
+            <span class="sizer sizer--main" data-copy="action.pulled.counter"></span>
+            <span class="sizer sizer--main" data-copy="action.startAgain"></span>
+          </span>
+          <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
+        </div>
+        <!-- "Still in the water?", the other answer: the primary says yes. -->
+        <button type="button" id="stillOut" class="secondary" hidden data-copy="ask.stillIn.no"></button>
+        <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
+      </div>
+    </div>
+  </div>
 
   <!-- ----------------------------------------------------------- the egg -->
   <!-- Two controls and a sentence (UI.md section 3), the same in every phase
@@ -271,6 +319,50 @@
     <p id="warn" hidden></p>
     <p id="welcome" hidden data-copy="idle.welcome"></p>
     <p id="advice" hidden><a href="#help-reliable" class="morelink" data-copy="advice.toggle"></a></p>
+  </div>
+
+  <!-- ---------------------------------------------------------- feedback -->
+  <!-- At Done, ending the page: two questions, always both, and under
+       them the thermometer reading, none required (INFERENCE.md section 3,
+       DECISIONS.md 92). Each answer is folded the moment it is tapped; one
+       left unanswered is recorded as skipped when the next cook starts. -->
+  <div id="feedback" hidden>
+    <!-- What this cook was started for, from its ticket. -->
+    <p class="hint" id="feedbackTarget"></p>
+    <!-- The yolk the cook got, in the slider's own words, whatever was
+         asked for. -->
+    <p id="feedbackAsk" data-copy="feedback.ask"></p>
+    <!-- Each row is a group named by its question, so a screen reader
+         says which "Runny" it is on. -->
+    <div class="pair pair--five" role="group" aria-labelledby="feedbackAsk">
+      <button type="button" class="fb" data-yolk="runny" data-copy="doneness.runny"></button>
+      <button type="button" class="fb" data-yolk="soft" data-copy="doneness.soft"></button>
+      <button type="button" class="fb" data-yolk="jammy" data-copy="doneness.jammy"></button>
+      <button type="button" class="fb" data-yolk="fudgy" data-copy="doneness.fudgy"></button>
+      <button type="button" class="fb" data-yolk="hard" data-copy="doneness.hard"></button>
+    </div>
+    <p id="whiteAsk" data-copy="feedback.white.ask"></p>
+    <div class="pair" role="group" aria-labelledby="whiteAsk">
+      <button type="button" class="wb" data-white="runny" data-copy="feedback.white.runny"></button>
+      <button type="button" class="wb" data-white="tender" data-copy="feedback.white.tender"></button>
+      <button type="button" class="wb" data-white="firm" data-copy="feedback.white.firm"></button>
+    </div>
+    <!-- A reading at the middle, now that the cooling has ended at the
+         peak; whenever the cook has a moment to probe. -->
+    <div id="probeEntry" hidden>
+      <p id="probeAsk" data-copy="probe.ask"></p>
+      <p class="hint" id="probeHow" data-copy="probe.how"></p>
+      <div class="probe__row">
+        <label class="sr-only" for="probeReading" data-copy="probe.entry"></label>
+        <!-- The − and + step in whole degrees from the peak the cook was
+             started at, which the empty field shows greyed (feedback2). -->
+        <span class="unit"><input type="number" id="probeReading" data-stepper inputmode="decimal"><span id="unitProbe"></span></span>
+        <button type="button" class="secondary" id="probeSave" data-copy="probe.save"></button>
+      </div>
+      <p class="hint" id="probeNote" aria-live="polite"></p>
+    </div>
+    <p class="hint" id="feedbackOptional" data-copy="feedback.optional"></p>
+    <p class="hint" id="calibNote"></p>
   </div>
 
   <!-- ---------------------------------------------------------- settings -->
@@ -563,58 +655,6 @@
     <!-- Who made it: the owner's name links the owner's blog, in a new tab. -->
     <p class="credit" data-copy="help.credit" data-copy-links></p>
   </section>
-
-  <!-- ------------------------------------------------------------ actions -->
-  <div id="actions">
-    <p id="primaryHint"><span id="primaryHintText"></span><button type="button" id="hintInfo" class="info" aria-expanded="false" aria-controls="hintMore" data-name="action.hint.heating.info" hidden></button></p>
-    <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
-    <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
-    <!-- "Still in the water?", the other answer: the primary says yes. -->
-    <button type="button" id="stillOut" class="secondary" hidden data-copy="ask.stillIn.no"></button>
-    <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
-    <!-- Two questions, always both, and under them the thermometer reading,
-         none required (INFERENCE.md section 3, DECISIONS.md 92). Each answer
-         is folded the moment it is tapped; one left unanswered is recorded
-         as skipped when the next cook starts. -->
-    <div id="feedback" hidden>
-      <!-- What this cook was started for, from its ticket. -->
-      <p class="hint" id="feedbackTarget"></p>
-      <!-- The yolk the cook got, in the slider's own words, whatever was
-           asked for. -->
-      <p id="feedbackAsk" data-copy="feedback.ask"></p>
-      <!-- Each row is a group named by its question, so a screen reader
-           says which "Runny" it is on. -->
-      <div class="pair pair--five" role="group" aria-labelledby="feedbackAsk">
-        <button type="button" class="fb" data-yolk="runny" data-copy="doneness.runny"></button>
-        <button type="button" class="fb" data-yolk="soft" data-copy="doneness.soft"></button>
-        <button type="button" class="fb" data-yolk="jammy" data-copy="doneness.jammy"></button>
-        <button type="button" class="fb" data-yolk="fudgy" data-copy="doneness.fudgy"></button>
-        <button type="button" class="fb" data-yolk="hard" data-copy="doneness.hard"></button>
-      </div>
-      <p id="whiteAsk" data-copy="feedback.white.ask"></p>
-      <div class="pair" role="group" aria-labelledby="whiteAsk">
-        <button type="button" class="wb" data-white="runny" data-copy="feedback.white.runny"></button>
-        <button type="button" class="wb" data-white="tender" data-copy="feedback.white.tender"></button>
-        <button type="button" class="wb" data-white="firm" data-copy="feedback.white.firm"></button>
-      </div>
-      <!-- A reading at the middle, now that the cooling has ended at the
-           peak; whenever the cook has a moment to probe. -->
-      <div id="probeEntry" hidden>
-        <p id="probeAsk" data-copy="probe.ask"></p>
-        <p class="hint" id="probeHow" data-copy="probe.how"></p>
-        <div class="probe__row">
-          <label class="sr-only" for="probeReading" data-copy="probe.entry"></label>
-          <!-- The − and + step in whole degrees from the peak the cook was
-               started at, which the empty field shows greyed (feedback2). -->
-          <span class="unit"><input type="number" id="probeReading" data-stepper inputmode="decimal"><span id="unitProbe"></span></span>
-          <button type="button" class="secondary" id="probeSave" data-copy="probe.save"></button>
-        </div>
-        <p class="hint" id="probeNote" aria-live="polite"></p>
-      </div>
-      <p class="hint" id="feedbackOptional" data-copy="feedback.optional"></p>
-      <p class="hint" id="calibNote"></p>
-    </div>
-  </div>
 
 </main>
 

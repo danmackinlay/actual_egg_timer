@@ -89,7 +89,36 @@ Heating, as a 390-pt column. `_x_` is a tappable clause and `( )` is the egg.
                     Cancel
 ```
 
-Idle is the same without Cancel, with "Total time" and Start. The
+*As built since 12 October 2026* (the owner, from using 0.5 on his
+phone): the hint and the action, item 7, sit directly under the readout
+and the certainty line, before the slider, in every phase and both apps;
+the slider, the egg and the sentence, and the slot follow, and at Done the
+questions after an egg end the page. The buttons are one row: Cancel on
+the left at its own width, the main button filling the rest on the right,
+the main button alone filling the row; one height in every phase, so the
+slider never moves and nothing is left empty under the row. Where the
+widest main button and Cancel do not fit side by side they stack, and the
+stack keeps both buttons' room in every phase (`UI.md` §3). Heating, as
+built:
+
+```
+          Heating
+            6:58
+   0:12 so far · about 8:00 to boil
+        A ballpark ›
+        wait for the whole surface to roll (i)
+  [ Cancel ]   [       Rolling boil       ]
+ Doneness                      peak yolk 65 °C
+ ░░░░▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓●▓▓▓▓▓▓▓▒▒▒▒▒░░░░░░░░░░░░
+ Runny   Soft    Jammy     Fudgy        Hard
+          └───────┴─────────┘
+ white set, yolk jammy
+  ╭──╮   _68 g eggs_ _from the fridge_,
+ │ ○ │   _into cold water, brought to the boil_,
+  ╰──╯   _then an ice bath_.
+```
+
+Idle is the same with "Total time" and Start filling the row. The
 sentence never says when the eggs went in, idle or mid-cook: the countdown
 already does, and the start clause's panel corrects it ("Eggs in at 7:42",
 with − and +; `DECISIONS.md` 108). Cooking is the same without the boil button. In Pull, the button
@@ -931,7 +960,8 @@ commit each):
      clause that wraps pushed its comma to the far end of its last line.
    - **At Done the action bar is not stuck** to the bottom: it carries the
      questions after an egg, which would cover the slider and the sentence,
-     so it ends the page and is scrolled to.
+     so it ends the page and is scrolled to. (Since 12 October 2026 the
+     action is under the time and the questions alone end the page: §2.)
    - **The controls' own settings** (`state.controls`): the settings while
      idle, a running cook's choices over a copy of them while one runs
      (`settingsOfChoices`). A correction is the fields the cook changed on
