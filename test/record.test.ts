@@ -279,6 +279,15 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
 });
 
+test('2c2. an egg cooled in a bowl is scored in that bowl: its water and its temperature reach the fold', () => {
+  const r = solvedRecord(0.4, 'jammy');
+  const bowl = { ...r, setup: { ...r.setup, cooling: 'bowl' as const, bowlLitres: 0.75, coolingWater_C: 9 } };
+  const q = gridRequestFor(freshCalibration(64, 7), bowl, calibrationGrid);
+  assert.deepEqual([q.setup.cooling, q.setup.bowlLitres, q.setup.coolingWater_C], ['bowl', 0.75, 9]);
+  const plain = gridRequestFor(freshCalibration(64, 7), r, calibrationGrid);
+  assert.equal('bowlLitres' in plain.setup || 'coolingWater_C' in plain.setup, false, 'an ice bath carries neither');
+});
+
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
   // INFERENCE.md section 4. A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
