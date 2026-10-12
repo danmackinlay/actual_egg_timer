@@ -68,8 +68,7 @@ export interface CookChoices {
   eggFrom: EggFrom;
   /** The egg's temperature, read only when `eggFrom` is 'custom'. */
   customStart_C: number;
-  /** The room as measured, while it counts (`roomInUse`: the probe on), or
-   *  null to assume one. */
+  /** The room as the cook gave it (`roomInUse`), or null to assume one. */
   room_C: number | null;
   /** Sous-vide starts no cook, so it is not here. */
   startMode: StartMode;

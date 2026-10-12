@@ -147,7 +147,6 @@ function drawMeasurements(f: FormView, except: string | null): void {
 function drawEcho(f: FormView, source: string | null): void {
   const c = f.controls;
   if (c.sizeIndex === -1) page().size.value = '-1';
-  page().roomField.hidden = !c.probe;
   page().startTempHint.textContent = f.startTempHint;
   page().customTempField.hidden = c.startTempMode !== 'custom';
   drawMeasurements(f, source);
@@ -200,7 +199,6 @@ function drawAll(f: FormView): void {
   page().doneness.value = String(c.doneness);
   page().customTempField.hidden = c.startTempMode !== 'custom';
   page().probeSetting.checked = c.probe;
-  page().roomField.hidden = !c.probe;
   applyLanguageToDom();
 }
 

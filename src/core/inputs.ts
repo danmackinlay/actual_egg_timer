@@ -32,8 +32,8 @@ export const LIMITS = {
   girth_mm: { lo: 90, hi: 200 },
   minor_mm: { lo: 30, hi: 60 },
   eggTemp_C: { lo: -2, hi: 40 },
-  /** A kitchen's air, measured with the probe (the room setting): colder
-   *  than 5 C is a cellar, hotter than 40 C a kitchen nobody cooks in. */
+  /** A kitchen's air (the room setting): colder than 5 C is a cellar,
+   *  hotter than 40 C a kitchen nobody cooks in. */
   room_C: { lo: 5, hi: 40 },
   altitude_m: { lo: -400, hi: 5000 },
   waterLitres: { lo: 0.25, hi: 12 },
@@ -87,12 +87,14 @@ export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | nu
 }
 
 /** The room the model is told about, C, or null to assume one: the cook's
- *  measured room, from Settings, which is offered - and so counts - only while
- *  they have said they have a probe thermometer; without one the room is
- *  assumed. A setting out of sight changes nothing.
- *  Clamped, like everything typed or stored. */
-export function roomInUse(probe: boolean, room_C: number | null): number | null {
-  if (!probe || room_C === null || !Number.isFinite(room_C)) return null;
+ *  own, as they gave it beside "at room temperature" or in Settings, with or
+ *  without a probe thermometer. It once counted only with the probe on; it
+ *  moves the right time by about 5 s a degree for eggs left out, as much as
+ *  a size class across a kitchen's 15-30 C, so it is offered where it is
+ *  used (LOGBOOK.md, 12 October 2026). Clamped, like everything typed or
+ *  stored. */
+export function roomInUse(room_C: number | null): number | null {
+  if (room_C === null || !Number.isFinite(room_C)) return null;
   return clamp(room_C, LIMITS.room_C);
 }
 

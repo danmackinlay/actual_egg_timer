@@ -40,14 +40,13 @@ struct DefaultsConformance {
         }
     }
 
-    @Test("a measured room counts only with a probe, and moves only the Room button")
+    @Test("a room given counts, clamped, and moves only the Room button")
     func measuredRoom() throws {
         for c in try Fixtures.list("inputs.json", "roomInUse") {
-            let probe = try c.flag("probe")
             let room = try c.optionalNum("room_C")
-            let got = roomInUse(probe: probe, roomC: room)
+            let got = roomInUse(roomC: room)
             let want = try c.optionalNum("inUse_C")
-            #expect(got == want, "room \(String(describing: room)), probe \(probe)")
+            #expect(got == want, "room \(String(describing: room))")
         }
         for c in try Fixtures.list("inputs.json", "startTempPresets") {
             let preset = try c.value(StartTempPreset.self, "preset")

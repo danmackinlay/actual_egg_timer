@@ -123,7 +123,6 @@ function findDom() {
     probeSave: el<HTMLButtonElement>('probeSave'),
     probeNote: el<HTMLParagraphElement>('probeNote'),
     feedbackTarget: el<HTMLParagraphElement>('feedbackTarget'),
-    roomField: el<HTMLDivElement>('roomField'),
     roomTemp: el<HTMLInputElement>('roomTemp'),
     unitRoom: el<HTMLSpanElement>('unitRoom'),
     moreRoom: el<HTMLParagraphElement>('moreRoom'),

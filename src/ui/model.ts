@@ -1117,7 +1117,7 @@ const FIELDS: { settings: (keyof Settings)[]; choices: (keyof CookChoices)[] }[]
   { settings: ['sizeIndex', 'customMinor_mm', 'measuredBy'], choices: ['mass_kg', 'massFrom', 'sizeTable'] },
   { settings: ['startTempMode'], choices: ['eggFrom'] },
   { settings: ['customStart_C'], choices: ['customStart_C'] },
-  { settings: ['probe', 'room_C'], choices: ['room_C'] },
+  { settings: ['room_C'], choices: ['room_C'] },
   { settings: ['startMode'], choices: ['startMode'] },
   { settings: ['afterBoil'], choices: ['afterBoil'] },
   { settings: ['cooling'], choices: ['cooling'] },

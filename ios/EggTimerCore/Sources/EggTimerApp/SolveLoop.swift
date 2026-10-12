@@ -74,7 +74,11 @@ final class SolveLoop {
     private var inputSnapshot: InputSnapshot {
         InputSnapshot(
             level: planner.settings.doneness, egg: planner.egg, setup: planner.setup, calibration: planner.calibration,
-            facts: AdviceFacts(eggFromClass: planner.massFrom == .sizeClass, startAssumed: planner.settings.startTempMode == .room),
+            // An egg left out is at a room assumed only until the cook gives the room.
+            facts: AdviceFacts(
+                eggFromClass: planner.massFrom == .sizeClass,
+                startAssumed: planner.settings.startTempMode == .room && planner.roomInUseC == nil
+            ),
             nudgeS: planner.nudgeS
         )
     }

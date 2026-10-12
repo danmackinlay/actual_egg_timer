@@ -72,8 +72,8 @@ export interface Settings {
   /** "I have a probe thermometer": ask for a reading at the middle of the
    *  egg when the cooling ends. Off until the cook says so. */
   probe: boolean;
-  /** The room as the cook measured it, C, or null for not measured.
-   *  Counted only while `probe` is on (`roomInUse`). */
+  /** The room as the cook gave it, C, or null to assume one
+   *  (`roomInUse`). */
   room_C: number | null;
 }
 

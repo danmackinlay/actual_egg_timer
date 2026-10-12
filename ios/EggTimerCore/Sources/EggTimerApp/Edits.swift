@@ -21,7 +21,7 @@ extension AppSettings {
         case .mass: sizeIndex == o.sizeIndex && weighedMassG == o.weighedMassG
         case .eggFrom: startTempMode == o.startTempMode
         case .customStart: customStartC == o.customStartC
-        case .room: probe == o.probe && roomC == o.roomC
+        case .room: roomC == o.roomC
         case .start: startMode == o.startMode
         case .afterBoil: afterBoil == o.afterBoil
         case .cooling: cooling == o.cooling
@@ -44,7 +44,7 @@ extension AppSettings {
         case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
         case .eggFrom: startTempMode = o.startTempMode
         case .customStart: customStartC = o.customStartC
-        case .room: probe = o.probe; roomC = o.roomC
+        case .room: roomC = o.roomC
         case .start: startMode = o.startMode
         case .afterBoil: afterBoil = o.afterBoil
         case .cooling: cooling = o.cooling

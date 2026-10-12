@@ -354,7 +354,7 @@
     {"locale": "en", "key": "share.waiting", "args": {"eggs": 2.5}, "text": "2.5 more will go when I can reach the server."},
     {"locale": "en", "key": "share.waiting", "args": {"eggs": 0.5}, "text": "0.5 more will go when I can reach the server."},
     {"locale": "en", "key": "feedback.target", "args": {"doneness": "jammy", "yolk": "149 °F"}, "text": "You asked for: jammy, peak yolk 149 °F"},
-    {"locale": "en", "key": "controls.room.more", "args": {"room": "68 °F"}, "text": "Optional. Hold your probe in the air of your kitchen and set what it reads. It matters most for eggs left out at room temperature and eggs cooled in the air. Leave it blank and I’ll assume 68 °F."},
+    {"locale": "en", "key": "controls.room.more", "args": {"room": "68 °F"}, "text": "Optional. Read a thermometer in the air of your kitchen and set what it says. It matters most for eggs left out at room temperature and eggs cooled in the air. Leave it blank and I’ll assume 68 °F."},
     {"locale": "en", "key": "probe.refused", "args": {"low": "117.7 °F", "high": "179.1 °F"}, "text": "That’s not what I’d expect from the middle of this egg, which should read 117.7 °F to 179.1 °F. Is the tip in the yolk?"},
     {"locale": "en", "key": "sousvide.subline", "args": {"clock": "8:47 AM", "duration": "22 h 43 min", "bath": "136 °F"}, "text": "at 8:47 AM, for 22 h 43 min at 136 °F, to eat now"},
     {"locale": "en", "key": "sousvide.warn", "args": {"bath": "136 °F", "floor": "140 °F"}, "text": "At 136 °F the white takes most of a day to set, if it sets at all. My times aren’t reliable below 140 °F, so boil the eggs instead."},

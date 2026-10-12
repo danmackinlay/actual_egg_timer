@@ -63,18 +63,12 @@
     {"eggStart_C": 26, "room_C": 27, "ambient_C": 27}
   ],
   "roomInUse": [
-    {"probe": true, "room_C": null, "inUse_C": null},
-    {"probe": true, "room_C": 2, "inUse_C": 5},
-    {"probe": true, "room_C": 5, "inUse_C": 5},
-    {"probe": true, "room_C": 23.5, "inUse_C": 23.5},
-    {"probe": true, "room_C": 40, "inUse_C": 40},
-    {"probe": true, "room_C": 41, "inUse_C": 40},
-    {"probe": false, "room_C": null, "inUse_C": null},
-    {"probe": false, "room_C": 2, "inUse_C": null},
-    {"probe": false, "room_C": 5, "inUse_C": null},
-    {"probe": false, "room_C": 23.5, "inUse_C": null},
-    {"probe": false, "room_C": 40, "inUse_C": null},
-    {"probe": false, "room_C": 41, "inUse_C": null}
+    {"room_C": null, "inUse_C": null},
+    {"room_C": 2, "inUse_C": 5},
+    {"room_C": 5, "inUse_C": 5},
+    {"room_C": 23.5, "inUse_C": 23.5},
+    {"room_C": 40, "inUse_C": 40},
+    {"room_C": 41, "inUse_C": 40}
   ],
   "startTempPresets": [
     {"preset": "fridge", "room_C": null, "eggStart_C": 4},

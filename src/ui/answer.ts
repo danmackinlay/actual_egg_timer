@@ -125,8 +125,10 @@ export function adviceFor(m: Model): { keys: string[]; surer: boolean; wanted: b
     const p = oddsIn(m, decisionInputs(m.calib, inputs.egg, change.setup));
     if (p !== null) priced.push({ key: change.key, profile: p });
   }
+  // An egg left out is at a room assumed only until the cook gives the room.
+  const ch = idleChoices(m);
   const advice = protocolAdvice(
-    inputs.setup, { eggFromClass: idleChoices(m).massFrom === 'class', startAssumed: m.settings.startTempMode === 'room' },
+    inputs.setup, { eggFromClass: ch.massFrom === 'class', startAssumed: ch.eggFrom === 'room' && ch.room_C === null },
     chosen.level, chosen.certainty.words.pAsked, priced,
   );
   return { keys: advice.keys, surer: advice.surer, wanted: true };

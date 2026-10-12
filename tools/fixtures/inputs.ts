@@ -50,13 +50,12 @@ export const inputsFixture = {
     room_C: room_C,
     ambient_C: ambientFor(eggStart_C, room_C),
   }))),
-  // The measured room counts only with a probe, clamped; and it moves the
-  // Room button, never the Fridge.
-  roomInUse: [true, false].flatMap((probe) => [null, 2, 5, 23.5, 40, 41].map((room_C) => ({
-    probe: probe,
+  // The room as given counts, clamped; and it moves the Room button, never
+  // the Fridge.
+  roomInUse: [null, 2, 5, 23.5, 40, 41].map((room_C) => ({
     room_C: room_C,
-    inUse_C: roomInUse(probe, room_C),
-  }))),
+    inUse_C: roomInUse(room_C),
+  })),
   startTempPresets: (['fridge', 'room'] as const).flatMap((preset) => [null, 12, 27].map((room_C) => ({
     preset: preset,
     room_C: room_C,

@@ -141,21 +141,19 @@ public final class Planner {
     // MARK: - The thermometer
 
     /// "I have a probe thermometer" (`settings.probe`), from the controls: when
-    /// the cooling ends, ask for one reading from the middle of the egg. It
-    /// brings a measured room into the model, or takes it out (`roomInUseC`),
-    /// so the pot is solved again.
+    /// the cooling ends, ask for one reading from the middle of the egg.
     public func setProbe(_ on: Bool) {
         settings.probe = on
     }
 
-    /// The room, from Settings; nil is "not measured". Clamped like anything
-    /// typed.
+    /// The room, from Settings or beside "at room temperature"; nil is "not
+    /// given", and the room is assumed. Clamped like anything typed.
     public func setRoom(_ c: Double?) {
         settings.roomC = c.map { clamp($0, to: Limits.roomC) }
     }
 
     /// The room the model is told about, or nil to assume one.
-    public var roomInUseC: Double? { roomInUse(probe: settings.probe, roomC: settings.roomC) }
+    public var roomInUseC: Double? { roomInUse(roomC: settings.roomC) }
 
     /// The readings the app takes for this cook, C: outside them it is a typo,
     /// the white or another egg, and is refused rather than folded.
@@ -336,8 +334,7 @@ public final class Planner {
     /// The controls set to a running cook's own choices, as they stood when
     /// it was stored (a relaunch): what the controls show while it runs
     /// (design/one-screen.md section 4). Neither saved nor
-    /// solved for: a correction writes the settings it changes. The room is
-    /// left as it is, since the choices hold only the room in use.
+    /// solved for: a correction writes the settings it changes.
     func adopt(_ c: CookChoices) {
         applying = true
         defer { applying = false }
@@ -351,6 +348,7 @@ public final class Planner {
         }
         next.startTempMode = c.eggFrom
         next.customStartC = c.customStartC
+        next.roomC = c.roomC
         next.startMode = c.startMode
         next.afterBoil = c.afterBoil
         next.cooling = c.cooling

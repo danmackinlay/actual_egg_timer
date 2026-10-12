@@ -391,10 +391,9 @@
         <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.thermometer.ask"></span></label>
       </fieldset>
 
-      <!-- The room, measured with the probe: offered only while the probe is
-           on, optional, and empty until set, when it shows the room assumed,
-           greyed (src/core/inputs.ts, roomInUse). -->
-      <div class="setting pan-only" id="roomField" hidden>
+      <!-- The room: optional, and empty until set, when it shows the room
+           assumed, greyed (src/core/inputs.ts, roomInUse). -->
+      <div class="setting pan-only" id="roomField">
         <div class="setting__line">
           <span class="setting__head">
             <label for="roomTemp" data-copy="controls.room"></label>
