@@ -225,7 +225,7 @@
 
     "setup.sentence": { "text": "{egg} {from}, {start}, {cooling}." },
     "setup.sentenceSousVide": { "text": "{egg}, {start}." },
-    "setup.egg": { "text": "Eggs of {mass}" },
+    "setup.egg": { "count": "count", "one": "An egg of {mass}", "other": "{count} eggs of {mass}" },
     "setup.from.fridge": { "text": "from the ice chest" },
     "setup.from.room": { "text": "at the warmth of the room" },
     "setup.from.custom": { "text": "at {temp}" },

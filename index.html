@@ -175,6 +175,16 @@
           <label for="size" data-copy="controls.size"></label>
           <select id="size"></select>
         </div>
+        <!-- How many go in: decided at each cook, so here and in the
+             sentence, not in Settings. -->
+        <div class="prow pan-only">
+          <span class="prow__head">
+            <label for="eggCount" data-copy="controls.eggsInPan"></label>
+            <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
+          </span>
+          <span class="unit"><input type="number" id="eggCount" data-stepper step="1" inputmode="numeric"></span>
+        </div>
+        <p id="moreEggs" class="disclosed pan-only" hidden data-copy="controls.eggsInPan.more"></p>
         <p class="measure__legend" id="measureLegend" data-copy="controls.measure.legend"></p>
         <div class="measure" role="group" aria-labelledby="measureLegend">
           <div>
@@ -385,16 +395,6 @@
         <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
       </div>
 
-      <div class="setting pan-only">
-        <div class="setting__line">
-          <span class="setting__head">
-            <label for="eggCount" data-copy="controls.eggsInPan"></label>
-            <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
-          </span>
-          <span class="unit"><input type="number" id="eggCount" data-stepper step="1" inputmode="numeric"></span>
-        </div>
-        <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
-      </div>
 
       <fieldset class="setting pan-only" aria-labelledby="lblAfterBoil">
         <div class="setting__head">

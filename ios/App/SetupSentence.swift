@@ -139,6 +139,8 @@ struct ClauseText {
 struct SetupFacts {
     /// The egg's mass as the size menu or the scale says it, with its unit.
     var mass: String
+    /// How many eggs go in.
+    var count: Int
     var from: EggFrom
     /// The egg's temperature when it is the cook's own number, C.
     var customC: Double
@@ -159,6 +161,7 @@ struct SetupFacts {
         mass = planner.sizeClasses.indices.contains(planner.settings.sizeIndex)
             ? classMass(planner.sizeClasses[planner.settings.sizeIndex], units: units)
             : showIn(units, .mass, planner.eggMassG)
+        count = planner.settings.eggCount
         from = planner.settings.startTempMode
         customC = planner.settings.customStartC
         start = planner.start
@@ -179,6 +182,7 @@ private func classMass(_ c: SizeClass, units: UnitSystem) -> String {
 /// web's `clauseTexts`.
 func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
     let args: CopyArgs = [
+        "count": .int(f.count),
         "mass": .text(f.mass),
         "temp": .text(showIn(f.units, .eggTemp, f.customC)),
         "bath": .text(showIn(f.units, .temperature, sousVideBathC)),
@@ -384,6 +388,16 @@ struct ClausePanel: View {
                 label: tr("controls.measure.weight"), measure: planner.measure(.mass),
                 value: planner.eggMassG, set: { planner.weigh($0) }, field: .mass
             )
+            // How many go in: decided at each cook, so here and in the
+            // sentence, not in Settings. A sous-vide egg cooks alone.
+            if !planner.isSousVide {
+                InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
+                    CountValue(
+                        label: tr("controls.eggsInPan"), value: $planner.settings.eggCount, range: Limits.eggCount,
+                        field: .eggCount
+                    )
+                }
+            }
         }
         .appFont(.subheadline)
     }

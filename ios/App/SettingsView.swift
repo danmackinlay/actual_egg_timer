@@ -124,12 +124,6 @@ struct SettingsView: View {
                             value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .water
                         )
                     }
-                    InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
-                        CountValue(
-                            label: tr("controls.eggsInPan"), value: $planner.settings.eggCount, range: Limits.eggCount,
-                            field: .eggCount
-                        )
-                    }
                 }
 
                 Section {

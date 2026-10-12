@@ -39,6 +39,8 @@ function panelFor(clause: Clause): HTMLElement {
 export interface SetupFacts {
   /** The egg's mass as the size menu or the scale says it, with its unit. */
   mass: string;
+  /** How many eggs go in. */
+  count: number;
   eggFrom: EggFrom;
   /** The egg's temperature when it is the cook's own number, C. */
   customStart_C: number;
@@ -66,6 +68,7 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
   return {
     mass: byClass ? classMass(classes, settings.sizeIndex) : show('mass', egg.mass_kg * 1000),
+    count: settings.eggCount,
     eggFrom: settings.startTempMode,
     customStart_C: settings.customStart_C,
     startMode: settings.startMode,
@@ -81,7 +84,7 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
 function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
   const args = {
-    mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
+    count: f.count, mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
   };
   // The cooling clause's temperature is the water's, not the egg's.
   const coolingArgs = {
@@ -91,7 +94,7 @@ function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: strin
     eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
     afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling, coolingWaterGiven: f.coolingWater_C !== null,
   });
-  const words = (k: ClauseKeys, own: string, with_: Record<string, string> = args) => ({
+  const words = (k: ClauseKeys, own: string, with_: Record<string, string | number> = args) => ({
     text: t(k.text, with_), label: t(k.label), value: k.value === null ? own : t(k.value, with_),
   });
   return {
