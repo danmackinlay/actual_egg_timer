@@ -224,6 +224,29 @@ Two things fall out that are worth more than the feature itself:
 `TAU_STANDING_SCALE` (1.0) holds open what the volume cannot see: the lid, the pan's
 shape and material, and evaporation. See §6 and §11.3.
 
+**After the pull.** Every change of medium blends over `TAU_PLUNGE` (4 s), so the surface
+never steps (§2.3). An ice bath and running water hold the surface at the water's
+temperature: 2 °C for ice, and for running water the cook's own number or, without one,
+`T_COLD_TAP_C`. On the counter the shell loses heat by Newton's law at its own temperature
+(§5). **A bowl of still water** is the ice bath with a target that moves: the eggs warm it
+by exactly what they lose,
+
+```
+T_bowl(t) = T_bowl,0 + N * m * c_egg * (Tmean,pull - Tmean(t)) / (V * c_water)
+```
+
+with `Tmean` the egg's own modal mean, so the heat balance closes exactly (test 18a), and
+`T_bowl,0` the cook's number or the room's. It is held well mixed and clamped like the ice
+bath, though free convection in still water is not quite a clamp: the study
+(`studies/bowl.ts`, `design/bowl.md`) puts the surface treatment at 16 s and 1.2 °C of
+peak, for the ice bath as much as the bowl, and the time-scale learned from the cook's
+answers absorbs it for every water cooling alike. The room's exchange through the bowl, the
+bowl's own heat capacity and the water standing unmixed round the eggs are each worth a
+second or less, and are left out. Two eggs in 2 L warm it by under 3 °C and cook within a
+second of running water at the same temperature; even twelve eggs in half a litre are
+within half a minute of a bowl that never warms. What a crowded bowl costs is the wait
+before the eggs can be handled, not the yolk.
+
 **Boiling point.** ISA barometric formula for pressure against altitude, then the
 Antoine equation (Stull 1947) inverted for temperature. The engineering one-liner
 `T_b = 100 - h/300` is kept as a cross-check and agrees to within 0.031 °C from 0 to
@@ -421,18 +444,19 @@ Still air is **~5.5x slower at removing heat than the egg's slowest internal mod
 redistributing it**, so a rested egg evens out while it cools. Slower is not never,
 though: by the time the yolk peaks, the counter has drawn the egg's mean temperature down
 by 13 °C — 6.2 to free convection, 5.6 to radiation, and 1.2 to the water on the shell,
-which flashes off in the first few seconds. Water is the opposite — an ice bath or a cold
-tap is effectively Dirichlet, pulling the surface to the bath temperature immediately and
-intercepting the carryover.
+which flashes off in the first few seconds. Water is the opposite — an ice bath, a cold
+tap or a bowl of water is effectively Dirichlet, pulling the surface to the water's
+temperature immediately and intercepting the carryover.
 
 Here is the same cook — identical 7.4 minutes in the water, so the egg is in an identical
-state at the pull, **48.5 °C at the yolk centre in all three cases** — diverging purely
+state at the pull, **48.5 °C at the yolk centre in every case** — diverging purely
 on what happens afterwards:
 
 | cooling | peak yolk (°C) | rise after the pull | peak reached |
 |---|---|---|---|
 | ice bath | 65.0 | +16.5 | ~3 min after pull |
 | cold tap | 65.6 | +17.1 | ~3 min after pull |
+| bowl of water, 2 L at 20 °C, four eggs | 65.9 | +17.4 | ~3 min after pull |
 | **counter (still air)** | **75.3** | **+26.8** | ~7 min after pull |
 | insulated (the ceiling) | 83.9 | +35.4 | never quite |
 
@@ -521,8 +545,8 @@ distrust.
 | constant | value | units | source / confidence |
 |---|---|---|---|
 | `T_ICE_BATH_C` | 2 | °C | Ice water. **High.** |
-| `T_COLD_TAP_C` | 15 | °C | Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. **Low, and it matters little** (§5). |
-| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. There is deliberately no input for it — see §9. |
+| `T_COLD_TAP_C` | 15 | °C | Running water's temperature when the cook gives none (`CookSetup.coolingWater_C`). Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. 5-25 °C is -8.5 to +6.5 s at jammy. **Low, and it matters little** (§5). |
+| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. The cook may give the room, beside "at room temperature" or in Settings — see §9. |
 | `TAU_PLUNGE` | 4 | s | Surface equilibration on changing medium. Physical (finite Bi, finite handling time) *and* a required numerical regulariser (§2.3). **Low as physics, mandatory as numerics.** |
 | `TAU_DIP_RECOVERY` | 60 | s | Burner recovery after cold eggs enter. **Low.** |
 | `MODE_COUNT` | 40 | — | Eigenmodes retained. Exact to machine precision at these Fourier numbers. **Numerical.** |
@@ -815,33 +839,30 @@ one matters:
 
 ### What the app deliberately does not ask
 
-**Room temperature.** The model has an `ambient_C` and uses it properly — the pan starts
-there, standing water decays toward it, a counter-rested egg cools toward it — but there
-is no input for it, because across a 20 °C swing of kitchen it is worth almost nothing:
+**Room temperature, asked lightly.** The model has an `ambient_C` and uses it wherever the
+room reaches the egg: an egg left out is at it, a cold pan starts at it, standing water
+decays toward it, a counter-rested egg cools toward it, and a bowl of water whose
+temperature is not given is taken to be at it. Measured on the default pot (68 g, 2 L, two
+eggs) as the room goes from 15 to 30 °C against 20 (LOGBOOK.md, 12 October 2026):
 
-| room | hot start, jammy | cold start, jammy | standing for jammy | counter-rested peak yolk |
-|---|---|---|---|---|
-| 10 °C | 7.37 min | 11.23 min | 3.72 min | 74.77 °C |
-| 20 °C | 7.37 min | 10.89 min | 3.21 min | 75.28 °C |
-| 30 °C | 7.37 min | 10.53 min | 2.74 min | 75.85 °C |
+| where the room reaches the egg | jammy cook, per °C | across 15-30 °C | peak yolk at a fixed cook, per °C |
+|---|---|---|---|
+| eggs left out (it is the egg's start) | -4.8 s | +22 to -50 s | +0.4 °C |
+| a cold start's pan, fridge eggs | -2.1 s | +10.5 to -21 s | +0.18 °C |
+| in the air, fudgy | -1.4 s | +6 to -14 s | +0.08 °C |
+| a bowl at the room, fridge eggs | -0.9 s | +4.4 to -9.6 s | +0.06 °C |
+| ice bath or running water | 0 | 0 | 0 |
 
-On the default path — eggs into boiling water, straight into an ice bath — it is worth
-*exactly* nothing, to three decimal places, and `tools/validate.ts` checks that it stays
-that way. A cold start costs about two seconds per degree. Even counter-resting, where
-the room is the thing the egg is cooling toward, moves the peak yolk by 0.05 °C per
-degree of room, because the carryover peak happens in the first few minutes while the egg
-is still far above the room whatever the room is doing.
+Beside the inputs the app asks: a size class (58 against 68 g) is 45 s, 1500 m of altitude
+39 s, one egg against six 8 s. So the room is worth asking where it counts, and it is: an
+optional Room temperature beside "at room temperature", and in Settings, greyed at the 20 °C
+assumed until set. Once given, it is the room for every path above, and the advice to use
+fridge eggs is not shown.
 
-Only the standing method is properly sensitive (about three seconds of standing per
-degree, and it moves what is reachable at all), and there the app already has the
-information: it takes the room from **Egg from** when the user has said the egg was
-sitting out, since an egg that has been on the counter *is* at room temperature. A fridge
-egg says nothing about the room, so that case keeps the 20 °C default.
-
-**Tap water temperature.** Tempting to tie to the room, and wrong: mains water arrives at
-something closer to ground temperature. It keeps its own constant (§6), and §5 shows why
-it barely matters anyway — ice and tap differ by 0.6 °C of peak yolk, while the counter
-differs by 10.
+**Running water's temperature.** Tempting to tie to the room, and wrong: mains water arrives
+at something closer to ground temperature. It keeps its own default (§6), 15 °C, and the
+cook may give their own beside the cooling; 5 to 25 °C is worth -8.5 to +6.5 s at jammy.
+A bowl's water is asked the same way, defaulting to the room.
 
 Keep those fixed and the same setting will give you the same egg. Change one and the
 app will tell you what it costs.

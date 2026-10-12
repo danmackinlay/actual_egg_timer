@@ -132,6 +132,7 @@ struct HelpView: View {
     private var unsure: some View {
         section(.unsure) {
             para(tr("help.unsure.counter"))
+            para(tr("help.unsure.bowl"))
             para(tr("help.unsure.heatOff"))
             para(tr("help.unsure.white"))
             para(tr("help.unsure.sousVide", ["floor": .text(planner.show(.temperature, sousVideModelFloorC))]))

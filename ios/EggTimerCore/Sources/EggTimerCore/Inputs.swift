@@ -21,11 +21,17 @@ public enum Limits {
     /// A measured egg's minor diameter, mm: the web's measured egg.
     public static let minorMm = 30.0...60.0
     public static let eggTempC = -2.0...40.0
-    /// A kitchen's air, measured with the probe (the room setting): colder
-    /// than 5 C is a cellar, hotter than 40 C a kitchen nobody cooks in.
+    /// A kitchen's air (the room setting): colder than 5 C is a cellar,
+    /// hotter than 40 C a kitchen nobody cooks in.
     public static let roomC = 5.0...40.0
     public static let altitudeM = -400.0...5000.0
     public static let waterLitres = 0.25...12.0
+    /// A bowl of water to cool the eggs in: half a litre covers two eggs in a
+    /// cereal bowl; eight is a washing-up bowl.
+    public static let bowlLitres = 0.5...8.0
+    /// The water the eggs cool in, running or in a bowl: just above freezing
+    /// to a warm summer's tap.
+    public static let coolingWaterC = 1.0...40.0
     public static let eggCount = 1.0...24.0
     public static let doneness = 0.0...1.0
     /// Across every table. The table in use is shorter than this outside the
@@ -74,12 +80,11 @@ public func startTempPresetC(_ preset: StartTempPreset, roomC: Double?) -> Doubl
 }
 
 /// The room the model is told about, C, or nil to assume one: the cook's
-/// measured room, from Settings, which is offered - and so counts - only while
-/// they have said they have a probe thermometer; without one the room is
-/// assumed. A setting out of sight changes nothing.
-/// Clamped, like everything typed or stored.
-public func roomInUse(probe: Bool, roomC: Double?) -> Double? {
-    guard probe, let roomC, roomC.isFinite else { return nil }
+/// own, as they gave it beside "at room temperature" or in Settings, with or
+/// without a probe thermometer. inputs.ts says why. Clamped, like everything
+/// typed or stored.
+public func roomInUse(roomC: Double?) -> Double? {
+    guard let roomC, roomC.isFinite else { return nil }
     return clamp(roomC, to: Limits.roomC)
 }
 
@@ -115,6 +120,8 @@ public enum Defaults {
     public static let customStartC = 12.0
     public static let altitudeM = 0.0
     public static let waterLitres = 2.0
+    /// A mixing bowl: within 3 s of any other volume for one to six eggs.
+    public static let bowlLitres = 2.0
     public static let eggCount = 2
     public static let doneness = 0.41
     /// The reference egg, an EU Large. The app takes its default from the

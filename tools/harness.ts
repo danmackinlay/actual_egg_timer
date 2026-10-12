@@ -391,10 +391,12 @@ export class Tab {
 }
 
 /** Whether the label the page shows is the phase's own words (the cooks
- *  here hold the boil and cool in ice), as a function for the page. */
+ *  here hold the boil and cool in ice, or in a bowl), as a function for the
+ *  page. */
 const LABEL_SAYS = `(s) => {
+  const bowl = s.cook !== null && s.cook.choices.cooling === 'bowl';
   const want = { HEATING: s.labels.heating, PULL: s.labels.pull, DONE: s.labels.done,
-    COOLING: s.labels.coolingIce, COOKING: s.labels.cookingBoiling };
+    COOLING: bowl ? s.labels.coolingBowl : s.labels.coolingIce, COOKING: s.labels.cookingBoiling };
   return want[s.phase] === undefined || want[s.phase] === s.label;
 }`;
 

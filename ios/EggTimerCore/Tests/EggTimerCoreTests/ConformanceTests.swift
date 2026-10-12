@@ -152,6 +152,33 @@ struct ThermoConformance {
     }
 }
 
+@Suite("What the egg cools in")
+struct CoolingConformance {
+    @Test("each cooling starts where the web says, given a temperature or not")
+    func medium() throws {
+        let rows = try Fixtures.list("core.json", "protocol.coolingMedium")
+        #expect(rows.count >= 8)
+        for c in rows {
+            let setup = try cookSetup(c.object("setup"))
+            try expectClose(coolingMediumC(setup), c.num("value"), "\(setup.cooling) starts")
+        }
+    }
+
+    @Test("a bowl warms by what the eggs give up")
+    func bowl() throws {
+        let rows = try Fixtures.list("core.json", "protocol.bowlTemperature")
+        #expect(rows.count >= 30)
+        for c in rows {
+            let setup = try cookSetup(c.object("setup"))
+            let egg = Geometry.eggFromMass(try c.num("mass_g") / 1000)
+            try expectClose(
+                Protocols.bowlTemperature(egg, setup, meanAtPullC: c.num("meanAtPull_C"), meanC: c.num("mean_C")),
+                c.num("value"), "\(setup.cooling) at \(try c.num("mean_C")) C"
+            )
+        }
+    }
+}
+
 @Suite("Kinetics")
 struct KineticsConformance {
     @Test("hold time for a dose")

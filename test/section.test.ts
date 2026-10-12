@@ -124,7 +124,7 @@ test('section 6. once out, the shell follows what the egg cools in', () => {
   advanceSection(s, EGG, setup, 460, 400);
   assert.equal(s.outAt_s, 400);
   // An ice bath does not read the egg's state, only the water it left.
-  const expected = coolingTemperature(s.sphere, EGG, setup, s.t_s - 400, DT_SIM, s.waterAtPull_C);
+  const expected = coolingTemperature(s.sphere, EGG, setup, s.t_s - 400, DT_SIM, s.waterAtPull_C, s.meanAtPull_C);
   assert.equal(s.sphere.surface_C, expected);
   // A later, different time out cannot rewrite the one already crossed.
   advanceSection(s, EGG, setup, 470, 450);

@@ -9,7 +9,7 @@ import EggTimerCopy
 struct PullLineTests {
     @Test("each cooling's own line, named for it, is in both catalogues")
     func inBothCatalogues() throws {
-        let coolings = ["ice", "tap", "counter"]
+        let coolings = ["ice", "tap", "bowl", "counter"]
         for cooling in coolings {
             let key = pullLineKey(cooling: cooling)
             #expect(key.lowercased().hasSuffix(cooling), "\(cooling) gets \(key)")

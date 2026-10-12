@@ -288,8 +288,8 @@ struct NudgeField: View {
     }
 }
 
-/// The room in Settings, measured with the probe: empty until set, when the
-/// room is assumed; emptied again, it is assumed again. The planner holds it
+/// The room, in Settings and beside "at room temperature": empty until set,
+/// when the room is assumed; emptied again, it is assumed again. The planner holds it
 /// in SI (`roomC`); the field holds what the cook typed or stepped to, and
 /// shows the stored room again whenever it is not being typed in.
 struct RoomField: View {
@@ -321,5 +321,88 @@ struct RoomField: View {
         guard let room = planner.settings.roomC else { return "" }
         let m = planner.measure(.roomTemp)
         return fieldText(m, display(m, room))
+    }
+}
+
+/// The temperature of the water the eggs cool in, running or in a bowl,
+/// whichever the cooling is: empty until set, when it shows greyed the one
+/// the model assumes (mains water running, the room in a bowl); emptied
+/// again, it is assumed again. As `RoomField`.
+struct CoolingWaterField: View {
+    let planner: Planner
+    @State private var text = ""
+
+    var body: some View {
+        let m = planner.measure(.coolingWater)
+        NudgeField(
+            label: tr("controls.coolingWater"), measure: m, text: $text, startSI: planner.coolingWaterAssumedC,
+            endEditing: { text = shown }, field: planner.settings.cooling == .tap ? .tapWater : .bowlWater
+        )
+            .onAppear { text = shown }
+            .onChange(of: text) {
+                let typed = text.trimmingCharacters(in: .whitespaces)
+                // What the stored temperature already shows is not a new
+                // number: a rounded display is never parsed back over it.
+                if typed == shown { return }
+                if typed.isEmpty {
+                    if planner.coolingWaterC != nil { planner.setCoolingWater(nil) }
+                } else if let value = parseTyped(typed), let si = parse(m, value), si != planner.coolingWaterC {
+                    planner.setCoolingWater(si)
+                }
+            }
+            .onChange(of: m) { text = shown }
+            .onChange(of: planner.settings.cooling) { text = shown }
+    }
+
+    private var shown: String {
+        guard let water = planner.coolingWaterC else { return "" }
+        let m = planner.measure(.coolingWater)
+        return fieldText(m, display(m, water))
+    }
+}
+
+/// A choice of a few, one to a line: each a row the width of the panel, the
+/// one chosen filled and ticked, as the web's list. Four names fit no phone's
+/// width as segments, least of all at the accessibility sizes, where a row
+/// instead wraps its name onto as many lines as it needs.
+struct ListChoice<Tag: Hashable>: View {
+    let label: String
+    let choices: [(title: String, tag: Tag)]
+    @Binding var selection: Tag
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ForEach(choices.indices, id: \.self) { i in
+                let picked = choices[i].tag == selection
+                Button {
+                    selection = choices[i].tag
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(choices[i].title)
+                            .appFont(.subheadline, weight: picked ? .semibold : nil)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                        Image(systemName: "checkmark")
+                            .font(.subheadline.weight(.semibold))
+                            .opacity(picked ? 1 : 0)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .foregroundStyle(picked ? Palette.accentText : Color.primary)
+                    .background(picked ? Palette.accent : Color(.systemBackground), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8).stroke(picked ? Palette.accent : Color.secondary.opacity(0.3))
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(picked ? .isSelected : [])
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(label)
     }
 }

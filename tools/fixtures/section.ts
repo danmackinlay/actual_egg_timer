@@ -46,6 +46,12 @@ const CASES: Case[] = [
     out_s: null,
     ticks: [100, 333.3, 600, 900],
   },
+  {
+    name: 'hot start, four eggs into a litre bowl at 12 C',
+    setup: appSetup({ cooling: 'bowl', bowlLitres: 1, coolingWater_C: 12, eggCount: 4 }),
+    out_s: 430.2,
+    ticks: [200, 430, 431, 460.4, 700, 1200],
+  },
 ];
 
 /* The egg the settings aim for (`previewSection`): the solve's time, the egg
@@ -57,6 +63,7 @@ const PREVIEWS: { name: string; setup: CookSetup; level: number }[] = [
   { name: 'hot start, ice bath, runny', setup: appSetup(), level: 0.05 },
   { name: 'cold start, cold tap, fudgy', setup: appSetup({ startMode: 'cold', cooling: 'tap' }), level: 0.62 },
   { name: 'hot start, on the counter, hard', setup: appSetup({ cooling: 'counter' }), level: 1 },
+  { name: 'hot start, a bowl at the room, soft', setup: appSetup({ cooling: 'bowl', bowlLitres: 2 }), level: 0.22 },
   { name: 'heat off, little water, many eggs', setup: appSetup({ afterBoil: 'off', waterLitres: 0.5, eggCount: 8 }), level: 1 },
 ];
 
@@ -87,6 +94,7 @@ export const sectionFixture = {
           t_s: s.t_s,
           outAt_s: s.outAt_s,
           waterAtPull_C: s.waterAtPull_C,
+          meanAtPull_C: s.meanAtPull_C,
           surface_C: s.sphere.surface_C,
           dose_min: s.dose.map((d) => d.minutes),
           views: [WHITE_DOSE_TARGET, MOVED_WHITE_TARGET].map((target) => {

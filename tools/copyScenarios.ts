@@ -297,6 +297,19 @@ const SCENARIOS: CopyScenario[] = [
       click('button.fb[data-yolk="jammy"]'), learned, click('#primary')],
   },
   {
+    // The bowl's words in place: the sentence with its water, the pull's
+    // button, the cooling's label.
+    name: 'hot bowl, four eggs in a litre at 12 C',
+    settings: { muted: true, startMode: 'hot', cooling: 'bowl', bowlLitres: 1, bowlWater_C: 12, eggCount: 4 },
+    steps: [click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd,
+      click('button.fb[data-yolk="jammy"]'), learned, click('#primary')],
+  },
+  {
+    name: 'refusal bowl',
+    settings: { sizeIndex: 0, cooling: 'bowl', bowlLitres: 0.5, eggCount: 8, doneness: 0 },
+    moves: ['doneness'], steps: [],
+  },
+  {
     name: 'cold standing, through',
     settings: { muted: true, afterBoil: 'off', cooling: 'tap' },
     steps: [click('#primary'), advance(400), click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd],

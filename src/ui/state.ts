@@ -90,7 +90,7 @@ export function emptyModel(): Model {
 
 /** The settings as core's choices: the cook the controls describe, for the
  *  carton of `region` (`sizeClassesFor`). The egg is its size class's mass, or
- *  the measured egg's, from its width; the room counts only with the probe on
+ *  the measured egg's, from its width; the room is the cook's, if given
  *  (`roomInUse`). Sous-vide is answered by src/core/sousvide.ts and starts no
  *  cook, so as far as the cook solver is concerned it is an egg going into
  *  water already hot. Pure, so a test can ask it. */
@@ -103,10 +103,13 @@ export function choicesOf(settings: Settings, region: string | null): CookChoice
     sizeTable: byClass ? sizeTableFor(region) : null,
     eggFrom: settings.startTempMode,
     customStart_C: settings.customStart_C,
-    room_C: roomInUse(settings.probe, settings.room_C),
+    room_C: roomInUse(settings.room_C),
     startMode: settings.startMode === 'cold' ? 'cold' : 'hot',
     afterBoil: settings.afterBoil,
     cooling: settings.cooling,
+    tapWater_C: settings.tapWater_C,
+    bowlLitres: settings.bowlLitres,
+    bowlWater_C: settings.bowlWater_C,
     waterLitres: settings.waterLitres,
     eggCount: settings.eggCount,
     altitude_m: settings.altitude_m,
@@ -125,7 +128,7 @@ export function idleChoices(m: Model): CookChoices {
  * egg's class by its mass in `classes` (this page's carton), else the egg
  * measured, its width from its mass; the rest field by field. What the
  * choices do not hold - the units, the language, the sound, the probe - is
- * the settings'. A room the choices count makes the probe on. Pure.
+ * the settings'. Pure.
  */
 export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: SizeClass[]): Settings {
   const index = ch.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === ch.mass_kg) : -1;
@@ -140,12 +143,14 @@ export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: 
     startMode: ch.startMode,
     afterBoil: ch.afterBoil,
     cooling: ch.cooling,
+    tapWater_C: ch.tapWater_C,
+    bowlLitres: ch.bowlLitres,
+    bowlWater_C: ch.bowlWater_C,
     waterLitres: ch.waterLitres,
     eggCount: ch.eggCount,
     altitude_m: ch.altitude_m,
     doneness: ch.level,
-    probe: ch.room_C !== null ? true : settings.probe,
-    room_C: ch.room_C !== null ? ch.room_C : settings.probe ? null : settings.room_C,
+    room_C: ch.room_C,
   };
 }
 
@@ -160,10 +165,16 @@ export function currentEgg(m: Model): Egg {
   return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).egg;
 }
 
-/** The room as the cook measured it, while it counts, or null to assume one
- *  (`roomInUse`: only with the probe on), as the controls say. */
+/** The room the controls' pot is solved in, C (`ambientFor`): the cook's,
+ *  or the one assumed. A bowl with no temperature given is at it. */
+export function currentAmbient_C(m: Model): number {
+  return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).setup.ambient_C;
+}
+
+/** The room as the cook gave it, or null to assume one (`roomInUse`), as
+ *  the controls say. */
 export function room_C(m: Model): number | null {
-  return roomInUse(m.controls.probe, m.controls.room_C);
+  return roomInUse(m.controls.room_C);
 }
 
 export function boilingPoint_C(m: Model): number {

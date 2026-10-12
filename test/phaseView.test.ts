@@ -55,7 +55,7 @@ function facts(over: Partial<ReadoutFacts> = {}): ReadoutFacts {
 
 const CHOICES: CookChoices = {
   mass_kg: SIZE_CLASSES[1].mass_kg, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12,
-  room_C: null, startMode: 'cold', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2,
+  room_C: null, startMode: 'cold', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2,
   altitude_m: 0, level: 0.4,
 };
 

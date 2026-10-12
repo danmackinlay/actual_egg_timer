@@ -57,8 +57,8 @@ public struct CookActivity: Codable, Hashable, Sendable {
         /// the numbers.
         public var peakYolk: String
         public var eggMass: String
-        /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
-        /// `counter`. The pull line names it (`pullLineKey`, in
+        /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap`,
+        /// `bowl` or `counter`. The pull line names it (`pullLineKey`, in
         /// EggTimerCopy). A String, since this file cannot see EggTimerCore.
         public var cooling: String
 

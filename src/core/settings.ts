@@ -45,6 +45,14 @@ export interface Settings {
   startMode: StartMode;
   afterBoil: HeatAfterBoil;
   cooling: Cooling;
+  /** Running water's temperature as the cook gave it, C, or null to assume
+   *  mains water (T_COLD_TAP_C). */
+  tapWater_C: number | null;
+  /** The bowl's water, litres, and its temperature as the cook gave it, C,
+   *  or null to assume the room. Kept while another cooling is chosen, so
+   *  that choosing the bowl again goes back to them. */
+  bowlLitres: number;
+  bowlWater_C: number | null;
   waterLitres: number;
   /** A whole number. */
   eggCount: number;
@@ -64,8 +72,8 @@ export interface Settings {
   /** "I have a probe thermometer": ask for a reading at the middle of the
    *  egg when the cooling ends. Off until the cook says so. */
   probe: boolean;
-  /** The room as the cook measured it, C, or null for not measured.
-   *  Counted only while `probe` is on (`roomInUse`). */
+  /** The room as the cook gave it, C, or null to assume one
+   *  (`roomInUse`). */
   room_C: number | null;
 }
 
@@ -83,6 +91,9 @@ export const DEFAULT_SETTINGS: Settings = {
   startMode: 'cold',
   afterBoil: 'hold',
   cooling: 'ice',
+  tapWater_C: null,
+  bowlLitres: DEFAULTS.bowlLitres,
+  bowlWater_C: null,
   waterLitres: DEFAULTS.waterLitres,
   eggCount: DEFAULTS.eggCount,
   doneness: DEFAULTS.doneness,
@@ -98,6 +109,12 @@ export const DEFAULT_SETTINGS: Settings = {
  *  finite number. */
 function storedNumber(value: unknown, limit: Limit, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? clamp(value, limit) : fallback;
+}
+
+/** A stored number within `limit`, or null for anything that is not a
+ *  finite number: an optional number left blank. */
+function storedOptional(value: unknown, limit: Limit): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? clamp(value, limit) : null;
 }
 
 /** A stored value that is one of `allowed`, or `fallback`. */
@@ -129,7 +146,10 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     altitude_m: storedNumber(r['altitude_m'], LIMITS.altitude_m, d.altitude_m),
     startMode: oneOf(r['startMode'], ['cold', 'hot'] as const, d.startMode),
     afterBoil: oneOf(r['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
-    cooling: oneOf(r['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
+    cooling: oneOf(r['cooling'], ['ice', 'tap', 'bowl', 'counter'] as const, d.cooling),
+    tapWater_C: storedOptional(r['tapWater_C'], LIMITS.coolingWater_C),
+    bowlLitres: storedNumber(r['bowlLitres'], LIMITS.bowlLitres, d.bowlLitres),
+    bowlWater_C: storedOptional(r['bowlWater_C'], LIMITS.coolingWater_C),
     waterLitres: storedNumber(r['waterLitres'], LIMITS.waterLitres, d.waterLitres),
     eggCount: Math.round(storedNumber(r['eggCount'], LIMITS.eggCount, d.eggCount)),
     doneness: storedNumber(r['doneness'], LIMITS.doneness, d.doneness),
@@ -138,6 +158,6 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     unitsChosen: readChosenUnits(r['unitsChosen']),
     language: readLanguageState(r['language'], LANGUAGES),
     probe: r['probe'] === true,
-    room_C: typeof r['room_C'] === 'number' && Number.isFinite(r['room_C']) ? clamp(r['room_C'], LIMITS.room_C) : null,
+    room_C: storedOptional(r['room_C'], LIMITS.room_C),
   };
 }

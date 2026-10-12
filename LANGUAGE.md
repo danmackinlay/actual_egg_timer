@@ -261,7 +261,8 @@ normalisation covers the one difference known in advance.
 - Name what a cook sees by what it tells them, not only by where it sits,
   and use the house terms (`DECISIONS.md` 57): the line under the countdown
   is "below the time display"; the cooling methods are "an ice bath",
-  "running water" and "the air".
+  "running water", "a bowl of water" and "the air" (in 1750, "iced water",
+  "the pump", "a basin" and "the open air").
 
 **The app speaks in the first person singular, in the active voice**
 (`DECISIONS.md` 28): "Tap the boil … and I'll remember for next time", not

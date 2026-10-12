@@ -97,10 +97,11 @@ private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
 /// a readout (peak yolk, the bath, the presets); `eggTemp` is the egg's
 /// temperature a cook can type (on the web); `probeTemp` is a probe
 /// thermometer's reading at the centre, typed to a tenth, stepped in whole
-/// degrees and never clamped; `roomTemp` is the kitchen's air, measured with
-/// the probe (the room setting).
+/// degrees and never clamped; `roomTemp` is the kitchen's air (the room
+/// setting); `coolingWater` the water the eggs cool in, running or in a bowl;
+/// `bowl` the water in that bowl, as the pan's.
 public enum Quantity: String, Sendable, CaseIterable {
-    case temperature, eggTemp, probeTemp, roomTemp, boilingPoint, mass, altitude, water
+    case temperature, eggTemp, probeTemp, roomTemp, coolingWater, boilingPoint, mass, altitude, water, bowl
 }
 
 /// A step as a ratio of integers, and the digits shown. `trim`: only the
@@ -133,6 +134,9 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
     case .roomTemp:
         (Limits.roomC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
          Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
+    case .coolingWater:
+        (Limits.coolingWaterC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
+         Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
     case .boilingPoint:
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
@@ -147,6 +151,10 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
     case .water:
         (Limits.waterLitres, Step(unit: .litres, num: 1, den: 4, decimals: 2),
          Step(unit: .quarts, num: 1, den: 4, decimals: 2))
+    case .bowl:
+        // Said in a sentence, so shown with only the decimals it needs.
+        (Limits.bowlLitres, Step(unit: .litres, num: 1, den: 4, decimals: 2, trim: true),
+         Step(unit: .quarts, num: 1, den: 4, decimals: 2, trim: true))
     }
 }
 
@@ -166,7 +174,7 @@ public struct Measure: Sendable, Equatable {
     /// Digits after the point on screen: at most this many when `trim`.
     public let decimals: Int
     /// Shown with only the decimals the value needs, up to `decimals`: "58 g"
-    /// and "58.5 g", never "58.0 g". Metric mass only.
+    /// and "58.5 g", never "58.0 g". Metric mass, and the bowl.
     public let trim: Bool
     public let unitKey: String
     public let formatKey: String
@@ -196,7 +204,8 @@ func imperialWaterUnit(region: String?) -> UnitId {
 public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?) -> Measure {
     let s = spec(quantity)
     let step = system == .imperial ? s.imperial : s.metric
-    let unit = system == .imperial && quantity == .water ? imperialWaterUnit(region: region) : step.unit
+    let unit = system == .imperial && (quantity == .water || quantity == .bowl)
+        ? imperialWaterUnit(region: region) : step.unit
     let keys = unitKeys(unit)
     func made(bounds: ClosedRange<Double>?) -> Measure {
         Measure(

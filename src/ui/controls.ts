@@ -17,14 +17,16 @@ import { activeLocale, t } from './copy.js';
 import { page, selectRadio } from './dom.js';
 import type { Model, Redraws } from './model.js';
 import { redrawSentence } from './sentence.js';
-import { currentEgg, room_C, sizeClasses } from './state.js';
+import { currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.js';
+import { T_COLD_TAP_C } from '../core/constants.js';
 import { LIMITS, Limit, START_TEMP_PRESETS_C, Settings } from './store.js';
 import { measure, show, unitSystem } from './units.js';
 
 /** The fields with a unit, by the id of their input. */
 const FIELDS = {
   measureMass: 'mass', measureGirth: 'girth', measureMinor: 'width', customTemp: 'eggTemp', altitude: 'altitude',
-  litres: 'water', probeReading: 'probeTemp', roomTemp: 'roomTemp',
+  litres: 'water', probeReading: 'probeTemp', roomTemp: 'roomTemp', roomTempFrom: 'roomTemp', bowlLitres: 'bowl',
+  coolingWater: 'coolingWater',
 } as const;
 type Field = keyof typeof FIELDS;
 
@@ -32,6 +34,7 @@ type Field = keyof typeof FIELDS;
 const UNIT_LABELS: Record<Field, string> = {
   measureMass: 'unitMass', measureGirth: 'unitGirth', measureMinor: 'unitMinor', customTemp: 'unitTemp',
   altitude: 'unitAltitude', litres: 'unitLitres', probeReading: 'unitProbe', roomTemp: 'unitRoom',
+  roomTempFrom: 'unitRoomFrom', bowlLitres: 'unitBowl', coolingWater: 'unitCoolingWater',
 };
 
 /** The form as it should read: the controls (`controls`: the settings while
@@ -44,9 +47,16 @@ export interface FormView {
   units: UnitSystem;
   measures: Record<Field, { step: string; min: string | null; max: string | null; unit: string }>;
   /** Each field's contents, from the stored SI value. */
-  values: { measureMass: string; measureGirth: string; measureMinor: string; customTemp: string; litres: string; altitude: string; roomTemp: string };
+  values: {
+    measureMass: string; measureGirth: string; measureMinor: string; customTemp: string; litres: string; altitude: string;
+    roomTemp: string; bowlLitres: string; coolingWater: string;
+  };
   roomPlaceholder: string;
   moreRoom: string;
+  /** The water the eggs cool in, for the cooling chosen: its temperature as
+   *  assumed, for the empty field, and its (i). */
+  coolingWaterPlaceholder: string;
+  moreCoolingWater: string;
   sizeLabels: string[];
   measuredLabel: string;
   startTempHint: string;
@@ -76,6 +86,10 @@ export function formView(m: Model): FormView {
   }
   const system = unitSystem();
   const room = room_C(m);
+  // The water's temperature the model assumes when the field is empty:
+  // mains water running, the room in a bowl (`coolingMedium_C`).
+  const assumedWater_C = c.cooling === 'tap' ? T_COLD_TAP_C : currentAmbient_C(m);
+  const givenWater_C = c.cooling === 'tap' ? c.tapWater_C : c.bowlWater_C;
   return {
     controls: c,
     alarm: m.settings.alarm,
@@ -91,9 +105,15 @@ export function formView(m: Model): FormView {
       // Empty until measured, showing the room assumed, greyed: the − and +
       // start there.
       roomTemp: c.room_C === null ? '' : inputText('roomTemp', c.room_C),
+      bowlLitres: inputText('bowl', c.bowlLitres),
+      coolingWater: givenWater_C === null ? '' : inputText('coolingWater', givenWater_C),
     },
     roomPlaceholder: String(nudgeFrom(measure('roomTemp'), START_TEMP_PRESETS_C.room)),
     moreRoom: t('controls.room.more', { room: show('temperature', START_TEMP_PRESETS_C.room) }),
+    coolingWaterPlaceholder: String(nudgeFrom(measure('coolingWater'), assumedWater_C)),
+    moreCoolingWater: c.cooling === 'tap'
+      ? t('controls.coolingWater.tap.more', { water: show('temperature', assumedWater_C) })
+      : t('controls.coolingWater.bowl.more', { room: show('temperature', assumedWater_C) }),
     sizeLabels: sizeClasses.map((sc) => {
       const label = sizeClassLabel(sc, system);
       return t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
@@ -147,11 +167,39 @@ function drawMeasurements(f: FormView, except: string | null): void {
 function drawEcho(f: FormView, source: string | null): void {
   const c = f.controls;
   if (c.sizeIndex === -1) page().size.value = '-1';
-  page().roomField.hidden = !c.probe;
   page().startTempHint.textContent = f.startTempHint;
   page().customTempField.hidden = c.startTempMode !== 'custom';
+  drawRoom(f, source);
+  drawCoolingWater(f, source);
   drawMeasurements(f, source);
   page().size.options[sizeClasses.length].textContent = f.measuredLabel;
+}
+
+/** The room, in Settings and beside "at room temperature", which shows it
+ *  only when Room is chosen: one setting in two fields, each written but the
+ *  one being typed in (`except`). */
+function drawRoom(f: FormView, except: string | null): void {
+  page().roomFromField.hidden = f.controls.startTempMode !== 'room';
+  for (const input of [page().roomTemp, page().roomTempFrom]) {
+    if (input.id !== except) input.value = f.values.roomTemp;
+    input.placeholder = f.roomPlaceholder;
+  }
+  page().moreRoom.textContent = f.moreRoom;
+  page().moreRoomFrom.textContent = f.moreRoom;
+}
+
+/** The rows under the cooling choices, for the cooling chosen: a bowl's
+ *  water, and the temperature of running water or of the bowl, each shown
+ *  only with its own choice; every field but the one being typed in
+ *  (`except`), which keeps what was typed. */
+function drawCoolingWater(f: FormView, except: string | null): void {
+  const cooling = f.controls.cooling;
+  page().bowlFields.hidden = cooling !== 'bowl';
+  page().coolingWaterField.hidden = cooling !== 'tap' && cooling !== 'bowl';
+  if (except !== 'bowlLitres') page().bowlLitres.value = f.values.bowlLitres;
+  if (except !== 'coolingWater') page().coolingWater.value = f.values.coolingWater;
+  page().coolingWater.placeholder = f.coolingWaterPlaceholder;
+  page().moreCoolingWater.textContent = f.moreCoolingWater;
 }
 
 /** Everything on the form that has a unit: each input's step, bounds, unit
@@ -172,9 +220,8 @@ function drawUnits(f: FormView): void {
   page().customTemp.value = f.values.customTemp;
   page().litres.value = f.values.litres;
   page().altitude.value = f.values.altitude;
-  page().roomTemp.value = f.values.roomTemp;
-  page().roomTemp.placeholder = f.roomPlaceholder;
-  page().moreRoom.textContent = f.moreRoom;
+  drawRoom(f, null);
+  drawCoolingWater(f, null);
   selectRadio('units', f.units);
   for (let i = 0; i < f.sizeLabels.length; i += 1) page().size.options[i].textContent = f.sizeLabels[i];
   page().size.options[sizeClasses.length].textContent = f.measuredLabel;
@@ -199,8 +246,9 @@ function drawAll(f: FormView): void {
   page().eggCount.value = String(c.eggCount);
   page().doneness.value = String(c.doneness);
   page().customTempField.hidden = c.startTempMode !== 'custom';
+  drawRoom(f, null);
+  drawCoolingWater(f, null);
   page().probeSetting.checked = c.probe;
-  page().roomField.hidden = !c.probe;
   applyLanguageToDom();
 }
 

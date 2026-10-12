@@ -224,6 +224,16 @@
           <label for="size" data-copy="controls.size"></label>
           <select id="size"></select>
         </div>
+        <!-- How many go in: decided at each cook, so here and in the
+             sentence, not in Settings. -->
+        <div class="prow pan-only">
+          <span class="prow__head">
+            <label for="eggCount" data-copy="controls.eggsInPan"></label>
+            <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
+          </span>
+          <span class="unit"><input type="number" id="eggCount" data-stepper step="1" inputmode="numeric"></span>
+        </div>
+        <p id="moreEggs" class="disclosed pan-only" hidden data-copy="controls.eggsInPan.more"></p>
         <p class="measure__legend" id="measureLegend" data-copy="controls.measure.legend"></p>
         <div class="measure" role="group" aria-labelledby="measureLegend">
           <div>
@@ -260,6 +270,19 @@
         <div class="prow" id="customTempField" hidden>
           <label for="customTemp" data-copy="controls.eggTemp"></label>
           <span class="unit"><input type="number" id="customTemp" data-stepper inputmode="decimal"><span id="unitTemp"></span></span>
+        </div>
+        <!-- An egg left out is at the room's temperature: the room setting,
+             here where it counts most, as in Settings. Optional, and empty
+             until set, when it shows the room assumed, greyed. -->
+        <div id="roomFromField" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="roomTempFrom" data-copy="controls.room"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreRoomFrom" data-label="controls.room"></button>
+            </span>
+            <span class="unit"><input type="number" id="roomTempFrom" data-stepper inputmode="decimal"><span id="unitRoomFrom"></span></span>
+          </div>
+          <p id="moreRoomFrom" class="disclosed" hidden></p>
         </div>
         <p class="hint" id="startTempHint"></p>
       </div>
@@ -299,13 +322,42 @@
           <button type="button" class="panel__close" data-copy="setup.close"></button>
         </div>
         <p id="moreCooling" class="disclosed" hidden data-copy="controls.cooling.more"></p>
-        <div class="seg">
+        <!-- Four choices, one to a line, fastest first: a list holds four
+             names at any width and text size, where four segments on a
+             phone would not (UI.md section 4). -->
+        <div class="seg seg--list">
           <input type="radio" name="cooling" id="coolIce" value="ice">
           <label for="coolIce" data-copy="controls.cooling.ice"></label>
           <input type="radio" name="cooling" id="coolTap" value="tap">
           <label for="coolTap" data-copy="controls.cooling.tap"></label>
+          <input type="radio" name="cooling" id="coolBowl" value="bowl">
+          <label for="coolBowl" data-copy="controls.cooling.bowl"></label>
           <input type="radio" name="cooling" id="coolCounter" value="counter">
           <label for="coolCounter" data-copy="controls.cooling.counter"></label>
+        </div>
+        <!-- The water the eggs cool in: running water's temperature, and a
+             bowl's water and temperature, each shown with its own choice.
+             A temperature is optional, and empty until set, when it shows
+             the one assumed, greyed (src/core/protocol.ts, coolingMedium_C). -->
+        <div id="bowlFields" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="bowlLitres" data-copy="controls.bowl"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreBowl" data-label="controls.bowl"></button>
+            </span>
+            <span class="unit"><input type="number" id="bowlLitres" data-stepper inputmode="decimal"><span id="unitBowl"></span></span>
+          </div>
+          <p id="moreBowl" class="disclosed" hidden data-copy="controls.bowl.more"></p>
+        </div>
+        <div id="coolingWaterField" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="coolingWater" data-copy="controls.coolingWater"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreCoolingWater" data-label="controls.coolingWater"></button>
+            </span>
+            <span class="unit"><input type="number" id="coolingWater" data-stepper inputmode="decimal"><span id="unitCoolingWater"></span></span>
+          </div>
+          <p id="moreCoolingWater" class="disclosed" hidden></p>
         </div>
       </div>
     </div>
@@ -449,16 +501,6 @@
         <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
       </div>
 
-      <div class="setting pan-only">
-        <div class="setting__line">
-          <span class="setting__head">
-            <label for="eggCount" data-copy="controls.eggsInPan"></label>
-            <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
-          </span>
-          <span class="unit"><input type="number" id="eggCount" data-stepper step="1" inputmode="numeric"></span>
-        </div>
-        <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
-      </div>
 
       <fieldset class="setting pan-only" aria-labelledby="lblAfterBoil">
         <div class="setting__head">
@@ -484,10 +526,9 @@
         <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.thermometer.ask"></span></label>
       </fieldset>
 
-      <!-- The room, measured with the probe: offered only while the probe is
-           on, optional, and empty until set, when it shows the room assumed,
-           greyed (src/core/inputs.ts, roomInUse). -->
-      <div class="setting pan-only" id="roomField" hidden>
+      <!-- The room: optional, and empty until set, when it shows the room
+           assumed, greyed (src/core/inputs.ts, roomInUse). -->
+      <div class="setting pan-only" id="roomField">
         <div class="setting__line">
           <span class="setting__head">
             <label for="roomTemp" data-copy="controls.room"></label>
@@ -629,6 +670,7 @@
     <section id="help-unsure" aria-labelledby="helpUnsureTitle">
       <h2 id="helpUnsureTitle" data-copy="help.unsure.title"></h2>
       <p data-copy="help.unsure.counter"></p>
+      <p data-copy="help.unsure.bowl"></p>
       <p data-copy="help.unsure.heatOff"></p>
       <p data-copy="help.unsure.white"></p>
       <p id="helpSousVide"></p>

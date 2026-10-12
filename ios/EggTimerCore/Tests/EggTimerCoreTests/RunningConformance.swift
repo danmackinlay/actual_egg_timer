@@ -47,7 +47,9 @@ func choicesOf(_ json: [String: Any]) throws -> CookChoices {
         customStartC: json.num("customStart_C"), roomC: json.optionalNum("room_C"),
         startMode: json.value(StartMode.self, "startMode"), afterBoil: json.value(HeatAfterBoil.self, "afterBoil"),
         cooling: json.value(Cooling.self, "cooling"), waterLitres: json.num("waterLitres"),
-        eggCount: json.num("eggCount"), altitudeM: json.num("altitude_m"), level: json.num("level")
+        eggCount: json.num("eggCount"), altitudeM: json.num("altitude_m"), level: json.num("level"),
+        tapWaterC: json.optionalNum("tapWater_C"), bowlLitres: json.num("bowlLitres"),
+        bowlWaterC: json.optionalNum("bowlWater_C")
     )
 }
 
@@ -86,6 +88,8 @@ struct RunningConformance {
             #expect(pot.setup.timeToBoilS == expected.timeToBoilS, "\(label) time to boil")
             #expect(pot.setup.waterLitres == expected.waterLitres, "\(label) water")
             #expect(pot.setup.eggCount == expected.eggCount, "\(label) eggs")
+            #expect(pot.setup.coolingWaterC == expected.coolingWaterC, "\(label) cooling water")
+            #expect(pot.setup.bowlLitres == expected.bowlLitres, "\(label) bowl")
             // The key of the inputs, from the fixture's own numbers, read from
             // their text to the bit: the same key as the web's, character for
             // character.

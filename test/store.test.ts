@@ -259,7 +259,7 @@ test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   assert.equal(cooks.text(), null, 'junk goes');
 });
 
-test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {
+test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with or without the probe', () => {
   const eu = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2, doneness: 0.62 }, 'GB');
   assert.deepEqual([eu.mass_kg, eu.massFrom, eu.sizeTable, eu.level], [sizeClassesFor('GB')[2].mass_kg, 'class', 'eu', 0.62]);
   const us = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2 }, 'US');
@@ -268,8 +268,9 @@ test('the settings as a cook\'s choices: the carton\'s class or the measured egg
   assert.deepEqual([measured.massFrom, measured.sizeTable], ['girth', null]);
   assert.ok(measured.mass_kg > 0.05 && measured.mass_kg < 0.08);
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, startMode: 'sous' }, 'GB').startMode, 'hot', 'sous-vide is a hot pan to the solver');
-  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26 }, 'GB').room_C, null, 'the room counts only with the probe on');
+  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26 }, 'GB').room_C, 26, 'the room counts without the probe');
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26, probe: true }, 'GB').room_C, 26);
+  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: null, probe: true }, 'GB').room_C, null);
 });
 
 test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {

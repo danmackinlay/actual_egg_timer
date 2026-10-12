@@ -120,15 +120,14 @@ test('6h. the room follows the egg only once the egg says something about it', (
   assert.equal(ambientFor(26, null), 26, 'an egg left out in a hot kitchen IS the kitchen');
 });
 
-test('6i. a measured room is the room, and moves the Room button, only with a probe', () => {
+test('6i. a room given is the room, and moves the Room button, with or without a probe', () => {
   assert.equal(ambientFor(4, 27), 27, 'a fridge egg in a measured room');
   assert.equal(ambientFor(26, 22), 22, 'the room as measured beats the room as guessed');
   assert.equal(startTempPreset_C('room', 27), 27, 'an egg left out is at the room');
   assert.equal(startTempPreset_C('room', null), START_TEMP_PRESETS_C.room);
   assert.equal(startTempPreset_C('fridge', 27), START_TEMP_PRESETS_C.fridge, 'a fridge is a fridge');
-  assert.equal(roomInUse(true, 23), 23);
-  assert.equal(roomInUse(false, 23), null, 'a setting out of sight changes nothing');
-  assert.equal(roomInUse(true, null), null);
-  assert.equal(roomInUse(true, 99), LIMITS.room_C.hi, 'clamped like anything stored');
-  assert.equal(roomInUse(true, Number.NaN), null);
+  assert.equal(roomInUse(23), 23);
+  assert.equal(roomInUse(null), null);
+  assert.equal(roomInUse(99), LIMITS.room_C.hi, 'clamped like anything stored');
+  assert.equal(roomInUse(Number.NaN), null);
 });

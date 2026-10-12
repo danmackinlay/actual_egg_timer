@@ -27,13 +27,15 @@ them out differently.
 - **One decision per screen.** Each phase shows what the cook must act on now,
   and no more.
 - **Set once, cook many.** Most inputs belong to the kitchen, not the egg:
-  units, altitude, water, egg count, heat after the boil, the probe and the
-  language. They live on a Settings page, visited rarely.
+  units, altitude, water, heat after the boil, the probe, the room and the
+  language. They live on a Settings page, visited rarely. How many eggs go
+  in is decided at each cook, so it is in the sentence and the egg's panel
+  (12 October 2026).
 - **The setup is a sentence, not a form.** What varies from egg to egg is one
   line of prose, and each clause of it is tappable (§5).
 - **Every number has a − and a +** beside it (4 October 2026): the egg's
-  weight and size, its temperature when it is Custom, the altitude, the water
-  and the number of eggs. A press steps it on its grid (`src/core/units.ts`:
+  weight and size, its temperature when it is Custom, the altitude, the water,
+  the number of eggs, the room, and a bowl's water and its temperature. A press steps it on its grid (`src/core/units.ts`:
   0.5 g, 0.1 oz, 50 m, 100 ft, 0.25 L, …), held it repeats, and the number
   stays typeable. The pair is as tall as the field, so no row grows. The web
   draws its own (`src/ui/stepper.ts`); iOS uses the system's `Stepper`, one
@@ -213,7 +215,7 @@ cannot disagree:
 | Heating | `readout.phase.heating` | `readout.sub.heating` (elapsed, expected boil) | `action.hint.heating` (with its (i)) / `heatingStanding` | `action.fullBoil` |
 | Cooking | `readout.phase.cookingBoiling` / `cookingHeatOff` | `readout.sub.cookingCold` / `cookingHot` | `action.hint.cookingBoiling` / `cookingStanding` | none |
 | Pull | `readout.phase.pull` | `readout.sub.pull` | `action.hint.pull`, none on the counter | the pull button, naming the cooling (`pulledKey`) |
-| Cooling (ice, tap) | `readout.phase.coolingIce` / `coolingTap` | `readout.sub.coolingPeak` / `coolingProbe` | none | none |
+| Cooling (ice, tap, bowl) | `readout.phase.coolingIce` / `coolingTap` / `coolingBowl` | `readout.sub.coolingPeak` / `coolingProbe` | none | none |
 | Done | `readout.phase.done` | `readout.sub.doneCold` / `doneHot` | none | `action.startAgain`; the two questions, and under them the probe reading |
 | Still in? | `ask.stillIn` | `readout.sub.stillIn` | none | `ask.stillIn.yes`, and `ask.stillIn.no` under it |
 
@@ -236,7 +238,8 @@ thermometer?" with how to take the reading and the field, the reading
 refused with the range it should be in when no kitchen could have made it
 (`probe.refused`). The probe is not offered while the egg cooks. The
 setting in Settings still has the alarm and the line under the cooling
-countdown ask for the reading, and offers the room temperature.
+countdown ask for the reading. The room temperature is in Settings with or
+without it, and beside "at room temperature" (§5).
 
 ## 4. The (i) component
 
@@ -271,14 +274,25 @@ there.
 
 - **Each fragment carries its own preposition and article** ("from the
   fridge", "then an ice bath"), so the template is only punctuation in
-  English and a translation may reorder it. The egg is in the plural ("68 g
-  eggs"), because English picks "a" or "an" before a number by its sound.
+  English and a translation may reorder it. The egg clause counts the eggs
+  ("2 × 68 g eggs", "One 68 g egg"), so English never picks "a" or "an"
+  before a number by its sound.
 - **A clause opens its choice in a panel** under the sentence, one at a time,
   with its title, its (i) and Done (`setup.close`). The sentence rewrites
   itself as the answer changes. The panels: the egg (the size menu, and the
-  mass - the web also takes girth or width), where it came from (fridge, room
-  or custom, with the presets' temperatures), the start (cold water, boiling
-  water or sous-vide), and the cooling (ice, tap or counter).
+  mass - the web also takes girth or width - and the number of eggs), where
+  it came from (fridge, room or custom, with the presets' temperatures, and
+  with Room the room temperature, optional and greyed at the 20 °C assumed),
+  the start (cold water, boiling water or sous-vide), and the cooling.
+- **The cooling's four choices are a list**, one to a line, fastest first:
+  Ice bath, Running water, Bowl of water, Air (12 October 2026). Four names
+  of up to 13 letters fit no 390 px phone as segments, least of all at the
+  accessibility text sizes, where a row of the list wraps its name instead.
+  Under the list, with its own choice: a bowl's Water in the bowl (2 L to
+  start), and for running water or a bowl the Water temperature, optional,
+  greyed at the one assumed (mains water's 15 °C, the room's for a bowl),
+  each with its (i). The sentence names the bowl and its water, and the
+  water's temperature only when the cook gave it.
 - **To a screen reader** each clause is a button named "{label}: {value},
   change" (`setup.clause`), expanded or collapsed. The web returns focus to
   the clause after Done. On the web a clause is a span that is a button

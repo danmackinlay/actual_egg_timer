@@ -11,9 +11,10 @@ public enum StartMode: String, Sendable, Codable {
 }
 
 /// What happens after the egg comes out. Not a detail: it changes the peak
-/// yolk temperature by ~20 C.
-public enum Cooling: String, Sendable, Codable {
-    case ice, tap, counter
+/// yolk temperature by ~20 C. `bowl` is a bowl of still water the eggs are
+/// put into and left in, which they warm (`bowlTemperature`).
+public enum Cooling: String, Sendable, Codable, CaseIterable {
+    case ice, tap, bowl, counter
 }
 
 /// What happens to the burner once the water boils. `hold` is what every recipe
@@ -43,6 +44,12 @@ public struct CookSetup: Sendable, Codable, Equatable {
     /// absent as `hold`; here the default does the same job.
     public var afterBoil: HeatAfterBoil
     public var eggCount: Double
+    /// The water the eggs cool in, C, as the cook gave it: running water's,
+    /// or the bowl's as the eggs go in. Nil when the cook gave none, and then
+    /// assumed (`coolingMediumC`). Read only for `tap` and `bowl`.
+    public var coolingWaterC: Double?
+    /// The water in the bowl, litres. Set for a bowl, and read only there.
+    public var bowlLitres: Double?
 
     /* The egg's MASS is not here. It was, and it duplicated `Egg.massKg` - so
      * `simulate(egg, setup, ...)` took the same number twice and every caller
@@ -52,7 +59,8 @@ public struct CookSetup: Sendable, Codable, Equatable {
     public init(
         startMode: StartMode, eggStartC: Double, ambientC: Double, boilingC: Double,
         timeToBoilS: Double, cooling: Cooling, waterLitres: Double,
-        afterBoil: HeatAfterBoil = .hold, eggCount: Double
+        afterBoil: HeatAfterBoil = .hold, eggCount: Double,
+        coolingWaterC: Double? = nil, bowlLitres: Double? = nil
     ) {
         self.startMode = startMode
         self.eggStartC = eggStartC
@@ -63,6 +71,8 @@ public struct CookSetup: Sendable, Codable, Equatable {
         self.waterLitres = waterLitres
         self.afterBoil = afterBoil
         self.eggCount = eggCount
+        self.coolingWaterC = coolingWaterC
+        self.bowlLitres = bowlLitres
     }
 }
 
@@ -122,14 +132,27 @@ public enum Protocols {
         return Constants.wetShellKgM2 * area * Constants.latentHeatWater / (egg.massKg * Constants.cEgg)
     }
 
+    /// The bowl's water now, C: what it started at, plus what the eggs have
+    /// given it since the pull over the water's heat capacity, a litre being
+    /// a kilogram. Well mixed, with nothing to the room or the bowl itself;
+    /// protocol.ts says why. A bowl with no water given never warms.
+    public static func bowlTemperature(_ egg: Egg, _ setup: CookSetup, meanAtPullC: Double, meanC: Double) -> Double {
+        let start = coolingMediumC(setup)
+        guard let litres = setup.bowlLitres, litres > 0.0 else { return start }
+        let given = setup.eggCount * egg.massKg * Constants.cEgg * (meanAtPullC - meanC)
+        return start + given / (litres * Constants.cWater)
+    }
+
     /// Surface temperature during cooling, for the step of `dtS` that ends
     /// `elapsedSincePullS` after the pull and starts from `sphere` as it
-    /// stands. Ice and tap are effectively Dirichlet. On the counter the shell
-    /// loses heat by Newton's law at its own temperature, and the water on it
-    /// takes its latent heat over `tauPlunge`. protocol.ts has the physics.
+    /// stands. Ice and tap are effectively Dirichlet, and a bowl is the same
+    /// with a target that warms by what the eggs give up since the pull,
+    /// when their mean was `meanAtPullC`. On the counter the shell loses heat
+    /// by Newton's law at its own temperature, and the water on it takes its
+    /// latent heat over `tauPlunge`. protocol.ts has the physics.
     static func coolingTemperature(
         sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePullS: Double, dtS: Double,
-        waterAtPullC: Double
+        waterAtPullC: Double, meanAtPullC: Double
     ) -> Double {
         if setup.cooling == .counter {
             let before = elapsedSincePullS > dtS ? elapsedSincePullS - dtS : 0.0
@@ -146,7 +169,9 @@ public enum Protocols {
             let counter = sphere.robinSurface(dtS: dtS, ambientC: setup.ambientC, tauS: tau, lossC: drying / out)
             return waterAtPullC + (counter - waterAtPullC) * out
         }
-        let target = coolingMediumC(setup.cooling, ambientC: setup.ambientC)
+        let target = setup.cooling == .bowl
+            ? bowlTemperature(egg, setup, meanAtPullC: meanAtPullC, meanC: sphere.meanTemperature)
+            : coolingMediumC(setup)
         // Blend out of the water temperature rather than jumping, so the
         // surface is continuous at the moment of pulling.
         return target + (waterAtPullC - target) * exp(-elapsedSincePullS / Constants.tauPlunge)
@@ -189,13 +214,21 @@ public enum Protocols {
     }
 }
 
-/// What the egg cools in, C: the ice bath, the tap's water, or on the counter
-/// the room. Mains water is not room temperature: nearer ground temperature,
-/// so it has its own constant.
-public func coolingMediumC(_ cooling: Cooling, ambientC: Double) -> Double {
+/// What the egg cools in as it goes in, C: the ice bath, running water, the
+/// bowl's water, or on the counter the room. Running water and the bowl take
+/// the cook's number when they gave one; without it, mains water is near
+/// ground temperature, so it has its own constant, and a bowl is taken to
+/// have stood at the room's.
+public func coolingMediumC(_ cooling: Cooling, ambientC: Double, waterC: Double?) -> Double {
     switch cooling {
-    case .ice: Constants.tIceBathC
-    case .tap: Constants.tColdTapC
-    case .counter: ambientC
+    case .ice: return Constants.tIceBathC
+    case .counter: return ambientC
+    case .tap: return waterC ?? Constants.tColdTapC
+    case .bowl: return waterC ?? ambientC
     }
+}
+
+/// The same, for a pot.
+public func coolingMediumC(_ setup: CookSetup) -> Double {
+    coolingMediumC(setup.cooling, ambientC: setup.ambientC, waterC: setup.coolingWaterC)
 }

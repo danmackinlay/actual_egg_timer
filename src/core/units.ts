@@ -120,19 +120,21 @@ const UNIT_KEYS: Record<UnitId, { unit: string; format: string }> = {
  *                    and + in whole degrees (its `nudge`). Not clamped: a
  *                    reading the egg could not have made is refused, not
  *                    moved.
- *  - `roomTemp`      the kitchen's air, measured with the probe: the room
- *                    setting, in whole degrees.
+ *  - `roomTemp`      the kitchen's air: the room setting, in whole degrees.
+ *  - `coolingWater`  the water the eggs cool in, running or in a bowl, as
+ *                    the cook gives it, in whole degrees.
  *  - `boilingPoint`  the water's boiling point, to a tenth of a degree.
  *  - `mass`, `girth`, `width`   the egg, weighed or measured.
  *  - `altitude`, `water`        the kitchen and the pan.
+ *  - `bowl`          the water in a bowl the eggs cool in, as the pan's.
  */
 export type Quantity =
-  | 'temperature' | 'eggTemp' | 'probeTemp' | 'roomTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width'
-  | 'altitude' | 'water';
+  | 'temperature' | 'eggTemp' | 'probeTemp' | 'roomTemp' | 'coolingWater' | 'boilingPoint' | 'mass' | 'girth'
+  | 'width' | 'altitude' | 'water' | 'bowl';
 
 export const QUANTITIES: readonly Quantity[] = [
-  'temperature', 'eggTemp', 'probeTemp', 'roomTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude',
-  'water',
+  'temperature', 'eggTemp', 'probeTemp', 'roomTemp', 'coolingWater', 'boilingPoint', 'mass', 'girth', 'width',
+  'altitude', 'water', 'bowl',
 ];
 
 /** A step, as a ratio of integers: 1/10 for 0.1, 1/50 for 0.02, 100/1.
@@ -182,6 +184,11 @@ const SPECS: Record<Quantity, QuantitySpec> = {
     metric: { unit: 'C', num: 1, den: 1, decimals: 0 },
     imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
   },
+  coolingWater: {
+    limit: LIMITS.coolingWater_C,
+    metric: { unit: 'C', num: 1, den: 1, decimals: 0 },
+    imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
+  },
   boilingPoint: {
     limit: null,
     metric: { unit: 'C', num: 1, den: 10, decimals: 1 },
@@ -212,6 +219,13 @@ const SPECS: Record<Quantity, QuantitySpec> = {
     metric: { unit: 'L', num: 1, den: 4, decimals: 2 },
     imperial: { unit: 'qt', num: 1, den: 4, decimals: 2 },
   },
+  // Said in a sentence ("a bowl with 1.5 L of water"), so shown with only
+  // the decimals it needs.
+  bowl: {
+    limit: LIMITS.bowlLitres,
+    metric: { unit: 'L', num: 1, den: 4, decimals: 2, trim: true },
+    imperial: { unit: 'qt', num: 1, den: 4, decimals: 2, trim: true },
+  },
 };
 
 /** One quantity in one unit: everything an input or a readout needs. */
@@ -230,8 +244,9 @@ export interface Measure {
   /** Digits after the point on screen: at most this many when `trim`. */
   decimals: number;
   /** Shown with only the decimals the value needs, up to `decimals`: "58 g"
-   *  and "58.5 g", never "58.0 g". Metric mass only; every other measure
-   *  keeps its decimals, as "2.00 L" does. */
+   *  and "58.5 g", never "58.0 g". Metric mass and the bowl's water, which
+   *  a sentence says; every other measure keeps its decimals, as the pan's
+   *  "2.00 L" does. */
   trim: boolean;
   /** The catalogue key of the bare symbol, for the label beside an input. */
   unitKey: string;
@@ -255,7 +270,7 @@ export function measureFor(
 ): Measure {
   const spec = SPECS[quantity];
   const s = system === 'imperial' ? spec.imperial : spec.metric;
-  const unit = system === 'imperial' && quantity === 'water' ? imperialWaterUnit(region) : s.unit;
+  const unit = system === 'imperial' && (quantity === 'water' || quantity === 'bowl') ? imperialWaterUnit(region) : s.unit;
   const m: Measure = {
     quantity: quantity,
     unit: unit,

@@ -33,7 +33,7 @@ import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js
  *  cold water at sea level, the heat held, then ice, jammy. */
 export const BASE_CHOICES: CookChoices = {
   mass_kg: SIZE_CLASSES[2].mass_kg, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12,
-  room_C: null, startMode: 'cold', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2,
+  room_C: null, startMode: 'cold', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2,
   altitude_m: 0, level: 0.41,
 };
 
@@ -65,6 +65,9 @@ const setupChoices: CookChoices[] = [];
     {},
     { startMode: 'hot', afterBoil: 'off', cooling: 'counter', waterLitres: 0.25, eggCount: 24, altitude_m: 2400 },
     { startMode: 'hot', cooling: 'tap', waterLitres: 12, eggCount: 1, altitude_m: -400 },
+    { cooling: 'bowl', bowlLitres: 1.25, bowlWater_C: 13, tapWater_C: 9, eggCount: 6 },
+    { startMode: 'hot', cooling: 'bowl', bowlLitres: 3, bowlWater_C: null },
+    { startMode: 'hot', cooling: 'tap', tapWater_C: 23.5, bowlWater_C: 30 },
   ];
   let k = 0;
   for (const egg of eggs) {
@@ -127,6 +130,7 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'corrected back to cold: cold from the second correction', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), move: { correct: tapped.choices, now: START_S + 610 } },
   { note: 'boiling a second time: first said boiling at the first', cook: corrected(corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), tapped.choices, START_S + 610), move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 620 } },
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
+  { note: 'corrected to a bowl of water after the cooling ended', cook: cooled, move: { correct: { ...cooled.choices, cooling: 'bowl', bowlLitres: 1, bowlWater_C: 14 }, now: START_S + 1100 } },
   { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
   { note: 'done on the counter, another correction: nothing ended', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
@@ -236,6 +240,10 @@ const REFUSED: { note: string; from: string; path: string[]; value: unknown }[] 
   { note: 'a start that is a list', from: 'pulled', path: ['start'], value: [] },
   { note: 'a start of zero', from: 'pulled', path: ['start', 'at_s'], value: 0 },
   { note: 'no choices', from: 'pulled', path: ['start', 'choices'], value: undefined },
+  { note: 'a bowl of no water', from: 'pulled', path: ['start', 'choices', 'bowlLitres'], value: 0 },
+  { note: 'no bowl', from: 'pulled', path: ['start', 'choices', 'bowlLitres'], value: undefined },
+  { note: 'running water at a temperature in words', from: 'pulled', path: ['start', 'choices', 'tapWater_C'], value: 'cold' },
+  { note: 'no word on the bowl’s water', from: 'pulled', path: ['start', 'choices', 'bowlWater_C'], value: undefined },
   { note: 'choices that are a list', from: 'pulled', path: ['start', 'choices'], value: [] },
   { note: 'no mass', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: undefined },
   { note: 'a mass of zero', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: 0 },
@@ -612,6 +620,10 @@ const S = START_S;
 {
   // A pot whose white never sets: the heat off under a quarter litre and
   // twelve eggs. The longest this pan gives, and nothing to choose.
+  // Four eggs into a bowl of a litre and a half from a cold tap: the
+  // cooling counted to the yolk's peak in a bowl that warms.
+  const bowl = cookOf({ startMode: 'hot', cooling: 'bowl', bowlLitres: 1.5, bowlWater_C: 12, eggCount: 4 }, 2);
+  plan({ note: 'a bowl of water, its cooling counted to the peak', posterior: 'learned', cook: bowl, leanHint_s: 0, now_s: S + 30, surface: 'own' });
   const never = cookOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 0.25, eggCount: 12 }, 5);
   plan({ note: 'the heat off, a white that never sets', posterior: 'learned', cook: never, leanHint_s: 3, now_s: S + 30, surface: 'own' });
   plan({ note: 'the same, before its surface', posterior: 'learned', cook: never, leanHint_s: 3, now_s: S + 30, surface: 'none' });

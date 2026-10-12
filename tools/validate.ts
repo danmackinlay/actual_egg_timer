@@ -186,6 +186,15 @@ for (let i = 0; i < CARRY_COOLING.length; i++) {
   carryRows.push(['insulated (the ceiling)', carryRows[0][1], ceiling.toFixed(1), (ceiling - Number(carryRows[0][1])).toFixed(1), 'never']);
 }
 
+// A bowl of still water, two eggs in 2 L at 20 C: it warms by under 3 C, so
+// it is running water at 20 C to within a couple of seconds of jammy
+// (design/bowl.md section 2.2, from a loop of its own).
+{
+  const bowl = cookMinutes(REFERENCE_EGG, referenceSetup({ eggCount: 2, cooling: 'bowl', bowlLitres: 2, coolingWater_C: 20 }), 0.41);
+  const tap = cookMinutes(REFERENCE_EGG, referenceSetup({ eggCount: 2, cooling: 'tap', coolingWater_C: 20 }), 0.41);
+  check('a 2 L bowl at 20 C against running water at 20 C, two eggs, jammy', 60 * (bowl - tap), 0.0, 2.0, 's');
+}
+
 /** Sea-level jammy cook time, computed once and reused by the altitude table. */
 let jammySeaLevelCache = -1;
 function jammySeaLevel(): number {

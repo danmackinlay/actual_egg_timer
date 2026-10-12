@@ -39,6 +39,8 @@ function panelFor(clause: Clause): HTMLElement {
 export interface SetupFacts {
   /** The egg's mass as the size menu or the scale says it, with its unit. */
   mass: string;
+  /** How many eggs go in. */
+  count: number;
   eggFrom: EggFrom;
   /** The egg's temperature when it is the cook's own number, C. */
   customStart_C: number;
@@ -46,6 +48,11 @@ export interface SetupFacts {
   /** The heat goes off at the boil. */
   standing: boolean;
   cooling: Cooling;
+  /** The bowl's water, with its unit. */
+  water: string;
+  /** The temperature of the water the eggs cool in as the cook gave it, C,
+   *  for running water or a bowl; null when assumed, or for another cooling. */
+  coolingWater_C: number | null;
 }
 
 /** The mass of a size class as the size menu shows it, in the units on
@@ -61,11 +68,15 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
   return {
     mass: byClass ? classMass(classes, settings.sizeIndex) : show('mass', egg.mass_kg * 1000),
+    count: settings.eggCount,
     eggFrom: settings.startTempMode,
     customStart_C: settings.customStart_C,
     startMode: settings.startMode,
     standing: settings.afterBoil === 'off',
     cooling: settings.cooling,
+    water: show('bowl', settings.bowlLitres),
+    coolingWater_C: settings.cooling === 'tap' ? settings.tapWater_C
+      : settings.cooling === 'bowl' ? settings.bowlWater_C : null,
   };
 }
 
@@ -73,20 +84,24 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
 function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
   const args = {
-    mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
+    count: f.count, mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
+  };
+  // The cooling clause's temperature is the water's, not the egg's.
+  const coolingArgs = {
+    water: f.water, temp: f.coolingWater_C === null ? '' : show('coolingWater', f.coolingWater_C),
   };
   const keys = clauseKeys({
     eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
-    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling,
+    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling, coolingWaterGiven: f.coolingWater_C !== null,
   });
-  const words = (k: ClauseKeys, own: string) => ({
-    text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),
+  const words = (k: ClauseKeys, own: string, with_: Record<string, string | number> = args) => ({
+    text: t(k.text, with_), label: t(k.label), value: k.value === null ? own : t(k.value, with_),
   });
   return {
     egg: words(keys.egg, args.mass),
     from: words(keys.from, args.temp),
     start: words(keys.start, ''),
-    cooling: words(keys.cooling, ''),
+    cooling: words(keys.cooling, '', coolingArgs),
   };
 }
 

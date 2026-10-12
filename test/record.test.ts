@@ -279,6 +279,15 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
 });
 
+test('2c2. an egg cooled in a bowl is scored in that bowl: its water and its temperature reach the fold', () => {
+  const r = solvedRecord(0.4, 'jammy');
+  const bowl = { ...r, setup: { ...r.setup, cooling: 'bowl' as const, bowlLitres: 0.75, coolingWater_C: 9 } };
+  const q = gridRequestFor(freshCalibration(64, 7), bowl, calibrationGrid);
+  assert.deepEqual([q.setup.cooling, q.setup.bowlLitres, q.setup.coolingWater_C], ['bowl', 0.75, 9]);
+  const plain = gridRequestFor(freshCalibration(64, 7), r, calibrationGrid);
+  assert.equal('bowlLitres' in plain.setup || 'coolingWater_C' in plain.setup, false, 'an ice bath carries neither');
+});
+
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
   // INFERENCE.md section 4. A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
@@ -628,7 +637,7 @@ const S0 = T0 / 1000;
 const C4 = knowing({ particles: 200, eggsLogged: 0 });
 const CHOICES: CookChoices = {
   mass_kg: 0.062, massFrom: 'scale', sizeTable: null, eggFrom: 'fridge', customStart_C: 12, room_C: null,
-  startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
+  startMode: 'hot', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
 };
 
 function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory = {}): RunningCook {

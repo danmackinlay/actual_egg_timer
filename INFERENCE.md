@@ -343,6 +343,15 @@ fit's training data cannot drift between the two.
   (27 September), this is what says which cooks leaned on the old derivation.
 - `ambient_C` is recorded rather than re-derived from the egg's start
   temperature, so a change to that rule cannot quietly change a replay.
+- `cooling` is `ice`, `tap`, `bowl` (12 October 2026: a bowl of still water
+  the eggs warm) or `counter`. Two optional fields say the water the eggs
+  cooled in, each present only where the cooling reads it and never `null`:
+  `coolingWater_C`, running water's or the bowl's temperature as the cook
+  gave it (absent, it was assumed: 15 °C running, the room's in a bowl), and
+  `bowlLitres`, which every bowl carries and nothing else may. A record from
+  before them reads as it always did, so the schema stays `v: 1`; a build
+  from before them refuses a log holding a bowl, and the newer-build guard
+  (`src/core/newer.ts`) keeps it from writing over one.
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.

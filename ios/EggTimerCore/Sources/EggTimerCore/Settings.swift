@@ -29,6 +29,13 @@ public struct AppSettings: Sendable, Equatable {
     public var startMode: StartMode
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
+    /// Running water's temperature as the cook gave it, C, or nil to assume
+    /// mains water.
+    public var tapWaterC: Double?
+    /// The bowl's water, litres, and its temperature as the cook gave it, C,
+    /// or nil to assume the room. Kept while another cooling is chosen.
+    public var bowlLitres: Double
+    public var bowlWaterC: Double?
     public var waterLitres: Double
     public var eggCount: Int
     public var doneness: Double
@@ -45,14 +52,16 @@ public struct AppSettings: Sendable, Equatable {
         weighedMassG: Defaults.eggMassKg * 1000, startTempMode: .fridge, customStartC: Defaults.customStartC,
         altitudeM: Defaults.altitudeM, startMode: .cold, afterBoil: .hold, cooling: .ice,
         waterLitres: Defaults.waterLitres, eggCount: Defaults.eggCount, doneness: Defaults.doneness, muted: false,
-        alarm: defaultAlarmSound, unitsChosen: nil, language: .fresh, probe: false, roomC: nil
+        alarm: defaultAlarmSound, unitsChosen: nil, language: .fresh, probe: false, roomC: nil,
+        tapWaterC: nil, bowlLitres: Defaults.bowlLitres, bowlWaterC: nil
     )
 
     public init(
         sizeIndex: Int, customMinorMm: Double, measuredBy: MeasuredBy, weighedMassG: Double, startTempMode: EggFrom,
         customStartC: Double, altitudeM: Double, startMode: StartMode, afterBoil: HeatAfterBoil, cooling: Cooling,
         waterLitres: Double, eggCount: Int, doneness: Double, muted: Bool, alarm: AlarmSound,
-        unitsChosen: UnitSystem?, language: LanguageState, probe: Bool, roomC: Double?
+        unitsChosen: UnitSystem?, language: LanguageState, probe: Bool, roomC: Double?,
+        tapWaterC: Double? = nil, bowlLitres: Double = Defaults.bowlLitres, bowlWaterC: Double? = nil
     ) {
         self.sizeIndex = sizeIndex
         self.customMinorMm = customMinorMm
@@ -64,6 +73,9 @@ public struct AppSettings: Sendable, Equatable {
         self.startMode = startMode
         self.afterBoil = afterBoil
         self.cooling = cooling
+        self.tapWaterC = tapWaterC
+        self.bowlLitres = bowlLitres
+        self.bowlWaterC = bowlWaterC
         self.waterLitres = waterLitres
         self.eggCount = eggCount
         self.doneness = doneness
@@ -85,6 +97,7 @@ public struct AppSettings: Sendable, Equatable {
             "cooling": cooling.rawValue, "waterLitres": waterLitres, "eggCount": eggCount, "doneness": doneness,
             "muted": muted, "alarm": alarm.rawValue, "unitsChosen": unitsChosen?.rawValue ?? NSNull(),
             "language": language.jsonObject, "probe": probe, "room_C": roomC ?? NSNull(),
+            "tapWater_C": tapWaterC ?? NSNull(), "bowlLitres": bowlLitres, "bowlWater_C": bowlWaterC ?? NSNull(),
         ]
     }
 }
@@ -105,6 +118,13 @@ private func storedFlag(_ v: Any?) -> Bool {
     isBool(v) && (v as? NSNumber)?.boolValue == true
 }
 
+/// A stored number within `range`, or nil for anything that is not a finite
+/// number: an optional number left blank.
+private func storedOptional(_ v: Any?, _ range: ClosedRange<Double>) -> Double? {
+    guard !isBool(v), let n = v as? NSNumber, n.doubleValue.isFinite else { return nil }
+    return clamp(n.doubleValue, to: range)
+}
+
 /// A stored value that is one of `T`'s, or `fallback`.
 private func oneOf<T: RawRepresentable>(_ v: Any?, _ fallback: T) -> T where T.RawValue == String {
     (v as? String).flatMap(T.init(rawValue:)) ?? fallback
@@ -115,7 +135,6 @@ private func oneOf<T: RawRepresentable>(_ v: Any?, _ fallback: T) -> T where T.R
 public func readSettings(_ raw: Any?, classes: [SizeClass]) -> AppSettings {
     let d = AppSettings.defaults
     guard let r = raw as? [String: Any] else { return d }
-    let room = r["room_C"]
     return AppSettings(
         sizeIndex: carrySizeIndex(storedNumber(r["sizeIndex"], Limits.sizeIndex, Double(d.sizeIndex)), classes: classes),
         customMinorMm: storedNumber(r["customMinor_mm"], Limits.minorMm, d.customMinorMm),
@@ -135,6 +154,9 @@ public func readSettings(_ raw: Any?, classes: [SizeClass]) -> AppSettings {
         unitsChosen: readChosenUnits(r["unitsChosen"]),
         language: readLanguageState(r["language"], known: languages),
         probe: storedFlag(r["probe"]),
-        roomC: isBool(room) ? nil : (room as? NSNumber).map(\.doubleValue).flatMap { $0.isFinite ? clamp($0, to: Limits.roomC) : nil }
+        roomC: storedOptional(r["room_C"], Limits.roomC),
+        tapWaterC: storedOptional(r["tapWater_C"], Limits.coolingWaterC),
+        bowlLitres: storedNumber(r["bowlLitres"], Limits.bowlLitres, d.bowlLitres),
+        bowlWaterC: storedOptional(r["bowlWater_C"], Limits.coolingWaterC)
     )
 }

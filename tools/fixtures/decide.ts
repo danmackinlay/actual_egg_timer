@@ -50,6 +50,8 @@ const DECIDE_SPEC_INPUTS: DecisionInputs[] = [
   { egg: DECIDE_EGG, setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 540 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'counter' }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ afterBoil: 'off', waterLitres: 4 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'bowl', bowlLitres: 1, coolingWater_C: 9 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'tap', coolingWater_C: 24 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
 ];
 
 const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({

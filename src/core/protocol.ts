@@ -9,7 +9,7 @@ import {
   STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
 import { Egg } from './geometry.js';
-import { SphereState, robinSurface } from './sphere.js';
+import { SphereState, meanTemperature, robinSurface } from './sphere.js';
 
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
  *  eggs are lowered into water already boiling - peels far better, and the
@@ -17,8 +17,9 @@ import { SphereState, robinSurface } from './sphere.js';
 export type StartMode = 'cold' | 'hot';
 
 /** What happens after the egg comes out. This is not a detail: it changes the
- *  peak yolk temperature by ~20 C. */
-export type Cooling = 'ice' | 'tap' | 'counter';
+ *  peak yolk temperature by ~20 C. 'bowl' is a bowl of still water the eggs
+ *  are put into and left in, which they warm (`bowlTemperature`). */
+export type Cooling = 'ice' | 'tap' | 'bowl' | 'counter';
 
 /** What happens to the burner once the water boils. 'hold' keeps the water at
  *  its boiling point, which is what every recipe silently assumes. 'off' is the
@@ -52,6 +53,13 @@ export interface CookSetup {
    *  assumes without saying so. */
   afterBoil?: HeatAfterBoil;
   eggCount: number;
+  /** The water the eggs cool in, C, as the cook gave it: running water's, or
+   *  the bowl's as the eggs go in. Absent when the cook gave none, and then
+   *  assumed (`coolingMedium_C`): running water at T_COLD_TAP_C, a bowl at
+   *  the room. Read only for 'tap' and 'bowl'. */
+  coolingWater_C?: number;
+  /** The water in the bowl, litres. Present for a bowl, and read only there. */
+  bowlLitres?: number;
 }
 
 /* The egg's MASS is not here. It was, and it duplicated `Egg.mass_kg` - so
@@ -140,13 +148,50 @@ function standingTemperature(
   return ambient_C + (from_C - ambient_C) * Math.exp(-elapsedSinceOff_s / tau);
 }
 
-/** What the egg cools in, C: the ice bath, the tap's water, or on the counter
- *  the room. Mains water is NOT room temperature: it arrives at something
- *  closer to ground temperature, usually below the room and occasionally - a
- *  long run of pipe in a hot summer - well above it, so it has its own
- *  constant. */
-export function coolingMedium_C(cooling: Cooling, ambient_C: number): number {
-  return cooling === 'ice' ? T_ICE_BATH_C : cooling === 'tap' ? T_COLD_TAP_C : ambient_C;
+/** What the cooling reads of a pot: the method, the room, and the water the
+ *  cook gave. A `CookSetup` is one, and so is a record's setup. */
+export interface CoolingFacts {
+  cooling: Cooling;
+  ambient_C: number;
+  coolingWater_C?: number;
+}
+
+/** What the egg cools in as it goes in, C: the ice bath, running water, the
+ *  bowl's water, or on the counter the room. Running water and the bowl take
+ *  the cook's number when they gave one. Without it, mains water is NOT room
+ *  temperature: it arrives at something closer to ground temperature, usually
+ *  below the room and occasionally - a long run of pipe in a hot summer - well
+ *  above it, so it has its own constant. A bowl is taken to have stood at the
+ *  room's, as the cook was told. The bowl then warms (`bowlTemperature`); this
+ *  is where it starts, and the coldest it is. */
+export function coolingMedium_C(s: CoolingFacts): number {
+  if (s.cooling === 'ice') return T_ICE_BATH_C;
+  if (s.cooling === 'counter') return s.ambient_C;
+  if (s.coolingWater_C !== undefined) return s.coolingWater_C;
+  return s.cooling === 'tap' ? T_COLD_TAP_C : s.ambient_C;
+}
+
+/**
+ * The bowl's water now, C: what it started at, plus what the eggs have given
+ * it since the pull over the water's heat capacity (a litre is a kilogram, as
+ * `dipMagnitude` has it). Each of the `eggCount` eggs is the egg modelled, so
+ * the heat given is N times one egg's heat capacity times the fall in its
+ * mean temperature since the pull: exactly what the eggs lose, from the modal
+ * state itself.
+ *
+ * Well mixed, with no heat to the room or into the bowl itself: over the few
+ * minutes that decide the yolk, the room's exchange (a time constant near two
+ * hours at 2 L) and a ceramic bowl's own heat capacity are each worth under a
+ * second of cook, and eggs lying still in water that has not mixed are worth
+ * one (design/bowl.md section 2.3). A bowl with no water given is no bowl: the
+ * water never warms, as running water at its temperature.
+ */
+export function bowlTemperature(egg: Egg, setup: CookSetup, meanAtPull_C: number, mean_C: number): number {
+  const start = coolingMedium_C(setup);
+  const litres = setup.bowlLitres;
+  if (litres === undefined || !(litres > 0.0)) return start;
+  const given = setup.eggCount * egg.mass_kg * C_EGG * (meanAtPull_C - mean_C);
+  return start + given / (litres * C_WATER);
 }
 
 /**
@@ -175,7 +220,13 @@ export function wetShellDrop_C(egg: Egg): number {
  * `elapsedSincePull_s` after the pull and starts from `sphere` as it stands.
  *
  * Ice water and a cold tap are effectively Dirichlet - the surface goes to the
- * bath temperature and stays there.
+ * bath temperature and stays there. A bowl of still water is the same with a
+ * target that moves: the bowl warms by what the eggs give up
+ * (`bowlTemperature`, from the egg's mean now against `meanAtPull_C`, its mean
+ * as it left the pan), and the surface follows it. Clamped, like the ice bath,
+ * though free convection in still water is not quite a clamp: the time-scale
+ * learned from the cook's answers absorbs that for every water cooling alike
+ * (design/bowl.md section 2.3).
  *
  * Still air is not: Bi ~ 0.6, so the shell is neither held at the room's
  * temperature nor at the egg's mean, and it loses heat by Newton's law at
@@ -192,7 +243,7 @@ export function wetShellDrop_C(egg: Egg): number {
  */
 export function coolingTemperature(
   sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePull_s: number, dt_s: number,
-  waterAtPull_C: number,
+  waterAtPull_C: number, meanAtPull_C: number,
 ): number {
   if (setup.cooling === 'counter') {
     const before = elapsedSincePull_s > dt_s ? elapsedSincePull_s - dt_s : 0.0;
@@ -210,7 +261,9 @@ export function coolingTemperature(
     const counter = robinSurface(sphere, dt_s, setup.ambient_C, tau, drying / out);
     return waterAtPull_C + (counter - waterAtPull_C) * out;
   }
-  const target = coolingMedium_C(setup.cooling, setup.ambient_C);
+  const target = setup.cooling === 'bowl'
+    ? bowlTemperature(egg, setup, meanAtPull_C, meanTemperature(sphere))
+    : coolingMedium_C(setup);
   // Blend out of the water temperature rather than jumping, so the surface is
   // continuous at the moment of pulling. See TAU_PLUNGE.
   return target + (waterAtPull_C - target) * Math.exp(-elapsedSincePull_s / TAU_PLUNGE);

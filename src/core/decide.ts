@@ -163,6 +163,15 @@ export function inputsKey(inputs: DecisionInputs): string {
   ];
   let key = `${s.startMode}|${s.afterBoil ?? 'hold'}|${s.cooling}`;
   for (let i = 0; i < numbers.length; i++) key += `|${numberKey(numbers[i])}`;
+  // The water the eggs cool in, after the rest and only where the cooling
+  // reads it, so every pot that had a key keeps it: running water's
+  // temperature when the cook gave one, and a bowl's always, '-' when it is
+  // assumed (`coolingMedium_C`), then its litres.
+  if (s.cooling === 'tap' && s.coolingWater_C !== undefined) key += `|${numberKey(s.coolingWater_C)}`;
+  if (s.cooling === 'bowl') {
+    key += `|${s.coolingWater_C === undefined ? '-' : numberKey(s.coolingWater_C)}`;
+    key += `|${s.bowlLitres === undefined ? '-' : numberKey(s.bowlLitres)}`;
+  }
   return key;
 }
 

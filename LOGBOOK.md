@@ -7849,3 +7849,94 @@ draws.
 
 Gates: `verify` before each commit, `ios:build` on the iOS commit,
 `e2e` 87 of 87, `ios:e2e` 48 of 48.
+
+
+## 12 October 2026: a bowl of water, the cooling water's temperature, the count and the room
+
+The owner's decisions of 12 October on `design/bowl.md`, built on
+`bowl-cooling` from `main` (`3758e7b`) with the study merged in.
+
+- **The bowl** (`91a3084`): a fourth cooling, `'bowl'`. The surface is
+  held at the bowl's water and blended out of the pan over `TAU_PLUNGE`,
+  as the ice bath and running water are; the water warms by exactly what
+  the eggs lose, N eggs' heat capacity times the fall in the egg's own
+  modal mean since the pull (`bowlTemperature`). `simulate` and the egg's
+  section keep the mean at the pull beside the water's temperature. Test
+  18a: four eggs in a litre at 15 °C, left three hours, settle with the
+  water at the mixture's temperature to 0.01 °C, which nothing in the model
+  is told. 18b: the drive never falls further in a step than the blend
+  allows (a thousandth of a degree of slack: in the step that straddles the
+  pull the egg still draws the pan's heat). 18c: a bowl of a million litres
+  is running water at its temperature to the second. validate: two eggs in
+  2 L at 20 °C against running water at 20 °C, -0.9 s. The study's room
+  exchange, bowl capacity and stratification, each worth a second or less,
+  are left out, as it recommended.
+- **The cooling water's temperature**: `CookSetup.coolingWater_C`,
+  optional, for running water or a bowl; absent, running water is
+  `T_COLD_TAP_C` (15 °C, unchanged) and a bowl the room. The choices and
+  settings keep `tapWater_C`, `bowlLitres` (default 2 L) and `bowlWater_C`
+  apart, since their defaults differ. `inputsKey` appends them only where
+  the cooling reads them, so no other pot's key or surface moved. The
+  running cook's format went to 7; the log's did not (below).
+- **No warning** for a crowded bowl. The owner dropped it while this was
+  being built (rare in a kitchen); the model takes any ratio.
+- **The record and the endpoint**: the record's setup carries the two
+  fields only where the cooling reads them and never as null; `bowl` is a
+  `cooling`. Records from before read as they did, so the schema stays
+  `v: 1` and the log's key and format stay, against the design note's
+  suggestion of a bump: a bump would empty every tester's log, and the
+  newer-build guard already stops an older build writing over a log it
+  cannot read (it would read it as empty for that session). The server
+  takes what `parseRecord` takes and needed no change; the fit reads
+  records through the same loader (`tools/eggs.ts` emulate,
+  `recordSetupOf`), and the Python reads no cooling. One thing is the
+  owner's: an iPhone build with the bowl that shares to a server from
+  before it gets 400 for a bowl's egg, which sharing passes over for good
+  (`shareReply`). Deploy the web (and so the server) before such a build
+  reaches testers.
+- **The room** (`c8fcd00`, `3e494f6`), the owner's two tests. Leverage, on
+  the default pot (68 g, 2 L, two eggs), 15-30 °C against 20, the jammy
+  cook and the peak yolk at a fixed cook:
+
+  | where the room reaches the egg | per °C | across 15-30 °C | peak per °C |
+  |---|---|---|---|
+  | eggs left out (the egg's start), hot or cold start | -4.8 s | +22 to -50 s | +0.40 °C |
+  | a cold start's pan, fridge eggs | -2.1 s | +10.5 to -21 s | +0.18 °C |
+  | heat off, hot start (2 fridge eggs in 2 L reach no jammy; the plateau) | | | +0.27 °C |
+  | the air, fudgy (hard: the same seconds) | -1.4 s | +6 to -14 s | +0.08 °C |
+  | a bowl at the room, fridge eggs | -0.9 s | +4.4 to -9.6 s | +0.06 °C |
+  | room eggs into a bowl at the room | -5.7 s | +26 to -59 s | +0.44 °C |
+
+  Against the inputs asked: 58 against 68 g is -45 s; 76 g +34 s; 1500 m
+  +39 s; one egg against six 8 s; 1 L against 3 L of pan 4.4 s; a fridge at
+  8 °C not 4, -16 s; running water at 5 or 25 °C, -2 to -17 s against ice.
+  So the leverage is high where an egg is left out, as high as a size class,
+  and the natural place is there: the panel of "at room temperature" now
+  shows Room temperature when Room is chosen, optional, greyed at the 20 °C
+  assumed; Settings shows it to every cook, probe or not (`roomInUse` lost
+  its probe argument), and Use fridge eggs is not advised once it is given.
+  The bowl's water defaults to it, and its row shows the room greyed. The
+  cooling panel does not repeat it for the air (1.4 s a degree).
+- **The count** (`620340d`): out of Settings, into the egg's panel and the
+  sentence ("4 × 68 g eggs", "One 68 g egg"); `setup.egg` became a count.
+- **Four choices, a list** (`572c19b`, `797c982`): one to a line, fastest
+  first, on both apps. Four names of up to 13 letters do not fit a 390 px
+  phone as segments, and at the accessibility sizes a 2×2 grid would
+  truncate "Running water"; a list wraps instead. iOS draws it as
+  `ListChoice` (a filled, ticked row), the web as `.seg--list`. Under it the
+  bowl's water on a stepper and the water's temperature, optional, greyed
+  at the one assumed.
+- **Words** (`73fa7e0`): the bowl in the cooling's (i), Help's reliable and
+  unsure sections, the count's (i), the fridge advice; every new and
+  changed key's 1750 twin written and stamped (a basin, the pump), none
+  stale. The English is in the owner's queue: 14 added, 7 changed.
+- **Seen**: the web at 390 px, default and 175% zoom (the panels' number
+  rows now wrap, `6bb69f3`; the clock's digits overflow at that zoom, as
+  before); iOS on an iPhone 17 Pro, iOS 27.0, at the default size and at
+  `accessibility-extra-extra-extra-large`, with `-settings <hex>` and
+  `-uiScreen clause-cooling` / `clause-egg` and `-uiScrollAnchor`. A value
+  and its unit can break across a line in the sentence ("1.5 / L"), as the
+  egg's mass always could: the formats use a plain space.
+
+Gates: `verify` before each commit, `ios:build` on each that touched the
+app; `e2e` and `ios:e2e` whole at the end.

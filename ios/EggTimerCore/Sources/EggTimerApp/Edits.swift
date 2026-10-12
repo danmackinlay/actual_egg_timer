@@ -8,7 +8,8 @@ import EggTimerShared
 /// the settings and the cook's choices each one makes. The web's `FIELDS`
 /// (src/ui/edit.ts), plus the start's time.
 public enum ControlField: Hashable, CaseIterable {
-    case level, mass, eggFrom, customStart, room, start, afterBoil, cooling, water, eggCount, altitude
+    case level, mass, eggFrom, customStart, room, start, afterBoil, cooling, tapWater, bowlLitres, bowlWater, water,
+        eggCount, altitude
     /// The start clause's time, which is the cook's own and no setting.
     case startTime
 }
@@ -21,10 +22,13 @@ extension AppSettings {
         case .mass: sizeIndex == o.sizeIndex && weighedMassG == o.weighedMassG
         case .eggFrom: startTempMode == o.startTempMode
         case .customStart: customStartC == o.customStartC
-        case .room: probe == o.probe && roomC == o.roomC
+        case .room: roomC == o.roomC
         case .start: startMode == o.startMode
         case .afterBoil: afterBoil == o.afterBoil
         case .cooling: cooling == o.cooling
+        case .tapWater: tapWaterC == o.tapWaterC
+        case .bowlLitres: bowlLitres == o.bowlLitres
+        case .bowlWater: bowlWaterC == o.bowlWaterC
         case .water: waterLitres == o.waterLitres
         case .eggCount: eggCount == o.eggCount
         case .altitude: altitudeM == o.altitudeM
@@ -44,10 +48,13 @@ extension AppSettings {
         case .mass: sizeIndex = o.sizeIndex; weighedMassG = o.weighedMassG
         case .eggFrom: startTempMode = o.startTempMode
         case .customStart: customStartC = o.customStartC
-        case .room: probe = o.probe; roomC = o.roomC
+        case .room: roomC = o.roomC
         case .start: startMode = o.startMode
         case .afterBoil: afterBoil = o.afterBoil
         case .cooling: cooling = o.cooling
+        case .tapWater: tapWaterC = o.tapWaterC
+        case .bowlLitres: bowlLitres = o.bowlLitres
+        case .bowlWater: bowlWaterC = o.bowlWaterC
         case .water: waterLitres = o.waterLitres
         case .eggCount: eggCount = o.eggCount
         case .altitude: altitudeM = o.altitudeM
@@ -68,6 +75,9 @@ extension CookChoices {
         case .start: startMode = o.startMode
         case .afterBoil: afterBoil = o.afterBoil
         case .cooling: cooling = o.cooling
+        case .tapWater: tapWaterC = o.tapWaterC
+        case .bowlLitres: bowlLitres = o.bowlLitres
+        case .bowlWater: bowlWaterC = o.bowlWaterC
         case .water: waterLitres = o.waterLitres
         case .eggCount: eggCount = o.eggCount
         case .altitude: altitudeM = o.altitudeM

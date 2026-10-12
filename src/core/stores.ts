@@ -50,7 +50,7 @@ export const STORES = {
   /** The running cook: what was fixed at the press, its start and its log,
    *  whether its egg was answered, and the lean last decided (running.ts,
    *  `storedCook`). */
-  cook: { name: 'cook', format: 6, web: 'aet.cook', ios: 'cook' },
+  cook: { name: 'cook', format: 7, web: 'aet.cook', ios: 'cook' },
   /** The pans' measured times to boil (boil.ts), as `pans`. */
   boilMemory: { name: 'boilMemory', format: 1, web: 'aet.boilMemory', ios: 'boilMemory' },
   /** The results log, the posterior and the base under it (record.ts). */

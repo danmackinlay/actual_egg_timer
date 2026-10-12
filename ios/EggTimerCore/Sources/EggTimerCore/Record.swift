@@ -123,6 +123,12 @@ public struct RecordSetup: Sendable, Codable, Equatable {
     public var afterBoil: HeatAfterBoil
     public var waterLitres: Double
     public var eggCount: Double
+    /// As `CookSetup` has them: the water the eggs cooled in as the cook gave
+    /// it, C, only when they gave it, for running water or a bowl; and the
+    /// bowl's water, litres, for a bowl and only there. Omitted, not null,
+    /// when absent.
+    public var coolingWaterC: Double?
+    public var bowlLitres: Double?
 
     public init(setup: CookSetup, eggFrom: EggFrom, timeToBoilFrom: TimeToBoilFrom) {
         startMode = setup.startMode
@@ -136,6 +142,10 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         afterBoil = setup.afterBoil
         waterLitres = setup.waterLitres
         eggCount = setup.eggCount
+        // Only what the cooling reads, so a record of an ice bath never says a bowl.
+        let watered = setup.cooling == .tap || setup.cooling == .bowl
+        coolingWaterC = watered ? setup.coolingWaterC : nil
+        bowlLitres = setup.cooling == .bowl ? setup.bowlLitres : nil
     }
 
     enum CodingKeys: String, CodingKey {
@@ -146,6 +156,27 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         case boilingC = "boiling_C"
         case timeToBoilS = "timeToBoil_s"
         case timeToBoilFrom, cooling, afterBoil, waterLitres, eggCount
+        case coolingWaterC = "coolingWater_C"
+        case bowlLitres
+    }
+
+    /// Every field today's records write; the two water fields only when
+    /// there, and refused as null, as `parseRecord` refuses them.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        startMode = try c.decode(StartMode.self, forKey: .startMode)
+        eggStartC = try c.decode(Double.self, forKey: .eggStartC)
+        eggFrom = try c.decode(EggFrom.self, forKey: .eggFrom)
+        ambientC = try c.decode(Double.self, forKey: .ambientC)
+        boilingC = try c.decode(Double.self, forKey: .boilingC)
+        timeToBoilS = try c.decode(Double.self, forKey: .timeToBoilS)
+        timeToBoilFrom = try c.decode(TimeToBoilFrom.self, forKey: .timeToBoilFrom)
+        cooling = try c.decode(Cooling.self, forKey: .cooling)
+        afterBoil = try c.decode(HeatAfterBoil.self, forKey: .afterBoil)
+        waterLitres = try c.decode(Double.self, forKey: .waterLitres)
+        eggCount = try c.decode(Double.self, forKey: .eggCount)
+        coolingWaterC = c.contains(.coolingWaterC) ? try c.decode(Double.self, forKey: .coolingWaterC) : nil
+        bowlLitres = c.contains(.bowlLitres) ? try c.decode(Double.self, forKey: .bowlLitres) : nil
     }
 }
 
@@ -555,7 +586,7 @@ public func probeReadingFor(_ r: EggRecord, centreC: Double, coolEndS: Double?) 
 
 /// The coolest thing this cook's egg ever touched, C.
 private func coldestOf(_ s: RecordSetup) -> Double {
-    let bath = coolingMediumC(s.cooling, ambientC: s.ambientC)
+    let bath = coolingMediumC(s.cooling, ambientC: s.ambientC, waterC: s.coolingWaterC)
     return min(s.eggStartC, s.ambientC, bath)
 }
 
@@ -603,6 +634,14 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard s.timeToBoilS.isFinite, s.timeToBoilS >= 0 else { return false }
     guard s.waterLitres.isFinite, s.waterLitres > 0 else { return false }
     guard s.eggCount.isFinite, s.eggCount >= 1 else { return false }
+    // The water the eggs cooled in: a temperature only for running water or
+    // a bowl, and a bowl always says how much water it held.
+    if let water = s.coolingWaterC, !((s.cooling == .tap || s.cooling == .bowl) && water.isFinite) { return false }
+    if s.cooling == .bowl {
+        guard let litres = s.bowlLitres, litres.isFinite, litres > 0 else { return false }
+    } else if s.bowlLitres != nil {
+        return false
+    }
     guard r.level.isFinite, r.level >= 0, r.level <= 1 else { return false }
     guard r.recommendedS.isFinite, r.recommendedS > 0 else { return false }
     guard r.nudgeS.isFinite, r.recommendedS + r.nudgeS > 0 else { return false }
@@ -720,7 +759,7 @@ func recordSetupOf(_ r: EggRecord) -> CookSetup {
         ambientC: r.setup.ambientC, boilingC: r.setup.boilingC,
         timeToBoilS: r.setup.timeToBoilS, cooling: r.setup.cooling,
         waterLitres: r.setup.waterLitres, afterBoil: r.setup.afterBoil,
-        eggCount: r.setup.eggCount
+        eggCount: r.setup.eggCount, coolingWaterC: r.setup.coolingWaterC, bowlLitres: r.setup.bowlLitres
     )
 }
 
