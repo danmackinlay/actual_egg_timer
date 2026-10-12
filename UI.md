@@ -367,15 +367,24 @@ whose nearest word it is, from the midpoint with the word below to the
 midpoint with the word above (0, 0.11, 0.315, 0.515, 0.81, 1), which is
 where the slider's own word changes. The bracket runs from the outer edge of
 the interval's first word's band to the outer edge of its last's, so it
-always lies inside the track, and its short mark sits at the most likely
-word's place on the slider, under that word's tick (Runny's and Hard's are
-the track's ends). So "9 times in 10: Runny to Fudgy." is drawn from 0 to
-0.81, marked at Jammy, and "9 times in 10: Fudgy." from 0.515 to 0.81. It
-is whole words wide, and moves a word at a time. In the foreground colour
-at 70%: not the accent, not the yolk, and below the track, so it never
-covers the shading. A screen reader hears the same words, "Likely yolk:
-Runny to Fudgy" (`outcome.range`, `.range.one` when the interval is one
-word; the words stand alone after a colon, `LANGUAGE.md` §5). It is not
+always lies inside the track. Its bottom line is twice as thick over the
+most likely word's whole band (`wordBandLow`, `wordBandHigh`), which is
+always one of the interval's words, so the heavy stretch never runs past
+the bracket's ends. So "9 times in 10: Runny to Fudgy." is drawn from 0 to
+0.81, heavy from 0.315 to 0.515 where Jammy is the most likely, and "9
+times in 10: Fudgy." from 0.515 to 0.81, heavy throughout. The band, not a
+mark at the word's anchor, because the thumb moves continuously and the
+anchor does not: a mark at Soft's 0.22 sat away from a thumb at 0.30 that
+was still on Soft, at about a third of the slider's positions. So the thumb
+sits inside the heavy stretch whenever the most likely word is the word
+asked, and away from it, honestly, when that word is softer or firmer
+("Most likely" then shows under the certainty line). It is whole words
+wide, and moves a word at a time. In the foreground colour at 70%, the
+band in the same ink: not the accent, not the yolk, and below the track,
+so it never covers the shading. A screen reader hears the same words,
+"Likely yolk: Runny to Fudgy" (`outcome.range`, `.range.one` when the
+interval is one word; the words stand alone after a colon, `LANGUAGE.md`
+§5), and not the band: the certainty line's press says "Most likely". It is not
 drawn before the pot's surface lands, where the white never sets, in
 sous-vide, or once the egg is pulled; its room is kept, so nothing under it
 moves. While a cook runs it is its plan's, held while a new pot's surface

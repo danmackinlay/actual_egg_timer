@@ -7815,3 +7815,37 @@ the band goes. Same branch, `action-under-time`.
 
 Gates: `verify` and `ios:build` before each code commit and the merge;
 `e2e` 87 of 87, `ios:e2e` 49 of 49 on the last code.
+
+## 12 October 2026: the bracket's most likely word as its band
+
+The owner's decision of the day: the point mark under the slider, at the
+most likely word's anchor, sat away from the thumb when the most likely
+word was the word asked (his Heating: the mark at Soft's 0.22, the thumb
+at 0.30, still Soft; about a third of the slider's positions do that). In
+its place the bracket's bottom line is twice as thick over that word's
+whole band, core's `wordBandLow` and `wordBandHigh`; no core change, no
+fixtures. Core's `wordBracket` still returns `mark`, which neither app now
+draws.
+
+- **The web** (`048b5e9`): `#donenessMedian` is now `#donenessLikelyBand`,
+  `.slider__likely`, a 4 px bar laid from the cup's outer edge by
+  fractions (`--from`, `--to`), its bottom corners the cup's 3 px, inside
+  the cup's 70%, so the overlap is one ink. Still `aria-hidden`.
+- **iOS** (`d59ce9a`): `YolkBracket` draws cup and band in one layer at
+  70%, the band 4 pt and clipped to the cup's outside; the frame keeps its
+  9 pt. The debug log says `bracket` (its ends and the band, as levels).
+  VoiceOver still hears `outcome.range` alone.
+- **Checks**: web e2e `likely-band`, the owner's state (Large 68 g, room,
+  cold start, cold running water, 0.30, "5:08 so far · about 8:00 to
+  boil"), then 0.41, 0.5, 0.6, 0.85: the band is the most likely word's,
+  inside the bracket, around the thumb when that word is the one asked
+  (Soft at 0.30, 0.11 to 0.315); at 0.5 the most likely is Fudgy, asked
+  Jammy, the band at the bracket's firm end. iOS `likely-still` and
+  `likely-still-largest` check the band at each level against "Most
+  likely" shown or not.
+- **Seen** in both apps at the owner's state, 0.30 (light and dark), 0.41
+  and 0.5: the two match, and at the bracket's end the band fills the
+  corner without overrunning it.
+
+Gates: `verify` before each commit, `ios:build` on the iOS commit,
+`e2e` 87 of 87, `ios:e2e` 48 of 48.

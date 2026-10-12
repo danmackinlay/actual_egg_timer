@@ -111,7 +111,10 @@ export interface Snap {
   deadlines: { cookEnd_s: number; coolEnd_s: number | null; provisional: boolean; outAt_s: number | null } | null;
   decided: boolean;
   lengthened: boolean;
-  certainty: { time: { low_s: number; high_s: number } } | null;
+  certainty: {
+    time: { low_s: number; high_s: number };
+    words: { asked: number; mostLikely: number; from: number; to: number };
+  } | null;
   peakYolk_C: number | null;
   whiteSets: boolean | null;
   stored: string | null;

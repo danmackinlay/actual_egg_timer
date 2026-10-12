@@ -113,20 +113,23 @@ struct OddsTrack: View {
 /// The bracket under the track (UI.md section 8): the certainty's 90%
 /// interval in words, drawn from the outer edge of its first word's band on
 /// the slider to the outer edge of its last's, open at the top so it cups the
-/// track, with a short mark at the most likely word (core's `wordBracket`).
-/// The foreground at 70%, not the accent and not the yolk, so it reads in
-/// both schemes and never covers the shading. Inset as the track is.
-/// VoiceOver reads it as `outcome.range`: the same words.
+/// track (core's `wordBracket`), its bottom line twice as thick over the most
+/// likely word's own band (`wordBandLow`, `wordBandHigh`). The heavy stretch
+/// is whole words wide, as the bracket is, so the thumb sits inside it
+/// whenever the most likely word is the word asked. The foreground at 70%,
+/// not the accent and not the yolk, so it reads in both schemes and never
+/// covers the shading. Inset as the track is. VoiceOver reads it as
+/// `outcome.range`: the same words.
 struct YolkBracket: View {
     let words: WordCertainty
 
     var body: some View {
+        let drawn = BracketLevels(words)
         Canvas { context, size in
             let w = size.width
-            let b = wordBracket(words)
             func x(_ level: Double) -> CGFloat { CGFloat(min(1, max(0, level))) * w }
-            let low = x(b.low)
-            let high = max(x(b.high), low + 2)
+            let low = x(drawn.low)
+            let high = max(x(drawn.high), low + 2)
             let depth: CGFloat = 7
             var cup = Path()
             cup.move(to: CGPoint(x: low + 1, y: 0))
@@ -135,15 +138,43 @@ struct YolkBracket: View {
             cup.addLine(to: CGPoint(x: high - 4, y: depth - 1))
             cup.addQuadCurve(to: CGPoint(x: high - 1, y: depth - 3), control: CGPoint(x: high - 1, y: depth - 1))
             cup.addLine(to: CGPoint(x: high - 1, y: 0))
-            let ink = Color.primary.opacity(0.7)
-            context.stroke(cup, with: .color(ink), style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round))
-            // The mark, kept inside the cup's walls at the track's ends.
-            let mid = min(max(x(b.mark), low + 1), high - 1)
-            context.fill(Path(CGRect(x: mid - 1, y: 0, width: 2, height: depth + 2)), with: .color(ink))
+            // The band: the cup's bottom line, 2 pt, doubled upward to 4.
+            let from = min(max(x(drawn.likelyLow), low), high)
+            let to = min(max(x(drawn.likelyHigh), from), high)
+            let band = Path(roundedRect: CGRect(x: from, y: depth - 4, width: to - from, height: 4), cornerRadius: 2)
+            // One layer at 70%, so where the band and the cup overlap the ink
+            // is one; clipped to the cup's outside, so at the cup's ends the
+            // band fills its corner and never runs past it.
+            context.opacity = 0.7
+            context.drawLayer { layer in
+                layer.stroke(cup, with: .color(.primary), style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round))
+                layer.clip(to: Path(roundedRect: CGRect(x: low, y: -depth, width: high - low, height: 2 * depth), cornerRadius: 4))
+                layer.fill(band, with: .color(.primary))
+            }
         }
         .frame(height: 9)
+        // Where it is drawn, as levels, for the scripted checks.
+        .logged(.bracket(low: drawn.low, high: drawn.high, likelyLow: drawn.likelyLow, likelyHigh: drawn.likelyHigh))
         .accessibilityElement()
         .accessibilityLabel(rangeText(words))
+    }
+}
+
+/// Where the bracket lies, as slider levels (core's `wordBracket`), and the
+/// stretch of it drawn heavy: the most likely word's band, which is one of
+/// the interval's words, so inside it.
+private struct BracketLevels {
+    let low: Double
+    let high: Double
+    let likelyLow: Double
+    let likelyHigh: Double
+
+    init(_ words: WordCertainty) {
+        let b = wordBracket(words)
+        low = b.low
+        high = b.high
+        likelyLow = min(max(wordBandLow(words.mostLikely), b.low), b.high)
+        likelyHigh = min(max(wordBandHigh(words.mostLikely), likelyLow), b.high)
     }
 }
 

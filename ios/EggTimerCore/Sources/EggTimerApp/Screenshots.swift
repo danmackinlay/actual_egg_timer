@@ -332,6 +332,9 @@ extension Screenshots {
         case certainty(word: String?, time: String?)
         case white(shown: Bool)
         case likely(shown: Bool)
+        /// The bracket under the slider as drawn, slider levels: its ends,
+        /// and the stretch drawn heavy, the most likely word's band.
+        case bracket(low: Double, high: Double, likelyLow: Double, likelyHigh: Double)
         /// The egg in cross-section: its reading (`aim`, `live`, `ran`) and
         /// how set its yolk is, to a thousandth; no yolk with no egg drawn.
         case egg(reading: String, yolk: Double?)

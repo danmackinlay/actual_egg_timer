@@ -35,6 +35,7 @@
  * when, never by waiting for it to play.
  */
 
+import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
 import { readStoredCook } from '../src/core/running.js';
 import { STORES } from '../src/core/stores.js';
 import { sleep } from './chrome.js';
@@ -442,6 +443,69 @@ const SCENARIOS: Record<string, Scenario> = {
       const ran = await centre();
       check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
       return `idle runny ${runny.fill}, hard ${hard.fill}; start ${live.fill}; Done ${ran.fill}`;
+    },
+  },
+
+  'likely-band': {
+    what: 'UI.md 8: the bracket is heavier over the most likely word\'s band, the thumb inside it when that is the word asked (the owner\'s Heating)',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      // Where the bracket and its heavy stretch are drawn, as levels: their
+      // edges over the width the slider's levels span (styles.css insets
+      // the bracket's row as the track is).
+      const drawn = async (): Promise<{ bracket: [number, number]; band: [number, number] }> => tab.eval(`(() => {
+        const row = document.querySelector('.slider__range').getBoundingClientRect();
+        const at = (id) => { const r = document.getElementById(id).getBoundingClientRect();
+          return [(r.left - row.left) / row.width, (r.right - row.left) / row.width]; };
+        return { bracket: at('donenessBracket'), band: at('donenessLikelyBand') };
+      })()`);
+      const seen: string[] = [];
+      let differs = 0;
+      const bandAt = async (level: number, s: Snap): Promise<void> => {
+        const w = s.certainty?.words;
+        if (w === undefined) throw new Failure(`no certainty at ${level}`);
+        const { bracket, band } = await drawn();
+        const want = [wordBandLow(w.mostLikely), wordBandHigh(w.mostLikely)];
+        // A pixel of the row is about 0.003 of it on a phone.
+        check(near(band[0], want[0]!, 0.004) && near(band[1], want[1]!, 0.004),
+          `at ${level} the band is ${band.map((x) => x.toFixed(3))}, not word ${w.mostLikely}'s ${want}`);
+        check(band[0] >= bracket[0] - 1e-3 && band[1] <= bracket[1] + 1e-3,
+          `at ${level} the band ${band.map((x) => x.toFixed(3))} overruns the bracket ${bracket.map((x) => x.toFixed(3))}`);
+        if (w.mostLikely === w.asked) {
+          check(band[0] <= level && level <= band[1], `at ${level} the most likely word is the word asked, and the thumb is outside its band`);
+        } else {
+          differs += 1;
+        }
+        seen.push(`${level}: ${w.mostLikely}${w.mostLikely === w.asked ? '' : ` (asked ${w.asked})`}`);
+      };
+      // The owner's: a 68 g egg at room temperature, cold start, under cold
+      // running water, the slider at 0.30, 5:08 into the heating. The
+      // certainty is the plan's, so it is read while the cook runs.
+      await pick(tab, '#size', '2');
+      await tab.click('#tempRoom');
+      await tab.click('#coolTap');
+      await setSlider(tab, 0.3);
+      await tab.until(`await (async () => { const st = __snap();
+        return st.chosen !== null && st.chosen.level === 0.3 && st.settings.cooling === 'tap'; })()`, 'the owner\'s egg decided');
+      let s = await start(tab, 'cold');
+      check(s.settings.sizeIndex === 2 && s.settings['startTempMode'] === 'room', `the owner's egg: ${JSON.stringify(s.settings)}`);
+      await tab.until('__snap().deadlines !== null', 'planned');
+      await tab.shift(308);
+      await tab.settle();
+      s = await tab.phase('HEATING');
+      await bandAt(0.3, s);
+      const owner = s.subline;
+      // Then the default, and on through a level whose most likely word is
+      // firmer than the word asked.
+      for (const level of [0.41, 0.5, 0.6, 0.85]) {
+        await later(tab);
+        await setSlider(tab, level);
+        s = await corrected(tab, s);
+        await tab.settle();
+        await bandAt(level, await tab.snap());
+      }
+      check(differs > 0 && differs < seen.length, `the most likely word never came apart from the word asked and back: ${seen.join(', ')}`);
+      return `${owner}; ${seen.join(', ')}`;
     },
   },
 
