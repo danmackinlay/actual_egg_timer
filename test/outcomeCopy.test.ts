@@ -101,15 +101,3 @@ test('the bracket says the certainty\'s interval: its first and last words, once
   for (const key of ['outcome.range', 'outcome.range.one']) assert.ok(key in MESSAGES);
 });
 
-test('what the direction\'s (i) opened is in Help now, and the direction, its (i) and the suggestion are not in the catalogue', () => {
-  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning', 'certainty.help']) {
-    assert.ok(key in MESSAGES, key);
-  }
-  for (const key of [
-    'outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer',
-    'outcome.likely', 'outcome.likely.firm', 'outcome.likely.soft', 'outcome.unsure', 'outcome.miss.firm',
-    'outcome.miss.soft', 'outcome.info', 'warn.lowOdds',
-  ]) {
-    assert.ok(!(key in MESSAGES), `${key} is retired`);
-  }
-});

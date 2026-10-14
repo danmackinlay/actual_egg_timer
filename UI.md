@@ -172,7 +172,7 @@ and a pull already past rings now. Under it "No, they’re out"
 (`ask.stillIn.no`): the pull stands and the correction goes to the record.
 Nothing past the question is shown or rung until it is answered.
 
-**Settings** (web `#settings`, which `#kitchen` still opens; iOS a pushed
+**Settings** (web `#settings`; iOS a pushed
 `Form`). Each row has its (i):
 
 - Units, Metric or Imperial, and one line under Imperial in an English UI

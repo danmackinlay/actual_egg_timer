@@ -1,7 +1,6 @@
 /**
  * The three views - the egg, Settings (`#settings`) and Help - as hash routes,
- * so the phone's back button leaves them the way it came. `#kitchen`, the
- * Settings page's old address, still opens it.
+ * so the phone's back button leaves them the way it came.
  */
 
 import { page } from './dom.js';
@@ -12,7 +11,7 @@ export type View = 'egg' | 'settings' | 'help';
  *  it. */
 export function viewFromHash(address: string): { view: View; target: string | null } {
   const hash = address.replace(/^#/, '');
-  if (hash === 'settings' || hash === 'kitchen') return { view: 'settings', target: null };
+  if (hash === 'settings') return { view: 'settings', target: null };
   if (hash === 'help' || hash.startsWith('help-')) return { view: 'help', target: hash === 'help' ? null : hash };
   return { view: 'egg', target: null };
 }
@@ -25,7 +24,6 @@ export function viewFromHash(address: string): { view: View; target: string | nu
 function route(focus: boolean): void {
   const before = page().body.dataset['view'];
   const { view, target } = viewFromHash(location.hash);
-  if (location.hash === '#kitchen') history.replaceState(history.state, '', '#settings');
   page().body.dataset['view'] = view;
   const section = target === null ? null : document.getElementById(target);
   if (section !== null) {
