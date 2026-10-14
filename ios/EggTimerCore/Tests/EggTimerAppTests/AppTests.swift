@@ -39,7 +39,11 @@ struct AppTests {
         #expect(cook.phase == .heating)
         #expect(world.stored?.idMs == cook.running?.idMs)
         #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
-        #expect(world.card.calls.contains(.start(.heating)))
+        // Pending with the system, by id, at the plan's moments; the card
+        // counting down to the pull.
+        #expect(world.alarm.pending == ["cook.pull": try pullS(cook), "cook.cool": try cooledS(cook)])
+        #expect(world.card.calls.contains { $0.started == .heating })
+        #expect(world.card.last?.ends == (try pullS(cook)))
 
         // Rolling boil, five minutes in.
         world.clock.set(t0 + 300)
@@ -56,6 +60,8 @@ struct AppTests {
         #expect(cook.phase == .pull)
         #expect(cook.running?.events.rangAtS != nil)
         #expect(world.ringer.rung.isEmpty)
+        #expect(world.alarm.delivered == ["cook.pull"])
+        #expect(world.alarm.pending.keys.sorted() == ["cook.cool"])
 
         // Out, three seconds into the pull: the cooling is timed from the tap.
         let pull = try pullS(cook)
@@ -143,7 +149,7 @@ struct AppTests {
         await world.until("the alarms and the card set again") { world.log.events.contains(.restored) }
         #expect(world.alarm.scheduled.count > scheduled)
         #expect(world.alarm.scheduled.last?.pullS == nil)
-        #expect(world.card.calls.dropFirst(calls).contains(.start(.cooling)))
+        #expect(world.card.calls.dropFirst(calls).contains { $0.started == .cooling })
         await world.settled(cook)
     }
 
@@ -247,14 +253,20 @@ struct AppTests {
 
     // MARK: - The model
 
-    /// Start a hot cook through the model, and take it to Done.
-    private func toDone(_ model: AppModel, _ world: World) async throws {
+    /// "Eggs in" through the model, a hot start unless said, once the
+    /// screen has its answer: the cook once its plan is on its pot's surface.
+    private func started(_ model: AppModel, _ world: World, _ start: StartChoice = .hot) async {
         model.appear()
-        model.planner.start = .hot
+        model.planner.start = start
         await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
         await world.settled(model.cook)
+    }
+
+    /// Start a hot cook through the model, and take it to Done.
+    private func toDone(_ model: AppModel, _ world: World) async throws {
+        await started(model, world)
         world.clock.set(try cooledS(model.cook) + 5)
         await world.ticked(model.cook)
         #expect(model.cook.phase == .done)
@@ -316,6 +328,35 @@ struct AppTests {
         await world.settled(model.cook)
         #expect(model.planner.kept.log.count == 1)
         #expect(!model.cook.eggOpen(atS: world.clock.seconds))
+    }
+
+    /// A tap's change is committed once it has settled on the cook's clock,
+    /// not before; a − or + held past `Edits.held` commits on release.
+    @Test func aTapSettlesOnTheCooksClock() async throws {
+        let world = World()
+        let model = AppModel()
+        defer { model.cook.killed() }
+        await started(model, world)
+        let water = model.planner.settings.waterLitres
+        model.planner.settings.waterLitres = water + 1
+        #expect(model.edits.pending)
+        world.clock.advance(Edits.settle - 0.1)
+        // The clock short of the settle: nothing, however long the Mac waits.
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(model.edits.pending)
+        #expect(model.cook.running?.choices.waterLitres == water)
+        world.clock.advance(0.2)
+        await world.until("the settle") { !model.edits.pending }
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.waterLitres == water + 1)
+        let eggs = model.planner.settings.eggCount
+        model.edits.fingerDown(.eggCount)
+        model.planner.settings.eggCount = eggs + 1
+        world.clock.advance(Edits.held + 0.1)
+        model.edits.fingerUp()
+        #expect(!model.edits.pending)
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.eggCount == Double(eggs + 1))
     }
 
     // MARK: - How a cook ends

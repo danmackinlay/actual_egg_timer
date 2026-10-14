@@ -35,12 +35,14 @@ final class MemoryStore: KeyValueStore, @unchecked Sendable {
     }
 }
 
-/// Cook time that moves only when the test moves it. A wait is a couple of
+/// Cook time that moves only when the test moves it. A sleep is a couple of
 /// milliseconds of the Mac's, however long in cook time, so a ticker looks
-/// often and a test never waits on the cook's clock.
+/// often; a wait for a moment (`AppClock.wait`, a correction's settle) ends
+/// once the test has moved the clock past it.
 final class TestClock: CookClock, @unchecked Sendable {
     private let lock = NSLock()
     private var nowS: Double
+    private var debug = false
 
     init(_ nowS: Double) { self.nowS = nowS }
 
@@ -49,6 +51,9 @@ final class TestClock: CookClock, @unchecked Sendable {
 
     func set(_ s: Double) { lock.withLock { nowS = s } }
     func advance(_ s: Double) { lock.withLock { nowS += s } }
+    /// As a debug build's clock run fast or stepped is: a record made under
+    /// it is marked (`AppClock.mark`).
+    func alter() { lock.withLock { debug = true } }
 
     func app(_ system: Date) -> Date { system }
     func real(_ app: Date) -> Date { app }
@@ -56,28 +61,66 @@ final class TestClock: CookClock, @unchecked Sendable {
     func realInterval(until app: Date) -> TimeInterval { app.timeIntervalSince(now) }
     func sleep(_ cookSeconds: Double) async throws { try await Task.sleep(for: .milliseconds(2)) }
     func period(_ cookSeconds: Double) -> TimeInterval { cookSeconds }
-    var altered: Bool { false }
+    var altered: Bool { lock.withLock { debug } }
 }
 
-/// The alarms, as the system would hold them: what was scheduled is pending.
+/// The alarms, as the system would hold them (`Alarm`): each by its id and
+/// its moment, pending until the test clock reaches it and delivered after.
+/// A schedule replaces what is pending and asks for nothing already past; a
+/// cancel takes what is pending and leaves what was delivered.
 @MainActor
 final class FakeAlarm: AlarmScheduling {
     var authorized = true
+    /// Each schedule asked for, in order.
     private(set) var scheduled: [(pullS: Double?, cooledS: Double?)] = []
     private(set) var cancels = 0
-    private var pending: Set<RingDeadline> = []
+    private let clock: TestClock
+    private var requests: [String: Double] = [:]
+    private var shown: Set<String> = []
+
+    init(_ clock: TestClock) { self.clock = clock }
+
+    static let ids: [RingDeadline: String] = [.pull: "cook.pull", .cooled: "cook.cool"]
+
+    /// What is pending, by id, with its moment, epoch s.
+    var pending: [String: Double] {
+        deliver()
+        return requests
+    }
+
+    /// The ids delivered and still shown.
+    var delivered: Set<String> {
+        deliver()
+        return shown
+    }
+
+    /// Those whose moment has come, delivered.
+    private func deliver() {
+        let now = clock.seconds
+        for (id, at) in requests where at <= now {
+            requests[id] = nil
+            shown.insert(id)
+        }
+    }
 
     func activate() {}
     func authorize() async -> Bool { authorized }
     func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
         scheduled.append((pullS, cooledS))
-        pending = Set([pullS.map { _ in RingDeadline.pull }, cooledS.map { _ in RingDeadline.cooled }].compactMap { $0 })
+        deliver()
+        requests = [:]
+        let now = clock.seconds
+        if let p = pullS, p > now { requests["cook.pull"] = p }
+        if let c = cooledS, c > now { requests["cook.cool"] = c }
     }
     func cancel() {
         cancels += 1
-        pending = []
+        deliver()
+        requests = [:]
     }
-    func pendingDeadlines() async -> Set<RingDeadline> { pending }
+    func pendingDeadlines() async -> Set<RingDeadline> {
+        Set(Self.ids.filter { pending[$0.value] != nil }.keys)
+    }
 }
 
 @MainActor
@@ -102,23 +145,53 @@ final class FakeSharing: ResultSharing {
     func sendFinal() { finals += 1 }
 }
 
-/// The Lock Screen card: each call, in the order it reached the card.
+/// The Lock Screen card: each call, in the order it reached the card, with
+/// what it showed as the debug log says it (`CookCard`).
 final class FakeCard: LockScreenCard, @unchecked Sendable {
+    /// What a card showed: its stage; its end, epoch s (the test clock's
+    /// moments are the system's); whether it counts up; and the cook as it
+    /// describes it: doneness, peak yolk, mass, cooling.
+    struct Shown: Equatable {
+        let stage: CookActivity.Stage
+        let ends: Double
+        let up: Bool
+        let cook: [String]
+
+        init(_ s: CookActivity.ContentState) {
+            stage = s.stage
+            ends = s.ends.timeIntervalSince1970
+            up = s.countsUp
+            cook = [s.cook.doneness, s.cook.peakYolk, s.cook.eggMass, s.cook.cooling]
+        }
+    }
+
     enum Call: Equatable {
-        case start(CookActivity.Stage)
-        case update(CookActivity.Stage)
+        case start(Shown)
+        case update(Shown)
         case endAll
         case endAtTheirEnds
+
+        /// The stage a start began.
+        var started: CookActivity.Stage? { if case .start(let s) = self { s.stage } else { nil } }
+        /// What a start or an update showed.
+        var shown: Shown? {
+            switch self {
+            case .start(let s), .update(let s): s
+            default: nil
+            }
+        }
     }
 
     private let lock = NSLock()
     private var made: [Call] = []
     var calls: [Call] { lock.withLock { made } }
+    /// What the card last showed.
+    var last: Shown? { calls.last { $0.shown != nil }?.shown }
 
     func start(_ attributes: CookActivity, state: CookActivity.ContentState) async {
-        lock.withLock { made.append(.start(state.stage)) }
+        lock.withLock { made.append(.start(Shown(state))) }
     }
-    func update(_ state: CookActivity.ContentState) async { lock.withLock { made.append(.update(state.stage)) } }
+    func update(_ state: CookActivity.ContentState) async { lock.withLock { made.append(.update(Shown(state))) } }
     func endAll() async { lock.withLock { made.append(.endAll) } }
     func endAtTheirEnds() async { lock.withLock { made.append(.endAtTheirEnds) } }
     @MainActor func logAll(_ when: String) {}
@@ -132,6 +205,14 @@ final class EventLog: @unchecked Sendable {
     func add(_ e: Screenshots.Event) { lock.withLock { seen.append(e) } }
 }
 
+/// What was said to VoiceOver, in order.
+final class Announced: @unchecked Sendable {
+    private let lock = NSLock()
+    private var said: [String] = []
+    var all: [String] { lock.withLock { said } }
+    func add(_ s: String) { lock.withLock { said.append(s) } }
+}
+
 /// One test's world: every service a fake, the store empty but for this
 /// build's mark, the clock at a fixed moment, and the words read from the
 /// repository's copy/.
@@ -139,11 +220,12 @@ final class EventLog: @unchecked Sendable {
 struct World {
     let store: MemoryStore
     let clock: TestClock
-    let alarm = FakeAlarm()
+    let alarm: FakeAlarm
     let ringer = FakeRinger()
     let sharing = FakeSharing()
     let card = FakeCard()
     let log = EventLog()
+    let announced = Announced()
 
     /// The version this build is, as the tests say it.
     static let version = "0.5.0"
@@ -156,6 +238,7 @@ struct World {
     init(store: MemoryStore = MemoryStore(), at nowS: Double = 1_791_234_567) {
         self.store = store
         clock = TestClock(nowS)
+        alarm = FakeAlarm(clock)
         Copy.folder = Self.copyFolder
         Stores.store = store
         AppClock.source = clock
@@ -164,7 +247,8 @@ struct World {
         Services.sharing = sharing
         Services.card = card
         Services.grids = Self.grids
-        Services.announce = { _ in }
+        let announced = announced
+        Services.announce = { announced.add($0) }
         let log = log
         Screenshots.output = { event, _ in log.add(event) }
         Stores.claim(Self.version, build: Self.build)
