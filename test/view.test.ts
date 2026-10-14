@@ -208,3 +208,39 @@ test('6. the parts drawn only when asked: the form in the units on screen, the l
   assert.equal(frozen.share?.deletable, false);
   assert.equal(frozen.learned.readOnly, true);
 });
+
+test('7. the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {
+  const pulls = { ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter' } as const;
+  for (const [cooling, key] of Object.entries(pulls) as [keyof typeof pulls, string][]) {
+    const v = view(page({ startMode: 'cold', cooling: cooling }), S * 1000, viewMemo());
+    assert.deepEqual(v.sizers, [t('action.startHeating'), t('action.fullBoil'), t(key), t('action.startAgain')], cooling);
+    for (const other of Object.values(pulls)) {
+      if (other !== key) assert.ok(!v.sizers.includes(t(other)), `${cooling}: not ${other}`);
+    }
+  }
+  assert.deepEqual(view(page({ startMode: 'hot', cooling: 'bowl' }), S * 1000, viewMemo()).sizers,
+    [t('action.eggsIn'), t('action.fullBoil'), t('action.pulled.bowl'), t('action.startAgain')], 'a hot start: Eggs in');
+  // A change to the controls, before its solve: the new cooling's pull at once.
+  const moved = go(page({ cooling: 'ice' }), { kind: 'controls', read: { cooling: 'tap' }, source: null, group: null, real_ms: 0 }, S);
+  const unsolved = view(moved, S * 1000, viewMemo());
+  assert.equal(unsolved.kind, 'unsolved');
+  assert.ok(unsolved.sizers.includes(t('action.pulled.tap')), 'the new cooling\'s pull before the solve');
+
+  // A cook: its own choices in every phase, whatever the settings say since.
+  let m = built(page({ startMode: 'cold', cooling: 'ice' }, { '2.0': 480 }), S);
+  const idle = view(m, S * 1000, viewMemo()).sizers;
+  m = built(go(m, { kind: 'begin', units: 'metric', lang: 'en' }, S), S + 1);
+  m = { ...m, settings: { ...m.settings, cooling: 'tap' } };
+  const memo = viewMemo();
+  const seen = [view(m, (S + 10) * 1000, memo)];
+  m = built(go(m, { kind: 'primary' }, S + 400), S + 401);
+  const pull = m.plan!.deadlines.cookEnd_s;
+  m = go(m, { kind: 'tick' }, pull + 1);
+  seen.push(view(m, (pull + 1) * 1000, memo));
+  m = go(m, { kind: 'primary' }, pull + 2);
+  const coolEnd = m.plan!.deadlines.coolEnd_s!;
+  m = go(m, { kind: 'tick' }, coolEnd + 1);
+  seen.push(view(m, (coolEnd + 1) * 1000, memo));
+  assert.deepEqual(seen.map((v) => v.kind), ['running', 'running', 'running']);
+  for (const v of seen) assert.deepEqual(v.sizers, idle, 'as at idle');
+});

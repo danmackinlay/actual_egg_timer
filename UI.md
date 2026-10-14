@@ -84,13 +84,15 @@ phase (the 1750 title page, when it is shown, above it all):
   the whole row (Start heating, Start again); one with only Cancel
   (Cooking, Cooling) leaves the rest empty. The row is the main button's
   height in every phase, so nothing under it moves and nothing is left
-  empty under it. Where the widest main button that can stand beside
-  Cancel (every main button's words, the pull's three included) and
+  empty under it. Where the widest main button the cook can show (the
+  start's, Rolling boil, the pull of the cooling chosen, Start again) and
   Cancel do not fit side by side, the row stacks, the main button over
   Cancel: on iOS at the accessibility text sizes and in 1750's longer
-  words (`ViewThatFits`), on the web on a narrow screen such as 320 px
-  (the row wraps). The choice is made on the widest words, never the
-  phase's own, so it is the same in every phase, and the stack keeps the
+  words (`ViewThatFits`), on the web on a narrow screen (the row wraps):
+  at 320 px with running water or the bowl in any font, though the ice
+  bath and the air fit there in Apple's. The choice is made on the widest
+  words, never the phase's own, so it is the same in every phase (a
+  change of cooling may change it), and the stack keeps the
   room of both buttons in every phase: there, Start heating has Cancel's
   room under it. The hint holds the room of the tallest hint (two lines on
   the web, or the (i); on iOS idle's with the widest time, Heating's with
@@ -591,14 +593,21 @@ the thumb when the finger lifts; the web's thumb moves at once.
     growing at the largest standard size, since each sits under its level.
   - *Settings* is the navigation bar's in every phase; the pull pops it, and
     Help, back to the egg's page.
-- **The action's row** is chosen and held differently. iOS lays a hidden
-  row of Cancel and the main button at its widest words under the row it
-  shows, and a hidden stack under the stack, and `ViewThatFits` takes the
-  row where the hidden row fits (`PhaseActions.buttons`). The web is CSS
-  alone (`.buttons` in `styles.css`): the main button's cell holds every
-  main button's words at no height, so the row wraps in every phase or in
-  none, and a hidden probe row with Cancel in the same grid cell holds the
-  stack's height in every phase. The web's hint room is two lines or the
+- **The action's row** is chosen on the same words in both, and held
+  differently. Both size the main button on the start's action (Start
+  heating or Eggs in), Rolling boil, the pull naming the cooling chosen
+  (only that one) and Start again, from the controls: a cook under way is
+  sized on its own choices, the same from idle to Done. A change of
+  cooling, while idle or as a correction, may change whether the row
+  stacks. iOS lays a hidden row of Cancel and the main button at those
+  words under the row it shows, and a hidden stack under the stack, and
+  `ViewThatFits` takes the row where the hidden row fits
+  (`PhaseActions.buttons`, `mainShape`). The web writes those words from
+  its view (`sizerWords` in `src/ui/view.ts`) into hidden sizers, and lays
+  them out in CSS (`.buttons` in `styles.css`): the main button's cell
+  holds them at no height, so the row wraps in every phase or in none, and
+  a hidden probe row with Cancel in the same grid cell holds the stack's
+  height in every phase. The web's hint room is two lines or the
   (i), so a hint longer than two lines (at a large browser text size)
   grows it; iOS lays the tallest hints out hidden, with Cooking's alarm
   line, which the web has not. In both the block is in the column,

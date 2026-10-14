@@ -91,6 +91,8 @@ function findDom() {
     eggCount: el<HTMLInputElement>('eggCount'),
     altitude: el<HTMLInputElement>('altitude'),
     primary: el<HTMLButtonElement>('primary'),
+    probeWords: el<HTMLSpanElement>('probeWords'),
+    mainWords: el<HTMLSpanElement>('mainWords'),
     primaryHintText: el<HTMLSpanElement>('primaryHintText'),
     hintInfo: el<HTMLButtonElement>('hintInfo'),
     hintMore: el<HTMLParagraphElement>('hintMore'),
