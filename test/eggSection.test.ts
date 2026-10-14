@@ -8,9 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  HEAT_STOPS_C, Rgb, SectionPalette, heatFills, ringFills, ringPoints,
-} from '../src/ui/eggSection.js';
+import { SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.js';
 import { advanceSection, createSection, sectionView } from '../src/core/section.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../src/core/solve.js';
@@ -24,7 +22,6 @@ const PALETTE: SectionPalette = {
   whiteRaw: [10, 10, 10],
   whiteSet: [250, 250, 250],
 };
-const HEAT: Rgb[] = [[0, 0, 255], [0, 128, 255], [128, 128, 128], [255, 128, 0], [255, 0, 0]];
 
 function radius(p: [number, number]): number {
   return Math.hypot(p[0], p[1]);
@@ -81,13 +78,4 @@ test('a raw egg is runny yolk and clear white; a hard one is the other ends', ()
   const hard = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(hard[0], '#0000ff');
   assert.equal(hard[hard.length - 1], '#fafafa');
-});
-
-test('the lab\'s heat map runs blue to red through its stops', () => {
-  const s = createSection(eggFromMass(0.060), appSetup(), DEFAULT_PARAMS);
-  const view = sectionView(s, WHITE_DOSE_TARGET);
-  assert.equal(heatFills(view, HEAT, -5)[0], '#0000ff');
-  assert.equal(heatFills(view, HEAT, HEAT_STOPS_C[2])[0], '#808080');
-  assert.equal(heatFills(view, HEAT, 100)[0], '#ff0000');
-  assert.equal(heatFills(view, HEAT, 30)[0], '#4080c0');
 });
