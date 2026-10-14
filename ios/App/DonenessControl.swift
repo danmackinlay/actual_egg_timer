@@ -76,7 +76,7 @@ struct DonenessControl: View {
             .padding(.horizontal, thumbInset)
             .padding(.top, -4)
             ticks(r)
-            let note = donenessNote(r)
+            let note = r.note(planner)
             if !note.isEmpty {
                 Text(note)
                     .appFont(.footnote)
@@ -84,7 +84,7 @@ struct DonenessControl: View {
             }
         }
         // The texture note, for the scripted checks.
-        .logged(.note(text: donenessNote(r)))
+        .logged(.note(text: r.note(planner)))
     }
 
     /// The slider's heading.
@@ -168,70 +168,5 @@ struct DonenessControl: View {
         return tr("controls.doneness.value", [
             "doneness": .text(tr(anchorNear(r.level).key)), "yolk": .text(planner.show(.temperature, r.peakYolkC)),
         ])
-    }
-
-    /// What the yolk and white will be like, or, in a bath, the bath's own
-    /// note.
-    private func donenessNote(_ r: SliderReading) -> String {
-        if r.sousVide {
-            return sousVideCopy(planner.sousVide, now: AppClock.now, units: planner.units).note
-        }
-        guard let s = r.noteSolution else { return "" }
-        return textureNote(peakYolkC: s.result.peakYolkC, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)
-    }
-}
-
-/// What the slider shows: the controls' answer while idle, the running
-/// cook's plan while one runs (the web's `renderIdle` and `renderRunning`).
-@MainActor
-struct SliderReading {
-    /// The pan's limits, for the stripes and the struck words; nil in
-    /// sous-vide and before the first answer.
-    var solution: Solution?
-    /// The shading: this pot's odds at every level.
-    var profile: OddsProfile?
-    /// The bracket: how sure I am, in the slider's words.
-    var words: WordCertainty?
-    /// The heading's peak yolk, C, and the level it is for.
-    var peakYolkC: Double
-    var level: Double
-    /// What the texture note describes.
-    var noteSolution: Solution?
-    var sousVide = false
-
-    init(_ model: AppModel, phase: Phase) {
-        let planner = model.planner
-        let cook = model.cook
-        if phase != .idle, let running = cook.running, let plan = cook.plan {
-            let whiteSets = plan.solution.whiteSets
-            // Until the pull; then the time they were about has passed.
-            let before = phase == .heating || phase == .cooking
-            // Once the egg is out, as it ran (`asRanShown`).
-            let ran = asRanShown(running, plan: plan)
-            solution = plan.solution
-            profile = whiteSets && before ? cook.heldProfile : nil
-            words = whiteSets && before ? cook.heldCertainty?.words : nil
-            peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
-            level = ran?.level ?? plan.answer.level
-            // The note too, once the egg is out (`Cook.ranSolution`): beside
-            // the peak, not from a plan made since on a
-            // posterior that has folded this egg's answer.
-            noteSolution = ran != nil ? cook.ranSolution ?? plan.solution : plan.solution
-            // A change in hand: the heading and the texture are its own
-            // (the readout keeps the committed plan's time).
-            if let aim = model.edits.aim {
-                peakYolkC = aim.peakYolkC
-                level = aim.level
-                noteSolution = aim.solution ?? plan.solution
-            }
-            return
-        }
-        sousVide = planner.isSousVide
-        solution = sousVide ? nil : planner.solution
-        profile = sousVide ? nil : planner.shownProfile
-        words = sousVide ? nil : planner.heldCertainty?.words
-        peakYolkC = planner.solution?.result.peakYolkC ?? targetPeakYolkC(planner.settings.doneness)
-        level = planner.settings.doneness
-        noteSolution = planner.solution
     }
 }

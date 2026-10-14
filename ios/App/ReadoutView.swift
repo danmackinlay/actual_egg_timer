@@ -25,7 +25,6 @@ struct ReadoutView: View {
     @State private var learningOpen = false
 
     private var planner: Planner { model.planner }
-    private var cook: Cook { model.cook }
 
     /// The clock's size, pt: fixed, as the web's, at every text size.
     private static let digits: CGFloat = 76
@@ -46,6 +45,7 @@ struct ReadoutView: View {
     ).xHeight.rounded()
 
     var body: some View {
+        let words = ReadoutWords(model, phase: phase, nowS: now.timeIntervalSince1970)
         VStack(spacing: 6) {
             if let copy = sousVide {
                 Text(tr("readout.phase.startTime"))
@@ -63,7 +63,7 @@ struct ReadoutView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             } else {
-                Text(tr(readout?.label ?? model.keys(phase).label))
+                Text(tr(words.label))
                     .appFont(.caption, smallCaps: true)
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
@@ -78,22 +78,25 @@ struct ReadoutView: View {
                 // never reach below, and the certainty word's press target
                 // directly under the boil line.
                 VStack(spacing: 0) {
-                    Text(bigTime)
+                    Text(words.big)
                         .font(.system(size: Self.digits, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: bigTime)
+                        .animation(.snappy, value: words.big)
                         .padding(.bottom, Self.underBaseline - Self.descender)
 
-                    sublineLine
+                    sublineLine(words)
                         // What the readout says, for the scripted checks.
-                        .logged(.readout(phase: phase.rawValue, big: bigTime, sub: subline))
+                        .logged(.readout(phase: phase.rawValue, big: words.big, sub: words.sub))
                         // One frame whole: the moment it was drawn for, to
                         // the millisecond, with the time, the line under it
                         // and the certainty's time range it drew, so a check
                         // can see that all of them are of that one moment.
-                        .logged(frame)
-                    certaintyLine
+                        .logged(.frame(
+                            at: now.timeIntervalSince1970, phase: phase.rawValue, big: words.big, sub: words.sub,
+                            range: words.range
+                        ))
+                    certaintyLine(words)
                 }
             }
         }
@@ -132,20 +135,20 @@ struct ReadoutView: View {
     /// The line under the time. "Based on history" has an (i) that says what
     /// history, as on the web.
     @ViewBuilder
-    private var sublineLine: some View {
+    private func sublineLine(_ words: ReadoutWords) -> some View {
         if phase == .idle && planner.coldStart && planner.hasBoilMemory {
             InfoRow(
                 name: tr("readout.sub.coldAssumes.info"),
                 more: [tr("readout.sub.coldAssumes.more")],
                 alignment: .center
             ) {
-                Text(subline)
+                Text(words.sub)
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         } else {
-            Text(subline)
+            Text(words.sub)
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -171,12 +174,9 @@ struct ReadoutView: View {
     /// white's line stays to the end. Never where the white never sets: there
     /// is no cook to say anything about.
     @ViewBuilder
-    private var certaintyLine: some View {
+    private func certaintyLine(_ words: ReadoutWords) -> some View {
         let idle = phase == .idle
-        // While idle, the choice on screen's; once a cook is running, its
-        // plan's.
-        let o = idle ? planner.heldOutcome : cook.outcome
-        let sure = certainty
+        let sure = words.certainty
         VStack(spacing: 2) {
             ZStack(alignment: .top) {
                 // Two lines' room in every phase, the word and "most
@@ -206,7 +206,7 @@ struct ReadoutView: View {
                         .buttonStyle(.plain)
                         .accessibilityValue(tr(certaintyOpen ? "more.expanded" : "more.collapsed"))
                         if mostLikelyShown(sure.words) {
-                            Text(rendered(mostLikelyWords(sure.words)))
+                            Text(renderedWords(mostLikelyWords(sure.words)))
                                 .appFont(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -214,9 +214,9 @@ struct ReadoutView: View {
                 }
             }
             .padding(.bottom, -Self.hang)
-            if let sure, certaintyOpen {
+            if sure != nil, certaintyOpen {
                 VStack(alignment: .leading, spacing: 0) {
-                    MoreText(opened(sure))
+                    MoreText(words.opened)
                     if idle {
                         NavigationLink(value: Route.help(.odds)) {
                             HStack(spacing: 4) {
@@ -233,7 +233,7 @@ struct ReadoutView: View {
                 .padding(.top, 4 + Self.hang)
                 .transition(.opacity)
             }
-            if whiteRunny(o) {
+            if words.whiteRunny {
                 Text(tr("outcome.whiteRunny"))
                     .appFont(.footnote)
                     .foregroundStyle(.orange)
@@ -244,23 +244,10 @@ struct ReadoutView: View {
         // What the line says, and what a press would open last (the time
         // range), whether open or not; and whether the white's line shows:
         // for the scripted checks.
-        .logged(.certainty(
-            word: sure.map { tr(certaintyKey($0.words.certainty)) }, time: sure.map { opened($0).last ?? "" }
-        ))
-        .logged(.white(shown: whiteRunny(o)))
+        .logged(.certainty(word: sure.map { tr(certaintyKey($0.words.certainty)) }, time: words.range))
+        .logged(.white(shown: words.whiteRunny))
         // Whether "Most likely" shows under the word, unpressed.
-        .logged(.likely(shown: sure.map { mostLikelyShown($0.words) } ?? false))
-    }
-
-    /// How sure I am, in this phase: while idle, the choice on screen's;
-    /// while the egg is in, its plan's, where the white sets; after the
-    /// pull, nothing.
-    private var certainty: CertaintyReading? {
-        switch phase {
-        case .idle: planner.heldCertainty
-        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? cook.heldCertainty : nil
-        case .pull, .cooling, .done: nil
-        }
+        .logged(.likely(shown: words.likelyShown))
     }
 
     /// Whether the line can say how sure I am in this phase, and so "most
@@ -288,88 +275,5 @@ struct ReadoutView: View {
                 }
             }
         }
-    }
-
-    /// Whether to say the white might still be runny: the choice on screen's
-    /// while idle, the plan's while the egg is in, and once it is out the
-    /// forecast as it ran (`Cook.asRan`), not a plan made since on a
-    /// posterior that has learned from this egg.
-    /// Never under "Are the eggs still in the water?": not a caveat about the
-    /// pull the question doubts.
-    private func whiteRunny(_ o: Outcome?) -> Bool {
-        if asking { return false }
-        if phase != .idle, let ran = cook.asRan { return forecastWhiteAtRisk(ran.forecast) }
-        return o.map(whiteAtRisk) ?? false
-    }
-
-    /// A key with its counts and its doneness words, rendered.
-    private func rendered(_ ref: WordsRef) -> String {
-        var args: CopyArgs = [:]
-        for (name, value) in ref.args { args[name] = .number(value) }
-        for (name, key) in ref.words { args[name] = .text(tr(key)) }
-        return tr(ref.key, args)
-    }
-
-    /// What pressing the certainty line opens: the interval, "most likely"
-    /// when it is not already said, and the likely time range in the clock's
-    /// own terms (core `timeRangeWords`): while idle
-    /// whole times, m:ss as the clock shows them; once a cook runs, the times
-    /// of day to take the eggs out, not whole times under a clock counting
-    /// down, and for a reading held over a plan that has moved since (a slow
-    /// hob's lengthening guess) about the plan's time now.
-    private func opened(_ sure: CertaintyReading) -> [String] {
-        var lines = [rendered(intervalWords(sure.words))]
-        if mostLikelyOpened(sure.words) { lines.append(rendered(mostLikelyWords(sure.words))) }
-        let running = phase == .idle ? nil : cook.running
-        let range = timeRangeWords(sure, startedAtS: running?.startedAtS, cookTimeS: cook.plan?.cookTimeS ?? 0)
-        let said = { (s: Double) in
-            range.ofDay ? timeOfDay(Date(timeIntervalSince1970: s)) : clockString(s)
-        }
-        lines.append(tr(range.key, ["low": .text(said(range.lowS)), "high": .text(said(range.highS))]))
-        return lines
-    }
-
-    /// The grace ran out unanswered, so I assumed the eggs came out, and a
-    /// correction since would cook them longer: the plan asks whether they
-    /// are still in the water, the question in the phase
-    /// label's place, the time since they were due out under it, and
-    /// nothing past the question - not the cooling, nor Done - until it is
-    /// answered (`PhaseActions`).
-    private var asking: Bool { readout?.asking == true }
-
-    /// What a running cook's readout says at this frame's moment (core's
-    /// `readoutAt`): the label, the clock and the line under it. Nil idle.
-    private var readout: Readout? {
-        phase == .idle ? nil : cook.readout(atS: now.timeIntervalSince1970)
-    }
-
-    /// The web's clock face in every phase: the countdown (the time heated,
-    /// counting up, once the slow hob has lengthened the guess), how late the
-    /// pull is running while the eggs wait to come out, and at the end the
-    /// time the egg was in the water.
-    private var bigTime: String {
-        guard let r = readout else { return planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--" }
-        return r.sign + clockString(r.clockS)
-    }
-
-    /// This frame as the debug log says it: its moment, epoch s, the phase,
-    /// the time, the line under it, and the certainty's time range.
-    private var frame: Screenshots.Event {
-        .frame(
-            at: now.timeIntervalSince1970, phase: phase.rawValue, big: bigTime, sub: subline,
-            range: certainty.map { opened($0).last ?? "" }
-        )
-    }
-
-    /// The line under the clock: core's key, with this phase's arguments.
-    /// While a cook runs every number it takes is a time, as a clock.
-    private var subline: String {
-        guard let r = readout else {
-            return tr(model.keys(.idle).subline, [
-                "boil": .text(clockString(planner.timeToBoilS)),
-                "water": .text(planner.show(.water, planner.settings.waterLitres)),
-            ])
-        }
-        return tr(r.subline.key, r.subline.args.mapValues { .text(clockString($0)) })
     }
 }

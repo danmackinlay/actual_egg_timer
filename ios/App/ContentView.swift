@@ -150,8 +150,8 @@ struct ContentView: View {
             if down { model.edits.fingerDown(field) } else { model.edits.fingerUp() }
         })
         // The pull brings the egg's page back, from Settings or Help.
-        .onChange(of: outerPhase == .pull) { _, pull in
-            if pull { path = [] }
+        .onChange(of: bringsEggBack(outerPhase)) { _, back in
+            if back { path = [] }
         }
         #if DEBUG
         .onChange(of: path) { _, now in
