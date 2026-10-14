@@ -1417,7 +1417,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
   Above it, the phase timeline ticked each second, the web's store and formatting have
   tests (`test/step.test.ts`, `test/store.test.ts`, `test/format.test.ts`), and iOS's
   decision to ring is `deadlineToRing` in EggTimerApp, under `swift test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the
-  apps. The iOS app project has no test target. Two things a cook sees are untested
+  apps. Two things a cook sees are untested
   anywhere: the Lock Screen card ending as the cooling does, and the web's setup
   sentence while a cook runs.
 - **The web can make an egg over 90 g, on purpose.** Both apps cap the mass at 90 g, a

@@ -8,8 +8,9 @@
 /// physics.
 /// Anything else is the ice bath.
 ///
-/// Here, and not in the app, so `swift test` holds which line each cooling
-/// gets (`PullLineTests`); the iOS app project has no test target.
+/// Here, and not in the alarm (ios/App) and the widget that both say it, so
+/// `swift test` holds which line each cooling gets (`PullLineTests`): those
+/// two are checked only by driving them.
 public func pullLineKey(cooling: String) -> String {
     switch cooling {
     case "tap": "alarm.pull.bodyTap"

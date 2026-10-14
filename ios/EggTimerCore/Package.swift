@@ -2,10 +2,12 @@
 import PackageDescription
 
 // The logic both apps must agree on - the physics, the inference, the
-// decisions above them - and nothing only one app uses. No SwiftUI, no
-// Foundation beyond the maths, no I/O. The same restriction src/core/ lives
-// under, for the same reason - it can be tested headlessly and reasoned about
-// without a simulator.
+// decisions above them - and nothing only one app uses. No SwiftUI and no
+// I/O: Foundation for the maths and for JSON (`Codable`, `JSONSerialization`),
+// read from and written to what the app hands it, never a file, the network
+// or the clock. The same restriction src/core/ lives under, for the same
+// reason - it can be tested headlessly and reasoned about without a
+// simulator.
 //
 // The words are a second, smaller library in the same package. EggTimerCopy is
 // the catalogue renderer (src/core/copy.ts on the web), and it is separate only

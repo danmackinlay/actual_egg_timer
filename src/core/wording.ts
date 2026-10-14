@@ -3,8 +3,8 @@
  * cook. Both apps render these keys and fill in their own arguments (a clock,
  * a quantity in the cook's units); the CHOICE of key is here, so the two apps
  * cannot choose differently, and `fixtures/wording.json` holds it for Swift
- * (`Wording.swift`). The iOS app has no test target, so this is the only way
- * its choices get tested.
+ * (`Wording.swift`). Here, the choice is tested once for both apps; each
+ * app's screens only render it.
  *
  * Nothing here renders text. A key's own arguments that core can answer (a
  * count) come back in a `CopyRef`; the rest the app supplies, and a template
