@@ -33,17 +33,11 @@ import os
 ///   picker would, before the first frame (`LanguageChoice.start`).
 /// - `-uiScrollAnchor 0.7`: open the egg's page scrolled that far down, for
 ///   a screenshot of what the largest text sizes push off the screen.
-/// - `-uiDo eggsIn@launch+1,set:size=3@30,drag:0.3/0.1@pull-60,release@pull-58`:
-///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
-///   from the launch), `set:<control>=<value>` (a control changed as a tap
-///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
-///   `water`, `bowlLitres`, `coolingWater` (the temperature of running water
-///   or the bowl, whichever is chosen; empty for none), `eggs`, `altitude`,
-///   and `language`, a tag as the picker
-///   would pick it), `drag:<levels>` and `release` (the
-///   slider held and moved, then let go), `start:+3` (the start's + or −
-///   pressed so many times), `stillIn` and `stillOut` (the two answers to
-///   "still in the water?"), `open:settings` or `open:clause-start`.
+/// - `-uiDo eggsIn@launch+1,set:size=3@30,drag:0.3/0.1@pull-60`: besides
+///   the taps below, `eggsIn` (Start, from idle; `launch` counts from the
+///   launch), `set:<control>=<value>` (a control changed as a tap would:
+///   `level`, `size` or `water`), and `drag:<levels>` (the slider held and
+///   moved through them; it stays held).
 /// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
 ///   many seconds on in the cook as planned, the pull and its grace included;
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
@@ -253,25 +247,18 @@ extension Screenshots {
             pull: Double, cooled: Double?, lengthened: Bool, surface: Bool, next: Double?, asking: Bool,
             overdue: Bool
         )
-        case verdict(kind: String, whiteSets: Bool, cookS: Double)
-        /// What Done shows, the peak yolk as it ran once kept (°C), and the
-        /// plan's own.
-        case shown(peak: Double?, level: Double?, plannedPeak: Double)
         /// The cook as stored, as the store holds it; none when cleared.
         case stored(value: Encoded?)
         /// A cook picked back up at launch, in this phase, and whether the
         /// clock wrote events it found past.
         case restore(phase: String, eventsWritten: Bool)
         case restoreTooOld
-        case restoreUnreadable
         /// A cook picked back up has its alarms and its card again.
         case restored
-        case cookEnded
         case ring(deadline: String)
         /// A card pushed (`what`: `start`, `update`): its stage, its end,
         /// whether it counts up, and what it says of the cook.
         case activity(what: String, stage: String, ends: Int, up: Bool, cook: [String?])
-        case activityEnd
         /// A card the system holds, read at launch (`when`: `launch`,
         /// `launch+3s`).
         case activitySeen(when: String, state: String, stage: String, ends: Int)
@@ -289,11 +276,6 @@ extension Screenshots {
         // The results log and the record.
         /// The log as written: how many eggs, how many folded, and the last.
         case log(count: Int, folded: Int, last: Encoded?)
-        case asRanCorrected
-        case asRanRemade
-        case asRanNotRemade
-        case answerHeld
-        case answerHeldMade
 
         // The stores (`Stores.claim`).
         case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
@@ -310,38 +292,19 @@ extension Screenshots {
         // Corrections while a cook runs (`Edits`).
         /// A change in hand, on this group of controls.
         case edit(group: String?)
-        case editLeaving
         /// The change in hand committed: the fields it changed, and the start
         /// if it moved it.
         case editCommitted(fields: [String], start: Double?)
-        case startLimit(kind: String, at: Double)
-        case announce(text: String)
 
         // The screen.
-        /// The page on top (`egg` for none pushed).
-        case view(page: String)
         /// Where a part of the screen sits, pt from the window's top.
         case layout(part: String, y: Double)
         case newerNote
-        case sentence(text: String)
-        case panelStart(at: Double)
-        case readout(phase: String, big: String, sub: String)
         /// One frame of the readout: the moment it was drawn for, and what
         /// it drew, the certainty's time range none with no certainty.
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)
-        /// The certainty line's word and the time range it opens; none with
-        /// no line.
-        case certainty(word: String?, time: String?)
-        case white(shown: Bool)
+        /// Whether "Most likely" shows under the certainty word.
         case likely(shown: Bool)
-        /// The bracket under the slider as drawn, slider levels: its ends,
-        /// and the stretch drawn heavy, the most likely word's band.
-        case bracket(low: Double, high: Double, likelyLow: Double, likelyHigh: Double)
-        /// The egg in cross-section: its reading (`aim`, `live`, `ran`) and
-        /// how set its yolk is, to a thousandth; no yolk with no egg drawn.
-        case egg(reading: String, yolk: Double?)
-        case slot(text: String)
-        case note(text: String)
     }
 
     /// A value the app stores as JSON, written into a line as it encodes.
@@ -460,10 +423,6 @@ extension Screenshots {
     /// Drags of `-uiDo` still moving the slider.
     @MainActor private static var dragging = 0
 
-    /// `open:settings` pushes Settings, `open:clause-start` opens a
-    /// clause's choice, as a press on its link would (set by the screen).
-    @MainActor public static var open: ((String) -> Void)?
-
     /// The clock at this launch, cook time: what `launch` counts from.
     static let launchedAtS = AppClock.nowS
 
@@ -483,7 +442,7 @@ extension Screenshots {
         case "set": set(action.arg ?? "", model.planner)
         case "drag":
             // The finger down on the slider and moved through each level,
-            // a twentieth of a second apart; it stays down (`release`).
+            // a twentieth of a second apart; it stays down.
             let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
             model.edits.fingerDown(.level, slider: true)
             dragging += 1
@@ -494,15 +453,6 @@ extension Screenshots {
                 }
                 dragging -= 1
             }
-        case "release": model.edits.fingerUp()
-        case "start":
-            // `start:+3`: the start's + pressed three times, or − for a
-            // minus; each a tap, so the correction settles.
-            let n = Int(action.arg ?? "") ?? 0
-            for _ in 0..<abs(n) { model.edits.stepStart(up: n > 0) }
-        case "stillIn": model.stillIn()
-        case "stillOut": model.stillOut()
-        case "open": open?(action.arg ?? "")
         default: log(.actionUnknown(raw: action.raw))
         }
     }
@@ -519,17 +469,7 @@ extension Screenshots {
         switch parts[0] {
         case "level": planner.settings.doneness = number
         case "size": planner.chooseSize(Int(number))
-        case "mass": planner.weigh(number)
-        case "from": if let v = EggFrom(rawValue: value) { planner.settings.startTempMode = v }
-        case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
-        case "cooling": if let v = Cooling(rawValue: value) { planner.settings.cooling = v }
-        case "heatOff": planner.heatOff = value == "1"
         case "water": planner.settings.waterLitres = number
-        case "bowlLitres": planner.settings.bowlLitres = number
-        case "coolingWater": planner.setCoolingWater(value.isEmpty ? nil : number)
-        case "eggs": planner.settings.eggCount = Int(number)
-        case "altitude": planner.settings.altitudeM = number
-        case "language": Services.language.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
     }

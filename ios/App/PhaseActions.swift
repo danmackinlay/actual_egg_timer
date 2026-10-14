@@ -39,7 +39,6 @@ struct PhaseSlot: View {
                 .appFont(.footnote)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .logged(.slot(text: line))
         } else if phase == .idle {
             VStack(spacing: 10) {
                 if let sousVide {

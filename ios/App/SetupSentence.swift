@@ -68,10 +68,6 @@ struct SetupSentence: View {
                     }
                 }
             }
-            // What the sentence says, to the debug log whenever it changes
-            // (`sentence`, `"text":"…into cold water…"`): what the scripted
-            // checks read.
-            .logged(.sentence(text: words.plain))
     }
 
     private func attributed(_ words: SentenceWords) -> AttributedString {
@@ -237,9 +233,6 @@ struct ClausePanel: View {
                 .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
             }
             .appFont(.subheadline)
-            // The start the panel shows, epoch s, to the debug log whenever
-            // it changes (`panelStart`, `"at":1791234567`).
-            .logged(.panelStart(at: start))
             if let limit = edits.startLimit {
                 Text(tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
                     .appFont(.caption)

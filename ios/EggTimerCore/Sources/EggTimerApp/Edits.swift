@@ -326,7 +326,6 @@ public final class Edits {
     public func leaving() {
         down = nil
         guard pending else { return }
-        Screenshots.log(.editLeaving)
         commit()
     }
 
@@ -484,18 +483,12 @@ public final class Edits {
             limit = (.earliest, earliest)
         }
         startLimit = limit
-        #if DEBUG
-        if let limit { Screenshots.log(.startLimit(kind: "\(limit.kind)", at: limit.atS)) }
-        #endif
         // The line under the start says why it went no further; VoiceOver
         // says it too, at each press it stops (the web's line is
         // `aria-live`), since the value it reads has not changed.
         if let limit {
             let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
             Services.announce(said)
-            #if DEBUG
-            Screenshots.log(.announce(text: said))
-            #endif
         }
         guard next != from else { return false }
         startInHand = next

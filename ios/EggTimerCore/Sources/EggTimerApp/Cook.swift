@@ -274,11 +274,12 @@ public final class Cook {
     }
     #endif
 
-    /// The process gone, for a test: the ticker stops, and the store keeps
-    /// what it has.
+    /// The process gone, for a test: the ticker stops, a change in hand
+    /// goes uncommitted with its waits, and the store keeps what it has.
     func killed() {
         ticker?.cancel()
         ticker = nil
+        edits?.end()
     }
 
     // MARK: - The steps
@@ -378,7 +379,6 @@ public final class Cook {
             }.value
             guard let i = ending.firstIndex(where: { $0.state.cook?.idMs == cook.idMs }) else { continue }
             perform(s.effects, for: cook, after: s.cook, leanHintS: s.leanHintS, onScreen: running == nil)
-            if asRanStale(cook), s.cook.map(asRanStale) != true { Screenshots.log(.asRanRemade) }
             if s.cook == nil {
                 ending.remove(at: i)
             } else {
@@ -419,8 +419,7 @@ public final class Cook {
             heldProfile = surfaceFor(surfaces.all(planner.calibration), p.inputs)?.profile
         }
         perform(s.effects, for: cook, after: cook, leanHintS: s.leanHintS, onScreen: true)
-        CookLog.plan(s, was: was, event: event, shown: (shownPeakYolkC, shownLevel))
-        CookLog.step(was: was.cook, now: cook, event: event)
+        CookLog.plan(s, was: was, event: event)
         keepBefore()
         follow()
         if started { begin(cook) }
@@ -510,7 +509,6 @@ public final class Cook {
     /// The cook has left the screen (ended, or gone): its ticker, ring and
     /// card go, and the controls answer to the idle screen again.
     private func leave() {
-        Screenshots.log(.cookEnded)
         state = CookState(cook: nil, plan: nil, leanHintS: 0)
         need = nil
         outcome = nil
@@ -609,9 +607,6 @@ public final class Cook {
         // A cook this build cannot read whole is dropped, with what timed it.
         guard let stored = Self.readStored(data) else {
             Stores.remove(Self.savedKey)
-            #if DEBUG
-            Screenshots.log(.restoreUnreadable)
-            #endif
             Services.alarm.cancel()
             card.endAll()
             return
@@ -646,7 +641,7 @@ public final class Cook {
         perform(
             s.effects.filter { $0 != .persist }, for: cook, after: after, leanHintS: s.leanHintS, onScreen: true
         )
-        CookLog.plan(s, was: was, event: .tick(nowS: now), shown: (shownPeakYolkC, shownLevel))
+        CookLog.plan(s, was: was, event: .tick(nowS: now))
         follow()
         begin(after, restored: true)
     }

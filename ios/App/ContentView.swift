@@ -154,9 +154,6 @@ struct ContentView: View {
             if back { path = [] }
         }
         #if DEBUG
-        .onChange(of: path) { _, now in
-            Screenshots.log(.view(page: now.last.map { "\($0)" } ?? "egg"))
-        }
         // A step's `idle` waits for the page drawn again (Screenshots.swift).
         .onChange(of: Screenshots.probe.drawn) { Screenshots.drawn() }
         #endif
@@ -205,13 +202,6 @@ struct ContentView: View {
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
         // The taps a script asked for, as each comes due.
-        Screenshots.open = { what in
-            if what == "settings" { path = [.settings] }
-            if what.hasPrefix("clause-"), let clause = Clause(rawValue: String(what.dropFirst(7))) {
-                model.edits.touchedElsewhere()
-                openClause = clause
-            }
-        }
         Screenshots.drive(model)
         // A cook restored at Done, answered as soon as asked: before its
         // pot's surface is built again, with `-uiAnswerAfter 0`.

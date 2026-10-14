@@ -154,8 +154,6 @@ struct YolkBracket: View {
             }
         }
         .frame(height: 9)
-        // Where it is drawn, as levels, for the scripted checks.
-        .logged(.bracket(low: drawn.low, high: drawn.high, likelyLow: drawn.likelyLow, likelyHigh: drawn.likelyHigh))
         .accessibilityElement()
         .accessibilityLabel(rangeText(words))
     }

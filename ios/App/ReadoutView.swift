@@ -86,8 +86,6 @@ struct ReadoutView: View {
                         .padding(.bottom, Self.underBaseline - Self.descender)
 
                     sublineLine(words)
-                        // What the readout says, for the scripted checks.
-                        .logged(.readout(phase: phase.rawValue, big: words.big, sub: words.sub))
                         // One frame whole: the moment it was drawn for, to
                         // the millisecond, with the time, the line under it
                         // and the certainty's time range it drew, so a check
@@ -244,9 +242,8 @@ struct ReadoutView: View {
         // What the line says, and what a press would open last (the time
         // range), whether open or not; and whether the white's line shows:
         // for the scripted checks.
-        .logged(.certainty(word: sure.map { tr(certaintyKey($0.words.certainty)) }, time: words.range))
-        .logged(.white(shown: words.whiteRunny))
-        // Whether "Most likely" shows under the word, unpressed.
+        // Whether "Most likely" shows under the word, unpressed, for the
+        // scripted checks.
         .logged(.likely(shown: words.likelyShown))
     }
 

@@ -171,6 +171,8 @@ final class FakeCard: LockScreenCard, @unchecked Sendable {
         case endAll
         case endAtTheirEnds
 
+        /// What an update showed.
+        var updated: Shown? { if case .update(let s) = self { s } else { nil } }
         /// The stage a start began.
         var started: CookActivity.Stage? { if case .start(let s) = self { s.stage } else { nil } }
         /// What a start or an update showed.
@@ -315,11 +317,31 @@ struct World {
         }
     }
 
-    /// Until the ticker has run at least twice more at the clock as it now is.
+    /// Until the cook has nothing under way, whatever its plan is on: a
+    /// slow hob's lengthened plan is on no pot's surface.
+    func quiet(_ cook: Cook, sourceLocation: SourceLocation = #_sourceLocation) async {
+        await until("the cook to have nothing under way", sourceLocation: sourceLocation) { cook.isSettled }
+    }
+
+    /// Until the ticker has run at least twice more at the clock as it now
+    /// is, and the cook has nothing under way.
     func ticked(_ cook: Cook, sourceLocation: SourceLocation = #_sourceLocation) async {
         let from = cook.ticks
         await until("the cook to tick", sourceLocation: sourceLocation) { cook.ticks >= from + 2 }
-        await settled(cook, sourceLocation: sourceLocation)
+        await quiet(cook, sourceLocation: sourceLocation)
+    }
+
+    /// The phases of a cook the debug log says, in order, as the ticks saw
+    /// them: idle left out.
+    var phases: [String] {
+        log.events.compactMap { e in
+            if case .phase(let p) = e, p != Phase.idle.rawValue { p } else { nil }
+        }
+    }
+
+    /// How many plans the debug log says were taken (`CookLog.plan`).
+    var plans: Int {
+        log.events.filter { if case .plan = $0 { true } else { false } }.count
     }
 
     /// The cook as stored, if one is.

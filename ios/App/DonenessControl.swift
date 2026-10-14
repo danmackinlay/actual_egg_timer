@@ -83,8 +83,6 @@ struct DonenessControl: View {
                     .foregroundStyle(.secondary)
             }
         }
-        // The texture note, for the scripted checks.
-        .logged(.note(text: r.note(planner)))
     }
 
     /// The slider's heading.

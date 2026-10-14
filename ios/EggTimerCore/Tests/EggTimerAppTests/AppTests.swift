@@ -7,12 +7,14 @@ import EggTimerShared
 /// The app's logic, driven as the screen drives it, on a clock the test
 /// moves, with every service a fake (Fakes.swift): the cook as core's
 /// `step` runs it, and what the app does with each step. One at a time:
-/// the services, the clock and the store are the app's globals.
+/// the services, the clock and the store are the app's globals. The suite
+/// goes on in CookTests.swift, CorrectionTests.swift and ScreenTests.swift,
+/// each check a device need not make that `npm run ios:e2e` once made.
 @Suite(.serialized) @MainActor
 struct AppTests {
     /// "Eggs in" on the planner's defaults, a cold start or a hot one, and
     /// the cook once its plan is on its pot's surface.
-    private func start(_ cook: Cook, _ planner: Planner, _ world: World, _ start: StartChoice = .cold) async {
+    func start(_ cook: Cook, _ planner: Planner, _ world: World, _ start: StartChoice = .cold) async {
         planner.start = start
         await cook.start(
             choices: planner.choices, nudgeS: 0, boilMemory: [:], units: .metric, lang: "en", leanHintS: 0
@@ -20,8 +22,8 @@ struct AppTests {
         await world.settled(cook)
     }
 
-    private func pullS(_ cook: Cook) throws -> Double { try #require(cook.plan).deadlines.cookEndS }
-    private func cooledS(_ cook: Cook) throws -> Double { try #require(cook.plan?.deadlines.coolEndS) }
+    func pullS(_ cook: Cook) throws -> Double { try #require(cook.plan).deadlines.cookEndS }
+    func cooledS(_ cook: Cook) throws -> Double { try #require(cook.plan?.deadlines.coolEndS) }
 
     // MARK: - A cook
 
@@ -253,11 +255,15 @@ struct AppTests {
 
     // MARK: - The model
 
-    /// "Eggs in" through the model, a hot start unless said, once the
-    /// screen has its answer: the cook once its plan is on its pot's surface.
-    private func started(_ model: AppModel, _ world: World, _ start: StartChoice = .hot) async {
+    /// "Eggs in" through the model, a hot start unless said, the controls
+    /// set by `setting` first, once the screen has its answer: the cook once
+    /// its plan is on its pot's surface.
+    func started(
+        _ model: AppModel, _ world: World, _ start: StartChoice = .hot, setting: (Planner) -> Void = { _ in }
+    ) async {
         model.appear()
         model.planner.start = start
+        setting(model.planner)
         await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
@@ -265,7 +271,7 @@ struct AppTests {
     }
 
     /// Start a hot cook through the model, and take it to Done.
-    private func toDone(_ model: AppModel, _ world: World) async throws {
+    func toDone(_ model: AppModel, _ world: World) async throws {
         await started(model, world)
         world.clock.set(try cooledS(model.cook) + 5)
         await world.ticked(model.cook)
@@ -291,6 +297,9 @@ struct AppTests {
         let egg = try #require(model.planner.kept.log.first)
         #expect(egg.yolkWord == nil)
         #expect(egg.white == nil)
+        #expect(egg.forecast != nil)
+        #expect(egg.setup.startMode == .hot)
+        #expect(world.phases.last == Phase.done.rawValue && !world.phases.contains(Phase.heating.rawValue))
         // In the store: the log written, then the cook removed.
         let after = world.store.writes.dropFirst(writes).map(\.key)
         let logged = try #require(after.firstIndex(of: "calibration.v5"))
@@ -362,7 +371,7 @@ struct AppTests {
     // MARK: - How a cook ends
 
     /// The cook on screen's choices with a heavier egg: a correction.
-    private func heavier(_ model: AppModel) throws -> CookChoices {
+    func heavier(_ model: AppModel) throws -> CookChoices {
         var choices = try #require(model.cook.running).choices
         choices.massKg += 0.008
         choices.massFrom = .scale
@@ -371,7 +380,7 @@ struct AppTests {
     }
 
     /// The egg answered about at Done, logged and folded: its record.
-    private func answeredAtDone(_ model: AppModel, _ world: World) async throws -> EggRecord {
+    func answeredAtDone(_ model: AppModel, _ world: World) async throws -> EggRecord {
         try await toDone(model, world)
         model.answer(yolk: .jammy, white: nil)
         await world.settled(model.cook)
@@ -382,7 +391,7 @@ struct AppTests {
     /// The calibration before the egg on screen held back (`HeldBefore`),
     /// and its cook corrected after the pull: the correction planned, its
     /// record not made again.
-    private func correctedHeld(_ model: AppModel, _ world: World) async throws -> HeldBefore {
+    func correctedHeld(_ model: AppModel, _ world: World) async throws -> HeldBefore {
         let held = HeldBefore(model.planner.learner)
         model.cook.learned = held
         model.correct(try heavier(model), startedAtS: nil)
@@ -392,17 +401,20 @@ struct AppTests {
         return held
     }
 
-    /// Jammy at Done, the egg corrected, and Start again pressed at once:
-    /// the egg logged as corrected, Jammy kept, and only then the cook
-    /// forgotten and the egg final.
+    /// Jammy at Done, a larger egg chosen, and Start again pressed while the
+    /// change settles: committed by Start again, the egg logged as
+    /// corrected, Jammy kept, and only then the cook forgotten and the egg
+    /// final.
     @Test func aCorrectionAtDoneThenStartAgainLogsTheCorrectedEgg() async throws {
         let world = World()
         let model = AppModel()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         let finals = world.sharing.finals
-        model.correct(try heavier(model), startedAtS: nil)
+        model.planner.chooseSize(model.planner.settings.sizeIndex + 1)
+        #expect(model.edits.pending)
         model.startAgain()
+        #expect(!model.edits.pending)
         await world.settled(model.cook)
         await world.until("the fold") { !model.planner.learner.draining }
         #expect(model.cook.running == nil)

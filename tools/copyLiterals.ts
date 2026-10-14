@@ -110,8 +110,6 @@ const NOT_COPY: Record<string, string> = {
   'cookInProgress.v2': 'UserDefaults key',
   'cookInProgress.v3': 'UserDefaults key',
   'cookInProgress.v4': 'UserDefaults key',
-  answered: 'stored cook log entry kind',
-  logged: 'stored cook log entry kind',
   '{} is not kept on iOS': 'precondition message, never shown',
   pans: 'stored pans field name (Store.swift, `BoilMemories`)',
   // the record's own fields, as the app fills them in: never shown

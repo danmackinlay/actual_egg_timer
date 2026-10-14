@@ -7,7 +7,8 @@ import EggTimerApp
 /// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
 /// same outline, the same rings and the same colours (`Palette`).
 ///
-/// It has two readings, which the debug log names as the web's drawing does:
+/// It has two readings, as the web's drawing has (`EggReading`,
+/// `AppModel.section`):
 ///
 /// - `aim`, the egg the settings on screen aim for, as eaten at the end of
 ///   the cooling (`previewSection`), so the yolk reads the level asked: idle,
@@ -38,12 +39,11 @@ struct EggSectionView: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        let (view, reading) = model.section(phase: phase, nowS: now.timeIntervalSince1970, cache: cache)
+        let view = model.section(phase: phase, nowS: now.timeIntervalSince1970, cache: cache).view
         Canvas { context, size in
             EggOutline.draw(view, in: context, size: size, scheme: scheme)
         }
         .accessibilityHidden(true)
-        .logged(.egg(reading: reading.rawValue, yolk: yolkSet(view)))
     }
 }
 
