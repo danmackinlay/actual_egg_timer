@@ -88,9 +88,11 @@ phase (the 1750 title page, when it is shown, above it all):
   start's, Rolling boil, the pull of the cooling chosen, Start again) and
   Cancel do not fit side by side, the row stacks, the main button over
   Cancel: on iOS at the accessibility text sizes and in 1750's longer
-  words (`ViewThatFits`), on the web on a narrow screen such as 320 px
-  (the row wraps). The choice is made on the widest words, never the
-  phase's own, so it is the same in every phase, and the stack keeps the
+  words (`ViewThatFits`), on the web on a narrow screen (the row wraps):
+  at 320 px with running water or the bowl in any font, though the ice
+  bath and the air fit there in Apple's. The choice is made on the widest
+  words, never the phase's own, so it is the same in every phase (a
+  change of cooling may change it), and the stack keeps the
   room of both buttons in every phase: there, Start heating has Cancel's
   room under it. The hint holds the room of the tallest hint (two lines on
   the web, or the (i); on iOS idle's with the widest time, Heating's with
