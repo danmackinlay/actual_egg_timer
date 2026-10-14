@@ -903,3 +903,20 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     a kitchen's range) and a natural place. Built `bowl-cooling`, merged
     `4f3251b`. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
+116. **The 1750 twin lags by default** (the owner, 14 October 2026, on the
+    adversarial review). Goes past 103: an English change no longer
+    rewrites its 1750 twin at all; the twins are rewritten in batches, and
+    one written then is still never a transform of the English. A twin
+    identical to its English is to be deleted, since a missing key renders
+    the English. Decided, not yet built: the deletion is a later round.
+    CLAUDE.md's wording steps follow it now.
+117. **`LOGBOOK.md` is frozen** (the owner, 14 October 2026, on the same
+    review). Nothing more is appended to it, and it is never rewritten; it
+    stays for reference. The commit messages are the log (`git log`). In
+    effect from the commit that records it, which adds the logbook's last
+    line and amends CLAUDE.md.
+118. **The iOS e2e shrinks to the checks only a device can make** (the
+    owner, 14 October 2026, on the same review). The logic scenarios
+    `npm run ios:e2e` drives through the simulator move into
+    `EggTimerAppTests`, under `swift test`; the e2e keeps what needs the
+    app on a device. Decided, not yet built.

@@ -1,8 +1,9 @@
 # PLAN.md — where Actual Egg Timer stands
 
 The state of the build, what is next, and what waits on whom. Updated in the
-same commit as the work it describes. History is `LOGBOOK.md`; the rules for
-working here are `CLAUDE.md`; the last section says where everything else is.
+same commit as the work it describes. History is `git log` (`LOGBOOK.md`
+is frozen, `DECISIONS.md` 117); the rules for working here are `CLAUDE.md`;
+the last section says where everything else is.
 
 **Where things stand, 14 October 2026: 0.5 is released and live**
 (`v0.5.0-alpha.1`, pushed 10 October; `DECISIONS.md` 110). `main` is the 0.5
@@ -26,7 +27,8 @@ copy:queue`).
 ## What is next
 
 1. **The owner's reviews** (the queue below).
-2. **The adversarial review of 14 October 2026**, worked in small rounds.
+2. **The adversarial review of 14 October 2026**, worked in small rounds;
+   the owner's answers to it are `DECISIONS.md` 116-118.
 3. **F5, Czech**, when the owner's friend can review it (below).
 4. **Left from the 0.5 worklist, not blocking** (`archive/REFACTOR-0.5.md`):
    iOS's `PhaseActions` keeps a layout per phase (3.9), and the Swift data
@@ -263,7 +265,7 @@ Start the QA pass here.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
-| `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
+| `LOGBOOK.md` | the record to 14 October 2026, frozen: what was verified, measured and learned, by date |
 | `archive/` | closed records: the 0.4 review, the three design reviews of 0.5, and the 0.5 worklists (`archive/SHIP-0.5.md`, `REFACTOR-0.5.md`), kept for their findings |
 | `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), outside the default build; each names the document that quotes it |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |

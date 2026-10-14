@@ -34,8 +34,9 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **A storage format may change without a migration** until wide deployment
   (`DECISIONS.md` 48): bump its key.
 - **The documents.** The session that merges brings `PLAN.md` up to date, not
-  each working commit (`DECISIONS.md` 104); counts appear only in its status
-  line. `LOGBOOK.md` is appended to, never rewritten. An owner decision goes
+  each working commit (`DECISIONS.md` 104), and it holds no counts.
+  `LOGBOOK.md` is frozen, kept for reference, never appended to or
+  rewritten (`DECISIONS.md` 117). An owner decision goes
   to `DECISIONS.md` with its number, date and commit.
 - **Comments say what the code does and why**, in the code's terms
   (`DECISIONS.md` 105). A decision number only where the code would otherwise
@@ -89,9 +90,10 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **To change wording** (`DECISIONS.md` 106): edit `copy/en.json`, and any
   `copy/en-US.json` override with its `base`; fit the string to its
   surface's budget (`test/data/surfaces.json`; raising a small surface's
-  budget is the owner's call); rewrite the 1750 twin, never transform it, and stamp it with
-  `npm run copy:approve -- --translation en-x-1750 <key…>`, or leave it to
-  lag (`DECISIONS.md` 103); then `npm run fixtures`.
+  budget is the owner's call); then `npm run fixtures`. The 1750 twin
+  lags by default (`DECISIONS.md` 116): it is not part of a wording
+  change. When a twin is rewritten, never transform the English, and stamp
+  it with `npm run copy:approve -- --translation en-x-1750 <key…>`.
 - **Approving English is the owner's word, never an agent's call**
   (`npm run copy:approve -- <key…>`). He reads `npm run copy:review` on a
   phone, not in a table. What he approved was good enough for now
