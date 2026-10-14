@@ -1,7 +1,8 @@
 /**
  * Whether a fixture made afresh says what the committed one says: the rule
  * `npm run fixtures:check` applies (tools/fixturesCheck.ts). And how every
- * fixture is laid out (`fixtureLayout`, at the end).
+ * fixture is laid out (`fixtureLayout`) and written (`replaceFile`), at the
+ * end.
  *
  * Every key, in the same order, every string, boolean and null, and every
  * array's length must be the same. Numbers must agree to FIXTURE_TOLERANCE,
@@ -21,6 +22,8 @@
  * fractions of a millisecond, which a loader refuses. Rounded to thirteen
  * digits, the first read 40 and the second became a whole number.
  */
+
+import { renameSync, writeFileSync } from 'node:fs';
 
 export const FIXTURE_TOLERANCE = 1e-12;
 
@@ -159,4 +162,13 @@ function laid(v: unknown, depth: number, row: boolean): string {
  *  one row per line, with a closing newline. */
 export function fixtureLayout(fixture: unknown): string {
   return `${laid(JSON.parse(JSON.stringify(fixture)) as unknown, 0, false)}\n`;
+}
+
+/** Write a fixture whole: to a file beside it, then renamed over it, so a
+ *  reader running alongside (`npm run verify` runs `npm test` beside
+ *  fixtures:check) reads the old file or the new one, never part of one. */
+export function replaceFile(path: string, text: string): void {
+  const part = `${path}.${process.pid}.part`;
+  writeFileSync(part, text);
+  renameSync(part, path);
 }
