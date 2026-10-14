@@ -904,7 +904,7 @@ half-minute of error.
 
 ```
 npm install
-npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest, the studies
+npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest
 npm test           # node --test
 npm run verify     # the gate: build, test, validate, copy:literals, fixtures:check and swift test
 npm run validate   # prints the validation table in §7; fails if a check does
@@ -914,7 +914,7 @@ npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (§11.2)
 npm run rank       # how many parameters can feedback move? (§11.5)
 npm run probe      # is a probe thermometer worth an egg? (§11.3)
-                   # (these four, and studies/shape-study, are in studies/, run only by hand; `npm run build` compiles the four)
+                   # (these four, and studies/shape-study, are in studies/, run only by hand; each builds studies/ itself)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
