@@ -219,14 +219,15 @@ app's — are in `GOTCHAS.md`.
 
 ## The fast clock and the scripted checks
 
-`npm run ios:e2e` (about ten minutes) drives a Debug build on a simulator of
-its own; the header of `tools/iosE2e.ts` says how to run some of it, and how it
-waits. The clock it freezes and steps is `AppClock.swift`'s, whose header says
-what a Debug build's clock can do and what stays on the system's. The launch
-arguments, the taps of `-uiDo` and the debug log the checks read are in the
-header of `Screenshots.swift`; both are in `ios/EggTimerCore/Sources/EggTimerApp`.
-It needs Xcode and a simulator, so it is not in `npm run verify`; CI runs it
-after the iOS build.
+`npm run ios:e2e` (about four minutes) checks on a simulator what only a
+device can: the layout, relaunches over the system's notifications and Live
+Activity, a notification delivered while the app is gone, the app leaving the
+screen, a newer build's store. What the app's logic decides is `swift test`'s
+(`EggTimerAppTests`). The headers say the rest: `tools/iosE2e.ts` (the
+scenarios, how to run some), `tools/iosHarness.ts` (the simulator driver), and
+in `ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it
+steps) and `Screenshots.swift` (the launch arguments and the debug log). Not
+in `npm run verify`; CI runs it after the iOS build.
 
 ## Signing
 
