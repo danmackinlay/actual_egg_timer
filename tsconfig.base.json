@@ -1,6 +1,8 @@
 // What the three projects share (tsconfig.core.json, tsconfig.app.json and
 // tsconfig.json). Composite, so `tsc -b` builds each once and each sees the
 // others through their declarations; all three write into dist/ by path.
+// Comments stay in the source: the site ships the compiled scripts as they
+// are (tools/buildSite.mjs), and they would be nearly half its bytes.
 {
   "compilerOptions": {
     "composite": true,
@@ -24,6 +26,7 @@
     "isolatedModules": true,
     "erasableSyntaxOnly": true,
     "sourceMap": true,
+    "removeComments": true,
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM"]
   }

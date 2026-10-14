@@ -8058,3 +8058,4 @@ iOS `one-moment` once. Branch `ci-e2e-fixes`, from `main`.
 Gates: `verify` before each code commit (501 tests, validate 29/29, the
 copy lint, fixtures fresh, `swift test` 163 and 30); `e2e` 91 of 91,
 `ios:e2e` 50 of 50 on the last code.
+## Frozen on 14 October 2026 (`DECISIONS.md` 117): nothing more is appended here; the log is `git log`.

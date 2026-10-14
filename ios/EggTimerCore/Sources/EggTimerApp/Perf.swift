@@ -9,8 +9,7 @@ import QuartzCore
 ///
 /// Every landing is timed from the last INPUT change, not from the solve that
 /// produced it, because that is what the cook waits for. Its lines are not
-/// words on a screen, and are built from as few literals as will do, each on
-/// copyLiterals' NOT_COPY list.
+/// words on a screen, so copyLiterals does not read this file.
 enum Perf {
     public static let on = Screenshots.arguments?.string(forKey: "perfProbe") != nil
     @MainActor private static var inputAt = CACurrentMediaTime()

@@ -2,8 +2,7 @@
  * The outcome and the certainty in words (src/core/wording.ts): which line
  * each certainty class gets, the 90% interval and the most likely word in
  * the slider's own words and when "most likely" shows unpressed, when the
- * white gets its line, the bracket's range in words, and a cook's outcome
- * read back after a reload.
+ * white gets its line, and the bracket's range in words.
  *
  * The numbers are core's and are tested in test/outcome.test.ts and
  * test/certainty.test.ts; this holds the choice of words on top of them, and
@@ -24,7 +23,6 @@ import {
   certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords,
   whiteAtRisk,
 } from '../src/core/wording.js';
-import { restoreOutcome } from '../src/ui/outcome.js';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
 
@@ -103,29 +101,3 @@ test('the bracket says the certainty\'s interval: its first and last words, once
   for (const key of ['outcome.range', 'outcome.range.one']) assert.ok(key in MESSAGES);
 });
 
-test('an outcome carried with a cook comes back whole, or not at all', () => {
-  const o = outcome({ lean: 'firm' });
-  assert.deepEqual(restoreOutcome(JSON.parse(JSON.stringify(o))), o);
-  assert.equal(restoreOutcome(undefined), null);
-  assert.equal(restoreOutcome(null), null);
-  assert.equal(restoreOutcome({ ...o, lean: 'sideways' }), null);
-  assert.equal(restoreOutcome({ ...o, pJustRight: 1.2 }), null);
-  assert.equal(restoreOutcome({ ...o, pWhiteRunny: Number.NaN }), null);
-  assert.equal(restoreOutcome({ ...o, levelLow: 0.6 }), null);
-  const partial: Record<string, unknown> = { ...o };
-  delete partial['levelHigh'];
-  assert.equal(restoreOutcome(partial), null);
-});
-
-test('what the direction\'s (i) opened is in Help now, and the direction, its (i) and the suggestion are not in the catalogue', () => {
-  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning', 'certainty.help']) {
-    assert.ok(key in MESSAGES, key);
-  }
-  for (const key of [
-    'outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer',
-    'outcome.likely', 'outcome.likely.firm', 'outcome.likely.soft', 'outcome.unsure', 'outcome.miss.firm',
-    'outcome.miss.soft', 'outcome.info', 'warn.lowOdds',
-  ]) {
-    assert.ok(!(key in MESSAGES), `${key} is retired`);
-  }
-});

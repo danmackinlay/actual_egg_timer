@@ -15,9 +15,8 @@
  * a "clear" white is a colour of its own (`--white-raw`), not an opacity.
  *
  * The app colours the rings by how set each layer is (`ringFills`). The
- * same rings by temperature (`heatFills`) were the prototype's other picture;
- * the owner chose how set, and the heat map lives on in the lab page
- * (tools/egg-section.html) for a day it might be wanted.
+ * prototype's other picture, the same rings by temperature, is the lab
+ * page's own (tools/egg-section.html).
  * Nothing here touches the document when the module is imported.
  */
 
@@ -105,11 +104,6 @@ export interface SectionPalette {
   whiteSet: Rgb;
 }
 
-/** Where the heat map's colours sit, C: blue from the ice to the room, a
- *  neutral grey at 40 C where nothing in an egg has begun to set, red toward
- *  the boil. Two hues and a grey, never a rainbow. The lab's only. */
-export const HEAT_STOPS_C = [0, 20, 40, 70, 100];
-
 /** Where the yolk's middle colour sits on the slider, as on the track
  *  (styles.css `.slider__odds`, iOS `Palette.yolkJammyAt`). */
 const YOLK_JAMMY_AT = 0.41;
@@ -137,28 +131,6 @@ export function ringFills(view: SectionView, p: SectionPalette): string[] {
   for (let i = 0; i < view.x.length; i++) {
     fills.push(hex(view.yolk[i] ? yolkAt(view.set[i], p) : mix(p.whiteRaw, p.whiteSet, view.set[i])));
   }
-  return fills;
-}
-
-/** A temperature on the heat map, whose colours `heat` are at
- *  `HEAT_STOPS_C`. */
-export function heatAt(temperature_C: number, heat: Rgb[]): Rgb {
-  const stops = HEAT_STOPS_C;
-  if (temperature_C <= stops[0]) return heat[0];
-  for (let i = 1; i < stops.length; i++) {
-    if (temperature_C <= stops[i]) {
-      return mix(heat[i - 1], heat[i], (temperature_C - stops[i - 1]) / (stops[i] - stops[i - 1]));
-    }
-  }
-  return heat[stops.length - 1];
-}
-
-/** Each ring's fill by its temperature, for the lab. `uniform_C`, when not
- *  null, stands in for every ring's: the first second of a cook, before the
- *  series has settled (section.ts). */
-export function heatFills(view: SectionView, heat: Rgb[], uniform_C: number | null): string[] {
-  const fills: string[] = [];
-  for (let i = 0; i < view.x.length; i++) fills.push(hex(heatAt(uniform_C ?? view.temperature_C[i], heat)));
   return fills;
 }
 

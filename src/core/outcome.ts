@@ -116,7 +116,8 @@ export interface Outcome {
   /** P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
    *  question the cook is asked. Sum to 1. No screen reads
    *  them; a record keeps them as the forecast. Null only on an outcome a
-   *  cook carried from a build before them (the web's `restoreOutcome`). */
+   *  running cook kept from a build before them, which only iOS keeps
+   *  (`Outcome` is `Codable` there). */
   pYolkWord: number[] | null;
   /** The 5%, 50% and 95% points of the delivered yolk doneness, on the
    *  slider's scale, clamped to [0, 1]. No taste offset: see the header. Not
