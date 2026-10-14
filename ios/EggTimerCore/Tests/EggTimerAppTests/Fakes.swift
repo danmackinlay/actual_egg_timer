@@ -205,6 +205,33 @@ final class EventLog: @unchecked Sendable {
     func add(_ e: Screenshots.Event) { lock.withLock { seen.append(e) } }
 }
 
+/// The calibration before an egg, held back until released: a record made
+/// again that has not landed, as when the app is killed before it does. A
+/// cook whose fake is never released is left as a killed app leaves it.
+@MainActor
+final class HeldBefore: LearnedBefore {
+    private let learner: Learning
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+    private var held = true
+    /// How many times it has been asked.
+    private(set) var asked = 0
+
+    init(_ learner: Learning) { self.learner = learner }
+
+    func calibrationBefore(_ index: Int?) async -> Calibration {
+        asked += 1
+        if held { await withCheckedContinuation { waiting.append($0) } }
+        return await learner.calibrationBefore(index)
+    }
+
+    func release() {
+        held = false
+        let resumed = waiting
+        waiting = []
+        for c in resumed { c.resume() }
+    }
+}
+
 /// What was said to VoiceOver, in order.
 final class Announced: @unchecked Sendable {
     private let lock = NSLock()

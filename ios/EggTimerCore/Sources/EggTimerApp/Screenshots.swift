@@ -84,12 +84,6 @@ import os
 ///   layout.
 /// - `-muteAudio YES`: the ring at no volume and notifications without
 ///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
-/// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
-///   ran while the cook runs in this launch, as if the app were killed
-///   before it landed: the stale cook a relaunch then finds (`Cook`).
-/// - `-uiFailRemake YES`: an ended cook's record is never made again in this
-///   launch, as if it could not be: the cook left stored for the next launch
-///   (`Cook`).
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -188,15 +182,6 @@ public enum Screenshots {
     /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
     /// Mac's speakers; everything else about the ring and the alarms is as is.
     public static var muteAudio: Bool { arguments?.bool(forKey: "muteAudio") ?? false }
-    /// `-uiHoldAsRan YES`: a correction after the pull never has its record
-    /// made again while the cook runs in this launch (`Cook`), as if the app
-    /// were killed before it landed, so a script can find the stale cook
-    /// stored at the next launch. Read at launch; a test sets it.
-    @MainActor static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
-    /// `-uiFailRemake YES`: an ended cook's record is never made again in
-    /// this launch (`Cook`): the cook stays stored for the next. Read at
-    /// launch; a test sets it.
-    @MainActor static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
     public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
     public static var doneAgo: Double { number("doneAgo") ?? 2 }

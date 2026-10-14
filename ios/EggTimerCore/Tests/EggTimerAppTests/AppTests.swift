@@ -379,10 +379,17 @@ struct AppTests {
         return try #require(model.planner.kept.log.last)
     }
 
-    /// The test hooks for a record never made again, off whatever happens.
-    private func hooksOff() {
-        Screenshots.holdAsRan = false
-        Screenshots.failRemake = false
+    /// The calibration before the egg on screen held back (`HeldBefore`),
+    /// and its cook corrected after the pull: the correction planned, its
+    /// record not made again.
+    private func correctedHeld(_ model: AppModel, _ world: World) async throws -> HeldBefore {
+        let held = HeldBefore(model.planner.learner)
+        model.cook.learned = held
+        model.correct(try heavier(model), startedAtS: nil)
+        await world.until("the correction planned, its record held") {
+            held.asked > 0 && model.cook.running?.correctedAtS != nil && model.cook.plan?.decided != nil
+        }
+        return held
     }
 
     /// Jammy at Done, the egg corrected, and Start again pressed at once:
@@ -413,20 +420,16 @@ struct AppTests {
     @Test func anAnswerHeldAtStartAgainIsLoggedWithIt() async throws {
         let world = World()
         let model = AppModel()
-        defer {
-            model.cook.killed()
-            hooksOff()
-        }
+        defer { model.cook.killed() }
         try await toDone(model, world)
-        Screenshots.holdAsRan = true
-        model.correct(try heavier(model), startedAtS: nil)
-        await world.settled(model.cook)
+        let held = try await correctedHeld(model, world)
         model.answer(yolk: .jammy, white: .tender)
-        await world.settled(model.cook)
+        await world.until("the answer kept") { model.cook.answers?.white == .tender }
         #expect(model.planner.kept.log.isEmpty)
         #expect(model.cook.answers?.yolkWord == .jammy)
-        #expect(world.log.events.contains(.answerHeld))
+        // Start again, and the record made again lands after it.
         model.startAgain()
+        held.release()
         await world.settled(model.cook)
         await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
         let egg = try #require(model.planner.kept.log.last)
@@ -445,28 +448,20 @@ struct AppTests {
     @Test func aFailedRemakeLeavesTheCookStoredNotFinal() async throws {
         let world = World()
         let model = AppModel()
-        defer {
-            model.cook.killed()
-            hooksOff()
-        }
+        defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
-        Screenshots.holdAsRan = true
-        Screenshots.failRemake = true
-        model.correct(try heavier(model), startedAtS: nil)
-        await world.settled(model.cook)
+        // Never released: the app is killed before the record lands.
+        _ = try await correctedHeld(model, world)
         let finals = world.sharing.finals
         model.startAgain()
-        await world.settled(model.cook)
-        #expect(world.log.events.contains(.asRanNotRemade))
-        #expect(model.cook.running == nil)
-        let stored = try #require(world.stored)
-        #expect(endedAtS(stored) != nil)
+        await world.until("the cook off the screen, stored ended") {
+            model.cook.running == nil && world.stored.map { endedAtS($0) != nil } == true
+        }
         #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
         #expect(world.sharing.finals == finals)
         #expect(model.cook.eggOpen(atS: world.clock.seconds))
         model.cook.killed()
 
-        hooksOff()
         world.clock.advance(60)
         let again = AppModel()
         defer { again.cook.killed() }
