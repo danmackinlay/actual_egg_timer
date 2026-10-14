@@ -43,11 +43,13 @@ Throughout: cook real eggs, and the two measurements in README §11.3.
 The one queue. Nothing else in the documents waits on the owner.
 
 1. **The review queue, on a phone** (`DECISIONS.md` 106): every word
-   changed or added since the owner last read them all (`e3a81cb`, 3
-   October 2026), and every one retired since. `npm run copy:queue` lists
-   them; `npm run copy:review` writes the page to read them on beside the
-   apps (`LANGUAGE.md` §3). Say what to put back; `npm run copy:approve`
-   stamps the rest. Also open to revision: the E2 feedback wording, which
+   changed, added or retired since the owner last approved them. It is
+   empty: the owner approved it whole on 10 October 2026 (`3758e7b`), and
+   the words changed since, the last on 13 October (`f327258`).
+   `npm run copy:queue` lists what has changed since; `npm run copy:review`
+   writes the page to read them on beside the apps (`LANGUAGE.md` §3). Say
+   what to put back; `npm run copy:approve` stamps the rest. Also open to
+   revision: the E2 feedback wording, which
    went in on the owner's behalf, and the probe's "highest" (a physics
    correction of "lowest", which stands unless the owner objects;
    `INFERENCE.md` §5).
@@ -72,8 +74,8 @@ The one queue. Nothing else in the documents waits on the owner.
    `help.unsure.counter` with the owner's hand edit of the words, and its
    en-US overlay ("counter", "draft"). The catalogue still has the old line,
    which says no measurement was found.
-7. **What was built since 4 October, on a phone**, in both apps; the words
-   are in the review queue:
+7. **What was built since 4 October, on a phone**, in both apps; their
+   words are approved (item 1), and what is left is seeing them work:
    - the − and + beside every number, stepping on the units grid and
      repeating while held;
    - the version at the foot of Settings: the web shows `APP_VERSION`, iOS
