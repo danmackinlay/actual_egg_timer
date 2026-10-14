@@ -25,6 +25,7 @@ import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
+import { NOTES_PATH, readNotes } from '../tools/copyNotes.js';
 import { asRead } from '../tools/text.js';
 
 type Entry = Record<string, unknown>;
@@ -61,10 +62,12 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
   assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
-  // copy/ holds only catalogues, `<tag>.json`: the apps ship it whole, so
-  // the review queue's state is kept in test/data/copy-review/.
+  // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
+  // which neither app ships (tools/buildSite.mjs and ios/project.yml leave
+  // them out). Anything else would ship, so the review queue's state is kept
+  // in test/data/copy-review/.
   for (const f of readdirSync('copy')) {
-    assert.ok(isCatalogueFile(f), `${f}: not a catalogue, and the apps would ship it`);
+    assert.ok(isCatalogueFile(f) || `copy/${f}` === NOTES_PATH, `${f}: not a catalogue, and the apps would ship it`);
   }
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
@@ -90,8 +93,9 @@ test('1b2. the small surfaces keep to a few words of period flavour', () => {
   // an alarm's title the register gets two or three words, not a paragraph.
   // The budgets bind in copy.test.ts; this holds the flavour to few words.
   const small = new Set(['notification.title', 'island.compact', 'island.expanded', 'lockscreen']);
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    if (!small.has(entry['surface'] as string) || !PERIOD.messages.has(key)) continue;
+  const notes = readNotes();
+  for (const key of Object.keys(EN_JSON.messages)) {
+    if (!small.has(notes[key].surface) || !PERIOD.messages.has(key)) continue;
     for (const t of templatesOf(PERIOD.messages.get(key) as Parameters<typeof templatesOf>[0])) {
       const words = t.split(/\s+/).filter((w) => w !== '' && w !== '·').length;
       assert.ok(words <= 8, `${key}: ${words} words in "${t}"`);

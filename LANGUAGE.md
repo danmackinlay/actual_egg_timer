@@ -31,11 +31,15 @@ plurals, and the repo carries no runtime dependencies. The renderer is
 invariants, no I/O and no dependencies: the catalogue is data the UI layer
 hands in.
 
-**What a message says about itself.** `copy/en.json` is the schema as well
-as the English. Each entry carries `surface`, where it is drawn; `apps`,
-`web`, `ios` or both; `example`, the arguments the fixture and the length
-budget render it with; and, where whoever writes or reads the words needs
-one, a `note`. Translations and overlays repeat none of these.
+**What a message says about itself** lives beside the catalogue, never in
+it (`DECISIONS.md` 122). A catalogue holds only what the renderers read: the
+templates and `count`, and an overlay's `base`. `copy/en.notes.json` gives
+each English key its `surface`, where it is drawn; `example`, the arguments
+the length budget and the review render it with; and, where whoever writes
+or reads the words needs one, a `note`. Neither app loads it
+(`tools/buildSite.mjs` and `ios/project.yml` leave it out). Which app shows
+a key is read from the apps' sources (`tools/copyNotes.ts`), not typed.
+Translations and overlays have no notes of their own.
 
 **Changing the words.** The steps are `CLAUDE.md`'s "To change wording";
 reading and approving them is `DEVELOPING.md`'s "Reviewing the words"; the

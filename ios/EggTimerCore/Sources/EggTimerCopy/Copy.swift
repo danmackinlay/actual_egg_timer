@@ -88,8 +88,9 @@ public final class Catalogue: Sendable {
         self.fallback = fallback
     }
 
-    /// A catalogue from `copy/<locale>.json`. Fields the renderer does not read
-    /// (`surface`, `example`, `note`, `apps`) are the tests' business. Throws
+    /// A catalogue from `copy/<locale>.json`, which holds only what this
+    /// reads: a field it does not know is ignored, never relied on (the
+    /// notes are `copy/en.notes.json`, which the app does not ship). Throws
     /// on anything malformed, naming the key: a catalogue that half-loads would
     /// put key names on a screen.
     public convenience init(json data: Data, fallback: Catalogue? = nil) throws {

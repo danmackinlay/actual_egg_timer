@@ -25,6 +25,7 @@ import {
   APPROVED_ABOUT, APPROVED_PATH, CatalogueJson, Templates, basePath, baseAbout, readApproved, readBases,
   readCatalogue, reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState, writeOnePerLine,
 } from './copyApproval.js';
+import { App, appsUsing } from './copyNotes.js';
 
 function show(t: Templates | null): string {
   if (t === null) return '(none)';
@@ -33,19 +34,22 @@ function show(t: Templates | null): string {
   return entries.map(([c, s]) => `${c}: ${s}`).join(' | ');
 }
 
-function appsOf(en: CatalogueJson, key: string): string {
-  const apps = en.messages[key]?.['apps'];
-  return Array.isArray(apps) ? `[${apps.join(', ')}]` : '[retired]';
+/** The apps whose sources name a key, as `[web, ios]`; a key no longer in
+ *  the catalogue is retired. */
+function appsOf(en: CatalogueJson, used: Map<string, Set<App>>, key: string): string {
+  if (!(key in en.messages)) return '[retired]';
+  return `[${(['web', 'ios'] as const).filter((a) => used.get(key)?.has(a)).join(', ')}]`;
 }
 
 function queue(): void {
   const en = readCatalogue('en');
   const q = reviewQueue(en, readApproved());
+  const used = appsUsing(Object.keys(en.messages));
   const count = (s: string): number => q.filter((e) => e.state === s).length;
   console.log(`The review queue: ${q.length} keys (${count('changed')} changed, ${count('added')} added, `
     + `${count('removed')} removed) of ${Object.keys(en.messages).length} in copy/en.json.`);
   for (const e of q) {
-    console.log(`\n${e.state.padEnd(8)} ${e.key} ${appsOf(en, e.key)}`);
+    console.log(`\n${e.state.padEnd(8)} ${e.key} ${appsOf(en, used, e.key)}`);
     if (e.approved !== null) console.log(`  approved  ${show(e.approved)}`);
     if (e.current !== null) console.log(`  now       ${show(e.current)}`);
   }
@@ -58,7 +62,7 @@ function queue(): void {
     console.log(`\n${tag}: ${stale} stale and ${tq.length - stale} missing of ${Object.keys(en.messages).length} keys`
       + `${left.length > 0 ? `; left to English: ${left.join(', ')}` : ''}.`);
     for (const t of tq) {
-      console.log(`\n${t.state.padEnd(8)} ${t.key} ${appsOf(en, t.key)}`);
+      console.log(`\n${t.state.padEnd(8)} ${t.key} ${appsOf(en, used, t.key)}`);
       if (t.twin !== null) console.log(`  twin      ${show(t.twin)}`);
       console.log(`  English   ${show(t.english)}`);
     }

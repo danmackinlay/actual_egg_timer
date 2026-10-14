@@ -11,6 +11,7 @@ import {
 } from '../../src/core/copy.js';
 
 import { catalogueTags } from '../copyApproval.js';
+import { exampleOf, readNotes } from '../copyNotes.js';
 import { CatalogueJson, english, englishJson } from './shared.js';
 
 /* Every key of every catalogue, rendered with the arguments its English entry
@@ -24,6 +25,8 @@ import { CatalogueJson, english, englishJson } from './shared.js';
  * category is seen to pick its own template end to end, and it falls back to
  * English, so that the fallback is seen to work, and it carries the malformed
  * braces and the missing argument, so that both renderers fail the same way. */
+/** What each key is for, beside the catalogue: its example arguments. */
+const NOTES = readNotes();
 const COPY_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5, 2.5, 0.5];
 const PLURAL_LOCALES = ['en', 'en-GB-x-1750', 'cs', 'cs-CZ', 'de'];
 const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.5, 1.25, -1, -2];
@@ -50,7 +53,7 @@ function copyRows(locale: string, catalogue: Catalogue, own: Record<string, unkn
   const overlay = OVERLAYS.indexOf(locale) >= 0;
   for (const key of Object.keys(englishJson.messages)) {
     const entry = englishJson.messages[key];
-    const example = (entry['example'] ?? {}) as Record<string, string | number>;
+    const example = exampleOf(NOTES, key);
     const count = entry['count'];
     const fallsBack = !Object.hasOwn(own, key);
     if (overlay && fallsBack) continue;

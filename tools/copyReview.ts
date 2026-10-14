@@ -7,7 +7,8 @@
  * against today's, word by word; each translation's twin and whether it is
  * stale or missing; the regional overlays' words; the surface's length budget
  * against the longest rendering (test/data/surfaces.json, as copy.test.ts 5a
- * measures it); which apps say it; and the developer's note. Then the twins
+ * measures it); which apps say it, read from their sources; and the note
+ * beside the catalogue (copy/en.notes.json). Then the twins
  * that want rewriting under English that is already approved. One file, no
  * network: the styles are inline and there is no script, so it can be sent
  * to a phone as it is.
@@ -21,6 +22,7 @@ import {
   CATEGORIES, CatalogueJson, Entry, Queued, REVIEW_DIR, Templates, TwinState, readApproved, readBases, readCatalogue,
   reviewQueue, templatesOf, translationTags, twinQueue, twinState,
 } from './copyApproval.js';
+import { App, Notes, appsUsing, exampleOf, readNotes } from './copyNotes.js';
 
 interface Surface { budget: number; about: string }
 
@@ -124,8 +126,8 @@ function diffHtml(a: string, b: string): string {
 
 /** A key's longest rendering in a catalogue, at its example arguments and,
  *  for a plural, at every count: copy.test.ts 5a's measure, in code points. */
-function longest(catalogue: Catalogue, key: string, entry: Entry): number {
-  const example = (entry['example'] ?? {}) as Record<string, string | number>;
+function longest(catalogue: Catalogue, key: string, entry: Entry, notes: Record<string, Notes>): number {
+  const example = exampleOf(notes, key);
   const count = entry['count'];
   const argSets = typeof count === 'string'
     ? [example, ...COUNTS.map((n) => ({ ...example, [count]: n }))]
@@ -164,6 +166,8 @@ interface Context {
   en: CatalogueJson;
   english: Catalogue;
   surfaces: Record<string, Surface>;
+  notes: Record<string, Notes>;
+  apps: Map<string, Set<App>>;
   overlays: { tag: string; json: CatalogueJson; catalogue: Catalogue }[];
   translations: { tag: string; json: CatalogueJson; catalogue: Catalogue; bases: ReturnType<typeof readBases> }[];
 }
@@ -177,11 +181,12 @@ function card(q: Queued, ctx: Context): string {
     parts.push(templatesHtml(q.approved ?? {}, 'gone'));
     return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
   }
-  const apps = (entry['apps'] as string[]).map((a) => (a === 'ios' ? 'iOS' : a)).join(' · ');
-  const surfaceName = String(entry['surface']);
+  const apps = [...(ctx.apps.get(q.key) ?? [])].sort().reverse().map((a) => (a === 'ios' ? 'iOS' : a)).join(' · ') || 'no app';
+  const notes = ctx.notes[q.key];
+  const surfaceName = notes.surface;
   const surface = ctx.surfaces[surfaceName];
   parts.push(`<p class="meta">${esc(apps)} · ${esc(surfaceName)}: `
-    + `${lengthHtml(longest(ctx.english, q.key, entry), surface.budget)}</p>`);
+    + `${lengthHtml(longest(ctx.english, q.key, entry, ctx.notes), surface.budget)}</p>`);
   parts.push(q.approved === null ? templatesHtml(q.current ?? {}) : diffTemplatesHtml(q.approved, q.current ?? {}));
   const rows: string[] = [];
   for (const t of ctx.translations) {
@@ -189,15 +194,15 @@ function card(q: Queued, ctx: Context): string {
     const twin = t.json.messages[q.key];
     rows.push(`<dt>${esc(NAMES[t.tag] ?? t.tag)} ${TWIN_FLAG[state]}</dt><dd>`
       + `${twin === undefined ? '' : `${templatesHtml(templatesOf(twin))}<p class="meta">`
-        + `${lengthHtml(longest(t.catalogue, q.key, entry), surface.budget)}</p>`}</dd>`);
+        + `${lengthHtml(longest(t.catalogue, q.key, entry, ctx.notes), surface.budget)}</p>`}</dd>`);
   }
   for (const o of ctx.overlays) {
     const over = o.json.messages[q.key];
     if (over === undefined) continue;
     rows.push(`<dt>${esc(o.tag)}</dt><dd>${templatesHtml(templatesOf(over))}<p class="meta">`
-      + `${lengthHtml(longest(o.catalogue, q.key, entry), surface.budget)}</p></dd>`);
+      + `${lengthHtml(longest(o.catalogue, q.key, entry, ctx.notes), surface.budget)}</p></dd>`);
   }
-  if (typeof entry['note'] === 'string') rows.push(`<dt>Note</dt><dd><p class="note">${esc(entry['note'])}</p></dd>`);
+  if (typeof notes.note === 'string') rows.push(`<dt>Note</dt><dd><p class="note">${esc(notes.note)}</p></dd>`);
   if (rows.length > 0) parts.push(`<dl>${rows.join('')}</dl>`);
   return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
 }
@@ -265,7 +270,10 @@ function page(): string {
     const json = readCatalogue(tag);
     return { tag: tag, json: json, catalogue: parseCatalogue(json, english), bases: readBases(tag) };
   });
-  const ctx: Context = { en: en, english: english, surfaces: surfaces, overlays: overlays, translations: translations };
+  const ctx: Context = {
+    en: en, english: english, surfaces: surfaces, notes: readNotes(), apps: appsUsing(Object.keys(en.messages)),
+    overlays: overlays, translations: translations,
+  };
 
   const queue = reviewQueue(en, readApproved());
   const inQueue = new Set(queue.map((q) => q.key));
