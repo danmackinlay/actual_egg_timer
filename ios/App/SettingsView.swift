@@ -247,7 +247,7 @@ struct SettingsView: View {
 
     // MARK: - Sharing
 
-    /// Sharing (E6), as the web's `#share`: the consent on screen beside the
+    /// Sharing, as the web's `#share`: the consent on screen beside the
     /// switch rather than behind the (i), the note under it, the random
     /// number, and the deletion, asked first. Sharing.swift does the work.
     private var share: some View {

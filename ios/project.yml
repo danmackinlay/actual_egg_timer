@@ -59,7 +59,7 @@ targets:
       - path: ../copy
         type: folder
         buildPhase: resources
-      # The population a new cook's prior is drawn from (E7): the same file
+      # The population a new cook's prior is drawn from: the same file
       # the web app fetches, bundled as population.json (Calibration.swift).
       - path: ../fixtures/population.json
         buildPhase: resources

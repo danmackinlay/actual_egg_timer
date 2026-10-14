@@ -110,7 +110,7 @@ export type OldYolk = -1 | 0 | 1;
 
 /** A record as the fit reads it: today's record, the yolk answered the old
  *  way if it was, and the model that made it, null on a record from before
- *  E6, which named none. */
+ *  sharing, which named none. */
 export interface FitRecord {
   record: EggRecord;
   yolk: OldYolk | null;
@@ -144,7 +144,7 @@ export function readFitRecord(raw: unknown): FitRecord | null {
   if (isPlain(probe) && !has(probe, 'after_s')) o['probe'] = { ...probe, after_s: null };
   const forecast = o['forecast'];
   if (isPlain(forecast) && !has(forecast, 'yolkWord')) o['forecast'] = { ...forecast, yolkWord: null };
-  // Core reads a model on every record; one from before E6 has none.
+  // Core reads a model on every record; one from before sharing has none.
   const model = o['model'];
   if (model === null) o['model'] = MODEL_ID;
   const yolk = has(o, 'yolk') ? o['yolk'] : null;

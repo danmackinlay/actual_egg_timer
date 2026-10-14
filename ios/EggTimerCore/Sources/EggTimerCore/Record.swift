@@ -22,10 +22,10 @@ public let recordVersion = 1
 
 // A record's `prior` is the id of the population the cook's prior was drawn
 // from (Population.swift): "2026-09", the literature's, until a fit publishes
-// another. Before E6 it named the policy too; `model` says that now.
+// another. Before sharing it named the policy too; `model` says that now.
 
 /// The code that made the record's forecast and chose its time: the
-/// likelihood, the decision and, from E8, the nudge. Changed whenever any of
+/// likelihood, the decision and the nudge. Changed whenever any of
 /// them changes, so the model as it shipped can be scored after the code has
 /// moved on. The record's provenance; it never decides a
 /// replay. See src/core/record.ts.

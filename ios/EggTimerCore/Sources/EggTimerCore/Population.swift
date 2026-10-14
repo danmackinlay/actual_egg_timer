@@ -1,6 +1,6 @@
 import Foundation
 
-/// The population a cook's prior is drawn from (E7; INFERENCE.md section 9).
+/// The population a cook's prior is drawn from (INFERENCE.md section 9).
 /// Transliterated from `src/core/population.ts`, and held to it by
 /// `fixtures/prior.json`.
 ///

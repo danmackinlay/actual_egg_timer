@@ -228,7 +228,7 @@ if (run('odds')) {
 }
 
 if (run('nudge')) {
-  // E8: what +-10 s costs the cook. Cooks drawn from the prior, as for the
+  // The nudge: what +-10 s costs the cook. Cooks drawn from the prior, as for the
   // odds, each egg at the time the app chooses; at every egg the TRUE cook's
   // loss - P(too soft) + P(too firm) + 3 P(runny), the decision's own loss,
   // read through the truth's probit rather than the posterior's - at the

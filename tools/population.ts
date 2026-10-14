@@ -1,11 +1,11 @@
 /**
  * fixtures/population.json: the population both apps draw a new cook's prior
- * from (E7; src/core/population.ts, INFERENCE.md section 9).
+ * from (src/core/population.ts, INFERENCE.md section 9).
  *
  *   npm run build && node dist/tools/population.js literature
  *
- * writes the literature's: the prior every cook drew from before E7, number
- * for number. The fit (fit/, `eggfit publish`) writes a fitted one in the
+ * writes the literature's: the prior every cook drew from before the
+ * population fit, number for number. The fit (fit/, `eggfit publish`) writes a fitted one in the
  * same shape - `id`, and the five spreads under `prior` - with its own record
  * of what it was fitted from beside them, which the apps ignore. Nothing else
  * writes this file, and `npm run fixtures` never touches it: it is the fit's

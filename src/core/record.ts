@@ -46,21 +46,21 @@ export const RECORD_VERSION = 1;
 
 /* WHICH PRIOR. A record's `prior` is the id of the population the cook's
  * prior was drawn from (population.ts): '2026-09', the literature's, until a
- * fit publishes another. Before E6 it named the policy too - '2026-09' a
+ * fit publishes another. Before sharing it named the policy too - '2026-09' a
  * three-number particle, '2026-09-e2' six numbers whose white offset moved
  * the recommendation, '2026-09-e5' the time chosen from the whole posterior -
  * and the policy is now `model`'s to say. */
 
 /** The code that made the record's forecast and chose its time: the
- *  likelihood, the decision and, from E8, the nudge. Changed whenever any of
+ *  likelihood, the decision and the nudge. Changed whenever any of
  *  them changes, so that the model as it SHIPPED can be scored after the code
  *  has moved on; a replay can only say what the current code
- *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
- *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
+ *  would have said. '2026-10-e6' is the likelihood and the decision
+ *  under uncertainty, with the forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
  *  sharing; '2026-10-e9' asks the cook which yolk they got, in five words,
  *  and forecasts those five; '2026-10-e10' holds the counter's carryover at
  *  1.0 instead of carrying it in the particle, which draws another prior from the same seed.
- *  Records from before E6 carry none.
+ *  Records from before sharing carry none.
  *
  *  It is the record's provenance (`model`, sent with each record, read by the
  *  fit) and never decides a replay: `LIKELIHOOD_ID` does. A new likelihood

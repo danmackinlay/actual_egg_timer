@@ -198,7 +198,7 @@ export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
    *  web. Never corrected, so a cook logged from two tabs is one egg. */
   id_ms: number;
-  /** The nudge this cook drew (E8): 0 when sharing was off at the start. A
+  /** The nudge this cook drew: 0 when sharing was off at the start. A
    *  plan takes it where a time is chosen (`appliedNudge`). */
   nudge_s: number;
   /** The pans as remembered at the start, so a corrected water reads the

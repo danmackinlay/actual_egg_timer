@@ -63,7 +63,7 @@ final class SolveLoop {
         /// the egg is a size off the carton, and whether its start is the room
         /// preset's assumption rather than the fridge.
         let facts: AdviceFacts
-        /// The nudge, for a cook who is sharing (E8); zero otherwise.
+        /// The nudge, for a cook who is sharing; zero otherwise.
         let nudgeS: Double
 
         /// What this pot's decision surface and odds profile are kept by.
@@ -204,7 +204,7 @@ final class SolveLoop {
         let egg = snapshot.egg
         let calibration = snapshot.calibration
         // The nudge moves the chosen time, where one is chosen, for a cook who
-        // is sharing (E8); the time shown, the time started and the outcome
+        // is sharing; the time shown, the time started and the outcome
         // under it are all at the nudged time.
         let d = decideAnswer(
             calibration, egg: egg, setup: answer.setup, grid: grid, solution: answer.solution,

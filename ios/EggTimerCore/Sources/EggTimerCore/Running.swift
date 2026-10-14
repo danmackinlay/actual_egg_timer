@@ -249,7 +249,7 @@ public struct RunningCook: Sendable, Equatable {
     /// When Start was pressed, whole ms since 1970: the record's id on the
     /// web. Never corrected.
     public internal(set) var idMs: Double
-    /// The nudge this cook drew (E8): 0 when sharing was off at the start.
+    /// The nudge this cook drew: 0 when sharing was off at the start.
     public internal(set) var nudgeS: Double
     /// The pans as remembered at the start.
     public internal(set) var boilMemory: BoilMemory

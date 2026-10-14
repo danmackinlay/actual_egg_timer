@@ -49,7 +49,7 @@ public enum Calibrations {
         return "\(version)+\(build)"
     }()
 
-    /// The population a new cook's prior is drawn from (E7; Population.swift):
+    /// The population a new cook's prior is drawn from (Population.swift):
     /// `fixtures/population.json` from the repo, bundled, which is the
     /// literature's until a fit of shared eggs publishes another. A bundle
     /// without it, or with one that does not read, draws from the literature.

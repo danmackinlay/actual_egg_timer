@@ -238,7 +238,7 @@ public final class Planner {
     /// bracket under the slider (`wordBracket`). Nil
     /// whenever `decision` is.
     public var certainty: CertaintyReading?
-    /// This launch's nudge (E8): a whole number of seconds
+    /// This launch's nudge: a whole number of seconds
     /// from -10 to +10, drawn at launch and again after each cook, so the
     /// time on screen holds still while the cook looks at it.
     var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
