@@ -8,19 +8,27 @@ things stand is `PLAN.md`; its last section says which document holds what.
 
 - **Stage files by name**, never `git add -A` or `git add .`: the owner's QA
   agent commits in this tree too. Check `git log --oneline` around a commit.
-- **Never push.** A push deploys the web app; it is the owner's call. An agent
-  in a worktree commits on its branch; the session that sent it verifies and
-  merges.
+- **Never push what deploys** (`DECISIONS.md` 124): pushing `main` or a
+  release tag deploys the web app, and is the owner's call. An agent may
+  push its own branch for CI. An agent in a worktree commits on its branch;
+  the session that sent it verifies and merges.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
-- **The gates** (`DECISIONS.md` 121). A branch commit runs `npm test` and
-  the check for what it touches (`copy:literals` after Swift, `swift test`
-  after the Swift core or fixtures, `fixtures:check` after copy or a fixture
-  generator). Before a merge: the full `npm run verify`; `npm run ios:build`
-  for anything under `ios/` (`verify` builds the package for macOS only);
-  `npm run e2e` and `npm run ios:e2e` for either app's screens or the logic
-  under them. A merge whose tree the branch was tested at needs no rerun.
+- **The gate is what the change touched** (`DECISIONS.md` 121, 123):
+
+  | changed | before a merge |
+  |---|---|
+  | documents, comments | nothing |
+  | tests, tools | `npm test` |
+  | core, fixture generators | `npm test`, `fixtures:check`; `swift test` if the Swift twin moves |
+  | Swift outside the twin | `copy:literals`, `swift test`, `ios:build` |
+  | the web's screens or words (`src/ui`, `index.html`, `styles.css`, `copy/`) | the rows above that apply, and `npm run e2e` |
+  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e` |
+
+  Any merge that touched code runs the full `npm run verify` once. A slow
+  suite runs once, on the branch's final code, here or in CI on the pushed
+  branch; a later commit to documents alone needs no rerun.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the

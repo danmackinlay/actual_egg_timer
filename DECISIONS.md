@@ -944,3 +944,21 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `example` move to a sidecar the apps never load, and its `apps` is
     derived from the sources, not typed. The catalogues keep only what the
     renderers read. Built `ceremony`.
+123. **The gate is what the change touched** (the owner, 14 October 2026:
+    the reruns of every suite at the smallest change were "tanking our
+    velocity"). Refines 121. Before a merge: nothing for documents and
+    comments alone; `npm test` for tests and tools; `fixtures:check`, and
+    `swift test` where the Swift twin moves, for core and the fixture
+    generators; `npm run e2e` for the web's screens and words; `ios:build`
+    and `ios:e2e` for the iOS app. The full `verify` runs before any merge
+    that touched code. Each slow suite runs once, on the branch's final
+    code; a later commit to documents alone needs no rerun. The reviewer
+    reruns `verify` and its own checks, and takes the e2e suites from the
+    agent's run or CI's. In effect from the commit that records it.
+124. **Never push what deploys without the owner** (the owner, 14 October
+    2026: "my intent was 'never push to the main public-facing deploy site
+    without my approval'", which had become "never push"). Pushing `main`,
+    or a release tag, deploys and is the owner's call. An agent may push
+    its own branch, so that CI runs the slow suites there; CI's run on the
+    branch's final code counts as that suite's gate. This holds while
+    Netlify deploys only `main`. In effect from the commit that records it.
