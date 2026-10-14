@@ -252,7 +252,7 @@ Start the QA pass here.
 - **The web app is live** at <https://actualeggtimer.netlify.app>, built by
   Netlify from `netlify.toml` on push; it serves `origin/main`. `og:` tags
   carry absolute URLs at that domain, so a domain change is a commit.
-  There is no second host: `vercel.json` was deleted in 0.5 (the owner,
+  There is no second host: the Vercel config was deleted in 0.5 (the owner,
   7 October 2026, "we can add vercel later if needed"); git has it.
 - **The web app opens with no signal** once a browser has visited, on a
   Home Screen too (`DECISIONS.md` 63): the built site's service worker
