@@ -80,7 +80,7 @@
   <section id="readout">
     <p id="phaseLabel" data-copy="readout.phase.total"></p>
 
-    <!-- The Learning mark (E8, DECISIONS.md 58): over the time while sharing
+    <!-- The Learning mark (DECISIONS.md 58): over the time while sharing
          is on, since the time may then be nudged a few seconds. -->
     <p id="learning" hidden><span class="badge" data-copy="learning.badge"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-label="learning.badge" hidden></button></p>
     <p id="learningMore" class="disclosed" hidden data-copy="learning.badge.more"></p>
@@ -162,8 +162,8 @@
   </div>
 
   <!-- ----------------------------------------------------------- the egg -->
-  <!-- Two controls and a sentence (UI.md section 3), the same in every phase
-       (design/one-screen.md section 2): while idle they are the settings,
+  <!-- Two controls and a sentence (UI.md section 3), the same in every phase:
+       while idle they are the settings,
        and while a cook runs, its own choices. Numeric bounds, steps,
        units and the preset temperatures are filled in at boot from
        src/core/inputs.ts and src/core/units.ts, in the cook's units, so the
@@ -302,8 +302,7 @@
           <label for="startSous" id="startSousLabel"></label>
         </div>
         <!-- While a cook runs, when the eggs went in, as the start clause says
-             it: corrected a minute at a time (design/one-screen.md section 7,
-             20), no earlier and no later than the cook allows (core
+             it: corrected a minute at a time, no earlier and no later than the cook allows (core
              earliestStart_s, latestStart_s), and the line under it says why
              when a press goes no further. The − and + are drawn by CSS and
              named by the code from the label. -->
@@ -323,7 +322,7 @@
         <p id="moreCooling" class="disclosed" hidden data-copy="controls.cooling.more"></p>
         <!-- Four choices, one to a line, fastest first: a list holds four
              names at any width and text size, where four segments on a
-             phone would not (UI.md section 4). -->
+             phone would not (UI.md section 5). -->
         <div class="seg seg--list">
           <input type="radio" name="cooling" id="coolIce" value="ice">
           <label for="coolIce" data-copy="controls.cooling.ice"></label>
@@ -567,7 +566,7 @@
       </div>
     </section>
 
-    <!-- Sharing (E6): off until the cook turns it on. What it sends is on
+    <!-- Sharing: off until the cook turns it on. What it sends is on
          screen beside the switch, not behind the (i); deleting asks first,
          as Forget does. The privacy page is linked under it. -->
     <section id="share" class="setting" aria-labelledby="lblShare">

@@ -106,7 +106,7 @@ struct ReadoutView: View {
         }
     }
 
-    /// The Learning mark (E8), as on the web: small, in the
+    /// The Learning mark, as on the web: small, in the
     /// panel's corner, over the time it is about, while sharing is on - the
     /// time may then be nudged a few seconds. Never in sous-vide, which has no
     /// time to nudge. Its (i) opens under the phase label.
@@ -167,7 +167,7 @@ struct ReadoutView: View {
     /// where that is more, so a drag that brings "most likely" or takes it
     /// away does not move the slider at any text size. Once a cook is running it is its plan's, on its pot's
     /// surface (held while a new pot's is built), until the pull, when the
-    /// time it was about has passed (design/one-screen.md section 7, 12); the
+    /// time it was about has passed; the
     /// white's line stays to the end. Never where the white never sets: there
     /// is no cook to say anything about.
     @ViewBuilder

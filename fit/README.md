@@ -1,6 +1,6 @@
 # fit/ — the population fit
 
-E7 (`INFERENCE.md` §9, `COLLECTIVE.md`): everyone's shared eggs in,
+The population fit (`INFERENCE.md` §9): everyone's shared eggs in,
 `fixtures/population.json` out, which both apps draw a new cook's prior from.
 Python, outside `src/core/` and its rules; run with [uv](https://docs.astral.sh/uv/).
 Nothing here runs in the apps or in `npm run verify`.

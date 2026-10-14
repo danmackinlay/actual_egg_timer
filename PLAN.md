@@ -1,7 +1,8 @@
 # PLAN.md — where Actual Egg Timer stands
 
-The state of the build, what is next, and what waits on whom. Updated in the
-same commit as the work it describes. History is `git log` (`LOGBOOK.md`
+The state of the build, what is next, and what waits on whom. Brought up to
+date by the session that merges, not by each working commit (`DECISIONS.md`
+104). History is `git log` (`LOGBOOK.md`
 is frozen, `DECISIONS.md` 117); the rules for working here are `CLAUDE.md`;
 the last section says where everything else is.
 
@@ -10,10 +11,11 @@ the last section says where everything else is.
 line and what Netlify serves at actualeggtimer.netlify.app; what merged
 after the tag (the button's "Rolling boil", 112; the action under the time,
 113; the bracket's band, 114; the bowl of still water, 115) went out with
-later pushes of `main`, at the same version. 0.3 is kept on `0.3.x`; 0.4 never
-shipped, since 0.5 forked from it, and `0.4.x` is retired (102). Both apps are complete for one cook
+later pushes of `main`, at the same version. Work is on short-lived branches
+off `main`, and a release is a tag on it (120); `0.3.x` (0.3), `0.4.x` (never
+shipped) and `0.5.x` are history. Both apps are complete for one cook
 and for learning, and for many: opt-in sharing, the population a prior is
-drawn from and the nudge (E6-E8, `COLLECTIVE.md`) are in both. The web app
+drawn from and the nudge (E6-E8, `INFERENCE.md` §7-§9) are in both. The web app
 (`src/`) and the iOS app (`ios/`) carry the same model, refusals, particle
 filter and choice of time, the same catalogue of words in two Englishes
 (Phase F but for Czech), and the same layout (`UI.md`). CI runs `verify`'s
@@ -30,11 +32,21 @@ copy:queue`).
 2. **The adversarial review of 14 October 2026**, worked in small rounds;
    the owner's answers to it are `DECISIONS.md` 116-118.
 3. **F5, Czech**, when the owner's friend can review it (below).
-4. **Left from the 0.5 worklist, not blocking** (`archive/REFACTOR-0.5.md`):
-   iOS's `PhaseActions` keeps a layout per phase (3.9), and the Swift data
-   layer generated from the TypeScript is deferred unless the copies keep
-   drifting (3.18). A7's time range, the right cook time's 90% interval,
-   stays as built until real eggs say how it reads (`archive/SHIP-0.5.md`).
+4. **Left from the 0.5 refactor, not blocking**:
+   - iOS's `PhaseActions` keeps a layout per phase, though its words are
+     already the readout's; the rest of `Cook` is core's `CookState`,
+     stepped, with its effects handed to `CookAlarms`, `CookCard`,
+     `CookSurfaces` and `CookLog`.
+   - Generating the Swift data layer (the types, the defensive readers,
+     `Codable`, `jsonObject`) from the TypeScript interfaces, where the
+     copies drifted, is deferred (the owner, 10 October 2026) unless the
+     drift keeps recurring; the conformance fixtures catch it meanwhile.
+     Never the whole core: TypeScript under JavaScriptCore loses the JIT,
+     and a surface would take seconds.
+   - The likely time range under the certainty word, the right cook
+     time's 90% interval (`predictCookTime` at 5% and 95%), stays as built
+     until real eggs say how it reads (`DECISIONS.md` 97; `INFERENCE.md`
+     §8 has the alternatives).
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -93,6 +105,16 @@ The one queue. Nothing else in the documents waits on the owner.
    - the alarm sounds: Wind-up timer, Cuckoo clock and Hen (101);
    - the action under the time, in one row (113), the bracket's band
      (114) and the bowl of still water (115).
+8. **In the Netlify dashboard.** Which plan the account is on: the
+   credit-based Free plan is 300 credits a month, the legacy free tier
+   (accounts from before 4 September 2025) 125,000 function invocations per
+   site a month, and exhausting either pauses the whole site, the web app
+   included. Whether the endpoint's limits are enough for a public link: 16
+   KB a body, 5,000 eggs an id (`MAX_SEQ`), 120 requests a minute an
+   address (`eggs.mts`). What Netlify's own request logs link to
+   `/api/eggs/<uid>` (the privacy page already says they keep the address,
+   the time and the path). And that the deploys built between `00186b1` and
+   `2850f40`, which ran on the live store, are deleted (`DECISIONS.md` 89).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
@@ -105,15 +127,30 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 - **The egg lab as an About page, someday** (the owner, 14 October 2026):
   `tools/egg-section.html`, which plays a whole cook in cross-section, how
   set and how hot, is to become a page cooks can see. Not in the app yet.
-- **E3's known limit.** Two runny whites at soft move jammy about as far as
+- **A runny white still moves the time-scale.** The white's learned offset
+  is its lag and the cook's idea of "runny" together, but a runny white is
+  as well explained by a slow time-scale as by a late white, and `alpha`'s
+  prior is the wider, so two runny whites at soft move jammy about as far as
   soft; left so until a probe or pooling pins the time-scale (`DECISIONS.md`
-  18). `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+  18; [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1)).
+  `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+- **The carryover is not learned.** `tauAirScale` is held at 1.0
+  (`DECISIONS.md` 95): the counter's cooling is the textbook's still air, so
+  a draughty kitchen's counter-rested eggs come out a little softer than the
+  model thinks, and their answers go into the time-scale and the taste.
 - **The heat-off pan's per-cook scale** is deferred: `TAU_STANDING_SCALE` is a
   global 1.0 (`DECISIONS.md` 11). A per-cook scale wants enough heat-off cooks
   to tell it from `alpha`. One real hot-start heat-off cook with a lid on
   would say whether 1.0 is pessimistic.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
-  setup sentence while a cook runs (README §11.5).
+  setup sentence while a cook runs. What both apps decide is core's, under
+  the conformance fixtures; above it each app's store, formatting and
+  decision to ring have tests, and the rest is view code, checked by driving
+  the apps.
+- **The web can make an egg over 90 g, on purpose** (`DECISIONS.md` 34). Both
+  apps cap the mass at 90 g, but the web's girth (90-200 mm) and width
+  (30-60 mm) keep their own limits, so a typed measurement reaches about
+  160-195 g; the model is a hen's egg's, so those times are extrapolated.
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad
   layout needs every orientation and Split View, checked by screenshots.
 - **Someday:** other birds' eggs, emu first (`DECISIONS.md` 34). The model's
@@ -149,13 +186,17 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | F6 | the English of 1750 | done 28 Sep; the owner's review open |
 
 The design is `INFERENCE.md` (E) and `LANGUAGE.md` (F); what each phase
-measured is `LOGBOOK.md`. E6-E8 were built from `COLLECTIVE.md`, which has
-every choice made to build them. What is left:
+measured is `LOGBOOK.md`; the choices made to build E6-E8 are in
+`INFERENCE.md` §7-§9 and the code. What is left:
 
 - **E7, the first real fit**, once shared eggs have arrived: `fit/README.md`
   has the loop, and publishing is writing `fixtures/population.json` in a
-  release. Read the open tier's cap first (`COLLECTIVE.md` §4): with no
-  attested eggs, `DECISIONS.md` 2 read literally gives the web no weight.
+  release. Settle the open tier's weight first, the owner's choice: open
+  results get none for now (`DECISIONS.md` 85), and with no attested eggs
+  `DECISIONS.md` 2 read literally caps them at zero anyway (`--open-cap`,
+  `INFERENCE.md` §9). Every open result is kept, so it can be given a
+  weight later, screened per id. The owner's own results do not wait on
+  it: their trusted ids count in full and lift the cap for the rest (82).
 - **F5, Czech.** Adds Czech to the picker in both apps and `cs` to
   `CFBundleLocalizations` in `ios/project.yml`. It tests all four CLDR plural
   categories, the decimal comma and seven cases (`LANGUAGE.md` §5); doneness
@@ -211,7 +252,7 @@ Start the QA pass here.
 - **The web app is live** at <https://actualeggtimer.netlify.app>, built by
   Netlify from `netlify.toml` on push; it serves `origin/main`. `og:` tags
   carry absolute URLs at that domain, so a domain change is a commit.
-  There is no second host: `vercel.json` was deleted in 0.5 (the owner,
+  There is no second host: the Vercel config was deleted in 0.5 (the owner,
   7 October 2026, "we can add vercel later if needed"); git has it.
 - **The web app opens with no signal** once a browser has visited, on a
   Home Screen too (`DECISIONS.md` 63): the built site's service worker
@@ -260,6 +301,7 @@ Start the QA pass here.
 | `PLAN.md` | this: the state, what is next, the owner's queue, open items, QA |
 | `DECISIONS.md` | every owner decision, numbered and dated, with its commits |
 | `README.md` | the science: the model, its constants, validation, open problems |
+| `DEVELOPING.md` | building and checking: the npm scripts, reviewing the words, the web app end to end |
 | `INFERENCE.md` | the learning: what is learned, the record, the probe, deciding, the fit |
 | `LANGUAGE.md` | the words: the catalogue, copy rules, units, languages, 1750 |
 | `UI.md` | the layout both apps share, as built |
@@ -268,9 +310,6 @@ Start the QA pass here.
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
 | `LOGBOOK.md` | the record to 14 October 2026, frozen: what was verified, measured and learned, by date |
-| `archive/` | closed records: the 0.4 review, the three design reviews of 0.5, and the 0.5 worklists (`archive/SHIP-0.5.md`, `REFACTOR-0.5.md`), kept for their findings |
 | `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), outside the default build; each names the document that quotes it |
-| `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
 | `design/bowl.md` | the bowl of still water as a cooling (`DECISIONS.md` 115) |
-| `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

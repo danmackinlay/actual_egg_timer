@@ -218,8 +218,8 @@ enum SettingsStore {
         return saved
     }
 
-    /// Only the settings a correction changed, for the next cook
-    /// (design/one-screen.md section 7, 22): the rest stay as they were, and
+    /// Only the settings a correction changed, so the next cook starts from
+    /// what was done, not from the mistake: the rest stay as they were, and
     /// a level the slider only previewed after the pull is never written.
     @MainActor
     public static func save(_ planner: Planner, fields: Set<ControlField>, level: Double) {

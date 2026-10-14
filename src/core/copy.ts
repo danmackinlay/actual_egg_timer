@@ -281,13 +281,13 @@ export function catalogueChain(language: string, preferred: readonly string[], r
  *
  *     { "locale": "en",
  *       "messages": {
- *         "feedback.ask": { "surface": "label", "text": "How was the yolk?" },
- *         "learned.tuned": { "surface": "body", "count": "eggs",
+ *         "feedback.ask": { "text": "How was the yolk?" },
+ *         "learned.tuned": { "count": "eggs",
  *                            "one": "Learned from {eggs} egg",
  *                            "other": "Learned from {eggs} eggs" } } }
  *
- * Fields the renderer does not read (`surface`, `example`, `note`) are the
- * tests' business and are ignored here. Throws on anything malformed, naming
+ * A field the renderer does not know is ignored, never relied on: what a key
+ * is for is copy/en.notes.json, which neither app loads. Throws on anything malformed, naming
  * the key: a catalogue that half-loads would put key names on a screen.
  */
 export function parseCatalogue(json: unknown, fallback: Catalogue | null = null): Catalogue {

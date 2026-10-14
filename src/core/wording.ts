@@ -69,7 +69,7 @@ export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): Copy
 /* ---------------------------------------------------------- the certainty */
 
 /**
- * HOW SURE, IN WORDS (design/one-screen.md section 6). Under the time: the
+ * HOW SURE, IN WORDS. Under the time: the
  * class `certaintyAt` gives the time on screen, as a line the cook can
  * press. Pressing it opens, in place, the 90% interval in the slider's words,
  * the most likely word and the likely time range. "Most likely" also shows
@@ -198,8 +198,7 @@ export function whiteAtRisk(o: Outcome): boolean {
 
 /** The same, for a cook as it ran: its forecast's chance of a runny white,
  *  which is the outcome's `pWhiteRunny` (`forecastOf`). Done reads this, not
- *  a plan made since, which may know how the egg came out
- *  (archive/design/running-cook-review.md 2.4). */
+ *  a plan made since, which may know how the egg came out. */
 export function forecastWhiteAtRisk(f: Forecast): boolean {
   return f.white[0] >= WHITE_RISK;
 }

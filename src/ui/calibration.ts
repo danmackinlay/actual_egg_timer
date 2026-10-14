@@ -240,8 +240,7 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
 
   /**
    * The calibration before the egg of the cook `id`, for a correction made
-   * after its pull (design/one-screen.md section 4, "Never from its own
-   * outcome"; core `asRanCorrected`): a plan made for that cook on a posterior
+   * after its pull, never from its own outcome (core `asRanCorrected`): a plan made for that cook on a posterior
    * that has folded its own answer would score the model against what it
    * already learned from it. A copy, never the page's own.
    *

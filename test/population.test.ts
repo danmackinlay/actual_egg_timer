@@ -1,5 +1,5 @@
 /**
- * The population a prior is drawn from (E7; src/core/population.ts): the
+ * The population a prior is drawn from (src/core/population.ts): the
  * literature's is the default prior, a fitted one moves where a new cook
  * starts, and a posterior drawn from one population is replayed from the
  * next (src/ui/calibrationStore.ts).

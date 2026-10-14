@@ -328,8 +328,8 @@ public func decidedSolution(
 
 // MARK: - The nudge
 
-/// The most the nudge moves a time, s, either way (INFERENCE.md section 8,
-/// E8). Why, and why ten: src/core/decide.ts.
+/// The most the nudge moves a time, s, either way (INFERENCE.md section 8).
+/// Why, and why ten: src/core/decide.ts.
 public let nudgeMaxS = 10.0
 
 /// A uniform draw on [0, 1) as the nudge: a whole number of seconds from

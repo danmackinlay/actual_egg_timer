@@ -4,7 +4,7 @@ import DeviceCheck
 import EggTimerCore
 import EggTimerApp
 
-/// Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
+/// Sharing (INFERENCE.md section 7): a cook who
 /// turns it on sends every egg in the log to the collection endpoint, the
 /// ones from before it was on included, and can delete
 /// everything this phone has sent. What it keeps, and how each step moves it,

@@ -1,6 +1,6 @@
 /**
- * fixtures/prior.json: drawing a prior from a population (E7;
- * src/core/population.ts). The published population (fixtures/population.json,
+ * fixtures/prior.json: drawing a prior from a population
+ * (src/core/population.ts). The published population (fixtures/population.json,
  * whatever the fit last wrote), the literature's, and one shifted every way a
  * fit could move it, each read, its centre, and the first particles of a
  * prior drawn from it; and the files a reader must refuse.

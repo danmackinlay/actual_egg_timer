@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import EggTimerCore
 
-/// A prior drawn from a population (E7), against `fixtures/prior.json`: the
+/// A prior drawn from a population, against `fixtures/prior.json`: the
 /// published population, the literature's and a shifted one, each read the
 /// same way, starting at the same centre, and drawing the same particles to
 /// the bit; and every file a reader must refuse, refused.

@@ -497,7 +497,7 @@ public struct DecidedAnswer: Sendable {
 /// `answerAt`'s solution and level), on `grid`, this pot's decision surface;
 /// held within the envelope of `profile`, or by nothing while it is nil;
 /// then moved by `nudgeS`, the nudge the app drew, where
-/// a time is chosen for (E8). The solve is re-read at the time given and the
+/// a time is chosen for. The solve is re-read at the time given and the
 /// outcome predicted there. A level the odds warn of is decided at that level
 /// like any other.
 public func decideAnswer(

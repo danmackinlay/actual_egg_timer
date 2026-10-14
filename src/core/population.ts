@@ -1,5 +1,5 @@
 /**
- * The population a cook's prior is drawn from (E7; INFERENCE.md section 9):
+ * The population a cook's prior is drawn from (INFERENCE.md section 9):
  * reading the published one, and what it says before any egg.
  *
  * `fixtures/population.json` is what both apps draw a new cook's prior from.

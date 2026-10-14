@@ -11,13 +11,14 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 import {
   Catalogue, Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.js';
 import { catalogueTags } from '../tools/copyApproval.js';
+import { appsUsing, exampleOf, readNotes } from '../tools/copyNotes.js';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {
@@ -37,6 +38,8 @@ const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
 ]));
 const EN_JSON = JSONS.get('en') as CatalogueJson;
 const EN = parseCatalogue(EN_JSON);
+/** What each key is for: copy/en.notes.json, beside the catalogue. */
+const NOTES = readNotes();
 
 function catalogueFor(locale: string): Catalogue {
   return locale === 'en' ? EN : parseCatalogue(JSONS.get(locale), EN);
@@ -139,21 +142,27 @@ test('2c. a language with no rule gets other, the one form every message has', (
 // the catalogue's shape
 // --------------------------------------------------------------------------
 
-test('3a. every English entry names its surface, its apps, and an example for each placeholder', () => {
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    const surface = entry['surface'];
+test('3a. every English key has notes beside it: its surface, and an example for each placeholder', () => {
+  assert.deepEqual(Object.keys(NOTES), Object.keys(EN_JSON.messages), 'the notes have the catalogue\'s keys, in its order');
+  for (const key of Object.keys(EN_JSON.messages)) {
+    const surface = NOTES[key].surface;
     assert.ok(typeof surface === 'string' && surface in SURFACES, `${key}: surface ${String(surface)}`);
-    const apps = entry['apps'];
-    assert.ok(Array.isArray(apps) && apps.length > 0, `${key}: apps`);
-    for (const app of apps as unknown[]) assert.ok(app === 'web' || app === 'ios', `${key}: app ${String(app)}`);
-
     const message = EN.messages.get(key);
     assert.ok(message !== undefined);
     const used = new Set(templatesOf(message).flatMap(placeholders));
-    const example = (entry['example'] ?? {}) as Record<string, unknown>;
+    const example = exampleOf(NOTES, key) as Record<string, unknown>;
     assert.deepEqual(new Set(Object.keys(example)), used, `${key}: example args`);
     if (message.kind === 'plural') {
       assert.equal(typeof example[message.count], 'number', `${key}: the count is a number`);
+    }
+  }
+});
+
+test('3a2. a catalogue holds only what the renderers read: templates, `count`, and an overlay\'s `base`', () => {
+  for (const [locale, json] of JSONS) {
+    const allowed = new Set(['text', 'count', ...PLURAL_CATEGORIES, ...(OVERLAYS.includes(locale) ? ['base'] : [])]);
+    for (const [key, entry] of Object.entries(json.messages)) {
+      for (const field of Object.keys(entry)) assert.ok(allowed.has(field), `${locale} ${key}: ${field} belongs in the notes`);
     }
   }
 });
@@ -240,7 +249,9 @@ test('3d. a measure never breaks across a line: format.* joins value and unit wi
     }
   }
   assert.deepEqual(failures, []);
-  assert.ok(checked >= 22, `${checked} templates: the English and its 1750 twins at least`);
+  // The English's at least; a twin that only repeated it is left to English.
+  const english = Object.keys(EN_JSON.messages).filter((k) => k.startsWith('format.')).length;
+  assert.ok(english >= 11 && checked >= english, `${checked} templates, ${english} of them English`);
   assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
 });
 
@@ -275,7 +286,7 @@ test('4b. the parity check catches a dropped, an invented and a miscounted place
 /** Each key's longest rendering in a language, at its example arguments and,
  *  for a plural, at every count. */
 function longest(catalogue: Catalogue, key: string, entry: Entry): number {
-  const example = (entry['example'] ?? {}) as Record<string, string | number>;
+  const example = exampleOf(NOTES, key);
   const count = entry['count'];
   const argSets = typeof count === 'string'
     ? [example, ...COUNTS.map((n) => ({ ...example, [count]: n }))]
@@ -287,10 +298,10 @@ test('5a. every string in every language fits its surface\'s budget', () => {
   for (const locale of LOCALES) {
     const catalogue = catalogueFor(locale);
     for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-      const surface = SURFACES[entry['surface'] as string];
+      const surface = SURFACES[NOTES[key].surface];
       const w = longest(catalogue, key, entry);
       assert.ok(w <= surface.budget,
-        `${locale} ${key}: ${w} characters on "${String(entry['surface'])}", budget ${surface.budget}`);
+        `${locale} ${key}: ${w} characters on "${NOTES[key].surface}", budget ${surface.budget}`);
     }
   }
 });
@@ -301,7 +312,7 @@ test('5b. English fits every budget, and every budget is drawn on', () => {
   // here, and moving it means editing this test and saying why.
   const max = new Map<string, number>();
   for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    const surface = entry['surface'] as string;
+    const surface = NOTES[key].surface;
     max.set(surface, Math.max(max.get(surface) ?? 0, longest(EN, key, entry)));
   }
   for (const [name, surface] of Object.entries(SURFACES)) {
@@ -318,54 +329,13 @@ test('5c. there are the plural categories CLDR has, and no others', () => {
 // the catalogue and the code agree
 // --------------------------------------------------------------------------
 
-/** Every file that can name a key, by the app that ships it. A key in a core
- *  counts for the app that core ships in. */
-function sourceFiles(dir: string, ext: string): string[] {
-  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
-    .filter((f) => f.endsWith(ext))
-    .map((f) => `${dir}/${f}`);
-}
-
-const SOURCES: Record<'web' | 'ios', string[]> = {
-  web: [...sourceFiles('src/ui', '.ts'), ...sourceFiles('src/core', '.ts'), 'index.html'],
-  ios: [
-    ...sourceFiles('ios/App', '.swift'), ...sourceFiles('ios/Widget', '.swift'),
-    ...sourceFiles('ios/EggTimerCore/Sources', '.swift'),
-  ],
-};
-
-/** Quoted strings shaped like a key: 'group.name', "group.name.more". */
-const KEY_SHAPE = /['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+)['"`]/g;
-
-/** Identifiers that are shaped like keys and are not: notification ids, and
- *  the UserDefaults keys an earlier build's sharing used, which the launch
- *  deletes (EggTimerApp/Store.swift, `retiredKeys`). */
-const NOT_KEYS = new Set(['cook.pull', 'cook.cool', 'share.v1', 'share.attest.v1']);
-
-function keysIn(file: string): string[] {
-  const text = readFileSync(file, 'utf8');
-  return [...text.matchAll(KEY_SHAPE)].map((m) => m[1]);
-}
-
-const GROUPS = new Set([...EN.messages.keys()].map((k) => k.split('.')[0]));
-
-test('6a. every key the code names exists, and every key is used by the apps it says', () => {
-  const usedBy = new Map<string, Set<string>>();
-  for (const app of ['web', 'ios'] as const) {
-    for (const file of SOURCES[app]) {
-      for (const key of keysIn(file)) {
-        if (NOT_KEYS.has(key) || !GROUPS.has(key.split('.')[0])) continue;
-        assert.ok(EN.messages.has(key), `${file}: "${key}" is not in copy/en.json`);
-        if (!usedBy.has(key)) usedBy.set(key, new Set());
-        (usedBy.get(key) as Set<string>).add(app);
-      }
-    }
-  }
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    const said = [...(entry['apps'] as string[])].sort();
-    const found = [...(usedBy.get(key) ?? [])].sort();
-    assert.deepEqual(found, said, `${key}: used by [${found.join(', ')}], says [${said.join(', ')}]`);
-  }
+test('6a. every key the code names exists, and every key is shown by an app', () => {
+  // Which app shows a key is read from the sources, never typed
+  // (tools/copyNotes.ts): a key an app's code names is that app's. A key in
+  // a core counts for the app that core ships in.
+  const used = appsUsing(EN.messages.keys());
+  for (const key of used.keys()) assert.ok(EN.messages.has(key), `"${key}" is named in the code and is not in copy/en.json`);
+  for (const key of EN.messages.keys()) assert.ok(used.has(key), `${key}: no app shows it`);
 });
 
 test('6b. index.html has no words of its own below <head>, and names only real keys', () => {

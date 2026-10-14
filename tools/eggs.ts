@@ -1,5 +1,5 @@
 /**
- * The fit's data (E7; INFERENCE.md section 9, COLLECTIVE.md section 1): the
+ * The fit's data (INFERENCE.md section 9): the
  * shared eggs pulled down, simulated cooks with a known truth to check the
  * fit against, and the physics each egg needs, written out so the fit
  * (fit/, Python) never runs it.
@@ -252,7 +252,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       const level = u() < 0.2 ? Math.min(1, Math.max(0, kitchen.level + (u() - 0.5) * 0.3)) : kitchen.level;
       const egg = eggFromMass(kitchen.mass_g / 1000);
       // Cooked at the literature's time for the level, nudged as a sharing
-      // cook's is (E8): the fit sees eggs either side of the surface.
+      // cook's is: the fit sees eggs either side of the surface.
       const solved = solveCookTime(egg, kitchen.setup, DEFAULT_PARAMS, donenessFromSlider(level));
       const nudge = nudgeSeconds(u());
       const time = solved.result.cookTime_s + nudge;

@@ -7,7 +7,8 @@ import Foundation
 /// time's 90% interval. The definitions and their reasons are in
 /// src/core/certainty.ts, which this is held to by fixtures/certainty.json.
 
-/// How sure, in three words: the keys D1 will give words to.
+/// How sure, in three words: keys, which the catalogue's `certainty.*`
+/// messages put into words.
 public enum Certainty: String, Sendable, Codable {
     case veryCertain
     case ballpark

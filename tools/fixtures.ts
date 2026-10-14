@@ -50,7 +50,7 @@
  *   fixtures/share.json        sharing's state: what a stored copy reads as,
  *                              every move from every reachable state, and what
  *                              a sender makes of the endpoint's answer
- *   fixtures/prior.json        a prior drawn from a population (E7), and the
+ *   fixtures/prior.json        a prior drawn from a population, and the
  *                              population files a reader refuses
  *   fixtures/running.json      a running cook: its egg and pot, its moves, a
  *                              stored one read back, its plan, two copies

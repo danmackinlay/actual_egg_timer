@@ -7,7 +7,7 @@ import EggTimerApp
 /// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
 /// same outline, the same rings and the same colours (`Palette`).
 ///
-/// It has two readings (design/one-screen.md section 5), which the debug log names as the web's drawing does:
+/// It has two readings, which the debug log names as the web's drawing does:
 ///
 /// - `aim`, the egg the settings on screen aim for, as eaten at the end of
 ///   the cooling (`previewSection`), so the yolk reads the level asked: idle,

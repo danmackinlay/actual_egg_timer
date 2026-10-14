@@ -4,10 +4,6 @@
 same numbers by a conformance suite. It runs headless, and that is the point:
 the core is finished in a terminal, and the app on top is a separate argument.
 
-The app is now real rather than a slice. It carries every input the solver has,
-schedules the alarm at absolute fire dates, and puts a countdown on the Lock
-Screen and in the Dynamic Island.
-
 ## The loop
 
 ```sh
@@ -24,9 +20,9 @@ number in `fixtures/` is wrong, it is wrong in the TypeScript first, and
 green converts the reference implementation into whatever the port happens to
 do, which is the one failure mode this arrangement exists to prevent.
 
-Tolerance is 1e-12 relative — a few ulps of a double, which is all that
-differing libm implementations of `exp`, `sin` and `log10` can cost. An
-algebraic mistake is never that small.
+Tolerance is 1e-12, relative above 1 and absolute below — a few ulps of a
+double, which is all that differing libm implementations of `exp`, `sin` and
+`log10` can cost. An algebraic mistake is never that small.
 
 ## The core, module by module
 
@@ -63,7 +59,7 @@ anything both apps must agree on lives here, not in either app.
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
-| `running.ts` | a running cook: its phases (`phaseAt` over its `Deadlines`, the pull's grace, the slow hob, the counted cooling and which probe readings are taken); its start and an append-only log of everything since, folded into the cook as it stands; the egg and pot from the choices; the plan derived from them (the ramp, the slow hob and its memo, the time decided, the deadlines, the cooling, how sure); the record's facts and the boil to remember; each move the cook makes, each a log entry; two copies of one cook taken up; a cook in progress as both apps store it, read defensively, its log folded again | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `takeUpEvents`, `cookFactsFor`, `boilToRemember`, `readRunningCook`, `storedCook`, `readStoredCook` | `Running.swift` | `running.json`, `stores.json` |
+| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, the plan derived from them, each move the cook makes, and a cook in progress as both apps store it, read defensively | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `takeUpEvents`, `cookFactsFor`, `boilToRemember`, `readRunningCook`, `storedCook`, `readStoredCook` | `Running.swift` | `running.json`, `stores.json` |
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer); what a sender makes of the endpoint's answer, and when it stops waiting | `shareReply`, `shareGivesUp`, `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
@@ -77,143 +73,31 @@ measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,
 `zFromActivationEnergy`) and the inference read-outs. The TypeScript keeps
 them for `npm run validate`, the tests and the web's width input.
 
-**The UI contract.** `solveCookTime` returns `reachable: false` when the
-yolk asked for cannot be had: too soft for the white (`softestLevel` is the
-softest level that is, and the slider stripes out everything below it, which
-is what makes a counter rest refuse soft eggs rather than lie about them), or,
-with the heat off, harder than the pan can manage (`hardestLevel`). If
-`whiteSets` is false nothing on the slider is reachable. Every cook time the
-solver returns is the first one known to meet its dose target, to within a
-second: the search returns the upper end of its final bracket, never the
-midpoint, so a dose compared against its own target at the answer passes.
-
-The integrator is covered against both a **held** surface and a **moving** one.
-The second matters: a step-only test cannot catch a sign error in the Duhamel
-drive term, which is the mistake this transliteration was most likely to make.
-
-One deliberate ugliness: `Sphere.complementaryError` is the Numerical Recipes
-Chebyshev form rather than Foundation's `erfc`, which is more accurate.
-Foundation's would be *better* and would diverge from the reference — quietly,
-in the fourth decimal place. The port's job is to agree.
-
-One real finding, in `erfcTheta`, a science check the Swift core leaves out:
-at the centre it evaluates
-`1 - total/x` with `x` clamped to 1e-9, so a one-ulp difference in `erfc` is
-amplified by 1e9. The two implementations differ by ~1e-8 there and by nothing
-anywhere else. That is the expression, not either implementation, and the model
-reads the quantity to five decimal places.
+Where a transliteration was most likely to go wrong, the code says why it is
+as it is. The integrator is tested against a moving surface as well as a held
+one, since a step-only test cannot catch a sign error in the Duhamel term
+(`ConformanceTests.swift`). `Sphere.complementaryError` is the Numerical
+Recipes form, not Foundation's more accurate `erfc`, because the port's job is
+to agree (`Sphere.swift`). The calibration's fixtures carry every particle and
+every weight, since a wrong random number generator draws a different but
+entirely plausible prior (`CalibrationTests.swift`); xorshift32 in `UInt32`
+reproduces JavaScript's signed shifts, and a sort by predicted time takes the
+original index as its tie-break, because Swift's sort is not stable
+(`Infer.swift`).
 
 ### How closely they agree
 
-Tighter than expected. Probing the whole-cook suite at 1e-15 puts the worst
-disagreement at **7e-15 relative**, on an accumulated dose after roughly 20,000
-calls each to `exp()` and `pow()` — where two libm implementations are entitled
-to differ in the last bit every single time. Cook times, peak temperatures and
-the boolean verdicts (`reachable`, `whiteSets`) agree at 1e-15 outright, which
-is to say exactly.
-
-The suite runs at 1e-12: three orders of headroom over that noise floor, and
-still ten orders tighter than anything that could change an answer.
+Tighter than expected. Probing the whole-cook suite at 1e-15 put the worst
+disagreement at **7e-15 relative**, on a dose accumulated over some 20,000
+calls each to `exp()` and `pow()`; cook times, peak temperatures and the
+verdicts (`reachable`, `whiteSets`) agreed exactly. The suite runs at 1e-12:
+three orders of headroom over that noise floor, and still ten orders tighter
+than anything that could change an answer.
 
 The whole-cook suite takes about 14 seconds, nearly all of it the standing
 scans. That is the price of not assuming monotonicity, and it is worth paying
 here — the standing scenarios in the fixtures are the ones a bisection would
 have got wrong.
-
-### The calibration, and why its fixtures are so much bigger
-
-`infer.ts` is the one module with STATE and a random number generator, and it is
-where a transliteration slip is least likely to announce itself. A wrong shift
-does not crash or produce a NaN: it draws a different but entirely plausible
-prior, and the two implementations quietly stop being the same model. Summary
-statistics would not catch it either — any seed gives a sensible mean and
-spread. So `fixtures/calibration.json` carries **every particle and every
-weight**, before the first observation and after each of eleven — and after each
-white answer folded in between them — and the Swift compares all of them.
-
-The RNG is xorshift32 written in terms of JavaScript's integer operators, where
-`<<` and `^` coerce to a SIGNED 32-bit int and `>>>` is the unsigned right
-shift. Doing the arithmetic in `UInt32` and reinterpreting the bits reproduces
-it exactly; Swift's fixed-width shifts discard overflow rather than trapping,
-so no masking is needed. The recorded state goes negative partway through the
-fixture sequence on purpose — that is the case a port reaching for `UInt32` or
-`Int` throughout would get wrong, and it is checked as an `Int32`.
-
-Several of the eleven updates drive the effective sample size below n/2 and
-resample, which is the only part of the filter that touches the RNG after the
-prior is drawn, and the only part where the ORDER of the particles matters.
-
-One ordering subtlety that is not in the TypeScript because it does not have to
-be: `predictCookTime`, which only the tests and `npm run decide` call now (no
-screen shows its interval), sorts particles by predicted time, and JavaScript's
-sort is required to be stable while Swift's is not. The Swift sorts by time with the
-original index as a tie-break, which is the same thing.
-
-## The port is complete
-
-`EggTimerCore` carries every module in `src/core/`, `sousvide.ts` included.
-The pure functions agree to 1e-12 and 17 whole cooks - times, peak
-temperatures, doses and the reachability verdicts - to the same, where the
-measured disagreement is 7e-15. The calibration is pinned harder still: every
-particle and every weight of an eleven-observation run, both channels, each
-white answer folded straight after the yolk answer for the same egg, because
-a wrong random number generator would otherwise produce a different but
-entirely plausible posterior. The app on top carries every input README.md
-describes, schedules its alarm at absolute fire dates with a time-sensitive
-interruption level, shows the countdown on the Lock Screen and in the Dynamic
-Island, and asks how the yolk and the white were after each egg, every time,
-with neither answer required.
-
-Sous-vide was once left unported as "a joke", which is why the owner went
-looking for it on his phone and did not find it. It is the same dose
-machinery with the surface temperature held constant, and its answer - a
-start time in the past, for a 58 °C bath - is the model's real conclusion,
-not the code declining to work.
-
-## The app's logic, file by file
-
-Above the core, the package has two libraries of the app's own, so that
-what the app does with the core is run by `swift test` as well, on a Mac, with no simulator. `ios/App` keeps the screens and what only an
-iPhone has.
-
-| library | file | what it is |
-|---|---|---|
-| EggTimerShared | `Copy.swift` | the catalogue as loaded, `tr`; the widget links it too |
-| EggTimerShared | `CookActivity.swift` | the Live Activity's contract; an `ActivityAttributes` on iOS |
-| EggTimerApp | `Services.swift` | the protocols below, and where the app puts each at launch |
-| EggTimerApp | `AppClock.swift` | cook time (`CookClock`); a Debug build's fast and stepped clock |
-| EggTimerApp | `Store.swift` | `Stores`, the one door to the store (`KeyValueStore`), its guard, the settings and the pans |
-| EggTimerApp | `Calibration.swift` | the posterior and the log, kept (`Calibrations`) |
-| EggTimerApp | `DecisionGrids.swift` | the decision surfaces and odds profiles, built off the main actor and kept |
-| EggTimerApp | `Planner.swift`, `SolveLoop.swift`, `Learning.swift` | the settings as one value and the choices made from them, the idle screen's solve, the learning from each egg |
-| EggTimerApp | `Cook.swift` | the running cook as core's `step` runs it: its effects carried out (the store, alarms, ring, log), what it waits for built, the card |
-| EggTimerApp | `AppModel.swift` | the three together: Eggs in, Start again, the buttons, a change in hand committed first |
-| EggTimerApp | `Edits.swift` | corrections while a cook runs |
-| EggTimerApp | `Presentation.swift`, `SousVide.swift` | words for a value, and the sous-vide start |
-| EggTimerApp | `LanguageChoice.swift`, `AlarmSoundChoice.swift` | the language and the alarm's sound, kept |
-| EggTimerApp | `Screenshots.swift`, `Perf.swift` | Debug only: launch arguments, the taps of `-uiDo`, the debug log |
-
-What the logic reaches outside itself, it reaches through a protocol, so a
-test can put a fake there: `Services.alarm` (`AlarmScheduling`; the app's
-`Alarm`), `.ringer` (`AlarmRinging`; `Ringer`), `.sharing` (`ResultSharing`;
-`Sharing`), `.card` (`LockScreenCard`; `LiveActivity`), `.announce`
-(VoiceOver), and `.grids`, `.language` and `.alarmSound` (`DecisionSurfaces`,
-`LanguageChoosing`, `AlarmSoundChoosing`), whose own are in the library;
-`AppClock.source` (`CookClock`); and `Stores.store` (`KeyValueStore`), which
-takes a write only with a `Stores.Pass` that only `Stores` can make.
-`ActualEggTimerApp.init` fills them before anything runs.
-
-Not moved, because each needs a framework only an iPhone has: `Alarm`
-(UserNotifications), `Ringer` (AVFoundation, UIKit), `Sharing` (App Attest),
-`LiveActivity` (ActivityKit), `ResultsExport` (the share sheet's
-Transferable), and the views.
-
-`Tests/EggTimerAppTests` drives them on a clock the test moves, with every
-service a fake: a cook from Eggs in to Done through `Cook`, the pull rung in
-the app with no notifications allowed, a relaunch picking up a stored cook
-past its pull, Start again logging an unanswered egg before the stored cook
-is cleared, nothing written under a newer build's mark, and every write of a
-whole cook through `Stores` (the runtime twin of `test/iosStores.test.ts`).
 
 ## The app
 
@@ -225,346 +109,124 @@ open ios/ActualEggTimer.xcodeproj
 The project file is **generated, not committed**. `project.yml` is the source of
 truth and fits on a screen; a pbxproj is three thousand lines of machine-written
 XML that every branch conflicts on and nobody reviews. `ActualEggTimer.xcodeproj`
-is gitignored — run `xcodegen` after cloning, and after any change to targets,
-sources or settings. So are `Widget/Info.plist` and `App/Info.plist`, which
-xcodegen writes from the same file (see **The Live Activity** below for why that one cannot be generated
-by the build system instead).
+is gitignored — run `xcodegen` after cloning, after adding or removing a file,
+and after any change to `project.yml`. So are `Widget/Info.plist` and `App/Info.plist`, which
+xcodegen writes from the same file (`GOTCHAS.md` says why the widget's cannot be
+generated by the build system instead).
 
-The screen carries the whole model, laid out as the web's (UI.md):
+The screen is the web's, one screen for setting up, boiling and correcting a
+cook, and `UI.md` describes it, with what differs on iOS. The kitchen's
+settings are a page away because the defaults are right for most people most
+mornings, and a first-time user should not have to answer six questions to
+boil an egg.
 
-- the doneness slider, with the peak yolk in its heading
-- one tappable sentence for what changes from egg to egg: how many eggs and the
-  egg (a size class or a weight), fridge, room (with the room's temperature) or
-  custom, cold start (the default), boiling water or a 58 °C bath, and ice bath,
-  cold tap, a bowl of water or the counter
-- a pushed **Settings** page for the kitchen: units, language, altitude, water,
-  keep boiling or heat off with the lid on, the probe, the room, and what it has
-  learned; and a **Help** page
-
-The kitchen's settings are a page away because the defaults are right for most
-people most mornings, and a first-time user should not have to answer six
-questions to boil an egg.
-
-Three behaviours are taken from the web app rather than reinvented, and all
-three are the model refusing to lie:
+Two behaviours are taken from the web app rather than reinvented, and both are
+the model refusing to lie:
 
 - **The slider clamps to what is reachable.** Ask for a jammy yolk while resting
   the egg on the counter and it snaps to the softest that carryover actually
   allows, and says why in a sentence. Ask for anything at all with the heat off
   in too little water and the start button goes dead, because that pan never
   sets the white.
-- **One screen, open to correction.** Setting up and boiling are one layout
-  (`UI.md` §3): the slider and the setup
-  sentence stay on screen while the egg cooks, showing the cook's own
-  choices, and every clause, the slider and Settings' pot rows correct it -
-  "it was always like this", the cook planned again from its start, the
-  alarms and the Lock Screen card following. `Edits.swift` decides when a
-  change is committed (on release of a drag or a held − or +, after a 1.5-s
-  settle of a tap). Beside the sentence, `EggSectionView.swift` draws the egg
-  in cross-section (`EggSection` in core): the egg aimed
-  for while idle and while a change is in hand, the live egg while it cooks,
-  and the egg as it ran at Done, the web's egg drawn the same way.
-  `-sectionAhead <s>` on a debug build draws it that far on, for a screenshot
-  of a cook part done (`Screenshots.swift`).
-- **A cold start is provisional until you tap the boil.** The countdown says so.
-  `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
-  uses — so one deadline covers the ramp and the boil together, and tapping
-  "Rolling boil" re-solves the cook and moves it. The button, with the hint
-  above it, asks for the whole surface rolling because tapping at first
-  bubbles under-measures by 15-25%. If the
-  hob is slower than assumed, the estimate is pushed out rather than counting
-  down to an alarm for an egg that has not started cooking.
+- **A cold start is provisional until you tap the boil.** `t = 0` is the egg
+  going into the cold pan, the same `t = 0` the physics core uses, so one
+  deadline covers the ramp and the boil together, and tapping "Rolling boil"
+  plans the cook again. If the hob is slower than assumed, the estimate is
+  pushed out rather than counting down to an alarm for an egg that has not
+  started cooking.
 
 The measured time to boil is remembered per water volume and blended with what
-was already known, so one odd run — lid off, pan half empty — does not dominate.
+was already known, so one odd run — lid off, pan half empty — does not
+dominate.
 
-### The third start mode answers, and then says not to
+### Sous-vide answers, and then says not to
 
-The Start control has three positions and the solver has two. Sous-vide is not a
-cook this pan solver can time at all, so it is answered by `sousVideEstimate`
-instead — the isothermal limit, which needs no integration: the centre
-equilibrates on the sphere's own timescale and everything after that accumulates
-dose at one constant rate.
-
-The branch is taken FIRST, before anything is solved for. That ordering is the
-whole of the fix the review asked for on the web side, where the branch ran
-*after* a full hot-start solve and after the stats row had been painted, so the
-app paid for an answer it discarded and left half of it on screen. Here it means
-`Planner.recompute` returns without starting a task, `solution` goes nil, and the
-nil solution is already what disables the start button — so the dead action on
-that screen needs no second rule.
-
-What it says is the honest answer and nothing more:
-
-- **Start time: Yesterday**, at the wall-clock time you would have had to begin.
-  A 58 °C bath needs about 22 h 43 min for a 68 g egg, because the white's dose
-  target lives at 80 °C.
-- **"water at 58 °C"** at the end of the doneness slider's heading, where it
-  otherwise says "peak yolk". In a bath held at 58 °C the yolk does end up at
-  58 °C, which is the point, but the label still has to say which number it is.
-- **The warning.** A 58 °C bath is below the temperature at which egg white
-  sets, so the white stays loose however long you leave it. The screen says so.
-- **`equilibrate_s` is deliberately not on screen.** It is the one output the
-  module's own caveat disowns: the model is conduction-only, and below 60 °C the
-  white is liquid and convecting, so that number is too long by an unknown
-  amount. The hold times do not depend on any of that.
-
-The words — "Yesterday", "Last Tuesday", "2 weeks ago" — are in the catalogue
-(`copy/en.json`); the core's `longDuration` and `startPhrase` choose which, and
-only the calendar arithmetic stays in the app's `SousVide.swift`. The core carries
-the decision and the catalogue carries the sentence. `StartChoice` is an app type for the same reason, which is why
-`StartMode` in the core is still a pair.
+The Start control has three positions and the solver has two. Sous-vide is
+answered by `sousVideEstimate` instead, and its answer, a start time in the
+past for a 58 °C bath, is the model's real conclusion, not the code declining
+to work (`SousVide.swift`, `src/core/sousvide.ts`). `equilibrate_s` is
+deliberately not on screen: it is the one output the module's own caveat
+disowns, since below 60 °C the white convects and the conduction-only model
+makes that number too long by an unknown amount.
 
 ### It asks how the egg was
 
-At PULL the app asks the cook to say when the eggs came out - "They're in the ice
-bath", "They're under the tap", "They're out" - as the web app does, and the record
-calls that tap a measured pull; with no tap the grace runs out and the pull is only
-assumed. After the cook it asks which YOLK the cook got (runny, soft, jammy, fudgy,
-hard) and how the WHITE was (runny, tender, firm), both every time and neither required. That is
-not a poor interface for a rating — it is the whole measurement. Ordinal feedback is
-worth one to two bits per egg, and asking for a number out of ten would collect
-precision that is not there. The likelihood is INFERENCE.md §3's ordered probit.
+After the cook it asks which yolk the cook got and how the white was, both
+every time and neither required. That is not a poor interface for a rating — it
+is the whole measurement. Ordinal feedback is worth one to two bits per egg,
+and asking for a number out of ten would collect precision that is not there.
+The likelihood is `INFERENCE.md` §3's ordered probit, and the time is chosen
+from the posterior by expected loss (§8).
 
-The answer goes into the particle filter. Building the dose surface for the cook
-that was actually performed costs about a second of arithmetic, so it runs in a
-detached task, once, after the egg has been eaten and never while anything is
-being adjusted — which is the entire reason the surface is cached rather than
-simulated per particle. (There is also one decision surface per pot, built off
-the main actor once the inputs settle.)
-
-Before any feedback the filter's prior mean IS the literature value, so the app
-is fully useful on day one and calibration is purely additive. Afterwards the
-suggested time moves: a room-temperature 62 g egg rested on the counter at fudgy
-went 4:07 to 4:29 on the first "too soft", when the time was still solved at
-the posterior mean (not re-measured since). The posterior's spread on alpha plateaus near 3%
-rather than collapsing, which is the honest answer — repeated agreement is
-consistent with a range. It is not shown; the sentence under the time says which
-way a miss is likely to go.
-
-Settings has Forget, in both apps, which asks first. The posterior recovers on its own after a few more eggs, so this is for people who
-would rather not wait.
+The dose surface for the cook actually performed costs about a second of
+arithmetic, so it is built once, off the main actor, after the egg has been
+eaten and never while anything is being adjusted — which is the entire reason
+the surface is cached rather than simulated per particle.
 
 ### It can share, if the cook says so
 
-`Sharing.swift` does what the web's `src/ui/share.ts` does, over the same
-state in core (`Share.swift`, `src/core/share.ts`: what is kept, how each step
-moves it, and how a damaged copy is read) (E6;
-INFERENCE.md §7, COLLECTIVE.md §1): off until the cook turns it on in
-Settings, where the consent sits beside the switch; then every final egg in
-the log, the ones from before included, goes to the endpoint on the web app's
-site, in order, each copy carrying the cook's random id; and Delete what I've
-sent deletes everything under every id this phone has used, asking again at
-each launch until the server confirms. It is the app's only network call:
-`URLSession`, HTTPS, to `actualeggtimer.netlify.app` (a debug build can point
-it at `npm run serve:dev` with `-shareServer`).
+`Sharing.swift` is the web's `src/ui/share.ts` over the same state in core
+(`INFERENCE.md` §7), and its header says what it sends and when. It is the
+app's only network call: `URLSession`, HTTPS, to the web app's site (a debug
+build can point it at `npm run serve:dev` with `-shareServer`).
 
-What iOS has that the web cannot is App Attest. The first
-time an id sends, the phone makes a key in its Secure Enclave and has Apple
-attest it, bound to the id (`clientDataHash = SHA256(uid)`); every egg then
-carries an assertion over its body, and the server files it in the attested
-tier, which outweighs the web in the fit. No entitlement is
-set: a development build uses Apple's sandbox, TestFlight and the App Store
-use production, and the server takes both, but files a development build's
-eggs in the open tier, as if unsigned: only a build
-from TestFlight or the App Store counts as genuine. The simulator cannot attest at
-all, so its eggs go to the open tier; that path was checked end to end, and
-the attested one has not yet run on a phone.
-
-The taste offset absorbs the difference between the user's palate and the
-nominal doneness scale so that `alpha` does not have to, which keeps the physics
-honest. From the first egg on, the time is chosen over every particle - taste,
-noise and white offset included - by expected loss (`Decide.swift`,
-INFERENCE.md §8).
-
-It agreed with the web app on screen, measured when the time was still solved
-at the posterior mean and the peak white was still shown. 62.3 g, fridge, ice bath, jammy gave **7:21** with a peak yolk of
-65 °C and a peak white of 81 °C, against 441.28 s, 64.8 °C and 80.6 °C from
-`solveCookTime` in TypeScript. The same egg at 400 m
-gives **7:31** and a 98.7 °C boiling point, against 450.9 s and 98.7 °C. A
-room-temperature egg on a cold start gives **10:20**, against 620.45 s.
+What iOS adds is App Attest. No entitlement is set: a development build uses
+Apple's sandbox, TestFlight and the App Store use production, and the server
+takes both, but files a development build's eggs in the open tier, as if
+unsigned (`DECISIONS.md` 68). The simulator cannot attest at all, so its eggs
+go to the open tier too.
 
 ## The alarm
 
-`Alarm.swift` is the reason this is a native app rather than a bookmark.
-
-A home-screen web app's timers are suspended the moment the screen locks, and
-WebKit has never shipped a way to schedule a local notification — so the web
-version can only ring while you are looking at it, which is exactly when you do
-not need it. Nothing of ours runs in the background either. The difference is
-that a native app can hand the system **absolute fire dates** up front and let
-it do the waiting.
-
-Two are scheduled at "Eggs in": the pull, which names the cooling chosen
-("Straight into the ice bath…"), and the end of the cooling step, at the yolk's
-modelled peak (skipped when the egg is resting on the counter, where there is
-nothing to time). With the probe on, the second asks for the reading instead,
-and tapping "They're in…" re-times it from the real pull.
-Cancelling removes both. A cold start reschedules them when the boil is tapped
-and on every revision. The app shows the wall-clock time the alarm is set for,
-and reads the pending count back from `UNUserNotificationCenter` rather than
-assuming — an egg timer that claims an alarm it has not got is worse than one
-with no alarm at all.
-
-A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the cook's alarm sound plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in EggTimerApp decides, under `swift test`.
-
-The alarm sounds are files, `App/Sounds/alarm-<sound>-<moment>.caf`, one per sound and moment, which the notification plays once and `Ringer` loops. They are rendered from the web's `src/ui/alarmSounds.ts` by `npm run sounds` (macOS; `tools/sounds.ts`), never edited by hand: IMA4 at 22.05 kHz, whole periods of the pattern, under the 30 s past which iOS plays its default sound instead. Which sounds there are, their order, the default and their timing are `AlarmSound` and its functions in EggTimerCore, held to `src/core/sounds.ts` by `fixtures/sounds.json`; the cook's choice is `AlarmSoundChoice.swift`.
+`Alarm.swift` is the reason this is a native app rather than a bookmark. A
+home-screen web app's timers are suspended the moment the screen locks, and
+WebKit has never shipped a way to schedule a local notification, so the web
+version can only ring while you are looking at it. A native app hands the
+system **absolute fire dates** up front and lets it do the waiting. The app
+reads the pending count back from the system rather than assuming: an egg
+timer that claims an alarm it has not got is worse than one with no alarm at
+all. Where no notification holds a deadline, `Ringer.swift` rings in the app
+while it is on screen.
 
 Both fire at **`.timeSensitive`** interruption level, which is what gets them
-through a Focus mode. An egg is time-sensitive in the literal sense the name was
-coined for: thirty seconds late is a different egg. That level needs the
+through a Focus mode. That level needs the
 `com.apple.developer.usernotifications.time-sensitive` entitlement, which needs
 signing, which needs the Apple Developer Program — see **Signing** below.
 Unsigned simulator builds carry no entitlement and fall back silently to the
 default level, which is the right failure: quieter, never wrong.
 
-`Cook.swift` runs the cook as core's state machine (`step`, `Step.swift`): it
-holds a `CookState` (the `RunningCook`, its start and the log of what it was
-told and observed, its plan and the lean), and feeds `step` each thing that
-happens - a tap, a correction, a tick, a surface landing - one at a time, off
-the main actor, each with its own moment. It carries out what the step asks
-(write the cook down, hold the alarms the plan sets, ring where no
-notification already rang, stop a ring, remember the boil, log the egg's
-record, forget the cook, send what is final), builds what it waits for (its
-pot's surface, the calibration before this egg and a surface on it, for a
-correction after the pull), and keeps the Live Activity with the plan. The
-readout and the buttons are core's `readoutAt` at the frame's moment. Every
-phase is derived from the plan's deadlines and the clock (`phaseAt`) rather
-than counted down, so a ticker that stops — backgrounded, locked, or simply
-busy — cannot make the egg wrong. The ticker counts nothing down: it sends a
-tick only when the clock has something to decide (the events it writes, the
-slow hob's next lengthening, a cook too old), and pushes the card's changes
-(at Done it goes on every 5 s, for the hour the egg stays open); the screen
-redraws from its own `TimelineView`. A cook that ends before its record can
-be made waits off the screen, stored, until it is logged and forgotten. This
-is the native form of the same discipline the web app uses when it recomputes
-from timestamps on `visibilitychange`.
+The alarm sounds, `App/Sounds/alarm-<sound>-<moment>.caf`, are rendered from
+the web's sounds by `npm run sounds` (macOS; `tools/sounds.ts` says how), never
+edited by hand.
 
-A cook in progress is written to `UserDefaults` (`cookInProgress.v4`, through
-JSONEncoder so every double comes back to the bit) and restored on launch. From
-the pull it carries the plan as it ran (core's `asRan`), so the record and Done
-are the cook as it ran whatever a later plan reads.
-Without that, a force-quit or a crash leaves the alarm with the system and the
-Live Activity on the Lock Screen while the app itself reopens to an idle screen —
-which teaches the user to distrust an alarm that was, in fact, perfectly
-correct. A restored cook's alarms are set again from its plan, since a slow hob
-planned later pulls at another moment. A cook core calls too old (`cookTooOld`:
-an hour past its end, or two hours still heating) is ended instead of
-restored, as Start again ends it, its alarms cancelled and its card ended;
-that egg has been eaten, and if it was cooked through it is logged. A
-cook this build cannot read is dropped, its alarms cancelled and its card
-ended. One an earlier build wrote (0.3's and 0.4's `cookInProgress`, an
-earlier 0.5 build's `cookInProgress.v2`) is deleted at launch with every
-other key the app no longer uses (`Stores.retiredKeys`), its notifications
-left to ring and its card ended to go at its own end. A card is read in this
-build's shape only (EggTimerShared's `CookActivity.swift`): one 0.3 began, with its
-description in the attributes, is not read, and lasts as long as the system
-lets any card.
+`Cook.swift` runs the cook as core's state machine, and derives every phase
+from the plan's deadlines and the clock rather than counting down, so a ticker
+that stops — backgrounded, locked, or simply busy — cannot make the egg wrong.
+A cook in progress is stored and picked up at launch, because a force-quit
+leaves the alarm with the system and the card on the Lock Screen, and an app
+that reopened to an idle screen would teach the cook to distrust an alarm that
+was, in fact, correct.
 
 ## The Live Activity
 
-`Widget/CookLiveActivity.swift` is the feature that makes a native egg timer
-worth having rather than merely correct. The notification says *when*; the Live
-Activity says *how long left* without unlocking anything, which is the question
-you actually have while standing at the hob with wet hands.
-
-Every countdown is `Text(timerInterval:)`, drawn and ticked by the system from
-two absolute dates. Nothing in the widget runs once a second and nothing in the
-app has to wake up to keep it honest — the same trick as scheduling the alarm at
-an absolute date, applied to the display. The app pushes a new state only when
-what the card shows changes: the **stage**, a deadline that moved, or the cook's
-description, which is in the state so a plan made again updates the card in
-place. While the slow hob has lengthened the guess, the heating card counts the
-time heated up (`countsUp`) rather than down to a pull that keeps moving.
-
-Three things cost time here and are worth writing down:
-
-- **`Activity` is a non-Sendable class whose methods run off the main actor.**
-  Holding one in a `@MainActor` object and awaiting on it is a data race, and
-  Swift 6 refuses to compile it. So nothing holds the handle: every call asks
-  `Activity<CookActivity>.activities` what is running and acts on that. This is
-  the same discipline the alarm uses when it reads its pending count back from
-  the system instead of assuming, and it cleans up a card left behind by a
-  force-quit for free.
-- **A widget extension needs a real `Info.plist`.** `NSExtension` is a nested
-  dictionary, and the `INFOPLIST_KEY_*` settings that generate a plist can only
-  express flat values — the key is silently dropped and the result is an
-  extension the system does not recognise as a widget at all. xcodegen writes
-  `Widget/Info.plist` from `project.yml` instead.
-- **The extension's version must match the host app's** or installation is
-  refused, so both read `$(MARKETING_VERSION)` and `$(CURRENT_PROJECT_VERSION)`.
-
-One layout note: a system timer view does not truncate when it is squeezed, it
-draws dashes where the digits should be — a countdown that tells you nothing. On
-the Lock Screen it therefore takes the width it needs first, and the description
-wraps around it.
+`Widget/CookLiveActivity.swift` puts the countdown on the Lock Screen and in
+the Dynamic Island: the notification says *when*, the card says *how long
+left* without unlocking anything. Every countdown is `Text(timerInterval:)`,
+ticked by the system from two absolute dates, so nothing has to wake up to keep
+it honest. Three things that cost time here — `Activity` is not Sendable, a
+widget extension needs a real `Info.plist`, and its version must match the
+app's — are in `GOTCHAS.md`.
 
 ## The fast clock and the scripted checks
 
-Every read of the time a cook depends on goes through `AppClock.swift`. A
-Release build is the system's clock and nothing else. A Debug build takes
-`-clockAt <epoch s>` (cook time at launch) and `-clockSpeed` (60 runs it sixty
-times as fast; 0 freezes it). A clock so launched can be stepped while the app
-runs: a line `<n> <at> <speed>` written to `Library/Caches/aet.clock` in the
-app's container moves cook time to `at` and runs it on at `speed`, and the
-debug log says `clock` with its `n` once it has. Under a running clock the
-notifications fire at the scaled interval; under a frozen one, which reaches
-no deadline by itself, a day later than that, so they stay pending and cover
-their deadlines. The Lock Screen card, which the system counts on its own
-clock, gets the real moments the deadlines come: it reaches zero with the app
-but counts real seconds (8:00 to go reads 0:08 at ×60). Sharing sends
-nothing, and a record made under it carries ` (debug clock)` after its
-`appVersion` and is never sent, nor anything logged after it, until Forget
-everything.
-
-```sh
-npm run ios:e2e                    # every scenario, about ten minutes
-npm run ios:e2e -- relaunch-*      # some; --list names them
-```
-
-`tools/iosE2e.ts` (TypeScript, compiled with the other tools by
-`tools/build.mjs`, which `npm run ios:e2e` runs first) builds Debug, makes a
-simulator of its own, and for each
-scenario installs afresh, drives the app by launch argument (`-uiScreen
-heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
-`Screenshots.swift`, never screen coordinates, the one screen's among
-them: `eggsIn@launch+1`, `set:size=3@30`, `drag:0.3/0.1@pull-60` and
-`release`, `start:+3`, `stillIn`, `stillOut`, `open:settings`), terminates
-and relaunches it, and asserts on the debug log (`Library/Caches/aet.log`,
-one event a line, each a JSON object, `{"t":<cook time, epoch s>,"ev":"plan",
-"pull":…}`, its fields typed as `Screenshots.Event` declares them: phases, plans, the stored cook, the egg log, alarms scheduled, read back and
-delivered, rings, cards with their description, and `settled` when the cook
-has nothing under way; for the one screen also where the slider, the
-sentence and the egg sit, which egg is drawn, each change in hand and each
-correction committed, what the readout and the slot say, each frame of the
-readout with the moment it was drawn for, whether "Most likely" shows) and on
-the prefs plist through plistlib. A scenario at the
-largest text size passes UIKit's own `-UIPreferredContentSizeCategoryName
-UICTContentSizeCategoryAccessibilityXXXL`. It deletes the device at the end. A tap's settle is
-the host's 1.5 s, as a finger's would be; the cook's clock stays frozen
-through it.
-
-The clock is frozen at every moment a scenario checks, and stepped from one
-to the next: launched 14 s into the pull's 20-s grace, the app is 14 s into
-it however long the launch took. The script waits for the log to say what
-happened, never for the host's seconds to pass, so a slow or loaded machine
-takes longer and checks the same; a wait's timeout (`AET_E2E_WAIT`, 60 s)
-only says when to give up. After every step it waits for `idle` with the
-step's number (`Screenshots.idle(after:)`): the cook has ticked at the new
-moment and after the last tap, `-uiDo` has nothing more due, nothing is under
-way in the cook, the planner or a change in hand, and the page has been drawn
-again at the moment. So a check that something did not happen (no ring, no
-plan, nothing committed) is made once the app is done, not after a second of
-the host's that a slow runner can spend before the app has begun; a step to
-where the clock already stands (`tick`) is how a scenario waits for that
-without moving it. What the screen says is read the same way, after a
-`tick`. Moments the clock was stepped to are checked to a
-millisecond, a deadline planned again at a relaunch to a second. Notifications
-are checked as scheduled, for which cook time, and pending; one scenario
-(`asleep`) leaves one to the system, at ×1 with the app killed, and gives it
-15 s past its moment to be delivered. Not in `npm run verify` (it needs Xcode
-and a simulator); CI runs it after the iOS build, `ios-e2e` in
-`.github/workflows/verify.yml`, not yet blocking.
+`npm run ios:e2e` (about ten minutes) drives a Debug build on a simulator of
+its own; the header of `tools/iosE2e.ts` says how to run some of it, and how it
+waits. The clock it freezes and steps is `AppClock.swift`'s, whose header says
+what a Debug build's clock can do and what stays on the system's. The launch
+arguments, the taps of `-uiDo` and the debug log the checks read are in the
+header of `Screenshots.swift`; both are in `ios/EggTimerCore/Sources/EggTimerApp`.
+It needs Xcode and a simulator, so it is not in `npm run verify`; CI runs it
+after the iOS build.
 
 ## Signing
 

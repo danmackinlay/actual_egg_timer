@@ -1,6 +1,5 @@
 /**
- * Sharing (src/core/share.ts, and the web's src/ui/share.ts; COLLECTIVE.md
- * section 1): the id, the cursor into the log, sending what is final and only
+ * Sharing (src/core/share.ts, and the web's src/ui/share.ts): the id, the cursor into the log, sending what is final and only
  * that, and deleting everything this browser has sent, under every id it has
  * used. fixtures/share.json holds iOS to the same moves.
  */

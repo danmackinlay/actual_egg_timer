@@ -11,7 +11,7 @@
   publish = "_site"
 
 # The one function: the collection endpoint for cooks who turn sharing on
-# (E6; INFERENCE.md section 7, COLLECTIVE.md section 1). netlify/functions/
+# (INFERENCE.md section 7). netlify/functions/
 # eggs.mts binds server/eggs.ts to the site's Blobs store; Netlify bundles it
 # from source with esbuild, imports of ../src/core included, so `build:site`
 # does not build it. Its routes (/api/eggs, /api/attest) and its per-address

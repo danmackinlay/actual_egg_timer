@@ -11,8 +11,8 @@ enum Route: Hashable {
     case help(HelpSection?)
 }
 
-/// The egg: the web's one screen (UI.md section 3, design/one-screen.md
-/// section 2), and the phase machine that runs it.
+/// The egg: the web's one screen (UI.md section 3), the same in every phase,
+/// and the phase machine that runs it.
 ///
 /// One layout from idle to Done, top to bottom: the time, with the line
 /// under it and how sure I am; the hint and the action, with Cancel while a

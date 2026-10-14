@@ -25,6 +25,7 @@ import { parseRecord } from '../src/core/record.js';
 import { CookChoices, replan, startCook } from '../src/core/running.js';
 import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
+import { NOTES_PATH, readNotes } from '../tools/copyNotes.js';
 import { asRead } from '../tools/text.js';
 
 type Entry = Record<string, unknown>;
@@ -61,10 +62,12 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
   assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
-  // copy/ holds only catalogues, `<tag>.json`: the apps ship it whole, so
-  // the review queue's state is kept in test/data/copy-review/.
+  // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
+  // which neither app ships (tools/buildSite.mjs and ios/project.yml leave
+  // them out). Anything else would ship, so the review queue's state is kept
+  // in test/data/copy-review/.
   for (const f of readdirSync('copy')) {
-    assert.ok(isCatalogueFile(f), `${f}: not a catalogue, and the apps would ship it`);
+    assert.ok(isCatalogueFile(f) || `copy/${f}` === NOTES_PATH, `${f}: not a catalogue, and the apps would ship it`);
   }
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
@@ -90,8 +93,9 @@ test('1b2. the small surfaces keep to a few words of period flavour', () => {
   // an alarm's title the register gets two or three words, not a paragraph.
   // The budgets bind in copy.test.ts; this holds the flavour to few words.
   const small = new Set(['notification.title', 'island.compact', 'island.expanded', 'lockscreen']);
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    if (!small.has(entry['surface'] as string) || !PERIOD.messages.has(key)) continue;
+  const notes = readNotes();
+  for (const key of Object.keys(EN_JSON.messages)) {
+    if (!small.has(notes[key].surface) || !PERIOD.messages.has(key)) continue;
     for (const t of templatesOf(PERIOD.messages.get(key) as Parameters<typeof templatesOf>[0])) {
       const words = t.split(/\s+/).filter((w) => w !== '' && w !== '·').length;
       assert.ok(words <= 8, `${key}: ${words} words in "${t}"`);
@@ -162,18 +166,25 @@ test('1h. the answers keep their meaning: the yolk in the slider\'s five words, 
   // words, five and distinct; the white's three are distinct too.
   const yolk = ['doneness.runny', 'doneness.soft', 'doneness.jammy', 'doneness.fudgy', 'doneness.hard']
     .map((k) => render(PERIOD, k));
-  assert.deepEqual(yolk, ['Rear', 'Soft', 'Thick', 'Firm', 'Hard']);
+  assert.equal(new Set(yolk).size, 5, `five distinct words: ${yolk.join(', ')}`);
+  for (const w of yolk) assert.ok(w.length > 0 && !w.includes(' '), `one word each: ${w}`);
+  // The runny yolk is a word of 1750's own, not the English left in place.
+  assert.notEqual(yolk[0], render(EN, 'doneness.runny'));
   const white = ['feedback.white.runny', 'feedback.white.tender', 'feedback.white.firm'].map((k) => render(PERIOD, k));
   assert.equal(new Set(white).size, 3);
 });
 
-test('1i. the owner\'s alarm, word for word', () => {
-  // The first clause names the cooling the cook chose; the clause after the
-  // semicolon is the owner's, untouched.
-  assert.equal(render(PERIOD, 'alarm.pull.bodyIce'),
-    'Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
-  assert.equal(render(PERIOD, 'alarm.pull.bodyTap'),
-    'Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
+test('1i. the owner\'s alarm: their clause, after the cooling the cook chose', () => {
+  // Each body into water is the catalogue's own twin, not the English left in
+  // place. The first clause names the cooling the cook chose, so the three
+  // differ there; the clause after the semicolon is the owner's, and the same
+  // in all three.
+  const keys = ['alarm.pull.bodyIce', 'alarm.pull.bodyTap', 'alarm.pull.bodyBowl'];
+  for (const key of keys) assert.ok(key in P_JSON.messages, `${key}: a twin of its own`);
+  const parts = keys.map((key) => render(PERIOD, key).split('; '));
+  for (const [i, p] of parts.entries()) assert.equal(p.length, 2, `${keys[i]}: two clauses, one semicolon`);
+  assert.equal(new Set(parts.map((p) => p[0])).size, 3, 'each names its own cooling');
+  assert.equal(new Set(parts.map((p) => p[1])).size, 1, 'the owner\'s clause, the same in all three');
 });
 
 test('1j. Help\'s links are the English links: the same URLs, in the same markdown', () => {

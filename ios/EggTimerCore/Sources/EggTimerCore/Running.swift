@@ -1,7 +1,6 @@
 import Foundation
 
-/// A running cook: its start and the log of everything since
-/// (design/one-screen.md section 3 and 4).
+/// A running cook: its start and the log of everything since.
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
 /// part is for, and held to it by `fixtures/running.json` and
@@ -250,7 +249,7 @@ public struct RunningCook: Sendable, Equatable {
     /// When Start was pressed, whole ms since 1970: the record's id on the
     /// web. Never corrected.
     public internal(set) var idMs: Double
-    /// The nudge this cook drew (E8): 0 when sharing was off at the start.
+    /// The nudge this cook drew: 0 when sharing was off at the start.
     public internal(set) var nudgeS: Double
     /// The pans as remembered at the start.
     public internal(set) var boilMemory: BoilMemory

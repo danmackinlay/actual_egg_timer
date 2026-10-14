@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sharing's state (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): what
+/// Sharing's state (INFERENCE.md section 7): what
 /// a device that shares keeps beside its log, how each thing the cook does or
 /// the server answers moves it, and how a stored copy is read.
 ///

@@ -1,6 +1,5 @@
 /**
- * A running cook: its start, its choices and what it observed
- * (design/one-screen.md section 3 and 4).
+ * A running cook: its start, its choices and what it observed.
  *
  * A cook is its START (when the egg went in, and the choices then: what the
  * sentence, the slider and Settings' pot rows say) and a LOG of everything
@@ -199,7 +198,7 @@ export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
    *  web. Never corrected, so a cook logged from two tabs is one egg. */
   id_ms: number;
-  /** The nudge this cook drew (E8): 0 when sharing was off at the start. A
+  /** The nudge this cook drew: 0 when sharing was off at the start. A
    *  plan takes it where a time is chosen (`appliedNudge`). */
   nudge_s: number;
   /** The pans as remembered at the start, so a corrected water reads the
@@ -629,7 +628,7 @@ export function corrected(cook: RunningCook, choices: CookChoices, now_s: number
  *  would read a boil before the egg went in. So a cook who pressed Start as
  *  the pan went on, tapped the boil, put the eggs in then and corrects to
  *  boiling cannot move the start past that tap, and the start's panel has
- *  to say so with the limit (design/one-screen.md section 3). */
+ *  to say so with the limit. */
 export function latestStart_s(cook: RunningCook, now_s: number): number {
   let latest = now_s;
   const e = cook.events;
@@ -1321,8 +1320,7 @@ export function cookTooOld(plan: CookPlan, now_s: number): boolean {
 }
 
 /**
- * The id of the egg still open to correction (design/one-screen.md section
- * 4): the stored running cook's, `cook` with its `plan`, until it is too old
+ * The id of the egg still open to correction: the stored running cook's, `cook` with its `plan`, until it is too old
  * to pick back up; null when there is none. Every other egg in the log is
  * final, whichever tab asks, and may be sent; this one becomes final at
  * Start again, which stores another cook, or when it is too old.
@@ -1701,8 +1699,8 @@ function asRanOf(cook: RunningCook, plan: CookPlan): CookAsRan | null {
  *
  * Kept before any answer is folded, it is planned on the calibration before
  * this egg; an app must not keep one, or make a record, from a plan made
- * after this egg's own answer was folded (design/one-screen.md section 4,
- * "Never from its own outcome"): it holds the answer until the surface lands.
+ * after this egg's own answer was folded, which would score the model
+ * against what it already learned from the egg: it holds the answer until the surface lands.
  */
 export function keepAsRan(cook: RunningCook, plan: CookPlan): RunningCook {
   if (cook.asRan !== null || cook.events.pulled === null) return cook;
@@ -1748,8 +1746,8 @@ export function solutionAsRan(plan: CookPlan, ran: CookAsRan): Solution {
 }
 
 /**
- * A correction after the pull, as it ran (design/one-screen.md
- * section 4, "Never from its own outcome"): the corrected cook planned on
+ * A correction after the pull, as it ran, never from its own outcome: the
+ * corrected cook planned on
  * `before`, the calibration before this egg - the fold's own starting point
  * once the egg is answered, the calibration as it stands while it is not -
  * on `surface`, that calibration's surface for the corrected pot, and its

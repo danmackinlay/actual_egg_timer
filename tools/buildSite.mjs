@@ -6,7 +6,8 @@
 //
 //   _site/index.html, styles.css, site.webmanifest   from the repo root
 //   _site/app/                 the compiled scripts, from dist/ (below)
-//   _site/assets, copy, privacy                      copied as they are
+//   _site/assets, copy, privacy                      copied as they are, but
+//                              copy/*.notes.json, which no app loads
 //   _site/fixtures/population.json                   the prior's population
 //   _site/sw.js                (tools/precache.mjs; it must run last, since
 //                              a file copied in after it is not in its list)
@@ -68,7 +69,9 @@ for (const source of sources('src')) {
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, js.replace(MAP, '\n'));
 }
-for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, `${SITE}/${dir}`, { recursive: true });
+// The notes beside a catalogue are the tools' and the tests', never the page's.
+const shipped = (path) => !path.endsWith('.notes.json');
+for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, `${SITE}/${dir}`, { recursive: true, filter: shipped });
 mkdirSync(`${SITE}/fixtures`);
 copyFileSync('fixtures/population.json', `${SITE}/fixtures/population.json`);
 run('tools/precache.mjs');

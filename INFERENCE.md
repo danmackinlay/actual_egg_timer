@@ -3,9 +3,9 @@
 The design of the learning, and the facts of the model as built. Built: the
 record (§4), the ordered probit and the white offset (§3), the thermometer
 (§5), choosing the time under uncertainty, with the odds-shaded slider and
-the outcome summary (§8), and opt-in collection (§7, E6). Being built, from
-`COLLECTIVE.md`: the nudge (§8, E8) and the population fit (§9, E7). The owner's decisions are
-numbered in `DECISIONS.md`; the two measurements the design rests on are in
+the outcome summary (§8), opt-in collection (§7, E6), the nudge (§8, E8)
+and the population fit (§9, E7), which has yet to see a real egg. The
+owner's decisions are numbered in `DECISIONS.md`; the two measurements the design rests on are in
 `LOGBOOK.md` (21 September 2026) and re-run with `npm run rank` and
 `npm run probe`.
 
@@ -596,7 +596,8 @@ No name, no location, nothing about you - just the egg. The timer is still
 learning, so sometimes it will try a time a few seconds either way to learn
 faster. You can turn it off, and delete what you sent, whenever you like."*
 
-**Built (E6, 2 October).** `COLLECTIVE.md` §1 has every choice; in short:
+**Built (E6, 2 October).** The endpoint's code says what each route
+answers; in short:
 
 - **The endpoint** is `server/eggs.ts`, bound to Netlify Blobs by
   `netlify/functions/eggs.mts`: `POST /api/eggs` keeps an egg at
@@ -609,14 +610,23 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   the key attested for its id, and `open`, everything else - the web, and any
   iPhone that cannot attest. The attestation is bound to the id
   (`clientDataHash = SHA256(uid)`) instead of a server challenge
-  (`server/appAttest.ts`, tested on Apple's own sample).
+  (`server/appAttest.ts`, tested on Apple's own sample). **Only production
+  counts** (`DECISIONS.md` 68): a build installed from Xcode attests in
+  Apple's development environment, and its key is kept but its eggs go to
+  the open tier, exactly as if unsigned (`countsAsGenuine`); the fit's pull
+  reads each record's tier by the same rule (`countedTier`). No entitlement
+  is added: TestFlight and App Store builds attest in production whatever
+  it says. A failure to attest is never fatal; the egg goes to the open
+  tier.
 - **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
   `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
   goes (`DECISIONS.md` 59), then each egg once it is final, in order. "Start
-  learning again" makes a new id; Delete what I've sent deletes every id the
-  device has used and asks again until the server confirms. The consent is
+  learning again" makes a new id; Delete what I've sent asks first, as
+  Forget does, turns sharing off, deletes every id the device has used and
+  asks again at every launch until the server confirms. Turning sharing off
+  stops sending and deletes nothing (`DECISIONS.md` 69). The consent is
   the `share` draft, on screen beside the switch.
 - **Each record carries its forecast and `model`** (§4).
 - **Not yet**: the endpoint goes live with the next push; the attested path
@@ -893,8 +903,8 @@ monotone by themselves. Left for later.
 
 Not built: any per-cook loss.
 
-**How sure, in words (6 October 2026, `DECISIONS.md` 93; SHIP-0.5 A7).**
-On both screens since the `certainty` draft (SHIP-0.5 D1, 8 October 2026),
+**How sure, in words (6 October 2026, `DECISIONS.md` 93).**
+On both screens since the `certainty` draft (8 October 2026),
 where the odds profile also reads it at each level: the chance of the word
 asked shades the track, and a wild guess at either end is dotted (reach.ts).
 `certaintyAt` in `src/core/certainty.ts`, held to
@@ -1068,7 +1078,13 @@ whole pipe, and its check on simulated cooks.
   per old answer against -0.598 and -0.804. The two yolk questions are
   scored apart, since a score over five answers and one over three are not
   on one scale.
-- **The tiers with no attested eggs**: `DECISIONS.md` 2 read literally caps
-  the open tier at zero, so the first fit, if every egg comes from the web,
-  learns nothing. `--open-cap` changes it; the choice is the owner's
-  (`COLLECTIVE.md` §4).
+- **The tiers, since**: open results (the web, and anything unattested)
+  are kept but get no weight for now (`DECISIONS.md` 85; the default
+  `--open-power 0`), since an id is free to make and one bad actor can be
+  many ids. The machinery for a weight stays: a likelihood raised to
+  `--open-power`, capped at the attested tier's total (`DECISIONS.md` 2),
+  with the per-id log score (37) as the screen. Read literally, that cap is
+  zero with no attested eggs, so a first fit on web eggs alone learns
+  nothing; `--open-cap` changes it, and the choice is the owner's
+  (`PLAN.md`). The owner's trusted ids (82) count in full whatever tier
+  they came in, and on the attested side of the cap (`fit/README.md`).

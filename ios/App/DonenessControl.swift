@@ -10,7 +10,7 @@ import EggTimerShared
 /// The doneness word is on the ticks, so it is not drawn again; VoiceOver
 /// hears it with the temperature as the slider's value.
 ///
-/// In every phase, as on the web (design/one-screen.md section 2): while idle
+/// In every phase, as on the web: while idle
 /// it reads the controls' answer; while a cook runs, its plan's - the peak
 /// yolk, the texture, and until the pull the shading and the bracket, from
 /// its pot's surface (`SliderReading`).

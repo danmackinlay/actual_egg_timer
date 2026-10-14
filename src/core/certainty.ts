@@ -72,7 +72,8 @@ import { Posterior, predictCookTime, yolkWordProbabilities } from './infer.js';
 import { anchorNear } from './slider.js';
 import { DONENESS_ANCHORS, logYolkTarget } from './solve.js';
 
-/** How sure, in three words: the keys D1 will give words to. */
+/** How sure, in three words: keys, which the catalogue's `certainty.*`
+ *  messages put into words. */
 export type Certainty = 'veryCertain' | 'ballpark' | 'wildGuess';
 
 /** Nine times in ten: the mass the class and the interval are read at. */
