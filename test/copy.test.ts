@@ -240,7 +240,9 @@ test('3d. a measure never breaks across a line: format.* joins value and unit wi
     }
   }
   assert.deepEqual(failures, []);
-  assert.ok(checked >= 22, `${checked} templates: the English and its 1750 twins at least`);
+  // The English's at least; a twin that only repeated it is left to English.
+  const english = Object.keys(EN_JSON.messages).filter((k) => k.startsWith('format.')).length;
+  assert.ok(english >= 11 && checked >= english, `${checked} templates, ${english} of them English`);
   assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
 });
 

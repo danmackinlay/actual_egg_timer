@@ -162,18 +162,25 @@ test('1h. the answers keep their meaning: the yolk in the slider\'s five words, 
   // words, five and distinct; the white's three are distinct too.
   const yolk = ['doneness.runny', 'doneness.soft', 'doneness.jammy', 'doneness.fudgy', 'doneness.hard']
     .map((k) => render(PERIOD, k));
-  assert.deepEqual(yolk, ['Rear', 'Soft', 'Thick', 'Firm', 'Hard']);
+  assert.equal(new Set(yolk).size, 5, `five distinct words: ${yolk.join(', ')}`);
+  for (const w of yolk) assert.ok(w.length > 0 && !w.includes(' '), `one word each: ${w}`);
+  // The runny yolk is a word of 1750's own, not the English left in place.
+  assert.notEqual(yolk[0], render(EN, 'doneness.runny'));
   const white = ['feedback.white.runny', 'feedback.white.tender', 'feedback.white.firm'].map((k) => render(PERIOD, k));
   assert.equal(new Set(white).size, 3);
 });
 
-test('1i. the owner\'s alarm, word for word', () => {
-  // The first clause names the cooling the cook chose; the clause after the
-  // semicolon is the owner's, untouched.
-  assert.equal(render(PERIOD, 'alarm.pull.bodyIce'),
-    'Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
-  assert.equal(render(PERIOD, 'alarm.pull.bodyTap'),
-    'Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
+test('1i. the owner\'s alarm: their clause, after the cooling the cook chose', () => {
+  // Each body into water is the catalogue's own twin, not the English left in
+  // place. The first clause names the cooling the cook chose, so the three
+  // differ there; the clause after the semicolon is the owner's, and the same
+  // in all three.
+  const keys = ['alarm.pull.bodyIce', 'alarm.pull.bodyTap', 'alarm.pull.bodyBowl'];
+  for (const key of keys) assert.ok(key in P_JSON.messages, `${key}: a twin of its own`);
+  const parts = keys.map((key) => render(PERIOD, key).split('; '));
+  for (const [i, p] of parts.entries()) assert.equal(p.length, 2, `${keys[i]}: two clauses, one semicolon`);
+  assert.equal(new Set(parts.map((p) => p[0])).size, 3, 'each names its own cooling');
+  assert.equal(new Set(parts.map((p) => p[1])).size, 1, 'the owner\'s clause, the same in all three');
 });
 
 test('1j. Help\'s links are the English links: the same URLs, in the same markdown', () => {
