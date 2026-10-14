@@ -18,7 +18,7 @@ struct SettingsView: View {
     /// While a cook runs, the pot's rows - the altitude, the water, the eggs
     /// in the pan, the heat after the boil, the probe and the room - are its
     /// controls, and correct it as the sentence does; what I have learned
-    /// and sharing wait for it to end (design/one-screen.md, step 7).
+    /// and sharing wait for it to end.
     var cooking = false
     /// Whether the egg on screen is in the log and still open to correction
     /// (`Cook.eggOpen`): sharing holds it back.

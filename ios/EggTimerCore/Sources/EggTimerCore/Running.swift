@@ -1,7 +1,6 @@
 import Foundation
 
-/// A running cook: its start and the log of everything since
-/// (design/one-screen.md section 3 and 4).
+/// A running cook: its start and the log of everything since.
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
 /// part is for, and held to it by `fixtures/running.json` and

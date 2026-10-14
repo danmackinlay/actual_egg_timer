@@ -20,7 +20,7 @@ public final class AppModel {
     /// so a second tap cannot start a second cook.
     public private(set) var starting = false
     /// The egg a change in hand aims for, while a control is held during a
-    /// cook and for a moment after (design/one-screen.md section 5): drawn
+    /// cook and for a moment after: drawn
     /// in place of the live egg. Nil otherwise.
     public var aimView: SectionView?
 

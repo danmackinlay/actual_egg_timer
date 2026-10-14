@@ -1066,8 +1066,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
 /* ------------------------------------------------- a correction in hand */
 
 /*
- * Corrections mid-cook (design/one-screen.md sections
- * 3 to 5): every control on the one screen stays open after Start, and a
+ * Corrections mid-cook: every control on the one screen stays open after Start, and a
  * change to one is a correction, "it was always like this" - the cook's
  * choices replaced (core `corrected`) and the whole cook planned again from
  * its start.

@@ -349,8 +349,7 @@ would rather not wait.
 
 `Sharing.swift` does what the web's `src/ui/share.ts` does, over the same
 state in core (`Share.swift`, `src/core/share.ts`: what is kept, how each step
-moves it, and how a damaged copy is read) (E6;
-INFERENCE.md §7, COLLECTIVE.md §1): off until the cook turns it on in
+moves it, and how a damaged copy is read; `INFERENCE.md` §7): off until the cook turns it on in
 Settings, where the consent sits beside the switch; then every final egg in
 the log, the ones from before included, goes to the endpoint on the web app's
 site, in order, each copy carrying the cook's random id; and Delete what I've

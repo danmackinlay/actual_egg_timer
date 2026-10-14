@@ -448,9 +448,8 @@ function clampLitres(litres: number): number {
 /* ------------------------------------------------------------ the cook */
 
 /*
- * A cook in progress, so a reload does not lose the egg
- * (design/one-screen.md section 4, "What is stored"): core's `StoredCook`,
- * written and read as iOS writes and reads it (`storedCook`,
+ * A cook in progress, so a reload does not lose the egg: core's
+ * `StoredCook`, written and read as iOS writes and reads it (`storedCook`,
  * `readStoredCook`). The plan is derived from it again.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no

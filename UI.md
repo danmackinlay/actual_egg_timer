@@ -51,7 +51,7 @@ them out differently.
 ## 3. The screens
 
 **The one screen** (both apps since 8 October 2026; `DECISIONS.md` 91, 96
-to 98; `design/one-screen.md`). Setting up and boiling are one layout, from
+to 98). Setting up and boiling are one layout, from
 idle to Done: at the start nothing moves and nothing goes, and only the
 readout's words, its colours and the buttons change. Top to bottom, in every
 phase (the 1750 title page, when it is shown, above it all):
@@ -337,7 +337,7 @@ The owner's steer of 27 September, after using the first web preview
 ## 8. The prediction under the time
 
 **How sure I am** (the `certainty` draft, 8 October 2026; `DECISIONS.md` 93
-and 97; `design/one-screen.md` §6). Below the time display, in the
+and 97). Below the time display, in the
 direction's old place, one of three words from core's `certaintyAt` at the
 time on screen (`src/core/certainty.ts`, `INFERENCE.md` §8, "How sure, in
 words"), carried by `decideAnswer` while idle and by the running cook's plan

@@ -86,8 +86,7 @@ extension CookChoices {
     }
 }
 
-/// Corrections mid-cook (design/one-screen.md sections 3 to 5; the web's
-/// src/ui/edit.ts): every control stays open after Start,
+/// Corrections mid-cook (the web's src/ui/edit.ts): every control stays open after Start,
 /// showing the cook's own choices (the planner holds them while a cook runs,
 /// `Planner.adopt`), and a change to one is a correction, "it was always like
 /// this" - the cook's choices replaced (core `corrected`) and the whole cook

@@ -1,5 +1,5 @@
 /**
- * The collection endpoint (server/eggs.ts; COLLECTIVE.md section 1), driven
+ * The collection endpoint (server/eggs.ts), driven
  * against a map standing in for Netlify Blobs: an egg kept once and only
  * once, in the tier its assertion earns (attested only under a key from
  * Apple's production environment), refused when a phone's loader would

@@ -402,8 +402,7 @@ export function answerAt(
 /* ------------------------------------------------------------ the shading */
 
 /** How strongly the track is shaded at a level: the chance of the word asked
- *  there, over the best level's (design/one-screen.md section 7, 17), 0 to
- *  1. Relative, so a fresh install, never very certain anywhere, still shows
+ *  there, over the best level's, 0 to 1. Relative, so a fresh install, never very certain anywhere, still shows
  *  where this pan works best. */
 export interface Shade {
   level: number;

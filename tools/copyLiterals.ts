@@ -106,7 +106,7 @@ const NOT_COPY: Record<string, string> = {
   fromFridge: 'UserDefaults key',
   eggMassG: 'UserDefaults key',
   probeAsked: 'UserDefaults key',
-  // the running cook as stored (Cook.swift; design/one-screen.md section 4)
+  // the running cook as stored (Cook.swift)
   'cookInProgress.v2': 'UserDefaults key',
   'cookInProgress.v3': 'UserDefaults key',
   'cookInProgress.v4': 'UserDefaults key',

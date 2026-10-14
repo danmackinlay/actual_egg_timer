@@ -1,7 +1,6 @@
 /**
  * The setup sentence: the egg's setup as one line of prose whose clauses are
- * the buttons that open its choices, in every phase (design/one-screen.md
- * section 2): the settings' while idle, a running cook's own choices while
+ * the buttons that open its choices, in every phase: the settings' while idle, a running cook's own choices while
  * one runs (`state.controls`).
  */
 

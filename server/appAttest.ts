@@ -8,7 +8,7 @@
  * ASSERTION, with every egg: that key's signature over the body sent. The
  * server keeps the key and the count of signatures it has seen; an egg whose
  * assertion checks out goes to the attested tier, and everything else to the
- * open tier (COLLECTIVE.md section 1). Nothing here is fatal to an egg.
+ * open tier. Nothing here is fatal to an egg.
  *
  * The checks are Apple's, in Apple's order ("Validating apps that connect to
  * your server"), and `test/appAttest.test.ts` runs them against the sample
@@ -19,7 +19,8 @@
  * with `clientDataHash = SHA256(uid)` instead, which binds the attestation to
  * the id it is registered under, and nothing can make assertions for the key
  * without the phone it lives on. An egg timer does not warrant a round trip
- * more (COLLECTIVE.md section 3).
+ * more; revisit if the attested tier ever matters more than that. Apple's
+ * fraud receipt is not asked for either: nothing would read it.
  *
  * Node's crypto only: no X.509 or CBOR library. `cbor.ts` reads the objects,
  * and the few lines of DER below find the nonce in the certificate.
@@ -302,7 +303,9 @@ function attestation(input: AttestationInput): AttestedKey {
   const nonce = sha256(authData, input.clientDataHash);
   if (!same(certNonce(credDer), nonce)) throw new AttestError('4: the nonce does not match');
 
-  // 5. The key id is the hash of credCert's public key.
+  // 5. The key id is the hash of credCert's public key. The guide's
+  // "expected public key hash" is the key id, as its own sample shows, not a
+  // hash of the key computed again.
   const point = uncompressedPoint(cred.publicKey);
   if (!same(sha256(point), input.keyId)) throw new AttestError('5: the key id is not this key\'s');
 
@@ -319,7 +322,8 @@ function attestation(input: AttestationInput): AttestedKey {
   // 9. The credential is the key.
   if (a.credentialId === null || !same(a.credentialId, input.keyId)) throw new AttestError('9: credential id');
 
-  // 10-11. How the app was signed, and its build, where the OS says.
+  // 10-11. How the app was signed, and its build, where the OS says. Any
+  // non-empty build is taken: the guide's sample says "1", not "1.0".
   let category: number | null = null;
   let bundleVersion: string | null = null;
   if (a.extensions !== null) {

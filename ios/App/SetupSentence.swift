@@ -327,8 +327,7 @@ struct ClausePanel: View {
             : tr("controls.coolingWater.bowl.more", ["room": .text(assumed)])
     }
 
-    /// When the eggs went in, while a cook runs (design/one-screen.md
-    /// section 7, 20): a − and a +, a minute at a time, no later than now,
+    /// When the eggs went in, while a cook runs: a − and a +, a minute at a time, no later than now,
     /// the press of Rolling boil or the pull, no earlier than two hours
     /// before Start; when a press goes no further, the line under it says
     /// why, and the time it stopped at.

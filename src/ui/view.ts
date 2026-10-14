@@ -1,6 +1,6 @@
 /**
  * What the egg page shows, as plain data (`view(model, now)`): one layout
- * in every phase (design/one-screen.md section 2) - the readout, how sure I
+ * in every phase - the readout, how sure I
  * am, the slider with its shading and bracket, the sentence with the egg in
  * cross-section beside it, the slot and the buttons. While idle they are the
  * controls' answer, with the advice and the welcome; while a cook runs, its
@@ -277,9 +277,9 @@ function runningScreen(
   // from a plan of the cook as it would be.
   const aim = m.aim;
   // The warning line while a cook runs, until the pull: what the plan says
-  // of the level, as the idle screen says it (design/one-screen.md section
-  // 3: a correction that leaves the white unset gets the longest time this
-  // pan can give, and the slot says so), a refusal first. Then a restored
+  // of the level, as the idle screen says it (a correction that leaves the
+  // white unset gets the longest time this pan can give, and the slot says
+  // so), a refusal first. Then a restored
   // cook's warning, the opposite of a refusal, which only exists mid-cook,
   // and only while the cook is still in flight: at DONE the egg is out and
   // "keep this tab open" is advice about a deadline that has already passed.
@@ -457,8 +457,7 @@ function solutionShown(memo: ViewMemo, cook: RunningCook, plan: CookPlan): Solut
 /** What a running cook's plan says of how sure, as drawn: its certainty
  *  reading and outcome, and its pot's odds profile for the track's shading,
  *  as held (model.ts, `held`) while a new pot's surface is on its way,
- *  until the pull, when the time they were about has passed
- *  (design/one-screen.md section 7, 12). The white's line stays to the
+ *  until the pull, when the time they were about has passed. The white's line stays to the
  *  end; once the egg is out it is the cook's as it ran, not a plan made
  *  since, which may know how the egg came out. */
 interface RunningReading {
@@ -519,8 +518,7 @@ function certaintyView(
 /* -------------------------------------------- the egg in cross-section */
 
 /**
- * The egg in cross-section has three readings (design/one-screen.md section
- * 5), named on the drawing as `data-egg`:
+ * The egg in cross-section has three readings, named on the drawing as `data-egg`:
  *
  * - `aim`: the egg the settings on screen aim for, at the end of the
  *   cooling, the egg as eaten (`previewSection`): at idle, the controls' egg

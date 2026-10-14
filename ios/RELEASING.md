@@ -207,8 +207,8 @@ in App Store Connect, **App Privacy**:
 - Nothing else: no contact info, location, user content, usage data or
   diagnostics.
 
-**Owner's questions before submitting 0.4** (`SHIP-0.4.md` section B; the
-research of 3 October 2026 against Apple's App Privacy Details page):
+**The owner's answers, and one still to weigh** (the research of 3 October
+2026 against Apple's App Privacy Details page):
 
 - **Not linked** (the owner, `DECISIONS.md` 74). Apple asks whether data is
   linked to the user's *identity*. The id is random, made per install from
@@ -312,9 +312,9 @@ that the next `xcodegen` deletes. Script it instead.
 ### 5. Check the entitlement survived
 
 ```sh
-codesign -d --entitlements - --xml \
-  'build/ActualEggTimer.xcarchive/Products/Applications/Actual Egg Timer.app' \
-  | grep time-sensitive
+(cd build/ActualEggTimer.xcarchive &&
+  codesign -d --entitlements - --xml 'Products/Applications/Actual Egg Timer.app') |
+  grep time-sensitive
 ```
 
 A build that merely succeeded proves nothing here. If the App ID does not grant

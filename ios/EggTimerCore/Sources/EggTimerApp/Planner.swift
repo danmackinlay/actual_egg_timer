@@ -355,7 +355,7 @@ public final class Planner {
 
     /// The controls set to a running cook's own choices, as they stood when
     /// it was stored (a relaunch): what the controls show while it runs
-    /// (design/one-screen.md section 4). Neither saved nor
+    /// Neither saved nor
     /// solved for: a correction writes the settings it changes.
     func adopt(_ c: CookChoices) {
         applying = true

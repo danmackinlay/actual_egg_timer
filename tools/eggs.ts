@@ -1,5 +1,5 @@
 /**
- * The fit's data (E7; INFERENCE.md section 9, COLLECTIVE.md section 1): the
+ * The fit's data (INFERENCE.md section 9): the
  * shared eggs pulled down, simulated cooks with a known truth to check the
  * fit against, and the physics each egg needs, written out so the fit
  * (fit/, Python) never runs it.

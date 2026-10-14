@@ -877,8 +877,8 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 /* ---------------------------------------------------------------- views */
 
 /* Settings and Help are pages of their own; the egg's parts, and the
-   buttons under the time, step aside while one is open. In every phase
-   (design/one-screen.md section 2): while a cook runs, Settings' pot rows
+   buttons under the time, step aside while one is open. In every phase:
+   while a cook runs, Settings' pot rows
    correct it as the sentence does, and what does not belong to the cook -
    what I have learned, and sharing - waits for it to end. */
 .page { display: none; }
@@ -1068,7 +1068,7 @@ button.secondary {
 
 /* ----------------------------------------------------------- running view */
 
-/* One layout from setup to Done (design/one-screen.md section 2): at the
+/* One layout from setup to Done: at the
    start nothing moves and nothing goes; only the readout's words, its
    colours and the button change. The phase label is the instruction, so it
    reads in the foreground colour while a cook runs. */

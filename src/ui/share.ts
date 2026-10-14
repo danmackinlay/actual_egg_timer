@@ -1,8 +1,10 @@
 /**
- * Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
- * turns it on sends every egg in the log to the collection endpoint
- * (`server/eggs.ts`), the ones from before it was on included, and can
- * delete everything this browser has sent.
+ * Sharing (INFERENCE.md section 7): a cook who turns it on sends every egg
+ * in the log to the collection endpoint (`server/eggs.ts`), the ones from
+ * before it was on included, and can delete everything this browser has
+ * sent. The endpoint is on the page's own site, which the CSP's
+ * `connect-src 'self'` allows; it sends no CORS headers, so no other site's
+ * page can post to it from a browser.
  *
  * What is kept, in `aet.share.v1` beside the log rather than in it, and how
  * each step moves it - turned on and off, forgotten, deletion asked, an

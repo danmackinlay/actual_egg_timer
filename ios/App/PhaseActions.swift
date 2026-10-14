@@ -31,9 +31,9 @@ struct PhaseSlot: View {
     private var slot: some View {
         if phase == .heating || phase == .cooking, let line = runningWarning, !line.isEmpty {
             // While a cook runs, until the pull: what its plan says of the
-            // level, as the idle screen says it (design/one-screen.md
-            // section 3: a correction that leaves the white unset gets the
-            // longest time this pan can give, and the slot says so).
+            // level, as the idle screen says it: a correction that leaves the
+            // white unset gets the longest time this pan can give, and the
+            // slot says so.
             Text(line)
                 .foregroundStyle(.orange)
                 .appFont(.footnote)
