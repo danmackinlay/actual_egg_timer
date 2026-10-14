@@ -279,9 +279,7 @@ final class SolveLoop {
     private nonisolated static func solve(
         egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, profile: OddsProfile? = nil
     ) async -> Answer {
-        let a = Perf.time(.answerAt) { answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile
-        ) }
+        let a = answerAt(calibration, egg: egg, setup: setup, level: level, profile: profile)
         return Answer(
             solution: a.solution, verdict: a.verdict, lowOdds: a.lowOdds, setup: setup, level: a.level,
             profile: profile
@@ -348,7 +346,6 @@ final class SolveLoop {
     }
 
     private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
-        Perf.landed(question: question, interim: !snap, chosen: answer.decision != nil, odds: answer.profile != nil, cookS: answer.solution.result.cookTimeS)
         // What the idle screen shows, for the scripted checks: the time, and
         // whether it is decided on this pot's surface.
         Screenshots.log(.answer(

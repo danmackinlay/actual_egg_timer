@@ -82,9 +82,11 @@ public final class Cook {
     private var ticker: Task<Void, Never>?
     /// Starts and restores under way, whose alarms and card are being set.
     @ObservationIgnored private var busy = 0
+    #if DEBUG
     /// Ticks taken: a step's `idle` waits for a tick at its moment
-    /// (`Screenshots.idle(after:)`).
+    /// (`Screenshots.idle(after:)`), and a test for a tick at its clock's.
     @ObservationIgnored private(set) var ticks = 0
+    #endif
     @ObservationIgnored private var log = CookLog()
 
     init(planner: Planner, edits: Edits? = nil) {
@@ -166,10 +168,13 @@ public final class Cook {
         )
     }
 
-    /// Whether the ticker runs, and whether nothing is under way: no step,
-    /// nothing being built, no start, restore or read-back. What a step's
-    /// `idle` and the tests wait for.
+    #if DEBUG
+    /// Whether the ticker runs, for a step's `idle`.
     var ticking: Bool { ticker != nil }
+    #endif
+
+    /// Whether nothing is under way: no step, nothing being built, no start,
+    /// restore or read-back. What a step's `idle` and the tests wait for.
     var isSettled: Bool {
         stepping == nil && jobs.isEmpty && surfaces.idle && busy == 0 && alarms.readingBack == 0
     }
@@ -502,7 +507,9 @@ public final class Cook {
             // take a prompt's seconds.
             if let now = running, let plan { await card.start(now, plan, atS: AppClock.nowS) }
             guard running?.idMs == cook.idMs else { return }
+            #if DEBUG
             if restored { Screenshots.log(.restored) }
+            #endif
         }
     }
 
@@ -543,7 +550,9 @@ public final class Cook {
         let now = AppClock.nowS
         defer {
             if log.phase(phase(atS: now)) { logIfSettled() }
+            #if DEBUG
             ticks &+= 1
+            #endif
         }
         // Stepped only when the clock has something to decide (core's
         // `tickDue`, which the step asks too).
@@ -554,8 +563,10 @@ public final class Cook {
 
     /// Nothing under way, to the debug log.
     private func logIfSettled() {
+        #if DEBUG
         guard isSettled else { return }
         Screenshots.log(.settled)
+        #endif
     }
 
     // MARK: - Surviving a relaunch
@@ -617,7 +628,9 @@ public final class Cook {
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
         let s = made.step
         guard let after = s.cook, endedAtS(after) == nil else {
+            #if DEBUG
             Screenshots.log(.restoreTooOld)
+            #endif
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
@@ -626,10 +639,12 @@ public final class Cook {
             follow()
             return
         }
+        #if DEBUG
         Screenshots.log(.restore(
             phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))
+        #endif
         state = s.state
         need = s.need
         if let o = made.outcome { outcome = o }

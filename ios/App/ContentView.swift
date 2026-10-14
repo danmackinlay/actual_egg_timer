@@ -119,9 +119,6 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            // `-uiScrollAnchor 0.7`: open scrolled that far down the page,
-            // for a screenshot at the largest text sizes.
-            .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
             .barTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -203,14 +200,6 @@ struct ContentView: View {
     private func showScreenshotScene() {
         // The taps a script asked for, as each comes due.
         Screenshots.drive(model)
-        // A cook restored at Done, answered as soon as asked: before its
-        // pot's surface is built again, with `-uiAnswerAfter 0`.
-        if Screenshots.scene != "done", cook.phase == .done, let answer = Screenshots.answer {
-            Task {
-                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
-                model.answer(yolk: answer.yolk, white: answer.white)
-            }
-        }
         guard let scene = Screenshots.scene else { return }
         switch scene {
         case "settings": path = [.settings]
@@ -231,9 +220,6 @@ struct ContentView: View {
             Task {
                 await startedCook()
                 cook.skipToDone(ago: Screenshots.doneAgo)
-                guard let answer = Screenshots.answer else { return }
-                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
-                model.answer(yolk: answer.yolk, white: answer.white)
             }
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {

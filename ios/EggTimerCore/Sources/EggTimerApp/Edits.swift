@@ -162,6 +162,7 @@ public final class Edits {
 
     /// Previews being planned.
     @ObservationIgnored private var previewing = 0
+    #if DEBUG
     /// Whether a preview is being planned, or a wait has reached its moment
     /// and not yet done what it waits for: a step's `idle` waits for it
     /// (`Screenshots.idle(after:)`). A wait whose moment is still to come is
@@ -170,6 +171,7 @@ public final class Edits {
         let now = AppClock.nowS
         return previewing > 0 || [settling, previewWait, releasing].contains { $0.map { $0.atS <= now } ?? false }
     }
+    #endif
 
     /// A correction of when the eggs went in, in hand; nil for none, when
     /// the panel shows the cook's own (`shownStart`).

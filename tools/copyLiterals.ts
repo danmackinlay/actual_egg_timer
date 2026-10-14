@@ -19,8 +19,8 @@
  *   keys, never sentences; what it says is held by fixtures/wording.json;
  * - what a debug build alone compiles: the part of an `#if DEBUG` before
  *   its `#else` (the `#else` half is the release build's, and is scanned),
- *   and the debug files, Screenshots.swift and Perf.swift, which act only
- *   on launch arguments a release build never reads.
+ *   and the debug file, Screenshots.swift, which acts only on launch
+ *   arguments a release build never reads.
  *
  * A NOT_COPY entry that no scanned literal needs fails too, so the list
  * holds only what the code says now.
@@ -46,7 +46,7 @@ const DIRS = [
 /** Files a release build compiles but never runs: each acts only on launch
  *  arguments, which a release build does not read. */
 const DEBUG_FILES = new Set([
-  'ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift', 'ios/EggTimerCore/Sources/EggTimerApp/Perf.swift',
+  'ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift',
 ]);
 
 /** Literals that are not words on a screen, and why. Exact raw text. */

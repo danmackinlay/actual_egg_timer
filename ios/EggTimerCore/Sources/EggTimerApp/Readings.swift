@@ -263,13 +263,12 @@ extension AppModel {
                 whiteTargetMin: whiteTarget
             ), .ran)
         }
-        let clock = nowS + Screenshots.sectionAhead
         // In the water until the cook said the eggs were out, or until the
         // grace ran out with nobody saying, and on through the carryover.
         let assumedOut = plan.deadlines.cookEndS + pullGraceSeconds
-        let out = running.events.pulled?.outS ?? (clock >= assumedOut ? assumedOut : nil)
+        let out = running.events.pulled?.outS ?? (nowS >= assumedOut ? assumedOut : nil)
         let outS = out.map { $0 - start }
-        let elapsedS = clock - start
+        let elapsedS = nowS - start
         return (cache.live(
             egg: plan.egg, setup: plan.setup, startedAtS: start, params: params,
             toS: outS.map { min(elapsedS, $0 + Constants.carryoverWindow) } ?? elapsedS,
