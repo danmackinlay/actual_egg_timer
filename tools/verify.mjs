@@ -1,4 +1,4 @@
-// `npm run verify`: the gate before every commit that touches code.
+// `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 121).
 //
 // The build first, alone, since everything after it runs what it compiled.
 // Then the rest at once, each job's output held and printed whole under its

@@ -1,7 +1,8 @@
 # PLAN.md — where Actual Egg Timer stands
 
-The state of the build, what is next, and what waits on whom. Updated in the
-same commit as the work it describes. History is `git log` (`LOGBOOK.md`
+The state of the build, what is next, and what waits on whom. Brought up to
+date by the session that merges, not by each working commit (`DECISIONS.md`
+104). History is `git log` (`LOGBOOK.md`
 is frozen, `DECISIONS.md` 117); the rules for working here are `CLAUDE.md`;
 the last section says where everything else is.
 
@@ -10,8 +11,9 @@ the last section says where everything else is.
 line and what Netlify serves at actualeggtimer.netlify.app; what merged
 after the tag (the button's "Rolling boil", 112; the action under the time,
 113; the bracket's band, 114; the bowl of still water, 115) went out with
-later pushes of `main`, at the same version. 0.3 is kept on `0.3.x`; 0.4 never
-shipped, since 0.5 forked from it, and `0.4.x` is retired (102). Both apps are complete for one cook
+later pushes of `main`, at the same version. Work is on short-lived branches
+off `main`, and a release is a tag on it (120); `0.3.x` (0.3), `0.4.x` (never
+shipped) and `0.5.x` are history. Both apps are complete for one cook
 and for learning, and for many: opt-in sharing, the population a prior is
 drawn from and the nudge (E6-E8, `COLLECTIVE.md`) are in both. The web app
 (`src/`) and the iOS app (`ios/`) carry the same model, refusals, particle
