@@ -903,3 +903,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     a kitchen's range) and a natural place. Built `bowl-cooling`, merged
     `4f3251b`. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
+116. **The web sizes the action's row as iOS does** (the owner, 14 October
+    2026: "yes, make the web match iOS"). Whether the row stacks is decided
+    on the start's action, Rolling boil, Start again and the chosen
+    cooling's pull, not on every pull: on GitHub's Linux fonts an ice-bath
+    cook stays one row at 390 px, the two apps agree, and the bowl's label,
+    missing from the web's sizers, is in. A change of cooling, at idle or
+    as a correction mid-cook (96), may restack the row, in both apps.
+    Amends 113's "a 320 px web page": with Apple's fonts the ice bath and
+    the air fit one row there. Built `web-row-sizing`, merged `4b490a7`.
