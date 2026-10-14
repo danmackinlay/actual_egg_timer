@@ -11,7 +11,7 @@ extension AppTests {
     /// The app launched again on the store as the last left it: the cook
     /// picked up, and nothing under way.
     func relaunched(_ world: World) async -> AppModel {
-        let model = AppModel()
+        let model = world.model()
         model.appear()
         await world.quiet(model.cook)
         return model
@@ -26,7 +26,7 @@ extension AppTests {
         let world = World()
         world.clock.alter()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         let start = try #require(model.cook.running).startedAtS
@@ -54,7 +54,7 @@ extension AppTests {
         await world.until("the card ended at Done") { world.card.calls.last == .endAll }
         world.clock.set(cooled + 20)
         model.answer(yolk: .jammy, white: nil)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         world.clock.set(cooled + 40)
         model.startAgain()
         await world.settled(model.cook)
@@ -75,7 +75,7 @@ extension AppTests {
     /// pending.
     @Test func cancelWhileHeatingLeavesNothing() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         world.clock.advance(120)
@@ -88,7 +88,7 @@ extension AppTests {
         #expect(world.stored == nil)
         #expect(model.planner.kept.log.isEmpty)
         await world.until("the card ended") { world.card.calls.last == .endAll }
-        model.cook.killed()
+        await kill(model, world)
 
         let calls = world.card.calls.count
         let again = await relaunched(world)
@@ -103,11 +103,11 @@ extension AppTests {
     /// logged unanswered, with its forecast.
     @Test func doneRelaunchedNearTheHourEndsAtIt() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         try await toDone(model, world)
         let cooled = try cooledS(model.cook)
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.set(cooled + 3540)
         let again = await relaunched(world)
@@ -117,7 +117,7 @@ extension AppTests {
         world.clock.set(cooled + 3601)
         again.answer(yolk: .runny, white: nil)
         await world.settled(again.cook)
-        await world.until("the fold") { !again.planner.learner.draining }
+        await world.learned(again.planner)
         #expect(again.cook.running == nil)
         #expect(world.stored == nil)
         #expect(again.planner.kept.log.count == 1)
@@ -131,13 +131,13 @@ extension AppTests {
     /// that learned from it would plan it.
     @Test func answeredAtDoneARelaunchShowsTheCookAsItRan() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         _ = try await answeredAtDone(model, world)
         let peak = try #require(model.cook.shownPeakYolkC)
         let note = SliderReading(model, phase: .done).note(model.planner)
         #expect(!note.isEmpty)
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.advance(55)
         let again = await relaunched(world)
@@ -154,7 +154,7 @@ extension AppTests {
     /// heating, and ended at them.
     @Test func neverBoiledTheGuessLengthensToTwoHours() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         let start = try #require(model.cook.running).startedAtS
@@ -181,7 +181,7 @@ extension AppTests {
         let card = try #require(world.card.last)
         #expect(card.stage == .heating && card.up)
         #expect(abs(card.ends - (start + 7200)) <= 1)
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.set(start + 7150)
         let again = await relaunched(world)
@@ -199,12 +199,12 @@ extension AppTests {
     /// pending pull moved to it.
     @Test func relaunchedPastTheGuessThePendingPullMoves() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         let start = try #require(model.cook.running).startedAtS
         let was = try #require(world.alarm.pending["cook.pull"])
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.set(start + 652)
         let again = await relaunched(world)
@@ -226,7 +226,7 @@ extension AppTests {
             Cook.savedKey: Data(#"{"v":\#(format),"cook":{"id_ms":1}}"#.utf8),
             "calibration.v5": Data("{damaged".utf8),
         ]))
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         model.appear()
         await world.settled(model.cook)
@@ -247,24 +247,24 @@ extension AppTests {
     /// kept, and the cook forgotten.
     @Test func correctedAtDoneKilledThenRelaunchedTooOld() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         let cooled = try cooledS(model.cook)
         _ = try await correctedHeld(model, world)
         #expect(world.stored?.correctedAtS != nil)
         #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.set(cooled + 3700)
-        let again = AppModel()
+        let again = world.model()
         defer { again.cook.killed() }
         again.appear()
         #expect(world.log.events.contains(.restoreTooOld))
         await world.until("the corrected egg logged, the cook forgotten") {
-            world.stored == nil && !again.planner.learner.draining
-                && again.planner.kept.log.last?.egg.massG != first.egg.massG
+            world.stored == nil && again.planner.kept.log.last?.egg.massG != first.egg.massG
         }
+        await world.learned(again.planner)
         #expect(again.planner.kept.log.count == 1)
         #expect(again.planner.kept.log.last?.yolkWord == .jammy)
     }

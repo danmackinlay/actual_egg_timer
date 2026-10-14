@@ -242,9 +242,46 @@ final class Announced: @unchecked Sendable {
     func add(_ s: String) { lock.withLock { said.append(s) } }
 }
 
+/// The planners a test made, held weakly. The app's globals - the store,
+/// the clock, the services - are the next test's once it begins, so a fold or
+/// a solve a test leaves under way would land in the next test's store.
+@MainActor
+private enum Made {
+    final class Held {
+        weak var planner: Planner?
+        init(_ planner: Planner) { self.planner = planner }
+    }
+    static var planners: [Held] = []
+
+    /// Those still folding or solving.
+    static var busy: [Planner] { planners.compactMap(\.planner).filter { !World.idle($0) } }
+}
+
+/// Each test of the suite ends only once every planner it made has nothing
+/// left to fold and no solve under way (`World.idle`), so none of its work
+/// lands in the next test's store.
+struct LeftIdle: SuiteTrait, TestTrait, TestScoping {
+    var isRecursive: Bool { true }
+
+    func provideScope(
+        for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void
+    ) async throws {
+        try await function()
+        guard !test.isSuite else { return }
+        await World.leftIdle()
+    }
+}
+
+extension Trait where Self == LeftIdle {
+    static var leftIdle: Self { Self() }
+}
+
 /// One test's world: every service a fake, the store empty but for this
 /// build's mark, the clock at a fixed moment, and the words read from the
-/// repository's copy/.
+/// repository's copy/. A test makes its models and planners here
+/// (`model()`, `planner()`), so that it ends once they are idle (`LeftIdle`);
+/// a world that still finds one busy, or a model made while another of the
+/// test's is busy, records an issue.
 @MainActor
 struct World {
     let store: MemoryStore
@@ -265,6 +302,11 @@ struct World {
     static let grids = DecisionGrids()
 
     init(store: MemoryStore = MemoryStore(), at nowS: Double = 1_791_234_567) {
+        let busy = Made.busy
+        if !busy.isEmpty {
+            Issue.record("the last test left \(busy.count) planner(s) folding or solving, which write to this test's store")
+        }
+        Made.planners = []
         self.store = store
         clock = TestClock(nowS)
         alarm = FakeAlarm(clock)
@@ -281,6 +323,51 @@ struct World {
         let log = log
         Screenshots.output = { event, _ in log.add(event) }
         Stores.claim(Self.version, build: Self.build)
+    }
+
+    /// A model, as the app makes it at launch, kept to check it is left idle.
+    /// One made on the store while another is folding or solving, as a
+    /// relaunch is, would read the store before that work lands in it.
+    func model(sourceLocation: SourceLocation = #_sourceLocation) -> AppModel {
+        if !Made.busy.isEmpty {
+            Issue.record("a model made while another still folds or solves", sourceLocation: sourceLocation)
+        }
+        let model = AppModel()
+        Made.planners.append(Made.Held(model.planner))
+        return model
+    }
+
+    /// A planner on its own, likewise.
+    func planner() -> Planner {
+        let planner = Planner()
+        Made.planners.append(Made.Held(planner))
+        return planner
+    }
+
+    /// Whether a planner has nothing left to fold and no solve under way.
+    /// Not draining is not enough: an egg logged is folded by a task that
+    /// may not have begun (`Learning.logRecord`).
+    static func idle(_ planner: Planner) -> Bool {
+        !planner.learner.draining && planner.kept.folded == planner.kept.log.count && !planner.solver.busy
+    }
+
+    /// Until every planner made since the last world is idle; an issue if
+    /// one is not within a minute of the Mac's.
+    static func leftIdle() async {
+        let deadline = ContinuousClock.now + .seconds(60)
+        while !Made.busy.isEmpty {
+            if ContinuousClock.now > deadline {
+                Issue.record("a planner still folding or solving a minute after the test")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
+    /// Until the planner has folded every egg in its log, and its solve
+    /// after the fold is done.
+    func learned(_ planner: Planner, sourceLocation: SourceLocation = #_sourceLocation) async {
+        await until("the planner to fold its eggs and solve", sourceLocation: sourceLocation) { Self.idle(planner) }
     }
 
     /// The repository's copy/, found above this file.

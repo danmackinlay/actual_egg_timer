@@ -25,7 +25,7 @@ extension AppTests {
     /// water from raw; cooling, still live; at Done, the egg as it ran.
     @Test func theEggAimedForInTheWaterAndAsItRan() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         model.appear()
         model.planner.start = .hot
@@ -61,7 +61,7 @@ extension AppTests {
     /// off, then the standing method's. The start's panel says when.
     @Test func theSentenceNeverSaysWhenTheEggsWentIn() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         model.appear()
         await decided(model, world)
@@ -93,7 +93,7 @@ extension AppTests {
     /// card's cooling and the record.
     @Test func aBowlOfWaterAllTheWayToTheRecord() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world) { p in
             p.settings.unitsChosen = .metric
@@ -119,7 +119,7 @@ extension AppTests {
         await tick(at: try cooledS(model.cook) + 1, model, world)
         model.startAgain()
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.learner.draining }
+        await world.learned(model.planner)
         let setup = try #require(model.planner.kept.log.last).setup
         #expect(setup.cooling == .bowl && setup.bowlLitres == 1 && setup.coolingWaterC == 12 && setup.eggCount == 4)
     }
@@ -130,7 +130,7 @@ extension AppTests {
     /// around the thumb unless "Most likely" names another.
     @Test func theBracketsHeavyStretchIsTheMostLikelyWordsBand() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         model.appear()
         var seen: [Bool] = []

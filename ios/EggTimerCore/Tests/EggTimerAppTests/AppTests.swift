@@ -7,10 +7,11 @@ import EggTimerShared
 /// The app's logic, driven as the screen drives it, on a clock the test
 /// moves, with every service a fake (Fakes.swift): the cook as core's
 /// `step` runs it, and what the app does with each step. One at a time:
-/// the services, the clock and the store are the app's globals. The suite
+/// the services, the clock and the store are the app's globals, and each
+/// test ends only once the planners it made are idle (`LeftIdle`). The suite
 /// goes on in CookTests.swift, CorrectionTests.swift and ScreenTests.swift,
 /// each check a device need not make that `npm run ios:e2e` once made.
-@Suite(.serialized) @MainActor
+@Suite(.serialized, .leftIdle) @MainActor
 struct AppTests {
     /// "Eggs in" on the planner's defaults, a cold start or a hot one, and
     /// the cook once its plan is on its pot's surface.
@@ -32,7 +33,7 @@ struct AppTests {
     /// in-app ring, the card, and the unanswered egg logged as it ends.
     @Test func aCookFromStartToDone() async throws {
         let world = World()
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         let t0 = world.clock.seconds
@@ -92,7 +93,7 @@ struct AppTests {
         #expect(planner.kept.log.count == 1)
         #expect(planner.kept.log.first?.yolkWord == nil)
         #expect(planner.hasBoilMemory)
-        await world.until("the planner to fold it") { !planner.learner.draining }
+        await world.learned(planner)
     }
 
     /// With no notifications allowed, the app rings the pull itself, once.
@@ -100,7 +101,7 @@ struct AppTests {
         let world = World()
         world.alarm.authorized = false
         world.ringer.onScreenSinceS = world.clock.seconds
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         await start(cook, planner, world, .hot)
@@ -119,7 +120,7 @@ struct AppTests {
     /// card again.
     @Test func aRelaunchRestoresTheStoredCook() async throws {
         let world = World()
-        let planner = Planner()
+        let planner = world.planner()
         let first = Cook(planner: planner)
         await start(first, planner, world)
         world.clock.advance(300)
@@ -160,7 +161,7 @@ struct AppTests {
     /// for an egg never cooked through.
     @Test func aRelaunchTooOldEndsTheCook() async throws {
         let world = World()
-        let planner = Planner()
+        let planner = world.planner()
         let first = Cook(planner: planner)
         await start(first, planner, world)
         first.killed()
@@ -181,7 +182,7 @@ struct AppTests {
     /// again, pulls later, and the alarm follows; the cook as stored says so.
     @Test func aCorrectionPlansTheCookAgain() async throws {
         let world = World()
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         await start(cook, planner, world, .hot)
@@ -208,7 +209,7 @@ struct AppTests {
     @Test func anOverdueCorrectionRings() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         await start(cook, planner, world, .hot)
@@ -229,7 +230,7 @@ struct AppTests {
     /// dropped and the cook timed again.
     @Test func theStillInQuestion() async throws {
         let world = World()
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         await start(cook, planner, world, .hot)
@@ -270,6 +271,13 @@ struct AppTests {
         await world.settled(model.cook)
     }
 
+    /// The app killed once its folds and its solve have landed in the
+    /// store, so a relaunch reads what it wrote, not what it was writing.
+    func kill(_ model: AppModel, _ world: World) async {
+        await world.learned(model.planner)
+        model.cook.killed()
+    }
+
     /// Start a hot cook through the model, and take it to Done.
     func toDone(_ model: AppModel, _ world: World) async throws {
         await started(model, world)
@@ -282,7 +290,7 @@ struct AppTests {
     /// written down, before the stored cook is cleared; then it is final.
     @Test func startAgainLogsTheUnansweredEggBeforeClearing() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         try await toDone(model, world)
         #expect(model.planner.kept.log.isEmpty)
@@ -307,7 +315,7 @@ struct AppTests {
         #expect(logged < cleared)
         #expect(world.store.data(forKey: Cook.savedKey) == nil)
         #expect(world.sharing.finals > finals)
-        await world.until("the planner to fold it") { !model.planner.learner.draining }
+        await world.learned(model.planner)
     }
 
     /// The answers at Done: the first logs the egg and folds it; the second
@@ -315,12 +323,12 @@ struct AppTests {
     /// to sharing until Start again.
     @Test func answersAtDoneLogTheEggOnce() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         try await toDone(model, world)
         model.answer(yolk: .jammy, white: nil)
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         #expect(model.planner.kept.log.count == 1)
         #expect(model.planner.kept.log.first?.yolkWord == .jammy)
         #expect(model.cook.answers?.yolkWord == .jammy)
@@ -328,7 +336,7 @@ struct AppTests {
         // Answered again about the yolk: the first word stands.
         model.answer(yolk: .hard, white: .firm)
         await world.settled(model.cook)
-        await world.until("the fold again") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         #expect(model.planner.kept.log.count == 1)
         #expect(model.planner.kept.log.first?.yolkWord == .jammy)
         #expect(model.planner.kept.log.first?.white == .firm)
@@ -343,7 +351,7 @@ struct AppTests {
     /// not before; a − or + held past `Edits.held` commits on release.
     @Test func aTapSettlesOnTheCooksClock() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let water = model.planner.settings.waterLitres
@@ -384,7 +392,7 @@ struct AppTests {
         try await toDone(model, world)
         model.answer(yolk: .jammy, white: nil)
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         return try #require(model.planner.kept.log.last)
     }
 
@@ -407,7 +415,7 @@ struct AppTests {
     /// final.
     @Test func aCorrectionAtDoneThenStartAgainLogsTheCorrectedEgg() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         let finals = world.sharing.finals
@@ -416,7 +424,7 @@ struct AppTests {
         model.startAgain()
         #expect(!model.edits.pending)
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.learner.draining }
+        await world.learned(model.planner)
         #expect(model.cook.running == nil)
         let egg = try #require(model.planner.kept.log.last)
         #expect(model.planner.kept.log.count == 1)
@@ -431,7 +439,7 @@ struct AppTests {
     /// cook; Start again logs the egg with it, and folds it.
     @Test func anAnswerHeldAtStartAgainIsLoggedWithIt() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         try await toDone(model, world)
         let held = try await correctedHeld(model, world)
@@ -443,7 +451,7 @@ struct AppTests {
         model.startAgain()
         held.release()
         await world.settled(model.cook)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         let egg = try #require(model.planner.kept.log.last)
         #expect(model.planner.kept.log.count == 1)
         #expect(egg.yolkWord == .jammy)
@@ -459,7 +467,7 @@ struct AppTests {
     /// then forgets the cook and sends the egg.
     @Test func aFailedRemakeLeavesTheCookStoredNotFinal() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         // Never released: the app is killed before the record lands.
@@ -472,14 +480,14 @@ struct AppTests {
         #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
         #expect(world.sharing.finals == finals)
         #expect(model.cook.eggOpen(atS: world.clock.seconds))
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.advance(60)
-        let again = AppModel()
+        let again = world.model()
         defer { again.cook.killed() }
         again.appear()
         await world.settled(again.cook)
-        await world.until("the fold") { !again.planner.learner.draining }
+        await world.learned(again.planner)
         #expect(again.cook.running == nil)
         #expect(again.cook.phase == .idle)
         let egg = try #require(again.planner.kept.log.last)
@@ -494,21 +502,21 @@ struct AppTests {
     /// the egg's hour opens idle, with the egg logged once.
     @Test func aCookDismissedWithStartAgainStaysDismissed() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         try await toDone(model, world)
         model.startAgain()
         await world.settled(model.cook)
-        model.cook.killed()
+        await kill(model, world)
         world.clock.advance(60)
-        let again = AppModel()
+        let again = world.model()
         defer { again.cook.killed() }
         again.appear()
         await world.settled(again.cook)
         #expect(again.cook.running == nil)
         #expect(again.cook.phase == .idle)
         #expect(again.planner.kept.log.count == 1)
-        await world.until("the fold") { !again.planner.learner.draining }
+        await world.learned(again.planner)
     }
 
     // MARK: - Stores
@@ -521,7 +529,7 @@ struct AppTests {
         let unformatted = try JSONSerialization.data(withJSONObject: ["waterLitres": 5])
         let world = World(store: MemoryStore(["doneness": 0.7, "start": "hot", SettingsStore.key: unformatted]))
         #expect(world.store.object(forKey: "doneness") == nil)
-        let planner = Planner()
+        let planner = world.planner()
         planner.load()
         #expect(planner.settings.doneness == Defaults.doneness)
         #expect(planner.settings.waterLitres == AppSettings.defaults.waterLitres)
@@ -533,7 +541,7 @@ struct AppTests {
         let stored = readSettings(raw, classes: planner.sizeClasses)
         #expect(stored.waterLitres == 3)
         #expect(stored.startMode == .hot)
-        let again = Planner()
+        let again = world.planner()
         again.load()
         #expect(again.settings.waterLitres == 3)
         #expect(again.start == .hot)
@@ -601,7 +609,7 @@ struct AppTests {
     @Test func aNewerMarkWritesNothing() async throws {
         let world = World(store: MemoryStore([Stores.markKey: "9.0.0", Stores.buildKey: "1"]))
         #expect(Stores.readOnly)
-        let planner = Planner()
+        let planner = world.planner()
         let cook = Cook(planner: planner)
         defer { cook.killed() }
         await start(cook, planner, world)
@@ -627,7 +635,7 @@ struct AppTests {
         let before = keys.map { standard.object(forKey: $0).map { "\($0)" } }
 
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         model.appear()
         await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
@@ -640,7 +648,7 @@ struct AppTests {
         await world.ticked(model.cook)
         model.startAgain()
         await world.settled(model.cook)
-        await world.until("the planner to fold it") { !model.planner.learner.draining }
+        await world.learned(model.planner)
 
         let set = world.store.writes.filter { !$0.removed }.map(\.key)
         let wrote = world.log.events.compactMap { e -> String? in

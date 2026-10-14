@@ -32,7 +32,7 @@ extension AppTests {
     /// setting written; a relaunch plans the same pull.
     @Test func boilingCorrectedToCold() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
@@ -48,10 +48,10 @@ extension AppTests {
         await world.until("the card updated") { world.card.calls.last?.updated?.ends == pull }
         #expect(world.card.calls.last?.updated?.stage == .heating)
         #expect(SettingsStore.read(classes: model.planner.sizeClasses).startMode == .cold)
-        model.cook.killed()
+        await kill(model, world)
 
         world.clock.set(t0 + 90)
-        let again = AppModel()
+        let again = world.model()
         defer { again.cook.killed() }
         again.appear()
         await world.settled(again.cook)
@@ -64,7 +64,7 @@ extension AppTests {
     /// kept, the pull sooner.
     @Test func coldCorrectedToBoilingAfterThePress() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         world.clock.advance(300)
@@ -83,7 +83,7 @@ extension AppTests {
     /// size, the first plan exactly.
     @Test func heavierPullsLaterLighterSooner() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
@@ -114,7 +114,7 @@ extension AppTests {
     @Test func overdueRingsAndBackUndoesIt() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let pull0 = try pullS(model.cook)
@@ -140,7 +140,7 @@ extension AppTests {
     @Test func aDragThroughAnOverdueLevelRingsNothingBeforeRelease() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let pull0 = try pullS(model.cook)
@@ -177,7 +177,7 @@ extension AppTests {
     /// Start, each said to VoiceOver; the start's panel shows the start.
     @Test func theStartCorrectedAMinuteAtATime() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world, .cold)
         let cook = try #require(model.cook.running)
@@ -213,7 +213,7 @@ extension AppTests {
     /// cook's, and writes nothing else; the pull brings the egg's page back.
     @Test func waterChangedInSettingsCorrectsTheCookAndTheNext() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
@@ -234,7 +234,7 @@ extension AppTests {
     /// cook as it ran.
     @Test func aCorrectionAtDoneMakesTheRecordAgainAndBackGivesTheFirst() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         let peak0 = try #require(model.cook.shownPeakYolkC)
@@ -242,8 +242,9 @@ extension AppTests {
         let done = world.clock.seconds
         await correct(at: done + 5, model, world) { model.planner.chooseSize(size + 1) }
         await world.until("the record made again") {
-            model.planner.kept.log.last?.egg.massG != first.egg.massG && !model.planner.learner.draining
+            model.planner.kept.log.last?.egg.massG != first.egg.massG
         }
+        await world.learned(model.planner)
         let heavier = try #require(model.planner.kept.log.last)
         #expect(model.planner.kept.log.count == 1)
         #expect(heavier.yolkWord == first.yolkWord)
@@ -251,8 +252,9 @@ extension AppTests {
         #expect(heavier.forecast != first.forecast)
         await correct(at: done + 15, model, world) { model.planner.chooseSize(size) }
         await world.until("the first record again") {
-            model.planner.kept.log.last == first && !model.planner.learner.draining
+            model.planner.kept.log.last == first
         }
+        await world.learned(model.planner)
         #expect(abs(try #require(model.cook.shownPeakYolkC) - peak0) < 0.01)
     }
 
@@ -261,7 +263,7 @@ extension AppTests {
     /// record as it was, the slider back at the cook's level.
     @Test func afterThePullTheSliderOnlyPreviews() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let first = try await answeredAtDone(model, world)
         let stored0 = try #require(world.stored)
@@ -305,7 +307,7 @@ extension AppTests {
     @Test func stillInTheWaterYes() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let pull = try await askedStillIn(model, world)
         #expect(world.alarm.pending.isEmpty)
@@ -331,7 +333,7 @@ extension AppTests {
     /// confirmed, and the record is made again for cold water.
     @Test func stillInTheWaterNo() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         let pull = try await askedStillIn(model, world)
         world.clock.set(pull + 40)
@@ -350,7 +352,7 @@ extension AppTests {
     /// and on the card.
     @Test func leftHeatingTheSlowHobCountsUp() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
@@ -369,7 +371,7 @@ extension AppTests {
     /// can give, and the slot says so.
     @Test func aCorrectionTheWhiteNeverSetsInIsSaidInTheSlot() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
@@ -387,7 +389,7 @@ extension AppTests {
     @Test func aCoolingChangeAtDoneStaysDone() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world) { $0.settings.cooling = .counter }
         let pull0 = try pullS(model.cook)
@@ -399,7 +401,7 @@ extension AppTests {
         #expect(model.cook.phase == .done)
         world.clock.set(pull0 + 60)
         model.answer(yolk: .jammy, white: nil)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         let (scheduled, calls, seen) = (world.alarm.scheduled.count, world.card.calls.count, world.log.events.count)
         await correct(at: pull0 + 70, model, world) { model.planner.settings.cooling = .ice }
         let cook = try #require(model.cook.running)
@@ -412,8 +414,9 @@ extension AppTests {
         #expect(!world.alarm.scheduled.dropFirst(scheduled).contains { $0.cooledS != nil })
         #expect(!world.card.calls.dropFirst(calls).contains { $0.shown != nil })
         await world.until("the record made again") {
-            model.planner.kept.log.last?.setup.cooling == .ice && !model.planner.learner.draining
+            model.planner.kept.log.last?.setup.cooling == .ice
         }
+        await world.learned(model.planner)
         let egg = try #require(model.planner.kept.log.last)
         #expect(egg.yolkWord == .jammy)
         #expect(egg.cooledS <= 68 + 1e-6)
@@ -423,7 +426,7 @@ extension AppTests {
     /// water: the pull confirmed, nothing asked, still Done.
     @Test func anAnsweredAssumedPullStands() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         await tick(at: try pullS(model.cook) + pullGraceSeconds + 1, model, world)
@@ -432,7 +435,7 @@ extension AppTests {
         await tick(at: cooled + 1, model, world)
         world.clock.set(cooled + 5)
         model.answer(yolk: .jammy, white: nil)
-        await world.until("the fold") { !model.planner.learner.draining && model.planner.kept.folded == 1 }
+        await world.learned(model.planner)
         await correct(at: cooled + 10, model, world) { model.planner.start = .cold }
         #expect(model.cook.plan.map(asksIfStillIn) == false)
         let pulled = try #require(model.cook.running?.events.pulled)
@@ -447,7 +450,7 @@ extension AppTests {
         let world = World()
         world.alarm.authorized = false
         world.ringer.onScreenSinceS = world.clock.seconds
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let pull0 = try pullS(model.cook)
@@ -473,7 +476,7 @@ extension AppTests {
     /// a lengthening slow hob, it moves with the guess.
     @Test func onceCookingTheRangeIsWhenToTakeTheEggsOut() async throws {
         let world = World()
-        let model = AppModel()
+        let model = world.model()
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
