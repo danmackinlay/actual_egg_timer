@@ -127,15 +127,30 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 - **The egg lab as an About page, someday** (the owner, 14 October 2026):
   `tools/egg-section.html`, which plays a whole cook in cross-section, how
   set and how hot, is to become a page cooks can see. Not in the app yet.
-- **E3's known limit.** Two runny whites at soft move jammy about as far as
+- **A runny white still moves the time-scale.** The white's learned offset
+  is its lag and the cook's idea of "runny" together, but a runny white is
+  as well explained by a slow time-scale as by a late white, and `alpha`'s
+  prior is the wider, so two runny whites at soft move jammy about as far as
   soft; left so until a probe or pooling pins the time-scale (`DECISIONS.md`
-  18). `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+  18; [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1)).
+  `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+- **The carryover is not learned.** `tauAirScale` is held at 1.0
+  (`DECISIONS.md` 95): the counter's cooling is the textbook's still air, so
+  a draughty kitchen's counter-rested eggs come out a little softer than the
+  model thinks, and their answers go into the time-scale and the taste.
 - **The heat-off pan's per-cook scale** is deferred: `TAU_STANDING_SCALE` is a
   global 1.0 (`DECISIONS.md` 11). A per-cook scale wants enough heat-off cooks
   to tell it from `alpha`. One real hot-start heat-off cook with a lid on
   would say whether 1.0 is pessimistic.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
-  setup sentence while a cook runs (README §11.5).
+  setup sentence while a cook runs. What both apps decide is core's, under
+  the conformance fixtures; above it each app's store, formatting and
+  decision to ring have tests, and the rest is view code, checked by driving
+  the apps.
+- **The web can make an egg over 90 g, on purpose** (`DECISIONS.md` 34). Both
+  apps cap the mass at 90 g, but the web's girth (90-200 mm) and width
+  (30-60 mm) keep their own limits, so a typed measurement reaches about
+  160-195 g; the model is a hen's egg's, so those times are extrapolated.
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad
   layout needs every orientation and Split View, checked by screenshots.
 - **Someday:** other birds' eggs, emu first (`DECISIONS.md` 34). The model's
@@ -286,6 +301,7 @@ Start the QA pass here.
 | `PLAN.md` | this: the state, what is next, the owner's queue, open items, QA |
 | `DECISIONS.md` | every owner decision, numbered and dated, with its commits |
 | `README.md` | the science: the model, its constants, validation, open problems |
+| `DEVELOPING.md` | building and checking: the npm scripts, reviewing the words, the web app end to end |
 | `INFERENCE.md` | the learning: what is learned, the record, the probe, deciding, the fit |
 | `LANGUAGE.md` | the words: the catalogue, copy rules, units, languages, 1750 |
 | `UI.md` | the layout both apps share, as built |
