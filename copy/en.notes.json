@@ -405,6 +405,9 @@
     "colophon.tail": { "surface": "body" },
     "colophon.version": { "surface": "label", "note": "The last line of Settings, under the colophon: which version of the app this is, so that someone writing in can say which. {version} is the number, shown whole in a fixed-width face and selectable, to copy: on the web the release, such as 0.4.0-alpha.1; on iOS the App Store version and, in brackets, the build, such as 0.4.0 (2).", "example": {"version": "0.4.0-alpha.1"} },
 
-    "newer.note": { "surface": "body", "note": "At the top of every screen, and only when a newer version of the app has run on this device and this older one is open (DECISIONS.md 100). It still times eggs but writes nothing: it keeps no setting, logs and learns from no egg, and sends nothing. Updating is the fix in both apps; on the web a reload brings the newest version." }
+    "newer.note": { "surface": "body", "note": "At the top of every screen, and only when a newer version of the app has run on this device and this older one is open (DECISIONS.md 100). It still times eggs but writes nothing: it keeps no setting, logs and learns from no egg, and sends nothing. Updating is the fix in both apps; on the web a reload brings the newest version." },
+
+    "tab.note": { "surface": "body", "note": "Web only. The whole page of a tab opened while the app is already open in another tab of the same browser (DECISIONS.md 128). Until the button under it (tab.useHere) is pressed, this tab saves nothing and sounds no alarm. Pressing it moves the app here, with any eggs being timed, and the other tab then shows this note instead." },
+    "tab.useHere": { "surface": "button", "note": "Under tab.note: moves the app to this tab, and with it any eggs being timed and their alarm." }
   }
 }

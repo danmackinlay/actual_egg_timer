@@ -888,6 +888,12 @@ body:not([data-view="egg"]) :is(#readout, #actions, #controls, #slot, #feedback)
 body:not([data-view="egg"]) main { display: block; }
 body:not([data-phase="IDLE"]) :is(#learned, #share) { display: none; }
 
+/* The app open in another tab (owner.ts): this tab shows only the note and
+   its button. */
+body[data-tab="waiting"] > main { display: none; }
+#tabNote { max-width: 32rem; margin: 0 auto; padding: 32px 16px; }
+#tabNote button { width: 100%; margin-top: 8px; }
+
 #navBack { display: none; }
 body:not([data-view="egg"]) #navBack { display: inline-flex; }
 body:not([data-view="egg"]) #settingsLink,
