@@ -1,5 +1,6 @@
 # macOS and editors
 .DS_Store
+.vscode/
 
 # Xcode per-user state and archives
 xcuserdata/
@@ -13,6 +14,15 @@ xcuserdata/
 
 # The shape study's runs, made again by studies/shape-study/RESULTS.md's commands
 studies/shape-study/results*.json
+
+# Agents' worktrees, and the briefs, handoffs and reports that pass between
+# the agents and the session that reviews them: working files, never committed
+# (the commits and DECISIONS.md are the record).
+.claude/worktrees/
+.claude/BRIEF-*.md
+.claude/HANDOFF-*.md
+.claude/REPORT-*.md
+.claude/reports/
 
 # Build output
 node_modules/
