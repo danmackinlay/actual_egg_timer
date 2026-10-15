@@ -11,15 +11,15 @@
  * that does not name an argument ignores it.
  */
 
-import type { CopyKey } from './copyKeys.js';
-import type { CopyRef } from './copy.js';
-import { CERTAINTY_MASS, type Certainty, type CertaintyReading, type WordCertainty } from './certainty.js';
-import { type Outcome, WHITE_RISK } from './outcome.js';
-import type { Phase } from './running.js';
-import type { Verdict } from './slider.js';
-import type { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
-import type { EggFrom, Forecast } from './record.js';
-import { DONENESS_ANCHORS } from './solve.js';
+import type { CopyKey } from './copyKeys.ts';
+import type { CopyRef } from './copy.ts';
+import { CERTAINTY_MASS, type Certainty, type CertaintyReading, type WordCertainty } from './certainty.ts';
+import { type Outcome, WHITE_RISK } from './outcome.ts';
+import type { Phase } from './running.ts';
+import type { Verdict } from './slider.ts';
+import type { Cooling, HeatAfterBoil, StartMode } from './protocol.ts';
+import type { EggFrom, Forecast } from './record.ts';
+import { DONENESS_ANCHORS } from './solve.ts';
 
 /* ----------------------------------------------------------- the refusal */
 

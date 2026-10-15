@@ -3,14 +3,14 @@
  * measured time to boil - and the way to take it back (Settings).
  */
 
-import type { BoilMemory } from '../core/boil.js';
-import { t } from './copy.js';
-import { page } from './dom.js';
-import { showInfo } from './info.js';
-import { send } from './send.js';
-import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.js';
-import { formatClock } from './countdown.js';
-import { show } from './units.js';
+import type { BoilMemory } from '../core/boil.ts';
+import { t } from './copy.ts';
+import { page } from './dom.ts';
+import { showInfo } from './info.ts';
+import { send } from './send.ts';
+import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.ts';
+import { formatClock } from './countdown.ts';
+import { show } from './units.ts';
 
 /** What has been learned, as it stands. */
 export interface Learning {

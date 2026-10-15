@@ -11,9 +11,9 @@
  * correct, and each a few seconds of the worker's time per egg.
  */
 
-import { LITERATURE_POPULATION, type Population } from '../core/infer.js';
-import { parsePopulation } from '../core/population.js';
-import { request } from './idle.js';
+import { LITERATURE_POPULATION, type Population } from '../core/infer.ts';
+import { parsePopulation } from '../core/population.ts';
+import { request } from './idle.ts';
 
 let active: Population = LITERATURE_POPULATION;
 

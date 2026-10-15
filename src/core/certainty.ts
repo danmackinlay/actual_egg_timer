@@ -67,10 +67,10 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import type { DoseGrid } from './doseGrid.js';
-import { type Posterior, predictCookTime, yolkWordProbabilities } from './infer.js';
-import { anchorNear } from './slider.js';
-import { DONENESS_ANCHORS, logYolkTarget } from './solve.js';
+import type { DoseGrid } from './doseGrid.ts';
+import { type Posterior, predictCookTime, yolkWordProbabilities } from './infer.ts';
+import { anchorNear } from './slider.ts';
+import { DONENESS_ANCHORS, logYolkTarget } from './solve.ts';
 
 /** How sure, in three words: keys, which the catalogue's `certainty.*`
  *  messages put into words. */

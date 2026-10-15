@@ -26,24 +26,24 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { decide, decideAt, decisionGridRequest, decisionInputs } from '../src/core/decide.js';
+import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { decide, decideAt, decisionGridRequest, decisionInputs } from '../src/core/decide.ts';
 import {
   type DoseGrid, type GridPolicy, buildRequestedGrid, lookupLogWhiteDose, lookupLogYolkDose, lookupPeakYolk_C,
-} from '../src/core/doseGrid.js';
-import { eggFromMass } from '../src/core/geometry.js';
+} from '../src/core/doseGrid.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
 import {
   PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle,
   type Posterior, type WhiteReport, YOLK_WORDS, type YolkWord, answerLikelihood, createPrior, whiteProbit,
   withUnrelated, withUnrelatedWord, yolkWordProbit,
-} from '../src/core/infer.js';
-import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
+} from '../src/core/infer.ts';
+import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.ts';
 import {
   type Calibration, type EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationGrid, copyCalibration, foldRecord, freshCalibration,
   gridRequestFor, recordCookTime_s, recordMass_g, recordTeaches, replay,
-} from '../src/core/record.js';
-import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
-import { appSetup, draw, gridFor, rng } from './common.js';
+} from '../src/core/record.ts';
+import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.ts';
+import { appSetup, draw, gridFor, rng } from './common.ts';
 
 /* ------------------------------------------------------------ the log */
 

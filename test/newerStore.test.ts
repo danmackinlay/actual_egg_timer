@@ -17,15 +17,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { sizeClassesFor } from '../src/core/geometry.js';
+import { sizeClassesFor } from '../src/core/geometry.ts';
 import {
   DEFAULT_SETTINGS, claimStorage, openCooks, openPans, openSettings, storageReadOnly,
-} from '../src/ui/store.js';
-import { openLearner } from '../src/ui/calibration.js';
-import { APP_VERSION } from '../src/ui/version.js';
-import { openSharing } from '../src/ui/share.js';
-import { sendTo } from '../src/ui/send.js';
-import { STORES, STORE_LIST, stamped } from '../src/ui/stores.js';
+} from '../src/ui/store.ts';
+import { openLearner } from '../src/ui/calibration.ts';
+import { APP_VERSION } from '../src/ui/version.ts';
+import { openSharing } from '../src/ui/share.ts';
+import { sendTo } from '../src/ui/send.ts';
+import { STORES, STORE_LIST, stamped } from '../src/ui/stores.ts';
 
 /** How many times the page was told its stores are left alone. */
 let told = 0;

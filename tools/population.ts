@@ -13,8 +13,8 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
-import { parsePopulation } from '../src/core/population.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.ts';
+import { parsePopulation } from '../src/core/population.ts';
 
 const OUT = 'fixtures/population.json';
 

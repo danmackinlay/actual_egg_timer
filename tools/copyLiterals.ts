@@ -39,7 +39,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
+import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.ts';
 
 const DIRS = [
   'ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared',

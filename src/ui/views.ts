@@ -3,7 +3,7 @@
  * so the phone's back button leaves them the way it came.
  */
 
-import { page } from './dom.js';
+import { page } from './dom.ts';
 
 export type View = 'egg' | 'settings' | 'help';
 

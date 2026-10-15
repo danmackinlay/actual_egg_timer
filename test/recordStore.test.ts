@@ -9,11 +9,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 
-import { CALIBRATION_SEED, LIKELIHOOD_ID, PARTICLE_COUNT, freshCalibration, replay } from '../src/core/record.js';
-import type { YolkWord } from '../src/core/infer.js';
-import { type Learner, openLearner } from '../src/ui/calibration.js';
-import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
-import { assertIdentical, solvedRecord, storage } from './records.js';
+import { CALIBRATION_SEED, LIKELIHOOD_ID, PARTICLE_COUNT, freshCalibration, replay } from '../src/core/record.ts';
+import type { YolkWord } from '../src/core/infer.ts';
+import { type Learner, openLearner } from '../src/ui/calibration.ts';
+import { decodeKept, encodeKept } from '../src/ui/calibrationStore.ts';
+import { assertIdentical, solvedRecord, storage } from './records.ts';
 
 /** The page under test, as boot() opens it: opened again for a reload. */
 let cal: Learner;

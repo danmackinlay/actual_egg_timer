@@ -26,9 +26,9 @@
  * made-up clock never reaches a server.
  */
 
-import { clockChanged, isDevHost, nowMs, useClock } from '../now.js';
-import { STORES } from '../stores.js';
-import { readStorage, removeStorage, writeStorage } from '../store.js';
+import { clockChanged, isDevHost, nowMs, useClock } from '../now.ts';
+import { STORES } from '../stores.ts';
+import { readStorage, removeStorage, writeStorage } from '../store.ts';
 
 export interface DevClock {
   /** The cook's seconds to the real second; 0 is stopped. */

@@ -4,22 +4,22 @@
  * the filter's size and seed.
  */
 
-import { eggFromMass } from '../../src/core/geometry.js';
-import type { CookSetup } from '../../src/core/protocol.js';
-import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
+import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.ts';
 import {
   CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
   MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, type ResultsMeta, type StoreRead, calibrationDoneness,
   calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
   probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
   resultsFileName,
-} from '../../src/core/record.js';
-import { LITERATURE_POPULATION } from '../../src/core/infer.js';
-import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
-import { COOLING_SECONDS, coolingSecondsFor } from '../../src/core/running.js';
+} from '../../src/core/record.ts';
+import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
+import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
+import { COOLING_SECONDS, coolingSecondsFor } from '../../src/core/running.ts';
 
-import { particleRows } from './shared.js';
-import { referenceSetup } from '../common.js';
+import { particleRows } from './shared.ts';
+import { referenceSetup } from '../common.ts';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
  *

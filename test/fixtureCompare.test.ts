@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { compareFixtures, FIXTURE_TOLERANCE, ROW_LIMIT, fixtureLayout } from '../tools/fixtureCompare.js';
+import { compareFixtures, FIXTURE_TOLERANCE, ROW_LIMIT, fixtureLayout } from '../tools/fixtureCompare.ts';
 
 test('a number in its last bits is close, not different', () => {
   // decide.json's grid on x86 Linux and arm64 macOS (10 October 2026).

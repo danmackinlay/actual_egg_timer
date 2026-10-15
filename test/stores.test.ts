@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { STORES, STORE_LIST, inFormat, stamped } from '../src/ui/stores.js';
+import { STORES, STORE_LIST, inFormat, stamped } from '../src/ui/stores.ts';
 
 test('every store is listed once, under its own name and a key of its own under aet.', () => {
   assert.deepEqual(STORE_LIST.map((s) => s.name).sort(), Object.keys(STORES).sort());

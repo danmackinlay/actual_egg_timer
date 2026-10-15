@@ -3,13 +3,13 @@
  * running cook's.
  */
 
-import type { Cooling } from '../core/protocol.js';
-import { anchorNear } from '../core/slider.js';
-import type { LevelAnswer } from '../core/reach.js';
-import { warningKey } from '../core/wording.js';
-import { midSentence } from '../core/copy.js';
-import { activeLocale, t, tRef } from './copy.js';
-import { show } from './units.js';
+import type { Cooling } from '../core/protocol.ts';
+import { anchorNear } from '../core/slider.ts';
+import type { LevelAnswer } from '../core/reach.ts';
+import { warningKey } from '../core/wording.ts';
+import { midSentence } from '../core/copy.ts';
+import { activeLocale, t, tRef } from './copy.ts';
+import { show } from './units.ts';
 
 /** The warning line, in words: a refusal, or that the level is a wild guess. Which,
  *  and which words say it, are core's (`answerAt`, `warningKey`); the

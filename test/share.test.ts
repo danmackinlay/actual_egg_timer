@@ -12,14 +12,14 @@ import assert from 'node:assert/strict';
 
 import {
   REQUEST_TIMEOUT_MS, type Sharing, type Transport, fetchWithin, newUid, openSharing, readShare, storedShare,
-} from '../src/ui/share.js';
-import { FIRST_SEQ, deletionDone, isUid, nextSeq, shareReply } from '../src/core/share.js';
+} from '../src/ui/share.ts';
+import { FIRST_SEQ, deletionDone, isUid, nextSeq, shareReply } from '../src/core/share.ts';
 import {
   FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, type ShareState, answered, deletionAsked, deletionConfirmed, forgotten,
   nextToSend, reconciled, shareGivesUp, turnedOff, turnedOn,
-} from '../src/ui/shareState.js';
-import type { EggRecord } from '../src/core/record.js';
-import { recordAt, rng } from '../tools/common.js';
+} from '../src/ui/shareState.ts';
+import type { EggRecord } from '../src/core/record.ts';
+import { recordAt, rng } from '../tools/common.ts';
 
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {

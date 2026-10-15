@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { viewFromHash } from '../src/ui/views.js';
+import { viewFromHash } from '../src/ui/views.ts';
 
 test('the hash names the view, and a Help section to scroll to', () => {
   assert.deepEqual(viewFromHash(''), { view: 'egg', target: null });

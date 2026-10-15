@@ -10,13 +10,13 @@
  * parsed; this reads it, and store.ts reads and writes it.
  */
 
-import type { SizeClass } from '../core/geometry.js';
-import { DEFAULTS, LIMITS, type Limit, clamp } from '../core/inputs.js';
-import { DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE } from '../core/language.js';
-import type { Cooling, HeatAfterBoil, StartMode } from '../core/protocol.js';
-import type { EggFrom } from '../core/record.js';
-import type { AlarmSound } from '../core/sounds.js';
-import type { UnitSystem } from '../core/units.js';
+import type { SizeClass } from '../core/geometry.ts';
+import { DEFAULTS, LIMITS, type Limit, clamp } from '../core/inputs.ts';
+import { DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE } from '../core/language.ts';
+import type { Cooling, HeatAfterBoil, StartMode } from '../core/protocol.ts';
+import type { EggFrom } from '../core/record.ts';
+import type { AlarmSound } from '../core/sounds.ts';
+import type { UnitSystem } from '../core/units.ts';
 
 /** Which of the web's three measurement boxes a measured egg came from: one
  *  number in three units, and a weighed egg and a ruler-measured one are not

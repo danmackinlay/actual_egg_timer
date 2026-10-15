@@ -4,8 +4,8 @@
  * across the cycle at load time throws; which way round depends on which
  * module a page happens to load first.
  *
- * The rule: every static `import … from './x.js'`, `import './x.js'` and
- * `export … from './x.js'` between files under src/ is an edge, whether the
+ * The rule: every static `import … from './x.ts'`, `import './x.ts'` and
+ * `export … from './x.ts'` between files under src/ is an edge, whether the
  * names it brings are used as values or only as types. Only what is written
  * `import type` or `export type` is left out: the compiler erases it, and it
  * says so in the source. A dynamic `import()` is not an edge: it runs after
@@ -43,7 +43,7 @@ function importGraph(root: string): Map<string, string[]> {
     const to: string[] = [];
     for (const m of text.matchAll(STATIC)) {
       if (m[1] !== undefined || !m[2].startsWith('.')) continue;
-      const target = normalize(join(dirname(file), m[2])).replace(/\.js$/, '.ts');
+      const target = normalize(join(dirname(file), m[2]));
       if (known.has(target) && !to.includes(target)) to.push(target);
     }
     graph.set(file, to);
@@ -91,20 +91,20 @@ test('2. a cycle is caught, through any static import, but not through a type-on
   };
   try {
     write({
-      'ui/a.ts': "import {\n  b,\n  B2,\n} from './b.js';\nimport type { T } from '../core/t.js';\nexport const a = b;\n",
-      'ui/b.ts': "export { c as b } from './c.js';\nexport const B2 = 2;\n",
-      'ui/c.ts': "import './d.js';\nexport const c = 1;\n",
-      'ui/d.ts': "import type { A } from './a.js';\nexport type { T } from '../core/t.js';\n",
-      'ui/e.ts': "export async function later(): Promise<number> { return (await import('./a.js')).a; }\n",
-      'core/t.ts': "export type { E } from '../ui/e.js';\nexport interface T { x: number }\n",
+      'ui/a.ts': "import {\n  b,\n  B2,\n} from './b.ts';\nimport type { T } from '../core/t.ts';\nexport const a = b;\n",
+      'ui/b.ts': "export { c as b } from './c.ts';\nexport const B2 = 2;\n",
+      'ui/c.ts': "import './d.ts';\nexport const c = 1;\n",
+      'ui/d.ts': "import type { A } from './a.ts';\nexport type { T } from '../core/t.ts';\n",
+      'ui/e.ts': "export async function later(): Promise<number> { return (await import('./a.ts')).a; }\n",
+      'core/t.ts': "export type { E } from '../ui/e.ts';\nexport interface T { x: number }\n",
     });
     assert.deepEqual(importGraph(dir).get('ui/a.ts'), ['ui/b.ts']);
     assert.deepEqual(importCycles(importGraph(dir)), [], 'type-only imports and import() are not edges');
     // d's import of a, written as a value import: a -> b -> c -> d -> a.
-    write({ 'ui/d.ts': "import { a } from './a.js';\nexport const d = a;\n" });
+    write({ 'ui/d.ts': "import { a } from './a.ts';\nexport const d = a;\n" });
     assert.deepEqual(importCycles(importGraph(dir)), [['ui/a.ts', 'ui/b.ts', 'ui/c.ts', 'ui/d.ts', 'ui/a.ts']]);
     // A module importing itself is a cycle too.
-    write({ 'ui/d.ts': "export const d = 1;\n", 'ui/e.ts': "import { e as f } from './e.js';\nexport const e = 1;\nvoid f;\n" });
+    write({ 'ui/d.ts': "export const d = 1;\n", 'ui/e.ts': "import { e as f } from './e.ts';\nexport const e = 1;\nvoid f;\n" });
     assert.deepEqual(importCycles(importGraph(dir)), [['ui/e.ts', 'ui/e.ts']]);
   } finally {
     rmSync(dir, { recursive: true, force: true });

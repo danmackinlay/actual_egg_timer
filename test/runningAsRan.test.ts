@@ -8,16 +8,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor } from '../src/core/record.js';
-import { type GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
+import { calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor } from '../src/core/record.ts';
+import { type GridSpec, buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
   PULL_GRACE_SECONDS, RESTORE_WINDOW_S, asRanCurrent, asRanShown, cookEnding, cookFactsFor, cookTooOld,
   coolingSecondsFor, corrected, eventsDue, keepAsRan, openEggId, phaseAt, pullStands, replan, solutionAsRan, stillIn,
   withAsRan, withOut, writeEvents,
-} from '../src/core/running.js';
-import { readRunningCook } from '../src/ui/storedCook.js';
-import { gridFor } from '../tools/common.js';
-import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.js';
+} from '../src/core/running.ts';
+import { readRunningCook } from '../src/ui/storedCook.ts';
+import { gridFor } from '../tools/common.ts';
+import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';
 
 test('25. nothing passes an open question about the pull', () => {
   // The review's call: a hot cook whose grace ran out while the phone

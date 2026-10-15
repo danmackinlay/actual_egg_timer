@@ -7,7 +7,7 @@
  * runner plugs itself in at boot (`sendTo`).
  */
 
-import type { Msg } from './model.js';
+import type { Msg } from './model.ts';
 
 let sink: ((msg: Msg) => void) | null = null;
 

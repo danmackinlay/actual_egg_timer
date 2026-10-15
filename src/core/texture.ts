@@ -7,7 +7,7 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import type { CopyKey } from './copyKeys.js';
+import type { CopyKey } from './copyKeys.ts';
 
 /** What the pan makes of the white: `runny` when it never gets the white the
  *  dose that sets it, and otherwise what its peak temperature makes of it. */

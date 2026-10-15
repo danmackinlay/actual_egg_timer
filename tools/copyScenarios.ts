@@ -29,8 +29,8 @@
 
 import { readFileSync } from 'node:fs';
 
-import { STORES, stamped } from '../src/ui/stores.js';
-import { Failure, type Harness, type Scenario, type Snap, Tab, check } from './harness.js';
+import { STORES, stamped } from '../src/ui/stores.ts';
+import { Failure, type Harness, type Scenario, type Snap, Tab, check } from './harness.ts';
 
 /** One state's words, as `copySnapshot.js compare` reads them. */
 export interface CopyState {

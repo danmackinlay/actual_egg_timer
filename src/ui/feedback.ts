@@ -11,16 +11,16 @@
 
 import {
   type CookPlan, type Phase, type RunningCook, answered, answersOf, asRanShown,
-} from '../core/running.js';
-import type { ModelParams } from '../core/solve.js';
-import { type WhiteReport, YOLK_WORDS, type YolkWord } from '../core/infer.js';
-import { parse, stepPast } from '../core/units.js';
-import { t } from './copy.js';
-import { page } from './dom.js';
-import type { Model } from './model.js';
-import { send } from './send.js';
-import { disableSteppers, setStepRule } from './stepper.js';
-import { measure, show } from './units.js';
+} from '../core/running.ts';
+import type { ModelParams } from '../core/solve.ts';
+import { type WhiteReport, YOLK_WORDS, type YolkWord } from '../core/infer.ts';
+import { parse, stepPast } from '../core/units.ts';
+import { t } from './copy.ts';
+import { page } from './dom.ts';
+import type { Model } from './model.ts';
+import { send } from './send.ts';
+import { disableSteppers, setStepRule } from './stepper.ts';
+import { measure, show } from './units.ts';
 
 /** Whether the questions are on offer for the cook on screen, and something
  *  has been said on this page: they stay, settled, until it moves on. */

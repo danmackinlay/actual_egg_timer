@@ -14,24 +14,24 @@
  * asked for, and which readings are taken at entry.
  */
 
-import { type CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.js';
-import { eggFromMass } from '../../src/core/geometry.js';
-import type { CookSetup } from '../../src/core/protocol.js';
-import { lookupPeakYolk_C } from '../../src/core/doseGrid.js';
+import { type CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.ts';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
+import { lookupPeakYolk_C } from '../../src/core/doseGrid.ts';
 import {
   PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   type Posterior, type WhiteReport, type YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
-} from '../../src/core/infer.js';
+} from '../../src/core/infer.ts';
 import {
   COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor, plausibleProbeRange_C,
   probeMomentFor,
-} from '../../src/core/running.js';
+} from '../../src/core/running.ts';
 
 import {
   CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, PARTICLE_COUNT, PRIOR_SEED,
-} from './calibration.js';
-import { particleRows } from './shared.js';
+} from './calibration.ts';
+import { particleRows } from './shared.ts';
 
 function readout(post: Posterior) {
   return {

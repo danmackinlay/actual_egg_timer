@@ -36,15 +36,15 @@
 
 import { readFileSync } from 'node:fs';
 
-import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
-import { readStoredCook } from '../src/ui/storedCook.js';
-import { STORES } from '../src/ui/stores.js';
-import { sleep } from './chrome.js';
-import { copyScenarios } from './copyScenarios.js';
+import { wordBandHigh, wordBandLow } from '../src/core/certainty.ts';
+import { readStoredCook } from '../src/ui/storedCook.ts';
+import { STORES } from '../src/ui/stores.ts';
+import { sleep } from './chrome.ts';
+import { copyScenarios } from './copyScenarios.ts';
 import {
   type Cook, Failure, type Harness, type Osc, type Rec, type Scenario, type Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
-} from './harness.js';
-import { asRead } from './text.js';
+} from './harness.ts';
+import { asRead } from './text.ts';
 
 /** Where the page keeps its stores (src/ui/stores.ts). */
 const COOK_KEY = STORES.cook.key;

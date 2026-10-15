@@ -6,8 +6,8 @@
 
 import { readFileSync } from 'node:fs';
 import { createHash, createSign } from 'node:crypto';
-import { APP_ID } from '../server/appAttest.js';
-import { encode } from '../server/cbor.js';
+import { APP_ID } from '../server/appAttest.ts';
+import { encode } from '../server/cbor.ts';
 
 /** One phone's attestation, and the key it attests, to sign with. */
 export interface SyntheticKey {

@@ -19,16 +19,16 @@
 import {
   ALPHA_DEFAULT, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
   YOLK_RADIUS_FRAC, DT_SIM, CARRYOVER_WINDOW, TAU_PLUNGE,
-} from '../src/core/constants.js';
+} from '../src/core/constants.ts';
 import {
   type SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, robinSurface,
-} from '../src/core/sphere.js';
+} from '../src/core/sphere.ts';
 import {
   type CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
   wetShellDrop_C,
-} from '../src/core/protocol.js';
-import { type Egg, eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
+} from '../src/core/protocol.ts';
+import { type Egg, eggFromMass } from '../src/core/geometry.ts';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.ts';
 
 export interface Theta {
   /** ln(alpha). The time-scale, and everything that behaves like one. */

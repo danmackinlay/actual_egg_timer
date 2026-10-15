@@ -7,15 +7,15 @@ import {
   H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
   STANDING_VOLUME_EXPONENT, H_AIR, WET_SHELL_KG_M2, LATENT_HEAT_WATER, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY,
   C_WATER, C_EGG, RHO_EGG, EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM, CARRYOVER_WINDOW,
-} from '../../src/core/constants.js';
-import { eggFromMass } from '../../src/core/geometry.js';
-import { pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude } from '../../src/core/thermo.js';
-import { createDose, accumulateDose, holdTimeForDose } from '../../src/core/kinetics.js';
+} from '../../src/core/constants.ts';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import { pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude } from '../../src/core/thermo.ts';
+import { createDose, accumulateDose, holdTimeForDose } from '../../src/core/kinetics.ts';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, seriesTheta, erfc,
-} from '../../src/core/sphere.js';
-import { type CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.js';
-import { appSetup } from '../common.js';
+} from '../../src/core/sphere.ts';
+import { type CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.ts';
+import { appSetup } from '../common.ts';
 
 /** Sample points chosen to sit where the model actually lives, plus the edges
  *  that break naive implementations: x = 0 (the sinc singularity), tiny Fo

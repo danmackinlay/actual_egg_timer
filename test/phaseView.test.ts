@@ -15,18 +15,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { parseCatalogue } from '../src/core/copy.js';
+import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import { parseCatalogue } from '../src/core/copy.ts';
 import {
   type CookChoices, type CookPlan, PULL_GRACE_SECONDS, type RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil,
   withOut, writeEvents,
-} from '../src/core/running.js';
-import { phaseKeys } from '../src/core/wording.js';
-import { forceFormatLocale, t, tChosen, useCatalogue } from '../src/ui/copy.js';
-import { formatClock, spokenClock } from '../src/ui/countdown.js';
-import { type ReadoutFacts, phaseView } from '../src/ui/phaseView.js';
-import { show, useUnits } from '../src/ui/units.js';
-import { knowing } from '../tools/common.js';
+} from '../src/core/running.ts';
+import { phaseKeys } from '../src/core/wording.ts';
+import { forceFormatLocale, t, tChosen, useCatalogue } from '../src/ui/copy.ts';
+import { formatClock, spokenClock } from '../src/ui/countdown.ts';
+import { type ReadoutFacts, phaseView } from '../src/ui/phaseView.ts';
+import { show, useUnits } from '../src/ui/units.ts';
+import { knowing } from '../tools/common.ts';
 
 useCatalogue(parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8'))));
 forceFormatLocale('en-GB');

@@ -19,7 +19,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { type BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.js';
+import { type BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.ts';
 
 test('1. a page is answered by its index.html, a file by itself', () => {
   const files: BuildFiles = {
@@ -159,9 +159,9 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
     g['history'] = { state: null, replaceState: () => { /* the address */ } };
     g['sessionStorage'] = memoryStorage();
     g['localStorage'] = memoryStorage();
-    const now = await import('../src/ui/now.js');
-    (await import('../src/ui/dev/clock.js')).installDevClock();
-    const clock = (g['window'] as { aetClock: import('../src/ui/dev/clock.js').ClockHandle }).aetClock;
+    const now = await import('../src/ui/now.ts');
+    (await import('../src/ui/dev/clock.ts')).installDevClock();
+    const clock = (g['window'] as { aetClock: import('../src/ui/dev/clock.ts').ClockHandle }).aetClock;
     assert.equal(clock.state()?.speed, 0);
 
     const onDocument = new Map<string, (() => void)[]>();
@@ -194,7 +194,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
       await settle();
     };
 
-    const { startOffline } = await import('../src/ui/offline.js');
+    const { startOffline } = await import('../src/ui/offline.ts');
     startOffline(() => ({ owner: true, cookRunning: false }));
     await settle();
     // Loading asks only whether the worker is still served.
@@ -226,7 +226,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
 });
 
 test('6. a new build: the owner takes it between cooks, waits mid-cook, and a waiting window reloads into it', async () => {
-  const { newBuild } = await import('../src/ui/offline.js');
+  const { newBuild } = await import('../src/ui/offline.ts');
   const owner = { owner: true, cookRunning: false, touched: false, visible: true, asked: false };
   assert.equal(newBuild(owner, false), 'take', 'the owner between cooks, untouched since it loaded');
   assert.equal(newBuild({ ...owner, touched: true, visible: false }, false), 'take', 'touched, but out of sight');

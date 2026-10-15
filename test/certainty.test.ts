@@ -20,17 +20,17 @@ import assert from 'node:assert/strict';
 import {
   CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordBandHigh, wordBandLow,
   wordBracket, wordCertainty,
-} from '../src/core/certainty.js';
-import { buildDoseGrid } from '../src/core/doseGrid.js';
+} from '../src/core/certainty.ts';
+import { buildDoseGrid } from '../src/core/doseGrid.ts';
 import {
   YOLK_WORD_CUTS, createPrior, predictCookTime, updatePosterior, yolkWordProbabilities,
-} from '../src/core/infer.js';
-import { anchorNear } from '../src/core/slider.js';
-import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { DONENESS_ANCHORS, logYolkTarget } from '../src/core/solve.js';
-import { timeRangeWords } from '../src/core/wording.js';
-import { appSetup, rng } from '../tools/common.js';
+} from '../src/core/infer.ts';
+import { anchorNear } from '../src/core/slider.ts';
+import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { DONENESS_ANCHORS, logYolkTarget } from '../src/core/solve.ts';
+import { timeRangeWords } from '../src/core/wording.ts';
+import { appSetup, rng } from '../tools/common.ts';
 
 const EGG = eggFromMass(0.068);
 const GRID = buildDoseGrid(EGG, appSetup(), { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });

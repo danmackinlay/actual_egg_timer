@@ -19,9 +19,9 @@ import { generateKeyPairSync } from 'node:crypto';
 
 import {
   APP_ID, AttestError, countsAsGenuine, verifyAssertion, verifyAttestation,
-} from '../server/appAttest.js';
-import { CborError, decode, decodeFirst, encode } from '../server/cbor.js';
-import { SYNTH, b64, makeAssertion, sha256 } from './attest.js';
+} from '../server/appAttest.ts';
+import { CborError, decode, decodeFirst, encode } from '../server/cbor.ts';
+import { SYNTH, b64, makeAssertion, sha256 } from './attest.ts';
 
 interface Sample {
   appId: string;

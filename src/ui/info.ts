@@ -4,8 +4,8 @@
  * rather than an (i) (`button.disclose`), opened and closed the same way.
  */
 
-import type { CopyKey } from '../core/copy.js';
-import { t } from './copy.js';
+import type { CopyKey } from '../core/copy.ts';
+import { t } from './copy.ts';
 
 /** The paragraph an (i) opens: the element its aria-controls names. */
 function infoPanel(button: HTMLButtonElement): HTMLElement | null {

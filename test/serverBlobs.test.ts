@@ -14,8 +14,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BlobsServer } from '@netlify/blobs/server';
 
-import eggs from '../netlify/functions/eggs.mjs';
-import { recordAt } from '../tools/common.js';
+import eggs from '../netlify/functions/eggs.mts';
+import { recordAt } from '../tools/common.ts';
 
 const UID = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f';
 const SITE = 'https://actualeggtimer.netlify.app';

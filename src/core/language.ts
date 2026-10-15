@@ -17,8 +17,8 @@
  * settings, iOS in UserDefaults.
  */
 
-import { languageOf } from './format.js';
-import type { UnitsFlip } from './units.js';
+import { languageOf } from './format.ts';
+import type { UnitsFlip } from './units.ts';
 
 /** The catalogue a fresh install reads. */
 export const DEFAULT_LANGUAGE = 'en';

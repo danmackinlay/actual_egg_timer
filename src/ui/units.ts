@@ -13,8 +13,8 @@
 import {
   type Measure, type Quantity, type UnitSystem, effectiveUnits, measureFor, quantityText,
   regionalUnits,
-} from '../core/units.js';
-import { REGION, t } from './copy.js';
+} from '../core/units.ts';
+import { REGION, t } from './copy.ts';
 
 /** The browser's region, from `copy.ts`, where it also picks how numbers and
  *  times are written. It decides which carton's size classes to offer, which

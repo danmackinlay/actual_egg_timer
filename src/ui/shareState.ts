@@ -34,7 +34,7 @@
  * passed in.
  */
 
-import { FIRST_SEQ, isUid, nextSeq, shareReply } from '../core/share.js';
+import { FIRST_SEQ, isUid, nextSeq, shareReply } from '../core/share.ts';
 
 export interface ShareState {
   on: boolean;

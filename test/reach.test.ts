@@ -30,21 +30,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import type { DoseGrid } from '../src/core/doseGrid.js';
-import { createPrior, updatePosterior, yolkWordProbabilities } from '../src/core/infer.js';
-import { type Egg, eggFromMass } from '../src/core/geometry.js';
-import type { CookSetup } from '../src/core/protocol.js';
-import { type Solution, solveCookTime } from '../src/core/solve.js';
-import { anchorNear, snapUp, verdictFor } from '../src/core/slider.js';
-import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import type { DoseGrid } from '../src/core/doseGrid.ts';
+import { createPrior, updatePosterior, yolkWordProbabilities } from '../src/core/infer.ts';
+import { type Egg, eggFromMass } from '../src/core/geometry.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { type Solution, solveCookTime } from '../src/core/solve.ts';
+import { anchorNear, snapUp, verdictFor } from '../src/core/slider.ts';
+import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
 import {
   ADVICE_GAIN, type AdviceFacts, type OddsProfile, adviceWanted, askedNear, lowOddsAt, oddsAtLevel, answerAt, decideAnswer,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
-} from '../src/core/reach.js';
-import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.js';
-import { mostLikelyShown, warningKey } from '../src/core/wording.js';
-import { appSetup, gridFor, knowing } from '../tools/common.js';
-import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, appAt, point, pointAt } from './profiles.js';
+} from '../src/core/reach.ts';
+import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.ts';
+import { mostLikelyShown, warningKey } from '../src/core/wording.ts';
+import { appSetup, gridFor, knowing } from '../tools/common.ts';
+import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, appAt, point, pointAt } from './profiles.ts';
 
 test('1. a profile point is the odds and the certainty the app shows at that level', () => {
   const grid = gridFor(WHITE_BOUND, EGG, SETUP);

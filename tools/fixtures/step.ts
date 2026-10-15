@@ -20,18 +20,18 @@
  * never change a phase.
  */
 
-import type { DecisionInputs } from '../../src/core/decide.js';
-import { LITERATURE_POPULATION } from '../../src/core/infer.js';
-import { oddsProfile } from '../../src/core/reach.js';
-import type { Calibration } from '../../src/core/record.js';
+import type { DecisionInputs } from '../../src/core/decide.ts';
+import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
+import { oddsProfile } from '../../src/core/reach.ts';
+import type { Calibration } from '../../src/core/record.ts';
 import {
   type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, endedAt_s, phaseAt,
-} from '../../src/core/running.js';
-import { type Readout, type ReadoutProbe, readoutAt } from '../../src/core/readout.js';
-import { type CookEnv, type CookEvent, type CookState, type CookStep, step } from '../../src/core/step.js';
+} from '../../src/core/running.ts';
+import { type Readout, type ReadoutProbe, readoutAt } from '../../src/core/readout.ts';
+import { type CookEnv, type CookEvent, type CookState, type CookStep, step } from '../../src/core/step.ts';
 
-import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
-import { BASE_CHOICES, MEMORY, START_S } from './shared.js';
+import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
+import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
 
 const S = START_S;
 

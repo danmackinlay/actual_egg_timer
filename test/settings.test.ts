@@ -9,9 +9,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SIZE_CLASSES, US_SIZE_CLASSES } from '../src/core/geometry.js';
-import { DEFAULTS, LIMITS } from '../src/core/inputs.js';
-import { DEFAULT_SETTINGS, carrySizeIndex, readChosenUnits, readSettings } from '../src/ui/settings.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from '../src/core/geometry.ts';
+import { DEFAULTS, LIMITS } from '../src/core/inputs.ts';
+import { DEFAULT_SETTINGS, carrySizeIndex, readChosenUnits, readSettings } from '../src/ui/settings.ts';
 
 test('nothing stored, or not an object: the defaults, a copy each time', () => {
   for (const raw of [null, undefined, 'x', 3, [1], true]) {

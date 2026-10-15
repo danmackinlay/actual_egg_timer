@@ -17,28 +17,28 @@
 import {
   type Decision, type DecisionInputs, NUDGE_MAX_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt,
   decisionGridRequest, decisionGridSpec, decisionInputs, oddsInTenths,
-} from '../src/core/decide.js';
-import { type DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
+} from '../src/core/decide.ts';
+import { type DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.ts';
 import {
   FEEDBACK_BAND, type Particle, type WhiteReport, YOLK_WORDS, type YolkWord, createPrior, yolkWordBands, yolkWordProbit,
   withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
-} from '../src/core/infer.js';
-import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { eggFromMass, type Egg } from '../src/core/geometry.js';
-import type { CookSetup } from '../src/core/protocol.js';
-import { type Solution, logYolkTarget } from '../src/core/solve.js';
-import { type LevelOdds, type OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
-import { predictOutcome } from '../src/core/outcome.js';
-import { CERTAINTY_MASS, type CertaintyReading, certaintyAt } from '../src/core/certainty.js';
-import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
-import { UNRELATED } from '../src/core/infer.js';
-import { sliderFromYolkDose } from '../src/core/solve.js';
+} from '../src/core/infer.ts';
+import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { eggFromMass, type Egg } from '../src/core/geometry.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { type Solution, logYolkTarget } from '../src/core/solve.ts';
+import { type LevelOdds, type OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.ts';
+import { predictOutcome } from '../src/core/outcome.ts';
+import { CERTAINTY_MASS, type CertaintyReading, certaintyAt } from '../src/core/certainty.ts';
+import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.ts';
+import { UNRELATED } from '../src/core/infer.ts';
+import { sliderFromYolkDose } from '../src/core/solve.ts';
 import {
   CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, type Calibration, type EggRecord, PARTICLE_COUNT,
   calibrationDoneness, calibrationParams, freshCalibration, replay,
-} from '../src/core/record.js';
-import { appSetup, draw, recordAt, rng } from '../tools/common.js';
+} from '../src/core/record.ts';
+import { appSetup, draw, recordAt, rng } from '../tools/common.ts';
 
 const only = process.argv[2] ?? 'all';
 const run = (name: string): boolean => only === 'all' || only === name;

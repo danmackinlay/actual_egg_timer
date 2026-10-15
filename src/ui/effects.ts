@@ -6,21 +6,21 @@
  * are final, for sharing.
  */
 
-import { type LanguageState, effectiveLanguage } from '../core/language.js';
-import { type CookPlan, openEggId, replan } from '../core/running.js';
-import type { Learner } from './calibration.js';
-import type { Stores } from './cook.js';
-import type { Model } from './model.js';
-import { applyLanguageToDom } from './controls.js';
-import { activeLocale, applyCopy, loadCopy } from './copy.js';
-import { cancelSoon, soon } from './idle.js';
-import { labelInfoButtons } from './info.js';
-import { renderVersion } from './render.js';
-import { send } from './send.js';
-import { labelTicks } from './slider.js';
-import { labelSteppers } from './stepper.js';
-import type { Settings, SettingsStore } from './store.js';
-import { forgetDevClockUse, nowMs } from './now.js';
+import { type LanguageState, effectiveLanguage } from '../core/language.ts';
+import { type CookPlan, openEggId, replan } from '../core/running.ts';
+import type { Learner } from './calibration.ts';
+import type { Stores } from './cook.ts';
+import type { Model } from './model.ts';
+import { applyLanguageToDom } from './controls.ts';
+import { activeLocale, applyCopy, loadCopy } from './copy.ts';
+import { cancelSoon, soon } from './idle.ts';
+import { labelInfoButtons } from './info.ts';
+import { renderVersion } from './render.ts';
+import { send } from './send.ts';
+import { labelTicks } from './slider.ts';
+import { labelSteppers } from './stepper.ts';
+import type { Settings, SettingsStore } from './store.ts';
+import { forgetDevClockUse, nowMs } from './now.ts';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
 const pending = {

@@ -27,12 +27,12 @@
  * direction both real eggs in LOGBOOK.md already went wrong in.
  */
 
-import type { CookSetup, Cooling } from '../src/core/protocol.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { simulate } from '../src/core/solve.js';
-import { ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
-import { type Theta, THETA0, runPerturbed } from './perturbed.js';
+import type { CookSetup, Cooling } from '../src/core/protocol.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { simulate } from '../src/core/solve.ts';
+import { ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC } from '../src/core/constants.ts';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.ts';
+import { type Theta, THETA0, runPerturbed } from './perturbed.ts';
 
 const MASS = DEFAULT_EGG_MASS_KG;
 const COOK_S = 400;

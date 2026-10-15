@@ -7,17 +7,17 @@
  * what any moment of a cook says.
  */
 
-import type { CopyKey } from '../core/copy.js';
-import type { CookPlan, RunningCook } from '../core/running.js';
-import { type ReadoutLine, type Spoken, readoutAt } from '../core/readout.js';
-import type { Cooling, HeatAfterBoil } from '../core/protocol.js';
-import { phaseKeys } from '../core/wording.js';
-import { t, tChosen } from './copy.js';
-import { formatClock, spokenClock } from './countdown.js';
-import type { UiStartMode } from './store.js';
-import { show } from './units.js';
+import type { CopyKey } from '../core/copy.ts';
+import type { CookPlan, RunningCook } from '../core/running.ts';
+import { type ReadoutLine, type Spoken, readoutAt } from '../core/readout.ts';
+import type { Cooling, HeatAfterBoil } from '../core/protocol.ts';
+import { phaseKeys } from '../core/wording.ts';
+import { t, tChosen } from './copy.ts';
+import { formatClock, spokenClock } from './countdown.ts';
+import type { UiStartMode } from './store.ts';
+import { show } from './units.ts';
 
-export { coolingStartsIn_s } from '../core/readout.js';
+export { coolingStartsIn_s } from '../core/readout.ts';
 
 /** What the readout needs besides the cook, its plan and the clock. */
 export interface ReadoutFacts {

@@ -30,13 +30,13 @@ import assert from 'node:assert/strict';
 import {
   DECISION_WINDOW_S, LEAN_COST_PER_S, NUDGE_MAX_S, RUNNY_WHITE_LOSS, appliedNudge, carriedSolution, chooseCookTime,
   decide, decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, nudgeSeconds,
-} from '../src/core/decide.js';
-import { type Posterior, UNRELATED, whiteAnswerProbabilities, yolkAnswerProbabilities } from '../src/core/infer.js';
-import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
-import { verdictFor } from '../src/core/slider.js';
-import { PARTICLE_COUNT, calibrationDoneness, calibrationParams, replay } from '../src/core/record.js';
-import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';
-import { COARSE, EGG, PRIOR, PRIOR_GRID, SETUP, decideFor, meanSolve } from './decisions.js';
+} from '../src/core/decide.ts';
+import { type Posterior, UNRELATED, whiteAnswerProbabilities, yolkAnswerProbabilities } from '../src/core/infer.ts';
+import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.ts';
+import { verdictFor } from '../src/core/slider.ts';
+import { PARTICLE_COUNT, calibrationDoneness, calibrationParams, replay } from '../src/core/record.ts';
+import { appSetup, gridFor, knowing, recordAt } from '../tools/common.ts';
+import { COARSE, EGG, PRIOR, PRIOR_GRID, SETUP, decideFor, meanSolve } from './decisions.ts';
 
 // --------------------------------------------------------------------------
 // shared

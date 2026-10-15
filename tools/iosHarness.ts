@@ -8,7 +8,7 @@ import {
 } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { asRead } from './text.js';
+import { asRead } from './text.ts';
 
 export const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';

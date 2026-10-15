@@ -32,7 +32,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { OVERLAYS, PLURAL_CATEGORIES } from '../src/core/copy.js';
+import { OVERLAYS, PLURAL_CATEGORIES } from '../src/core/copy.ts';
 
 /** A message's templates by category: `text`, or each plural form. */
 export type Templates = Record<string, string>;

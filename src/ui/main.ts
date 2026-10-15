@@ -13,17 +13,17 @@
  *  import, so the site that ships has none of them (`npm run build:site`
  *  leaves src/ui/dev/ out); where they are missing, the page boots without
  *  them. */
-import { boot } from './app.js';
-import { applyCopy, loadCopy } from './copy.js';
-import { effectiveLanguage } from '../core/language.js';
-import { isDevHost } from './now.js';
-import { loadLanguage } from './store.js';
-import { loadPopulation } from './population.js';
+import { boot } from './app.ts';
+import { applyCopy, loadCopy } from './copy.ts';
+import { effectiveLanguage } from '../core/language.ts';
+import { isDevHost } from './now.ts';
+import { loadLanguage } from './store.ts';
+import { loadPopulation } from './population.ts';
 
 async function devTools(): Promise<void> {
   if (!isDevHost(location.hostname)) return;
   try {
-    (await import('./dev/index.js')).install();
+    (await import('./dev/index.ts')).install();
   } catch {
     /* a site built to ship, served here: no development tools */
   }

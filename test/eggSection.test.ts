@@ -8,12 +8,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { type SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.js';
-import { advanceSection, createSection, sectionView } from '../src/core/section.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../src/core/solve.js';
-import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
-import { appSetup } from '../tools/common.js';
+import { type SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.ts';
+import { advanceSection, createSection, sectionView } from '../src/core/section.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../src/core/solve.ts';
+import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../src/core/constants.ts';
+import { appSetup } from '../tools/common.ts';
 
 const PALETTE: SectionPalette = {
   yolkRunny: [255, 0, 0],

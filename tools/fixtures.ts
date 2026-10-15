@@ -76,7 +76,7 @@ import { availableParallelism } from 'node:os';
 import { mkdirSync } from 'node:fs';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
-import { fixtureLayout, replaceFile } from './fixtureCompare.js';
+import { fixtureLayout, replaceFile } from './fixtureCompare.ts';
 
 /** What a worker hands back: the fixture's file, and what the summary line
  *  says of it. */
@@ -86,7 +86,7 @@ interface Made { text: string; counts: string[] }
  *  of it, in the order the fixtures are written. */
 const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[] }>> = {
   core: async () => {
-    const { coreFixture: f } = await import('./fixtures/core.js');
+    const { coreFixture: f } = await import('./fixtures/core.ts');
     return {
       fixture: f, counts: [
         `${f.sphere.seriesTheta.length} seriesTheta`,
@@ -98,12 +98,12 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     };
   },
   scenarios: async () => {
-    const { scenariosFixture: f } = await import('./fixtures/scenarios.js');
+    const { scenariosFixture: f } = await import('./fixtures/scenarios.ts');
     return { fixture: f, counts: [`${f.cases.length} scenarios`] };
   },
-  section: async () => ({ fixture: (await import('./fixtures/section.js')).sectionFixture, counts: [] }),
+  section: async () => ({ fixture: (await import('./fixtures/section.ts')).sectionFixture, counts: [] }),
   calibration: async () => {
-    const { calibrationFixture: f } = await import('./fixtures/calibration.js');
+    const { calibrationFixture: f } = await import('./fixtures/calibration.ts');
     return {
       fixture: f, counts: [
         `${f.grid.logYolk.length} grid cells`,
@@ -112,44 +112,44 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
       ],
     };
   },
-  inputs: async () => ({ fixture: (await import('./fixtures/inputs.js')).inputsFixture, counts: [] }),
+  inputs: async () => ({ fixture: (await import('./fixtures/inputs.ts')).inputsFixture, counts: [] }),
   slider: async () => {
-    const { sliderFixture: f } = await import('./fixtures/slider.js');
+    const { sliderFixture: f } = await import('./fixtures/slider.ts');
     return { fixture: f, counts: [`${f.cases.length} snap`, `${f.verdict.length} verdicts`] };
   },
   texture: async () => {
-    const { textureFixture: f } = await import('./fixtures/texture.js');
+    const { textureFixture: f } = await import('./fixtures/texture.ts');
     return { fixture: f, counts: [`${f.cases.length} textures`] };
   },
-  boil: async () => ({ fixture: (await import('./fixtures/boil.js')).boilFixture, counts: [] }),
-  sounds: async () => ({ fixture: (await import('./fixtures/sounds.js')).soundsFixture, counts: [] }),
+  boil: async () => ({ fixture: (await import('./fixtures/boil.ts')).boilFixture, counts: [] }),
+  sounds: async () => ({ fixture: (await import('./fixtures/sounds.ts')).soundsFixture, counts: [] }),
   sousvide: async () => {
-    const { sousvideFixture: f } = await import('./fixtures/sousvide.js');
+    const { sousvideFixture: f } = await import('./fixtures/sousvide.ts');
     return { fixture: f, counts: [`${f.cases.length} sous-vide`] };
   },
   sousvideCopy: async () => {
-    const { sousvideCopyFixture: f } = await import('./fixtures/sousvideCopy.js');
+    const { sousvideCopyFixture: f } = await import('./fixtures/sousvideCopy.ts');
     return { fixture: f, counts: [`${f.duration.length + f.startPhrase.length} sous-vide copy`] };
   },
   record: async () => {
-    const { recordFixture: f } = await import('./fixtures/record.js');
+    const { recordFixture: f } = await import('./fixtures/record.ts');
     return { fixture: f, counts: [`${f.cases.length} records`, `${f.replay.log.length} replayed eggs`] };
   },
-  prior: async () => ({ fixture: (await import('./fixtures/population.js')).priorFixture, counts: [] }),
+  prior: async () => ({ fixture: (await import('./fixtures/population.ts')).priorFixture, counts: [] }),
   decide: async () => {
-    const { decideFixture: f } = await import('./fixtures/decide.js');
+    const { decideFixture: f } = await import('./fixtures/decide.ts');
     return { fixture: f, counts: [`${f.specs.length} decision surfaces and ${f.cases.length} decisions`] };
   },
   outcome: async () => {
-    const { outcomeFixture: f } = await import('./fixtures/outcome.js');
+    const { outcomeFixture: f } = await import('./fixtures/outcome.ts');
     return { fixture: f, counts: [`${f.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`] };
   },
   certainty: async () => {
-    const { certaintyFixture: f } = await import('./fixtures/certainty.js');
+    const { certaintyFixture: f } = await import('./fixtures/certainty.ts');
     return { fixture: f, counts: [`${f.spreads.length + f.cases.length} certainty readings`] };
   },
   reach: async () => {
-    const { reachFixture: f } = await import('./fixtures/reach.js');
+    const { reachFixture: f } = await import('./fixtures/reach.ts');
     const decided = f.profiles.reduce((n, p) => n + p.decided.length, f.owner.decided.length + f.neverSets.decided.length);
     return {
       fixture: f,
@@ -157,14 +157,14 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     };
   },
   copy: async () => {
-    const { copyFixture: f } = await import('./fixtures/copy.js');
+    const { copyFixture: f } = await import('./fixtures/copy.ts');
     return {
       fixture: f,
       counts: [`${f.render.length} copy renders`, `${f.plural.length} plural rules`, `${f.probe.cases.length} copy probes`],
     };
   },
   format: async () => {
-    const { formatFixture: f } = await import('./fixtures/format.js');
+    const { formatFixture: f } = await import('./fixtures/format.ts');
     return {
       fixture: f, counts: [
         `${f.numbers.length + f.counts.length + f.times.length} formatted numbers and times`,
@@ -173,33 +173,33 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     };
   },
   units: async () => {
-    const { english } = await import('./fixtures/shared.js');
-    const f = (await import('./fixtures/units.js')).unitsFixture(english);
+    const { english } = await import('./fixtures/shared.ts');
+    const f = (await import('./fixtures/units.ts')).unitsFixture(english);
     const trips = (f['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0);
     return { fixture: f, counts: [`${trips} unit round trips`] };
   },
   probe: async () => {
-    const f = (await import('./fixtures/probe.js')).probeFixture();
+    const f = (await import('./fixtures/probe.ts')).probeFixture();
     return {
       fixture: f,
       counts: [`${(f['updates'] as unknown[]).length} probe folds`, `${(f['solved'] as unknown[]).length} probe cooks`],
     };
   },
   language: async () => {
-    const f = (await import('./fixtures/language.js')).languageFixture();
+    const f = (await import('./fixtures/language.ts')).languageFixture();
     return { fixture: f, counts: [`${(f['transitions'] as unknown[]).length} language moves`] };
   },
   share: async () => {
-    const f = (await import('./fixtures/share.js')).shareFixture();
+    const f = (await import('./fixtures/share.ts')).shareFixture();
     return { fixture: f, counts: [`${f.replies.length} server answers`] };
   },
-  wording: async () => ({ fixture: (await import('./fixtures/wording.js')).wordingFixture(), counts: [] }),
+  wording: async () => ({ fixture: (await import('./fixtures/wording.ts')).wordingFixture(), counts: [] }),
   running: async () => {
-    const { runningFixture: f } = await import('./fixtures/running.js');
+    const { runningFixture: f } = await import('./fixtures/running.ts');
     return { fixture: f, counts: [`${f.setups.length} cook setups and ${f.moves.length} cook moves`] };
   },
   step: async () => {
-    const { stepFixture: f } = await import('./fixtures/step.js');
+    const { stepFixture: f } = await import('./fixtures/step.ts');
     return {
       fixture: f,
       counts: [`${f.traces.length} cook traces of ${f.traces.reduce((n, t) => n + t.steps.length, 0)} steps`],

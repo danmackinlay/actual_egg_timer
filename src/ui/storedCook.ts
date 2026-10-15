@@ -7,12 +7,12 @@
  * reader (`StoredCook.swift`).
  */
 
-import type { SizeTable } from '../core/geometry.js';
-import type { BoilMemory } from '../core/boil.js';
-import { YOLK_WORDS, type YolkWord } from '../core/infer.js';
-import { type ProbeReading, parseForecast } from '../core/record.js';
-import { type CookAsRan, type CookChoices, type CookEntry, type Pulled, type RunningCook, foldCook } from '../core/running.js';
-import { STORES, inFormat, stamped } from './stores.js';
+import type { SizeTable } from '../core/geometry.ts';
+import type { BoilMemory } from '../core/boil.ts';
+import { YOLK_WORDS, type YolkWord } from '../core/infer.ts';
+import { type ProbeReading, parseForecast } from '../core/record.ts';
+import { type CookAsRan, type CookChoices, type CookEntry, type Pulled, type RunningCook, foldCook } from '../core/running.ts';
+import { STORES, inFormat, stamped } from './stores.ts';
 
 /** A finite number. */
 function isNumber(v: unknown): v is number {

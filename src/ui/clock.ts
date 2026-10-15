@@ -9,11 +9,11 @@
  * setInterval does not.
  */
 
-import { ALARM_RING_S, type AlarmMoment, type AlarmSound, alarmRepeats } from '../core/sounds.js';
-import { DEFAULT_ALARM_SOUND } from './settings.js';
-import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.js';
-import { request, soon } from './idle.js';
-import { clockSpeed, nowMs } from './now.js';
+import { ALARM_RING_S, type AlarmMoment, type AlarmSound, alarmRepeats } from '../core/sounds.ts';
+import { DEFAULT_ALARM_SOUND } from './settings.ts';
+import { RECORDINGS, beepsPeriod, recordedPeriod, synthPeriod } from './alarmSounds.ts';
+import { request, soon } from './idle.ts';
+import { clockSpeed, nowMs } from './now.ts';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
 const TICK_MS = 200;

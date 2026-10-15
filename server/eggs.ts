@@ -27,10 +27,10 @@
  */
 
 import { createHash } from 'node:crypto';
-import { parseRecord, sharedRecord } from '../src/core/record.js';
+import { parseRecord, sharedRecord } from '../src/core/record.ts';
 // A cook's id, as both apps read one.
-import { isUid } from '../src/core/share.js';
-import { AttestError, countsAsGenuine, verifyAssertion, verifyAttestation } from './appAttest.js';
+import { isUid } from '../src/core/share.ts';
+import { AttestError, countsAsGenuine, verifyAssertion, verifyAttestation } from './appAttest.ts';
 
 /** The store, as much of it as this needs. */
 export interface Store {

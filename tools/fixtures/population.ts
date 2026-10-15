@@ -7,10 +7,10 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { LITERATURE_POPULATION, type Population, createPrior } from '../../src/core/infer.js';
-import { parsePopulation, priorStart } from '../../src/core/population.js';
-import { calibrationDoneness, calibrationParams, freshCalibration } from '../../src/core/record.js';
-import { particleRows } from './shared.js';
+import { LITERATURE_POPULATION, type Population, createPrior } from '../../src/core/infer.ts';
+import { parsePopulation, priorStart } from '../../src/core/population.ts';
+import { calibrationDoneness, calibrationParams, freshCalibration } from '../../src/core/record.ts';
+import { particleRows } from './shared.ts';
 
 const PRIOR_COUNT = 64;
 const PRIOR_SEED = 20261002;

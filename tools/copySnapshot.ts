@@ -25,8 +25,8 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { type CopyState, copyScenarios } from './copyScenarios.js';
-import { runScenarios, treeArg } from './harness.js';
+import { type CopyState, copyScenarios } from './copyScenarios.ts';
+import { runScenarios, treeArg } from './harness.ts';
 
 type Snapshot = CopyState;
 

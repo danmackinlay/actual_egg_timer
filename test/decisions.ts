@@ -4,15 +4,15 @@
  * prior with its surface.
  */
 
-import { type Decision, decide } from '../src/core/decide.js';
-import type { DoseGrid, GridSpec } from '../src/core/doseGrid.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { type Solution, logYolkTarget } from '../src/core/solve.js';
+import { type Decision, decide } from '../src/core/decide.ts';
+import type { DoseGrid, GridSpec } from '../src/core/doseGrid.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { type Solution, logYolkTarget } from '../src/core/solve.ts';
 import {
   CALIBRATION_SEED, type Calibration, PARTICLE_COUNT, calibrationGrid, freshCalibration,
-} from '../src/core/record.js';
-import { answerAt } from '../src/core/reach.js';
-import { appSetup, gridFor } from '../tools/common.js';
+} from '../src/core/record.ts';
+import { answerAt } from '../src/core/reach.ts';
+import { appSetup, gridFor } from '../tools/common.ts';
 
 export const EGG = eggFromMass(0.068);
 

@@ -8,16 +8,16 @@
  * only build inputs for it.
  */
 
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
-import { decisionGridRequest, decisionInputs } from '../src/core/decide.js';
-import { type DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
-import type { Egg } from '../src/core/geometry.js';
-import { type WhiteReport, type YolkWord, createPrior } from '../src/core/infer.js';
-import type { CookSetup } from '../src/core/protocol.js';
-import { CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, type ProbeReading, recordFor } from '../src/core/record.js';
-import { type CookPlan, type RunningCook, cookFactsFor } from '../src/core/running.js';
-import { APP_VERSION } from '../src/ui/version.js';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
+import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.ts';
+import { decisionGridRequest, decisionInputs } from '../src/core/decide.ts';
+import { type DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.ts';
+import type { Egg } from '../src/core/geometry.ts';
+import { type WhiteReport, type YolkWord, createPrior } from '../src/core/infer.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, type ProbeReading, recordFor } from '../src/core/record.ts';
+import { type CookPlan, type RunningCook, cookFactsFor } from '../src/core/running.ts';
+import { APP_VERSION } from '../src/ui/version.ts';
+import { LITERATURE_POPULATION } from '../src/core/infer.ts';
 
 /* ------------------------------------------------------------------ pots */
 

@@ -23,8 +23,8 @@
 import { IncomingMessage, ServerResponse, createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, relative } from 'node:path';
-import { handle } from '../server/eggs.js';
-import { MemoryStore } from '../server/memoryStore.js';
+import { handle } from '../server/eggs.ts';
+import { MemoryStore } from '../server/memoryStore.ts';
 
 const TREE = process.env['TREE'] ?? '.';
 const ROOT = join(TREE, '_site');

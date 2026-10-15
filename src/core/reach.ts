@@ -100,20 +100,20 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import type { CopyKey } from './copyKeys.js';
-import type { Egg } from './geometry.js';
-import type { CookSetup } from './protocol.js';
-import { type Solution, logYolkTarget, solveCookTime } from './solve.js';
-import type { DoseGrid } from './doseGrid.js';
+import type { CopyKey } from './copyKeys.ts';
+import type { Egg } from './geometry.ts';
+import type { CookSetup } from './protocol.ts';
+import { type Solution, logYolkTarget, solveCookTime } from './solve.ts';
+import type { DoseGrid } from './doseGrid.ts';
 import {
   type Decision, type TimeBounds, appliedNudge, decide, decidedSolution,
-} from './decide.js';
-import { yolkWordProbabilities } from './infer.js';
-import { type Outcome, predictOutcome } from './outcome.js';
-import { type Certainty, type CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.js';
-import { type Calibration, calibrationDoneness, calibrationParams } from './record.js';
-import { LIMITS, START_TEMP_PRESETS_C } from './inputs.js';
-import { SLIDER_STEPS, type Verdict, snapDown, snapUp, verdictFor } from './slider.js';
+} from './decide.ts';
+import { yolkWordProbabilities } from './infer.ts';
+import { type Outcome, predictOutcome } from './outcome.ts';
+import { type Certainty, type CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.ts';
+import { type Calibration, calibrationDoneness, calibrationParams } from './record.ts';
+import { LIMITS, START_TEMP_PRESETS_C } from './inputs.ts';
+import { SLIDER_STEPS, type Verdict, snapDown, snapUp, verdictFor } from './slider.ts';
 
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the

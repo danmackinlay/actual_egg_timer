@@ -15,19 +15,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { parseCatalogue, render, templatesOf } from '../src/core/copy.js';
-import { formattingLocale } from '../src/core/format.js';
+import { parseCatalogue, render, templatesOf } from '../src/core/copy.ts';
+import { formattingLocale } from '../src/core/format.ts';
 import {
   DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
   languageAfterPick, registerOf,
-} from '../src/core/language.js';
-import { FRESH_LANGUAGE, readLanguageState } from '../src/ui/settings.js';
-import { parseRecord } from '../src/core/record.js';
-import { type CookChoices, replan, startCook } from '../src/core/running.js';
-import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
-import { gridFor, knowing, webRecordFor } from '../tools/common.js';
-import { NOTES_PATH, readNotes } from '../tools/copyNotes.js';
-import { asRead } from '../tools/text.js';
+} from '../src/core/language.ts';
+import { FRESH_LANGUAGE, readLanguageState } from '../src/ui/settings.ts';
+import { parseRecord } from '../src/core/record.ts';
+import { type CookChoices, replan, startCook } from '../src/core/running.ts';
+import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.ts';
+import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
+import { NOTES_PATH, readNotes } from '../tools/copyNotes.ts';
+import { asRead } from '../tools/text.ts';
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }

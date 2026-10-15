@@ -68,12 +68,12 @@
  * a posterior the decision already has.
  */
 
-import { type DoseGrid, lookupLogYolkDose } from './doseGrid.js';
+import { type DoseGrid, lookupLogYolkDose } from './doseGrid.ts';
 import {
   type Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities, yolkWordProbabilities,
-} from './infer.js';
-import { normalCdf } from './sphere.js';
-import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
+} from './infer.ts';
+import { normalCdf } from './sphere.ts';
+import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.ts';
 
 /** How much likelier one way of missing has to be than the other before the
  *  outcome leans that way: three misses in five. See the header. */

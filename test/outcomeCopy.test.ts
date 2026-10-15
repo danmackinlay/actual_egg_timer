@@ -15,14 +15,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import type { Outcome } from '../src/core/outcome.js';
-import { WHITE_RISK } from '../src/core/outcome.js';
-import { forecastOf } from '../src/core/record.js';
-import { type Certainty, wordCertainty } from '../src/core/certainty.js';
+import type { Outcome } from '../src/core/outcome.ts';
+import { WHITE_RISK } from '../src/core/outcome.ts';
+import { forecastOf } from '../src/core/record.ts';
+import { type Certainty, wordCertainty } from '../src/core/certainty.ts';
 import {
   certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords,
   whiteAtRisk,
-} from '../src/core/wording.js';
+} from '../src/core/wording.ts';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
 

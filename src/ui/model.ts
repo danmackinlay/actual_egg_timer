@@ -32,34 +32,34 @@
  *   and forgotten.
  */
 
-import type { AlarmMoment, AlarmSound } from '../core/sounds.js';
-import type { BoilMemory } from '../core/boil.js';
-import type { Decision, DecisionInputs } from '../core/decide.js';
-import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.js';
-import type { Outcome } from '../core/outcome.js';
-import type { ShareState } from './shareState.js';
-import type { Solution } from '../core/solve.js';
-import type { CertaintyReading } from '../core/certainty.js';
-import { CARRYOVER_WINDOW } from '../core/constants.js';
-import { type EggSection, type SectionView, advanceSection, createSection, previewSection } from '../core/section.js';
-import type { WhiteReport, YolkWord } from '../core/infer.js';
-import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
-import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
+import type { AlarmMoment, AlarmSound } from '../core/sounds.ts';
+import type { BoilMemory } from '../core/boil.ts';
+import type { Decision, DecisionInputs } from '../core/decide.ts';
+import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.ts';
+import type { Outcome } from '../core/outcome.ts';
+import type { ShareState } from './shareState.ts';
+import type { Solution } from '../core/solve.ts';
+import type { CertaintyReading } from '../core/certainty.ts';
+import { CARRYOVER_WINDOW } from '../core/constants.ts';
+import { type EggSection, type SectionView, advanceSection, createSection, previewSection } from '../core/section.ts';
+import type { WhiteReport, YolkWord } from '../core/infer.ts';
+import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.ts';
+import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.ts';
 import {
   answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookTooOld, corrected, earliestStart_s, endedAt_s,
   latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
-} from '../core/running.js';
-import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
-import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';
-import { step, surfaceFor } from '../core/step.js';
-import type { UnitSystem } from '../core/units.js';
-import { chooseUnits } from '../core/units.js';
-import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.js';
-import { type PotOdds, nudgeNow, solveIdle } from './answer.js';
-import { targetPeakYolk_C } from '../core/slider.js';
-import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
-import type { KeptAnswers, Settings, StoredCook } from './store.js';
-import { REGION, REGIONAL_UNITS } from './units.js';
+} from '../core/running.ts';
+import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.ts';
+import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.ts';
+import { step, surfaceFor } from '../core/step.ts';
+import type { UnitSystem } from '../core/units.ts';
+import { chooseUnits } from '../core/units.ts';
+import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.ts';
+import { type PotOdds, nudgeNow, solveIdle } from './answer.ts';
+import { targetPeakYolk_C } from '../core/slider.ts';
+import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
+import type { KeptAnswers, Settings, StoredCook } from './store.ts';
+import { REGION, REGIONAL_UNITS } from './units.ts';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,
  *  and the egg it aims for, once planned. */

@@ -6,16 +6,16 @@
  * a correction in hand - is `update`'s.
  */
 
-import { eggFromMass } from '../core/geometry.js';
-import type { Cooling } from '../core/protocol.js';
-import { type Quantity, parse } from '../core/units.js';
-import { DEFAULTS } from '../core/inputs.js';
-import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.js';
-import { page, radioValue } from './dom.js';
-import { groupOf } from './edit.js';
-import { send } from './send.js';
-import { LIMITS, type Settings, type UiStartMode, clampNumber } from './store.js';
-import { measure } from './units.js';
+import { eggFromMass } from '../core/geometry.ts';
+import type { Cooling } from '../core/protocol.ts';
+import { type Quantity, parse } from '../core/units.ts';
+import { DEFAULTS } from '../core/inputs.ts';
+import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.ts';
+import { page, radioValue } from './dom.ts';
+import { groupOf } from './edit.ts';
+import { send } from './send.ts';
+import { LIMITS, type Settings, type UiStartMode, clampNumber } from './store.ts';
+import { measure } from './units.ts';
 
 /** The three ways a person can measure an egg are one number in three units.
  *  The model egg's equator is a circle, so girth = pi * B exactly; mass goes

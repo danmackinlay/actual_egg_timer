@@ -9,12 +9,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, type Options, type Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
-import { MemoryStore } from '../server/memoryStore.js';
-import { type EggRecord, MODEL_ID, parseRecord } from '../src/core/record.js';
-import { readFitRecord } from '../tools/eggsImport.js';
-import { recordAt } from '../tools/common.js';
-import { SYNTH, makeAssertion } from './attest.js';
+import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, type Options, type Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.ts';
+import { MemoryStore } from '../server/memoryStore.ts';
+import { type EggRecord, MODEL_ID, parseRecord } from '../src/core/record.ts';
+import { readFitRecord } from '../tools/eggsImport.ts';
+import { recordAt } from '../tools/common.ts';
+import { SYNTH, makeAssertion } from './attest.ts';
 
 const UID = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f';
 const SITE = 'https://actualeggtimer.netlify.app';

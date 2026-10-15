@@ -31,25 +31,25 @@
  * `fixtures/running.json` and `fixtures/step.json`.
  */
 
-import { type Egg, type SizeTable, eggFromMass } from './geometry.js';
-import { type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C } from './protocol.js';
-import { boilingPointAtAltitude } from './thermo.js';
-import { ALPHA_REL_SD } from './constants.js';
-import { LIMITS, ambientFor, startTempPreset_C } from './inputs.js';
-import { type BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.js';
-import { type CookResult, type ModelParams, type Solution, logYolkTarget, simulate } from './solve.js';
+import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
+import { type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C } from './protocol.ts';
+import { boilingPointAtAltitude } from './thermo.ts';
+import { ALPHA_REL_SD } from './constants.ts';
+import { LIMITS, ambientFor, startTempPreset_C } from './inputs.ts';
+import { type BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.ts';
+import { type CookResult, type ModelParams, type Solution, logYolkTarget, simulate } from './solve.ts';
 import {
   type DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, inputsKey, numberKey, solutionAt,
-} from './decide.js';
-import type { DoseGrid } from './doseGrid.js';
-import { type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
-import { type CertaintyReading, certaintyAt } from './certainty.js';
-import { predictOutcome } from './outcome.js';
-import type { WhiteReport, YolkWord } from './infer.js';
+} from './decide.ts';
+import type { DoseGrid } from './doseGrid.ts';
+import { type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.ts';
+import { type CertaintyReading, certaintyAt } from './certainty.ts';
+import { predictOutcome } from './outcome.ts';
+import type { WhiteReport, YolkWord } from './infer.ts';
 import {
   type AppName, type Calibration, type CookFacts, type EggFrom, type Forecast, type MassFrom, type ProbeReading, type PulledBy, type Units, calibrationDoneness,
   calibrationParams, forecastOf,
-} from './record.js';
+} from './record.ts';
 
 /* ------------------------------------------------------------- the types */
 

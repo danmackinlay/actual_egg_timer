@@ -13,7 +13,7 @@
 import {
   DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
   languageAfterPick, registerOf,
-} from '../../src/core/language.js';
+} from '../../src/core/language.ts';
 
 type Move = { flip: 'metricToImperial' | 'imperialToMetric' } | { pick: string };
 

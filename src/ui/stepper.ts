@@ -20,9 +20,9 @@
  * label its field shows.
  */
 
-import type { CopyKey } from '../core/copy.js';
-import { t } from './copy.js';
-import { cancelSoon, soon } from './idle.js';
+import type { CopyKey } from '../core/copy.ts';
+import { t } from './copy.ts';
+import { cancelSoon, soon } from './idle.ts';
 
 /** A held button's first repeat, then its pace, and the pace it speeds up
  *  to after `FAST_AFTER` repeats: 30 steps of altitude in about 2.5 s. */

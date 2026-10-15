@@ -19,9 +19,9 @@
  * answer what it is.
  */
 
-import { Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C } from './constants.js';
-import { createDose, holdTimeForDose } from './kinetics.js';
-import { seriesTheta } from './sphere.js';
+import { Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C } from './constants.ts';
+import { createDose, holdTimeForDose } from './kinetics.ts';
+import { seriesTheta } from './sphere.ts';
 
 /** The bath temperature the app offers. 58 C is squarely inside the range the
  *  low-temperature literature argues about, which is the point. */

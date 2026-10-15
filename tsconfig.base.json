@@ -25,6 +25,7 @@
     "allowUnusedLabels": false,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "rewriteRelativeImportExtensions": true,
     "erasableSyntaxOnly": true,
     "sourceMap": true,
     "removeComments": true,

@@ -70,16 +70,16 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import type { Egg } from './geometry.js';
-import type { CookSetup } from './protocol.js';
+import type { Egg } from './geometry.ts';
+import type { CookSetup } from './protocol.ts';
 import {
   type ModelParams, type Solution, YOLK_DOSE_HARD, simulate, solveCookTime,
-} from './solve.js';
-import type { DoseGrid, GridRequest, GridSpec } from './doseGrid.js';
+} from './solve.ts';
+import type { DoseGrid, GridRequest, GridSpec } from './doseGrid.ts';
 import {
   type Posterior, UNRELATED, whiteProbit, withUnrelated, yolkProbit,
-} from './infer.js';
-import { type Calibration, calibrationDoneness, calibrationParams } from './record.js';
+} from './infer.ts';
+import { type Calibration, calibrationDoneness, calibrationParams } from './record.ts';
 
 /** How much worse a runny white is than a yolk one answer off: the owner's
  *  number (DECISIONS.md 7). */

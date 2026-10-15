@@ -12,19 +12,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import type { CookSurface } from '../src/core/running.js';
-import type { DecisionInputs } from '../src/core/decide.js';
-import type { DoseGrid } from '../src/core/doseGrid.js';
-import type { Calibration } from '../src/core/record.js';
-import { type Stores, performStored } from '../src/ui/cook.js';
-import { openLearner } from '../src/ui/calibration.js';
-import { type Effect, type Model, type Msg, update } from '../src/ui/model.js';
-import { type Builds, openNeeds } from '../src/ui/needs.js';
-import { openSharing } from '../src/ui/share.js';
-import { emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.js';
-import { sizeClassesFor } from '../src/core/geometry.js';
-import { gridFor, knowing } from '../tools/common.js';
+import type { CookSurface } from '../src/core/running.ts';
+import type { DecisionInputs } from '../src/core/decide.ts';
+import type { DoseGrid } from '../src/core/doseGrid.ts';
+import type { Calibration } from '../src/core/record.ts';
+import { type Stores, performStored } from '../src/ui/cook.ts';
+import { openLearner } from '../src/ui/calibration.ts';
+import { type Effect, type Model, type Msg, update } from '../src/ui/model.ts';
+import { type Builds, openNeeds } from '../src/ui/needs.ts';
+import { openSharing } from '../src/ui/share.ts';
+import { emptyModel } from '../src/ui/state.ts';
+import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.ts';
+import { sizeClassesFor } from '../src/core/geometry.ts';
+import { gridFor, knowing } from '../tools/common.ts';
 
 /** localStorage, in memory, and the page's timers, as a browser runs them. */
 const storage = new Map<string, string>();

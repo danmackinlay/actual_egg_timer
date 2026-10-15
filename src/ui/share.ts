@@ -16,17 +16,17 @@
  * turned on, the browser back online).
  */
 
-import { type EggRecord, sharedRecord } from '../core/record.js';
-import { deletionDone } from '../core/share.js';
+import { type EggRecord, sharedRecord } from '../core/record.ts';
+import { deletionDone } from '../core/share.ts';
 import {
   type ShareState, answered, deletionAsked, deletionConfirmed, forgotten, nextToSend, readShareState, reconciled, turnedOff,
   turnedOn,
-} from './shareState.js';
-import { request } from './idle.js';
-import { send } from './send.js';
-import { STORES } from './stores.js';
-import { storageReadOnly, storedKey } from './store.js';
-import { devClockUsed, nowMs } from './now.js';
+} from './shareState.ts';
+import { request } from './idle.ts';
+import { send } from './send.ts';
+import { STORES } from './stores.ts';
+import { storageReadOnly, storedKey } from './store.ts';
+import { devClockUsed, nowMs } from './now.ts';
 
 /** Now, epoch s, as core counts it. */
 const nowS = (): number => nowMs() / 1000;

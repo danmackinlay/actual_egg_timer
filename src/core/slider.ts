@@ -8,8 +8,8 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { type DonenessAnchor, DONENESS_ANCHORS, type Solution } from './solve.js';
-import { LIMITS, clamp } from './inputs.js';
+import { type DonenessAnchor, DONENESS_ANCHORS, type Solution } from './solve.ts';
+import { LIMITS, clamp } from './inputs.ts';
 
 /* -------------------------------------------------------------- the slider */
 

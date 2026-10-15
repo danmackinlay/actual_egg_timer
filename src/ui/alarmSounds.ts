@@ -31,7 +31,7 @@
  * need more is left that much quieter.
  */
 
-import { type AlarmMoment, type AlarmSound, alarmPeriod_s } from '../core/sounds.js';
+import { type AlarmMoment, type AlarmSound, alarmPeriod_s } from '../core/sounds.ts';
 
 /** The hen's recordings, relative to the page (and to `assets/` in the
  *  repository for `npm run sounds`). */

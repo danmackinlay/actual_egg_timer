@@ -10,14 +10,14 @@ import assert from 'node:assert/strict';
 
 import {
   SECTION_YOLK_SAMPLES, SECTION_WHITE_SAMPLES, advanceSection, createSection, previewSection, sectionView,
-} from '../src/core/section.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { coolingTemperature } from '../src/core/protocol.js';
+} from '../src/core/section.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { coolingTemperature } from '../src/core/protocol.ts';
 import {
   DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, simulate, sliderFromYolkDose, solveCookTime,
-} from '../src/core/solve.js';
-import { CARRYOVER_WINDOW, DT_SIM, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
-import { appSetup } from '../tools/common.js';
+} from '../src/core/solve.ts';
+import { CARRYOVER_WINDOW, DT_SIM, YOLK_RADIUS_FRAC } from '../src/core/constants.ts';
+import { appSetup } from '../tools/common.ts';
 
 const EGG = eggFromMass(0.060);
 const CENTRE = 0;

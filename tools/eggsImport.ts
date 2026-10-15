@@ -25,7 +25,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { type EggRecord, MODEL_ID, RESULTS_FILE_VERSION, parseRecord } from '../src/core/record.js';
+import { type EggRecord, MODEL_ID, RESULTS_FILE_VERSION, parseRecord } from '../src/core/record.ts';
 
 /** A line of a records file: what the store holds, and where. */
 export interface Line {

@@ -2,18 +2,18 @@
  * fixtures/calibration.json: the particle filter, particle by particle.
  */
 
-import { eggFromMass } from '../../src/core/geometry.js';
-import { type GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.js';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import { type GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.ts';
 import {
   FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
   WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, type WhiteReport, YOLK_WORD_CUTS, type YolkWord, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
   yolkWordProbabilities, yolkWordProbit,
-} from '../../src/core/infer.js';
-import type { CookSetup } from '../../src/core/protocol.js';
+} from '../../src/core/infer.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
 
-import { particleRows } from './shared.js';
-import { referenceSetup } from '../common.js';
+import { particleRows } from './shared.ts';
+import { referenceSetup } from '../common.ts';
 
 /* The calibration is the one part of the core with STATE and a random number
  * generator, so conformance needs more than a few scalars: a divergence in the

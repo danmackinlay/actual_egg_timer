@@ -10,8 +10,8 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { SIZE_CLASSES, US_SIZE_CLASSES } from './geometry.js';
-import { T_ROOM_C } from './constants.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from './geometry.ts';
+import { T_ROOM_C } from './constants.ts';
 
 /* ------------------------------------------------------------------ bounds */
 

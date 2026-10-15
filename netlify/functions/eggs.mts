@@ -16,7 +16,7 @@
  */
 
 import { getDeployStore, getStore } from '@netlify/blobs';
-import { type Store, handle } from '../../server/eggs.js';
+import { type Store, handle } from '../../server/eggs.ts';
 
 /** What Netlify tells a function about the deploy it runs in (Functions 2.0's
  *  second argument). Only the context is read. */
