@@ -63,7 +63,7 @@ things stand is `PLAN.md`; its last section says which document holds what.
   first, is fixtured by `npm run fixtures`, and is held in Swift by
   `npm run conformance`. `ios/README.md` maps the modules. Each app's
   plumbing (its stores, settings, share queue, newer-build guard) is its
-  own, tested in its own suite (`DECISIONS.md` 125).
+  own, tested in its own suite (`DECISIONS.md` 126).
 - **Fixtures are never hand-edited, and never regenerated to make Swift
   pass.** If a fixture is wrong, the TypeScript is wrong first.
 - Apps call core only through its exports. Each app's screens are its own,
