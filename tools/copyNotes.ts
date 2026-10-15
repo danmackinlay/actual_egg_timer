@@ -55,30 +55,24 @@ export function sources(): Record<App, string[]> {
   };
 }
 
-/** Quoted strings shaped like a key: 'group.name', "group.name.more". */
+/** Quoted strings shaped like a key: 'group.name', "group.name.more", and
+ *  Swift's `group.name`, a CopyKey case. */
 const KEY_SHAPE = /['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+)['"`]/g;
-
-/** Identifiers that are shaped like keys and are not: notification ids, and
- *  the UserDefaults keys an earlier build's sharing used, which the launch
- *  deletes (EggTimerApp/Store.swift, `retiredKeys`). */
-export const NOT_KEYS = new Set(['cook.pull', 'cook.cool', 'share.v1', 'share.attest.v1']);
 
 /** The key-shaped strings a file names. */
 export function keysIn(file: string): string[] {
   return [...readFileSync(file, 'utf8').matchAll(KEY_SHAPE)].map((m) => m[1]);
 }
 
-/** Every key-shaped string each app's sources name in one of the catalogue's
- *  groups, with the apps that name it. A name that is not a key is the
- *  caller's to refuse (copy.test.ts 6a). */
+/** Each of `keys` that an app's sources name, with the apps that name it. */
 export function appsUsing(keys: Iterable<string>): Map<string, Set<App>> {
-  const groups = new Set([...keys].map((k) => k.split('.')[0]));
+  const wanted = new Set(keys);
   const used = new Map<string, Set<App>>();
   const src = sources();
   for (const app of ['web', 'ios'] as const) {
     for (const file of src[app]) {
       for (const key of keysIn(file)) {
-        if (NOT_KEYS.has(key) || !groups.has(key.split('.')[0])) continue;
+        if (!wanted.has(key)) continue;
         if (!used.has(key)) used.set(key, new Set());
         (used.get(key) as Set<App>).add(app);
       }

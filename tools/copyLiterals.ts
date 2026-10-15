@@ -10,9 +10,10 @@
  * app and the widget share (EggTimerShared). Every string literal there,
  * not only a view's arguments, since a notification's body and the Live
  * Activity's text never pass through `Text(`; `+` chains joined and each
- * `\(...)` interpolation reduced to `{}`. Each must be a catalogue key, an
- * argument's name in key position, or on the NOT_COPY list below with the
- * reason it is not words.
+ * `\(...)` interpolation reduced to `{}`. A key is no literal: it is a
+ * `CopyKey` case, which the compiler holds to the catalogue (npm run
+ * copy:keys). So each literal must be an argument's name in key position, or
+ * on the NOT_COPY list below with the reason it is not words.
  *
  * Not scanned, because no cook can see it:
  * - the core (EggTimerCore), pure numerics that hands the app catalogue
@@ -22,7 +23,7 @@
  *   and the debug file, Screenshots.swift, which acts only on launch
  *   arguments a release build never reads;
  * - the files that only write and read back what the app stores (FORMAT_FILES):
- *   every literal there is a key, a field's name or a version's syntax.
+ *   every literal there is a stored key, a field's name or a version's syntax.
  *
  * A NOT_COPY entry that no scanned literal needs fails too, so the list
  * holds only what the code says now.
@@ -317,9 +318,9 @@ function sources(): Map<string, string> {
 
 /* ------------------------------------------------------------------ main */
 
-// No literal in the Swift sources is words: each is a catalogue key, an
-// argument's name in key position, or on the NOT_COPY list
-// with the reason it is not copy; and no NOT_COPY entry is one none needs.
+// No literal in the Swift sources is words: each is an argument's name in key
+// position, or on the NOT_COPY list with the reason it is not copy; and no
+// NOT_COPY entry is one none needs.
 const en = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 const now = [...sources().entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
 
@@ -330,9 +331,7 @@ const argumentNames = new Set([...en.messages.values()]
 
 const failures: string[] = [];
 const needed = new Set<string>();
-let keys = 0;
 for (const l of now) {
-  if (en.messages.has(l.text)) { keys += 1; continue; }
   if (l.argument && argumentNames.has(l.text)) continue;
   if (l.text in NOT_COPY) { needed.add(l.text); continue; }
   failures.push(`${l.file}: "${l.text}" is still a literal`);
@@ -344,7 +343,7 @@ for (const entry of Object.keys(NOT_COPY)) {
   if (!needed.has(entry)) failures.push(`NOT_COPY: "${entry}" is no scanned literal that needs it; delete it`);
 }
 
-console.log(`${now.length} Swift literals: ${keys} catalogue keys, the rest arguments or on NOT_COPY.`);
+console.log(`${now.length} Swift literals: arguments' names, or on NOT_COPY.`);
 if (failures.length > 0) {
   console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
   process.exit(1);
