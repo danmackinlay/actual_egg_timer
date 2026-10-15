@@ -1,6 +1,5 @@
 /**
- * The collection endpoint (E6; INFERENCE.md section 7, COLLECTIVE.md
- * section 1): eggs from cooks who turned sharing on, kept as append-only
+ * The collection endpoint (INFERENCE.md section 7): eggs from cooks who turned sharing on, kept as append-only
  * blobs, and deleted by the cook's id.
  *
  *   POST   /api/eggs        { "seq": n, "record": {...} }   one egg

@@ -20,7 +20,7 @@ public final class AppModel {
     /// so a second tap cannot start a second cook.
     public private(set) var starting = false
     /// The egg a change in hand aims for, while a control is held during a
-    /// cook and for a moment after (design/one-screen.md section 5): drawn
+    /// cook and for a moment after: drawn
     /// in place of the live egg. Nil otherwise.
     public var aimView: SectionView?
 
@@ -40,7 +40,6 @@ public final class AppModel {
         planner.load()
         #if DEBUG
         planner.learner.seed(Screenshots.seedEggs)
-        Perf.drive(planner)
         Services.card.logAll("launch")
         Task {
             try? await Task.sleep(for: .seconds(3))
@@ -60,8 +59,8 @@ public final class AppModel {
                 planner.kept.log.count - (cook.eggOpen(atS: AppClock.nowS) ? 1 : 0)
             }
         ))
-        // The planner solved before sharing was read, so without the nudge
-        // (E8); a cook who is sharing has the time solved again with it.
+        // The planner solved before sharing was read, so without the nudge;
+        // a cook who is sharing has the time solved again with it.
         if Services.sharing.state.on { planner.refresh() }
     }
 
@@ -97,7 +96,7 @@ public final class AppModel {
         guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
         await cook.start(
             choices: planner.choices,
-            // The nudge drawn for this cook, while sharing is on (E8).
+            // The nudge drawn for this cook, while sharing is on.
             nudgeS: planner.nudgeS,
             boilMemory: planner.boilMemory,
             units: planner.units,

@@ -9,8 +9,8 @@
  *                                 nudge, certainty)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
- * INFERENCE.md section 8 (and DECISIONS.md, COLLECTIVE.md and UI.md, which
- * cite its sections) and LOGBOOK.md, 28 September 2026; the claims they rest
+ * INFERENCE.md section 8 (and DECISIONS.md and UI.md, which cite its
+ * sections) and LOGBOOK.md, 28 September 2026; the claims they rest
  * on are asserted, more cheaply, in test/decide.test.ts.
  */
 
@@ -228,7 +228,7 @@ if (run('odds')) {
 }
 
 if (run('nudge')) {
-  // E8: what +-10 s costs the cook. Cooks drawn from the prior, as for the
+  // The nudge: what +-10 s costs the cook. Cooks drawn from the prior, as for the
   // odds, each egg at the time the app chooses; at every egg the TRUE cook's
   // loss - P(too soft) + P(too firm) + 3 P(runny), the decision's own loss,
   // read through the truth's probit rather than the posterior's - at the
@@ -562,7 +562,7 @@ if (run('outcome')) {
 /* ------------------------------------------------------- how sure, in words */
 
 if (run('certainty')) {
-  // DECISIONS.md 93, SHIP-0.5 A7: the certainty word, the 90% interval in
+  // DECISIONS.md 93 and 97: the certainty word, the 90% interval in
   // words and the likely time range (src/core/certainty.ts). First what a
   // cook is told at each word on the owner's setup - 58 g from the fridge,
   // into boiling water, an ice bath - on the production surface and particle

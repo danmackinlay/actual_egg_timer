@@ -1,26 +1,17 @@
 # UI.md — fewer controls, room for sentences
 
-The layout both apps share, as the code has it now. Where the two apps differ,
-§9 says how and why. Every word is a key in `copy/en.json`, named here rather
-than quoted, because the wording moves faster than the layout (`LANGUAGE.md`
-§3). How each part was built, and what it replaced, is in `LOGBOOK.md` (27 and
-28 September 2026); the pass-by-pass notes this file used to carry are in git
-at `632bdbd`.
-
----
+The layout both apps share. Where the two apps differ, §9 says how and why.
+Every word is a key in `copy/en.json`, named here rather than quoted,
+because the wording moves faster than the layout (`LANGUAGE.md` §3).
 
 ## 1. Where it comes from
 
-The owner's steer of 27 September 2026 (`DECISIONS.md` 25):
+The owner's steer (`DECISIONS.md` 25):
 
 1. Decorate brief controls and buttons with a longer (i) disclosure.
 2. Keep few enough controls on screen that longer strings fit where they help,
    for clarity or for comedy.
 3. Judge comprehension in place, on a phone, not in a table.
-
-Before it, the web's idle screen showed about thirteen controls at once and
-iOS about eight, each label squeezed to a word or two, and the two apps laid
-them out differently.
 
 ## 2. Principles
 
@@ -30,16 +21,15 @@ them out differently.
   units, altitude, water, heat after the boil, the probe, the room and the
   language. They live on a Settings page, visited rarely. How many eggs go
   in is decided at each cook, so it is in the sentence and the egg's panel
-  (12 October 2026).
+  (`DECISIONS.md` 115).
 - **The setup is a sentence, not a form.** What varies from egg to egg is one
   line of prose, and each clause of it is tappable (§5).
-- **Every number has a − and a +** beside it (4 October 2026): the egg's
-  weight and size, its temperature when it is Custom, the altitude, the water,
-  the number of eggs, the room, and a bowl's water and its temperature. A press steps it on its grid (`src/core/units.ts`:
-  0.5 g, 0.1 oz, 50 m, 100 ft, 0.25 L, …), held it repeats, and the number
-  stays typeable. The pair is as tall as the field, so no row grows. The web
-  draws its own (`src/ui/stepper.ts`); iOS uses the system's `Stepper`, one
-  adjustable element to VoiceOver.
+- **Every number has a − and a +** beside it: the egg's weight and size, its
+  temperature when it is Custom, the altitude, the water, the number of
+  eggs, the room, and a bowl's water and its temperature. A press steps it
+  on its grid (`src/core/units.ts`: 0.5 g, 0.1 oz, 50 m, 100 ft, 0.25 L, …),
+  held it repeats, and the number stays typeable. The pair is as tall as the
+  field, so no row grows (§9 has how each app draws it).
 - **Terse control, longer (i).** A control's label stays short. What it means
   goes in a paragraph opened in place by an (i) (§4).
 - **One place for longer text per phase.** Each screen has a single slot for
@@ -50,11 +40,11 @@ them out differently.
 
 ## 3. The screens
 
-**The one screen** (both apps since 8 October 2026; `DECISIONS.md` 91, 96
-to 98; `design/one-screen.md`). Setting up and boiling are one layout, from
-idle to Done: at the start nothing moves and nothing goes, and only the
-readout's words, its colours and the buttons change. Top to bottom, in every
-phase (the 1750 title page, when it is shown, above it all):
+**The one screen** (`DECISIONS.md` 91, 96 to 98). Setting up and boiling
+are one layout, from idle to Done: at the start nothing moves and nothing
+goes, and only the readout's words, its colours and the buttons change. Top
+to bottom, in every phase (the 1750 title page, when it is shown, above it
+all):
 
 - Settings and Help at the top (web: links; iOS: the navigation bar, left and
   right), in every phase. The web's mute is at the top right. While a cook
@@ -66,39 +56,34 @@ phase (the 1750 title page, when it is shown, above it all):
   `hot`; with the heat off it says the lid is on, so the time is never read
   without it). The clock is the same size in every phase. While sharing is
   on, a small **Learning** mark sits in the panel's top corner with its (i)
-  (`learning.badge`, E8, `DECISIONS.md` 58): the time may be nudged a few
+  (`learning.badge`, `DECISIONS.md` 58): the time may be nudged a few
   seconds, and the (i), which opens under the phase label, says so. Never
   in sous-vide.
 - **How sure I am**: a line of words the cook presses, and the runny-white
   line when it applies (§8). It keeps its room in every phase; it goes at
   the pull, when the time it was about has passed.
-- The hint, then **the action**, directly under the time it runs (the
-  owner, 12 October 2026): "Start heating" on a cold start, "Eggs in"
+- The hint, then **the action**, directly under the time it runs
+  (`DECISIONS.md` 113): "Start heating" on a cold start, "Eggs in"
   otherwise, Rolling boil, the pull, Start again (the table below). In
   sous-vide it is dead, with the bath's hint above. The buttons are **one
-  row** (the owner, 12 October 2026): while a cook runs, Cancel on the
-  left, small and plainly secondary at its own width (iOS's grey pill, the
-  web's outlined button), and the main button filling the rest, on the
-  right where the thumb rests, with room between them for a wet thumb (20
-  pt, 24 px); no confirmation. A phase with only the main button gives it
-  the whole row (Start heating, Start again); one with only Cancel
+  row**: while a cook runs, Cancel on the left, small and plainly secondary
+  at its own width (iOS's grey pill, the web's outlined button), the main
+  button filling the rest, on the right where the thumb rests, with room
+  between them for a wet thumb (20 pt, 24 px); no confirmation. A main
+  button alone fills the row (Start heating, Start again); Cancel alone
   (Cooking, Cooling) leaves the rest empty. The row is the main button's
   height in every phase, so nothing under it moves and nothing is left
-  empty under it. Where the widest main button the cook can show (the
-  start's, Rolling boil, the pull of the cooling chosen, Start again) and
-  Cancel do not fit side by side, the row stacks, the main button over
-  Cancel: on iOS at the accessibility text sizes and in 1750's longer
-  words (`ViewThatFits`), on the web on a narrow screen (the row wraps):
-  at 320 px with running water or the bowl in any font, though the ice
-  bath and the air fit there in Apple's. The choice is made on the widest
-  words, never the phase's own, so it is the same in every phase (a
-  change of cooling may change it), and the stack keeps the
-  room of both buttons in every phase: there, Start heating has Cancel's
-  room under it. The hint holds the room of the tallest hint (two lines on
-  the web, or the (i); on iOS idle's with the widest time, Heating's with
-  its (i), or Cooking's with the alarm's line), at its foot. Only "still in
-  the water?", with its two answers and Cancel, and the hint's (i) opened
-  go past the room and move what is below.
+  empty. Where the widest main button the cook can show (the start's,
+  Rolling boil, the pull of the cooling chosen, Start again) and Cancel do
+  not fit side by side, the row stacks, the main button over Cancel: on iOS
+  at the accessibility text sizes and in 1750's longer words, on the web on
+  a narrow screen (at 320 px with running water or the bowl). The choice is
+  made on those words, never the phase's own, so it is the same in every
+  phase (a change of cooling may change it), and the stack keeps both
+  buttons' room in every phase. The hint holds the room of the tallest
+  hint, at its foot (§9). Only "still in the water?", with its two answers
+  and Cancel, and the hint's (i) opened go past the room and move what is
+  below.
 - **The doneness slider.** The heading reads `controls.doneness` at its start
   and the peak yolk at its end (`controls.doneness.peak`; in sous-vide the
   water, `controls.doneness.bath`), in the cook's units. The track is the
@@ -116,46 +101,41 @@ phase (the 1750 title page, when it is shown, above it all):
   (`idle.welcome`). While a cook runs it says what its plan says of the
   level until the pull, a refusal first (a correction that leaves the
   white unset gets the longest time the pan can give), then a reloaded
-  cook's warning. Under a wild guess that a change of setup would make
-  surer (§8, "the advice") the link "How to make this more reliable →" goes
-  under whichever is there, while idle, and opens Help at its reliability
-  section, which lists the changes that would help this setup (`advice.*`).
+  cook's warning. While idle, under a wild guess that a change of setup
+  would make surer, the advice link goes under whichever is there (§8).
 - **The questions after an egg**, at Done, end the page (below).
 
-**The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98; web
-`src/ui/eggSection.ts` and `render.ts`, iOS `EggSectionView.swift`). An
-ovoid with a round yolk, drawn ring by ring, showing how set each layer is:
-the yolk in the slider track's colours, the white from a clear, faintly
-blue raw white to opaque. It is a picture of what the sentence and the time
-already say, so it has no words and a screen reader passes over it. It has
-two readings, which the web names on the drawing (`data-egg`) and iOS in
-its debug log (`egg aim|live|ran`):
+**The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98). An ovoid
+with a round yolk, drawn ring by ring, showing how set each layer is: the
+yolk in the slider track's colours, the white from a clear, faintly blue raw
+white to opaque. A picture of what the sentence and the time already say,
+it has no words and a screen reader passes over it. Its readings, which the
+checks read by name (the web's `data-egg`, iOS's debug log `egg aim|live|ran`):
 
 - **the egg aimed for** (`aim`): the egg the settings on screen aim for, as
-  eaten at the end of the cooling (`previewSection`), so the yolk reads the
-  level asked. Idle, always; during a cook, while a control is held and
-  for about 1.5 s after the last change.
+  eaten at the end of the cooling, so the yolk reads the level asked. Idle,
+  always; during a cook, while a control is held and for about 1.5 s after
+  the last change.
 - **the live egg** (`live`): the egg in the water now, from raw at the
   start, carried forward a tick at a time and replayed from raw when the
   cook is corrected, through the cooling. At Done, **the egg as it ran**
   (`ran`), eaten, with the parameters it ran under.
 
-**Corrections** (`DECISIONS.md` 96 to 98; web `src/ui/edit.ts`, iOS
-`ios/EggTimerCore/Sources/EggTimerApp/Edits.swift`). After
-Start every clause of the sentence, the slider and Settings' pot rows stay
-open, showing the cook's own choices, never the settings (another tab's
-settings touch only the units, the language and the sound, and which sound,
-while a cook runs). A change is a correction, "it was always like this": the cook is
-planned again from its start. It is committed on release of the slider or
-of a − or + held long enough to repeat, after a 1.5-s settle for anything
-else (a choice, a tap, a number typed), and at once when another control
-is touched; until then the readout keeps its time, and the slider's
-heading and the egg show the change. A correction that puts the pull in the
-past makes it now, and rings; changed back within the 20-s grace, the pull
-is cancelled. After the pull the slider only previews, and springs back to
-the level the egg ran at; anything else corrects the record, planned on the
-calibration before this egg. A correction also changes the settings for
-the next cook.
+**Corrections** (`DECISIONS.md` 96 to 98). After Start every clause of the
+sentence, the slider and Settings' pot rows stay open, showing the cook's
+own choices, never the settings (another tab's settings touch only the
+units, the language and the sound, and which sound, while a cook runs). A
+change is a correction, "it was always like this": the cook is planned
+again from its start. It is committed on release of the slider or of a − or
++ held long enough to repeat, after a 1.5-s settle for anything else (a
+choice, a tap, a number typed), and at once when another control is
+touched; until then the readout keeps its time, and the slider's heading
+and the egg show the change. A correction that puts the pull in the past
+makes it now, and rings; changed back within the 20-s grace, the pull is
+cancelled. After the pull the slider only previews, and springs back to the
+level the egg ran at; anything else corrects the record, planned on the
+calibration before this egg. A correction also changes the settings for the
+next cook.
 
 **The start's time.** The sentence never says when the eggs went in: the
 countdown already does (`DECISIONS.md` 108). While a cook runs the start
@@ -174,8 +154,7 @@ and a pull already past rings now. Under it "No, they’re out"
 (`ask.stillIn.no`): the pull stands and the correction goes to the record.
 Nothing past the question is shown or rung until it is answered.
 
-**Settings** (web `#settings`, which `#kitchen` still opens; iOS a pushed
-`Form`). Each row has its (i):
+**Settings** (web `#settings`; iOS a pushed `Form`). Each row has its (i):
 
 - Units, Metric or Imperial, and one line under Imperial in an English UI
   (`controls.units.period`).
@@ -184,23 +163,21 @@ Nothing past the question is shown or rung until it is answered.
 - Heat after the boil: keep boiling, or heat off and lid on.
 - The probe thermometer: "ask for a reading after each egg".
 - Language: English or English (1750) (`LANGUAGE.md` §6).
-- Alarm sound: Wind-up timer, the default, Cuckoo clock or Hen (`DECISIONS.md`
-  101, the `alarm` draft). Choosing one plays it once, as it rings when the
+- Alarm sound: Wind-up timer, the default, Cuckoo clock or Hen
+  (`DECISIONS.md` 101). Choosing one plays it once, as it rings when the
   cooling is done; its (i) credits the hen's two recordings.
 - What I've learned (`learned.literature`, `.tuned`, `.pan` or `.both`), and
   Forget, which asks first, in place (`learned.confirm.*`).
-- Sharing results (E6, the `share` draft; the `data` draft named it), with
-  its (i): the consent always on screen (`share.what`), never behind the
-  (i); the switch, off until the cook
-  turns it on; under it how many results have gone and how many wait; the
-  random number (`share.id`, the `sharingid` draft), whole, fixed-width and
-  selectable, from the first time sharing is turned on until a deletion, to
-  quote by email; Delete shared results, which asks first in place as Forget
-  does; and the privacy page.
+- Sharing results, with its (i): the consent always on screen
+  (`share.what`), never behind the (i); the switch, off until the cook turns
+  it on; how many results have gone and how many wait; the random number
+  (`share.id`), whole, fixed-width and selectable, from sharing's first
+  turning on until a deletion, to quote by email; Delete shared results,
+  which asks first in place as Forget does; and the privacy page.
 - The colophon, with its link.
 
-In sous-vide the settings that change nothing there are put away. While a
-cook runs, what I've learned and sharing are put away until it ends.
+In sous-vide the settings that change nothing there are put away; while a
+cook runs, what I've learned and sharing are too.
 
 **Help** (web `#help`, iOS a pushed page) is the whole story (§7), with a
 contents list. `[label](https://…)` in the copy is a link; nothing else is
@@ -229,19 +206,17 @@ heated up, still Heating.
 **The questions after an egg** (`DECISIONS.md` 92), on one panel at Done,
 none required: what the cook asked for (`feedback.target`); "How was the
 yolk?" with the slider's own five words as the answers, side by side
-(`doneness.runny` to `doneness.hard`; one row on a phone at the default
-text size, three over two when the text is made larger, and fewer a row
-again at the largest sizes, never a word cut, web and iOS); "And the white
-next to the yolk?" with Runny / Tender / Firm, which on iOS break the same
-way; each row is a group named by its question for a screen reader; and
-under them,
-whenever the cooling ended at the yolk's peak, "Do you have a probe
-thermometer?" with how to take the reading and the field, the reading
-refused with the range it should be in when no kitchen could have made it
-(`probe.refused`). The probe is not offered while the egg cooks. The
-setting in Settings still has the alarm and the line under the cooling
-countdown ask for the reading. The room temperature is in Settings with or
-without it, and beside "at room temperature" (§5).
+(`doneness.runny` to `doneness.hard`: one row on a phone at the default
+text size, three over two at larger text, fewer a row at the largest,
+never a word cut); "And the white next to the yolk?" with Runny / Tender /
+Firm, breaking the same way; each row a group named by its question for a
+screen reader; and under them, whenever the cooling ended at the yolk's
+peak, "Do you have a probe thermometer?" with how to take the reading and
+the field, a reading no kitchen could have made refused with the range it
+should be in (`probe.refused`). The probe is not offered while the egg
+cooks; the setting in Settings still has the alarm and the line under the
+cooling countdown ask for the reading. The room temperature is in Settings
+with or without it, and beside "at room temperature" (§5).
 
 ## 4. The (i) component
 
@@ -251,19 +226,14 @@ without it, and beside "at room temperature" (§5).
   `action.hint.heating.info`, `outcome.info`).
 - **One look and one behaviour everywhere**: a circled *i* at the end of the
   line it belongs to, which opens a paragraph in place under that line, with
-  a rule down its left. No modal, no popover, no triangles or chevrons.
-- **Web**: `info.ts`, a `<button aria-expanded>` named "About {label}"
-  (`more.about`).
-- **iOS**: `InfoRow` in `Info.swift`, holding a line, the *i* (filled while
-  open), an optional control at the line's end, and the paragraph.
-  VoiceOver reads the name and Expanded or Collapsed (`more.expanded`,
+  a rule down its left. No modal, no popover, no triangles or chevrons. The
+  *i* is filled while open. A screen reader hears it as a button named
+  "About {label}" (`more.about`), Expanded or Collapsed (`more.expanded`,
   `more.collapsed`).
 - **Which controls have one**: only where the meaning does not fit in the
-  label. Today: the egg, where it comes from, the start, the cooling, units,
-  altitude, water, the number of eggs, heat after the boil, the probe,
-  language, Forget, the boil time under the readout and the heating hint.
-  The certainty line under the time opens in place the same way, from its
-  words rather than an (i) (§8).
+  label; the `.more` keys in `copy/en.json` are the list. The certainty line
+  under the time opens in place the same way, from its words rather than an
+  (i) (§8).
 - **Short enough to read standing at the hob.** What depends on the setup, or
   runs longer than one control's meaning, goes to Help.
 
@@ -287,20 +257,20 @@ there.
   with Room the room temperature, optional and greyed at the 20 °C assumed),
   the start (cold water, boiling water or sous-vide), and the cooling.
 - **The cooling's four choices are a list**, one to a line, fastest first:
-  Ice bath, Running water, Bowl of water, Air (12 October 2026). Four names
-  of up to 13 letters fit no 390 px phone as segments, least of all at the
-  accessibility text sizes, where a row of the list wraps its name instead.
-  Under the list, with its own choice: a bowl's Water in the bowl (2 L to
-  start), and for running water or a bowl the Water temperature, optional,
-  greyed at the one assumed (mains water's 15 °C, the room's for a bowl),
-  each with its (i). The sentence names the bowl and its water, and the
-  water's temperature only when the cook gave it.
+  Ice bath, Running water, Bowl of water, Air (`DECISIONS.md` 115). Four
+  names of up to 13 letters fit no 390 px phone as segments, least of all
+  at the accessibility text sizes, where a row of the list wraps its name
+  instead. Under the list, with its own choice: a bowl's Water in the bowl
+  (2 L to start), and for running water or a bowl the Water temperature,
+  optional, greyed at the one assumed (mains water's 15 °C, the room's for
+  a bowl), each with its (i). The sentence names the bowl and its water,
+  and the water's temperature only when the cook gave it.
 - **To a screen reader** each clause is a button named "{label}: {value},
   change" (`setup.clause`), expanded or collapsed. The web returns focus to
   the clause after Done. On the web a clause is a span that is a button
   (`role`, `tabindex`, Enter and Space), since a `<button>` is drawn as an
-  inline block, and beside the egg a clause that wrapped pushed the comma
-  after it to the end of its last line.
+  inline block, and beside the egg a clause that wrapped would push the
+  comma after it to the end of its last line.
 - **While a cook runs** the sentence is the cook's own choices, and stays
   tappable: a choice corrects the cook (§3). The start clause says what it
   said at idle ("into cold water, brought to the boil"), never the time;
@@ -314,14 +284,11 @@ there.
 In place, on a phone (`DECISIONS.md` 25): a wording change goes into both
 apps, the owner uses it and says what to put back. What he has yet to read
 is the review queue, which `npm run copy:review` lays out as one page beside
-the apps (`LANGUAGE.md` §3, `DECISIONS.md` 106). The web was meant to be
-judged on a deploy preview first; that needs a pushed branch, which is the
-owner's call, so iOS followed without waiting.
+the apps (`LANGUAGE.md` §3, `DECISIONS.md` 106).
 
 ## 7. Two tiers: the (i), and Help
 
-The owner's steer of 27 September, after using the first web preview
-(`DECISIONS.md` 26):
+The owner's steer (`DECISIONS.md` 26):
 
 - **The (i) is for one control's meaning** (§4).
 - **Help is for the whole story, opened on purpose.** A page of its own, with
@@ -329,21 +296,20 @@ The owner's steer of 27 September, after using the first web preview
   then how I work, what I learn and from what, getting reliable eggs
   by method, how sure I am, where I'm unsure, and sources; last, a link to
   the privacy page (`privacy/index.html`, which the iOS app opens in
-  Safari), and under it "Made by Dan MacKinlay", the name linking the owner's blog.
-  Anything that
-  depends on the setup, or is longer than one control's meaning, goes there.
-  The low-odds line is a link into it, not a disclosure.
+  Safari), and under it "Made by Dan MacKinlay", the name linking the
+  owner's blog. Anything that depends on the setup, or is longer than one
+  control's meaning, goes there. The advice link (§8) is a link into it,
+  not a disclosure.
 - **Never narrate what the interface just visibly did.** The cook can see
   controls go away and come back.
 
 ## 8. The prediction under the time
 
-**How sure I am** (the `certainty` draft, 8 October 2026; `DECISIONS.md` 93
-and 97; `design/one-screen.md` §6). Below the time display, in the
-direction's old place, one of three words from core's `certaintyAt` at the
-time on screen (`src/core/certainty.ts`, `INFERENCE.md` §8, "How sure, in
-words"), carried by `decideAnswer` while idle and by the running cook's plan
-after: `certaintyKey` (`src/core/wording.ts`, `fixtures/wording.json`).
+**How sure I am** (`DECISIONS.md` 93 and 97). Below the time display, one
+of three words from core's `certaintyAt` at the time on screen
+(`src/core/certainty.ts`, `INFERENCE.md` §8, "How sure, in words"), carried
+by `decideAnswer` while idle and by the running cook's plan after:
+`certaintyKey` (`src/core/wording.ts`, `fixtures/wording.json`).
 
 | class | when | key | words |
 |---|---|---|---|
@@ -351,24 +317,18 @@ after: `certaintyKey` (`src/core/wording.ts`, `fixtures/wording.json`).
 | a ballpark | 9 times in 10 that word or a neighbour | `certainty.ballpark` | A ballpark figure |
 | a wild guess | less sure | `certainty.wildGuess` | A wild guess |
 
-The words are a button, underlined in the accent (dotted while closed, solid
-while open), that opens in place under it, as an (i) does: the 90% interval
+The words are a button, underlined in the accent (dotted closed, solid
+open), that opens in place under it, as an (i) does: the 90% interval
 in the slider's words (`certainty.interval`, `.interval.one`: "9 times in 10:
 Runny to Fudgy."), "Most likely: Jammy." (`certainty.mostLikely`) unless it
 is already under the line or the interval is that one word
-(`mostLikelyOpened`), the likely time range (`certainty.time`, A7's, m:ss as
-the clock shows it) and a link to Help's "How sure I am"
-(`certainty.help`), which holds the three paragraphs the direction's (i)
-opened. "Most likely" also shows under the line, unpressed, whenever it is
-not the word asked (`mostLikelyShown`). A screen reader hears the line as a
-button, Expanded or Collapsed. While a cook runs the line is the plan's,
-held while a new pot's surface builds, until the pull: then the time it was
-about has passed. No odds are shown or spoken anywhere; the direction, its
-lean and the odds of "just right" on screen are retired.
-
-On the reference pot a fresh install is a wild guess at runny to jammy and
-a ballpark at fudgy and hard; four eggs called jammy make fudgy and hard very
-certain.
+(`mostLikelyOpened`), the likely time range (`certainty.time`, m:ss as the
+clock shows it) and a link to Help's "How sure I am" (`certainty.help`).
+"Most likely" also shows under the line, unpressed, whenever it is not the
+word asked (`mostLikelyShown`). A screen reader hears the line as a button,
+Expanded or Collapsed. While a cook runs the line is the plan's, held while
+a new pot's surface builds, until the pull: then the time it was about has
+passed. No odds are shown or spoken anywhere.
 
 **The white's line**, `outcome.whiteRunny`, in the warning colour, shows from
 P(runny) 0.2 (`WHITE_RISK`), one egg in five. That is where it speaks at the
@@ -379,184 +339,117 @@ soft reads 0.17 on the reference pot, and that is the prior's width.
 **The bracket** is the certainty line's 90% interval, drawn (core's
 `wordBracket`; `DECISIONS.md` 97, question 14: one interval for the words and
 the bracket). Each of the five words has a band on the slider, the levels
-whose nearest word it is, from the midpoint with the word below to the
-midpoint with the word above (0, 0.11, 0.315, 0.515, 0.81, 1), which is
-where the slider's own word changes. The bracket runs from the outer edge of
-the interval's first word's band to the outer edge of its last's, so it
-always lies inside the track. Its bottom line is twice as thick over the
-most likely word's whole band (`wordBandLow`, `wordBandHigh`), which is
-always one of the interval's words, so the heavy stretch never runs past
-the bracket's ends. So "9 times in 10: Runny to Fudgy." is drawn from 0 to
-0.81, heavy from 0.315 to 0.515 where Jammy is the most likely, and "9
-times in 10: Fudgy." from 0.515 to 0.81, heavy throughout. The band, not a
-mark at the word's anchor, because the thumb moves continuously and the
-anchor does not: a mark at Soft's 0.22 sat away from a thumb at 0.30 that
-was still on Soft, at about a third of the slider's positions. So the thumb
+whose nearest word it is, between the midpoints with its neighbours (0,
+0.11, 0.315, 0.515, 0.81, 1), where the slider's own word changes. The
+bracket runs from the outer edge of the interval's first word's band to
+the outer edge of its last's, so it always lies inside the track. Its
+bottom line is twice as thick over the most likely word's whole band
+(`wordBandLow`, `wordBandHigh`), always one of the interval's words, so the
+heavy stretch never runs past the bracket's ends: "9 times in 10: Runny to
+Fudgy." is drawn from 0 to 0.81, heavy from 0.315 to 0.515 where Jammy is
+the most likely; "9 times in 10: Fudgy." from 0.515 to 0.81, heavy
+throughout. A band, not a mark at the word's anchor, because the thumb
+moves continuously and the anchor does not (`DECISIONS.md` 114): the thumb
 sits inside the heavy stretch whenever the most likely word is the word
-asked, and away from it, honestly, when that word is softer or firmer
-("Most likely" then shows under the certainty line). It is whole words
-wide, and moves a word at a time. In the foreground colour at 70%, the
-band in the same ink: not the accent, not the yolk, and below the track,
-so it never covers the shading. A screen reader hears the same words,
-"Likely yolk: Runny to Fudgy" (`outcome.range`, `.range.one` when the
-interval is one word; the words stand alone after a colon, `LANGUAGE.md`
-§5), and not the band: the certainty line's press says "Most likely". It is not
+asked, and away from it, honestly, when it is not ("Most likely" then
+shows under the certainty line). It is whole words wide, and moves a word
+at a time. In the foreground colour at 70%: not the accent, not the yolk,
+and below the track, so it never covers the shading. A screen reader hears
+the same words, "Likely yolk: Runny to Fudgy" (`outcome.range`,
+`.range.one`; the words stand alone after a colon, `LANGUAGE.md` §5), and
+not the band: the certainty line's press says "Most likely". It is not
 drawn before the pot's surface lands, where the white never sets, in
 sous-vide, or once the egg is pulled; its room is kept, so nothing under it
-moves. While a cook runs it is its plan's, held while a new pot's surface
-builds, as the line is.
-It is not clamped to what the pan delivers: on a counter rest its soft end
-can lie over the stripes, since a cook can still call that egg Soft. Until
-the `certainty` draft's follow-up (8 October 2026) it was the outcome's
-level range, the egg without the cook's taste, and could name other words
-than the line's; that range is kept in core (`levelLow`, `levelHigh`) for
-`npm run decide -- outcome`, and nothing on screen reads it.
+moves. While a cook runs it is its plan's, held as the line is. It is not
+clamped to what the pan delivers: on a counter rest its soft end can lie
+over the stripes, since a cook can still call that egg Soft.
 
-The slider never
-rests on the stripes: asked for less than the pan can deliver, it moves to
-the softest level the pan delivers, which is the level the time and the
-bracket are for (test/reach.test.ts 10). It does rest on the dots
+The slider never rests on the stripes: asked for less than the pan can
+deliver, it moves to the softest level the pan delivers, which the time and
+the bracket are for (`test/reach.test.ts` 10). It does rest on the dots
 (`DECISIONS.md` 83): there the time, the certainty line and the bracket are
 for the level asked, and the warning line says `warn.wildGuess`, "Soft: a
-wild guess so far." (the word is the level the thumb is on). A refusal
-worth saying takes the line instead, as the slider
-moves out of the stripes; the next answer there carries the warning. The
-advice link stays under it. After a runny white or a yolk too soft, the
-time at a dotted level leans late, but never past a firmer level's
-(`DECISIONS.md` 84): the time never rises as the thumb moves softer, and
-where the white binds the soft end takes the time of the first level firmer
-whose own choice is sooner (test/reach.test.ts 11: one egg soft with a runny
-white, soft asked, jammy's 427 s, 1/10, the level range 0.20-0.53, which was
-the bracket then; it chose 500 s with 0.50-0.82 before). "Most likely" and the bracket say
-where that puts the yolk. Since the `certainty` draft that egg's soft is a
-ballpark, soft or a neighbour 9 times in 10, so it is no longer dotted.
+wild guess so far." (the word is the thumb's level). A refusal worth saying
+takes the line instead, as the slider moves out of the stripes; the next
+answer there carries the warning, the advice link under it. After a runny
+white or a yolk too soft, the time at a dotted level leans late, but never
+past a firmer level's (`DECISIONS.md` 84): the time never rises as the
+thumb moves softer, and where the white binds the soft end takes the time
+of the first firmer level whose own choice is sooner (`test/reach.test.ts`
+11). "Most likely" and the bracket say where that puts the yolk.
 
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
-jammy, pale yellow at hard (web `--yolk-runny`, `--yolk-jammy`,
-`--yolk-hard`; iOS `Palette.yolkRunny`, `yolkJammy`, `yolkHard`), deeper in
-the light scheme. Its opacity is the chance of the word asked at each level,
-over the best level's (`shadingOf`; the odds of "just right" until the
-`certainty` draft), so a fresh install, never very certain, still shows
-where the pan works. The word asked changes at the cuts between words, and
-a level on a cut is half one word and half the next, so the shading dips
+jammy, pale yellow at hard, deeper in the light scheme. Its opacity is the
+chance of the word asked at each level, over the best level's
+(`shadingOf`), so a fresh install, never very certain, still shows where
+the pan works. The word asked changes at the cuts between words, and a
+level on a cut is half one word and half the next, so the shading dips
 there and is strongest at each word's middle. Colour alone is a level
 surer than a wild guess; dots mark levels the pan delivers but that are a
 wild guess so far, softer or firmer than every level that is not
 (`lowOddsAt`), which can be chosen and are warned of; stripes mark what the
 pan cannot deliver, which cannot. No dots before the first egg that taught
-something, nor when every level is a wild guess. A tick word is
-struck through, in both apps, only when every position it names is under the
+something, nor when every level is a wild guess. A tick word is struck
+through, in both apps, only when every position it names is under the
 stripes (`anchorReachable`): after a runny white the floor moves to about
-0.05-0.09, which is still Runny, so Runny stays. The strip is bare before the
-first answer and in sous-vide.
+0.05-0.09, which is still Runny, so Runny stays. The strip is bare before
+the first answer and in sous-vide.
 
-**The advice** (`reach.ts`, "when to advise"; the `certainty` draft's
-follow-up, 8 October 2026). "How to make this more reliable →"
-(`advice.toggle`) shows under the warning slot while idle when the word
-asked is a wild guess at the time on screen and a change of setup the model
-can price makes it surer: ice for a counter rest, twice the water with the
-heat off, each priced on its own pot's odds profile, and kept when it
-raises the chance of the word asked at the level by a twentieth
-(`ADVICE_GAIN`) or more over the chance on screen. The chance, not the
-class: a profile point carries both, but only the chance can be read
-between two points (between those that ask the same word, `askedNear`).
-The link waits for the changed pots' profiles, which the app asks for
-behind it, so it can come a moment after the time. It opens Help at "Getting
-reliable eggs", whose "For your current settings" lists those changes and,
-under any wild guess, the two the model cannot price (the fridge, the
-scale), which never bring the link on their own. On the model a fresh
-install never gets it: its wild guesses are the prior's width, which no
-setup narrows (on the counter, ice makes the word asked less likely, not
-more). One egg called runny on a counter rest does: there ice raises the
-word asked from 0.10 to 0.38 at the soft end (test/reach.test.ts 9). Until
-the follow-up it showed when the odds of "just right" were under 5/10 or
-3/10 short of the best level's, which nothing on screen shows.
+**The advice** (`src/core/reach.ts`, "when to advise"). "How to make this
+more reliable →" (`advice.toggle`) shows under the warning slot while idle
+when the word asked is a wild guess at the time on screen and a change of
+setup the model can price makes it surer: ice for a counter rest, twice the
+water with the heat off, each priced on its own pot's odds profile, and
+kept when it raises the chance of the word asked at the level by a
+twentieth (`ADVICE_GAIN`) or more. The link waits for those profiles, so it
+can come a moment after the time. It opens Help at "Getting reliable eggs",
+whose "For your current settings" lists those changes and, under any wild
+guess, the two the model cannot price (the fridge, the scale), which never
+bring the link on their own. A fresh install never gets it: its wild
+guesses are the prior's width, which no setup narrows. One egg called
+runny on a counter rest does: ice raises the word asked from 0.10 to 0.38
+at the soft end (`test/reach.test.ts` 9).
 
 **Nothing jumps.** While idle the certainty line keeps two lines' room, the
 word and "Most likely", with the word at its top, so a drag that brings
-"Most likely" or takes it away moves neither the word nor the slider (on
-iOS, at the largest text sizes, the room is the tallest the two can take:
-below). While a new pot's surface is on its way, the readout keeps its
-last height. The time can move once more when the pot's odds profile lands
-after the surface, where it holds a soft level's time under a firmer one's. The white's line can still appear mid-drag near the soft end.
+"Most likely" or takes it away moves neither the word nor the slider. On
+iOS at the accessibility text sizes either wraps (more in 1750's face), so
+from idle to the pull the room is also the tallest the line can take there:
+the tallest of the three words over the tallest of the five "Most
+likely"s, laid out hidden at the line's width and text size. At the default
+size that is no more than two lines; at the largest it costs empty room
+under a lone word, and holds the slider still (`npm run ios:e2e`'s
+`likely-still` and `likely-still-largest`). While a new pot's surface is on
+its way, the readout keeps its last height. The time can move once more
+when the pot's odds profile lands after the surface, where it holds a soft
+level's time under a firmer one's. The white's line can still appear
+mid-drag near the soft end.
 
-**The time's two lines sit close** (`DECISIONS.md` 99, 9 October 2026).
-Under the digits, the boil line ("about 8:00 to boil", or the running
-phase's line) and then the certainty word are two lines, so the word is
-never read as the boil time's and its press target does not move when the
-boil line wraps, but with no room of their own between them. On the web
-(`styles.css`): the clock gives back the room under its baseline, which
-digits never use (`#bigtime` bottom margin -0.03em, about 3 px at a
-phone's 101-px digits; its line height stays 0.95); the boil line has no
-top margin (was 4 px); the certainty line no top margin (was 6 px), and
-its word sits at the top of its two lines' room, where it was centred. On a
-390-px screen the boil line's text now starts about 10 px under the
-digits' baseline (was 17), the certainty word's 32-px press target starts
-at the boil line's foot (was 16 px below it), and the readout is 13 px
-shorter idle. iOS matches it (`ReadoutView`): the clock gives back the
-room its line keeps under the baseline for descenders (the 76-pt face's
-descender, about 18 pt) and keeps 10, so the boil line's frame starts 10
-pt under the digits' baseline (was about 24); the boil line and the
-certainty line sit with no gap (was 6 pt each), the word's target (4 pt
-of padding above and below it) directly under the boil line, and the word
-at the top of its two lines' room. The clock keeps its 76 pt at every
-text size, so at the largest the boil line, wrapping to two lines, is
-still 10 pt under it and the word under that. The idle readout is 20.5 pt
-shorter (the slider moved from 387 to 366.5 pt on an iPhone 17 Pro).
+**The time's two lines sit close** (`DECISIONS.md` 99). Under the digits,
+the boil line ("about 8:00 to boil", or the running phase's line) and then
+the certainty word are two lines, so the word is never read as the boil
+time's and its press target does not move when the boil line wraps, but
+with no gap between them. The clock gives back the room under its
+baseline, which digits never use, so the boil line starts about 10 px (10
+pt) under the digits' baseline, the word's press target directly under the
+boil line. The clock keeps its size at every text size.
 
-**The folded word is an x-height closer to the panel's foot** (the owner on
-a phone, 9 October 2026). The certainty line's second line of room, kept
-for "Most likely", hangs the word's x-height into the readout's bottom
-padding, so a folded word with nothing under it has that much less empty
-room below it; what the word opens, and the white's line, take it back, so
-they sit where they did and the open readout is the height it was. "Most
-likely" still fits in the room, so it comes and goes without moving the
-slider; it now sits that much nearer the panel's foot (on the web its
-line box ends 8 px above the panel's border, inside the 14-px padding;
-was 16). On the web
-(`styles.css`, `--certainty-hang`): 0.5rem, the 15-px word's x-height
-(8 px; 7 px in the face of 1750); `#certainty` has that as a negative
-bottom margin, and `#certaintyMore` and `#whiteRisk` add it to their top
-margins. On a 390-px screen the idle readout, folded, is 205.7 px (was
-213.7), the word's text ends 34 px above the panel's border (was 42), and
-the slider is 8 px higher; opened it is 375.2 px, as before. iOS
-(`ReadoutView.hang`): the subheadline's x-height at the default text size,
-8 pt, as negative bottom padding on the line's two-line room and added to
-what opens and the white's line; fixed at every text size, as the panel's
-22-pt padding is, so the hang never takes "Most likely" through it. On an
-iPhone 17 the slider moved from 366.5 to 358.5 pt folded (in 1750 from
-454.5 to 446.5; at the largest text size from 519.5 to 511.5) and stays at
-477.5 pt open (569.5 in 1750). At the largest text size "Most likely:
-Fudgy." wraps to two lines, more than the room, and moved the slider 48.5
-pt; it no longer does (below).
-
-**"Most likely" moves nothing at any text size on iOS** (9 October 2026).
-At the accessibility sizes the certainty word and "Most likely" each wrap
-("A ballpark figure" to two lines, "Most likely: Fudgy." to two, and
-more in 1750's face), so the two lines' room was not
-enough, and the slider moved as it came and went: on an iPhone 17 Pro at
-the largest size by 48.5 or 54.5 pt in modern English and 52 or 114 pt in
-1750. Now, from idle to the pull, the line's room is also the tallest it
-can take there (`ReadoutView.tallest`): the tallest of the three words,
-over the tallest of the five "Most likely"s, laid out at the line's width
-and text size, hidden. At the default size that is no more than the two
-lines' room, so nothing changes there (the slider at 358.5 pt, 446.5 in
-1750); at the largest it costs empty room under a word with nothing below
-it (the slider from 511.5 to 618 pt in modern English, 1255.5 to 1369.5 in
-1750), and holds it still. `npm run ios:e2e`'s `likely-still` and
-`likely-still-largest` move the level between showing it and not, a wild
-guess and a ballpark, and check the slider does not move.
+**The folded word sits an x-height closer to the panel's foot.** The
+certainty line's second line of room hangs the word's x-height (about 8 px,
+8 pt, fixed at every text size, as the panel's padding is) into the
+readout's bottom padding, so a folded word has no more empty room below it
+than it needs; what the word opens, and the white's line, take it back, so
+the open readout keeps its height. "Most likely" still fits in the room.
 
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is
 `controls.doneness.value` (or `.valueBath`), and the heading's number is
-hidden from it so it is not read twice. On iOS it is `YolkSlider`, a
-`UISlider` with clear tracks over `OddsTrack`, inset by the thumb's
-half-width so a level sits exactly under the thumb that asks for it; it
-keeps VoiceOver's adjustable behaviour (a swipe moves a tenth of the range,
-on the 0.01 grid) and ticks a selection haptic each time a drag crosses
-into another doneness word. A snap that lands while the finger is down moves
-the thumb when the finger lifts; the web's thumb moves at once.
+hidden from it so it is not read twice. A level sits exactly under the
+thumb that asks for it. On iOS it keeps VoiceOver's adjustable behaviour (a
+swipe moves a tenth of the range, on the 0.01 grid) and ticks a selection
+haptic each time a drag crosses into another doneness word. A snap that
+lands while the finger is down moves the thumb when the finger lifts; the
+web's thumb moves at once.
 
 ## 9. Where the apps differ
 
@@ -569,20 +462,22 @@ the thumb when the finger lifts; the web's thumb moves at once.
   (`readout.alarm.*`) above Cancel.
 - **The units' (i)** says "phone" on iOS (`controls.units.more.ios`) where the
   web says "browser".
+- **The − and +.** The web draws its own pair; iOS uses the system's
+  `Stepper`, one adjustable element to VoiceOver.
 - **The open clause** has a solid accent fill on the web and an accent wash on
   iOS, where a link's text takes the tint. VoiceOver focus does not return to
   the clause after Done on iOS.
-- **The one screen on iOS** (8 October 2026) is the web's, but:
+- **The one screen on iOS** is the web's, but:
   - *"Another control touched"* is what iOS can see: a finger down on the
-    slider or on a − or + (its `onEditingChanged`), a clause pressed, a
-    button that moves the cook on, or a change landing from another control.
-    A segmented choice or a menu reports no touch of its own, only its
-    change, so a change in hand from another control is committed when that
-    change lands, without it (the web commits it with it).
+    slider or on a − or +, a clause pressed, a button that moves the cook
+    on, or a change landing from another control. A segmented choice or a
+    menu reports no touch of its own, only its change, so a change in hand
+    from another control is committed when that change lands, without it
+    (the web commits it with it).
   - *The controls are the planner's own*, set to the cook's choices at a
-    relaunch (`Planner.adopt`); iOS has no second tab, so a correction
-    writes only the settings it changed, as the web does, and nothing else
-    can write them while a cook runs.
+    relaunch; iOS has no second tab, so a correction writes only the
+    settings it changed, as the web does, and nothing else can write them
+    while a cook runs.
   - *While "still in the water?" is open* the Lock Screen card shows the
     pull, "now", with the pull's line naming the cooling, not a cooling's
     countdown that may not be running; no alarm is pending. VoiceOver reads
@@ -593,25 +488,18 @@ the thumb when the finger lifts; the web's thumb moves at once.
     growing at the largest standard size, since each sits under its level.
   - *Settings* is the navigation bar's in every phase; the pull pops it, and
     Help, back to the egg's page.
-- **The action's row** is chosen on the same words in both, and held
-  differently. Both size the main button on the start's action (Start
-  heating or Eggs in), Rolling boil, the pull naming the cooling chosen
-  (only that one) and Start again, from the controls: a cook under way is
-  sized on its own choices, the same from idle to Done. A change of
-  cooling, while idle or as a correction, may change whether the row
-  stacks. iOS lays a hidden row of Cancel and the main button at those
-  words under the row it shows, and a hidden stack under the stack, and
-  `ViewThatFits` takes the row where the hidden row fits
-  (`PhaseActions.buttons`, `mainShape`). The web writes those words from
-  its view (`sizerWords` in `src/ui/view.ts`) into hidden sizers, and lays
-  them out in CSS (`.buttons` in `styles.css`): the main button's cell
-  holds them at no height, so the row wraps in every phase or in none, and
-  a hidden probe row with Cancel in the same grid cell holds the stack's
-  height in every phase. The web's hint room is two lines or the
-  (i), so a hint longer than two lines (at a large browser text size)
-  grows it; iOS lays the tallest hints out hidden, with Cooking's alarm
-  line, which the web has not. In both the block is in the column,
-  scrolled with it, never stuck to the screen.
+- **The action's row** is chosen on the same words in both: the start's
+  action, Rolling boil, the pull of the cooling chosen and Start again,
+  from the cook's own choices. iOS lays the row and the stack out hidden at
+  those words, and takes the row where it fits (`mainShape`). The web
+  writes them from its view (`sizerWords`) into hidden sizers that CSS
+  lays out: the main button's cell holds them at no height, so the row
+  wraps in every phase or in none, and a hidden row holds the stack's
+  height. The web's hint room is two lines or the (i), so a longer hint
+  (at a large browser text size) grows it; iOS lays the tallest hints out
+  hidden (idle's with the widest time, Heating's with its (i), Cooking's
+  with the alarm's line, which the web has not). In both the block is in
+  the column, scrolled with it, never stuck to the screen.
 - **The Lock Screen and Dynamic Island** are iOS's alone: the pull names the
   cooling, word for word as the alarm does, the card ends when the cooling
   does, and it carries no odds (`DECISIONS.md` 32, 33).
@@ -620,15 +508,16 @@ the thumb when the finger lifts; the web's thumb moves at once.
 
 A debug iOS build takes launch arguments (`-uiScreen`, `-seedEggs`,
 `-noAlarmPrompt` and others), so screens can be reached without a tap; the
-header of `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them. The web's states are driven
-by `npm run copy:snapshot` (`tools/copySnapshot.ts`).
+header of `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists
+them. The web's states are driven by `npm run copy:snapshot`
+(`tools/copySnapshot.ts`).
 
 What the cook sees on the reference setup (68 g, fridge, cold start, ice,
 jammy):
 
 | Log | Certainty line | Bracket |
 |---|---|---|
-| Fresh install | A wild guess; 9 times in 10: Runny to Fudgy | Runny to Fudgy |
+| Fresh install | A wild guess at runny to jammy, a ballpark at fudgy and hard; 9 times in 10: Runny to Fudgy | Runny to Fudgy |
 | Four eggs called jammy | A ballpark figure at jammy; Very certain at fudgy and hard | about a word wide |
 | One egg called hard (into boiling water) | A wild guess at soft, dotted, with the warning; Most likely: Jammy | wide |
 

@@ -205,7 +205,7 @@ public struct Normal: Sendable, Codable, Equatable {
 }
 
 /// What a new cook's prior is drawn from: one spread per particle dimension
-/// (INFERENCE.md section 9, E7). See src/core/infer.ts and population.ts.
+/// (INFERENCE.md section 9). See src/core/infer.ts and population.ts.
 public struct Population: Sendable, Equatable {
     public var id: String
     public var alphaM2s: LogNormal
@@ -227,7 +227,8 @@ public struct Population: Sendable, Equatable {
     }
 }
 
-/// The literature's population: the prior every cook drew from before E7,
+/// The literature's population: the prior every cook drew from before the
+/// population fit,
 /// number for number, less the carryover, which is not a particle.
 public let literaturePopulation = Population(
     id: "2026-09",

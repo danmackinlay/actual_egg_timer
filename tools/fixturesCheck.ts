@@ -17,9 +17,9 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
-import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout } from './fixtureCompare.js';
+import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from './fixtureCompare.js';
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 
@@ -42,7 +42,7 @@ for (const file of tracked) {
     // The committed values, laid out as the generator lays them out: the
     // committed file itself, unless it was committed in another layout.
     const relaid = fixtureLayout(JSON.parse(committed));
-    writeFileSync(file, relaid);
+    replaceFile(file, relaid);
     if (relaid !== committed) {
       failed = true;
       console.error(`${file}: the same values, not laid out one row per line; written so, to be committed`);

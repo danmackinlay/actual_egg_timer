@@ -63,8 +63,8 @@ public final class Learning {
     }
 
     /// The calibration before the egg at `index` in the log, for a
-    /// correction made after its pull (design/one-screen.md section 4,
-    /// "Never from its own outcome"; core `asRanCorrected`): a plan made for
+    /// correction made after its pull, never from its own outcome (core
+    /// `asRanCorrected`): a plan made for
     /// that cook on a posterior that has folded its own answer would score
     /// the model against what it already learned from it. The web's
     /// `calibrationBefore`.

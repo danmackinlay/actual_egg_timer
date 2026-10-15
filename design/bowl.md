@@ -453,7 +453,6 @@ slider as the ratio rises (§2.5), as `refusal.tap` is below 0.01 to 0.05.
   `PhaseActions.swift` (the pull button), `HelpView.swift`, the Settings
   form, the Live Activity line and the pull alarm (`EggTimerShared`,
   `EggTimerCopy`), and a launch argument for a bowl in `Screenshots.swift`.
-  Run `xcodegen` only if files are added; `npm run ios:build` either way.
 
 ---
 

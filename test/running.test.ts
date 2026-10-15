@@ -1,5 +1,5 @@
 /**
- * A running cook (src/core/running.ts; design/one-screen.md section 3 and 4):
+ * A running cook (src/core/running.ts):
  * a cook is its start, its choices and what it observed, and everything else
  * is derived. fixtures/running.json holds iOS to the same arithmetic; what is
  * checked here is the reasoning.

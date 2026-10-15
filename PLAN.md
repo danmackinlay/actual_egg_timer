@@ -1,81 +1,52 @@
 # PLAN.md — where Actual Egg Timer stands
 
-The state of the build, what is next, and what waits on whom. Updated in the
-same commit as the work it describes. History is `LOGBOOK.md`; the rules for
-working here are `CLAUDE.md`; the last section says where everything else is.
+The state of the build, what is next, and what waits on whom. Brought up to
+date by the session that merges, not by each working commit (`DECISIONS.md`
+104). History is `git log` (`LOGBOOK.md`
+is frozen, `DECISIONS.md` 117); the rules for working here are `CLAUDE.md`;
+the last section says where everything else is.
 
-**Where things stand, 10 October 2026: 0.5 is released** (`v0.5.0-alpha.1`,
-`main`; `DECISIONS.md` 110; 0.3 kept on `0.3.x`; the worklists were
-`archive/SHIP-0.5.md` and `archive/REFACTOR-0.5.md`). Both apps are complete for one
-cook and learning, and now for many: opt-in sharing, the nudge and the
-population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
-both, and deployed on the web. The web app (`src/`) and the iOS app (`ios/`) carry
-the same model, refusals, particle filter and choice of time, the same
-catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 501 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 50 scenarios in headless
-Chrome and checks 39 scenarios' copy states as it captures them, and `npm run
-ios:e2e` the iOS app through 50 on a simulator, each
-stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. CI runs both and fails on either; each
-passed on GitHub's runners on 10 October. `npm run validate` passes 29/29 (in `verify`), `swift test` passes 163 tests
-for the core twin and 29 for the app's package, and the fit's pytest 9. **0.5 pushed to `main` on 10 October**, the owner's
-call: Netlify serves it at actualeggtimer.netlify.app, and every job of
-`.github/workflows/verify.yml` passed on it. The iOS app runs from Xcode on the owner's
-phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
-uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
-(`ios/RELEASING.md`). The words the owner has not yet read are the review
-queue (`npm run copy:queue`).
-
-These counts are the only ones in the documents. If you want a number, run
-`npm test`.
+**Where things stand, 14 October 2026: 0.5 is released and live**
+(`v0.5.0-alpha.1`, pushed 10 October; `DECISIONS.md` 110). `main` is the 0.5
+line and what Netlify serves at actualeggtimer.netlify.app; what merged
+after the tag (the button's "Rolling boil", 112; the action under the time,
+113; the bracket's band, 114; the bowl of still water, 115) went out with
+later pushes of `main`, at the same version. Work is on short-lived branches
+off `main`, and a release is a tag on it (120); `0.3.x` (0.3), `0.4.x` (never
+shipped) and `0.5.x` are history. Both apps are complete for one cook
+and for learning, and for many: opt-in sharing, the population a prior is
+drawn from and the nudge (E6-E8, `INFERENCE.md` §7-§9) are in both. The web app
+(`src/`) and the iOS app (`ios/`) carry the same model, refusals, particle
+filter and choice of time, the same catalogue of words in two Englishes
+(Phase F but for Czech), and the same layout (`UI.md`). CI runs `verify`'s
+steps, `ios:build`, `e2e` and `ios:e2e` (`.github/workflows/verify.yml`).
+The iOS app runs from Xcode on the owner's phone and has cooked real eggs;
+TestFlight has had 0.3.1 (1) and 0.3.2 (2), for internal testing, and
+`ios/project.yml` holds the next upload's build number (`ios/RELEASING.md`).
+The words the owner has not yet read are the review queue (`npm run
+copy:queue`).
 
 ## What is next
 
 1. **The owner's reviews** (the queue below).
-2. **An adversarial QA pass** against this baseline, starting from the QA
-   list below. The owner's review of the 0.4 line, `archive/REVIEW-0.4.x.md`, is
-   actioned item by item; what is left there
-   is marked OWNER, the owner's questions.
-3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: built, on this branch, `0.4.x`
-   (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
-   to date with `main` and not released. The owner reviews it first: its
-   words on a phone (in the review queue), the privacy page (rewritten for
-   0.4; two `OWNER` marks left to answer, `SHIP-0.4.md` B), and the
-   endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
-   It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
-
-5. **0.5**, on this line (`archive/SHIP-0.5.md`, done). The foundations are built (A,
-   B): the counter's carryover held at 1.0 (`DECISIONS.md` 95), the
-   review's refactors into core (90), the certainty word's arithmetic
-   (93), the web's god files split; both apps driven after them. The one
-   screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
-   screen.md`), and its core, the running cook, is built (C2,
-   `src/core/running.ts`), with the red-team review of it applied
-   (`archive/design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (now core's stored cook, `aet.cook` and `cook`; `design/one-screen.md` §4),
-   and red-teamed as built (`archive/design/running-cook-review.md`): core's, the
-   web's and iOS's findings fixed, before the one screen; certainty in words (93, D1),
-   for the owner on a phone. The one screen is built in both apps (C3,
-   for the owner on a phone), and red-teamed as built
-   (`archive/design/onescreen-review.md`): core's and the web's findings fixed
-   (`DECISIONS.md` 99), and iOS's on the same core (9 October 2026). 0.5 is
-   the next release and `0.4.x` is retired (`DECISIONS.md` 102).
-6. **The 0.5 red team's worklist is done** (9-10 October;
-   `archive/REFACTOR-0.5.md`, its decisions `DECISIONS.md` 102-109). The
-   e2e gate CI, and `ios:build` compiles Release too. Core holds the
-   running cook as one `step` with its readout, the stores' table, and one
-   stored cook both apps read alike; the web's page goes through `update`
-   and a pure view, iOS's `Cook` steps core's state and hands effects to
-   small runners, and both keep settings as one value read by core. The
-   suite tests the apps' wiring as well as core, and comments say what the
-   code does. A 0.3 install starts from the defaults: settings, pans and
-   the 1750 language choice go with the log (48, 107). Left, not blocking
-   0.5: iOS's `PhaseActions` keeps a layout per phase (3.9), and the Swift
-   data layer generated from the TypeScript is deferred unless the copies
-   keep drifting (3.18). A7's time range, the right cook time's 90%
-   interval, stays as built until real eggs say how it reads.
+2. **The adversarial review of 14 October 2026**, worked in small rounds;
+   the owner's answers to it are `DECISIONS.md` 116-118.
+3. **F5, Czech**, when the owner's friend can review it (below).
+4. **Left from the 0.5 refactor, not blocking**:
+   - iOS's `PhaseActions` keeps a layout per phase, though its words are
+     already the readout's; the rest of `Cook` is core's `CookState`,
+     stepped, with its effects handed to `CookAlarms`, `CookCard`,
+     `CookSurfaces` and `CookLog`.
+   - Generating the Swift data layer (the types, the defensive readers,
+     `Codable`, `jsonObject`) from the TypeScript interfaces, where the
+     copies drifted, is deferred (the owner, 10 October 2026) unless the
+     drift keeps recurring; the conformance fixtures catch it meanwhile.
+     Never the whole core: TypeScript under JavaScriptCore loses the JIT,
+     and a surface would take seconds.
+   - The likely time range under the certainty word, the right cook
+     time's 90% interval (`predictCookTime` at 5% and 95%), stays as built
+     until real eggs say how it reads (`DECISIONS.md` 97; `INFERENCE.md`
+     §8 has the alternatives).
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -84,251 +55,102 @@ Throughout: cook real eggs, and the two measurements in README §11.3.
 The one queue. Nothing else in the documents waits on the owner.
 
 1. **The review queue, on a phone** (`DECISIONS.md` 106): every word
-   changed or added since the owner last read them all (`e3a81cb`, the
-   `notes` draft, 3 October 2026), and every one retired since. 101 keys:
-   25 changed, 57 added and 19 removed: the words of the items below, and
-   the 0.4 line's sharing (the consent beside the switch, the deletion's
-   words, the Learning mark and its (i), "Your random ID" over the id).
-   No 1750 twin is stale or missing.
-   `npm run copy:queue` lists them; `npm run copy:review` writes the page to
-   read them on beside the apps (`LANGUAGE.md` §3). Say what to put back;
-   `npm run copy:approve` stamps the rest. Also open to revision: the E2
-   feedback wording, which went in on the owner's behalf, and the probe's
-   "highest" (a physics correction of "lowest", which stands unless the
-   owner objects; `INFERENCE.md` §5).
+   changed, added or retired since the owner last approved them. It is
+   empty: the owner approved it whole on 10 October 2026 (`3758e7b`), and
+   the words changed since, the last on 13 October (`f327258`).
+   `npm run copy:queue` lists what has changed since; `npm run copy:review`
+   writes the page to read them on beside the apps (`LANGUAGE.md` §3). Say
+   what to put back; `npm run copy:approve` stamps the rest. Also open to
+   revision: the E2 feedback wording, which
+   went in on the owner's behalf, and the probe's "highest" (a physics
+   correction of "lowest", which stands unless the owner objects;
+   `INFERENCE.md` §5).
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide. Its
    face, IM FELL English with the long s everywhere (§6, *The face*), is
    not yet seen on a phone.
-3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each
-   later push is still the owner's call.
-4. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)
+3. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)
    gets through the silent switch as intended, and whether the slider's
    haptic tick at each doneness word is wanted.
-5. **`Intl` inside `src/core/format.ts`.** `CLAUDE.md` invariant 1 allows it
+4. **`Intl` inside `src/core/format.ts`.** `CLAUDE.md` invariant 1 allows it
    in that one file, so the web's output depends on the browser's ICU while
    the fixtures are pinned against Node's. Safari has not been tried.
-6. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The
-   privacy policy URL is <https://actualeggtimer.netlify.app/privacy>
-   (`privacy/index.html`), which is live only after the next push. App
-   Privacy's answers changed with sharing (E6): Other Data Types and Device
-   ID, not tracking, and App Attest needs no answer of its own
-   (`DECISIONS.md` 72), as `ios/RELEASING.md` step 6 lists them.
-   Read the page first: it speaks in your name, says what sharing sends
-   and keeps, and carries `OWNER` marks for you (`SHIP-0.4.md` B). Help links it in both apps, as "Privacy" ("Of Privacy" in 1750),
-   and so does Settings, under sharing. It names the controls as they now
-   read: "Sharing results", "Share results" and "Delete shared results".
-   **The owner's privacy items left**, after `DECISIONS.md` 67-72, and
-   only these: the retention rule (a five-year cap from the day cooked, or
-   criteria); whether you delete the local copy of the records after each
-   fit; and Linked to You or Not Linked on Apple's label.
-   The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
-   `DECISIONS.md` 53).
-7. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
-   `help.unsure.counter` with the owner's hand edit of the words, with its
-   en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
-   suggestion).
-
-8. **The − and + beside every number, on a phone** (4 October 2026): in
-   both apps, stepping on the units grid (the egg's mass now in half grams,
-   shown "58 g" and "58.5 g"), repeating while held. The web's two
-   screen-reader names ("Less: {label}", "More: {label}") are in the
-   review queue.
-9. **The version at the foot of Settings, on a phone** (5 October 2026):
-   "Version {version}" (1750: "Edition {version}"; in the review queue),
-   under the colophon in both apps, the number fixed-width and
-   selectable like the random number. The web shows `APP_VERSION`
-   ("0.4.0-alpha.1"); iOS the App Store version and its build ("0.4.0
-   (2)"), since the App Store version holds only integers.
-
-10. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
-    leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps,
-    and the Language (i) no longer says "and back when you pick Metric".
-    The day's words are in the review queue: "press" for the screen
-    gesture, never "tap"; the "random ID" (1750: a "cypher"), in Settings,
-    the consent and the privacy page; and "boil" never a noun
-    (`DECISIONS.md` 78), so the setting is "Once it’s boiling" and water is
-    "boiling hard". The button was "Full rolling boil", and is
-    "Rolling boil" since 12 October (`DECISIONS.md` 112); "brought to the
-    boil" stays.
-
-11. **The feedback and the room, on a phone** (5 October 2026,
-    `DECISIONS.md` 79), in both apps. After a
-    cook, "You asked for: jammy, peak yolk 65 °C" over the yolk question
-    (1750: "You desired: thick, the yolk rising to …"); the probe reading
-    has a − and +, in whole degrees from the peak the cook was started at,
-    which the empty field shows greyed; and with the probe on, Settings
-    has an optional Room temperature, empty until set, with an (i). A
-    measured room is the room the model cools toward and the Room egg's
-    start (`roomInUse`, `src/core/inputs.ts`), recorded in each result's
-    `ambient_C` as before.
-12. **Your results, kept and exported** (5 October 2026, `DECISIONS.md` 81
-    and 82). On a phone: "Export my results" under
-    What I’ve learned in Settings (1750: "Copy out my results"), a
-    download on the web and the share sheet on iOS, and "Nothing to export
-    yet." on an empty log. The log is never written over now: a record a
-    build cannot read is set aside and kept, a store it cannot read is
-    kept aside before anything replaces it, and the log is replayed when
-    the model changes. `npm run eggs -- import` reads an exported file for
-    the fit, and the fit gives your own random IDs full weight once they
-    are in `fit/trusted.local.txt` (`fit/README.md` says how).
-13. **A soft yolk can be chosen again, on a phone** (5 October 2026,
-    `DECISIONS.md` 83), in both apps. With your setup
-    (58 g from the fridge, boiling water, an ice bath, a little learned),
-    the thumb goes left of jammy onto the dots, and the time, the sentence
-    under it and the bracket follow; the line under the setup says "Soft: I
-    get this right fewer than 3 times in 10 so far." (1750: "Soft: in this
-    I have hitherto succeeded fewer than 3 times in 10."), with the
-    reliability link under it. Only the stripes still push the thumb back.
-    The old line, "The softest I get right at least 3 times in 10, so far:
-    jammy.", is gone. Worth a look while you are there: on the simulator,
-    after one egg answered too soft at jammy, soft came out only 10-12 s
-    shorter than jammy, with the bracket from soft to fudgy and "probably
-    too firm", because the time leans late to set the white (decision 80);
-    the warning now says why. Since item 14 it is never later than jammy.
-14. **The time never rises as the thumb moves softer, on a phone** (5
-    October 2026, `DECISIONS.md` 84), both apps, no new words. With your
-    setup and one egg answered soft with a runny white, soft was 500 s and
-    jammy 428 s; now everything from soft to just under jammy shows the
-    same time, about jammy's (7:02 on the simulator and the web), with
-    "probably too firm" and the warning, and the time rises from there.
-    Drag from hard to the left edge and watch the time only fall or hold.
-    The time can step once, a second or so after a new pot, when its odds
-    arrive.
-15. **How sure I am, in words, on a phone** (8 October 2026, `DECISIONS.md`
-    93 and 97; `archive/SHIP-0.5.md` D1), both apps and both Englishes: the line
-    below the time ("Very certain", "A ballpark figure", "A wild guess"),
-    what pressing it opens, "Most likely" under it, the warning on a
-    dotted level, and Help's "How sure I am"; the words, and their 1750
-    twins, are in the review queue. Three things to
-    judge with it: the shading now dips between the words, since a level
-    on a cut is half one word; your soft egg of 5 October is a ballpark
-    now and no longer dotted ("Most likely: Jammy." says where it lands);
-    and the time range's wording, "I think the right time is between …",
-    for A7's range, which is yours to confirm. Since its follow-up (same
-    day) the bracket under the slider is the words' own interval, whole
-    words wide, and "How to make this more reliable" shows only at a wild
-    guess a change of setup makes surer: on the model a fresh install
-    never gets it (`UI.md` §8).
-16. **The one screen, on a phone** (8 October
-    2026, `DECISIONS.md` 91, 96 to 98; `archive/SHIP-0.5.md` C3), in both apps: the
-    web, and iOS with the same words (iOS also retires the line under its
-    running sentence, `cook.summary`).
-    One layout from setup to Done: start an egg and change anything - the
-    start clause (boiling to cold, your case), the egg, the slider,
-    Settings' water - and watch it re-plan; hold the slider and the egg
-    shows what you aim for. New words: the start clause with its time
-    ("into cold water at 7:42, brought to the boil"; with the heat off,
-    "…, to the boil, heat off, lid on", shorter than idle's to fit), "Eggs
-    in at" and the four reasons it stops, and "Are the eggs still in the
-    water?" with "Yes, still in" / "No, they’re out".
-    The words, and their 1750 twins, are in the review queue; `UI.md` §3
-    has the screen. Things to judge with it: the clock keeps its idle size
-    while the egg cooks (nothing moves at the start); at Done the
-    questions are below the slider and sentence, scrolled to; after the
-    pull the slider only previews and springs back. On iOS also: while "Are
-    the eggs still in the water?" is open the Lock Screen card shows the
-    pull, "now", with its line naming the cooling (`UI.md` §9).
-17. **The one screen's review, on a phone** (9 October 2026; the one screen's
-    review, `archive/design/onescreen-review.md`, and `DECISIONS.md` 99), both
-    apps: under the time, "about 8:00 to boil",
-    guessed or remembered; once the eggs cook, the time range opened under
-    the certainty line is when to take them out ("I think the right time
-    to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
-    clause "into cold water at 7:42, heat off and lid on once it boils".
-    With it, the time's two lines sit closer under the digits, and the
-    readout is an x-height (8 px or pt) shorter under the folded certainty
-    word, opened as before (`UI.md` §8).
-18. **An older build leaves a newer one's results alone, on a phone** (9
-    October 2026, `DECISIONS.md` 100), in both apps.
-    Install this build after a newer one (or, on the web, keep a tab of it
-    open while a newer one loads): at the top of the screen, and of
-    Settings, "A newer edition of this app saved your results. Until you
-    update this one, I’ll time your eggs but won’t save or learn
-    anything." (1750: "A later edition of this work has kept your results.
-    Until you procure it, I shall time your eggs, but shall neither keep
-    nor learn any thing."). The questions after an egg, the sharing
-    switch and Start learning again are gone while it shows.
-19. **The alarm sounds, on a phone** (9 October 2026, `DECISIONS.md` 101),
-    in both apps. In Settings, after Language,
-    "Alarm sound": Wind-up timer (the default), Cuckoo clock or Hen, and
-    choosing one plays it once. Hear each across the kitchen at both
-    moments: at the pull the cuckoo calls three times, the bell rings
-    longer and the hen gives her alarm call; when cooled, two calls, a
-    shorter ring and her egg song. Each is as loud as the beeps were;
-    louder is a change to `level` in `src/ui/alarmSounds.ts`. On iOS both
-    paths: with notifications allowed, the notification plays the sound
-    for up to 30 s (the silent switch silences it); refused, the in-app
-    ring loops it for 40 s. The (i) credits the hen's two recordings.
-    1750: "Sound of the alarm", "Clockwork bell", "Cuckoo clock", "The
-    hen".
+5. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The
+   privacy policy is live at <https://actualeggtimer.netlify.app/privacy>
+   (`privacy/index.html`), with no `OWNER` mark left in it; App Privacy's
+   answers are the ones step 6 lists (`DECISIONS.md` 72-76). Help links the
+   page in both apps, and so does Settings, under sharing. The App Store
+   subtitle: "Time eggs, not minutes" (`DECISIONS.md` 53). App Review may
+   ask for a recording from a device (`ios/RELEASING.md`, the last section).
+6. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
+   `help.unsure.counter` with the owner's hand edit of the words, and its
+   en-US overlay ("counter", "draft"). The catalogue still has the old line,
+   which says no measurement was found.
+7. **What was built since 4 October, on a phone**, in both apps; their
+   words are approved (item 1), and what is left is seeing them work:
+   - the − and + beside every number, stepping on the units grid and
+     repeating while held;
+   - the version at the foot of Settings: the web shows `APP_VERSION`, iOS
+     the App Store version and its build ("0.5.0 (3)");
+   - back to metric leaving the English of 1750 alone (77), and "boil"
+     never a noun but for the water's "a full rolling boil" (78, 111);
+   - the feedback saying what the cook asked for, the probe reading's − and
+     +, and the room's temperature in Settings (79, 115);
+   - "Export my results" (81; the log itself starts fresh in 0.5, 107);
+   - a soft yolk that can be chosen again (83), and the time never
+     falling as the doneness rises (84);
+   - how sure I am, in words, and its time range (93, 97);
+   - the one screen, from setup to Done, and its review (91, 96-99, 108);
+   - an older build leaving a newer one's results alone (100);
+   - the alarm sounds: Wind-up timer, Cuckoo clock and Hen (101);
+   - the action under the time, in one row (113), the bracket's band
+     (114) and the bowl of still water (115).
+8. **In the Netlify dashboard.** Which plan the account is on: the
+   credit-based Free plan is 300 credits a month, the legacy free tier
+   (accounts from before 4 September 2025) 125,000 function invocations per
+   site a month, and exhausting either pauses the whole site, the web app
+   included. Whether the endpoint's limits are enough for a public link: 16
+   KB a body, 5,000 eggs an id (`MAX_SEQ`), 120 requests a minute an
+   address (`eggs.mts`). What Netlify's own request logs link to
+   `/api/eggs/<uid>` (the privacy page already says they keep the address,
+   the time and the path). And that the deploys built between `00186b1` and
+   `2850f40`, which ran on the live store, are deleted (`DECISIONS.md` 89).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items
 
-- **What keeping the log cannot reach** (`DECISIONS.md` 81). A 0.3 build
-  (`main`) still drops a log it cannot read whole and writes over it, so
-  switching a device back to 0.3 can lose what 0.4 kept; export first.
-  From 0.4 on a build that finds a newer build's mark writes nothing at all
-  (`DECISIONS.md` 100; `ios/RELEASING.md`, "Never roll back past 0.4"), but
-  0.3 has no such guard and cannot be given one.
-  `MODEL_ID` was not changed when the counter's physics was (`9d00f48`), so
-  records from 3 October say `2026-10-e8` under two counters; every stored
-  posterior is replayed once on this build regardless, since none says its
-  model yet. The web still offers no question after a reload: its panel's
-  rule (`src/ui/feedback.ts`, "beforeReload"); iOS now does when the egg is
-  the last in the log and not yet shared.
-
-- **The after-egg questions name the yolk** (`DECISIONS.md` 92), for 0.4:
-  the cook says which yolk they got (Runny to Hard), the white is asked
-  about next to the yolk, and the probe reading moves below the two
-  answers. Built on the branch `after-egg` (`LOGBOOK.md`, 6 October): the
-  five-word probit and the record's `yolkWord` in both cores, the server,
-  the fit, both apps' panels and their words, and the ticks struck
-  through only when no position of their word can be reached. Waiting on the
-  owner, on a phone: the five words and the probe field's two lines, and
-  whether the field should show when the probe setting is off (it does
-  now, whenever the cooling ends at the peak).
-
-- **0.5** (`archive/SHIP-0.5.md`): the counter's carryover fixed at 1.0
-  (`DECISIONS.md` 95); the review's refactors into core (90); certainty in
-  words, "very certain", "ballpark" or "wild guess", with the 90% interval
-  on a tap (93); one screen for setting up and boiling, the egg in
-  cross-section always on it (91), which needs interface design first.
-
 - **Dim the time while it is recalculated**, the owner's idea (5 October
   2026), not wanted yet: while a newer answer is on its way, the time and its
   subline dim slightly, back to full when the final answer (and the odds'
-  correction) lands, in both apps; never delay the number instead. Not
-  noticeable today, since Settings takes as long to leave.
-
-- **E3's known limit.** Two runny whites at soft move jammy about as far as
+  correction) lands, in both apps; never delay the number instead.
+- **The egg lab as an About page, someday** (the owner, 14 October 2026):
+  `tools/egg-section.html`, which plays a whole cook in cross-section, how
+  set and how hot, is to become a page cooks can see. Not in the app yet.
+- **A runny white still moves the time-scale.** The white's learned offset
+  is its lag and the cook's idea of "runny" together, but a runny white is
+  as well explained by a slow time-scale as by a late white, and `alpha`'s
+  prior is the wider, so two runny whites at soft move jammy about as far as
   soft; left so until a probe or pooling pins the time-scale (`DECISIONS.md`
-  18). `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+  18; [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1)).
+  `test/infer.test.ts` 5b pins it, so a change that moves it is seen.
+- **The carryover is not learned.** `tauAirScale` is held at 1.0
+  (`DECISIONS.md` 95): the counter's cooling is the textbook's still air, so
+  a draughty kitchen's counter-rested eggs come out a little softer than the
+  model thinks, and their answers go into the time-scale and the taste.
 - **The heat-off pan's per-cook scale** is deferred: `TAU_STANDING_SCALE` is a
   global 1.0 (`DECISIONS.md` 11). A per-cook scale wants enough heat-off cooks
-  to tell it from `alpha`. Meanwhile hot-start heat-off cooks never set the
-  white at 1-4 L with four fridge eggs; 1.0 may be pessimistic with a lid
-  on, and one real cook would settle it.
-- **The egg in cross-section**, merged on 2 October (`DECISIONS.md` 52),
-  not yet released: the yolk and
-  white drawn ring by ring as the cook runs, as how set each layer is.
-  `src/core/section.ts` carries the cook forward a tick at a time with a
-  dose at every ring, and agrees with `simulate`. The web's cooking screen
-  draws it beside the setup sentence (`src/ui/eggSection.ts`, `UI.md` §3).
-  `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
-  whole cook, with the heat map the owner set aside beside it. Its Swift
-  twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`;
-  iOS draws it beside `CookSentence` (`EggSectionView.swift`). Not yet seen
-  on a phone in either app.
-- **iOS answers a change as the web does** (4 October, `LOGBOOK.md`): the
-  solve is throttled, not debounced, so a held stepper and a drag are
-  followed; the time moves 15-30 ms after a tap on the simulator. A new pot
-  still shows the mean solve's time and then, 0.7 s later, the time chosen
-  on its surface, a few seconds apart, in both apps. Not yet felt on a phone.
+  to tell it from `alpha`. One real hot-start heat-off cook with a lid on
+  would say whether 1.0 is pessimistic.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
-  setup sentence while a cook runs (README §11.5).
+  setup sentence while a cook runs. What both apps decide is core's, under
+  the conformance fixtures; above it each app's store, formatting and
+  decision to ring have tests, and the rest is view code, checked by driving
+  the apps.
+- **The web can make an egg over 90 g, on purpose** (`DECISIONS.md` 34). Both
+  apps cap the mass at 90 g, but the web's girth (90-200 mm) and width
+  (30-60 mm) keep their own limits, so a typed measurement reaches about
+  160-195 g; the model is a hen's egg's, so those times are extrapolated.
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad
   layout needs every orientation and Split View, checked by screenshots.
 - **Someday:** other birds' eggs, emu first (`DECISIONS.md` 34). The model's
@@ -353,9 +175,9 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | E3 | the white offset | built 27 Sep; its done-when half met (above) |
 | E4 | the thermometer | done 27 Sep |
 | E5 | choosing the time under uncertainty; the odds, reach and advice | done 28 Sep |
-| E6 | opt-in collection | built 2 Oct; live with the next push |
+| E6 | opt-in collection | built 2 Oct; live since 0.5 |
 | E7 | the population fit | built 2 Oct, checked on simulated cooks; no real fit until eggs arrive |
-| E8 | the nudge | built 2 Oct; live with the next push |
+| E8 | the nudge | built 2 Oct; live since 0.5 |
 | F1 | one catalogue for both apps | done 27 Sep |
 | F2 | the rewrite, in the first person | done 27 Sep |
 | F3 | Metric and Imperial; US size classes | done 27 Sep |
@@ -364,16 +186,17 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | F6 | the English of 1750 | done 28 Sep; the owner's review open |
 
 The design is `INFERENCE.md` (E) and `LANGUAGE.md` (F); what each phase
-measured is `LOGBOOK.md`. E6-E8 were built from `COLLECTIVE.md`, which has
-every choice made to build them. What is left:
+measured is `LOGBOOK.md`; the choices made to build E6-E8 are in
+`INFERENCE.md` §7-§9 and the code. What is left:
 
-- **E6-E8, after the push.** The endpoint goes live with it; then check a
-  record posted and deleted through the real one, and App Attest's attested
-  path on a phone (only the simulator's open tier has run).
 - **E7, the first real fit**, once shared eggs have arrived: `fit/README.md`
   has the loop, and publishing is writing `fixtures/population.json` in a
-  release. Read the open tier's cap first (`COLLECTIVE.md` §4): with no
-  attested eggs, `DECISIONS.md` 2 read literally gives the web no weight.
+  release. Settle the open tier's weight first, the owner's choice: open
+  results get none for now (`DECISIONS.md` 85), and with no attested eggs
+  `DECISIONS.md` 2 read literally caps them at zero anyway (`--open-cap`,
+  `INFERENCE.md` §9). Every open result is kept, so it can be given a
+  weight later, screened per id. The owner's own results do not wait on
+  it: their trusted ids count in full and lift the cap for the rest (82).
 - **F5, Czech.** Adds Czech to the picker in both apps and `cs` to
   `CFBundleLocalizations` in `ios/project.yml`. It tests all four CLDR plural
   categories, the decimal comma and seven cases (`LANGUAGE.md` §5); doneness
@@ -388,62 +211,36 @@ every choice made to build them. What is left:
 
 ## QA: what nobody has checked
 
-Gathered from every "Not verified" in `LOGBOOK.md`, less what has since been
-checked, fixed or deleted. Start the QA pass here.
+What the e2e harnesses cannot reach: a real device, a real ear, a real egg.
+Start the QA pass here.
 
-- **Sharing, live.** The endpoint has run only locally (`npm run
-  serve:dev`): a record posted and deleted through the deployed one; App
-  Attest's attested path on a phone; the web in Safari; an iPhone on a
-  flaky network; Netlify's rate limit at work; a deletion asked offline and
-  confirmed at a later launch, outside the tests.
-
-- **iOS, by hand.** Nothing in these was tapped, in a simulator or on a
-  phone: the units menu, the steppers in displayed units and a typed value's
-  round trip; the pull button, both questions and the second answer's
-  refold, and the five yolk words, typing a probe reading and its refusal
-  (tapped in the simulator on 6 October, `-uiScreen done`); the "Probe it
-  now" notification; the clause links, Done, the (i)s opening, the Forget
-  confirmation, the advice link into Help, setting a weight, and Weighed
-  going back to the last weighed mass; a drag on `YolkSlider` by a finger
-  on a phone (the simulator's synthetic drag reaches it, being a
-  `UISlider`, and drove the thumb to the far left and back on 5 October;
-  the haptic and the white's line mid-drag are still unfelt); the cooking,
-  pull and done screens in their words, and the direction mid-cook; the
-  lower half of Settings and Help's reliability section with advice in it;
-  a Live Activity cancelled mid-start.
-- **The low-odds warning at the firm end** (`warn.lowOdds` with "Hard")
-  has not been seen on a screen; the soft end was, in both apps, on 5
-  October. The unlikelySoft/Hard sentences it replaced are retired. The
-  copy-snapshot harness drives fresh installs only, so it never shows the
-  warning.
+- **Sharing, live.** A record posted and deleted through the deployed
+  endpoint; App Attest's attested path on a phone (only the simulator's
+  open tier has run); the web in Safari; an iPhone on a flaky network;
+  Netlify's rate limit at work; a deletion asked offline and confirmed at a
+  later launch.
 - **The Lock Screen and the Dynamic Island**: the card ending as the cooling
-  does, the 1750 alarms and their 110-character body on a real notification,
-  the Live Activity in 1750, and "my guess until you tap Full rolling boil"
-  (40 characters against the island's 41).
+  does, the 1750 alarms and their body on a real notification, the Live
+  Activity in 1750, and "my guess until Rolling boil" against the island's
+  width.
 - **Sound and touch, on a device**: the in-app ring's tone, the silent switch
   and a media volume at zero, touch to stop, no ring on the authorised path,
   the refused and failed notification states, and the haptic tick.
 - **Screen readers.** VoiceOver: the sentence and its clauses, the (i)'s
   Expanded and Collapsed, the slider's adjustable swipe, the bracket's words,
-  and focus after a tap. The web's names ("Egg: 68 g, change", "Likely yolk:
-  Soft to Fudgy") were read from the DOM, not heard.
+  and focus after a press. The web's names were read from the DOM, not
+  heard.
 - **Dynamic Type** at large sizes on iOS.
-- **The web on a phone, and Safari.** Every web check was an emulated
+- **The web on a phone, and Safari.** The web's checks run an emulated
   viewport in desktop Chromium: no real thumb on the sentence, no Safari
   (Apple's ICU, and any locale with non-ASCII digits), no alarm heard. Not
-  tried: a second tab changing the pan start mid-sous-vide; the app on a
-  phone's Home Screen opening offline, and taking a new build after a
-  deploy (both seen only on localhost and in the simulator).
+  tried: the app on a phone's Home Screen opening offline, and taking a new
+  build after a deploy.
 - **Real eggs.** None cooked at a chosen time (the odds are calibrated
   against the model's own idea of cooks); none probed (the 1.0 C instrument
   sd and 0.4 C handling mean are the model's); no hot-start heat-off cook.
   The range under the slider cannot split an egg's scatter from the cook's
   judging; only a thermometer can.
-- **Cases no run has shown**: "It could miss" where a miss is nearly
-  certain (a pot where no level reaches 3/10 and the lean is strong); the
-  bracket's median mark parting from the thumb for a cook who likes a firmer
-  yolk (it has been seen parting at the soft end, where the white leans the
-  time, on the web: `UI.md` §8).
 - **For the owner's eye**: the light scheme's hard end, a mustard (no paler
   stop was tried), and iOS's accent wash on an open clause.
 - **Locales measured but not pinned**: en-CA and en-IN/NZ/SG print a time of
@@ -455,31 +252,29 @@ checked, fixed or deleted. Start the QA pass here.
 - **The web app is live** at <https://actualeggtimer.netlify.app>, built by
   Netlify from `netlify.toml` on push; it serves `origin/main`. `og:` tags
   carry absolute URLs at that domain, so a domain change is a commit.
-  There is no second host: `vercel.json` was deleted in 0.5 (the owner,
+  There is no second host: the Vercel config was deleted in 0.5 (the owner,
   7 October 2026, "we can add vercel later if needed"); git has it.
 - **The web app opens with no signal** once a browser has visited, on a
   Home Screen too (`DECISIONS.md` 63): the built site's service worker
   keeps one build whole (`src/ui/serviceWorker.ts`, written into `sw.js` by
   `tools/precache.mjs`), and a new build takes over only between cooks
-  (`src/ui/offline.ts`). Deleting `sw.js` takes it out. Seen in Chromium and
-  the iOS simulator, not yet on a phone or on Netlify.
+  (`src/ui/offline.ts`). Deleting `sw.js` takes it out.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
-  48). The site is public but not in wide use, so the storage formats
-  (core's table of stores, `src/core/stores.ts`, each with its format
-  inside the payload but the results log's and sharing's, in their keys)
-  may change without a migration; bump the store's format so an old value
-  is dropped rather than misread, and the boot sweep deletes any key the
-  table does not list. Back-compat starts when the owner says the app
-  is widely deployed, and not before. What has been SENT is another matter:
-  the server's records are parsed by the same `parseRecord`, and a field
-  reinterpreted there would misread every egg already kept.
+  48, 107). The site is public but not in wide use, so the storage formats
+  (core's table of stores, `src/core/stores.ts`) may change without a
+  migration; bump the store's format so an old value is dropped rather than
+  misread, and the boot sweep deletes any key the table does not list.
+  Back-compat starts when the owner says the app is widely deployed, and
+  not before. What has been SENT is another matter: the server's records
+  are parsed by the same `parseRecord`, and a field reinterpreted there
+  would misread every egg already kept.
 - **Sharing's endpoint** is `netlify/functions/eggs.mts` on the same site,
   backed by the site's Blobs store `eggs` in Netlify's default region
   (`us-east-2`); `npm run serve:dev` runs it locally on a store in memory.
   Nothing is sent unless a cook turns sharing on.
 - **Versions and tags** (`DECISIONS.md` 49, `CLAUDE.md`): the version is
   `package.json`'s, now `0.5.0-alpha.1`; iOS carries it without the
-  pre-release tag. Each push the owner makes is a release, tagged
+  pre-release tag. A release is a push the owner makes, tagged
   `v<version>`.
 - **The newest version that has run is marked** (`DECISIONS.md` 100):
   `aet.newest` on the web, `newestVersion` on iOS, a version string whose
@@ -493,6 +288,10 @@ checked, fixed or deleted. Start the QA pass here.
   entitlement signed and verified in a device build. **The Live Activity
   works** on the Lock Screen and in the Dynamic Island, seen on the owner's
   phone on 28 September.
+- **The egg in cross-section** is drawn in both apps from core's
+  `src/core/section.ts` (`Section.swift`, held by `fixtures/section.json`).
+  `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
+  whole cook, with the heat map the owner set aside beside it.
 
 ## Where things are
 
@@ -502,6 +301,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `PLAN.md` | this: the state, what is next, the owner's queue, open items, QA |
 | `DECISIONS.md` | every owner decision, numbered and dated, with its commits |
 | `README.md` | the science: the model, its constants, validation, open problems |
+| `DEVELOPING.md` | building and checking: the npm scripts, reviewing the words, the web app end to end |
 | `INFERENCE.md` | the learning: what is learned, the record, the probe, deciding, the fit |
 | `LANGUAGE.md` | the words: the catalogue, copy rules, units, languages, 1750 |
 | `UI.md` | the layout both apps share, as built |
@@ -509,11 +309,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
-| `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
-| `archive/` | closed records: the 0.4 review, the three design reviews of 0.5, and the 0.5 worklists (`archive/SHIP-0.5.md`, `REFACTOR-0.5.md`), kept for their findings |
+| `LOGBOOK.md` | the record to 14 October 2026, frozen: what was verified, measured and learned, by date |
 | `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), outside the default build; each names the document that quotes it |
-| `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
-| `archive/design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
-| `archive/design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |
-| `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
+| `design/bowl.md` | the bowl of still water as a cooling (`DECISIONS.md` 115) |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

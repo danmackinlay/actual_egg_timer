@@ -238,7 +238,7 @@ public final class Planner {
     /// bracket under the slider (`wordBracket`). Nil
     /// whenever `decision` is.
     public var certainty: CertaintyReading?
-    /// This launch's nudge (E8): a whole number of seconds
+    /// This launch's nudge: a whole number of seconds
     /// from -10 to +10, drawn at launch and again after each cook, so the
     /// time on screen holds still while the cook looks at it.
     var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
@@ -339,7 +339,6 @@ public final class Planner {
             onEdit()
             return
         }
-        Perf.input()
         SettingsStore.save(self)
         solver.recompute()
     }
@@ -355,7 +354,7 @@ public final class Planner {
 
     /// The controls set to a running cook's own choices, as they stood when
     /// it was stored (a relaunch): what the controls show while it runs
-    /// (design/one-screen.md section 4). Neither saved nor
+    /// Neither saved nor
     /// solved for: a correction writes the settings it changes.
     func adopt(_ c: CookChoices) {
         applying = true

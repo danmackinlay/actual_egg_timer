@@ -56,11 +56,6 @@ public final class Cook {
     public private(set) var heldProfile: OddsProfile?
     public private(set) var ranSolution: Solution?
 
-    /// An ended cook whose record could not be made again, left stored for
-    /// the next launch to make: its egg is not final until then, or until a
-    /// new cook is stored over it.
-    private var unremade = false
-
     /// What the cook's effects are handed to: its alarms and its ring, its
     /// card on the Lock Screen, and what its steps wait for, built.
     public let alarms = CookAlarms()
@@ -69,6 +64,9 @@ public final class Cook {
 
     @ObservationIgnored private let planner: Planner
     @ObservationIgnored private let edits: Edits?
+    /// Where the calibration before an egg comes from: the planner's
+    /// learning, or a test's.
+    @ObservationIgnored var learned: any LearnedBefore
 
     private enum Job {
         case event(CookEvent)
@@ -84,14 +82,17 @@ public final class Cook {
     private var ticker: Task<Void, Never>?
     /// Starts and restores under way, whose alarms and card are being set.
     @ObservationIgnored private var busy = 0
+    #if DEBUG
     /// Ticks taken: a step's `idle` waits for a tick at its moment
-    /// (`Screenshots.idle(after:)`).
+    /// (`Screenshots.idle(after:)`), and a test for a tick at its clock's.
     @ObservationIgnored private(set) var ticks = 0
+    #endif
     @ObservationIgnored private var log = CookLog()
 
     init(planner: Planner, edits: Edits? = nil) {
         self.planner = planner
         self.edits = edits
+        learned = planner.learner
         alarms.onScreen = { [weak self] in (self?.running, self?.asksForProbe ?? false) }
         alarms.onSettled = { [weak self] in self?.logIfSettled() }
         surfaces.landed = { [weak self] in self?.send(.landed) }
@@ -141,11 +142,10 @@ public final class Cook {
 
     /// Whether this cook's egg is in the log and not yet final: the egg on
     /// screen, answered and not too old, or an ended one whose record is
-    /// being made again or was left for the next launch. Sharing holds it
-    /// back; every other egg is final.
+    /// being made again. Sharing holds it back; every other egg is final.
     public func eggOpen(atS nowS: Double) -> Bool {
         if logged, openEggId(running, plan: plan, nowS: nowS) != nil { return true }
-        return unremade || ending.contains { $0.state.cook.map { answersLogged($0) != nil } ?? false }
+        return ending.contains { $0.state.cook.map { answersLogged($0) != nil } ?? false }
     }
 
     /// This egg's record as core makes it now, with what has been said, or
@@ -168,10 +168,13 @@ public final class Cook {
         )
     }
 
-    /// Whether the ticker runs, and whether nothing is under way: no step,
-    /// nothing being built, no start, restore or read-back. What a step's
-    /// `idle` and the tests wait for.
+    #if DEBUG
+    /// Whether the ticker runs, for a step's `idle`.
     var ticking: Bool { ticker != nil }
+    #endif
+
+    /// Whether nothing is under way: no step, nothing being built, no start,
+    /// restore or read-back. What a step's `idle` and the tests wait for.
     var isSettled: Bool {
         stepping == nil && jobs.isEmpty && surfaces.idle && busy == 0 && alarms.readingBack == 0
     }
@@ -276,11 +279,12 @@ public final class Cook {
     }
     #endif
 
-    /// The process gone, for a test: the ticker stops, and the store keeps
-    /// what it has.
+    /// The process gone, for a test: the ticker stops, a change in hand
+    /// goes uncommitted with its waits, and the store keeps what it has.
     func killed() {
         ticker?.cancel()
         ticker = nil
+        edits?.end()
     }
 
     // MARK: - The steps
@@ -380,7 +384,6 @@ public final class Cook {
             }.value
             guard let i = ending.firstIndex(where: { $0.state.cook?.idMs == cook.idMs }) else { continue }
             perform(s.effects, for: cook, after: s.cook, leanHintS: s.leanHintS, onScreen: running == nil)
-            if asRanStale(cook), s.cook.map(asRanStale) != true { Screenshots.log(.asRanRemade) }
             if s.cook == nil {
                 ending.remove(at: i)
             } else {
@@ -420,10 +423,8 @@ public final class Cook {
             heldCertainty = p.certainty
             heldProfile = surfaceFor(surfaces.all(planner.calibration), p.inputs)?.profile
         }
-        if started { unremade = false }
         perform(s.effects, for: cook, after: cook, leanHintS: s.leanHintS, onScreen: true)
-        CookLog.plan(s, was: was, event: event, shown: (shownPeakYolkC, shownLevel))
-        CookLog.step(was: was.cook, now: cook, event: event)
+        CookLog.plan(s, was: was, event: event)
         keepBefore()
         follow()
         if started { begin(cook) }
@@ -462,31 +463,20 @@ public final class Cook {
 
     /// What each cook waits for, asked for.
     private func follow() {
-        if let cook = running, let need { ask(need, for: cook, ended: false) }
+        if let cook = running, let need { ask(need, for: cook) }
         for e in ending {
-            if let cook = e.state.cook, let need = e.need { ask(need, for: cook, ended: true) }
+            if let cook = e.state.cook, let need = e.need { ask(need, for: cook) }
         }
     }
 
-    private func ask(_ need: CookNeed, for cook: RunningCook, ended: Bool) {
+    private func ask(_ need: CookNeed, for cook: RunningCook) {
         if let inputs = need.surface { surfaces.build(inputs, on: planner.calibration) }
-        // `-uiHoldAsRan YES`: the calibration before the egg is never made
-        // while the cook runs in this launch.
-        if need.before, ended || !Screenshots.holdAsRan {
+        if need.before {
             surfaces.buildBefore(
-                cook.idMs, logged: answersLogged(cook) != nil ? planner.kept.log.indices.last : nil,
-                from: planner.learner
+                cook.idMs, logged: answersLogged(cook) != nil ? planner.kept.log.indices.last : nil, from: learned
             )
         }
         guard let inputs = need.beforeSurface, surfaces.before[cook.idMs] != nil else { return }
-        // `-uiFailRemake YES`: an ended cook's record is never made again in
-        // this launch; the cook stays stored for the next.
-        if Screenshots.failRemake, ended {
-            ending.removeAll { $0.state.cook?.idMs == cook.idMs }
-            unremade = true
-            Screenshots.log(.asRanNotRemade)
-            return
-        }
         surfaces.buildBefore(cook.idMs, surface: inputs)
     }
 
@@ -517,14 +507,15 @@ public final class Cook {
             // take a prompt's seconds.
             if let now = running, let plan { await card.start(now, plan, atS: AppClock.nowS) }
             guard running?.idMs == cook.idMs else { return }
+            #if DEBUG
             if restored { Screenshots.log(.restored) }
+            #endif
         }
     }
 
     /// The cook has left the screen (ended, or gone): its ticker, ring and
     /// card go, and the controls answer to the idle screen again.
     private func leave() {
-        Screenshots.log(.cookEnded)
         state = CookState(cook: nil, plan: nil, leanHintS: 0)
         need = nil
         outcome = nil
@@ -559,7 +550,9 @@ public final class Cook {
         let now = AppClock.nowS
         defer {
             if log.phase(phase(atS: now)) { logIfSettled() }
+            #if DEBUG
             ticks &+= 1
+            #endif
         }
         // Stepped only when the clock has something to decide (core's
         // `tickDue`, which the step asks too).
@@ -570,8 +563,10 @@ public final class Cook {
 
     /// Nothing under way, to the debug log.
     private func logIfSettled() {
+        #if DEBUG
         guard isSettled else { return }
         Screenshots.log(.settled)
+        #endif
     }
 
     // MARK: - Surviving a relaunch
@@ -623,9 +618,6 @@ public final class Cook {
         // A cook this build cannot read whole is dropped, with what timed it.
         guard let stored = Self.readStored(data) else {
             Stores.remove(Self.savedKey)
-            #if DEBUG
-            Screenshots.log(.restoreUnreadable)
-            #endif
             Services.alarm.cancel()
             card.endAll()
             return
@@ -636,7 +628,9 @@ public final class Cook {
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
         let s = made.step
         guard let after = s.cook, endedAtS(after) == nil else {
+            #if DEBUG
             Screenshots.log(.restoreTooOld)
+            #endif
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
@@ -645,10 +639,12 @@ public final class Cook {
             follow()
             return
         }
+        #if DEBUG
         Screenshots.log(.restore(
             phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))
+        #endif
         state = s.state
         need = s.need
         if let o = made.outcome { outcome = o }
@@ -660,7 +656,7 @@ public final class Cook {
         perform(
             s.effects.filter { $0 != .persist }, for: cook, after: after, leanHintS: s.leanHintS, onScreen: true
         )
-        CookLog.plan(s, was: was, event: .tick(nowS: now), shown: (shownPeakYolkC, shownLevel))
+        CookLog.plan(s, was: was, event: .tick(nowS: now))
         follow()
         begin(after, restored: true)
     }

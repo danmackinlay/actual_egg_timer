@@ -446,8 +446,7 @@ export function decidedSolution(
 /* ------------------------------------------------------------- the nudge */
 
 /**
- * The most the nudge moves a time, s, either way (INFERENCE.md section 8,
- * E8).
+ * The most the nudge moves a time, s, either way (INFERENCE.md section 8).
  *
  * WHY. The app chooses the time as a function of the inputs, so every egg a
  * cook reports on lies on one surface - the time the app thinks right - and

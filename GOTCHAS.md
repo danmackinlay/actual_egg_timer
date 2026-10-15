@@ -30,9 +30,9 @@ releasing has its own in `ios/RELEASING.md`.
 
 ## iOS: the build and the frameworks
 
-- **The Xcode project is generated** (`cd ios && xcodegen`) and gitignored,
-  as is `ios/Widget/Info.plist`; don't look for either in the history.
-  `ios/project.yml` is the source.
+- **The Xcode project is generated** and gitignored, as is
+  `ios/Widget/Info.plist`; don't look for either in the history.
+  `ios/project.yml` is the source (`ios/README.md`, "The app").
 - **`INFOPLIST_KEY_*` build settings cannot express a nested dictionary.**
   `INFOPLIST_KEY_NSExtensionPointIdentifier` is accepted, silently dropped,
   and the widget builds, embeds and is never recognised. An extension needs
@@ -70,6 +70,14 @@ releasing has its own in `ios/RELEASING.md`.
   or clear the site's data. On a simulator, Safari keeps it under
   `Containers/Data/Application/<Safari>/Library/WebKit/com.apple.mobilesafari/WebsiteData/Default/`,
   and a Home Screen web app inside its `Library/WebClips/<id>.webclip`.
+- **Every worktree served on one port shares one localStorage**, the
+  newest-version mark included: `npm run serve:dev` is :8888 and
+  `serve:site` :8080 in any worktree. Serve a build of a newer version (a
+  branch that has bumped it), then an older one, and the older one writes
+  nothing, shows the update line, and looks broken. The e2e harness is
+  immune (a fresh profile each run). Give each worktree its own port
+  (`PORT=8890 npm run serve:dev`; `python3 -m http.server 8090 --directory
+  _site`), or clear the site's data before switching.
 - **CSS order decides a tie**: `.pair--five > button` lost to `button.fb`'s
   font size on order alone; the rule needed the class.
 
@@ -93,7 +101,7 @@ releasing has its own in `ios/RELEASING.md`.
   default to Imperial units, US egg sizes and a 12-hour clock: a scenario
   written on a metric machine fails only in CI. Each tab is given a locale
   (`DEFAULT_LOCALE` in `tools/harness.ts`), and each iOS launch one
-  (`localeArgs` in `tools/iosE2e.ts`); `AET_LOCALE=en-US npm run e2e --
+  (`localeArgs` in `tools/iosHarness.ts`); `AET_LOCALE=en-US npm run e2e --
   <names>`, or `ios:e2e`, reproduces a runner's. `--lang` does not reach the
   page on macOS. On iOS, `simctl create` copies the host's locale and its
   unit and clock preferences into the device, and those preferences win

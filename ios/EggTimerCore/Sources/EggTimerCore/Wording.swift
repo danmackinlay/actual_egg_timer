@@ -4,8 +4,8 @@ import EggTimerCopy
 /// Which catalogue key each part of the screen says, from the facts of the
 /// cook: src/core/wording.ts, against `fixtures/wording.json`. The app renders
 /// the keys and fills in its own arguments; the CHOICE of key is here, so the
-/// two apps cannot choose differently. The app project has no test target, so
-/// this is the only way its choices get tested.
+/// two apps cannot choose differently, and the fixture tests the choice once
+/// for both; each app's screens only render it.
 
 // MARK: - The refusal
 

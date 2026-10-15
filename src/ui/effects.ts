@@ -154,7 +154,7 @@ function openEgg(s: Stores, m: Model, now_s: number): number | null {
 /** How many of the log's eggs are final, from its start (share.ts): all of
  *  them but the stored running cook's, whichever tab asks, which can still be
  *  answered and corrected until Start again or until it is too old
- *  (`openEggId`, design/one-screen.md section 4, "Which eggs are final"). */
+ *  (`openEggId`). */
 export function finalEggs(s: Stores, m: Model): number {
   const log = s.learner.keptState().log;
   const open = openEgg(s, m, nowMs() / 1000);

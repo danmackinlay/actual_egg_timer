@@ -11,8 +11,8 @@ enum Route: Hashable {
     case help(HelpSection?)
 }
 
-/// The egg: the web's one screen (UI.md section 3, design/one-screen.md
-/// section 2), and the phase machine that runs it.
+/// The egg: the web's one screen (UI.md section 3), the same in every phase,
+/// and the phase machine that runs it.
 ///
 /// One layout from idle to Done, top to bottom: the time, with the line
 /// under it and how sure I am; the hint and the action, with Cancel while a
@@ -119,9 +119,6 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            // `-uiScrollAnchor 0.7`: open scrolled that far down the page,
-            // for a screenshot at the largest text sizes.
-            .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
             .barTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -150,13 +147,10 @@ struct ContentView: View {
             if down { model.edits.fingerDown(field) } else { model.edits.fingerUp() }
         })
         // The pull brings the egg's page back, from Settings or Help.
-        .onChange(of: outerPhase == .pull) { _, pull in
-            if pull { path = [] }
+        .onChange(of: bringsEggBack(outerPhase)) { _, back in
+            if back { path = [] }
         }
         #if DEBUG
-        .onChange(of: path) { _, now in
-            Screenshots.log(.view(page: now.last.map { "\($0)" } ?? "egg"))
-        }
         // A step's `idle` waits for the page drawn again (Screenshots.swift).
         .onChange(of: Screenshots.probe.drawn) { Screenshots.drawn() }
         #endif
@@ -205,22 +199,7 @@ struct ContentView: View {
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
         // The taps a script asked for, as each comes due.
-        Screenshots.open = { what in
-            if what == "settings" { path = [.settings] }
-            if what.hasPrefix("clause-"), let clause = Clause(rawValue: String(what.dropFirst(7))) {
-                model.edits.touchedElsewhere()
-                openClause = clause
-            }
-        }
         Screenshots.drive(model)
-        // A cook restored at Done, answered as soon as asked: before its
-        // pot's surface is built again, with `-uiAnswerAfter 0`.
-        if Screenshots.scene != "done", cook.phase == .done, let answer = Screenshots.answer {
-            Task {
-                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
-                model.answer(yolk: answer.yolk, white: answer.white)
-            }
-        }
         guard let scene = Screenshots.scene else { return }
         switch scene {
         case "settings": path = [.settings]
@@ -241,9 +220,6 @@ struct ContentView: View {
             Task {
                 await startedCook()
                 cook.skipToDone(ago: Screenshots.doneAgo)
-                guard let answer = Screenshots.answer else { return }
-                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
-                model.answer(yolk: answer.yolk, white: answer.white)
             }
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {

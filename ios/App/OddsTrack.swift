@@ -1,5 +1,6 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerApp
 import EggTimerShared
 
 /// The strip under the doneness slider: where this pan works.
@@ -153,28 +154,8 @@ struct YolkBracket: View {
             }
         }
         .frame(height: 9)
-        // Where it is drawn, as levels, for the scripted checks.
-        .logged(.bracket(low: drawn.low, high: drawn.high, likelyLow: drawn.likelyLow, likelyHigh: drawn.likelyHigh))
         .accessibilityElement()
         .accessibilityLabel(rangeText(words))
-    }
-}
-
-/// Where the bracket lies, as slider levels (core's `wordBracket`), and the
-/// stretch of it drawn heavy: the most likely word's band, which is one of
-/// the interval's words, so inside it.
-private struct BracketLevels {
-    let low: Double
-    let high: Double
-    let likelyLow: Double
-    let likelyHigh: Double
-
-    init(_ words: WordCertainty) {
-        let b = wordBracket(words)
-        low = b.low
-        high = b.high
-        likelyLow = min(max(wordBandLow(words.mostLikely), b.low), b.high)
-        likelyHigh = min(max(wordBandHigh(words.mostLikely), likelyLow), b.high)
     }
 }
 

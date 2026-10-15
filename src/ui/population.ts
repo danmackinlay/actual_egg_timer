@@ -1,5 +1,5 @@
 /**
- * The population this page draws a new cook's prior from (E7; core's
+ * The population this page draws a new cook's prior from (core's
  * population.ts): `fixtures/population.json`, fetched at boot beside the
  * words, from the same deploy as the scripts. The literature's until a fit of
  * everyone's shared eggs publishes another.

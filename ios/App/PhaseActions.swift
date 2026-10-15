@@ -29,17 +29,16 @@ struct PhaseSlot: View {
     /// line and goes under whichever is there.
     @ViewBuilder
     private var slot: some View {
-        if phase == .heating || phase == .cooking, let line = runningWarning, !line.isEmpty {
+        if phase == .heating || phase == .cooking, let line = model.runningWarning, !line.isEmpty {
             // While a cook runs, until the pull: what its plan says of the
-            // level, as the idle screen says it (design/one-screen.md
-            // section 3: a correction that leaves the white unset gets the
-            // longest time this pan can give, and the slot says so).
+            // level, as the idle screen says it: a correction that leaves the
+            // white unset gets the longest time this pan can give, and the
+            // slot says so.
             Text(line)
                 .foregroundStyle(.orange)
                 .appFont(.footnote)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .logged(.slot(text: line))
         } else if phase == .idle {
             VStack(spacing: 10) {
                 if let sousVide {
@@ -70,16 +69,6 @@ struct PhaseSlot: View {
         }
     }
 
-    /// The running plan's warning: a refusal, or a wild guess at the
-    /// level, in its own pot's words.
-    private var runningWarning: String? {
-        guard let plan = cook.plan else { return nil }
-        let a = plan.answer
-        return warningText(
-            a.verdict, lowOdds: a.lowOdds, level: a.level, setup: plan.setup,
-            water: planner.show(.water, plan.setup.waterLitres)
-        )
-    }
 }
 
 /// Directly under the time, in every phase: the hint, and under it one row

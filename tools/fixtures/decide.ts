@@ -206,7 +206,7 @@ export const decideFixture = {
       decided: decideSolutionRow(decidedSolution(
         DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d,
       )),
-      // The same, nudged seven seconds short (E8): moved where a time is
+      // The same, nudged seven seconds short: moved where a time is
       // chosen, and not where the solver's answer stands.
       nudged: decideSolutionRow(decidedSolution(
         DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d, -7,

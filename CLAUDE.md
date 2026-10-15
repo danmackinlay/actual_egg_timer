@@ -7,36 +7,41 @@ things stand is `PLAN.md`; its last section says which document holds what.
 ## Working here
 
 - **Stage files by name**, never `git add -A` or `git add .`: the owner's QA
-  agent commits in this tree too. Check `git log --oneline` before and after
-  each commit.
-- **Never push.** A push deploys the web app; it is the owner's call. An agent
-  in a worktree commits on its branch; the session that sent it verifies and
-  merges.
-- **The gates.** `npm run verify` before every commit that touches code.
-  `npm run ios:build` too for anything under `ios/` outside the core twin
-  (`verify` builds the package for macOS only). Before merging a change to
-  either app's screens or the logic under them, `npm run e2e` and
-  `npm run ios:e2e`; CI fails on both. A merge whose tree the branch has
-  already been tested at needs no rerun, and a slow suite may wait for the
-  next change if it runs before anything is pushed.
-- **One logical change per commit.**
-- **Branches are named for their version line** (`DECISIONS.md` 64, 102,
-  110). `main` is live (0.5) and takes 0.5's work. A release large enough to
-  need its own line is built on one (`0.6.x`), which merges `main` in and is
-  merged into `main` on release. `0.3.x` (at `v0.3.4-alpha.1`) and `0.4.x`
-  are history. An agent's branch is named for what it does.
+  agent commits in this tree too. Check `git log --oneline` around a commit.
+- **Never push what deploys** (`DECISIONS.md` 124): pushing `main` or a
+  release tag deploys the web app, and is the owner's call. An agent may
+  push its own branch for CI. An agent in a worktree commits on its branch;
+  the session that sent it verifies and merges.
+- **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
+  120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
+  commit.**
+- **The gate is what the change touched** (`DECISIONS.md` 121, 123):
+
+  | changed | before a merge |
+  |---|---|
+  | documents, comments | nothing |
+  | tests, tools | `npm test` |
+  | core, fixture generators | `npm test`, `fixtures:check`; `swift test` if the Swift twin moves |
+  | Swift outside the twin | `copy:literals`, `swift test`, `ios:build` |
+  | the web's screens or words (`src/ui`, `index.html`, `styles.css`, `copy/`) | the rows above that apply, and `npm run e2e` |
+  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e` |
+
+  Any merge that touched code runs the full `npm run verify` once. A slow
+  suite runs once, on the branch's final code, here or in CI on the pushed
+  branch; a later commit to documents alone needs no rerun.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
-  first two. A release (a push to `origin/main`, the owner's call) bumps it in its own commit, tags
-  that commit `git tag -a v<version> -m "<one line>"` and pushes
-  `--follow-tags`. Never move or reuse a tag.
+  first two. A release is a tagged commit on `main`, pushed by the owner: it
+  bumps the version in its own commit, tags it `git tag -a v<version> -m
+  "<one line>"` and pushes `--follow-tags`. Never move or reuse a tag.
 - **A storage format may change without a migration** until wide deployment
   (`DECISIONS.md` 48): bump its key.
-- **The documents.** The session that merges brings `PLAN.md` up to date, not
-  each working commit (`DECISIONS.md` 104); counts appear only in its status
-  line. `LOGBOOK.md` is appended to, never rewritten. An owner decision goes
-  to `DECISIONS.md` with its number, date and commit.
+- **The documents.** The session that merges brings `PLAN.md` up to date
+  (`DECISIONS.md` 104); it holds no counts. `LOGBOOK.md` is frozen (117).
+  A closed document is deleted once its live facts have moved to `PLAN.md`,
+  the code or the model's documents (119). An owner decision goes to
+  `DECISIONS.md` with its number, date and commit.
 - **Comments say what the code does and why**, in the code's terms
   (`DECISIONS.md` 105). A decision number only where the code would otherwise
   look wrong (z ≈ 4.65 K), never as a changelog.
@@ -73,10 +78,7 @@ things stand is `PLAN.md`; its last section says which document holds what.
 4. **Sum 40 series terms**, never one: one term is 8.4% low at realistic Fo.
 5. **z ≈ 4.65 K for eggs**, never the food-engineering 33.1 K, which is seven
    times too shallow.
-6. The boil button says **"Rolling boil"**, under the hint "wait for the
-   whole surface to roll": tapping at first bubbles under-measures the time
-   to boil by 15-25% (`DECISIONS.md` 112).
-7. **Never step the surface temperature discontinuously.** A truncated modal
+6. **Never step the surface temperature discontinuously.** A truncated modal
    basis cannot represent it: an instant 100 -> 2 C drop read the yolk
    centre as 12.5 C when it was 49.3 C. Every change of medium blends
    through `TAU_PLUNGE`.
@@ -89,13 +91,19 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **To change wording** (`DECISIONS.md` 106): edit `copy/en.json`, and any
   `copy/en-US.json` override with its `base`; fit the string to its
   surface's budget (`test/data/surfaces.json`; raising a small surface's
-  budget is the owner's call); rewrite the 1750 twin, never transform it, and stamp it with
-  `npm run copy:approve -- --translation en-x-1750 <key…>`, or leave it to
-  lag (`DECISIONS.md` 103); then `npm run fixtures`.
+  budget is the owner's call); then `npm run fixtures`. A key's note and
+  surface live in `copy/en.notes.json`, which no app loads; the apps that
+  show it are derived from their sources (`DECISIONS.md` 122). The 1750
+  twin lags (116): it is not part of a wording change. A twin rewritten
+  never transforms the English, and is stamped with
+  `npm run copy:approve -- --translation en-x-1750 <key…>`.
 - **Approving English is the owner's word, never an agent's call**
   (`npm run copy:approve -- <key…>`). He reads `npm run copy:review` on a
   phone, not in a table. What he approved was good enough for now
   (`DECISIONS.md` 54), and changes like anything else.
+- The boil button says **"Rolling boil"** (`action.fullBoil`), under the
+  hint "wait for the whole surface to roll": tapping at first bubbles
+  under-measures the time to boil by 15-25% (`DECISIONS.md` 112).
 - **The owner's rules** (`LANGUAGE.md` §3 has them whole):
   - plain words a cook uses, never a term only this repository uses;
   - the app is "I" and the cook "you", in the active voice;

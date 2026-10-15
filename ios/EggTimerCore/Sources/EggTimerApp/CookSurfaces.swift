@@ -62,7 +62,7 @@ final class CookSurfaces {
     /// The calibration before the egg of the cook `id`: the one held before
     /// the egg at `logged` in the log was folded, or the log replayed up to
     /// it (`Learning.calibrationBefore`).
-    func buildBefore(_ id: Double, logged: Int?, from learner: Learning) {
+    func buildBefore(_ id: Double, logged: Int?, from learner: any LearnedBefore) {
         let key = "before|\(id)"
         guard !building.contains(key), before[id] == nil else { return }
         building.insert(key)
@@ -99,3 +99,13 @@ final class CookSurfaces {
         before = before.filter { ids.contains($0.key) }
     }
 }
+
+/// Where the calibration before an egg comes from: the learning
+/// (`Learning.calibrationBefore`), or a test's, which can hold it back as a
+/// relaunch finds a record not yet made again.
+@MainActor
+protocol LearnedBefore: AnyObject {
+    func calibrationBefore(_ index: Int?) async -> Calibration
+}
+
+extension Learning: LearnedBefore {}

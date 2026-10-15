@@ -402,8 +402,7 @@ export function answerAt(
 /* ------------------------------------------------------------ the shading */
 
 /** How strongly the track is shaded at a level: the chance of the word asked
- *  there, over the best level's (design/one-screen.md section 7, 17), 0 to
- *  1. Relative, so a fresh install, never very certain anywhere, still shows
+ *  there, over the best level's, 0 to 1. Relative, so a fresh install, never very certain anywhere, still shows
  *  where this pan works best. */
 export interface Shade {
   level: number;
@@ -615,7 +614,7 @@ export interface DecidedAnswer {
  * `answerAt`'s solution and level), on `grid`, this pot's decision surface;
  * held within the envelope of `profile`, the pot's odds profile, or by
  * nothing while it is null; then moved by `nudge_s`, the
- * nudge the app drew, where a time is chosen for (E8). The solve is re-read
+ * nudge the app drew, where a time is chosen for. The solve is re-read
  * at the time given and the outcome and the certainty read there, so the
  * time shown, the time started, the words under it and the bracket agree.
  *

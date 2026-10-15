@@ -63,7 +63,7 @@ final class SolveLoop {
         /// the egg is a size off the carton, and whether its start is the room
         /// preset's assumption rather than the fridge.
         let facts: AdviceFacts
-        /// The nudge, for a cook who is sharing (E8); zero otherwise.
+        /// The nudge, for a cook who is sharing; zero otherwise.
         let nudgeS: Double
 
         /// What this pot's decision surface and odds profile are kept by.
@@ -204,7 +204,7 @@ final class SolveLoop {
         let egg = snapshot.egg
         let calibration = snapshot.calibration
         // The nudge moves the chosen time, where one is chosen, for a cook who
-        // is sharing (E8); the time shown, the time started and the outcome
+        // is sharing; the time shown, the time started and the outcome
         // under it are all at the nudged time.
         let d = decideAnswer(
             calibration, egg: egg, setup: answer.setup, grid: grid, solution: answer.solution,
@@ -279,9 +279,7 @@ final class SolveLoop {
     private nonisolated static func solve(
         egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, profile: OddsProfile? = nil
     ) async -> Answer {
-        let a = Perf.time(.answerAt) { answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile
-        ) }
+        let a = answerAt(calibration, egg: egg, setup: setup, level: level, profile: profile)
         return Answer(
             solution: a.solution, verdict: a.verdict, lowOdds: a.lowOdds, setup: setup, level: a.level,
             profile: profile
@@ -348,7 +346,6 @@ final class SolveLoop {
     }
 
     private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
-        Perf.landed(question: question, interim: !snap, chosen: answer.decision != nil, odds: answer.profile != nil, cookS: answer.solution.result.cookTimeS)
         // What the idle screen shows, for the scripted checks: the time, and
         // whether it is decided on this pot's surface.
         Screenshots.log(.answer(

@@ -86,8 +86,7 @@ extension CookChoices {
     }
 }
 
-/// Corrections mid-cook (design/one-screen.md sections 3 to 5; the web's
-/// src/ui/edit.ts): every control stays open after Start,
+/// Corrections mid-cook (the web's src/ui/edit.ts): every control stays open after Start,
 /// showing the cook's own choices (the planner holds them while a cook runs,
 /// `Planner.adopt`), and a change to one is a correction, "it was always like
 /// this" - the cook's choices replaced (core `corrected`) and the whole cook
@@ -102,7 +101,7 @@ extension CookChoices {
 /// nothing. It is committed
 ///
 /// - on release, for the slider, and for a − or + held long enough to repeat;
-/// - after a tap's settle (`settle`, 1.5 s) for anything else - a choice in a
+/// - after a tap's settle (`settle`, 1.5 s of the cook's clock) for anything else - a choice in a
 ///   panel, a − or + pressed once, a number typed - the settle starting again
 ///   with each change;
 /// - at once when another control is touched, or a button that moves the
@@ -118,13 +117,15 @@ extension CookChoices {
 @MainActor
 public final class Edits {
     /// How long a tap's change settles before it is committed, and how long
-    /// the aimed-for egg stays after the last change (design section 5).
-    static let settle: Duration = .milliseconds(1500)
+    /// the aimed-for egg stays after the last change (design section 5), s.
+    /// Every wait here is on the cook's clock (`AppClock`), the system's in
+    /// the app, so a test moves it with its own.
+    static let settle = 1.5
     /// A − or + held this long has begun to repeat: a hold, committed on
-    /// release.
-    static let held: Duration = .milliseconds(400)
-    /// How long a burst of changes waits before the aimed-for egg is planned.
-    static let previewDelay: Duration = .milliseconds(90)
+    /// release, s.
+    static let held = 0.4
+    /// How long a burst of changes waits before the aimed-for egg is planned, s.
+    static let previewDelay = 0.09
 
     @ObservationIgnored weak var model: AppModel?
 
@@ -137,25 +138,40 @@ public final class Edits {
     /// control.
     @ObservationIgnored public private(set) var pending = false
     @ObservationIgnored private var group: ControlField?
-    /// A finger down on a control: when, on which, and whether the slider.
-    @ObservationIgnored private var down: (at: ContinuousClock.Instant, group: ControlField, slider: Bool)?
-    /// When the last change came.
-    @ObservationIgnored private var changedAt = ContinuousClock.now
+    /// A finger down on a control: when, epoch s, on which, and whether the
+    /// slider.
+    @ObservationIgnored private var down: (atS: Double, group: ControlField, slider: Bool)?
+    /// When the last change came, epoch s.
+    @ObservationIgnored private var changedAtS = 0.0
     /// The slider moved after the pull, previewed and not corrected: it goes
     /// back to the cook's level when the aimed-for egg goes.
     @ObservationIgnored private var previewedLevel = false
-    @ObservationIgnored private var settleTask: Task<Void, Never>?
-    @ObservationIgnored private var previewTask: Task<Void, Never>?
-    @ObservationIgnored private var releaseTask: Task<Void, Never>?
+    /// A wait on the cook's clock (`after`), and the moment it ends, epoch s.
+    private struct Wait {
+        let task: Task<Void, Never>
+        let atS: Double
+    }
+    /// The settle before a commit, the delay before a preview, and the
+    /// settle before the aimed-for egg goes.
+    @ObservationIgnored private var settling: Wait?
+    @ObservationIgnored private var previewWait: Wait?
+    @ObservationIgnored private var releasing: Wait?
     /// Bumped at each begin and end, so a preview landing after them is
     /// dropped.
     @ObservationIgnored private var generation = 0
 
     /// Previews being planned.
     @ObservationIgnored private var previewing = 0
-    /// Whether a change is settling, being previewed, or letting its aimed-for
-    /// egg go: a step's `idle` waits for it (`Screenshots.idle(after:)`).
-    var underWay: Bool { settleTask != nil || previewTask != nil || releaseTask != nil || previewing > 0 }
+    #if DEBUG
+    /// Whether a preview is being planned, or a wait has reached its moment
+    /// and not yet done what it waits for: a step's `idle` waits for it
+    /// (`Screenshots.idle(after:)`). A wait whose moment is still to come is
+    /// not under way: a frozen clock reaches it only when it is stepped.
+    var underWay: Bool {
+        let now = AppClock.nowS
+        return previewing > 0 || [settling, previewWait, releasing].contains { $0.map { $0.atS <= now } ?? false }
+    }
+    #endif
 
     /// A correction of when the eggs went in, in hand; nil for none, when
     /// the panel shows the cook's own (`shownStart`).
@@ -225,10 +241,23 @@ public final class Edits {
     }
 
     private func clearTasks() {
-        for t in [settleTask, previewTask, releaseTask] { t?.cancel() }
-        settleTask = nil
-        previewTask = nil
-        releaseTask = nil
+        for w in [settling, previewWait, releasing] { w?.task.cancel() }
+        settling = nil
+        previewWait = nil
+        releasing = nil
+    }
+
+    /// `then`, once the cook's clock has moved on `seconds`, unless the wait
+    /// is cancelled or a cook has begun or ended since.
+    private func after(_ seconds: Double, then: @escaping @MainActor (Edits) async -> Void) -> Wait {
+        let at = AppClock.nowS + seconds
+        let gen = generation
+        let task = Task { [weak self] in
+            try? await AppClock.wait(until: at)
+            guard !Task.isCancelled, let self, gen == self.generation else { return }
+            await then(self)
+        }
+        return Wait(task: task, atS: at)
     }
 
     // MARK: - A change, and the gesture making it
@@ -246,21 +275,18 @@ public final class Edits {
         if pending, let group, let field, field != group { commit(except: field) }
         pending = true
         group = field ?? group
-        changedAt = .now
-        releaseTask?.cancel()
-        releaseTask = nil
+        changedAtS = AppClock.nowS
+        releasing?.task.cancel()
+        releasing = nil
         Screenshots.log(.edit(group: group.map { "\($0)" }))
         // At once, the slider's own reading; the plan's follows.
         aim = (planner.settings.doneness, targetPeakYolkC(planner.settings.doneness), nil)
-        if previewTask == nil {
-            let gen = generation
-            previewTask = Task { [weak self] in
-                try? await Task.sleep(for: Self.previewDelay)
-                guard let self, gen == self.generation else { return }
-                self.previewTask = nil
-                self.previewing += 1
-                defer { self.previewing -= 1 }
-                await self.preview()
+        if previewWait == nil {
+            previewWait = after(Self.previewDelay) { edits in
+                edits.previewWait = nil
+                edits.previewing += 1
+                defer { edits.previewing -= 1 }
+                await edits.preview()
             }
         }
         if down == nil { settleThenCommit() }
@@ -272,9 +298,9 @@ public final class Edits {
     public func fingerDown(_ field: ControlField, slider: Bool = false) {
         guard cook?.running != nil, base != nil else { return }
         if pending, group != field { commit() }
-        down = (.now, field, slider)
-        settleTask?.cancel()
-        settleTask = nil
+        down = (AppClock.nowS, field, slider)
+        settling?.task.cancel()
+        settling = nil
     }
 
     /// The finger lifts: a drag of the slider, or a − or + held, commits
@@ -283,7 +309,7 @@ public final class Edits {
         guard let d = down else { return }
         down = nil
         guard pending else { return }
-        if d.slider || ContinuousClock.now - d.at >= Self.held {
+        if d.slider || AppClock.nowS - d.atS >= Self.held {
             commit()
         } else {
             settleThenCommit()
@@ -302,18 +328,14 @@ public final class Edits {
     public func leaving() {
         down = nil
         guard pending else { return }
-        Screenshots.log(.editLeaving)
         commit()
     }
 
     private func settleThenCommit() {
-        settleTask?.cancel()
-        let gen = generation
-        settleTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.settle)
-            guard !Task.isCancelled, let self, gen == self.generation else { return }
-            self.settleTask = nil
-            self.commit()
+        settling?.task.cancel()
+        settling = after(Self.settle) { edits in
+            edits.settling = nil
+            edits.commit()
         }
     }
 
@@ -377,8 +399,8 @@ public final class Edits {
     /// and goes back to the level the egg was pulled at; nothing is written
     /// for it. The aimed-for egg stays until a settle after the last change.
     func commit(except: ControlField? = nil) {
-        settleTask?.cancel()
-        settleTask = nil
+        settling?.task.cancel()
+        settling = nil
         guard pending, let model, let planner, let running = model.cook.running, let base else { return }
         pending = false
         group = nil
@@ -412,15 +434,11 @@ public final class Edits {
     /// The aimed-for egg goes a settle after the last change, unless a
     /// finger is down or another change is in hand by then.
     private func letAimGo() {
-        releaseTask?.cancel()
-        let left = max(.zero, Self.settle - (ContinuousClock.now - changedAt))
-        let gen = generation
-        releaseTask = Task { [weak self] in
-            try? await Task.sleep(for: left)
-            guard !Task.isCancelled, let self, gen == self.generation else { return }
-            self.releaseTask = nil
-            guard !self.pending, self.down == nil else { return }
-            self.dropAim()
+        releasing?.task.cancel()
+        releasing = after(max(0, Self.settle - (AppClock.nowS - changedAtS))) { edits in
+            edits.releasing = nil
+            guard !edits.pending, edits.down == nil else { return }
+            edits.dropAim()
         }
     }
 
@@ -467,18 +485,12 @@ public final class Edits {
             limit = (.earliest, earliest)
         }
         startLimit = limit
-        #if DEBUG
-        if let limit { Screenshots.log(.startLimit(kind: "\(limit.kind)", at: limit.atS)) }
-        #endif
         // The line under the start says why it went no further; VoiceOver
         // says it too, at each press it stops (the web's line is
         // `aria-live`), since the value it reads has not changed.
         if let limit {
             let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
             Services.announce(said)
-            #if DEBUG
-            Screenshots.log(.announce(text: said))
-            #endif
         }
         guard next != from else { return false }
         startInHand = next

@@ -8,7 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "node tools/build.mjs tsconfig.json studies",
+    "build": "node tools/build.mjs",
     "test": "node tools/build.mjs && node --test dist/test/*.test.js",
     "validate": "node tools/build.mjs && node dist/tools/validate.js",
     "fixtures": "node tools/build.mjs && node dist/tools/fixtures.js",
@@ -28,7 +28,7 @@
     "copy:review": "node tools/build.mjs && node dist/tools/copyReview.js",
     "fixtures:check": "npm run fixtures && node dist/tools/fixturesCheck.js",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
-    "verify": "npm run build && npm test && npm run validate && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
+    "verify": "node tools/verify.mjs",
     "ios:archive": "node tools/iosArchive.mjs",
     "ios:upload": "node tools/iosUpload.mjs",
     "ios:e2e": "node tools/build.mjs && node dist/tools/iosE2e.js",

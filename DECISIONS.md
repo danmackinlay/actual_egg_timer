@@ -903,7 +903,66 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     a kitchen's range) and a natural place. Built `bowl-cooling`, merged
     `4f3251b`. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
-116. **The web sizes the action's row as iOS does** (the owner, 14 October
+116. **The 1750 twin lags by default** (the owner, 14 October 2026, on the
+    adversarial review). Goes past 103: an English change no longer
+    rewrites its 1750 twin at all; the twins are rewritten in batches, and
+    one written then is still never a transform of the English. A twin
+    identical to its English is to be deleted, since a missing key renders
+    the English. Decided, not yet built: the deletion is a later round.
+    CLAUDE.md's wording steps follow it now.
+117. **`LOGBOOK.md` is frozen** (the owner, 14 October 2026, on the same
+    review). Nothing more is appended to it, and it is never rewritten; it
+    stays for reference. The commit messages are the log (`git log`). In
+    effect from the commit that records it, which adds the logbook's last
+    line and amends CLAUDE.md.
+118. **The iOS e2e shrinks to the checks only a device can make** (the
+    owner, 14 October 2026, on the same review). The logic scenarios
+    `npm run ios:e2e` drives through the simulator move into
+    `EggTimerAppTests`, under `swift test`; the e2e keeps what needs the
+    app on a device. Decided, not yet built.
+119. **Closed documents are deleted, not kept** (the owner, 14 October
+    2026, answering the adversarial review). `archive/`, `SHIP-0.4.md`,
+    `COLLECTIVE.md` and `design/one-screen.md` go; git keeps them. A
+    document's live facts move first: to `PLAN.md` if someone waits on
+    them, otherwise to the code, `INFERENCE.md` or `README.md`. Built
+    `ceremony`.
+120. **No branch per version line** (the owner, 14 October 2026, on the
+    same review). Supersedes the branch rule of 64, 102 and 110. Work
+    happens on short-lived branches off `main`, named for what they do; a
+    release is a tagged commit on `main`. The old line branches (`0.3.x`,
+    `0.4.x`, `0.5.x`) stay as history. In effect from the commit that
+    records it, which amends CLAUDE.md.
+121. **The full gate runs at merge** (the owner, 14 October 2026, on the
+    same review). A branch commit runs `npm test` and the checks for what
+    it touches. Before a merge: the full `npm run verify`, plus `npm run
+    ios:build` for a change under `ios/`, plus `npm run e2e` and `npm run
+    ios:e2e` for a change to either app's screens or the logic under them.
+    CI is unchanged. In effect from the commit that records it, which
+    amends CLAUDE.md.
+122. **The catalogue's notes live beside it, not in it** (the owner, 14
+    October 2026, on the same review). A message's `note`, `surface` and
+    `example` move to a sidecar the apps never load, and its `apps` is
+    derived from the sources, not typed. The catalogues keep only what the
+    renderers read. Built `ceremony`.
+123. **The gate is what the change touched** (the owner, 14 October 2026:
+    the reruns of every suite at the smallest change were "tanking our
+    velocity"). Refines 121. Before a merge: nothing for documents and
+    comments alone; `npm test` for tests and tools; `fixtures:check`, and
+    `swift test` where the Swift twin moves, for core and the fixture
+    generators; `npm run e2e` for the web's screens and words; `ios:build`
+    and `ios:e2e` for the iOS app. The full `verify` runs before any merge
+    that touched code. Each slow suite runs once, on the branch's final
+    code; a later commit to documents alone needs no rerun. The reviewer
+    reruns `verify` and its own checks, and takes the e2e suites from the
+    agent's run or CI's. In effect from the commit that records it.
+124. **Never push what deploys without the owner** (the owner, 14 October
+    2026: "my intent was 'never push to the main public-facing deploy site
+    without my approval'", which had become "never push"). Pushing `main`,
+    or a release tag, deploys and is the owner's call. An agent may push
+    its own branch, so that CI runs the slow suites there; CI's run on the
+    branch's final code counts as that suite's gate. This holds while
+    Netlify deploys only `main`. In effect from the commit that records it.
+125. **The web sizes the action's row as iOS does** (the owner, 14 October
     2026: "yes, make the web match iOS"). Whether the row stacks is decided
     on the start's action, Rolling boil, Start again and the chosen
     cooling's pull, not on every pull: on GitHub's Linux fonts an ice-bath

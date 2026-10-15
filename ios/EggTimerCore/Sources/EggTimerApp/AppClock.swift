@@ -61,8 +61,15 @@ public enum AppClock {
     public static func fromReal(_ system: Date) -> Date { source.fromReal(system) }
     /// The system's seconds from now until a moment in cook time.
     public static func realInterval(until app: Date) -> TimeInterval { source.realInterval(until: app) }
-    /// Wait this much cook time.
+    /// Wait this much cook time: one look of a loop that looks again, which
+    /// a clock stepped from outside ends early (see below).
     public static func sleep(_ cookSeconds: Double) async throws { try await source.sleep(cookSeconds) }
+    /// Wait until cook time reaches `s`, epoch s, looking again at each
+    /// `sleep`: the system's clock waits the span, a fast one its share of
+    /// it, and a frozen one until it is stepped past `s`.
+    public static func wait(until s: Double) async throws {
+        while nowS < s { try await sleep(s - nowS) }
+    }
     /// A redraw period in the system's seconds for one in cook time.
     public static func period(_ cookSeconds: Double) -> TimeInterval { source.period(cookSeconds) }
     /// Whether this launch's clock is, or has been, not the system's.

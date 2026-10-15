@@ -3,8 +3,8 @@
  * cook. Both apps render these keys and fill in their own arguments (a clock,
  * a quantity in the cook's units); the CHOICE of key is here, so the two apps
  * cannot choose differently, and `fixtures/wording.json` holds it for Swift
- * (`Wording.swift`). The iOS app has no test target, so this is the only way
- * its choices get tested.
+ * (`Wording.swift`). Here, the choice is tested once for both apps; each
+ * app's screens only render it.
  *
  * Nothing here renders text. A key's own arguments that core can answer (a
  * count) come back in a `CopyRef`; the rest the app supplies, and a template
@@ -69,7 +69,7 @@ export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): Copy
 /* ---------------------------------------------------------- the certainty */
 
 /**
- * HOW SURE, IN WORDS (design/one-screen.md section 6). Under the time: the
+ * HOW SURE, IN WORDS. Under the time: the
  * class `certaintyAt` gives the time on screen, as a line the cook can
  * press. Pressing it opens, in place, the 90% interval in the slider's words,
  * the most likely word and the likely time range. "Most likely" also shows
@@ -198,8 +198,7 @@ export function whiteAtRisk(o: Outcome): boolean {
 
 /** The same, for a cook as it ran: its forecast's chance of a runny white,
  *  which is the outcome's `pWhiteRunny` (`forecastOf`). Done reads this, not
- *  a plan made since, which may know how the egg came out
- *  (archive/design/running-cook-review.md 2.4). */
+ *  a plan made since, which may know how the egg came out. */
 export function forecastWhiteAtRisk(f: Forecast): boolean {
   return f.white[0] >= WHITE_RISK;
 }

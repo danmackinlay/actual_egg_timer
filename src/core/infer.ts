@@ -346,7 +346,7 @@ export interface Normal {
 
 /**
  * What a new cook's prior is drawn from: one spread per particle dimension
- * (INFERENCE.md section 9, E7). The literature's is the one below, every
+ * (INFERENCE.md section 9). The literature's is the one below, every
  * number README section 6 documents; a fit of everyone's shared eggs
  * publishes another (`fixtures/population.json`), which both apps read, and
  * the record names it (`prior`). A posterior drawn from one population is
@@ -364,9 +364,9 @@ export interface Population {
   whiteFirmGap: LogNormal;
 }
 
-/** The literature's population: the prior every cook drew from before E7,
- *  number for number, less the carryover, which is not a particle (a prior
- *  drawn from it is not the one drawn with it, and `LIKELIHOOD_ID` says so). '2026-09' is the id E1's records gave it. */
+/** The literature's population: the prior every cook drew from before the
+ *  population fit, number for number, less the carryover, which is not a particle (a prior
+ *  drawn from it is not the one drawn with it, and `LIKELIHOOD_ID` says so). '2026-09' is the id the first records gave it. */
 export const LITERATURE_POPULATION: Population = {
   id: '2026-09',
   alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },
