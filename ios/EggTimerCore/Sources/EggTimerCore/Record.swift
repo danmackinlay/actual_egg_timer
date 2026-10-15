@@ -950,7 +950,7 @@ public func resultsFileName(day: String) -> String {
 
 /// A JSON string literal, escaped as JSON.stringify escapes one and no
 /// further: JSONEncoder would also escape `/`.
-public func jsonString(_ s: String) -> String {
+func jsonString(_ s: String) -> String {
     var out = "\""
     for u in s.unicodeScalars {
         switch u.value {

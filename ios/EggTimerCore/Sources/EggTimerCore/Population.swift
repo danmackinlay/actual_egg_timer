@@ -29,9 +29,6 @@ public func priorStart(_ p: Population) -> PriorStart {
     PriorStart(alphaM2s: p.alphaM2s.median, whiteOffset: p.whiteOffset.mean)
 }
 
-/// The literature's start: the literature's values exactly.
-public let literatureStart = priorStart(literaturePopulation)
-
 /// The file's shape: an id, and the five spreads under `prior`.
 private struct PopulationFile: Decodable {
     struct Prior: Decodable {

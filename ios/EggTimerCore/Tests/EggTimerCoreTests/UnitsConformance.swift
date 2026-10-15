@@ -155,11 +155,6 @@ struct UnitsConformance {
             #expect(try choice.chosen.rawValue == c.str("stored"), "\(c)")
             #expect(choice.flip?.rawValue == c["flip"] as? String, "\(c): flip")
         }
-        for c in try Fixtures.list("units.json", "stored") {
-            let raw = c["raw"]
-            // JSON's true and 0 both arrive as NSNumber; neither is a choice.
-            #expect(readChosenUnits(raw is NSNull ? nil : raw)?.rawValue == c["chosen"] as? String, "\(String(describing: raw))")
-        }
     }
 
     @Test("size labels in both systems")

@@ -15,12 +15,12 @@ import {
   freshCalibration as freshFrom, loadDecision, parseLog,
 } from '../core/record.js';
 import { activePopulation } from './population.js';
-import { STORES, inFormat } from '../core/stores.js';
+import { STORES, inFormat } from './stores.js';
 import { SyncedKey, syncedKey } from './store.js';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
  *  and records of today's shape only. An earlier key's store is never read. */
-const KEY = STORES.calibration.web;
+const KEY = STORES.calibration.key;
 
 /** Everything that is kept, and the one invariant that holds it together:
  *  `calibration` is `replay(base ?? prior, log.slice(0, folded))`. */

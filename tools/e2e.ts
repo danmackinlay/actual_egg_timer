@@ -37,8 +37,8 @@
 import { readFileSync } from 'node:fs';
 
 import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
-import { readStoredCook } from '../src/core/running.js';
-import { STORES } from '../src/core/stores.js';
+import { readStoredCook } from '../src/ui/storedCook.js';
+import { STORES } from '../src/ui/stores.js';
 import { sleep } from './chrome.js';
 import { copyScenarios } from './copyScenarios.js';
 import {
@@ -46,11 +46,11 @@ import {
 } from './harness.js';
 import { asRead } from './text.js';
 
-/** Where the page keeps its stores (src/core/stores.ts). */
-const COOK_KEY = STORES.cook.web;
-const SETTINGS_KEY = STORES.settings.web;
-const BOIL_KEY = STORES.boilMemory.web;
-const NEWEST_KEY = STORES.newest.web;
+/** Where the page keeps its stores (src/ui/stores.ts). */
+const COOK_KEY = STORES.cook.key;
+const SETTINGS_KEY = STORES.settings.key;
+const BOIL_KEY = STORES.boilMemory.key;
+const NEWEST_KEY = STORES.newest.key;
 
 /** The pans a stored text holds: litres to the time to boil. */
 function pansIn(text: string | null): Record<string, number> {
@@ -58,7 +58,7 @@ function pansIn(text: string | null): Record<string, number> {
 }
 
 /** The cook a stored text reads as, folded from its log as the page reads
- *  it (core's `readStoredCook`), or null. */
+ *  it (the web's `readStoredCook`), or null. */
 function cookIn(text: string): Cook | null {
   return (readStoredCook(JSON.parse(text))?.cook ?? null) as Cook | null;
 }
@@ -1666,7 +1666,7 @@ const SCENARIOS: Record<string, Scenario> = {
       await b.click('.fb[data-yolk="jammy"]');
       await a.until('__snap().log.length === 1 && __snap().eggsLogged === 1 && __snap().eggsBehind === 0',
         'B\'s egg, folded, in A');
-      const back = await settled(a, b, STORES.calibration.web, from);
+      const back = await settled(a, b, STORES.calibration.key, from);
       check(back.length === 0, `A wrote the log back: ${back.length}`);
       return 'B logged Jammy and folded it: A has the egg, and wrote the log 0 times';
     },
@@ -1678,7 +1678,7 @@ const SCENARIOS: Record<string, Scenario> = {
       const [a, b, from] = await twoTabs(h);
       await b.click('#shareSetting');
       await a.until("__snap().share.on && document.getElementById('shareSetting').checked", 'sharing on in A');
-      const back = await settled(a, b, STORES.share.web, from);
+      const back = await settled(a, b, STORES.share.key, from);
       check(back.length === 0, `A wrote the sharing state back: ${back.length}`);
       return 'B turned sharing on: A shows it, and wrote the sharing state 0 times';
     },
@@ -1878,13 +1878,13 @@ const SCENARIOS: Record<string, Scenario> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.eval(`localStorage.setItem('${COOK_KEY}', '{"v":${STORES.cook.format},"cook":{"id_ms":1},"answers":"none"}');
-        localStorage.setItem('${STORES.calibration.web}', '{damaged')`);
+        localStorage.setItem('${STORES.calibration.key}', '{damaged')`);
       await tab.reload();
       await tab.settle();
       const s = await tab.snap();
       check(s.phase === 'IDLE' && s.stored === null, 'idle, the cook dropped');
       check(s.log.length === 0, 'no egg');
-      const text = await tab.storage(STORES.calibration.web);
+      const text = await tab.storage(STORES.calibration.key);
       const store = text === null ? null : JSON.parse(text) as { v: number; log: unknown[] };
       check(store !== null && store.v === 5 && store.log.length === 0, `the log written again, empty: ${text?.slice(0, 40)}`);
       const keys = await tab.eval<string[]>('Object.keys(localStorage).sort()');
@@ -1906,7 +1906,7 @@ const SCENARIOS: Record<string, Scenario> = {
       await tab.settle();
       const left = await tab.eval<string[]>(keys);
       check(old.every((k) => !left.includes(k)), `each deleted: ${left.join(', ')}`);
-      check(left.includes(STORES.calibration.web) && left.includes(NEWEST_KEY), `this build's stores kept: ${left.join(', ')}`);
+      check(left.includes(STORES.calibration.key) && left.includes(NEWEST_KEY), `this build's stores kept: ${left.join(', ')}`);
       await tab.eval(`localStorage.setItem('${NEWEST_KEY}', '9.0.0'); ${plant}`);
       await tab.reload();
       await tab.settle();
@@ -1992,7 +1992,7 @@ const SCENARIOS: Record<string, Scenario> = {
         localStorage.setItem('${SETTINGS_KEY}', JSON.stringify({ ...s, addedLater: true }));
         localStorage.setItem('aet.later.v1', 'a newer store');
         localStorage.setItem('aet.calibration.v4', 'a key this build would sweep');
-        localStorage.setItem('${STORES.share.web}', JSON.stringify({ on: false, uid: null,
+        localStorage.setItem('${STORES.share.key}', JSON.stringify({ on: false, uid: null,
           uids: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'], deleting: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'] }));
       })()`);
       const dump = 'JSON.stringify(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)]))';

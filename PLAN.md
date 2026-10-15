@@ -261,9 +261,10 @@ Start the QA pass here.
   (`src/ui/offline.ts`). Deleting `sw.js` takes it out.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48, 107). The site is public but not in wide use, so the storage formats
-  (core's table of stores, `src/core/stores.ts`) may change without a
-  migration; bump the store's format so an old value is dropped rather than
-  misread, and the boot sweep deletes any key the table does not list.
+  (each app's table of stores, `src/ui/stores.ts` and `StoreRegistry.swift`)
+  may change without a migration; bump the store's format so an old value
+  is dropped rather than misread, and the boot sweep deletes any key the
+  table does not list.
   Back-compat starts when the owner says the app is widely deployed, and
   not before. What has been SENT is another matter: the server's records
   are parsed by the same `parseRecord`, and a field reinterpreted there
@@ -280,8 +281,9 @@ Start the QA pass here.
   `aet.newest` on the web, `newestVersion` on iOS, a version string whose
   format never changes. A build that finds a newer one there writes no
   store, logs and learns from no egg and sends nothing for the rest of the
-  session, and says so at the top of the screen; it is core's `writerCheck`
-  (`src/core/newer.ts`), semantic versioning's order, `fixtures/newer.json`.
+  session, and says so at the top of the screen. Semantic versioning's
+  order; each app's own (`src/ui/newer.ts`, `EggTimerApp/Newer.swift`),
+  tested in each app's suite.
 - **Every constant has been checked against the primary literature.**
   `Z_WHITE` was corrected; `H_EFF` is known high and open (README §11.2).
 - **The alarm fires at `.timeSensitive`**, also in the foreground, with the

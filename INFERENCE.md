@@ -351,7 +351,7 @@ fit's training data cannot drift between the two.
   `bowlLitres`, which every bowl carries and nothing else may. A record from
   before them reads as it always did, so the schema stays `v: 1`; a build
   from before them refuses a log holding a bowl, and the newer-build guard
-  (`src/core/newer.ts`) keeps it from writing over one.
+  (each app's `writerCheck`) keeps it from writing over one.
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
@@ -619,7 +619,7 @@ answers; in short:
   it says. A failure to attest is never fatal; the egg goes to the open
   tier.
 - **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
-  `src/core/share.ts`) keep the id, a
+  contract with the server, `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
   goes (`DECISIONS.md` 59), then each egg once it is final, in order. "Start

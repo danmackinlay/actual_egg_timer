@@ -971,3 +971,16 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     as a correction mid-cook (96), may restack the row, in both apps.
     Amends 113's "a 320 px web page": with Apple's fonts the ice bath and
     the air fit one row there. Built `web-row-sizing`, merged `4b490a7`.
+126. **App plumbing leaves `src/core/`** (the owner, 14 October 2026, on
+    the adversarial review). Core keeps what both apps must agree on: the
+    physics, the inference and the decisions; the record's wire schema
+    (`parseRecord`), which the server ingests from both; the cook's `step`
+    machine; which words say what (`wording.ts`); the alarms' timing, which
+    the iOS sounds are rendered from; and the server's contract for
+    sharing (`isUid`, `shareReply`, `deletionDone`, and that a seq is never
+    reused under one id). What only stores, reads back or merges - the
+    settings, the stored cook, the share queue, the table of stores, the
+    newer-build guard, another tab's copy of a cook - is each app's own:
+    the web's in `src/ui`, tested by `test/*.test.ts`; iOS's in
+    `EggTimerApp`, tested by `EggTimerAppTests`. It is no longer ported to
+    Swift or fixtured. Built `core-narrow`.

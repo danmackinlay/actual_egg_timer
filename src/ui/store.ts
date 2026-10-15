@@ -9,41 +9,45 @@
  */
 
 import { SizeClass } from '../core/geometry.js';
-import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
+import { LanguageState } from '../core/language.js';
 import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
-import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
-import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
-import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
-import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
+import {
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, Settings as StoredSettings, readLanguageState,
+  readSettings,
+} from './settings.js';
+import { RunningCook } from '../core/running.js';
+import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
+import { STORES, STORE_LIST, inFormat, stamped } from './stores.js';
+import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
-export type { KeptAnswers, StoredCook } from '../core/running.js';
+export type { KeptAnswers, StoredCook } from './storedCook.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
-const SETTINGS_KEY = STORES.settings.web;
-const COOK_KEY = STORES.cook.web;
-const BOIL_KEY = STORES.boilMemory.web;
+const SETTINGS_KEY = STORES.settings.key;
+const COOK_KEY = STORES.cook.key;
+const BOIL_KEY = STORES.boilMemory.key;
 
-/** Every key this build keeps (src/core/stores.ts). Any other key of this
- *  app's (`aet.`) is an earlier build's, which this one neither reads nor
+/** Every key this build keeps (stores.ts). Any other key of this app's
+ *  (`aet.`) is an earlier build's, which this one neither reads nor
  *  collects, and is deleted at boot (`claimStorage`). */
-const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web])));
+const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.map((s) => s.key));
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */
 export type UiStartMode = StartMode | 'sous';
 
-/** The settings are core's (`src/core/settings.ts`), but for the start on
+/** The settings are settings.ts's, but for the start on
  *  screen, which may be a sous-vide; a sous-vide is never stored. */
 export interface Settings extends Omit<StoredSettings, 'startMode'> {
   startMode: UiStartMode;
 }
 
-export const DEFAULT_SETTINGS: Settings = CORE_DEFAULT_SETTINGS;
+export const DEFAULT_SETTINGS: Settings = STORED_DEFAULT_SETTINGS;
 
 /* ------------------------------------------------------------- raw storage */
 
@@ -81,14 +85,14 @@ export function removeStorage(key: string): void {
  * The newest version of the app that has run in this browser. An older build writes what it stores whole, from the
  * fields it knows, and drops what a newer one added, so a build that finds a
  * newer version here writes nothing at all for the rest of the page's life:
- * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is core's `writerCheck`.
+ * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is `writerCheck` (newer.ts).
  *
  * The mark is written before anything else, and checked again before every
  * write: a tab of a newer build opened since, or a tab that cleared the
  * storage, is seen at this page's next write even if its `storage` event
  * has not yet arrived. Never removed: "Start learning again" keeps it.
  */
-const NEWEST_KEY = STORES.newest.web;
+const NEWEST_KEY = STORES.newest.key;
 
 /** This build's version, once `claimStorage` has been called; until then
  *  (tests, tools) every write goes through unguarded. The page's own: the
@@ -448,9 +452,9 @@ function clampLitres(litres: number): number {
 /* ------------------------------------------------------------ the cook */
 
 /*
- * A cook in progress, so a reload does not lose the egg: core's
- * `StoredCook`, written and read as iOS writes and reads it (`storedCook`,
- * `readStoredCook`). The plan is derived from it again.
+ * A cook in progress, so a reload does not lose the egg: a `StoredCook`,
+ * written and read by storedCook.ts in the shape iOS stores its own. The
+ * plan is derived from it again.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. Whether a cook is still
@@ -472,7 +476,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
 
 /**
  * The cook as stored, whichever tab wrote it, or null: none, or one this
- * build cannot read (core's `readStoredCook`), which the caller drops. What this
+ * build cannot read (`readStoredCook`), which the caller drops. What this
  * tab last read or wrote there is what it has seen; another tab's write is
  * taken up (model.ts, `elsewhere`) only when it is of this tab's own cook,
  * by id, since each tab runs the cook it started, and then only what that
@@ -503,7 +507,3 @@ export function openCooks(): CookStore {
     },
   };
 }
-
-/** What another tab wrote for this cook, taken up, and which copy a reload
- *  restores: core's, over the two copies' logs (src/core/running.ts). */
-export { correctedLater, takeUpEvents } from '../core/running.js';

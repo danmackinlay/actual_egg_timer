@@ -315,16 +315,6 @@
     {"chosen": "imperial", "regional": "imperial", "next": "metric", "stored": "metric", "flip": "imperialToMetric"},
     {"chosen": "imperial", "regional": "imperial", "next": "imperial", "stored": "imperial", "flip": null}
   ],
-  "stored": [
-    {"raw": "metric", "chosen": "metric"},
-    {"raw": "imperial", "chosen": "imperial"},
-    {"raw": "Imperial", "chosen": null},
-    {"raw": "kelvin", "chosen": null},
-    {"raw": "", "chosen": null},
-    {"raw": 0, "chosen": null},
-    {"raw": true, "chosen": null},
-    {"raw": null, "chosen": null}
-  ],
   "sizeLabels": [
     {"table": "eu", "key": "size.eu.small", "system": "metric", "mass": {"key": "format.grams", "value": {"value": 48, "decimals": 0}}, "text": "Small — 48 g"},
     {"table": "eu", "key": "size.eu.small", "system": "imperial", "mass": {"key": "format.ounces", "value": {"value": 1.7, "decimals": 1}}, "text": "Small — 1.7 oz"},

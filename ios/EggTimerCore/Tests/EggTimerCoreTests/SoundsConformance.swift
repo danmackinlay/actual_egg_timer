@@ -7,16 +7,16 @@ import Foundation
 
 @Suite("The alarm sounds match the reference implementation")
 struct SoundsConformance {
-    @Test("the alarm sounds: the order, the default, a stored value read, and the timing")
+    @Test("the alarm sounds, and each one's timing")
     func alarmSounds() throws {
         let a = try Fixtures.load("sounds.json")
-        #expect(AlarmSound.allCases.map(\.rawValue) == a["sounds"] as? [String])
-        #expect(try defaultAlarmSound.rawValue == a.str("default"))
         try expectClose(alarmRingS, a.num("ring_s"), "ring_s")
-        for c in try Fixtures.list("sounds.json", "read") {
-            #expect(try readAlarmSound(c["stored"]).rawValue == c.str("sound"), "\(String(describing: c["stored"]))")
-        }
-        for c in try Fixtures.list("sounds.json", "timing") {
+        let rows = try Fixtures.list("sounds.json", "timing")
+        // Every sound, in the picker's order, as the rows first name them.
+        var named: [String] = []
+        for c in rows where !named.contains(try c.str("sound")) { named.append(try c.str("sound")) }
+        #expect(AlarmSound.allCases.map(\.rawValue) == named)
+        for c in rows {
             let sound = try #require(AlarmSound(rawValue: c.str("sound")))
             let moment = try #require(RingDeadline(rawValue: c.str("moment")))
             try expectClose(alarmPeriodS(sound, moment), c.num("period_s"), "\(sound) \(moment) period")

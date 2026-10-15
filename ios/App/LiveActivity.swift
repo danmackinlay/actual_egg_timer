@@ -58,7 +58,7 @@ enum LiveActivity {
 
     /// End every card to go when its own stage ends, or at once if that has
     /// passed: a card an earlier build began for a cook whose key the launch
-    /// deleted (`Stores.retiredKeys`), which nothing will update again. Until then it shows what it
+    /// deleted (`StoreRegistry.retired`), which nothing will update again. Until then it shows what it
     /// showed, beside the notifications still pending for it.
     static func endAtTheirEnds() async {
         // The card's dates are the system's (`AppClock.real`).

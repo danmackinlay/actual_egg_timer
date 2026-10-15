@@ -1,10 +1,10 @@
 import Foundation
 
-/// The alarm sounds a cook can choose in Settings, in the
-/// order the picker lists them; the one a fresh install rings with; a stored
-/// choice read back; and each sound's timing. Transliterated from
-/// `src/core/sounds.ts`, whose comment has the reasons, and held to it by
-/// `fixtures/sounds.json`. The files the app plays are rendered from the
+/// The alarm sounds a cook can choose in Settings, in the order the picker
+/// lists them, and each sound's timing. Transliterated from
+/// `src/core/sounds.ts`, and held to it by `fixtures/sounds.json`. Which one
+/// a fresh install rings with, and the stored choice, are the app's
+/// (`AlarmSoundChoice`). The files the app plays are rendered from the
 /// web's `src/ui/alarmSounds.ts` by `npm run sounds`, one per sound and
 /// moment.
 
@@ -20,14 +20,6 @@ public enum RingDeadline: String, Sendable, Hashable, CaseIterable {
 /// The sounds, in the order the picker lists them (`ALARM_SOUNDS`).
 public enum AlarmSound: String, Sendable, Hashable, CaseIterable {
     case timer, cuckoo, hen
-}
-
-public let defaultAlarmSound = AlarmSound.timer
-
-/// A stored choice, or the default for anything that is not one.
-public func readAlarmSound(_ raw: Any?) -> AlarmSound {
-    guard let tag = raw as? String, let sound = AlarmSound(rawValue: tag) else { return defaultAlarmSound }
-    return sound
 }
 
 /// One period of a sound's pattern, s: it sounds once at the start of each.

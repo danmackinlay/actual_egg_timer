@@ -29,7 +29,15 @@ double, which is all that differing libm implementations of `exp`, `sin` and
 Every module in `src/core/` has a Swift twin, held to it by a fixture. This
 table is the map; each file's header comment is its documentation, and the
 exports are its API. Apps call what is exported and nothing else, and
-anything both apps must agree on lives here, not in either app.
+anything both apps must agree on lives here, not in either app. What an app
+only stores, reads back or merges is its own (`DECISIONS.md` 126): the web's
+in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
+by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
+`Newer.swift`; the share queue `src/ui/shareState.ts` and
+`ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
+`StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`;
+the table of stores `src/ui/stores.ts` and `StoreRegistry.swift`; and the
+web's alone, another tab's copy of a cook, `src/ui/tabs.ts`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
@@ -50,21 +58,18 @@ anything both apps must agree on lives here, not in either app.
 | `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
 | `certainty.ts` | how sure, in words: very certain, a ballpark or a wild guess; the 90% interval in words; a likely time range | `certaintyAt`, `wordCertainty`, `askedWord` | `Certainty.swift` | `certainty.json` |
 | `reach.ts` | the odds at every level, the shading, the advice, and the answer on screen with its time decided | `oddsProfile`, `answerAt`, `decideAnswer`, `protocolAdvice` | `Reach.swift` | `reach.json` |
-| `inputs.ts` | what a cook enters and a fresh install starts from: the bounds on every number, the defaults, the egg-temperature buttons, the room the model is told about, a stored size carried into the table in use | `LIMITS`, `DEFAULTS`, `clamp`, `roomInUse`, `ambientFor`, `carrySizeIndex` | `Inputs.swift` | `inputs.json` |
+| `inputs.ts` | what a cook enters and a fresh install starts from: the bounds on every number, the defaults, the egg-temperature buttons, the room the model is told about | `LIMITS`, `DEFAULTS`, `clamp`, `roomInUse`, `ambientFor` | `Inputs.swift` | `inputs.json` |
 | `slider.ts` | the doneness slider: its grid, the nearest label, which words can be reached, the yolk temperature asked for, and the refusal verdict | `snapUp`, `anchorNear`, `anchorReachable`, `verdictFor` | `Slider.swift` | `slider.json` |
 | `texture.ts` | the texture bands, and the keys the note is said in | `textureFor`, `textureNoteKeys` | `Texture.swift` | `texture.json` |
 | `boil.ts` | boil memory: a boil remembered by volume, and the estimate for a volume | `rememberBoil`, `estimateTimeToBoil` | `Boil.swift` | `boil.json` |
-| `sounds.ts` | the alarm sounds: their order, the default, a stored choice read, each sound's timing | `readAlarmSound`, `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
-| `settings.ts` | the settings both apps keep, as one value, and a stored copy read back defensively | `Settings` (`AppSettings`), `DEFAULT_SETTINGS`, `readSettings` | `Settings.swift` | `settings.json` |
+| `sounds.ts` | the alarm sounds and each sound's timing | `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
-| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, the plan derived from them, each move the cook makes, and a cook in progress as both apps store it, read defensively | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `takeUpEvents`, `cookFactsFor`, `boilToRemember`, `readRunningCook`, `storedCook`, `readStoredCook` | `Running.swift` | `running.json`, `stores.json` |
+| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, folded, the plan derived from them, each move the cook makes | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `foldCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember` | `Running.swift` | `running.json` |
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
-| `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer); what a sender makes of the endpoint's answer, and when it stops waiting | `shareReply`, `shareGivesUp`, `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
-| `stores.ts` | every store either app keeps: its name, its key on each app, and the format written inside it; a stored value read only in its own format | `STORES`, `stamped`, `inFormat` | `StoreRegistry.swift` | `stores.json` |
-| `newer.ts` | which build may write: versions ordered, and the verdict on the newest-version mark | `compareVersions`, `writerCheck` | `Newer.swift` | `newer.json` |
+| `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls: the
@@ -165,8 +170,9 @@ the surface is cached rather than simulated per particle.
 
 ### It can share, if the cook says so
 
-`Sharing.swift` is the web's `src/ui/share.ts` over the same state in core
-(`INFERENCE.md` §7), and its header says what it sends and when. It is the
+`Sharing.swift` is the web's `src/ui/share.ts` over the same state, kept
+alike (`ShareQueue.swift`, `src/ui/shareState.ts`; `INFERENCE.md` §7), and
+its header says what it sends and when. It is the
 app's only network call: `URLSession`, HTTPS, to the web app's site (a debug
 build can point it at `npm run serve:dev` with `-shareServer`).
 

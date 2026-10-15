@@ -1,12 +1,11 @@
-/// Which build may write: the newest that has run.
+/// Which build may write: the newest that has run on this phone.
 ///
-/// Transliterated from `src/core/newer.ts`, and held to it by
-/// `fixtures/newer.json`. An older build can damage what a newer one stored,
-/// because it writes the settings, the pans, the sharing state, the cook in
-/// progress and the store around the log whole, from the fields it knows. So
-/// the app keeps one mark, the newest version that has run on the phone, and
-/// a build that finds a newer version there writes nothing for the rest of
-/// the session: it times the egg and leaves the stores alone.
+/// An older build can damage what a newer one stored, because it writes the
+/// settings, the pans, the sharing state, the cook in progress and the store
+/// around the log whole, from the fields it knows. So the app keeps one
+/// mark, the newest version that has run on the phone, and a build that
+/// finds a newer version there writes nothing for the rest of the session:
+/// it times the egg and leaves the stores alone (`Stores.claim`).
 ///
 /// The ordering is semantic versioning's: major.minor.patch as integers,
 /// then a version with a pre-release below the same version without one, and
@@ -16,18 +15,19 @@
 /// pre-release (`0.4.0` for `0.4.0-alpha.1`), so every alpha of one version
 /// shares it, and keeps the build number (`CFBundleVersion`) beside it to
 /// tell two builds of one version apart (`writerCheckBuilt`). The web keeps
-/// its own mark, with its own form of the number; the two never meet.
+/// its own mark, with its own form of the number (`src/ui/newer.ts`); the
+/// two never meet.
 ///
-/// The mark's format is fixed for good: a version string or nothing. No I/O.
+/// The mark's format is fixed for good: a version string or nothing.
 
-public struct Version: Sendable, Equatable {
-    public let major: Int
-    public let minor: Int
-    public let patch: Int
+struct Version: Sendable, Equatable {
+    let major: Int
+    let minor: Int
+    let patch: Int
     /// The pre-release's identifiers, in order; empty for a release.
-    public let pre: [String]
+    let pre: [String]
 
-    public init(major: Int, minor: Int, patch: Int, pre: [String]) {
+    init(major: Int, minor: Int, patch: Int, pre: [String]) {
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -59,7 +59,7 @@ private func isIdentifier<S: StringProtocol>(_ s: S) -> Bool {
 
 /// A version as semantic versioning writes one, without build metadata, or
 /// nil for anything else.
-public func parseVersion(_ text: String) -> Version? {
+func parseVersion(_ text: String) -> Version? {
     let main: Substring
     var pre: [String] = []
     if let dash = text.firstIndex(of: "-") {
@@ -113,7 +113,7 @@ private func compareIdentifier(_ a: String, _ b: String) -> Int {
 
 /// -1, 0 or 1 as `a` is older than, the same as or newer than `b`; nil when
 /// either is not a version.
-public func compareVersions(_ a: String, _ b: String) -> Int? {
+func compareVersions(_ a: String, _ b: String) -> Int? {
     guard let va = parseVersion(a), let vb = parseVersion(b) else { return nil }
     let core = sign(va.major, vb.major) != 0 ? sign(va.major, vb.major)
         : sign(va.minor, vb.minor) != 0 ? sign(va.minor, vb.minor)
@@ -131,7 +131,7 @@ public func compareVersions(_ a: String, _ b: String) -> Int? {
 /// `.write` when there is no mark, or the mark is not newer than this build
 /// (the app then writes `mine` as the mark before anything else); `.readOnly`
 /// when a newer build has run here, or this build cannot place itself.
-public func writerCheck(_ storedMark: String?, _ mine: String) -> WriterVerdict {
+func writerCheck(_ storedMark: String?, _ mine: String) -> WriterVerdict {
     guard let storedMark, parseVersion(storedMark) != nil else { return .write }
     guard let c = compareVersions(storedMark, mine) else { return .readOnly }
     return c > 0 ? .readOnly : .write
@@ -139,7 +139,7 @@ public func writerCheck(_ storedMark: String?, _ mine: String) -> WriterVerdict 
 
 /// A build number as Apple writes one (`CFBundleVersion`): one to three
 /// integers joined by dots, or nil for anything else.
-public func parseBuild(_ text: String) -> [Int]? {
+func parseBuild(_ text: String) -> [Int]? {
     let parts = text.split(separator: ".", omittingEmptySubsequences: false)
     guard (1...3).contains(parts.count), parts.allSatisfy({ isNumeric($0) }) else { return nil }
     var out: [Int] = []
@@ -152,7 +152,7 @@ public func parseBuild(_ text: String) -> [Int]? {
 
 /// -1, 0 or 1 as build `a` is older than, the same as or newer than `b`, a
 /// missing part read as zero; nil when either is not a build number.
-public func compareBuilds(_ a: String, _ b: String) -> Int? {
+func compareBuilds(_ a: String, _ b: String) -> Int? {
     guard let pa = parseBuild(a), let pb = parseBuild(b) else { return nil }
     for i in 0..<3 {
         let c = sign(i < pa.count ? pa[i] : 0, i < pb.count ? pb[i] : 0)
@@ -166,8 +166,8 @@ public func compareBuilds(_ a: String, _ b: String) -> Int? {
 /// build later than `myBuild` is a newer build too, since every TestFlight
 /// build of one version shares it. A stored build that is not one is
 /// ignored; a build that cannot read its own number writes over no build of
-/// its version. See src/core/newer.ts.
-public func writerCheckBuilt(
+/// its version.
+func writerCheckBuilt(
     _ storedMark: String?, _ storedBuild: String?, _ mine: String, _ myBuild: String
 ) -> WriterVerdict {
     let verdict = writerCheck(storedMark, mine)

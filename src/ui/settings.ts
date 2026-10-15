@@ -1,25 +1,22 @@
 /**
- * The settings, as both apps keep them: one value, and the one reader of a
- * stored copy (`readSettings`), which checks every field and takes the
- * default for anything missing or malformed.
+ * The settings as the web keeps them (`aet.settings`): one value, and the
+ * one reader of a stored copy (`readSettings`), which checks every field and
+ * takes the default for anything missing or malformed. Among them the
+ * measured egg (`customMinor_mm`, `measuredBy`), the mute, the alarm's sound
+ * and the language, which the iPhone keeps its own way
+ * (`EggTimerApp/Settings.swift`).
  *
- * The value holds what either app keeps. Most is the same control in both;
- * a few fields are one app's alone and the other carries them untouched:
- * the web's measured egg (`customMinor_mm`, `measuredBy`) and its mute, and
- * iOS's weighed egg (`weighedMass_g`). iOS keeps the language and the alarm's
- * sound under keys of their own and reads them from there.
- *
- * Pure, like the rest of `src/core/`: no storage, no DOM, no clock. What is
- * stored is the app's JSON, parsed; this reads it.
+ * Pure: no storage, no DOM, no clock. What is stored is the page's JSON,
+ * parsed; this reads it, and store.ts reads and writes it.
  */
 
-import { SizeClass } from './geometry.js';
-import { DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, Limit, carrySizeIndex, clamp } from './inputs.js';
-import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from './language.js';
-import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
-import type { EggFrom } from './record.js';
-import { AlarmSound, DEFAULT_ALARM_SOUND, readAlarmSound } from './sounds.js';
-import { UnitSystem, readChosenUnits } from './units.js';
+import { SizeClass } from '../core/geometry.js';
+import { DEFAULTS, LIMITS, Limit, clamp } from '../core/inputs.js';
+import { DEFAULT_LANGUAGE, LanguageState, PERIOD_LANGUAGE } from '../core/language.js';
+import { Cooling, HeatAfterBoil, StartMode } from '../core/protocol.js';
+import type { EggFrom } from '../core/record.js';
+import { AlarmSound } from '../core/sounds.js';
+import { UnitSystem } from '../core/units.js';
 
 /** Which of the web's three measurement boxes a measured egg came from: one
  *  number in three units, and a weighed egg and a ruler-measured one are not
@@ -27,16 +24,13 @@ import { UnitSystem, readChosenUnits } from './units.js';
 export type MeasuredBy = 'scale' | 'girth' | 'width';
 
 export interface Settings {
-  /** Index into the region's size classes, or -1 for an egg measured (the
-   *  web) or weighed (iOS). Stored without the region: see `carrySizeIndex`. */
+  /** Index into the region's size classes, or -1 for an egg measured.
+   *  Stored without the region: see `carrySizeIndex`. */
   sizeIndex: number;
-  /** The web's measured egg: its minor diameter, mm, and the box it was
-   *  typed in. */
+  /** The measured egg: its minor diameter, mm, and the box it was typed
+   *  in. */
   customMinor_mm: number;
   measuredBy: MeasuredBy;
-  /** iOS's weighed egg, g: what the mass slider says, kept while a class is
-   *  chosen, so that choosing Weighed again goes back to it. */
-  weighedMass_g: number;
   /** Where the egg comes from, and its temperature when it is `custom`. */
   startTempMode: EggFrom;
   customStart_C: number;
@@ -58,7 +52,7 @@ export interface Settings {
   eggCount: number;
   /** Doneness slider position, [0, 1]. */
   doneness: number;
-  /** The web's: no alarm, no blips. The countdown still runs. */
+  /** No alarm, no blips. The countdown still runs. */
   muted: boolean;
   /** Which sound the alarm makes (`ALARM_SOUNDS`). */
   alarm: AlarmSound;
@@ -77,6 +71,71 @@ export interface Settings {
   room_C: number | null;
 }
 
+/* ---------------------------------------- what only the settings read */
+
+/** The alarm sounds the cook can choose, in the order the picker lists
+ *  them, and the one a fresh install rings with: the wind-up timer, which is
+ *  what anyone expects an egg timer to sound like. */
+export const ALARM_SOUNDS: AlarmSound[] = ['timer', 'cuckoo', 'hen'];
+export const DEFAULT_ALARM_SOUND: AlarmSound = 'timer';
+
+/** A stored choice, or the default for anything that is not one: absence, a
+ *  sound a later version offers and this one does not, a sound since
+ *  retired. */
+export function readAlarmSound(raw: unknown): AlarmSound {
+  for (let i = 0; i < ALARM_SOUNDS.length; i++) {
+    if (raw === ALARM_SOUNDS[i]) return ALARM_SOUNDS[i];
+  }
+  return DEFAULT_ALARM_SOUND;
+}
+
+/** Every catalogue the picker offers, in its order, and the state of a
+ *  cook who never chose one. */
+export const LANGUAGES: readonly string[] = [DEFAULT_LANGUAGE, PERIOD_LANGUAGE];
+
+export const FRESH_LANGUAGE: LanguageState = { chosen: null };
+
+/** A stored state, read defensively: anything malformed is the fresh one. A
+ *  tag is kept only if it is one of `known`, so a catalogue that has gone
+ *  cannot be asked for. Any other field, such as the retired `flippedFrom`,
+ *  is ignored. */
+export function readLanguageState(raw: unknown, known: readonly string[]): LanguageState {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return FRESH_LANGUAGE;
+  const chosen = (raw as Record<string, unknown>)['chosen'];
+  return { chosen: typeof chosen === 'string' && known.includes(chosen) ? chosen : null };
+}
+
+/**
+ * A stored size index, read against the table in use now.
+ *
+ * An index means something only inside one table, and the table can change
+ * underneath a stored record: the phone's region is changed, the browser's
+ * language is, or - the case that matters - a record saved before there were
+ * two tables is read by an American. The rule is that the index keeps its
+ * NAME. A cook who picked Large picked the word on their carton, and the
+ * region says whose carton it is, so a Large stays a Large and cooks at the
+ * new table's mass. Keeping the mass instead would leave every American who
+ * never touched the control on the EU Large this table exists to replace.
+ *
+ * Both tables hold the same names at the same indices as far as the shorter
+ * goes, so keeping the name is keeping the index. A Jumbo read outside the US
+ * becomes the largest class there is, Extra large. A measured egg (-1) is
+ * measured in any region. Nothing is stored about the region, so there is no
+ * second record to disagree with the first.
+ */
+export function carrySizeIndex(stored: number, classes: SizeClass[]): number {
+  if (!Number.isFinite(stored)) return DEFAULTS.sizeIndex;
+  // Negatives first: any is a measured egg, and -0.5 never reaches
+  // Math.round, which would make it the first class.
+  if (stored < 0) return -1;
+  return Math.min(Math.round(stored), classes.length - 1);
+}
+
+/** A stored choice, or null for none: anything else in storage is not one. */
+export function readChosenUnits(raw: unknown): UnitSystem | null {
+  return raw === 'metric' || raw === 'imperial' ? raw : null;
+}
+
 /** What a fresh install starts from: the numbers are `DEFAULTS`'. */
 export const DEFAULT_SETTINGS: Settings = {
   sizeIndex: DEFAULTS.sizeIndex,
@@ -84,7 +143,6 @@ export const DEFAULT_SETTINGS: Settings = {
   // Read only for a measured egg, and set by whichever box is typed in. The
   // first, the scale, is the likely one for a record that never said.
   measuredBy: 'scale',
-  weighedMass_g: DEFAULT_EGG_MASS_KG * 1000,
   startTempMode: 'fridge',
   customStart_C: DEFAULTS.customStart_C,
   altitude_m: DEFAULTS.altitude_m,
@@ -140,7 +198,6 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     sizeIndex: carrySizeIndex(storedNumber(r['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex), classes),
     customMinor_mm: storedNumber(r['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
     measuredBy: oneOf(r['measuredBy'], ['scale', 'girth', 'width'] as const, d.measuredBy),
-    weighedMass_g: storedNumber(r['weighedMass_g'], LIMITS.mass_g, d.weighedMass_g),
     startTempMode: oneOf(r['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
     customStart_C: storedNumber(r['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
     altitude_m: storedNumber(r['altitude_m'], LIMITS.altitude_m, d.altitude_m),

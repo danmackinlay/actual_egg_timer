@@ -571,12 +571,12 @@ public final class Cook {
 
     // MARK: - Surviving a relaunch
 
-    /// What is stored is core's `StoredCook`, as the web stores it: the
+    /// What is stored is a `StoredCook` (StoredCook.swift): the
     /// cook, whether its egg has been answered, and the last decided lean.
     /// The alarms are with the system and the card on the Lock Screen, so a
     /// force-quit leaves both counting down: the cook is picked back up to
     /// match them.
-    static let savedKey = Stores.key(StoreRegistry.cook)
+    static let savedKey = StoreRegistry.cook.key
 
     /// A stored cook's data as this app reads it, whole, or nil.
     static func readStored(_ data: Data) -> StoredCook? {
@@ -661,3 +661,40 @@ public final class Cook {
         begin(after, restored: true)
     }
 }
+
+#if DEBUG
+/// One entry with every clock time in it moved by `by`.
+private func shiftedEntry(_ entry: CookEntry, by: Double) -> CookEntry {
+    switch entry {
+    case let .boil(at): .boil(atS: at + by)
+    case let .correct(at, choices): .correct(atS: at + by, choices: choices)
+    case let .start(at, startedAt): .start(atS: at + by, startedAtS: startedAt + by)
+    case let .pulled(p):
+        .pulled(p.map { Pulled(dueS: $0.dueS + by, outS: $0.outS + by, by: $0.by, confirmed: $0.confirmed) })
+    case .stands: .stands
+    case let .cooled(at): .cooled(atS: at.map { $0 + by })
+    case let .rang(at): .rang(atS: at.map { $0 + by })
+    case let .stillIn(at): .stillIn(atS: at + by)
+    case let .ran(r):
+        .ran(r.map {
+            var moved = $0
+            moved.correctedAtS = $0.correctedAtS.map { $0 + by }
+            return moved
+        })
+    case let .answered(at, yolk, white, probe): .answered(atS: at + by, yolkWord: yolk, white: white, probe: probe)
+    case let .logged(at): .logged(atS: at + by)
+    case let .ended(at): .ended(atS: at + by)
+    }
+}
+
+/// The cook with every clock time in it moved by `by` s, the press with
+/// them: how a debug build's `-uiScreen done` and `-cookAgo` reach a moment
+/// without waiting for it.
+func shiftedCook(_ cook: RunningCook, by: Double) -> RunningCook {
+    foldCook(
+        idMs: (cook.idMs + by * 1000).rounded(), start: CookStart(atS: cook.start.atS + by, choices: cook.start.choices),
+        nudgeS: cook.nudgeS, boilMemory: cook.boilMemory, units: cook.units, lang: cook.lang,
+        log: cook.log.map { shiftedEntry($0, by: by) }
+    )
+}
+#endif

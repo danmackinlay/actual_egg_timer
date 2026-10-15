@@ -8,7 +8,7 @@
  * cooling, the answers. The cook as it stands - the start and choices in
  * force, the events, when it was last corrected, the plan as it ran - is the
  * log folded (`appendEntry`), and nothing else: a stored cook is read back by
- * folding its log again (`readRunningCook`). So changing a setting back gives
+ * folding its log again (`foldCook`, under each app's reader). So changing a setting back gives
  * back the old choices exactly, and the plan with them.
  *
  * - The start is correctable, never after now or after the first event, nor
@@ -45,11 +45,10 @@ import { DoseGrid } from './doseGrid.js';
 import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
 import { CertaintyReading, certaintyAt } from './certainty.js';
 import { predictOutcome } from './outcome.js';
-import { WhiteReport, YOLK_WORDS, YolkWord } from './infer.js';
-import { STORES, inFormat, stamped } from './stores.js';
+import { WhiteReport, YolkWord } from './infer.js';
 import {
   AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationDoneness,
-  calibrationParams, forecastOf, parseForecast,
+  calibrationParams, forecastOf,
 } from './record.js';
 
 /* ------------------------------------------------------------- the types */
@@ -187,12 +186,11 @@ export type CookEntry =
   | { kind: 'ended'; at_s: number };
 
 /**
- * A running cook. What is stored is what was fixed at the press (the id, the
- * nudge, the pans, the units and language), the start and the log
- * (`storedCook`); the rest is the log folded, kept beside it so a plan need
- * not fold it again, and folded afresh from a stored cook
- * (`readRunningCook`). Only core makes one (`startCook`, `appendEntry` and
- * the moves over it).
+ * A running cook. What each app stores is what was fixed at the press (the
+ * id, the nudge, the pans, the units and language), the start and the log;
+ * the rest is the log folded, kept beside it so a plan need not fold it
+ * again, and folded afresh from a stored cook (`foldCook`). Only core makes
+ * one (`startCook`, `foldCook`, `appendEntry` and the moves over it).
  */
 export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
@@ -438,8 +436,9 @@ function freshCook(
   };
 }
 
-/** The cook folded from its start and log. */
-function foldCook(
+/** The cook folded from its start and log: what a stored cook is read back
+ *  as. */
+export function foldCook(
   id_ms: number, start: CookStart, nudge_s: number, boilMemory: BoilMemory, units: Units, lang: string,
   log: CookEntry[],
 ): RunningCook {
@@ -678,7 +677,7 @@ export function pullStands(cook: RunningCook): RunningCook {
 }
 
 /** Whether two pulls are the same, every field. */
-function samePulled(a: Pulled | null, b: Pulled | null): boolean {
+export function samePulled(a: Pulled | null, b: Pulled | null): boolean {
   if (a === null || b === null) return a === b;
   return a.due_s === b.due_s && a.out_s === b.out_s && a.by === b.by && a.confirmed === b.confirmed;
 }
@@ -715,7 +714,7 @@ function sameNumbers(a: number[] | null, b: number[] | null): boolean {
 }
 
 /** Whether two plans as they ran are the same, every field. */
-function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
+export function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
   if (a === null || b === null) return a === b;
   const f = a.forecast;
   const g = b.forecast;
@@ -750,385 +749,6 @@ export function levelPreview(cook: RunningCook, choices: CookChoices): RunningCo
     ...cook, log: log, choices: choices, correctedAt_s: null, asRan: null,
     events: { ...cook.events, pulled: null, cooledAt_s: null, rangAt_s: null },
   };
-}
-
-/** A clock time moved by `by_s`, or null as it was. */
-function shift(t: number | null, by_s: number): number | null {
-  return t === null ? null : t + by_s;
-}
-
-/** One entry with every clock time in it moved by `by_s`. */
-function shiftedEntry(entry: CookEntry, by_s: number): CookEntry {
-  switch (entry.kind) {
-    case 'boil':
-    case 'correct':
-    case 'stillIn':
-    case 'answered':
-    case 'logged':
-    case 'ended':
-      return { ...entry, at_s: entry.at_s + by_s };
-    case 'start':
-      return { ...entry, at_s: entry.at_s + by_s, startedAt_s: entry.startedAt_s + by_s };
-    case 'pulled':
-      return entry.pulled === null ? entry
-        : { kind: 'pulled', pulled: { ...entry.pulled, due_s: entry.pulled.due_s + by_s, out_s: entry.pulled.out_s + by_s } };
-    case 'cooled':
-    case 'rang':
-      return { ...entry, at_s: shift(entry.at_s, by_s) };
-    case 'stands':
-      return entry;
-    case 'ran':
-      return entry.asRan === null ? entry
-        : { kind: 'ran', asRan: { ...entry.asRan, correctedAt_s: shift(entry.asRan.correctedAt_s, by_s) } };
-  }
-}
-
-/** The cook with every clock time in it moved by `by_s`, the press with
- *  them: what a development clock does to a cook to reach a moment without
- *  waiting for it. */
-export function shiftedCook(cook: RunningCook, by_s: number): RunningCook {
-  const log: CookEntry[] = [];
-  for (let i = 0; i < cook.log.length; i++) log.push(shiftedEntry(cook.log[i], by_s));
-  return foldCook(
-    Math.round(cook.id_ms + by_s * 1000), { at_s: cook.start.at_s + by_s, choices: cook.start.choices },
-    cook.nudge_s, cook.boilMemory, cook.units, cook.lang, log,
-  );
-}
-
-/* ----------------------------------------------- two copies of one cook */
-
-/** The earlier of two times, either of which may be missing. */
-function earlier(a: number | null, b: number | null): number | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return Math.min(a, b);
-}
-
-/** The pull to keep of two: the cook's tap over the clock's assumption, and
- *  of two alike the earlier out, then the earlier due. */
-function betterPull(a: Pulled | null, b: Pulled | null): Pulled | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  if (a.by !== b.by) return a.by === 'cook' ? a : b;
-  if (a.out_s !== b.out_s) return a.out_s < b.out_s ? a : b;
-  return a.due_s <= b.due_s ? a : b;
-}
-
-/** Whether two copies of one cook were told the same: the same start and
- *  choices, so the same plan, and what either's clock decided is the other's
- *  too. */
-function sameCorrections(a: RunningCook, b: RunningCook): boolean {
-  return a.startedAt_s === b.startedAt_s && sameChoices(a.choices, b.choices);
-}
-
-/**
- * `ours` with what another copy of the same cook saw taken up - another tab's
- * on the web: what it saw in the one pan that this copy has not, logged. The
- * two are one cook, the same id, so neither copy corrects the other, and the
- * events are each the earliest seen: the boil tapped first; a pull by the
- * cook over one the clock assumed (`timeout`), and of two alike the earlier;
- * the cooling's end of the pull kept; the pull that rang, if it rang under
- * the boil kept; and the plan as it ran, if it is of the pull kept. `ours`,
- * the same object, when there is nothing to take up, and always for another
- * cook: a tab never takes up a cook another tab started.
- * Taken up both ways, two copies end with the same events.
- *
- * From a copy whose start or choices differ from ours, only the cook's own
- * observations: the boil tap and a pull the cook tapped, which are what was
- * seen in the pan whatever either copy was told. Never what that copy's clock
- * decided from a plan this one has been corrected away from - the pull
- * ringing, a pull it assumed when the grace ran out (`timeout`), the
- * cooling's end - which would end this cook on another's time.
- */
-export function takeUpEvents(ours: RunningCook, theirs: RunningCook): RunningCook {
-  if (theirs.id_ms !== ours.id_ms) return ours;
-  const same = sameCorrections(ours, theirs);
-  const a = ours.events;
-  const b = theirs.events;
-  const boil = earlier(a.boilAt_s, b.boilAt_s);
-  const theirPull = same || (b.pulled !== null && b.pulled.by === 'cook') ? b.pulled : null;
-  const pulled = betterPull(a.pulled, theirPull);
-  const cooled = earlier(
-    samePulled(pulled, a.pulled) ? a.cooledAt_s : null, same && samePulled(pulled, b.pulled) ? b.cooledAt_s : null,
-  );
-  const rang = earlier(a.boilAt_s === boil ? a.rangAt_s : null, same && b.boilAt_s === boil ? b.rangAt_s : null);
-  const events: CookEvents = { boilAt_s: boil, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
-  // The plan as it ran is of one pull's cook time, and of the cook as last
-  // corrected: ours if it still is, else theirs if it is.
-  const ranFits = (r: CookAsRan | null): boolean => r !== null && pulled !== null
-    && r.cook_s === pulled.due_s - ours.startedAt_s && r.correctedAt_s === ours.correctedAt_s;
-  const asRan = ranFits(ours.asRan) ? ours.asRan : ranFits(theirs.asRan) ? theirs.asRan : null;
-  if (sameEvents(events, a) && sameAsRan(asRan, ours.asRan)) return ours;
-  return withAsRan(writeEvents(ours, events), asRan);
-}
-
-/** Whether copy `a` of a cook was corrected after copy `b` was: a reload
- *  should restore the latest correction, so `a` is not written over by `b`. */
-export function correctedLater(a: RunningCook, b: RunningCook): boolean {
-  return a.correctedAt_s !== null && (b.correctedAt_s === null || a.correctedAt_s > b.correctedAt_s);
-}
-
-/* ------------------------------------------------------- the stored cook */
-
-/** A finite number. */
-function isNumber(v: unknown): v is number {
-  return typeof v === 'number' && Number.isFinite(v);
-}
-
-function isObject(v: unknown): v is Record<string, unknown> {
-  return v !== null && typeof v === 'object' && !Array.isArray(v);
-}
-
-/** The choices, or null if any field is missing or out of kind. */
-function readChoices(raw: unknown): CookChoices | null {
-  if (!isObject(raw)) return null;
-  const mass = raw['mass_kg'];
-  const massFrom = raw['massFrom'];
-  const table = raw['sizeTable'];
-  const eggFrom = raw['eggFrom'];
-  const custom = raw['customStart_C'];
-  const room = raw['room_C'];
-  const start = raw['startMode'];
-  const after = raw['afterBoil'];
-  const cooling = raw['cooling'];
-  const tapWater = raw['tapWater_C'];
-  const bowlLitres = raw['bowlLitres'];
-  const bowlWater = raw['bowlWater_C'];
-  const water = raw['waterLitres'];
-  const count = raw['eggCount'];
-  const altitude = raw['altitude_m'];
-  const level = raw['level'];
-  if (!isNumber(mass) || !(mass > 0)) return null;
-  if (massFrom !== 'class' && massFrom !== 'scale' && massFrom !== 'girth' && massFrom !== 'width') return null;
-  if (massFrom === 'class' ? table !== 'eu' && table !== 'us' : table !== null) return null;
-  if (eggFrom !== 'fridge' && eggFrom !== 'room' && eggFrom !== 'custom') return null;
-  if (!isNumber(custom)) return null;
-  if (room !== null && !isNumber(room)) return null;
-  if (start !== 'cold' && start !== 'hot') return null;
-  if (after !== 'hold' && after !== 'off') return null;
-  if (cooling !== 'ice' && cooling !== 'tap' && cooling !== 'bowl' && cooling !== 'counter') return null;
-  if (tapWater !== null && !isNumber(tapWater)) return null;
-  if (!isNumber(bowlLitres) || !(bowlLitres > 0)) return null;
-  if (bowlWater !== null && !isNumber(bowlWater)) return null;
-  if (!isNumber(water) || !(water > 0)) return null;
-  if (!isNumber(count) || !(count > 0)) return null;
-  if (!isNumber(altitude)) return null;
-  if (!isNumber(level) || level < 0 || level > 1) return null;
-  return {
-    mass_kg: mass, massFrom: massFrom, sizeTable: massFrom === 'class' ? table as SizeTable : null,
-    eggFrom: eggFrom, customStart_C: custom, room_C: room, startMode: start, afterBoil: after,
-    cooling: cooling, tapWater_C: tapWater, bowlLitres: bowlLitres, bowlWater_C: bowlWater,
-    waterLitres: water, eggCount: count, altitude_m: altitude, level: level,
-  };
-}
-
-/** A pull, or null if it is not one: out before it was due, by nobody, or a
- *  cook's own tap unconfirmed. */
-function readPulled(raw: unknown): Pulled | null {
-  if (!isObject(raw)) return null;
-  const due = raw['due_s'];
-  const out = raw['out_s'];
-  const by = raw['by'];
-  const confirmed = raw['confirmed'];
-  if (!isNumber(due) || !isNumber(out) || out < due) return null;
-  if (by !== 'cook' && by !== 'timeout') return null;
-  if (typeof confirmed !== 'boolean' || (by === 'cook' && !confirmed)) return null;
-  return { due_s: due, out_s: out, by: by, confirmed: confirmed };
-}
-
-/** A clock time or null, as `.value`; null if it is neither. */
-function timeOrNull(v: unknown): { value: number | null } | null {
-  if (v === null) return { value: null };
-  return isNumber(v) ? { value: v } : null;
-}
-
-/** A probe reading as the log keeps one, or none (JSON's null), as `.value`;
- *  null if it is neither. */
-function readProbe(raw: unknown): { value: ProbeReading | null } | null {
-  if (raw === null) return { value: null };
-  if (!isObject(raw)) return null;
-  const centre = raw['centre_C'];
-  const after = raw['after_s'];
-  if (!isNumber(centre) || (after !== null && !isNumber(after))) return null;
-  return { value: { centre_C: centre, after_s: after } };
-}
-
-/** One entry of a stored log, or null if it is not one. */
-function readEntry(raw: unknown, start_s: number): CookEntry | null {
-  if (!isObject(raw)) return null;
-  const at = raw['at_s'];
-  switch (raw['kind']) {
-    case 'boil':
-    case 'stillIn':
-    case 'logged':
-    case 'ended':
-      return isNumber(at) ? { kind: raw['kind'], at_s: at } : null;
-    case 'correct': {
-      const choices = readChoices(raw['choices']);
-      return isNumber(at) && choices !== null ? { kind: 'correct', at_s: at, choices: choices } : null;
-    }
-    case 'start': {
-      const startedAt = raw['startedAt_s'];
-      return isNumber(at) && isNumber(startedAt) ? { kind: 'start', at_s: at, startedAt_s: startedAt } : null;
-    }
-    case 'pulled': {
-      if (raw['pulled'] === null) return { kind: 'pulled', pulled: null };
-      const pulled = readPulled(raw['pulled']);
-      return pulled === null ? null : { kind: 'pulled', pulled: pulled };
-    }
-    case 'stands':
-      return { kind: 'stands' };
-    case 'cooled':
-    case 'rang': {
-      const t = timeOrNull(at);
-      return t === null ? null : { kind: raw['kind'], at_s: t.value };
-    }
-    case 'ran': {
-      if (raw['asRan'] === null) return { kind: 'ran', asRan: null };
-      const asRan = readAsRan(raw['asRan'], start_s);
-      return asRan === null ? null : { kind: 'ran', asRan: asRan };
-    }
-    case 'answered': {
-      const yolk = raw['yolkWord'];
-      const white = raw['white'];
-      const probe = readProbe(raw['probe']);
-      if (!isNumber(at) || probe === null) return null;
-      if (yolk !== null && !YOLK_WORDS.some((w) => w === yolk)) return null;
-      if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
-      return { kind: 'answered', at_s: at, yolkWord: yolk as YolkWord | null, white: white, probe: probe.value };
-    }
-    default:
-      return null;
-  }
-}
-
-/** The pans as remembered, or null if any is not a time. */
-function readBoilMemory(raw: unknown): BoilMemory | null {
-  if (!isObject(raw)) return null;
-  const out: BoilMemory = {};
-  for (const key of Object.keys(raw)) {
-    const seconds = raw[key];
-    if (!isNumber(seconds) || !(seconds > 0)) return null;
-    out[key] = seconds;
-  }
-  return out;
-}
-
-/** The plan as it ran, or null if any field is missing or out of kind. */
-function readAsRan(raw: unknown, start_s: number): CookAsRan | null {
-  if (!isObject(raw)) return null;
-  const at = raw['correctedAt_s'];
-  const level = raw['level'];
-  const cook = raw['cook_s'];
-  const nudge = raw['nudge_s'];
-  const forecast = parseForecast(raw['forecast']);
-  const peak = raw['peakYolk_C'];
-  const probe = raw['probeMoment'];
-  const params = raw['params'];
-  if (at !== null && (!isNumber(at) || at < start_s)) return null;
-  if (!isNumber(level) || level < 0 || level > 1) return null;
-  if (!isNumber(cook) || !(cook > 0) || !isNumber(nudge)) return null;
-  if (forecast === null || !isNumber(peak) || typeof probe !== 'boolean') return null;
-  if (!isObject(params)) return null;
-  const alpha = params['alpha_m2s'];
-  if (!isNumber(alpha) || !(alpha > 0)) return null;
-  return {
-    correctedAt_s: at, level: level, cook_s: cook, nudge_s: nudge, forecast: forecast, peakYolk_C: peak,
-    probeMoment: probe, params: { alpha_m2s: alpha },
-  };
-}
-
-/** Whether the folded events are in order: nothing before the start, a pull
- *  out no sooner than it was due, a cooling ended only after the egg came
- *  out, the plan as it ran only once pulled, and no correction before the
- *  start. */
-function foldInOrder(cook: RunningCook): boolean {
-  const e = cook.events;
-  const start = cook.startedAt_s;
-  if (e.boilAt_s !== null && e.boilAt_s < start) return false;
-  if (e.pulled !== null && e.pulled.due_s < start) return false;
-  if (e.cooledAt_s !== null && (e.pulled === null || e.cooledAt_s < e.pulled.out_s)) return false;
-  if (e.rangAt_s !== null && e.rangAt_s < start) return false;
-  if (cook.correctedAt_s !== null && cook.correctedAt_s < start) return false;
-  if (cook.asRan !== null && e.pulled === null) return false;
-  return cook.asRan === null || cook.asRan.correctedAt_s === null || cook.asRan.correctedAt_s >= start;
-}
-
-/**
- * A stored cook, read defensively: whole, or null. What was fixed at the
- * press, the start and the log are read, and the log folded again. A cook is
- * what the calibration learns from and what the alarms ring for, so a shape
- * this build cannot read is reported, not guessed at or patched from the
- * controls; the app drops it. Extra fields are ignored.
- */
-export function readRunningCook(raw: unknown): RunningCook | null {
-  if (!isObject(raw)) return null;
-  const id = raw['id_ms'];
-  const nudge = raw['nudge_s'];
-  const units = raw['units'];
-  const lang = raw['lang'];
-  const startRaw = raw['start'];
-  const logRaw = raw['log'];
-  if (!isNumber(id) || !(id > 0)) return null;
-  if (!isNumber(nudge)) return null;
-  const memory = readBoilMemory(raw['boilMemory']);
-  if (memory === null) return null;
-  if (units !== 'metric' && units !== 'imperial') return null;
-  if (typeof lang !== 'string' || lang === '') return null;
-  if (!isObject(startRaw)) return null;
-  const at = startRaw['at_s'];
-  const choices = readChoices(startRaw['choices']);
-  if (!isNumber(at) || !(at > 0) || choices === null) return null;
-  if (!Array.isArray(logRaw)) return null;
-  const log: CookEntry[] = [];
-  for (let i = 0; i < logRaw.length; i++) {
-    const entry = readEntry(logRaw[i], 0);
-    if (entry === null) return null;
-    log.push(entry);
-  }
-  const cook = foldCook(id, { at_s: at, choices: choices }, nudge, memory, units, lang, log);
-  return foldInOrder(cook) ? cook : null;
-}
-
-/** Whether the egg had been written down with an answer when the cook was
- *  stored: a cook stored as answered is read back as answered, so its egg
- *  is never logged a second time. */
-export type KeptAnswers = 'none' | 'beforeReload';
-
-/** A cook in progress as both apps store it (`STORES.cook`), so a reload or
- *  a relaunch does not lose the egg: the cook, whether its egg was answered,
- *  and the lean last decided, the interim while its surface is rebuilt. */
-export interface StoredCook {
-  cook: RunningCook;
-  answers: KeptAnswers;
-  leanHint_s: number;
-}
-
-/** A stored cook as it is written: the cook's id, nudge, pans, units,
- *  language, start and log, and no more, since the rest is the log folded. */
-export function storedCook(s: StoredCook): Record<string, unknown> {
-  const c = s.cook;
-  return stamped(STORES.cook, {
-    cook: {
-      id_ms: c.id_ms, nudge_s: c.nudge_s, boilMemory: c.boilMemory, units: c.units, lang: c.lang, start: c.start,
-      log: c.log,
-    },
-    answers: s.answers,
-    leanHint_s: s.leanHint_s,
-  });
-}
-
-/** A stored cook read back, parsed JSON: whole, or null for one in another
- *  format, one whose cook does not read (`readRunningCook`), and one without
- *  a known `answers`, which read as unanswered would log its egg twice. */
-export function readStoredCook(raw: unknown): StoredCook | null {
-  const o = inFormat(STORES.cook, raw);
-  if (o === null) return null;
-  const cook = readRunningCook(o['cook']);
-  const answers = o['answers'];
-  const hint = o['leanHint_s'];
-  if (cook === null || (answers !== 'none' && answers !== 'beforeReload') || !isNumber(hint)) return null;
-  return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
 /* ---------------------------------------------------------------- the plan */
@@ -1328,20 +948,6 @@ export function cookTooOld(plan: CookPlan, now_s: number): boolean {
 export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s: number): number | null {
   if (cook === null || plan === null || cookTooOld(plan, now_s)) return null;
   return cook.id_ms;
-}
-
-/**
- * Whether the cook on a screen is still the egg open to correction at
- * `now_s`: the stored cook is this one - its id, `storedId_ms`, is this
- * cook's (null when nothing is stored) - and it is not too old by this
- * screen's plan. `openEggId` asks the same of the stored cook and its plan;
- * this asks it of the screen's own, with no second plan. When it is not -
- * Start again or Cancel in another tab, another cook stored, or an hour past
- * the end - the egg is final: the screen ends it as Start again does, or at
- * least puts its questions away, and logs or rewrites nothing more for it.
- */
-export function cookStillOpen(cook: RunningCook, plan: CookPlan, storedId_ms: number | null, now_s: number): boolean {
-  return storedId_ms === cook.id_ms && !cookTooOld(plan, now_s);
 }
 
 /**

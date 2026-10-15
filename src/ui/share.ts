@@ -8,22 +8,24 @@
  *
  * What is kept, in `aet.share.v1` beside the log rather than in it, and how
  * each step moves it - turned on and off, forgotten, deletion asked, an
- * answer from the server - is core's (`src/core/share.ts`), which iOS moves
- * alike. A page's sharing (`openSharing`) holds the current state and writes
- * it through, takes up what another tab wrote before acting, and does the
- * talking: each final egg in turn, in order. No answer, or a busy one
- * (`answered`), stops the run until the next (a load, a new egg, sharing
- * turned on, the browser back online).
+ * answer from the server - is `shareState.ts`'s; what the server takes and
+ * what its answers mean, core's (`src/core/share.ts`). A page's sharing
+ * (`openSharing`) holds the current state and writes it through, takes up
+ * what another tab wrote before acting, and does the talking: each final egg
+ * in turn, in order. No answer, or a busy one (`answered`), stops the run
+ * until the next (a load, a new egg, sharing turned on, the browser back
+ * online).
  */
 
 import { EggRecord, sharedRecord } from '../core/record.js';
+import { deletionDone } from '../core/share.js';
 import {
-  ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, forgotten, nextToSend,
-  readShareState, reconciled, turnedOff, turnedOn,
-} from '../core/share.js';
+  ShareState, answered, deletionAsked, deletionConfirmed, forgotten, nextToSend, readShareState, reconciled, turnedOff,
+  turnedOn,
+} from './shareState.js';
 import { request } from './idle.js';
 import { send } from './send.js';
-import { STORES } from '../core/stores.js';
+import { STORES } from './stores.js';
 import { Taken, storageReadOnly, syncedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
@@ -79,7 +81,7 @@ export function newUid(fill: (bytes: Uint8Array) => void = (b) => { crypto.getRa
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-/** What storage holds, read defensively (core's `readShareState`): text that
+/** What storage holds, read defensively (`readShareState`): text that
  *  is not JSON reads as nothing stored. Stored, `busySince` is epoch ms. */
 export function readShare(raw: string | null): ShareState {
   let o: unknown = null;
@@ -134,7 +136,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
    *  acts (`current`). A tab loaded yesterday must not send under an id
    *  another tab has since deleted, nor write back the deletions it never
    *  saw. */
-  const store = syncedKey(STORES.share.web, readShare);
+  const store = syncedKey(STORES.share.key, readShare);
   let state: ShareState = reconciled(store.load(), host.log().length);
   /** Bumped by every change of id, so a send in flight for an old one lands
    *  on nothing. */

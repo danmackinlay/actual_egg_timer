@@ -130,23 +130,3 @@ public enum Defaults {
     public static let eggMassKg = sizeClasses[sizeIndex].massKg
 }
 
-/// A stored size index, read against the table in use now.
-///
-/// An index means something only inside one table, and the table can change
-/// underneath a stored record: the phone's region changes, or - the case that
-/// matters - a record saved before there were two tables is read by an
-/// American. The index keeps its NAME. A cook who picked Large picked the word
-/// on their carton, and the region says whose carton it is, so a Large stays a
-/// Large and cooks at the new table's mass. Keeping the mass instead would leave
-/// every American who never touched the control on the EU Large.
-///
-/// Both tables hold the same names at the same indices as far as the shorter
-/// goes, so keeping the name is keeping the index. A Jumbo read outside the US
-/// becomes Extra large. A weighed egg (-1) is weighed in any region.
-public func carrySizeIndex(_ stored: Double, classes: [SizeClass]) -> Int {
-    guard stored.isFinite else { return Defaults.sizeIndex }
-    // Negatives first, so rounding never has to settle -0.5: Swift rounds that
-    // tie away from zero and JavaScript towards +infinity.
-    if stored < 0 { return -1 }
-    return min(Int(stored.rounded()), classes.count - 1)
-}

@@ -7,8 +7,9 @@ import EggTimerShared
 ///
 /// The rule is the core's (`languageAfterFlip`, `languageAfterPick`), the
 /// same as the web's and held to it by `fixtures/language.json`. This file
-/// only stores the state, as the JSON the web stores, and puts the catalogue
-/// it names on screen (`Copy.use`), which redraws every word in place.
+/// only stores the state, reads it back (`readLanguageState`), and puts the
+/// catalogue it names on screen (`Copy.use`), which redraws every word in
+/// place.
 ///
 /// The switch listens for `.unitsFlipped`, which `Planner.chooseUnits` posts
 /// when the cook changes the system on screen and never for a default.
@@ -20,7 +21,7 @@ public final class LanguageChoice: LanguageChoosing {
     /// Under its own key, not "language": a launch argument of that name
     /// would shadow it (UserDefaults' argument domain), and the debug builds
     /// take one (`-uiLanguage`, Screenshots.swift).
-    private static let key = Stores.key(StoreRegistry.languageState)
+    private static let key = StoreRegistry.languageState.key
 
     public private(set) var state = LanguageState.fresh
     private var observer: NSObjectProtocol?
@@ -72,6 +73,30 @@ public final class LanguageChoice: LanguageChoosing {
         guard let data = try? JSONSerialization.data(withJSONObject: stored) else { return }
         Stores.set(data, forKey: key)
     }
+}
+
+/// Every catalogue the picker offers, in its order.
+public let languages: [String] = [defaultLanguage, periodLanguage]
+
+extension LanguageState {
+    /// The state of a cook who never chose a language.
+    public static let fresh = LanguageState(chosen: nil)
+
+    /// As it is stored, for JSONSerialization: an absent value is JSON's
+    /// null, so that `readLanguageState` gives back the same state.
+    var jsonObject: [String: Any] {
+        ["chosen": chosen ?? NSNull()]
+    }
+}
+
+/// A stored state, read defensively: anything malformed is the fresh one. A
+/// tag is kept only if it is one of `known`, so a catalogue that has gone
+/// cannot be asked for. Any other field, such as the retired `flippedFrom`,
+/// is ignored.
+func readLanguageState(_ raw: Any?, known: [String]) -> LanguageState {
+    guard let r = raw as? [String: Any] else { return .fresh }
+    guard let chosen = r["chosen"] as? String, known.contains(chosen) else { return .fresh }
+    return LanguageState(chosen: chosen)
 }
 
 /// Text as a screen reader should hear it: every long s an s. The title is

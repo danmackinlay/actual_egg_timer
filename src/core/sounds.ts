@@ -1,10 +1,7 @@
 /**
- * The alarm sounds a cook can choose in Settings, in the
- * order both pickers list them; the one a fresh install rings with; a stored
- * choice read back; and each sound's timing. Both apps ring the same patterns
- * for the same time. The wind-up timer is the default because it is what
- * anyone expects an egg timer to sound like; the cuckoo clock and the hen are
- * a choice away.
+ * The alarm sounds a cook can choose in Settings, and each sound's timing:
+ * both apps ring the same patterns for the same time. Which one a fresh
+ * install rings with, and the stored choice, are each app's settings'.
  *
  * Each sound has two forms, one per moment the cook is told about: `pull`,
  * out of the water now, which is the urgent one, and `cooled`, the end of the
@@ -16,19 +13,6 @@
 
 export type AlarmSound = 'timer' | 'cuckoo' | 'hen';
 export type AlarmMoment = 'pull' | 'cooled';
-
-export const ALARM_SOUNDS: AlarmSound[] = ['timer', 'cuckoo', 'hen'];
-export const DEFAULT_ALARM_SOUND: AlarmSound = 'timer';
-
-/** A stored choice, or the default for anything that is not one: absence, a
- *  sound a later version offers and this one does not, a sound since
- *  retired. */
-export function readAlarmSound(raw: unknown): AlarmSound {
-  for (let i = 0; i < ALARM_SOUNDS.length; i++) {
-    if (raw === ALARM_SOUNDS[i]) return ALARM_SOUNDS[i];
-  }
-  return DEFAULT_ALARM_SOUND;
-}
 
 /** One period of a sound's pattern, s: the pattern sounds once at its start
  *  and the period repeats it. The cuckoo calls twice when cooled and three

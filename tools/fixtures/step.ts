@@ -13,8 +13,9 @@
  * What the app builds is given by the step that lands it: the surface the
  * last step needed, coarse as decide.json's (its extent written, so Swift
  * builds the same one for its own pot), the calibration before this egg, or a
- * surface on it. A reload reads the stored cook back and starts with no plan
- * and nothing built. Events are written at their times; a time read off a
+ * surface on it. A reload keeps the cook as it stood, which each app stores
+ * and reads back as its own (tested in each app's suite), and starts with no
+ * plan and nothing built. Events are written at their times; a time read off a
  * plan is a few seconds clear of any deadline, so the two cores' last bits
  * never change a phase.
  */
@@ -24,7 +25,7 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { Calibration } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt, readRunningCook,
+  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt,
 } from '../../src/core/running.js';
 import { Readout, ReadoutProbe, readoutAt } from '../../src/core/readout.js';
 import { CookEnv, CookEvent, CookState, CookStep, step } from '../../src/core/step.js';
@@ -410,31 +411,31 @@ const SCREEN_ONLY: Record<string, string> = {
   'e2e inert-off-localhost': 'the development clock (tools/e2e.ts)',
   'e2e sentence-no-time': 'the sentence (wording.json, clauseKeys)',
   'e2e two-tabs-own-cooks': 'each tab its own cook (web)',
-  'e2e two-tabs-correction': 'running.json takeUps',
-  'e2e two-tabs': 'running.json takeUps',
+  'e2e two-tabs-correction': 'another tab\'s copy taken up (web tabs.ts)',
+  'e2e two-tabs': 'another tab\'s copy taken up (web tabs.ts)',
   'e2e change-kept-on-hide': 'the commit on leaving (web edit.ts; ios Edits)',
   'e2e certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
-  'e2e unreadable-stores': 'running.json reads',
+  'e2e unreadable-stores': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
   'e2e retired-keys': 'the boot sweep (web store.ts; ios Stores)',
-  'e2e dev-clock-shares-nothing': 'sharing (share.json)',
-  'e2e newer-version': 'newer.json',
-  'e2e newer-version-tab': 'newer.json',
+  'e2e dev-clock-shares-nothing': 'sharing (web share.ts)',
+  'e2e newer-version': 'the newer-build guard (web newer.ts)',
+  'e2e newer-version-tab': 'the newer-build guard (web newer.ts)',
   'ios likely-still': 'the certainty line (certainty.json)',
   'ios likely-still-largest': 'the certainty line (certainty.json)',
   'ios sentence-no-time': 'the sentence (wording.json, clauseKeys)',
   'ios certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
   'ios one-moment': 'the readout reads one moment (readoutAt is given it)',
   'ios change-kept-on-hide': 'the commit on leaving (ios Edits)',
-  'ios unreadable': 'running.json reads',
+  'ios unreadable': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
   'ios sweep': 'the boot sweep (ios Stores)',
-  'ios newer-version': 'newer.json',
-  'ios newer-build': 'newer.json',
+  'ios newer-version': 'the newer-build guard (ios Newer.swift)',
+  'ios newer-build': 'the newer-build guard (ios Newer.swift)',
   'a drag is one correction, on release': 'both apps\' edits',
-  'each tab keeps its own cook': 'running.json takeUps',
+  'each tab keeps its own cook': 'another tab\'s copy taken up (web tabs.ts)',
   'an earlier build\'s stored cook at an upgrade': 'the boot sweep',
-  'a second tab takes up a correction and never undoes it': 'running.json takeUps',
+  'a second tab takes up a correction and never undoes it': 'another tab\'s copy taken up (web tabs.ts)',
   'the likely time range never contradicts the clock': 'wording.json timeRangeWords',
-  'a second tab never writes over what the first observed': 'running.json takeUps',
+  'a second tab never writes over what the first observed': 'another tab\'s copy taken up (web tabs.ts)',
 };
 
 /* ------------------------------------------------------------- the run */
@@ -489,8 +490,7 @@ function run(def: TraceDef) {
     const s = d(seen);
     if (s.posterior !== undefined) env.calibration = posterior(s.posterior);
     if (s.reload === true) {
-      const stored = state.cook === null ? null : readRunningCook(JSON.parse(JSON.stringify(state.cook)));
-      state = { cook: stored, plan: null, leanHint_s: state.leanHint_s };
+      state = { cook: state.cook, plan: null, leanHint_s: state.leanHint_s };
       env.surfaces = [];
       env.before = null;
     }

@@ -24,7 +24,7 @@
  *                              label, which words can be reached, the verdict
  *   fixtures/texture.json      the texture bands and the note's keys
  *   fixtures/boil.json         boil memory: a boil remembered, and estimated
- *   fixtures/sounds.json       the alarm sounds and their timing
+ *   fixtures/sounds.json       the alarm sounds' timing
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
@@ -47,22 +47,15 @@
  *                              locale, and a pseudo-Czech catalogue in cs-CZ
  *   fixtures/probe.json        the probe reading
  *   fixtures/language.json     the switch into the English of 1750 and out
- *   fixtures/share.json        sharing's state: what a stored copy reads as,
- *                              every move from every reachable state, and what
- *                              a sender makes of the endpoint's answer
+ *   fixtures/share.json        sharing's contract with the server: ids, the
+ *                              number each egg is filed under, and what a
+ *                              sender makes of the endpoint's answers
  *   fixtures/prior.json        a prior drawn from a population, and the
  *                              population files a reader refuses
- *   fixtures/running.json      a running cook: its egg and pot, its moves, a
- *                              stored one read back, its plan, two copies
- *                              taken up, and the phase at every boundary
+ *   fixtures/running.json      a running cook: its egg and pot, its moves, its
+ *                              plan, and the phase at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
- *   fixtures/newer.json        which build may write: versions compared, and
- *                              the verdict on the newest-version mark
- *   fixtures/settings.json     the settings both apps keep: the defaults, and
- *                              a stored copy read back
- *   fixtures/stores.json       every store either app keeps: its name, format
- *                              and keys, and what reads as in its format
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -102,16 +95,12 @@ import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
-import { newerFixture } from './fixtures/newer.js';
 import { stepFixture } from './fixtures/step.js';
-import { settingsFixture } from './fixtures/settings.js';
-import { storesFixture } from './fixtures/stores.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
 const shareJson = shareFixture();
-const newerJson = newerFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -141,9 +130,6 @@ const written: Record<string, unknown> = {
   wording: wordingFixture(),
   running: runningFixture,
   step: stepFixture,
-  newer: newerJson,
-  settings: settingsFixture,
-  stores: storesFixture,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that
@@ -215,10 +201,8 @@ const counts = [
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
-  `${shareJson.transitions.length} sharing moves`,
-  `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
+  `${shareJson.replies.length} server answers`,
+  `${runningFixture.setups.length} cook setups and ${runningFixture.moves.length} cook moves`,
   `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
-  `${(newerJson['compare'] as unknown[]).length} version comparisons`,
-  `${settingsFixture.read.length} stored settings read`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

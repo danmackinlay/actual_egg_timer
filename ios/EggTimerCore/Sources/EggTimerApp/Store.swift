@@ -18,7 +18,7 @@ import EggTimerCore
 /// and a build that finds a newer one writes nothing at all until it is
 /// quit: no setting, pan, cook, result, language or sharing state. It still
 /// times the egg, and says so at the top of the screen and in Settings.
-/// Whether it may write is core's `writerCheckBuilt`.
+/// Whether it may write is `writerCheckBuilt` (Newer.swift).
 ///
 /// Every write the app makes to UserDefaults goes through `set` and
 /// `remove`, so the guard holds for all of them: `test/iosStores.test.ts`
@@ -40,40 +40,18 @@ public enum Stores {
     }
 
     /// Under its own key, never changed: a newer build must find it.
-    static let markKey = key(StoreRegistry.newest)
+    static let markKey = StoreRegistry.newest.key
     /// The build number of the build that wrote the mark. A build from
     /// before it was kept reads only the mark, and leaves this alone.
-    static let buildKey = key(StoreRegistry.newestBuild)
+    static let buildKey = StoreRegistry.newestBuild.key
 
-    /// Every key an earlier build wrote: the posteriors before the log
-    /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
-    /// 0.5, DECISIONS.md 107), the copies 0.4 kept aside of what it could not
-    /// read, the cooks in progress before this one's shape, the sharing keys
-    /// of an earlier 0.4 build, settings no build reads any more, the
-    /// settings a key each among them, sharing's key kept with its dates as
-    /// seconds since 2001, and 0.5's keys with a format in them, from before
-    /// the table of stores.
-    static let retiredKeys = [
-        "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
-        "settings.v1",
-        "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
-        // The settings before they were one value (`SettingsStore`).
-        "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
-        "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
-    ]
     /// The keys deleted at launch (`claim`) rather than left on the phone
     /// being neither read nor collected: every key an earlier build wrote
-    /// that no store of this build is kept under (core's `StoreRegistry`).
+    /// that no store of this build is kept under (`StoreRegistry`).
     static var sweptKeys: [String] {
-        let kept = Set(StoreRegistry.all.compactMap(\.ios))
-        return retiredKeys.filter { !kept.contains($0) }
+        let kept = Set(StoreRegistry.all.map(\.key))
+        return StoreRegistry.retired.filter { !kept.contains($0) }
     }
-
-    /// The keys where an earlier build kept its cook in progress.
-    private static let retiredCookKeys: Set<String> = [
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4",
-    ]
 
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
@@ -91,7 +69,7 @@ public enum Stores {
     public nonisolated(unsafe) private(set) static var readOnly = false
 
     /// The version this build marks with: the App Store version alone, which
-    /// is package.json's without the pre-release (core's `Newer.swift`).
+    /// is package.json's without the pre-release (Newer.swift).
     public static var mine: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
     }
@@ -119,7 +97,7 @@ public enum Stores {
         // A build that finds a newer mark deletes nothing.
         if verdict == .write {
             for key in sweptKeys where defaults.object(forKey: key) != nil {
-                if retiredCookKeys.contains(key) { retiredCook = true }
+                if StoreRegistry.retiredCooks.contains(key) { retiredCook = true }
                 defaults.removeObject(forKey: key, Pass())
                 #if DEBUG
                 Screenshots.log(.swept(key: key))
@@ -148,12 +126,6 @@ public enum Stores {
         guard !readOnly else { return }
         store.removeObject(forKey: key, Pass())
     }
-
-    /// A store's key on this app (core's `StoreRegistry`).
-    static func key(_ store: StoreSpec) -> String {
-        guard let key = store.ios else { preconditionFailure("\(store.name) is not kept on iOS") }
-        return key
-    }
 }
 
 /// UserDefaults' reads, and its writes with a `Stores.Pass`: what the app
@@ -180,7 +152,7 @@ extension UserDefaults: KeyValueStore {
 /// pans under `pans`. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
 enum BoilMemories {
-    private static let key = Stores.key(StoreRegistry.boilMemory)
+    private static let key = StoreRegistry.boilMemory.key
 
     static func load() -> BoilMemory {
         let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
@@ -200,11 +172,11 @@ enum BoilMemories {
     }
 }
 
-/// The inputs, remembered between launches: one value, core's `AppSettings`,
-/// as JSON under one key, read by core's `readSettings`, which the web reads
-/// its own with. Nobody wants to re-enter their altitude every morning.
+/// The inputs, remembered between launches: one value, `AppSettings`, as
+/// JSON under one key, read by `readSettings` (Settings.swift). Nobody wants
+/// to re-enter their altitude every morning.
 enum SettingsStore {
-    public static let key = Stores.key(StoreRegistry.settings)
+    public static let key = StoreRegistry.settings.key
 
     /// The settings as last read or written: what a save of some fields is
     /// laid over, so the rest stay as they were.

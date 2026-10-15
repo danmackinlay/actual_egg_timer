@@ -24,22 +24,6 @@
       {"region": "USA", "table": "eu"},
       {"region": "", "table": "eu"},
       {"region": null, "table": "eu"}
-    ],
-    "carry": [
-      {"stored": -3, "eu": -1, "us": -1},
-      {"stored": -1, "eu": -1, "us": -1},
-      {"stored": -0.5, "eu": -1, "us": -1},
-      {"stored": -0.4, "eu": -1, "us": -1},
-      {"stored": 0, "eu": 0, "us": 0},
-      {"stored": 0.5, "eu": 1, "us": 1},
-      {"stored": 1, "eu": 1, "us": 1},
-      {"stored": 1.5, "eu": 2, "us": 2},
-      {"stored": 2, "eu": 2, "us": 2},
-      {"stored": 2.5, "eu": 3, "us": 3},
-      {"stored": 3, "eu": 3, "us": 3},
-      {"stored": 3.5, "eu": 3, "us": 4},
-      {"stored": 4, "eu": 3, "us": 4},
-      {"stored": 7, "eu": 3, "us": 4}
     ]
   },
   "ambient": [

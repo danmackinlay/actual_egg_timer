@@ -15,13 +15,10 @@
 // starts with its own `node tools/build.mjs`, and four of them at once would
 // be four `tsc -b`s over one dist/.
 //
-// fixtures:check rewrites fixtures/, and two jobs read it. `swift test` reads
-// every fixture, so it waits for fixtures:check to end: Swift never reads
-// fixtures/ while anything writes it. `npm test` reads fixtures/stores.json
-// and runs alongside; it cannot see a part-written file, because every write
-// to fixtures/ is a whole file renamed into place (`replaceFile`,
-// tools/fixtureCompare.ts). It sees the committed file or the fresh one, and
-// when fixtures:check passes those agree.
+// fixtures:check rewrites fixtures/, and `swift test` reads every fixture, so
+// it waits for fixtures:check to end: Swift never reads fixtures/ while
+// anything writes it. `npm test` runs alongside; the one fixture it reads,
+// population.json, is the fit's, which fixtures:check never writes.
 //
 // A failed job stops nothing else: every job runs to its end (but swift test,
 // which needs swift build), and verify fails naming each failed job and its

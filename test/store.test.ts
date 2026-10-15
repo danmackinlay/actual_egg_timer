@@ -11,15 +11,13 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
-import { STORES, stamped } from '../src/core/stores.js';
+import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
+import { STORES, stamped } from '../src/ui/stores.js';
 import { choicesOf } from '../src/ui/state.js';
-import {
-  DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
-} from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openPans, openSettings } from '../src/ui/store.js';
+import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */
@@ -32,12 +30,12 @@ const storage = new Map<string, string>();
   },
 };
 
-const SETTINGS_KEY = STORES.settings.web;
-const BOIL_KEY = STORES.boilMemory.web;
+const SETTINGS_KEY = STORES.settings.key;
+const BOIL_KEY = STORES.boilMemory.key;
 
 /** Settings as a build of this format stores them. */
 const settingsText = (o: object): string => JSON.stringify(stamped(STORES.settings, { ...o }));
-const COOK_KEY = STORES.cook.web;
+const COOK_KEY = STORES.cook.key;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
 const settings = openSettings(classes);
@@ -90,6 +88,22 @@ test('settings stored in no format, as 0.3 stored them, read as a fresh install\
   freshPage();
   storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 }));
   assert.equal(settings.load().altitude_m, DEFAULT_SETTINGS.altitude_m);
+});
+
+test('settings the build before stored, with the iPhone\'s weighed egg in them, read back intact', () => {
+  // Format 1 as core's settings wrote it before each app kept its own: every
+  // field the web reads, and `weighedMass_g`, which only the iPhone reads.
+  freshPage();
+  const written = {
+    v: 1, sizeIndex: -1, customMinor_mm: 47.5, measuredBy: 'girth', weighedMass_g: 71.25, startTempMode: 'custom',
+    customStart_C: 18.5, altitude_m: 1200, startMode: 'hot', afterBoil: 'off', cooling: 'bowl', tapWater_C: 12.5,
+    bowlLitres: 1.5, bowlWater_C: 17, waterLitres: 3.5, eggCount: 6, doneness: 0.73, muted: true, alarm: 'hen',
+    unitsChosen: 'imperial', language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5,
+  };
+  storage.set(SETTINGS_KEY, JSON.stringify(written));
+  const { v: _v, weighedMass_g: _weighed, ...read } = written;
+  assert.deepEqual(settings.load(), read);
+  assert.equal(loadLanguage().chosen, 'en-x-1750', 'the reader of 1750 stays in 1750');
 });
 
 test('a stored sous-vide from an older build loads as cold', () => {
@@ -213,24 +227,6 @@ test('a copy with other corrections gives only what the cook saw, never what its
   assert.equal(correctedLater(start, corrected), false);
   assert.equal(correctedLater(back, corrected), true);
   assert.equal(correctedLater(start, start), false);
-});
-
-/** The stored cooks both apps are held to, as text (fixtures/stores.json):
- *  what each reads as, as it is stored, or null. iOS runs the same rows
- *  through `Cook` (EggTimerAppTests). */
-const STORED_COOKS = (JSON.parse(readFileSync('fixtures/stores.json', 'utf8')) as {
-  cooks: { about: string; text: string; read: unknown }[];
-}).cooks;
-
-test('the web\'s store takes or refuses each stored cook of the table both apps are held to', () => {
-  assert.ok(STORED_COOKS.length > 20);
-  for (const row of STORED_COOKS) {
-    storage.clear();
-    storage.set(COOK_KEY, row.text);
-    const loaded = cooks.load();
-    const read = loaded === null ? null : JSON.parse(JSON.stringify(storedCook(loaded))) as unknown;
-    assert.deepEqual(read, row.read, row.about);
-  }
 });
 
 test('a cook is stored without the cook as it stands: its start and log, which a reload folds again', () => {

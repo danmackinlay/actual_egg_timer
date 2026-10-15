@@ -196,10 +196,7 @@ struct StepConformance {
                 let what = "\(note), step \(i)"
                 if let name = s["posterior"] as? String { env.calibration = try #require(posteriors[name]) }
                 if s["reload"] as? Bool == true {
-                    let stored = try state.cook.map {
-                        try #require(readRunningCook($0.jsonObject), "\(what): the stored cook reads back")
-                    }
-                    state = CookState(cook: stored, plan: nil, leanHintS: state.leanHintS)
+                    state = CookState(cook: state.cook, plan: nil, leanHintS: state.leanHintS)
                     env.surfaces = []
                     env.before = nil
                 }

@@ -11,11 +11,10 @@
  *
  * Like the units (`chooseUnits` in `units.ts`), the cook's own choice is kept
  * apart from the default. `chosen` is what the cook picked, or null if they
- * never have, in which case the app speaks `DEFAULT_LANGUAGE`. A stored state
- * may also carry `flippedFrom`, what the units switch replaced, which nothing
- * reads; a read ignores it.
+ * never have, in which case the app speaks `DEFAULT_LANGUAGE`.
  *
- * No I/O. The web keeps this in its settings, iOS in UserDefaults.
+ * No I/O. Each app keeps and reads back its own state: the web in its
+ * settings, iOS in UserDefaults.
  */
 
 import { languageOf } from './format.js';
@@ -27,9 +26,6 @@ export const DEFAULT_LANGUAGE = 'en';
 /** The English of 1750's catalogue tag. */
 export const PERIOD_LANGUAGE = 'en-x-1750';
 
-/** Every catalogue the picker offers, in its order. */
-export const LANGUAGES: readonly string[] = [DEFAULT_LANGUAGE, PERIOD_LANGUAGE];
-
 /** The private-use subtag that marks the register. */
 const PERIOD_SUBTAG = 'x-1750';
 
@@ -38,8 +34,6 @@ export interface LanguageState {
    *  1750 put there by the units switch. */
   chosen: string | null;
 }
-
-export const FRESH_LANGUAGE: LanguageState = { chosen: null };
 
 /** The catalogue on screen. */
 export function effectiveLanguage(state: LanguageState): string {
@@ -80,14 +74,4 @@ export function languageAfterFlip(state: LanguageState, flip: UnitsFlip): Langua
  *  keeps °F. */
 export function languageAfterPick(_state: LanguageState, tag: string): LanguageState {
   return { chosen: tag };
-}
-
-/** A stored state, read defensively: anything malformed is the fresh one. A
- *  tag is kept only if it is one of `known`, so a catalogue that has gone
- *  cannot be asked for. Any other field, such as the retired `flippedFrom`,
- *  is ignored. */
-export function readLanguageState(raw: unknown, known: readonly string[]): LanguageState {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return FRESH_LANGUAGE;
-  const chosen = (raw as Record<string, unknown>)['chosen'];
-  return { chosen: typeof chosen === 'string' && known.includes(chosen) ? chosen : null };
 }

@@ -22,7 +22,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ALARM_SOUNDS, AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
+import { AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
+import { ALARM_SOUNDS } from '../src/ui/settings.js';
 import {
   NOTIFICATION_SOUND_MAX_S, RECORDINGS, loudness, notificationRepeats, recordedPeriod, synthPeriod,
 } from '../src/ui/alarmSounds.js';

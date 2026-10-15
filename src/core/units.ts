@@ -486,8 +486,3 @@ export function chooseUnits(
     : next === 'imperial' ? 'metricToImperial' : 'imperialToMetric';
   return { chosen: next, flip: flip };
 }
-
-/** A stored choice, or null for none: anything else in storage is not one. */
-export function readChosenUnits(raw: unknown): UnitSystem | null {
-  return raw === 'metric' || raw === 'imperial' ? raw : null;
-}

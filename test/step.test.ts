@@ -15,8 +15,9 @@ import { Cooling } from '../src/core/protocol.js';
 import { decisionInputs, inputsKey, numberKey } from '../src/core/decide.js';
 import { EggRecord } from '../src/core/record.js';
 import {
-  CookChoices, CookSurface, PULL_GRACE_SECONDS, Phase, cookSetupOf, guessLengthened, phaseAt, readRunningCook,
+  CookChoices, CookSurface, PULL_GRACE_SECONDS, Phase, cookSetupOf, guessLengthened, phaseAt,
 } from '../src/core/running.js';
+import { readRunningCook } from '../src/ui/storedCook.js';
 import { coolingStartsIn_s, readoutAt } from '../src/core/readout.js';
 import { CookEffect, CookEnv, CookEvent, CookState, CookStep, step, surfaceFor } from '../src/core/step.js';
 import { gridFor, knowing } from '../tools/common.js';

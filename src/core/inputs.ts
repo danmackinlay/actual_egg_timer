@@ -10,7 +10,7 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES } from './geometry.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from './geometry.js';
 import { T_ROOM_C } from './constants.js';
 
 /* ------------------------------------------------------------------ bounds */
@@ -141,28 +141,3 @@ export const DEFAULTS = {
  *  restated, so the size class and the number can never disagree. */
 export const DEFAULT_EGG_MASS_KG = SIZE_CLASSES[DEFAULTS.sizeIndex].mass_kg;
 
-/**
- * A stored size index, read against the table in use now.
- *
- * An index means something only inside one table, and the table can change
- * underneath a stored record: the phone's region is changed, the browser's
- * language is, or - the case that matters - a record saved before there were
- * two tables is read by an American. The rule is that the index keeps its
- * NAME. A cook who picked Large picked the word on their carton, and the
- * region says whose carton it is, so a Large stays a Large and cooks at the
- * new table's mass. Keeping the mass instead would leave every American who
- * never touched the control on the EU Large this table exists to replace.
- *
- * Both tables hold the same names at the same indices as far as the shorter
- * goes, so keeping the name is keeping the index. A Jumbo read outside the US
- * becomes the largest class there is, Extra large. A measured egg (-1) is
- * measured in any region. Nothing is stored about the region, so there is no
- * second record to disagree with the first.
- */
-export function carrySizeIndex(stored: number, classes: SizeClass[]): number {
-  if (!Number.isFinite(stored)) return DEFAULTS.sizeIndex;
-  // Negatives first, so rounding never has to settle -0.5: the two languages
-  // break that tie in different directions.
-  if (stored < 0) return -1;
-  return Math.min(Math.round(stored), classes.length - 1);
-}

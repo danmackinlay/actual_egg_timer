@@ -2,9 +2,11 @@ import EggTimerCore
 import Foundation
 import Observation
 
-/// The alarm's sound, as the cook chose it in Settings, kept. The sounds, their order and the default are the core's
-/// (`AlarmSound`), as the web's are; what a stored value reads as is
-/// `readAlarmSound`, held to the web's by `fixtures/sounds.json`.
+/// The alarm's sound, as the cook chose it in Settings, kept. The sounds and
+/// their order are the core's (`AlarmSound`), as the web's are; a fresh
+/// install rings the wind-up timer, which is what anyone expects an egg
+/// timer to sound like, and a stored value that is not a sound reads as it
+/// (`readAlarmSound`).
 ///
 /// The notification and the in-app ring both read it when they sound, so a
 /// change reaches the next alarm scheduled. One already scheduled for a
@@ -15,7 +17,7 @@ public final class AlarmSoundChoice: AlarmSoundChoosing {
     public static let shared = AlarmSoundChoice()
 
     /// Under its own key, as the language is (`LanguageChoice`).
-    private static let key = Stores.key(StoreRegistry.alarmSound)
+    private static let key = StoreRegistry.alarmSound.key
 
     public private(set) var sound: AlarmSound
 
@@ -36,4 +38,15 @@ public final class AlarmSoundChoice: AlarmSoundChoosing {
     public static func file(_ sound: AlarmSound, _ moment: RingDeadline) -> String {
         "alarm-\(sound.rawValue)-\(moment.rawValue).caf"
     }
+}
+
+/// The sound a fresh install rings with.
+public let defaultAlarmSound = AlarmSound.timer
+
+/// A stored choice, or the default for anything that is not one: absence, a
+/// sound a later version offers and this one does not, a sound since
+/// retired.
+func readAlarmSound(_ raw: Any?) -> AlarmSound {
+    guard let tag = raw as? String, let sound = AlarmSound(rawValue: tag) else { return defaultAlarmSound }
+    return sound
 }

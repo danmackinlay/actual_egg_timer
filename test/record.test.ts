@@ -18,7 +18,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { STORES } from '../src/core/stores.js';
+import { STORES } from '../src/ui/stores.js';
 import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
@@ -30,9 +30,10 @@ import {
 import { LITERATURE_POPULATION, WhiteReport, YolkWord } from '../src/core/infer.js';
 import { BoilMemory } from '../src/core/boil.js';
 import {
-  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, readRunningCook,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt,
   replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
+import { readRunningCook } from '../src/ui/storedCook.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
@@ -526,7 +527,7 @@ test('3d. another tab\'s egg is taken up, not written over', () => {
   const stored = decodeKept(storage.get('aet.calibration.v5') as string).kept;
   assert.deepEqual(stored.log.map((r) => r.level), [0.3, 0.4, 0.5]);
   assert.equal(cal.storedElsewhere('aet.calibration.v5'), false, 'nothing new since');
-  assert.equal(cal.storedElsewhere(STORES.settings.web), false);
+  assert.equal(cal.storedElsewhere(STORES.settings.key), false);
   // The other tab forgets everything: this one follows, in the calibration
   // the app holds, and a late answer to its egg is refused.
   storage.delete('aet.calibration.v5');

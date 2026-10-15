@@ -143,7 +143,7 @@ public func wordBracket(_ w: WordCertainty) -> WordBracket {
 
 /// The likely time range for a cook aiming at a nominal yolk dose of
 /// 10^`logNominalTarget`: the right cook time's 90% interval.
-public func likelyTimeRange(_ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double) -> TimeRange {
+func likelyTimeRange(_ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double) -> TimeRange {
     let r = predictCookTime(post, grid, logNominalTarget, lowQ: timeRangeLowQ, highQ: timeRangeHighQ)
     return TimeRange(lowS: r.lowS, highS: r.highS)
 }

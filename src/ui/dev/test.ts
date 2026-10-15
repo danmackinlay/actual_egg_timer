@@ -24,8 +24,9 @@
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
 import { BoilMemory } from '../../core/boil.js';
-import { Phase, RunningCook, guessLengthened, readStoredCook } from '../../core/running.js';
-import { STORES } from '../../core/stores.js';
+import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
+import { readStoredCook } from '../storedCook.js';
+import { STORES } from '../stores.js';
 import { EggRecord } from '../../core/record.js';
 import { flushDraw, pageModel, pageStores } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
@@ -67,7 +68,7 @@ export interface Snapshot {
    *  plan's, else the idle answer's; null with neither. */
   whiteSets: boolean | null;
   /** The running cook as stored, its text, and the cook it reads as, folded
-   *  from its log (core's `readStoredCook`), or null. */
+   *  from its log (`readStoredCook`), or null. */
   stored: string | null;
   storedCook: RunningCook | null;
   /** The results log, how many of it are folded in, how many still to
@@ -131,8 +132,8 @@ function snapshot(): Snapshot {
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
     whiteSets: plan !== null ? plan.solution.whiteSets : m.solution?.whiteSets ?? null,
-    stored: localStorage.getItem(STORES.cook.web),
-    storedCook: storedCookOf(localStorage.getItem(STORES.cook.web)),
+    stored: localStorage.getItem(STORES.cook.key),
+    storedCook: storedCookOf(localStorage.getItem(STORES.cook.key)),
     log: stores.learner.keptState().log,
     eggsLogged: m.calib.eggsLogged,
     eggsBehind: stores.learner.eggsBehind(),

@@ -4,7 +4,7 @@ import Foundation
 
 /// Conformance against `fixtures/language.json`, generated from
 /// `src/core/language.ts`: the switch into the English of 1750, which
-/// tags are 1750, the record's register, and a stored state read defensively.
+/// tags are 1750, and the record's register.
 ///
 /// The two apps must agree move for move, or a cook who flips units on the web
 /// and on the phone ends up reading different Englishes for the same reason.
@@ -22,7 +22,6 @@ struct LanguageConformance {
         let fixture = try Fixtures.load("language.json")
         #expect(try defaultLanguage == fixture.str("defaultLanguage"))
         #expect(try periodLanguage == fixture.str("periodLanguage"))
-        #expect(languages == fixture["languages"] as? [String])
     }
 
     @Test("which tags are 1750, which are modern English, and the register")
@@ -50,20 +49,6 @@ struct LanguageConformance {
             }
             #expect(try after == state(c["next"]), "\(before) then \(move)")
             #expect(try effectiveLanguage(after) == c.str("effective"), "\(before) then \(move)")
-        }
-    }
-
-    @Test("a stored state is read defensively, and what is written reads back")
-    func reads() throws {
-        for c in try Fixtures.list("language.json", "reads") {
-            let raw: Any? = c["raw"] is NSNull ? nil : c["raw"]
-            let read = readLanguageState(raw, known: languages)
-            #expect(try read == state(c["state"]), "read \(String(describing: raw))")
-            // The app stores `jsonObject` through JSONSerialization; the read
-            // of that is the same state.
-            let data = try JSONSerialization.data(withJSONObject: read.jsonObject)
-            let back = try JSONSerialization.jsonObject(with: data)
-            #expect(readLanguageState(back, known: languages) == read, "round trip of \(read)")
         }
     }
 }

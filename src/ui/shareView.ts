@@ -4,7 +4,7 @@
  * (learned.ts). What sharing does is share.ts; this only says it.
  */
 
-import { ShareState } from '../core/share.js';
+import { ShareState } from './shareState.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
 import { send } from './send.js';

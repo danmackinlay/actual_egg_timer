@@ -56,9 +56,14 @@ things stand is `PLAN.md`; its last section says which document holds what.
 
 ## Both apps, TypeScript first
 
-- What both apps must agree on lives in `src/core/`, lands in TypeScript
+- What both apps must agree on lives in `src/core/`: the physics, the
+  inference and the decisions; the record's wire schema (`parseRecord`);
+  the cook's `step` machine; which words say what (`wording.ts`); the
+  alarms' timing; the server's contract for sharing. It lands in TypeScript
   first, is fixtured by `npm run fixtures`, and is held in Swift by
-  `npm run conformance`. `ios/README.md` maps the modules.
+  `npm run conformance`. `ios/README.md` maps the modules. Each app's
+  plumbing (its stores, settings, share queue, newer-build guard) is its
+  own, tested in its own suite (`DECISIONS.md` 126).
 - **Fixtures are never hand-edited, and never regenerated to make Swift
   pass.** If a fixture is wrong, the TypeScript is wrong first.
 - Apps call core only through its exports. Each app's screens are its own,

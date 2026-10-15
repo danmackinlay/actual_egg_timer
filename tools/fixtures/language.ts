@@ -8,14 +8,11 @@
  *    moves - a units flip either way, or a pick of English, 1750 or Czech - and
  *    what each move does to it. Czech has no catalogue yet; it stands for "a
  *    language that is not English", which the switch must never move.
- *  - `reads`: stored states, well and badly formed, and what a defensive read
- *    makes of each, including states stored with a `flippedFrom`, which a
- *    read ignores.
  */
 
 import {
-  DEFAULT_LANGUAGE, FRESH_LANGUAGE, LANGUAGES, LanguageState, PERIOD_LANGUAGE, effectiveLanguage,
-  isModernEnglish, isPeriod, languageAfterFlip, languageAfterPick, readLanguageState, registerOf,
+  DEFAULT_LANGUAGE, LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
+  languageAfterPick, registerOf,
 } from '../../src/core/language.js';
 
 type Move = { flip: 'metricToImperial' | 'imperialToMetric' } | { pick: string };
@@ -38,7 +35,7 @@ export function languageFixture(): Record<string, unknown> {
   }));
 
   const starts: LanguageState[] = [
-    FRESH_LANGUAGE,
+    { chosen: null },
     { chosen: DEFAULT_LANGUAGE },
     { chosen: PERIOD_LANGUAGE },
     { chosen: 'cs' },
@@ -61,28 +58,11 @@ export function languageFixture(): Record<string, unknown> {
     frontier = nextFrontier;
   }
 
-  const raws: unknown[] = [
-    null, 'en', 42, [], {}, { chosen: 'xx' }, { chosen: 5 }, { chosen: 'en' }, { chosen: 'cs' },
-    { chosen: PERIOD_LANGUAGE },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: null },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: null } },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: 'en' } },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: 'cs' } },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: {} },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: 'en' },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: [] },
-    { chosen: 'en', flippedFrom: { chosen: null } },
-    { chosen: null, flippedFrom: { chosen: 'en' } },
-  ];
-  const reads = raws.map((raw) => ({ raw, state: readLanguageState(raw, LANGUAGES) }));
-
   return {
-    about: 'The switch into the English of 1750: tags, transitions and defensive reads. src/core/language.ts.',
+    about: 'The switch into the English of 1750: tags and transitions. src/core/language.ts.',
     defaultLanguage: DEFAULT_LANGUAGE,
     periodLanguage: PERIOD_LANGUAGE,
-    languages: LANGUAGES,
     tags,
     transitions,
-    reads,
   };
 }
