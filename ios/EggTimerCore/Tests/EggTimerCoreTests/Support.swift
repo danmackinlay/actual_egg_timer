@@ -85,13 +85,31 @@ func posteriorsByName(_ list: [[String: Any]]) throws -> [String: Posterior] {
 }
 
 /// A dose grid built from a fixture's recorded extent and resolution, for the
-/// fixture's egg and pot.
+/// fixture's egg and pot. Each is built once and shared: the running and step
+/// fixtures ask for a few dozen surfaces hundreds of times, and a surface is
+/// the slow part.
 func doseGrid(_ g: [String: Any], egg: Egg, setup: CookSetup) throws -> DoseGrid {
-    try buildDoseGrid(
-        egg: egg, setup: setup,
-        spec: GridSpec(
-            alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
-            timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
-        )
+    let spec = try GridSpec(
+        alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
+        timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
     )
+    return builtGrids.grid(egg: egg, setup: setup, spec: spec)
 }
+
+/// The dose grids built so far, by egg, pot and spec. Suites run in parallel,
+/// so it is locked; a grid is built outside the lock, and two suites wanting
+/// the same one at once may each build it.
+private final class BuiltGrids: @unchecked Sendable {
+    private let lock = NSLock()
+    private var grids = [String: DoseGrid]()
+
+    func grid(egg: Egg, setup: CookSetup, spec: GridSpec) -> DoseGrid {
+        let key = "\(egg)|\(setup)|\(spec)"
+        if let grid = lock.withLock({ grids[key] }) { return grid }
+        let grid = buildDoseGrid(egg: egg, setup: setup, spec: spec)
+        lock.withLock { grids[key] = grid }
+        return grid
+    }
+}
+
+private let builtGrids = BuiltGrids()

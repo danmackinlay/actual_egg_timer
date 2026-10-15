@@ -59,14 +59,24 @@ const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({
   spec: decisionGridSpec(inputs),
 }));
 
+/** The surfaces built so far, by egg, pot and spec: the fixtures ask for a
+ *  few dozen pots some two hundred times, and a surface is the slow part. */
+const coarseGrids = new Map<string, DoseGrid>();
+
 /** A pot's decision surface as the fixtures build it: where the production
  *  spec puts it, at 7 rows and 20 s columns, the last column on or past the
- *  spec's end. reach.json builds one per pot the same way. */
+ *  spec's end. reach.json builds one per pot the same way. Each surface is
+ *  built once and shared; nothing writes to one. */
 export function coarseDecisionGrid(inputs: DecisionInputs): { spec: GridSpec; grid: DoseGrid } {
   const full = decisionGridSpec(inputs);
   const count = Math.ceil((full.timeMax_s - full.timeMin_s) / 20) + 1;
   const spec: GridSpec = { ...full, alphaCount: 7, timeMax_s: full.timeMin_s + 20 * (count - 1), timeCount: count };
-  const grid = buildRequestedGrid({ egg: inputs.egg, setup: inputs.setup, spec: spec });
+  const key = JSON.stringify([inputs.egg, inputs.setup, spec]);
+  let grid = coarseGrids.get(key);
+  if (grid === undefined) {
+    grid = buildRequestedGrid({ egg: inputs.egg, setup: inputs.setup, spec: spec });
+    coarseGrids.set(key, grid);
+  }
   return { spec: spec, grid: grid };
 }
 

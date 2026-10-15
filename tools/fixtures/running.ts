@@ -7,6 +7,7 @@
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { decisionInputs, inputsKey } from '../../src/core/decide.js';
+import { GridSpec } from '../../src/core/doseGrid.js';
 import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
@@ -218,14 +219,20 @@ function named(posterior: string) {
   return pz;
 }
 
-function surfaceFor(posterior: string, of: RunningCook, hint: number, now_s: number, profile: boolean): CookSurface {
+/** The surface a plan wants, and the spec it was built to. */
+function surfaceFor(
+  posterior: string, of: RunningCook, hint: number, now_s: number, profile: boolean,
+): { surface: CookSurface; spec: GridSpec } {
   const c = calibrationOf(named(posterior));
   const inputs = replan(of, c, null, hint, now_s).inputs;
   if (inputs === null) throw new Error('a lengthened plan has no surface');
   const g = coarseDecisionGrid(inputs);
   return {
-    inputs: inputs, grid: g.grid,
-    profile: profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null,
+    surface: {
+      inputs: inputs, grid: g.grid,
+      profile: profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null,
+    },
+    spec: g.spec,
   };
 }
 
@@ -285,25 +292,25 @@ function contextFor(cook: RunningCook, i: number): RecordContext {
 function plan(pc: PlanCase): CookPlan {
   const c = calibrationOf(named(pc.posterior));
   const ask = pc.surface;
-  let surface: CookSurface | null = null;
+  let built: { surface: CookSurface; spec: GridSpec } | null = null;
   if (ask === 'own' || ask === 'profile') {
-    surface = surfaceFor(pc.posterior, pc.cook, pc.leanHint_s, pc.now_s, ask === 'profile');
+    built = surfaceFor(pc.posterior, pc.cook, pc.leanHint_s, pc.now_s, ask === 'profile');
   } else if (ask !== 'none') {
-    surface = surfaceFor(pc.posterior, ask.of, pc.leanHint_s, ask.now_s, false);
+    built = surfaceFor(pc.posterior, ask.of, pc.leanHint_s, ask.now_s, false);
   }
+  const surface = built === null ? null : built.surface;
   const hint = pc.hint ?? null;
   const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s, hint);
   if (hint !== null && JSON.stringify(p) !== JSON.stringify(replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s))) {
     throw new Error(`${pc.note}: the hint moved the plan`);
   }
-  const g = surface === null ? null : coarseDecisionGrid(surface.inputs);
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
     leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: memoJson(hint),
-    surface: surface === null || g === null ? null : {
+    surface: built === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
-      grid: g.spec,
-      profile: surface.profile,
+      grid: built.spec,
+      profile: built.surface.profile,
     },
     plan: planJson(p),
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
@@ -572,7 +579,7 @@ const S = START_S;
   const corr = corrected(done, { ...done.choices, mass_kg: 0.062 }, due + 1000);
   plan({ note: 'kept, then corrected at Done: stale, no record until planned again', posterior: 'learned', cook: corr, leanHint_s: 0, now_s: due + 1001, surface: 'own' });
   plan({ note: 'kept, corrected, and no surface for the corrected pot', posterior: 'learned', cook: corr, leanHint_s: 0, now_s: due + 1001, surface: 'none' });
-  const again = asRanCorrected(corr, learned, surfaceFor('learned', corr, 0, due + 1001, false), due + 1001);
+  const again = asRanCorrected(corr, learned, surfaceFor('learned', corr, 0, due + 1001, false).surface, due + 1001);
   if (again === null) throw new Error('not planned again');
   plan({ note: 'corrected, planned again on the calibration before this egg: its record from that', posterior: 'learned', cook: again, leanHint_s: 0, now_s: due + 1002, surface: 'none' });
 }
