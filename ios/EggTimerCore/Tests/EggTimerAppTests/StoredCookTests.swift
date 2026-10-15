@@ -180,6 +180,7 @@ struct StoredCookTests {
             ("no room at all", Self.pulled, ["start", "choices", "room_C"], nil),
             ("sous-vide", Self.pulled, ["start", "choices", "startMode"], "sous"),
             ("an unknown burner", Self.pulled, ["start", "choices", "afterBoil"], "low"),
+            ("no burner", Self.pulled, ["start", "choices", "afterBoil"], nil),
             ("an unknown cooling", Self.pulled, ["start", "choices", "cooling"], "fridge"),
             ("no water", Self.pulled, ["start", "choices", "waterLitres"], 0),
             ("no eggs", Self.pulled, ["start", "choices", "eggCount"], 0),

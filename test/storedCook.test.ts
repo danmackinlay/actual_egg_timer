@@ -119,6 +119,7 @@ const REFUSED: [string, string, string[], unknown][] = [
   ['no room at all', 'pulled', ['start', 'choices', 'room_C'], undefined],
   ['sous-vide', 'pulled', ['start', 'choices', 'startMode'], 'sous'],
   ['an unknown burner', 'pulled', ['start', 'choices', 'afterBoil'], 'low'],
+  ['no burner', 'pulled', ['start', 'choices', 'afterBoil'], undefined],
   ['an unknown cooling', 'pulled', ['start', 'choices', 'cooling'], 'fridge'],
   ['no water', 'pulled', ['start', 'choices', 'waterLitres'], 0],
   ['no eggs', 'pulled', ['start', 'choices', 'eggCount'], 0],
