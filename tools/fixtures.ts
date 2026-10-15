@@ -64,73 +64,158 @@
  * Each is JSON laid out one row per line (`fixtureLayout`,
  * tools/fixtureCompare.ts): a case, a step of a trace, a particle a line, so
  * that a diff names the rows that changed.
+ *
+ * Each fixture is made in a worker thread of its own, as many at once as the
+ * machine has cores, the slowest first: a fixture module computes its
+ * fixture when it is imported, and a module another imports for its
+ * constants is one that computes nothing (tools/fixtures/shared.ts). Nothing
+ * is written until every fixture is made, and then in the order below.
  */
 
+import { availableParallelism } from 'node:os';
 import { mkdirSync } from 'node:fs';
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { fixtureLayout, replaceFile } from './fixtureCompare.js';
-import { english } from './fixtures/shared.js';
-import { coreFixture } from './fixtures/core.js';
-import { scenariosFixture } from './fixtures/scenarios.js';
-import { sectionFixture } from './fixtures/section.js';
-import { calibrationFixture } from './fixtures/calibration.js';
-import { inputsFixture } from './fixtures/inputs.js';
-import { sliderFixture } from './fixtures/slider.js';
-import { textureFixture } from './fixtures/texture.js';
-import { boilFixture } from './fixtures/boil.js';
-import { soundsFixture } from './fixtures/sounds.js';
-import { sousvideFixture } from './fixtures/sousvide.js';
-import { sousvideCopyFixture } from './fixtures/sousvideCopy.js';
-import { recordFixture } from './fixtures/record.js';
-import { decideFixture } from './fixtures/decide.js';
-import { outcomeFixture } from './fixtures/outcome.js';
-import { certaintyFixture } from './fixtures/certainty.js';
-import { reachFixture } from './fixtures/reach.js';
-import { copyFixture } from './fixtures/copy.js';
-import { formatFixture } from './fixtures/format.js';
-import { unitsFixture } from './fixtures/units.js';
-import { probeFixture } from './fixtures/probe.js';
-import { languageFixture } from './fixtures/language.js';
-import { shareFixture } from './fixtures/share.js';
-import { wordingFixture } from './fixtures/wording.js';
-import { priorFixture } from './fixtures/population.js';
-import { runningFixture } from './fixtures/running.js';
-import { stepFixture } from './fixtures/step.js';
 
-const unitsJson = unitsFixture(english);
-const probeJson = probeFixture();
-const languageJson = languageFixture();
-const shareJson = shareFixture();
+/** What a worker hands back: the fixture's file, and what the summary line
+ *  says of it. */
+interface Made { text: string; counts: string[] }
 
-mkdirSync('fixtures', { recursive: true });
-const written: Record<string, unknown> = {
-  core: coreFixture,
-  scenarios: scenariosFixture,
-  section: sectionFixture,
-  calibration: calibrationFixture,
-  inputs: inputsFixture,
-  slider: sliderFixture,
-  texture: textureFixture,
-  boil: boilFixture,
-  sounds: soundsFixture,
-  sousvide: sousvideFixture,
-  sousvideCopy: sousvideCopyFixture,
-  record: recordFixture,
-  prior: priorFixture,
-  decide: decideFixture,
-  outcome: outcomeFixture,
-  certainty: certaintyFixture,
-  reach: reachFixture,
-  copy: copyFixture,
-  format: formatFixture,
-  units: unitsJson,
-  probe: probeJson,
-  language: languageJson,
-  share: shareJson,
-  wording: wordingFixture(),
-  running: runningFixture,
-  step: stepFixture,
+/** Each fixture by name, made by its module, and what the summary line counts
+ *  of it, in the order the fixtures are written. */
+const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[] }>> = {
+  core: async () => {
+    const { coreFixture: f } = await import('./fixtures/core.js');
+    return {
+      fixture: f, counts: [
+        `${f.sphere.seriesTheta.length} seriesTheta`,
+        `${f.sphere.stepResponse.length} step samples`,
+        `${f.sphere.rampResponse.length} ramp samples`,
+        `${f.geometry.fromMass.length} geometry`,
+        `${f.thermo.boilingPointAtAltitude.length} altitudes`,
+      ],
+    };
+  },
+  scenarios: async () => {
+    const { scenariosFixture: f } = await import('./fixtures/scenarios.js');
+    return { fixture: f, counts: [`${f.cases.length} scenarios`] };
+  },
+  section: async () => ({ fixture: (await import('./fixtures/section.js')).sectionFixture, counts: [] }),
+  calibration: async () => {
+    const { calibrationFixture: f } = await import('./fixtures/calibration.js');
+    return {
+      fixture: f, counts: [
+        `${f.grid.logYolk.length} grid cells`,
+        `${f.wordUpdates.length} calibration updates`,
+        `${f.wordUpdates.filter((u) => u.white !== null).length} white answers`,
+      ],
+    };
+  },
+  inputs: async () => ({ fixture: (await import('./fixtures/inputs.js')).inputsFixture, counts: [] }),
+  slider: async () => {
+    const { sliderFixture: f } = await import('./fixtures/slider.js');
+    return { fixture: f, counts: [`${f.cases.length} snap`, `${f.verdict.length} verdicts`] };
+  },
+  texture: async () => {
+    const { textureFixture: f } = await import('./fixtures/texture.js');
+    return { fixture: f, counts: [`${f.cases.length} textures`] };
+  },
+  boil: async () => ({ fixture: (await import('./fixtures/boil.js')).boilFixture, counts: [] }),
+  sounds: async () => ({ fixture: (await import('./fixtures/sounds.js')).soundsFixture, counts: [] }),
+  sousvide: async () => {
+    const { sousvideFixture: f } = await import('./fixtures/sousvide.js');
+    return { fixture: f, counts: [`${f.cases.length} sous-vide`] };
+  },
+  sousvideCopy: async () => {
+    const { sousvideCopyFixture: f } = await import('./fixtures/sousvideCopy.js');
+    return { fixture: f, counts: [`${f.duration.length + f.startPhrase.length} sous-vide copy`] };
+  },
+  record: async () => {
+    const { recordFixture: f } = await import('./fixtures/record.js');
+    return { fixture: f, counts: [`${f.cases.length} records`, `${f.replay.log.length} replayed eggs`] };
+  },
+  prior: async () => ({ fixture: (await import('./fixtures/population.js')).priorFixture, counts: [] }),
+  decide: async () => {
+    const { decideFixture: f } = await import('./fixtures/decide.js');
+    return { fixture: f, counts: [`${f.specs.length} decision surfaces and ${f.cases.length} decisions`] };
+  },
+  outcome: async () => {
+    const { outcomeFixture: f } = await import('./fixtures/outcome.js');
+    return { fixture: f, counts: [`${f.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`] };
+  },
+  certainty: async () => {
+    const { certaintyFixture: f } = await import('./fixtures/certainty.js');
+    return { fixture: f, counts: [`${f.spreads.length + f.cases.length} certainty readings`] };
+  },
+  reach: async () => {
+    const { reachFixture: f } = await import('./fixtures/reach.js');
+    const decided = f.profiles.reduce((n, p) => n + p.decided.length, f.owner.decided.length + f.neverSets.decided.length);
+    return {
+      fixture: f,
+      counts: [`${f.profiles.length} odds profiles, ${decided} decided answers, ${f.lowOdds.length} warnings and ${f.advice.length} advice setups`],
+    };
+  },
+  copy: async () => {
+    const { copyFixture: f } = await import('./fixtures/copy.js');
+    return {
+      fixture: f,
+      counts: [`${f.render.length} copy renders`, `${f.plural.length} plural rules`, `${f.probe.cases.length} copy probes`],
+    };
+  },
+  format: async () => {
+    const { formatFixture: f } = await import('./fixtures/format.js');
+    return {
+      fixture: f, counts: [
+        `${f.numbers.length + f.counts.length + f.times.length} formatted numbers and times`,
+        `${f.pseudo.cases.length} pseudo-Czech renders`,
+      ],
+    };
+  },
+  units: async () => {
+    const { english } = await import('./fixtures/shared.js');
+    const f = (await import('./fixtures/units.js')).unitsFixture(english);
+    const trips = (f['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0);
+    return { fixture: f, counts: [`${trips} unit round trips`] };
+  },
+  probe: async () => {
+    const f = (await import('./fixtures/probe.js')).probeFixture();
+    return {
+      fixture: f,
+      counts: [`${(f['updates'] as unknown[]).length} probe folds`, `${(f['solved'] as unknown[]).length} probe cooks`],
+    };
+  },
+  language: async () => {
+    const f = (await import('./fixtures/language.js')).languageFixture();
+    return { fixture: f, counts: [`${(f['transitions'] as unknown[]).length} language moves`] };
+  },
+  share: async () => {
+    const f = (await import('./fixtures/share.js')).shareFixture();
+    return { fixture: f, counts: [`${f.replies.length} server answers`] };
+  },
+  wording: async () => ({ fixture: (await import('./fixtures/wording.js')).wordingFixture(), counts: [] }),
+  running: async () => {
+    const { runningFixture: f } = await import('./fixtures/running.js');
+    return { fixture: f, counts: [`${f.setups.length} cook setups and ${f.moves.length} cook moves`] };
+  },
+  step: async () => {
+    const { stepFixture: f } = await import('./fixtures/step.js');
+    return {
+      fixture: f,
+      counts: [`${f.traces.length} cook traces of ${f.traces.reduce((n, t) => n + t.steps.length, 0)} steps`],
+    };
+  },
 };
+
+/** The order the summary line counts them in. */
+const COUNTED = [
+  'core', 'scenarios', 'calibration', 'slider', 'texture', 'sousvide', 'sousvideCopy', 'copy', 'format', 'units',
+  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'language', 'share', 'running', 'step',
+];
+
+/** The slowest first, so that none is started last; the rest take moments. */
+const SLOWEST = ['step', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
+
 /**
  * A particle set that repeats one earlier in the same file - an update that
  * reweighted without resampling keeps its particles - is written once: the
@@ -162,47 +247,49 @@ function shareRepeatedParticles(root: unknown): unknown {
   return walk(root, []);
 }
 
-// Every fixture's first key is `about`: what it pins and the core module that
-// answers. The line saying where it came from is added here, the same for all.
-for (const [name, fixture] of Object.entries(written)) {
+/** The fixture `name`, made and laid out as its file. Every fixture's first
+ *  key is `about`: what it pins and the core module that answers. The line
+ *  saying where it came from is added here, the same for all. */
+async function make(name: string): Promise<Made> {
+  const { fixture, counts } = await FIXTURES[name]();
   const about = (fixture as { about?: unknown }).about;
   if (typeof about !== 'string') throw new Error(`fixtures/${name}.json has no about`);
   const stamped = { ...(fixture as object), about: `${about} Generated by tools/fixtures/${name}.ts (npm run fixtures): do not hand-edit.` };
-  replaceFile(`fixtures/${name}.json`, fixtureLayout(shareRepeatedParticles(stamped)));
+  return { text: fixtureLayout(shareRepeatedParticles(stamped)), counts: counts };
 }
 
-const counts = [
-  `${coreFixture.sphere.seriesTheta.length} seriesTheta`,
-  `${coreFixture.sphere.stepResponse.length} step samples`,
-  `${coreFixture.sphere.rampResponse.length} ramp samples`,
-  `${coreFixture.geometry.fromMass.length} geometry`,
-  `${coreFixture.thermo.boilingPointAtAltitude.length} altitudes`,
-  `${scenariosFixture.cases.length} scenarios`,
-  `${calibrationFixture.grid.logYolk.length} grid cells`,
-  `${calibrationFixture.wordUpdates.length} calibration updates`,
-  `${calibrationFixture.wordUpdates.filter((u) => u.white !== null).length} white answers`,
-  `${sliderFixture.cases.length} snap`,
-  `${sliderFixture.verdict.length} verdicts`,
-  `${textureFixture.cases.length} textures`,
-  `${sousvideFixture.cases.length} sous-vide`,
-  `${sousvideCopyFixture.duration.length + sousvideCopyFixture.startPhrase.length} sous-vide copy`,
-  `${copyFixture.render.length} copy renders`,
-  `${copyFixture.plural.length} plural rules`,
-  `${copyFixture.probe.cases.length} copy probes`,
-  `${formatFixture.numbers.length + formatFixture.counts.length + formatFixture.times.length} formatted numbers and times`,
-  `${formatFixture.pseudo.cases.length} pseudo-Czech renders`,
-  `${(unitsJson['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0)} unit round trips`,
-  `${recordFixture.cases.length} records`,
-  `${recordFixture.replay.log.length} replayed eggs`,
-  `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
-  `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
-  `${certaintyFixture.spreads.length + certaintyFixture.cases.length} certainty readings`,
-  `${reachFixture.profiles.length} odds profiles, ${reachFixture.profiles.reduce((n, p) => n + p.decided.length, reachFixture.owner.decided.length + reachFixture.neverSets.decided.length)} decided answers, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
-  `${(probeJson['updates'] as unknown[]).length} probe folds`,
-  `${(probeJson['solved'] as unknown[]).length} probe cooks`,
-  `${(languageJson['transitions'] as unknown[]).length} language moves`,
-  `${shareJson.replies.length} server answers`,
-  `${runningFixture.setups.length} cook setups and ${runningFixture.moves.length} cook moves`,
-  `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
-];
-console.log(`fixtures/*.json written: ${counts.join(', ')}`);
+/** `name` made in a worker of its own. */
+function inWorker(name: string): Promise<Made> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL(import.meta.url), { workerData: name });
+    let made: Made | null = null;
+    worker.on('message', (m: Made) => { made = m; });
+    worker.on('error', (e: Error) => reject(new Error(`fixtures/${name}.json: ${e.stack ?? e.message}`)));
+    worker.on('exit', (code) => {
+      if (made !== null) resolve(made);
+      else reject(new Error(`fixtures/${name}.json: its worker exited ${code} with nothing made`));
+    });
+  });
+}
+
+/** Every fixture, at most `width` at once, the slowest started first. */
+async function makeAll(width: number): Promise<Map<string, Made>> {
+  const names = Object.keys(FIXTURES);
+  const queue = [...SLOWEST, ...names.filter((n) => !SLOWEST.includes(n))];
+  const made = new Map<string, Made>();
+  const lane = async (): Promise<void> => {
+    for (let name = queue.shift(); name !== undefined; name = queue.shift()) made.set(name, await inWorker(name));
+  };
+  await Promise.all(Array.from({ length: Math.min(width, queue.length) }, lane));
+  return made;
+}
+
+if (isMainThread) {
+  const made = await makeAll(availableParallelism());
+  mkdirSync('fixtures', { recursive: true });
+  for (const name of Object.keys(FIXTURES)) replaceFile(`fixtures/${name}.json`, (made.get(name) as Made).text);
+  const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
+  console.log(`fixtures/*.json written: ${counts.join(', ')}`);
+} else {
+  parentPort?.postMessage(await make(workerData as string));
+}

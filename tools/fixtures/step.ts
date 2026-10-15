@@ -31,7 +31,7 @@ import { Readout, ReadoutProbe, readoutAt } from '../../src/core/readout.js';
 import { CookEnv, CookEvent, CookState, CookStep, step } from '../../src/core/step.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
-import { BASE_CHOICES, MEMORY, START_S } from './running.js';
+import { BASE_CHOICES, MEMORY, START_S } from './shared.js';
 
 const S = START_S;
 
