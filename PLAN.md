@@ -274,7 +274,7 @@ Start the QA pass here.
   (`us-east-2`); `npm run serve:dev` runs it locally on a store in memory.
   Nothing is sent unless a cook turns sharing on.
 - **Versions and tags** (`DECISIONS.md` 49, `CLAUDE.md`): the version is
-  `package.json`'s, now `0.5.0-alpha.1`; iOS carries it without the
+  `package.json`'s, now `0.5.1-alpha.1`; iOS carries it without the
   pre-release tag. A release is a push the owner makes, tagged
   `v<version>`.
 - **The newest version that has run is marked** (`DECISIONS.md` 100):
