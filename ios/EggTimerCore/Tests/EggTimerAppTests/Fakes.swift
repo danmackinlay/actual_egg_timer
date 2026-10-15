@@ -297,9 +297,9 @@ struct World {
     static let version = "0.5.0"
     static let build = "3"
 
-    /// One set of surfaces for every test: they are a pure function of the
-    /// pot, and a build is seconds.
-    static let grids = DecisionGrids()
+    /// One set of surfaces for every test, none ever dropped: they are a pure
+    /// function of the pot and the posterior, and a build is seconds.
+    static let grids = DecisionGrids(kept: .max, profilesKept: .max)
 
     init(store: MemoryStore = MemoryStore(), at nowS: Double = 1_791_234_567) {
         let busy = Made.busy
