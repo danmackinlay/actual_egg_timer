@@ -90,20 +90,25 @@ struct RunningConformance {
             #expect(pot.setup.eggCount == expected.eggCount, "\(label) eggs")
             #expect(pot.setup.coolingWaterC == expected.coolingWaterC, "\(label) cooling water")
             #expect(pot.setup.bowlLitres == expected.bowlLitres, "\(label) bowl")
-            // The key of the inputs, from the fixture's own numbers, read from
-            // their text to the bit: the same key as the web's, character for
-            // character.
+            // The key of this pot's inputs, under the fixture's parameters: the
+            // same fields in the same order as the web's, each word the same
+            // and each number to tolerance (DECISIONS.md 109).
             let n = try #require(row["keyNumbers"] as? [String], "\(label): no key numbers").compactMap(Double.init)
             #expect(n.count == 12, "\(label): key numbers")
             guard n.count == 12 else { continue }
-            var setup = expected
-            (setup.eggStartC, setup.ambientC, setup.boilingC, setup.timeToBoilS) = (n[4], n[5], n[6], n[7])
-            (setup.waterLitres, setup.eggCount) = (n[8], n[9])
             let inputs = DecisionInputs(
-                egg: Egg(radiusM: n[0], minorDiameterM: n[1], massKg: n[2], volumeM3: n[3]), setup: setup,
-                params: ModelParams(alphaM2s: n[10]), whiteDoseMin: n[11]
+                egg: pot.egg, setup: pot.setup, params: ModelParams(alphaM2s: n[10]), whiteDoseMin: n[11]
             )
-            #expect(try inputsKey(inputs) == row.str("inputsKey"), "\(label) inputs key \(inputsKey(inputs))")
+            let got = keyFields(inputsKey(inputs))
+            let want = keyFields(try row.str("inputsKey"))
+            #expect(got.count == want.count, "\(label) inputs key \(inputsKey(inputs))")
+            #expect(want.filter { if case .number = $0 { true } else { false } }.count >= 12, "\(label): key numbers")
+            for (i, (a, b)) in zip(got, want).enumerated() {
+                switch (a, b) {
+                case let (.number(x), .number(y)): expectClose(x, y, "\(label) inputs key, field \(i)")
+                default: #expect(a == b, "\(label) inputs key, field \(i)")
+                }
+            }
         }
     }
 
@@ -290,6 +295,20 @@ struct RunningConformance {
             let note = try row.str("note")
             try expectBoil(boilToRemember(runningCookOf(row["cook"], note)), row["boil"], note)
         }
+    }
+}
+
+/// A field of a decision surface's key: a number, read back from the
+/// sixteen hex digits of its bits (`numberKey`), or a word as it is.
+private enum KeyField: Equatable {
+    case number(Double)
+    case word(String)
+}
+
+private func keyFields(_ key: String) -> [KeyField] {
+    key.split(separator: "|", omittingEmptySubsequences: false).map { part in
+        if part.count == 16, let bits = UInt64(part, radix: 16) { return .number(Double(bitPattern: bits)) }
+        return .word(String(part))
     }
 }
 
