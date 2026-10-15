@@ -12,7 +12,7 @@ import EggTimerCore
 struct SettingsTests {
     /// Through JSONSerialization, as the store reads them.
     func read(_ stored: Any, _ classes: [SizeClass] = sizeClasses) throws -> AppSettings {
-        let data = try JSONSerialization.data(withJSONObject: ["v": 2, "s": stored])
+        let data = try JSONSerialization.data(withJSONObject: ["v": 1, "s": stored])
         let o = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         return readSettings(o["s"], classes: classes)
     }

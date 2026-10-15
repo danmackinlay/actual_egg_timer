@@ -16,7 +16,7 @@ import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
 import { STORES, stamped } from '../src/ui/stores.js';
 import { choicesOf } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings, openCooks, openPans, openSettings } from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openPans, openSettings } from '../src/ui/store.js';
 import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -88,6 +88,22 @@ test('settings stored in no format, as 0.3 stored them, read as a fresh install\
   freshPage();
   storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 }));
   assert.equal(settings.load().altitude_m, DEFAULT_SETTINGS.altitude_m);
+});
+
+test('settings the build before stored, with the iPhone\'s weighed egg in them, read back intact', () => {
+  // Format 1 as core's settings wrote it before each app kept its own: every
+  // field the web reads, and `weighedMass_g`, which only the iPhone reads.
+  freshPage();
+  const written = {
+    v: 1, sizeIndex: -1, customMinor_mm: 47.5, measuredBy: 'girth', weighedMass_g: 71.25, startTempMode: 'custom',
+    customStart_C: 18.5, altitude_m: 1200, startMode: 'hot', afterBoil: 'off', cooling: 'bowl', tapWater_C: 12.5,
+    bowlLitres: 1.5, bowlWater_C: 17, waterLitres: 3.5, eggCount: 6, doneness: 0.73, muted: true, alarm: 'hen',
+    unitsChosen: 'imperial', language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5,
+  };
+  storage.set(SETTINGS_KEY, JSON.stringify(written));
+  const { v: _v, weighedMass_g: _weighed, ...read } = written;
+  assert.deepEqual(settings.load(), read);
+  assert.equal(loadLanguage().chosen, 'en-x-1750', 'the reader of 1750 stays in 1750');
 });
 
 test('a stored sous-vide from an older build loads as cold', () => {

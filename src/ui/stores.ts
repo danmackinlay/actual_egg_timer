@@ -40,7 +40,7 @@ export const STORES = {
   newest: { name: 'newest', format: null, key: 'aet.newest' },
   /** The settings, one value (settings.ts), the language and the alarm's
    *  sound among them. */
-  settings: { name: 'settings', format: 2, key: 'aet.settings' },
+  settings: { name: 'settings', format: 1, key: 'aet.settings' },
   /** The running cook: what was fixed at the press, its start and its log,
    *  whether its egg was answered, and the lean last decided
    *  (storedCook.ts). */

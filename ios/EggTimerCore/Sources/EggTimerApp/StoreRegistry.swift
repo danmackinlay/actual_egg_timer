@@ -33,7 +33,7 @@ public enum StoreRegistry {
     public static let newest = StoreSpec(name: "newest", format: nil, key: "newestVersion")
     public static let newestBuild = StoreSpec(name: "newestBuild", format: nil, key: "newestBuild")
     /// The settings, one value (Settings.swift).
-    public static let settings = StoreSpec(name: "settings", format: 2, key: "settings")
+    public static let settings = StoreSpec(name: "settings", format: 1, key: "settings")
     /// The running cook (StoredCook.swift).
     public static let cook = StoreSpec(name: "cook", format: 7, key: "cook")
     /// The pans' measured times to boil, as `pans`.
