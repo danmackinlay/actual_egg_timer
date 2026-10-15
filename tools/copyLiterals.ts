@@ -20,7 +20,9 @@
  * - what a debug build alone compiles: the part of an `#if DEBUG` before
  *   its `#else` (the `#else` half is the release build's, and is scanned),
  *   and the debug file, Screenshots.swift, which acts only on launch
- *   arguments a release build never reads.
+ *   arguments a release build never reads;
+ * - the files that only write and read back what the app stores (FORMAT_FILES):
+ *   every literal there is a key, a field's name or a version's syntax.
  *
  * A NOT_COPY entry that no scanned literal needs fails too, so the list
  * holds only what the code says now.
@@ -33,7 +35,7 @@
  * web's by fixtures/copy.json.
  */
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
@@ -47,6 +49,16 @@ const DIRS = [
  *  arguments, which a release build does not read. */
 const DEBUG_FILES = new Set([
   'ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift',
+]);
+
+/** Files that draw and say nothing: they only write and read back what the
+ *  app stores, so every literal in them is a stored field's name, a key, or
+ *  the syntax of a version. */
+const FORMAT_FILES = new Set([
+  'ios/EggTimerCore/Sources/EggTimerApp/Newer.swift',
+  'ios/EggTimerCore/Sources/EggTimerApp/Settings.swift',
+  'ios/EggTimerCore/Sources/EggTimerApp/ShareQueue.swift',
+  'ios/EggTimerCore/Sources/EggTimerApp/StoredCook.swift',
 ]);
 
 /** Literals that are not words on a screen, and why. Exact raw text. */
@@ -112,6 +124,7 @@ const NOT_COPY: Record<string, string> = {
   'cookInProgress.v4': 'UserDefaults key',
   '{} is not kept on iOS': 'precondition message, never shown',
   pans: 'stored pans field name (Store.swift, `BoilMemories`)',
+  chosen: 'stored language state field (LanguageChoice.swift)',
   // the record's own fields, as the app fills them in: never shown
   '{}+{}': 'the app version a record carries: version, plus, build number',
   weighedMassG: 'UserDefaults key',
@@ -185,8 +198,6 @@ const NOT_COPY: Record<string, string> = {
   ', looped': 'log message, never shown',
   'no sound to play: its file is missing or unreadable': 'log message, never shown',
   population: 'bundle resource name (Calibration.swift)',
-  busySince: 'stored sharing state field',
-  busySince_s: 'sharing state field, in core\'s JSON',
   'sharing.attest.v1': 'UserDefaults key, retired (Store.swift)',
   'https://actualeggtimer.netlify.app': 'the endpoint\'s site, never shown',
   'x-egg-assertion': 'HTTP header name',
@@ -330,7 +341,7 @@ function sources(): Map<string, string> {
   const files = new Map<string, string>();
   for (const dir of DIRS) {
     for (const name of swiftFiles(dir)) {
-      if (!DEBUG_FILES.has(name)) files.set(name, releaseOnly(readFileSync(name, 'utf8')));
+      if (!DEBUG_FILES.has(name) && !FORMAT_FILES.has(name)) files.set(name, releaseOnly(readFileSync(name, 'utf8')));
     }
   }
   return files;
@@ -361,6 +372,9 @@ for (const l of now) {
   if (l.argument && argumentNames.has(l.text)) continue;
   if (l.text in NOT_COPY) { needed.add(l.text); continue; }
   failures.push(`${l.file}: "${l.text}" is still a literal`);
+}
+for (const name of [...DEBUG_FILES, ...FORMAT_FILES]) {
+  if (!existsSync(name)) failures.push(`${name} is skipped and is no file; take it off its list`);
 }
 for (const entry of Object.keys(NOT_COPY)) {
   if (!needed.has(entry)) failures.push(`NOT_COPY: "${entry}" is no scanned literal that needs it; delete it`);
