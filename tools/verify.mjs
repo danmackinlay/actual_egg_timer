@@ -9,20 +9,26 @@
 //   copy:literals    no Swift literal is words (dist/tools/copyLiterals.js)
 //   fixtures:check   the fixtures made afresh, compared with git's
 //   swift build      the package and its tests, compiled
-//   swift test       run, once fixtures:check and swift build have both ended
+//   swift app tests  EggTimerAppTests, once swift build has ended
+//   swift core tests EggTimerCoreTests, once fixtures:check and swift build
+//                    have both ended
 //
 // The jobs call the compiled scripts, not their npm scripts: each npm script
 // starts with its own `node tools/build.mjs`, and four of them at once would
 // be four `tsc -b`s over one dist/.
 //
-// fixtures:check rewrites fixtures/, and `swift test` reads every fixture, so
-// it waits for fixtures:check to end: Swift never reads fixtures/ while
-// anything writes it. `npm test` runs alongside; the one fixture it reads,
+// fixtures:check rewrites fixtures/, and the core's Swift tests read every
+// fixture, so they wait for fixtures:check to end: Swift never reads
+// fixtures/ while anything writes it. The app's Swift tests read no fixture,
+// and are the longest job, so they start as soon as the build ends. The two
+// Swift test runs share the package's .build, which `swift test` locks even
+// when it builds nothing; with --skip-build neither writes it, so each passes
+// --ignore-lock. `npm test` runs alongside; the one fixture it reads,
 // population.json, is the fit's, which fixtures:check never writes.
 //
-// A failed job stops nothing else: every job runs to its end (but swift test,
-// which needs swift build), and verify fails naming each failed job and its
-// exit code.
+// A failed job stops nothing else: every job runs to its end (but the Swift
+// tests, which need swift build), and verify fails naming each failed job and
+// its exit code.
 //
 // Usage: node tools/verify.mjs
 import { spawn } from 'node:child_process';
@@ -78,8 +84,10 @@ if (build.code === 0) {
   const tests = readdirSync('dist/test').filter((f) => f.endsWith('.test.js')).sort().map((f) => join('dist/test', f));
   const fixtures = job('fixtures:check', [[node, ['dist/tools/fixtures.js']], [node, ['dist/tools/fixturesCheck.js']]]);
   const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
-  const swiftTest = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
-    ? job('swift test', [['swift', ['test', '--skip-build'], SWIFT]])
+  const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
+  const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
+  const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
+    ? swiftTests('swift core tests', 'EggTimerCoreTests')
     : null));
   const all = await Promise.all([
     job('npm test', [[node, ['--test', ...tests]]]),
@@ -87,17 +95,20 @@ if (build.code === 0) {
     job('copy:literals', [[node, ['dist/tools/copyLiterals.js']]]),
     fixtures,
     swiftBuild,
-    swiftTest,
+    appTests,
+    coreTests,
   ]);
   results.push(...all.filter((r) => r !== null));
 }
 
 console.log('\n===== verify =====');
 for (const r of [...results].sort((a, b) => a.end - b.end)) {
-  console.log(`${r.code === 0 ? 'ok    ' : 'FAILED'} ${r.name.padEnd(15)} ${seconds(r.start).padStart(6)} s to ${seconds(r.end).padStart(6)} s`);
+  console.log(`${r.code === 0 ? 'ok    ' : 'FAILED'} ${r.name.padEnd(16)} ${seconds(r.start).padStart(6)} s to ${seconds(r.end).padStart(6)} s`);
 }
 const failed = results.filter((r) => r.code !== 0);
-if (build.code === 0 && results.every((r) => r.name !== 'swift test')) console.log('skipped swift test: swift build failed');
+if (build.code === 0 && results.every((r) => !r.name.startsWith('swift') || r.name === 'swift build')) {
+  console.log('skipped the Swift tests: swift build failed');
+}
 if (failed.length > 0) {
   console.log(`verify failed in ${seconds(Date.now() - T0)} s: ${failed.map((r) => `${r.name} (exit ${r.code})`).join(', ')}`);
   process.exit(1);
