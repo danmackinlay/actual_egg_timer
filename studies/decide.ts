@@ -3,7 +3,7 @@
  * is, what it does before and after the first egg, whether the odds are
  * calibrated, and why "still learning" is a count.
  *
- * Run: npm run decide            (all of it, several minutes)
+ * Run: npm run decide            (all of it, about nine minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
  *                                 learning, runny, reach, advice, outcome,
  *                                 nudge, certainty)
