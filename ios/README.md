@@ -29,7 +29,11 @@ double, which is all that differing libm implementations of `exp`, `sin` and
 Every module in `src/core/` has a Swift twin, held to it by a fixture. This
 table is the map; each file's header comment is its documentation, and the
 exports are its API. Apps call what is exported and nothing else, and
-anything both apps must agree on lives here, not in either app.
+anything both apps must agree on lives here, not in either app. What an app
+only stores, reads back or merges is its own (`DECISIONS.md` 125): the web's
+in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
+by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
+`Newer.swift`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
@@ -64,7 +68,6 @@ anything both apps must agree on lives here, not in either app.
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer); what a sender makes of the endpoint's answer, and when it stops waiting | `shareReply`, `shareGivesUp`, `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
 | `stores.ts` | every store either app keeps: its name, its key on each app, and the format written inside it; a stored value read only in its own format | `STORES`, `stamped`, `inFormat` | `StoreRegistry.swift` | `stores.json` |
-| `newer.ts` | which build may write: versions ordered, and the verdict on the newest-version mark | `compareVersions`, `writerCheck` | `Newer.swift` | `newer.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls: the

@@ -351,7 +351,7 @@ fit's training data cannot drift between the two.
   `bowlLitres`, which every bowl carries and nothing else may. A record from
   before them reads as it always did, so the schema stays `v: 1`; a build
   from before them refuses a log holding a bowl, and the newer-build guard
-  (`src/core/newer.ts`) keeps it from writing over one.
+  (each app's `writerCheck`) keeps it from writing over one.
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.

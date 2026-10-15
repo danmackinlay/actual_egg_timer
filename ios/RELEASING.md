@@ -319,7 +319,7 @@ the family's phones get it without you doing anything else.
 
 An older build writes what it stores whole, from the fields it knows, and
 drops what a newer one added. From 0.4 on a build that finds a newer
-version's mark writes nothing (`src/core/newer.ts`); 0.3 has no such guard,
+version's mark writes nothing (`EggTimerApp/Newer.swift`); 0.3 has no such guard,
 and 0.5's first launch deletes 0.3's results log (`DECISIONS.md` 107). So:
 
 - **Never offer a 0.3 build again** on a device 0.5 has run on, on the web or

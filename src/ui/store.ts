@@ -16,7 +16,7 @@ import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
 import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
 import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
-import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
+import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
@@ -81,7 +81,7 @@ export function removeStorage(key: string): void {
  * The newest version of the app that has run in this browser. An older build writes what it stores whole, from the
  * fields it knows, and drops what a newer one added, so a build that finds a
  * newer version here writes nothing at all for the rest of the page's life:
- * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is core's `writerCheck`.
+ * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is `writerCheck` (newer.ts).
  *
  * The mark is written before anything else, and checked again before every
  * write: a tab of a newer build opened since, or a tab that cleared the

@@ -18,7 +18,7 @@ import EggTimerCore
 /// and a build that finds a newer one writes nothing at all until it is
 /// quit: no setting, pan, cook, result, language or sharing state. It still
 /// times the egg, and says so at the top of the screen and in Settings.
-/// Whether it may write is core's `writerCheckBuilt`.
+/// Whether it may write is `writerCheckBuilt` (Newer.swift).
 ///
 /// Every write the app makes to UserDefaults goes through `set` and
 /// `remove`, so the guard holds for all of them: `test/iosStores.test.ts`
@@ -91,7 +91,7 @@ public enum Stores {
     public nonisolated(unsafe) private(set) static var readOnly = false
 
     /// The version this build marks with: the App Store version alone, which
-    /// is package.json's without the pre-release (core's `Newer.swift`).
+    /// is package.json's without the pre-release (Newer.swift).
     public static var mine: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
     }

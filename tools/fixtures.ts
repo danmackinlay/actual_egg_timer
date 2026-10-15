@@ -57,8 +57,6 @@
  *                              at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
- *   fixtures/newer.json        which build may write: versions compared, and
- *                              the verdict on the newest-version mark
  *   fixtures/settings.json     the settings both apps keep: the defaults, and
  *                              a stored copy read back
  *   fixtures/stores.json       every store either app keeps: its name, format
@@ -102,7 +100,6 @@ import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
-import { newerFixture } from './fixtures/newer.js';
 import { stepFixture } from './fixtures/step.js';
 import { settingsFixture } from './fixtures/settings.js';
 import { storesFixture } from './fixtures/stores.js';
@@ -111,7 +108,6 @@ const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
 const shareJson = shareFixture();
-const newerJson = newerFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -141,7 +137,6 @@ const written: Record<string, unknown> = {
   wording: wordingFixture(),
   running: runningFixture,
   step: stepFixture,
-  newer: newerJson,
   settings: settingsFixture,
   stores: storesFixture,
 };
@@ -218,7 +213,6 @@ const counts = [
   `${shareJson.transitions.length} sharing moves`,
   `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
   `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
-  `${(newerJson['compare'] as unknown[]).length} version comparisons`,
   `${settingsFixture.read.length} stored settings read`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
