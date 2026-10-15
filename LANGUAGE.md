@@ -245,8 +245,8 @@ diff. `CLAUDE.md` has the steps.
 - **Made**: an edit to `copy/en.json`, in both apps, with each
   `copy/en-US.json` entry it reaches and that entry's `base` (§2), each
   string within its surface's budget (`test/data/surfaces.json`); then
-  `npm run fixtures`, and `npm run copy:keys` when a key or its arguments
-  change.
+  `npm run copy:keys` when a key or its arguments change, and
+  `npm run fixtures`.
 - **Approval is stored.** `test/data/copy-review/approved.json` holds, per
   key, the English the owner approved and its hash. It began from the
   English of `e3a81cb` (the `notes` draft, 3 October 2026), the last time he

@@ -99,8 +99,8 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **To change wording** (`DECISIONS.md` 106): edit `copy/en.json`, and any
   `copy/en-US.json` override with its `base`; fit the string to its
   surface's budget (`test/data/surfaces.json`; raising a small surface's
-  budget is the owner's call); then `npm run fixtures`, and
-  `npm run copy:keys` when a key or its arguments change. A key's note and
+  budget is the owner's call); then `npm run copy:keys` when a key or its
+  arguments change, and `npm run fixtures`. A key's note and
   surface live in `copy/en.notes.json`, which no app loads; the apps that
   show it are derived from their sources (`DECISIONS.md` 122). The 1750
   twin lags (116): it is not part of a wording change. A twin rewritten
