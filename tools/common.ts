@@ -130,6 +130,11 @@ export function knowing(k: Knowing): Calibration {
   return { posterior: post, eggsLogged: k.eggsLogged };
 }
 
+/** The surfaces `gridFor` has built, by request: a surface is a pure function
+ *  of its egg, pot and extent, nothing writes to one, and the tests ask for
+ *  the same few many times. */
+const grids = new Map<string, DoseGrid>();
+
 /** A decision surface for this calibration and pot at a third of the
  *  production one's cost: its extent, at 9 rows and 20 s columns where the
  *  app has 13 and 10. What a test checks is what the choice does, which a
@@ -138,9 +143,16 @@ export function knowing(k: Knowing): Calibration {
 export function gridFor(c: Calibration, egg: Egg, setup: CookSetup): DoseGrid {
   const q = decisionGridRequest(decisionInputs(c, egg, setup));
   const count = Math.ceil((q.spec.timeMax_s - q.spec.timeMin_s) / 20) + 1;
-  return buildRequestedGrid({
+  const request = {
     ...q, spec: { ...q.spec, alphaCount: 9, timeMax_s: q.spec.timeMin_s + 20 * (count - 1), timeCount: count },
-  });
+  };
+  const key = JSON.stringify(request);
+  let grid = grids.get(key);
+  if (grid === undefined) {
+    grid = buildRequestedGrid(request);
+    grids.set(key, grid);
+  }
+  return grid;
 }
 
 /** The web's record of one egg, from its cook and plan, as a step logs it
