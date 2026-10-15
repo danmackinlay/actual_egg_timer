@@ -66,6 +66,10 @@ export async function boot(): Promise<void> {
   page().useHere.addEventListener('click', takeOver);
   if (await claimApp(false, standDown)) own(true);
   else wait();
+  // The app opens with no signal, from the last build it kept; a newer one
+  // takes over only between cooks, and a tab waiting for the app reloads
+  // into it (offline.ts).
+  startOffline(() => ({ owner: ownsApp(), cookRunning: ownsApp() && !betweenCooks() }));
 }
 
 /** The app is open in another tab: this one shows only the note and its
@@ -193,7 +197,4 @@ function wire(): void {
   document.addEventListener('visibilitychange', lookAgain);
   window.addEventListener('focus', lookAgain);
   window.addEventListener('pageshow', lookAgain);
-  // The app opens with no signal, from the last build it kept; a newer one
-  // takes over only between cooks (offline.ts).
-  startOffline(betweenCooks);
 }

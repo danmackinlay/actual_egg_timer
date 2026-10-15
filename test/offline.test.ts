@@ -1,8 +1,9 @@
 /**
  * Opening with no signal: which file answers which address
  * (src/ui/serviceWorker.ts), and the build's list of files and its name that
- * tools/precache.mjs writes into sw.js; and the page's hourly look for a
- * new build (src/ui/offline.ts), which goes by the real clock.
+ * tools/precache.mjs writes into sw.js; and the page's side
+ * (src/ui/offline.ts): which window takes a new build, and when, and the
+ * hourly look for one, which goes by the real clock.
  *
  * The worker itself runs only in a browser; it was checked there, offline,
  * in the built site (LOGBOOK, 3 October 2026).
@@ -194,7 +195,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
     };
 
     const { startOffline } = await import('../src/ui/offline.js');
-    startOffline(() => true);
+    startOffline(() => ({ owner: true, cookRunning: false }));
     await settle();
     // Loading asks only whether the worker is still served.
     assert.deepEqual([heads, updates], [1, 0]);
@@ -222,4 +223,18 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
     if (savedNavigator === undefined) delete g['navigator'];
     else Object.defineProperty(globalThis, 'navigator', savedNavigator);
   }
+});
+
+test('6. a new build: the owner takes it between cooks, waits mid-cook, and a waiting window reloads into it', async () => {
+  const { newBuild } = await import('../src/ui/offline.js');
+  const owner = { owner: true, cookRunning: false, touched: false, visible: true, asked: false };
+  assert.equal(newBuild(owner, false), 'take', 'the owner between cooks, untouched since it loaded');
+  assert.equal(newBuild({ ...owner, touched: true, visible: false }, false), 'take', 'touched, but out of sight');
+  assert.equal(newBuild({ ...owner, touched: true }, false), 'wait', 'never under a thumb');
+  assert.equal(newBuild({ ...owner, cookRunning: true, visible: false }, false), 'wait', 'the owner mid-cook');
+  assert.equal(newBuild({ ...owner, asked: true }, true), 'reload', 'the owner that asked, once it has taken over');
+  const waiting = { ...owner, owner: false };
+  assert.equal(newBuild(waiting, false), 'wait', 'a waiting window never asks');
+  assert.equal(newBuild({ ...waiting, touched: true }, true), 'reload', 'a waiting window reloads into it');
+  assert.equal(newBuild({ ...owner, cookRunning: true }, true), 'wait', 'an owner that did not ask keeps its build');
 });
