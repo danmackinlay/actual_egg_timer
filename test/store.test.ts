@@ -19,7 +19,7 @@ import { choicesOf } from '../src/ui/state.js';
 import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openPans, openSettings } from '../src/ui/store.js';
 import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
 
-/** localStorage, in memory, as in record.test.ts: the store reads
+/** localStorage, in memory, as in test/records.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {
