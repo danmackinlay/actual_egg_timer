@@ -28,7 +28,9 @@ things stand is `PLAN.md`; its last section says which document holds what.
 
   Any merge that touched code runs the full `npm run verify` once. A slow
   suite runs once, on the branch's final code, here or in CI on the pushed
-  branch; a later commit to documents alone needs no rerun.
+  branch; a later commit to documents alone needs no rerun. A sweep in
+  `npm test` may be smaller than in `npm run test:slow`, which CI runs
+  (`EXHAUSTIVE`, `tools/common.ts`).
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
@@ -92,11 +94,13 @@ things stand is `PLAN.md`; its last section says which document holds what.
 
 - **Every word either app shows is a key in `copy/en.json`**; no literal on
   an iOS screen is words (`npm run copy:literals`). Read `LANGUAGE.md` §3
-  before writing one.
+  before writing one. A key is a `CopyKey`, which `npm run copy:keys` makes
+  from the catalogue and both compilers check (`DECISIONS.md` 127).
 - **To change wording** (`DECISIONS.md` 106): edit `copy/en.json`, and any
   `copy/en-US.json` override with its `base`; fit the string to its
   surface's budget (`test/data/surfaces.json`; raising a small surface's
-  budget is the owner's call); then `npm run fixtures`. A key's note and
+  budget is the owner's call); then `npm run fixtures`, and
+  `npm run copy:keys` when a key or its arguments change. A key's note and
   surface live in `copy/en.notes.json`, which no app loads; the apps that
   show it are derived from their sources (`DECISIONS.md` 122). The 1750
   twin lags (116): it is not part of a wording change. A twin rewritten
