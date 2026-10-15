@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import EggTimerCore
+import EggTimerCopy
 
 /// The doneness slider, whose track is the yolk (UI.md section 8, "the track
 /// is a yolk"): the system's thumb, its drag and its VoiceOver adjusting, on
@@ -64,7 +65,7 @@ struct YolkSlider: UIViewRepresentable {
         /// A tick each time the drag crosses into another doneness word, so a
         /// thumb feels where Soft ends and Jammy begins.
         private let haptic = UISelectionFeedbackGenerator()
-        private var word: String?
+        private var word: CopyKey?
         /// The last level the finger put on the grid. UIKit sends the same
         /// value again - while the finger rests, and once more as it lifts -
         /// and passing that on would undo a snap that landed in between.

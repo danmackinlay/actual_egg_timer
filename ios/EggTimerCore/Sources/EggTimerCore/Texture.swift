@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// What the pan makes of the white and the yolk, as bands read from their
 /// peak temperatures, and the catalogue keys the texture note is said in.
@@ -69,8 +70,8 @@ public enum YolkBandBelowC {
 /// of the fragment that fills each of its placeholders. The app renders the
 /// fragments and hands them in; it chooses nothing.
 public struct TextureNote: Sendable, Equatable {
-    public let key: String
-    public let parts: [String: String]
+    public let key: CopyKey
+    public let parts: [String: CopyKey]
 }
 
 /// Which words a texture is said in. A white that never sets is the whole
@@ -78,20 +79,20 @@ public struct TextureNote: Sendable, Equatable {
 /// it; every other white is named with its yolk. The keys are written out
 /// whole so that the copy tests can find each one.
 public func textureNoteKeys(_ t: Texture) -> TextureNote {
-    let white: String
+    let white: CopyKey
     switch t.white {
-    case .runny: return TextureNote(key: "texture.white.runny", parts: [:])
-    case .justSet: white = "texture.white.justSet"
-    case .set: white = "texture.white.set"
-    case .firm: white = "texture.white.firm"
+    case .runny: return TextureNote(key: .`texture.white.runny`, parts: [:])
+    case .justSet: white = .`texture.white.justSet`
+    case .set: white = .`texture.white.set`
+    case .firm: white = .`texture.white.firm`
     }
-    let yolk: String
+    let yolk: CopyKey
     switch t.yolk {
-    case .liquid: yolk = "texture.yolk.liquid"
-    case .soft: yolk = "texture.yolk.soft"
-    case .jammy: yolk = "texture.yolk.jammy"
-    case .fudgy: yolk = "texture.yolk.fudgy"
-    case .set: yolk = "texture.yolk.set"
+    case .liquid: yolk = .`texture.yolk.liquid`
+    case .soft: yolk = .`texture.yolk.soft`
+    case .jammy: yolk = .`texture.yolk.jammy`
+    case .fudgy: yolk = .`texture.yolk.fudgy`
+    case .set: yolk = .`texture.yolk.set`
     }
-    return TextureNote(key: "texture.note", parts: ["white": white, "yolk": yolk])
+    return TextureNote(key: .`texture.note`, parts: ["white": white, "yolk": yolk])
 }

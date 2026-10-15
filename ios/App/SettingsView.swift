@@ -45,15 +45,15 @@ struct SettingsView: View {
                 Section { NewerNote() }
             }
             Section {
-                InfoRow(name: about("controls.units"), more: [tr("controls.units.more.ios")]) {
-                    Text(tr("controls.units"))
+                InfoRow(name: about(.`controls.units`), more: [tr(.`controls.units.more.ios`)]) {
+                    Text(tr(.`controls.units`))
                 }
-                Picker(tr("controls.units"), selection: Binding(
+                Picker(tr(.`controls.units`), selection: Binding(
                     get: { planner.units },
                     set: { planner.chooseUnits($0) }
                 )) {
-                    Text(tr("controls.units.metric")).tag(UnitSystem.metric)
-                    Text(tr("controls.units.imperial")).tag(UnitSystem.imperial)
+                    Text(tr(.`controls.units.metric`)).tag(UnitSystem.metric)
+                    Text(tr(.`controls.units.imperial`)).tag(UnitSystem.imperial)
                 }
                 .segmented()
                 .labelsHidden()
@@ -61,7 +61,7 @@ struct SettingsView: View {
                 // never makes the switch (LANGUAGE.md section 6): on any
                 // English page, 1750 included, in its own twin.
                 if languageOf(Copy.activeLocale) == "en" {
-                    Text(tr("controls.units.period"))
+                    Text(tr(.`controls.units.period`))
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -70,15 +70,15 @@ struct SettingsView: View {
             // English, or the English of 1750. Named alike in both
             // catalogues, so either can be found from the other.
             Section {
-                InfoRow(name: about("controls.language"), more: [tr("controls.language.more")]) {
-                    Text(tr("controls.language"))
+                InfoRow(name: about(.`controls.language`), more: [tr(.`controls.language.more`)]) {
+                    Text(tr(.`controls.language`))
                 }
-                Picker(tr("controls.language"), selection: Binding(
+                Picker(tr(.`controls.language`), selection: Binding(
                     get: { Copy.activeLocale },
                     set: { LanguageChoice.shared.pick($0) }
                 )) {
-                    Text(tr("language.en")).tag(defaultLanguage)
-                    Text(tr("language.en1750")).tag(periodLanguage)
+                    Text(tr(.`language.en`)).tag(defaultLanguage)
+                    Text(tr(.`language.en1750`)).tag(periodLanguage)
                 }
                 .segmented()
                 .labelsHidden()
@@ -86,16 +86,16 @@ struct SettingsView: View {
 
             // The alarm's sound. Choosing one plays it.
             Section {
-                InfoRow(name: about("controls.alarm"), more: [tr("controls.alarm.more")]) {
-                    Text(tr("controls.alarm"))
+                InfoRow(name: about(.`controls.alarm`), more: [tr(.`controls.alarm.more`)]) {
+                    Text(tr(.`controls.alarm`))
                 }
-                Picker(tr("controls.alarm"), selection: Binding(
+                Picker(tr(.`controls.alarm`), selection: Binding(
                     get: { AlarmSoundChoice.shared.sound },
                     set: { AlarmSoundChoice.shared.pick($0) }
                 )) {
-                    Text(tr("controls.alarm.timer")).tag(AlarmSound.timer)
-                    Text(tr("controls.alarm.cuckoo")).tag(AlarmSound.cuckoo)
-                    Text(tr("controls.alarm.hen")).tag(AlarmSound.hen)
+                    Text(tr(.`controls.alarm.timer`)).tag(AlarmSound.timer)
+                    Text(tr(.`controls.alarm.cuckoo`)).tag(AlarmSound.cuckoo)
+                    Text(tr(.`controls.alarm.hen`)).tag(AlarmSound.hen)
                 }
                 .segmented()
                 .labelsHidden()
@@ -103,13 +103,13 @@ struct SettingsView: View {
 
             if !planner.isSousVide {
                 Section {
-                    InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
+                    InfoRow(.`controls.altitude`, more: [tr(.`controls.altitude.more`)]) {
                         StepperValue(
-                            label: tr("controls.altitude"), measure: planner.measure(.altitude),
+                            label: tr(.`controls.altitude`), measure: planner.measure(.altitude),
                             value: $planner.settings.altitudeM, show: { planner.show(.altitude, $0) }, field: .altitude
                         )
                     }
-                    LabeledContent(tr("readout.stat.waterBoilsAt")) {
+                    LabeledContent(tr(.`readout.stat.waterBoilsAt`)) {
                         Text(planner.show(.boilingPoint, planner.boilingC))
                             .monospacedDigit()
                     }
@@ -118,19 +118,19 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    InfoRow("controls.water", more: [tr("controls.water.more")]) {
+                    InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
                         StepperValue(
-                            label: tr("controls.water"), measure: planner.measure(.water),
+                            label: tr(.`controls.water`), measure: planner.measure(.water),
                             value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .water
                         )
                     }
                 }
 
                 Section {
-                    InfoRow("controls.afterTheBoil", more: [tr("controls.afterTheBoil.more")])
-                    Picker(tr("controls.afterTheBoil"), selection: $planner.heatOff) {
-                        Text(tr("controls.afterTheBoil.keepBoiling")).tag(false)
-                        Text(tr("controls.afterTheBoil.heatOff")).tag(true)
+                    InfoRow(.`controls.afterTheBoil`, more: [tr(.`controls.afterTheBoil.more`)])
+                    Picker(tr(.`controls.afterTheBoil`), selection: $planner.heatOff) {
+                        Text(tr(.`controls.afterTheBoil.keepBoiling`)).tag(false)
+                        Text(tr(.`controls.afterTheBoil.heatOff`)).tag(true)
                     }
                     .segmented()
                     .labelsHidden()
@@ -139,8 +139,8 @@ struct SettingsView: View {
                 // The probe thermometer. Off by default, and changed here; the
                 // reading's field after a cook is there either way.
                 Section {
-                    InfoRow("controls.thermometer", more: [tr("controls.thermometer.more")])
-                    Toggle(tr("controls.thermometer.ask"), isOn: Binding(
+                    InfoRow(.`controls.thermometer`, more: [tr(.`controls.thermometer.more`)])
+                    Toggle(tr(.`controls.thermometer.ask`), isOn: Binding(
                         get: { planner.settings.probe },
                         set: { planner.setProbe($0) }
                     ))
@@ -151,7 +151,7 @@ struct SettingsView: View {
                 // the field and its stepper, so the control has a line of
                 // its own.
                 Section {
-                    InfoRow("controls.room", more: [tr("controls.room.more", [
+                    InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
                         "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
                     ])])
                     HStack {
@@ -177,7 +177,7 @@ struct SettingsView: View {
                     .textSelection(.enabled)
             }
         }
-        .barTitle(tr("controls.settings"))
+        .barTitle(tr(.`controls.settings`))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -188,7 +188,7 @@ struct SettingsView: View {
     /// not just logged eggs - because the button clears both.
     private var learned: some View {
         Section {
-            Text(tr("learned.title"))
+            Text(tr(.`learned.title`))
             Text(learnedNote)
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
@@ -200,14 +200,14 @@ struct SettingsView: View {
                     item: ResultsExport(uid: sharing.state.uid, name: Calibrations.exportName()),
                     preview: SharePreview(Calibrations.exportName())
                 ) {
-                    Text(tr("learned.export"))
+                    Text(tr(.`learned.export`))
                 }
             } else {
-                Button(tr("learned.export")) {
+                Button(tr(.`learned.export`)) {
                     nothingToExport = true
                 }
                 if nothingToExport {
-                    Text(tr("learned.export.none"))
+                    Text(tr(.`learned.export.none`))
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -217,23 +217,23 @@ struct SettingsView: View {
             if (planner.eggsLogged > 0 || planner.hasBoilMemory) && !Stores.readOnly {
                 if confirming {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(tr("learned.confirm.title"))
+                        Text(tr(.`learned.confirm.title`))
                             .appFont(.subheadline, weight: .semibold)
-                        Text(tr("learned.confirm.message"))
+                        Text(tr(.`learned.confirm.message`))
                             .appFont(.footnote)
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
-                    Button(tr("learned.confirm.forget"), role: .destructive) {
+                    Button(tr(.`learned.confirm.forget`), role: .destructive) {
                         confirming = false
                         planner.learner.reset()
                     }
-                    Button(tr("learned.confirm.keep")) {
+                    Button(tr(.`learned.confirm.keep`)) {
                         confirming = false
                     }
                 } else {
-                    InfoRow(name: about("learned.forget"), more: [tr("learned.forget.more")]) {
-                        Button(tr("learned.forget"), role: .destructive) {
+                    InfoRow(name: about(.`learned.forget`), more: [tr(.`learned.forget.more`)]) {
+                        Button(tr(.`learned.forget`), role: .destructive) {
                             withAnimation(.snappy) { confirming = true }
                         }
                         // Its own hit area, not the row's: the row also
@@ -253,13 +253,13 @@ struct SettingsView: View {
     private var share: some View {
         let s = sharing.state
         return Section {
-            InfoRow(name: about("share.title"), more: [tr("share.more")]) {
-                Text(tr("share.title"))
+            InfoRow(name: about(.`share.title`), more: [tr(.`share.more`)]) {
+                Text(tr(.`share.title`))
             }
-            Text(tr("share.what"))
+            Text(tr(.`share.what`))
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
-            Toggle(tr("share.toggle"), isOn: Binding(
+            Toggle(tr(.`share.toggle`), isOn: Binding(
                 get: { s.on },
                 set: { on in
                     deletedHere = false
@@ -282,7 +282,7 @@ struct SettingsView: View {
             // never draw its 0 as an o.
             if let uid = s.uid {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(tr("share.id"))
+                    Text(tr(.`share.id`))
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                     Text(verbatim: uid)
@@ -292,29 +292,29 @@ struct SettingsView: View {
             }
             if confirmingDelete {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(tr("share.confirm.title"))
+                    Text(tr(.`share.confirm.title`))
                         .appFont(.subheadline, weight: .semibold)
-                    Text(tr("share.confirm.message"))
+                    Text(tr(.`share.confirm.message`))
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)
-                Button(tr("share.confirm.delete"), role: .destructive) {
+                Button(tr(.`share.confirm.delete`), role: .destructive) {
                     confirmingDelete = false
                     Task {
                         await sharing.deleteSent()
                         deletedHere = sharing.state.deleting.isEmpty
                     }
                 }
-                Button(tr("share.confirm.keep")) {
+                Button(tr(.`share.confirm.keep`)) {
                     confirmingDelete = false
                 }
             } else if !s.uids.isEmpty && !Stores.readOnly {
-                Button(tr("share.delete"), role: .destructive) {
+                Button(tr(.`share.delete`), role: .destructive) {
                     withAnimation(.snappy) { confirmingDelete = true }
                 }
             }
-            Link(tr("help.privacy"), destination: HelpView.privacyURL)
+            Link(tr(.`help.privacy`), destination: HelpView.privacyURL)
                 .appFont(.footnote)
         }
     }
@@ -322,43 +322,43 @@ struct SettingsView: View {
     /// The web's `renderShare`: deleting, deleted, nothing yet, or how many
     /// have gone and how many wait.
     private func shareNote(_ s: ShareState) -> String? {
-        if !s.deleting.isEmpty { return tr("share.deleting") }
-        if deletedHere && !s.on { return tr("share.deleted") }
+        if !s.deleting.isEmpty { return tr(.`share.deleting`) }
+        if deletedHere && !s.on { return tr(.`share.deleted`) }
         guard s.on else { return nil }
-        if s.sent == 0 { return tr("share.none") }
+        if s.sent == 0 { return tr(.`share.none`) }
         let final = planner.kept.log.count - (eggOpen ? 1 : 0)
         let waiting = max(0, final - s.sent)
-        let sent = tr("share.sent", ["eggs": .int(s.sent)])
-        return waiting > 0 ? sent + " " + tr("share.waiting", ["eggs": .int(waiting)]) : sent
+        let sent = tr(.`share.sent`, ["eggs": .int(s.sent)])
+        return waiting > 0 ? sent + " " + tr(.`share.waiting`, ["eggs": .int(waiting)]) : sent
     }
 
     /// The web's `renderLearned`: nothing yet, the eggs, the pan, or both.
     private var learnedNote: String {
         let eggs = planner.eggsLogged
         let pan = planner.hasBoilMemory
-        if eggs == 0 && !pan { return tr("learned.literature") }
-        let tuned = eggs > 0 ? tr("learned.tuned", ["eggs": .int(eggs)]) : ""
+        if eggs == 0 && !pan { return tr(.`learned.literature`) }
+        let tuned = eggs > 0 ? tr(.`learned.tuned`, ["eggs": .int(eggs)]) : ""
         let measured = pan
-            ? tr("learned.pan", [
+            ? tr(.`learned.pan`, [
                 "water": .text(planner.show(.water, planner.settings.waterLitres)),
                 "time": .text(clockString(planner.timeToBoilS)),
             ])
             : ""
         if !tuned.isEmpty && !measured.isEmpty {
-            return tr("learned.both", ["tuned": .text(tuned), "pan": .text(measured)])
+            return tr(.`learned.both`, ["tuned": .text(tuned), "pan": .text(measured)])
         }
         return tuned + measured
     }
 
     /// The web's colophon, with its link to the source.
     private var colophon: AttributedString {
-        var name = AttributedString(tr("colophon.name"))
+        var name = AttributedString(tr(.`colophon.name`))
         name.font = .app(.footnote, weight: .semibold, size: dynamicTypeSize)
-        var link = AttributedString(tr("colophon.link"))
+        var link = AttributedString(tr(.`colophon.link`))
         link.link = URL(string: "https://github.com/danmackinlay/actual_egg_timer")
         link.underlineStyle = .single
-        return name + AttributedString(" " + tr("colophon.lede") + " ") + link
-            + AttributedString(" " + tr("colophon.tail"))
+        return name + AttributedString(" " + tr(.`colophon.lede`) + " ") + link
+            + AttributedString(" " + tr(.`colophon.tail`))
     }
 
     /// The web's last line, "Version 0.4.0 (2)": the App Store version, which
@@ -370,7 +370,7 @@ struct SettingsView: View {
         let short = info?["CFBundleShortVersionString"] as? String ?? ""
         let build = info?["CFBundleVersion"] as? String ?? ""
         let mark = "\u{1}"
-        let parts = tr("colophon.version", ["version": .text(mark)]).components(separatedBy: mark)
+        let parts = tr(.`colophon.version`, ["version": .text(mark)]).components(separatedBy: mark)
         var number = AttributedString(build.isEmpty ? short : "\(short) (\(build))")
         number.font = .footnote.monospaced()
         number.foregroundColor = .primary

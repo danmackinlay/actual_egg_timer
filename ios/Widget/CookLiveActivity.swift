@@ -35,7 +35,7 @@ struct CookLiveActivity: Widget {
                         .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(tr("activity.target", [
+                    Text(tr(.`activity.target`, [
                         "doneness": .text(midSentence(context.state.cook.doneness, locale: lang)),
                         "yolk": .text(context.state.cook.peakYolk),
                     ], in: lang))
@@ -88,7 +88,7 @@ struct CookLiveActivity: Widget {
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
 
-                Text(tr("activity.summary", [
+                Text(tr(.`activity.summary`, [
                     "mass": .text(cook.eggMass),
                     "doneness": .text(midSentence(cook.doneness, locale: lang)),
                     "yolk": .text(cook.peakYolk),
@@ -156,17 +156,17 @@ struct CookLiveActivity: Widget {
             Text(timerInterval: state.began...state.ends, countsDown: !state.countsUp)
                 .multilineTextAlignment(.trailing)
         } else {
-            Text(tr("activity.now", in: lang))
+            Text(tr(.`activity.now`, in: lang))
         }
     }
 
     /// The line under the stage.
     private func note(_ state: CookActivity.ContentState, _ attributes: CookActivity) -> String {
-        let key: String = switch state.stage {
-        case .heating: state.provisional ? "activity.note.estimate" : "activity.note.heating"
-        case .cooking: state.provisional ? "activity.note.estimate" : "activity.note.cooking"
+        let key: CopyKey = switch state.stage {
+        case .heating: state.provisional ? .`activity.note.estimate` : .`activity.note.heating`
+        case .cooking: state.provisional ? .`activity.note.estimate` : .`activity.note.cooking`
         case .pull: pullLineKey(cooling: state.cook.cooling)
-        case .cooling: "activity.note.cooling"
+        case .cooling: .`activity.note.cooling`
         }
         return tr(key, in: attributes.lang)
     }

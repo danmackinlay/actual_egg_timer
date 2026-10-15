@@ -11,11 +11,11 @@
 /// Here, and not in the alarm (ios/App) and the widget that both say it, so
 /// `swift test` holds which line each cooling gets (`PullLineTests`): those
 /// two are checked only by driving them.
-public func pullLineKey(cooling: String) -> String {
+public func pullLineKey(cooling: String) -> CopyKey {
     switch cooling {
-    case "tap": "alarm.pull.bodyTap"
-    case "bowl": "alarm.pull.bodyBowl"
-    case "counter": "alarm.pull.bodyCounter"
-    default: "alarm.pull.bodyIce"
+    case "tap": .`alarm.pull.bodyTap`
+    case "bowl": .`alarm.pull.bodyBowl`
+    case "counter": .`alarm.pull.bodyCounter`
+    default: .`alarm.pull.bodyIce`
     }
 }

@@ -93,7 +93,7 @@ struct SizeClassConformance {
             let expected = try Fixtures.list("inputs.json", "sizeClasses.\(name)")
             #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
             for (actual, c) in zip(classes, expected) {
-                #expect(try actual.key == c.str("key"), "\(name): \(actual.key)")
+                #expect(try actual.key.rawValue == c.str("key"), "\(name): \(actual.key)")
                 try expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
             }
         }

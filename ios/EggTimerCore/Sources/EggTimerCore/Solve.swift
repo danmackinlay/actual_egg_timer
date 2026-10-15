@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// Putting it together: simulate a cook, and invert for the cook time that hits
 /// a doneness target. Transliterated from `src/core/solve.ts`.
@@ -60,17 +61,17 @@ func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
 /// language picks its own word for each anchor, and the anchor stays at the
 /// same dose whatever it is called (LANGUAGE.md §5).
 public struct DonenessAnchor: Sendable {
-    public let key: String
+    public let key: CopyKey
     public let level: Double
     public let approxPeakYolkC: Double
 }
 
 public let donenessAnchors: [DonenessAnchor] = [
-    DonenessAnchor(key: "doneness.runny", level: 0.00, approxPeakYolkC: 56),
-    DonenessAnchor(key: "doneness.soft", level: 0.22, approxPeakYolkC: 61),
-    DonenessAnchor(key: "doneness.jammy", level: 0.41, approxPeakYolkC: 65),
-    DonenessAnchor(key: "doneness.fudgy", level: 0.62, approxPeakYolkC: 70),
-    DonenessAnchor(key: "doneness.hard", level: 1.00, approxPeakYolkC: 77),
+    DonenessAnchor(key: .`doneness.runny`, level: 0.00, approxPeakYolkC: 56),
+    DonenessAnchor(key: .`doneness.soft`, level: 0.22, approxPeakYolkC: 61),
+    DonenessAnchor(key: .`doneness.jammy`, level: 0.41, approxPeakYolkC: 65),
+    DonenessAnchor(key: .`doneness.fudgy`, level: 0.62, approxPeakYolkC: 70),
+    DonenessAnchor(key: .`doneness.hard`, level: 1.00, approxPeakYolkC: 77),
 ]
 
 public struct CookResult: Sendable {

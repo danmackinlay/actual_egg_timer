@@ -299,7 +299,7 @@ struct RoomField: View {
     var body: some View {
         let m = planner.measure(.roomTemp)
         NudgeField(
-            label: tr("controls.room"), measure: m, text: $text, startSI: StartTempPresets.roomC,
+            label: tr(.`controls.room`), measure: m, text: $text, startSI: StartTempPresets.roomC,
             endEditing: { text = shown }, field: .room
         )
             .onAppear { text = shown }
@@ -335,7 +335,7 @@ struct CoolingWaterField: View {
     var body: some View {
         let m = planner.measure(.coolingWater)
         NudgeField(
-            label: tr("controls.coolingWater"), measure: m, text: $text, startSI: planner.coolingWaterAssumedC,
+            label: tr(.`controls.coolingWater`), measure: m, text: $text, startSI: planner.coolingWaterAssumedC,
             endEditing: { text = shown }, field: planner.settings.cooling == .tap ? .tapWater : .bowlWater
         )
             .onAppear { text = shown }

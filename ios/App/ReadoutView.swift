@@ -48,7 +48,7 @@ struct ReadoutView: View {
         let words = ReadoutWords(model, phase: phase, nowS: now.timeIntervalSince1970)
         VStack(spacing: 6) {
             if let copy = sousVide {
-                Text(tr("readout.phase.startTime"))
+                Text(tr(.`readout.phase.startTime`))
                     .appFont(.caption, smallCaps: true)
                     .foregroundStyle(.secondary)
                 // Not the 76 pt clock face the other phases use: "Yesterday" is
@@ -68,7 +68,7 @@ struct ReadoutView: View {
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
                 if learningShown && learningOpen {
-                    MoreText([tr("learning.badge.more")])
+                    MoreText([tr(.`learning.badge.more`)])
                         .transition(.opacity)
                 }
 
@@ -117,14 +117,14 @@ struct ReadoutView: View {
 
     private var learningMark: some View {
         HStack(spacing: 0) {
-            Text(tr("learning.badge"))
+            Text(tr(.`learning.badge`))
                 .appFont(.caption2, weight: .semibold)
                 .textCase(.uppercase)
                 .foregroundStyle(Palette.accent)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 2)
                 .overlay(Capsule().strokeBorder(Palette.accent.opacity(0.55)))
-            InfoButton(expanded: $learningOpen, name: about("learning.badge"))
+            InfoButton(expanded: $learningOpen, name: about(.`learning.badge`))
         }
         .padding(.top, 6)
         .padding(.trailing, 4)
@@ -136,8 +136,8 @@ struct ReadoutView: View {
     private func sublineLine(_ words: ReadoutWords) -> some View {
         if phase == .idle && planner.coldStart && planner.hasBoilMemory {
             InfoRow(
-                name: tr("readout.sub.coldAssumes.info"),
-                more: [tr("readout.sub.coldAssumes.more")],
+                name: tr(.`readout.sub.coldAssumes.info`),
+                more: [tr(.`readout.sub.coldAssumes.more`)],
                 alignment: .center
             ) {
                 Text(words.sub)
@@ -202,7 +202,7 @@ struct ReadoutView: View {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityValue(tr(certaintyOpen ? "more.expanded" : "more.collapsed"))
+                        .accessibilityValue(tr(certaintyOpen ? .`more.expanded` : .`more.collapsed`))
                         if mostLikelyShown(sure.words) {
                             Text(renderedWords(mostLikelyWords(sure.words)))
                                 .appFont(.footnote)
@@ -218,7 +218,7 @@ struct ReadoutView: View {
                     if idle {
                         NavigationLink(value: Route.help(.odds)) {
                             HStack(spacing: 4) {
-                                Text(tr("certainty.help"))
+                                Text(tr(.`certainty.help`))
                                 Image(systemName: "arrow.right")
                                     .accessibilityHidden(true)
                             }
@@ -232,7 +232,7 @@ struct ReadoutView: View {
                 .transition(.opacity)
             }
             if words.whiteRunny {
-                Text(tr("outcome.whiteRunny"))
+                Text(tr(.`outcome.whiteRunny`))
                     .appFont(.footnote)
                     .foregroundStyle(.orange)
                     .padding(.top, 2 + Self.hang)
@@ -267,7 +267,7 @@ struct ReadoutView: View {
             .padding(.vertical, 4)
             ZStack {
                 ForEach(donenessAnchors.indices, id: \.self) { i in
-                    Text(tr("certainty.mostLikely", ["word": .text(tr(donenessAnchors[i].key))]))
+                    Text(tr(.`certainty.mostLikely`, ["word": .text(tr(donenessAnchors[i].key))]))
                         .appFont(.footnote)
                 }
             }

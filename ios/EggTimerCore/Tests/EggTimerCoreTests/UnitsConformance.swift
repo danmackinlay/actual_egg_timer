@@ -48,8 +48,8 @@ struct UnitsConformance {
             #expect(try m.nudgeNum == c.num("nudgeNum") && m.nudgeDen == c.num("nudgeDen"), "\(what): nudge")
             #expect(try Double(m.decimals) == c.num("decimals"), "\(what): decimals")
             #expect(try m.trim == c.flag("trim"), "\(what): trim")
-            #expect(try m.unitKey == c.str("unitKey"), "\(what): unit key")
-            #expect(try m.formatKey == c.str("formatKey"), "\(what): format key")
+            #expect(try m.unitKey.rawValue == c.str("unitKey"), "\(what): unit key")
+            #expect(try m.formatKey.rawValue == c.str("formatKey"), "\(what): format key")
             #expect(try m.limit == range(c["limit"]), "\(what): limit")
             // Exactly: a bound is a value a control accepts, and must be the
             // same value in both apps.
@@ -163,12 +163,12 @@ struct UnitsConformance {
         for c in try Fixtures.list("units.json", "sizeLabels") {
             let table = try c.str("table") == "us" ? usSizeClasses : sizeClasses
             let key = try c.str("key")
-            let cls = try #require(table.first(where: { $0.key == key }), "size label \(c)")
+            let cls = try #require(table.first(where: { $0.key.rawValue == key }), "size label \(c)")
             let mass = try c.object("mass")
             let label = try sizeClassLabel(cls, system: c.value(UnitSystem.self, "system"))
-            #expect(try label.mass.key == mass.str("key"), "\(c)")
+            #expect(try label.mass.key.rawValue == mass.str("key"), "\(c)")
             #expect(CopyConformance.arg(mass["value"] ?? "") == .fixed(label.mass.value), "\(c)")
-            let text = en.render(label.key, ["mass": .text(en.render(label.mass.key, ["value": .fixed(label.mass.value)]))])
+            let text = en.render(label.key.rawValue, ["mass": .text(en.render(label.mass.key.rawValue, ["value": .fixed(label.mass.value)]))])
             #expect(try text == c.str("text"), "\(text)")
         }
     }

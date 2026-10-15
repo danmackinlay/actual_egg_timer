@@ -12,14 +12,14 @@ struct PullLineTests {
         let coolings = ["ice", "tap", "bowl", "counter"]
         for cooling in coolings {
             let key = pullLineKey(cooling: cooling)
-            #expect(key.lowercased().hasSuffix(cooling), "\(cooling) gets \(key)")
+            #expect(key.rawValue.lowercased().hasSuffix(cooling), "\(cooling) gets \(key)")
         }
         let keys = Set(coolings.map { pullLineKey(cooling: $0) })
         for locale in ["en", "en-x-1750"] {
             // No fallback: each line must be in the catalogue's own messages.
             let own = try Fixtures.catalogue(locale).messages
             for key in keys {
-                #expect(own[key] != nil, "copy/\(locale).json has no \(key)")
+                #expect(own[key.rawValue] != nil, "copy/\(locale).json has no \(key)")
             }
         }
     }

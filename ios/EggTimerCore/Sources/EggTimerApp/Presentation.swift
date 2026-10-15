@@ -67,7 +67,7 @@ extension Notification.Name {
 /// never sets is runny, not named from its peak as "white just set".
 public func textureNote(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> String {
     let note = textureNoteKeys(textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC, whiteSets: whiteSets))
-    return tr(note.key, note.parts.mapValues { .text(tr($0)) })
+    return trChosen(note.key, note.parts.mapValues { .text(tr($0)) })
 }
 
 public func clockString(_ seconds: Double) -> String {

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import EggTimerApp
 import EggTimerCore
+import EggTimerCopy
 import EggTimerShared
 
 /// Corrections while a cook runs, made as the controls make them: a value
@@ -206,7 +207,7 @@ extension AppTests {
         #expect(model.cook.running?.startedAtS == cook.idMs / 1000 - 7200)
         let said = world.announced.all
         #expect(said.count >= 3)
-        #expect(said.first == tr("controls.startedAt.latestNow"))
+        #expect(said.first == tr(.`controls.startedAt.latestNow`))
     }
 
     /// Settings' water while a cook runs corrects the cook and the next
@@ -380,7 +381,7 @@ extension AppTests {
         await correct(at: t0 + 30, model, world) { planner.chooseSize(0) }
         await correct(at: t0 + 40, model, world) { planner.settings.eggCount = 1 }
         await correct(at: t0 + 50, model, world) { planner.settings.waterLitres = 0.5 }
-        #expect(model.runningWarning == tr("refusal.whiteNeverSets"))
+        #expect(model.runningWarning == tr(.`refusal.whiteNeverSets`))
     }
 
     /// On the counter, Done at the out, Jammy, then the cooling corrected to
@@ -480,11 +481,11 @@ extension AppTests {
         defer { model.cook.killed() }
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
-        let lead = { (key: String) in
+        let lead = { (key: CopyKey) in
             tr(key, ["low": .text("\u{1}"), "high": .text("\u{1}")]).components(separatedBy: "\u{1}")[0]
         }
-        let out = lead("certainty.timeOut")
-        #expect(out != lead("certainty.time"))
+        let out = lead(.`certainty.timeOut`)
+        #expect(out != lead(.`certainty.time`))
         let range = { ReadoutWords(model, phase: model.cook.phase, nowS: world.clock.seconds).range ?? "" }
         await tick(at: t0 + 299, model, world)
         #expect(range().hasPrefix(out))

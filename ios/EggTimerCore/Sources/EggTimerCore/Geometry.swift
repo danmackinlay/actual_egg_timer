@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// Egg geometry, transliterated from `src/core/geometry.ts`.
 public struct Egg: Sendable, Equatable, Codable {
@@ -45,16 +46,16 @@ public enum Geometry {
 /// on the label comes from the mass, in grams or ounces - see `sizeClassLabel`
 /// in Units.swift.
 public struct SizeClass: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let massKg: Double
 }
 
 /// EU Regulation 589/2008 Art. 4, at a representative mass inside each band.
 public let sizeClasses: [SizeClass] = [
-    SizeClass(key: "size.eu.small", massKg: 0.048),
-    SizeClass(key: "size.eu.medium", massKg: 0.058),
-    SizeClass(key: "size.eu.large", massKg: 0.068),
-    SizeClass(key: "size.eu.extraLarge", massKg: 0.076),
+    SizeClass(key: .`size.eu.small`, massKg: 0.048),
+    SizeClass(key: .`size.eu.medium`, massKg: 0.058),
+    SizeClass(key: .`size.eu.large`, massKg: 0.068),
+    SizeClass(key: .`size.eu.extraLarge`, massKg: 0.076),
 ]
 
 /// The classes printed on an American carton. USDA defines each by a MINIMUM
@@ -66,11 +67,11 @@ public let sizeClasses: [SizeClass] = [
 /// the width of the class below it. Labels round to the gram; the model cooks
 /// the midpoint to a tenth.
 public let usSizeClasses: [SizeClass] = [
-    SizeClass(key: "size.us.small", massKg: 0.0461),
-    SizeClass(key: "size.us.medium", massKg: 0.0532),
-    SizeClass(key: "size.us.large", massKg: 0.0602),
-    SizeClass(key: "size.us.extraLarge", massKg: 0.0673),
-    SizeClass(key: "size.us.jumbo", massKg: 0.074),
+    SizeClass(key: .`size.us.small`, massKg: 0.0461),
+    SizeClass(key: .`size.us.medium`, massKg: 0.0532),
+    SizeClass(key: .`size.us.large`, massKg: 0.0602),
+    SizeClass(key: .`size.us.extraLarge`, massKg: 0.0673),
+    SizeClass(key: .`size.us.jumbo`, massKg: 0.074),
 ]
 
 /// The size classes for a region: the American carton in region `US`, the EU

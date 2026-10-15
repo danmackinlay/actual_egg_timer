@@ -163,5 +163,5 @@ struct YolkBracket: View {
 /// word when the interval is one (core's `rangeWords`).
 private func rangeText(_ w: WordCertainty) -> String {
     let r = rangeWords(w)
-    return tr(r.key, r.args.mapValues { .text(tr($0)) })
+    return trChosen(r.key, r.args.mapValues { .text(tr($0)) })
 }

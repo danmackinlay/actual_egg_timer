@@ -67,7 +67,7 @@ extension AppTests {
         await decided(model, world)
         let said = { SentenceWords(model.planner).plain }
         let idle = said()
-        #expect(idle.contains(tr("setup.start.cold")))
+        #expect(idle.contains(tr(.`setup.start.cold`)))
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
         await world.settled(model.cook)
@@ -85,7 +85,7 @@ extension AppTests {
             #expect(line.range(of: #"\d:\d\d"#, options: .regularExpression) == nil, "\(line)")
         }
         #expect(heating == idle && cooking == idle)
-        #expect(off.contains(tr("setup.start.coldStanding")))
+        #expect(off.contains(tr(.`setup.start.coldStanding`)))
     }
 
     /// A bowl of water, its water, four eggs and its temperature: in the

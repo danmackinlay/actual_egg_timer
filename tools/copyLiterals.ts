@@ -84,6 +84,7 @@ const NOT_COPY: Record<string, string> = {
   copy: 'bundle folder',
   'copy/{}.json is not in the bundle - see the copy folder in ios/project.yml': 'developer error, never shown',
   'copy/{}.json: {}': 'developer error, never shown',
+  'tr({}): given {}, takes {}': 'a debug build\'s check of a key\'s arguments, never shown',
   // the record (INFERENCE.md §4): schema, never shown
   CFBundleShortVersionString: 'Info.plist key',
   CFBundleVersion: 'Info.plist key',

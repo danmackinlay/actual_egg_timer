@@ -46,10 +46,10 @@ public typealias CopyArgs = [String: CopyArg]
 /// numbers the sentence needs. The app renders it, and may add arguments of its
 /// own (a weekday name, say) that only a platform can answer.
 public struct CopyRef: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let args: [String: Double]
 
-    public init(_ key: String, _ args: [String: Double] = [:]) {
+    public init(_ key: CopyKey, _ args: [String: Double] = [:]) {
         self.key = key
         self.args = args
     }
@@ -161,7 +161,7 @@ public final class Catalogue: Sendable {
         var args: CopyArgs = [:]
         for (name, value) in ref.args { args[name] = .number(value) }
         for (name, value) in extra { args[name] = value }
-        return render(ref.key, args, formatLocale: formatLocale)
+        return render(ref.key.rawValue, args, formatLocale: formatLocale)
     }
 
     private func template(for message: Message, locale: String, args: CopyArgs) -> String {

@@ -48,14 +48,14 @@ struct PhaseSlot: View {
                     Text(planner.warning)
                         .foregroundStyle(.orange)
                 } else if planner.eggsLogged == 0 && !planner.hasBoilMemory {
-                    Text(tr("idle.welcome"))
+                    Text(tr(.`idle.welcome`))
                         .foregroundStyle(.secondary)
                 }
                 // The way to Help's advice (reach.ts, "when to advise").
                 if planner.shownAdvice {
                     NavigationLink(value: Route.help(.reliable)) {
                         HStack(spacing: 4) {
-                            Text(tr("advice.toggle"))
+                            Text(tr(.`advice.toggle`))
                             Image(systemName: "arrow.right")
                                 .accessibilityHidden(true)
                         }
@@ -127,12 +127,12 @@ struct PhaseActions: View {
         let widest = clockString(59 * 60 + 59)
         let boiling = planner.show(.temperature, planner.boilingC)
         return ZStack {
-            Text(model.keys(.idle).hint.map { tr($0, ["time": .text(widest)]) } ?? " ")
-            InfoRow(name: tr("action.hint.heating.info"), more: [], alignment: .center) {
+            Text(model.keys(.idle).hint.map { trChosen($0, ["time": .text(widest)]) } ?? " ")
+            InfoRow(name: tr(.`action.hint.heating.info`), more: [], alignment: .center) {
                 Text(model.keys(.heating).hint.map { tr($0) } ?? " ")
             }
             VStack(spacing: 4) {
-                Text(model.keys(.cooking).hint.map { tr($0, ["boiling": .text(boiling)]) } ?? " ")
+                Text(model.keys(.cooking).hint.map { trChosen($0, ["boiling": .text(boiling)]) } ?? " ")
                 Text(alarmLine)
             }
         }
@@ -152,8 +152,8 @@ struct PhaseActions: View {
             // What a full rolling boil looks like, and why the tap matters,
             // in its (i).
             InfoRow(
-                name: tr("action.hint.heating.info"),
-                more: [tr("action.hint.heating.more")],
+                name: tr(.`action.hint.heating.info`),
+                more: [tr(.`action.hint.heating.more`)],
                 alignment: .center
             ) {
                 footnote(readout?.hint.map { tr($0.key) } ?? "")
@@ -162,7 +162,7 @@ struct PhaseActions: View {
             VStack(spacing: 4) {
                 // The web's hint: what the hob must do until the pull.
                 Text(readout?.hint.map {
-                    tr($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
+                    trChosen($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
                 } ?? "")
                 // Whether the alarm is really set: iOS's own line, since the
                 // web's alarm is the open tab.
@@ -176,7 +176,7 @@ struct PhaseActions: View {
             // counter, where the grace runs out into Done and the line under
             // the time already says the yolk is still cooking.
             if let hint = readout?.hint {
-                footnote(tr(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
+                footnote(trChosen(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
             }
         default:
             EmptyView()
@@ -208,16 +208,16 @@ struct PhaseActions: View {
             // Dead rather than absent. There is nothing to start, and a
             // button that has gone missing looks like a layout accident
             // where one that will not press is the answer.
-            return Main(title: tr("action.eggsIn"), disabled: true) {}
+            return Main(title: tr(.`action.eggsIn`), disabled: true) {}
         case .idle:
             return Main(
-                title: tr(model.keys(.idle).action ?? "action.eggsIn"),
+                title: tr(model.keys(.idle).action ?? .`action.eggsIn`),
                 disabled: model.starting || planner.solution == nil || planner.solution?.whiteSets == false
             ) { model.eggsIn() }
         case .heating:
             // Invariant 6: tapping at first bubbles under-measures the boil
             // by 15-25%, so the button names the thing to wait for.
-            return Main(title: tr(readout?.primary ?? "action.fullBoil")) { model.boil() }
+            return Main(title: tr(readout?.primary ?? .`action.fullBoil`)) { model.boil() }
         case .pull:
             // The cook's tap is the nearest thing to when the egg left the
             // water that the app will ever know, and the record calls it a
@@ -225,7 +225,7 @@ struct PhaseActions: View {
             // only assumed.
             return Main(title: tr(readout?.primary ?? pulledKey(.ice))) { model.pulledOut() }
         case .done:
-            return Main(title: tr(readout?.primary ?? "action.startAgain"), prominent: false) { model.startAgain() }
+            return Main(title: tr(readout?.primary ?? .`action.startAgain`), prominent: false) { model.startAgain() }
         default:
             return nil
         }
@@ -290,10 +290,10 @@ struct PhaseActions: View {
     private var mainShape: some View {
         Button {} label: {
             ZStack {
-                Text(tr(model.keys(.idle).action ?? "action.eggsIn"))
-                Text(tr("action.fullBoil"))
+                Text(tr(model.keys(.idle).action ?? .`action.eggsIn`))
+                Text(tr(.`action.fullBoil`))
                 Text(tr(pulledKey(planner.settings.cooling)))
-                Text(tr("action.startAgain"))
+                Text(tr(.`action.startAgain`))
             }
             .frame(maxWidth: .infinity)
         }
@@ -304,7 +304,7 @@ struct PhaseActions: View {
     /// Cancel: small, grey, at its own width, so it reads as the way out and
     /// not the way on.
     private var cancelButton: some View {
-        Button(tr("action.cancel"), role: .destructive) {
+        Button(tr(.`action.cancel`), role: .destructive) {
             model.cancel()
         }
         .buttonStyle(.bordered)
@@ -319,14 +319,14 @@ struct PhaseActions: View {
             Button {
                 model.stillIn()
             } label: {
-                Text(tr(r.primary ?? "ask.stillIn.yes")).frame(maxWidth: .infinity).onAccent()
+                Text(tr(r.primary ?? .`ask.stillIn.yes`)).frame(maxWidth: .infinity).onAccent()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             Button {
                 model.stillOut()
             } label: {
-                Text(tr(r.secondary ?? "ask.stillIn.no")).frame(maxWidth: .infinity)
+                Text(tr(r.secondary ?? .`ask.stillIn.no`)).frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
@@ -343,7 +343,7 @@ struct PhaseActions: View {
     /// What Start is about to ask of the cook, above the button.
     private var idleHint: String {
         guard let solution = planner.solution else { return " " }
-        return model.keys(.idle).hint.map { tr($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
+        return model.keys(.idle).hint.map { trChosen($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
     }
 
     /// What the alarm actually is, not what permission was granted.
@@ -355,15 +355,15 @@ struct PhaseActions: View {
     private var alarmLine: String {
         switch cook.alarms.authorized {
         case .none:
-            return tr("readout.alarm.setting")
+            return tr(.`readout.alarm.setting`)
         case .some(false):
-            return tr("readout.alarm.denied")
+            return tr(.`readout.alarm.denied`)
         case .some(true):
             guard cook.alarms.pending > 0 else {
-                return tr("readout.alarm.failed")
+                return tr(.`readout.alarm.failed`)
             }
             let pull = cook.plan.map { Date(timeIntervalSince1970: $0.deadlines.cookEndS) } ?? now
-            return tr("readout.alarm.set", ["time": .text(timeOfDay(pull, withSeconds: true))])
+            return tr(.`readout.alarm.set`, ["time": .text(timeOfDay(pull, withSeconds: true))])
         }
     }
 }

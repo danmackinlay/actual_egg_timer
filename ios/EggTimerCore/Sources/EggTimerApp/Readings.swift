@@ -18,7 +18,7 @@ public struct ReadoutWords {
     /// A running cook's readout at the moment (core's `readoutAt`); nil idle.
     public let readout: Readout?
     /// The phase label's key.
-    public let label: String
+    public let label: CopyKey
     /// The web's clock face in every phase: the countdown (the time heated,
     /// counting up, once the slow hob has lengthened the guess), how late the
     /// pull is running while the eggs wait to come out, and at the end the
@@ -45,10 +45,10 @@ public struct ReadoutWords {
         label = r?.label ?? model.keys(phase).label
         if let r {
             big = r.sign + clockString(r.clockS)
-            sub = tr(r.subline.key, r.subline.args.mapValues { .text(clockString($0)) })
+            sub = trChosen(r.subline.key, r.subline.args.mapValues { .text(clockString($0)) })
         } else {
             big = planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
-            sub = tr(model.keys(.idle).subline, [
+            sub = trChosen(model.keys(.idle).subline, [
                 "boil": .text(clockString(planner.timeToBoilS)),
                 "water": .text(planner.show(.water, planner.settings.waterLitres)),
             ])
@@ -111,7 +111,7 @@ public func renderedWords(_ ref: WordsRef) -> String {
     var args: CopyArgs = [:]
     for (name, value) in ref.args { args[name] = .number(value) }
     for (name, key) in ref.words { args[name] = .text(tr(key)) }
-    return tr(ref.key, args)
+    return trChosen(ref.key, args)
 }
 
 // MARK: - The slot

@@ -185,12 +185,12 @@ public final class Edits {
     public enum StartLimit: Equatable {
         case now, boil, pull, earliest
 
-        public var key: String {
+        public var key: CopyKey {
             switch self {
-            case .now: "controls.startedAt.latestNow"
-            case .boil: "controls.startedAt.latestBoil"
-            case .pull: "controls.startedAt.latestPull"
-            case .earliest: "controls.startedAt.earliest"
+            case .now: .`controls.startedAt.latestNow`
+            case .boil: .`controls.startedAt.latestBoil`
+            case .pull: .`controls.startedAt.latestPull`
+            case .earliest: .`controls.startedAt.earliest`
             }
         }
     }
@@ -489,7 +489,7 @@ public final class Edits {
         // says it too, at each press it stops (the web's line is
         // `aria-live`), since the value it reads has not changed.
         if let limit {
-            let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
+            let said = trChosen(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
             Services.announce(said)
         }
         guard next != from else { return false }

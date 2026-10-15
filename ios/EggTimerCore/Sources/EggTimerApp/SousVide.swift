@@ -67,13 +67,13 @@ public func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) 
             startPhrase(daysAgo: daysBefore(start, now)),
             ["weekday": .text(tr(weekdayKey(dayOfWeek(start))))]
         ),
-        subline: tr("sousvide.subline", [
+        subline: tr(.`sousvide.subline`, [
             "clock": .text(timeOfDay(start)), "duration": .text(duration), "bath": .text(bath),
         ]),
-        note: tr(est.whiteBound ? "sousvide.note.whiteBound" : "sousvide.note.yolkBound"),
-        warn: tr("sousvide.warn", [
+        note: tr(est.whiteBound ? .`sousvide.note.whiteBound` : .`sousvide.note.yolkBound`),
+        warn: tr(.`sousvide.warn`, [
             "bath": .text(bath), "floor": .text(showIn(units, .temperature, sousVideModelFloorC)),
         ]),
-        hint: tr("sousvide.hint", ["duration": .text(duration)])
+        hint: tr(.`sousvide.hint`, ["duration": .text(duration)])
     )
 }

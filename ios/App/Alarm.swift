@@ -87,7 +87,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         if let pullAt = pullS.map(Date.init(timeIntervalSince1970:)) {
             request(
                 id: pullID, moment: .pull, at: pullAt,
-                title: tr("alarm.pull.title"),
+                title: tr(.`alarm.pull.title`),
                 body: tr(pullLineKey(cooling: cooling.rawValue))
             )
         }
@@ -95,8 +95,8 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         if let coolDoneAt = cooledS.map(Date.init(timeIntervalSince1970:)) {
             request(
                 id: coolID, moment: .cooled, at: coolDoneAt,
-                title: tr(probe ? "alarm.probe.title" : "alarm.cooled.title"),
-                body: tr(probe ? "alarm.probe.body" : "alarm.cooled.body")
+                title: tr(probe ? .`alarm.probe.title` : .`alarm.cooled.title`),
+                body: tr(probe ? .`alarm.probe.body` : .`alarm.cooled.body`)
             )
         }
     }
