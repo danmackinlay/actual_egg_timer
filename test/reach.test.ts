@@ -41,7 +41,7 @@ import {
 import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.js';
-import { appSetup, gridFor, knowing } from '../tools/common.js';
+import { EXHAUSTIVE, appSetup, gridFor, knowing } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
 
@@ -483,14 +483,16 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
 });
 
 /** Every slider position the pan delivers, from soft to hard, with the time the
- *  app gives there (held by the profile, as the apps hold it). */
+ *  app gives there (held by the profile, as the apps hold it). `npm test`
+ *  takes every fourth, and both ends; `npm run test:slow` takes them all. */
 function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: OddsProfile; times: [number, number][] } {
   const grid = gridFor(c, egg, setup);
   const profile = oddsProfile(c, egg, setup, grid);
   const times: [number, number][] = [];
   const lo = Math.round(profile.physicalSoftest * 100);
   const hi = Math.round(profile.physicalHardest * 100);
-  for (let k = lo; k <= hi; k++) {
+  const stride = EXHAUSTIVE ? 1 : 4;
+  for (let k = lo; k <= hi; k = k < hi && k + stride > hi ? hi : k + stride) {
     const a = answerAt(c, egg, setup, k / 100, profile);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
     times.push([a.level, d.cookTime_s]);

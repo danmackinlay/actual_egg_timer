@@ -10,6 +10,7 @@
   "scripts": {
     "build": "node tools/build.mjs",
     "test": "node tools/build.mjs && node --test dist/test/*.test.js",
+    "test:slow": "node tools/build.mjs && AET_TEST_SLOW=1 node --test dist/test/*.test.js",
     "validate": "node tools/build.mjs && node dist/tools/validate.js",
     "fixtures": "node tools/build.mjs && node dist/tools/fixtures.js",
     "population": "node tools/build.mjs && node dist/tools/population.js",
