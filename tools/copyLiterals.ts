@@ -126,7 +126,7 @@ const NOT_COPY: Record<string, string> = {
   dlig: 'OpenType feature tag',
   hist: 'OpenType feature tag',
   '{} is not registered: see UIAppFonts in project.yml': 'developer error, never shown',
-  '{}#{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
+  '{}#{}|{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
   // links, symbols, separators and digits that size a line, the ring's
   // log, and sharing's endpoint: none of them words on a screen
   'https://github.com/danmackinlay/actual_egg_timer': 'URL',

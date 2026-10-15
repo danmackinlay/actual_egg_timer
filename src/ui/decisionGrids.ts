@@ -89,23 +89,26 @@ const profileBuilds = new Map<string, Promise<OddsProfile>>();
 const PROFILES_KEPT = 8;
 
 /** A cheap summary of where the posterior stands: the count, the resampler's
- *  state and the weighted sums of every dimension. Any fold moves at least
- *  one of them. */
+ *  state and the weighted sum of each of the five dimensions, one apiece, so
+ *  shifts that cancel between two dimensions still move the print. Any fold
+ *  moves at least one of them. */
 function posteriorPrint(c: Calibration): string {
   const post = c.posterior;
   let a = 0;
   let b = 0;
   let d = 0;
   let e = 0;
+  let f = 0;
   for (let i = 0; i < post.particles.length; i++) {
     const p = post.particles[i];
     const w = post.weights[i];
     a += w * p.alpha_m2s;
     b += w * p.logDoseOffset;
     d += w * p.noise;
-    e += w * (p.whiteOffset + p.whiteFirmGap);
+    e += w * p.whiteOffset;
+    f += w * p.whiteFirmGap;
   }
-  return `${c.eggsLogged}|${post.rng}|${post.particles.length}|${a}|${b}|${d}|${e}`;
+  return `${c.eggsLogged}|${post.rng}|${post.particles.length}|${a}|${b}|${d}|${e}|${f}`;
 }
 
 export function profileKey(inputs: DecisionInputs, c: Calibration): string {
