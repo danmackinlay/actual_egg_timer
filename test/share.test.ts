@@ -9,7 +9,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { STORES } from '../src/ui/stores.js';
 
 import {
   REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare, storedShare,
@@ -241,56 +240,7 @@ test('7. a deletion the server did not confirm is asked again at the next load',
   assert.deepEqual(sh.state().deleting, []);
 });
 
-test('8. another tab\'s change is taken up before this one acts: a stale tab neither sends nor undoes a deletion', async () => {
-  storage.clear();
-  const t = fake();
-  const log = [...LOG];
-  sh = openSharing(page(log), t);
-  await sh.setSharing(true);
-  const uid = sh.state().uid as string;
-  assert.equal(t.posts.length, 3);
-  assert.equal(sh.storedElsewhere('aet.share.v1'), false, 'nothing new');
-  // Another tab, loaded later, deletes everything sent.
-  storage.set('aet.share.v1', storedShare(deletionAsked(readShare(storage.get('aet.share.v1') ?? null))));
-  // This tab, still showing sharing on, finishes an egg before it hears.
-  log.push({ ...LOG[0], day: '2026-10-04' });
-  await sh.sendFinal();
-  assert.equal(t.posts.length, 3, 'nothing goes under an id another tab deleted');
-  assert.equal(sh.state().on, false);
-  // And its own writes start from what the other tab wrote.
-  sh.forget();
-  assert.deepEqual(readShare(storage.get('aet.share.v1') ?? null).deleting, [uid], 'the deletion is still to be asked');
-  // The page's storage event: taken up once, and only for this key.
-  storage.set('aet.share.v1', storedShare({ ...FRESH_SHARE, deleting: [uid, B] }));
-  assert.equal(sh.storedElsewhere(STORES.settings.key), false);
-  assert.equal(sh.storedElsewhere('aet.share.v1'), true);
-  assert.equal(sh.storedElsewhere('aet.share.v1'), false);
-  assert.deepEqual(sh.state().deleting, [uid, B]);
-});
-
-test('9. two tabs sending the same egg move the cursor once', async () => {
-  storage.clear();
-  let release: (status: number) => void = () => {};
-  const slow: Transport = {
-    post: () => new Promise<number>((resolve) => { release = resolve; }),
-    remove: async () => 200,
-  };
-  sh = openSharing(page(LOG, 0), slow);
-  await sh.setSharing(true);
-  const sending = (async () => {
-    sh = openSharing(page(LOG, 1), slow);
-    return sh.sendFinal();
-  })();
-  await new Promise((r) => setTimeout(r, 0));
-  // Meanwhile the other tab sent egg 0 and moved on.
-  const s = readShare(storage.get('aet.share.v1') ?? null);
-  storage.set('aet.share.v1', storedShare({ ...s, sent: 1, seq: 1 }));
-  release(200);
-  await sending;
-  assert.deepEqual([sh.state().sent, sh.state().seq], [1, 1], 'not 2: the other tab already moved it');
-});
-
-test('10. a request the server never answers is given up, so the lock it holds is let go', async () => {
+test('10. a request the server never answers is given up, so a deletion waiting on it goes ahead', async () => {
   assert.ok(REQUEST_TIMEOUT_MS > 0 && REQUEST_TIMEOUT_MS <= 30000);
   let signal: AbortSignal | null = null;
   const stalled = (_url: string, init: RequestInit): Promise<Response> => new Promise((_resolve, reject) => {

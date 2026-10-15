@@ -9,10 +9,6 @@
  * odds, a cook's pot's surface, the calibration before its egg and a surface
  * on it) off the main thread, and draws the page.
  *
- * Before any message about the running cook, what another tab wrote for it
- * since is taken up (`elsewhere`), so a tab never writes over what another
- * saw in the pan.
- *
  * The pull's alarm is scheduled ahead on the audio clock for the pull the
  * plan sets (`setPullAlarm`), except while the time to boil is a guess, and
  * rung when a step writes the pull ringing. The ticker runs, and the screen
@@ -22,7 +18,7 @@
 
 import { nudgeSeconds } from '../core/decide.js';
 import type { BoilMemory } from '../core/boil.js';
-import { RunningCook, answered } from '../core/running.js';
+import { answered } from '../core/running.js';
 import { phaseNow } from './state.js';
 import { EditTimer, Effect, Model, Msg, update } from './model.js';
 import type { Learner } from './calibration.js';
@@ -39,11 +35,10 @@ import { draw, drawnNothing, showStartLimit } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import type { Sharing } from './share.js';
-import { CookStore, KeptAnswers, PansStore, SettingsStore, storageReadOnly } from './store.js';
-import { correctedLater, takeUpEvents } from './tabs.js';
+import { CookStore, PansStore, SettingsStore, storageReadOnly } from './store.js';
 import { unitSystem, useUnits } from './units.js';
 import {
-  dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon, storedElsewhere,
+  dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon,
 } from './effects.js';
 import { showEgg } from './views.js';
 import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
@@ -148,19 +143,6 @@ export function flushDraw(): void {
 
 /* ------------------------------------------------------------ messages */
 
-/** The stored cook's id as this tab reads it, for whether its egg is still
- *  open: its own when storage does not work. */
-function storedId(): number | null {
-  if (!model.works) return model.cook === null ? null : model.cook.id_ms;
-  return stores.cooks.peek()?.cook.id_ms ?? null;
-}
-
-/** The messages about the running cook, before which another tab's write
- *  for it is taken up. */
-const ABOUT_THE_COOK = new Set<Msg['kind']>([
-  'start', 'primary', 'cancel', 'stillOut', 'correct', 'tick', 'landed', 'before', 'answered', 'probe', 'restore',
-]);
-
 /** Take up what `msg` did, and do what it asks: the runner's view of its
  *  caches and the stores handed in with it, and the units and the sound
  *  kept with the settings before the effects. */
@@ -169,7 +151,6 @@ function apply(msg: Msg, now: number): void {
   const share = stores.sharing.state();
   const [next, effects] = update(model, msg, now, {
     surfaces: built.surfaces, profiles: built.profiles, sharing: share.on, readOnly: storageReadOnly(),
-    storedId_ms: model.cook === null ? null : storedId(),
     share: { state: share, final: finalEggs(stores, model) },
   });
   model = next;
@@ -183,8 +164,7 @@ function apply(msg: Msg, now: number): void {
 }
 
 /**
- * One thing that happened, at the page's time now. What another tab wrote
- * for the running cook since is taken up first. Then what the page waits
+ * One thing that happened, at the page's time now. Then what the page waits
  * for is asked for, the ticker and the alarm follow the plan, and the page
  * is drawn. A message sent while one is taken up waits for it.
  */
@@ -195,15 +175,7 @@ export function dispatch(msg: Msg): void {
   if (busy) return;
   busy = true;
   try {
-    while (queue.length > 0) {
-      const next = queue.shift()!;
-      const now = nowMs();
-      if (model.cook !== null && ABOUT_THE_COOK.has(next.kind)) {
-        const taken = stores.cooks.takeUp();
-        if (taken !== null) apply({ kind: 'elsewhere', theirs: taken.theirs }, now);
-      }
-      apply(next, now);
-    }
+    while (queue.length > 0) apply(queue.shift()!, nowMs());
   } finally {
     busy = false;
   }
@@ -357,16 +329,17 @@ function perform(effects: Effect[]): void {
 export function performStored(e: Effect, s: Stores, boilMemory: BoilMemory, send: (msg: Msg) => void): boolean {
   switch (e.kind) {
     case 'persist':
-      persist(s.cooks, e.cook, e.answers, e.leanHint_s, send);
+      // The page is told when whether a write reads back changes.
+      send({ kind: 'persisted', works: s.cooks.save(e.cook, e.answers, e.leanHint_s) !== null });
       return true;
     case 'persistLean':
       s.cooks.saveLeanHint(e.id_ms, e.leanHint_s);
       return true;
     case 'persistEnded':
-      if (s.cooks.peek()?.cook.id_ms === e.cook.id_ms) s.cooks.save(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
+      if (s.cooks.load()?.cook.id_ms === e.cook.id_ms) s.cooks.save(e.cook, answered(e.cook) ? 'beforeReload' : 'none', e.leanHint_s);
       return true;
     case 'rememberBoil':
-      send({ kind: 'pans', boilMemory: s.pans.remember(boilMemory, e.boil.litres, e.boil.seconds), quiet: true });
+      send({ kind: 'pans', boilMemory: s.pans.remember(boilMemory, e.boil.litres, e.boil.seconds) });
       return true;
     case 'log': {
       const id = e.record.id ?? null;
@@ -383,27 +356,6 @@ export function performStored(e: Effect, s: Stores, boilMemory: BoilMemory, send
     default:
       return false;
   }
-}
-
-/**
- * Write the cook on screen down. A copy of this cook another tab corrected
- * later stays the copy stored, so a reload restores
- * the latest correction: what this tab saw in the pan is written into it
- * instead (`takeUpEvents`), and this tab runs on as it is.
- * The page is told when whether a write reads back changes.
- */
-function persist(
-  cooks: CookStore, cook: RunningCook, answers: KeptAnswers, leanHint_s: number, send: (msg: Msg) => void,
-): void {
-  const stored = cooks.peek();
-  let written: string | null;
-  if (stored !== null && stored.cook.id_ms === cook.id_ms && correctedLater(stored.cook, cook)) {
-    const kept = stored.answers === 'beforeReload' ? stored.answers : answers;
-    written = cooks.save(takeUpEvents(stored.cook, cook), kept, stored.leanHint_s);
-  } else {
-    written = cooks.save(cook, answers, leanHint_s);
-  }
-  send({ kind: 'persisted', works: written !== null });
 }
 
 /* ------------------------------------------------------------ the needs */
@@ -446,15 +398,13 @@ export function onPrimary(): void {
   dispatch({ kind: 'primary' });
 }
 
-/** Start: a cook started here is this tab's own, whatever happened before
- *  it. */
+/** Start. */
 function startCookNow(): void {
   // The audio context must be created inside a user gesture or the alarm is
   // silently blocked later, when it matters.
   primeAudio();
   stopAlarm();
   resetFeedback();
-  stores.cooks.load();
   dispatch({ kind: 'begin', units: unitSystem(), lang: activeLocale() });
 }
 
@@ -468,20 +418,6 @@ export function reset(): void {
 export function onStillOut(): void {
   stopAlarm();
   dispatch({ kind: 'stillOut' });
-}
-
-/** Another tab changed storage (the `storage` event; a null key cleared it
- *  all): what it wrote for this cook taken up at once, so a tab leaves
- *  Heating when another taps the boil; at Done, whether this
- *  egg is still open, its questions going if not. */
-export function storageElsewhere(key: string | null): void {
-  storedElsewhere(stores, key, model.settings);
-  cookElsewhere(key);
-}
-
-function cookElsewhere(key: string | null): void {
-  if (!stores.cooks.touches(key) || model.cook === null) return;
-  dispatch({ kind: 'elsewhere', theirs: stores.cooks.takeUp()?.theirs ?? null });
 }
 
 /** The page is looked at again (shown, focused): the ticker, which stops at

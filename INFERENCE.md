@@ -297,9 +297,8 @@ fit's training data cannot drift between the two.
   screen had none.
 - **`id`** (6 October 2026) is the moment the cook started, in whole
   milliseconds since 1970 UTC: which cook the egg was. The web app writes it,
-  so that two tabs showing one cook, or a cook written down twice, make one
-  egg, and only the tab that wrote an egg down learns from it; the iPhone app
-  runs one cook at a time and writes none, and it is the one field a record
+  so that a cook written down twice (corrected after its egg was logged)
+  makes one egg; the iPhone app runs one cook at a time and writes none, and it is the one field a record
   may leave out. It stays
   on the device: sharing sends the record without it, and the server drops
   it from whatever it is sent (`sharedRecord`), because a start time to the

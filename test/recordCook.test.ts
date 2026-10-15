@@ -177,7 +177,7 @@ test('4e. the same egg logged again keeps its facts as last corrected, and the a
   const plan = onSurface(cook, S0);
   const first = rec(cook, plan, 'jammy');
   assert.equal(cal.logEgg(first), 0);
-  // The same cook, its record made again from another tab's plan: another
+  // The same cook, its record made again from a later plan: another
   // forecast, no answer. The answer stays; the rest is the newer record.
   const again = { ...rec(cook, plan, null), cooled_s: first.cooled_s + 10 };
   assert.equal(cal.logEgg(again), 0);

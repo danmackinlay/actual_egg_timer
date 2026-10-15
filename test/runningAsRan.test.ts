@@ -16,7 +16,6 @@ import {
   withAsRan, withOut, writeEvents,
 } from '../src/core/running.js';
 import { readRunningCook } from '../src/ui/storedCook.js';
-import { cookStillOpen } from '../src/ui/tabs.js';
 import { gridFor } from '../tools/common.js';
 import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.js';
 
@@ -160,11 +159,9 @@ test('27. a cook too old ends from the tick; a screen knows its egg is no longer
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 1);
   const done = p.tooOldAt_s - 1;
-  assert.equal(cookStillOpen(hot, p, hot.id_ms, done), true);
-  assert.equal(cookStillOpen(hot, p, hot.id_ms, S + 3 * 3600), false, 'too old: final');
-  assert.equal(cookStillOpen(hot, p, null, done), false, 'Start again in another tab: nothing stored');
-  assert.equal(cookStillOpen(hot, p, hot.id_ms + 60_000, done), false, 'another cook stored');
-  assert.equal(cookStillOpen(hot, p, hot.id_ms, done), openEggId(hot, p, done) === hot.id_ms, 'as openEggId says');
+  assert.equal(cookTooOld(p, done), false);
+  assert.equal(cookTooOld(p, S + 3 * 3600), true, 'too old: final');
+  assert.equal(!cookTooOld(p, done), openEggId(hot, p, done) === hot.id_ms, 'as openEggId says');
 });
 
 test('28. a correction after Done keeps it Done, and corrects only the record', () => {

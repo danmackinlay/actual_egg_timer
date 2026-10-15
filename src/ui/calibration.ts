@@ -27,7 +27,7 @@ import {
   calibrationParams as paramsOf, copyCalibration, foldRecord, gridRequestFor, recordTeaches, resultsFile,
   resultsFileName,
 } from '../core/record.js';
-import { Decoded, Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
+import { Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
 import { localDay } from './model.js';
 import { buildOffThread } from './offThread.js';
 import { activePopulation } from './population.js';
@@ -62,15 +62,9 @@ export type Learner = ReturnType<typeof openLearner>;
  * solves with, and it is folded into IN PLACE as eggs are learned, so the
  * caller's reference stays current. If it is behind the log, `learn()`
  * catches it up. It folds under `likelihood`: `LIKELIHOOD_ID`, unless a test
- * opens a second page as another build would be.
+ * opens a page as another build would be.
  */
 export function openLearner(likelihood = LIKELIHOOD_ID) {
-  /** The store: another tab's write is taken up before this one writes
-   *  (`current`), since every tab writes the whole store, and a tab that wrote
-   *  back what it loaded would undo every egg another tab logged since. One
-   *  this page would not have written is folded in memory and not written
-   *  back until this page's own next change: an egg logged, an answer given,
-   *  everything forgotten (`owns`). */
   const store = keptStore(() => likelihood);
   const decoded = store.load();
   let kept: Kept = decoded.kept;
@@ -85,80 +79,8 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    *  Every other record is folded quietly. */
   let live = -1;
   let last: LiveFold | null = null;
-  /**
-   * The eggs another tab wrote down while this page was open, by `id`. Only
-   * the page that wrote an egg down folds it while it is the newest in the
-   * log: that page holds what a second answer to it needs (`last`), and a
-   * page that folded it first would leave that answer nowhere to go. Once
-   * another egg follows it, no second answer can come, and any page folds it.
-   */
-  let elsewhere = new Set<number>();
-
   function save(): void {
     store.write(encodeKept(kept, activePopulation(), likelihood));
-  }
-
-  /** Take up what another tab wrote, if it wrote anything since this one last
-   *  read or wrote: before every change, so a change lands on the store as it
-   *  is now. Says whether there was anything to take up. */
-  function current(): boolean {
-    const taken = store.takeUp();
-    if (taken === null) return false;
-    adopt(taken.theirs);
-    return true;
-  }
-
-  /**
-   * Another tab's store, as a load reads one (`decodeKept`), into the
-   * calibration the page already holds, so every holder of the reference sees
-   * it. A fold under way lands on nothing, and the drain goes round again on
-   * what is there now. The egg on screen keeps its chance of a second answer
-   * only if the other tab left it where it was.
-   *
-   * Nothing is written back, whatever the store turned out to be: what this
-   * page makes of it is written with its own next change, and not before. A
-   * page that wrote back every store it could not use as it was would answer
-   * another build's every write with one of its own, and the other build
-   * would answer in kind, for as long as both were open.
-   *
-   * What this page has folded is kept, not replayed, when the store needs a
-   * replay only because another build folded it (`rebuild`) and the eggs this
-   * page folded are still the first in the log: its posterior is still this
-   * build's replay of them, and only the eggs after need folding.
-   */
-  function adopt(decoded: Decoded): void {
-    const had = kept;
-    const next = decoded.kept;
-    if (keepsFolds(had, decoded)) {
-      kept = { ...next, base: had.base, calibration: had.calibration, folded: had.folded };
-    } else {
-      assign(had.calibration, next.calibration);
-      kept = { ...next, calibration: had.calibration };
-    }
-    generation += 1;
-    const known = new Set<number>();
-    for (const r of had.log) {
-      const id = idOf(r);
-      if (id !== null) known.add(id);
-    }
-    for (const r of kept.log) {
-      const id = idOf(r);
-      if (id !== null && !known.has(id)) elsewhere.add(id);
-    }
-    if (live >= 0 && !sameEgg(kept.log[live], had.log[live])) live = -1;
-    if (last !== null) {
-      const r = kept.log[last.index];
-      last = r !== undefined && sameEgg(r, last.record)
-        && kept.log.length === last.index + 1 && kept.folded === last.index + 1
-        ? { ...last, record: r } : null;
-    }
-  }
-
-  /** Another tab changed storage (the page's `storage` event, whose key is
-   *  null when a tab cleared it all): taken up now, if it touched the store.
-   *  Says whether it did, so the page can redraw and fold what is behind. */
-  function storedElsewhere(key: string | null): boolean {
-    return store.touches(key) && current();
   }
 
   /**
@@ -192,12 +114,11 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    * stores are left alone (store.ts): then nothing is written down, so
    * nothing is learned either.
    *
-   * An egg already written down - the same cook, by `id`, from another tab or
-   * from this one - is not written twice. The record given is the cook as last
-   * corrected, so its facts replace the ones logged (two tabs can run one
-   * id with different corrections), with the answers already in the
-   * log kept as they are; an answer given with it is a later answer to that
-   * egg (`recordSecondAnswer`). When that changes an egg already folded, the
+   * An egg already written down - the same cook, by `id` - is not written
+   * twice. The record given is the cook as last corrected, so its facts
+   * replace the ones logged (a correction after the egg was logged), with
+   * the answers already in the log kept as they are; an answer given with
+   * it is a later answer to that egg (`recordSecondAnswer`). When that changes an egg already folded, the
    * posterior no longer holds the log, and the log is folded again from where
    * it starts (`base`, or the prior), the path a model change takes; the caller
    * then `learn`s, as after any egg logged.
@@ -230,10 +151,9 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
     last = null;
   }
 
-  /** Where the cook that started at `id` is in the log, with whatever another
-   *  tab wrote since taken up first; -1 if it is not there, or has no id. */
+  /** Where the cook that started at `id` is in the log; -1 if it is not
+   *  there, or has no id. */
   function eggLogged(id: number | null): number {
-    current();
     if (id === null) return -1;
     for (let i = kept.log.length - 1; i >= 0; i--) {
       if (idOf(kept.log[i]) === id) return i;
@@ -294,18 +214,14 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
   async function drainLog(): Promise<void> {
     for (;;) {
       if (closed) return;
-      current();
       if (kept.folded >= kept.log.length) return;
       const k = kept;
       const gen = generation;
       const index = k.folded;
       const r = k.log[index];
-      // Another tab's newest egg is that tab's to fold (`elsewhere`).
-      const id = idOf(r);
-      if (index === k.log.length - 1 && id !== null && elsewhere.has(id)) return;
       if (!recordTeaches(r)) {
         k.folded += 1;
-        if (store.owns()) save();
+        save();
         continue;
       }
       // The surface is centred where the posterior stands BEFORE this egg - see
@@ -319,9 +235,9 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
         if (closed) return;
         throw error;
       }
-      // Another tab's store, written while the surface was being built, is
-      // taken up instead, and folded from where it stands.
-      if (current() || gen !== generation) continue;
+      // Everything forgotten, or the log refolded, while the surface was
+      // being built: folded again from where it stands.
+      if (gen !== generation) continue;
       const before = index === live ? copyCalibration(k.calibration) : null;
       // Whatever answers the record holds NOW: one that arrived while the surface
       // was being built is folded with the first, as a replay would fold them.
@@ -331,7 +247,7 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
         live = -1;
         last = { index: index, record: r, grid: grid, before: before };
       }
-      if (store.owns()) save();
+      save();
     }
   }
 
@@ -348,13 +264,8 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    * make, whichever order the answers came in. Refused, and nothing is written,
    * when that is no longer possible: another egg has been logged since, the
    * question was answered already, or the surface is gone - the page was
-   * reloaded, or another tab wrote the egg down and folded it. Writing an
-   * answer the posterior does not hold would break the one invariant the log
-   * exists for.
-   *
-   * An egg another tab wrote down and has not yet folded takes the answer:
-   * written into its record, and folded by that tab with the rest
-   * (`elsewhere`).
+   * reloaded since. Writing an answer the posterior does not hold would break
+   * the one invariant the log exists for.
    *
    * Returns whether the answer was taken; the caller says nothing was kept
    * when it was not.
@@ -363,10 +274,6 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
     index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
   ): Promise<boolean> {
     if (storageReadOnly()) return false;
-    const had = kept.log[index];
-    // Another tab's store first: the answer is written only to the egg it was
-    // given for, and only if no other egg has been logged since.
-    if (current() && !sameEgg(kept.log[index], had)) return false;
     const r = kept.log[index];
     if (r === undefined || index !== kept.log.length - 1) return false;
     if (answer.yolkWord !== undefined && r.yolkWord !== null) return false;
@@ -441,7 +348,6 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
     live = -1;
     last = null;
     store.remove();
-    elsewhere = new Set<number>();
     kept = freshKept();
     return kept.calibration;
   }
@@ -457,34 +363,13 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
 
   return {
     calibration: (): Calibration => kept.calibration,
-    keptState, storedElsewhere, exportResults, eggsBehind, logEgg, eggLogged, calibrationBefore, learn,
+    keptState, exportResults, eggsBehind, logEgg, eggLogged, calibrationBefore, learn,
     recordSecondAnswer, keepRecord, clear, close,
   };
 }
 
-/** Whether a store taken up can keep what this page has folded: a store
- *  that would be replayed, or is behind this page, over the same eggs this
- *  page folded, from the prior. */
-function keepsFolds(had: Kept, decoded: Decoded): boolean {
-  const next = decoded.kept;
-  if (decoded.path !== 'rebuild' && !(decoded.path === 'loaded' && next.folded < had.folded)) return false;
-  if (had.base !== null || next.base !== null || next.log.length < had.folded) return false;
-  for (let i = 0; i < had.folded; i++) {
-    if (!sameRecord(next.log[i], had.log[i])) return false;
-  }
-  return true;
-}
-
 function sameRecord(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
   return a !== undefined && b !== undefined && JSON.stringify(a) === JSON.stringify(b);
-}
-
-/** The same egg: the same cook, by `id`, whatever answers another tab has
- *  added to it since; the same record, for one without an id. */
-function sameEgg(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
-  if (a === undefined || b === undefined) return false;
-  const id = idOf(a);
-  return id !== null && idOf(b) !== null ? id === idOf(b) : sameRecord(a, b);
 }
 
 /** The cook a record is of, or null for one without an id. */

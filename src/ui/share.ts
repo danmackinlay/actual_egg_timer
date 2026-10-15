@@ -10,11 +10,10 @@
  * each step moves it - turned on and off, forgotten, deletion asked, an
  * answer from the server - is `shareState.ts`'s; what the server takes and
  * what its answers mean, core's (`src/core/share.ts`). A page's sharing
- * (`openSharing`) holds the current state and writes it through, takes up
- * what another tab wrote before acting, and does the talking: each final egg
- * in turn, in order. No answer, or a busy one (`answered`), stops the run
- * until the next (a load, a new egg, sharing turned on, the browser back
- * online).
+ * (`openSharing`) holds the current state and writes it through, and does
+ * the talking: each final egg in turn, in order. No answer, or a busy one
+ * (`answered`), stops the run until the next (a load, a new egg, sharing
+ * turned on, the browser back online).
  */
 
 import { EggRecord, sharedRecord } from '../core/record.js';
@@ -26,7 +25,7 @@ import {
 import { request } from './idle.js';
 import { send } from './send.js';
 import { STORES } from './stores.js';
-import { Taken, storageReadOnly, syncedKey } from './store.js';
+import { storageReadOnly, storedKey } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
 /** Now, epoch s, as core counts it. */
@@ -46,11 +45,11 @@ const fetchTransport: Transport = {
   remove: async (uid) => (await fetchWithin(`/api/eggs/${uid}`, { method: 'DELETE' })).status,
 };
 
-/** How long a send or a deletion waits for the server. Each holds the lock
- *  every tab's sends and deletions take turns under (`exclusive`), so one
- *  that stalled would hold up a deletion asked for in any tab for as long as
- *  the browser left it hanging. A request given up is asked again at the
- *  next run, which the server takes once (a resent egg is a 200). */
+/** How long a send or a deletion waits for the server. A deletion waits
+ *  for the send under way (`retryDeletes`), so a send that stalled would
+ *  hold it up for as long as the browser left it hanging. A request given
+ *  up is asked again at the next run, which the server takes once (a resent
+ *  egg is a 200). */
 export const REQUEST_TIMEOUT_MS = 20000;
 
 /** `fetch`, given up after `ms`: a throw then, as when the network does not
@@ -111,17 +110,6 @@ export interface ShareHost {
   finalCount(): number;
 }
 
-/**
- * One tab at a time, across every tab of the site, where the browser can say
- * so (`navigator.locks`): a send, and the asking for a deletion, each read
- * the state, talk to the server and write the state back, and another tab's
- * deletion must not land in the middle of a send and be outlived by it.
- */
-function exclusive<T>(f: () => Promise<T>): Promise<T> {
-  const locks = (globalThis as { navigator?: { locks?: LockManager } }).navigator?.locks;
-  return locks === undefined ? f() : locks.request('aet.share', f) as Promise<T>;
-}
-
 /** A page's sharing (`openSharing`). */
 export type Sharing = ReturnType<typeof openSharing>;
 
@@ -132,11 +120,7 @@ export type Sharing = ReturnType<typeof openSharing>;
  * `shared` message).
  */
 export function openSharing(host: ShareHost, transport: Transport = fetchTransport, clock: () => number = nowS) {
-  /** The state as stored: another tab's write is taken up before this one
-   *  acts (`current`). A tab loaded yesterday must not send under an id
-   *  another tab has since deleted, nor write back the deletions it never
-   *  saw. */
-  const store = syncedKey(STORES.share.key, readShare);
+  const store = storedKey(STORES.share.key, readShare);
   let state: ShareState = reconciled(store.load(), host.log().length);
   /** Bumped by every change of id, so a send in flight for an old one lands
    *  on nothing. */
@@ -153,34 +137,9 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
     send({ kind: 'shared' });
   }
 
-  /** Another tab's state, taken up: whether there was one. A change of id or
-   *  of on and off is a new generation, so a send in flight under the old one
-   *  lands on nothing. */
-  function takeUp(taken: Taken<ShareState> | null): boolean {
-    if (taken === null) return false;
-    const next = reconciled(taken.theirs, host.log().length);
-    if (next.uid !== state.uid || next.on !== state.on) generation += 1;
-    state = next;
-    return true;
-  }
-
-  /** The state, with whatever another tab wrote since this one last looked
-   *  taken up first. */
-  function current(): ShareState {
-    takeUp(store.takeUp());
-    return state;
-  }
-
-  /** Another tab changed storage (the page's `storage` event; a null key is a
-   *  tab that cleared it all): taken up now, if it touched sharing. Says
-   *  whether it did. */
-  function storedElsewhere(key: string | null): boolean {
-    return takeUp(store.elsewhere(key));
-  }
-
   /** Sharing on or off. On sends the log so far; the promise is that run. */
   function setSharing(on: boolean): Promise<void> {
-    if (storageReadOnly() || on === current().on) return Promise.resolve();
+    if (storageReadOnly() || on === state.on) return Promise.resolve();
     generation += 1;
     save(on ? turnedOn(state, newUid()) : turnedOff(state));
     return on ? sendFinal() : Promise.resolve();
@@ -189,7 +148,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
   /** Forget everything: paired with the calibration's reset. */
   function forget(): void {
     generation += 1;
-    save(forgotten(current(), newUid()));
+    save(forgotten(state, newUid()));
   }
 
   /**
@@ -212,7 +171,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
   }
 
   async function sendRun(): Promise<void> {
-    while (await exclusive(sendOne));
+    while (await sendOne());
   }
 
   /** The next final egg, if there is one and sharing is on: whether to go on. */
@@ -221,7 +180,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
     // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
     // anything while a newer build's results are left alone (store.ts).
     if (closed || devClockUsed() || storageReadOnly()) return false;
-    const s = current();
+    const s = state;
     const log = host.log();
     const at = nextToSend(s, host.finalCount(), log.length);
     if (at === null) return false;
@@ -233,43 +192,36 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
     } catch {
       return false;
     }
-    const now = current();
     if (gen !== generation) return false;
-    // Another tab may have sent the same egg meanwhile and moved on: then
-    // there is nothing to move, and the next is looked at afresh.
-    if (now.sent !== s.sent || now.seq !== s.seq) return true;
-    const { next, moved } = answered(now, status, clock());
+    const { next, moved } = answered(state, status, clock());
     save(next);
     return moved;
   }
 
-  /** "Delete what I've sent", confirmed: off, and every id asked for - after
-   *  any egg already on its way has landed, so that it cannot arrive after the
-   *  deletion and outlive it. */
+  /** "Delete what I've sent", confirmed: off, and every id asked for. */
   async function deleteSent(): Promise<void> {
     if (storageReadOnly()) return;
     generation += 1;
-    save(deletionAsked(current()));
-    if (pumping !== null) await pumping;
+    save(deletionAsked(state));
     await retryDeletes();
   }
 
-  /** Ask the server to delete every id it has not yet confirmed. At every
-   *  load, and after the cook asks. */
-  function retryDeletes(): Promise<void> {
-    if (storageReadOnly()) return Promise.resolve();
-    return exclusive(async () => {
-      for (const uid of [...current().deleting]) {
-        if (closed) return;
-        let status: number;
-        try {
-          status = await transport.remove(uid);
-        } catch {
-          return;
-        }
-        if (!closed && deletionDone(status)) save(deletionConfirmed(current(), uid));
+  /** Ask the server to delete every id it has not yet confirmed, once any
+   *  egg on its way has landed, so that it cannot arrive after the deletion
+   *  and outlive it. At every load, and after the cook asks. */
+  async function retryDeletes(): Promise<void> {
+    if (storageReadOnly()) return;
+    if (pumping !== null) await pumping;
+    for (const uid of [...state.deleting]) {
+      if (closed) return;
+      let status: number;
+      try {
+        status = await transport.remove(uid);
+      } catch {
+        return;
       }
-    });
+      if (!closed && deletionDone(status)) save(deletionConfirmed(state, uid));
+    }
   }
 
   /** The page no longer owns the app (owner.ts): nothing more is sent or
@@ -280,8 +232,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
   }
 
   return {
-    /** The state, with another tab's write taken up first. */
-    state: (): Readonly<ShareState> => current(),
-    storedElsewhere, setSharing, forget, sendFinal, deleteSent, retryDeletes, close,
+    state: (): Readonly<ShareState> => state,
+    setSharing, forget, sendFinal, deleteSent, retryDeletes, close,
   };
 }

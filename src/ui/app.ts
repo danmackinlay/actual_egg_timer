@@ -17,8 +17,7 @@
  *   picked back up after a reload, and the page drawn; send.ts, the way in
  *   for the modules under it;
  * - effects.ts: the page's own effects - the settings written, the solve
- *   coalesced, a new language, everything forgotten, another tab's writes
- *   taken up as messages;
+ *   coalesced, a new language, everything forgotten;
  * - render.ts: the egg page drawn from the state;
  * - controls.ts and input.ts: the controls written from the model, and read
  *   back as messages.
@@ -30,7 +29,7 @@ import { openLearner } from './calibration.js';
 import { applyConstantsToDom, buildSizeOptions } from './controls.js';
 import {
   Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
-  startRunner, stopRunner, storageElsewhere,
+  startRunner, stopRunner,
 } from './cook.js';
 import { closeAudio, primeAudio } from './clock.js';
 import { bindDom, el, page } from './dom.js';
@@ -49,7 +48,7 @@ import { buildTicks } from './slider.js';
 import { emptyModel, sizeClasses } from './state.js';
 import { activePopulation } from './population.js';
 import { setStepRule, wireSteppers } from './stepper.js';
-import { claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly } from './store.js';
+import { claimStorage, openCooks, openPans, openSettings } from './store.js';
 import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
 import { learnBehind } from './effects.js';
@@ -138,8 +137,7 @@ function own(reloaded: boolean): void {
   // A deletion not yet confirmed is asked again before anything is sent.
   resend();
   // The idle page solved; a cook picked back up is described by its own
-  // choices and its plan, never by the settings, which another tab may have
-  // changed since.
+  // choices and its plan, never by the settings.
   dispatch({ kind: 'solve' });
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
@@ -191,14 +189,6 @@ function wire(): void {
   wireFeedback();
   wireShare();
   window.addEventListener('online', resend);
-  window.addEventListener('storage', (event) => {
-    if (!ownsApp()) return;
-    // A newer build's tab has run: this page writes nothing from now on
-    // (`claimStorage`), and takes up nothing more either.
-    newerStoredElsewhere(event.key);
-    if (storageReadOnly()) return;
-    storageElsewhere(event.key);
-  });
   // A cook left at DONE an hour or more ends when the page is next looked at.
   document.addEventListener('visibilitychange', lookAgain);
   window.addEventListener('focus', lookAgain);
