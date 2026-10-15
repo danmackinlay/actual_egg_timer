@@ -57,7 +57,7 @@ public struct ReadoutProbe: Sendable, Equatable {
 
 /// Whole seconds until the counted cooling starts without the cook; nil
 /// outside the pull, and on a counter rest.
-public func coolingStartsInS(_ d: Deadlines, cooling: Cooling, nowS: Double) -> Double? {
+func coolingStartsInS(_ d: Deadlines, cooling: Cooling, nowS: Double) -> Double? {
     guard phaseAt(d, nowS: nowS) == .pull, cooling != .counter else { return nil }
     return max(0, (pullGraceSeconds - (nowS - d.cookEndS)).rounded(.up))
 }

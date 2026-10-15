@@ -39,9 +39,8 @@ import { draw, drawnNothing, showStartLimit } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import type { Sharing } from './share.js';
-import {
-  CookStore, KeptAnswers, PansStore, SettingsStore, correctedLater, storageReadOnly, takeUpEvents,
-} from './store.js';
+import { CookStore, KeptAnswers, PansStore, SettingsStore, storageReadOnly } from './store.js';
+import { correctedLater, takeUpEvents } from './tabs.js';
 import { unitSystem, useUnits } from './units.js';
 import { finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon, storedElsewhere } from './effects.js';
 import { showEgg } from './views.js';

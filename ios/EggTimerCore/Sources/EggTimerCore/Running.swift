@@ -481,8 +481,9 @@ private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook 
     return c
 }
 
-/// The cook folded from its start and log.
-private func foldCook(
+/// The cook folded from its start and log: what a stored cook is read back
+/// as.
+public func foldCook(
     idMs: Double, start: CookStart, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String,
     log: [CookEntry]
 ) -> RunningCook {
@@ -569,7 +570,7 @@ public struct CookPot: Sendable, Equatable {
 }
 
 /// The egg's temperature as it goes in, C.
-public func eggStartOf(_ ch: CookChoices) -> Double {
+func eggStartOf(_ ch: CookChoices) -> Double {
     switch ch.eggFrom {
     case .custom: ch.customStartC
     case .fridge: startTempPresetC(.fridge, roomC: ch.roomC)
@@ -685,12 +686,6 @@ public func writeEvents(_ cook: RunningCook, _ events: CookEvents) -> RunningCoo
     return next
 }
 
-/// The cook with `asRan` as its plan as it ran: logged if it differs.
-public func withAsRan(_ cook: RunningCook, _ asRan: CookAsRan?) -> RunningCook {
-    if asRan == cook.asRan { return cook }
-    return appendEntry(cook, .ran(asRan))
-}
-
 /// The cook a level asked for after the pull would have made, for the
 /// slider's preview: these choices, as if not yet pulled and never corrected.
 /// A cook for a plan and nothing else, never stored or stepped. See
@@ -705,87 +700,6 @@ public func levelPreview(_ cook: RunningCook, choices: CookChoices) -> RunningCo
     c.events.cooledAtS = nil
     c.events.rangAtS = nil
     return c
-}
-
-/// One entry with every clock time in it moved by `by`.
-private func shiftedEntry(_ entry: CookEntry, by: Double) -> CookEntry {
-    switch entry {
-    case let .boil(at): .boil(atS: at + by)
-    case let .correct(at, choices): .correct(atS: at + by, choices: choices)
-    case let .start(at, startedAt): .start(atS: at + by, startedAtS: startedAt + by)
-    case let .pulled(p):
-        .pulled(p.map { Pulled(dueS: $0.dueS + by, outS: $0.outS + by, by: $0.by, confirmed: $0.confirmed) })
-    case .stands: .stands
-    case let .cooled(at): .cooled(atS: at.map { $0 + by })
-    case let .rang(at): .rang(atS: at.map { $0 + by })
-    case let .stillIn(at): .stillIn(atS: at + by)
-    case let .ran(r):
-        .ran(r.map {
-            var moved = $0
-            moved.correctedAtS = $0.correctedAtS.map { $0 + by }
-            return moved
-        })
-    case let .answered(at, yolk, white, probe): .answered(atS: at + by, yolkWord: yolk, white: white, probe: probe)
-    case let .logged(at): .logged(atS: at + by)
-    case let .ended(at): .ended(atS: at + by)
-    }
-}
-
-/// The cook with every clock time in it moved by `by` s, the press with
-/// them: what a development clock does to reach a moment without waiting.
-public func shiftedCook(_ cook: RunningCook, by: Double) -> RunningCook {
-    foldCook(
-        idMs: (cook.idMs + by * 1000).rounded(), start: CookStart(atS: cook.start.atS + by, choices: cook.start.choices),
-        nudgeS: cook.nudgeS, boilMemory: cook.boilMemory, units: cook.units, lang: cook.lang,
-        log: cook.log.map { shiftedEntry($0, by: by) }
-    )
-}
-
-// MARK: - Two copies of one cook
-
-private func earlier(_ a: Double?, _ b: Double?) -> Double? {
-    guard let a else { return b }
-    guard let b else { return a }
-    return min(a, b)
-}
-
-/// The pull to keep of two: the cook's tap over the clock's assumption, and of
-/// two alike the earlier out, then the earlier due.
-private func betterPull(_ a: Pulled?, _ b: Pulled?) -> Pulled? {
-    guard let a else { return b }
-    guard let b else { return a }
-    if a.by != b.by { return a.by == .cook ? a : b }
-    if a.outS != b.outS { return a.outS < b.outS ? a : b }
-    return a.dueS <= b.dueS ? a : b
-}
-
-/// `ours` with what another copy of the same cook saw taken up. See
-/// `takeUpEvents` in `src/core/running.ts`.
-public func takeUpEvents(_ ours: RunningCook, _ theirs: RunningCook) -> RunningCook {
-    guard theirs.idMs == ours.idMs else { return ours }
-    let same = ours.startedAtS == theirs.startedAtS && ours.choices == theirs.choices
-    let a = ours.events
-    let b = theirs.events
-    let boil = earlier(a.boilAtS, b.boilAtS)
-    let theirPull = same || b.pulled?.by == .cook ? b.pulled : nil
-    let pulled = betterPull(a.pulled, theirPull)
-    let cooled = earlier(pulled == a.pulled ? a.cooledAtS : nil, same && pulled == b.pulled ? b.cooledAtS : nil)
-    let rang = earlier(a.boilAtS == boil ? a.rangAtS : nil, same && b.boilAtS == boil ? b.rangAtS : nil)
-    let events = CookEvents(boilAtS: boil, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
-    func fits(_ r: CookAsRan?) -> Bool {
-        guard let r, let pulled else { return false }
-        return r.cookS == pulled.dueS - ours.startedAtS && r.correctedAtS == ours.correctedAtS
-    }
-    let asRan = fits(ours.asRan) ? ours.asRan : fits(theirs.asRan) ? theirs.asRan : nil
-    if events == a, asRan == ours.asRan { return ours }
-    return withAsRan(writeEvents(ours, events), asRan)
-}
-
-/// Whether copy `a` of a cook was corrected after copy `b` was.
-public func correctedLater(_ a: RunningCook, _ b: RunningCook) -> Bool {
-    guard let at = a.correctedAtS else { return false }
-    guard let bt = b.correctedAtS else { return true }
-    return at > bt
 }
 
 // MARK: - The stored cook
@@ -1273,11 +1187,6 @@ public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
 public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
     guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
     return cook.idMs
-}
-
-/// Whether the cook on a screen is still the egg open to correction.
-public func cookStillOpen(_ cook: RunningCook, plan: CookPlan, storedIdMs: Double?, nowS: Double) -> Bool {
-    storedIdMs == cook.idMs && !cookTooOld(plan, nowS: nowS)
 }
 
 /// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by

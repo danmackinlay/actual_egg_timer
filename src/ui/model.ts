@@ -50,9 +50,8 @@ import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
 import {
-  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookStillOpen, corrected, earliestStart_s,
-  endedAt_s, latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
-  takeUpEvents,
+  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, corrected, earliestStart_s, endedAt_s,
+  latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
 } from '../core/running.js';
 import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.js';
@@ -64,6 +63,7 @@ import { PotOdds, nudgeNow, solveIdle } from './answer.js';
 import { targetPeakYolk_C } from '../core/slider.js';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
 import type { KeptAnswers, Settings, StoredCook } from './store.js';
+import { cookStillOpen, takeUpEvents } from './tabs.js';
 import { REGION, REGIONAL_UNITS } from './units.js';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,

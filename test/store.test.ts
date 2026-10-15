@@ -17,9 +17,8 @@ import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
 import { STORES, stamped } from '../src/core/stores.js';
 import { choicesOf } from '../src/ui/state.js';
-import {
-  DEFAULT_SETTINGS, Settings, correctedLater, openCooks, openPans, openSettings, takeUpEvents,
-} from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, Settings, openCooks, openPans, openSettings } from '../src/ui/store.js';
+import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */

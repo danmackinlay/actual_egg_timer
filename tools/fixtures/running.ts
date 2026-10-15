@@ -13,9 +13,9 @@ import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
   COOLING_SECONDS, CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
   SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace, appendEntry,
-  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf, cookStillOpen,
-  corrected, correctedLater, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
-  readRunningCook, replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, takeUpEvents, withBoil,
+  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
+  corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
+  readRunningCook, replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
 } from '../../src/core/running.js';
 
@@ -452,8 +452,6 @@ function plan(pc: PlanCase): CookPlan {
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
     ...(pc.hobDue === undefined ? {} : { hobDue: pc.hobDue.map((t) => ({ now_s: t, due: slowHobDue(p, t) })) }),
     open: openEggId(pc.cook, p, pc.now_s),
-    stillOpen: [cookStillOpen(pc.cook, p, pc.cook.id_ms, pc.now_s), cookStillOpen(pc.cook, p, null, pc.now_s),
-      cookStillOpen(pc.cook, p, pc.cook.id_ms + 60000, pc.now_s)],
     asRan: {
       current: asRanCurrent(pc.cook), kept: keepAsRan(pc.cook, p).asRan, shown: asRanShown(pc.cook, p),
       corrected: correctedAsRan(pc.cook, c, surface, pc.now_s),
@@ -792,40 +790,6 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('the start corrected ten minutes earlier, a tap, then a stray: not remembered', corrected(corrected(withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500), { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610));
 }
 
-/* Two copies of one cook, as two tabs hold it (`takeUpEvents`): what each
- * takes up from the other, both ways, and which a
- * reload restores (`correctedLater`). */
-const takeUps: { note: string; ours: RunningCook; theirs: RunningCook }[] = [];
-{
-  const untapped = cookOf({}, -3);
-  const start = withBoil(untapped, S + 500);
-  const due = S + 900;
-  const byCook = writeEvents(start, {
-    ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
-  });
-  const byClock = writeEvents(start, {
-    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
-    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
-  });
-  const cooledByCook = writeEvents(byCook, { ...byCook.events, cooledAt_s: due + 204 });
-  const rangOnGuess = writeEvents(untapped, { ...untapped.events, rangAt_s: S + 700 });
-  const heavier = corrected(start, { ...start.choices, mass_kg: 0.076 }, S + 600);
-  const pair = (note: string, ours: RunningCook, theirs: RunningCook): void => {
-    takeUps.push({ note: note, ours: ours, theirs: theirs });
-  };
-  pair('one never saw the tap: it takes the other\'s', untapped, start);
-  pair('two taps: the first', withBoil(untapped, S + 520), start);
-  pair('the cook\'s tap out over the clock\'s assumption', byClock, byCook);
-  pair('the cooling\'s end of the pull kept', byClock, cooledByCook);
-  pair('all of it, at once', untapped, cooledByCook);
-  pair('a pull that rang under a guessed boil, not taken up with the real one', rangOnGuess, start);
-  pair('another cook: never taken up', untapped, startCook(S + 60, BASE_CHOICES, -3, MEMORY, 'metric', 'en'));
-  pair('a copy corrected otherwise: nothing its clock decided', heavier, byClock);
-  pair('a copy corrected otherwise: the boil and the cook\'s tap out, from any copy', corrected(untapped, heavier.choices, S + 600), cooledByCook);
-  pair('the same start and choices, corrected later: the same plan', corrected(start, start.choices, S + 610), byClock);
-  pair('the plan as it ran, of the pull kept', byCook, keptOf(byCook, due + 30));
-}
-
 /** Every running cook in the fixture as it is stored and read: what was fixed
  *  at the press, the start and the log. The cook as it stands, which a store
  *  writes beside them for whoever reads it by eye, is the log folded, and a
@@ -859,10 +823,6 @@ export const runningFixture = stored({
   reads: reads,
   plans: plans,
   remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
-  takeUps: takeUps.map((t) => ({
-    note: t.note, ours: t.ours, theirs: t.theirs, oursAfter: takeUpEvents(t.ours, t.theirs), theirsAfter: takeUpEvents(t.theirs, t.ours),
-    later: [correctedLater(t.ours, t.theirs), correctedLater(t.theirs, t.ours)],
-  })),
   phase: {
     coolingSeconds: COOLING_SECONDS,
     pullGraceSeconds: PULL_GRACE_SECONDS,

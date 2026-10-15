@@ -53,8 +53,8 @@
  *   fixtures/prior.json        a prior drawn from a population, and the
  *                              population files a reader refuses
  *   fixtures/running.json      a running cook: its egg and pot, its moves, a
- *                              stored one read back, its plan, two copies
- *                              taken up, and the phase at every boundary
+ *                              stored one read back, its plan, and the phase
+ *                              at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
  *   fixtures/newer.json        which build may write: versions compared, and

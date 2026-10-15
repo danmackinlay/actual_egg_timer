@@ -410,8 +410,8 @@ const SCREEN_ONLY: Record<string, string> = {
   'e2e inert-off-localhost': 'the development clock (tools/e2e.ts)',
   'e2e sentence-no-time': 'the sentence (wording.json, clauseKeys)',
   'e2e two-tabs-own-cooks': 'each tab its own cook (web)',
-  'e2e two-tabs-correction': 'running.json takeUps',
-  'e2e two-tabs': 'running.json takeUps',
+  'e2e two-tabs-correction': 'another tab\'s copy taken up (web tabs.ts)',
+  'e2e two-tabs': 'another tab\'s copy taken up (web tabs.ts)',
   'e2e change-kept-on-hide': 'the commit on leaving (web edit.ts; ios Edits)',
   'e2e certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
   'e2e unreadable-stores': 'running.json reads',
@@ -430,11 +430,11 @@ const SCREEN_ONLY: Record<string, string> = {
   'ios newer-version': 'newer.json',
   'ios newer-build': 'newer.json',
   'a drag is one correction, on release': 'both apps\' edits',
-  'each tab keeps its own cook': 'running.json takeUps',
+  'each tab keeps its own cook': 'another tab\'s copy taken up (web tabs.ts)',
   'an earlier build\'s stored cook at an upgrade': 'the boot sweep',
-  'a second tab takes up a correction and never undoes it': 'running.json takeUps',
+  'a second tab takes up a correction and never undoes it': 'another tab\'s copy taken up (web tabs.ts)',
   'the likely time range never contradicts the clock': 'wording.json timeRangeWords',
-  'a second tab never writes over what the first observed': 'running.json takeUps',
+  'a second tab never writes over what the first observed': 'another tab\'s copy taken up (web tabs.ts)',
 };
 
 /* ------------------------------------------------------------- the run */

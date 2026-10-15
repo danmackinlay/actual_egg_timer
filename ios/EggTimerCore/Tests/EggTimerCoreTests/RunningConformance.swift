@@ -152,39 +152,6 @@ struct RunningConformance {
         }
     }
 
-    @Test("a stored cook through JSONEncoder and JSONDecoder comes back to the bit, in the web's shape")
-    func storedToTheBit() throws {
-        var cooks = try Fixtures.list("running.json", "reads").compactMap { readRunningCook($0["raw"]) }
-        #expect(cooks.count >= 10)
-        // And each again with doubles of 17 significant digits in its fields,
-        // which is what JSONSerialization read back an ulp off.
-        var draw = SplitMix(seed: 20261007)
-        for base in cooks {
-            // Every time moved by a fraction, and a correction of every
-            // number, logged as a cook makes one.
-            var cook = shiftedCook(base, by: draw.next())
-            var choices = cook.choices
-            choices.massKg = 0.04 + 0.04 * draw.next()
-            choices.waterLitres = 0.2 + 3 * draw.next()
-            choices.level = draw.next()
-            choices.altitudeM = 2000 * draw.next()
-            cook = corrected(cook, choices: choices, nowS: cook.startedAtS + 1 + draw.next())
-            cook.nudgeS = 20 * draw.next() - 10
-            cook.boilMemory = ["\(choices.waterLitres)": 300 + 600 * draw.next()]
-            cooks.append(cook)
-        }
-        for (i, cook) in cooks.enumerated() {
-            let stored = StoredCook(cook: cook, answers: i % 2 == 0 ? .unanswered : .beforeReload, leanHintS: draw.next())
-            let data = try JSONEncoder().encode(stored)
-            let back = try JSONDecoder().decode(StoredCook.self, from: data)
-            #expect(back == stored)
-            #expect(back.cook == cook)
-            // The web's keys and nulls: what JSONSerialization makes of it is
-            // the store's own JSON, to its last bit but one.
-            #expect(sameJSON(try JSONSerialization.jsonObject(with: data), stored.jsonObject, ulps: 4))
-        }
-    }
-
     @Test("the constants")
     func constants() throws {
         let c = try Fixtures.object("running.json", "constants")
@@ -231,12 +198,6 @@ struct RunningConformance {
             let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, memo: memo)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
-            let stillOpen = [
-                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs, nowS: now),
-                cookStillOpen(cook, plan: plan, storedIdMs: nil, nowS: now),
-                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs + 60000, nowS: now),
-            ]
-            #expect(stillOpen == (row["stillOpen"] as? [Bool]), "\(note): still open")
             for out in try row.rows("outs", mayBeEmpty: true) {
                 let t = try out.num("now_s")
                 let after = withOut(cook, plan: plan, nowS: t)
@@ -319,21 +280,6 @@ struct RunningConformance {
             #expect(try ending.remake == expectedEnding.flag("remake"), "\(note): made again first")
         }
         #expect(hobsAsked >= 7, "the slow hob's moment asked of too few plans")
-    }
-
-    @Test("two copies of one cook: what each takes up from the other, and which a reload restores")
-    func takeUps() throws {
-        let rows = try Fixtures.list("running.json", "takeUps")
-        #expect(rows.count >= 8)
-        for row in rows {
-            let note = try row.str("note")
-            let ours = try runningCookOf(row["ours"], "\(note): ours")
-            let theirs = try runningCookOf(row["theirs"], "\(note): theirs")
-            #expect(sameJSON(storedJSON(takeUpEvents(ours, theirs)), row["oursAfter"]), "\(note): ours")
-            #expect(sameJSON(storedJSON(takeUpEvents(theirs, ours)), row["theirsAfter"]), "\(note): theirs")
-            let later = [correctedLater(ours, theirs), correctedLater(theirs, ours)]
-            #expect(later == (row["later"] as? [Bool]), "\(note): corrected later")
-        }
     }
 
     @Test("what the boil memory learns from a cook, and what it does not")
@@ -497,21 +443,6 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
         }
     } else {
         #expect(p.forecast == nil, "\(note): forecast")
-    }
-}
-
-/// A fixed stream of doubles in [0, 1) with every bit of the mantissa used:
-/// SplitMix64, for draws a test can repeat.
-private struct SplitMix {
-    var state: UInt64
-    init(seed: UInt64) { state = seed }
-    mutating func next() -> Double {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        z ^= z >> 31
-        return Double(z >> 11) / Double(UInt64(1) << 53)
     }
 }
 

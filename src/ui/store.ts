@@ -503,7 +503,3 @@ export function openCooks(): CookStore {
     },
   };
 }
-
-/** What another tab wrote for this cook, taken up, and which copy a reload
- *  restores: core's, over the two copies' logs (src/core/running.ts). */
-export { correctedLater, takeUpEvents } from '../core/running.js';
