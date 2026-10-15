@@ -10,7 +10,7 @@ import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
 import { sizeClassLabel } from '../core/units.js';
 import { EggFrom } from '../core/record.js';
 import { Clause, ClauseKeys, clauseKeys } from '../core/wording.js';
-import { t } from './copy.js';
+import { t, tChosen } from './copy.js';
 import { el, page } from './dom.js';
 import { Settings, UiStartMode } from './store.js';
 import { show, unitSystem } from './units.js';
@@ -94,7 +94,7 @@ function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: strin
     afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling, coolingWaterGiven: f.coolingWater_C !== null,
   });
   const words = (k: ClauseKeys, own: string, with_: Record<string, string | number> = args) => ({
-    text: t(k.text, with_), label: t(k.label), value: k.value === null ? own : t(k.value, with_),
+    text: tChosen(k.text, with_), label: t(k.label), value: k.value === null ? own : tChosen(k.value, with_),
   });
   return {
     egg: words(keys.egg, args.mass),

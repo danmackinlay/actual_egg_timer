@@ -7,12 +7,12 @@
  * what any moment of a cook says.
  */
 
-import { CopyArgs } from '../core/copy.js';
+import { CopyKey } from '../core/copy.js';
 import { CookPlan, RunningCook } from '../core/running.js';
 import { ReadoutLine, Spoken, readoutAt } from '../core/readout.js';
 import { Cooling, HeatAfterBoil } from '../core/protocol.js';
 import { phaseKeys } from '../core/wording.js';
-import { t } from './copy.js';
+import { t, tChosen } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import { UiStartMode } from './store.js';
 import { show } from './units.js';
@@ -104,18 +104,18 @@ export function phaseView(
   return {
     label: t(keys.label),
     digits: formatClock(cookTime_s),
-    subline: t(keys.subline, { boil: formatClock(boil_s), water: show('water', c.waterLitres) }),
+    subline: tChosen(keys.subline, { boil: formatClock(boil_s), water: show('water', c.waterLitres) }),
     spoken: t('spoken.total', { time: spokenClock(cookTime_s) }),
     primary: keys.action === null ? null : t(keys.action),
     primaryDisabled: !facts.whiteSets,
-    hint: keys.hint === null ? '' : t(keys.hint, { time: formatClock(cookTime_s) }),
+    hint: keys.hint === null ? '' : tChosen(keys.hint, { time: formatClock(cookTime_s) }),
     secondaryVisible: false,
     asking: false,
   };
 }
 
 /** What a screen reader hears for the clock, by what core says to say. */
-const SPOKEN: Record<Exclude<Spoken['say'], 'subline'>, string> = {
+const SPOKEN: Record<Exclude<Spoken['say'], 'subline'>, CopyKey> = {
   heating: 'spoken.heating', cooking: 'spoken.cooking', pull: 'spoken.pull', cooling: 'spoken.cooling',
   done: 'spoken.done', probe: 'spoken.probe', stillIn: 'spoken.stillIn',
 };
@@ -129,5 +129,5 @@ function line(l: ReadoutLine): string {
     args[name] = name === 'time' ? spokenClock(v) : name === 'boiling' ? show('temperature', v)
       : name === 'seconds' ? v : formatClock(v);
   }
-  return t(l.key, args as CopyArgs);
+  return tChosen(l.key, args);
 }

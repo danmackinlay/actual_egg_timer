@@ -21,6 +21,7 @@
  * "1,234" or "1 234" - through `src/core/format.ts`, so no app formats a count by hand.
  */
 
+import { CopyKey, CopyKeyArgs } from './copyKeys.js';
 import { Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, roundTo } from './format.js';
 
 /** A word or phrase written to stand alone - a doneness word, a headline -
@@ -49,11 +50,20 @@ export type CopyArg = string | number | Fixed;
 
 export type CopyArgs = Readonly<Record<string, CopyArg>>;
 
+export type { CopyKey } from './copyKeys.js';
+
+/** The arguments a key is rendered with, as a rest parameter: none for a key
+ *  that takes none, or exactly its names. For a key known only as one of
+ *  several, any one of theirs. */
+export type CopyArgsOf<K extends CopyKey> = K extends CopyKey
+  ? [CopyKeyArgs[K]] extends [never] ? [] : [Readonly<Record<CopyKeyArgs[K], CopyArg>>]
+  : never;
+
 /** What core returns instead of English: a key, and the numbers
  *  the sentence needs. The app renders it, and may add arguments of its own
  *  (a weekday name, say) that only a platform can answer. */
 export interface CopyRef {
-  key: string;
+  key: CopyKey;
   args: Readonly<Record<string, number>>;
 }
 

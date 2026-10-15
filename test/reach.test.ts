@@ -291,7 +291,7 @@ test('8. advice: when it is looked for, and what it says for which setup', () =>
 
   // Kept, and the link shown, only where the change raises that chance by
   // ADVICE_GAIN over the chance on screen.
-  const priced = [{ key: 'advice.ice', profile: ice }];
+  const priced = [{ key: 'advice.ice' as const, profile: ice }];
   const at25 = askedNear(ice, 0.25);
   assert.deepEqual(protocolAdvice(COUNTER, facts(true, false), 0.25, 0.2, priced), { keys: ['advice.weigh', 'advice.ice'], surer: true });
   assert.deepEqual(

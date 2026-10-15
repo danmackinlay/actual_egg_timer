@@ -11,6 +11,7 @@
  * Swift by `fixtures/step.json`, a readout for every step of every trace.
  */
 
+import { CopyKey } from './copyKeys.js';
 import { Cooling } from './protocol.js';
 import {
   CookPlan, Deadlines, PULL_GRACE_SECONDS, Phase, RunningCook, asksIfStillIn, guessLengthened, phaseAt,
@@ -22,7 +23,7 @@ import { phaseKeys } from './wording.js';
  *  (`time` spoken, where the key is a spoken one); `boiling` is degrees
  *  Celsius; `seconds` is a whole number of seconds. */
 export interface ReadoutLine {
-  key: string;
+  key: CopyKey;
   args: Record<string, number>;
 }
 
@@ -40,7 +41,7 @@ export interface Readout {
   phase: Phase;
   asking: boolean;
   /** Above the clock. */
-  label: string;
+  label: CopyKey;
   /** The clock, s, never below zero, and whether it counts on past the pull
    *  ('+'): in the pull's grace, and the time since the eggs were due out
    *  while the plan asks. While the slow hob has lengthened the guess, the
@@ -53,8 +54,8 @@ export interface Readout {
   spoken: Spoken;
   /** The primary button, or null when the phase has none; and the second,
    *  the "no" to "still in the water?". */
-  primary: string | null;
-  secondary: string | null;
+  primary: CopyKey | null;
+  secondary: CopyKey | null;
   /** The line beside the primary button, or null when there is nothing true
    *  to add. */
   hint: ReadoutLine | null;

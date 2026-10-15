@@ -7,6 +7,8 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
+import { CopyKey } from './copyKeys.js';
+
 /** What the pan makes of the white: `runny` when it never gets the white the
  *  dose that sets it, and otherwise what its peak temperature makes of it. */
 export type WhiteBand = 'runny' | 'justSet' | 'set' | 'firm';
@@ -51,8 +53,8 @@ export const YOLK_BAND_BELOW_C = { liquid: 58, soft: 63, jammy: 68, fudgy: 73 } 
  *  of the fragment that fills each of its placeholders. The app renders the
  *  fragments and hands them in; it chooses nothing. */
 export interface TextureNote {
-  key: string;
-  parts: Readonly<Record<string, string>>;
+  key: CopyKey;
+  parts: Readonly<Record<string, CopyKey>>;
 }
 
 /** Which words a texture is said in. A white that never sets is the whole

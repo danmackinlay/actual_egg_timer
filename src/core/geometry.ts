@@ -3,6 +3,7 @@
  * ruler; the model needs an equivalent-sphere radius and a mass.
  */
 
+import { CopyKey } from './copyKeys.js';
 import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.js';
 
 export interface Egg {
@@ -72,7 +73,7 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
  *  mass on the label comes from the mass, in grams or ounces - see
  *  `sizeClassLabel` in units.ts. */
 export interface SizeClass {
-  key: string;
+  key: CopyKey;
   mass_kg: number;
 }
 

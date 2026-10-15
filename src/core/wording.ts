@@ -11,6 +11,7 @@
  * that does not name an argument ignores it.
  */
 
+import { CopyKey } from './copyKeys.js';
 import { CopyRef } from './copy.js';
 import { CERTAINTY_MASS, Certainty, CertaintyReading, WordCertainty } from './certainty.js';
 import { Outcome, WHITE_RISK } from './outcome.js';
@@ -23,7 +24,7 @@ import { DONENESS_ANCHORS } from './solve.js';
 /* ----------------------------------------------------------- the refusal */
 
 /** A yolk too soft for the white, blamed on each cooling. */
-const REFUSAL_KEYS: Record<Cooling, string> = {
+const REFUSAL_KEYS: Record<Cooling, CopyKey> = {
   ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter',
 };
 
@@ -84,7 +85,7 @@ export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): Copy
  */
 
 /** The catalogue key of the line under the time. */
-export function certaintyKey(c: Certainty): string {
+export function certaintyKey(c: Certainty): CopyKey {
   if (c === 'veryCertain') return 'certainty.veryCertain';
   if (c === 'ballpark') return 'certainty.ballpark';
   return 'certainty.wildGuess';
@@ -93,9 +94,9 @@ export function certaintyKey(c: Certainty): string {
 /** A key with its counts (`args`, as a `CopyRef`'s) and its inserted words
  *  (`words`, each itself a doneness key for the caller to render). */
 export interface WordsRef {
-  key: string;
+  key: CopyKey;
   args: Readonly<Record<string, number>>;
-  words: Readonly<Record<string, string>>;
+  words: Readonly<Record<string, CopyKey>>;
 }
 
 /** The 90% interval in the slider's words: "9 times in 10: Soft to Fudgy.",
@@ -134,7 +135,7 @@ export function mostLikelyOpened(w: WordCertainty): boolean {
  *  shows a time (m:ss), or, `ofDay`, as clock times, epoch s, to be shown as
  *  times of day. */
 export interface TimeRangeWords {
-  key: string;
+  key: CopyKey;
   low_s: number;
   high_s: number;
   ofDay: boolean;
@@ -206,7 +207,7 @@ export function forecastWhiteAtRisk(f: Forecast): boolean {
 /** The bracket in the slider's words: a key and its arguments, each argument
  *  itself a doneness key for the caller to render: the 90% interval's first
  *  and last words, or its one word. */
-export function rangeWords(w: WordCertainty): { key: string; args: Record<string, string> } {
+export function rangeWords(w: WordCertainty): { key: CopyKey; args: Record<string, CopyKey> } {
   const low = DONENESS_ANCHORS[w.from].key;
   if (w.from === w.to) return { key: 'outcome.range.one', args: { level: low } };
   return { key: 'outcome.range', args: { low: low, high: DONENESS_ANCHORS[w.to].key } };
@@ -235,28 +236,28 @@ export interface PhaseFacts {
  *  `water`, `time`, `elapsed`, `after`, `cooking`, `boiling`, `seconds`. */
 export interface PhaseKeys {
   /** Above the clock. */
-  label: string;
+  label: CopyKey;
   /** Under the clock. */
-  subline: string;
+  subline: CopyKey;
   /** The primary button, or null when the phase has none. */
-  action: string | null;
+  action: CopyKey | null;
   /** The line that says what the primary button (or, without one, the pan)
    *  asks of the cook, or null when there is nothing true to add. */
-  hint: string | null;
+  hint: CopyKey | null;
 }
 
 /** Where the eggs go at the pull, as the button says it. */
-const PULLED_KEYS: Record<Cooling, string> = {
+const PULLED_KEYS: Record<Cooling, CopyKey> = {
   ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter',
 };
 
-function pulledKey(cooling: Cooling): string {
+function pulledKey(cooling: Cooling): CopyKey {
   return PULLED_KEYS[cooling];
 }
 
 /** The label while the cooling counts down. Never the counter's, which has
  *  no counted cooling. */
-const COOLING_LABELS: Record<Cooling, string> = {
+const COOLING_LABELS: Record<Cooling, CopyKey> = {
   ice: 'readout.phase.coolingIce', tap: 'readout.phase.coolingTap', bowl: 'readout.phase.coolingBowl',
   counter: 'readout.phase.coolingTap',
 };
@@ -334,9 +335,9 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
  *  supplies `count` and `mass` (the egg), `temp` (the egg's own, or the
  *  cooling water's), `bath` (sous-vide) and `water` (the bowl's). */
 export interface ClauseKeys {
-  text: string;
-  label: string;
-  value: string | null;
+  text: CopyKey;
+  label: CopyKey;
+  value: CopyKey | null;
 }
 
 export type Clause = 'egg' | 'from' | 'start' | 'cooling';
@@ -448,11 +449,11 @@ export function startPhrase(daysAgo: number): CopyRef {
 
 /** The catalogue key of a weekday's name, by `Date.getDay()` numbering:
  *  0 is Sunday. Swift's `Calendar` counts from 1, and subtracts it. */
-const WEEKDAY_KEYS: readonly string[] = [
+const WEEKDAY_KEYS: readonly CopyKey[] = [
   'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
   'weekday.thursday', 'weekday.friday', 'weekday.saturday',
 ];
 
-export function weekdayKey(dayOfWeek: number): string {
+export function weekdayKey(dayOfWeek: number): CopyKey {
   return WEEKDAY_KEYS[((Math.floor(dayOfWeek) % 7) + 7) % 7];
 }

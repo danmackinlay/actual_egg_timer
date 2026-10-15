@@ -8,6 +8,7 @@
  * Settings, written once.
  */
 
+import { CopyKey } from '../core/copy.js';
 import { t, timeOfDay } from './copy.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
@@ -191,7 +192,7 @@ function drawHeight(height: 'free' | 'hold' | 'measure', d: Drawn): void {
 }
 
 /** The way to Help, and what would help this setup. */
-function drawAdvice(a: { link: boolean; keys: string[] }, d: Drawn): void {
+function drawAdvice(a: { link: boolean; keys: CopyKey[] }, d: Drawn): void {
   page().advice.hidden = !a.link;
   page().forYou.hidden = a.keys.length === 0;
   const shown = a.keys.join(' ');

@@ -11,7 +11,7 @@ import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
 import { OddsProfile, shadingOf } from '../core/reach.js';
 import { WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.js';
 import { rangeWords } from '../core/wording.js';
-import { t } from './copy.js';
+import { t, tChosen } from './copy.js';
 import { page } from './dom.js';
 import { clampNumber } from './store.js';
 import { show } from './units.js';
@@ -116,7 +116,7 @@ function renderBracket(w: WordCertainty | null): void {
   const words = rangeWords(w);
   const args: Record<string, string> = {};
   for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
-  page().donenessRange.textContent = t(words.key, args);
+  page().donenessRange.textContent = tChosen(words.key, args);
 }
 
 /** A level as a percentage of the track, clamped. */
