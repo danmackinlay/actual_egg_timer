@@ -96,7 +96,6 @@ const NOT_COPY: Record<string, string> = {
   'surface|{}': 'a build\'s key in Cook, never shown',
   'before|{}': 'a build\'s key in Cook, never shown',
   'beforeSurface|{}|{}': 'a build\'s key in Cook, never shown',
-  seconds: 'a readout argument\'s name, read from core\'s readoutAt',
   boiling: 'a readout argument\'s name, read from core\'s readoutAt',
   // fields of what is stored, outside the files that only hold stored formats
   pans: 'stored pans field name (Store.swift, `BoilMemories`)',

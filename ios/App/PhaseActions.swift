@@ -142,6 +142,18 @@ struct PhaseActions: View {
         .accessibilityHidden(true)
     }
 
+    /// One of the core's hint lines in words, with the numbers it takes
+    /// (`readoutAt`): `boiling` a temperature, `seconds` as it is. A view
+    /// drawn for one phase may hold the readout of the next for a frame, so
+    /// every hint is rendered with its own arguments, whichever phase drew it.
+    private func hintText(_ line: ReadoutLine) -> String {
+        var args: CopyArgs = [:]
+        for (name, value) in line.args {
+            args[name] = name == "boiling" ? .text(planner.show(.temperature, value)) : .int(Int(value))
+        }
+        return trChosen(line.key, args)
+    }
+
     /// The phase's hint, at the foot of its room.
     @ViewBuilder
     private var hint: some View {
@@ -156,14 +168,12 @@ struct PhaseActions: View {
                 more: [tr(.`action.hint.heating.more`)],
                 alignment: .center
             ) {
-                footnote(readout?.hint.map { tr($0.key) } ?? "")
+                footnote(readout?.hint.map(hintText) ?? "")
             }
         case .cooking:
             VStack(spacing: 4) {
                 // The web's hint: what the hob must do until the pull.
-                Text(readout?.hint.map {
-                    trChosen($0.key, ["boiling": .text(planner.show(.temperature, $0.args["boiling"] ?? 0))])
-                } ?? "")
+                Text(readout?.hint.map(hintText) ?? "")
                 // Whether the alarm is really set: iOS's own line, since the
                 // web's alarm is the open tab.
                 Text(alarmLine)
@@ -176,7 +186,7 @@ struct PhaseActions: View {
             // counter, where the grace runs out into Done and the line under
             // the time already says the yolk is still cooking.
             if let hint = readout?.hint {
-                footnote(trChosen(hint.key, ["seconds": .int(Int(hint.args["seconds"] ?? 0))]))
+                footnote(hintText(hint))
             }
         default:
             EmptyView()
