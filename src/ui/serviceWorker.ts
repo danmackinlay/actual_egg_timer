@@ -12,11 +12,12 @@
  * is copied across rather than fetched, so a deploy costs a browser only the
  * files it changed.
  *
- * A new build waits until the page asks it to take over, which the page
- * does only when no cook is running (offline.ts), and it agrees only when
- * that page is the site's one window: a second window might have a cook
- * running. Until then the old build answers every window it loaded,
- * including the grid worker it starts and the words it fetches later.
+ * A new build waits until the page asks it to take over, which only the
+ * tab that owns the app does, and only when no cook is running in it
+ * (offline.ts, owner.ts); every other window is waiting for the app, holds
+ * nothing, and reloads into the new build as it takes over. Until then the
+ * old build answers every window it loaded, including the grid worker it
+ * starts and the words it fetches later.
  *
  * `_site/sw.js` is written by tools/precache.mjs at build time: it imports
  * this module and calls `serve` with the build's files. Nothing here runs on
@@ -92,13 +93,7 @@ export function serve(build: string, files: BuildFiles): void {
   });
 
   sw.addEventListener('message', (event) => {
-    if (event.data !== TAKE_OVER || event.source === null) return;
-    const asker = event.source.id;
-    event.waitUntil(sw.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windows) => {
-        if (windows.length === 1 && windows[0].id === asker) return sw.skipWaiting();
-        return undefined;
-      }));
+    if (event.data === TAKE_OVER) event.waitUntil(sw.skipWaiting());
   });
 
   sw.addEventListener('fetch', (event) => {

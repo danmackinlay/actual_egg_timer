@@ -107,14 +107,14 @@ DevTools protocol, with nothing installed beyond Chrome itself
 names another binary). Each scenario runs in a browser context of its
 own and asserts on the page and on what it stored: a cold cook at sixty
 times speed, a hot start, Cancel, a reload at every phase, a tab woken past
-the pull, two tabs on one cook, a cook too old, an egg made final, Done
+the pull, a second tab that waits and the cook moved to it, a cook too old, an egg made final, Done
 after an answer and a reload, a slow hob, a cook and a log this build
 cannot read dropped, the old keys swept at boot, and sharing sending only
 final eggs; and the one screen's: its layout in
 every phase, the egg's readings, corrections mid-cook (the owner's boiling
 to cold, overdue and back, a drag that rings only on release, the start's
-time and its limits, Settings' water, two tabs' own cooks), a correction at
-Done and the slider there, and "still in the water?". `npm run e2e -- reload two-tabs` runs
+time and its limits, Settings' water), a correction at Done and the slider
+there, and "still in the water?". `npm run e2e -- reload one-tab-takeover` runs
 those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
 the page's text when one fails.
 

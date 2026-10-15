@@ -111,7 +111,7 @@ export interface CookEvents {
   cooledAt_s: number | null;
   /** The pull rang: the plan's pull, the first time the clock passed it with
    *  the egg still in (`eventsDue`). A plan keeps it - a surface landing, an
-   *  egg folded in another tab, or a correction that leaves the pull still
+   *  egg folded, or a correction that leaves the pull still
    *  due - so a pull already due never moves or rings twice, and its grace
    *  ends where it began. A correction that moves the pull past the moment
    *  it was made, or back to heating, undoes it: the plan reads it no more

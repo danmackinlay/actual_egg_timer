@@ -13,11 +13,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
+import { RunningCook, startCook, withBoil } from '../src/core/running.js';
 import { STORES, stamped } from '../src/ui/stores.js';
 import { choicesOf } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openPans, openSettings } from '../src/ui/store.js';
-import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
+import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openSettings } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in test/records.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */
@@ -31,7 +30,6 @@ const storage = new Map<string, string>();
 };
 
 const SETTINGS_KEY = STORES.settings.key;
-const BOIL_KEY = STORES.boilMemory.key;
 
 /** Settings as a build of this format stores them. */
 const settingsText = (o: object): string => JSON.stringify(stamped(STORES.settings, { ...o }));
@@ -39,7 +37,6 @@ const COOK_KEY = STORES.cook.key;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
 const settings = openSettings(classes);
-const pans = openPans();
 const cooks = openCooks();
 
 /** A page opened on this storage: as boot() does, the settings are read
@@ -152,81 +149,13 @@ test('a cook comes back whole, with whether its egg was written down and the lea
   storage.clear();
   const cook = aCook();
   cooks.save(cook, 'beforeReload', 12.5);
-  assert.deepEqual(cooks.peek(), { cook: cook, answers: 'beforeReload', leanHint_s: 12.5 });
+  assert.deepEqual(cooks.load(), { cook: cook, answers: 'beforeReload', leanHint_s: 12.5 });
   cooks.save(cook, 'none', 0);
-  assert.equal(cooks.peek()?.answers, 'none');
-  assert.deepEqual((cooks.peek()?.cook ?? null), cook, 'whichever tab wrote it');
+  assert.equal(cooks.load()?.answers, 'none');
   cooks.saveLeanHint(cook.id_ms + 1, 4);
-  assert.equal(cooks.peek()?.leanHint_s, 0, 'the lean goes only beside its own cook');
+  assert.equal(cooks.load()?.leanHint_s, 0, 'the lean goes only beside its own cook');
   cooks.saveLeanHint(cook.id_ms, 4);
-  assert.deepEqual(cooks.peek(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
-});
-
-test('two tabs on one cook take up each other\'s events, never a copy that lacks them', () => {
-  const start = aCook();
-  const untapped = unboiled();
-  const S = start.startedAt_s;
-  // B never saw the tap: it takes A's, and A takes nothing from B.
-  assert.equal(takeUpEvents(untapped, start).events.boilAt_s, start.events.boilAt_s);
-  assert.equal(takeUpEvents(start, untapped), start, 'nothing to take up: the same object');
-  // Two taps: the first.
-  const later = withBoil(untapped, S + 520);
-  assert.equal(takeUpEvents(later, start).events.boilAt_s, S + 500);
-  // The cook's tap out over the clock's assumption, whichever tab has it,
-  // with the cooling's end of the pull kept.
-  const due = S + 900;
-  const byCook = writeEvents(start, {
-    ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
-  });
-  const byClock = writeEvents(start, {
-    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
-    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
-  });
-  assert.deepEqual(takeUpEvents(byClock, byCook).events, byCook.events);
-  assert.equal(takeUpEvents(byCook, byClock), byCook);
-  const cooled = writeEvents(byCook, { ...byCook.events, cooledAt_s: due + 204 });
-  assert.deepEqual(takeUpEvents(byClock, cooled).events, cooled.events);
-  assert.deepEqual(takeUpEvents(untapped, cooled).events, cooled.events, 'all of it, at once');
-  // A pull that rang under a guessed boil is not taken up with the real one.
-  const rangOnGuess = writeEvents(untapped, { ...untapped.events, rangAt_s: S + 700 });
-  assert.equal(takeUpEvents(rangOnGuess, start).events.rangAt_s, null);
-  // Taken up both ways, the two copies agree.
-  for (const [x, y] of [[byClock, cooled], [rangOnGuess, start], [later, byClock]]) {
-    assert.deepEqual(takeUpEvents(x, y).events, takeUpEvents(y, x).events);
-  }
-  // Another cook is never taken up.
-  const other = aCook(start.id_ms + 60_000);
-  assert.equal(takeUpEvents(untapped, other), untapped);
-});
-
-test('a copy with other corrections gives only what the cook saw, never what its clock decided', () => {
-  const start = aCook();
-  const S = start.startedAt_s;
-  const due = S + 900;
-  // B, never corrected, rang its own pull and its grace ran out; A was
-  // corrected to a heavier egg at 600 s.
-  const corrected = correctedTo(start, { ...start.choices, mass_kg: 0.076 }, S + 600);
-  const byClock = writeEvents(start, {
-    ...start.events, rangAt_s: due, cooledAt_s: due + 220,
-    pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
-  });
-  assert.equal(takeUpEvents(corrected, byClock), corrected, 'nothing B\'s clock decided, either way round');
-  assert.deepEqual(takeUpEvents(byClock, corrected).events, byClock.events);
-  // The cook's own tap out, and the boil, are taken from any copy; a
-  // cooling's end, which the plan decides, only from the same corrections.
-  const byCook = writeEvents(start, {
-    ...start.events, rangAt_s: due, cooledAt_s: due + 204, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true },
-  });
-  const took = takeUpEvents(correctedTo(unboiled(), corrected.choices, S + 600), byCook).events;
-  assert.deepEqual(took, { boilAt_s: start.events.boilAt_s, pulled: byCook.events.pulled, cooledAt_s: null, rangAt_s: null });
-  // The same start and choices are the same plan, whenever corrected.
-  const back = correctedTo(start, start.choices, S + 610);
-  assert.deepEqual(takeUpEvents(back, byClock).events, byClock.events);
-  // Which copy a reload restores: the one corrected last.
-  assert.equal(correctedLater(corrected, start), true);
-  assert.equal(correctedLater(start, corrected), false);
-  assert.equal(correctedLater(back, corrected), true);
-  assert.equal(correctedLater(start, start), false);
+  assert.deepEqual(cooks.load(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
 });
 
 test('a cook is stored without the cook as it stands: its start and log, which a reload folds again', () => {
@@ -238,20 +167,20 @@ test('a cook is stored without the cook as it stands: its start and log, which a
   for (const field of ['startedAt_s', 'choices', 'events', 'correctedAt_s', 'asRan']) {
     assert.ok(!(field in stored.cook), `${field} not written`);
   }
-  assert.deepEqual(cooks.peek()?.cook, cook);
+  assert.deepEqual(cooks.load()?.cook, cook);
 });
 
-test('Cancel forgets the stored cook only if it is this tab\'s', () => {
+test('a cook forgotten goes from storage only if it is the cook stored', () => {
   storage.clear();
-  const mine = aCook();
-  const theirs = aCook(mine.id_ms + 60_000);
-  cooks.save(theirs, 'none', 0);
-  cooks.clear(mine.id_ms);
-  assert.deepEqual((cooks.peek()?.cook ?? null), theirs, 'another tab started a cook since: it stays');
-  cooks.clear(theirs.id_ms);
+  const ended = aCook();
+  const later = aCook(ended.id_ms + 60_000);
+  cooks.save(later, 'none', 0);
+  cooks.clear(ended.id_ms);
+  assert.deepEqual((cooks.load()?.cook ?? null), later, 'a cook started since, while that one waited on its record: it stays');
+  cooks.clear(later.id_ms);
   assert.equal(cooks.text(), null);
   storage.set(COOK_KEY, '{');
-  cooks.clear(mine.id_ms);
+  cooks.clear(ended.id_ms);
   assert.equal(cooks.text(), null, 'junk goes');
 });
 
@@ -267,54 +196,6 @@ test('the settings as a cook\'s choices: the carton\'s class or the measured egg
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26 }, 'GB').room_C, 26, 'the room counts without the probe');
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26, probe: true }, 'GB').room_C, 26);
   assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: null, probe: true }, 'GB').room_C, null);
-});
-
-test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {
-  freshPage();
-  const mine = settings.load();
-  // Another tab, loaded earlier, changes the altitude and turns the sound off.
-  const theirs = { ...DEFAULT_SETTINGS, altitude_m: 900, muted: true };
-  storage.set(SETTINGS_KEY, settingsText(theirs));
-  // This page, before it hears, moves the slider and saves.
-  mine.doneness = 0.8;
-  const saved = settings.save(mine);
-  assert.deepEqual([saved.altitude_m, saved.muted, saved.doneness], [900, true, 0.8]);
-  const stored = JSON.parse(storage.get(SETTINGS_KEY) ?? '{}') as Settings;
-  assert.deepEqual([stored.altitude_m, stored.muted, stored.doneness], [900, true, 0.8], 'nothing undone');
-  // The page's storage event: taken up once, keeping a change not yet saved.
-  saved.eggCount = 3;
-  storage.set(SETTINGS_KEY, settingsText({ ...stored, cooling: 'tap' }));
-  assert.equal(settings.elsewhere(BOIL_KEY, saved), null);
-  const heard = settings.elsewhere(SETTINGS_KEY, saved);
-  assert.deepEqual([heard?.cooling, heard?.eggCount, heard?.altitude_m], ['tap', 3, 900]);
-  assert.equal(settings.elsewhere(SETTINGS_KEY, saved), null, 'once');
-});
-
-test('a sous-vide on screen stays this page\'s when another tab saves a pan', () => {
-  freshPage();
-  settings.save(settingsWith({ startMode: 'cold' }));
-  const mine = settingsWith({ startMode: 'sous' });
-  storage.set(SETTINGS_KEY, settingsText({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
-  const saved = settings.save(mine);
-  assert.equal(saved.startMode, 'sous');
-  assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'hot', 'the other tab\'s pan, the last saved');
-});
-
-test('"Forget everything" in another tab is not undone by this one\'s next measured boil', () => {
-  storage.clear();
-  let memory = pans.load();
-  memory = pans.remember(memory, 2, 600);
-  assert.equal(pans.elsewhere(BOIL_KEY), null, 'its own write is nothing new');
-  // Another tab forgets every pan; this one has not heard, and times a boil.
-  storage.delete(BOIL_KEY);
-  memory = pans.remember(memory, 1.5, 420);
-  assert.deepEqual(Object.keys((JSON.parse(storage.get(BOIL_KEY) ?? '{}') as { pans: object }).pans), Object.keys(memory));
-  assert.equal(Object.keys(memory).length, 1, 'only the pan timed since');
-  // And when it hears, it follows.
-  storage.delete(BOIL_KEY);
-  assert.deepEqual(pans.elsewhere(null), {});
-  assert.equal(pans.elsewhere(BOIL_KEY), null);
-  pans.clear();
 });
 
 test('the alarm sound comes back as stored, and anything else, or nothing, is the wind-up timer', () => {

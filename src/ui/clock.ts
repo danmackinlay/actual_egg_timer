@@ -390,6 +390,21 @@ export function pullSounding(): boolean {
   return sounding;
 }
 
+/** The page no longer owns the app (owner.ts): the alarm and the pull's
+ *  beeps ahead stopped, and the audio context closed, so nothing scheduled
+ *  on it can sound. A press that takes the app back primes a new one. */
+export function closeAudio(): void {
+  stopAlarm();
+  if (previewing !== null) stopAll([previewing]);
+  previewing = null;
+  pull.at_ms = null;
+  const ctx = audio;
+  audio = null;
+  // Its buffers were made for it.
+  periods.clear();
+  if (ctx !== null) ctx.close().catch(() => { /* already closed */ });
+}
+
 /** A single short confirmation blip, for state changes that are not alarms. */
 export function blip(): void {
   const ctx = audio;

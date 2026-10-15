@@ -406,13 +406,13 @@ const TRACES: TraceDef[] = [
 ];
 
 /** What the cook's or the clock's moments, the screen's words, the store and
- *  the second tab hold, which are not the cook's: where each is held. */
+ *  which tab owns the app hold, which are not the cook's: where each is held. */
 const SCREEN_ONLY: Record<string, string> = {
   'e2e inert-off-localhost': 'the development clock (tools/e2e.ts)',
   'e2e sentence-no-time': 'the sentence (wording.json, clauseKeys)',
-  'e2e two-tabs-own-cooks': 'each tab its own cook (web)',
-  'e2e two-tabs-correction': 'another tab\'s copy taken up (web tabs.ts)',
-  'e2e two-tabs': 'another tab\'s copy taken up (web tabs.ts)',
+  'e2e one-tab-waits': 'one tab owns the app (web owner.ts)',
+  'e2e one-tab-takeover': 'one tab owns the app (web owner.ts)',
+  'e2e one-tab-silent': 'one tab owns the app (web owner.ts)',
   'e2e change-kept-on-hide': 'the commit on leaving (web edit.ts; ios Edits)',
   'e2e certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
   'e2e unreadable-stores': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
@@ -431,11 +431,8 @@ const SCREEN_ONLY: Record<string, string> = {
   'ios newer-version': 'the newer-build guard (ios Newer.swift)',
   'ios newer-build': 'the newer-build guard (ios Newer.swift)',
   'a drag is one correction, on release': 'both apps\' edits',
-  'each tab keeps its own cook': 'another tab\'s copy taken up (web tabs.ts)',
   'an earlier build\'s stored cook at an upgrade': 'the boot sweep',
-  'a second tab takes up a correction and never undoes it': 'another tab\'s copy taken up (web tabs.ts)',
   'the likely time range never contradicts the clock': 'wording.json timeRangeWords',
-  'a second tab never writes over what the first observed': 'another tab\'s copy taken up (web tabs.ts)',
 };
 
 /* ------------------------------------------------------------- the run */

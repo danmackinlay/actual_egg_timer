@@ -138,29 +138,11 @@ test('alarm: the sound picked is heard, kept with the settings and the controls,
   assert.deepEqual(kinds(effects), ['previewAlarm', 'save']);
 });
 
-test('settingsTaken: another tab\'s settings; an idle page\'s controls follow, a running cook keeps its own choices', () => {
-  const theirs = { ...DEFAULT_SETTINGS, eggCount: 5, muted: true };
-  const [m, effects] = go(idle(), { kind: 'settingsTaken', settings: theirs }, S);
-  assert.equal(m.controls.eggCount, 5);
-  assert.deepEqual(redrawn(idle(), m), ['controls']);
-  assert.ok(kinds(effects).includes('language'));
-  const cook = running();
-  const [mid, more] = go(cook, { kind: 'settingsTaken', settings: theirs }, S + 10);
-  assert.equal(mid.settings.eggCount, 5);
-  assert.equal(mid.controls.eggCount, cook.controls.eggCount, 'the cook\'s own');
-  assert.equal(mid.controls.muted, true, 'but the sound is the kitchen\'s');
-  assert.deepEqual(redrawn(cook, mid), ['alarm']);
-  assert.ok(kinds(more).includes('language'));
-});
-
-test('pans: a boil this page measured is kept quietly; another tab\'s is said and solved for', () => {
-  const [quiet, none] = go(idle(), { kind: 'pans', boilMemory: { '2.0': 500 }, quiet: true }, S);
-  assert.deepEqual(quiet.boilMemory, { '2.0': 500 });
-  assert.deepEqual(none, []);
-  const [loud, said] = go(idle(), { kind: 'pans', boilMemory: { '2.0': 500 }, quiet: false }, S);
-  assert.deepEqual(redrawn(idle(), quiet), []);
-  assert.deepEqual(redrawn(idle(), loud), ['learned']);
-  assert.ok(kinds(said).includes('askSurface'), 'solved again');
+test('pans: a boil measured is kept quietly', () => {
+  const [m, effects] = go(idle(), { kind: 'pans', boilMemory: { '2.0': 500 } }, S);
+  assert.deepEqual(m.boilMemory, { '2.0': 500 });
+  assert.deepEqual(effects, []);
+  assert.deepEqual(redrawn(idle(), m), []);
 });
 
 test('calibration: everything forgotten, the posterior and the pans new, and what is said of them drawn again', () => {
@@ -261,13 +243,26 @@ test('restore: a deadline that passed before the page was shown rings nothing', 
   const stored = { cook: m.cook!, answers: 'none' as const, leanHint_s: m.leanHint_s };
   const fresh = { ...idle(), surfaces: m.surfaces };
   for (const at of [pull(m) + 5, pull(m) + 300]) {
-    const [back, effects] = go(fresh, { kind: 'restore', stored: stored }, at);
+    const [back, effects] = go(fresh, { kind: 'restore', stored: stored, reloaded: true }, at);
     assert.ok(!kinds(effects).includes('ring'), `nothing rung at ${at - S} s`);
     assert.equal(back.reloaded, true);
     // And ticked on from there, the deadline already passed is not rung.
     const [, ticked] = go(back, { kind: 'tick' }, at + 1);
     assert.ok(!ticked.some((e) => e.kind === 'ring' && e.moment === 'pull'), 'the pull, gone by unheard, stays unheard');
   }
+});
+
+test('restore in a tab the app was moved to: the alarm armed for the same pull, and a pull due rung once', () => {
+  const m = running();
+  const stored = { cook: m.cook!, answers: 'none' as const, leanHint_s: m.leanHint_s };
+  const fresh = { ...idle(), surfaces: m.surfaces };
+  const [before] = go(fresh, { kind: 'restore', stored: stored, reloaded: false }, pull(m) - 60);
+  assert.equal(before.reloaded, false, 'no note of an alarm lost');
+  assert.equal(before.pull_s, m.pull_s, 'the pull where it was');
+  const [due, effects] = go(fresh, { kind: 'restore', stored: stored, reloaded: false }, pull(m) + 5);
+  assert.ok(effects.some((e) => e.kind === 'ring' && e.moment === 'pull'), 'the pull due, rung');
+  const [, again] = go(due, { kind: 'tick' }, pull(m) + 6);
+  assert.ok(!kinds(again).includes('ring'), 'once');
 });
 
 test('landed: a cook waiting on its surface is planned on it', () => {
@@ -313,7 +308,7 @@ test('correct: a choice changed is the cook\'s, planned again from its start', (
 });
 
 test('answered: a question answered once stays answered; the row settles on the answer taken', () => {
-  const m = { ...done(), storedId_ms: done().cook!.id_ms };
+  const m = done();
   const [first, effects] = go(m, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, pull(m) + 600);
   assert.deepEqual(effects.filter((e) => e.kind === 'answerTaken'), [{ kind: 'answerTaken', yolkWord: 'jammy', white: null }]);
   const [again, more] = go(first, { kind: 'answered', yolkWord: 'soft', white: null, probe: null }, pull(m) + 601);
@@ -322,7 +317,7 @@ test('answered: a question answered once stays answered; the row settles on the 
 });
 
 test('probe: a reading no kitchen could have made is refused, with the range it should be in', () => {
-  const m = { ...done(), storedId_ms: done().cook!.id_ms };
+  const m = done();
   const [, effects] = go(m, { kind: 'probe', reading_C: 5 }, pull(m) + 600);
   const refused = effects.find((e) => e.kind === 'probeRefused');
   assert.ok(refused !== undefined && refused.kind === 'probeRefused' && refused.low_C > 5);
@@ -331,7 +326,7 @@ test('probe: a reading no kitchen could have made is refused, with the range it 
 });
 
 test('kept: the egg kept is thanked for at Done; one that could not be kept puts its questions away', () => {
-  const answered = go({ ...done(), storedId_ms: done().cook!.id_ms }, { kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, pull(done()) + 600)[0];
+  const answered = go(done(), { kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, pull(done()) + 600)[0];
   const id = answered.cook!.id_ms;
   assert.equal(answered.note.say, 'learning', 'an answer taken: learning');
   assert.equal(go(answered, { kind: 'kept', id_ms: id, kept: true }, pull(done()) + 601)[0].note.say, 'thanks');

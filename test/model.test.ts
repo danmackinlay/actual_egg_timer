@@ -1,8 +1,7 @@
 /**
  * The web's model over core's `step` (src/ui/model.ts, `update`): what the
- * web adds around the running cook - the primary button by phase, another
- * tab's copy taken up, the egg final here, a reload, and a cook that ends
- * before its record can be made. `step` itself is test/step.test.ts's.
+ * web adds around the running cook - the primary button by phase, the egg
+ * final here, a reload, and a cook that ends before its record can be made. `step` itself is test/step.test.ts's.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -102,50 +101,30 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
 });
 
-test('2. an answer to an egg no longer open closes it here: nothing stepped, nothing written or logged', () => {
+test('2. an answer to an egg too old to pick back up closes it here: nothing stepped, nothing written or logged', () => {
   const p = started();
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
-  const id = (p.m.cook as NonNullable<Model['cook']>).id_ms;
-  p.m.storedId_ms = id + 1;
-  const refused = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, p.coolEnd + 5);
+  const tooOld = (p.m.plan as NonNullable<Model['plan']>).tooOldAt_s;
+  const refused = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, tooOld + 5);
   assert.deepEqual(refused, []);
   assert.equal(p.m.closed, true);
   assert.equal(p.m.questions, 'away');
-  const end = p.go({ kind: 'cancel' }, p.coolEnd + 9);
+  const end = p.go({ kind: 'cancel' }, tooOld + 9);
   assert.deepEqual(kinds(end).filter((k) => k === 'log' || k === 'persist'), [], 'final here: nothing logged');
   assert.equal(p.m.cook, null);
   assert.equal(p.m.ending.length, 0);
-});
-
-test('3. another tab\'s tap is taken up, and the pull this tab never rang rings here', () => {
-  const a = started({ startMode: 'cold' });
-  const b = new Page();
-  b.m = { ...a.m };
-  a.go({ kind: 'primary' }, S + 400);
-  const theirs = { cook: a.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  b.m.storedId_ms = theirs.cook.id_ms;
-  b.go({ kind: 'elsewhere', theirs: theirs }, S + 401);
-  assert.equal(b.m.cook?.events.boilAt_s, S + 400, 'B has A\'s tap');
-  assert.equal(b.m.written, JSON.stringify(theirs.cook), 'B has seen A\'s write');
-  a.land(S + 402);
-  b.land(S + 402);
-  a.go({ kind: 'tick' }, a.pull + 1);
-  const rang = { cook: a.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  assert.deepEqual(kinds(b.go({ kind: 'elsewhere', theirs: rang }, a.pull + 2)), ['ring:pull']);
 });
 
 test('4. a reload rings nothing, and an answer given before it puts the questions away', () => {
   const p = started();
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
-  const id = (p.m.cook as NonNullable<Model['cook']>).id_ms;
-  p.m.storedId_ms = id;
   p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, p.coolEnd + 5);
   const stored = { cook: p.m.cook as NonNullable<Model['cook']>, answers: 'beforeReload' as const, leanHint_s: p.m.leanHint_s };
   const q = new Page();
   q.m.surfaces = p.m.surfaces;
-  const back = q.go({ kind: 'restore', stored: stored }, p.coolEnd + 30);
+  const back = q.go({ kind: 'restore', stored: stored, reloaded: true }, p.coolEnd + 30);
   assert.ok(!kinds(back).some((k) => k.startsWith('ring')), 'no ring');
   assert.equal(q.m.reloaded, true);
   assert.equal(q.m.questions, 'away');
@@ -153,7 +132,7 @@ test('4. a reload rings nothing, and an answer given before it puts the question
   const early = new Page();
   const fresh = started();
   const past = { cook: fresh.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  assert.ok(!kinds(early.go({ kind: 'restore', stored: past }, fresh.pull + 5)).some((k) => k.startsWith('ring')),
+  assert.ok(!kinds(early.go({ kind: 'restore', stored: past, reloaded: true }, fresh.pull + 5)).some((k) => k.startsWith('ring')),
     'a reload past the pull writes it rung, and rings nothing');
 });
 
@@ -168,7 +147,7 @@ test('5. a cook ended before its surface is in waits off screen, and is logged a
   const stored = { cook: p.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: p.m.leanHint_s };
   // A reload, two hours on: too old, and no surface built on this page.
   const q = new Page();
-  q.go({ kind: 'restore', stored: stored }, p.coolEnd + 7200);
+  q.go({ kind: 'restore', stored: stored, reloaded: true }, p.coolEnd + 7200);
   assert.equal(q.m.cook, null, 'the page opens idle');
   assert.equal(q.m.ending.length, 1);
   const waiting = q.m.ending[0];

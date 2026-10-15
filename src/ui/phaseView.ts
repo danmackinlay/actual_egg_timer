@@ -73,8 +73,8 @@ export interface PhaseView {
 
 /** The readout at `now_ms`, for the running cook `cook` with its `plan`, or
  *  the controls while both are null. While a cook runs, everything describes
- *  its own choices and its plan's pot, not the controls: a second tab may
- *  have changed those. */
+ *  its own choices and its plan's pot, not the controls, which may hold a
+ *  correction not yet committed. */
 export function phaseView(
   cook: RunningCook | null, plan: CookPlan | null, now_ms: number, facts: ReadoutFacts,
 ): PhaseView {

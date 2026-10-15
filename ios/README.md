@@ -37,7 +37,7 @@ by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 `ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
 `StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`;
 the table of stores `src/ui/stores.ts` and `StoreRegistry.swift`; and the
-web's alone, another tab's copy of a cook, `src/ui/tabs.ts`.
+web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|

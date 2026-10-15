@@ -12,24 +12,20 @@
  * The idle page: a change to the controls is taken into the settings, saved
  * once the cook stops changing them, and answered once they settle (a solve
  * is tens of milliseconds, too long for every pixel of a drag); the units,
- * the language, the sound, another tab's settings, a pan measured, an egg
- * learned, everything forgotten: each a message, the page solved again after
- * it (`solve`). While a cook runs the controls are its own choices, never
- * the settings, which another tab may have changed since:
- * a change to them is a correction, held in hand until it is committed
- * (`Edit`; the gestures are edit.ts's).
+ * the language, the sound, a pan measured, an egg learned, everything
+ * forgotten: each a message, the page solved again after it (`solve`). While
+ * a cook runs the controls are its own choices, never the settings, which
+ * describe the next cook: a change to them is a correction, held in hand
+ * until it is committed (`Edit`; the gestures are edit.ts's).
  *
  * The cook is core's `CookState` (src/core/step.ts): `update` hands it to
  * `step` with each thing that happened. What is the web's own, around it:
  *
  * - The primary button reads the phase: the boil at Heating, the egg out at
  *   Pull, "still in" while the plan asks, Start again at Done.
- * - Another tab's copy of this cook (`elsewhere`): what it saw in the pan
- *   taken up (`takeUpEvents`) and planned on, and the pull rung here if this
- *   tab never rang it. Never another cook.
- * - Which egg is open (`cookStillOpen`): at Done, one another tab ended or
- *   stored another for, or an hour past its end, is final. Its questions go,
- *   and nothing more is written or logged for it (`closed`).
+ * - Which egg is open (`stillOpen`): at Done, one too old to pick back up
+ *   (core `cookTooOld`) is final. Its questions go, and nothing more is
+ *   written or logged for it (`closed`).
  * - A cook that ends before its egg's record can be made - the surface or
  *   the calibration before this egg still to build - leaves the screen at
  *   once and waits in `ending`, stepped as each lands, until it is logged
@@ -50,7 +46,7 @@ import type { WhiteReport, YolkWord } from '../core/infer.js';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.js';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.js';
 import {
-  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, corrected, earliestStart_s, endedAt_s,
+  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookTooOld, corrected, earliestStart_s, endedAt_s,
   latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
 } from '../core/running.js';
 import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.js';
@@ -63,7 +59,6 @@ import { PotOdds, nudgeNow, solveIdle } from './answer.js';
 import { targetPeakYolk_C } from '../core/slider.js';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.js';
 import type { KeptAnswers, Settings, StoredCook } from './store.js';
-import { cookStillOpen, takeUpEvents } from './tabs.js';
 import { REGION, REGIONAL_UNITS } from './units.js';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,
@@ -166,8 +161,8 @@ export interface Model extends CookState {
   settings: Settings;
   /** What the controls show: a copy of the settings while idle; while a
    *  cook runs, its own choices over a copy of them (`settingsOfChoices`),
-   *  with a correction in hand on them, never the settings, which another
-   *  tab may have changed since. */
+   *  with a correction in hand on them, never the settings, which describe
+   *  the next cook. */
   controls: Settings;
   boilMemory: BoilMemory;
   /** The posterior over the model's uncertain constants, folded IN PLACE as
@@ -178,10 +173,6 @@ export interface Model extends CookState {
    *  those stores, taken before each message. */
   sharing: boolean;
   readOnly: boolean;
-  /** The stored cook's id as this tab reads it, for whether its egg is
-   *  still open (this cook's own when storage does not work): the runner's
-   *  view, taken before each message while a cook runs. */
-  storedId_ms: number | null;
   /** A deletion of what was shared, asked for on this page, confirmed: said
    *  under the switch until sharing is turned on again. */
   deletedHere: boolean;
@@ -250,19 +241,20 @@ export interface Model extends CookState {
   /** The pull's alarm as the last step set it, epoch s, or null. */
   pull_s: number | null;
 
-  /** This tab's cook as written down: as this tab last read or wrote it
-   *  (JSON), so it is written only when it changed (`update` sets it with
+  /** The cook as this page last wrote it down (JSON), so it is written
+   *  only when it changed (`update` sets it with
    *  each write it asks for); whether the last write read back, as the
    *  runner says (`persisted`); and whether the egg is final here
    *  (`closed`): nothing more is written or logged for it. */
   written: string | null;
   works: boolean;
   closed: boolean;
-  /** The questions at Done: open, or put away - answered before a reload or
-   *  in another tab, or the egg final - when no more can be taken. */
+  /** The questions at Done: open, or put away - answered before a reload,
+   *  or the egg final - when no more can be taken. */
   questions: 'open' | 'away';
   /** Whether the cook on screen was picked back up after a reload: its
-   *  alarm died with the old page. */
+   *  alarm died with the old page. Not in a tab the app was moved to by a
+   *  press, whose alarm is armed again. */
   reloaded: boolean;
   /** A probe reading typed before the egg's record could be made: read
    *  again when a surface lands. */
@@ -285,10 +277,11 @@ export type Msg =
   /** A write of the cook on screen: whether it read back. */
   | { kind: 'persisted'; works: boolean }
   | { kind: 'answered'; yolkWord: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null }
-  | { kind: 'elsewhere'; theirs: StoredCook | null }
   /** A probe reading typed at Done, C; null for what is not a number. */
   | { kind: 'probe'; reading_C: number | null }
-  | { kind: 'restore'; stored: StoredCook }
+  /** The stored cook picked back up: after a reload, or in a tab the app
+   *  was moved to by a press (`reloaded` false), whose alarm can sound. */
+  | { kind: 'restore'; stored: StoredCook; reloaded: boolean }
   /** A finger down on a control (edit.ts, `groupOf`), or lifted; the page
    *  hidden or gone, which commits a change still settling; a timer of the
    *  correction in hand come round. Real ms. */
@@ -314,11 +307,8 @@ export type Msg =
   | { kind: 'language'; pick: string }
   | { kind: 'mute' }
   | { kind: 'alarm'; sound: AlarmSound }
-  /** The settings with another tab's write taken up (store.ts). */
-  | { kind: 'settingsTaken'; settings: Settings }
-  /** The pans remembered: a boil this page measured (`quiet`), or another
-   *  tab's. */
-  | { kind: 'pans'; boilMemory: BoilMemory; quiet: boolean }
+  /** The pans remembered: a boil measured. */
+  | { kind: 'pans'; boilMemory: BoilMemory }
   /** A new posterior, everything forgotten, and the pans with it. */
   | { kind: 'calibration'; calib: Calibration; boilMemory: BoilMemory }
   /** Eggs folded: the idle page solved again, and what is said of what has
@@ -327,9 +317,8 @@ export type Msg =
   /** Every word on the page in a new language: as `learned`, and the words
    *  drawn only when they change drawn again. */
   | { kind: 'relabelled' }
-  /** What another store holds changed - another tab's log or sharing,
-   *  sharing turned on or off, a newer build's mark: as `learned`, and the
-   *  sharing section drawn again. */
+  /** A newer build's mark found (store.ts): as `learned`, and the sharing
+   *  section drawn again. */
   | { kind: 'stores' }
   | { kind: 'forget' }
   /** "Export my results". */
@@ -454,7 +443,7 @@ function asRanStale(cook: RunningCook): boolean {
   return cook.events.pulled !== null && cook.asRan !== null && !asRanCurrent(cook);
 }
 
-/** The model with the running cook gone: idle, and this tab's bookkeeping
+/** The model with the running cook gone: idle, and this page's bookkeeping
  *  for it cleared. */
 function idle(m: Model): Model {
   return {
@@ -559,44 +548,10 @@ function beforeKept(m: Model): Model {
   return kept.length === m.before.length ? m : { ...m, before: kept };
 }
 
-/**
- * Another tab's copy of this cook, taken up: what it saw in the pan, and an
- * answer that logged the egg (the questions go here, as after a reload),
- * planned on at once. The pull rung there, which this tab has not rung,
- * rings here too, as this tab's tick would have; Done rings if the egg is
- * now Done.
- */
-function takeUp(m: Model, theirs: StoredCook, now_s: number): [Model, Effect[]] {
-  const ours = m.cook;
-  if (ours === null || m.plan === null || theirs.cook.id_ms !== ours.id_ms) return [m, []];
-  let next: Model = { ...m, written: JSON.stringify(theirs.cook) };
-  if (theirs.answers === 'beforeReload' && !answered(ours)) next = { ...next, questions: 'away' };
-  const cook = takeUpEvents(ours, theirs.cook);
-  if (cook === ours) return [next, []];
-  const [after, effects] = stepCook(next, { kind: 'surfaceLanded', now_s: now_s }, now_s, { ...m, cook: cook });
-  if (after.cook === null || after.plan === null || asksIfStillIn(after.plan) || effects.some((e) => e.kind === 'ring')) {
-    return [after, effects];
-  }
-  const e = after.cook.events;
-  if (ours.events.rangAt_s === null && e.rangAt_s !== null && (e.pulled === null || e.pulled.by === 'timeout')) {
-    effects.push({ kind: 'ring', moment: 'pull' });
-  } else if (!doneByEvents(ours) && doneByEvents(after.cook)) {
-    effects.push({ kind: 'ring', moment: 'cooled' });
-  }
-  return [after, effects];
-}
-
-/** Whether a cook is Done by its events: out, and on the counter or its
- *  counted cooling ended. */
-function doneByEvents(cook: RunningCook): boolean {
-  const e = cook.events;
-  return e.pulled !== null && (cook.choices.cooling === 'counter' || e.cooledAt_s !== null);
-}
-
 /** Whether the egg on screen is still the one open to answers and
  *  corrections; if not, it is final here. */
 function stillOpen(m: Model, now_s: number): boolean {
-  return m.cook !== null && m.plan !== null && !m.closed && cookStillOpen(m.cook, m.plan, m.storedId_ms, now_s);
+  return m.cook !== null && m.plan !== null && !m.closed && !cookTooOld(m.plan, now_s);
 }
 
 /**
@@ -661,7 +616,7 @@ function close(m: Model): Model {
 
 /** The runner's view of its caches and its stores (cook.ts), taken before
  *  each message and handed in with it. */
-export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'sharing' | 'readOnly' | 'storedId_ms' | 'share'>;
+export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'sharing' | 'readOnly' | 'share'>;
 
 /** What `msg` does to the model at `now_ms`, with the runner's view `seen`
  *  of its caches and stores if it has a new one, and what the page must
@@ -676,9 +631,8 @@ export function update(m: Model, msg: Msg, now_ms: number, seen: Seen | null = n
 
 /**
  * The cook on screen written only when it changed - something it was told
- * or saw, never a plan alone, which would write a copy lacking what another
- * tab on the same cook saw since: otherwise only the lean beside it. What it
- * is written as is what this tab has seen (`written`).
+ * or saw, never a plan alone, which changes nothing stored: otherwise only
+ * the lean beside it (`written`).
  */
 function written(m: Model, effects: Effect[]): [Model, Effect[]] {
   let text = m.written;
@@ -771,11 +725,9 @@ function copySection(s: EggSection): EggSection {
 
 /**
  * The controls follow a cook begun or ended. Begun: they show its own
- * choices, never the settings - at the start, where they are the
- * same, and after a reload, where another tab may have changed the settings
- * since - with nothing in hand. Ended: whatever was in hand goes with it;
- * they show the settings again (another tab may have changed them
- * meanwhile), the alarm stops, the questions start empty, a new cook
+ * choices, never the settings, which describe the next cook, with nothing
+ * in hand. Ended: whatever was in hand goes with it; they show the settings
+ * again, the alarm stops, the questions start empty, a new cook
  * gets a new nudge (and the idle page is solved again with it), and the egg
  * just finished is final once it is forgotten: no answer can be added to
  * it.
@@ -919,20 +871,8 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
         [{ kind: 'previewAlarm' }, { kind: 'save', soon: false }],
       ];
     }
-    case 'settingsTaken': {
-      // Another tab's settings: the units, the sound and the words follow,
-      // and an idle page's controls follow and it is solved again. A cook
-      // under way is described by its own choices, never by the settings.
-      const before = effectiveLanguage(m.settings.language);
-      let next = withSettings(m, msg.settings);
-      if (m.cook === null) next = redraw(next, 'controls');
-      else next = redraw(next, 'alarm');
-      if (m.cook !== null && msg.settings.unitsChosen !== m.settings.unitsChosen) next = redraw(next, 'units');
-      return solved(next, [{ kind: 'language', before: before }]);
-    }
     case 'pans':
-      return msg.quiet ? [{ ...m, boilMemory: msg.boilMemory }, []]
-        : solved(redraw({ ...m, boilMemory: msg.boilMemory }, 'learned'), []);
+      return [{ ...m, boilMemory: msg.boilMemory }, []];
     case 'calibration':
       return solved(learnedSaid({ ...m, calib: msg.calib, boilMemory: msg.boilMemory }), []);
     case 'learned':
@@ -1003,13 +943,14 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     case 'restore': {
       const stored = msg.stored;
       const fresh: Model = {
-        ...idle(m), written: JSON.stringify(stored.cook), reloaded: true,
+        ...idle(m), written: JSON.stringify(stored.cook), reloaded: msg.reloaded,
         questions: stored.answers === 'beforeReload' || answered(stored.cook) ? 'away' : 'open',
       };
       const state: CookState = { cook: stored.cook, plan: null, leanHint_s: stored.leanHint_s };
       const [next, effects] = stepCook(fresh, { kind: 'tick', now_s: now_s }, now_s, state);
-      // The alarm died with the old page, and cannot sound before a gesture.
-      return [next, effects.filter((e) => e.kind !== 'ring')];
+      // After a reload the alarm died with the old page, and cannot sound
+      // before a gesture; a tab the app was moved to was pressed.
+      return [next, msg.reloaded ? effects.filter((e) => e.kind !== 'ring') : effects];
     }
     case 'primary': {
       // A correction still settling is committed first: the button acts on
@@ -1053,11 +994,6 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     }
     case 'probe':
       return probeRead(m, msg.reading_C, now_s);
-    case 'elsewhere': {
-      if (m.cook === null || m.plan === null || m.closed) return [m, []];
-      if (phaseOf(m, now_s) === 'DONE' && !stillOpen(m, now_s)) return [close(m), []];
-      return msg.theirs === null ? [m, []] : takeUp(m, msg.theirs, now_s);
-    }
     default:
       return [m, []];
   }

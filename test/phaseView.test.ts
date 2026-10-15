@@ -6,7 +6,7 @@
  * fixtures/wording.json); these tests hold the web to those keys, and to the
  * arguments it fills them with - above all that a running cook is described
  * by its own choices and its plan (src/core/running.ts), never by the
- * controls, which a second tab may have changed since "Eggs in".
+ * controls, which may hold a correction not yet committed.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */

@@ -384,6 +384,8 @@ export interface CopyKeyArgs {
   'colophon.tail': never;
   'colophon.version': 'version';
   'newer.note': never;
+  'tab.note': never;
+  'tab.useHere': never;
 }
 
 /** A key of the catalogue. */

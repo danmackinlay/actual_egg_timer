@@ -16,7 +16,7 @@ import {
 } from '../core/record.js';
 import { activePopulation } from './population.js';
 import { STORES, inFormat } from './stores.js';
-import { SyncedKey, syncedKey } from './store.js';
+import { StoredKey, storedKey } from './store.js';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
  *  and records of today's shape only. An earlier key's store is never read. */
@@ -238,13 +238,8 @@ function decodeParts(raw: string | null, pop: Population, likelihood: string): D
 
 /* ------------------------------------------------------------- the storage */
 
-/** The store, kept across the tabs (store.ts), read as a load reads it
- *  (`decodeKept`) under the likelihood `likelihood()` names. A store taken
- *  up that this page would not have written as it is - another build's,
- *  folded under another likelihood or drawn from another population, or
- *  one another tab emptied - is not written back as this page folds it,
- *  only with this page's own next change, so that two builds open in two
- *  tabs never answer each other's every write with one of their own. */
-export function keptStore(likelihood: () => string): SyncedKey<Decoded> {
-  return syncedKey(KEY, (text) => decodeKept(text, activePopulation(), likelihood()), (d) => d.path === 'loaded');
+/** The store (store.ts), read as a load reads it (`decodeKept`) under the
+ *  likelihood `likelihood()` names. */
+export function keptStore(likelihood: () => string): StoredKey<Decoded> {
+  return storedKey(KEY, (text) => decodeKept(text, activePopulation(), likelihood()));
 }

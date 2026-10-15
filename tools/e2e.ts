@@ -5,10 +5,10 @@
  * scenario too, every state checked for raw keys, straight quotes and the
  * certainty line.
  *
- *   npm run e2e                      # build the site, then every scenario
- *   npm run e2e -- reload two-tabs   # only those named (after a build)
- *   npm run e2e -- copy/             # those whose names start so
- *   npm run e2e -- --tree <dir>      # another checkout's build (harness.ts)
+ *   npm run e2e                              # build the site, then every scenario
+ *   npm run e2e -- reload one-tab-takeover   # only those named (after a build)
+ *   npm run e2e -- copy/                     # those whose names start so
+ *   npm run e2e -- --tree <dir>              # another checkout's build (harness.ts)
  *   node dist/tools/e2e.js --list
  *
  * The harness is tools/harness.ts: the site served, Chrome, a context per
@@ -388,23 +388,17 @@ function storedCook(s: Snap): Cook | null {
   return s.storedCook;
 }
 
-/** Two tabs open and idle, each on its stopped clock, and how many writes
- *  the first had made by then. */
-async function twoTabs(h: Harness): Promise<[Tab, Tab, number]> {
-  const a = await h.ctx.open(STOPPED);
-  const b = await h.ctx.open(STOPPED);
-  await a.settle();
-  await b.settle();
-  return [a, b, (await a.writes()).length];
+/** A second tab opened beside one that owns the app: it boots only as far
+ *  as the note that the app is open in another tab (owner.ts). */
+async function opened(h: Harness, path: string): Promise<Tab> {
+  const tab = await h.ctx.open(path, h.origin, { boot: false });
+  await tab.until("document.body.dataset.tab === 'waiting' && !document.getElementById('tabNote').hidden",
+    'the note that the app is open in another tab');
+  return tab;
 }
 
-/** Once both tabs have settled, what `tab` has written to `key` since its
- *  `from`th write. */
-async function settled(tab: Tab, other: Tab, key: string, from: number): Promise<string[]> {
-  await other.settle();
-  await tab.settle();
-  return (await tab.writes()).slice(from).filter((w) => w.key === key).map((w) => w.value);
-}
+/** Every key the page's storage holds, with its value, in order. */
+const DUMP = 'JSON.stringify(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)]))';
 
 /* ------------------------------------------------------------ scenarios */
 
@@ -422,12 +416,20 @@ const SCENARIOS: Record<string, Scenario> = {
       check(a.search === '?clock=60&at=+1h', 'the address left alone off this machine');
       const asked = away.requests().filter((r) => r.url.includes('/dev/'));
       check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
+      // No Web Locks there (an insecure context): a second tab runs the app
+      // too, as before one tab owned it (owner.ts).
+      const second = await h.ctx.open('/', `http://eggs.test:${h.port}`);
+      for (const tab of [away, second]) {
+        const owns = await tab.eval<{ locks: boolean; tab: string | undefined }>(
+          "({ locks: 'locks' in navigator, tab: document.body.dataset.tab })");
+        check(!owns.locks && owns.tab === 'owner', `eggs.test without Web Locks: ${JSON.stringify(owns)}`);
+      }
       const home = await h.ctx.open('/?clock=60&at=+1h');
       const b = await home.eval<{ mark: string | null; skew: number; search: string }>(`(() => ({
         mark: document.getElementById('devClock')?.textContent ?? null,
         skew: window.aetTest.snapshot().now_ms - Date.now(), search: location.search }))()`);
       check(b.mark !== null && b.skew > 3_590_000 && b.search === '', `127.0.0.1: ${JSON.stringify(b)}`);
-      return `eggs.test: no development tools asked for, no mark, no handle; 127.0.0.1: mark "${b.mark}"`;
+      return `eggs.test: no development tools asked for, no mark, no handle, two tabs running; 127.0.0.1: mark "${b.mark}"`;
     },
   },
 
@@ -882,41 +884,6 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
-  'two-tabs-own-cooks': {
-    what: 'a correction in one tab leaves another tab\'s cook and its controls alone (both stopped at one moment)',
-    run: async (h) => {
-      const a = await h.ctx.open(STOPPED);
-      await start(a, 'hot');
-      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
-      await b.phase('COOKING');
-      // B puts A's cook down and starts its own: two tabs, two cooks.
-      await b.click('#secondary');
-      await b.phase('IDLE');
-      let sb = await start(b, 'hot');
-      const idB = sb.cook?.id_ms;
-      await b.until('__snap().decided', 'B planned');
-      sb = await b.snap();
-      const pullB = deadlines(sb).cookEnd_s;
-      await pick(a, '#size', '3');
-      const sa = await corrected(a, null);
-      check(sa.cook?.choices.mass_kg !== sb.cook?.choices.mass_kg, 'A corrected its egg');
-      await b.until(`JSON.parse(localStorage.getItem('${SETTINGS_KEY}')).sizeIndex === 3`, 'A\'s correction in the settings');
-      await b.settle();
-      sb = await b.snap();
-      check(sb.cook?.id_ms === idB, 'B runs its own cook');
-      check(sb.cook?.choices.mass_kg === 0.068 && near(deadlines(sb).cookEnd_s, pullB, 1e-6), 'B\'s cook untouched');
-      const shown = await b.eval<string>("document.getElementById('size').value");
-      check(shown === '2', `B's controls show B's egg: ${shown}`);
-      const next = await b.eval<number>('__snap().settings.sizeIndex');
-      check(next === 3, `B's next cook takes A's correction: ${next}`);
-      await b.click('#secondary');
-      await b.phase('IDLE');
-      const after = await b.eval<string>("document.getElementById('size').value");
-      check(after === '3', `B, idle, shows the settings: ${after}`);
-      return 'A corrected to size 3; B\'s cook and controls kept size 2; B idle shows 3';
-    },
-  },
-
   'record-corrected-at-done': {
     what: 'a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
     run: async (h) => {
@@ -1090,44 +1057,6 @@ const SCENARIOS: Record<string, Scenario> = {
       const never = await tab.words('refusal.whiteNeverSets');
       check(!warn.hidden && warn.text === never, `the slot: "${warn.text}"`);
       return `${slow}; heat off, 0.5 L, one small egg: "${warn.text}"`;
-    },
-  },
-
-  'two-tabs-correction': {
-    what: 'a second tab on the same cook never undoes the first one\'s correction with its own ring',
-    run: async (h) => {
-      const a = await h.ctx.open(STOPPED);
-      await start(a, 'hot');
-      await a.until('__snap().decided', 'A planned');
-      const pull0 = deadlines(await a.snap()).cookEnd_s;
-      // B opened on the site, as a second visit: it takes up A's cook.
-      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
-      await b.phase('COOKING');
-      await b.until('__snap().decided', 'B planned');
-      await a.shift(60);
-      await b.shift(60);
-      // A minute in, A corrects the start to cold water (the owner's case).
-      await a.click('#sentence .clause[aria-controls="panelStart"]');
-      await a.click('#startCold');
-      let sa = await corrected(a, null);
-      check(sa.phase === 'HEATING', `A back to ${sa.phase}`);
-      const osc0 = (await a.osc()).length;
-      // B, which takes no correction, reaches its own pull and its grace runs out.
-      await b.shiftTo(pull0 + 25);
-      const sb = await b.phase('COOLING');
-      check(sb.cook?.events.pulled?.by === 'timeout', `B's own pull: ${JSON.stringify(sb.cook?.events.pulled)}`);
-      await a.shiftTo(pull0 + 25);
-      await a.settle();
-      sa = await a.snap();
-      check(sa.phase === 'HEATING', `A, corrected to cold, still heating: ${sa.phase} "${sa.label}"`);
-      check(sa.cook?.events.pulled === null && sa.cook?.events.rangAt_s === null,
-        `nothing B's clock decided taken up: ${JSON.stringify(sa.cook?.events)}`);
-      check((await a.osc()).length === osc0, `A rang nothing: ${(await a.osc()).length - osc0}`);
-      // A reload restores the corrected cook, not B's older copy.
-      await a.reload();
-      sa = await a.phase('HEATING');
-      check(storedCook(sa)?.choices.startMode === 'cold', `stored: ${storedCook(sa)?.choices.startMode}`);
-      return `B timed out in COOLING; A stayed HEATING, nothing taken up, nothing rung; A reloaded to HEATING, cold`;
     },
   },
 
@@ -1592,120 +1521,100 @@ const SCENARIOS: Record<string, Scenario> = {
     },
   },
 
-  'two-tabs': {
-    what: 'a second tab follows the first one\'s tap and writes nothing back over it (both stopped at one moment)',
+  'one-tab-waits': {
+    what: 'a second tab says the app is open in another: it writes nothing and arms no alarm while a cook runs in the first',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
-      await start(a, 'cold');
-      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
-      let sb = await b.phase('HEATING');
-      check(storedCook(sb)?.id_ms === (await a.snap()).cook?.id_ms, 'B took up A\'s cook');
-      await b.until('__snap().deadlines !== null', 'B planned');
-      await a.click('#primary');
-      await a.phase('COOKING');
-      sb = await b.phase('COOKING');
-      // Both tabs' surfaces in, then all B would write written.
-      await a.until('__snap().decided', 'A planned on the measured pot');
-      await b.until('__snap().decided', 'B planned on the measured pot');
+      await start(a, 'hot');
+      await a.until('__snap().decided', 'A planned');
       await a.settle();
-      await b.settle();
-      const stored = storedCook(await a.snap());
-      check(stored?.events.boilAt_s !== null, 'the tap still stored');
-      const bWrites = (await b.writes()).filter((w) => w.key === COOK_KEY).map((w) => cookIn(w.value));
-      check(bWrites.every((c) => c !== null && c.events.boilAt_s !== null), 'B never wrote a cook without the tap');
-      await a.reload();
-      const sa = await a.snap();
-      check(sa.phase === 'COOKING', `A reloaded to ${sa.phase}`);
-      return `B followed in COOKING; B's writes of the cook: ${bWrites.length}, none without the tap; A reloaded to COOKING`;
+      const before = await a.eval<string>(DUMP);
+      const b = await opened(h, `${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      const shown = await b.eval<{ note: string; want: string; button: string; main: boolean }>(`(() => ({
+        note: document.querySelector('#tabNote p').textContent, want: aetTest.t('tab.note'),
+        button: document.getElementById('useHere').textContent,
+        main: document.querySelector('main').offsetHeight > 0 }))()`);
+      check(shown.note === shown.want && shown.note !== '' && shown.button !== '' && !shown.main,
+        `the note alone: ${JSON.stringify(shown)}`);
+      // Time passes in B, past A's pull: still nothing.
+      await b.eval(`window.aetClock.shift(900)`);
+      await b.look();
+      await b.eval('new Promise((r) => setTimeout(r, 500))');
+      check((await b.writes()).length === 0, `B wrote ${(await b.writes()).map((w) => w.key).join(', ')}`);
+      check((await b.eval<string>(DUMP)) === before, 'every store as A left it');
+      const sound = await b.eval<{ contexts: number; osc: number }>('({ contexts: __audio.length, osc: __osc.length })');
+      check(sound.contexts === 0 && sound.osc === 0, `B made no sound: ${JSON.stringify(sound)}`);
+      check(b.requests().every((r) => !r.url.includes('/api/')), 'B asked the server nothing');
+      check((await a.snap()).phase === 'COOKING', 'A cooks on');
+      return `B shows "${shown.note.slice(0, 32)}…" and "${shown.button}": 0 writes, no audio context, the stores as A left them`;
     },
   },
 
-  'two-tabs-settings': {
-    what: 'a setting changed in another tab is taken up and shown, and never written back',
-    run: async (h) => {
-      const [a, b, from] = await twoTabs(h);
-      await pick(b, '#size', '3');
-      await a.until("__snap().settings.sizeIndex === 3 && document.getElementById('size').value === '3'", 'B\'s size in A');
-      const back = await settled(a, b, SETTINGS_KEY, from);
-      check(back.length === 0, `A wrote the settings back: ${back.length}`);
-      return 'B chose size 3: A shows it, and wrote the settings 0 times';
-    },
-  },
-
-  'two-tabs-pans': {
-    what: 'a pan another tab timed to the boil is taken up, and never written back',
-    run: async (h) => {
-      const [a, b, from] = await twoTabs(h);
-      await start(b, 'cold');
-      await b.shift(240);
-      await boil(b);
-      await b.click('#secondary');
-      await b.phase('IDLE');
-      const pans = pansIn(await b.storage(BOIL_KEY));
-      check(Object.keys(pans).length === 1, `B remembered the pan: ${JSON.stringify(pans)}`);
-      await a.until(`JSON.stringify(__snap().boilMemory) === ${JSON.stringify(JSON.stringify(pans))}`, 'B\'s pan in A');
-      const back = await settled(a, b, BOIL_KEY, from);
-      check(back.length === 0, `A wrote the pans back: ${back.length}`);
-      return `B timed ${JSON.stringify(pans)}: A has it, and wrote the pans 0 times`;
-    },
-  },
-
-  'two-tabs-log': {
-    what: 'an egg another tab logged and folded is taken up, and never written back',
-    run: async (h) => {
-      const [a, b, from] = await twoTabs(h);
-      let s = await start(b, 'hot');
-      await b.until('__snap().decided', 'B planned');
-      s = await b.snap();
-      await b.shiftTo(deadlines(s).cookEnd_s + 2);
-      await b.phase('PULL');
-      await b.click('#primary');
-      s = await b.phase('COOLING');
-      await b.shiftTo(deadlines(s).coolEnd_s + 2);
-      await b.phase('DONE');
-      await b.click('.fb[data-yolk="jammy"]');
-      await a.until('__snap().log.length === 1 && __snap().eggsLogged === 1 && __snap().eggsBehind === 0',
-        'B\'s egg, folded, in A');
-      const back = await settled(a, b, STORES.calibration.key, from);
-      check(back.length === 0, `A wrote the log back: ${back.length}`);
-      return 'B logged Jammy and folded it: A has the egg, and wrote the log 0 times';
-    },
-  },
-
-  'two-tabs-sharing': {
-    what: 'sharing turned on in another tab is taken up and shown, and never written back',
-    run: async (h) => {
-      const [a, b, from] = await twoTabs(h);
-      await b.click('#shareSetting');
-      await a.until("__snap().share.on && document.getElementById('shareSetting').checked", 'sharing on in A');
-      const back = await settled(a, b, STORES.share.key, from);
-      check(back.length === 0, `A wrote the sharing state back: ${back.length}`);
-      return 'B turned sharing on: A shows it, and wrote the sharing state 0 times';
-    },
-  },
-
-  'two-tabs-cook': {
-    what: 'the boil tapped in another tab on the same cook is taken up, and the cook never written back',
+  'one-tab-takeover': {
+    what: 'pressing the second tab\'s button moves a running cook to it: the same pull, its alarm armed, no note of an alarm lost',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       await start(a, 'cold');
-      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
-      await b.phase('HEATING');
-      await b.until('__snap().deadlines !== null', 'B planned');
-      await b.settle();
-      const from = (await b.writes()).length;
-      await a.click('#primary');
-      const sa = await a.phase('COOKING');
-      const sb = await b.phase('COOKING');
-      check(sb.cook?.events.boilAt_s === sa.cook?.events.boilAt_s, 'B has A\'s tap');
-      const cookOf = (text: string): string => JSON.stringify((JSON.parse(text) as { cook: Cook }).cook);
-      const written = await settled(b, a, COOK_KEY, from);
-      // B's lean, a cache, may be written beside a cook A stored; a cook of
-      // B's own, never.
-      const aCooks = new Set((await a.writes()).filter((w) => w.key === COOK_KEY).map((w) => cookOf(w.value)));
-      const back = written.filter((w) => !aCooks.has(cookOf(w)));
-      check(back.length === 0, `B wrote its copy of the cook back: ${back.length}`);
-      return `A tapped the boil: B took it up; of B's ${written.length} writes of the cook, 0 its own copy`;
+      await a.shift(240);
+      let sa = await boil(a);
+      await a.shift(60);
+      await a.settle();
+      sa = await a.snap();
+      const pull_s = deadlines(sa).cookEnd_s;
+      const b = await opened(h, `${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      await b.click('#useHere');
+      await b.until("document.body.dataset.tab === 'owner' && window.aetTest !== undefined", 'B owns the app');
+      await b.until('__snap().decided', 'B planned');
+      let sb = await b.phase('COOKING');
+      check(sb.cook?.id_ms === sa.cook?.id_ms, 'the same cook');
+      check(JSON.stringify(sb.cook?.events) === JSON.stringify(sa.cook?.events), 'what A saw in the pan, kept');
+      check(near(deadlines(sb).cookEnd_s, pull_s, 1e-6), `the pull ${deadlines(sb).cookEnd_s} was ${pull_s}`);
+      const ahead = (await b.osc()).filter(scheduledAhead);
+      check(ahead.length === 1, `B's alarm armed ahead: ${ahead.length}`);
+      const lost = await b.eval<boolean>("document.body.innerText.includes(aetTest.t('readout.restored'))");
+      check(!lost, 'no note that the alarm was lost');
+      // At the pull, B rings.
+      const osc0 = (await b.osc()).length;
+      await b.shiftTo(pull_s + 2);
+      sb = await b.phase('PULL');
+      const rang = rings((await b.osc()).slice(osc0));
+      check(rang.length === 1, `B rang the pull: ${rang.length}`);
+      await a.until("document.body.dataset.tab === 'waiting'", 'A waits');
+      return `cook ${sb.cook?.id_ms} moved to B at the same pull; a ring ahead, no lost-alarm note; rung at the pull`;
+    },
+  },
+
+  'one-tab-silent': {
+    what: 'the tab the app was taken from falls silent: its audio closed, and nothing rung or written as its timers come round',
+    run: async (h) => {
+      const a = await h.ctx.open(STOPPED);
+      await start(a, 'hot');
+      await a.until('__snap().decided', 'A planned');
+      // A correction in hand when the app is taken: its settle would write.
+      await pick(a, '#size', '3');
+      const sa = await a.snap();
+      check((await a.osc()).some(scheduledAhead), 'A\'s alarm armed ahead');
+      const b = await opened(h, `${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      await b.click('#useHere');
+      await a.until("document.body.dataset.tab === 'waiting' && !document.getElementById('tabNote').hidden", 'A waits');
+      await b.until("document.body.dataset.tab === 'owner' && window.aetTest !== undefined", 'B owns the app');
+      const closed = await a.eval<string[]>('__audio.map((c) => c.state)');
+      check(closed.length > 0 && closed.every((state) => state === 'closed'), `A's audio: ${closed.join(', ')}`);
+      const writes0 = (await a.writes()).length;
+      const osc0 = (await a.osc()).length;
+      // A's clock past the pull and past the cooling; A looked at, its
+      // settle and its ticks come round.
+      const d = deadlines(sa);
+      for (const at of [d.cookEnd_s + 2, d.cookEnd_s + 30, d.coolEnd_s + 5, d.cookEnd_s + 7200]) {
+        await a.shiftTo(at);
+        await a.eval("document.dispatchEvent(new Event('visibilitychange')); window.dispatchEvent(new Event('pageshow'))");
+      }
+      await a.eval('new Promise((r) => setTimeout(r, 2500))');
+      const wrote = (await a.writes()).slice(writes0);
+      check(wrote.length === 0, `A wrote ${wrote.map((w) => w.key).join(', ')}`);
+      check((await a.osc()).length === osc0, `A made ${(await a.osc()).length - osc0} sounds`);
+      check(await a.eval<boolean>("document.querySelector('main').offsetHeight === 0"), 'A shows the note alone');
+      return `A: ${closed.length} audio context closed; past the pull, the cooling and two hours: 0 writes, 0 sounds`;
     },
   },
 
@@ -2030,21 +1939,23 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'newer-version-tab': {
-    what: 'a tab already open stops writing when a newer build\'s tab marks the storage',
+    what: 'a tab waiting for the app writes no mark; the tab that owns it stops writing at its next write once a newer build has marked the storage',
     run: async (h) => {
       const a = await h.ctx.open(STOPPED);
       check((await a.storage(NEWEST_KEY)) !== null, 'this build marked the storage first');
       check(await a.eval<boolean>("document.getElementById('newerNote').hidden"), 'no line while this build is the newest');
-      const b = await h.ctx.open(STOPPED);
-      // A newer build's tab: the mark is all this build can see of it.
+      const before = await a.eval<string>(DUMP);
+      const b = await opened(h, STOPPED);
+      check((await b.writes()).length === 0 && (await b.eval<string>(DUMP)) === before, 'the waiting tab wrote nothing, no mark');
+      // A newer build has run since: the mark is all this build can see of it.
       await b.eval(`localStorage.setItem('${NEWEST_KEY}', '9.0.0')`);
-      await a.until("!document.getElementById('newerNote').hidden", 'the line in the tab already open');
       const n0 = (await a.writes()).length;
       await pick(a, '#size', '3');
       await a.settle();
+      await a.until("!document.getElementById('newerNote').hidden", 'the line, at the next write');
       const after = (await a.writes()).slice(n0);
       check(after.length === 0, `not one write after: ${after.map((w) => w.key).join(', ')}`);
-      return `the open tab shows the line and writes nothing (${n0} writes before)`;
+      return `the waiting tab wrote nothing; the owner shows the line at its next write and writes nothing (${n0} writes before)`;
     },
   },
 };

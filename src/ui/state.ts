@@ -13,7 +13,7 @@
  * `RunningCook` (src/core/running.ts): its start, its own choices and what it
  * observed, with everything else - the deadlines, the time, the record -
  * derived as its `CookPlan`. A running cook is described by its own choices,
- * never by the settings, which another tab may have changed since.
+ * never by the settings, which describe the next cook.
  */
 
 import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
@@ -47,7 +47,6 @@ export function emptyModel(): Model {
     calib: null!,
     sharing: false,
     readOnly: false,
-    storedId_ms: null,
     deletedHere: false,
     share: null,
     redraws: { controls: 0, units: 0, doneness: 0, alarm: 0, echo: 0, learned: 0, share: 0, words: 0 },

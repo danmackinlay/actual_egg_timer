@@ -123,10 +123,8 @@ checks read by name (the web's `data-egg`, iOS's debug log `egg aim|live|ran`):
 
 **Corrections** (`DECISIONS.md` 96 to 98). After Start every clause of the
 sentence, the slider and Settings' pot rows stay open, showing the cook's
-own choices, never the settings (another tab's settings touch only the
-units, the language and the sound, and which sound, while a cook runs). A
-change is a correction, "it was always like this": the cook is planned
-again from its start. It is committed on release of the slider or of a − or
+own choices, never the settings. A change is a correction, "it was always
+like this": the cook is planned again from its start. It is committed on release of the slider or of a − or
 + held long enough to repeat, after a 1.5-s settle for anything else (a
 choice, a tap, a number typed), and at once when another control is
 touched; until then the readout keeps its time, and the slider's heading
@@ -475,9 +473,8 @@ web's thumb moves at once.
     from another control is committed when that change lands, without it
     (the web commits it with it).
   - *The controls are the planner's own*, set to the cook's choices at a
-    relaunch; iOS has no second tab, so a correction writes only the
-    settings it changed, as the web does, and nothing else can write them
-    while a cook runs.
+    relaunch; a correction writes only the settings it changed, as the web
+    does, and nothing else can write them while a cook runs.
   - *While "still in the water?" is open* the Lock Screen card shows the
     pull, "now", with the pull's line naming the cooling, not a cooling's
     countdown that may not be running; no alarm is pending. VoiceOver reads

@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
-  DEFAULT_SETTINGS, claimStorage, newerStoredElsewhere, openCooks, openPans, openSettings, storageReadOnly,
+  DEFAULT_SETTINGS, claimStorage, openCooks, openPans, openSettings, storageReadOnly,
 } from '../src/ui/store.js';
 import { openLearner } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
@@ -114,7 +114,7 @@ test('3. a newer mark: nothing is written, removed, logged or sent, and the time
   settings.save({ ...loaded, altitude_m: 0, eggCount: 4 });
   pans.remember(pans.load(), 2, 500);
   pans.clear();
-  cooks.peek();
+  cooks.load();
   cooks.save({ id_ms: 7 } as never, 'none', 12);
   cooks.saveLeanHint(7, 30);
   cooks.clear(7);
@@ -167,18 +167,7 @@ test('3c. a build the guard has made read-only deletes nothing', () => {
   assert.deepEqual(storage, before);
 });
 
-test('4. another tab of a newer build: this page stops writing at its event, or at its next write before it', () => {
-  storage.clear();
-  claimStorage(APP_VERSION);
-  assert.equal(newerStoredElsewhere(SETTINGS), false, 'not the mark');
-  storage.set(NEWEST_KEY, '9.0.0');
-  assert.equal(newerStoredElsewhere(NEWEST_KEY), true);
-  assert.equal(storageReadOnly(), true);
-  writes.length = 0;
-  settings.save({ ...DEFAULT_SETTINGS, altitude_m: 10 });
-  assert.deepEqual(writes, []);
-
-  // The event not yet here: the next write finds the mark first.
+test('4. a newer build that ran since: this page stops writing at its next write', () => {
   storage.clear();
   told = 0;
   claimStorage(APP_VERSION);
@@ -188,13 +177,11 @@ test('4. another tab of a newer build: this page stops writing at its event, or 
   assert.deepEqual(writes, []);
   assert.equal(storageReadOnly(), true);
   assert.equal(told, 1);
-  assert.equal(newerStoredElsewhere(NEWEST_KEY), false, 'told once');
 
-  // A tab that cleared the storage: this build marks it again before it writes.
+  // The storage cleared since: this build marks it again before it writes.
   storage.clear();
   claimStorage(APP_VERSION);
   storage.clear();
-  assert.equal(newerStoredElsewhere(null), false);
   writes.length = 0;
   settings.save({ ...DEFAULT_SETTINGS, altitude_m: 30 });
   assert.deepEqual(writes, [NEWEST_KEY, SETTINGS]);

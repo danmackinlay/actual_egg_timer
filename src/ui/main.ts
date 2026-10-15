@@ -31,4 +31,4 @@ async function devTools(): Promise<void> {
 
 await Promise.all([loadCopy(effectiveLanguage(loadLanguage())), loadPopulation(), devTools()]);
 applyCopy(document);
-boot();
+await boot();

@@ -1,10 +1,9 @@
 /**
  * The page's effects that are not the cook's, as the runner (cook.ts)
- * carries them out for `update` (model.ts): the settings written, coalesced or at once, with
- * whatever another tab wrote since taken up; the idle page solved again once
- * the controls settle; the words in a new language; everything forgotten;
- * what another tab wrote, taken up as messages; and how many of the log's
- * eggs are final, for sharing.
+ * carries them out for `update` (model.ts): the settings written, coalesced
+ * or at once; the idle page solved again once the controls settle; the words
+ * in a new language; everything forgotten; and how many of the log's eggs
+ * are final, for sharing.
  */
 
 import { LanguageState, effectiveLanguage } from '../core/language.js';
@@ -52,7 +51,7 @@ export function saveSoon(store: SettingsStore, settings: () => Settings): void {
   if (pending.saveHandle !== 0) return;
   pending.saveHandle = soon(() => {
     pending.saveHandle = 0;
-    writeSettings(store, settings());
+    store.save(settings());
   }, 250);
 }
 
@@ -61,14 +60,16 @@ export function saveSoon(store: SettingsStore, settings: () => Settings): void {
 export function saveNow(store: SettingsStore, settings: Settings): void {
   cancelSoon(pending.saveHandle);
   pending.saveHandle = 0;
-  writeSettings(store, settings);
+  store.save(settings);
 }
 
-/** Write the settings, with whatever another tab wrote since taken up
- *  first (store.ts), and that taken up on the page. */
-function writeSettings(store: SettingsStore, settings: Settings): void {
-  const next = store.save(settings);
-  if (next !== settings) send({ kind: 'settingsTaken', settings: next });
+/** The page no longer owns the app (owner.ts): a save or a solve still
+ *  waiting to coalesce is dropped. */
+export function dropPending(): void {
+  cancelSoon(pending.solveHandle);
+  cancelSoon(pending.saveHandle);
+  pending.solveHandle = 0;
+  pending.saveHandle = 0;
 }
 
 /* -------------------------------------------------------------- language */
@@ -126,16 +127,16 @@ export function learnBehind(learner: Learner): void {
 
 /* ---------------------------------------------------------------- sharing */
 
-/** The stored cook's plan, for whether it is too old: this tab's own, or
- *  one made for another tab's cook, kept for as long as the stored text is
- *  the same (how old a cook may get does not move with the clock). */
+/** The stored cook's plan, for whether it is too old: the one on screen's,
+ *  or, for a cook stored and not on screen (one ended and waiting on its
+ *  record), one made for it, kept for as long as the stored text is the same
+ *  (how old a cook may get does not move with the clock). */
 const storedPlan = { text: null as string | null, plan: null as CookPlan | null };
 
-/** The egg still open to correction (core `openEggId`): the
- *  stored running cook's, whichever tab wrote it, until it is too old to
- *  pick back up; null when there is none. */
+/** The egg still open to correction (core `openEggId`): the stored running
+ *  cook's, until it is too old to pick back up; null when there is none. */
 function openEgg(s: Stores, m: Model, now_s: number): number | null {
-  const cook = s.cooks.peek()?.cook ?? null;
+  const cook = s.cooks.load()?.cook ?? null;
   if (cook === null) return null;
   let plan: CookPlan;
   if (m.cook !== null && m.plan !== null && m.cook.id_ms === cook.id_ms) {
@@ -152,35 +153,12 @@ function openEgg(s: Stores, m: Model, now_s: number): number | null {
 }
 
 /** How many of the log's eggs are final, from its start (share.ts): all of
- *  them but the stored running cook's, whichever tab asks, which can still be
- *  answered and corrected until Start again or until it is too old
- *  (`openEggId`). */
+ *  them but the stored running cook's, which can still be answered and
+ *  corrected until Start again or until it is too old (`openEggId`). */
 export function finalEggs(s: Stores, m: Model): number {
   const log = s.learner.keptState().log;
   const open = openEgg(s, m, nowMs() / 1000);
   if (open === null) return log.length;
   const at = log.findIndex((r) => (r.id ?? null) === open);
   return at < 0 ? log.length : at;
-}
-
-
-/**
- * Another tab wrote the settings, the pans, the log or the sharing state
- * (the `storage` event): this page takes it up at once rather than writing
- * back what it loaded, which would undo it. Eggs the other tab logged are
- * folded here too, if it has not folded them, and the time on screen moves
- * with what was learned. The cook in progress is cook.ts's
- * (`cookElsewhere`).
- */
-export function storedElsewhere(s: Stores, key: string | null, settings: Settings): void {
-  const nextSettings = s.settings.elsewhere(key, settings);
-  if (nextSettings !== null) send({ kind: 'settingsTaken', settings: nextSettings });
-  // The pans: another tab's measured boil, or its "Forget everything".
-  const pans = s.pans.elsewhere(key);
-  if (pans !== null) send({ kind: 'pans', boilMemory: pans, quiet: false });
-  const calibration = s.learner.storedElsewhere(key);
-  const sharing = s.sharing.storedElsewhere(key);
-  if (!calibration && !sharing) return;
-  send({ kind: 'stores' });
-  if (calibration) learnBehind(s.learner);
 }

@@ -103,7 +103,7 @@ test('the egg\'s record is in the log before the cook is forgotten', async () =>
   storage.clear();
   const { stores } = page();
   const m = atDone(stores);
-  assert.notEqual(stores.cooks.peek(), null, 'written down while it ran');
+  assert.notEqual(stores.cooks.load(), null, 'written down while it ran');
   const [, effects] = go(m, { kind: 'primary' }, m.plan!.deadlines.coolEnd_s! + 10);
   assert.ok(effects.findIndex((e) => e.kind === 'log') < effects.findIndex((e) => e.kind === 'forget'));
   const order: string[] = [];
@@ -114,7 +114,7 @@ test('the egg\'s record is in the log before the cook is forgotten', async () =>
   };
   carryOut(effects, stores, m);
   assert.deepEqual(order, ['forget, the log holding 1']);
-  assert.equal(stores.cooks.peek(), null);
+  assert.equal(stores.cooks.load(), null);
   await settle();
 });
 
@@ -154,7 +154,7 @@ test('a cook ended before its record can be made stays stored until it is logged
   carryOut(effects, stores, m);
   assert.equal(m.cook, null, 'off the screen');
   assert.equal(m.ending.length, 1, 'waiting on its record');
-  assert.equal(stores.cooks.peek()?.cook.id_ms, id, 'and still stored');
+  assert.equal(stores.cooks.load()?.cook.id_ms, id, 'and still stored');
   assert.equal(stores.learner.keptState().log.length, 0);
   // Its surface lands: logged, then forgotten.
   const inputs = m.ending[0].need.surface!;
@@ -162,7 +162,7 @@ test('a cook ended before its record can be made stays stored until it is logged
   [m, effects] = go({ ...m, surfaces: [...m.surfaces, surface] }, { kind: 'landed' }, m.ending[0].plan!.deadlines.coolEnd_s! + 20);
   carryOut(effects, stores, m);
   assert.equal(stores.learner.keptState().log.length, 1);
-  assert.equal(stores.cooks.peek(), null);
+  assert.equal(stores.cooks.load(), null);
   await settle();
 });
 
