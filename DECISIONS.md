@@ -995,3 +995,16 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     fails `tsc` or `swift build`, and so does a `t()` call with a missing or
     extra argument; Swift's `tr()` checks argument names in a debug build.
     Built `gate-speed`.
+128. **One tab owns the web app** (the owner, 14 October 2026, on the
+    adversarial review; "let's KISS", 15 October). Supersedes 97's
+    exception to question 23, "each tab runs the cook it started". The
+    first tab runs the app under an exclusive Web Lock; any other tab says
+    the app is open in another tab, with a button that moves the app, its
+    cook and alarm, to it, and writes and sounds nothing until pressed. Given up:
+    two cooks at once in two tabs, two pans started at different times.
+    Every tab shares one storage, so independent tabs needed the cross-tab
+    merges, which go; keeping them apart would have meant a store per tab
+    for the cook beside a shared one for the learning. Without Web Locks
+    (an insecure context) every tab runs as before. 100's newer-build mark
+    stays. A new build no longer waits for the site's one window: a
+    waiting tab reloads into it. Built `one-tab`.
