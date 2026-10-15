@@ -40,7 +40,6 @@ public final class AppModel {
         planner.load()
         #if DEBUG
         planner.learner.seed(Screenshots.seedEggs)
-        Perf.drive(planner)
         Services.card.logAll("launch")
         Task {
             try? await Task.sleep(for: .seconds(3))

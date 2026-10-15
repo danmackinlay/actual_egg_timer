@@ -101,7 +101,7 @@ releasing has its own in `ios/RELEASING.md`.
   default to Imperial units, US egg sizes and a 12-hour clock: a scenario
   written on a metric machine fails only in CI. Each tab is given a locale
   (`DEFAULT_LOCALE` in `tools/harness.ts`), and each iOS launch one
-  (`localeArgs` in `tools/iosE2e.ts`); `AET_LOCALE=en-US npm run e2e --
+  (`localeArgs` in `tools/iosHarness.ts`); `AET_LOCALE=en-US npm run e2e --
   <names>`, or `ios:e2e`, reproduces a runner's. `--lang` does not reach the
   page on macOS. On iOS, `simctl create` copies the host's locale and its
   unit and clock preferences into the device, and those preferences win

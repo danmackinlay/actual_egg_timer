@@ -3,64 +3,26 @@ import Foundation
 import Observation
 import os
 
-/// Launch arguments that put a debug build on a given screen, so screenshots
-/// can be taken on a simulator nobody drives (`xcrun simctl launch … -uiScreen
-/// settings`), and the debug log the scripted checks read. Debug builds only:
-/// a release build reads no launch argument (`arguments`), so every flag here
-/// is off and `log` writes nothing, and it has none of the taps, the waits
-/// and the seeds (the `#if DEBUG` part below). What the rest of the app asks
-/// of this, it asks in every build, and need not say which it is in.
+/// Launch arguments for a debug build, and the debug log the scripted checks
+/// read. Debug builds only: a release build reads no launch argument
+/// (`arguments`), so every flag here is off and `log` writes nothing, and it
+/// has none of the screenshot kit, the taps, the waits and the seeds (the
+/// `#if DEBUG` parts below). What the rest of the app asks of this, it asks
+/// in every build, and need not say which it is in.
+///
+/// The screenshot kit: a given screen on a simulator nobody drives
+/// (`xcrun simctl launch … -uiScreen settings`).
 ///
 /// - `-uiScreen settings`, `help`, `help-reliable`: push that page.
 /// - `-uiScreen clause-egg`, `clause-from`, `clause-start`, `clause-cooling`:
 ///   open that clause's choice under the sentence.
+/// - `-uiScreen certainty-open`: open what the certainty line under the time
+///   says when pressed.
 /// - `-uiScreen heating`: start a cook, as a tap on Start would.
 /// - `-uiScreen done`: start a cook and move it back in time, so its cooling
 ///   ended a moment ago and the eggs came out on time: the questions after
 ///   an egg (`Cook.skipToDone`). With `-noAlarmPrompt YES`, so no alarm is
 ///   set for a moment already past.
-/// - `-noAlarmPrompt YES`: answer the notification question with no, without
-///   asking, so the system's alert is not in the picture.
-/// - `-seedEggs got-jammy,got-soft`: on a fresh install, write that many
-///   eggs into the log through the app's own store, each cooked at the level
-///   and setup on screen, and fold them (`Planner.seed`). A learned state
-///   without cooking. `got-` and one of the five words is the yolk the cook
-///   got: `got-runny` to `got-hard`. An answer about the
-///   white follows a slash: `got-jammy/firm`, `got-soft/tender`.
-/// - `-uiScreen certainty-open`: open what the certainty line under the time
-///   says when pressed.
-/// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
-///   picker would, before the first frame (`LanguageChoice.start`).
-/// - `-uiScrollAnchor 0.7`: open the egg's page scrolled that far down, for
-///   a screenshot of what the largest text sizes push off the screen.
-/// - `-uiDo eggsIn@launch+1,set:size=3@30,drag:0.3/0.1@pull-60,release@pull-58`:
-///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
-///   from the launch), `set:<control>=<value>` (a control changed as a tap
-///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
-///   `water`, `bowlLitres`, `coolingWater` (the temperature of running water
-///   or the bowl, whichever is chosen; empty for none), `eggs`, `altitude`,
-///   and `language`, a tag as the picker
-///   would pick it), `drag:<levels>` and `release` (the
-///   slider held and moved, then let go), `start:+3` (the start's + or −
-///   pressed so many times), `stillIn` and `stillOut` (the two answers to
-///   "still in the water?"), `open:settings` or `open:clause-start`.
-/// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
-///   many seconds on in the cook as planned, the pull and its grace included;
-///   with `-uiScreen heating`, a cook part done without waiting for it.
-/// - `-perfProbe all`: after the first solve, tap, hold and drag the inputs
-///   on a script and print how long each takes to reach the screen
-///   (`Perf.swift`). `-settings.v1 <hex>`, the settings as stored, as JSON
-///   in hex (`SettingsStore`), starts it from the same place each time.
-/// - `-shareServer http://localhost:8888`: send what sharing sends there
-///   rather than to the live site (`Sharing.server`), for `npm run
-///   serve:dev`.
-/// - `-clockAt 1791234567 -clockSpeed 0`: the app's clock at that moment and
-///   frozen there (`AppClock`); `-clockSpeed 60` runs it fast. A clock so
-///   launched is stepped from outside: a line `<n> <at> <speed>` written to
-///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
-///   it on at `speed`, and the log says `clock` with its `n` once it has. The
-///   scripted checks freeze it at each moment they check. Sharing sends
-///   nothing under either.
 /// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
 ///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
 ///   past its guesses, or a cook about to be too old, on screen. The cook
@@ -68,38 +30,57 @@ import os
 ///   a cook stored to move past.
 /// - `-doneAgo 3590`: with `-uiScreen done`, the cooling ended that many
 ///   seconds ago rather than 2.
-/// - `-uiAnswer jammy`, `jammy/tender`, `/firm`: at Done, answer the yolk,
-///   the white or both, as the buttons would (`AppModel.answer`), after
-///   `-uiAnswerAfter 5` seconds (default 3; the system's seconds, not cook
-///   time), so a simulator nobody taps can answer; with no `-uiScreen`, a
-///   cook restored at Done is answered so.
-/// - `-uiDo boil@470,out@pull+3,again@cooled+5`: tap, each once, when the
-///   cook's clock reaches a moment of the cook (`drive`): `boil` (Full
-///   rolling boil), `out` (the egg out at the pull), `cancel`, `again`
-///   (Start again), `answer:jammy/tender` (as `-uiAnswer`). The moment is
-///   seconds after the start, or after `boil` (the boil tapped), `pull` or
-///   `cooled` (the plan's deadlines), the cook as restored included; a
-///   moment once known is kept, so a tap still comes after the cook has
-///   ended. What the scripted checks tap with, in place of the screen's
-///   layout.
+/// - `-seedEggs got-jammy,got-soft`: on a fresh install, write that many
+///   eggs into the log through the app's own store, each cooked at the level
+///   and setup on screen, and fold them (`Planner.seed`). A learned state
+///   without cooking. `got-` and one of the five words is the yolk the cook
+///   got: `got-runny` to `got-hard`. An answer about the white follows a
+///   slash: `got-jammy/firm`, `got-soft/tender`.
+/// - `-noAlarmPrompt YES`: answer the notification question with no, without
+///   asking, so the system's alert is not in the picture.
+/// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
+///   picker would, before the first frame (`LanguageChoice.start`).
+///
+/// What the scripted checks (`npm run ios:e2e`, tools/iosE2e.ts) launch
+/// with, besides those:
+///
+/// - `-clockAt 1791234567 -clockSpeed 0`: the app's clock at that moment and
+///   frozen there (`AppClock`); `-clockSpeed 60` runs it fast. A clock so
+///   launched is stepped from outside: a line `<n> <at> <speed>` written to
+///   `Library/Caches/aet.clock` in the container moves it to `at` and runs
+///   it on at `speed`, and the log says `clock` with its `n` once it has. The
+///   scripted checks freeze it at each moment they check. Sharing sends
+///   nothing under either.
+/// - `-uiDo eggsIn@launch+1,boil@300,out@pull+3,again@cooled+5`: tap, each
+///   once, when the cook's clock reaches a moment (`drive`): `eggsIn`
+///   (Start, from idle), `boil` (Rolling boil), `out` (the egg out at the
+///   pull), `cancel`, `again` (Start again), `answer:jammy/tender` (the
+///   yolk, the white or both, as the buttons would: `AppModel.answer`),
+///   `set:<control>=<value>` (`level`, `size` or `water`, changed as a tap
+///   would) and `drag:<levels>` (the slider held and moved through them; it
+///   stays held). The moment is seconds after the start, after `launch`
+///   (the clock at this launch, before any cook), or after `boil` (the boil
+///   tapped), `pull` or `cooled` (the plan's deadlines), the cook as restored
+///   included; a moment once known is kept, so a tap still comes after the
+///   cook has ended. What the scripted checks tap with, in place of the
+///   screen's layout.
+/// - `-settings.v1 <hex>`: the settings as stored, as JSON in hex
+///   (`SettingsStore`), as UserDefaults reads a launch argument's data.
 /// - `-muteAudio YES`: the ring at no volume and notifications without
-///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
-/// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
-///   ran while the cook runs in this launch, as if the app were killed
-///   before it landed: the stale cook a relaunch then finds (`Cook`).
-/// - `-uiFailRemake YES`: an ended cook's record is never made again in this
-///   launch, as if it could not be: the cook left stored for the next launch
-///   (`Cook`).
+///   sound, so a scripted run is silent.
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
+///
+/// And `-shareServer http://localhost:8888`: send what sharing sends there
+/// rather than to the live site (`Sharing.server`), for `npm run serve:dev`.
 ///
 /// `log` writes one event as a line of JSON, to standard error and to
 /// `Library/Caches/aet.log` in the app's container: the phases, each plan,
 /// the stored cook and the log as written, the alarms scheduled, cancelled
 /// and read back, the rings, the Live Activities pushed and seen, the taps
-/// of `-uiDo`, and what the screen says, which the scripted checks read
-/// (`tools/iosE2e.ts`). A line is `{"t":<cook time, epoch s>,"ev":"<the
+/// of `-uiDo`, the corrections, and where the screen's parts sit and what
+/// its readout drew. A line is `{"t":<cook time, epoch s>,"ev":"<the
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
 /// `Codable` writes them, in the order of their names, a field with no value
 /// left out.
@@ -188,40 +169,22 @@ public enum Screenshots {
     /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
     /// Mac's speakers; everything else about the ring and the alarms is as is.
     public static var muteAudio: Bool { arguments?.bool(forKey: "muteAudio") ?? false }
-    /// `-uiHoldAsRan YES`: a correction after the pull never has its record
-    /// made again while the cook runs in this launch (`Cook`), as if the app
-    /// were killed before it landed, so a script can find the stale cook
-    /// stored at the next launch. Read at launch; a test sets it.
-    @MainActor static var holdAsRan = arguments?.bool(forKey: "uiHoldAsRan") ?? false
-    /// `-uiFailRemake YES`: an ended cook's record is never made again in
-    /// this launch (`Cook`): the cook stays stored for the next. Read at
-    /// launch; a test sets it.
-    @MainActor static var failRemake = arguments?.bool(forKey: "uiFailRemake") ?? false
-    public static var scene: String? { arguments?.string(forKey: "uiScreen") }
-    public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
-    public static var doneAgo: Double { number("doneAgo") ?? 2 }
-    public static var answerAfter: Double { number("uiAnswerAfter") ?? 3 }
-    /// `-uiAnswer`'s yolk and white, either possibly nil; nil when not given.
-    public static var answer: (yolk: YolkWord?, white: WhiteReport?)? {
-        guard let raw = arguments?.string(forKey: "uiAnswer") else { return nil }
-        let parts = raw.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
-        return (YolkWord(rawValue: parts[0]), parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil)
-    }
     public static var language: String? { arguments?.string(forKey: "uiLanguage") }
     public static var noAlarmPrompt: Bool { arguments?.bool(forKey: "noAlarmPrompt") ?? false }
-    public static var sectionAhead: Double { arguments?.double(forKey: "sectionAhead") ?? 0 }
-    public static var scrollAnchor: Double? { number("uiScrollAnchor") }
     /// `-shareServer`: where sharing sends, in place of the live site.
     public static var shareServer: URL? { arguments?.string(forKey: "shareServer").flatMap(URL.init(string:)) }
-
-    /// A number given as a launch argument, or nil when none is.
-    private static func number(_ key: String) -> Double? {
-        arguments.flatMap { $0.object(forKey: key) == nil ? nil : $0.double(forKey: key) }
-    }
 }
 
 #if DEBUG
 extension Screenshots {
+    /// The screenshot kit's screen, and how far its cook is moved back
+    /// (above).
+    public static var scene: String? { arguments?.string(forKey: "uiScreen") }
+    public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
+    public static var doneAgo: Double {
+        arguments.flatMap { $0.object(forKey: "doneAgo") == nil ? nil : $0.double(forKey: "doneAgo") } ?? 2
+    }
+
     static var seedEggs: [SeedAnswer] {
         guard let list = arguments?.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
@@ -268,25 +231,18 @@ extension Screenshots {
             pull: Double, cooled: Double?, lengthened: Bool, surface: Bool, next: Double?, asking: Bool,
             overdue: Bool
         )
-        case verdict(kind: String, whiteSets: Bool, cookS: Double)
-        /// What Done shows, the peak yolk as it ran once kept (°C), and the
-        /// plan's own.
-        case shown(peak: Double?, level: Double?, plannedPeak: Double)
         /// The cook as stored, as the store holds it; none when cleared.
         case stored(value: Encoded?)
         /// A cook picked back up at launch, in this phase, and whether the
         /// clock wrote events it found past.
         case restore(phase: String, eventsWritten: Bool)
         case restoreTooOld
-        case restoreUnreadable
         /// A cook picked back up has its alarms and its card again.
         case restored
-        case cookEnded
         case ring(deadline: String)
         /// A card pushed (`what`: `start`, `update`): its stage, its end,
         /// whether it counts up, and what it says of the cook.
         case activity(what: String, stage: String, ends: Int, up: Bool, cook: [String?])
-        case activityEnd
         /// A card the system holds, read at launch (`when`: `launch`,
         /// `launch+3s`).
         case activitySeen(when: String, state: String, stage: String, ends: Int)
@@ -304,11 +260,6 @@ extension Screenshots {
         // The results log and the record.
         /// The log as written: how many eggs, how many folded, and the last.
         case log(count: Int, folded: Int, last: Encoded?)
-        case asRanCorrected
-        case asRanRemade
-        case asRanNotRemade
-        case answerHeld
-        case answerHeldMade
 
         // The stores (`Stores.claim`).
         case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
@@ -325,38 +276,19 @@ extension Screenshots {
         // Corrections while a cook runs (`Edits`).
         /// A change in hand, on this group of controls.
         case edit(group: String?)
-        case editLeaving
         /// The change in hand committed: the fields it changed, and the start
         /// if it moved it.
         case editCommitted(fields: [String], start: Double?)
-        case startLimit(kind: String, at: Double)
-        case announce(text: String)
 
         // The screen.
-        /// The page on top (`egg` for none pushed).
-        case view(page: String)
         /// Where a part of the screen sits, pt from the window's top.
         case layout(part: String, y: Double)
         case newerNote
-        case sentence(text: String)
-        case panelStart(at: Double)
-        case readout(phase: String, big: String, sub: String)
         /// One frame of the readout: the moment it was drawn for, and what
         /// it drew, the certainty's time range none with no certainty.
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)
-        /// The certainty line's word and the time range it opens; none with
-        /// no line.
-        case certainty(word: String?, time: String?)
-        case white(shown: Bool)
+        /// Whether "Most likely" shows under the certainty word.
         case likely(shown: Bool)
-        /// The bracket under the slider as drawn, slider levels: its ends,
-        /// and the stretch drawn heavy, the most likely word's band.
-        case bracket(low: Double, high: Double, likelyLow: Double, likelyHigh: Double)
-        /// The egg in cross-section: its reading (`aim`, `live`, `ran`) and
-        /// how set its yolk is, to a thousandth; no yolk with no egg drawn.
-        case egg(reading: String, yolk: Double?)
-        case slot(text: String)
-        case note(text: String)
     }
 
     /// A value the app stores as JSON, written into a line as it encodes.
@@ -475,10 +407,6 @@ extension Screenshots {
     /// Drags of `-uiDo` still moving the slider.
     @MainActor private static var dragging = 0
 
-    /// `open:settings` pushes Settings, `open:clause-start` opens a
-    /// clause's choice, as a press on its link would (set by the screen).
-    @MainActor public static var open: ((String) -> Void)?
-
     /// The clock at this launch, cook time: what `launch` counts from.
     static let launchedAtS = AppClock.nowS
 
@@ -498,7 +426,7 @@ extension Screenshots {
         case "set": set(action.arg ?? "", model.planner)
         case "drag":
             // The finger down on the slider and moved through each level,
-            // a twentieth of a second apart; it stays down (`release`).
+            // a twentieth of a second apart; it stays down.
             let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
             model.edits.fingerDown(.level, slider: true)
             dragging += 1
@@ -509,15 +437,6 @@ extension Screenshots {
                 }
                 dragging -= 1
             }
-        case "release": model.edits.fingerUp()
-        case "start":
-            // `start:+3`: the start's + pressed three times, or − for a
-            // minus; each a tap, so the correction settles.
-            let n = Int(action.arg ?? "") ?? 0
-            for _ in 0..<abs(n) { model.edits.stepStart(up: n > 0) }
-        case "stillIn": model.stillIn()
-        case "stillOut": model.stillOut()
-        case "open": open?(action.arg ?? "")
         default: log(.actionUnknown(raw: action.raw))
         }
     }
@@ -534,17 +453,7 @@ extension Screenshots {
         switch parts[0] {
         case "level": planner.settings.doneness = number
         case "size": planner.chooseSize(Int(number))
-        case "mass": planner.weigh(number)
-        case "from": if let v = EggFrom(rawValue: value) { planner.settings.startTempMode = v }
-        case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
-        case "cooling": if let v = Cooling(rawValue: value) { planner.settings.cooling = v }
-        case "heatOff": planner.heatOff = value == "1"
         case "water": planner.settings.waterLitres = number
-        case "bowlLitres": planner.settings.bowlLitres = number
-        case "coolingWater": planner.setCoolingWater(value.isEmpty ? nil : number)
-        case "eggs": planner.settings.eggCount = Int(number)
-        case "altitude": planner.settings.altitudeM = number
-        case "language": Services.language.pick(value)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
     }

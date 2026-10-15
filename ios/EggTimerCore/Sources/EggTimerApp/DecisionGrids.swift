@@ -33,7 +33,7 @@ actor DecisionGrids: DecisionSurfaces {
         if let grid = done[key] { return grid }
         if let running = building[key] { return await running.value }
         let build = Task.detached(priority: .userInitiated) {
-            Perf.time(.grid) { buildDecisionGrid(inputs) }
+            buildDecisionGrid(inputs)
         }
         building[key] = build
         let grid = await build.value
@@ -88,7 +88,7 @@ actor DecisionGrids: DecisionSurfaces {
         if let p = profiles[key] { return p }
         if let running = profileBuilds[key] { return await running.value }
         let build = Task.detached(priority: .userInitiated) {
-            Perf.time(.profile) { oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface) }
+            oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface)
         }
         profileBuilds[key] = build
         let p = await build.value

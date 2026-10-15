@@ -35,7 +35,6 @@ final class CookCard {
         if phaseAt(plan.deadlines, nowS: now) == .done {
             guard !finished else { return }
             finished = true
-            Screenshots.log(.activityEnd)
             endAll()
             return
         }

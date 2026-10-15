@@ -7,7 +7,8 @@ import EggTimerApp
 /// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
 /// same outline, the same rings and the same colours (`Palette`).
 ///
-/// It has two readings, which the debug log names as the web's drawing does:
+/// It has two readings, as the web's drawing has (`EggReading`,
+/// `AppModel.section`):
 ///
 /// - `aim`, the egg the settings on screen aim for, as eaten at the end of
 ///   the cooling (`previewSection`), so the yolk reads the level asked: idle,
@@ -38,108 +39,11 @@ struct EggSectionView: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        let (view, reading) = section()
+        let view = model.section(phase: phase, nowS: now.timeIntervalSince1970, cache: cache).view
         Canvas { context, size in
             EggOutline.draw(view, in: context, size: size, scheme: scheme)
         }
         .accessibilityHidden(true)
-        .logged(Self.summary(view, reading))
-    }
-
-    /// The reading and how set the yolk is, its rings' mean, for the log.
-    private static func summary(_ view: SectionView?, _ reading: EggReading) -> Screenshots.Event {
-        guard let view else { return .egg(reading: reading.rawValue, yolk: nil) }
-        let yolk = view.set.indices.filter { view.yolk[$0] }.map { view.set[$0] }
-        let mean = yolk.isEmpty ? 0 : yolk.reduce(0, +) / Double(yolk.count)
-        return .egg(reading: reading.rawValue, yolk: (mean * 1000).rounded() / 1000)
-    }
-
-    /// What to draw, and which reading it is.
-    private func section() -> (SectionView?, EggReading) {
-        let planner = model.planner
-        let calibration = planner.calibration
-        guard phase != .idle, let running = model.cook.running, let plan = model.cook.plan else {
-            // Idle: the egg the controls aim for, at the time on screen.
-            guard !planner.isSousVide, let solution = planner.solution else { return (nil, .aim) }
-            let level = planner.settings.doneness
-            return (cache.preview(
-                egg: planner.egg, setup: planner.setup, params: calibrationParams(calibration),
-                cookTimeS: solution.result.cookTimeS,
-                whiteTargetMin: calibrationDoneness(calibration, level: level).whiteDoseMin
-            ), .aim)
-        }
-        // A change in hand: the egg it aims for.
-        if let aim = model.aimView { return (aim, .aim) }
-        // Once the egg is out, under the model and at the level it ran with
-        // (`asRanShown`), not a posterior that has since learned from it.
-        let ran = asRanShown(running, plan: plan)
-        let params = ran?.params ?? calibrationParams(calibration)
-        let whiteTarget = calibrationDoneness(calibration, level: ran?.level ?? plan.answer.level).whiteDoseMin
-        let start = running.startedAtS
-        if phase == .done, let pulled = running.events.pulled {
-            return (cache.preview(
-                egg: plan.egg, setup: plan.setup, params: params, cookTimeS: pulled.outS - start,
-                whiteTargetMin: whiteTarget
-            ), .ran)
-        }
-        let clock = now.addingTimeInterval(Screenshots.sectionAhead).timeIntervalSince1970
-        // In the water until the cook said the eggs were out, or until the
-        // grace ran out with nobody saying, and on through the carryover.
-        let assumedOut = plan.deadlines.cookEndS + pullGraceSeconds
-        let out = running.events.pulled?.outS ?? (clock >= assumedOut ? assumedOut : nil)
-        let outS = out.map { $0 - start }
-        let nowS = clock - start
-        return (cache.live(
-            egg: plan.egg, setup: plan.setup, startedAtS: start, params: params,
-            toS: outS.map { min(nowS, $0 + Constants.carryoverWindow) } ?? nowS,
-            outAtS: outS, whiteTargetMin: whiteTarget
-        ), .live)
-    }
-}
-
-/// Which egg the drawing is (the web's `data-egg`).
-enum EggReading: String {
-    case aim, live, ran
-}
-
-/// The live section carried forward between ticks, so each second costs two
-/// steps rather than a replay. A new egg, water, start or model - the boil
-/// tapped, a slow hob, a restore, a correction - replays it from t = 0, since
-/// the water it has been in changed. And the last preview worked out, which
-/// is a few thousand steps, so once for each thing it is of.
-@MainActor
-final class SectionCache {
-    private var section: EggSection?
-    private var key = ""
-    private var preview: SectionView?
-    private var previewKey = ""
-
-    func live(
-        egg: Egg, setup: CookSetup, startedAtS: Double, params: ModelParams,
-        toS: Double, outAtS: Double?, whiteTargetMin: Double
-    ) -> SectionView {
-        let k = "\(egg)|\(setup)|\(startedAtS)|\(params)"
-        if section == nil || key != k {
-            section = EggSection(egg: egg, setup: setup, params: params)
-            key = k
-        }
-        section!.advance(egg: egg, setup: setup, toS: toS, outAtS: outAtS)
-        return section!.view(whiteTargetMin: whiteTargetMin)
-    }
-
-    /// `previewSection`, the egg as eaten for a pot, a time in the water and
-    /// a white's target.
-    func preview(
-        egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
-    ) -> SectionView {
-        let k = "\(egg)|\(setup)|\(params)|\(cookTimeS)|\(whiteTargetMin)"
-        if let preview, previewKey == k { return preview }
-        let view = previewSection(
-            egg: egg, setup: setup, params: params, cookTimeS: cookTimeS, whiteTargetMin: whiteTargetMin
-        )
-        preview = view
-        previewKey = k
-        return view
     }
 }
 
