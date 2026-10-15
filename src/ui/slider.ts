@@ -7,9 +7,9 @@
  */
 
 import { anchorNear, anchorReachable } from '../core/slider.js';
-import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
-import { OddsProfile, shadingOf } from '../core/reach.js';
-import { WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.js';
+import { DONENESS_ANCHORS, type Solution } from '../core/solve.js';
+import { type OddsProfile, shadingOf } from '../core/reach.js';
+import { type WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.js';
 import { rangeWords } from '../core/wording.js';
 import { t, tChosen } from './copy.js';
 import { page } from './dom.js';

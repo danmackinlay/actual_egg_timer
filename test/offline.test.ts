@@ -19,7 +19,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.js';
+import { type BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.js';
 
 test('1. a page is answered by its index.html, a file by itself', () => {
   const files: BuildFiles = {

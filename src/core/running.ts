@@ -31,23 +31,23 @@
  * `fixtures/running.json` and `fixtures/step.json`.
  */
 
-import { Egg, SizeTable, eggFromMass } from './geometry.js';
-import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
+import { type Egg, type SizeTable, eggFromMass } from './geometry.js';
+import { type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C } from './protocol.js';
 import { boilingPointAtAltitude } from './thermo.js';
 import { ALPHA_REL_SD } from './constants.js';
 import { LIMITS, ambientFor, startTempPreset_C } from './inputs.js';
-import { BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.js';
-import { CookResult, ModelParams, Solution, logYolkTarget, simulate } from './solve.js';
+import { type BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.js';
+import { type CookResult, type ModelParams, type Solution, logYolkTarget, simulate } from './solve.js';
 import {
-  DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, inputsKey, numberKey, solutionAt,
+  type DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, inputsKey, numberKey, solutionAt,
 } from './decide.js';
-import { DoseGrid } from './doseGrid.js';
-import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
-import { CertaintyReading, certaintyAt } from './certainty.js';
+import type { DoseGrid } from './doseGrid.js';
+import { type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
+import { type CertaintyReading, certaintyAt } from './certainty.js';
 import { predictOutcome } from './outcome.js';
-import { WhiteReport, YolkWord } from './infer.js';
+import type { WhiteReport, YolkWord } from './infer.js';
 import {
-  AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationDoneness,
+  type AppName, type Calibration, type CookFacts, type EggFrom, type Forecast, type MassFrom, type ProbeReading, type PulledBy, type Units, calibrationDoneness,
   calibrationParams, forecastOf,
 } from './record.js';
 

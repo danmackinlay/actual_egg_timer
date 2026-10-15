@@ -69,14 +69,14 @@ import {
   ALPHA_DEFAULT, ALPHA_REL_SD, C_EGG, C_WATER, DT_SIM, K_EGG, TAU_PLUNGE, TREF_WHITE_C, TREF_YOLK_C,
   YOLK_RADIUS_FRAC, Z_WHITE, Z_YOLK,
 } from '../src/core/constants.js';
-import { Egg, eggFromMass } from '../src/core/geometry.js';
+import { type Egg, eggFromMass } from '../src/core/geometry.js';
 import { DEFAULTS, DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
 import {
-  CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
   wetShellDrop_C,
 } from '../src/core/protocol.js';
 import {
-  SphereState, centreTemperature, createSphere, meanTemperature, robinSurface, stepSphere,
+  type SphereState, centreTemperature, createSphere, meanTemperature, robinSurface, stepSphere,
   temperatureAt,
 } from '../src/core/sphere.js';
 import { donenessFromSlider, simulate, sliderFromYolkDose } from '../src/core/solve.js';

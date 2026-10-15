@@ -5,7 +5,7 @@
  * egg-temperature buttons.
  */
 
-import { SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor } from '../../src/core/geometry.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES, type SizeClass, sizeTableFor } from '../../src/core/geometry.js';
 import {
   DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, ROOM_EGG_FROM_C, START_TEMP_PRESETS_C, ambientFor, roomInUse,
   startTempPreset_C,

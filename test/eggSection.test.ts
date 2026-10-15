@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.js';
+import { type SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.js';
 import { advanceSection, createSection, sectionView } from '../src/core/section.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../src/core/solve.js';

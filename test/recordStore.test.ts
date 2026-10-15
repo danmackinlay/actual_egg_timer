@@ -10,8 +10,8 @@ import assert from 'node:assert/strict';
 
 
 import { CALIBRATION_SEED, LIKELIHOOD_ID, PARTICLE_COUNT, freshCalibration, replay } from '../src/core/record.js';
-import { YolkWord } from '../src/core/infer.js';
-import { Learner, openLearner } from '../src/ui/calibration.js';
+import type { YolkWord } from '../src/core/infer.js';
+import { type Learner, openLearner } from '../src/ui/calibration.js';
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { assertIdentical, solvedRecord, storage } from './records.js';
 

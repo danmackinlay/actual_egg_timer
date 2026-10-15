@@ -30,7 +30,7 @@
 import { readFileSync } from 'node:fs';
 
 import { STORES, stamped } from '../src/ui/stores.js';
-import { Failure, Harness, Scenario, Snap, Tab, check } from './harness.js';
+import { Failure, type Harness, type Scenario, type Snap, Tab, check } from './harness.js';
 
 /** One state's words, as `copySnapshot.js compare` reads them. */
 export interface CopyState {

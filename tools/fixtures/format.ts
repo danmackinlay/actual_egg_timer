@@ -5,15 +5,15 @@
 
 import { readFileSync } from 'node:fs';
 
-import { CopyArgs, parseCatalogue, pluralCategory, render } from '../../src/core/copy.js';
+import { type CopyArgs, parseCatalogue, pluralCategory, render } from '../../src/core/copy.js';
 import { weekdayKey } from '../../src/core/wording.js';
 import {
-  Fixed, HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
+  type Fixed, type HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
   normaliseTime, roundTo, unpadHour,
 } from '../../src/core/format.js';
 import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../../src/core/units.js';
 
-import { CatalogueJson, english } from './shared.js';
+import { type CatalogueJson, english } from './shared.js';
 
 /* Numbers and times of day as each supported formatting locale writes them,
  * through `Intl` here and Foundation in Swift. SUPPORTED are the locales the

@@ -11,7 +11,7 @@
  * boundaries that a real one reaches only by accident.
  */
 
-import { DONENESS_ANCHORS, Solution } from '../../src/core/solve.js';
+import { DONENESS_ANCHORS, type Solution } from '../../src/core/solve.js';
 import {
   SLIDER_STEPS, anchorNear, anchorReachable, snapDown, snapUp, targetPeakYolk_C, verdictFor,
 } from '../../src/core/slider.js';

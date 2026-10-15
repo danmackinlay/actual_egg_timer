@@ -20,10 +20,10 @@ import { nudgeSeconds } from '../core/decide.js';
 import type { BoilMemory } from '../core/boil.js';
 import { answered } from '../core/running.js';
 import { phaseNow } from './state.js';
-import { EditTimer, Effect, Model, Msg, update } from './model.js';
+import { type EditTimer, type Effect, type Model, type Msg, update } from './model.js';
 import type { Learner } from './calibration.js';
 import {
-  Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
+  type Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
   setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
 } from './clock.js';
 import { activeLocale } from './copy.js';
@@ -35,13 +35,13 @@ import { draw, drawnNothing, showStartLimit } from './render.js';
 import { view, viewMemo } from './view.js';
 import { send, sendTo } from './send.js';
 import type { Sharing } from './share.js';
-import { CookStore, PansStore, SettingsStore, storageReadOnly } from './store.js';
+import { type CookStore, type PansStore, type SettingsStore, storageReadOnly } from './store.js';
 import { unitSystem, useUnits } from './units.js';
 import {
   dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon,
 } from './effects.js';
 import { showEgg } from './views.js';
-import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
+import { type Builds, type Needs, openNeeds, workerBuilds } from './needs.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
 import { ownsApp } from './owner.js';
 

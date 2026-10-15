@@ -25,7 +25,7 @@ import { readFileSync } from 'node:fs';
 
 import { buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  CALIBRATION_SEED, Calibration, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
+  CALIBRATION_SEED, type Calibration, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, jsonString, parseLog, parseRecord, recordCookTime_s,
   replay, resultsFile, resultsFileName,
 } from '../src/core/record.js';
@@ -34,7 +34,7 @@ import { DEFAULT_PARAMS } from '../src/core/solve.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { appSetup, recordAt } from '../tools/common.js';
 import {
-  PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, seedOf,
+  type PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, type Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, seedOf,
   spread, summarise, wordLog,
 } from '../tools/posterior.js';
 import { COARSE, assertIdentical, solvedRecord } from './records.js';

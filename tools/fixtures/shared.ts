@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { parseCatalogue } from '../../src/core/copy.js';
 import { SIZE_CLASSES } from '../../src/core/geometry.js';
 import { createPrior } from '../../src/core/infer.js';
-import { CookChoices } from '../../src/core/running.js';
+import type { CookChoices } from '../../src/core/running.js';
 
 export type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
 

@@ -17,7 +17,7 @@ import {
   startTempPreset_C,
 } from '../src/core/inputs.js';
 import { DEFAULT_TIME_TO_BOIL_S } from '../src/core/boil.js';
-import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.js';
+import { SIZE_CLASSES, type SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
 import { sizeClassLabel } from '../src/core/units.js';
 import { T_ROOM_C } from '../src/core/constants.js';

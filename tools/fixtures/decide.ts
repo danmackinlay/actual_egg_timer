@@ -4,19 +4,19 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.js';
 import { eggFromMass } from '../../src/core/geometry.js';
-import { DoseGrid, GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
-import { Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import { type DoseGrid, type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
+import { type Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
+import type { CookSetup } from '../../src/core/protocol.js';
 import {
-  Calibration, calibrationDoneness, calibrationParams,
+  type Calibration, calibrationDoneness, calibrationParams,
 } from '../../src/core/record.js';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S, DECISION_WINDOW_S,
-  DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
+  type DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
   NUDGE_MAX_S, decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, nudgeSeconds,
   oddsInTenths,
 } from '../../src/core/decide.js';
-import { DEFAULT_PARAMS, Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.js';
+import { DEFAULT_PARAMS, type Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';

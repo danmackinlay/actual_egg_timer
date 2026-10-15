@@ -13,10 +13,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CookSurface } from '../src/core/running.js';
-import { Effect, Model, Msg, Part, update } from '../src/ui/model.js';
+import type { CookSurface } from '../src/core/running.js';
+import { type Effect, type Model, type Msg, type Part, update } from '../src/ui/model.js';
 import { emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings } from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.js';
 import { gridFor, knowing } from '../tools/common.js';
 
 const S = 1791363600;

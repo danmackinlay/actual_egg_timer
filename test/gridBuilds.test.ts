@@ -14,7 +14,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DecisionInputs } from '../src/core/decide.js';
+import type { DecisionInputs } from '../src/core/decide.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, freshCalibration } from '../src/core/record.js';
 import { decisionGrid, oddsProfileFor } from '../src/ui/decisionGrids.js';
 import { eggFromMass } from '../src/core/geometry.js';

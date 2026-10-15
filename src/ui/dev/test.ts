@@ -21,19 +21,19 @@
  * across a reload, and starts again from the seed at each load.
  */
 
-import { CertaintyReading } from '../../core/certainty.js';
-import { CopyArgs } from '../../core/copy.js';
-import { BoilMemory } from '../../core/boil.js';
-import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
+import type { CertaintyReading } from '../../core/certainty.js';
+import type { CopyArgs } from '../../core/copy.js';
+import type { BoilMemory } from '../../core/boil.js';
+import { type Phase, type RunningCook, guessLengthened } from '../../core/running.js';
 import { readStoredCook } from '../storedCook.js';
 import { STORES } from '../stores.js';
-import { EggRecord } from '../../core/record.js';
+import type { EggRecord } from '../../core/record.js';
 import { flushDraw, pageModel, pageStores } from '../cook.js';
 import { t, timeOfDay } from '../copy.js';
 import { inHand } from '../idle.js';
 import { isDevHost, nowMs, useRandom } from '../now.js';
 import { phaseNow } from '../state.js';
-import { Settings } from '../store.js';
+import type { Settings } from '../store.js';
 import { finalEggs } from '../effects.js';
 
 /** The page as a script sees it. */

@@ -4,7 +4,7 @@
  * rather than an (i) (`button.disclose`), opened and closed the same way.
  */
 
-import { CopyKey } from '../core/copy.js';
+import type { CopyKey } from '../core/copy.js';
 import { t } from './copy.js';
 
 /** The paragraph an (i) opens: the element its aria-controls names. */

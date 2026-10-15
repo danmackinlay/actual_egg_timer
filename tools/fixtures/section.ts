@@ -4,7 +4,7 @@
  */
 
 import { eggFromMass } from '../../src/core/geometry.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import type { CookSetup } from '../../src/core/protocol.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.js';
 import {
   SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, previewSection, sectionView,

@@ -11,7 +11,7 @@
  */
 
 import {
-  Measure, Quantity, UnitSystem, effectiveUnits, measureFor, quantityText,
+  type Measure, type Quantity, type UnitSystem, effectiveUnits, measureFor, quantityText,
   regionalUnits,
 } from '../core/units.js';
 import { REGION, t } from './copy.js';

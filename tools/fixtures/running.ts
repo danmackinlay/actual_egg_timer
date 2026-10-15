@@ -7,13 +7,13 @@
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { decisionInputs, inputsKey } from '../../src/core/decide.js';
-import { GridSpec } from '../../src/core/doseGrid.js';
-import { WhiteReport, YolkWord } from '../../src/core/infer.js';
+import type { GridSpec } from '../../src/core/doseGrid.js';
+import type { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
-import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
+import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  COOLING_SECONDS, CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
-  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace,
+  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RecordContext, type RunningCook,
+  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, type SlowHobMemo, type SlowHobPlace,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
   corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
   replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,

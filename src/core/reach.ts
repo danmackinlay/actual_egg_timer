@@ -100,20 +100,20 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import { CopyKey } from './copyKeys.js';
-import { Egg } from './geometry.js';
-import { CookSetup } from './protocol.js';
-import { Solution, logYolkTarget, solveCookTime } from './solve.js';
-import { DoseGrid } from './doseGrid.js';
+import type { CopyKey } from './copyKeys.js';
+import type { Egg } from './geometry.js';
+import type { CookSetup } from './protocol.js';
+import { type Solution, logYolkTarget, solveCookTime } from './solve.js';
+import type { DoseGrid } from './doseGrid.js';
 import {
-  Decision, TimeBounds, appliedNudge, decide, decidedSolution,
+  type Decision, type TimeBounds, appliedNudge, decide, decidedSolution,
 } from './decide.js';
 import { yolkWordProbabilities } from './infer.js';
-import { Outcome, predictOutcome } from './outcome.js';
-import { Certainty, CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.js';
-import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
+import { type Outcome, predictOutcome } from './outcome.js';
+import { type Certainty, type CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.js';
+import { type Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import { LIMITS, START_TEMP_PRESETS_C } from './inputs.js';
-import { SLIDER_STEPS, Verdict, snapDown, snapUp, verdictFor } from './slider.js';
+import { SLIDER_STEPS, type Verdict, snapDown, snapUp, verdictFor } from './slider.js';
 
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the

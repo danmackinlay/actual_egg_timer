@@ -46,13 +46,13 @@
  * seconds. `Step.swift` is held to it by the traces in `fixtures/step.json`.
  */
 
-import { AlarmMoment } from './sounds.js';
-import { BoilMemory } from './boil.js';
-import { DecisionInputs, inputsKey } from './decide.js';
-import { WhiteReport, YolkWord } from './infer.js';
-import { AppName, Calibration, EggRecord, ProbeReading, Units, recordFor } from './record.js';
+import type { AlarmMoment } from './sounds.js';
+import type { BoilMemory } from './boil.js';
+import { type DecisionInputs, inputsKey } from './decide.js';
+import type { WhiteReport, YolkWord } from './infer.js';
+import { type AppName, type Calibration, type EggRecord, type ProbeReading, type Units, recordFor } from './record.js';
 import {
-  BoilToRemember, CookChoices, CookEntry, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, answered,
+  type BoilToRemember, type CookChoices, type CookEntry, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, answered,
   answersLogged, answersOf, appendEntry, asRanCorrected, asRanCurrent, asksIfStillIn, cookEnding, cookFactsFor,
   cookTooOld, corrected, endedAt_s, eventsDue, keepAsRan, phaseAt, pullStands, replan, sameChoices, sameEvents,
   slowHobDue, startCook, startCorrected, stillIn, withBoil, withOut, writeEvents,

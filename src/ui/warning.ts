@@ -3,9 +3,9 @@
  * running cook's.
  */
 
-import { Cooling } from '../core/protocol.js';
+import type { Cooling } from '../core/protocol.js';
 import { anchorNear } from '../core/slider.js';
-import { LevelAnswer } from '../core/reach.js';
+import type { LevelAnswer } from '../core/reach.js';
 import { warningKey } from '../core/wording.js';
 import { midSentence } from '../core/copy.js';
 import { activeLocale, t, tRef } from './copy.js';

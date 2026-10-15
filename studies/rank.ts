@@ -35,12 +35,12 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
-import { CookSetup, Cooling, StartMode } from '../src/core/protocol.js';
+import type { CookSetup, Cooling, StartMode } from '../src/core/protocol.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
   simulate, solveCookTime, donenessFromSlider, WHITE_DOSE_TARGET,
 } from '../src/core/solve.js';
-import { Theta, THETA0, NO_PROBE, runPerturbed } from './perturbed.js';
+import { type Theta, THETA0, NO_PROBE, runPerturbed } from './perturbed.js';
 
 /* ------------------------------------------------------------ candidates */
 

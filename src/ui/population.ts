@@ -11,7 +11,7 @@
  * correct, and each a few seconds of the worker's time per egg.
  */
 
-import { LITERATURE_POPULATION, Population } from '../core/infer.js';
+import { LITERATURE_POPULATION, type Population } from '../core/infer.js';
 import { parsePopulation } from '../core/population.js';
 import { request } from './idle.js';
 

@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  Catalogue, Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
+  type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.js';
 import { catalogueTags } from '../tools/copyApproval.js';

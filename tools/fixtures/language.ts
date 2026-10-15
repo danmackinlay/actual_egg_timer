@@ -11,7 +11,7 @@
  */
 
 import {
-  DEFAULT_LANGUAGE, LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
+  DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
   languageAfterPick, registerOf,
 } from '../../src/core/language.js';
 

@@ -16,7 +16,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
-import { AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
+import { type AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
 import { ALARM_SOUNDS } from '../src/ui/settings.js';
 import {
   NOTIFICATION_SOUND_MAX_S, PEAK, RECORDINGS, beepsPeriod, loudness, notificationRepeats, recordedPeriod, synthPeriod,

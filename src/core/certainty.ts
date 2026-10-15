@@ -67,8 +67,8 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import { DoseGrid } from './doseGrid.js';
-import { Posterior, predictCookTime, yolkWordProbabilities } from './infer.js';
+import type { DoseGrid } from './doseGrid.js';
+import { type Posterior, predictCookTime, yolkWordProbabilities } from './infer.js';
 import { anchorNear } from './slider.js';
 import { DONENESS_ANCHORS, logYolkTarget } from './solve.js';
 

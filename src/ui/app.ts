@@ -28,7 +28,7 @@ import { stepPast } from '../core/units.js';
 import { openLearner } from './calibration.js';
 import { applyConstantsToDom, buildSizeOptions } from './controls.js';
 import {
-  Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
+  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
   startRunner, stopRunner,
 } from './cook.js';
 import { closeAudio, primeAudio } from './clock.js';

@@ -15,7 +15,7 @@ import { DEFAULTS } from '../src/core/inputs.js';
 import { anchorNear, targetPeakYolk_C, verdictFor } from '../src/core/slider.js';
 import { textureFor, textureNoteKeys } from '../src/core/texture.js';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
-import { CookSetup } from '../src/core/protocol.js';
+import type { CookSetup } from '../src/core/protocol.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
 

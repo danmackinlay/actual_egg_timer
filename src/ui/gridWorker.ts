@@ -20,7 +20,7 @@
  * the page would have built.
  */
 
-import { Job, runJob } from './runJob.js';
+import { type Job, runJob } from './runJob.js';
 
 /** A job, and the number its answer is posted back under. */
 interface Request extends Job {

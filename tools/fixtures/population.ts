@@ -7,7 +7,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { LITERATURE_POPULATION, Population, createPrior } from '../../src/core/infer.js';
+import { LITERATURE_POPULATION, type Population, createPrior } from '../../src/core/infer.js';
 import { parsePopulation, priorStart } from '../../src/core/population.js';
 import { calibrationDoneness, calibrationParams, freshCalibration } from '../../src/core/record.js';
 import { particleRows } from './shared.js';

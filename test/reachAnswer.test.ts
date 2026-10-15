@@ -11,12 +11,12 @@ import assert from 'node:assert/strict';
 
 import { decide } from '../src/core/decide.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
-import { Egg, eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
+import { type Egg, eggFromMass } from '../src/core/geometry.js';
+import type { CookSetup } from '../src/core/protocol.js';
 import { logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { snapUp } from '../src/core/slider.js';
-import { CALIBRATION_SEED, Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
-import { OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer, oddsProfile } from '../src/core/reach.js';
+import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { type OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer, oddsProfile } from '../src/core/reach.js';
 import { askedWord, certaintyAt } from '../src/core/certainty.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.js';

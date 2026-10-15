@@ -18,8 +18,8 @@
  * interpolated exactly as the doses are.
  */
 
-import { Egg } from './geometry.js';
-import { CookSetup } from './protocol.js';
+import type { Egg } from './geometry.js';
+import type { CookSetup } from './protocol.js';
 import { simulate } from './solve.js';
 
 export interface DoseGrid {

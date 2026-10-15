@@ -19,15 +19,15 @@
  * calibrationStore.ts; the record of one egg is core's, made by `step`.
  */
 
-import { Doneness, ModelParams } from '../core/solve.js';
-import { DoseGrid } from '../core/doseGrid.js';
-import { WhiteReport, YolkWord } from '../core/infer.js';
+import type { Doneness, ModelParams } from '../core/solve.js';
+import type { DoseGrid } from '../core/doseGrid.js';
+import type { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  Calibration, EggRecord, LIKELIHOOD_ID, ProbeReading, calibrationDoneness as donenessOf, calibrationGrid,
+  type Calibration, type EggRecord, LIKELIHOOD_ID, type ProbeReading, calibrationDoneness as donenessOf, calibrationGrid,
   calibrationParams as paramsOf, copyCalibration, foldRecord, gridRequestFor, recordTeaches, resultsFile,
   resultsFileName,
 } from '../core/record.js';
-import { Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
+import { type Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
 import { localDay } from './model.js';
 import { buildOffThread } from './offThread.js';
 import { activePopulation } from './population.js';

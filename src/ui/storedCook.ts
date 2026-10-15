@@ -7,11 +7,11 @@
  * reader (`StoredCook.swift`).
  */
 
-import { SizeTable } from '../core/geometry.js';
-import { BoilMemory } from '../core/boil.js';
-import { YOLK_WORDS, YolkWord } from '../core/infer.js';
-import { ProbeReading, parseForecast } from '../core/record.js';
-import { CookAsRan, CookChoices, CookEntry, Pulled, RunningCook, foldCook } from '../core/running.js';
+import type { SizeTable } from '../core/geometry.js';
+import type { BoilMemory } from '../core/boil.js';
+import { YOLK_WORDS, type YolkWord } from '../core/infer.js';
+import { type ProbeReading, parseForecast } from '../core/record.js';
+import { type CookAsRan, type CookChoices, type CookEntry, type Pulled, type RunningCook, foldCook } from '../core/running.js';
 import { STORES, inFormat, stamped } from './stores.js';
 
 /** A finite number. */

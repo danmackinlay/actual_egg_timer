@@ -12,28 +12,28 @@
  * so each is worked out once. Drawing it is render.ts's.
  */
 
-import { CertaintyReading, WordCertainty } from '../core/certainty.js';
-import { CopyKey, midSentence } from '../core/copy.js';
-import { Egg } from '../core/geometry.js';
+import type { CertaintyReading, WordCertainty } from '../core/certainty.js';
+import { type CopyKey, midSentence } from '../core/copy.js';
+import type { Egg } from '../core/geometry.js';
 import { anchorNear, targetPeakYolk_C } from '../core/slider.js';
 import { textureFor, textureNoteKeys } from '../core/texture.js';
-import { CookSetup } from '../core/protocol.js';
+import type { CookSetup } from '../core/protocol.js';
 import type { Outcome } from '../core/outcome.js';
-import { OddsProfile } from '../core/reach.js';
-import { CookPlan, Phase, RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
-import { SectionView, previewSection, sectionView } from '../core/section.js';
-import { ModelParams, Solution } from '../core/solve.js';
+import type { OddsProfile } from '../core/reach.js';
+import { type CookPlan, type Phase, type RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
+import { type SectionView, previewSection, sectionView } from '../core/section.js';
+import type { ModelParams, Solution } from '../core/solve.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
 import { nudgeFrom } from '../core/units.js';
 import {
-  WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
+  type WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
   phaseKeys, refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.js';
 import { adviceFor } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { activeLocale, t, tChosen, timeOfDay } from './copy.js';
 import { formatClock } from './countdown.js';
-import { CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
+import { type CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
 import { formView } from './controls.js';
 import type { FormView } from './controls.js';
 import { learnedLine, learnedView } from './learned.js';
@@ -41,13 +41,13 @@ import type { Learning, LearnedView } from './learned.js';
 import { shareView } from './shareView.js';
 import type { ShareView } from './shareView.js';
 import type { Model, Redraws } from './model.js';
-import { PhaseView, phaseView } from './phaseView.js';
-import { SetupFacts, liveSetupFacts } from './sentence.js';
+import { type PhaseView, phaseView } from './phaseView.js';
+import { type SetupFacts, liveSetupFacts } from './sentence.js';
 import { sousVideCopy } from './sousvide.js';
 import {
   boilingPoint_C, currentEgg, idlePot, isSousVide, learning, phaseNow, sizeClasses, startModeNow,
 } from './state.js';
-import { Settings, UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.js';
+import { type Settings, type UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.js';
 import { measure, show } from './units.js';
 import { warningText } from './warning.js';
 

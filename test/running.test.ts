@@ -18,7 +18,7 @@ import { T_ROOM_C } from '../src/core/constants.js';
 import { decisionInputs } from '../src/core/decide.js';
 import { recordFor } from '../src/core/record.js';
 import {
-  PULL_GRACE_SECONDS, RecordContext, RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookEnding, cookFactsFor,
+  PULL_GRACE_SECONDS, type RecordContext, type RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookEnding, cookFactsFor,
   cookSetupOf, corrected, eventsDue, guessLengthened, keepAsRan, latestStart_s, phaseAt, replan, startCorrected,
   withBoil, withOut, writeEvents,
 } from '../src/core/running.js';

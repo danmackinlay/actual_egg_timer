@@ -27,7 +27,7 @@
  */
 
 import { X509Certificate, createHash, createPublicKey, createVerify, KeyObject } from 'node:crypto';
-import { Cbor, decode, decodeFirst } from './cbor.js';
+import { type Cbor, decode, decodeFirst } from './cbor.js';
 
 /** Apple App Attestation Root CA, from
  *  https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem

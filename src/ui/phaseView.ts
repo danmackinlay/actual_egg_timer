@@ -7,14 +7,14 @@
  * what any moment of a cook says.
  */
 
-import { CopyKey } from '../core/copy.js';
-import { CookPlan, RunningCook } from '../core/running.js';
-import { ReadoutLine, Spoken, readoutAt } from '../core/readout.js';
-import { Cooling, HeatAfterBoil } from '../core/protocol.js';
+import type { CopyKey } from '../core/copy.js';
+import type { CookPlan, RunningCook } from '../core/running.js';
+import { type ReadoutLine, type Spoken, readoutAt } from '../core/readout.js';
+import type { Cooling, HeatAfterBoil } from '../core/protocol.js';
 import { phaseKeys } from '../core/wording.js';
 import { t, tChosen } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
-import { UiStartMode } from './store.js';
+import type { UiStartMode } from './store.js';
 import { show } from './units.js';
 
 export { coolingStartsIn_s } from '../core/readout.js';

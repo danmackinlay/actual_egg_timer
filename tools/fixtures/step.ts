@@ -20,15 +20,15 @@
  * never change a phase.
  */
 
-import { DecisionInputs } from '../../src/core/decide.js';
+import type { DecisionInputs } from '../../src/core/decide.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { oddsProfile } from '../../src/core/reach.js';
-import { Calibration } from '../../src/core/record.js';
+import type { Calibration } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt,
+  type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, endedAt_s, phaseAt,
 } from '../../src/core/running.js';
-import { Readout, ReadoutProbe, readoutAt } from '../../src/core/readout.js';
-import { CookEnv, CookEvent, CookState, CookStep, step } from '../../src/core/step.js';
+import { type Readout, type ReadoutProbe, readoutAt } from '../../src/core/readout.js';
+import { type CookEnv, type CookEvent, type CookState, type CookStep, step } from '../../src/core/step.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
 import { BASE_CHOICES, MEMORY, START_S } from './shared.js';

@@ -9,7 +9,7 @@
 
 import { eggFromMinorDiameter } from '../core/geometry.js';
 import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C } from '../core/sousvide.js';
-import { Measure, Quantity, UnitSystem, displayText, nudgeFrom, sizeClassLabel } from '../core/units.js';
+import { type Measure, type Quantity, type UnitSystem, displayText, nudgeFrom, sizeClassLabel } from '../core/units.js';
 import { SLIDER_STEPS } from '../core/slider.js';
 import { startTempPreset_C } from '../core/inputs.js';
 import { languageOf } from '../core/format.js';
@@ -19,7 +19,7 @@ import type { Model, Redraws } from './model.js';
 import { redrawSentence } from './sentence.js';
 import { currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.js';
 import { T_COLD_TAP_C } from '../core/constants.js';
-import { LIMITS, Limit, START_TEMP_PRESETS_C, Settings } from './store.js';
+import { LIMITS, type Limit, START_TEMP_PRESETS_C, type Settings } from './store.js';
 import { measure, show, unitSystem } from './units.js';
 
 /** The fields with a unit, by the id of their input. */

@@ -4,7 +4,7 @@
  * and not.
  */
 
-import { BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, rememberBoil } from '../../src/core/boil.js';
+import { type BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, rememberBoil } from '../../src/core/boil.js';
 
 /* Two pans remembered in both orders, so a port that iterates an unordered map
  * is caught rather than merely lucky. */

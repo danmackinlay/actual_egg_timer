@@ -4,12 +4,12 @@
  * prior with its surface.
  */
 
-import { Decision, decide } from '../src/core/decide.js';
-import { DoseGrid, GridSpec } from '../src/core/doseGrid.js';
+import { type Decision, decide } from '../src/core/decide.js';
+import type { DoseGrid, GridSpec } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { Solution, logYolkTarget } from '../src/core/solve.js';
+import { type Solution, logYolkTarget } from '../src/core/solve.js';
 import {
-  CALIBRATION_SEED, Calibration, PARTICLE_COUNT, calibrationGrid, freshCalibration,
+  CALIBRATION_SEED, type Calibration, PARTICLE_COUNT, calibrationGrid, freshCalibration,
 } from '../src/core/record.js';
 import { answerAt } from '../src/core/reach.js';
 import { appSetup, gridFor } from '../tools/common.js';

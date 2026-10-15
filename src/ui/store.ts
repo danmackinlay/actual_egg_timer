@@ -8,19 +8,19 @@
  * two apps share one set. This module applies them; it does not decide them.
  */
 
-import { SizeClass } from '../core/geometry.js';
-import { LanguageState } from '../core/language.js';
-import { StartMode } from '../core/protocol.js';
-import { BoilMemory, rememberBoil } from '../core/boil.js';
-import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
+import type { SizeClass } from '../core/geometry.js';
+import type { LanguageState } from '../core/language.js';
+import type { StartMode } from '../core/protocol.js';
+import { type BoilMemory, rememberBoil } from '../core/boil.js';
+import { LIMITS, type Limit, clamp, isWithin } from '../core/inputs.js';
 import {
-  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, Settings as StoredSettings, readLanguageState,
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, type Settings as StoredSettings, readLanguageState,
   readSettings,
 } from './settings.js';
-import { RunningCook } from '../core/running.js';
-import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
+import type { RunningCook } from '../core/running.js';
+import { type KeptAnswers, type StoredCook, readStoredCook, storedCook } from './storedCook.js';
 import { STORES, STORE_LIST, inFormat, stamped } from './stores.js';
-import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
+import { type WriterVerdict, parseVersion, writerCheck } from './newer.js';
 import { ownsApp } from './owner.js';
 import { send } from './send.js';
 

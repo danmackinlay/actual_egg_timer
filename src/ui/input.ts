@@ -7,14 +7,14 @@
  */
 
 import { eggFromMass } from '../core/geometry.js';
-import { Cooling } from '../core/protocol.js';
-import { Quantity, parse } from '../core/units.js';
+import type { Cooling } from '../core/protocol.js';
+import { type Quantity, parse } from '../core/units.js';
 import { DEFAULTS } from '../core/inputs.js';
 import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.js';
 import { page, radioValue } from './dom.js';
 import { groupOf } from './edit.js';
 import { send } from './send.js';
-import { LIMITS, Settings, UiStartMode, clampNumber } from './store.js';
+import { LIMITS, type Settings, type UiStartMode, clampNumber } from './store.js';
 import { measure } from './units.js';
 
 /** The three ways a person can measure an egg are one number in three units.

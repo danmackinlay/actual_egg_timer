@@ -8,8 +8,8 @@ import {
   TAU_DIP_RECOVERY, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
   STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
-import { Egg } from './geometry.js';
-import { SphereState, meanTemperature, robinSurface } from './sphere.js';
+import type { Egg } from './geometry.js';
+import { type SphereState, meanTemperature, robinSurface } from './sphere.js';
 
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
  *  eggs are lowered into water already boiling - peels far better, and the

@@ -18,13 +18,13 @@ import { readFileSync } from 'node:fs';
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { parseCatalogue } from '../src/core/copy.js';
 import {
-  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil,
+  type CookChoices, type CookPlan, PULL_GRACE_SECONDS, type RunningCook, eventsDue, guessLengthened, replan, startCook, withBoil,
   withOut, writeEvents,
 } from '../src/core/running.js';
 import { phaseKeys } from '../src/core/wording.js';
 import { forceFormatLocale, t, tChosen, useCatalogue } from '../src/ui/copy.js';
 import { formatClock, spokenClock } from '../src/ui/countdown.js';
-import { ReadoutFacts, phaseView } from '../src/ui/phaseView.js';
+import { type ReadoutFacts, phaseView } from '../src/ui/phaseView.js';
 import { show, useUnits } from '../src/ui/units.js';
 import { knowing } from '../tools/common.js';
 

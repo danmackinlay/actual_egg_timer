@@ -11,10 +11,10 @@
  * Swift by `fixtures/step.json`, a readout for every step of every trace.
  */
 
-import { CopyKey } from './copyKeys.js';
-import { Cooling } from './protocol.js';
+import type { CopyKey } from './copyKeys.js';
+import type { Cooling } from './protocol.js';
 import {
-  CookPlan, Deadlines, PULL_GRACE_SECONDS, Phase, RunningCook, asksIfStillIn, guessLengthened, phaseAt,
+  type CookPlan, type Deadlines, PULL_GRACE_SECONDS, type Phase, type RunningCook, asksIfStillIn, guessLengthened, phaseAt,
 } from './running.js';
 import { phaseKeys } from './wording.js';
 

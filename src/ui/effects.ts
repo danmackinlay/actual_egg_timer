@@ -6,8 +6,8 @@
  * are final, for sharing.
  */
 
-import { LanguageState, effectiveLanguage } from '../core/language.js';
-import { CookPlan, openEggId, replan } from '../core/running.js';
+import { type LanguageState, effectiveLanguage } from '../core/language.js';
+import { type CookPlan, openEggId, replan } from '../core/running.js';
 import type { Learner } from './calibration.js';
 import type { Stores } from './cook.js';
 import type { Model } from './model.js';

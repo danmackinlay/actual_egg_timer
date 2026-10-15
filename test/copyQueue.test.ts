@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  APPROVED_PATH, CatalogueJson, approvedProblems, baseProblems, basePath, hashTemplates, readApproved, readBases,
+  APPROVED_PATH, type CatalogueJson, approvedProblems, baseProblems, basePath, hashTemplates, readApproved, readBases,
   reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState,
 } from '../tools/copyApproval.js';
 

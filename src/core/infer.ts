@@ -63,10 +63,10 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
+import { type ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc, normalCdf } from './sphere.js';
 import {
-  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
+  type DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
   cookTimeForLogWhiteDose,
 } from './doseGrid.js';
 

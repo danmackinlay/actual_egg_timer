@@ -4,7 +4,7 @@
  */
 
 import {
-  Catalogue, CopyArg, CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
+  type Catalogue, type CopyArg, type CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
   pluralCategory, regionOf, render,
 } from '../../src/core/copy.js';
 

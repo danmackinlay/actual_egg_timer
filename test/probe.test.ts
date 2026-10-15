@@ -24,17 +24,17 @@ import {
 } from '../src/core/infer.js';
 import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
 import {
-  CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
+  type CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
+import type { CookSetup } from '../src/core/protocol.js';
 import {
-  CALIBRATION_SEED, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
+  CALIBRATION_SEED, type EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import {
-  COOLING_MIN_SECONDS, COOLING_SECONDS, PULL_GRACE_SECONDS, RunningCook, coolingSecondsFor, eventsDue,
+  COOLING_MIN_SECONDS, COOLING_SECONDS, PULL_GRACE_SECONDS, type RunningCook, coolingSecondsFor, eventsDue,
   plausibleProbeRange_C, probeMomentFor, replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { appSetup, knowing } from '../tools/common.js';

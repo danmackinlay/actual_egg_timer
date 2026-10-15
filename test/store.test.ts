@@ -13,10 +13,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, startCook, withBoil } from '../src/core/running.js';
+import { type RunningCook, startCook, withBoil } from '../src/core/running.js';
 import { STORES, stamped } from '../src/ui/stores.js';
 import { choicesOf } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings, loadLanguage, openCooks, openSettings } from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, type Settings, loadLanguage, openCooks, openSettings } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in test/records.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */

@@ -12,7 +12,7 @@
  */
 
 import {
-  Catalogue, CopyArgs, CopyArgsOf, CopyKey, CopyRef, catalogueChain, parseCatalogue, render, renderRef,
+  type Catalogue, type CopyArgs, type CopyArgsOf, type CopyKey, type CopyRef, catalogueChain, parseCatalogue, render, renderRef,
 } from '../core/copy.js';
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
 import { DEFAULT_LANGUAGE } from '../core/language.js';

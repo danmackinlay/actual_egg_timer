@@ -16,10 +16,10 @@
  * turned on, the browser back online).
  */
 
-import { EggRecord, sharedRecord } from '../core/record.js';
+import { type EggRecord, sharedRecord } from '../core/record.js';
 import { deletionDone } from '../core/share.js';
 import {
-  ShareState, answered, deletionAsked, deletionConfirmed, forgotten, nextToSend, readShareState, reconciled, turnedOff,
+  type ShareState, answered, deletionAsked, deletionConfirmed, forgotten, nextToSend, readShareState, reconciled, turnedOff,
   turnedOn,
 } from './shareState.js';
 import { request } from './idle.js';

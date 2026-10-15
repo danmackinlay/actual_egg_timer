@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import { LIMITS } from '../src/core/inputs.js';
 import {
-  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RunningCook, boilToRemember, cookTooOld, coolingSecondsFor, corrected,
+  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RunningCook, boilToRemember, cookTooOld, coolingSecondsFor, corrected,
   earliestStart_s, eventsDue, openEggId, phaseAt, pullStands, replan, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
 } from '../src/core/running.js';

@@ -4,7 +4,7 @@
 
 import { eggFromMass, eggFromMinorDiameter } from '../../src/core/geometry.js';
 import { boilingPointAtAltitude } from '../../src/core/thermo.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import type { CookSetup } from '../../src/core/protocol.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
 import { referenceSetup } from '../common.js';
 

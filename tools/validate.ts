@@ -12,7 +12,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { eggFromMinorDiameter, eggFromMass, Egg } from '../src/core/geometry.js';
+import { eggFromMinorDiameter, eggFromMass, type Egg } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
 import {
   seriesTheta, biotNumber, createSphere, stepSphere, meanTemperature,
@@ -23,7 +23,7 @@ import {
 } from '../src/core/constants.js';
 import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.js';
 import {
-  CookSetup, panTimeConstant, bathTemperature, initialSurfaceTemperature,
+  type CookSetup, panTimeConstant, bathTemperature, initialSurfaceTemperature,
 } from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,

@@ -5,11 +5,11 @@
  * (`DecisionGrids.swift`).
  */
 
-import { DoseGrid } from '../core/doseGrid.js';
-import { DecisionInputs, inputsKey } from '../core/decide.js';
-import { OddsProfile } from '../core/reach.js';
-import { Calibration, copyCalibration } from '../core/record.js';
-import { CookSurface } from '../core/running.js';
+import type { DoseGrid } from '../core/doseGrid.js';
+import { type DecisionInputs, inputsKey } from '../core/decide.js';
+import type { OddsProfile } from '../core/reach.js';
+import { type Calibration, copyCalibration } from '../core/record.js';
+import type { CookSurface } from '../core/running.js';
 import type { PotOdds } from './answer.js';
 import { offThread } from './offThread.js';
 

@@ -4,15 +4,15 @@
  * one runs (`state.controls`).
  */
 
-import { Egg, SizeClass } from '../core/geometry.js';
-import { Cooling } from '../core/protocol.js';
+import type { Egg, SizeClass } from '../core/geometry.js';
+import type { Cooling } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
 import { sizeClassLabel } from '../core/units.js';
-import { EggFrom } from '../core/record.js';
-import { Clause, ClauseKeys, clauseKeys } from '../core/wording.js';
+import type { EggFrom } from '../core/record.js';
+import { type Clause, type ClauseKeys, clauseKeys } from '../core/wording.js';
 import { t, tChosen } from './copy.js';
 import { el, page } from './dom.js';
-import { Settings, UiStartMode } from './store.js';
+import type { Settings, UiStartMode } from './store.js';
 import { show, unitSystem } from './units.js';
 
 const CLAUSE_PANELS: Record<Clause, string> = {

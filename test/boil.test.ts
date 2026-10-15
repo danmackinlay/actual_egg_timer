@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import { LIMITS, isWithin } from '../src/core/inputs.js';
 import {
-  BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, hasBoilMemory, rememberBoil, volumeKey,
+  type BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, hasBoilMemory, rememberBoil, volumeKey,
 } from '../src/core/boil.js';
 
 test('7. a first measurement is taken whole; a second is blended half and half', () => {

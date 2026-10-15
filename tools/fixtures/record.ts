@@ -5,11 +5,11 @@
  */
 
 import { eggFromMass } from '../../src/core/geometry.js';
-import { CookSetup } from '../../src/core/protocol.js';
-import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
+import type { CookSetup } from '../../src/core/protocol.js';
+import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, CookFacts, EggRecord, LIKELIHOOD_ID,
-  MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, ResultsMeta, StoreRead, calibrationDoneness,
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
+  MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, type ResultsMeta, type StoreRead, calibrationDoneness,
   calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
   probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
   resultsFileName,

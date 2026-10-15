@@ -10,10 +10,10 @@
  */
 
 import {
-  CookPlan, Phase, RunningCook, answered, answersOf, asRanShown,
+  type CookPlan, type Phase, type RunningCook, answered, answersOf, asRanShown,
 } from '../core/running.js';
-import { ModelParams } from '../core/solve.js';
-import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
+import type { ModelParams } from '../core/solve.js';
+import { type WhiteReport, YOLK_WORDS, type YolkWord } from '../core/infer.js';
 import { parse, stepPast } from '../core/units.js';
 import { t } from './copy.js';
 import { page } from './dom.js';

@@ -3,7 +3,7 @@
  * ruler; the model needs an equivalent-sphere radius and a mass.
  */
 
-import { CopyKey } from './copyKeys.js';
+import type { CopyKey } from './copyKeys.js';
 import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.js';
 
 export interface Egg {

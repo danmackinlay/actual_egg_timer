@@ -18,7 +18,7 @@
  */
 
 import { languageOf } from './format.js';
-import { UnitsFlip } from './units.js';
+import type { UnitsFlip } from './units.js';
 
 /** The catalogue a fresh install reads. */
 export const DEFAULT_LANGUAGE = 'en';

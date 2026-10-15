@@ -19,8 +19,8 @@ import {
 } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
 import {
-  Measure, QUANTITIES, Quantity, UNIT_SYSTEMS,
-  UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
+  type Measure, QUANTITIES, type Quantity, UNIT_SYSTEMS,
+  type UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
 import { parseRecord } from '../src/core/record.js';

@@ -14,13 +14,13 @@
  * asked for, and which readings are taken at entry.
  */
 
-import { CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.js';
+import { type CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.js';
 import { eggFromMass } from '../../src/core/geometry.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import type { CookSetup } from '../../src/core/protocol.js';
 import { lookupPeakYolk_C } from '../../src/core/doseGrid.js';
 import {
   PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
-  Posterior, WhiteReport, YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
+  type Posterior, type WhiteReport, type YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../../src/core/infer.js';
 import {

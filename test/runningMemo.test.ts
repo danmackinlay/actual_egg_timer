@@ -10,7 +10,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { LIMITS } from '../src/core/inputs.js';
 import {
-  CookPlan, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobPlace, corrected, guessLengthened, replan, slowHobDue,
+  type CookPlan, type RunningCook, SLOW_HOB_MAX_STEPS, type SlowHobPlace, corrected, guessLengthened, replan, slowHobDue,
   startCorrected, withBoil,
 } from '../src/core/running.js';
 import { knowing, rng } from '../tools/common.js';

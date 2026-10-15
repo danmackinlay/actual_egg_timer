@@ -23,7 +23,7 @@ import {
   createDose, accumulateDose, holdTimeForDose,
 } from '../src/core/kinetics.js';
 import {
-  CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
+  type CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
   coolingMedium_C, coolingTemperature, initialSurfaceTemperature,
 } from '../src/core/protocol.js';
 import {

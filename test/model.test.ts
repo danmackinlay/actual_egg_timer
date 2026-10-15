@@ -10,8 +10,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { CookChoices, CookSurface, endedAt_s } from '../src/core/running.js';
-import { Effect, Model, Msg, update } from '../src/ui/model.js';
+import { type CookChoices, type CookSurface, endedAt_s } from '../src/core/running.js';
+import { type Effect, type Model, type Msg, update } from '../src/ui/model.js';
 import { emptyModel } from '../src/ui/state.js';
 import { DEFAULT_SETTINGS } from '../src/ui/store.js';
 import { gridFor, knowing } from '../tools/common.js';

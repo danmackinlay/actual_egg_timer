@@ -18,12 +18,12 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { parseCatalogue, render, templatesOf } from '../src/core/copy.js';
 import { formattingLocale } from '../src/core/format.js';
 import {
-  DEFAULT_LANGUAGE, LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
+  DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
   languageAfterPick, registerOf,
 } from '../src/core/language.js';
 import { FRESH_LANGUAGE, readLanguageState } from '../src/ui/settings.js';
 import { parseRecord } from '../src/core/record.js';
-import { CookChoices, replan, startCook } from '../src/core/running.js';
+import { type CookChoices, replan, startCook } from '../src/core/running.js';
 import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
 import { NOTES_PATH, readNotes } from '../tools/copyNotes.js';

@@ -3,14 +3,14 @@
  */
 
 import { eggFromMass } from '../../src/core/geometry.js';
-import { GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.js';
+import { type GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.js';
 import {
   FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
-  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior,
+  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, type WhiteReport, YOLK_WORD_CUTS, type YolkWord, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
   yolkWordProbabilities, yolkWordProbit,
 } from '../../src/core/infer.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import type { CookSetup } from '../../src/core/protocol.js';
 
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';

@@ -20,7 +20,7 @@
  * label its field shows.
  */
 
-import { CopyKey } from '../core/copy.js';
+import type { CopyKey } from '../core/copy.js';
 import { t } from './copy.js';
 import { cancelSoon, soon } from './idle.js';
 

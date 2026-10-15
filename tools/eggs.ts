@@ -46,13 +46,13 @@ import { buildDoseGrid } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
   FEEDBACK_BAND, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
-  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
+  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle, UNRELATED, type WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
 } from '../src/core/infer.js';
-import { CookSetup } from '../src/core/protocol.js';
+import type { CookSetup } from '../src/core/protocol.js';
 import {
-  EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
+  type EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.js';
@@ -62,7 +62,7 @@ import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
 import { countedTier, keyKey } from '../server/eggs.js';
 import { appSetup, rng } from './common.js';
 import {
-  Line, OldYolk, TRUSTED_ENV, TRUSTED_FILE, importResults, readFitRecord, readTrusted, sameEggKey, tagTrusted,
+  type Line, type OldYolk, TRUSTED_ENV, TRUSTED_FILE, importResults, readFitRecord, readTrusted, sameEggKey, tagTrusted,
 } from './eggsImport.js';
 
 /** The time-scale axis of the emulator, in literature sds. */

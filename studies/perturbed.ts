@@ -21,13 +21,13 @@ import {
   YOLK_RADIUS_FRAC, DT_SIM, CARRYOVER_WINDOW, TAU_PLUNGE,
 } from '../src/core/constants.js';
 import {
-  SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, robinSurface,
+  type SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, robinSurface,
 } from '../src/core/sphere.js';
 import {
-  CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
   wetShellDrop_C,
 } from '../src/core/protocol.js';
-import { Egg, eggFromMass } from '../src/core/geometry.js';
+import { type Egg, eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
 
 export interface Theta {

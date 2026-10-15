@@ -31,7 +31,7 @@ import {
   DECISION_WINDOW_S, LEAN_COST_PER_S, NUDGE_MAX_S, RUNNY_WHITE_LOSS, appliedNudge, carriedSolution, chooseCookTime,
   decide, decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, nudgeSeconds,
 } from '../src/core/decide.js';
-import { Posterior, UNRELATED, whiteAnswerProbabilities, yolkAnswerProbabilities } from '../src/core/infer.js';
+import { type Posterior, UNRELATED, whiteAnswerProbabilities, yolkAnswerProbabilities } from '../src/core/infer.js';
 import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { verdictFor } from '../src/core/slider.js';
 import { PARTICLE_COUNT, calibrationDoneness, calibrationParams, replay } from '../src/core/record.js';

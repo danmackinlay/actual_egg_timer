@@ -8,10 +8,10 @@
 import type { Egg } from '../core/geometry.js';
 import type { CookSetup } from '../core/protocol.js';
 import type { DoseGrid } from '../core/doseGrid.js';
-import { GridRequest, buildRequestedGrid } from '../core/doseGrid.js';
-import { Calibration } from '../core/record.js';
-import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
-import { OddsProfile, oddsProfile } from '../core/reach.js';
+import { type GridRequest, buildRequestedGrid } from '../core/doseGrid.js';
+import type { Calibration } from '../core/record.js';
+import { type DecisionInputs, decisionGridRequest } from '../core/decide.js';
+import { type OddsProfile, oddsProfile } from '../core/reach.js';
 
 /** What a profile is computed from. Plain data: it crosses to the worker by
  *  structured clone, which copies doubles bit for bit. */

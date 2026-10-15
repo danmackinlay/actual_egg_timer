@@ -21,7 +21,7 @@ import { parseCatalogue, pluralCategory, render } from '../src/core/copy.js';
 import {
   countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale, roundTo, unpadHour,
 } from '../src/core/format.js';
-import { SousVideEstimate } from '../src/core/sousvide.js';
+import type { SousVideEstimate } from '../src/core/sousvide.js';
 import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy.js';
 import { show, useUnits } from '../src/ui/units.js';
 import { spokenClock } from '../src/ui/countdown.js';

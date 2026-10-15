@@ -17,12 +17,12 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { Catalogue, OVERLAYS, parseCatalogue, render } from '../src/core/copy.js';
+import { type Catalogue, OVERLAYS, parseCatalogue, render } from '../src/core/copy.js';
 import {
-  CATEGORIES, CatalogueJson, Entry, Queued, REVIEW_DIR, Templates, TwinState, readApproved, readBases, readCatalogue,
+  CATEGORIES, type CatalogueJson, type Entry, type Queued, REVIEW_DIR, type Templates, type TwinState, readApproved, readBases, readCatalogue,
   reviewQueue, templatesOf, translationTags, twinQueue, twinState,
 } from './copyApproval.js';
-import { App, Notes, appsUsing, exampleOf, readNotes } from './copyNotes.js';
+import { type App, type Notes, appsUsing, exampleOf, readNotes } from './copyNotes.js';
 
 interface Surface { budget: number; about: string }
 

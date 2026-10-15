@@ -5,12 +5,12 @@
 
 import assert from 'node:assert/strict';
 
-import { DoseGrid } from '../src/core/doseGrid.js';
+import type { DoseGrid } from '../src/core/doseGrid.js';
 import { createPrior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { CALIBRATION_SEED, Calibration } from '../src/core/record.js';
-import { LevelOdds, OddsProfile, answerAt, decideAnswer } from '../src/core/reach.js';
+import type { CookSetup } from '../src/core/protocol.js';
+import { CALIBRATION_SEED, type Calibration } from '../src/core/record.js';
+import { type LevelOdds, type OddsProfile, answerAt, decideAnswer } from '../src/core/reach.js';
 import { appSetup, knowing } from '../tools/common.js';
 
 export const EGG = eggFromMass(0.068);

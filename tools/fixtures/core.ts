@@ -14,7 +14,7 @@ import { createDose, accumulateDose, holdTimeForDose } from '../../src/core/kine
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, seriesTheta, erfc,
 } from '../../src/core/sphere.js';
-import { CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.js';
+import { type CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.js';
 import { appSetup } from '../common.js';
 
 /** Sample points chosen to sit where the model actually lives, plus the edges

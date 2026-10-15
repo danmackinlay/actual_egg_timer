@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor } from '../src/core/record.js';
-import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
+import { type GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
   PULL_GRACE_SECONDS, RESTORE_WINDOW_S, asRanCurrent, asRanShown, cookEnding, cookFactsFor, cookTooOld,
   coolingSecondsFor, corrected, eventsDue, keepAsRan, openEggId, phaseAt, pullStands, replan, solutionAsRan, stillIn,

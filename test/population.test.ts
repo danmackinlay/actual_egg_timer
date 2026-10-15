@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { LITERATURE_POPULATION, Population, createPrior } from '../src/core/infer.js';
+import { LITERATURE_POPULATION, type Population, createPrior } from '../src/core/infer.js';
 import { parsePopulation, priorStart } from '../src/core/population.js';
 import { CALIBRATION_SEED, calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider } from '../src/core/solve.js';

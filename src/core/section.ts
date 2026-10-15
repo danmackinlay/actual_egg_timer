@@ -21,15 +21,15 @@
 import {
   YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, DT_SIM, CARRYOVER_WINDOW,
 } from './constants.js';
-import { Egg } from './geometry.js';
+import type { Egg } from './geometry.js';
 import {
-  CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.js';
 import {
-  SphereState, createSphere, meanTemperature, stepSphere, temperatureAt,
+  type SphereState, createSphere, meanTemperature, stepSphere, temperatureAt,
 } from './sphere.js';
-import { Dose, createDose, accumulateDose } from './kinetics.js';
-import { ModelParams, sliderFromYolkDose } from './solve.js';
+import { type Dose, createDose, accumulateDose } from './kinetics.js';
+import { type ModelParams, sliderFromYolkDose } from './solve.js';
 
 /** Samples across the yolk, from its centre (x = 0) to its edge (x =
  *  YOLK_RADIUS_FRAC), evenly in radius. */

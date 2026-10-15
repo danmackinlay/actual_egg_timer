@@ -3,19 +3,19 @@
  * a doneness target.
  */
 
-import { CopyKey } from './copyKeys.js';
+import type { CopyKey } from './copyKeys.js';
 import {
   ALPHA_DEFAULT, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
   DT_SIM, CARRYOVER_WINDOW,
 } from './constants.js';
-import { Egg } from './geometry.js';
+import type { Egg } from './geometry.js';
 import {
-  CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.js';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
 } from './sphere.js';
-import { Dose, createDose, accumulateDose } from './kinetics.js';
+import { type Dose, createDose, accumulateDose } from './kinetics.js';
 
 /** The calibratable parameters. Everything else is fixed physics. */
 export interface ModelParams {

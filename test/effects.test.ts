@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import { startCook } from '../src/core/running.js';
-import { Stores } from '../src/ui/cook.js';
+import type { Stores } from '../src/ui/cook.js';
 import { finalEggs } from '../src/ui/effects.js';
 import { useClock } from '../src/ui/now.js';
 import { choicesOf, emptyModel } from '../src/ui/state.js';

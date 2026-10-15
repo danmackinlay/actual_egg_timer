@@ -13,17 +13,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { CopyKey, parseCatalogue } from '../src/core/copy.js';
+import { type CopyKey, parseCatalogue } from '../src/core/copy.js';
 import { targetPeakYolk_C } from '../src/core/slider.js';
-import { CookSurface } from '../src/core/running.js';
+import type { CookSurface } from '../src/core/running.js';
 import { FRESH_SHARE } from '../src/ui/shareState.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
 import { formatClock } from '../src/ui/countdown.js';
-import { Model, Msg, update } from '../src/ui/model.js';
+import { type Model, type Msg, update } from '../src/ui/model.js';
 import { emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings } from '../src/ui/store.js';
+import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.js';
 import { useUnits } from '../src/ui/units.js';
-import { View, view, viewMemo } from '../src/ui/view.js';
+import { type View, view, viewMemo } from '../src/ui/view.js';
 import { gridFor, knowing } from '../tools/common.js';
 
 useCatalogue(parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8'))));

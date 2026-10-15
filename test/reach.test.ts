@@ -30,15 +30,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DoseGrid } from '../src/core/doseGrid.js';
+import type { DoseGrid } from '../src/core/doseGrid.js';
 import { createPrior, updatePosterior, yolkWordProbabilities } from '../src/core/infer.js';
-import { Egg, eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { Solution, solveCookTime } from '../src/core/solve.js';
+import { type Egg, eggFromMass } from '../src/core/geometry.js';
+import type { CookSetup } from '../src/core/protocol.js';
+import { type Solution, solveCookTime } from '../src/core/solve.js';
 import { anchorNear, snapUp, verdictFor } from '../src/core/slider.js';
-import { CALIBRATION_SEED, Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
-  ADVICE_GAIN, AdviceFacts, OddsProfile, adviceWanted, askedNear, lowOddsAt, oddsAtLevel, answerAt, decideAnswer,
+  ADVICE_GAIN, type AdviceFacts, type OddsProfile, adviceWanted, askedNear, lowOddsAt, oddsAtLevel, answerAt, decideAnswer,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.js';
 import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.js';

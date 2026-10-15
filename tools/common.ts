@@ -10,12 +10,12 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { decisionGridRequest, decisionInputs } from '../src/core/decide.js';
-import { DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
-import { Egg } from '../src/core/geometry.js';
-import { WhiteReport, YolkWord, createPrior } from '../src/core/infer.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID, ProbeReading, recordFor } from '../src/core/record.js';
-import { CookPlan, RunningCook, cookFactsFor } from '../src/core/running.js';
+import { type DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
+import type { Egg } from '../src/core/geometry.js';
+import { type WhiteReport, type YolkWord, createPrior } from '../src/core/infer.js';
+import type { CookSetup } from '../src/core/protocol.js';
+import { CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, type ProbeReading, recordFor } from '../src/core/record.js';
+import { type CookPlan, type RunningCook, cookFactsFor } from '../src/core/running.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 

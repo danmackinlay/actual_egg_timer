@@ -8,7 +8,7 @@
  * Settings, written once.
  */
 
-import { CopyKey } from '../core/copy.js';
+import type { CopyKey } from '../core/copy.js';
 import { t, timeOfDay } from './copy.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
@@ -20,7 +20,7 @@ import { drawShare } from './shareView.js';
 import { renderSentence } from './sentence.js';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
 import { APP_VERSION } from './version.js';
-import { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.js';
+import type { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.js';
 
 /** What is on the page now, as far as the writer needs to know it. */
 export interface Drawn {

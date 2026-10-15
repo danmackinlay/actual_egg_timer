@@ -42,7 +42,7 @@ import { STORES } from '../src/ui/stores.js';
 import { sleep } from './chrome.js';
 import { copyScenarios } from './copyScenarios.js';
 import {
-  Cook, Failure, Harness, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
+  type Cook, Failure, type Harness, type Osc, type Rec, type Scenario, type Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
 } from './harness.js';
 import { asRead } from './text.js';
 

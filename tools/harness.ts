@@ -40,7 +40,7 @@ import { ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
+import { type Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
 
 /** How long to wait for something that will come, real ms: failure
  *  detection only, never a measure of anything, so long enough for a page

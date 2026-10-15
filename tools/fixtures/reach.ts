@@ -4,15 +4,15 @@
  * shading, the advice.
  */
 
-import { CookSetup } from '../../src/core/protocol.js';
-import { Egg, eggFromMass } from '../../src/core/geometry.js';
+import type { CookSetup } from '../../src/core/protocol.js';
+import { type Egg, eggFromMass } from '../../src/core/geometry.js';
 import { createPrior, updatePosterior } from '../../src/core/infer.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
+import { type Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
 import { decide, decisionInputs } from '../../src/core/decide.js';
-import { DoseGrid } from '../../src/core/doseGrid.js';
+import type { DoseGrid } from '../../src/core/doseGrid.js';
 import { logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 import {
-  ADVICE_GAIN, LevelOdds, OddsProfile, PROFILE_STEP,
+  ADVICE_GAIN, type LevelOdds, type OddsProfile, PROFILE_STEP,
   SHADE_BEST_MIN, adviceWanted, answerAt, askedNear, decideAnswer, envelopeBounds, lowOddsAt, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';

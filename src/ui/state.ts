@@ -16,14 +16,14 @@
  * never by the settings, which describe the next cook.
  */
 
-import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
+import { type Egg, type SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { roomInUse } from '../core/inputs.js';
-import { CookChoices, CookPot, Phase, cookSetupOf, phaseAt } from '../core/running.js';
+import { type CookChoices, type CookPot, type Phase, cookSetupOf, phaseAt } from '../core/running.js';
 import type { CookNeed } from '../core/step.js';
 import type { Learning } from './learned.js';
 import type { Model } from './model.js';
-import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';
+import { type Settings, type UiStartMode, estimateTimeToBoil } from './store.js';
 import { REGION } from './units.js';
 
 /** The carton's size classes, by the browser's region (`REGION`, in units.ts)

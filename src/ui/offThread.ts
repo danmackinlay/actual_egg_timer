@@ -5,10 +5,10 @@
  * decision's surface and an odds profile.
  */
 
-import { DoseGrid, GridRequest } from '../core/doseGrid.js';
-import { OddsProfile } from '../core/reach.js';
+import type { DoseGrid, GridRequest } from '../core/doseGrid.js';
+import type { OddsProfile } from '../core/reach.js';
 import { job as inHand } from './idle.js';
-import { Job, runJob } from './runJob.js';
+import { type Job, runJob } from './runJob.js';
 
 interface Waiting {
   job: Job;

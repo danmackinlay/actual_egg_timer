@@ -22,10 +22,10 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 import {
-  APPROVED_ABOUT, APPROVED_PATH, CatalogueJson, Templates, basePath, baseAbout, readApproved, readBases,
+  APPROVED_ABOUT, APPROVED_PATH, type CatalogueJson, type Templates, basePath, baseAbout, readApproved, readBases,
   readCatalogue, reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState, writeOnePerLine,
 } from './copyApproval.js';
-import { App, appsUsing } from './copyNotes.js';
+import { type App, appsUsing } from './copyNotes.js';
 
 function show(t: Templates | null): string {
   if (t === null) return '(none)';

@@ -18,11 +18,11 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { EggRecord, LIKELIHOOD_ID, MODEL_ID, parseRecord, resultsFile } from '../src/core/record.js';
+import { type EggRecord, LIKELIHOOD_ID, MODEL_ID, parseRecord, resultsFile } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { recordAt } from '../tools/common.js';
 import {
-  Line, canonical, importResults, parseTrusted, readFitRecord, readTrusted, sameEggKey, tagTrusted,
+  type Line, canonical, importResults, parseTrusted, readFitRecord, readTrusted, sameEggKey, tagTrusted,
 } from '../tools/eggsImport.js';
 
 const UID = '5f0c3a52-7b1e-4d0a-9c33-2a8e61f0b7d4';

@@ -9,9 +9,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
+import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, type Options, type Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
-import { EggRecord, MODEL_ID, parseRecord } from '../src/core/record.js';
+import { type EggRecord, MODEL_ID, parseRecord } from '../src/core/record.js';
 import { readFitRecord } from '../tools/eggsImport.js';
 import { recordAt } from '../tools/common.js';
 import { SYNTH, makeAssertion } from './attest.js';

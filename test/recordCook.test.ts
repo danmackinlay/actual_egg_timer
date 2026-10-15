@@ -8,16 +8,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  CALIBRATION_SEED, EggRecord, MODEL_ID, PARTICLE_COUNT, freshCalibration, parseRecord, recordCookTime_s, replay,
+  CALIBRATION_SEED, type EggRecord, MODEL_ID, PARTICLE_COUNT, freshCalibration, parseRecord, recordCookTime_s, replay,
 } from '../src/core/record.js';
-import { WhiteReport, YolkWord } from '../src/core/infer.js';
-import { BoilMemory } from '../src/core/boil.js';
+import type { WhiteReport, YolkWord } from '../src/core/infer.js';
+import type { BoilMemory } from '../src/core/boil.js';
 import {
-  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, replan,
+  type CookChoices, type CookPlan, PULL_GRACE_SECONDS, type RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, replan,
   startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
 import { readRunningCook } from '../src/ui/storedCook.js';
-import { Learner, openLearner } from '../src/ui/calibration.js';
+import { type Learner, openLearner } from '../src/ui/calibration.js';
 import { gridFor, knowing, webRecordFor } from '../tools/common.js';
 import { assertIdentical, storage } from './records.js';
 

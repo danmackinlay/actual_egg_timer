@@ -11,9 +11,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CookAsRan, CookChoices, RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.js';
+import { type CookAsRan, type CookChoices, type RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.js';
 import { STORES } from '../src/ui/stores.js';
-import { KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.js';
+import { type KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.js';
 import { openCooks } from '../src/ui/store.js';
 
 const storage = new Map<string, string>();

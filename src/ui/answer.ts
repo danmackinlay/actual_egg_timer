@@ -10,11 +10,11 @@
  * runner to ask the worker for, never fetched here.
  */
 
-import { DecisionInputs, decisionInputs, inputsKey } from '../core/decide.js';
-import { CopyKey } from '../core/copy.js';
-import { DoseGrid } from '../core/doseGrid.js';
+import { type DecisionInputs, decisionInputs, inputsKey } from '../core/decide.js';
+import type { CopyKey } from '../core/copy.js';
+import type { DoseGrid } from '../core/doseGrid.js';
 import {
-  DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
+  type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
 } from '../core/reach.js';
 import type { Model } from './model.js';
 import { idleChoices, idlePot, isSousVide } from './state.js';

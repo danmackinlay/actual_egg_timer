@@ -22,7 +22,7 @@
  * Pure, like the rest of `src/core/`.
  */
 
-import { LogNormal, Normal, Population } from './infer.js';
+import type { LogNormal, Normal, Population } from './infer.js';
 
 export { LITERATURE_POPULATION } from './infer.js';
 export type { Population } from './infer.js';

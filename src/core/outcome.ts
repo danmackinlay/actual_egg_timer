@@ -68,9 +68,9 @@
  * a posterior the decision already has.
  */
 
-import { DoseGrid, lookupLogYolkDose } from './doseGrid.js';
+import { type DoseGrid, lookupLogYolkDose } from './doseGrid.js';
 import {
-  Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities, yolkWordProbabilities,
+  type Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities, yolkWordProbabilities,
 } from './infer.js';
 import { normalCdf } from './sphere.js';
 import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';

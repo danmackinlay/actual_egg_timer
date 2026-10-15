@@ -15,27 +15,27 @@
  */
 
 import {
-  Decision, DecisionInputs, NUDGE_MAX_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt,
+  type Decision, type DecisionInputs, NUDGE_MAX_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt,
   decisionGridRequest, decisionGridSpec, decisionInputs, oddsInTenths,
 } from '../src/core/decide.js';
-import { DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
+import { type DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  FEEDBACK_BAND, Particle, WhiteReport, YOLK_WORDS, YolkWord, createPrior, yolkWordBands, yolkWordProbit,
+  FEEDBACK_BAND, type Particle, type WhiteReport, YOLK_WORDS, type YolkWord, createPrior, yolkWordBands, yolkWordProbit,
   withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { eggFromMass, Egg } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { Solution, logYolkTarget } from '../src/core/solve.js';
-import { LevelOdds, OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
+import { eggFromMass, type Egg } from '../src/core/geometry.js';
+import type { CookSetup } from '../src/core/protocol.js';
+import { type Solution, logYolkTarget } from '../src/core/solve.js';
+import { type LevelOdds, type OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
-import { CERTAINTY_MASS, CertaintyReading, certaintyAt } from '../src/core/certainty.js';
+import { CERTAINTY_MASS, type CertaintyReading, certaintyAt } from '../src/core/certainty.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import { UNRELATED } from '../src/core/infer.js';
 import { sliderFromYolkDose } from '../src/core/solve.js';
 import {
-  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, Calibration, EggRecord, PARTICLE_COUNT,
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, type Calibration, type EggRecord, PARTICLE_COUNT,
   calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
 import { appSetup, draw, recordAt, rng } from '../tools/common.js';

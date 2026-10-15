@@ -13,13 +13,13 @@ import assert from 'node:assert/strict';
 import { decideAt } from '../src/core/decide.js';
 import { buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Particle, WhiteReport, YOLK_WORDS, createPrior, updatePosterior, whiteProbit, withUnrelated, withUnrelatedWord,
+  type Particle, type WhiteReport, YOLK_WORDS, createPrior, updatePosterior, whiteProbit, withUnrelated, withUnrelatedWord,
   yolkProbit, yolkWordProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { logYolkTarget } from '../src/core/solve.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import { appSetup, draw, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);

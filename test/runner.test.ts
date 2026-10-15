@@ -12,14 +12,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CookSurface } from '../src/core/running.js';
-import { DecisionInputs } from '../src/core/decide.js';
-import { DoseGrid } from '../src/core/doseGrid.js';
-import { Calibration } from '../src/core/record.js';
-import { Stores, performStored } from '../src/ui/cook.js';
+import type { CookSurface } from '../src/core/running.js';
+import type { DecisionInputs } from '../src/core/decide.js';
+import type { DoseGrid } from '../src/core/doseGrid.js';
+import type { Calibration } from '../src/core/record.js';
+import { type Stores, performStored } from '../src/ui/cook.js';
 import { openLearner } from '../src/ui/calibration.js';
-import { Effect, Model, Msg, update } from '../src/ui/model.js';
-import { Builds, openNeeds } from '../src/ui/needs.js';
+import { type Effect, type Model, type Msg, update } from '../src/ui/model.js';
+import { type Builds, openNeeds } from '../src/ui/needs.js';
 import { openSharing } from '../src/ui/share.js';
 import { emptyModel } from '../src/ui/state.js';
 import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.js';

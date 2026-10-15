@@ -42,10 +42,10 @@
  * ask the platform for the region and hand it in.
  */
 
-import { CopyKey } from './copyKeys.js';
-import { LIMITS, Limit, clamp } from './inputs.js';
-import { SizeClass, isUS } from './geometry.js';
-import { Fixed, roundTo } from './format.js';
+import type { CopyKey } from './copyKeys.js';
+import { LIMITS, type Limit, clamp } from './inputs.js';
+import { type SizeClass, isUS } from './geometry.js';
+import { type Fixed, roundTo } from './format.js';
 
 /** The one setting. The record's `Units` is the same pair. */
 export type UnitSystem = 'metric' | 'imperial';
