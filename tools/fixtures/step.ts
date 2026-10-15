@@ -13,8 +13,9 @@
  * What the app builds is given by the step that lands it: the surface the
  * last step needed, coarse as decide.json's (its extent written, so Swift
  * builds the same one for its own pot), the calibration before this egg, or a
- * surface on it. A reload reads the stored cook back and starts with no plan
- * and nothing built. Events are written at their times; a time read off a
+ * surface on it. A reload keeps the cook as it stood, which each app stores
+ * and reads back as its own (tested in each app's suite), and starts with no
+ * plan and nothing built. Events are written at their times; a time read off a
  * plan is a few seconds clear of any deadline, so the two cores' last bits
  * never change a phase.
  */
@@ -24,7 +25,7 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { oddsProfile } from '../../src/core/reach.js';
 import { Calibration } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt, readRunningCook,
+  CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RunningCook, endedAt_s, phaseAt,
 } from '../../src/core/running.js';
 import { Readout, ReadoutProbe, readoutAt } from '../../src/core/readout.js';
 import { CookEnv, CookEvent, CookState, CookStep, step } from '../../src/core/step.js';
@@ -489,8 +490,7 @@ function run(def: TraceDef) {
     const s = d(seen);
     if (s.posterior !== undefined) env.calibration = posterior(s.posterior);
     if (s.reload === true) {
-      const stored = state.cook === null ? null : readRunningCook(JSON.parse(JSON.stringify(state.cook)));
-      state = { cook: stored, plan: null, leanHint_s: state.leanHint_s };
+      state = { cook: state.cook, plan: null, leanHint_s: state.leanHint_s };
       env.surfaces = [];
       env.before = null;
     }
