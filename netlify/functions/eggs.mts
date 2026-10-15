@@ -3,11 +3,12 @@
  * handed the site's Blobs store. Netlify builds this file with esbuild on
  * deploy, from source, so a push to `main` is what puts it live.
  *
- * `@netlify/blobs` is the one runtime dependency (the apps have none),
- * pinned exactly (11.1.1, a week old when chosen, not the day-old latest).
- * Its runtime entry imports only `@netlify/runtime-utils`; the rest of its
- * tree, the local server `test/serverBlobs.test.ts` runs against, never
- * reaches the function.
+ * The runtime dependencies are two (the apps have none), each pinned
+ * exactly. `@netlify/blobs` (11.1.1, a week old when chosen, not the day-old
+ * latest): its runtime entry imports only `@netlify/runtime-utils`; the rest
+ * of its tree, the local server `test/serverBlobs.test.ts` runs against,
+ * never reaches the function. `cborg`, which reads App Attest's CBOR
+ * (`server/appAttest.ts`), pure JavaScript with no dependencies of its own.
  *
  * Nothing about a request is logged here, and an error is logged by its name
  * only (INFERENCE.md section 7). The rate limit is Netlify's, per address, and

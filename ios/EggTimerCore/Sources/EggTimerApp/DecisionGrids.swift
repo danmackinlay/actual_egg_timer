@@ -66,18 +66,20 @@ actor DecisionGrids: DecisionSurfaces {
     private var profileBuilds: [String: Task<OddsProfile, Never>] = [:]
 
     /// A cheap summary of where the posterior stands: the count and the
-    /// weighted sums of every dimension. Any fold moves at least one of them.
-    /// The web app's `posteriorPrint`.
+    /// weighted sum of each of the five dimensions, one apiece, so shifts that
+    /// cancel between two dimensions still move the key. Any fold moves at
+    /// least one of them. The web app's `posteriorPrint`.
     nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
-        var a = 0.0, b = 0.0, d = 0.0, e = 0.0
+        var a = 0.0, b = 0.0, d = 0.0, e = 0.0, f = 0.0
         let post = c.posterior
         for (p, w) in zip(post.particles, post.weights) {
             a += w * p.alphaM2s
             b += w * p.logDoseOffset
             d += w * p.noise
-            e += w * (p.whiteOffset + p.whiteFirmGap)
+            e += w * p.whiteOffset
+            f += w * p.whiteFirmGap
         }
-        return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
+        return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)|\(f)"
     }
 
     func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {

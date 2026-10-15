@@ -174,12 +174,16 @@ public func deletionAsked(_ s: ShareState) -> ShareState {
     return ShareState(deleting: deleting)
 }
 
-/// A log shorter than what was sent has been dropped and begun again (a
-/// damaged log): what it holds now is new.
+/// A log shorter than what was sent, or one that no longer holds the egg
+/// waiting on a busy answer, has been dropped and begun again (a damaged
+/// log): what it holds now is new. The waiting egg was sent at `seq`, and the
+/// server may have kept it there, so the new log's first egg goes at the
+/// number after; the server takes a gap.
 public func reconciled(_ s: ShareState, logLength: Int) -> ShareState {
-    guard s.sent > logLength else { return s }
+    guard s.sent > logLength || (s.busy > 0 && s.sent >= logLength) else { return s }
     var next = s
     next.sent = 0
+    if s.busy > 0 { next.seq = nextSeq(s.seq) }
     next.busy = 0
     next.busySinceS = nil
     return next

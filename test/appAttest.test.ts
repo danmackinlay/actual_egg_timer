@@ -17,10 +17,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { generateKeyPairSync } from 'node:crypto';
 
+import { encode } from 'cborg';
+
 import {
-  APP_ID, AttestError, countsAsGenuine, verifyAssertion, verifyAttestation,
+  APP_ID, AttestError, CborError, countsAsGenuine, decodeCbor, decodeCborFirst, verifyAssertion, verifyAttestation,
 } from '../server/appAttest.ts';
-import { CborError, decode, decodeFirst, encode } from '../server/cbor.ts';
 import { SYNTH, b64, makeAssertion, sha256 } from './attest.ts';
 
 interface Sample {
@@ -135,11 +136,63 @@ test('5. CBOR: what is encoded decodes, and what is broken is refused', () => {
     ['a', 1], [-7, new Uint8Array([1, 2, 3])], ['list', [0, 23, 24, 255, 256, 65535, 65536, -1, -25, 'x']],
     ['t', true], ['f', false], ['n', null],
   ]);
-  assert.deepEqual(decode(encode(value as never)), value);
+  assert.deepEqual(decodeCbor(encode(value)), value);
   const two = new Uint8Array([...encode(1), ...encode('two')]);
-  assert.deepEqual(decodeFirst(two), { value: 1, end: 1 });
-  assert.throws(() => decode(two), CborError, 'bytes after the item');
-  assert.throws(() => decode(new Uint8Array([0x5f])), CborError, 'indefinite length');
-  assert.throws(() => decode(new Uint8Array([0x45, 1, 2])), CborError, 'truncated');
-  assert.throws(() => decode(new Uint8Array([0xa2, 0x01, 0x01, 0x01, 0x02])), CborError, 'a repeated key');
+  assert.deepEqual(decodeCborFirst(two), { value: 1, end: 1 });
+  assert.deepEqual(decodeCborFirst(two, 1), { value: 'two', end: 5 });
+  assert.throws(() => decodeCbor(two), CborError, 'bytes after the item');
+  assert.throws(() => decodeCbor(new Uint8Array([0x45, 1, 2])), CborError, 'truncated');
+});
+
+test('5b. CBOR: everything Apple never writes is refused', () => {
+  const nest = (n: number): number[] => [...Array<number>(n).fill(0x81), 0x00];
+  const refused: [string, number[]][] = [
+    ['an indefinite byte string', [0x5f, 0x41, 0x00, 0xff]],
+    ['an indefinite text string', [0x7f, 0x61, 0x61, 0xff]],
+    ['an indefinite array', [0x9f, 0x00, 0xff]],
+    ['an indefinite map', [0xbf, 0x01, 0x00, 0xff]],
+    ['a lone break', [0xff]],
+    ['a reserved length (28)', [0x1c]],
+    ['a reserved length (29)', [0x5d]],
+    ['a reserved length (30)', [0x9e]],
+    ['a reserved simple value (28)', [0xfc]],
+    ['simple value 0', [0xe0]],
+    ['simple value 19', [0xf3]],
+    ['a one-byte simple value', [0xf8, 0x20]],
+    ['a half float', [0xf9, 0x3c, 0x00]],
+    ['a map key of bytes', [0xa1, 0x41, 0x00, 0x00]],
+    ['a map key that is an array', [0xa1, 0x80, 0x00]],
+    ['a map key that is a map', [0xa1, 0xa0, 0x00]],
+    ['a map key that is an array, after a good pair', [0xa2, 0x01, 0x00, 0x81, 0x00, 0x00]],
+    ['a repeated number key', [0xa2, 0x01, 0x01, 0x01, 0x02]],
+    ['a repeated text key', [0xa2, 0x61, 0x61, 0x00, 0x61, 0x61, 0x00]],
+    ['a repeated negative key', [0xa2, 0x20, 0x00, 0x20, 0x01]],
+    ['nesting 17 deep', nest(17)],
+    ['nesting 17 deep in maps', [...Array<number>(17).fill(0).flatMap(() => [0xa1, 0x00]), 0x00]],
+    ['nesting far too deep', nest(100_000)],
+    ['text that is not UTF-8', [0x62, 0xc3, 0x28]],
+    ['a lone surrogate in text', [0x63, 0xed, 0xa0, 0x80]],
+    ['a byte string longer than 2^53', [0x5b, 0x00, 0x20, 0, 0, 0, 0, 0, 0x01]],
+    ['a text string longer than 2^53', [0x7b, 0x00, 0x20, 0, 0, 0, 0, 0, 0x01]],
+    ['an array longer than 2^53', [0x9b, 0x00, 0x20, 0, 0, 0, 0, 0, 0x01]],
+    ['a map longer than 2^53', [0xbb, 0x00, 0x20, 0, 0, 0, 0, 0, 0x01]],
+    ['a tag, small', [0xc1, 0x00]],
+    ['a tag, one byte (24, encoded CBOR)', [0xd8, 0x18, 0x41, 0x00]],
+    ['a tag, two bytes', [0xd9, 0x01, 0x03, 0xa0]],
+    ['a tag inside a map', [0xa1, 0x01, 0xc2, 0x41, 0x01]],
+  ];
+  for (const [what, bytes] of refused) {
+    assert.throws(() => decodeCbor(Uint8Array.from(bytes)), CborError, what);
+    assert.throws(() => decodeCborFirst(Uint8Array.from([0x00, ...bytes]), 1), CborError, `${what}, read from an offset`);
+  }
+  // What is allowed at each edge.
+  assert.deepEqual(decodeCbor(Uint8Array.from(nest(16))), [[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]);
+  assert.deepEqual(decodeCbor(Uint8Array.from([0x84, 0xf4, 0xf5, 0xf6, 0xf7])), [false, true, null, undefined]);
+  assert.equal(decodeCbor(Uint8Array.from([0xfa, 0x3f, 0x80, 0, 0])), 1, 'a float32');
+  assert.equal(decodeCbor(Uint8Array.from([0xfb, 0x3f, 0xf0, 0, 0, 0, 0, 0, 0])), 1, 'a float64');
+  assert.equal(decodeCbor(Uint8Array.from([0x1b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff])), 2n ** 64n - 1n);
+  assert.equal(decodeCbor(Uint8Array.from([0x62, 0xc3, 0xa9])), 'é');
+  assert.equal(decodeCbor(Uint8Array.from([0x60])), '');
+  const cose = decodeCbor(Uint8Array.from([0xa3, 0x01, 0x02, 0x20, 0x41, 0x07, 0x61, 0x6b, 0x40]));
+  assert.deepEqual(cose, new Map<number | string, unknown>([[1, 2], [-1, Uint8Array.of(7)], ['k', new Uint8Array()]]));
 });

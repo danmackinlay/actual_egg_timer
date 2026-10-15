@@ -22,12 +22,13 @@
  * more; revisit if the attested tier ever matters more than that. Apple's
  * fraud receipt is not asked for either: nothing would read it.
  *
- * Node's crypto only: no X.509 or CBOR library. `cbor.ts` reads the objects,
- * and the few lines of DER below find the nonce in the certificate.
+ * The certificates and signatures are Node's crypto, and the few lines of DER
+ * below find the nonce in the certificate. The objects are CBOR, read by
+ * cborg (pinned in package.json) under the checks below.
  */
 
 import { X509Certificate, createHash, createPublicKey, createVerify, KeyObject } from 'node:crypto';
-import { type Cbor, decode, decodeFirst } from './cbor.ts';
+import { type Token, Tokenizer, Type, decodeFirst } from 'cborg';
 
 /** Apple App Attestation Root CA, from
  *  https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem
@@ -84,6 +85,94 @@ function same(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
+/* -------------------------------------------------------------------- CBOR */
+
+/** What the objects decode to: byte strings as bytes, and maps as maps, whose
+ *  keys may be numbers (a COSE key's 1, 3, -1, -2, -3). */
+export type Cbor =
+  | number
+  | bigint
+  | string
+  | boolean
+  | null
+  | undefined
+  | Uint8Array
+  | Cbor[]
+  | Map<Cbor, Cbor>;
+
+export class CborError extends Error {}
+
+const MAX_DEPTH = 16;
+const UTF8 = new TextDecoder('utf-8', { fatal: true });
+
+/** cborg refuses, as asked: indefinite lengths, any tag (none is given a
+ *  decoder) and a repeated map key. Of itself it refuses reserved values,
+ *  simple values but false, true, null and undefined, and lengths past 2^53.
+ *  An integer past 2^53 is a bigint, and a text string's bytes are kept, for
+ *  `Checked` to read. Every option is spelled out: the tokenizer reads these
+ *  as given, without cborg's defaults. */
+const OPTIONS = {
+  allowIndefinite: false, allowUndefined: true, allowBigInt: true, useMaps: true, rejectDuplicateMapKeys: true,
+  retainStringBytes: true,
+};
+
+/**
+ * cborg's tokens, refused where its options do not reach: a half float, text
+ * that is not UTF-8 (cborg reads it with replacement characters), a map key
+ * that is bytes, an array or a map, and nesting deeper than `MAX_DEPTH`. It
+ * follows the arrays and maps open around each token as cborg's decode
+ * reads them, so each is refused before cborg reads into it.
+ */
+class Checked extends Tokenizer {
+  /** The items still to come in each array or map open around the next
+   *  token, innermost last; a map's are its keys and values both. */
+  private readonly open: { left: number; map: boolean }[] = [];
+
+  override next(): Token {
+    const around = this.open.at(-1);
+    const isKey = around !== undefined && around.map && around.left % 2 === 0;
+    const t = super.next();
+    const container = Type.equals(t.type, Type.array) || Type.equals(t.type, Type.map);
+    if (this.open.length > MAX_DEPTH) throw new CborError('nested too deep');
+    if (isKey && (container || Type.equals(t.type, Type.bytes))) {
+      throw new CborError('a map key that is not a number or a string');
+    }
+    if (Type.equals(t.type, Type.float) && t.encodedLength === 3) throw new CborError('a half float');
+    // The empty string comes as one shared token, which carries no bytes.
+    if (Type.equals(t.type, Type.string) && t.value !== '') {
+      if (t.byteValue === undefined) throw new CborError('text without its bytes');
+      UTF8.decode(t.byteValue);
+    }
+    if (around !== undefined) around.left -= 1;
+    const items = Type.equals(t.type, Type.map) ? 2 * (t.value as number) : (t.value as number);
+    if (container && items > 0) this.open.push({ left: items, map: Type.equals(t.type, Type.map) });
+    while (this.open.length > 0 && this.open[this.open.length - 1].left === 0) this.open.pop();
+    return t;
+  }
+}
+
+/** The first CBOR item in `bytes` from `offset`, and where it ends:
+ *  authenticator data holds a COSE key followed by an extensions map, and the
+ *  second can only be found by reading the first. Anything refused, by cborg
+ *  or by `Checked`, is a `CborError`. */
+export function decodeCborFirst(bytes: Uint8Array, offset = 0): { value: Cbor; end: number } {
+  const from = bytes.subarray(offset);
+  try {
+    const [value, rest] = decodeFirst(from, { ...OPTIONS, tokenizer: new Checked(from, OPTIONS) });
+    return { value: value as Cbor, end: bytes.length - rest.length };
+  } catch (error) {
+    if (error instanceof CborError) throw error;
+    throw new CborError(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** Exactly one CBOR item, filling `bytes`. */
+export function decodeCbor(bytes: Uint8Array): Cbor {
+  const r = decodeCborFirst(bytes);
+  if (r.end !== bytes.length) throw new CborError(`${bytes.length - r.end} bytes after the item`);
+  return r.value;
+}
+
 function bytesOf(v: Cbor | undefined, what: string): Uint8Array {
   if (!(v instanceof Uint8Array)) throw new AttestError(`${what} is not bytes`);
   return v;
@@ -129,12 +218,12 @@ function readAuthData(a: Uint8Array): AuthData {
     if (a.length < p + idLength) throw new AttestError('credential id too short');
     out.credentialId = a.slice(p, p + idLength);
     p += idLength;
-    p = decodeFirst(a, p).end; // the COSE key, which credCert carries too
+    p = decodeCborFirst(a, p).end; // the COSE key, which credCert carries too
   }
   // Apple's own sample carries its extensions without setting ED, so a map
   // after the credential is read whether the flag says so or not.
   if ((flags & FLAG_ED) || p < a.length) {
-    const ext = decodeFirst(a, p);
+    const ext = decodeCborFirst(a, p);
     out.extensions = mapOf(ext.value, 'the extensions');
     p = ext.end;
   }
@@ -277,7 +366,7 @@ export function verifyAttestation(input: AttestationInput): AttestedKey {
 function attestation(input: AttestationInput): AttestedKey {
   const now = input.now ?? new Date();
   const appId = input.appId ?? APP_ID;
-  const top = mapOf(decode(input.attestation), 'the attestation');
+  const top = mapOf(decodeCbor(input.attestation), 'the attestation');
   if (top.get('fmt') !== 'apple-appattest') throw new AttestError('not an App Attest attestation');
   const statement = mapOf(top.get('attStmt') ?? null, 'attStmt');
   const x5c = statement.get('x5c');
@@ -373,7 +462,7 @@ export function verifyAssertion(input: AssertionInput): number {
 }
 
 function assertion(input: AssertionInput): number {
-  const top = mapOf(decode(input.assertion), 'the assertion');
+  const top = mapOf(decodeCbor(input.assertion), 'the assertion');
   const signature = bytesOf(top.get('signature'), 'signature');
   const authenticatorData = bytesOf(top.get('authenticatorData'), 'authenticatorData');
   const nonce = sha256(authenticatorData, sha256(input.clientData));

@@ -141,10 +141,15 @@ export function deletionAsked(s: ShareState): ShareState {
   return { ...FRESH_SHARE, uids: [], deleting: deleting };
 }
 
-/** A log shorter than what was sent has been dropped and begun again (a
- *  damaged log, `decodeKept`): what it holds now is new. */
+/** A log shorter than what was sent, or one that no longer holds the egg
+ *  waiting on a busy answer, has been dropped and begun again (a damaged log,
+ *  `decodeKept`): what it holds now is new. The waiting egg was sent at
+ *  `seq`, and the server may have kept it there, so the new log's first egg
+ *  goes at the number after; the server takes a gap. */
 export function reconciled(s: ShareState, logLength: number): ShareState {
-  return s.sent > logLength ? { ...s, sent: 0, busy: 0, busySince_s: null } : s;
+  const dropped = s.sent > logLength || (s.busy > 0 && s.sent >= logLength);
+  if (!dropped) return s;
+  return { ...s, sent: 0, seq: s.busy > 0 ? nextSeq(s.seq) : s.seq, busy: 0, busySince_s: null };
 }
 
 /** The index in the log of the next egg to send, or null when there is none
