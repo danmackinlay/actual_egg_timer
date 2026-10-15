@@ -38,10 +38,12 @@ export interface Drawn {
    *  the line over the questions. */
   redraws: Redraws | null;
   note: number;
+  /** The main button's words under the row, as laid out. */
+  sizers: string;
 }
 
 export function drawnNothing(): Drawn {
-  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, redraws: null, note: -1 };
+  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, redraws: null, note: -1, sizers: '' };
 }
 
 /** The parts of the page drawn only when `update` asks for them, each whose
@@ -65,6 +67,7 @@ function drawSections(s: Sections, d: Drawn): void {
 /** Draw `v` over what `d` says is there. */
 export function draw(v: View, d: Drawn): void {
   drawSections(v.sections, d);
+  drawSizers(v.sizers, d);
   page().mute.textContent = v.mute.label;
   page().mute.setAttribute('aria-pressed', v.mute.pressed ? 'true' : 'false');
   page().newerNote.hidden = !v.newer;
@@ -95,6 +98,24 @@ export function draw(v: View, d: Drawn): void {
   drawAdvice(v.advice, d);
   page().welcome.hidden = !v.welcome;
   if (v.section !== null) drawSection(v.section, d);
+}
+
+/** The words the row of buttons is sized on, laid out hidden twice: in the
+ *  probe row beside Cancel, and in the main button's cell at no height
+ *  (styles.css, "actions"). Written only when they change, since a new
+ *  width may lay the row out again. */
+function drawSizers(words: string[], d: Drawn): void {
+  const shown = words.join('\n');
+  if (shown === d.sizers) return;
+  d.sizers = shown;
+  for (const into of [page().probeWords, page().mainWords]) {
+    into.replaceChildren(...words.map((w) => {
+      const span = document.createElement('span');
+      span.className = 'sizer sizer--main';
+      span.textContent = w;
+      return span;
+    }));
+  }
 }
 
 function drawReading(r: ReadingView): void {

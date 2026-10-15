@@ -991,9 +991,11 @@ html[lang$="-x-1750"] input[type="number"] {
    Where the widest main button and Cancel do not fit side by side (a narrow
    screen, a larger text size, 1750's words), the row wraps: the main button
    over Cancel. The choice is the widest main button's, never the phase's
-   own: the main button's cell holds the words of every main button that
-   can stand beside Cancel, laid out at no height (.buttons__widths), so it
-   wraps in every phase or in none. And the probe, the same row with Cancel
+   own: the main button's cell holds the words of every main button the
+   chosen setup's cook can show (the start's, Rolling boil, the chosen
+   cooling's pull, Start again: view.ts, `sizerWords`), laid out at no
+   height (.buttons__widths), so it wraps in every phase or in none. A
+   change of cooling may change it, as iOS's does. And the probe, the same row with Cancel
    in every phase, never seen, sits in the same grid cell, so the block
    keeps the stack's height in every phase too: Start heating alone, idle,
    with Cancel's room under it. Only "still in the water?", with its two

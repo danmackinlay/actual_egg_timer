@@ -27,7 +27,7 @@ import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
 import { nudgeFrom } from '../core/units.js';
 import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  refusalKey, timeRangeWords, whiteAtRisk,
+  phaseKeys, refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.js';
 import { adviceFor } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
@@ -47,7 +47,7 @@ import { sousVideCopy } from './sousvide.js';
 import {
   boilingPoint_C, currentEgg, idlePot, isSousVide, learning, phaseNow, sizeClasses, startModeNow,
 } from './state.js';
-import { UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.js';
+import { Settings, UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.js';
 import { measure, show } from './units.js';
 import { warningText } from './warning.js';
 
@@ -142,8 +142,11 @@ export interface Sections {
 }
 
 /** On every screen: the mute, the line that says a newer build's stores are
- *  left alone, and the parts drawn only when asked. */
-export type View = { mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections } & (
+ *  left alone, the parts drawn only when asked, and the words the main
+ *  button is sized on (`sizerWords`). */
+export type View = {
+  mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections; sizers: string[];
+} & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
    *  slider, the boiling point beside the altitude, the start, the
@@ -169,7 +172,7 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
-  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m) };
+  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
@@ -218,6 +221,28 @@ function sectionsOf(m: Model): Sections {
     share: share === null ? null
       : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere, m.readOnly),
   };
+}
+
+/** The words of every main button the controls' cook can show, in its
+ *  phases' order: the start's, Rolling boil, the pull naming the cooling
+ *  chosen, and Start again. Laid out hidden under the row of buttons
+ *  (styles.css, "actions"), the widest decides whether the row stacks, so
+ *  it decides alike in every phase of that cook; iOS sizes it on the same
+ *  four (`PhaseActions.mainShape`). Only the chosen cooling's pull: another
+ *  cooling's longer words would stack a row this cook never needs to. The
+ *  controls, not the settings, so a cook under way is sized on its own
+ *  choices; a correction to them, like a choice while idle, may change it. */
+export function sizerWords(c: Settings): string[] {
+  const phases: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
+  const words: string[] = [];
+  for (const phase of phases) {
+    const action = phaseKeys({
+      phase: phase, startMode: c.startMode === 'cold' ? 'cold' : 'hot', afterBoil: c.afterBoil, cooling: c.cooling,
+      whiteSets: true, boilKnown: false, probeWanted: false,
+    }).action;
+    if (action !== null) words.push(t(action));
+  }
+  return words;
 }
 
 /* -------------------------------------------------------------- screens */

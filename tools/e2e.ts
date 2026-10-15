@@ -34,6 +34,8 @@
  * when, never by waiting for it to play.
  */
 
+import { readFileSync } from 'node:fs';
+
 import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
 import { readStoredCook } from '../src/ui/storedCook.js';
 import { STORES } from '../src/ui/stores.js';
@@ -119,10 +121,13 @@ interface Layout {
 
 /** How the row of buttons was laid out, read from the probe (the row at
  *  its widest, with Cancel, never seen; styles.css "actions"): whether it
- *  wrapped, the main button over Cancel; and the widths that decide it, px:
+ *  wrapped, the main button over Cancel; the widths that decide it, px:
  *  the widest main button's words with its padding, the gap, Cancel's, and
- *  the row's. */
-interface RowFit { stacked: boolean; main: number; gap: number; cancel: number; room: number }
+ *  the row's; and the words it is sized on, in the probe and in the main
+ *  button's cell. */
+interface RowFit {
+  stacked: boolean; main: number; gap: number; cancel: number; room: number; words: string[]; cellWords: string[];
+}
 
 async function layout(tab: Tab): Promise<Layout> {
   return tab.eval<Layout>(`(() => {
@@ -155,6 +160,8 @@ async function layout(tab: Tab): Promise<Layout> {
         gap: parseFloat(st.columnGap) || 0,
         cancel: probeCancel.width,
         room: probe.clientWidth - (parseFloat(st.paddingLeft) || 0) - (parseFloat(st.paddingRight) || 0),
+        words: [...probe.querySelectorAll('.sizer--main')].map((e) => e.textContent),
+        cellWords: [...document.querySelectorAll('.buttons__widths .sizer--main')].map((e) => e.textContent),
       },
     };
   })()`);
@@ -166,29 +173,92 @@ function actionUnderTime(l: Layout, when: string): void {
     `${when}: the action not between the time and the slider: readout ends ${l.readoutEnd}, action ${l.top.actions}, slider ${l.top.doneness}`);
 }
 
-/** One layout from idle to Done at a screen `width` px wide: in every phase
- *  the action is under the time, as tall as at idle, and what is under it
- *  as far below it. The row of buttons is side by side or stacked as the
- *  widest main button and Cancel fit or not, which turns on the fonts the
- *  machine has (GitHub's Linux Chrome sets the words wider than a Mac's):
- *  the page's own choice is read, checked against the widths, and held to
- *  `want` if given. Side by side, Cancel is on the main button's left and
- *  nothing is left empty under the row; stacked, Cancel is under it, and
- *  its room is kept at idle, so only the block's height is held. */
-function oneLayout(width: number, want: 'side by side' | 'stacked' | null): Scenario['run'] {
+/** The English the page shows for a key (copy/en.json). */
+const EN = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, { text: string }> }).messages;
+
+/** The coolings, by the radio that chooses each and the pull that names it. */
+const COOLINGS = [
+  { cooling: 'ice', radio: '#coolIce', pull: EN['action.pulled.ice'].text },
+  { cooling: 'tap', radio: '#coolTap', pull: EN['action.pulled.tap'].text },
+  { cooling: 'bowl', radio: '#coolBowl', pull: EN['action.pulled.bowl'].text },
+  { cooling: 'counter', radio: '#coolCounter', pull: EN['action.pulled.counter'].text },
+] as const;
+
+/** The widths of the row with the main button and Cancel side by side. */
+const need = (fit: RowFit): number => fit.main + fit.gap + fit.cancel;
+const widthsSaid = (fit: RowFit): string => `the widest main button ${fit.main.toFixed(1)} + ${fit.gap} + Cancel `
+  + `${fit.cancel.toFixed(1)} = ${need(fit).toFixed(1)} px in ${fit.room.toFixed(1)}`;
+
+type Cooling = typeof COOLINGS[number];
+
+/** The cooling `c` chosen while idle, and the row as it is then laid out. */
+async function chooseCooling(tab: Tab, c: Cooling): Promise<RowFit> {
+  await tab.click(c.radio);
+  await tab.until(`__snap().settings.cooling === '${c.cooling}' && __snap().chosen !== null`, `${c.cooling} chosen`);
+  await tab.settle();
+  return (await layout(tab)).row;
+}
+
+/** The row sized on the cooling chosen, as iOS's is (UI.md section 9): at a
+ *  screen `width` px wide, idle, each cooling in turn, the sizers carry its
+ *  pull and no other, and the row stacks exactly where those words and
+ *  Cancel do not fit. Then at a width between running water's need and the
+ *  ice bath's, read from the fonts this machine has, running water stacks
+ *  and the ice bath does not. Left at `width` with the ice bath. */
+async function rowFollowsCooling(tab: Tab, width: number): Promise<string> {
+  const fits: Record<string, RowFit> = {};
+  for (const c of COOLINGS) {
+    const fit = await chooseCooling(tab, c);
+    fits[c.cooling] = fit;
+    const pulls = COOLINGS.filter((o) => fit.words.includes(o.pull)).map((o) => o.cooling);
+    check(pulls.length === 1 && pulls[0] === c.cooling, `${c.cooling}: the row sized on the pulls ${pulls.join(', ')}: ${fit.words.join(' | ')}`);
+    check(fit.words.length === 4 && JSON.stringify(fit.cellWords) === JSON.stringify(fit.words),
+      `${c.cooling}: the probe on ${fit.words.join(' | ')}, the main button's cell on ${fit.cellWords.join(' | ')}`);
+    check(near(need(fit), fit.room, 1) || fit.stacked === need(fit) > fit.room,
+      `${c.cooling} ${fit.stacked ? 'stacked' : 'side by side'} at ${width} px: ${widthsSaid(fit)}`);
+  }
+  const ice = fits['ice'];
+  const tap = fits['tap'];
+  check(need(tap) > need(ice) + 4, `running water needs more than the ice bath: ${need(tap).toFixed(1)}, ${need(ice).toFixed(1)}`);
+  // The row's room moves with the screen's width, px for px.
+  const between = Math.round(width + (need(ice) + need(tap)) / 2 - ice.room);
+  await tab.viewport(between);
+  const iceThere = await chooseCooling(tab, COOLINGS[0]);
+  check(!iceThere.stacked, `the ice bath at ${between} px stacked: ${widthsSaid(iceThere)}`);
+  const tapThere = await chooseCooling(tab, COOLINGS[1]);
+  check(tapThere.stacked, `running water at ${between} px side by side: ${widthsSaid(tapThere)}`);
+  await tab.viewport(width);
+  await chooseCooling(tab, COOLINGS[0]);
+  const at = (c: string): string => `${c} ${need(fits[c]).toFixed(1)}${fits[c].stacked ? ' stacked' : ''}`;
+  return `at ${width} px ${COOLINGS.map((c) => at(c.cooling)).join(', ')} in ${ice.room.toFixed(1)}; `
+    + `at ${between} px the ice bath one row and running water stacked`;
+}
+
+/** One layout from idle to Done at a screen `width` px wide, for a cook
+ *  cooled as `cooling`: in every phase the action is under the time, as
+ *  tall as at idle, and what is under it as far below it. The row of
+ *  buttons is side by side or stacked as the widest main button and Cancel
+ *  fit or not, which turns on the fonts the machine has (GitHub's Linux
+ *  Chrome sets the words wider than a Mac's): the page's own choice is
+ *  read, checked against the widths, and held to `want` if given. Side by
+ *  side, Cancel is on the main button's left and nothing is left empty
+ *  under the row; stacked, Cancel is under it, and its room is kept at
+ *  idle, so only the block's height is held. First, the row follows the
+ *  cooling chosen (`rowFollowsCooling`). */
+function oneLayout(width: number, want: 'side by side' | 'stacked' | null, cooling: Cooling = COOLINGS[0]): Scenario['run'] {
   return async (h) => {
     const tab = await h.ctx.open(STOPPED);
     await tab.viewport(width);
     await tab.until("__snap().chosen !== null", 'the time decided');
     await tab.settle();
+    const coolings = await rowFollowsCooling(tab, width);
+    await chooseCooling(tab, cooling);
     const idle = await layout(tab);
     const fit = idle.row;
     const stacked = fit.stacked;
-    const need = fit.main + fit.gap + fit.cancel;
-    const widths = `the widest main button ${fit.main.toFixed(1)} + ${fit.gap} + Cancel ${fit.cancel.toFixed(1)} `
-      + `= ${need.toFixed(1)} px in ${fit.room.toFixed(1)}`;
+    const widths = widthsSaid(fit);
     // The row stacks where the two do not fit, and only there.
-    check(near(need, fit.room, 1) || stacked === need > fit.room,
+    check(near(need(fit), fit.room, 1) || stacked === need(fit) > fit.room,
       `${stacked ? 'stacked' : 'side by side'} at ${width} px: ${widths}`);
     check(want === null || want === (stacked ? 'stacked' : 'side by side'),
       `${stacked ? 'stacked' : 'side by side'} at ${width} px, not ${want}: ${widths}`);
@@ -232,8 +302,8 @@ function oneLayout(width: number, want: 'side by side' | 'stacked' | null): Scen
       check(stacked ? c.top >= p.bottom : c.left < p.left && c.top < p.bottom,
         `Heating at ${width} px: Cancel at ${c.left},${c.top}, the main button at ${p.left},${p.top} to ${p.bottom}`);
     }
-    return `${width} px, ${stacked ? 'stacked' : 'side by side'} (${widths}): the action ${block(idle).toFixed(0)} px tall, `
-      + `the slider ${(idle.top.doneness - idle.top.actions).toFixed(0)} px under its top, idle to Done`;
+    return `${width} px, ${cooling.cooling}, ${stacked ? 'stacked' : 'side by side'} (${widths}): the action ${block(idle).toFixed(0)} px tall, `
+      + `the slider ${(idle.top.doneness - idle.top.actions).toFixed(0)} px under its top, idle to Done; the row by cooling: ${coolings}`;
   };
 }
 
@@ -437,13 +507,15 @@ const SCENARIOS: Record<string, Scenario> = {
   },
 
   'one-layout': {
-    what: 'one layout from idle to Done at 390 px; the action under the time, nothing below it moving; Cancel beside the main button and nothing empty under the row, or, where the fonts set the words too wide for that, the two stacked',
+    what: 'one layout from idle to Done at 390 px; the action under the time, nothing below it moving; Cancel beside the main button and nothing empty under the row, or, where the fonts set the words too wide for that, the two stacked; the row sized on the chosen cooling\'s pull alone',
     run: oneLayout(390, null),
   },
 
   'one-layout-narrow': {
-    what: 'at 320 px the main button and Cancel stack, and the action keeps its height from idle to Done, so nothing below it moves',
-    run: oneLayout(320, 'stacked'),
+    what: 'at 320 px, cooled in a bowl of water, the main button and Cancel stack, and the action keeps its height from idle to Done, so nothing below it moves; the row sized on the chosen cooling\'s pull alone',
+    // The bowl: its pull stacks at 320 px in every font, by 54 px in
+    // Apple's; the ice bath fits there in Apple's by 2 px.
+    run: oneLayout(320, 'stacked', COOLINGS[2]),
   },
 
   'egg-readings': {

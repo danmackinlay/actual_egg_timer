@@ -962,7 +962,16 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     its own branch, so that CI runs the slow suites there; CI's run on the
     branch's final code counts as that suite's gate. This holds while
     Netlify deploys only `main`. In effect from the commit that records it.
-125. **App plumbing leaves `src/core/`** (the owner, 14 October 2026, on
+125. **The web sizes the action's row as iOS does** (the owner, 14 October
+    2026: "yes, make the web match iOS"). Whether the row stacks is decided
+    on the start's action, Rolling boil, Start again and the chosen
+    cooling's pull, not on every pull: on GitHub's Linux fonts an ice-bath
+    cook stays one row at 390 px, the two apps agree, and the bowl's label,
+    missing from the web's sizers, is in. A change of cooling, at idle or
+    as a correction mid-cook (96), may restack the row, in both apps.
+    Amends 113's "a 320 px web page": with Apple's fonts the ice bath and
+    the air fit one row there. Built `web-row-sizing`, merged `4b490a7`.
+126. **App plumbing leaves `src/core/`** (the owner, 14 October 2026, on
     the adversarial review). Core keeps what both apps must agree on: the
     physics, the inference and the decisions; the record's wire schema
     (`parseRecord`), which the server ingests from both; the cook's `step`

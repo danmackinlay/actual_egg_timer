@@ -30,7 +30,7 @@ Every module in `src/core/` has a Swift twin, held to it by a fixture. This
 table is the map; each file's header comment is its documentation, and the
 exports are its API. Apps call what is exported and nothing else, and
 anything both apps must agree on lives here, not in either app. What an app
-only stores, reads back or merges is its own (`DECISIONS.md` 125): the web's
+only stores, reads back or merges is its own (`DECISIONS.md` 126): the web's
 in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
 by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 `Newer.swift`; the share queue `src/ui/shareState.ts` and
