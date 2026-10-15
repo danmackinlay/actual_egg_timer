@@ -12,11 +12,11 @@
  */
 
 import {
-  Catalogue, CopyArgs, CopyArgsOf, CopyKey, CopyRef, catalogueChain, parseCatalogue, render, renderRef,
-} from '../core/copy.js';
-import { formatTimeOfDay, formattingLocale } from '../core/format.js';
-import { DEFAULT_LANGUAGE } from '../core/language.js';
-import { request } from './idle.js';
+  type Catalogue, type CopyArgs, type CopyArgsOf, type CopyKey, type CopyRef, catalogueChain, parseCatalogue, render, renderRef,
+} from '../core/copy.ts';
+import { formatTimeOfDay, formattingLocale } from '../core/format.ts';
+import { DEFAULT_LANGUAGE } from '../core/language.ts';
+import { request } from './idle.ts';
 
 /** The language on screen, and the catalogues that render it. */
 let active: { language: string; catalogue: Catalogue } | null = null;

@@ -8,15 +8,15 @@
  * without a browser.
  */
 
-import { Particle, Population } from '../core/infer.js';
-import { priorStart } from '../core/population.js';
+import type { Particle, Population } from '../core/infer.ts';
+import { priorStart } from '../core/population.ts';
 import {
-  CALIBRATION_SEED, Calibration, EggRecord, LIKELIHOOD_ID, LoadPath, PARTICLE_COUNT, copyCalibration,
+  CALIBRATION_SEED, type Calibration, type EggRecord, LIKELIHOOD_ID, type LoadPath, PARTICLE_COUNT, copyCalibration,
   freshCalibration as freshFrom, loadDecision, parseLog,
-} from '../core/record.js';
-import { activePopulation } from './population.js';
-import { STORES, inFormat } from './stores.js';
-import { StoredKey, storedKey } from './store.js';
+} from '../core/record.ts';
+import { activePopulation } from './population.ts';
+import { STORES, inFormat } from './stores.ts';
+import { type StoredKey, storedKey } from './store.ts';
 
 /** The posterior, the base under it, and the log: a particle of six numbers,
  *  and records of today's shape only. An earlier key's store is never read. */

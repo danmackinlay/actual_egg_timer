@@ -8,16 +8,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DECISION_WINDOW_S } from '../src/core/decide.js';
-import { buildRequestedGrid } from '../src/core/doseGrid.js';
+import { DECISION_WINDOW_S } from '../src/core/decide.ts';
+import { buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
-  CookTimePrediction, YOLK_WORDS, YolkWord, predictCookTime, whiteProbit, yolkWordProbit,
-} from '../src/core/infer.js';
-import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { logYolkTarget } from '../src/core/solve.js';
-import { EggRecord, copyCalibration, foldRecord, gridRequestFor, replay } from '../src/core/record.js';
-import { gridFor, recordAt } from '../tools/common.js';
-import { COARSE, EGG, PRIOR, PRIOR_GRID, SETUP, decideFor } from './decisions.js';
+  type CookTimePrediction, YOLK_WORDS, type YolkWord, predictCookTime, whiteProbit, yolkWordProbit,
+} from '../src/core/infer.ts';
+import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { logYolkTarget } from '../src/core/solve.ts';
+import { type EggRecord, copyCalibration, foldRecord, gridRequestFor, replay } from '../src/core/record.ts';
+import { gridFor, recordAt } from '../tools/common.ts';
+import { COARSE, EGG, PRIOR, PRIOR_GRID, SETUP, decideFor } from './decisions.ts';
 
 // --------------------------------------------------------------------------
 // 5. How fast the posterior narrows

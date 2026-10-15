@@ -10,10 +10,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { LIMITS, isWithin } from '../src/core/inputs.js';
+import { LIMITS, isWithin } from '../src/core/inputs.ts';
 import {
-  BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, hasBoilMemory, rememberBoil, volumeKey,
-} from '../src/core/boil.js';
+  type BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, hasBoilMemory, rememberBoil, volumeKey,
+} from '../src/core/boil.ts';
 
 test('7. a first measurement is taken whole; a second is blended half and half', () => {
   let m: BoilMemory = {};

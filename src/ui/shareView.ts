@@ -4,10 +4,10 @@
  * (learned.ts). What sharing does is share.ts; this only says it.
  */
 
-import { ShareState } from './shareState.js';
-import { t } from './copy.js';
-import { page } from './dom.js';
-import { send } from './send.js';
+import type { ShareState } from './shareState.ts';
+import { t } from './copy.ts';
+import { page } from './dom.ts';
+import { send } from './send.ts';
 
 /** The section as sharing stands: the switch, whether it can be moved,
  *  the note under it, the random number, and whether there is anything to

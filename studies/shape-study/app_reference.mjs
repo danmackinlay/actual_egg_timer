@@ -1,17 +1,18 @@
 // The app's own answers for the cases shape_study.py checks its pipeline on:
-// solveCookTime from compiled core, equal-volume sphere, hot start into a
-// held boil at 100 C, 2 eggs in 2 L, ice bath. Prints JSON.
+// solveCookTime from core, equal-volume sphere, hot start into a held boil
+// at 100 C, 2 eggs in 2 L, ice bath. Prints JSON.
 //
-//   node studies/shape-study/app_reference.mjs [path/to/compiled/src/core]
+//   node studies/shape-study/app_reference.mjs [path/to/src/core]
 //
-// The default path is dist/src/core, which `npm run build` writes.
+// The default path is src/core, whose sources Node runs, their types
+// stripped.
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const core = path.resolve(process.argv[2] ?? 'dist/src/core');
+const core = path.resolve(process.argv[2] ?? 'src/core');
 const load = (m) => import(pathToFileURL(path.join(core, m)).href);
-const { eggFromMass } = await load('geometry.js');
-const { solveCookTime, donenessFromSlider, DEFAULT_PARAMS } = await load('solve.js');
+const { eggFromMass } = await load('geometry.ts');
+const { solveCookTime, donenessFromSlider, DEFAULT_PARAMS } = await load('solve.ts');
 
 const out = [];
 for (const mass_g of [50, 62, 75]) {

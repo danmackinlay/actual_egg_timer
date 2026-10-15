@@ -10,17 +10,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { Cooling } from '../src/core/protocol.js';
-import { decisionInputs, inputsKey, numberKey } from '../src/core/decide.js';
-import { EggRecord } from '../src/core/record.js';
+import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import type { Cooling } from '../src/core/protocol.ts';
+import { decisionInputs, inputsKey, numberKey } from '../src/core/decide.ts';
+import type { EggRecord } from '../src/core/record.ts';
 import {
-  CookChoices, CookSurface, PULL_GRACE_SECONDS, Phase, cookSetupOf, guessLengthened, phaseAt,
-} from '../src/core/running.js';
-import { readRunningCook } from '../src/ui/storedCook.js';
-import { coolingStartsIn_s, readoutAt } from '../src/core/readout.js';
-import { CookEffect, CookEnv, CookEvent, CookState, CookStep, step, surfaceFor } from '../src/core/step.js';
-import { gridFor, knowing } from '../tools/common.js';
+  type CookChoices, type CookSurface, PULL_GRACE_SECONDS, type Phase, cookSetupOf, guessLengthened, phaseAt,
+} from '../src/core/running.ts';
+import { readRunningCook } from '../src/ui/storedCook.ts';
+import { coolingStartsIn_s, readoutAt } from '../src/core/readout.ts';
+import { type CookEffect, type CookEnv, type CookEvent, type CookState, type CookStep, step, surfaceFor } from '../src/core/step.ts';
+import { gridFor, knowing } from '../tools/common.ts';
 
 const S = 1791363600;
 const C = knowing({ particles: 200, eggsLogged: 4, taste: 0.1 });

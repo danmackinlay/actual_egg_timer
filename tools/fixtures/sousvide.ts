@@ -3,12 +3,12 @@
  * and an answer in hours.
  */
 
-import { ALPHA_DEFAULT } from '../../src/core/constants.js';
-import { eggFromMass } from '../../src/core/geometry.js';
+import { ALPHA_DEFAULT } from '../../src/core/constants.ts';
+import { eggFromMass } from '../../src/core/geometry.ts';
 import {
   SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
-} from '../../src/core/sousvide.js';
-import { donenessFromSlider } from '../../src/core/solve.js';
+} from '../../src/core/sousvide.ts';
+import { donenessFromSlider } from '../../src/core/solve.ts';
 
 /* The isothermal limit. Cheap - no integration at all - so the cases are dense
  * enough that the three things a port could get wrong each have their own

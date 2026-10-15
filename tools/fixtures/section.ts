@@ -3,13 +3,13 @@
  * a time.
  */
 
-import { eggFromMass } from '../../src/core/geometry.js';
-import { CookSetup } from '../../src/core/protocol.js';
-import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.js';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.ts';
 import {
   SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, previewSection, sectionView,
-} from '../../src/core/section.js';
-import { appSetup } from '../common.js';
+} from '../../src/core/section.ts';
+import { appSetup } from '../common.ts';
 
 const EGG = eggFromMass(0.060);
 

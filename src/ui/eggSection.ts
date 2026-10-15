@@ -20,8 +20,8 @@
  * Nothing here touches the document when the module is imported.
  */
 
-import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../core/constants.js';
-import { SectionView } from '../core/section.js';
+import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../core/constants.ts';
+import type { SectionView } from '../core/section.ts';
 
 /* ------------------------------------------------------------- the outline */
 

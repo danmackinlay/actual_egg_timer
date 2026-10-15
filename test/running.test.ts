@@ -12,18 +12,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { START_TEMP_PRESETS_C } from '../src/core/inputs.js';
-import { T_ROOM_C } from '../src/core/constants.js';
-import { decisionInputs } from '../src/core/decide.js';
-import { recordFor } from '../src/core/record.js';
+import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import { START_TEMP_PRESETS_C } from '../src/core/inputs.ts';
+import { T_ROOM_C } from '../src/core/constants.ts';
+import { decisionInputs } from '../src/core/decide.ts';
+import { recordFor } from '../src/core/record.ts';
 import {
-  PULL_GRACE_SECONDS, RecordContext, RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookEnding, cookFactsFor,
+  PULL_GRACE_SECONDS, type RecordContext, type RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookEnding, cookFactsFor,
   cookSetupOf, corrected, eventsDue, guessLengthened, keepAsRan, latestStart_s, phaseAt, replan, startCorrected,
   withBoil, withOut, writeEvents,
-} from '../src/core/running.js';
-import { readRunningCook } from '../src/ui/storedCook.js';
-import { START_MS, S, CHOICES, C, asRanAgain, cookOf, factsOf, planned, surfaceFor } from './cooks.js';
+} from '../src/core/running.ts';
+import { readRunningCook } from '../src/ui/storedCook.ts';
+import { START_MS, S, CHOICES, C, asRanAgain, cookOf, factsOf, planned, surfaceFor } from './cooks.ts';
 
 test('1. the egg and the pot: the presets, a measured room, and the room an egg sitting out is', () => {
   const fridge = cookSetupOf(CHOICES, 480).setup;

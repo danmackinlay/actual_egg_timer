@@ -15,9 +15,9 @@ xcuserdata/
 studies/shape-study/results*.json
 
 # Build output
-dist/
 node_modules/
 _site/
+_dev/
 # The review queue's page, written by npm run copy:review
 copy-review.html
 .netlify/

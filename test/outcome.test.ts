@@ -15,20 +15,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { decideAt } from '../src/core/decide.js';
+import { decideAt } from '../src/core/decide.ts';
 import {
   buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose, lookupLogYolkDose,
-} from '../src/core/doseGrid.js';
+} from '../src/core/doseGrid.ts';
 import {
-  FEEDBACK_BAND, Particle, Posterior, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS, YolkWord,
+  FEEDBACK_BAND, type Particle, type Posterior, UNRELATED, type WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS, type YolkWord,
   createPrior, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated, yolkAnswerProbabilities,
-} from '../src/core/infer.js';
-import { LEVEL_HIGH_Q, LEVEL_LOW_Q, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
-import { ALPHA_DEFAULT } from '../src/core/constants.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { logYolkTarget, sliderFromYolkDose } from '../src/core/solve.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
-import { appSetup, draw, rng } from '../tools/common.js';
+} from '../src/core/infer.ts';
+import { LEVEL_HIGH_Q, LEVEL_LOW_Q, type Outcome, leanOf, predictOutcome } from '../src/core/outcome.ts';
+import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { logYolkTarget, sliderFromYolkDose } from '../src/core/solve.ts';
+import { type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
+import { appSetup, draw, rng } from '../tools/common.ts';
 
 const EGG = eggFromMass(0.068);
 const SETUP = appSetup();

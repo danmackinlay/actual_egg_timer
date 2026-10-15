@@ -10,8 +10,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { claimApp, ownsApp } from '../src/ui/owner.js';
-import { removeStorage, writeStorage } from '../src/ui/store.js';
+import { claimApp, ownsApp } from '../src/ui/owner.ts';
+import { removeStorage, writeStorage } from '../src/ui/store.ts';
 
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {

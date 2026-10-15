@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { compareVersions, parseVersion, writerCheck } from '../src/ui/newer.js';
+import { compareVersions, parseVersion, writerCheck } from '../src/ui/newer.ts';
 
 test('1. versions order as semantic versioning orders them', () => {
   const ascending = [

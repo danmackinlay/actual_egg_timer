@@ -15,13 +15,13 @@ import { readFileSync } from 'node:fs';
 import {
   DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, START_TEMP_PRESETS_C, ambientFor, clamp, isWithin, roomInUse,
   startTempPreset_C,
-} from '../src/core/inputs.js';
-import { DEFAULT_TIME_TO_BOIL_S } from '../src/core/boil.js';
-import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.js';
-import { parseCatalogue, render } from '../src/core/copy.js';
-import { sizeClassLabel } from '../src/core/units.js';
-import { T_ROOM_C } from '../src/core/constants.js';
-import { asRead } from '../tools/text.js';
+} from '../src/core/inputs.ts';
+import { DEFAULT_TIME_TO_BOIL_S } from '../src/core/boil.ts';
+import { SIZE_CLASSES, type SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.ts';
+import { parseCatalogue, render } from '../src/core/copy.ts';
+import { sizeClassLabel } from '../src/core/units.ts';
+import { T_ROOM_C } from '../src/core/constants.ts';
+import { asRead } from '../tools/text.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 

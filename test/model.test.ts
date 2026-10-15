@@ -9,12 +9,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { CookChoices, CookSurface, endedAt_s } from '../src/core/running.js';
-import { Effect, Model, Msg, update } from '../src/ui/model.js';
-import { emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS } from '../src/ui/store.js';
-import { gridFor, knowing } from '../tools/common.js';
+import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import { type CookChoices, type CookSurface, endedAt_s } from '../src/core/running.ts';
+import { type Effect, type Model, type Msg, update } from '../src/ui/model.ts';
+import { emptyModel } from '../src/ui/state.ts';
+import { DEFAULT_SETTINGS } from '../src/ui/store.ts';
+import { gridFor, knowing } from '../tools/common.ts';
 
 const S = 1791363600;
 const C = knowing({ particles: 200, eggsLogged: 4, taste: 0.1 });

@@ -2,15 +2,15 @@
  * fixtures/outcome.json: the predicted outcome at the chosen time.
  */
 
-import { UNRELATED, createPrior, updatePosterior } from '../../src/core/infer.js';
-import { decideAt, decisionApplies } from '../../src/core/decide.js';
-import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../../src/core/outcome.js';
+import { UNRELATED, createPrior, updatePosterior } from '../../src/core/infer.ts';
+import { decideAt, decisionApplies } from '../../src/core/decide.ts';
+import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../../src/core/outcome.ts';
 
-import { particleRows } from './shared.js';
+import { particleRows } from './shared.ts';
 import {
   DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, meanSolve,
-} from './decide.js';
-import { logYolkTarget } from '../../src/core/solve.js';
+} from './decide.ts';
+import { logYolkTarget } from '../../src/core/solve.ts';
 
 /* What the egg at the chosen time will be like (src/core/outcome.ts): the
  * three yolk answers, a runny white, the level range and the lean. On

@@ -28,17 +28,17 @@
  * handed in; nothing here reads a clock.
  */
 
-import { Egg, SizeTable, eggFromMass } from './geometry.js';
-import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
-import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
-import { DoseGrid, GridPolicy, GridRequest, GridSpec, buildRequestedGrid } from './doseGrid.js';
+import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
+import { type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C } from './protocol.ts';
+import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
+import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
 import {
-  LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
+  LITERATURE_POPULATION, type Particle, type Population, type Posterior, type WhiteReport, YOLK_WORDS, type YolkWord,
   createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
-} from './infer.js';
-import { PriorStart, priorStart } from './population.js';
-import { Outcome } from './outcome.js';
-import { registerOf } from './language.js';
+} from './infer.ts';
+import { type PriorStart, priorStart } from './population.ts';
+import type { Outcome } from './outcome.ts';
+import { registerOf } from './language.ts';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */

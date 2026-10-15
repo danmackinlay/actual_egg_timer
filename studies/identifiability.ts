@@ -25,13 +25,13 @@
  * them. The angle between the columns is the answer.
  */
 
-import { seriesTheta, biotNumber } from '../src/core/sphere.js';
+import { seriesTheta, biotNumber } from '../src/core/sphere.ts';
 import {
   ALPHA_DEFAULT, H_EFF, YOLK_RADIUS_FRAC,
   Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, T_ICE_BATH_C,
-} from '../src/core/constants.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.js';
+} from '../src/core/constants.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.ts';
 
 /* ------------------------------------------------------- Robin eigenmodes */
 

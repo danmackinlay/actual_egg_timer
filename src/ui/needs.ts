@@ -8,17 +8,17 @@
  * or a test's), and so is the model, read as it is when each lands.
  */
 
-import type { DecisionInputs } from '../core/decide.js';
-import { inputsKey } from '../core/decide.js';
-import type { DoseGrid } from '../core/doseGrid.js';
-import type { OddsProfile } from '../core/reach.js';
-import type { Calibration } from '../core/record.js';
-import { currentInputs, wantedProfiles } from './answer.js';
-import { cachedDecisionGrid, cachedOddsProfile, decisionGrid, oddsProfileFor, profileKey } from './decisionGrids.js';
-import type { Learner } from './calibration.js';
-import { cancelSoon, soon } from './idle.js';
-import type { Model, Msg } from './model.js';
-import { isSousVide } from './state.js';
+import type { DecisionInputs } from '../core/decide.ts';
+import { inputsKey } from '../core/decide.ts';
+import type { DoseGrid } from '../core/doseGrid.ts';
+import type { OddsProfile } from '../core/reach.ts';
+import type { Calibration } from '../core/record.ts';
+import { currentInputs, wantedProfiles } from './answer.ts';
+import { cachedDecisionGrid, cachedOddsProfile, decisionGrid, oddsProfileFor, profileKey } from './decisionGrids.ts';
+import type { Learner } from './calibration.ts';
+import { cancelSoon, soon } from './idle.ts';
+import type { Model, Msg } from './model.ts';
+import { isSousVide } from './state.ts';
 
 /** What builds what the page waits for. */
 export interface Builds {

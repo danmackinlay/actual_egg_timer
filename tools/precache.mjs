@@ -34,7 +34,8 @@ const LEFT_OUT = new Set([
   'assets/social.jpg',
 ]);
 
-const WORKER = 'app/src/ui/serviceWorker.js';
+/** The service worker's bundle, under its hashed name (tools/buildSite.mjs). */
+const WORKER = /^bundle\/serviceWorker-\w+\.js$/;
 
 const HOST_SETTINGS = ['netlify.toml'];
 
@@ -55,7 +56,8 @@ function sha256(data) {
   return createHash('sha256').update(data).digest('hex');
 }
 
-if (!existsSync(join(site, WORKER))) throw new Error(`${site}/${WORKER} not found: is the site compiled?`);
+const workers = walk(site).filter((p) => WORKER.test(p));
+if (workers.length !== 1) throw new Error(`${site}: ${workers.length} service workers in bundle/: is the site built?`);
 
 // Name the worker in the page first: index.html is in the list, hashed as
 // it is served.
@@ -76,7 +78,7 @@ for (const path of HOST_SETTINGS.filter((p) => existsSync(p))) hosts[path] = sha
 const build = sha256(JSON.stringify({ files, hosts })).slice(0, 16);
 
 writeFileSync(join(site, 'sw.js'), `// Written by tools/precache.mjs; the code is src/ui/serviceWorker.ts.
-import { serve } from './${WORKER}';
+import { serve } from './${workers[0]}';
 
 serve('${build}', ${JSON.stringify(files, null, 2)});
 `);

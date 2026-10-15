@@ -14,11 +14,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  Catalogue, Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
+  type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
-} from '../src/core/copy.js';
-import { catalogueTags } from '../tools/copyApproval.js';
-import { appsUsing, exampleOf, readNotes } from '../tools/copyNotes.js';
+} from '../src/core/copy.ts';
+import { catalogueTags } from '../tools/copyApproval.ts';
+import { appsUsing, exampleOf, readNotes } from '../tools/copyNotes.ts';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {

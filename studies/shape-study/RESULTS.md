@@ -159,8 +159,7 @@ and the path has to guess it.
 ## Running it
 
 ```
-npm run build                      # only for the check against the app
-python3 studies/shape-study/shape_study.py --app-core dist/src/core   # ~2.5 min
+python3 studies/shape-study/shape_study.py --app-core src/core   # ~2.5 min
 python3 studies/shape-study/shape_study.py --quick                    # coarse mesh, ~20 s
 python3 studies/shape-study/report.py      # prints the tables below
 ```
@@ -188,7 +187,7 @@ unless a header says otherwise; negative means the real egg needs less time.
 | Fo for the centre to go 0.90 of the way: exact / FE | 0.30352 / 0.30349 (-0.009%) |
 | app 40-mode series vs exact, Fo > 0.01 | 4e-16 |
 
-This script's protocol, dose and bisection, fed the app's own 40-mode series, against the app's `solveCookTime` (compiled `src/core`, `app_reference.mjs`): 18 cases (50/62/75 g, 4/20 C, soft/jammy/hard, plus the white floor), worst difference 0.000 s.
+This script's protocol, dose and bisection, fed the app's own 40-mode series, against the app's `solveCookTime` (`src/core`, `app_reference.mjs`): 18 cases (50/62/75 g, 4/20 C, soft/jammy/hard, plus the white floor), worst difference 0.000 s.
 
 | g | start C | level | app cook s | this script s | app white floor s | this script s |
 |---|---|---|---|---|---|---|

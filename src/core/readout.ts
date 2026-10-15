@@ -11,12 +11,12 @@
  * Swift by `fixtures/step.json`, a readout for every step of every trace.
  */
 
-import { CopyKey } from './copyKeys.js';
-import { Cooling } from './protocol.js';
+import type { CopyKey } from './copyKeys.ts';
+import type { Cooling } from './protocol.ts';
 import {
-  CookPlan, Deadlines, PULL_GRACE_SECONDS, Phase, RunningCook, asksIfStillIn, guessLengthened, phaseAt,
-} from './running.js';
-import { phaseKeys } from './wording.js';
+  type CookPlan, type Deadlines, PULL_GRACE_SECONDS, type Phase, type RunningCook, asksIfStillIn, guessLengthened, phaseAt,
+} from './running.ts';
+import { phaseKeys } from './wording.ts';
 
 /** One line of words: a key, and the numbers it takes by name. `time`,
  *  `elapsed`, `boil`, `after` and `cooking` are seconds, shown as a clock

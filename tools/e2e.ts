@@ -9,7 +9,7 @@
  *   npm run e2e -- reload one-tab-takeover   # only those named (after a build)
  *   npm run e2e -- copy/                     # those whose names start so
  *   npm run e2e -- --tree <dir>              # another checkout's build (harness.ts)
- *   node dist/tools/e2e.js --list
+ *   node tools/e2e.ts --list
  *
  * The harness is tools/harness.ts: the site served, Chrome, a context per
  * scenario, and the page read through its test API (`window.aetTest`,
@@ -36,15 +36,15 @@
 
 import { readFileSync } from 'node:fs';
 
-import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
-import { readStoredCook } from '../src/ui/storedCook.js';
-import { STORES } from '../src/ui/stores.js';
-import { sleep } from './chrome.js';
-import { copyScenarios } from './copyScenarios.js';
+import { wordBandHigh, wordBandLow } from '../src/core/certainty.ts';
+import { readStoredCook } from '../src/ui/storedCook.ts';
+import { STORES } from '../src/ui/stores.ts';
+import { sleep } from './chrome.ts';
+import { copyScenarios } from './copyScenarios.ts';
 import {
-  Cook, Failure, Harness, Osc, Rec, Scenario, Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
-} from './harness.js';
-import { asRead } from './text.js';
+  type Cook, Failure, type Harness, type Osc, type Rec, type Scenario, type Snap, Tab, WAIT_MS, check, labelSays, runScenarios, treeArg,
+} from './harness.ts';
+import { asRead } from './text.ts';
 
 /** Where the page keeps its stores (src/ui/stores.ts). */
 const COOK_KEY = STORES.cook.key;
@@ -414,7 +414,7 @@ const SCENARIOS: Record<string, Scenario> = {
         search: location.search }))()`);
       check(!a.mark && !a.handles, `eggs.test: ${JSON.stringify(a)}`);
       check(a.search === '?clock=60&at=+1h', 'the address left alone off this machine');
-      const asked = away.requests().filter((r) => r.url.includes('/dev/'));
+      const asked = away.requests().filter((r) => r.url.includes('/bundle/dev-'));
       check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
       // No Web Locks there (an insecure context): a second tab runs the app
       // too, as before one tab owned it (owner.ts).
@@ -502,6 +502,9 @@ const SCENARIOS: Record<string, Scenario> = {
       check(s.log.length === 1, `one egg logged, ${s.log.length}`);
       const pans = pansIn(await tab.storage(BOIL_KEY));
       check(Object.keys(pans).length === 1, `the pan remembered: ${JSON.stringify(pans)}`);
+      // The surfaces and the odds were built by the grid worker, off the
+      // page's thread.
+      check(s.gridJobs.offThread > 0 && s.gridJobs.onThread === 0, `the grid worker's jobs: ${JSON.stringify(s.gridJobs)}`);
       const cooked_s = (s.now_ms - (cook?.startedAt_s ?? 0) * 1000) / 1000;
       return `${(cooked_s / 60).toFixed(1)} min of cook in ${((Date.now() - real0) / 1000).toFixed(1)} s; `
         + `recommended ${rec.recommended_s.toFixed(1)} s, pan ${JSON.stringify(pans)}`;

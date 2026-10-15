@@ -14,26 +14,26 @@ import assert from 'node:assert/strict';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
   seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc, robinSurface,
-} from '../src/core/sphere.js';
+} from '../src/core/sphere.ts';
 import {
   boilingPointAtPressure, boilingPointAtAltitude, pressureAtAltitude, saltBoilingElevation,
-} from '../src/core/thermo.js';
-import { eggFromMass, eggFromMinorDiameter, diffusionTime } from '../src/core/geometry.js';
+} from '../src/core/thermo.ts';
+import { eggFromMass, eggFromMinorDiameter, diffusionTime } from '../src/core/geometry.ts';
 import {
   createDose, accumulateDose, holdTimeForDose,
-} from '../src/core/kinetics.js';
+} from '../src/core/kinetics.ts';
 import {
-  CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
+  type CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
   coolingMedium_C, coolingTemperature, initialSurfaceTemperature,
-} from '../src/core/protocol.js';
+} from '../src/core/protocol.ts';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose, DEFAULT_PARAMS,
-} from '../src/core/solve.js';
+} from '../src/core/solve.ts';
 import {
   H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S, H_AIR, K_EGG, C_EGG,
   ALPHA_DEFAULT, DT_SIM, C_WATER, T_COLD_TAP_C, TAU_PLUNGE,
-} from '../src/core/constants.js';
-import { referenceSetup } from '../tools/common.js';
+} from '../src/core/constants.ts';
+import { referenceSetup } from '../tools/common.ts';
 
 // --------------------------------------------------------------------------
 // shared fixtures

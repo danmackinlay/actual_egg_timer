@@ -6,15 +6,15 @@
  * track shows - none once a cook is running - is the caller's to say.
  */
 
-import { anchorNear, anchorReachable } from '../core/slider.js';
-import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
-import { OddsProfile, shadingOf } from '../core/reach.js';
-import { WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.js';
-import { rangeWords } from '../core/wording.js';
-import { t, tChosen } from './copy.js';
-import { page } from './dom.js';
-import { clampNumber } from './store.js';
-import { show } from './units.js';
+import { anchorNear, anchorReachable } from '../core/slider.ts';
+import { DONENESS_ANCHORS, type Solution } from '../core/solve.ts';
+import { type OddsProfile, shadingOf } from '../core/reach.ts';
+import { type WordCertainty, wordBandHigh, wordBandLow, wordBracket } from '../core/certainty.ts';
+import { rangeWords } from '../core/wording.ts';
+import { t, tChosen } from './copy.ts';
+import { page } from './dom.ts';
+import { clampNumber } from './store.ts';
+import { show } from './units.ts';
 
 /** The slider's reading: at the end of its heading, the peak yolk the level
  *  asks for, and to a screen reader, as the slider's value, the doneness word

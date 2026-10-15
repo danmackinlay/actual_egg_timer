@@ -9,10 +9,10 @@
  * in the past. All this module does is say so out loud.
  */
 
-import { SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate } from '../core/sousvide.js';
-import { longDuration, startPhrase, weekdayKey } from '../core/wording.js';
-import { t, tRef, timeOfDay } from './copy.js';
-import { show } from './units.js';
+import { SOUS_VIDE_MODEL_FLOOR_C, type SousVideEstimate } from '../core/sousvide.ts';
+import { longDuration, startPhrase, weekdayKey } from '../core/wording.ts';
+import { t, tRef, timeOfDay } from './copy.ts';
+import { show } from './units.ts';
 
 interface SousVideCopy {
   /** Big text, in place of the clock. */

@@ -16,15 +16,15 @@
  * never by the settings, which describe the next cook.
  */
 
-import { Egg, SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
-import { boilingPointAtAltitude } from '../core/thermo.js';
-import { roomInUse } from '../core/inputs.js';
-import { CookChoices, CookPot, Phase, cookSetupOf, phaseAt } from '../core/running.js';
-import type { CookNeed } from '../core/step.js';
-import type { Learning } from './learned.js';
-import type { Model } from './model.js';
-import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';
-import { REGION } from './units.js';
+import { type Egg, type SizeClass, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.ts';
+import { boilingPointAtAltitude } from '../core/thermo.ts';
+import { roomInUse } from '../core/inputs.ts';
+import { type CookChoices, type CookPot, type Phase, cookSetupOf, phaseAt } from '../core/running.ts';
+import type { CookNeed } from '../core/step.ts';
+import type { Learning } from './learned.ts';
+import type { Model } from './model.ts';
+import { type Settings, type UiStartMode, estimateTimeToBoil } from './store.ts';
+import { REGION } from './units.ts';
 
 /** The carton's size classes, by the browser's region (`REGION`, in units.ts)
  *  alone: not the language, and not the units - an American carton is an

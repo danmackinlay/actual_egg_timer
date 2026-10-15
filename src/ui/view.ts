@@ -12,44 +12,44 @@
  * so each is worked out once. Drawing it is render.ts's.
  */
 
-import { CertaintyReading, WordCertainty } from '../core/certainty.js';
-import { CopyKey, midSentence } from '../core/copy.js';
-import { Egg } from '../core/geometry.js';
-import { anchorNear, targetPeakYolk_C } from '../core/slider.js';
-import { textureFor, textureNoteKeys } from '../core/texture.js';
-import { CookSetup } from '../core/protocol.js';
-import type { Outcome } from '../core/outcome.js';
-import { OddsProfile } from '../core/reach.js';
-import { CookPlan, Phase, RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.js';
-import { SectionView, previewSection, sectionView } from '../core/section.js';
-import { ModelParams, Solution } from '../core/solve.js';
-import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
-import { nudgeFrom } from '../core/units.js';
+import type { CertaintyReading, WordCertainty } from '../core/certainty.ts';
+import { type CopyKey, midSentence } from '../core/copy.ts';
+import type { Egg } from '../core/geometry.ts';
+import { anchorNear, targetPeakYolk_C } from '../core/slider.ts';
+import { textureFor, textureNoteKeys } from '../core/texture.ts';
+import type { CookSetup } from '../core/protocol.ts';
+import type { Outcome } from '../core/outcome.ts';
+import type { OddsProfile } from '../core/reach.ts';
+import { type CookPlan, type Phase, type RunningCook, asRanShown, asksIfStillIn, solutionAsRan } from '../core/running.ts';
+import { type SectionView, previewSection, sectionView } from '../core/section.ts';
+import type { ModelParams, Solution } from '../core/solve.ts';
+import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.ts';
+import { nudgeFrom } from '../core/units.ts';
 import {
-  WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
+  type WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
   phaseKeys, refusalKey, timeRangeWords, whiteAtRisk,
-} from '../core/wording.js';
-import { adviceFor } from './answer.js';
-import { calibrationDoneness, calibrationParams } from './calibration.js';
-import { activeLocale, t, tChosen, timeOfDay } from './copy.js';
-import { formatClock } from './countdown.js';
-import { CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
-import { formView } from './controls.js';
-import type { FormView } from './controls.js';
-import { learnedLine, learnedView } from './learned.js';
-import type { Learning, LearnedView } from './learned.js';
-import { shareView } from './shareView.js';
-import type { ShareView } from './shareView.js';
-import type { Model, Redraws } from './model.js';
-import { PhaseView, phaseView } from './phaseView.js';
-import { SetupFacts, liveSetupFacts } from './sentence.js';
-import { sousVideCopy } from './sousvide.js';
+} from '../core/wording.ts';
+import { adviceFor } from './answer.ts';
+import { calibrationDoneness, calibrationParams } from './calibration.ts';
+import { activeLocale, t, tChosen, timeOfDay } from './copy.ts';
+import { formatClock } from './countdown.ts';
+import { type CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.ts';
+import { formView } from './controls.ts';
+import type { FormView } from './controls.ts';
+import { learnedLine, learnedView } from './learned.ts';
+import type { Learning, LearnedView } from './learned.ts';
+import { shareView } from './shareView.ts';
+import type { ShareView } from './shareView.ts';
+import type { Model, Redraws } from './model.ts';
+import { type PhaseView, phaseView } from './phaseView.ts';
+import { type SetupFacts, liveSetupFacts } from './sentence.ts';
+import { sousVideCopy } from './sousvide.ts';
 import {
   boilingPoint_C, currentEgg, idlePot, isSousVide, learning, phaseNow, sizeClasses, startModeNow,
-} from './state.js';
-import { Settings, UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.js';
-import { measure, show } from './units.js';
-import { warningText } from './warning.js';
+} from './state.ts';
+import { type Settings, type UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.ts';
+import { measure, show } from './units.ts';
+import { warningText } from './warning.ts';
 
 /** The slider's reading: a level and the peak yolk it asks for, or the
  *  bath's temperature in sous-vide (slider.ts, `renderDonenessReading`). */

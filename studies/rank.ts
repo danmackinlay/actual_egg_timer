@@ -34,13 +34,13 @@
  * obviously set teaches next to nothing.
  */
 
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
-import { CookSetup, Cooling, StartMode } from '../src/core/protocol.js';
-import { eggFromMass } from '../src/core/geometry.js';
+import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.ts';
+import type { CookSetup, Cooling, StartMode } from '../src/core/protocol.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
 import {
   simulate, solveCookTime, donenessFromSlider, WHITE_DOSE_TARGET,
-} from '../src/core/solve.js';
-import { Theta, THETA0, NO_PROBE, runPerturbed } from './perturbed.js';
+} from '../src/core/solve.ts';
+import { type Theta, THETA0, NO_PROBE, runPerturbed } from './perturbed.ts';
 
 /* ------------------------------------------------------------ candidates */
 

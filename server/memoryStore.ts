@@ -4,7 +4,7 @@
  * (`tools/devServer.ts`), where nothing should outlive the process.
  */
 
-import { Store } from './eggs.js';
+import type { Store } from './eggs.ts';
 
 export class MemoryStore implements Store {
   readonly blobs = new Map<string, string>();

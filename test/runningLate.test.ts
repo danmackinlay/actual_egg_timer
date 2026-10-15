@@ -8,13 +8,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { LIMITS } from '../src/core/inputs.js';
+import { LIMITS } from '../src/core/inputs.ts';
 import {
-  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RunningCook, boilToRemember, cookTooOld, coolingSecondsFor, corrected,
+  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RunningCook, boilToRemember, cookTooOld, coolingSecondsFor, corrected,
   earliestStart_s, eventsDue, openEggId, phaseAt, pullStands, replan, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
-} from '../src/core/running.js';
-import { START_MS, S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.js';
+} from '../src/core/running.ts';
+import { START_MS, S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';
 
 test('15. a pull the clock assumed stays open, and a correction that would pull later asks', () => {
   const hot = cookOf({ startMode: 'hot' });

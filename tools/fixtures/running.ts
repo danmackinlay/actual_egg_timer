@@ -4,24 +4,24 @@
  * every boundary (src/core/running.ts).
  */
 
-import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
-import { oddsProfile } from '../../src/core/reach.js';
-import { decisionInputs, inputsKey } from '../../src/core/decide.js';
-import { GridSpec } from '../../src/core/doseGrid.js';
-import { WhiteReport, YolkWord } from '../../src/core/infer.js';
-import { LITERATURE_POPULATION } from '../../src/core/infer.js';
-import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.ts';
+import { oddsProfile } from '../../src/core/reach.ts';
+import { decisionInputs, inputsKey } from '../../src/core/decide.ts';
+import type { GridSpec } from '../../src/core/doseGrid.ts';
+import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
+import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
+import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
-  COOLING_SECONDS, CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
-  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace,
+  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RecordContext, type RunningCook,
+  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, type SlowHobMemo, type SlowHobPlace,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
   corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
   replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
-} from '../../src/core/running.js';
+} from '../../src/core/running.ts';
 
-import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
-import { BASE_CHOICES, MEMORY, START_S } from './shared.js';
+import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
+import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
 
 /* The egg and the pot (`cookSetupOf`) for choices across every branch: a
  * class off each carton and a measured egg, each egg start with and without

@@ -7,7 +7,7 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { LIMITS, clamp, isWithin } from './inputs.js';
+import { LIMITS, clamp, isWithin } from './inputs.ts';
 
 /** Fallback when no pan has ever been measured, s. */
 export const DEFAULT_TIME_TO_BOIL_S = 480;

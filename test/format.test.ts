@@ -17,16 +17,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { parseCatalogue, pluralCategory, render } from '../src/core/copy.js';
+import { parseCatalogue, pluralCategory, render } from '../src/core/copy.ts';
 import {
   countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale, roundTo, unpadHour,
-} from '../src/core/format.js';
-import { SousVideEstimate } from '../src/core/sousvide.js';
-import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy.js';
-import { show, useUnits } from '../src/ui/units.js';
-import { spokenClock } from '../src/ui/countdown.js';
-import { sousVideCopy } from '../src/ui/sousvide.js';
-import { asRead } from '../tools/text.js';
+} from '../src/core/format.ts';
+import type { SousVideEstimate } from '../src/core/sousvide.ts';
+import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy.ts';
+import { show, useUnits } from '../src/ui/units.ts';
+import { spokenClock } from '../src/ui/countdown.ts';
+import { sousVideCopy } from '../src/ui/sousvide.ts';
+import { asRead } from '../tools/text.ts';
 
 const NBSP = ' ';
 const NNBSP = ' ';

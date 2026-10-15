@@ -14,11 +14,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DecisionInputs } from '../src/core/decide.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT, freshCalibration } from '../src/core/record.js';
-import { decisionGrid, oddsProfileFor } from '../src/ui/decisionGrids.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { appSetup } from '../tools/common.js';
+import type { DecisionInputs } from '../src/core/decide.ts';
+import { CALIBRATION_SEED, PARTICLE_COUNT, freshCalibration } from '../src/core/record.ts';
+import { decisionGrid, oddsProfileFor } from '../src/ui/decisionGrids.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { appSetup } from '../tools/common.ts';
 
 /** A pot that cannot be built: no parameters to key or build the surface
  *  with, a null `params`. */

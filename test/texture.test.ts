@@ -11,13 +11,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { DEFAULTS } from '../src/core/inputs.js';
-import { anchorNear, targetPeakYolk_C, verdictFor } from '../src/core/slider.js';
-import { textureFor, textureNoteKeys } from '../src/core/texture.js';
-import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { parseCatalogue, render } from '../src/core/copy.js';
+import { DEFAULTS } from '../src/core/inputs.ts';
+import { anchorNear, targetPeakYolk_C, verdictFor } from '../src/core/slider.ts';
+import { textureFor, textureNoteKeys } from '../src/core/texture.ts';
+import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { parseCatalogue, render } from '../src/core/copy.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 

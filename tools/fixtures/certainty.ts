@@ -5,12 +5,12 @@
 import {
   CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordBandHigh, wordBandLow,
   wordBracket, wordCertainty,
-} from '../../src/core/certainty.js';
-import { decideAt, decisionApplies } from '../../src/core/decide.js';
-import { logYolkTarget } from '../../src/core/solve.js';
+} from '../../src/core/certainty.ts';
+import { decideAt, decisionApplies } from '../../src/core/decide.ts';
+import { logYolkTarget } from '../../src/core/solve.ts';
 
-import { DECIDE_GRID, meanSolve } from './decide.js';
-import { outcomePosteriors } from './outcome.js';
+import { DECIDE_GRID, meanSolve } from './decide.ts';
+import { outcomePosteriors } from './outcome.ts';
 
 /* Four parts. The word asked at every slider position, and at each place
  * the word changes. Each word's band on the slider, whose edges the bracket

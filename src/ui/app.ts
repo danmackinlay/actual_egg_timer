@@ -23,39 +23,39 @@
  *   back as messages.
  */
 
-import { nudgeSeconds } from '../core/decide.js';
-import { stepPast } from '../core/units.js';
-import { openLearner } from './calibration.js';
-import { applyConstantsToDom, buildSizeOptions } from './controls.js';
+import { nudgeSeconds } from '../core/decide.ts';
+import { stepPast } from '../core/units.ts';
+import { openLearner } from './calibration.ts';
+import { applyConstantsToDom, buildSizeOptions } from './controls.ts';
 import {
-  Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
+  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
   startRunner, stopRunner,
-} from './cook.js';
-import { closeAudio, primeAudio } from './clock.js';
-import { bindDom, el, page } from './dom.js';
-import { wireFeedback } from './feedback.js';
-import { wireInfoButtons } from './info.js';
-import { onInput, onToggleMute } from './input.js';
-import { wireExport, wireForget } from './learned.js';
-import { startOffline } from './offline.js';
-import { stopWorker } from './offThread.js';
-import { claimApp, ownsApp } from './owner.js';
-import { renderVersion } from './render.js';
-import { buildClauses } from './sentence.js';
-import { openSharing } from './share.js';
-import { wireShare } from './shareView.js';
-import { buildTicks } from './slider.js';
-import { emptyModel, sizeClasses } from './state.js';
-import { activePopulation } from './population.js';
-import { setStepRule, wireSteppers } from './stepper.js';
-import { claimStorage, openCooks, openPans, openSettings } from './store.js';
-import { APP_VERSION } from './version.js';
-import { measure, useUnits } from './units.js';
-import { learnBehind } from './effects.js';
-import type { Model } from './model.js';
-import { wireViews } from './views.js';
-import { wireEdits, wireStartTime } from './edit.js';
-import { markDevClockUse, random } from './now.js';
+} from './cook.ts';
+import { closeAudio, primeAudio } from './clock.ts';
+import { bindDom, el, page } from './dom.ts';
+import { wireFeedback } from './feedback.ts';
+import { wireInfoButtons } from './info.ts';
+import { onInput, onToggleMute } from './input.ts';
+import { wireExport, wireForget } from './learned.ts';
+import { startOffline } from './offline.ts';
+import { stopWorker } from './offThread.ts';
+import { claimApp, ownsApp } from './owner.ts';
+import { renderVersion } from './render.ts';
+import { buildClauses } from './sentence.ts';
+import { openSharing } from './share.ts';
+import { wireShare } from './shareView.ts';
+import { buildTicks } from './slider.ts';
+import { emptyModel, sizeClasses } from './state.ts';
+import { activePopulation } from './population.ts';
+import { setStepRule, wireSteppers } from './stepper.ts';
+import { claimStorage, openCooks, openPans, openSettings } from './store.ts';
+import { APP_VERSION } from './version.ts';
+import { measure, useUnits } from './units.ts';
+import { learnBehind } from './effects.ts';
+import type { Model } from './model.ts';
+import { wireViews } from './views.ts';
+import { wireEdits, wireStartTime } from './edit.ts';
+import { markDevClockUse, random } from './now.ts';
 
 /**
  * Boot: the page's elements found, then whether this tab runs the app or

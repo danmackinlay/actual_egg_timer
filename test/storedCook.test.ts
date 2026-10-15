@@ -11,10 +11,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CookAsRan, CookChoices, RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.js';
-import { STORES } from '../src/ui/stores.js';
-import { KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.js';
-import { openCooks } from '../src/ui/store.js';
+import { type CookAsRan, type CookChoices, type RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.ts';
+import { STORES } from '../src/ui/stores.ts';
+import { type KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.ts';
+import { openCooks } from '../src/ui/store.ts';
 
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {

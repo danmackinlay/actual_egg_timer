@@ -17,25 +17,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, Particle, Posterior, WhiteReport, YOLK_WORDS,
-  YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
+  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, type Particle, type Posterior, type WhiteReport, YOLK_WORDS,
+  YOLK_WORD_CUTS, type YolkWord, answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
   posteriorMeanWhiteOffset, posteriorParams, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated,
   withUnrelatedWord, yolkAnswerProbabilities, yolkProbit, yolkWordProbabilities, yolkWordProbit,
-} from '../src/core/infer.js';
-import { DoseGrid, buildDoseGrid, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
+} from '../src/core/infer.ts';
+import { type DoseGrid, buildDoseGrid, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.ts';
 import {
-  DEFAULT_PARAMS, DONENESS_ANCHORS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate,
+  DEFAULT_PARAMS, DONENESS_ANCHORS, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate,
   solveCookTime,
-} from '../src/core/solve.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
-import { anchorNear } from '../src/core/slider.js';
+} from '../src/core/solve.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { Z_WHITE, Z_YOLK } from '../src/core/constants.ts';
+import { anchorNear } from '../src/core/slider.ts';
 import {
-  CALIBRATION_SEED, Calibration, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid,
+  CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid,
   calibrationParams, freshCalibration, replay,
-} from '../src/core/record.js';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
-import { appSetup, draw, rng } from '../tools/common.js';
+} from '../src/core/record.ts';
+import { LITERATURE_POPULATION } from '../src/core/infer.ts';
+import { appSetup, draw, rng } from '../tools/common.ts';
 
 // --------------------------------------------------------------------------
 // shared fixtures

@@ -13,11 +13,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CookSurface } from '../src/core/running.js';
-import { Effect, Model, Msg, Part, update } from '../src/ui/model.js';
-import { emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, Settings } from '../src/ui/store.js';
-import { gridFor, knowing } from '../tools/common.js';
+import type { CookSurface } from '../src/core/running.ts';
+import { type Effect, type Model, type Msg, type Part, update } from '../src/ui/model.ts';
+import { emptyModel } from '../src/ui/state.ts';
+import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.ts';
+import { gridFor, knowing } from '../tools/common.ts';
 
 const S = 1791363600;
 const C = knowing({ particles: 200, eggsLogged: 4, taste: 0.1 });

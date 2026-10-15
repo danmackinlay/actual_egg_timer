@@ -21,23 +21,23 @@ import {
   PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorParams, probeLikelihood,
   probeShortfallDensity, updatePosterior,
-} from '../src/core/infer.js';
-import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
+} from '../src/core/infer.ts';
+import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.ts';
 import {
-  CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
-} from '../src/core/solve.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
+  type CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
+} from '../src/core/solve.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
 import {
-  CALIBRATION_SEED, EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
+  CALIBRATION_SEED, type EggRecord, MODEL_ID, PARTICLE_COUNT, calibrationDoneness, calibrationGrid, calibrationParams,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
-} from '../src/core/record.js';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
+} from '../src/core/record.ts';
+import { LITERATURE_POPULATION } from '../src/core/infer.ts';
 import {
-  COOLING_MIN_SECONDS, COOLING_SECONDS, PULL_GRACE_SECONDS, RunningCook, coolingSecondsFor, eventsDue,
+  COOLING_MIN_SECONDS, COOLING_SECONDS, PULL_GRACE_SECONDS, type RunningCook, coolingSecondsFor, eventsDue,
   plausibleProbeRange_C, probeMomentFor, replan, startCook, withBoil, withOut, writeEvents,
-} from '../src/core/running.js';
-import { appSetup, knowing } from '../tools/common.js';
+} from '../src/core/running.ts';
+import { appSetup, knowing } from '../tools/common.ts';
 
 // --------------------------------------------------------------------------
 // shared

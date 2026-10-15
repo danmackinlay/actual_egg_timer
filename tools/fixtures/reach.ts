@@ -4,25 +4,25 @@
  * shading, the advice.
  */
 
-import { CookSetup } from '../../src/core/protocol.js';
-import { Egg, eggFromMass } from '../../src/core/geometry.js';
-import { createPrior, updatePosterior } from '../../src/core/infer.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
-import { decide, decisionInputs } from '../../src/core/decide.js';
-import { DoseGrid } from '../../src/core/doseGrid.js';
-import { logYolkTarget, solveCookTime } from '../../src/core/solve.js';
+import type { CookSetup } from '../../src/core/protocol.ts';
+import { type Egg, eggFromMass } from '../../src/core/geometry.ts';
+import { createPrior, updatePosterior } from '../../src/core/infer.ts';
+import { type Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.ts';
+import { decide, decisionInputs } from '../../src/core/decide.ts';
+import type { DoseGrid } from '../../src/core/doseGrid.ts';
+import { logYolkTarget, solveCookTime } from '../../src/core/solve.ts';
 import {
-  ADVICE_GAIN, LevelOdds, OddsProfile, PROFILE_STEP,
+  ADVICE_GAIN, type LevelOdds, type OddsProfile, PROFILE_STEP,
   SHADE_BEST_MIN, adviceWanted, answerAt, askedNear, decideAnswer, envelopeBounds, lowOddsAt, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
-} from '../../src/core/reach.js';
+} from '../../src/core/reach.ts';
 
 
 import {
   DECIDE_EGG, DECIDE_PARTICLES, DECIDE_SEED, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors,
-} from './decide.js';
-import { particleRows } from './shared.js';
-import { referenceSetup } from '../common.js';
+} from './decide.ts';
+import { particleRows } from './shared.ts';
+import { referenceSetup } from '../common.ts';
 
 /* The odds and the certainty at every level, the range that is not a wild
  * guess, the warning outside it, the shading and the advice

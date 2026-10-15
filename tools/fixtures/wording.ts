@@ -7,17 +7,17 @@
 
 import { readFileSync } from 'node:fs';
 
-import { Outcome } from '../../src/core/outcome.js';
-import { Certainty, CertaintyReading, wordCertainty } from '../../src/core/certainty.js';
-import { Phase } from '../../src/core/running.js';
-import { RefusalKind, Verdict, anchorNear } from '../../src/core/slider.js';
-import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
-import { EggFrom, forecastOf } from '../../src/core/record.js';
+import type { Outcome } from '../../src/core/outcome.ts';
+import { type Certainty, type CertaintyReading, wordCertainty } from '../../src/core/certainty.ts';
+import type { Phase } from '../../src/core/running.ts';
+import { type RefusalKind, type Verdict, anchorNear } from '../../src/core/slider.ts';
+import type { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.ts';
+import { type EggFrom, forecastOf } from '../../src/core/record.ts';
 import {
   certaintyKey, clauseKeys, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, phaseKeys,
   forecastWhiteAtRisk, rangeWords, timeRangeWords, warningKey, whiteAtRisk,
-} from '../../src/core/wording.js';
-import { WHITE_RISK } from '../../src/core/outcome.js';
+} from '../../src/core/wording.ts';
+import { WHITE_RISK } from '../../src/core/outcome.ts';
 
 const PHASES: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
 const STARTS: StartMode[] = ['hot', 'cold'];

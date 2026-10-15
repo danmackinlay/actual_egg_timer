@@ -1,8 +1,8 @@
-# The app is static: TypeScript compiled to ES modules, no bundler, no runtime
+# The app is static: TypeScript bundled by esbuild into ES modules, no runtime
 # dependencies. `npm run build:site` (tools/buildSite.mjs) builds the whole
-# site into _site/: the compiled scripts under app/, which index.html's
-# <script src="app/src/ui/main.js"> loads, beside the page, the styles, the
-# artwork, the words in copy/, the privacy page (privacy/index.html, so
+# site into _site/: the scripts under bundle/, each named for its contents,
+# which index.html's one module script loads, beside the page, the styles,
+# the artwork, the words in copy/, the privacy page (privacy/index.html, so
 # /privacy finds it on any host), the prior's population, and last the
 # service worker that lists all of it (sw.js, tools/precache.mjs).
 
@@ -26,34 +26,27 @@
 # Netlify's own default is 24 as of July 2026; NODE_VERSION set here would
 # silently override the file, so it deliberately is not set.
 
-# The scripts and the words are revalidated on every load, not cached for a
-# year. They keep their names across deploys - app/src/ui/main.js is
-# app/src/ui/main.js in every build, because there is no bundler to hash them -
-# so "immutable" here would be a false promise: a returning browser would run
-# last month's modules against this month's index.html, or a mix of old and
-# new, since every import is its own cache entry. The page assumes the scripts,
-# the worker they start (gridWorker.js) and copy/*.json all came from one
-# build; the per-egg record and the catalogue keys both depend on it.
-#
-# The other fix is to version the paths per deploy (app/<commit>/...) and
-# rewrite index.html's <script src> at build time. It would let these be
-# immutable, but it adds a rewriting step to the build, for a few dozen small
-# files. Revalidating costs one conditional request per file, which Netlify's
-# edge answers with a 304 from its own cache; the edge copy is purged on every
-# deploy, so only the browser's copy needed fixing. Once the service worker
-# has a build, it answers for all of these anyway (below).
-#
-# This is also Netlify's default for a file with no rule; it is written out so
-# that nobody adds the year back.
-# The scripts are under /app/, not /dist/: the 19 September site sent /dist/*
-# as immutable for a year, so a browser that visited then would keep running
-# those modules against new ones; a path it has never cached cannot be stale.
-# Never mark /app/* immutable for the same reason.
+# The scripts are named for their contents (bundle/main-<hash>.js), so a
+# name never changes what it holds, and a browser may keep one for a year
+# without asking. index.html names this build's, and is revalidated (below).
+# bundle/ is a path no earlier build used: the scripts were app/ and, on the
+# 19 September site, dist/, under fixed names, and that site sent /dist/* as
+# immutable for a year. A browser may still hold those, so never mark /app/*
+# or /dist/* immutable.
 [[headers]]
-  for = "/app/*"
+  for = "/bundle/*"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
 
+# The words are revalidated on every load, not cached for a year. They keep
+# their names across deploys, so "immutable" here would be a false promise:
+# a returning browser would run this month's scripts against last month's
+# words, and the catalogue's keys depend on both coming from one build.
+# Revalidating costs one conditional request per file, which Netlify's edge
+# answers with a 304 from its own cache; the edge copy is purged on every
+# deploy. Once the service worker has a build, it answers for these anyway
+# (below). This is also Netlify's default for a file with no rule; it is
+# written out so that nobody adds the year back.
 [[headers]]
   for = "/copy/*"
   [headers.values]
@@ -90,8 +83,8 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 # Security headers, on everything. The page has no inline script, style or
-# event handler: one module script, one same-origin worker (gridWorker.js)
-# and the service worker (sw.js), same-origin fetches (copy/*.json, the
+# event handler: one module script, one same-origin worker (the grid worker's
+# bundle) and the service worker (sw.js), same-origin fetches (copy/*.json, the
 # population, /api/* when sharing is on), styles.css, and the images, fonts
 # and sounds in assets/. The slider's shading is set through element.style
 # from script, which a CSP does not govern. So a strict policy costs nothing,

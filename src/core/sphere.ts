@@ -30,7 +30,7 @@
  * the same modes, with no change of basis.
  */
 
-import { MODE_COUNT, K_EGG } from './constants.js';
+import { MODE_COUNT, K_EGG } from './constants.ts';
 
 export interface SphereState {
   radius_m: number;

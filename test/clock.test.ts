@@ -15,8 +15,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { primeAudio, pullSounding, ringAlarm, setMuted, setPullAlarm, stopAlarm } from '../src/ui/clock.js';
-import { useClock } from '../src/ui/now.js';
+import { primeAudio, pullSounding, ringAlarm, setMuted, setPullAlarm, stopAlarm } from '../src/ui/clock.ts';
+import { useClock } from '../src/ui/now.ts';
 
 /** The page's clock, ms. */
 let now_ms = 1_791_363_600_000;

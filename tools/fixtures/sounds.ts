@@ -3,7 +3,7 @@
  * sound's period and how many times it rings, at both moments.
  */
 
-import { ALARM_RING_S, AlarmMoment, AlarmSound, alarmPeriod_s, alarmRepeats } from '../../src/core/sounds.js';
+import { ALARM_RING_S, type AlarmMoment, type AlarmSound, alarmPeriod_s, alarmRepeats } from '../../src/core/sounds.ts';
 
 const SOUNDS: AlarmSound[] = ['timer', 'cuckoo', 'hen'];
 

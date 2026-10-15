@@ -18,9 +18,9 @@
  * interpolated exactly as the doses are.
  */
 
-import { Egg } from './geometry.js';
-import { CookSetup } from './protocol.js';
-import { simulate } from './solve.js';
+import type { Egg } from './geometry.ts';
+import type { CookSetup } from './protocol.ts';
+import { simulate } from './solve.ts';
 
 export interface DoseGrid {
   logAlphaMin: number;

@@ -4,9 +4,9 @@
  */
 
 import {
-  Catalogue, CopyArg, CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
+  type Catalogue, type CopyArg, type CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
   pluralCategory, regionOf, render,
-} from '../../src/core/copy.js';
+} from '../../src/core/copy.ts';
 
 /* The renderer's contract, pinned on catalogues that exist only here, so
  * that a change of wording in copy/ never rewrites this fixture: placeholders

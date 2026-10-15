@@ -6,13 +6,13 @@
 
 import assert from 'node:assert/strict';
 
-import { SIZE_CLASSES } from '../src/core/geometry.js';
-import { CookFacts, ProbeReading } from '../src/core/record.js';
-import { WhiteReport, YolkWord } from '../src/core/infer.js';
+import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import type { CookFacts, ProbeReading } from '../src/core/record.ts';
+import type { WhiteReport, YolkWord } from '../src/core/infer.ts';
 import {
-  CookChoices, CookPlan, CookSurface, RecordContext, RunningCook, asRanCorrected, cookFactsFor, replan, startCook,
-} from '../src/core/running.js';
-import { gridFor, knowing } from '../tools/common.js';
+  type CookChoices, type CookPlan, type CookSurface, type RecordContext, type RunningCook, asRanCorrected, cookFactsFor, replan, startCook,
+} from '../src/core/running.ts';
+import { gridFor, knowing } from '../tools/common.ts';
 
 export const START_MS = 1791363600000;
 export const S = START_MS / 1000;

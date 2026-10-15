@@ -2,7 +2,7 @@
  * Every word the web app puts on screen, in every state worth reaching: the
  * copy capture's scenarios, run by the one harness (tools/harness.ts) as
  * e2e scenarios (`npm run e2e -- copy/`) and written out by
- * `copySnapshot.js capture`.
+ * `copySnapshot.ts capture`.
  *
  * It is the proof that a change touched no wording: capture the build before
  * and the build after, and the two must be identical. Each scenario plants
@@ -29,10 +29,10 @@
 
 import { readFileSync } from 'node:fs';
 
-import { STORES, stamped } from '../src/ui/stores.js';
-import { Failure, Harness, Scenario, Snap, Tab, check } from './harness.js';
+import { STORES, stamped } from '../src/ui/stores.ts';
+import { Failure, type Harness, type Scenario, type Snap, Tab, check } from './harness.ts';
 
-/** One state's words, as `copySnapshot.js compare` reads them. */
+/** One state's words, as `copySnapshot.ts compare` reads them. */
 export interface CopyState {
   name: string;
   lang: string;

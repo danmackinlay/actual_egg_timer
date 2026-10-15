@@ -5,8 +5,8 @@
  * what a script driving the page may ask of it (test.ts).
  */
 
-import { installDevClock } from './clock.js';
-import { installTestApi } from './test.js';
+import { installDevClock } from './clock.ts';
+import { installTestApi } from './test.ts';
 
 export function install(): void {
   installDevClock();

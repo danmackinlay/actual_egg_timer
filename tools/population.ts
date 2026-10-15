@@ -2,7 +2,7 @@
  * fixtures/population.json: the population both apps draw a new cook's prior
  * from (src/core/population.ts, INFERENCE.md section 9).
  *
- *   npm run build && node dist/tools/population.js literature
+ *   node tools/population.ts literature
  *
  * writes the literature's: the prior every cook drew from before the
  * population fit, number for number. The fit (fit/, `eggfit publish`) writes a fitted one in the
@@ -13,13 +13,13 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
-import { parsePopulation } from '../src/core/population.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.ts';
+import { parsePopulation } from '../src/core/population.ts';
 
 const OUT = 'fixtures/population.json';
 
 if (process.argv[2] !== 'literature') {
-  console.error('usage: node dist/tools/population.js literature');
+  console.error('usage: node tools/population.ts literature');
   process.exit(2);
 }
 

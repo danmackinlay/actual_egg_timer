@@ -13,20 +13,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { LIMITS } from '../src/core/inputs.js';
+import { LIMITS } from '../src/core/inputs.ts';
 import {
   SIZE_CLASSES, US_SIZE_CLASSES, eggFromMass, eggFromMinorDiameter,
-} from '../src/core/geometry.js';
-import { parseCatalogue, render } from '../src/core/copy.js';
+} from '../src/core/geometry.ts';
+import { parseCatalogue, render } from '../src/core/copy.ts';
 import {
-  Measure, QUANTITIES, Quantity, UNIT_SYSTEMS,
-  UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
+  type Measure, QUANTITIES, type Quantity, UNIT_SYSTEMS,
+  type UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
-} from '../src/core/units.js';
-import { parseRecord } from '../src/core/record.js';
-import { replan, startCook } from '../src/core/running.js';
-import { gridFor, knowing, webRecordFor } from '../tools/common.js';
-import { asRead } from '../tools/text.js';
+} from '../src/core/units.ts';
+import { parseRecord } from '../src/core/record.ts';
+import { replan, startCook } from '../src/core/running.ts';
+import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
+import { asRead } from '../tools/text.ts';
 
 /** The units' definitions, written out here rather than imported, so the
  *  conversions are checked against them. */

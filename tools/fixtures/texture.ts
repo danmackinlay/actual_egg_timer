@@ -4,7 +4,7 @@
  * sides, and the keys the texture note is said in.
  */
 
-import { WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, textureFor, textureNoteKeys } from '../../src/core/texture.js';
+import { WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, textureFor, textureNoteKeys } from '../../src/core/texture.ts';
 
 /* Every boundary with the white setting, and a few without: a white the pan
  * never sets is runny whatever its peak, even one hot enough to read "firm". */

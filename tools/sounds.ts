@@ -22,11 +22,11 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AlarmMoment, alarmPeriod_s } from '../src/core/sounds.js';
-import { ALARM_SOUNDS } from '../src/ui/settings.js';
+import { type AlarmMoment, alarmPeriod_s } from '../src/core/sounds.ts';
+import { ALARM_SOUNDS } from '../src/ui/settings.ts';
 import {
   NOTIFICATION_SOUND_MAX_S, RECORDINGS, loudness, notificationRepeats, recordedPeriod, synthPeriod,
-} from '../src/ui/alarmSounds.js';
+} from '../src/ui/alarmSounds.ts';
 
 const RATE = 22050;
 const OUT = 'ios/App/Sounds';

@@ -7,10 +7,10 @@
  * in hand").
  */
 
-import { page } from './dom.js';
-import { send } from './send.js';
-import { pageModel } from './cook.js';
-import { pressAndHold } from './stepper.js';
+import { page } from './dom.ts';
+import { send } from './send.ts';
+import { pageModel } from './cook.ts';
+import { pressAndHold } from './stepper.ts';
 
 /** The controls, for "another control touched": the slider, a number with
  *  its − and +, a radio group, a menu, a clause. */

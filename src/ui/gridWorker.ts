@@ -12,15 +12,15 @@
  * odds at every level on a decision's surface (`oddsProfile`, reach.ts), a
  * solve and a decision per level: most of a second, and never on the page.
  *
- * Zero dependencies and no bundler: this is compiled by the same `tsc` as
- * everything else, lands beside `offThread.js` in `dist/src/ui/`, and is
- * started by it as a module worker, so it imports the core exactly as the page does.
+ * Zero dependencies: esbuild bundles this, with the core it imports, into a
+ * file of its own beside the page's (tools/buildSite.mjs), which offThread.ts
+ * starts as a module worker; the core is the same source the page runs.
  * The request is plain data and so is the surface, so both cross by structured
  * clone, which copies doubles bit for bit: a surface built here is the surface
  * the page would have built.
  */
 
-import { Job, runJob } from './runJob.js';
+import { type Job, runJob } from './runJob.ts';
 
 /** A job, and the number its answer is posted back under. */
 interface Request extends Job {

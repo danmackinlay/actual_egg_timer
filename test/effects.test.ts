@@ -9,14 +9,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { sizeClassesFor } from '../src/core/geometry.js';
-import { startCook } from '../src/core/running.js';
-import { Stores } from '../src/ui/cook.js';
-import { finalEggs } from '../src/ui/effects.js';
-import { useClock } from '../src/ui/now.js';
-import { choicesOf, emptyModel } from '../src/ui/state.js';
-import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.js';
-import { knowing } from '../tools/common.js';
+import { sizeClassesFor } from '../src/core/geometry.ts';
+import { startCook } from '../src/core/running.ts';
+import type { Stores } from '../src/ui/cook.ts';
+import { finalEggs } from '../src/ui/effects.ts';
+import { useClock } from '../src/ui/now.ts';
+import { choicesOf, emptyModel } from '../src/ui/state.ts';
+import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.ts';
+import { knowing } from '../tools/common.ts';
 
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {

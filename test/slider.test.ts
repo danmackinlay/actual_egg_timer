@@ -13,8 +13,8 @@ import assert from 'node:assert/strict';
 
 import {
   SLIDER_STEPS, anchorNear, anchorReachable, snapDown, snapUp, targetPeakYolk_C, verdictFor,
-} from '../src/core/slider.js';
-import { CookResult, DONENESS_ANCHORS, Solution } from '../src/core/solve.js';
+} from '../src/core/slider.ts';
+import { type CookResult, DONENESS_ANCHORS, type Solution } from '../src/core/solve.ts';
 
 const NO_RESULT: CookResult = {
   cookTime_s: 0, peakYolk_C: 0, peakYolkTime_s: 0, yolkAtPull_C: 0,

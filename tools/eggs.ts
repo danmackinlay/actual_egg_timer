@@ -41,29 +41,29 @@
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/constants.js';
-import { buildDoseGrid } from '../src/core/doseGrid.js';
-import { eggFromMass } from '../src/core/geometry.js';
+import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/constants.ts';
+import { buildDoseGrid } from '../src/core/doseGrid.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
 import {
   FEEDBACK_BAND, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
-  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
+  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle, UNRELATED, type WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
-} from '../src/core/infer.js';
-import { CookSetup } from '../src/core/protocol.js';
+} from '../src/core/infer.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
 import {
-  EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
+  type EggRecord, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches,
-} from '../src/core/record.js';
-import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.js';
-import { coolingSecondsFor } from '../src/core/running.js';
-import { normalCdf } from '../src/core/sphere.js';
-import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
-import { countedTier, keyKey } from '../server/eggs.js';
-import { appSetup, rng } from './common.js';
+} from '../src/core/record.ts';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.ts';
+import { coolingSecondsFor } from '../src/core/running.ts';
+import { normalCdf } from '../src/core/sphere.ts';
+import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.ts';
+import { countedTier, keyKey } from '../server/eggs.ts';
+import { appSetup, rng } from './common.ts';
 import {
-  Line, OldYolk, TRUSTED_ENV, TRUSTED_FILE, importResults, readFitRecord, readTrusted, sameEggKey, tagTrusted,
-} from './eggsImport.js';
+  type Line, type OldYolk, TRUSTED_ENV, TRUSTED_FILE, importResults, readFitRecord, readTrusted, sameEggKey, tagTrusted,
+} from './eggsImport.ts';
 
 /** The time-scale axis of the emulator, in literature sds. */
 const Z_GRID = Array.from({ length: 17 }, (_, i) => -4 + 0.5 * i);

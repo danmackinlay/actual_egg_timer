@@ -3,8 +3,8 @@
  * ruler; the model needs an equivalent-sphere radius and a mass.
  */
 
-import { CopyKey } from './copyKeys.js';
-import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.js';
+import type { CopyKey } from './copyKeys.ts';
+import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.ts';
 
 export interface Egg {
   /** Equal-volume sphere radius, m. This is what the conduction model uses. */

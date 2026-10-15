@@ -27,9 +27,9 @@
  * the same address.
  */
 
-import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.js';
-import { request } from './idle.js';
-import { realMs } from './now.js';
+import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.ts';
+import { request } from './idle.ts';
+import { realMs } from './now.ts';
 
 const LOOK_EVERY_MS = 60 * 60 * 1000;
 

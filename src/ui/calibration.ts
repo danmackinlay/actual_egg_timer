@@ -19,22 +19,22 @@
  * calibrationStore.ts; the record of one egg is core's, made by `step`.
  */
 
-import { Doneness, ModelParams } from '../core/solve.js';
-import { DoseGrid } from '../core/doseGrid.js';
-import { WhiteReport, YolkWord } from '../core/infer.js';
+import type { Doneness, ModelParams } from '../core/solve.ts';
+import type { DoseGrid } from '../core/doseGrid.ts';
+import type { WhiteReport, YolkWord } from '../core/infer.ts';
 import {
-  Calibration, EggRecord, LIKELIHOOD_ID, ProbeReading, calibrationDoneness as donenessOf, calibrationGrid,
+  type Calibration, type EggRecord, LIKELIHOOD_ID, type ProbeReading, calibrationDoneness as donenessOf, calibrationGrid,
   calibrationParams as paramsOf, copyCalibration, foldRecord, gridRequestFor, recordTeaches, resultsFile,
   resultsFileName,
-} from '../core/record.js';
-import { Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.js';
-import { localDay } from './model.js';
-import { buildOffThread } from './offThread.js';
-import { activePopulation } from './population.js';
-import { APP_VERSION } from './version.js';
-import { storageReadOnly } from './store.js';
+} from '../core/record.ts';
+import { type Kept, encodeKept, freshKept, keptStore, startOf } from './calibrationStore.ts';
+import { localDay } from './model.ts';
+import { buildOffThread } from './offThread.ts';
+import { activePopulation } from './population.ts';
+import { APP_VERSION } from './version.ts';
+import { storageReadOnly } from './store.ts';
 
-export type { Calibration } from '../core/record.js';
+export type { Calibration } from '../core/record.ts';
 
 /** Parameters to solve with. Before any feedback this is the literature values,
  *  so the app is fully useful on day one and calibration is purely additive. */

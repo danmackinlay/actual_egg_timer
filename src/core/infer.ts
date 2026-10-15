@@ -62,13 +62,13 @@
  *    0.8 / 0.1 band would.
  */
 
-import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
-import { erfc, normalCdf } from './sphere.js';
+import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.ts';
+import { type ModelParams, WHITE_DOSE_TARGET } from './solve.ts';
+import { erfc, normalCdf } from './sphere.ts';
 import {
-  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
+  type DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
   cookTimeForLogWhiteDose,
-} from './doseGrid.js';
+} from './doseGrid.ts';
 
 /**
  * What the cook reports about the YOLK after eating the egg: the yolk they got, in the slider's own words, whatever they asked

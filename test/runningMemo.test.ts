@@ -8,13 +8,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';
 
-import { LIMITS } from '../src/core/inputs.js';
+import { LIMITS } from '../src/core/inputs.ts';
 import {
-  CookPlan, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobPlace, corrected, guessLengthened, replan, slowHobDue,
+  type CookPlan, type RunningCook, SLOW_HOB_MAX_STEPS, type SlowHobPlace, corrected, guessLengthened, replan, slowHobDue,
   startCorrected, withBoil,
-} from '../src/core/running.js';
-import { knowing, rng } from '../tools/common.js';
-import { S, C, cookOf } from './cooks.js';
+} from '../src/core/running.ts';
+import { knowing, rng } from '../tools/common.ts';
+import { S, C, cookOf } from './cooks.ts';
 
 test("23. the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
   // A cold start never tapped, planned as the app plans it, at twenty moments

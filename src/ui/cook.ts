@@ -16,34 +16,34 @@
  * the plan says something is next decided (`wakeAt_s`), and when looked at.
  */
 
-import { nudgeSeconds } from '../core/decide.js';
-import type { BoilMemory } from '../core/boil.js';
-import { answered } from '../core/running.js';
-import { phaseNow } from './state.js';
-import { EditTimer, Effect, Model, Msg, update } from './model.js';
-import type { Learner } from './calibration.js';
+import { nudgeSeconds } from '../core/decide.ts';
+import type { BoilMemory } from '../core/boil.ts';
+import { answered } from '../core/running.ts';
+import { phaseNow } from './state.ts';
+import { type EditTimer, type Effect, type Model, type Msg, update } from './model.ts';
+import type { Learner } from './calibration.ts';
 import {
-  Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
+  type Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
   setAlarmSound, setMuted, setPullAlarm, startTicker, stopAlarm,
-} from './clock.js';
-import { activeLocale } from './copy.js';
-import { builtFor } from './decisionGrids.js';
-import { cancelSoon, nextFrame, soon } from './idle.js';
-import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.js';
-import { saveResults } from './learned.js';
-import { draw, drawnNothing, showStartLimit } from './render.js';
-import { view, viewMemo } from './view.js';
-import { send, sendTo } from './send.js';
-import type { Sharing } from './share.js';
-import { CookStore, PansStore, SettingsStore, storageReadOnly } from './store.js';
-import { unitSystem, useUnits } from './units.js';
+} from './clock.ts';
+import { activeLocale } from './copy.ts';
+import { builtFor } from './decisionGrids.ts';
+import { cancelSoon, nextFrame, soon } from './idle.ts';
+import { answerTaken, probeRefused, probeTaken, resetFeedback, retryProbe } from './feedback.ts';
+import { saveResults } from './learned.ts';
+import { draw, drawnNothing, showStartLimit } from './render.ts';
+import { view, viewMemo } from './view.ts';
+import { send, sendTo } from './send.ts';
+import type { Sharing } from './share.ts';
+import { type CookStore, type PansStore, type SettingsStore, storageReadOnly } from './store.ts';
+import { unitSystem, useUnits } from './units.ts';
 import {
   dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon,
-} from './effects.js';
-import { showEgg } from './views.js';
-import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
-import { clockSpeed, nowMs, onClockChange, random } from './now.js';
-import { ownsApp } from './owner.js';
+} from './effects.ts';
+import { showEgg } from './views.ts';
+import { type Builds, type Needs, openNeeds, workerBuilds } from './needs.ts';
+import { clockSpeed, nowMs, onClockChange, random } from './now.ts';
+import { ownsApp } from './owner.ts';
 
 /** The page's model: what `update` last made of it. Kept here only. */
 let model!: Model;

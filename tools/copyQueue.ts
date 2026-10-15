@@ -22,10 +22,10 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 import {
-  APPROVED_ABOUT, APPROVED_PATH, CatalogueJson, Templates, basePath, baseAbout, readApproved, readBases,
+  APPROVED_ABOUT, APPROVED_PATH, type CatalogueJson, type Templates, basePath, baseAbout, readApproved, readBases,
   readCatalogue, reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState, writeOnePerLine,
-} from './copyApproval.js';
-import { App, appsUsing } from './copyNotes.js';
+} from './copyApproval.ts';
+import { type App, appsUsing } from './copyNotes.ts';
 
 function show(t: Templates | null): string {
   if (t === null) return '(none)';
@@ -129,6 +129,6 @@ if (mode === 'queue') queue();
 else if (mode === 'approve' && t >= 0) translated(args[t + 1], args.filter((_, i) => i !== t && i !== t + 1));
 else if (mode === 'approve') approve(args);
 else {
-  console.error('usage: copyQueue.js queue | approve <key…|--all> [--at <ref>] | approve --translation <tag> <key…|--all>');
+  console.error('usage: copyQueue.ts queue | approve <key…|--all> [--at <ref>] | approve --translation <tag> <key…|--all>');
   process.exit(2);
 }

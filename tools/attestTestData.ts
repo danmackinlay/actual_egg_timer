@@ -7,7 +7,7 @@
  * can be tested, which Apple's own sample cannot do: it is for Apple's
  * example app, with a raw challenge rather than SHA256 of a cook's id.
  *
- *   npm run build && node dist/tools/attestTestData.js
+ *   node tools/attestTestData.ts
  *
  * Needs OpenSSL 3 on the PATH, for the certificates; the test does not. The
  * output is test data, regenerated only when its shape must change, and
@@ -19,8 +19,8 @@ import { createHash, generateKeyPairSync } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { APP_ID } from '../server/appAttest.js';
-import { encode } from '../server/cbor.js';
+import { APP_ID } from '../server/appAttest.ts';
+import { encode } from '../server/cbor.ts';
 
 const UID = '3f0b8c1e-6d2a-4b7e-9a41-0c5d2e7f8a90';
 const UID_PRODUCTION = '9b2d4f60-1a3c-4e5f-8a7b-6c5d4e3f2a10';

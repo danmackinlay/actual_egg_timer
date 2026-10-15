@@ -8,7 +8,7 @@
  * picks the form each number needs.
  */
 
-import { t } from './copy.js';
+import { t } from './copy.ts';
 
 export function formatClock(seconds: number): string {
   const total = Math.max(0, Math.round(seconds));

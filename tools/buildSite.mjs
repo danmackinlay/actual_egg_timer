@@ -1,39 +1,49 @@
-// `npm run build:site`: the deployable tree, in _site/, from nothing.
-//
-// The app's part of the build (`node tools/build.mjs tsconfig.app.json`,
-// the same build `npm run verify` checks and tests), the page and what it
-// loads, and last the service worker that lists all of it:
+// `npm run build:site`: the deployable tree, in _site/, from nothing, and
+// beside it the development tools, in _dev/.
 //
 //   _site/index.html, styles.css, site.webmanifest   from the repo root
-//   _site/app/                 the compiled scripts, from dist/ (below)
+//   _site/bundle/              the scripts, bundled by esbuild (below)
 //   _site/assets, copy, privacy                      copied as they are, but
 //                              copy/*.notes.json, which no app loads
 //   _site/fixtures/population.json                   the prior's population
 //   _site/sw.js                (tools/precache.mjs; it must run last, since
 //                              a file copied in after it is not in its list)
+//   _dev/bundle/dev-<hash>.js  the development tools (src/ui/dev/)
 //
-// The scripts go to app/, not dist/, and index.html asks for them there: the
-// 19 September site served /dist/* as immutable for a year, so a browser that
-// visited then keeps those modules, and a new page importing them breaks. A
-// path no browser has cached cannot be stale. So the page loads only from a
-// built site (`npm run serve:site`, `serve:dev`), not from the repo root.
+// esbuild bundles three entries into _site/bundle/, each file named for its
+// contents, so a name never changes what it holds: the page (src/ui/main.ts),
+// the grid worker it starts (src/ui/gridWorker.ts), and the service worker
+// (src/ui/serviceWorker.ts), which sw.js imports. ES2022 modules, minified,
+// no source maps. The two workers are each one file. The page is split, with
+// the development tools (src/ui/dev/index.ts, which main.ts imports on this
+// machine only) as an entry of their own: they use the app's own clock and
+// state, so whatever they share with the page goes to a chunk both import,
+// and the tools' own code to dev-<hash>.js. That one file goes to _dev/, not
+// _site/: the site that ships is the development build less that file, and
+// the development server (tools/devServer.ts) serves _site/ with _dev/ over
+// it.
 //
-// Each script is copied less its last line, which names its source map: the
-// site ships none, so what lands in _site/app is byte for byte what `tsc`
-// emits with `sourceMap` off. The list is src/'s .ts files, not dist/'s, so
-// a module whose source is gone is never shipped; a source with no compiled
-// twin fails the build. The development tools (src/ui/dev/: the development
-// clock and the test API, loaded on this machine only, main.ts) are left
-// out: a server for the harness adds them from dist/ (tools/devServer.ts).
+// The page starts the grid worker by its hashed name, which esbuild writes
+// into the page's code as GRID_WORKER_FILE (src/ui/offThread.ts), and loads
+// as index.html's one module script, whose src (src/ui/main.ts in the repo)
+// is rewritten to the bundle's name.
+//
+// The bundles live under bundle/, a path no earlier build used: before them,
+// the scripts were app/ and dist/, under fixed names, which browsers may
+// still hold (netlify.toml).
 //
 // Usage: node tools/buildSite.mjs
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { copyFileSync, cpSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { build } from 'esbuild';
 
 const SITE = '_site';
-const DEV = join('src', 'ui', 'dev');
-const MAP = /\n\/\/# sourceMappingURL=[^\n]*\n?$/;
+const DEV = '_dev';
+const BUNDLE = 'bundle';
+const PAGE_SCRIPT = '<script type="module" src="src/ui/main.ts"></script>';
+/** Words only the development tools hold: none may reach _site/. */
+const DEV_ONLY = ['aetClock', 'aetTest'];
 
 /** A node script, as a step: its output shown, its failure the build's. */
 function run(script, ...args) {
@@ -41,37 +51,57 @@ function run(script, ...args) {
   if (step.status !== 0) process.exit(step.status ?? 1);
 }
 
-/** Every .ts under `dir`, declaration files and the development tools aside. */
-function sources(dir) {
-  const found = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (path !== DEV) found.push(...sources(path));
-    } else if (path.endsWith('.ts') && !path.endsWith('.d.ts')) found.push(path);
-  }
-  return found;
+/** What every bundle is built with. */
+const OPTIONS = {
+  bundle: true,
+  format: 'esm',
+  target: 'es2022',
+  minify: true,
+  legalComments: 'none',
+  outdir: join(SITE, BUNDLE),
+  entryNames: '[name]-[hash]',
+  chunkNames: '[name]-[hash]',
+  metafile: true,
+  logLevel: 'warning',
+};
+
+/** The output, as a path under `outdir`, that `entry` was built into. */
+function outputOf(result, entry) {
+  const found = Object.entries(result.metafile.outputs).find(([, o]) => o.entryPoint === entry);
+  if (found === undefined) throw new Error(`no output for ${entry}`);
+  return found[0];
 }
 
 rmSync(SITE, { recursive: true, force: true });
-run('tools/build.mjs', 'tsconfig.app.json');
+rmSync(DEV, { recursive: true, force: true });
 mkdirSync(SITE);
-for (const file of ['index.html', 'styles.css', 'site.webmanifest']) copyFileSync(file, `${SITE}/${file}`);
-for (const source of sources('src')) {
-  const script = source.replace(/\.ts$/, '.js');
-  let js;
-  try {
-    js = readFileSync(join('dist', script), 'utf8');
-  } catch {
-    throw new Error(`dist/${script} not found: is dist/ older than ${source}?`);
-  }
-  const target = join(SITE, 'app', script);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, js.replace(MAP, '\n'));
+
+const workers = await build({ ...OPTIONS, entryPoints: ['src/ui/gridWorker.ts', 'src/ui/serviceWorker.ts'] });
+const page = await build({
+  ...OPTIONS,
+  entryPoints: { main: 'src/ui/main.ts', dev: 'src/ui/dev/index.ts' },
+  splitting: true,
+  define: { GRID_WORKER_FILE: JSON.stringify(`./${basename(outputOf(workers, 'src/ui/gridWorker.ts'))}`) },
+});
+
+const dev = outputOf(page, 'src/ui/dev/index.ts');
+mkdirSync(join(DEV, BUNDLE), { recursive: true });
+renameSync(dev, join(DEV, BUNDLE, basename(dev)));
+for (const output of Object.keys({ ...workers.metafile.outputs, ...page.metafile.outputs })) {
+  if (output === dev) continue;
+  const js = readFileSync(output, 'utf8');
+  const found = DEV_ONLY.filter((word) => js.includes(word));
+  if (found.length > 0) throw new Error(`${output} holds ${found.join(', ')}: the development tools reached the site`);
 }
+
+const html = readFileSync('index.html', 'utf8');
+if (!html.includes(PAGE_SCRIPT)) throw new Error(`index.html: ${PAGE_SCRIPT} not found`);
+const main = `${BUNDLE}/${basename(outputOf(page, 'src/ui/main.ts'))}`;
+writeFileSync(join(SITE, 'index.html'), html.replace(PAGE_SCRIPT, PAGE_SCRIPT.replace('src/ui/main.ts', main)));
+for (const file of ['styles.css', 'site.webmanifest']) copyFileSync(file, join(SITE, file));
 // The notes beside a catalogue are the tools' and the tests', never the page's.
 const shipped = (path) => !path.endsWith('.notes.json');
-for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, `${SITE}/${dir}`, { recursive: true, filter: shipped });
-mkdirSync(`${SITE}/fixtures`);
-copyFileSync('fixtures/population.json', `${SITE}/fixtures/population.json`);
-run('tools/precache.mjs');
+for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, join(SITE, dir), { recursive: true, filter: shipped });
+mkdirSync(join(SITE, 'fixtures'));
+copyFileSync('fixtures/population.json', join(SITE, 'fixtures', 'population.json'));
+run('tools/precache.mjs', SITE);

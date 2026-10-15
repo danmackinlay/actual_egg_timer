@@ -19,7 +19,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from './fixtureCompare.js';
+import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from './fixtureCompare.ts';
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 

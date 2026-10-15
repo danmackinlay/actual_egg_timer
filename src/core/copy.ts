@@ -21,8 +21,8 @@
  * "1,234" or "1 234" - through `src/core/format.ts`, so no app formats a count by hand.
  */
 
-import { CopyKey, CopyKeyArgs } from './copyKeys.js';
-import { Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, roundTo } from './format.js';
+import type { CopyKey, CopyKeyArgs } from './copyKeys.ts';
+import { type Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, roundTo } from './format.ts';
 
 /** A word or phrase written to stand alone - a doneness word, a headline -
  *  set down in the middle of a sentence: its first letter lower-cased in the
@@ -50,7 +50,7 @@ export type CopyArg = string | number | Fixed;
 
 export type CopyArgs = Readonly<Record<string, CopyArg>>;
 
-export type { CopyKey } from './copyKeys.js';
+export type { CopyKey } from './copyKeys.ts';
 
 /** The arguments a key is rendered with, as a rest parameter: none for a key
  *  that takes none, or exactly its names. For a key known only as one of

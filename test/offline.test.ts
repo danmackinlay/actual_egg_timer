@@ -19,21 +19,21 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.js';
+import { type BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.ts';
 
 test('1. a page is answered by its index.html, a file by itself', () => {
   const files: BuildFiles = {
-    'index.html': 'a', 'privacy/index.html': 'b', 'styles.css': 'c', 'app/src/ui/main.js': 'd',
+    'index.html': 'a', 'privacy/index.html': 'b', 'styles.css': 'c', 'bundle/main-ABCD1234.js': 'd',
   };
   assert.equal(cacheKeyFor('', files), 'index.html');
   assert.equal(cacheKeyFor('index.html', files), 'index.html');
   assert.equal(cacheKeyFor('privacy', files), 'privacy/index.html');
   assert.equal(cacheKeyFor('privacy/', files), 'privacy/index.html');
   assert.equal(cacheKeyFor('privacy/index.html', files), 'privacy/index.html');
-  assert.equal(cacheKeyFor('app/src/ui/main.js', files), 'app/src/ui/main.js');
+  assert.equal(cacheKeyFor('bundle/main-ABCD1234.js', files), 'bundle/main-ABCD1234.js');
   // Not in the build: left to the network.
   assert.equal(cacheKeyFor('assets/social.jpg', files), null);
-  assert.equal(cacheKeyFor('app/', files), null);
+  assert.equal(cacheKeyFor('bundle/', files), null);
   assert.equal(cacheKeyFor('styles', files), null);
   // A name the object has without being given it is not a file.
   assert.equal(cacheKeyFor('constructor', files), null);
@@ -44,8 +44,9 @@ const SITE: Record<string, string> = {
   'index.html': '<head>\n<link rel="manifest" href="site.webmanifest">\n</head>\n',
   'styles.css': 'body {}\n',
   'site.webmanifest': '{}\n',
-  'app/src/ui/main.js': 'import "./app.js";\n',
-  'app/src/ui/serviceWorker.js': 'export function serve() {}\n',
+  'bundle/main-ABCD1234.js': 'import "./chunk-EFGH5678.js";\n',
+  'bundle/chunk-EFGH5678.js': 'export const x = 1;\n',
+  'bundle/serviceWorker-IJKL9012.js': 'export function serve() {}\n',
   'copy/en.json': '{}\n',
   'privacy/index.html': '<p>privacy</p>\n',
   'assets/icon-192.png': 'png',
@@ -67,7 +68,7 @@ function buildSite(
   }
   execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.mjs'), dir], { cwd: host });
   const sw = readFileSync(join(dir, 'sw.js'), 'utf8');
-  assert.match(sw, /^import \{ serve \} from '\.\/app\/src\/ui\/serviceWorker\.js';$/m);
+  assert.match(sw, /^import \{ serve \} from '\.\/bundle\/serviceWorker-IJKL9012\.js';$/m);
   const m = sw.match(/^serve\('([0-9a-f]{16})', (\{[\s\S]*\})\);\s*$/m);
   assert.ok(m !== null, 'sw.js calls serve with a build and its files');
   return { files: JSON.parse(m[2]) as Record<string, string>, build: m[1], dir };
@@ -83,7 +84,7 @@ test('2. sw.js lists what the page can ask for, hashed as served', () => {
     // The 512 px icons and the social card are for the system and for link
     // previews; sw.js is the worker itself; hidden files are not the site's.
     assert.deepEqual(Object.keys(files), [
-      'app/src/ui/main.js', 'app/src/ui/serviceWorker.js', 'assets/icon-192.png',
+      'assets/icon-192.png', 'bundle/chunk-EFGH5678.js', 'bundle/main-ABCD1234.js', 'bundle/serviceWorker-IJKL9012.js',
       'copy/en.json', 'index.html', 'privacy/index.html', 'site.webmanifest', 'styles.css',
     ]);
     // The page names its worker, under the manifest, and is hashed with it.
@@ -123,7 +124,7 @@ test('3. the build is named by its files and the hosts\' headers: any change is 
   }
 });
 
-test('4. a site without the compiled worker fails the build', () => {
+test('4. a site without the service worker\'s bundle fails the build', () => {
   const dir = mkdtempSync(join(tmpdir(), 'aet-site-'));
   try {
     writeFileSync(join(dir, 'index.html'), SITE['index.html']);
@@ -159,9 +160,9 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
     g['history'] = { state: null, replaceState: () => { /* the address */ } };
     g['sessionStorage'] = memoryStorage();
     g['localStorage'] = memoryStorage();
-    const now = await import('../src/ui/now.js');
-    (await import('../src/ui/dev/clock.js')).installDevClock();
-    const clock = (g['window'] as { aetClock: import('../src/ui/dev/clock.js').ClockHandle }).aetClock;
+    const now = await import('../src/ui/now.ts');
+    (await import('../src/ui/dev/clock.ts')).installDevClock();
+    const clock = (g['window'] as { aetClock: import('../src/ui/dev/clock.ts').ClockHandle }).aetClock;
     assert.equal(clock.state()?.speed, 0);
 
     const onDocument = new Map<string, (() => void)[]>();
@@ -194,7 +195,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
       await settle();
     };
 
-    const { startOffline } = await import('../src/ui/offline.js');
+    const { startOffline } = await import('../src/ui/offline.ts');
     startOffline(() => ({ owner: true, cookRunning: false }));
     await settle();
     // Loading asks only whether the worker is still served.
@@ -226,7 +227,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
 });
 
 test('6. a new build: the owner takes it between cooks, waits mid-cook, and a waiting window reloads into it', async () => {
-  const { newBuild } = await import('../src/ui/offline.js');
+  const { newBuild } = await import('../src/ui/offline.ts');
   const owner = { owner: true, cookRunning: false, touched: false, visible: true, asked: false };
   assert.equal(newBuild(owner, false), 'take', 'the owner between cooks, untouched since it loaded');
   assert.equal(newBuild({ ...owner, touched: true, visible: false }, false), 'take', 'touched, but out of sight');

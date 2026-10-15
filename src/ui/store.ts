@@ -8,26 +8,26 @@
  * two apps share one set. This module applies them; it does not decide them.
  */
 
-import { SizeClass } from '../core/geometry.js';
-import { LanguageState } from '../core/language.js';
-import { StartMode } from '../core/protocol.js';
-import { BoilMemory, rememberBoil } from '../core/boil.js';
-import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
+import type { SizeClass } from '../core/geometry.ts';
+import type { LanguageState } from '../core/language.ts';
+import type { StartMode } from '../core/protocol.ts';
+import { type BoilMemory, rememberBoil } from '../core/boil.ts';
+import { LIMITS, type Limit, clamp, isWithin } from '../core/inputs.ts';
 import {
-  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, Settings as StoredSettings, readLanguageState,
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, type Settings as StoredSettings, readLanguageState,
   readSettings,
-} from './settings.js';
-import { RunningCook } from '../core/running.js';
-import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
-import { STORES, STORE_LIST, inFormat, stamped } from './stores.js';
-import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
-import { ownsApp } from './owner.js';
-import { send } from './send.js';
+} from './settings.ts';
+import type { RunningCook } from '../core/running.ts';
+import { type KeptAnswers, type StoredCook, readStoredCook, storedCook } from './storedCook.ts';
+import { STORES, STORE_LIST, inFormat, stamped } from './stores.ts';
+import { type WriterVerdict, parseVersion, writerCheck } from './newer.ts';
+import { ownsApp } from './owner.ts';
+import { send } from './send.ts';
 
-export type { Limit } from '../core/inputs.js';
-export type { KeptAnswers, StoredCook } from './storedCook.js';
-export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
-export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
+export type { Limit } from '../core/inputs.ts';
+export type { KeptAnswers, StoredCook } from './storedCook.ts';
+export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.ts';
+export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.ts';
 
 const SETTINGS_KEY = STORES.settings.key;
 const COOK_KEY = STORES.cook.key;

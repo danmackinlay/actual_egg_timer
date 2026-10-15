@@ -1,28 +1,28 @@
 // `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 121).
 //
-// The build first, alone, since everything after it runs what it compiled.
-// Then the rest at once, each job's output held and printed whole under its
-// name when it ends, so no two jobs' lines interleave:
+// Every job at once, each one's output held and printed whole under its name
+// when it ends, so no two jobs' lines interleave. Node runs the tests and
+// tools from their sources, so nothing waits for a build:
 //
-//   npm test         node --test over dist/test
-//   validate         the science against the literature (dist/tools/validate.js)
-//   copy:literals    no Swift literal is words (dist/tools/copyLiterals.js)
+//   typecheck        tsc over core, the app and the rest (npm run typecheck)
+//   npm test         node --test over test/*.test.ts
+//   validate         the science against the literature (tools/validate.ts)
+//   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
-//                    with git's (dist/tools/copyKeys.js --check)
+//                    with git's (tools/copyKeys.ts --check)
 //   fixtures:check   the fixtures made afresh, compared with git's
 //   swift build      the package and its tests, compiled
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
 //                    have both ended
 //
-// The jobs call the compiled scripts, not their npm scripts: each npm script
-// starts with its own `node tools/build.mjs`, and four of them at once would
-// be four `tsc -b`s over one dist/.
+// The jobs call node and tsc directly, not npm test, which type-checks first:
+// here the type check is a job of its own, beside the tests.
 //
 // fixtures:check rewrites fixtures/, and the core's Swift tests read every
 // fixture, so they wait for fixtures:check to end: Swift never reads
 // fixtures/ while anything writes it. The app's Swift tests read no fixture,
-// and are the longest job, so they start as soon as the build ends. The two
+// and are the longest job, so they start as soon as swift build ends. The two
 // Swift test runs share the package's .build, which `swift test` locks even
 // when it builds nothing; with --skip-build neither writes it, so each passes
 // --ignore-lock. `npm test` runs alongside; the one fixture it reads,
@@ -35,6 +35,7 @@
 // Usage: node tools/verify.mjs
 import { spawn } from 'node:child_process';
 import { readdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 
 const T0 = Date.now();
@@ -78,38 +79,34 @@ function job(name, steps) {
 }
 
 const node = process.execPath;
-const results = [];
-
-const build = await job('build', [['npm', ['run', 'build']]]);
-results.push(build);
-if (build.code === 0) {
-  const tests = readdirSync('dist/test').filter((f) => f.endsWith('.test.js')).sort().map((f) => join('dist/test', f));
-  const fixtures = job('fixtures:check', [[node, ['dist/tools/fixtures.js']], [node, ['dist/tools/fixturesCheck.js']]]);
-  const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
-  const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
-  const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
-  const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
-    ? swiftTests('swift core tests', 'EggTimerCoreTests')
-    : null));
-  const all = await Promise.all([
-    job('npm test', [[node, ['--test', ...tests]]]),
-    job('validate', [[node, ['dist/tools/validate.js']]]),
-    job('copy:literals', [[node, ['dist/tools/copyLiterals.js']]]),
-    job('copy:keys', [[node, ['dist/tools/copyKeys.js', '--check']]]),
-    fixtures,
-    swiftBuild,
-    appTests,
-    coreTests,
-  ]);
-  results.push(...all.filter((r) => r !== null));
-}
+const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc');
+const tests = readdirSync('test').filter((f) => f.endsWith('.test.ts')).sort().map((f) => join('test', f));
+const fixtures = job('fixtures:check', [[node, ['tools/fixtures.ts']], [node, ['tools/fixturesCheck.ts']]]);
+const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
+const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
+const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
+const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
+  ? swiftTests('swift core tests', 'EggTimerCoreTests')
+  : null));
+const all = await Promise.all([
+  job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p) => [node, [tsc, '-p', p]])),
+  job('npm test', [[node, ['--test', ...tests]]]),
+  job('validate', [[node, ['tools/validate.ts']]]),
+  job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
+  job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]),
+  fixtures,
+  swiftBuild,
+  appTests,
+  coreTests,
+]);
+const results = all.filter((r) => r !== null);
 
 console.log('\n===== verify =====');
 for (const r of [...results].sort((a, b) => a.end - b.end)) {
   console.log(`${r.code === 0 ? 'ok    ' : 'FAILED'} ${r.name.padEnd(16)} ${seconds(r.start).padStart(6)} s to ${seconds(r.end).padStart(6)} s`);
 }
 const failed = results.filter((r) => r.code !== 0);
-if (build.code === 0 && results.every((r) => !r.name.startsWith('swift') || r.name === 'swift build')) {
+if (results.every((r) => !r.name.startsWith('swift') || r.name === 'swift build')) {
   console.log('skipped the Swift tests: swift build failed');
 }
 if (failed.length > 0) {

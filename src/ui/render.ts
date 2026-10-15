@@ -8,19 +8,19 @@
  * Settings, written once.
  */
 
-import { CopyKey } from '../core/copy.js';
-import { t, timeOfDay } from './copy.js';
-import { page } from './dom.js';
-import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
-import { showInfo } from './info.js';
-import { drawForm } from './controls.js';
-import { drawLearned, renderCalibNote } from './learned.js';
-import type { Redraws, StartLimit } from './model.js';
-import { drawShare } from './shareView.js';
-import { renderSentence } from './sentence.js';
-import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
-import { APP_VERSION } from './version.js';
-import { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.js';
+import type { CopyKey } from '../core/copy.ts';
+import { t, timeOfDay } from './copy.ts';
+import { page } from './dom.ts';
+import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.ts';
+import { showInfo } from './info.ts';
+import { drawForm } from './controls.ts';
+import { drawLearned, renderCalibNote } from './learned.ts';
+import type { Redraws, StartLimit } from './model.ts';
+import { drawShare } from './shareView.ts';
+import { renderSentence } from './sentence.ts';
+import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.ts';
+import { APP_VERSION } from './version.ts';
+import type { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.ts';
 
 /** What is on the page now, as far as the writer needs to know it. */
 export interface Drawn {

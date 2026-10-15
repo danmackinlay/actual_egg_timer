@@ -32,8 +32,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
-import { replaceFile } from './fixtureCompare.js';
+import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.ts';
+import { replaceFile } from './fixtureCompare.ts';
 
 export const TS_KEYS = 'src/core/copyKeys.ts';
 export const SWIFT_KEYS = 'ios/EggTimerCore/Sources/EggTimerCopy/CopyKeys.swift';

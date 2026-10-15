@@ -10,14 +10,14 @@
  * runner to ask the worker for, never fetched here.
  */
 
-import { DecisionInputs, decisionInputs, inputsKey } from '../core/decide.js';
-import { CopyKey } from '../core/copy.js';
-import { DoseGrid } from '../core/doseGrid.js';
+import { type DecisionInputs, decisionInputs, inputsKey } from '../core/decide.ts';
+import type { CopyKey } from '../core/copy.ts';
+import type { DoseGrid } from '../core/doseGrid.ts';
 import {
-  DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
-} from '../core/reach.js';
-import type { Model } from './model.js';
-import { idleChoices, idlePot, isSousVide } from './state.js';
+  type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
+} from '../core/reach.ts';
+import type { Model } from './model.ts';
+import { idleChoices, idlePot, isSousVide } from './state.ts';
 
 /** An odds profile built, and the pot it is for. */
 export interface PotOdds {

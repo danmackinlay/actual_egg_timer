@@ -11,10 +11,10 @@
  * boundaries that a real one reaches only by accident.
  */
 
-import { DONENESS_ANCHORS, Solution } from '../../src/core/solve.js';
+import { DONENESS_ANCHORS, type Solution } from '../../src/core/solve.ts';
 import {
   SLIDER_STEPS, anchorNear, anchorReachable, snapDown, snapUp, targetPeakYolk_C, verdictFor,
-} from '../../src/core/slider.js';
+} from '../../src/core/slider.ts';
 
 const SNAP_LEVELS: number[] = [];
 for (let i = 0; i <= 40; i++) SNAP_LEVELS.push(i / 40);

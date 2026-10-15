@@ -1,12 +1,7 @@
-// The tests, the tools and the server, on Node, over core and the app as
-// built by their own projects. `tsc -b` here builds all three into dist/;
-// every script does it through `node tools/build.mjs` (`npm run build`),
-// which also knows when an incremental build is not safe.
+// The tests, the tools, the server, the Netlify function and the studies, on
+// Node, over the app and core as they import them. One of the three
+// type-checks `npm run typecheck` runs; Node runs these from their sources.
 {
   "extends": "./tsconfig.base.json",
-  "include": ["test/**/*.ts", "tools/**/*.ts", "server/**/*.ts", "netlify/**/*.mts"],
-  "references": [
-    { "path": "./tsconfig.core.json" },
-    { "path": "./tsconfig.app.json" }
-  ]
+  "include": ["test/**/*.ts", "tools/**/*.ts", "server/**/*.ts", "netlify/**/*.mts", "studies/**/*.ts"]
 }

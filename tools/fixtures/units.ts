@@ -17,13 +17,13 @@
  *    switch into 1750 listens for, and the size labels in both systems, rendered in English.
  */
 
-import { Catalogue, render } from '../../src/core/copy.js';
-import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
+import { type Catalogue, render } from '../../src/core/copy.ts';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.ts';
 import {
-  Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
+  type Measure, type PlatformUnits, QUANTITIES, UNIT_SYSTEMS, type UnitId, type UnitSystem, chooseUnits, display,
   displayText, fromSI, measureFor, nudgeFrom, parse, regionalUnits, stepPast,
   shownDecimals, sizeClassLabel, snap, toSI,
-} from '../../src/core/units.js';
+} from '../../src/core/units.ts';
 
 const UNITS: UnitId[] = ['C', 'F', 'g', 'oz', 'mm', 'in', 'm', 'ft', 'L', 'qt', 'pt'];
 

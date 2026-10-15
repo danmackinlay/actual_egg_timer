@@ -5,11 +5,11 @@
  * egg-temperature buttons.
  */
 
-import { SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor } from '../../src/core/geometry.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES, type SizeClass, sizeTableFor } from '../../src/core/geometry.ts';
 import {
   DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, ROOM_EGG_FROM_C, START_TEMP_PRESETS_C, ambientFor, roomInUse,
   startTempPreset_C,
-} from '../../src/core/inputs.js';
+} from '../../src/core/inputs.ts';
 
 /** A size class as the fixture states it: the key and the mass the model
  *  cooks. What its label shows, in either system, is in units.json. */

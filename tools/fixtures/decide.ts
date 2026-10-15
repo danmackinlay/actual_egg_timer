@@ -2,24 +2,24 @@
  * fixtures/decide.json: decision surfaces and the time chosen on one.
  */
 
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.js';
-import { eggFromMass } from '../../src/core/geometry.js';
-import { DoseGrid, GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
-import { Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
-import { CookSetup } from '../../src/core/protocol.js';
+import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.ts';
+import { eggFromMass } from '../../src/core/geometry.ts';
+import { type DoseGrid, type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.ts';
+import { type Posterior, createPrior, updatePosterior } from '../../src/core/infer.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
 import {
-  Calibration, calibrationDoneness, calibrationParams,
-} from '../../src/core/record.js';
+  type Calibration, calibrationDoneness, calibrationParams,
+} from '../../src/core/record.ts';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S, DECISION_WINDOW_S,
-  DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
+  type DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
   NUDGE_MAX_S, decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, nudgeSeconds,
   oddsInTenths,
-} from '../../src/core/decide.js';
-import { DEFAULT_PARAMS, Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.js';
+} from '../../src/core/decide.ts';
+import { DEFAULT_PARAMS, type Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.ts';
 
-import { particleRows } from './shared.js';
-import { referenceSetup } from '../common.js';
+import { particleRows } from './shared.ts';
+import { referenceSetup } from '../common.ts';
 
 /* The time is CHOSEN from the whole posterior, and the two apps must choose
  * the same time for the same posterior and pot. Three things are pinned: where

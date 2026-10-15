@@ -27,17 +27,16 @@
 // AET_E2E_LOG=1 prints a failing scenario's log; AET_LOCALE=en-US launches
 // the app in that locale rather than en-AU (`localeArgs`).
 //
-// Compiled with the other tools (tools/build.mjs), which the npm script runs
-// first. Needs Xcode, xcodegen and python3; not in `npm run verify`.
+// Needs Xcode, xcodegen and python3; not in `npm run verify`.
 import { existsSync } from 'node:fs';
 
-import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.js';
-import type { BoilMemory } from '../src/core/boil.js';
-import type { Units } from '../src/core/record.js';
+import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
+import type { BoilMemory } from '../src/core/boil.ts';
+import type { Units } from '../src/core/record.ts';
 import {
   APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
   createDevice, is, lastOf, quietly, simctl, sleep,
-} from './iosHarness.js';
+} from './iosHarness.ts';
 
 /// How long the system is given to deliver the one notification a scenario
 /// waits for, past its moment, the host's s.

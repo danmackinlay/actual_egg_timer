@@ -12,24 +12,24 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { eggFromMinorDiameter, eggFromMass, Egg } from '../src/core/geometry.js';
-import { parseCatalogue, render } from '../src/core/copy.js';
+import { eggFromMinorDiameter, eggFromMass, type Egg } from '../src/core/geometry.ts';
+import { parseCatalogue, render } from '../src/core/copy.ts';
 import {
   seriesTheta, biotNumber, createSphere, stepSphere, meanTemperature,
-} from '../src/core/sphere.js';
-import { zFromActivationEnergy } from '../src/core/kinetics.js';
+} from '../src/core/sphere.ts';
+import { zFromActivationEnergy } from '../src/core/kinetics.ts';
 import {
   ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S, DT_SIM,
-} from '../src/core/constants.js';
-import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.js';
+} from '../src/core/constants.ts';
+import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.ts';
 import {
-  CookSetup, panTimeConstant, bathTemperature, initialSurfaceTemperature,
-} from '../src/core/protocol.js';
+  type CookSetup, panTimeConstant, bathTemperature, initialSurfaceTemperature,
+} from '../src/core/protocol.ts';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,
   DEFAULT_PARAMS, DONENESS_ANCHORS, YOLK_DOSE_HARD,
-} from '../src/core/solve.js';
-import { referenceSetup } from './common.js';
+} from '../src/core/solve.ts';
+import { referenceSetup } from './common.ts';
 
 /** The report names the anchors in English, as the app does. */
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));

@@ -9,19 +9,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { decide } from '../src/core/decide.js';
-import { createPrior, updatePosterior } from '../src/core/infer.js';
-import { Egg, eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { logYolkTarget, solveCookTime } from '../src/core/solve.js';
-import { snapUp } from '../src/core/slider.js';
-import { CALIBRATION_SEED, Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
-import { OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer, oddsProfile } from '../src/core/reach.js';
-import { askedWord, certaintyAt } from '../src/core/certainty.js';
-import { predictOutcome } from '../src/core/outcome.js';
-import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.js';
-import { EXHAUSTIVE, appSetup, gridFor, knowing } from '../tools/common.js';
-import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, point } from './profiles.js';
+import { decide } from '../src/core/decide.ts';
+import { createPrior, updatePosterior } from '../src/core/infer.ts';
+import { type Egg, eggFromMass } from '../src/core/geometry.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { logYolkTarget, solveCookTime } from '../src/core/solve.ts';
+import { snapUp } from '../src/core/slider.ts';
+import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
+import { type OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer, oddsProfile } from '../src/core/reach.ts';
+import { askedWord, certaintyAt } from '../src/core/certainty.ts';
+import { predictOutcome } from '../src/core/outcome.ts';
+import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.ts';
+import { EXHAUSTIVE, appSetup, gridFor, knowing } from '../tools/common.ts';
+import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, point } from './profiles.ts';
 
 test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
   // A cold start, as a fresh install has it: the white sets only from a

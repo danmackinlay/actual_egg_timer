@@ -5,14 +5,14 @@
 
 import assert from 'node:assert/strict';
 
-import { GridSpec } from '../src/core/doseGrid.js';
-import { Calibration, EggRecord, MODEL_ID, calibrationGrid, recordMass_g } from '../src/core/record.js';
-import { LITERATURE_POPULATION, YolkWord } from '../src/core/infer.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { APP_VERSION } from '../src/ui/version.js';
-import { appSetup } from '../tools/common.js';
+import type { GridSpec } from '../src/core/doseGrid.ts';
+import { type Calibration, type EggRecord, MODEL_ID, calibrationGrid, recordMass_g } from '../src/core/record.ts';
+import { LITERATURE_POPULATION, type YolkWord } from '../src/core/infer.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.ts';
+import type { CookSetup } from '../src/core/protocol.ts';
+import { APP_VERSION } from '../src/ui/version.ts';
+import { appSetup } from '../tools/common.ts';
 
 /** localStorage, in memory. The store module reads `window.localStorage` at call
  *  time, inside a try, so this is all a test needs to give it one. */

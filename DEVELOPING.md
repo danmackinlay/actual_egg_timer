@@ -8,9 +8,9 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 
 ```
 npm install
-npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest
-npm test           # node --test
-npm run verify     # the gate: build, test, validate, copy:literals, fixtures:check and swift test
+npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
+npm test           # the type check, then node --test
+npm run verify     # the gate: typecheck, test, validate, copy:literals, copy:keys, fixtures:check and swift test
 npm run validate   # prints the validation table in README §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
@@ -18,7 +18,7 @@ npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (README §11.2)
 npm run rank       # how many parameters can feedback move? (INFERENCE.md §2)
 npm run probe      # is a probe thermometer worth an egg? (README §11.3)
-                   # (these four, and studies/shape-study, are in studies/, run only by hand; each builds studies/ itself)
+                   # (these four, and studies/shape-study, are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
@@ -33,36 +33,34 @@ npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :
 npm run e2e        # the web app driven end to end in headless Chrome (below)
 ```
 
-Every script that runs compiled code builds first, through `tools/build.mjs`:
-`tsc -b` over three projects (`tsconfig.core.json`, `tsconfig.app.json`, and
-`tsconfig.json` for the tests, tools and server), so `npm run verify`
-compiles once and each later step finds the build up to date. A file added,
-deleted or renamed, or a change to the installed packages, builds `dist/`
-from scratch, since `tsc -b` alone would keep a deleted file's output and
-not check again what imported it. `npm run build:site` ships the app's part
-of the same build.
+Nothing is compiled to run: Node runs the tests, tools and studies from their
+`.ts` sources, stripping the types itself, and every import names its source
+(`./x.ts`). `tsc` only checks, over three configurations (`tsconfig.core.json`,
+`tsconfig.app.json`, and `tsconfig.json` for the tests, tools, server and
+studies); `npm test` runs it first. `npm run build:site` bundles the app with
+esbuild from the same sources.
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
-so a Netlify build compiles on the same Node the tests ran on. `engines.node` is
-a range rather than a pin, a statement about the APIs this uses (`node:test`,
-ES2022), not a tested claim: 26 is what runs here, and what
-`.github/workflows/verify.yml` runs `npm run verify` on - the type checks, the
+so a Netlify build runs on the same Node the tests ran on. `engines.node` is a
+range rather than a pin, a statement about the APIs this uses (`node:test`,
+ES2022, types stripped by default from 22.18), not a tested claim: 26 is what
+runs here, and what `.github/workflows/verify.yml` runs `npm run verify` on - the type checks, the
 tests, fixtures identical to a fresh `npm run fixtures`, and the Swift core
 against them.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host
-needs, and the build is `tsc` plus a few `cp`s — no bundler, no environment
-variables, no secrets. The one exception is the endpoint that receives shared
+needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
+no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
 that Netlify bundles from source on deploy and backs with its Blobs store;
 `@netlify/blobs` is its one runtime dependency, and the apps have none. Another
 host would serve the site, but nothing there would answer `/api/eggs`, so
 sharing would wait until the endpoint was ported; the apps keep the eggs and
-retry. Because nothing is bundled, nothing is hashed: `dist/` and `copy/` keep
-their filenames from one deploy to the next, so they are served to be
-revalidated on every load rather than cached for a year, and a returning browser
-never runs last month's scripts against this month's page. `netlify.toml` says
-why. The built site also has a service worker: `tools/precache.mjs` writes
+retry. esbuild bundles the page, the grid worker and the service worker into
+a few files under `bundle/`, each named for its contents, so they are cached
+for a year, and a returning browser never runs last month's scripts against
+this month's page; `copy/` keeps its filenames, so it is revalidated on every
+load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.mjs` writes
 `sw.js`, listing every file with its SHA-256, and once a browser has it the app
 opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
@@ -115,7 +113,7 @@ every phase, the egg's readings, corrections mid-cook (the owner's boiling
 to cold, overdue and back, a drag that rings only on release, the start's
 time and its limits, Settings' water), a correction at Done and the slider
 there, and "still in the water?". `npm run e2e -- reload one-tab-takeover` runs
-those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
+those named; `node tools/e2e.ts --list` lists them; `E2E_DEBUG=1` prints
 the page's text when one fails.
 
 The harness reads the app through what it shows, what it stores, and a
@@ -144,12 +142,12 @@ fails the run.
 What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
 Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
 `Date.now()` unless the development clock has put itself there. On a page
-served from `localhost` or `127.0.0.1`, and nowhere else, `src/ui/main.ts`
-loads the development tools (`src/ui/dev/`: the clock and the test API) by a
-dynamic import before the app boots; `npm run build:site` leaves them out
-of the site, so the site that ships does not carry them, and the harness's
-server (`tools/devServer.ts`, as `npm run serve:dev` runs it) serves them
-beside it from the build. There, `?clock=60` runs it sixty
+served from `localhost` or `127.0.0.1` by the harness's server
+(`tools/devServer.ts`, as `npm run serve:dev` runs it), and nowhere else,
+`src/ui/main.ts` loads the development tools (`src/ui/dev/`: the clock and
+the test API) by a dynamic import before the app boots. `npm run build:site`
+builds them as a file of their own, sharing the app's modules, and leaves it
+out of the site, in `_dev/`, which that server serves over `_site/`. There, `?clock=60` runs it sixty
 times fast, `?clock=0` stops it, `?at=+7m40s` or `?at=-15m` sets it ahead or
 behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
 back; it is kept for the tab across a reload, a red mark in the corner shows

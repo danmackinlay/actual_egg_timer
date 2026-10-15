@@ -14,7 +14,7 @@
  * tells the page to look again with a `focus` event, as a tab coming back
  * does, and asserts. Both are loaded on a page served from this machine
  * only, and are not in the site that ships, so the harness's server adds
- * them to it from the build (devServer.ts).
+ * them to it from the development build (devServer.ts).
  *
  * Beyond that API the harness watches the platform, not the app: before the
  * app runs, each page counts the sounds made, each ring (one looped buffer)
@@ -24,12 +24,13 @@
  * exception thrown in a page fails its scenario.
  *
  * `--tree <dir>` (E2E_TREE) serves another checkout's build - its `_site/`
- * and its `dist/src/ui/dev/` - to this harness: a commit's build, driven by
- * today's scenarios. The commit must have the test API (this one and later):
+ * and its `_dev/` - to this harness: a commit's build, driven by today's
+ * scenarios. The commit must have the test API and build `_dev/` (this one
+ * and later):
  *
  *   git worktree add /tmp/aet-old <commit>
  *   (cd /tmp/aet-old && npm ci && npm run build:site)
- *   npm run build && node dist/tools/e2e.js --tree /tmp/aet-old
+ *   node tools/e2e.ts --tree /tmp/aet-old
  *
  * E2E_CPU_THROTTLE=<rate> slows every page's CPU that many times (DevTools'
  * `Emulation.setCPUThrottlingRate`), to show the scenarios do not depend on
@@ -40,7 +41,7 @@ import { ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
+import { type Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.ts';
 
 /** How long to wait for something that will come, real ms: failure
  *  detection only, never a measure of anything, so long enough for a page
@@ -134,6 +135,7 @@ export interface Snap {
   finalEggs: number;
   share: { on: boolean; sent: number };
   inHand: { timers: number; jobs: number; requests: number };
+  gridJobs: { offThread: number; onThread: number };
   osc: number;
 }
 
@@ -193,6 +195,8 @@ export const DEFAULT_LOCALE = process.env['AET_LOCALE'] ?? 'en-AU';
 
 export class Tab {
   readonly errors: string[] = [];
+  /** What the page said with console.warn, in order. */
+  readonly warnings: string[] = [];
   /** Every request the tab made, as DevTools saw it leave, with the
    *  document that made it (its loader). */
   private sent: { url: string; method: string; loader: string }[] = [];
@@ -222,6 +226,9 @@ export class Tab {
       if (method === 'Runtime.exceptionThrown') {
         const d = (params as { exceptionDetails: { text: string; exception?: { description?: string } } }).exceptionDetails;
         tab.errors.push(d.exception?.description ?? d.text);
+      } else if (method === 'Runtime.consoleAPICalled') {
+        const c = params as { type: string; args: { value?: unknown; description?: string }[] };
+        if (c.type === 'warning') tab.warnings.push(c.args.map((a) => String(a.value ?? a.description ?? '')).join(' '));
       } else if (method === 'Network.requestWillBeSent') {
         const p = params as { loaderId: string; request: { url: string; method: string } };
         tab.sent.push({ url: p.request.url, method: p.request.method, loader: p.loaderId });
@@ -482,7 +489,7 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
   const port = 9100 + Math.floor(Math.random() * 400);
   const origin = `http://127.0.0.1:${port}`;
   const lines: string[] = [];
-  const server: ChildProcess = spawn(process.execPath, ['dist/tools/devServer.js'], {
+  const server: ChildProcess = spawn(process.execPath, ['tools/devServer.ts'], {
     env: { ...process.env, PORT: String(port), TREE: tree }, stdio: ['ignore', 'pipe', 'inherit'],
   });
   server.stdout?.on('data', (b: Buffer) => { lines.push(...String(b).split('\n').filter((l) => l !== '')); });
@@ -509,7 +516,11 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
           ctx: ctx, origin: origin, port: port, posts: () => lines.filter((l) => l.startsWith('POST /api/eggs')),
         });
         const thrown = ctx.tabs.flatMap((tab) => tab.errors);
+        // The grid worker that did not start leaves the page working, on its
+        // own thread (src/ui/offThread.ts): only this line tells.
+        const onPage = ctx.tabs.flatMap((tab) => tab.warnings).filter((w) => w.startsWith('the grid worker'));
         if (thrown.length > 0) error = `the page threw: ${thrown.join(' | ')}`;
+        else if (onPage.length > 0) error = `the page built off no worker: ${onPage.join(' | ')}`;
       } catch (e) {
         error = e instanceof Error ? (e instanceof Failure ? e.message : e.stack ?? e.message) : String(e);
         if (process.env['E2E_DEBUG'] !== undefined) {

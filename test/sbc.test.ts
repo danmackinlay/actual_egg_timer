@@ -24,8 +24,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { PARTICLE_COUNT } from '../src/core/record.js';
-import { SBC_QUANTITIES, SBC_SCENARIOS, outerShare, sbc } from '../tools/posterior.js';
+import { PARTICLE_COUNT } from '../src/core/record.ts';
+import { SBC_QUANTITIES, SBC_SCENARIOS, outerShare, sbc } from '../tools/posterior.ts';
 
 for (const [i, cooks] of [[0, 300], [1, 200]] as const) {
   const scenario = SBC_SCENARIOS[i];

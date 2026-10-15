@@ -21,20 +21,21 @@
  * across a reload, and starts again from the seed at each load.
  */
 
-import { CertaintyReading } from '../../core/certainty.js';
-import { CopyArgs } from '../../core/copy.js';
-import { BoilMemory } from '../../core/boil.js';
-import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
-import { readStoredCook } from '../storedCook.js';
-import { STORES } from '../stores.js';
-import { EggRecord } from '../../core/record.js';
-import { flushDraw, pageModel, pageStores } from '../cook.js';
-import { t, timeOfDay } from '../copy.js';
-import { inHand } from '../idle.js';
-import { isDevHost, nowMs, useRandom } from '../now.js';
-import { phaseNow } from '../state.js';
-import { Settings } from '../store.js';
-import { finalEggs } from '../effects.js';
+import type { CertaintyReading } from '../../core/certainty.ts';
+import type { CopyArgs } from '../../core/copy.ts';
+import type { BoilMemory } from '../../core/boil.ts';
+import { type Phase, type RunningCook, guessLengthened } from '../../core/running.ts';
+import { readStoredCook } from '../storedCook.ts';
+import { STORES } from '../stores.ts';
+import type { EggRecord } from '../../core/record.ts';
+import { flushDraw, pageModel, pageStores } from '../cook.ts';
+import { t, timeOfDay } from '../copy.ts';
+import { inHand } from '../idle.ts';
+import { isDevHost, nowMs, useRandom } from '../now.ts';
+import { jobsAnswered } from '../offThread.ts';
+import { phaseNow } from '../state.ts';
+import type { Settings } from '../store.ts';
+import { finalEggs } from '../effects.ts';
 
 /** The page as a script sees it. */
 export interface Snapshot {
@@ -79,6 +80,9 @@ export interface Snapshot {
   finalEggs: number;
   share: { on: boolean; sent: number };
   inHand: { timers: number; jobs: number; requests: number };
+  /** The jobs sent off the main thread since the page loaded: answered by
+   *  the grid worker, and built on the page when it could not be had. */
+  gridJobs: { offThread: number; onThread: number };
 }
 
 export interface TestApi {
@@ -140,6 +144,7 @@ function snapshot(): Snapshot {
     finalEggs: finalEggs(stores, m),
     share: { on: share.on, sent: share.sent },
     inHand: inHand(),
+    gridJobs: jobsAnswered(),
   };
 }
 

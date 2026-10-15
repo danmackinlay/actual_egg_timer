@@ -19,7 +19,7 @@ test('every module of the web app loads without a document or storage', async ()
   assert.ok(modules.includes('app.ts'));
   assert.equal((globalThis as { document?: unknown }).document, undefined);
   for (const file of modules) {
-    await import(`../src/ui/${file.replace(/\.ts$/, '.js')}`);
+    await import(`../src/ui/${file}`);
   }
 });
 

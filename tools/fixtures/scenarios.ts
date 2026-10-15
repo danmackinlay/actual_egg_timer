@@ -2,11 +2,11 @@
  * fixtures/scenarios.json: whole cooks, solved end to end.
  */
 
-import { eggFromMass, eggFromMinorDiameter } from '../../src/core/geometry.js';
-import { boilingPointAtAltitude } from '../../src/core/thermo.js';
-import { CookSetup } from '../../src/core/protocol.js';
-import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
-import { referenceSetup } from '../common.js';
+import { eggFromMass, eggFromMinorDiameter } from '../../src/core/geometry.ts';
+import { boilingPointAtAltitude } from '../../src/core/thermo.ts';
+import type { CookSetup } from '../../src/core/protocol.ts';
+import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
+import { referenceSetup } from '../common.ts';
 
 
 
