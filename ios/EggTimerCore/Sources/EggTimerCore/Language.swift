@@ -18,11 +18,9 @@ import EggTimerCopy
 ///
 /// Like the units, the cook's own choice is kept apart from the default.
 /// `chosen` is what the cook picked, or nil if they never have, in which case
-/// the app speaks `defaultLanguage`. A stored state may also carry
-/// `flippedFrom`, what the units switch replaced, which nothing reads; a read
-/// ignores it.
+/// the app speaks `defaultLanguage`.
 ///
-/// No I/O. The app keeps this in UserDefaults, as the JSON the web stores.
+/// No I/O. The app keeps and reads back its own (`LanguageChoice`).
 
 /// The catalogue a fresh install reads.
 public let defaultLanguage = "en"
@@ -30,8 +28,6 @@ public let defaultLanguage = "en"
 /// The English of 1750's catalogue tag.
 public let periodLanguage = "en-x-1750"
 
-/// Every catalogue the picker offers, in its order.
-public let languages: [String] = [defaultLanguage, periodLanguage]
 
 /// The private-use subtag that marks the register.
 private let periodSubtag = "x-1750"
@@ -43,14 +39,6 @@ public struct LanguageState: Sendable, Equatable {
 
     public init(chosen: String?) {
         self.chosen = chosen
-    }
-
-    public static let fresh = LanguageState(chosen: nil)
-
-    /// The state as the web stores it, for JSONSerialization: an absent value
-    /// is JSON's null, so that `readLanguageState` gives back the same state.
-    public var jsonObject: [String: Any] {
-        ["chosen": chosen ?? NSNull()]
     }
 }
 
@@ -90,14 +78,4 @@ public func languageAfterFlip(_ state: LanguageState, _ flip: UnitsFlip) -> Lang
 /// keeps °F.
 public func languageAfterPick(_ state: LanguageState, _ tag: String) -> LanguageState {
     LanguageState(chosen: tag)
-}
-
-/// A stored state, read defensively: anything malformed is the fresh one. A
-/// tag is kept only if it is one of `known`, so a catalogue that has gone
-/// cannot be asked for. Any other field, such as the retired `flippedFrom`,
-/// is ignored.
-public func readLanguageState(_ raw: Any?, known: [String]) -> LanguageState {
-    guard let r = raw as? [String: Any] else { return .fresh }
-    guard let chosen = r["chosen"] as? String, known.contains(chosen) else { return .fresh }
-    return LanguageState(chosen: chosen)
 }

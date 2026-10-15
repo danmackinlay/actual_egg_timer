@@ -3,7 +3,7 @@
   "stores": [
     {"name": "newest", "format": null, "web": "aet.newest", "ios": "newestVersion"},
     {"name": "newestBuild", "format": null, "web": null, "ios": "newestBuild"},
-    {"name": "settings", "format": 1, "web": "aet.settings", "ios": "settings"},
+    {"name": "settings", "format": 2, "web": "aet.settings", "ios": "settings"},
     {"name": "cook", "format": 7, "web": "aet.cook", "ios": "cook"},
     {"name": "boilMemory", "format": 1, "web": "aet.boilMemory", "ios": "boilMemory"},
     {"name": "calibration", "format": 5, "web": "aet.calibration.v5", "ios": "calibration.v5"},
@@ -14,9 +14,9 @@
     {"name": "devClockUsed", "format": null, "web": "aet.devClock.used", "ios": null}
   ],
   "inFormat": [
-    {"about": "the settings' format", "store": "settings", "raw": {"v": 1, "doneness": 0.5}, "read": true},
-    {"about": "the settings' format", "store": "cook", "raw": {"v": 1, "doneness": 0.5}, "read": false},
-    {"about": "the settings' format", "store": "share", "raw": {"v": 1, "doneness": 0.5}, "read": false},
+    {"about": "the settings' format", "store": "settings", "raw": {"v": 2, "doneness": 0.5}, "read": true},
+    {"about": "the settings' format", "store": "cook", "raw": {"v": 2, "doneness": 0.5}, "read": false},
+    {"about": "the settings' format", "store": "share", "raw": {"v": 2, "doneness": 0.5}, "read": false},
     {"about": "the cook's format", "store": "settings", "raw": {"v": 6, "cook": {}}, "read": false},
     {"about": "the cook's format", "store": "cook", "raw": {"v": 6, "cook": {}}, "read": false},
     {"about": "the cook's format", "store": "share", "raw": {"v": 6, "cook": {}}, "read": false},

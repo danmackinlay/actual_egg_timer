@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, START_TEMP_PRESETS_C, ambientFor, carrySizeIndex, clamp, isWithin, roomInUse,
+  DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, START_TEMP_PRESETS_C, ambientFor, clamp, isWithin, roomInUse,
   startTempPreset_C,
 } from '../src/core/inputs.js';
 import { DEFAULT_TIME_TO_BOIL_S } from '../src/core/boil.js';
@@ -89,22 +89,6 @@ test('6e. region US, and only region US, gets the American carton', () => {
   for (const region of ['GB', 'CZ', 'CA', 'AU', '', 'USA', null, undefined]) {
     assert.equal(sizeClassesFor(region), SIZE_CLASSES, String(region));
   }
-});
-
-test('6f. a stored size keeps its name when the table changes, and a Jumbo shrinks to fit', () => {
-  for (const table of [SIZE_CLASSES, US_SIZE_CLASSES]) {
-    for (let i = 0; i < table.length; i++) assert.equal(carrySizeIndex(i, table), i);
-    assert.equal(carrySizeIndex(-1, table), -1, 'a measured egg stays measured');
-    assert.equal(carrySizeIndex(-0.4, table), -1);
-    assert.equal(carrySizeIndex(NaN, table), DEFAULTS.sizeIndex);
-    assert.equal(carrySizeIndex(1.5, table), 2);
-  }
-  assert.equal(carrySizeIndex(4, SIZE_CLASSES), 3, 'Jumbo outside the US is Extra large');
-  assert.equal(carrySizeIndex(4, US_SIZE_CLASSES), 4);
-  // The case the second table exists for: a record saved before it, on the
-  // default egg, read in the US. It must cook the American Large.
-  const carried = carrySizeIndex(DEFAULTS.sizeIndex, US_SIZE_CLASSES);
-  assert.equal(US_SIZE_CLASSES[carried].mass_kg, 0.0602);
 });
 
 test('6g. clamp pins to the bounds and refuses to pass a non-number through', () => {

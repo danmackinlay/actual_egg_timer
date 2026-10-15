@@ -21,7 +21,7 @@ import { Catalogue, render } from '../../src/core/copy.js';
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
   Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
-  displayText, fromSI, measureFor, nudgeFrom, parse, readChosenUnits, regionalUnits, stepPast,
+  displayText, fromSI, measureFor, nudgeFrom, parse, regionalUnits, stepPast,
   shownDecimals, sizeClassLabel, snap, toSI,
 } from '../../src/core/units.js';
 
@@ -203,9 +203,6 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
         return { chosen: chosen, regional: regional, next: next, stored: c.chosen, flip: c.flip };
       },
     ))),
-    stored: ['metric', 'imperial', 'Imperial', 'kelvin', '', 0, true, null].map((raw) => ({
-      raw: raw, chosen: readChosenUnits(raw),
-    })),
     sizeLabels: [['eu', SIZE_CLASSES], ['us', US_SIZE_CLASSES]].flatMap(([table, classes]) =>
       (classes as typeof SIZE_CLASSES).flatMap((c) => UNIT_SYSTEMS.map((system) => {
         const label = sizeClassLabel(c, system);

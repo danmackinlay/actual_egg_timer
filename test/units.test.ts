@@ -21,7 +21,7 @@ import { parseCatalogue, render } from '../src/core/copy.js';
 import {
   Measure, QUANTITIES, Quantity, UNIT_SYSTEMS,
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
-  nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
+  nudgeFrom, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
 import { parseRecord } from '../src/core/record.js';
 import { replan, startCook } from '../src/core/running.js';
@@ -286,10 +286,6 @@ test('4c. a choice is stored as a choice, and only a change of system is a flip'
   // A stored choice outlives the default changing under it.
   assert.equal(effectiveUnits('metric', 'imperial'), 'metric');
   assert.equal(effectiveUnits(null, 'imperial'), 'imperial');
-  for (const raw of ['Imperial', 'kelvin', '', 0, true, null, undefined]) {
-    assert.equal(readChosenUnits(raw), null, String(raw));
-  }
-  assert.equal(readChosenUnits('imperial'), 'imperial');
 });
 
 // --------------------------------------------------------------------------

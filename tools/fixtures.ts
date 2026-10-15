@@ -24,7 +24,7 @@
  *                              label, which words can be reached, the verdict
  *   fixtures/texture.json      the texture bands and the note's keys
  *   fixtures/boil.json         boil memory: a boil remembered, and estimated
- *   fixtures/sounds.json       the alarm sounds and their timing
+ *   fixtures/sounds.json       the alarm sounds' timing
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
@@ -57,8 +57,6 @@
  *                              at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
- *   fixtures/settings.json     the settings both apps keep: the defaults, and
- *                              a stored copy read back
  *   fixtures/stores.json       every store either app keeps: its name, format
  *                              and keys, and what reads as in its format
  *
@@ -101,7 +99,6 @@ import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
 import { stepFixture } from './fixtures/step.js';
-import { settingsFixture } from './fixtures/settings.js';
 import { storesFixture } from './fixtures/stores.js';
 
 const unitsJson = unitsFixture(english);
@@ -137,7 +134,6 @@ const written: Record<string, unknown> = {
   wording: wordingFixture(),
   running: runningFixture,
   step: stepFixture,
-  settings: settingsFixture,
   stores: storesFixture,
 };
 /**
@@ -213,6 +209,5 @@ const counts = [
   `${shareJson.replies.length} server answers`,
   `${runningFixture.setups.length} cook setups and ${runningFixture.moves.length} cook moves`,
   `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
-  `${settingsFixture.read.length} stored settings read`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

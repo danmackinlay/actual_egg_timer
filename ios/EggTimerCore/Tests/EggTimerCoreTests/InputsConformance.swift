@@ -115,21 +115,4 @@ struct SizeClassConformance {
             )
         }
     }
-
-    /// The rule for a stored record meeting a changed region. The two apps
-    /// store the same index, so they must read it back the same way.
-    @Test("a stored size is carried into either table the same way")
-    func carry() throws {
-        for c in try Fixtures.list("inputs.json", "sizeClasses.carry") {
-            let stored = try c.num("stored")
-            #expect(
-                try carrySizeIndex(stored, classes: sizeClasses) == Int(c.num("eu")),
-                "stored \(stored) read against the EU table"
-            )
-            #expect(
-                try carrySizeIndex(stored, classes: usSizeClasses) == Int(c.num("us")),
-                "stored \(stored) read against the US table"
-            )
-        }
-    }
 }

@@ -23,7 +23,7 @@ public enum StoreRegistry {
     /// good, since an older build must find them.
     public static let newest = StoreSpec(name: "newest", format: nil, web: "aet.newest", ios: "newestVersion")
     public static let newestBuild = StoreSpec(name: "newestBuild", format: nil, web: nil, ios: "newestBuild")
-    public static let settings = StoreSpec(name: "settings", format: 1, web: "aet.settings", ios: "settings")
+    public static let settings = StoreSpec(name: "settings", format: 2, web: "aet.settings", ios: "settings")
     public static let cook = StoreSpec(name: "cook", format: 7, web: "aet.cook", ios: "cook")
     public static let boilMemory = StoreSpec(name: "boilMemory", format: 1, web: "aet.boilMemory", ios: "boilMemory")
     public static let calibration = StoreSpec(

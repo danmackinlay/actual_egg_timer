@@ -35,7 +35,7 @@ in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
 by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 `Newer.swift`; the share queue `src/ui/shareState.ts` and
 `ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
-`StoredCook.swift`.
+`StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
@@ -56,12 +56,11 @@ by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 | `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
 | `certainty.ts` | how sure, in words: very certain, a ballpark or a wild guess; the 90% interval in words; a likely time range | `certaintyAt`, `wordCertainty`, `askedWord` | `Certainty.swift` | `certainty.json` |
 | `reach.ts` | the odds at every level, the shading, the advice, and the answer on screen with its time decided | `oddsProfile`, `answerAt`, `decideAnswer`, `protocolAdvice` | `Reach.swift` | `reach.json` |
-| `inputs.ts` | what a cook enters and a fresh install starts from: the bounds on every number, the defaults, the egg-temperature buttons, the room the model is told about, a stored size carried into the table in use | `LIMITS`, `DEFAULTS`, `clamp`, `roomInUse`, `ambientFor`, `carrySizeIndex` | `Inputs.swift` | `inputs.json` |
+| `inputs.ts` | what a cook enters and a fresh install starts from: the bounds on every number, the defaults, the egg-temperature buttons, the room the model is told about | `LIMITS`, `DEFAULTS`, `clamp`, `roomInUse`, `ambientFor` | `Inputs.swift` | `inputs.json` |
 | `slider.ts` | the doneness slider: its grid, the nearest label, which words can be reached, the yolk temperature asked for, and the refusal verdict | `snapUp`, `anchorNear`, `anchorReachable`, `verdictFor` | `Slider.swift` | `slider.json` |
 | `texture.ts` | the texture bands, and the keys the note is said in | `textureFor`, `textureNoteKeys` | `Texture.swift` | `texture.json` |
 | `boil.ts` | boil memory: a boil remembered by volume, and the estimate for a volume | `rememberBoil`, `estimateTimeToBoil` | `Boil.swift` | `boil.json` |
-| `sounds.ts` | the alarm sounds: their order, the default, a stored choice read, each sound's timing | `readAlarmSound`, `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
-| `settings.ts` | the settings both apps keep, as one value, and a stored copy read back defensively | `Settings` (`AppSettings`), `DEFAULT_SETTINGS`, `readSettings` | `Settings.swift` | `settings.json` |
+| `sounds.ts` | the alarm sounds and each sound's timing | `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |

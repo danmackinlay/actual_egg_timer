@@ -12,7 +12,7 @@
 import { STORES, STORE_LIST, inFormat } from '../../src/core/stores.js';
 
 const VALUES: { about: string; raw: unknown }[] = [
-  { about: 'the settings\' format', raw: { v: 1, doneness: 0.5 } },
+  { about: 'the settings\' format', raw: { v: 2, doneness: 0.5 } },
   { about: 'the cook\'s format', raw: { v: 6, cook: {} } },
   { about: 'a format no build has written', raw: { v: 7 } },
   { about: 'no format: a store from before formats were inside', raw: { doneness: 0.5 } },

@@ -9,11 +9,14 @@
  */
 
 import { SizeClass } from '../core/geometry.js';
-import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
+import { LanguageState } from '../core/language.js';
 import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
-import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
+import {
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, Settings as StoredSettings, readLanguageState,
+  readSettings,
+} from './settings.js';
 import { RunningCook } from '../core/running.js';
 import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
 import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
@@ -38,13 +41,13 @@ const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.flatMap((s) => (s.web 
  *  'sous' never reaches core: see choicesOf in state.ts. */
 export type UiStartMode = StartMode | 'sous';
 
-/** The settings are core's (`src/core/settings.ts`), but for the start on
+/** The settings are settings.ts's, but for the start on
  *  screen, which may be a sous-vide; a sous-vide is never stored. */
 export interface Settings extends Omit<StoredSettings, 'startMode'> {
   startMode: UiStartMode;
 }
 
-export const DEFAULT_SETTINGS: Settings = CORE_DEFAULT_SETTINGS;
+export const DEFAULT_SETTINGS: Settings = STORED_DEFAULT_SETTINGS;
 
 /* ------------------------------------------------------------- raw storage */
 

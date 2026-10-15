@@ -46,7 +46,7 @@ export const STORES = {
   newest: { name: 'newest', format: null, web: 'aet.newest', ios: 'newestVersion' },
   newestBuild: { name: 'newestBuild', format: null, web: null, ios: 'newestBuild' },
   /** The settings, one value (settings.ts). */
-  settings: { name: 'settings', format: 1, web: 'aet.settings', ios: 'settings' },
+  settings: { name: 'settings', format: 2, web: 'aet.settings', ios: 'settings' },
   /** The running cook: what was fixed at the press, its start and its log,
    *  whether its egg was answered, and the lean last decided (the web's
    *  storedCook.ts, iOS's StoredCook.swift). */

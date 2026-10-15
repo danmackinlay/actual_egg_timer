@@ -379,9 +379,3 @@ public func chooseUnits(chosen: UnitSystem?, regional: UnitSystem, next: UnitSys
     let flip: UnitsFlip? = before == next ? nil : next == .imperial ? .metricToImperial : .imperialToMetric
     return UnitsChoice(chosen: next, flip: flip)
 }
-
-/// A stored choice, or nil for none.
-public func readChosenUnits(_ raw: Any?) -> UnitSystem? {
-    guard let string = raw as? String else { return nil }
-    return UnitSystem(rawValue: string)
-}
