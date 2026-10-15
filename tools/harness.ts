@@ -19,8 +19,8 @@
  * Beyond that API the harness watches the platform, not the app: before the
  * app runs, each page counts the sounds made, each ring (one looped buffer)
  * and each blip (an oscillator), and when each is set to
- * start on the audio clock (`__osc`), and what it wrote to localStorage
- * (`__writes`); its requests are read off DevTools' network events. An
+ * start on the audio clock (`__osc`), the audio contexts it made
+ * (`__audio`), and what it wrote to localStorage (`__writes`); its requests are read off DevTools' network events. An
  * exception thrown in a page fails its scenario.
  *
  * `--tree <dir>` (E2E_TREE) serves another checkout's build - its `_site/`
@@ -81,6 +81,15 @@ const INSTRUMENT = `(() => {
     };
     counted('createOscillator', 'blip');
     counted('createBufferSource', 'ring');
+  }
+  // Every audio context the page made, to read whether it was closed.
+  const contexts = [];
+  window.__audio = contexts;
+  if (window.AudioContext) {
+    const A = window.AudioContext;
+    window.AudioContext = class extends A {
+      constructor(...args) { super(...args); contexts.push(this); }
+    };
   }
   const writes = [];
   window.__writes = writes;
