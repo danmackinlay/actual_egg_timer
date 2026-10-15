@@ -6,8 +6,8 @@ import EggTimerShared
 
 /// Every input the solver has, and the answer it last gave.
 ///
-/// The inputs are one value, the settings both apps keep (`settings`, core's
-/// `AppSettings`), and a cook's choices are made from them (`choices`) and
+/// The inputs are one value, the settings (`settings`, `AppSettings`,
+/// Settings.swift), and a cook's choices are made from them (`choices`) and
 /// back (`adopt`). This file holds them and what is derived from them. The
 /// solve is `SolveLoop`, the learning from each egg `Learning`, and the
 /// decision surfaces both of them share are in DecisionGrids.swift.
@@ -21,7 +21,7 @@ import EggTimerShared
 public final class Planner {
     // MARK: - Inputs
 
-    /// The controls, as both apps keep them: core's `AppSettings`, one value,
+    /// The controls, as this app keeps them: `AppSettings`, one value,
     /// stored as it is (`SettingsStore`). While a cook runs they are its own
     /// choices (`adopt`), and a change is a correction in hand (`Edits`).
     public var settings = AppSettings.defaults { didSet { settingsChanged(from: oldValue) } }

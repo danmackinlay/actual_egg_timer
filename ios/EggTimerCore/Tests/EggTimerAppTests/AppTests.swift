@@ -521,7 +521,7 @@ struct AppTests {
 
     // MARK: - Stores
 
-    /// The settings are one value, read by core's `readSettings`: a control
+    /// The settings are one value, read by `readSettings`: a control
     /// changed while idle writes it whole, in its format, and the next launch
     /// reads it back; the keys of before are swept, and settings in no format
     /// are not read.

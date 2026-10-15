@@ -172,9 +172,9 @@ enum BoilMemories {
     }
 }
 
-/// The inputs, remembered between launches: one value, core's `AppSettings`,
-/// as JSON under one key, read by core's `readSettings`, which the web reads
-/// its own with. Nobody wants to re-enter their altitude every morning.
+/// The inputs, remembered between launches: one value, `AppSettings`, as
+/// JSON under one key, read by `readSettings` (Settings.swift). Nobody wants
+/// to re-enter their altitude every morning.
 enum SettingsStore {
     public static let key = StoreRegistry.settings.key
 
