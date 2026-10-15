@@ -1,7 +1,9 @@
 /**
  * The application: inputs -> solver -> readout, and the cook itself, put
- * together. `boot()` reads the state from storage, draws the page and wires
- * every event; what each part holds and does is its own module:
+ * together. `boot()` asks whether this tab runs the app (owner.ts); if it
+ * does, it reads the state from storage, draws the page and wires every
+ * event, and if another tab does, it waits. What each part holds and does is
+ * its own module:
  *
  * - model.ts: the page's model, and `update`, how a message moves it - the
  *   idle page, and the running cook over core's `step`;
@@ -27,15 +29,18 @@ import { stepPast } from '../core/units.js';
 import { openLearner } from './calibration.js';
 import { applyConstantsToDom, buildSizeOptions } from './controls.js';
 import {
-  Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, reset, restoreCook, startRunner,
-  storageElsewhere,
+  Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
+  startRunner, stopRunner, storageElsewhere,
 } from './cook.js';
+import { closeAudio, primeAudio } from './clock.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
 import { wireInfoButtons } from './info.js';
 import { onInput, onToggleMute } from './input.js';
 import { wireExport, wireForget } from './learned.js';
 import { startOffline } from './offline.js';
+import { stopWorker } from './offThread.js';
+import { claimApp, ownsApp } from './owner.js';
 import { renderVersion } from './render.js';
 import { buildClauses } from './sentence.js';
 import { openSharing } from './share.js';
@@ -53,8 +58,54 @@ import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
 import { markDevClockUse, random } from './now.js';
 
-export function boot(): void {
+/**
+ * Boot: the page's elements found, then whether this tab runs the app or
+ * another tab does (owner.ts), asked before anything is claimed or written.
+ */
+export async function boot(): Promise<void> {
   bindDom();
+  page().useHere.addEventListener('click', takeOver);
+  if (await claimApp(false, standDown)) own(true);
+  else wait();
+}
+
+/** The app is open in another tab: this one shows only the note and its
+ *  button, and writes, sounds and claims nothing. */
+function wait(): void {
+  page().body.dataset['tab'] = 'waiting';
+  page().tabNote.hidden = false;
+}
+
+/** The button pressed: the app taken from the tab that has it. The press is
+ *  a gesture, so the audio is primed for the alarm. */
+function takeOver(): void {
+  primeAudio();
+  void claimApp(true, standDown).then((owned) => {
+    if (owned) own(false);
+  });
+}
+
+/** Another tab took the app: this one stops everything that writes or
+ *  sounds, and waits. */
+function standDown(): void {
+  stopRunner();
+  stopWorker();
+  closeAudio();
+  wait();
+}
+
+/** Whether the page's own events are wired: once, the first time it owns
+ *  the app. */
+let wired = false;
+
+/**
+ * This tab owns the app, at boot or taken over: every store read afresh, as
+ * a reload reads it, and the cook picked back up - after a reload with its
+ * alarm lost (`reloaded`), and taken over with it armed again.
+ */
+function own(reloaded: boolean): void {
+  page().body.dataset['tab'] = 'owner';
+  page().tabNote.hidden = true;
   // Before anything is written: whether a newer build has run here, and the
   // mark brought up to this one if not, and then the keys
   // no build reads any more deleted.
@@ -79,7 +130,32 @@ export function boot(): void {
     calib: learner.calibration(), nudgeDraw: nudgeSeconds(random()), appVersion: APP_VERSION,
     prior: activePopulation().id,
   };
+  if (!wired) wire();
+  wired = true;
+  // From here on every change to the page is a message (send.ts).
+  startRunner(stores, initial);
+  restoreCook(reloaded);
+  // A deletion not yet confirmed is asked again before anything is sent.
+  resend();
+  // The idle page solved; a cook picked back up is described by its own
+  // choices and its plan, never by the settings, which another tab may have
+  // changed since.
+  dispatch({ kind: 'solve' });
+  // Eggs written down but not yet folded - a reload mid-fold, or a posterior
+  // that had to be rebuilt from the log - are folded now, off the main thread.
+  // The app runs on what it had until they land.
+  learnBehind(learner);
+}
 
+/** What sharing has still to send or delete, sent, by the app's owner. */
+function resend(): void {
+  if (!ownsApp()) return;
+  const sharing = pageStores().sharing;
+  void sharing.retryDeletes().then(sharing.sendFinal);
+}
+
+/** The page's controls built, and its events wired: once. */
+function wire(): void {
   buildSizeOptions();
   buildTicks();
   buildClauses();
@@ -111,19 +187,12 @@ export function boot(): void {
   setStepRule(page().roomTempFrom, (value, up) => stepPast(measure('roomTemp'), value, up));
   setStepRule(page().coolingWater, (value, up) => stepPast(measure('coolingWater'), value, up));
   wireViews();
-  // From here on every change to the page is a message (send.ts).
-  startRunner(stores, initial);
   renderVersion();
-
   wireFeedback();
-
-  restoreCook();
-  // A deletion not yet confirmed is asked again before anything is sent.
   wireShare();
-  const resend = (): void => { void stores.sharing.retryDeletes().then(stores.sharing.sendFinal); };
-  resend();
   window.addEventListener('online', resend);
   window.addEventListener('storage', (event) => {
+    if (!ownsApp()) return;
     // A newer build's tab has run: this page writes nothing from now on
     // (`claimStorage`), and takes up nothing more either.
     newerStoredElsewhere(event.key);
@@ -134,14 +203,6 @@ export function boot(): void {
   document.addEventListener('visibilitychange', lookAgain);
   window.addEventListener('focus', lookAgain);
   window.addEventListener('pageshow', lookAgain);
-  // The idle page solved; a cook picked back up is described by its own
-  // choices and its plan, never by the settings, which another tab may have
-  // changed since.
-  dispatch({ kind: 'solve' });
-  // Eggs written down but not yet folded - a reload mid-fold, or a posterior
-  // that had to be rebuilt from the log - are folded now, off the main thread.
-  // The app runs on what it had until they land.
-  learnBehind(learner);
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(betweenCooks);

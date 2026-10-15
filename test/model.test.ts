@@ -145,7 +145,7 @@ test('4. a reload rings nothing, and an answer given before it puts the question
   const stored = { cook: p.m.cook as NonNullable<Model['cook']>, answers: 'beforeReload' as const, leanHint_s: p.m.leanHint_s };
   const q = new Page();
   q.m.surfaces = p.m.surfaces;
-  const back = q.go({ kind: 'restore', stored: stored }, p.coolEnd + 30);
+  const back = q.go({ kind: 'restore', stored: stored, reloaded: true }, p.coolEnd + 30);
   assert.ok(!kinds(back).some((k) => k.startsWith('ring')), 'no ring');
   assert.equal(q.m.reloaded, true);
   assert.equal(q.m.questions, 'away');
@@ -153,7 +153,7 @@ test('4. a reload rings nothing, and an answer given before it puts the question
   const early = new Page();
   const fresh = started();
   const past = { cook: fresh.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: 0 };
-  assert.ok(!kinds(early.go({ kind: 'restore', stored: past }, fresh.pull + 5)).some((k) => k.startsWith('ring')),
+  assert.ok(!kinds(early.go({ kind: 'restore', stored: past, reloaded: true }, fresh.pull + 5)).some((k) => k.startsWith('ring')),
     'a reload past the pull writes it rung, and rings nothing');
 });
 
@@ -168,7 +168,7 @@ test('5. a cook ended before its surface is in waits off screen, and is logged a
   const stored = { cook: p.m.cook as NonNullable<Model['cook']>, answers: 'none' as const, leanHint_s: p.m.leanHint_s };
   // A reload, two hours on: too old, and no surface built on this page.
   const q = new Page();
-  q.go({ kind: 'restore', stored: stored }, p.coolEnd + 7200);
+  q.go({ kind: 'restore', stored: stored, reloaded: true }, p.coolEnd + 7200);
   assert.equal(q.m.cook, null, 'the page opens idle');
   assert.equal(q.m.ending.length, 1);
   const waiting = q.m.ending[0];

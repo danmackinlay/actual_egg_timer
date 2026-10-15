@@ -20,13 +20,21 @@ let worker: Worker | null = null;
 let workerFailed = false;
 let nextId = 1;
 const waiting = new Map<number, Waiting>();
+/** Moved on when the page stands down (`stopWorker`): a job asked for
+ *  before it is never built. */
+let epoch = 0;
 
 /** Build on this thread, after yielding once so whatever the caller just put on
  *  screen paints before the build blocks it. The fallback, and the path the
  *  tests take, since Node has no Web Worker. */
 function onThisThread(job: Job): Promise<unknown> {
+  const asked = epoch;
   return new Promise((resolve, reject) => {
     setTimeout(() => {
+      if (asked !== epoch) {
+        reject(new Error(STOOD_DOWN));
+        return;
+      }
       try {
         resolve(runJob(job));
       } catch (error) {
@@ -69,6 +77,20 @@ function gridWorker(): Worker | null {
   // lands here. The fold still happens; it just blocks the page while it runs.
   worker.onerror = () => abandonWorker();
   return worker;
+}
+
+const STOOD_DOWN = 'this page no longer owns the app';
+
+/** The page no longer owns the app (owner.ts): the worker ended, and every
+ *  job it holds refused, so nothing more is built and whatever waits on a
+ *  job lets go of it. A page that takes the app back starts a new one. */
+export function stopWorker(): void {
+  epoch += 1;
+  if (worker !== null) worker.terminate();
+  worker = null;
+  const held = Array.from(waiting.values());
+  waiting.clear();
+  for (const w of held) w.reject(new Error(STOOD_DOWN));
 }
 
 /** A job's answer, from the worker if there is one. */

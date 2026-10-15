@@ -143,6 +143,9 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
   let generation = 0;
   let pumping: Promise<void> | null = null;
   let again = false;
+  /** Whether the page has stopped owning the app (`close`): nothing more is
+   *  sent or asked. */
+  let closed = false;
 
   function save(next: ShareState): void {
     state = next;
@@ -217,7 +220,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
     // Never an egg cooked on the development clock, which runs only on this
     // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
     // anything while a newer build's results are left alone (store.ts).
-    if (devClockUsed() || storageReadOnly()) return false;
+    if (closed || devClockUsed() || storageReadOnly()) return false;
     const s = current();
     const log = host.log();
     const at = nextToSend(s, host.finalCount(), log.length);
@@ -257,20 +260,28 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
     if (storageReadOnly()) return Promise.resolve();
     return exclusive(async () => {
       for (const uid of [...current().deleting]) {
+        if (closed) return;
         let status: number;
         try {
           status = await transport.remove(uid);
         } catch {
           return;
         }
-        if (deletionDone(status)) save(deletionConfirmed(current(), uid));
+        if (!closed && deletionDone(status)) save(deletionConfirmed(current(), uid));
       }
     });
+  }
+
+  /** The page no longer owns the app (owner.ts): nothing more is sent or
+   *  asked, and an answer still to come lands on nothing. */
+  function close(): void {
+    closed = true;
+    generation += 1;
   }
 
   return {
     /** The state, with another tab's write taken up first. */
     state: (): Readonly<ShareState> => current(),
-    storedElsewhere, setSharing, forget, sendFinal, deleteSent, retryDeletes,
+    storedElsewhere, setSharing, forget, sendFinal, deleteSent, retryDeletes, close,
   };
 }

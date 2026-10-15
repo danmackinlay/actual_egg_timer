@@ -21,6 +21,7 @@ import { RunningCook } from '../core/running.js';
 import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
 import { STORES, STORE_LIST, inFormat, stamped } from './stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
+import { ownsApp } from './owner.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
@@ -60,7 +61,10 @@ export function readStorage(key: string): string | null {
 }
 
 /** Every write the app makes, of every store, comes through here or through
- *  `removeStorage`, so the guard below holds for all of them. */
+ *  `removeStorage`, so the guards below hold for all of them: a page that
+ *  does not own the app (owner.ts) writes nothing, whatever timer of its own
+ *  comes round after it lost it, and neither does one a newer build has
+ *  run beside. */
 export function writeStorage(key: string, value: string): void {
   if (!mayWrite()) return;
   try {
@@ -141,6 +145,7 @@ export function storageReadOnly(): boolean {
 /** The mark as stored, and this build's verdict on it; the mark brought up
  *  to this build when it may write. */
 function mayWrite(): boolean {
+  if (!ownsApp()) return false;
   if (mine === null) return true;
   if (readOnly) return false;
   const mark = readStorage(NEWEST_KEY);

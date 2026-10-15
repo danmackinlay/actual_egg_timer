@@ -262,7 +262,8 @@ export interface Model extends CookState {
    *  in another tab, or the egg final - when no more can be taken. */
   questions: 'open' | 'away';
   /** Whether the cook on screen was picked back up after a reload: its
-   *  alarm died with the old page. */
+   *  alarm died with the old page. Not in a tab the app was moved to by a
+   *  press, whose alarm is armed again. */
   reloaded: boolean;
   /** A probe reading typed before the egg's record could be made: read
    *  again when a surface lands. */
@@ -288,7 +289,9 @@ export type Msg =
   | { kind: 'elsewhere'; theirs: StoredCook | null }
   /** A probe reading typed at Done, C; null for what is not a number. */
   | { kind: 'probe'; reading_C: number | null }
-  | { kind: 'restore'; stored: StoredCook }
+  /** The stored cook picked back up: after a reload, or in a tab the app
+   *  was moved to by a press (`reloaded` false), whose alarm can sound. */
+  | { kind: 'restore'; stored: StoredCook; reloaded: boolean }
   /** A finger down on a control (edit.ts, `groupOf`), or lifted; the page
    *  hidden or gone, which commits a change still settling; a timer of the
    *  correction in hand come round. Real ms. */
@@ -1003,13 +1006,14 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     case 'restore': {
       const stored = msg.stored;
       const fresh: Model = {
-        ...idle(m), written: JSON.stringify(stored.cook), reloaded: true,
+        ...idle(m), written: JSON.stringify(stored.cook), reloaded: msg.reloaded,
         questions: stored.answers === 'beforeReload' || answered(stored.cook) ? 'away' : 'open',
       };
       const state: CookState = { cook: stored.cook, plan: null, leanHint_s: stored.leanHint_s };
       const [next, effects] = stepCook(fresh, { kind: 'tick', now_s: now_s }, now_s, state);
-      // The alarm died with the old page, and cannot sound before a gesture.
-      return [next, effects.filter((e) => e.kind !== 'ring')];
+      // After a reload the alarm died with the old page, and cannot sound
+      // before a gesture; a tab the app was moved to was pressed.
+      return [next, msg.reloaded ? effects.filter((e) => e.kind !== 'ring') : effects];
     }
     case 'primary': {
       // A correction still settling is committed first: the button acts on

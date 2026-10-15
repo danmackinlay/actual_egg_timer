@@ -42,10 +42,13 @@ import type { Sharing } from './share.js';
 import { CookStore, KeptAnswers, PansStore, SettingsStore, storageReadOnly } from './store.js';
 import { correctedLater, takeUpEvents } from './tabs.js';
 import { unitSystem, useUnits } from './units.js';
-import { finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon, storedElsewhere } from './effects.js';
+import {
+  dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon, storedElsewhere,
+} from './effects.js';
 import { showEgg } from './views.js';
 import { Builds, Needs, openNeeds, workerBuilds } from './needs.js';
 import { clockSpeed, nowMs, onClockChange, random } from './now.js';
+import { ownsApp } from './owner.js';
 
 /** The page's model: what `update` last made of it. Kept here only. */
 let model!: Model;
@@ -186,6 +189,8 @@ function apply(msg: Msg, now: number): void {
  * is drawn. A message sent while one is taken up waits for it.
  */
 export function dispatch(msg: Msg): void {
+  // A page that lost the app to another tab (owner.ts) takes nothing up.
+  if (!ownsApp()) return;
   queue.push(msg);
   if (busy) return;
   busy = true;
@@ -219,6 +224,23 @@ export function startRunner(s: Stores, initial: Model, builds: Builds = workerBu
   muted = model.settings.muted;
   setMuted(muted);
   setAlarmSound(model.settings.alarm);
+}
+
+/** The page no longer owns the app (owner.ts): every message is refused
+ *  from now on (`dispatch`), and what would still write or sound stopped -
+ *  the ticker and the screen kept awake, the page's wake, a correction's
+ *  timers, the saves and solves waiting to coalesce, the folds and the
+ *  sharing. The alarm and the worker are app.ts's to stop. */
+export function stopRunner(): void {
+  if (clock.ticker !== null) clock.ticker.stop();
+  clock.ticker = null;
+  releaseScreen();
+  window.clearTimeout(clock.wake);
+  clock.wake = 0;
+  for (const timer of EDIT_TIMERS) editTimer(timer, null);
+  dropPending();
+  stores.learner.close();
+  stores.sharing.close();
 }
 
 /* ------------------------------------------------------------- effects */
@@ -469,20 +491,23 @@ export function lookAgain(): void {
 }
 
 /**
- * Pick a cook back up after a reload: a tick of the stored cook with no plan
- * yet. The cook is clock times, so the countdown resumes at the right number
- * rather than restarting. What does NOT come back is the alarm: it lives in
- * this tab's audio context and died with the old page, so a restored cook
- * says so rather than letting someone walk away trusting a noise that will
- * not happen. One too old to pick back up ends as Start again would end it,
- * and the page opens idle; one under the current key that does not read is
+ * Pick a cook back up after a reload, or in a tab the app was moved to
+ * (`reloaded` false): a tick of the stored cook with no plan yet. The cook
+ * is clock times, so the countdown resumes at the right number rather than
+ * restarting. After a reload the alarm does NOT come back: it lived in the
+ * old page's audio context, and a new one cannot sound before a gesture, so
+ * a restored cook says so rather than letting someone walk away trusting a
+ * noise that will not happen. A tab the app was moved to was pressed, which
+ * primed its audio, so its alarm is armed again and a pull it finds due
+ * rings. One too old to pick back up ends as Start again would end it, and
+ * the page opens idle; one under the current key that does not read is
  * dropped.
  */
-export function restoreCook(): void {
+export function restoreCook(reloaded: boolean): void {
   const stored = stores.cooks.load();
   if (stored === null) {
     if (stores.cooks.text() !== null) stores.cooks.remove();
     return;
   }
-  dispatch({ kind: 'restore', stored: stored });
+  dispatch({ kind: 'restore', stored: stored, reloaded: reloaded });
 }

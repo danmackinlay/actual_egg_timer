@@ -71,6 +71,15 @@ function writeSettings(store: SettingsStore, settings: Settings): void {
   if (next !== settings) send({ kind: 'settingsTaken', settings: next });
 }
 
+/** The page no longer owns the app (owner.ts): a save or a solve still
+ *  waiting to coalesce is dropped. */
+export function dropPending(): void {
+  cancelSoon(pending.solveHandle);
+  cancelSoon(pending.saveHandle);
+  pending.solveHandle = 0;
+  pending.saveHandle = 0;
+}
+
 /* -------------------------------------------------------------- language */
 
 /**

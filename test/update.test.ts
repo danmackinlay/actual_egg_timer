@@ -261,13 +261,26 @@ test('restore: a deadline that passed before the page was shown rings nothing', 
   const stored = { cook: m.cook!, answers: 'none' as const, leanHint_s: m.leanHint_s };
   const fresh = { ...idle(), surfaces: m.surfaces };
   for (const at of [pull(m) + 5, pull(m) + 300]) {
-    const [back, effects] = go(fresh, { kind: 'restore', stored: stored }, at);
+    const [back, effects] = go(fresh, { kind: 'restore', stored: stored, reloaded: true }, at);
     assert.ok(!kinds(effects).includes('ring'), `nothing rung at ${at - S} s`);
     assert.equal(back.reloaded, true);
     // And ticked on from there, the deadline already passed is not rung.
     const [, ticked] = go(back, { kind: 'tick' }, at + 1);
     assert.ok(!ticked.some((e) => e.kind === 'ring' && e.moment === 'pull'), 'the pull, gone by unheard, stays unheard');
   }
+});
+
+test('restore in a tab the app was moved to: the alarm armed for the same pull, and a pull due rung once', () => {
+  const m = running();
+  const stored = { cook: m.cook!, answers: 'none' as const, leanHint_s: m.leanHint_s };
+  const fresh = { ...idle(), surfaces: m.surfaces };
+  const [before] = go(fresh, { kind: 'restore', stored: stored, reloaded: false }, pull(m) - 60);
+  assert.equal(before.reloaded, false, 'no note of an alarm lost');
+  assert.equal(before.pull_s, m.pull_s, 'the pull where it was');
+  const [due, effects] = go(fresh, { kind: 'restore', stored: stored, reloaded: false }, pull(m) + 5);
+  assert.ok(effects.some((e) => e.kind === 'ring' && e.moment === 'pull'), 'the pull due, rung');
+  const [, again] = go(due, { kind: 'tick' }, pull(m) + 6);
+  assert.ok(!kinds(again).includes('ring'), 'once');
 });
 
 test('landed: a cook waiting on its surface is planned on it', () => {

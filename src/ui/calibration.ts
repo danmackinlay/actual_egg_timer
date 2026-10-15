@@ -78,6 +78,9 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    *  when the button was pressed lands on nothing rather than on the fresh prior. */
   let generation = 0;
   let draining: Promise<void> | null = null;
+  /** Whether the page has stopped owning the app (`close`): nothing more is
+   *  folded. */
+  let closed = false;
   /** The record whose cook is on screen, whose second answer may still come.
    *  Every other record is folded quietly. */
   let live = -1;
@@ -290,6 +293,7 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
 
   async function drainLog(): Promise<void> {
     for (;;) {
+      if (closed) return;
       current();
       if (kept.folded >= kept.log.length) return;
       const k = kept;
@@ -307,7 +311,14 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
       // The surface is centred where the posterior stands BEFORE this egg - see
       // `gridRequestFor` - and nothing folds in between, because this loop is the
       // only thing that folds.
-      const grid = await buildOffThread(gridRequestFor(k.calibration, r, calibrationGrid));
+      let grid: DoseGrid;
+      try {
+        grid = await buildOffThread(gridRequestFor(k.calibration, r, calibrationGrid));
+      } catch (error: unknown) {
+        // The page stood down while the surface was built (`close`).
+        if (closed) return;
+        throw error;
+      }
       // Another tab's store, written while the surface was being built, is
       // taken up instead, and folded from where it stands.
       if (current() || gen !== generation) continue;
@@ -435,12 +446,19 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
     return kept.calibration;
   }
 
+  /** The page no longer owns the app (owner.ts): the drain stops, and a
+   *  fold under way lands on nothing. */
+  function close(): void {
+    closed = true;
+    generation += 1;
+  }
+
   if (decoded.path !== 'loaded') save();
 
   return {
     calibration: (): Calibration => kept.calibration,
     keptState, storedElsewhere, exportResults, eggsBehind, logEgg, eggLogged, calibrationBefore, learn,
-    recordSecondAnswer, keepRecord, clear,
+    recordSecondAnswer, keepRecord, clear, close,
   };
 }
 

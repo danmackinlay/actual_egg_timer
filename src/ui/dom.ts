@@ -114,6 +114,8 @@ function findDom() {
     shareUid: el<HTMLSpanElement>('shareUid'),
     appVersion: el<HTMLParagraphElement>('appVersion'),
     newerNote: el<HTMLParagraphElement>('newerNote'),
+    tabNote: el<HTMLElement>('tabNote'),
+    useHere: el<HTMLButtonElement>('useHere'),
     shareDelete: el<HTMLButtonElement>('shareDelete'),
     shareConfirm: el<HTMLDivElement>('shareConfirm'),
     shareDeleteYes: el<HTMLButtonElement>('shareDeleteYes'),
