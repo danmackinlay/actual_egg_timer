@@ -67,6 +67,13 @@ struct ShareQueueTests {
                 "a dropped log begins again; its numbers carry on")
         long.sent = 2
         #expect(reconciled(long, logLength: 5) == long)
+        var waiting = long
+        waiting.busy = 1
+        waiting.busySinceS = 1e9
+        let passed = reconciled(waiting, logLength: 2)
+        #expect(passed.sent == 0 && passed.seq == nextSeq(s.seq) && passed.busy == 0,
+                "the egg waiting on a busy answer dropped with its log: its number is passed over")
+        #expect(reconciled(waiting, logLength: 3) == waiting, "the waiting egg still in the log")
         let moved = [200, 201, 400, 409, 413, 415, 422, 403, 404, 429, 500, 503].map { answered(s, status: $0, nowS: 0).moved }
         #expect(moved == [true, true, true, true, true, true, true, false, false, false, false, false])
         #expect(nextToSend(s, finalCount: 3, logLength: 3) == 0)
@@ -105,10 +112,8 @@ struct ShareQueueTests {
     /// damaged log dropped, every kind of answer, a relaunch - posting each
     /// egg the queue offers, and noting which egg went at each id and
     /// number. An egg is its log's (`gen`, bumped when the log is emptied or
-    /// dropped) and its place. A log is dropped here only between eggs: one
-    /// dropped while an egg waits on a busy answer files the new log's first
-    /// egg at the number the waiting one was sent at, which the server may
-    /// have kept.
+    /// dropped) and its place. A log is dropped between eggs or while one
+    /// waits on a busy answer, whose number the server may have kept.
     @Test func noNumberIsUsedForASecondEggUnderOneId() {
         #expect(firstSeq == 0 && nextSeq(41) == 42)
         var draw = SplitMix(seed: 20_261_015)
@@ -137,9 +142,12 @@ struct ShareQueueTests {
                 s = deletionAsked(s)
                 if let first = s.deleting.first, draw.next() < 0.5 { s = deletionConfirmed(s, uid: first) }
             } else if u < 0.31 {
-                if s.busy > 0 { continue }
+                // A damaged log, dropped and begun again with what came
+                // after. A relaunch reads a dropped log as empty, so while an
+                // egg waits the new one is no longer than the egg in flight.
                 gen += 1
                 logLength = Int(draw.next() * 3)
+                if s.busy > 0 { logLength = min(logLength, s.sent) }
                 s = reconciled(s, logLength: logLength)
             } else if u < 0.33 {
                 s = reconciled(readStoredShare(storedShare(s)), logLength: logLength)

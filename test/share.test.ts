@@ -78,6 +78,12 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
   assert.deepEqual(deletionAsked({ ...gone, uids: [A] }).deleting, [A, B], 'no id asked for twice');
   assert.equal(reconciled({ ...s, sent: 5 }, 2).sent, 0, 'a dropped log begins again');
   assert.equal(reconciled({ ...s, sent: 2 }, 5).sent, 2);
+  const waiting: ShareState = { ...s, sent: 2, busy: 1, busySince_s: 1e9 };
+  assert.deepEqual(
+    [reconciled(waiting, 2).sent, reconciled(waiting, 2).seq, reconciled(waiting, 2).busy], [0, s.seq + 1, 0],
+    'the egg waiting on a busy answer dropped with its log: its number is passed over',
+  );
+  assert.equal(reconciled(waiting, 3), waiting, 'the waiting egg still in the log');
   assert.deepEqual(
     [200, 201, 400, 409, 413, 415, 422, 403, 404, 429, 500, 503].map((status) => answered(s, status, 0).moved),
     [true, true, true, true, true, true, true, false, false, false, false, false],
@@ -274,9 +280,8 @@ test('12. no number is used for a second egg under one id, whatever the cook doe
   // log dropped, every kind of answer, a reload - posting each egg the queue
   // offers, and noting which egg went at each id and number. An egg is its
   // log's (`gen`, bumped when the log is emptied or dropped) and its place.
-  // A log is dropped here only between eggs: one dropped while an egg waits
-  // on a busy answer files the new log's first egg at the number the
-  // waiting one was sent at, which the server may have kept.
+  // A log is dropped between eggs or while one waits on a busy answer, whose
+  // number the server may have kept.
   assert.equal(FIRST_SEQ, 0);
   assert.deepEqual([0, 1, 41].map(nextSeq), [1, 2, 42]);
   const draw = rng(20261015);
@@ -302,10 +307,12 @@ test('12. no number is used for a second egg under one id, whatever the cook doe
       s = deletionAsked(s);
       if (s.deleting.length > 0 && draw() < 0.5) s = deletionConfirmed(s, s.deleting[0]);
     } else if (u < 0.31) {
-      // A damaged log, dropped and begun again with what came after.
-      if (s.busy > 0) continue;
+      // A damaged log, dropped and begun again with what came after. A load
+      // reads a dropped log as empty, so while an egg waits the new one is
+      // no longer than the egg in flight.
       gen += 1;
       logLength = Math.floor(draw() * 3);
+      if (s.busy > 0) logLength = Math.min(logLength, s.sent);
       s = reconciled(s, logLength);
     } else if (u < 0.33) {
       s = reconciled(readShare(storedShare(s)), logLength);
