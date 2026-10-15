@@ -1008,3 +1008,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     (an insecure context) every tab runs as before. 100's newer-build mark
     stays. A new build no longer waits for the site's one window: a
     waiting tab reloads into it. Built `one-tab`.
+129. **esbuild bundles the site; Node runs the TypeScript** (the owner, 14
+    October 2026, on the adversarial review). The site is built by esbuild,
+    a dev dependency, into a few content-hashed files; the tests and tools
+    run from their `.ts` sources, Node stripping the types, and `tsc` only
+    type-checks. `tools/build.mjs` and `dist/` go. Core still has no runtime
+    dependency (`CLAUDE.md` invariant 1). Built `bundle-and-strip`.
