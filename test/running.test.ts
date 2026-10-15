@@ -561,10 +561,12 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
   const random = rng(20261010);
   // Whether a plan takes a memo: one made wrong on purpose - its guess a
   // minute on, and at the most lengthenings, so the plan stops there -
-  // changes the plan only if it is read.
-  const takes = (memo: SlowHobPlace, k: RunningCook, c: typeof C, lean: number, now: number): boolean => {
+  // changes the plan from the start, `start`, only if it is read.
+  const takes = (
+    memo: SlowHobPlace, k: RunningCook, c: typeof C, lean: number, now: number, start: CookPlan,
+  ): boolean => {
     const wrong: SlowHobPlace = { ...memo, steps: SLOW_HOB_MAX_STEPS, ramp_s: memo.ramp_s + 60 };
-    return !isDeepStrictEqual(replan(k, c, null, lean, now, wrong), replan(k, c, null, lean, now));
+    return !isDeepStrictEqual(replan(k, c, null, lean, now, wrong), start);
   };
   const cooks = [cookOf(), cookOf({ mass_kg: 0.048, level: 0 })];
   const last = cooks.map((k) => replan(k, C, null, 0, S + 1));
@@ -590,7 +592,7 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
     const k = cooks[j];
     const tag = `cook ${j} at ${(t - S).toFixed(1)} s`;
     const fresh = replan(k, C, null, 0, t);
-    assert.equal(takes(last[j].memo as SlowHobPlace, k, C, 0, t), true, `${tag}: the last plan's memo taken`);
+    assert.equal(takes(last[j].memo as SlowHobPlace, k, C, 0, t, fresh), true, `${tag}: the last plan's memo taken`);
     assert.deepEqual(replan(k, C, null, 0, t, last[j].memo), fresh, tag);
     const place = fresh.memo as SlowHobPlace;
     // Offered elsewhere at the first ten moments: the place a memo keeps is
@@ -599,8 +601,9 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
     if (i < elsewhere.length) {
       const [name, offer] = elsewhere[i];
       const [ck, cc, lean, now, fits] = offer(k, t, place);
-      assert.equal(takes(place, ck, cc, lean, now), fits, `${tag}, ${name}`);
-      assert.deepEqual(replan(ck, cc, null, lean, now, place), replan(ck, cc, null, lean, now), `${tag}, ${name}`);
+      const start = replan(ck, cc, null, lean, now);
+      assert.equal(takes(place, ck, cc, lean, now, start), fits, `${tag}, ${name}`);
+      assert.deepEqual(replan(ck, cc, null, lean, now, place), start, `${tag}, ${name}`);
     }
     const at = fresh.slowHobAt_s as number;
     assert.ok(at > t, tag);
