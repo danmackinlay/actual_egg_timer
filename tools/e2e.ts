@@ -9,7 +9,7 @@
  *   npm run e2e -- reload one-tab-takeover   # only those named (after a build)
  *   npm run e2e -- copy/                     # those whose names start so
  *   npm run e2e -- --tree <dir>              # another checkout's build (harness.ts)
- *   node dist/tools/e2e.js --list
+ *   node tools/e2e.ts --list
  *
  * The harness is tools/harness.ts: the site served, Chrome, a context per
  * scenario, and the page read through its test API (`window.aetTest`,

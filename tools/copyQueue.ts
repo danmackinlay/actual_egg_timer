@@ -129,6 +129,6 @@ if (mode === 'queue') queue();
 else if (mode === 'approve' && t >= 0) translated(args[t + 1], args.filter((_, i) => i !== t && i !== t + 1));
 else if (mode === 'approve') approve(args);
 else {
-  console.error('usage: copyQueue.js queue | approve <key…|--all> [--at <ref>] | approve --translation <tag> <key…|--all>');
+  console.error('usage: copyQueue.ts queue | approve <key…|--all> [--at <ref>] | approve --translation <tag> <key…|--all>');
   process.exit(2);
 }

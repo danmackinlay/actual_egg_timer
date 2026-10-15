@@ -620,7 +620,7 @@ function reportSbc(r: SbcResult): void {
 
 /* ------------------------------------------------------------------ main */
 
-if (process.argv[1]?.endsWith('posterior.js')) {
+if (process.argv[1]?.endsWith('posterior.ts')) {
   const [mode, a, b] = process.argv.slice(2);
   if (mode === 'noise') noise(Number(a ?? 50), Number(b ?? PARTICLE_COUNT));
   else if (mode === 'reference') writeReference();

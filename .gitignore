@@ -15,7 +15,6 @@ xcuserdata/
 studies/shape-study/results*.json
 
 # Build output
-dist/
 node_modules/
 _site/
 _dev/

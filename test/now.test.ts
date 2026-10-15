@@ -106,11 +106,11 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
   g['sessionStorage'] = store(session);
   g['localStorage'] = store(local);
   const key = `${hostname}${search}${kept ?? ''}`;
-  const dev = await import(`../src/ui/dev/clock.js?${key}`) as typeof import('../src/ui/dev/clock.ts');
+  const dev = await import(`../src/ui/dev/clock.ts?${key}`) as typeof import('../src/ui/dev/clock.ts');
   dev.installDevClock();
   const m = isDevHost(hostname)
     ? await import('../src/ui/now.ts')
-    : await import(`../src/ui/now.js?${key}`) as typeof import('../src/ui/now.ts');
+    : await import(`../src/ui/now.ts?${key}`) as typeof import('../src/ui/now.ts');
   return { m: m, win: win, local: local };
 }
 

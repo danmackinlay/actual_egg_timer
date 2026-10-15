@@ -8,9 +8,9 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 
 ```
 npm install
-npm run build      # tsc -b into dist/, incrementally: core without DOM or Node, the app without Node, the rest
-npm test           # node --test
-npm run verify     # the gate: build, test, validate, copy:literals, fixtures:check and swift test
+npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
+npm test           # the type check, then node --test
+npm run verify     # the gate: typecheck, test, validate, copy:literals, copy:keys, fixtures:check and swift test
 npm run validate   # prints the validation table in README §7; fails if a check does
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run conformance      # fixtures unchanged, then the Swift core against them
@@ -18,7 +18,7 @@ npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (README §11.2)
 npm run rank       # how many parameters can feedback move? (INFERENCE.md §2)
 npm run probe      # is a probe thermometer worth an egg? (README §11.3)
-                   # (these four, and studies/shape-study, are in studies/, run only by hand; each builds studies/ itself)
+                   # (these four, and studies/shape-study, are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
@@ -33,20 +33,18 @@ npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :
 npm run e2e        # the web app driven end to end in headless Chrome (below)
 ```
 
-Every script that runs compiled code builds first, through `tools/build.mjs`:
-`tsc -b` over three projects (`tsconfig.core.json`, `tsconfig.app.json`, and
-`tsconfig.json` for the tests, tools and server), so `npm run verify`
-compiles once and each later step finds the build up to date. A file added,
-deleted or renamed, or a change to the installed packages, builds `dist/`
-from scratch, since `tsc -b` alone would keep a deleted file's output and
-not check again what imported it. `npm run build:site` ships the app's part
-of the same build.
+Nothing is compiled to run: Node runs the tests, tools and studies from their
+`.ts` sources, stripping the types itself, and every import names its source
+(`./x.ts`). `tsc` only checks, over three configurations (`tsconfig.core.json`,
+`tsconfig.app.json`, and `tsconfig.json` for the tests, tools, server and
+studies); `npm test` runs it first. `npm run build:site` bundles the app with
+esbuild from the same sources.
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
-so a Netlify build compiles on the same Node the tests ran on. `engines.node` is
-a range rather than a pin, a statement about the APIs this uses (`node:test`,
-ES2022), not a tested claim: 26 is what runs here, and what
-`.github/workflows/verify.yml` runs `npm run verify` on - the type checks, the
+so a Netlify build runs on the same Node the tests ran on. `engines.node` is a
+range rather than a pin, a statement about the APIs this uses (`node:test`,
+ES2022, types stripped by default from 22.18), not a tested claim: 26 is what
+runs here, and what `.github/workflows/verify.yml` runs `npm run verify` on - the type checks, the
 tests, fixtures identical to a fresh `npm run fixtures`, and the Swift core
 against them.
 
@@ -115,7 +113,7 @@ every phase, the egg's readings, corrections mid-cook (the owner's boiling
 to cold, overdue and back, a drag that rings only on release, the start's
 time and its limits, Settings' water), a correction at Done and the slider
 there, and "still in the water?". `npm run e2e -- reload one-tab-takeover` runs
-those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
+those named; `node tools/e2e.ts --list` lists them; `E2E_DEBUG=1` prints
 the page's text when one fails.
 
 The harness reads the app through what it shows, what it stores, and a

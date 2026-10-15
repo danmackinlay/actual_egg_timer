@@ -154,7 +154,7 @@ test('5. the command line: import, then emulate keeps the pull\'s copy of an egg
     const input = join(dir, 'actual-egg-timer-results-2026-10-05.json');
     const out = join(dir, 'imported.jsonl');
     writeFileSync(input, file(store(log())));
-    const run = spawnSync(process.execPath, ['dist/tools/eggs.js', 'import', input, out], {
+    const run = spawnSync(process.execPath, ['tools/eggs.ts', 'import', input, out], {
       encoding: 'utf8', env: { ...process.env, EGGFIT_TRUSTED: UID },
     });
     assert.equal(run.status, 0, run.stderr);
@@ -170,7 +170,7 @@ test('5. the command line: import, then emulate keeps the pull\'s copy of an egg
     const all = join(dir, 'all.jsonl');
     writeFileSync(all, [pulled, ...lines].map((l) => JSON.stringify(l)).join('\n') + '\n');
     const emulated = join(dir, 'emulated.json');
-    const em = spawnSync(process.execPath, ['dist/tools/eggs.js', 'emulate', all, emulated], { encoding: 'utf8' });
+    const em = spawnSync(process.execPath, ['tools/eggs.ts', 'emulate', all, emulated], { encoding: 'utf8' });
     assert.equal(em.status, 0, em.stderr);
     const e = JSON.parse(readFileSync(emulated, 'utf8')) as {
       counts: { twice: number; unanswered: number };

@@ -3,9 +3,9 @@
  * scenarios (tools/copyScenarios.ts), written to a JSON file - or two such
  * files compared.
  *
- *   npm run build:site && npm run build
- *   node dist/tools/copySnapshot.js capture <out.json> [--tree <dir>]
- *   node dist/tools/copySnapshot.js compare <before.json> <after.json>
+ *   npm run build:site
+ *   node tools/copySnapshot.ts capture <out.json> [--tree <dir>]
+ *   node tools/copySnapshot.ts compare <before.json> <after.json>
  *
  * `capture` runs the scenarios in the one web harness (tools/harness.ts:
  * the built site served, headless Chrome over the DevTools protocol), the
@@ -79,6 +79,6 @@ if (mode === 'capture' && a !== undefined) {
 } else if (mode === 'compare' && a !== undefined && b !== undefined) {
   compare(a, b);
 } else {
-  console.error('usage: copySnapshot.js capture <out.json> [--tree <dir>] | compare <before.json> <after.json>');
+  console.error('usage: copySnapshot.ts capture <out.json> [--tree <dir>] | compare <before.json> <after.json>');
   process.exit(2);
 }

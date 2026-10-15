@@ -7,7 +7,7 @@
  * can be tested, which Apple's own sample cannot do: it is for Apple's
  * example app, with a raw challenge rather than SHA256 of a cook's id.
  *
- *   npm run build && node dist/tools/attestTestData.js
+ *   node tools/attestTestData.ts
  *
  * Needs OpenSSL 3 on the PATH, for the certificates; the test does not. The
  * output is test data, regenerated only when its shape must change, and

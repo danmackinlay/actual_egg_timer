@@ -2,7 +2,7 @@
  * Can the eggs be cooled in a bowl of still water, and how sure would the
  * app be?
  *
- * Run: node tools/build.mjs studies && node dist/studies/bowl.js
+ * Run: node studies/bowl.ts
  *
  * Quoted by design/bowl.md.
  *

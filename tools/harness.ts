@@ -30,7 +30,7 @@
  *
  *   git worktree add /tmp/aet-old <commit>
  *   (cd /tmp/aet-old && npm ci && npm run build:site)
- *   npm run build && node dist/tools/e2e.js --tree /tmp/aet-old
+ *   node tools/e2e.ts --tree /tmp/aet-old
  *
  * E2E_CPU_THROTTLE=<rate> slows every page's CPU that many times (DevTools'
  * `Emulation.setCPUThrottlingRate`), to show the scenarios do not depend on
@@ -489,7 +489,7 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
   const port = 9100 + Math.floor(Math.random() * 400);
   const origin = `http://127.0.0.1:${port}`;
   const lines: string[] = [];
-  const server: ChildProcess = spawn(process.execPath, ['dist/tools/devServer.js'], {
+  const server: ChildProcess = spawn(process.execPath, ['tools/devServer.ts'], {
     env: { ...process.env, PORT: String(port), TREE: tree }, stdio: ['ignore', 'pipe', 'inherit'],
   });
   server.stdout?.on('data', (b: Buffer) => { lines.push(...String(b).split('\n').filter((l) => l !== '')); });

@@ -24,7 +24,6 @@ jobs:
       # A release tag names the version it releases: v<package.json version>.
       - if: startsWith(github.ref, 'refs/tags/v')
         run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
-      - run: npm run build
       - run: npm test
       # The tests again, sweeping every point where npm test sweeps fewer.
       - run: npm run test:slow

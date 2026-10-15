@@ -8,7 +8,7 @@ the egg count, the water's volume and the water's starting temperature as
 inputs, the temperature defaulting to the room.
 
 It can. The numbers are from `studies/bowl.ts` (run it with
-`node tools/build.mjs studies && node dist/studies/bowl.js`; about ten
+`node studies/bowl.ts`; about ten
 seconds). Every case is a 68 g egg (the EU Large, `DEFAULT_EGG_MASS_KG`) from
 the fridge into boiling water at 100 °C, held, aiming at jammy (slider 0.41),
 unless it says otherwise. A cold start was run too (§2.4), and it agrees.

@@ -27,8 +27,7 @@
 // AET_E2E_LOG=1 prints a failing scenario's log; AET_LOCALE=en-US launches
 // the app in that locale rather than en-AU (`localeArgs`).
 //
-// Compiled with the other tools (tools/build.mjs), which the npm script runs
-// first. Needs Xcode, xcodegen and python3; not in `npm run verify`.
+// Needs Xcode, xcodegen and python3; not in `npm run verify`.
 import { existsSync } from 'node:fs';
 
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
