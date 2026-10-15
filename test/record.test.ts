@@ -30,9 +30,10 @@ import {
 import { LITERATURE_POPULATION, WhiteReport, YolkWord } from '../src/core/infer.js';
 import { BoilMemory } from '../src/core/boil.js';
 import {
-  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, readRunningCook,
+  CookChoices, CookPlan, PULL_GRACE_SECONDS, RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt,
   replan, startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
+import { readRunningCook } from '../src/ui/storedCook.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';

@@ -211,7 +211,7 @@ const counts = [
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
   `${shareJson.replies.length} server answers`,
-  `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
+  `${runningFixture.setups.length} cook setups and ${runningFixture.moves.length} cook moves`,
   `${stepFixture.traces.length} cook traces of ${stepFixture.traces.reduce((n, t) => n + t.steps.length, 0)} steps`,
   `${settingsFixture.read.length} stored settings read`,
 ];

@@ -14,13 +14,14 @@ import { StartMode } from '../core/protocol.js';
 import { BoilMemory, rememberBoil } from '../core/boil.js';
 import { LIMITS, Limit, clamp, isWithin } from '../core/inputs.js';
 import { DEFAULT_SETTINGS as CORE_DEFAULT_SETTINGS, Settings as StoredSettings, readSettings } from '../core/settings.js';
-import { KeptAnswers, RunningCook, StoredCook, readStoredCook, storedCook } from '../core/running.js';
+import { RunningCook } from '../core/running.js';
+import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
 import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
 import { send } from './send.js';
 
 export type { Limit } from '../core/inputs.js';
-export type { KeptAnswers, StoredCook } from '../core/running.js';
+export type { KeptAnswers, StoredCook } from './storedCook.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
@@ -448,9 +449,9 @@ function clampLitres(litres: number): number {
 /* ------------------------------------------------------------ the cook */
 
 /*
- * A cook in progress, so a reload does not lose the egg: core's
- * `StoredCook`, written and read as iOS writes and reads it (`storedCook`,
- * `readStoredCook`). The plan is derived from it again.
+ * A cook in progress, so a reload does not lose the egg: a `StoredCook`,
+ * written and read by storedCook.ts in the shape iOS stores its own. The
+ * plan is derived from it again.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. Whether a cook is still
@@ -472,7 +473,7 @@ export interface CookStore extends SyncedKey<StoredCook | null> {
 
 /**
  * The cook as stored, whichever tab wrote it, or null: none, or one this
- * build cannot read (core's `readStoredCook`), which the caller drops. What this
+ * build cannot read (`readStoredCook`), which the caller drops. What this
  * tab last read or wrote there is what it has seen; another tab's write is
  * taken up (model.ts, `elsewhere`) only when it is of this tab's own cook,
  * by id, since each tab runs the cook it started, and then only what that

@@ -24,9 +24,10 @@ import {
   CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
   SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SlowHobPlace, asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookTooOld, coolingSecondsFor, corrected, earliestStart_s, eventsDue,
-  guessLengthened, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands, readRunningCook, replan, slowHobDue,
+  guessLengthened, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands, replan, slowHobDue,
   solutionAsRan, startCook, startCorrected, stillIn, withAsRan, withBoil, withOut, writeEvents,
 } from '../src/core/running.js';
+import { readRunningCook } from '../src/ui/storedCook.js';
 import { cookStillOpen } from '../src/ui/tabs.js';
 import { gridFor, knowing, rng } from '../tools/common.js';
 

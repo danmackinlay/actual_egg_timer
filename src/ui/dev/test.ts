@@ -24,7 +24,8 @@
 import { CertaintyReading } from '../../core/certainty.js';
 import { CopyArgs } from '../../core/copy.js';
 import { BoilMemory } from '../../core/boil.js';
-import { Phase, RunningCook, guessLengthened, readStoredCook } from '../../core/running.js';
+import { Phase, RunningCook, guessLengthened } from '../../core/running.js';
+import { readStoredCook } from '../storedCook.js';
 import { STORES } from '../../core/stores.js';
 import { EggRecord } from '../../core/record.js';
 import { flushDraw, pageModel, pageStores } from '../cook.js';
@@ -67,7 +68,7 @@ export interface Snapshot {
    *  plan's, else the idle answer's; null with neither. */
   whiteSets: boolean | null;
   /** The running cook as stored, its text, and the cook it reads as, folded
-   *  from its log (core's `readStoredCook`), or null. */
+   *  from its log (`readStoredCook`), or null. */
   stored: string | null;
   storedCook: RunningCook | null;
   /** The results log, how many of it are folded in, how many still to

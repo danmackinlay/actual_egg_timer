@@ -9,7 +9,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { STORES, STORE_LIST, inFormat, stamped } from '../src/core/stores.js';
-import { CookChoices, readStoredCook, startCook, storedCook, withBoil } from '../src/core/running.js';
+import { CookChoices, startCook, withBoil } from '../src/core/running.js';
+import { readStoredCook, storedCook } from '../src/ui/storedCook.js';
 
 const CHOICES: CookChoices = {
   mass_kg: 0.0625, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,

@@ -3,8 +3,8 @@ import Foundation
 @testable import EggTimerCore
 
 /// A running cook against `fixtures/running.json`, generated from
-/// `src/core/running.ts`: its egg and pot, the moves the cook makes, a
-/// stored cook read back, the plan derived from it, and the record it makes.
+/// `src/core/running.ts`: its egg and pot, the moves the cook makes, the
+/// plan derived from it, and the record it makes.
 ///
 /// The two apps must plan the same cook alike: the alarm, the cooling and
 /// the record are all read off the plan.
@@ -38,8 +38,7 @@ func sameJSON(_ a: Any?, _ b: Any?, ulps: Double = 0, relative: Double = 0) -> B
     return false
 }
 
-/// The choices as the fixture writes them, field by field: not through
-/// `readRunningCook`, which is under test.
+/// The choices as the fixture writes them, field by field.
 func choicesOf(_ json: [String: Any]) throws -> CookChoices {
     try CookChoices(
         massKg: json.num("mass_kg"), massFrom: json.value(MassFrom.self, "massFrom"),
@@ -57,11 +56,6 @@ func choicesOf(_ json: [String: Any]) throws -> CookChoices {
 /// log, as the fixtures write every cook.
 func storedJSON(_ cook: RunningCook?) -> [String: Any]? {
     cook?.jsonObject
-}
-
-/// A cook the fixture writes, read as the app will read it.
-func runningCookOf(_ json: Any?, _ what: String) throws -> RunningCook {
-    try #require(readRunningCook(json), "\(what): the cook does not read")
 }
 
 @Suite("Running")
@@ -136,24 +130,6 @@ struct RunningConformance {
                 after = startCorrected(cook, startedAtS: try move.optionalNum("start") ?? .nan, nowS: now)
             }
             #expect(sameJSON(storedJSON(after), row["after"]), "\(note)")
-        }
-    }
-
-    @Test("a stored cook is read whole or not at all, and what is written reads back")
-    func reads() throws {
-        let rows = try Fixtures.list("running.json", "reads")
-        #expect(rows.count >= 40)
-        for row in rows {
-            let note = try row.str("note")
-            let read = readRunningCook(row["raw"])
-            #expect(sameJSON(storedJSON(read), row["cook"]), "\(note)")
-            if let read {
-                let data = try JSONSerialization.data(withJSONObject: read.jsonObject)
-                // To the last bit but one: JSONSerialization writes 0.068 as
-                // 0.068000000000000005 and reads that back an ulp off.
-                let back = readRunningCook(try JSONSerialization.jsonObject(with: data))
-                #expect(sameJSON(back?.jsonObject, read.jsonObject, ulps: 4), "\(note): round trip")
-            }
         }
     }
 

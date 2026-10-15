@@ -11,10 +11,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { RunningCook, corrected as correctedTo, startCook, storedCook, withBoil, writeEvents } from '../src/core/running.js';
+import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
 import { STORES, stamped } from '../src/core/stores.js';
 import { choicesOf } from '../src/ui/state.js';
 import { DEFAULT_SETTINGS, Settings, openCooks, openPans, openSettings } from '../src/ui/store.js';
@@ -212,24 +211,6 @@ test('a copy with other corrections gives only what the cook saw, never what its
   assert.equal(correctedLater(start, corrected), false);
   assert.equal(correctedLater(back, corrected), true);
   assert.equal(correctedLater(start, start), false);
-});
-
-/** The stored cooks both apps are held to, as text (fixtures/stores.json):
- *  what each reads as, as it is stored, or null. iOS runs the same rows
- *  through `Cook` (EggTimerAppTests). */
-const STORED_COOKS = (JSON.parse(readFileSync('fixtures/stores.json', 'utf8')) as {
-  cooks: { about: string; text: string; read: unknown }[];
-}).cooks;
-
-test('the web\'s store takes or refuses each stored cook of the table both apps are held to', () => {
-  assert.ok(STORED_COOKS.length > 20);
-  for (const row of STORED_COOKS) {
-    storage.clear();
-    storage.set(COOK_KEY, row.text);
-    const loaded = cooks.load();
-    const read = loaded === null ? null : JSON.parse(JSON.stringify(storedCook(loaded))) as unknown;
-    assert.deepEqual(read, row.read, row.about);
-  }
 });
 
 test('a cook is stored without the cook as it stands: its start and log, which a reload folds again', () => {

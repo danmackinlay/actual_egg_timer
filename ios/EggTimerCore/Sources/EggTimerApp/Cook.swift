@@ -571,7 +571,7 @@ public final class Cook {
 
     // MARK: - Surviving a relaunch
 
-    /// What is stored is core's `StoredCook`, as the web stores it: the
+    /// What is stored is a `StoredCook` (StoredCook.swift): the
     /// cook, whether its egg has been answered, and the last decided lean.
     /// The alarms are with the system and the card on the Lock Screen, so a
     /// force-quit leaves both counting down: the cook is picked back up to

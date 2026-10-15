@@ -31,7 +31,9 @@
 // first. Needs Xcode, xcodegen and python3; not in `npm run verify`.
 import { existsSync } from 'node:fs';
 
-import { type StoredCook, readStoredCook } from '../src/core/running.js';
+import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.js';
+import type { BoilMemory } from '../src/core/boil.js';
+import type { Units } from '../src/core/record.js';
 import { STORES, stamped } from '../src/core/stores.js';
 import {
   APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build,
@@ -66,12 +68,27 @@ let udid = given ?? '';
 
 // ----------------------------------------------------------- reading the log
 
-/// The cook as the app stores it, read as both apps read it (core's
-/// `readStoredCook`): the cook folded from its log.
-type Stored = StoredCook;
+/// The cook as the app stores it (StoredCook.swift): what was fixed at the
+/// press, the start and the log, folded again by core's `foldCook`, and
+/// beside it whether the egg was answered and the lean last decided.
+interface Stored { cook: RunningCook; answers: string; leanHint_s: number }
 
-/// A stored cook as the log or the plist has it, read; null if it does not.
-const storedOf = (raw: unknown): Stored | null => readStoredCook(raw);
+/// A stored cook as the log or the plist has it, read as the app wrote it,
+/// in its format; null if it is not one. Trusted, not checked field by
+/// field: what the app takes back is EggTimerAppTests'.
+function storedOf(raw: unknown): Stored | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const o = raw as { v?: unknown; cook?: unknown; answers?: unknown; leanHint_s?: unknown };
+  if (o.v !== STORES.cook.format || o.cook === null || typeof o.cook !== 'object') return null;
+  const c = o.cook as {
+    id_ms: number; nudge_s: number; boilMemory: BoilMemory; units: Units; lang: string; start: CookStart;
+    log: CookEntry[];
+  };
+  return {
+    cook: foldCook(c.id_ms, c.start, c.nudge_s, c.boilMemory, c.units, c.lang, c.log),
+    answers: String(o.answers), leanHint_s: Number(o.leanHint_s),
+  };
+}
 
 /// A plan as the checks read it: { pull, cooled, lengthened, surface, next
 /// (when the slow hob lengthens it next), asking (whether the eggs are still

@@ -48,8 +48,8 @@ export const STORES = {
   /** The settings, one value (settings.ts). */
   settings: { name: 'settings', format: 1, web: 'aet.settings', ios: 'settings' },
   /** The running cook: what was fixed at the press, its start and its log,
-   *  whether its egg was answered, and the lean last decided (running.ts,
-   *  `storedCook`). */
+   *  whether its egg was answered, and the lean last decided (the web's
+   *  storedCook.ts, iOS's StoredCook.swift). */
   cook: { name: 'cook', format: 7, web: 'aet.cook', ios: 'cook' },
   /** The pans' measured times to boil (boil.ts), as `pans`. */
   boilMemory: { name: 'boilMemory', format: 1, web: 'aet.boilMemory', ios: 'boilMemory' },

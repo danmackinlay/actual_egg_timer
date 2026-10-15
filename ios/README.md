@@ -33,7 +33,9 @@ anything both apps must agree on lives here, not in either app. What an app
 only stores, reads back or merges is its own (`DECISIONS.md` 125): the web's
 in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
 by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
-`Newer.swift`.
+`Newer.swift`; the share queue `src/ui/shareState.ts` and
+`ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
+`StoredCook.swift`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
@@ -63,7 +65,7 @@ by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
-| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, the plan derived from them, each move the cook makes, and a cook in progress as both apps store it, read defensively | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember`, `readRunningCook`, `storedCook`, `readStoredCook` | `Running.swift` | `running.json`, `stores.json` |
+| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, folded, the plan derived from them, each move the cook makes | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `foldCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember` | `Running.swift` | `running.json` |
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |

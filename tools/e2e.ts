@@ -35,7 +35,7 @@
  */
 
 import { wordBandHigh, wordBandLow } from '../src/core/certainty.js';
-import { readStoredCook } from '../src/core/running.js';
+import { readStoredCook } from '../src/ui/storedCook.js';
 import { STORES } from '../src/core/stores.js';
 import { sleep } from './chrome.js';
 import { copyScenarios } from './copyScenarios.js';
@@ -56,7 +56,7 @@ function pansIn(text: string | null): Record<string, number> {
 }
 
 /** The cook a stored text reads as, folded from its log as the page reads
- *  it (core's `readStoredCook`), or null. */
+ *  it (the web's `readStoredCook`), or null. */
 function cookIn(text: string): Cook | null {
   return (readStoredCook(JSON.parse(text))?.cook ?? null) as Cook | null;
 }

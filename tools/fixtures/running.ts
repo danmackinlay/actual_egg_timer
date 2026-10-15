@@ -12,10 +12,10 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
   COOLING_SECONDS, CookChoices, CookPlan, CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, RecordContext, RunningCook,
-  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace, appendEntry,
+  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, SlowHobMemo, SlowHobPlace,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
   corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
-  readRunningCook, replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
+  replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
 } from '../../src/core/running.js';
 
@@ -25,9 +25,7 @@ import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js
  * class off each carton and a measured egg, each egg start with and without
  * a measured room, both starts, both burners, each cooling, at sea level and
  * up a mountain. The moves (`startCook`, `withBoil`, `corrected`,
- * `startCorrected`) from cooks at each stage, taken and refused. The reads
- * (`readRunningCook`): a cook at each stage, written and read back, and every
- * way a stored one is refused. */
+ * `startCorrected`) from cooks at each stage, taken and refused. */
 
 /** The cook of these fixtures: a 68 g EU Large from the fridge into 2 L of
  *  cold water at sea level, the heat held, then ice, jammy. */
@@ -102,7 +100,6 @@ const hot = cookOf({ startMode: 'hot' }, -7);
 const tapped = withBoil(cold, START_S + 532.5);
 const pulled = writeEvents(tapped, { ...tapped.events, pulled: { due_s: START_S + 851.2, out_s: START_S + 858.9, by: 'cook', confirmed: true } });
 const cooled = writeEvents(pulled, { ...pulled.events, cooledAt_s: START_S + 1031.9 });
-const hotTapped = withBoil(corrected(hot, { ...hot.choices, startMode: 'cold' }, START_S + 100), START_S + 500);
 /** The grace ran out on a hot start, and the counted cooling ended. */
 const timedOut = writeEvents(hot, {
   boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false },
@@ -177,20 +174,6 @@ const moves = MOVES.map((m) => {
   };
 });
 
-/* ---------------------------------------------------------------- reads */
-
-/** A copy of `raw` with the value at `path` replaced, or removed when
- *  `value` is undefined. */
-function withAt(raw: unknown, path: string[], value: unknown): unknown {
-  const copy = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-  let node: Record<string, unknown> = copy;
-  for (let i = 0; i < path.length - 1; i++) node = node[path[i]] as Record<string, unknown>;
-  const last = path[path.length - 1];
-  if (value === undefined) delete node[last];
-  else node[last] = value;
-  return copy;
-}
-
 /** `cook` with the plan as it ran kept, from its plan at `now_s` on the
  *  learned posterior's coarse surface. */
 function keptOf(cook: RunningCook, now_s: number): RunningCook {
@@ -201,131 +184,6 @@ function keptOf(cook: RunningCook, now_s: number): RunningCook {
   if (kept.asRan === null) throw new Error('nothing kept');
   return kept;
 }
-
-const keptCooled = keptOf(cooled, START_S + 1100);
-
-const READ_COOKS: { note: string; cook: RunningCook }[] = [
-  { note: 'just started, cold', cook: cold },
-  { note: 'hot, nudged, imperial, in the English of 1750', cook: startCook(START_S, { ...BASE_CHOICES, startMode: 'hot' }, -7, MEMORY, 'imperial', 'en-x-1750') },
-  { note: 'tapped', cook: tapped },
-  { note: 'pulled by the cook', cook: pulled },
-  { note: 'cooled', cook: cooled },
-  { note: 'pulled when the grace ran out, on the counter', cook: writeEvents(cookOf({ startMode: 'hot', cooling: 'counter' }, -7), { boilAt_s: null, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false }, cooledAt_s: null, rangAt_s: null }) },
-  { note: 'a measured egg and a measured room, no pans remembered', cook: startCook(START_S, { ...BASE_CHOICES, mass_kg: 0.0612, massFrom: 'girth', sizeTable: null, room_C: 23.5, eggFrom: 'room' }, 3, {}, 'metric', 'cs') },
-  { note: 'a tap kept unread on a cook corrected to boiling', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600) },
-  { note: 'corrected to cold after the start', cook: hotTapped },
-  { note: 'the grace ran out, the pull unconfirmed, the cooling ended', cook: timedOut },
-  { note: 'the pull the clock assumed, said to stand', cook: pullStands(timedOut) },
-  { note: 'the pull rang, the egg still in', cook: rung },
-  { note: 'cooled, with the plan as it ran kept', cook: keptCooled },
-  { note: 'the plan as it ran, then a correction: kept, stale', cook: corrected(keptCooled, { ...keptCooled.choices, mass_kg: 0.06 }, START_S + 1200) },
-];
-
-/** Stored cooks to damage: the pulled cook (`[boil, pulled]` in its log), and
- *  others whose logs hold the entry a row damages. */
-const answeredCook = appendEntry(cooled, {
-  kind: 'answered', at_s: START_S + 1100, yolkWord: 'jammy', white: null, probe: { centre_C: 66.4, after_s: 180 },
-});
-const FROM: Record<string, RunningCook> = {
-  pulled: pulled, cooled: cooled, kept: keptCooled, rung: rung, answered: answeredCook,
-  corrected: corrected(tapped, { ...tapped.choices, mass_kg: 0.076 }, START_S + 600),
-  moved: startCorrected(cold, START_S - 60, START_S + 10) as RunningCook,
-};
-const base = JSON.parse(JSON.stringify(pulled)) as unknown;
-const BOIL = { kind: 'boil', at_s: START_S + 532.5 };
-const REFUSED: { note: string; from: string; path: string[]; value: unknown }[] = [
-  { note: 'no id', from: 'pulled', path: ['id_ms'], value: undefined },
-  { note: 'an id that is not a number', from: 'pulled', path: ['id_ms'], value: '1791363600000' },
-  { note: 'no start', from: 'pulled', path: ['start'], value: undefined },
-  { note: 'a start that is a list', from: 'pulled', path: ['start'], value: [] },
-  { note: 'a start of zero', from: 'pulled', path: ['start', 'at_s'], value: 0 },
-  { note: 'no choices', from: 'pulled', path: ['start', 'choices'], value: undefined },
-  { note: 'a bowl of no water', from: 'pulled', path: ['start', 'choices', 'bowlLitres'], value: 0 },
-  { note: 'no bowl', from: 'pulled', path: ['start', 'choices', 'bowlLitres'], value: undefined },
-  { note: 'running water at a temperature in words', from: 'pulled', path: ['start', 'choices', 'tapWater_C'], value: 'cold' },
-  { note: 'no word on the bowl’s water', from: 'pulled', path: ['start', 'choices', 'bowlWater_C'], value: undefined },
-  { note: 'choices that are a list', from: 'pulled', path: ['start', 'choices'], value: [] },
-  { note: 'no mass', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: undefined },
-  { note: 'a mass of zero', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: 0 },
-  { note: 'a mass that is true', from: 'pulled', path: ['start', 'choices', 'mass_kg'], value: true },
-  { note: 'an unknown mass source', from: 'pulled', path: ['start', 'choices', 'massFrom'], value: 'guess' },
-  { note: 'a class with no carton', from: 'pulled', path: ['start', 'choices', 'sizeTable'], value: null },
-  { note: 'an unknown carton', from: 'pulled', path: ['start', 'choices', 'sizeTable'], value: 'uk' },
-  { note: 'an unknown egg source', from: 'pulled', path: ['start', 'choices', 'eggFrom'], value: 'counter' },
-  { note: 'no egg temperature of its own', from: 'pulled', path: ['start', 'choices', 'customStart_C'], value: null },
-  { note: 'a room that is a string', from: 'pulled', path: ['start', 'choices', 'room_C'], value: '20' },
-  { note: 'no room at all', from: 'pulled', path: ['start', 'choices', 'room_C'], value: undefined },
-  { note: 'sous-vide', from: 'pulled', path: ['start', 'choices', 'startMode'], value: 'sous' },
-  { note: 'an unknown burner', from: 'pulled', path: ['start', 'choices', 'afterBoil'], value: 'low' },
-  { note: 'no burner', from: 'pulled', path: ['start', 'choices', 'afterBoil'], value: undefined },
-  { note: 'an unknown cooling', from: 'pulled', path: ['start', 'choices', 'cooling'], value: 'fridge' },
-  { note: 'no water', from: 'pulled', path: ['start', 'choices', 'waterLitres'], value: 0 },
-  { note: 'no eggs', from: 'pulled', path: ['start', 'choices', 'eggCount'], value: 0 },
-  { note: 'no altitude', from: 'pulled', path: ['start', 'choices', 'altitude_m'], value: null },
-  { note: 'a level past hard', from: 'pulled', path: ['start', 'choices', 'level'], value: 1.01 },
-  { note: 'a level under runny', from: 'pulled', path: ['start', 'choices', 'level'], value: -0.01 },
-  { note: 'no log', from: 'pulled', path: ['log'], value: undefined },
-  { note: 'a log that is not a list', from: 'pulled', path: ['log'], value: { 0: BOIL } },
-  { note: 'an entry that is a number', from: 'pulled', path: ['log', '0'], value: 3 },
-  { note: 'an entry of a kind this build does not know', from: 'pulled', path: ['log', '0', 'kind'], value: 'heatOff' },
-  { note: 'a boil before the start', from: 'pulled', path: ['log', '0', 'at_s'], value: START_S - 1 },
-  { note: 'a boil that is a string', from: 'pulled', path: ['log', '0', 'at_s'], value: 'soon' },
-  { note: 'a boil with no time', from: 'pulled', path: ['log', '0', 'at_s'], value: undefined },
-  { note: 'a pull that is a list', from: 'pulled', path: ['log', '1', 'pulled'], value: [] },
-  { note: 'a pull due before the start', from: 'pulled', path: ['log', '1', 'pulled', 'due_s'], value: START_S - 5 },
-  { note: 'out before it was due', from: 'pulled', path: ['log', '1', 'pulled', 'out_s'], value: START_S + 851 },
-  { note: 'pulled by nobody', from: 'pulled', path: ['log', '1', 'pulled', 'by'], value: null },
-  { note: 'a pull neither confirmed nor not', from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: undefined },
-  { note: 'a pull confirmed as a number', from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: 1 },
-  { note: "the cook's own tap, unconfirmed", from: 'pulled', path: ['log', '1', 'pulled', 'confirmed'], value: false },
-  { note: 'no pull in a pull entry', from: 'pulled', path: ['log', '1', 'pulled'], value: undefined },
-  { note: 'a correction whose choices do not read', from: 'corrected', path: ['log', '1', 'choices', 'level'], value: 1.01 },
-  { note: 'a correction with no time', from: 'corrected', path: ['log', '1', 'at_s'], value: 'then' },
-  { note: 'corrected before the start', from: 'corrected', path: ['log', '1', 'at_s'], value: START_S - 1 },
-  { note: 'a start corrected to no time', from: 'moved', path: ['log', '0', 'startedAt_s'], value: null },
-  { note: 'rang before the start', from: 'rung', path: ['log', '0', 'at_s'], value: START_S - 1 },
-  { note: 'rang as a string', from: 'rung', path: ['log', '0', 'at_s'], value: 'then' },
-  { note: 'cooled without a pull', from: 'cooled', path: ['log', '1'], value: BOIL },
-  { note: 'cooled before the egg came out', from: 'cooled', path: ['log', '2', 'at_s'], value: START_S + 858 },
-  { note: 'an answer in a word not asked', from: 'answered', path: ['log', '3', 'yolkWord'], value: 'gooey' },
-  { note: 'a white answer not asked', from: 'answered', path: ['log', '3', 'white'], value: 'set' },
-  { note: 'a probe reading that is not one', from: 'answered', path: ['log', '3', 'probe', 'centre_C'], value: 'hot' },
-  { note: 'a nudge that is not a number', from: 'pulled', path: ['nudge_s'], value: null },
-  { note: 'pans that are a list', from: 'pulled', path: ['boilMemory'], value: [480] },
-  { note: 'a pan that is not a time', from: 'pulled', path: ['boilMemory', '2.0'], value: 'slow' },
-  { note: 'a pan of no time', from: 'pulled', path: ['boilMemory', '2.0'], value: 0 },
-  { note: 'unknown units', from: 'pulled', path: ['units'], value: 'si' },
-  { note: 'no language', from: 'pulled', path: ['lang'], value: '' },
-  { note: 'the plan as it ran, with no pull', from: 'kept', path: ['log', '1'], value: BOIL },
-  { note: 'the plan as it ran, a list', from: 'kept', path: ['log', '3', 'asRan'], value: [] },
-  { note: 'the plan as it ran, no forecast', from: 'kept', path: ['log', '3', 'asRan', 'forecast'], value: null },
-  { note: 'the plan as it ran, a forecast that is not one', from: 'kept', path: ['log', '3', 'asRan', 'forecast', 'yolk'], value: [0.5, 0.6, 0.1] },
-  { note: 'the plan as it ran, a level past hard', from: 'kept', path: ['log', '3', 'asRan', 'level'], value: 1.5 },
-  { note: 'the plan as it ran, no cook time', from: 'kept', path: ['log', '3', 'asRan', 'cook_s'], value: 0 },
-  { note: 'the plan as it ran, a nudge that is a string', from: 'kept', path: ['log', '3', 'asRan', 'nudge_s'], value: '3' },
-  { note: 'the plan as it ran, no peak yolk', from: 'kept', path: ['log', '3', 'asRan', 'peakYolk_C'], value: undefined },
-  { note: 'the plan as it ran, the probe moment a number', from: 'kept', path: ['log', '3', 'asRan', 'probeMoment'], value: 1 },
-  { note: 'the plan as it ran, a diffusivity of zero', from: 'kept', path: ['log', '3', 'asRan', 'params', 'alpha_m2s'], value: 0 },
-  { note: 'the plan as it ran, corrected before the start', from: 'kept', path: ['log', '3', 'asRan', 'correctedAt_s'], value: START_S - 1 },
-];
-
-/** Not refused: what is written beside the log is not read. */
-const IGNORED: { note: string; path: string[]; value: unknown }[] = [
-  { note: 'the cook as it stood, damaged beside its log: folded afresh', path: ['events', 'boilAt_s'], value: 'soon' },
-  { note: 'the start as it stood, missing: folded afresh', path: ['startedAt_s'], value: undefined },
-  { note: 'extra fields are ignored', path: ['ticket'], value: { old: true } },
-];
-
-const rawReads: { note: string; raw: unknown }[] = [
-  ...READ_COOKS.map((r) => ({ note: r.note, raw: JSON.parse(JSON.stringify(r.cook)) as unknown })),
-  { note: 'null', raw: null },
-  { note: 'a list', raw: [base] },
-  { note: 'a number', raw: 7 },
-  { note: "0.5's cook before the log (`aet.cook.v4`): its events whole, no start or log", raw: { ...(base as object), start: undefined, log: undefined } },
-  ...REFUSED.map((r) => ({ note: r.note, raw: withAt(FROM[r.from], r.path, r.value) })),
-  ...IGNORED.map((r) => ({ note: r.note, raw: withAt(base, r.path, r.value) })),
-];
-const reads = rawReads.map((r) => ({ note: r.note, raw: r.raw, cook: readRunningCook(r.raw) }));
 
 /* ----------------------------------------------------------------- plans */
 
@@ -790,10 +648,9 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('the start corrected ten minutes earlier, a tap, then a stray: not remembered', corrected(corrected(withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500), { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610));
 }
 
-/** Every running cook in the fixture as it is stored and read: what was fixed
- *  at the press, the start and the log. The cook as it stands, which a store
- *  writes beside them for whoever reads it by eye, is the log folded, and a
- *  reader folds it again (`readRunningCook`). A raw text read is as written. */
+/** Every running cook in the fixture as the apps store it: what was fixed at
+ *  the press, the start and the log. The cook as it stands is the log
+ *  folded, and a reader folds it again (`foldCook`). */
 function stored(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(stored);
   if (node === null || typeof node !== 'object') return node;
@@ -801,11 +658,6 @@ function stored(node: unknown): unknown {
   const isCook = 'id_ms' in o && 'start' in o && 'log' in o;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(o)) {
-    // A raw stored text is written as it was, damaged or not.
-    if (k === 'raw') {
-      out[k] = v;
-      continue;
-    }
     if (isCook && (k === 'startedAt_s' || k === 'choices' || k === 'events' || k === 'correctedAt_s' || k === 'asRan')) continue;
     out[k] = stored(v);
   }
@@ -813,14 +665,13 @@ function stored(node: unknown): unknown {
 }
 
 export const runningFixture = stored({
-  about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, the plan derived from it, and the phase at every boundary. src/core/running.ts.',
+  about: 'A running cook: its egg and pot, the moves the cook makes, the plan derived from it, and the phase at every boundary. src/core/running.ts.',
   constants: {
     slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
     slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS, restoreWindow_s: RESTORE_WINDOW_S,
   },
   setups: setups,
   moves: moves,
-  reads: reads,
   plans: plans,
   remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
   phase: {
@@ -862,4 +713,4 @@ export const runningFixture = stored({
       })),
     })),
   },
-}) as Record<string, unknown[]> & { setups: unknown[]; moves: unknown[]; reads: unknown[] };
+}) as Record<string, unknown[]> & { setups: unknown[]; moves: unknown[] };
