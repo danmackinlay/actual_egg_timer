@@ -22,6 +22,11 @@
  * `--check` is `fixtures:check`'s rule for generated files: what is written
  * must be what git's index has, so a catalogue changed without its keys
  * fails verify and CI.
+ *
+ * `npm run copy:keys` runs this even when the build before it fails: the
+ * code is checked against these types, so a catalogue changed ahead of them
+ * (a key added and already used, or one put back) fails the build until they
+ * are made again. tsc emits this file all the same.
  */
 
 import { execFileSync } from 'node:child_process';
