@@ -322,6 +322,9 @@
     "activity.note.heating": { "text": "upon the fire" },
     "activity.note.cooking": { "text": "until the eggs are taken out" },
     "activity.note.cooling": { "text": "the yolk cooks still" },
-    "newer.note": { "text": "A later edition of this work has kept your results. Until you procure it, I shall time your eggs, but shall neither keep nor learn any thing." }
+    "newer.note": { "text": "A later edition of this work has kept your results. Until you procure it, I shall time your eggs, but shall neither keep nor learn any thing." },
+
+    "tab.note": { "text": "I am already open in another tab; and as he who is every where is no where, I can serve you in one place only. Press the button below to employ me here instead; the other will fall silent, and any eggs I am timing will continue here, with their alarm." },
+    "tab.useHere": { "text": "Employ me here" }
   }
 }
