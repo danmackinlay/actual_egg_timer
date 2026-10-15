@@ -5,9 +5,9 @@
  * anywhere but a page served from this machine, they are `Date.now()` and
  * `Math.random()` and nothing else.
  *
- * A page served from localhost or 127.0.0.1 loads the development tools
- * before the app boots (main.ts, src/ui/dev/), which `npm run build:site`
- * leaves out of the site: the development clock (dev/clock.ts) puts its time
+ * A page served from localhost or 127.0.0.1 by the development server loads
+ * the development tools before the app boots (main.ts, src/ui/dev/), which
+ * `npm run build:site` leaves out of the site: the development clock (dev/clock.ts) puts its time
  * here with `useClock`, and a script's seed (dev/test.ts) its draw with
  * `useRandom`. Neither can be reached from anywhere else.
  *

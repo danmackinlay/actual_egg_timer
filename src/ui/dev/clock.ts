@@ -2,9 +2,10 @@
  * The development clock: a page served from localhost or 127.0.0.1 can run a
  * clock of its own, so an eleven-minute cook takes seconds and a reload, a
  * cook moved to another tab or a tab woken past the pull can be checked
- * without waiting (`npm run e2e`, tools/e2e.ts). It is loaded only there
- * (main.ts), and not shipped (`npm run build:site` leaves src/ui/dev/
- * out); on the live site the clock is `Date.now()` (now.ts).
+ * without waiting (`npm run e2e`, tools/e2e.ts). It is loaded only there,
+ * from the development server (main.ts, tools/devServer.ts), and not
+ * shipped (`npm run build:site` leaves the development tools' file out of
+ * _site/); on the live site the clock is `Date.now()` (now.ts).
  *
  *   ?clock=60        sixty seconds of the cook's time to the real second
  *   ?clock=0         stopped: it moves only when it is moved
