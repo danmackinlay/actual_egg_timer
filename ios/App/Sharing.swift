@@ -66,8 +66,8 @@ final class Sharing {
     @ObservationIgnored private var run: Task<Void, Never>?
     @ObservationIgnored private var again = false
 
-    private static let stateKey = "sharing.v1"
-    private static let attestKey = "sharing.attest.v2"
+    private static let stateKey = StoreRegistry.share.key
+    private static let attestKey = StoreRegistry.shareAttest.key
 
     private init() {}
 

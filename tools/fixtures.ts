@@ -52,13 +52,10 @@
  *                              sender makes of the endpoint's answers
  *   fixtures/prior.json        a prior drawn from a population, and the
  *                              population files a reader refuses
- *   fixtures/running.json      a running cook: its egg and pot, its moves, a
- *                              stored one read back, its plan, and the phase
- *                              at every boundary
+ *   fixtures/running.json      a running cook: its egg and pot, its moves, its
+ *                              plan, and the phase at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
- *   fixtures/stores.json       every store either app keeps: its name, format
- *                              and keys, and what reads as in its format
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -99,7 +96,6 @@ import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
 import { stepFixture } from './fixtures/step.js';
-import { storesFixture } from './fixtures/stores.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -134,7 +130,6 @@ const written: Record<string, unknown> = {
   wording: wordingFixture(),
   running: runningFixture,
   step: stepFixture,
-  stores: storesFixture,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that

@@ -21,7 +21,7 @@ public final class LanguageChoice: LanguageChoosing {
     /// Under its own key, not "language": a launch argument of that name
     /// would shadow it (UserDefaults' argument domain), and the debug builds
     /// take one (`-uiLanguage`, Screenshots.swift).
-    private static let key = Stores.key(StoreRegistry.languageState)
+    private static let key = StoreRegistry.languageState.key
 
     public private(set) var state = LanguageState.fresh
     private var observer: NSObjectProtocol?

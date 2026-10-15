@@ -417,7 +417,7 @@ const SCREEN_ONLY: Record<string, string> = {
   'e2e certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
   'e2e unreadable-stores': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
   'e2e retired-keys': 'the boot sweep (web store.ts; ios Stores)',
-  'e2e dev-clock-shares-nothing': 'sharing (share.json)',
+  'e2e dev-clock-shares-nothing': 'sharing (web share.ts)',
   'e2e newer-version': 'the newer-build guard (web newer.ts)',
   'e2e newer-version-tab': 'the newer-build guard (web newer.ts)',
   'ios likely-still': 'the certainty line (certainty.json)',

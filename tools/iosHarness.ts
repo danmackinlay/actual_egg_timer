@@ -8,7 +8,6 @@ import {
 } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { STORES } from '../src/core/stores.js';
 import { asRead } from './text.js';
 
 export const BUNDLE = 'name.danmackinlay.actualeggtimer';
@@ -340,9 +339,21 @@ with open(path, 'wb') as f:
 
 // ------------------------------------------------------------- the debug log
 
-/// Where the app keeps its cook and its settings.
-export const COOK = STORES.cook.ios;
-export const SETTINGS = STORES.settings.ios;
+/// A store as the app's own table has it (StoreRegistry.swift, read from
+/// its source): the key it is kept under, and the format written inside it.
+export function iosStore(name: string): { key: string; format: number | null } {
+  const table = readFileSync('ios/EggTimerCore/Sources/EggTimerApp/StoreRegistry.swift', 'utf8');
+  const m = new RegExp(`StoreSpec\\(name: "${name}", format: (nil|\\d+), key: "([^"]+)"\\)`).exec(table);
+  if (m === null) throw new Error(`StoreRegistry.swift has no store named ${name}`);
+  return { key: m[2], format: m[1] === 'nil' ? null : Number(m[1]) };
+}
+
+/// Where the app keeps its cook and its settings, as its table says.
+export const COOK = 'cook';
+export const SETTINGS = 'settings';
+for (const [name, key] of [['cook', COOK], ['settings', SETTINGS]]) {
+  if (iosStore(name).key !== key) throw new Error(`the app keeps its ${name} under ${iosStore(name).key}`);
+}
 
 /// One event of the debug log, as `Screenshots.Event` declares it: `t`, cook
 /// time, epoch s, to the millisecond; `ev`, the case; its fields, a field

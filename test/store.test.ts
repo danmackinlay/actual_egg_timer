@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, corrected as correctedTo, startCook, withBoil, writeEvents } from '../src/core/running.js';
-import { STORES, stamped } from '../src/core/stores.js';
+import { STORES, stamped } from '../src/ui/stores.js';
 import { choicesOf } from '../src/ui/state.js';
 import { DEFAULT_SETTINGS, Settings, openCooks, openPans, openSettings } from '../src/ui/store.js';
 import { correctedLater, takeUpEvents } from '../src/ui/tabs.js';
@@ -30,12 +30,12 @@ const storage = new Map<string, string>();
   },
 };
 
-const SETTINGS_KEY = STORES.settings.web;
-const BOIL_KEY = STORES.boilMemory.web;
+const SETTINGS_KEY = STORES.settings.key;
+const BOIL_KEY = STORES.boilMemory.key;
 
 /** Settings as a build of this format stores them. */
 const settingsText = (o: object): string => JSON.stringify(stamped(STORES.settings, { ...o }));
-const COOK_KEY = STORES.cook.web;
+const COOK_KEY = STORES.cook.key;
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
 const settings = openSettings(classes);

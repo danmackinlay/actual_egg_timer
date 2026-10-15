@@ -576,7 +576,7 @@ public final class Cook {
     /// The alarms are with the system and the card on the Lock Screen, so a
     /// force-quit leaves both counting down: the cook is picked back up to
     /// match them.
-    static let savedKey = Stores.key(StoreRegistry.cook)
+    static let savedKey = StoreRegistry.cook.key
 
     /// A stored cook's data as this app reads it, whole, or nil.
     static func readStored(_ data: Data) -> StoredCook? {

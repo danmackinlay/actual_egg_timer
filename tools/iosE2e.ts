@@ -34,9 +34,8 @@ import { existsSync } from 'node:fs';
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.js';
 import type { BoilMemory } from '../src/core/boil.js';
 import type { Units } from '../src/core/record.js';
-import { STORES, stamped } from '../src/core/stores.js';
 import {
-  APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build,
+  APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
   createDevice, is, lastOf, quietly, simctl, sleep,
 } from './iosHarness.js';
 
@@ -68,6 +67,9 @@ let udid = given ?? '';
 
 // ----------------------------------------------------------- reading the log
 
+/// The format the app stores its cook in (StoreRegistry.swift).
+const COOK_FORMAT = iosStore('cook').format;
+
 /// The cook as the app stores it (StoredCook.swift): what was fixed at the
 /// press, the start and the log, folded again by core's `foldCook`, and
 /// beside it whether the egg was answered and the lean last decided.
@@ -79,7 +81,7 @@ interface Stored { cook: RunningCook; answers: string; leanHint_s: number }
 function storedOf(raw: unknown): Stored | null {
   if (raw === null || typeof raw !== 'object') return null;
   const o = raw as { v?: unknown; cook?: unknown; answers?: unknown; leanHint_s?: unknown };
-  if (o.v !== STORES.cook.format || o.cook === null || typeof o.cook !== 'object') return null;
+  if (o.v !== COOK_FORMAT || o.cook === null || typeof o.cook !== 'object') return null;
   const c = o.cook as {
     id_ms: number; nudge_s: number; boilMemory: BoilMemory; units: Units; lang: string; start: CookStart;
     log: CookEntry[];
@@ -184,11 +186,11 @@ const before = (lines: Event[], test: (e: Event) => boolean): Event[] => {
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 const sorted = (a: string[] | null): string[] | null => (a ? [...a].sort() : a);
 
-/// The settings as stored (core's `stamped` and `readSettings`), given at
-/// launch: what is not given is the default. A launch argument whose value
-/// is `<hex>` is data to UserDefaults, as the app stores the value.
+/// The settings as stored, in the app's format, given at launch: what is not
+/// given is the default. A launch argument whose value is `<hex>` is data to
+/// UserDefaults, as the app stores the value.
 function settingsArg(over: Record<string, unknown>): string[] {
-  const text = JSON.stringify(stamped(STORES.settings, over));
+  const text = JSON.stringify({ v: iosStore('settings').format, ...over });
   return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
 }
 /// A hot start's settings.

@@ -12,7 +12,7 @@ import { BoilMemory } from '../core/boil.js';
 import { YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, parseForecast } from '../core/record.js';
 import { CookAsRan, CookChoices, CookEntry, Pulled, RunningCook, foldCook } from '../core/running.js';
-import { STORES, inFormat, stamped } from '../core/stores.js';
+import { STORES, inFormat, stamped } from './stores.js';
 
 /** A finite number. */
 function isNumber(v: unknown): v is number {

@@ -10,9 +10,9 @@
  * app and the widget share (EggTimerShared). Every string literal there,
  * not only a view's arguments, since a notification's body and the Live
  * Activity's text never pass through `Text(`; `+` chains joined and each
- * `\(...)` interpolation reduced to `{}`. Each must be a catalogue key, a
- * store's name or key (src/core/stores.ts), an argument's name in key
- * position, or on the NOT_COPY list below with the reason it is not words.
+ * `\(...)` interpolation reduced to `{}`. Each must be a catalogue key, an
+ * argument's name in key position, or on the NOT_COPY list below with the
+ * reason it is not words.
  *
  * Not scanned, because no cook can see it:
  * - the core (EggTimerCore), pure numerics that hands the app catalogue
@@ -39,7 +39,6 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
-import { STORE_LIST } from '../src/core/stores.js';
 
 const DIRS = [
   'ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared',
@@ -58,21 +57,14 @@ const FORMAT_FILES = new Set([
   'ios/EggTimerCore/Sources/EggTimerApp/Newer.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/Settings.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/ShareQueue.swift',
+  'ios/EggTimerCore/Sources/EggTimerApp/StoreRegistry.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/StoredCook.swift',
 ]);
 
 /** Literals that are not words on a screen, and why. Exact raw text. */
 const NOT_COPY: Record<string, string> = {
-  // storage keys and identifiers
-  cookInProgress: 'UserDefaults key',
-  doneness: 'UserDefaults key',
-  sizeIndex: 'UserDefaults key',
-  altitudeM: 'UserDefaults key',
-  waterLitres: 'UserDefaults key',
-  eggCount: 'UserDefaults key',
-  start: 'UserDefaults key',
-  heatOff: 'UserDefaults key',
-  cooling: 'UserDefaults key',
+  // identifiers
+  start: 'debug log (CookCard.log), never shown',
   'cook.pull': 'notification identifier',
   'cook.cool': 'notification identifier',
   // SF Symbols
@@ -99,40 +91,16 @@ const NOT_COPY: Record<string, string> = {
   unknown: 'record field value, never shown',
   '%04d-%02d-%02d': 'record day format, never shown',
   // the store and the prior (INFERENCE.md section 4): schema, never shown
-  'calibration.v4': 'UserDefaults key',
-  'settings.v1': 'UserDefaults key',
   'surface|{}': 'a build\'s key in Cook, never shown',
   'before|{}': 'a build\'s key in Cook, never shown',
   'beforeSurface|{}|{}': 'a build\'s key in Cook, never shown',
   seconds: 'a readout argument\'s name, read from core\'s readoutAt',
   boiling: 'a readout argument\'s name, read from core\'s readoutAt',
-  'calibration.v4.unread': 'UserDefaults key',
-  'cookInProgress.unread': 'UserDefaults key',
-  // keys earlier builds wrote, deleted at launch (Store.swift, `retiredKeys`)
-  'calibration.v1': 'UserDefaults key',
-  'calibration.v2': 'UserDefaults key',
-  'calibration.v3': 'UserDefaults key',
-  'share.v1': 'UserDefaults key',
-  'share.attest.v1': 'UserDefaults key',
-  coldStart: 'UserDefaults key',
-  fromFridge: 'UserDefaults key',
-  eggMassG: 'UserDefaults key',
-  probeAsked: 'UserDefaults key',
-  // the running cook as stored (Cook.swift)
-  'cookInProgress.v2': 'UserDefaults key',
-  'cookInProgress.v3': 'UserDefaults key',
-  'cookInProgress.v4': 'UserDefaults key',
-  '{} is not kept on iOS': 'precondition message, never shown',
+  // fields of what is stored, outside the files that only hold stored formats
   pans: 'stored pans field name (Store.swift, `BoilMemories`)',
   chosen: 'stored language state field (LanguageChoice.swift)',
   // the record's own fields, as the app fills them in: never shown
   '{}+{}': 'the app version a record carries: version, plus, build number',
-  weighedMassG: 'UserDefaults key',
-  startTemp: 'UserDefaults key',
-  customStartC: 'UserDefaults key',
-  probe: 'UserDefaults key',
-  roomC: 'UserDefaults key',
-  unitsChosen: 'UserDefaults key',
   'alarm-{}-{}.caf': 'bundle resource name: an alarm sound\'s file (tools/sounds.ts)',
   flip: 'notification userInfo key',
   unitsFlipped: 'notification name',
@@ -198,7 +166,6 @@ const NOT_COPY: Record<string, string> = {
   ', looped': 'log message, never shown',
   'no sound to play: its file is missing or unreadable': 'log message, never shown',
   population: 'bundle resource name (Calibration.swift)',
-  'sharing.attest.v1': 'UserDefaults key, retired (Store.swift)',
   'https://actualeggtimer.netlify.app': 'the endpoint\'s site, never shown',
   'x-egg-assertion': 'HTTP header name',
   'application/json': 'HTTP content type',
@@ -349,8 +316,8 @@ function sources(): Map<string, string> {
 
 /* ------------------------------------------------------------------ main */
 
-// No literal in the Swift sources is words: each is a catalogue key, a
-// store's name, an argument's name in key position, or on the NOT_COPY list
+// No literal in the Swift sources is words: each is a catalogue key, an
+// argument's name in key position, or on the NOT_COPY list
 // with the reason it is not copy; and no NOT_COPY entry is one none needs.
 const en = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 const now = [...sources().entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
@@ -360,15 +327,11 @@ const now = [...sources().entries()].flatMap(([f, s]) => literals(s).map((l) => 
 const argumentNames = new Set([...en.messages.values()]
   .flatMap((m) => templatesOf(m).flatMap(placeholders).concat(m.kind === 'plural' ? [m.count] : [])));
 
-/** Every store's name and its keys: names in storage, never shown. */
-const storeNames = new Set(STORE_LIST.flatMap((s) => [s.name, s.web, s.ios]));
-
 const failures: string[] = [];
 const needed = new Set<string>();
 let keys = 0;
 for (const l of now) {
   if (en.messages.has(l.text)) { keys += 1; continue; }
-  if (storeNames.has(l.text)) continue;
   if (l.argument && argumentNames.has(l.text)) continue;
   if (l.text in NOT_COPY) { needed.add(l.text); continue; }
   failures.push(`${l.file}: "${l.text}" is still a literal`);
@@ -380,7 +343,7 @@ for (const entry of Object.keys(NOT_COPY)) {
   if (!needed.has(entry)) failures.push(`NOT_COPY: "${entry}" is no scanned literal that needs it; delete it`);
 }
 
-console.log(`${now.length} Swift literals: ${keys} catalogue keys, the rest arguments, store names or on NOT_COPY.`);
+console.log(`${now.length} Swift literals: ${keys} catalogue keys, the rest arguments or on NOT_COPY.`);
 if (failures.length > 0) {
   console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
   process.exit(1);

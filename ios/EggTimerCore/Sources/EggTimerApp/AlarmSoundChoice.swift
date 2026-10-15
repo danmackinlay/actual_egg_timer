@@ -17,7 +17,7 @@ public final class AlarmSoundChoice: AlarmSoundChoosing {
     public static let shared = AlarmSoundChoice()
 
     /// Under its own key, as the language is (`LanguageChoice`).
-    private static let key = Stores.key(StoreRegistry.alarmSound)
+    private static let key = StoreRegistry.alarmSound.key
 
     public private(set) var sound: AlarmSound
 

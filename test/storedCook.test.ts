@@ -12,7 +12,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { CookAsRan, CookChoices, RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.js';
-import { STORES } from '../src/core/stores.js';
+import { STORES } from '../src/ui/stores.js';
 import { KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.js';
 import { openCooks } from '../src/ui/store.js';
 
@@ -204,7 +204,7 @@ test('3. the store takes a stored cook in its format, whole, and refuses the res
   ];
   for (const [about, t] of TAKEN) {
     storage.clear();
-    storage.set(STORES.cook.web, t);
+    storage.set(STORES.cook.key, t);
     assert.deepEqual(cooks.load(), { cook: answered, answers: 'none', leanHint_s: 0 }, about);
   }
   const format = STORES.cook.format;
@@ -232,7 +232,7 @@ test('3. the store takes a stored cook in its format, whole, and refuses the res
   ];
   for (const [about, t] of REFUSED_TEXT) {
     storage.clear();
-    storage.set(STORES.cook.web, t);
+    storage.set(STORES.cook.key, t);
     assert.equal(cooks.load(), null, about);
   }
 });

@@ -35,7 +35,9 @@ in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
 by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 `Newer.swift`; the share queue `src/ui/shareState.ts` and
 `ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
-`StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`.
+`StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`;
+the table of stores `src/ui/stores.ts` and `StoreRegistry.swift`; and the
+web's alone, another tab's copy of a cook, `src/ui/tabs.ts`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
@@ -68,7 +70,6 @@ by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |
-| `stores.ts` | every store either app keeps: its name, its key on each app, and the format written inside it; a stored value read only in its own format | `STORES`, `stamped`, `inFormat` | `StoreRegistry.swift` | `stores.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls: the

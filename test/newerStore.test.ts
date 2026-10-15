@@ -6,7 +6,7 @@
  * none of the keys it does not keep. With none, or an older one, the mark
  * is brought up to this build before anything else is written, and then
  * every key of the app's that is not in the table of stores
- * (src/core/stores.ts) is deleted.
+ * (src/ui/stores.ts) is deleted.
  *
  * In a file of its own: the guard is the store module's state for the life
  * of the page, and node runs each test file in a process of its own.
@@ -25,7 +25,7 @@ import { openLearner } from '../src/ui/calibration.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { openSharing } from '../src/ui/share.js';
 import { sendTo } from '../src/ui/send.js';
-import { STORES, STORE_LIST, stamped } from '../src/core/stores.js';
+import { STORES, STORE_LIST, stamped } from '../src/ui/stores.js';
 
 /** How many times the page was told its stores are left alone. */
 let told = 0;
@@ -44,8 +44,8 @@ const writes: string[] = [];
   },
 };
 
-const NEWEST_KEY = STORES.newest.web;
-const SETTINGS = STORES.settings.web;
+const NEWEST_KEY = STORES.newest.key;
+const SETTINGS = STORES.settings.key;
 const GONE = '0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab';
 const classes = sizeClassesFor('eu');
 /** The page's stores, as boot() opens them. */
@@ -59,8 +59,8 @@ function newerStores(): Map<string, string> {
   return new Map([
     [NEWEST_KEY, '9.0.0'],
     [SETTINGS, JSON.stringify(stamped(STORES.settings, { ...DEFAULT_SETTINGS, altitude_m: 1200, addedLater: true }))],
-    [STORES.boilMemory.web, JSON.stringify(stamped(STORES.boilMemory, { pans: { '2': 420 } }))],
-    [STORES.cook.web, JSON.stringify({ v: 7, cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
+    [STORES.boilMemory.key, JSON.stringify(stamped(STORES.boilMemory, { pans: { '2': 420 } }))],
+    [STORES.cook.key, JSON.stringify({ v: 7, cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
     ['aet.settings.v1', JSON.stringify({ ...DEFAULT_SETTINGS, altitude_m: 600 })],
     ['aet.cook.v5', JSON.stringify({ cook: { id_ms: 7, later: 1 }, answers: 'none', leanHint_s: 0 })],
     ['aet.cook.v2', JSON.stringify({ machine: { phase: 'COOKING' }, ticket: null, answers: 'none' })],
@@ -144,7 +144,7 @@ const EARLIER = [
   'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1', 'aet.later.v1',
 ];
 /** Every key this build keeps. */
-const KEPT = STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web]));
+const KEPT = STORE_LIST.map((s) => s.key);
 
 test('3b. a key of an earlier build is deleted at the claim, after the mark; every key this build keeps, and any other app\'s, stays', () => {
   storage.clear();

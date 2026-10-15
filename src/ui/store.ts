@@ -19,7 +19,7 @@ import {
 } from './settings.js';
 import { RunningCook } from '../core/running.js';
 import { KeptAnswers, StoredCook, readStoredCook, storedCook } from './storedCook.js';
-import { STORES, STORE_LIST, inFormat, stamped } from '../core/stores.js';
+import { STORES, STORE_LIST, inFormat, stamped } from './stores.js';
 import { WriterVerdict, parseVersion, writerCheck } from './newer.js';
 import { send } from './send.js';
 
@@ -28,14 +28,14 @@ export type { KeptAnswers, StoredCook } from './storedCook.js';
 export { LIMITS, START_TEMP_PRESETS_C } from '../core/inputs.js';
 export { estimateTimeToBoil, hasBoilMemory } from '../core/boil.js';
 
-const SETTINGS_KEY = STORES.settings.web;
-const COOK_KEY = STORES.cook.web;
-const BOIL_KEY = STORES.boilMemory.web;
+const SETTINGS_KEY = STORES.settings.key;
+const COOK_KEY = STORES.cook.key;
+const BOIL_KEY = STORES.boilMemory.key;
 
-/** Every key this build keeps (src/core/stores.ts). Any other key of this
- *  app's (`aet.`) is an earlier build's, which this one neither reads nor
+/** Every key this build keeps (stores.ts). Any other key of this app's
+ *  (`aet.`) is an earlier build's, which this one neither reads nor
  *  collects, and is deleted at boot (`claimStorage`). */
-const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.flatMap((s) => (s.web === null ? [] : [s.web])));
+const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.map((s) => s.key));
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */
@@ -92,7 +92,7 @@ export function removeStorage(key: string): void {
  * storage, is seen at this page's next write even if its `storage` event
  * has not yet arrived. Never removed: "Start learning again" keeps it.
  */
-const NEWEST_KEY = STORES.newest.web;
+const NEWEST_KEY = STORES.newest.key;
 
 /** This build's version, once `claimStorage` has been called; until then
  *  (tests, tools) every write goes through unguarded. The page's own: the
