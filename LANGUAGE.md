@@ -280,8 +280,8 @@ twins are written in batches. Each translation has a sidecar,
 `<tag>.base.json` beside the approvals (today
 `test/data/copy-review/en-x-1750.base.json`): per key with a twin, the hash
 of the English it was written against (`base`); per key left to English on
-purpose, the hash of the English it was judged at (`english`, today only
-`app.name`). A twin whose English has moved since is stale, and keeps
+purpose, the hash of the English it was judged at (`english`; `npm run copy:queue`
+lists them). A twin whose English has moved since is stale, and keeps
 showing. A key with no twin that is not left to English is missing, and
 renders in English (`src/core/copy.ts`). The queue and the page list both,
 and neither fails a build. Once a twin is rewritten,
