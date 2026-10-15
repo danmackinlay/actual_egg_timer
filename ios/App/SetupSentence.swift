@@ -56,7 +56,7 @@ struct SetupSentence: View {
                 VStack(alignment: .leading) {
                     Text(words.plain)
                     ForEach(shown) { clause in
-                        Button(tr("setup.clause", [
+                        Button(tr(.`setup.clause`, [
                             "label": .text(texts[clause]?.label ?? ""),
                             "value": .text(texts[clause]?.value ?? ""),
                         ])) {
@@ -64,7 +64,7 @@ struct SetupSentence: View {
                             onTap()
                             open = open == clause ? nil : clause
                         }
-                        .accessibilityValue(tr(open == clause ? "more.expanded" : "more.collapsed"))
+                        .accessibilityValue(tr(open == clause ? .`more.expanded` : .`more.collapsed`))
                     }
                 }
             }
@@ -113,7 +113,7 @@ struct ClausePanel: View {
                     .foregroundStyle(.secondary)
                 InfoButton(expanded: $more, name: about(titleKey))
                 Spacer()
-                Button(tr("setup.close"), action: done)
+                Button(tr(.`setup.close`), action: done)
                     .appFont(.subheadline, weight: .semibold)
             }
             if more { MoreText([moreText]).transition(.opacity) }
@@ -124,21 +124,21 @@ struct ClausePanel: View {
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.3)))
     }
 
-    private var titleKey: String {
+    private var titleKey: CopyKey {
         switch clause {
-        case .egg: "controls.egg"
-        case .from: "controls.eggFrom"
-        case .start: "controls.start"
-        case .cooling: "controls.cooling"
+        case .egg: .`controls.egg`
+        case .from: .`controls.eggFrom`
+        case .start: .`controls.start`
+        case .cooling: .`controls.cooling`
         }
     }
 
     private var moreText: String {
         switch clause {
-        case .egg: tr("controls.egg.more")
-        case .from: tr("controls.eggFrom.more")
-        case .start: tr("controls.start.more")
-        case .cooling: tr("controls.cooling.more")
+        case .egg: tr(.`controls.egg.more`)
+        case .from: tr(.`controls.eggFrom.more`)
+        case .start: tr(.`controls.start.more`)
+        case .cooling: tr(.`controls.cooling.more`)
         }
     }
 
@@ -150,11 +150,11 @@ struct ClausePanel: View {
         case .start:
             // Rendered from the constant, so the button cannot name a bath
             // the model is not computing.
-            Picker(tr("controls.start"), selection: $planner.start) {
-                Text(tr("controls.start.cold")).tag(StartChoice.cold)
-                Text(tr("controls.start.hot")).tag(StartChoice.hot)
+            Picker(tr(.`controls.start`), selection: $planner.start) {
+                Text(tr(.`controls.start.cold`)).tag(StartChoice.cold)
+                Text(tr(.`controls.start.hot`)).tag(StartChoice.hot)
                 if edits == nil {
-                    Text(tr("controls.start.sousVide", ["bath": .text(planner.show(.temperature, sousVideBathC))]))
+                    Text(tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]))
                         .tag(StartChoice.sousVide)
                 }
             }
@@ -171,25 +171,25 @@ struct ClausePanel: View {
     private var cooling: some View {
         VStack(alignment: .leading, spacing: 10) {
             ListChoice(
-                label: tr("controls.cooling"),
+                label: tr(.`controls.cooling`),
                 choices: [
-                    (tr("controls.cooling.ice"), Cooling.ice), (tr("controls.cooling.tap"), Cooling.tap),
-                    (tr("controls.cooling.bowl"), Cooling.bowl), (tr("controls.cooling.counter"), Cooling.counter),
+                    (tr(.`controls.cooling.ice`), Cooling.ice), (tr(.`controls.cooling.tap`), Cooling.tap),
+                    (tr(.`controls.cooling.bowl`), Cooling.bowl), (tr(.`controls.cooling.counter`), Cooling.counter),
                 ],
                 selection: $planner.settings.cooling
             )
             if planner.settings.cooling == .bowl {
-                InfoRow("controls.bowl", more: [tr("controls.bowl.more")])
+                InfoRow(.`controls.bowl`, more: [tr(.`controls.bowl.more`)])
                 HStack {
                     Spacer(minLength: 0)
                     StepperValue(
-                        label: tr("controls.bowl"), measure: planner.measure(.bowl),
+                        label: tr(.`controls.bowl`), measure: planner.measure(.bowl),
                         value: $planner.settings.bowlLitres, show: { planner.show(.bowl, $0) }, field: .bowlLitres
                     )
                 }
             }
             if planner.settings.cooling == .tap || planner.settings.cooling == .bowl {
-                InfoRow("controls.coolingWater", more: [coolingWaterMore])
+                InfoRow(.`controls.coolingWater`, more: [coolingWaterMore])
                 HStack {
                     Spacer(minLength: 0)
                     CoolingWaterField(planner: planner)
@@ -204,8 +204,8 @@ struct ClausePanel: View {
     private var coolingWaterMore: String {
         let assumed = planner.show(.temperature, planner.coolingWaterAssumedC)
         return planner.settings.cooling == .tap
-            ? tr("controls.coolingWater.tap.more", ["water": .text(assumed)])
-            : tr("controls.coolingWater.bowl.more", ["room": .text(assumed)])
+            ? tr(.`controls.coolingWater.tap.more`, ["water": .text(assumed)])
+            : tr(.`controls.coolingWater.bowl.more`, ["room": .text(assumed)])
     }
 
     /// When the eggs went in, while a cook runs: a − and a +, a minute at a time, no later than now,
@@ -215,14 +215,14 @@ struct ClausePanel: View {
     private func startedAt(_ edits: Edits, _ start: Double) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(tr("controls.startedAt"))
+                Text(tr(.`controls.startedAt`))
                 Spacer(minLength: 8)
                 Text(timeOfDay(Date(timeIntervalSince1970: start)))
                     .systemFigures()
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .fixedSize()
-                Stepper(tr("controls.startedAt")) {
+                Stepper(tr(.`controls.startedAt`)) {
                     edits.stepStart(up: true)
                 } onDecrement: {
                     edits.stepStart(up: false)
@@ -234,7 +234,7 @@ struct ClausePanel: View {
             }
             .appFont(.subheadline)
             if let limit = edits.startLimit {
-                Text(tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
+                Text(trChosen(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -252,25 +252,25 @@ struct ClausePanel: View {
             // run past the screen (`MenuChoice`).
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(tr("controls.size"))
+                    Text(tr(.`controls.size`))
                         .accessibilityHidden(true)
                     sizeMenu
                 }
             } else {
-                LabeledContent(tr("controls.size")) {
+                LabeledContent(tr(.`controls.size`)) {
                     sizeMenu.fixedSize()
                 }
             }
             MeasureField(
-                label: tr("controls.measure.weight"), measure: planner.measure(.mass),
+                label: tr(.`controls.measure.weight`), measure: planner.measure(.mass),
                 value: planner.eggMassG, set: { planner.weigh($0) }, field: .mass
             )
             // How many go in: decided at each cook, so here and in the
             // sentence, not in Settings. A sous-vide egg cooks alone.
             if !planner.isSousVide {
-                InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
+                InfoRow(.`controls.eggsInPan`, more: [tr(.`controls.eggsInPan.more`)]) {
                     CountValue(
-                        label: tr("controls.eggsInPan"), value: $planner.settings.eggCount, range: Limits.eggCount,
+                        label: tr(.`controls.eggsInPan`), value: $planner.settings.eggCount, range: Limits.eggCount,
                         field: .eggCount
                     )
                 }
@@ -283,9 +283,9 @@ struct ClausePanel: View {
     /// there, the button and its list (`MenuChoice`).
     private var sizeMenu: some View {
         MenuChoice(
-            label: tr("controls.size"),
+            label: tr(.`controls.size`),
             choices: planner.sizeClasses.indices.map { (sizeLabel(planner.sizeClasses[$0]), $0) } + [(
-                tr("controls.size.measured", ["mass": .text(planner.show(.mass, planner.settings.weighedMassG))]),
+                tr(.`controls.size.measured`, ["mass": .text(planner.show(.mass, planner.settings.weighedMassG))]),
                 -1
             )],
             selection: Binding(get: { planner.settings.sizeIndex }, set: { planner.chooseSize($0) })
@@ -298,15 +298,15 @@ struct ClausePanel: View {
     /// there for anyone who knows better.
     private var from: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker(tr("controls.eggFrom"), selection: $planner.settings.startTempMode) {
-                Text(tr("controls.eggFrom.fridge")).tag(EggFrom.fridge)
-                Text(tr("controls.eggFrom.room")).tag(EggFrom.room)
-                Text(tr("controls.eggFrom.custom")).tag(EggFrom.custom)
+            Picker(tr(.`controls.eggFrom`), selection: $planner.settings.startTempMode) {
+                Text(tr(.`controls.eggFrom.fridge`)).tag(EggFrom.fridge)
+                Text(tr(.`controls.eggFrom.room`)).tag(EggFrom.room)
+                Text(tr(.`controls.eggFrom.custom`)).tag(EggFrom.custom)
             }
             .segmented()
             if planner.settings.startTempMode == .custom {
                 StepperRow(
-                    label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
+                    label: tr(.`controls.eggTemp`), measure: planner.measure(.eggTemp),
                     value: $planner.settings.customStartC, show: { planner.show(.eggTemp, $0) }, field: .customStart
                 )
                 .appFont(.subheadline)
@@ -316,7 +316,7 @@ struct ClausePanel: View {
             // the room assumed until set.
             if planner.settings.startTempMode == .room {
                 VStack(alignment: .leading, spacing: 6) {
-                    InfoRow("controls.room", more: [tr("controls.room.more", [
+                    InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
                         "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
                     ])])
                     HStack {
@@ -326,7 +326,7 @@ struct ClausePanel: View {
                 }
                 .appFont(.subheadline)
             }
-            Text(tr("controls.eggFrom.hint", [
+            Text(tr(.`controls.eggFrom.hint`, [
                 "fridge": .text(planner.show(.temperature, startTempPresetC(.fridge, roomC: planner.roomInUseC))),
                 "room": .text(planner.show(.temperature, startTempPresetC(.room, roomC: planner.roomInUseC))),
             ]))

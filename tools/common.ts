@@ -1,8 +1,8 @@
 /**
  * Helpers the tools and the tests share: the pots they cook in, the seeded
  * draws of their simulated cooks, a record, a posterior that knows its cook,
- * and a cheap decision surface. Each was copied between files before; a
- * change to one now reaches every user of it.
+ * a cheap decision surface, and how far a sweep goes. Each was copied
+ * between files before; a change to one now reaches every user of it.
  *
  * Nothing here is the app's: the apps' own logic is in src/core/, and these
  * only build inputs for it.
@@ -130,6 +130,11 @@ export function knowing(k: Knowing): Calibration {
   return { posterior: post, eggsLogged: k.eggsLogged };
 }
 
+/** The surfaces `gridFor` has built, by request: a surface is a pure function
+ *  of its egg, pot and extent, nothing writes to one, and the tests ask for
+ *  the same few many times. */
+const grids = new Map<string, DoseGrid>();
+
 /** A decision surface for this calibration and pot at a third of the
  *  production one's cost: its extent, at 9 rows and 20 s columns where the
  *  app has 13 and 10. What a test checks is what the choice does, which a
@@ -138,9 +143,16 @@ export function knowing(k: Knowing): Calibration {
 export function gridFor(c: Calibration, egg: Egg, setup: CookSetup): DoseGrid {
   const q = decisionGridRequest(decisionInputs(c, egg, setup));
   const count = Math.ceil((q.spec.timeMax_s - q.spec.timeMin_s) / 20) + 1;
-  return buildRequestedGrid({
+  const request = {
     ...q, spec: { ...q.spec, alphaCount: 9, timeMax_s: q.spec.timeMin_s + 20 * (count - 1), timeCount: count },
-  });
+  };
+  const key = JSON.stringify(request);
+  let grid = grids.get(key);
+  if (grid === undefined) {
+    grid = buildRequestedGrid(request);
+    grids.set(key, grid);
+  }
+  return grid;
 }
 
 /** The web's record of one egg, from its cook and plan, as a step logs it
@@ -161,3 +173,11 @@ export function webRecordFor(
   const made = cookFactsFor(cook, plan, ctx, yolk, white, probe);
   return made.facts === null ? null : recordFor(made.facts);
 }
+
+/* ---------------------------------------------------------------- sweeps */
+
+/** Whether the tests sweep exhaustively: `npm run test:slow`, which CI runs.
+ *  `npm test`, run on every commit, sweeps fewer points, chosen so that each
+ *  sweep still reaches every branch the exhaustive one does; a test whose
+ *  sweep shrinks asserts that it does. */
+export const EXHAUSTIVE = process.env['AET_TEST_SLOW'] === '1';

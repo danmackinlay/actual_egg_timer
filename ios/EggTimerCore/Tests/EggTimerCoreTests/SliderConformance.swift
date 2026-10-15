@@ -28,7 +28,7 @@ struct SliderConformance {
             )
             let anchor = try c.str("anchor")
             #expect(
-                anchorNear(level).key == anchor,
+                anchorNear(level).key.rawValue == anchor,
                 "anchorNear(\(level)): expected \(anchor), got \(anchorNear(level).key)"
             )
         }
@@ -92,8 +92,8 @@ struct VerdictConformance {
                 + " hardest \(sol.hardestLevel))"
 
             #expect(try v.kind.rawValue == c.str("kind"), "\(what) kind")
-            #expect(try v.wanted.key == c.str("wanted"), "\(what) wanted")
-            #expect(try v.limit.key == c.str("limit"), "\(what) limit")
+            #expect(try v.wanted.key.rawValue == c.str("wanted"), "\(what) wanted")
+            #expect(try v.limit.key.rawValue == c.str("limit"), "\(what) limit")
             #expect(try v.worthSaying == c.flag("worthSaying"), "\(what) worthSaying")
 
             switch (v.snapTo, try c.optionalNum("snapTo")) {

@@ -249,12 +249,12 @@ struct ReachConformance {
         for row in try file.rows("advice") {
             let setup = try cookSetup(row.object("setup"))
             let facts = try AdviceFacts(eggFromClass: row.flag("eggFromClass"), startAssumed: row.flag("startAssumed"))
-            #expect(unpricedAdvice(setup, facts: facts) == (row["unpriced"] as? [String]), "unpriced \(row)")
+            #expect(unpricedAdvice(setup, facts: facts).map(\.rawValue) == (row["unpriced"] as? [String]), "unpriced \(row)")
             let priced = pricedChanges(setup)
             // Most pots have nothing to price; the keys are compared whole, so
             // an empty list is still checked.
             let expected = try row.rows("priced", mayBeEmpty: true)
-            #expect(try priced.map(\.key) == expected.map { try $0.str("key") }, "priced keys \(row)")
+            #expect(try priced.map(\.key) == expected.map { try $0.copyKey("key") }, "priced keys \(row)")
             for (a, b) in zip(priced, expected) {
                 #expect(try a.setup == cookSetup(b.object("setup")), "priced setup \(a.key)")
             }
@@ -264,7 +264,7 @@ struct ReachConformance {
                     priced: priced.map { (key: $0.key, profile: adviceProfile) }
                 )
                 let expected = try shown.object("advice")
-                #expect(advice.keys == (expected["keys"] as? [String]), "shown \(shown)")
+                #expect(advice.keys.map(\.rawValue) == (expected["keys"] as? [String]), "shown \(shown)")
                 #expect(try advice.surer == expected.flag("surer"), "surer \(shown)")
             }
         }

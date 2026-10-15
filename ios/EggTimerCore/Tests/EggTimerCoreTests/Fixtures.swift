@@ -145,6 +145,21 @@ extension Dictionary where Key == String, Value == Any {
         return value
     }
 
+    /// A catalogue key from a fixture case: one the catalogue has.
+    func copyKey(_ key: String) throws -> CopyKey {
+        let raw = try str(key)
+        guard let value = CopyKey(rawValue: raw) else {
+            throw FixtureError("fixture case's \(key) is no catalogue key: \(raw)")
+        }
+        return value
+    }
+
+    /// A catalogue key the generator may have written as null.
+    func optionalCopyKey(_ key: String) throws -> CopyKey? {
+        guard let value = self[key], !(value is NSNull) else { return nil }
+        return try copyKey(key)
+    }
+
     /// A bool from a fixture case.
     func flag(_ key: String) throws -> Bool {
         guard let value = self[key] as? Bool else {

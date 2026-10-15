@@ -26,8 +26,11 @@ jobs:
         run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
       - run: npm run build
       - run: npm test
+      # The tests again, sweeping every point where npm test sweeps fewer.
+      - run: npm run test:slow
       - run: npm run validate
       - run: npm run copy:literals
+      - run: npm run copy:keys -- --check
       - run: npm run fixtures:check
 
   apple:

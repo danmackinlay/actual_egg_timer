@@ -150,10 +150,21 @@ public enum Copy {
 
 /// A message, rendered, with its numbers in the formatting locale. In the
 /// language on screen, or in `locale` when one is given: the widget renders
-/// in the language the cook was started in.
-public func tr(_ key: String, _ args: CopyArgs = [:], in locale: String? = nil) -> String {
+/// in the language the cook was started in. A debug build stops on arguments
+/// that are not exactly the key's (`CopyKey.argumentNames`).
+public func tr(_ key: CopyKey, _ args: CopyArgs = [:], in locale: String? = nil) -> String {
+    assert(
+        Set(args.keys) == CopyKey.argumentNames[key] ?? [],
+        "tr(\(key.rawValue)): given \(args.keys.sorted()), takes \((CopyKey.argumentNames[key] ?? []).sorted())"
+    )
+    return trChosen(key, args, in: locale)
+}
+
+/// A message whose key the core chose from several, rendered with every
+/// argument any of them takes: which of them it uses is not checked.
+public func trChosen(_ key: CopyKey, _ args: CopyArgs, in locale: String? = nil) -> String {
     let tag = locale ?? Copy.activeLocale
-    return Copy.catalogue(for: tag).render(key, args, formatLocale: Copy.formatLocale(for: tag))
+    return Copy.catalogue(for: tag).render(key.rawValue, args, formatLocale: Copy.formatLocale(for: tag))
 }
 
 /// What the core returned, rendered, with any arguments only the app can supply.

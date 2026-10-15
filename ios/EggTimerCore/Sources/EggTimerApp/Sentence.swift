@@ -20,7 +20,7 @@ public struct SentenceWords {
             "egg": .text(Self.mark(.egg)), "from": .text(Self.mark(.from)),
             "start": .text(Self.mark(.start)), "cooling": .text(Self.mark(.cooling)),
         ]
-        template = planner.isSousVide ? tr("setup.sentenceSousVide", args) : tr("setup.sentence", args)
+        template = planner.isSousVide ? tr(.`setup.sentenceSousVide`, args) : tr(.`setup.sentence`, args)
     }
 
     /// A clause's place in the template: its name between characters no
@@ -130,8 +130,8 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
         let (clause, k) = entry
         let with = clause == .cooling ? coolingArgs : args
         out[clause] = ClauseText(
-            text: tr(k.text, with), label: tr(k.label),
-            value: k.value.map { tr($0, with) } ?? own[clause] ?? ""
+            text: trChosen(k.text, with), label: tr(k.label),
+            value: k.value.map { trChosen($0, with) } ?? own[clause] ?? ""
         )
     }
 }

@@ -22,7 +22,7 @@ import {
   withOut, writeEvents,
 } from '../src/core/running.js';
 import { phaseKeys } from '../src/core/wording.js';
-import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
+import { forceFormatLocale, t, tChosen, useCatalogue } from '../src/ui/copy.js';
 import { formatClock, spokenClock } from '../src/ui/countdown.js';
 import { ReadoutFacts, phaseView } from '../src/ui/phaseView.js';
 import { show, useUnits } from '../src/ui/units.js';
@@ -76,11 +76,11 @@ test('idle: the controls\' pot, in the words phaseKeys chose', () => {
   });
   assert.equal(v.label, t(keys.label));
   assert.equal(v.digits, formatClock(720));
-  assert.equal(v.subline, t(keys.subline, { boil: formatClock(400), water: show('water', 3) }));
+  assert.equal(v.subline, tChosen(keys.subline, { boil: formatClock(400), water: show('water', 3) }));
   assert.equal(v.spoken, t('spoken.total', { time: spokenClock(720) }));
   assert.equal(v.primary, t('action.startHeating'));
   assert.equal(v.primaryDisabled, false);
-  assert.equal(v.hint, t(keys.hint ?? '', { time: formatClock(720) }));
+  assert.equal(v.hint, keys.hint === null ? '' : tChosen(keys.hint, { time: formatClock(720) }));
   assert.equal(v.secondaryVisible, false, 'nothing to cancel');
 });
 
@@ -159,7 +159,7 @@ test('the pull, the cooling and done', () => {
   const finished = planOf(done, end_s);
   const plain = phaseView(done, finished, end_s * 1000, facts());
   assert.equal(plain.digits, formatClock(finished.cookTime_s));
-  assert.equal(plain.subline, t('readout.sub.doneHot', { boil: formatClock(0), cooking: formatClock(finished.cookTime_s) }));
+  assert.equal(plain.subline, t('readout.sub.doneHot'));
   assert.equal(plain.spoken, t('spoken.done'));
   assert.equal(plain.primary, t('action.startAgain'));
   assert.equal(plain.secondaryVisible, false, 'a finished cook has nothing to cancel');

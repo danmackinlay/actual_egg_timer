@@ -1,6 +1,7 @@
 import SwiftUI
 import EggTimerCore
 import EggTimerApp
+import EggTimerCopy
 import EggTimerShared
 
 /// A section of Help, which a link on the main screen can open at.
@@ -8,14 +9,14 @@ enum HelpSection: String, CaseIterable, Hashable, Identifiable {
     case how, learn, reliable, odds, unsure, sources
     var id: String { rawValue }
 
-    var titleKey: String {
+    var titleKey: CopyKey {
         switch self {
-        case .how: "help.how.title"
-        case .learn: "help.learn.title"
-        case .reliable: "help.reliable.title"
-        case .odds: "help.odds.title"
-        case .unsure: "help.unsure.title"
-        case .sources: "help.sources.title"
+        case .how: .`help.how.title`
+        case .learn: .`help.learn.title`
+        case .reliable: .`help.reliable.title`
+        case .odds: .`help.odds.title`
+        case .unsure: .`help.unsure.title`
+        case .sources: .`help.sources.title`
         }
     }
 }
@@ -52,7 +53,7 @@ struct HelpView: View {
             }
         }
         .tint(.primary)
-        .barTitle(tr("help.title"))
+        .barTitle(tr(.`help.title`))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -71,29 +72,29 @@ struct HelpView: View {
 
     private var how: some View {
         section(.how) {
-            para(tr("help.how.p1"))
-            aside(tr("help.how.aside"))
-            para(tr("help.how.p2"))
-            aside(tr("help.how.aside2"))
+            para(tr(.`help.how.p1`))
+            aside(tr(.`help.how.aside`))
+            para(tr(.`help.how.p2`))
+            aside(tr(.`help.how.aside2`))
         }
     }
 
     private var learn: some View {
         section(.learn) {
-            para(tr("help.learn.p1"))
-            aside(tr("help.learn.aside"))
+            para(tr(.`help.learn.p1`))
+            aside(tr(.`help.learn.aside`))
         }
     }
 
     private var reliable: some View {
         section(.reliable) {
-            para(tr("help.reliable.intro"))
+            para(tr(.`help.reliable.intro`))
             // Under a wild guess: the changes that would help the setup on
             // screen, from `protocolAdvice` in the core's Reach.swift - the
             // same list the web shows here.
             if !planner.advice.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    subhead(tr("help.reliable.forYou"))
+                    subhead(tr(.`help.reliable.forYou`))
                     ForEach(planner.advice, id: \.self) { key in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(verbatim: "•")
@@ -104,16 +105,16 @@ struct HelpView: View {
                 .padding(12)
                 .background(Palette.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
             }
-            subhead(tr("help.reliable.every.title"))
-            para(tr("help.reliable.every"))
-            subhead(tr("help.reliable.hot.title"))
-            para(tr("help.reliable.hot"))
-            subhead(tr("help.reliable.cold.title"))
-            para(tr("help.reliable.cold"))
-            subhead(tr("help.reliable.heatOff.title"))
-            para(tr("help.reliable.heatOff"))
-            subhead(tr("help.reliable.cooling.title"))
-            para(tr("help.reliable.cooling"))
+            subhead(tr(.`help.reliable.every.title`))
+            para(tr(.`help.reliable.every`))
+            subhead(tr(.`help.reliable.hot.title`))
+            para(tr(.`help.reliable.hot`))
+            subhead(tr(.`help.reliable.cold.title`))
+            para(tr(.`help.reliable.cold`))
+            subhead(tr(.`help.reliable.heatOff.title`))
+            para(tr(.`help.reliable.heatOff`))
+            subhead(tr(.`help.reliable.cooling.title`))
+            para(tr(.`help.reliable.cooling`))
         }
     }
 
@@ -121,21 +122,21 @@ struct HelpView: View {
     /// certainty draft, then the aside. The certainty line's link opens here.
     private var odds: some View {
         section(.odds) {
-            para(tr("help.odds.p1"))
-            para(tr("outcome.bracket"))
-            para(tr("outcome.why"))
-            para(tr("outcome.learning"))
-            aside(tr("help.odds.aside"))
+            para(tr(.`help.odds.p1`))
+            para(tr(.`outcome.bracket`))
+            para(tr(.`outcome.why`))
+            para(tr(.`outcome.learning`))
+            aside(tr(.`help.odds.aside`))
         }
     }
 
     private var unsure: some View {
         section(.unsure) {
-            para(tr("help.unsure.counter"))
-            para(tr("help.unsure.bowl"))
-            para(tr("help.unsure.heatOff"))
-            para(tr("help.unsure.white"))
-            para(tr("help.unsure.sousVide", ["floor": .text(planner.show(.temperature, sousVideModelFloorC))]))
+            para(tr(.`help.unsure.counter`))
+            para(tr(.`help.unsure.bowl`))
+            para(tr(.`help.unsure.heatOff`))
+            para(tr(.`help.unsure.white`))
+            para(tr(.`help.unsure.sousVide`, ["floor": .text(planner.show(.temperature, sousVideModelFloorC))]))
         }
     }
 
@@ -143,16 +144,16 @@ struct HelpView: View {
     /// links them; nothing else.
     private var sources: some View {
         section(.sources) {
-            para(tr("help.sources.intro"))
+            para(tr(.`help.sources.intro`))
             VStack(alignment: .leading, spacing: 10) {
-                source("help.source.williams", "https://newton.ex.ac.uk/teaching/CDHW/egg/")
-                source("help.source.buay", "https://doi.org/10.1088/0143-0807/27/1/013")
-                source("help.source.abbasnezhad", "https://doi.org/10.1002/fsn3.257")
-                source("help.source.denys", "https://doi.org/10.1016/j.jfoodeng.2003.06.002")
-                source("help.source.vega", "https://doi.org/10.1007/s11483-010-9200-1")
-                source("help.source.weijers", "https://doi.org/10.1110/ps.03242803")
-                source("help.source.hoyt", "https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf")
-                source("help.source.usda", "https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking")
+                source(.`help.source.williams`, "https://newton.ex.ac.uk/teaching/CDHW/egg/")
+                source(.`help.source.buay`, "https://doi.org/10.1088/0143-0807/27/1/013")
+                source(.`help.source.abbasnezhad`, "https://doi.org/10.1002/fsn3.257")
+                source(.`help.source.denys`, "https://doi.org/10.1016/j.jfoodeng.2003.06.002")
+                source(.`help.source.vega`, "https://doi.org/10.1007/s11483-010-9200-1")
+                source(.`help.source.weijers`, "https://doi.org/10.1110/ps.03242803")
+                source(.`help.source.hoyt`, "https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf")
+                source(.`help.source.usda`, "https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking")
             }
         }
     }
@@ -165,7 +166,7 @@ struct HelpView: View {
         VStack(alignment: .leading, spacing: 0) {
             Divider()
             Link(destination: Self.privacyURL) {
-                Text(tr("help.privacy"))
+                Text(tr(.`help.privacy`))
                     .appFont(.subheadline, weight: .semibold)
                     .underline()
             }
@@ -173,7 +174,7 @@ struct HelpView: View {
             .padding(.top, 14)
             // Who made it, as on the web: the name links the owner's blog,
             // which `linked` hands to Safari like Help's other links.
-            Text(linked(tr("help.credit")))
+            Text(linked(tr(.`help.credit`)))
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.top, 10)
@@ -182,7 +183,7 @@ struct HelpView: View {
 
     /// The motto, under the title, as on the web.
     private var motto: some View {
-        Text(tr("help.motto"))
+        Text(tr(.`help.motto`))
             .appFont(.subheadline, italic: true)
             .foregroundStyle(.secondary)
             .padding(.bottom, -12)
@@ -226,7 +227,7 @@ struct HelpView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func source(_ key: String, _ url: String) -> some View {
+    private func source(_ key: CopyKey, _ url: String) -> some View {
         Link(destination: URL(string: url)!) {
             Text(tr(key))
                 .appFont(.footnote)

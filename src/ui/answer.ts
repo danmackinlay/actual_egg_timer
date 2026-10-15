@@ -11,6 +11,7 @@
  */
 
 import { DecisionInputs, decisionInputs, inputsKey } from '../core/decide.js';
+import { CopyKey } from '../core/copy.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import {
   DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
@@ -115,12 +116,12 @@ export function solveIdle(m: Model): IdleSolve {
  *  keys of what would help this setup, and whether a change the model can
  *  price makes the word asked surer. Idle only, and only once the time is
  *  decided; the priced changes count as their profiles land. */
-export function adviceFor(m: Model): { keys: string[]; surer: boolean; wanted: boolean } {
+export function adviceFor(m: Model): { keys: CopyKey[]; surer: boolean; wanted: boolean } {
   const chosen = m.chosen;
   const wanted = m.cook === null && !isSousVide(m) && chosen !== null && chosen.adviceWanted;
   if (!wanted || chosen === null) return { keys: [], surer: false, wanted: false };
   const inputs = currentInputs(m);
-  const priced: { key: string; profile: OddsProfile }[] = [];
+  const priced: { key: CopyKey; profile: OddsProfile }[] = [];
   for (const change of pricedChanges(inputs.setup)) {
     const p = oddsIn(m, decisionInputs(m.calib, inputs.egg, change.setup));
     if (p !== null) priced.push({ key: change.key, profile: p });

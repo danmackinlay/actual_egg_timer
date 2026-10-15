@@ -1,5 +1,6 @@
 import Foundation
 import EggTimerCore
+import EggTimerCopy
 
 /// The idle screen's solve: one loop at a time, off the main actor, a solve
 /// started at most every 90 ms (`recompute`), a change while it solves taken
@@ -220,7 +221,7 @@ final class SolveLoop {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
         guard d.adviceWanted else { return chosen }
-        var priced: [(key: String, profile: OddsProfile)] = []
+        var priced: [(key: CopyKey, profile: OddsProfile)] = []
         for change in pricedChanges(answer.setup) {
             let changed = decisionInputs(calibration, egg: egg, setup: change.setup)
             if let p = await Services.grids.cachedProfile(changed, calibration) {
@@ -400,7 +401,7 @@ final class SolveLoop {
         /// shaded and dotted by it.
         var profile: OddsProfile? = nil
         /// What to say under a wild guess, as catalogue keys; empty for nothing.
-        var advice: [String] = []
+        var advice: [CopyKey] = []
         /// Whether the way to it shows: a wild guess that a priced change
         /// makes surer (`ProtocolAdvice.surer`).
         var adviceShown = false

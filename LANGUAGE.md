@@ -67,7 +67,10 @@ remove that. `Info.plist` declares `CFBundleLocalizations`, so the App Store
 still lists the languages.
 
 **Core speaks no English.** Core returns keys and numbers, never sentences:
-a `CopyRef`, `{ key, args }`.
+a `CopyRef`, `{ key, args }`. A key is a `CopyKey`, made from
+`copy/en.json` by `npm run copy:keys` (`DECISIONS.md` 127): a key the
+catalogue lacks, or a web `t()` call with a missing or extra argument, does
+not compile.
 
 - The doneness anchors carry a `key`, not a label.
 - A size class's label takes its grams from the mass, as an argument, so a
@@ -242,6 +245,7 @@ diff. `CLAUDE.md` has the steps.
 - **Made**: an edit to `copy/en.json`, in both apps, with each
   `copy/en-US.json` entry it reaches and that entry's `base` (§2), each
   string within its surface's budget (`test/data/surfaces.json`); then
+  `npm run copy:keys` when a key or its arguments change, and
   `npm run fixtures`.
 - **Approval is stored.** `test/data/copy-review/approved.json` holds, per
   key, the English the owner approved and its hash. It began from the

@@ -3,6 +3,7 @@
  * a doneness target.
  */
 
+import { CopyKey } from './copyKeys.js';
 import {
   ALPHA_DEFAULT, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
   DT_SIM, CARRYOVER_WINDOW,
@@ -85,7 +86,7 @@ export function sliderFromYolkDose(yolkDose_min: number): number {
  *  word a language uses for each anchor is that language's choice, and the
  *  anchor stays at the same dose whatever it is called (LANGUAGE.md §5). */
 export interface DonenessAnchor {
-  key: string;
+  key: CopyKey;
   level: number;
   approxPeakYolk_C: number;
 }

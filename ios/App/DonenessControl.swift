@@ -54,7 +54,7 @@ struct DonenessControl: View {
                 YolkSlider(
                     value: Binding(get: { planner.settings.doneness }, set: { planner.settings.doneness = $0 }),
                     range: Limits.doneness, step: 0.01,
-                    label: tr("controls.doneness"), valueText: donenessValue(r), inset: $thumbInset,
+                    label: tr(.`controls.doneness`), valueText: donenessValue(r), inset: $thumbInset,
                     onTouch: { down in
                         // While a cook runs a drag is a correction committed
                         // on release (`Edits`).
@@ -87,7 +87,7 @@ struct DonenessControl: View {
 
     /// The slider's heading.
     private var heading: some View {
-        Text(tr("controls.doneness"))
+        Text(tr(.`controls.doneness`))
             .foregroundStyle(.secondary)
     }
 
@@ -151,19 +151,19 @@ struct DonenessControl: View {
     /// or in sous-vide the water's temperature.
     private func donenessPeak(_ r: SliderReading) -> String {
         if r.sousVide {
-            return tr("controls.doneness.bath", ["bath": .text(planner.show(.temperature, sousVideBathC))])
+            return tr(.`controls.doneness.bath`, ["bath": .text(planner.show(.temperature, sousVideBathC))])
         }
-        return tr("controls.doneness.peak", ["yolk": .text(planner.show(.temperature, r.peakYolkC))])
+        return tr(.`controls.doneness.peak`, ["yolk": .text(planner.show(.temperature, r.peakYolkC))])
     }
 
     /// The slider's value to VoiceOver: the doneness word and the temperature.
     private func donenessValue(_ r: SliderReading) -> String {
         if r.sousVide {
-            return tr("controls.doneness.valueBath", [
+            return tr(.`controls.doneness.valueBath`, [
                 "doneness": .text(planner.label), "bath": .text(planner.show(.temperature, sousVideBathC)),
             ])
         }
-        return tr("controls.doneness.value", [
+        return tr(.`controls.doneness.value`, [
             "doneness": .text(tr(anchorNear(r.level).key)), "yolk": .text(planner.show(.temperature, r.peakYolkC)),
         ])
     }

@@ -33,7 +33,7 @@ struct SousVideCopyConformance {
         for c in try Fixtures.list("sousvideCopy.json", "duration") {
             let seconds = try c.num("seconds")
             let actual = longDuration(seconds)
-            #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "longDuration(\(seconds)): \(actual)")
+            #expect(try actual == CopyRef(c.copyKey("key"), Self.args(c["args"])), "longDuration(\(seconds)): \(actual)")
             let text = english.render(actual)
             let expected = try c.str("text")
             #expect(text == expected, "longDuration(\(seconds)): expected \(expected), got \(text)")
@@ -49,7 +49,7 @@ struct SousVideCopyConformance {
         for c in try Fixtures.list("sousvideCopy.json", "startPhrase") {
             let days = try Int(c.num("daysAgo"))
             let actual = startPhrase(daysAgo: days)
-            #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
+            #expect(try actual == CopyRef(c.copyKey("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
             let text = english.render(actual, ["weekday": .text("Tuesday")])
             let expected = try c.str("text")
             #expect(text == expected, "startPhrase(\(days)): expected \(expected), got \(text)")
@@ -61,8 +61,8 @@ struct SousVideCopyConformance {
         let english = try Fixtures.catalogue("en")
         for c in try Fixtures.list("sousvideCopy.json", "weekday") {
             let day = try Int(c.num("day"))
-            #expect(try weekdayKey(day) == c.str("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
-            #expect(try english.render(weekdayKey(day)) == c.str("text"), "weekday \(day)")
+            #expect(try weekdayKey(day) == c.copyKey("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
+            #expect(try english.render(weekdayKey(day).rawValue) == c.str("text"), "weekday \(day)")
         }
     }
 }

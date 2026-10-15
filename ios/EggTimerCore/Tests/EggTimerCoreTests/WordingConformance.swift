@@ -26,7 +26,7 @@ struct WordingConformance {
             )
             let ref = warningKey(v, lowOdds: lowOdds, cooling: cooling)
             let label = "\(kind) \(worthSaying) \(lowOdds) \(cooling.rawValue)"
-            #expect(try ref?.key == row.optionalStr("key"), "\(label) key")
+            #expect(try ref?.key.rawValue == row.optionalStr("key"), "\(label) key")
             let args = (row["args"] as? [String: NSNumber])?.mapValues(\.doubleValue)
             #expect(ref?.args == args, "\(label) args")
         }
@@ -53,8 +53,8 @@ struct WordingConformance {
             let range = try row.object("range")
             let args = try #require(range["args"] as? [String: String], "range \(row)")
             let r = rangeWords(w)
-            #expect(try r.key == range.str("key"), "\(w.from)-\(w.to) range key")
-            #expect(r.args == args, "\(w.from)-\(w.to) range args")
+            #expect(try r.key.rawValue == range.str("key"), "\(w.from)-\(w.to) range key")
+            #expect(r.args.mapValues(\.rawValue) == args, "\(w.from)-\(w.to) range args")
         }
     }
 
@@ -62,7 +62,7 @@ struct WordingConformance {
     func certainty() throws {
         let c = try Fixtures.object("wording.json", "certainty")
         for row in try c.rows("keys") {
-            #expect(try certaintyKey(row.value(Certainty.self, "certainty")) == row.str("key"), "\(row)")
+            #expect(try certaintyKey(row.value(Certainty.self, "certainty")).rawValue == row.str("key"), "\(row)")
         }
         for row in try c.rows("words") {
             let p = try #require(row["p"] as? [NSNumber], "p in \(row)").map(\.doubleValue)
@@ -70,13 +70,13 @@ struct WordingConformance {
             let w = wordCertainty(p, asked: asked)
             let label = "\(p) asked \(asked)"
             #expect(try w.certainty.rawValue == row.str("certainty"), "\(label) class")
-            #expect(try certaintyKey(w.certainty) == row.str("key"), "\(label) key")
+            #expect(try certaintyKey(w.certainty).rawValue == row.str("key"), "\(label) key")
             for (name, got) in [("interval", intervalWords(w)), ("mostLikely", mostLikelyWords(w))] {
                 let e = try row.object(name)
-                #expect(try got.key == e.str("key"), "\(label) \(name) key")
+                #expect(try got.key.rawValue == e.str("key"), "\(label) \(name) key")
                 let args = (e["args"] as? [String: NSNumber])?.mapValues(\.doubleValue) ?? [:]
                 #expect(got.args == args, "\(label) \(name) args")
-                #expect(got.words == (e["words"] as? [String: String]), "\(label) \(name) words")
+                #expect(got.words.mapValues(\.rawValue) == (e["words"] as? [String: String]), "\(label) \(name) words")
             }
             #expect(try mostLikelyShown(w) == row.flag("mostLikelyShown"), "\(label) shown")
             #expect(try mostLikelyOpened(w) == row.flag("mostLikelyOpened"), "\(label) opened")
@@ -98,7 +98,7 @@ struct WordingConformance {
                 sure, startedAtS: running?.num("startedAt_s"), cookTimeS: running?.num("cookTime_s") ?? 0
             )
             let e = try row.object("words")
-            #expect(try w.key == e.str("key"), "\(note): key")
+            #expect(try w.key.rawValue == e.str("key"), "\(note): key")
             #expect(try w.lowS == e.num("low_s") && w.highS == e.num("high_s"), "\(note): \(w.lowS)-\(w.highS)")
             #expect(try w.ofDay == e.flag("ofDay"), "\(note): of day")
         }
@@ -113,8 +113,8 @@ struct WordingConformance {
                 whiteSets: row.flag("whiteSets"), boilKnown: row.flag("boilKnown"), probeWanted: row.flag("probeWanted")
             ))
             let expected = try PhaseKeys(
-                label: row.str("label"), subline: row.str("subline"),
-                action: row.optionalStr("action"), hint: row.optionalStr("hint")
+                label: row.copyKey("label"), subline: row.copyKey("subline"),
+                action: row.optionalCopyKey("action"), hint: row.optionalCopyKey("hint")
             )
             #expect(k == expected, "\(row)")
         }
@@ -133,7 +133,7 @@ struct WordingConformance {
             #expect(k.count == keys.count)
             for clause in Clause.allCases {
                 let e = try #require(keys[clause.rawValue], "no \(clause)")
-                let expected = try ClauseKeys(text: e.str("text"), label: e.str("label"), value: e.optionalStr("value"))
+                let expected = try ClauseKeys(text: e.copyKey("text"), label: e.copyKey("label"), value: e.optionalCopyKey("value"))
                 #expect(k[clause] == expected, "\(clause) in \(row)")
             }
         }

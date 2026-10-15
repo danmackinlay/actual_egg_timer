@@ -34,26 +34,26 @@ struct FeedbackPanel: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            Text(tr("feedback.ask"))
+            Text(tr(.`feedback.ask`))
                 .appFont(.headline)
                 .multilineTextAlignment(.center)
             yolkWords
-                .answerRow(tr("feedback.ask"))
+                .answerRow(tr(.`feedback.ask`))
 
-            Text(tr("feedback.white.ask"))
+            Text(tr(.`feedback.white.ask`))
                 .appFont(.headline)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
             AnswerRows(spacing: 10, rowSpacing: 8) {
-                whiteButton(tr("feedback.white.runny"), .runny)
-                whiteButton(tr("feedback.white.tender"), .tender)
-                whiteButton(tr("feedback.white.firm"), .firm)
+                whiteButton(tr(.`feedback.white.runny`), .runny)
+                whiteButton(tr(.`feedback.white.tender`), .tender)
+                whiteButton(tr(.`feedback.white.firm`), .firm)
             }
-            .answerRow(tr("feedback.white.ask"))
+            .answerRow(tr(.`feedback.white.ask`))
 
             probeEntry
 
-            Text(tr("feedback.optional"))
+            Text(tr(.`feedback.optional`))
                 .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -80,10 +80,10 @@ struct FeedbackPanel: View {
         if cook.shownProbeMoment {
             let given = said?.probe
             VStack(spacing: 8) {
-                Text(tr("probe.ask"))
+                Text(tr(.`probe.ask`))
                     .appFont(.headline)
                     .multilineTextAlignment(.center)
-                Text(tr("probe.how"))
+                Text(tr(.`probe.how`))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -91,10 +91,10 @@ struct FeedbackPanel: View {
                 // started at, which the empty field shows greyed; the button
                 // goes under them, since the three do not fit one line.
                 NudgeField(
-                    label: tr("probe.entry"), measure: planner.measure(.probeTemp), text: $probeText,
+                    label: tr(.`probe.entry`), measure: planner.measure(.probeTemp), text: $probeText,
                     startSI: cook.shownPeakYolkC ?? 0, width: 96, disabled: given != nil
                 )
-                Button(tr("probe.save")) { saveProbe() }
+                Button(tr(.`probe.save`)) { saveProbe() }
                     .buttonStyle(.bordered)
                     .disabled(given != nil || probeText.isEmpty)
                 if !probeNote.isEmpty {
@@ -114,7 +114,7 @@ struct FeedbackPanel: View {
         guard let scored = model.liveRecord().map(recordCookTimeS) else { return }
         let range = planner.probeRange(egg: plan.egg, setup: plan.setup, cookTimeS: scored)
         guard let reading, reading >= range.low, reading <= range.high else {
-            probeNote = tr("probe.refused", [
+            probeNote = tr(.`probe.refused`, [
                 "low": .text(planner.show(.probeTemp, range.low)),
                 "high": .text(planner.show(.probeTemp, range.high)),
             ])
@@ -179,10 +179,10 @@ struct FeedbackPanel: View {
     }
 
     private var calibrationNote: String {
-        if planner.learning { return tr("feedback.learning") }
-        if said.map({ $0.yolkWord != nil || $0.white != nil || $0.probe != nil }) == true { return tr("feedback.thanks") }
+        if planner.learning { return tr(.`feedback.learning`) }
+        if said.map({ $0.yolkWord != nil || $0.white != nil || $0.probe != nil }) == true { return tr(.`feedback.thanks`) }
         if planner.eggsLogged == 0 {
-            return tr("feedback.invite")
+            return tr(.`feedback.invite`)
         }
         return tunedLine
     }
@@ -195,14 +195,14 @@ struct FeedbackPanel: View {
     /// `renderTarget` says it.
     private var targetLine: String? {
         guard let level = cook.shownLevel, let peak = cook.shownPeakYolkC else { return nil }
-        return tr("feedback.target", [
+        return tr(.`feedback.target`, [
             "doneness": .text(midSentence(tr(anchorNear(level).key), locale: Copy.activeLocale)),
             "yolk": .text(planner.show(.temperature, peak)),
         ])
     }
 
     private var tunedLine: String {
-        tr("learned.tuned", ["eggs": .int(planner.eggsLogged)])
+        tr(.`learned.tuned`, ["eggs": .int(planner.eggsLogged)])
     }
 }
 

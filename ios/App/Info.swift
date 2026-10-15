@@ -1,4 +1,5 @@
 import SwiftUI
+import EggTimerCopy
 import EggTimerShared
 
 /// The (i), one component everywhere (UI.md sections 4 and 7): a circled *i*
@@ -63,7 +64,7 @@ extension InfoRow where Trailing == EmptyView {
 
 extension InfoRow where Label == Text, Trailing == EmptyView {
     /// The common case: a label from the catalogue, named "About {label}".
-    init(_ labelKey: String, more: [String]) {
+    init(_ labelKey: CopyKey, more: [String]) {
         self.init(name: about(labelKey), more: more) {
             Text(tr(labelKey))
         }
@@ -72,14 +73,14 @@ extension InfoRow where Label == Text, Trailing == EmptyView {
 
 extension InfoRow where Label == Text {
     /// A catalogue label with its control at the end of the line.
-    init(_ labelKey: String, more: [String], @ViewBuilder trailing: @escaping () -> Trailing) {
+    init(_ labelKey: CopyKey, more: [String], @ViewBuilder trailing: @escaping () -> Trailing) {
         self.init(name: about(labelKey), more: more, label: { Text(tr(labelKey)) }, trailing: trailing)
     }
 }
 
 /// "About {label}": the (i)'s name when its control's label reads inside it.
-func about(_ labelKey: String) -> String {
-    tr("more.about", ["label": .text(tr(labelKey))])
+func about(_ labelKey: CopyKey) -> String {
+    tr(.`more.about`, ["label": .text(tr(labelKey))])
 }
 
 /// The circled *i*. A thumb's hit area around a small circle; filled while
@@ -101,7 +102,7 @@ struct InfoButton: View {
         .buttonStyle(.plain)
         .foregroundStyle(expanded ? Color.primary : Color.secondary)
         .accessibilityLabel(name)
-        .accessibilityValue(tr(expanded ? "more.expanded" : "more.collapsed"))
+        .accessibilityValue(tr(expanded ? .`more.expanded` : .`more.collapsed`))
     }
 }
 

@@ -75,19 +75,19 @@ public func toSI(_ unit: UnitId, _ value: Double) -> Double {
 
 /// The catalogue's bare symbol, for a control's label, and its "value and
 /// unit" template, for everything else.
-private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
+private func unitKeys(_ unit: UnitId) -> (unit: CopyKey, format: CopyKey) {
     switch unit {
-    case .celsius: ("unit.celsius", "format.celsius")
-    case .fahrenheit: ("unit.fahrenheit", "format.fahrenheit")
-    case .grams: ("unit.grams", "format.grams")
-    case .ounces: ("unit.ounces", "format.ounces")
-    case .millimetres: ("unit.millimetres", "format.millimetres")
-    case .inches: ("unit.inches", "format.inches")
-    case .metres: ("unit.metres", "format.metres")
-    case .feet: ("unit.feet", "format.feet")
-    case .litres: ("unit.litres", "format.litres")
-    case .quarts: ("unit.quarts", "format.quarts")
-    case .pints: ("unit.pints", "format.pints")
+    case .celsius: (.`unit.celsius`, .`format.celsius`)
+    case .fahrenheit: (.`unit.fahrenheit`, .`format.fahrenheit`)
+    case .grams: (.`unit.grams`, .`format.grams`)
+    case .ounces: (.`unit.ounces`, .`format.ounces`)
+    case .millimetres: (.`unit.millimetres`, .`format.millimetres`)
+    case .inches: (.`unit.inches`, .`format.inches`)
+    case .metres: (.`unit.metres`, .`format.metres`)
+    case .feet: (.`unit.feet`, .`format.feet`)
+    case .litres: (.`unit.litres`, .`format.litres`)
+    case .quarts: (.`unit.quarts`, .`format.quarts`)
+    case .pints: (.`unit.pints`, .`format.pints`)
     }
 }
 
@@ -176,8 +176,8 @@ public struct Measure: Sendable, Equatable {
     /// Shown with only the decimals the value needs, up to `decimals`: "58 g"
     /// and "58.5 g", never "58.0 g". Metric mass, and the bowl.
     public let trim: Bool
-    public let unitKey: String
-    public let formatKey: String
+    public let unitKey: CopyKey
+    public let formatKey: CopyKey
     /// The SI limit, or nil for a readout.
     public let limit: ClosedRange<Double>?
     /// The limit in this unit, rounded INWARD to the step. Nil for a readout.
@@ -300,7 +300,7 @@ public func parse(_ m: Measure, _ typed: Double) -> Double? {
 /// renderer writes the value in the formatting locale, to the measure's
 /// decimals - "2.4 oz", "2,4 oz", "1,500 m".
 public struct QuantityText: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let value: Fixed
 }
 
@@ -313,7 +313,7 @@ public func quantityText(_ m: Measure, _ si: Double) -> QuantityText {
 /// units. The classes follow the region, not the units, so only the number
 /// changes. The label rounds; the model cooks the mass to a tenth of a gram.
 public struct SizeLabel: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let mass: QuantityText
 }
 

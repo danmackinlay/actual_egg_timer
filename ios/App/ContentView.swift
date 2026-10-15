@@ -119,15 +119,15 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            .barTitle(tr("app.name"))
+            .barTitle(tr(.`app.name`))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // In every phase: Settings' pot rows correct a running cook.
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink(value: Route.settings) { Text(tr("controls.settings")) }
+                    NavigationLink(value: Route.settings) { Text(tr(.`controls.settings`)) }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(value: Route.help(nil)) { Text(tr("help.link")) }
+                    NavigationLink(value: Route.help(nil)) { Text(tr(.`help.link`)) }
                 }
             }
             .navigationDestination(for: Route.self) { route in
@@ -243,7 +243,7 @@ struct ContentView: View {
     /// long s is drawn; VoiceOver reads it without, since a screen reader
     /// would announce every one.
     private var titlePage: some View {
-        let title = tr("app.titlePage")
+        let title = tr(.`app.titlePage`)
         return Text(title)
             .appFont(.body, italic: true)
             .foregroundStyle(.secondary)
@@ -352,7 +352,7 @@ extension View {
 /// the top of the egg screen and of Settings, in the warning's colour.
 struct NewerNote: View {
     var body: some View {
-        Text(tr("newer.note"))
+        Text(tr(.`newer.note`))
             .appFont(.footnote)
             .foregroundStyle(.orange)
             .frame(maxWidth: .infinity, alignment: .leading)

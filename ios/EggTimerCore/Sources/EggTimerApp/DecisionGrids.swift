@@ -12,11 +12,18 @@ actor DecisionGrids: DecisionSurfaces {
     public static let shared = DecisionGrids()
 
     /// The pot on screen, the one before, and a cold start's measured ramp.
-    private static let kept = 6
+    private let kept: Int
 
     private var done: [String: DoseGrid] = [:]
     private var order: [String] = []
     private var building: [String: Task<DoseGrid, Never>] = [:]
+
+    /// How many surfaces and profiles are kept. The app keeps a few; the tests,
+    /// which ask for the same few dozen pots in turn, keep every one.
+    init(kept: Int = 6, profilesKept: Int = 8) {
+        self.kept = kept
+        self.profilesKept = profilesKept
+    }
 
     /// A surface's key: core's (`inputsKey`), which the plan and the web's
     /// caches use too.
@@ -40,7 +47,7 @@ actor DecisionGrids: DecisionSurfaces {
         building[key] = nil
         if done[key] == nil { order.append(key) }
         done[key] = grid
-        while order.count > Self.kept {
+        while order.count > kept {
             done[order.removeFirst()] = nil
         }
         return grid
@@ -52,7 +59,7 @@ actor DecisionGrids: DecisionSurfaces {
     /// particle, so a fold - or a second answer refolded, which keeps the
     /// count - makes a new one. A few more than the surfaces, for the priced
     /// changes the advice asks about.
-    private static let profilesKept = 8
+    private let profilesKept: Int
 
     private var profiles: [String: OddsProfile] = [:]
     private var profileOrder: [String] = []
@@ -95,7 +102,7 @@ actor DecisionGrids: DecisionSurfaces {
         profileBuilds[key] = nil
         if profiles[key] == nil { profileOrder.append(key) }
         profiles[key] = p
-        while profileOrder.count > Self.profilesKept {
+        while profileOrder.count > profilesKept {
             profiles[profileOrder.removeFirst()] = nil
         }
         return p

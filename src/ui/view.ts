@@ -13,7 +13,7 @@
  */
 
 import { CertaintyReading, WordCertainty } from '../core/certainty.js';
-import { midSentence } from '../core/copy.js';
+import { CopyKey, midSentence } from '../core/copy.js';
 import { Egg } from '../core/geometry.js';
 import { anchorNear, targetPeakYolk_C } from '../core/slider.js';
 import { textureFor, textureNoteKeys } from '../core/texture.js';
@@ -31,7 +31,7 @@ import {
 } from '../core/wording.js';
 import { adviceFor } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
-import { activeLocale, t, timeOfDay } from './copy.js';
+import { activeLocale, t, tChosen, timeOfDay } from './copy.js';
 import { formatClock } from './countdown.js';
 import { CookShown, answeredHere, cookShown, pickedUpAfterReload, probePending, probeWanted } from './feedback.js';
 import { formView } from './controls.js';
@@ -121,7 +121,7 @@ interface Screen {
   /** The readout's height: let go, held at what it last measured while the
    *  lines are blank (a new pot's surface on its way), or measured. */
   height: 'free' | 'hold' | 'measure';
-  advice: { link: boolean; keys: string[] };
+  advice: { link: boolean; keys: CopyKey[] };
   welcome: boolean;
   /** Null: the drawing as it is. */
   section: SectionDraw | null;
@@ -459,7 +459,7 @@ function textureNote(sol: Solution): string {
   const note = textureNoteKeys(textureFor(sol.result.peakYolk_C, sol.result.peakWhite_C, sol.whiteSets));
   const parts: Record<string, string> = {};
   for (const [name, key] of Object.entries(note.parts)) parts[name] = t(key);
-  return t(note.key, parts);
+  return tChosen(note.key, parts);
 }
 
 /** The solve the texture note reads while a cook runs: once the egg is out,
@@ -510,7 +510,7 @@ function runningReading(m: Model, now_ms: number, cook: RunningCook, plan: CookP
 function words(ref: WordsRef): string {
   const args: Record<string, string | number> = { ...ref.args };
   for (const [name, key] of Object.entries(ref.words)) args[name] = t(key);
-  return t(ref.key, args);
+  return tChosen(ref.key, args);
 }
 
 /** How sure I am of the time on screen, under it (src/core/wording.ts, "How

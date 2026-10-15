@@ -12,7 +12,7 @@
  */
 
 import {
-  Catalogue, CopyArgs, CopyRef, catalogueChain, parseCatalogue, render, renderRef,
+  Catalogue, CopyArgs, CopyArgsOf, CopyKey, CopyRef, catalogueChain, parseCatalogue, render, renderRef,
 } from '../core/copy.js';
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
 import { DEFAULT_LANGUAGE } from '../core/language.js';
@@ -124,8 +124,15 @@ export function forceFormatLocale(tag: string | null): void {
   forcedFormatLocale = tag;
 }
 
-/** A message, rendered. */
-export function t(key: string, args: CopyArgs = {}): string {
+/** A message, rendered: a key of the catalogue, with exactly its arguments. */
+export function t<K extends CopyKey>(key: K, ...args: CopyArgsOf<K>): string {
+  return render(catalogue(), key, args[0] ?? {}, formatLocale());
+}
+
+/** A message whose key core chose from several, rendered with every argument
+ *  any of them takes: the compiler cannot know which key comes, so which of
+ *  the arguments it uses is held by the tests and the copy capture. */
+export function tChosen(key: CopyKey, args: CopyArgs): string {
   return render(catalogue(), key, args, formatLocale());
 }
 
@@ -153,7 +160,8 @@ export function timeOfDay(ms: number): string {
 export function applyCopy(doc: Document): void {
   doc.documentElement.lang = activeLocale();
   for (const node of Array.from(doc.querySelectorAll<HTMLElement>('[data-copy]'))) {
-    const key = node.dataset['copy'];
+    // A key read from the page, which test 6b holds to the catalogue.
+    const key = node.dataset['copy'] as CopyKey | undefined;
     if (key === undefined) continue;
     const text = t(key);
     if (node.hasAttribute('data-copy-links')) fillWithLinks(node, text);

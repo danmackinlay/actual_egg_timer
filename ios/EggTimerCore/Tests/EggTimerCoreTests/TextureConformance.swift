@@ -31,9 +31,9 @@ struct TextureConformance {
             #expect(try t.white.rawValue == c.str("white"), "white band at \(white) C, sets \(sets)")
             #expect(try t.yolk.rawValue == c.str("yolk"), "yolk band at \(yolk) C")
             let note = textureNoteKeys(t)
-            #expect(try note.key == c.str("noteKey"), "note at \(yolk) / \(white) C, sets \(sets)")
-            #expect(note.parts["white"] == c["noteWhite"] as? String, "note's white at \(white) C")
-            #expect(note.parts["yolk"] == c["noteYolk"] as? String, "note's yolk at \(yolk) C")
+            #expect(try note.key.rawValue == c.str("noteKey"), "note at \(yolk) / \(white) C, sets \(sets)")
+            #expect(note.parts["white"]?.rawValue == c["noteWhite"] as? String, "note's white at \(white) C")
+            #expect(note.parts["yolk"]?.rawValue == c["noteYolk"] as? String, "note's yolk at \(yolk) C")
             if !sets { runny += 1 }
         }
         // The case the fixture exists for: without it, this suite would pass
@@ -47,6 +47,6 @@ struct TextureConformance {
     func runnyWhite() {
         let t = textureFor(peakYolkC: 48, peakWhiteC: 51, whiteSets: false)
         #expect(t.white == .runny)
-        #expect(textureNoteKeys(t) == TextureNote(key: "texture.white.runny", parts: [:]))
+        #expect(textureNoteKeys(t) == TextureNote(key: .`texture.white.runny`, parts: [:]))
     }
 }

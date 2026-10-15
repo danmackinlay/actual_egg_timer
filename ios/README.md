@@ -71,6 +71,7 @@ web's alone, another tab's copy of a cook, `src/ui/tabs.ts`.
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
 | `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
+| `copyKeys.ts`, made by `npm run copy:keys` | the catalogue's keys, and each key's arguments | `CopyKey`, `CopyKeyArgs` | `EggTimerCopy`: `CopyKeys.swift`, made with it | none: `copy:keys --check` |
 
 The Swift core leaves out what no app calls: the
 measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,

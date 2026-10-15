@@ -366,7 +366,7 @@ over the stripes, since a cook can still call that egg Soft.
 
 The slider never rests on the stripes: asked for less than the pan can
 deliver, it moves to the softest level the pan delivers, which the time and
-the bracket are for (`test/reach.test.ts` 10). It does rest on the dots
+the bracket are for (`test/reachAnswer.test.ts` 10). It does rest on the dots
 (`DECISIONS.md` 83): there the time, the certainty line and the bracket are
 for the level asked, and the warning line says `warn.wildGuess`, "Soft: a
 wild guess so far." (the word is the thumb's level). A refusal worth saying
@@ -375,8 +375,8 @@ answer there carries the warning, the advice link under it. After a runny
 white or a yolk too soft, the time at a dotted level leans late, but never
 past a firmer level's (`DECISIONS.md` 84): the time never rises as the
 thumb moves softer, and where the white binds the soft end takes the time
-of the first firmer level whose own choice is sooner (`test/reach.test.ts`
-11). "Most likely" and the bracket say where that puts the yolk.
+of the first firmer level whose own choice is sooner
+(`test/reachAnswer.test.ts` 11). "Most likely" and the bracket say where that puts the yolk.
 
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
 jammy, pale yellow at hard, deeper in the light scheme. Its opacity is the

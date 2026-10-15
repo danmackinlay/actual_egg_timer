@@ -736,7 +736,7 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   jammy it runs +-72, 22, 13, 11, 9, 8 s over the first five eggs. No screen
   shows it (`DECISIONS.md` 27), the decision does not compute it
   (`DECISIONS.md` 40), and the record does not keep it: `npm run decide --
-  learning` and `test/decide.test.ts` read it on demand.
+  learning` and `test/decideLearning.test.ts` read it on demand.
 - **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
   re-solve rather than waiting a second for the new pot's surface: 3 s from
   choosing again at soft, under 0.5 s at jammy.

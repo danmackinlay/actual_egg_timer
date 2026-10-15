@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// What the readout says while a cook runs: the words above, on and under the
 /// clock, the buttons, and the numbers they take, for a cook and its plan at
@@ -9,7 +10,7 @@ import Foundation
 /// `elapsed`, `boil`, `after` and `cooking` are seconds, shown as a clock;
 /// `boiling` is degrees Celsius; `seconds` a whole number of seconds.
 public struct ReadoutLine: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let args: [String: Double]
 }
 
@@ -30,15 +31,15 @@ public struct Readout: Sendable, Equatable {
     public let phase: Phase
     public let asking: Bool
     /// Above the clock.
-    public let label: String
+    public let label: CopyKey
     /// The clock, s, never below zero, and whether it counts on past the pull.
     public let clockS: Double
     public let sign: String
     public let subline: ReadoutLine
     public let spoken: Spoken
     /// The primary button, and the second (the "no" to "still in the water?").
-    public let primary: String?
-    public let secondary: String?
+    public let primary: CopyKey?
+    public let secondary: CopyKey?
     public let hint: ReadoutLine?
     /// Whether Cancel is offered.
     public let cancel: Bool
@@ -78,10 +79,10 @@ public func readoutAt(
     if asksIfStillIn(plan) {
         let since = max(0, nowS - d.cookEndS)
         return Readout(
-            phase: phase, asking: true, label: "ask.stillIn", clockS: since, sign: "+",
-            subline: ReadoutLine(key: "readout.sub.stillIn", args: [:]),
+            phase: phase, asking: true, label: .`ask.stillIn`, clockS: since, sign: "+",
+            subline: ReadoutLine(key: .`readout.sub.stillIn`, args: [:]),
             spoken: Spoken(say: .stillIn, args: ["time": since]),
-            primary: "ask.stillIn.yes", secondary: "ask.stillIn.no", hint: nil, cancel: true
+            primary: .`ask.stillIn.yes`, secondary: .`ask.stillIn.no`, hint: nil, cancel: true
         )
     }
 

@@ -329,12 +329,12 @@ test('5c. there are the plural categories CLDR has, and no others', () => {
 // the catalogue and the code agree
 // --------------------------------------------------------------------------
 
-test('6a. every key the code names exists, and every key is shown by an app', () => {
+test('6a. every key is shown by an app', () => {
   // Which app shows a key is read from the sources, never typed
   // (tools/copyNotes.ts): a key an app's code names is that app's. A key in
-  // a core counts for the app that core ships in.
+  // a core counts for the app that core ships in. That every key the code
+  // names exists is the compilers' to say (npm run copy:keys).
   const used = appsUsing(EN.messages.keys());
-  for (const key of used.keys()) assert.ok(EN.messages.has(key), `"${key}" is named in the code and is not in copy/en.json`);
   for (const key of EN.messages.keys()) assert.ok(used.has(key), `${key}: no app shows it`);
 });
 

@@ -42,6 +42,7 @@
  * ask the platform for the region and hand it in.
  */
 
+import { CopyKey } from './copyKeys.js';
 import { LIMITS, Limit, clamp } from './inputs.js';
 import { SizeClass, isUS } from './geometry.js';
 import { Fixed, roundTo } from './format.js';
@@ -94,7 +95,7 @@ export function toSI(unit: UnitId, value: number): number {
 
 /** The catalogue's bare symbol, for the label beside an input, and its
  *  "value and unit" template, for everything else. */
-const UNIT_KEYS: Record<UnitId, { unit: string; format: string }> = {
+const UNIT_KEYS: Record<UnitId, { unit: CopyKey; format: CopyKey }> = {
   C: { unit: 'unit.celsius', format: 'format.celsius' },
   F: { unit: 'unit.fahrenheit', format: 'format.fahrenheit' },
   g: { unit: 'unit.grams', format: 'format.grams' },
@@ -249,9 +250,9 @@ export interface Measure {
    *  "2.00 L" does. */
   trim: boolean;
   /** The catalogue key of the bare symbol, for the label beside an input. */
-  unitKey: string;
+  unitKey: CopyKey;
   /** The catalogue key of "{value} unit". */
-  formatKey: string;
+  formatKey: CopyKey;
   /** The SI limit, or null for a readout. */
   limit: Limit | null;
   /** The limit in this unit, rounded INWARD to the step, so that both ends
@@ -395,7 +396,7 @@ export function parse(m: Measure, typed: number): number | null {
  *  renderer writes the value in the formatting locale, to the measure's
  *  decimals - "2.4 oz", "2,4 oz", "1,500 m". */
 export interface QuantityText {
-  key: string;
+  key: CopyKey;
   value: Fixed;
 }
 
@@ -410,7 +411,7 @@ export function quantityText(m: Measure, si: number): QuantityText {
  *  American carton in grams too), so only the number changes. The label rounds;
  *  the model cooks the mass to a tenth of a gram. */
 export interface SizeLabel {
-  key: string;
+  key: CopyKey;
   mass: QuantityText;
 }
 

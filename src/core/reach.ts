@@ -39,7 +39,7 @@
  * THE ENVELOPE. Each level's time is chosen against that level's own
  * target, so the choices need not keep their order: after a runny white the
  * white's weight pushes the time chosen at soft past the one chosen at jammy
- * (500 s against 428 s, test/reach.test.ts 11), and asking for a softer egg
+ * (500 s against 428 s, test/reachAnswer.test.ts 11), and asking for a softer egg
  * would give a firmer one. The owner wants the time monotone in the level
  * (DECISIONS.md 84). So the time a level is given is the smallest of its own
  * choice and every firmer level's: a running minimum from the hard end. That
@@ -100,6 +100,7 @@
  * Pure, like the rest of `src/core/`.
  */
 
+import { CopyKey } from './copyKeys.js';
 import { Egg } from './geometry.js';
 import { CookSetup } from './protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from './solve.js';
@@ -472,7 +473,7 @@ export interface AdviceFacts {
 /** A change of protocol the model can price: the same pot with one thing
  *  changed. Its odds come from its own profile, built as the pot's own is. */
 export interface PricedChange {
-  key: string;
+  key: CopyKey;
   setup: CookSetup;
 }
 
@@ -512,8 +513,8 @@ export function pricedChanges(setup: CookSetup): PricedChange[] {
  * Both are true of every level, and the model shows neither in its odds: it
  * sees them only as a noisier cook, egg by egg.
  */
-export function unpricedAdvice(setup: CookSetup, facts: AdviceFacts): string[] {
-  const keys: string[] = [];
+export function unpricedAdvice(setup: CookSetup, facts: AdviceFacts): CopyKey[] {
+  const keys: CopyKey[] = [];
   if (facts.startAssumed && setup.eggStart_C > START_TEMP_PRESETS_C.fridge + FRIDGE_MARGIN_C) {
     keys.push('advice.fridge');
   }
@@ -553,7 +554,7 @@ export function askedNear(profile: OddsProfile, level: number): number {
 export interface ProtocolAdvice {
   /** Catalogue keys in the order shown: the unpriced advice, then each
    *  priced change that makes the word asked surer. */
-  keys: string[];
+  keys: CopyKey[];
   /** Whether a priced change makes it surer: the link shows (with
    *  `adviceWanted`). */
   surer: boolean;
@@ -568,7 +569,7 @@ export interface ProtocolAdvice {
  */
 export function protocolAdvice(
   setup: CookSetup, facts: AdviceFacts, level: number, pAsked: number,
-  priced: { key: string; profile: OddsProfile }[],
+  priced: { key: CopyKey; profile: OddsProfile }[],
 ): ProtocolAdvice {
   const keys = unpricedAdvice(setup, facts);
   let surer = false;

@@ -984,3 +984,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     the web's in `src/ui`, tested by `test/*.test.ts`; iOS's in
     `EggTimerApp`, tested by `EggTimerAppTests`. It is no longer ported to
     Swift or fixtured. Built `core-narrow`.
+127. **The compilers check the catalogue's keys** (the owner, 14 October
+    2026, on the adversarial review: generate the key type from the
+    catalogue). `npm run copy:keys` writes, from `copy/en.json`, the
+    TypeScript `CopyKey` with each key's argument names
+    (`src/core/copyKeys.ts`) and Swift's `enum CopyKey: String`
+    (`EggTimerCopy/CopyKeys.swift`), each case spelled as its key. Both are
+    committed, since Xcode and SwiftPM run no node, and `copy:keys --check`
+    holds them to the catalogue in verify and CI. A key the catalogue lacks
+    fails `tsc` or `swift build`, and so does a `t()` call with a missing or
+    extra argument; Swift's `tr()` checks argument names in a debug build.
+    Built `gate-speed`.

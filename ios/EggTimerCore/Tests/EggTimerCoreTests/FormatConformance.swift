@@ -126,10 +126,10 @@ struct FormatConformance {
             let m = measureFor(q, system: system, region: c["region"] as? String)
             let si = try c.num("si")
             let text = quantityText(m, si)
-            #expect(try text.key == c.str("key"), "\(c)")
+            #expect(try text.key.rawValue == c.str("key"), "\(c)")
             let locale = try c.str("locale")
             let expected = try c.str("text")
-            let actual = en.render(text.key, ["value": .fixed(text.value)], formatLocale: locale)
+            let actual = en.render(text.key.rawValue, ["value": .fixed(text.value)], formatLocale: locale)
             #expect(actual == expected, "\(locale) \(q) \(si): expected \(Self.show(expected)), got \(Self.show(actual))")
         }
     }

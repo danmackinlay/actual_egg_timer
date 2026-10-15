@@ -56,11 +56,14 @@ private func expectLine(_ l: ReadoutLine?, _ json: Any?, _ what: String) throws 
         return
     }
     let line = try #require(l, "\(what): no line")
-    #expect(try line.key == j.str("key"), "\(what): key")
-    let args = try j.object("args")
-    #expect(Set(line.args.keys) == Set(args.keys), "\(what): its numbers \(line.args.keys.sorted())")
+    #expect(try line.key.rawValue == j.str("key"), "\(what): key")
+    try expectArgs(line.args, j.object("args"), what)
+}
+
+private func expectArgs(_ got: [String: Double], _ args: [String: Any], _ what: String) {
+    #expect(Set(got.keys) == Set(args.keys), "\(what): its numbers \(got.keys.sorted())")
     for (k, v) in args {
-        if let n = v as? NSNumber, let got = line.args[k] { expectClose(got, n.doubleValue, "\(what): \(k)") }
+        if let n = v as? NSNumber, let value = got[k] { expectClose(value, n.doubleValue, "\(what): \(k)") }
     }
 }
 
@@ -72,18 +75,15 @@ private func expectReadout(_ r: Readout?, _ json: Any?, _ what: String) throws {
     let ro = try #require(r, "\(what): a readout")
     #expect(try ro.phase.rawValue == j.str("phase"), "\(what): phase")
     #expect(try ro.asking == j.flag("asking"), "\(what): asking")
-    #expect(try ro.label == j.str("label"), "\(what): label")
+    #expect(try ro.label.rawValue == j.str("label"), "\(what): label")
     try expectClose(ro.clockS, j.num("clock_s"), "\(what): clock")
     #expect(try ro.sign == j.str("sign"), "\(what): sign")
     try expectLine(ro.subline, j["subline"], "\(what): subline")
     let spoken = try j.object("spoken")
     #expect(try ro.spoken.say.rawValue == spoken.str("say"), "\(what): spoken")
-    try expectLine(
-        ReadoutLine(key: ro.spoken.say.rawValue, args: ro.spoken.args),
-        ["key": spoken.str("say"), "args": spoken.object("args")], "\(what): spoken"
-    )
-    #expect(try ro.primary == j.optionalStr("primary"), "\(what): primary")
-    #expect(try ro.secondary == j.optionalStr("secondary"), "\(what): secondary")
+    try expectArgs(ro.spoken.args, spoken.object("args"), "\(what): spoken")
+    #expect(try ro.primary?.rawValue == j.optionalStr("primary"), "\(what): primary")
+    #expect(try ro.secondary?.rawValue == j.optionalStr("secondary"), "\(what): secondary")
     try expectLine(ro.hint, j["hint"], "\(what): hint")
     #expect(try ro.cancel == j.flag("cancel"), "\(what): cancel")
 }

@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// The odds at every level the slider offers, and what follows from them:
 /// which levels the app warns of, how the track is shaded, and when the app
@@ -381,7 +382,7 @@ public struct AdviceFacts: Sendable, Equatable {
 
 /// A change of protocol the model can price: the same pot, one thing changed.
 public struct PricedChange: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let setup: CookSetup
 }
 
@@ -393,23 +394,23 @@ public func pricedChanges(_ setup: CookSetup) -> [PricedChange] {
     if setup.cooling == .counter {
         var ice = setup
         ice.cooling = .ice
-        out.append(PricedChange(key: "advice.ice", setup: ice))
+        out.append(PricedChange(key: .`advice.ice`, setup: ice))
     }
     if setup.afterBoil == .off && setup.waterLitres < Limits.waterLitres.upperBound {
         var more = setup
         more.waterLitres = min(Limits.waterLitres.upperBound, 2 * setup.waterLitres)
-        out.append(PricedChange(key: "advice.moreWater", setup: more))
+        out.append(PricedChange(key: .`advice.moreWater`, setup: more))
     }
     return out
 }
 
 /// The advice the model cannot price: the inputs it takes as exact.
-public func unpricedAdvice(_ setup: CookSetup, facts: AdviceFacts) -> [String] {
-    var keys: [String] = []
+public func unpricedAdvice(_ setup: CookSetup, facts: AdviceFacts) -> [CopyKey] {
+    var keys: [CopyKey] = []
     if facts.startAssumed && setup.eggStartC > StartTempPresets.fridgeC + fridgeMarginC {
-        keys.append("advice.fridge")
+        keys.append(.`advice.fridge`)
     }
-    if facts.eggFromClass { keys.append("advice.weigh") }
+    if facts.eggFromClass { keys.append(.`advice.weigh`) }
     return keys
 }
 
@@ -442,7 +443,7 @@ public func askedNear(_ profile: OddsProfile, level: Double) -> Double {
 public struct ProtocolAdvice: Sendable, Equatable {
     /// Catalogue keys in the order shown: the unpriced advice, then each
     /// priced change that makes the word asked surer.
-    public let keys: [String]
+    public let keys: [CopyKey]
     /// Whether a priced change makes it surer: the link shows (with
     /// `adviceWanted`).
     public let surer: Bool
@@ -453,7 +454,7 @@ public struct ProtocolAdvice: Sendable, Equatable {
 /// `adviceGain` or more over `pAsked`, the chance at the time on screen.
 public func protocolAdvice(
     _ setup: CookSetup, facts: AdviceFacts, level: Double, pAsked: Double,
-    priced: [(key: String, profile: OddsProfile)]
+    priced: [(key: CopyKey, profile: OddsProfile)]
 ) -> ProtocolAdvice {
     var keys = unpricedAdvice(setup, facts: facts)
     var surer = false

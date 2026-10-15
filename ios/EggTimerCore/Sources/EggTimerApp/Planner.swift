@@ -250,7 +250,7 @@ public final class Planner {
     var appliedNudgeS: Double = 0
     /// Under a wild guess, what would make this cook more reliable, as
     /// catalogue keys in the order shown; empty when there is nothing to say.
-    public var advice: [String] = []
+    public var advice: [CopyKey] = []
     /// Whether the way to Help's advice shows (Reach.swift, `protocolAdvice`):
     /// the word asked is a wild guess at the time on screen, and a change the
     /// model can price makes it surer. Never in sous-vide, or where the white

@@ -13,7 +13,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { parseCatalogue } from '../src/core/copy.js';
+import { CopyKey, parseCatalogue } from '../src/core/copy.js';
 import { targetPeakYolk_C } from '../src/core/slider.js';
 import { CookSurface } from '../src/core/running.js';
 import { FRESH_SHARE } from '../src/ui/shareState.js';
@@ -211,7 +211,7 @@ test('6. the parts drawn only when asked: the form in the units on screen, the l
 
 test('7. the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {
   const pulls = { ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter' } as const;
-  for (const [cooling, key] of Object.entries(pulls) as [keyof typeof pulls, string][]) {
+  for (const [cooling, key] of Object.entries(pulls) as [keyof typeof pulls, CopyKey][]) {
     const v = view(page({ startMode: 'cold', cooling: cooling }), S * 1000, viewMemo());
     assert.deepEqual(v.sizers, [t('action.startHeating'), t('action.fullBoil'), t(key), t('action.startAgain')], cooling);
     for (const other of Object.values(pulls)) {

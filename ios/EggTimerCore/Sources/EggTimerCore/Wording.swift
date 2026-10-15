@@ -16,14 +16,14 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
     guard v.worthSaying else { return nil }
     switch v.kind {
     case .none: return nil
-    case .whiteNeverSets: return CopyRef("refusal.whiteNeverSets")
-    case .harderThanPanReaches: return CopyRef("refusal.harderThanPan")
+    case .whiteNeverSets: return CopyRef(.`refusal.whiteNeverSets`)
+    case .harderThanPanReaches: return CopyRef(.`refusal.harderThanPan`)
     case .tooSoftForWhite:
         switch cooling {
-        case .counter: return CopyRef("refusal.counter")
-        case .tap: return CopyRef("refusal.tap")
-        case .bowl: return CopyRef("refusal.bowl")
-        case .ice: return CopyRef("refusal.ice")
+        case .counter: return CopyRef(.`refusal.counter`)
+        case .tap: return CopyRef(.`refusal.tap`)
+        case .bowl: return CopyRef(.`refusal.bowl`)
+        case .ice: return CopyRef(.`refusal.ice`)
         }
     }
 }
@@ -38,34 +38,34 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
 public func warningKey(_ v: Verdict, lowOdds: Bool, cooling: Cooling) -> CopyRef? {
     if let refusal = refusalKey(v, cooling: cooling) { return refusal }
     guard lowOdds else { return nil }
-    return CopyRef("warn.wildGuess")
+    return CopyRef(.`warn.wildGuess`)
 }
 
 // MARK: - The certainty
 
 /// The catalogue key of the line under the time (src/core/wording.ts, "How
 /// sure, in words").
-public func certaintyKey(_ c: Certainty) -> String {
+public func certaintyKey(_ c: Certainty) -> CopyKey {
     switch c {
-    case .veryCertain: return "certainty.veryCertain"
-    case .ballpark: return "certainty.ballpark"
-    case .wildGuess: return "certainty.wildGuess"
+    case .veryCertain: return .`certainty.veryCertain`
+    case .ballpark: return .`certainty.ballpark`
+    case .wildGuess: return .`certainty.wildGuess`
     }
 }
 
 /// A key with its counts (`args`, as a `CopyRef`'s) and its inserted words
 /// (`words`, each itself a doneness key for the caller to render).
 public struct WordsRef: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let args: [String: Double]
-    public let words: [String: String]
+    public let words: [String: CopyKey]
 }
 
 /// The likely time range as words take it (`timeRangeWords`): the key, and
 /// `low` and `high` as cook times, s (m:ss), or, `ofDay`, clock times, epoch
 /// s, said as times of day.
 public struct TimeRangeWords: Sendable, Equatable {
-    public let key: String
+    public let key: CopyKey
     public let lowS: Double
     public let highS: Double
     public let ofDay: Bool
@@ -80,14 +80,14 @@ public struct TimeRangeWords: Sendable, Equatable {
 public func timeRangeWords(_ sure: CertaintyReading, startedAtS: Double?, cookTimeS: Double) -> TimeRangeWords {
     let r = sure.time
     guard let start = startedAtS else {
-        return TimeRangeWords(key: "certainty.time", lowS: r.lowS, highS: r.highS, ofDay: false)
+        return TimeRangeWords(key: .`certainty.time`, lowS: r.lowS, highS: r.highS, ofDay: false)
     }
     if cookTimeS == sure.atS {
-        return TimeRangeWords(key: "certainty.timeOut", lowS: start + r.lowS, highS: start + r.highS, ofDay: true)
+        return TimeRangeWords(key: .`certainty.timeOut`, lowS: start + r.lowS, highS: start + r.highS, ofDay: true)
     }
     let now = start + cookTimeS
     return TimeRangeWords(
-        key: "certainty.timeOut", lowS: now + (r.lowS - sure.atS), highS: now + (r.highS - sure.atS), ofDay: true
+        key: .`certainty.timeOut`, lowS: now + (r.lowS - sure.atS), highS: now + (r.highS - sure.atS), ofDay: true
     )
 }
 
@@ -96,17 +96,17 @@ public func timeRangeWords(_ sure: CertaintyReading, startedAtS: Double?, cookTi
 public func intervalWords(_ w: WordCertainty) -> WordsRef {
     let args: [String: Double] = ["hits": (certaintyMass * 10).rounded(), "of": 10]
     if w.from == w.to {
-        return WordsRef(key: "certainty.interval.one", args: args, words: ["word": donenessAnchors[w.from].key])
+        return WordsRef(key: .`certainty.interval.one`, args: args, words: ["word": donenessAnchors[w.from].key])
     }
     return WordsRef(
-        key: "certainty.interval", args: args,
+        key: .`certainty.interval`, args: args,
         words: ["from": donenessAnchors[w.from].key, "to": donenessAnchors[w.to].key]
     )
 }
 
 /// "Most likely: Fudgy."
 public func mostLikelyWords(_ w: WordCertainty) -> WordsRef {
-    WordsRef(key: "certainty.mostLikely", args: [:], words: ["word": donenessAnchors[w.mostLikely].key])
+    WordsRef(key: .`certainty.mostLikely`, args: [:], words: ["word": donenessAnchors[w.mostLikely].key])
 }
 
 /// Whether "Most likely" shows under the line before it is pressed: only when
@@ -141,10 +141,10 @@ public func forecastWhiteAtRisk(_ f: Forecast) -> Bool {
 /// The bracket in the slider's words: a key and its arguments, each argument
 /// itself a doneness key for the caller to render: the certainty's 90%
 /// interval's first and last words, or its one word (`wordBracket` draws it).
-public func rangeWords(_ w: WordCertainty) -> (key: String, args: [String: String]) {
+public func rangeWords(_ w: WordCertainty) -> (key: CopyKey, args: [String: CopyKey]) {
     let low = donenessAnchors[w.from].key
-    if w.from == w.to { return ("outcome.range.one", ["level": low]) }
-    return ("outcome.range", ["low": low, "high": donenessAnchors[w.to].key])
+    if w.from == w.to { return (.`outcome.range.one`, ["level": low]) }
+    return (.`outcome.range`, ["low": low, "high": donenessAnchors[w.to].key])
 }
 
 // MARK: - The phase
@@ -180,23 +180,23 @@ public struct PhaseFacts: Sendable {
 /// The readout's keys in one phase. The app supplies the arguments.
 public struct PhaseKeys: Sendable, Equatable {
     /// Above the clock.
-    public let label: String
+    public let label: CopyKey
     /// Under the clock.
-    public let subline: String
+    public let subline: CopyKey
     /// The primary button, or nil when the phase has none.
-    public let action: String?
+    public let action: CopyKey?
     /// What the primary button (or, without one, the pan) asks of the cook, or
     /// nil when there is nothing true to add.
-    public let hint: String?
+    public let hint: CopyKey?
 }
 
 /// Where the eggs go at the pull, as the button says it.
-public func pulledKey(_ cooling: Cooling) -> String {
+public func pulledKey(_ cooling: Cooling) -> CopyKey {
     switch cooling {
-    case .ice: "action.pulled.ice"
-    case .tap: "action.pulled.tap"
-    case .bowl: "action.pulled.bowl"
-    case .counter: "action.pulled.counter"
+    case .ice: .`action.pulled.ice`
+    case .tap: .`action.pulled.tap`
+    case .bowl: .`action.pulled.bowl`
+    case .counter: .`action.pulled.counter`
     }
 }
 
@@ -208,43 +208,43 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     case .idle:
         // The time to boil, guessed or remembered, says no certainty of its
         // own: the certainty line speaks for both.
-        let subline = cold ? "readout.sub.coldAssumes" : (standing ? "readout.sub.standing" : "readout.sub.hot")
-        let hint = !f.whiteSets
-            ? "action.hint.whiteNeverSets"
-            : cold ? "action.hint.cold" : standing ? "action.hint.hotStanding" : "action.hint.hotBoiling"
+        let subline: CopyKey = cold ? .`readout.sub.coldAssumes` : (standing ? .`readout.sub.standing` : .`readout.sub.hot`)
+        let hint: CopyKey = !f.whiteSets
+            ? .`action.hint.whiteNeverSets`
+            : cold ? .`action.hint.cold` : standing ? .`action.hint.hotStanding` : .`action.hint.hotBoiling`
         return PhaseKeys(
-            label: "readout.phase.total", subline: subline,
-            action: cold ? "action.startHeating" : "action.eggsIn", hint: hint
+            label: .`readout.phase.total`, subline: subline,
+            action: cold ? .`action.startHeating` : .`action.eggsIn`, hint: hint
         )
     case .heating:
         return PhaseKeys(
-            label: "readout.phase.heating", subline: "readout.sub.heating", action: "action.fullBoil",
-            hint: standing ? "action.hint.heatingStanding" : "action.hint.heating"
+            label: .`readout.phase.heating`, subline: .`readout.sub.heating`, action: .`action.fullBoil`,
+            hint: standing ? .`action.hint.heatingStanding` : .`action.hint.heating`
         )
     case .cooking:
         return PhaseKeys(
-            label: standing ? "readout.phase.cookingHeatOff" : "readout.phase.cookingBoiling",
-            subline: cold ? "readout.sub.cookingCold" : "readout.sub.cookingHot", action: nil,
-            hint: standing ? "action.hint.cookingStanding" : "action.hint.cookingBoiling"
+            label: standing ? .`readout.phase.cookingHeatOff` : .`readout.phase.cookingBoiling`,
+            subline: cold ? .`readout.sub.cookingCold` : .`readout.sub.cookingHot`, action: nil,
+            hint: standing ? .`action.hint.cookingStanding` : .`action.hint.cookingBoiling`
         )
     case .pull:
         // On a counter rest nothing starts on its own: the grace runs out into
         // done, and the subline already says the yolk is still cooking.
         return PhaseKeys(
-            label: "readout.phase.pull", subline: "readout.sub.pull", action: pulledKey(f.cooling),
-            hint: f.cooling == .counter ? nil : "action.hint.pull"
+            label: .`readout.phase.pull`, subline: .`readout.sub.pull`, action: pulledKey(f.cooling),
+            hint: f.cooling == .counter ? nil : .`action.hint.pull`
         )
     case .cooling:
         return PhaseKeys(
-            label: f.cooling == .ice ? "readout.phase.coolingIce"
-                : f.cooling == .bowl ? "readout.phase.coolingBowl" : "readout.phase.coolingTap",
-            subline: f.probeWanted ? "readout.sub.coolingProbe" : "readout.sub.coolingPeak",
+            label: f.cooling == .ice ? .`readout.phase.coolingIce`
+                : f.cooling == .bowl ? .`readout.phase.coolingBowl` : .`readout.phase.coolingTap`,
+            subline: f.probeWanted ? .`readout.sub.coolingProbe` : .`readout.sub.coolingPeak`,
             action: nil, hint: nil
         )
     case .done:
         return PhaseKeys(
-            label: "readout.phase.done", subline: cold ? "readout.sub.doneCold" : "readout.sub.doneHot",
-            action: "action.startAgain", hint: nil
+            label: .`readout.phase.done`, subline: cold ? .`readout.sub.doneCold` : .`readout.sub.doneHot`,
+            action: .`action.startAgain`, hint: nil
         )
     }
 }
@@ -257,9 +257,9 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
 /// supplies `count` and `mass` (the egg), `temp` (the egg's own, or the
 /// cooling water's), `bath` (sous-vide) and `water` (the bowl's).
 public struct ClauseKeys: Sendable, Equatable {
-    public let text: String
-    public let label: String
-    public let value: String?
+    public let text: CopyKey
+    public let label: CopyKey
+    public let value: CopyKey?
 }
 
 public enum Clause: String, Sendable, CaseIterable, Identifiable {
@@ -298,40 +298,40 @@ public struct ClauseFacts: Sendable {
 public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
     let standing = f.afterBoil == .off
     let from: ClauseKeys = switch f.eggFrom {
-    case .fridge: ClauseKeys(text: "setup.from.fridge", label: "controls.eggFrom", value: "controls.eggFrom.fridge")
-    case .room: ClauseKeys(text: "setup.from.room", label: "controls.eggFrom", value: "controls.eggFrom.room")
-    case .custom: ClauseKeys(text: "setup.from.custom", label: "controls.eggFrom", value: nil)
+    case .fridge: ClauseKeys(text: .`setup.from.fridge`, label: .`controls.eggFrom`, value: .`controls.eggFrom.fridge`)
+    case .room: ClauseKeys(text: .`setup.from.room`, label: .`controls.eggFrom`, value: .`controls.eggFrom.room`)
+    case .custom: ClauseKeys(text: .`setup.from.custom`, label: .`controls.eggFrom`, value: nil)
     }
     let start: ClauseKeys = if f.sousVide {
-        ClauseKeys(text: "setup.start.sous", label: "controls.start", value: "controls.start.sousVide")
+        ClauseKeys(text: .`setup.start.sous`, label: .`controls.start`, value: .`controls.start.sousVide`)
     } else if f.startMode == .cold {
         ClauseKeys(
-            text: standing ? "setup.start.coldStanding" : "setup.start.cold",
-            label: "controls.start", value: "controls.start.cold"
+            text: standing ? .`setup.start.coldStanding` : .`setup.start.cold`,
+            label: .`controls.start`, value: .`controls.start.cold`
         )
     } else {
         ClauseKeys(
-            text: standing ? "setup.start.hotStanding" : "setup.start.hot",
-            label: "controls.start", value: "controls.start.hot"
+            text: standing ? .`setup.start.hotStanding` : .`setup.start.hot`,
+            label: .`controls.start`, value: .`controls.start.hot`
         )
     }
     let cooling: ClauseKeys = switch f.cooling {
-    case .ice: ClauseKeys(text: "setup.cooling.ice", label: "controls.cooling", value: "controls.cooling.ice")
+    case .ice: ClauseKeys(text: .`setup.cooling.ice`, label: .`controls.cooling`, value: .`controls.cooling.ice`)
     case .tap:
         ClauseKeys(
-            text: f.coolingWaterGiven ? "setup.cooling.tapAt" : "setup.cooling.tap",
-            label: "controls.cooling", value: "controls.cooling.tap"
+            text: f.coolingWaterGiven ? .`setup.cooling.tapAt` : .`setup.cooling.tap`,
+            label: .`controls.cooling`, value: .`controls.cooling.tap`
         )
     case .bowl:
         ClauseKeys(
-            text: f.coolingWaterGiven ? "setup.cooling.bowlAt" : "setup.cooling.bowl",
-            label: "controls.cooling", value: "controls.cooling.bowl"
+            text: f.coolingWaterGiven ? .`setup.cooling.bowlAt` : .`setup.cooling.bowl`,
+            label: .`controls.cooling`, value: .`controls.cooling.bowl`
         )
     case .counter:
-        ClauseKeys(text: "setup.cooling.counter", label: "controls.cooling", value: "controls.cooling.counter")
+        ClauseKeys(text: .`setup.cooling.counter`, label: .`controls.cooling`, value: .`controls.cooling.counter`)
     }
     return [
-        .egg: ClauseKeys(text: "setup.egg", label: "controls.egg", value: nil),
+        .egg: ClauseKeys(text: .`setup.egg`, label: .`controls.egg`, value: nil),
         .from: from,
         .start: start,
         .cooling: cooling,
@@ -360,17 +360,17 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
 /// numbers it needs.
 public func longDuration(_ seconds: Double) -> CopyRef {
     let minutes = Int((seconds / 60.0).rounded())
-    if minutes < 90 { return CopyRef("duration.minutes", ["minutes": Double(minutes)]) }
+    if minutes < 90 { return CopyRef(.`duration.minutes`, ["minutes": Double(minutes)]) }
     let hours = minutes / 60
     let rest = minutes % 60
     if hours < 48 {
         return rest == 0
-            ? CopyRef("duration.hours", ["hours": Double(hours)])
-            : CopyRef("duration.hoursMinutes", ["hours": Double(hours), "minutes": Double(rest)])
+            ? CopyRef(.`duration.hours`, ["hours": Double(hours)])
+            : CopyRef(.`duration.hoursMinutes`, ["hours": Double(hours), "minutes": Double(rest)])
     }
     let days = Int((Double(hours) / 24.0).rounded())
-    if days < 14 { return CopyRef("duration.days", ["days": Double(days)]) }
-    return CopyRef("duration.weeks", ["weeks": (Double(days) / 7.0).rounded()])
+    if days < 14 { return CopyRef(.`duration.days`, ["days": Double(days)]) }
+    return CopyRef(.`duration.weeks`, ["weeks": (Double(days) / 7.0).rounded()])
 }
 
 /// How long ago the cook should have started: today, yesterday, last Tuesday,
@@ -383,23 +383,23 @@ public func longDuration(_ seconds: Double) -> CopyRef {
 /// not supply. The app adds it, from the catalogue through `weekdayKey`, as the
 /// web does.
 public func startPhrase(daysAgo: Int) -> CopyRef {
-    if daysAgo <= 0 { return CopyRef("sousvide.start.today") }
-    if daysAgo == 1 { return CopyRef("sousvide.start.yesterday") }
-    if daysAgo < 7 { return CopyRef("sousvide.start.lastWeekday") }
-    if daysAgo < 14 { return CopyRef("sousvide.start.lastWeek") }
-    if daysAgo < 60 { return CopyRef("sousvide.start.weeksAgo", ["weeks": (Double(daysAgo) / 7.0).rounded()]) }
-    return CopyRef("sousvide.start.monthsAgo", ["months": (Double(daysAgo) / 30.0).rounded()])
+    if daysAgo <= 0 { return CopyRef(.`sousvide.start.today`) }
+    if daysAgo == 1 { return CopyRef(.`sousvide.start.yesterday`) }
+    if daysAgo < 7 { return CopyRef(.`sousvide.start.lastWeekday`) }
+    if daysAgo < 14 { return CopyRef(.`sousvide.start.lastWeek`) }
+    if daysAgo < 60 { return CopyRef(.`sousvide.start.weeksAgo`, ["weeks": (Double(daysAgo) / 7.0).rounded()]) }
+    return CopyRef(.`sousvide.start.monthsAgo`, ["months": (Double(daysAgo) / 30.0).rounded()])
 }
 
 /// The catalogue key of a weekday's name, numbered as JavaScript's
 /// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
 /// from 1, so the app subtracts one. Both apps name weekdays from the
 /// catalogue, not the platform (LANGUAGE.md §2).
-let weekdayKeys: [String] = [
-    "weekday.sunday", "weekday.monday", "weekday.tuesday", "weekday.wednesday",
-    "weekday.thursday", "weekday.friday", "weekday.saturday",
+let weekdayKeys: [CopyKey] = [
+    .`weekday.sunday`, .`weekday.monday`, .`weekday.tuesday`, .`weekday.wednesday`,
+    .`weekday.thursday`, .`weekday.friday`, .`weekday.saturday`,
 ]
 
-public func weekdayKey(_ dayOfWeek: Int) -> String {
+public func weekdayKey(_ dayOfWeek: Int) -> CopyKey {
     weekdayKeys[((dayOfWeek % 7) + 7) % 7]
 }
