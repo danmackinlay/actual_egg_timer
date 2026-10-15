@@ -32,6 +32,7 @@ import { flushDraw, pageModel, pageStores } from '../cook.ts';
 import { t, timeOfDay } from '../copy.ts';
 import { inHand } from '../idle.ts';
 import { isDevHost, nowMs, useRandom } from '../now.ts';
+import { jobsAnswered } from '../offThread.ts';
 import { phaseNow } from '../state.ts';
 import type { Settings } from '../store.ts';
 import { finalEggs } from '../effects.ts';
@@ -79,6 +80,9 @@ export interface Snapshot {
   finalEggs: number;
   share: { on: boolean; sent: number };
   inHand: { timers: number; jobs: number; requests: number };
+  /** The jobs sent off the main thread since the page loaded: answered by
+   *  the grid worker, and built on the page when it could not be had. */
+  gridJobs: { offThread: number; onThread: number };
 }
 
 export interface TestApi {
@@ -140,6 +144,7 @@ function snapshot(): Snapshot {
     finalEggs: finalEggs(stores, m),
     share: { on: share.on, sent: share.sent },
     inHand: inHand(),
+    gridJobs: jobsAnswered(),
   };
 }
 

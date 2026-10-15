@@ -15,10 +15,11 @@
   app does not draw, is this page's own code, below.
 
   Run it:
-    npm run build
-    python3 -m http.server 8391            # from the repo root
-    open http://localhost:8391/tools/egg-section.html
-  or the `egg-lab` configuration in .claude/launch.json.
+    npm run serve:dev
+    open http://localhost:8888/tools/egg-section.html
+  or the `egg-lab` configuration in .claude/launch.json. The development
+  server serves the sources below as modules, their types stripped
+  (tools/devServer.ts).
 -->
 <link rel="stylesheet" href="../styles.css">
 <style>
@@ -92,11 +93,11 @@
 </div>
 
 <script type="module">
-import { advanceSection, createSection, sectionView } from '../dist/src/core/section.js';
-import { eggFromMass } from '../dist/src/core/geometry.js';
-import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../dist/src/core/solve.js';
-import { CARRYOVER_WINDOW } from '../dist/src/core/constants.js';
-import { buildEggSection, paintEggSection, parseHex, readPalette, ringFills } from '../dist/src/ui/eggSection.js';
+import { advanceSection, createSection, sectionView } from '../src/core/section.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../src/core/solve.ts';
+import { CARRYOVER_WINDOW } from '../src/core/constants.ts';
+import { buildEggSection, paintEggSection, parseHex, readPalette, ringFills } from '../src/ui/eggSection.ts';
 
 /** Where the heat map's colours sit, C: blue from the ice to the room, a
  *  neutral grey at 40 C where nothing in an egg has begun to set, red toward

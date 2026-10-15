@@ -51,18 +51,18 @@ tests, fixtures identical to a fresh `npm run fixtures`, and the Swift core
 against them.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host
-needs, and the build is `tsc` plus a few `cp`s — no bundler, no environment
-variables, no secrets. The one exception is the endpoint that receives shared
+needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
+no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
 that Netlify bundles from source on deploy and backs with its Blobs store;
 `@netlify/blobs` is its one runtime dependency, and the apps have none. Another
 host would serve the site, but nothing there would answer `/api/eggs`, so
 sharing would wait until the endpoint was ported; the apps keep the eggs and
-retry. Because nothing is bundled, nothing is hashed: `dist/` and `copy/` keep
-their filenames from one deploy to the next, so they are served to be
-revalidated on every load rather than cached for a year, and a returning browser
-never runs last month's scripts against this month's page. `netlify.toml` says
-why. The built site also has a service worker: `tools/precache.mjs` writes
+retry. esbuild bundles the page, the grid worker and the service worker into
+a few files under `bundle/`, each named for its contents, so they are cached
+for a year, and a returning browser never runs last month's scripts against
+this month's page; `copy/` keeps its filenames, so it is revalidated on every
+load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.mjs` writes
 `sw.js`, listing every file with its SHA-256, and once a browser has it the app
 opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
@@ -144,12 +144,12 @@ fails the run.
 What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
 Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
 `Date.now()` unless the development clock has put itself there. On a page
-served from `localhost` or `127.0.0.1`, and nowhere else, `src/ui/main.ts`
-loads the development tools (`src/ui/dev/`: the clock and the test API) by a
-dynamic import before the app boots; `npm run build:site` leaves them out
-of the site, so the site that ships does not carry them, and the harness's
-server (`tools/devServer.ts`, as `npm run serve:dev` runs it) serves them
-beside it from the build. There, `?clock=60` runs it sixty
+served from `localhost` or `127.0.0.1` by the harness's server
+(`tools/devServer.ts`, as `npm run serve:dev` runs it), and nowhere else,
+`src/ui/main.ts` loads the development tools (`src/ui/dev/`: the clock and
+the test API) by a dynamic import before the app boots. `npm run build:site`
+builds them as a file of their own, sharing the app's modules, and leaves it
+out of the site, in `_dev/`, which that server serves over `_site/`. There, `?clock=60` runs it sixty
 times fast, `?clock=0` stops it, `?at=+7m40s` or `?at=-15m` sets it ahead or
 behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
 back; it is kept for the tab across a reload, a red mark in the corner shows

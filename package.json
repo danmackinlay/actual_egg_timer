@@ -34,7 +34,7 @@
     "ios:archive": "node tools/iosArchive.mjs",
     "ios:upload": "node tools/iosUpload.mjs",
     "ios:e2e": "node tools/build.mjs && node dist/tools/iosE2e.js",
-    "ios:release":"node tools/iosArchive.mjs && node tools/iosUpload.mjs",
+    "ios:release": "node tools/iosArchive.mjs && node tools/iosUpload.mjs",
     "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -configuration Release -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
     "build:site": "node tools/buildSite.mjs",
     "serve:site": "python3 -m http.server 8080 --directory _site",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
+    "esbuild": "^0.28.2",
     "typescript": "^5.6.0"
   },
   "dependencies": {

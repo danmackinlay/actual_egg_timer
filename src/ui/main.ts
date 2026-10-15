@@ -7,12 +7,15 @@
  *  the prior is drawn from (population.ts), which the calibration loads
  *  against.
  *
- *  On a page served from this machine, and nowhere else, the development
- *  tools load before the app boots (dev/index.ts: the development clock and
- *  the test API). They are imported here and only here, by a dynamic
- *  import, so the site that ships has none of them (`npm run build:site`
- *  leaves src/ui/dev/ out); where they are missing, the page boots without
- *  them. */
+ *  On a page served from this machine by the development server, and
+ *  nowhere else, the development tools load before the app boots
+ *  (dev/index.ts: the development clock and the test API). They are
+ *  imported here and only here, by a dynamic import, which the build makes
+ *  a file of its own that the site that ships leaves out (`npm run
+ *  build:site`, tools/buildSite.mjs). The server says it has them with a
+ *  cookie naming its port (tools/devServer.ts): cookies are shared by every
+ *  port of a host, and the site that ships, served here on another
+ *  (`npm run serve:site`), asks for nothing it does not have. */
 import { boot } from './app.ts';
 import { applyCopy, loadCopy } from './copy.ts';
 import { effectiveLanguage } from '../core/language.ts';
@@ -22,10 +25,12 @@ import { loadPopulation } from './population.ts';
 
 async function devTools(): Promise<void> {
   if (!isDevHost(location.hostname)) return;
+  if (!document.cookie.split('; ').includes(`aet-dev-tools=${location.port}`)) return;
   try {
     (await import('./dev/index.ts')).install();
   } catch {
-    /* a site built to ship, served here: no development tools */
+    /* not to be had (offline, say, since the service worker does not keep
+       them): the page boots without them */
   }
 }
 

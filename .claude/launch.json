@@ -26,7 +26,7 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "npm run build && python3 -m http.server \"${PORT:-8391}\""
+        "npm run build:site && npm run build && PORT=\"${PORT:-8391}\" node dist/tools/devServer.js"
       ],
       "port": 8391,
       "autoPort": true

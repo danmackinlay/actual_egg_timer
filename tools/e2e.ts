@@ -414,7 +414,7 @@ const SCENARIOS: Record<string, Scenario> = {
         search: location.search }))()`);
       check(!a.mark && !a.handles, `eggs.test: ${JSON.stringify(a)}`);
       check(a.search === '?clock=60&at=+1h', 'the address left alone off this machine');
-      const asked = away.requests().filter((r) => r.url.includes('/dev/'));
+      const asked = away.requests().filter((r) => r.url.includes('/bundle/dev-'));
       check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
       // No Web Locks there (an insecure context): a second tab runs the app
       // too, as before one tab owned it (owner.ts).
@@ -502,6 +502,9 @@ const SCENARIOS: Record<string, Scenario> = {
       check(s.log.length === 1, `one egg logged, ${s.log.length}`);
       const pans = pansIn(await tab.storage(BOIL_KEY));
       check(Object.keys(pans).length === 1, `the pan remembered: ${JSON.stringify(pans)}`);
+      // The surfaces and the odds were built by the grid worker, off the
+      // page's thread.
+      check(s.gridJobs.offThread > 0 && s.gridJobs.onThread === 0, `the grid worker's jobs: ${JSON.stringify(s.gridJobs)}`);
       const cooked_s = (s.now_ms - (cook?.startedAt_s ?? 0) * 1000) / 1000;
       return `${(cooked_s / 60).toFixed(1)} min of cook in ${((Date.now() - real0) / 1000).toFixed(1)} s; `
         + `recommended ${rec.recommended_s.toFixed(1)} s, pan ${JSON.stringify(pans)}`;

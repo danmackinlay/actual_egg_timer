@@ -16,8 +16,14 @@ interface Waiting {
   reject: (error: unknown) => void;
 }
 
+/** The grid worker's bundle, by its hashed name, beside the page's
+ *  (tools/buildSite.mjs, through esbuild's `define`). */
+declare const GRID_WORKER_FILE: string;
+
 let worker: Worker | null = null;
 let workerFailed = false;
+/** Jobs answered by the worker, and on this thread. */
+const answered = { offThread: 0, onThread: 0 };
 let nextId = 1;
 const waiting = new Map<number, Waiting>();
 /** Moved on when the page stands down (`stopWorker`): a job asked for
@@ -36,6 +42,7 @@ function onThisThread(job: Job): Promise<unknown> {
         return;
       }
       try {
+        answered.onThread += 1;
         resolve(runJob(job));
       } catch (error) {
         reject(error);
@@ -44,8 +51,12 @@ function onThisThread(job: Job): Promise<unknown> {
   });
 }
 
-/** Give up on the worker and finish whatever it was holding here instead. */
+/** Give up on the worker and finish whatever it was holding here instead,
+ *  saying so: the page still works, but blocks while it builds, and only
+ *  this line tells that apart from a worker that ran (tools/harness.ts
+ *  fails a scenario on it). */
 function abandonWorker(): void {
+  console.warn(WORKER_FAILED);
   workerFailed = true;
   if (worker !== null) worker.terminate();
   worker = null;
@@ -58,8 +69,9 @@ function gridWorker(): Worker | null {
   if (worker !== null) return worker;
   if (workerFailed || typeof Worker === 'undefined') return null;
   try {
-    worker = new Worker(new URL('./gridWorker.js', import.meta.url), { type: 'module' });
+    worker = new Worker(new URL(GRID_WORKER_FILE, import.meta.url), { type: 'module' });
   } catch {
+    console.warn(WORKER_FAILED);
     workerFailed = true;
     return null;
   }
@@ -70,8 +82,12 @@ function gridWorker(): Worker | null {
     if (w === undefined) return;
     waiting.delete(event.data.id);
     const result = event.data.grid ?? event.data.profile;
-    if (result !== undefined) w.resolve(result);
-    else onThisThread(w.job).then(w.resolve, w.reject);
+    if (result !== undefined) {
+      answered.offThread += 1;
+      w.resolve(result);
+    } else {
+      onThisThread(w.job).then(w.resolve, w.reject);
+    }
   };
   // A browser without module workers, or a worker file that did not ship,
   // lands here. The fold still happens; it just blocks the page while it runs.
@@ -80,6 +96,14 @@ function gridWorker(): Worker | null {
 }
 
 const STOOD_DOWN = 'this page no longer owns the app';
+
+const WORKER_FAILED = 'the grid worker did not start: building on the page';
+
+/** How many jobs the worker has answered, and how many were built on this
+ *  thread, since the page loaded: for the test API (dev/test.ts). */
+export function jobsAnswered(): { offThread: number; onThread: number } {
+  return { ...answered };
+}
 
 /** The page no longer owns the app (owner.ts): the worker ended, and every
  *  job it holds refused, so nothing more is built and whatever waits on a

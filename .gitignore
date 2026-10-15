@@ -18,6 +18,7 @@ studies/shape-study/results*.json
 dist/
 node_modules/
 _site/
+_dev/
 # The review queue's page, written by npm run copy:review
 copy-review.html
 .netlify/
