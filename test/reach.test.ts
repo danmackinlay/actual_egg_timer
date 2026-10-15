@@ -351,11 +351,20 @@ function cookedAt(setup: CookSetup, egg: Egg, n: number, word: 'runny' | 'soft' 
 
 test('9. on the model, ice makes a counter rest surer once it has bitten, and not before', () => {
   const egg = eggFromMass(0.058);
+  const change = pricedChanges(COUNTER)[0];
+  // The counter's surface and odds and ice's, for each calibration, made once.
+  const profiled = new Map<Calibration, { grid: DoseGrid; p: OddsProfile; ice: OddsProfile }>();
   const at = (c: Calibration, level: number) => {
-    const grid = gridFor(c, egg, COUNTER);
-    const p = oddsProfile(c, egg, COUNTER, grid);
-    const change = pricedChanges(COUNTER)[0];
-    const ice = oddsProfile(c, egg, change.setup, gridFor(c, egg, change.setup));
+    let made = profiled.get(c);
+    if (made === undefined) {
+      const grid = gridFor(c, egg, COUNTER);
+      made = {
+        grid: grid, p: oddsProfile(c, egg, COUNTER, grid),
+        ice: oddsProfile(c, egg, change.setup, gridFor(c, egg, change.setup)),
+      };
+      profiled.set(c, made);
+    }
+    const { grid, p, ice } = made;
     const a = answerAt(c, egg, COUNTER, level, p);
     const d = decideAnswer(c, egg, COUNTER, grid, a.solution, a.level, p, 0);
     const advice = protocolAdvice(
@@ -376,12 +385,13 @@ test('9. on the model, ice makes a counter rest surer once it has bitten, and no
   // One egg on the counter called runny when jammy was asked: the carryover
   // is the doubt now, and ice settles it. The link shows.
   console.log('# one egg called runny, counter, soft asked:');
-  const bitten = at(cookedAt(COUNTER, egg, 1, 'runny'), 0.22);
+  const runny = cookedAt(COUNTER, egg, 1, 'runny');
+  const bitten = at(runny, 0.22);
   assert.equal(bitten.d.certainty.words.certainty, 'wildGuess');
   assert.equal(bitten.d.adviceWanted, true);
   assert.deepEqual(bitten.advice, { keys: ['advice.ice'], surer: true });
   // At hard it is surer than a wild guess, and nothing is looked for.
-  assert.equal(at(cookedAt(COUNTER, egg, 1, 'runny'), 1).d.adviceWanted, false);
+  assert.equal(at(runny, 1).d.adviceWanted, false);
 });
 
 test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
