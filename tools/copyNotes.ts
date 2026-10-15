@@ -39,14 +39,19 @@ function sourceFiles(dir: string, ext: string): string[] {
     .map((f) => `${dir}/${f}`);
 }
 
+/** The key types made from the catalogue (tools/copyKeys.ts): they name
+ *  every key, and show none. */
+const GENERATED = new Set(['src/core/copyKeys.ts', 'ios/EggTimerCore/Sources/EggTimerCopy/CopyKeys.swift']);
+
 /** Each app's sources: what it is built from, so what it can say. */
 export function sources(): Record<App, string[]> {
+  const own = (files: string[]): string[] => files.filter((f) => !GENERATED.has(f));
   return {
-    web: [...sourceFiles('src/ui', '.ts'), ...sourceFiles('src/core', '.ts'), 'index.html'],
-    ios: [
+    web: own([...sourceFiles('src/ui', '.ts'), ...sourceFiles('src/core', '.ts'), 'index.html']),
+    ios: own([
       ...sourceFiles('ios/App', '.swift'), ...sourceFiles('ios/Widget', '.swift'),
       ...sourceFiles('ios/EggTimerCore/Sources', '.swift'),
-    ],
+    ]),
   };
 }
 

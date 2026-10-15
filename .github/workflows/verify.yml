@@ -30,6 +30,7 @@ jobs:
       - run: npm run test:slow
       - run: npm run validate
       - run: npm run copy:literals
+      - run: npm run copy:keys -- --check
       - run: npm run fixtures:check
 
   apple:

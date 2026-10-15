@@ -7,6 +7,8 @@
 //   npm test         node --test over dist/test
 //   validate         the science against the literature (dist/tools/validate.js)
 //   copy:literals    no Swift literal is words (dist/tools/copyLiterals.js)
+//   copy:keys        the key types made afresh from copy/en.json, compared
+//                    with git's (dist/tools/copyKeys.js --check)
 //   fixtures:check   the fixtures made afresh, compared with git's
 //   swift build      the package and its tests, compiled
 //   swift app tests  EggTimerAppTests, once swift build has ended
@@ -93,6 +95,7 @@ if (build.code === 0) {
     job('npm test', [[node, ['--test', ...tests]]]),
     job('validate', [[node, ['dist/tools/validate.js']]]),
     job('copy:literals', [[node, ['dist/tools/copyLiterals.js']]]),
+    job('copy:keys', [[node, ['dist/tools/copyKeys.js', '--check']]]),
     fixtures,
     swiftBuild,
     appTests,
