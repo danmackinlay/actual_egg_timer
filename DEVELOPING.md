@@ -101,7 +101,8 @@ The rules the words are held to, and the machinery, are `LANGUAGE.md` §3.
 `npm run e2e` builds the site, serves it with the sharing endpoint on a store
 in memory (`tools/devServer.ts`), and drives it in headless Chrome over the
 DevTools protocol, with nothing installed beyond Chrome itself
-(`tools/e2e.ts`, its scenarios, over `tools/harness.ts` and
+(`tools/e2e.ts`, which runs the scenarios in `tools/e2e/`, a file for each
+area beside the helpers they share, on `tools/harness.ts` and
 `tools/chrome.ts`, which finds Chrome where macOS and Linux put it; `CHROME`
 names another binary). Each scenario runs in a browser context of its
 own and asserts on the page and on what it stored: a cold cook at sixty
