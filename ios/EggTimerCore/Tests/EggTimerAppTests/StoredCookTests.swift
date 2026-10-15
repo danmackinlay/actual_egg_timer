@@ -75,7 +75,7 @@ private func sameJSON(_ a: Any?, _ b: Any?, ulps: Double) -> Bool {
 
 /// A fixed stream of doubles in [0, 1) with every bit of the mantissa used:
 /// SplitMix64, for draws a test can repeat.
-private struct SplitMix {
+struct SplitMix {
     var state: UInt64
     init(seed: UInt64) { state = seed }
     mutating func next() -> Double {

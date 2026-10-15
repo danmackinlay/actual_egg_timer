@@ -66,7 +66,7 @@ by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
 | `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, the plan derived from them, each move the cook makes, and a cook in progress as both apps store it, read defensively | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember`, `readRunningCook`, `storedCook`, `readStoredCook` | `Running.swift` | `running.json`, `stores.json` |
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
-| `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer); what a sender makes of the endpoint's answer, and when it stops waiting | `shareReply`, `shareGivesUp`, `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
+| `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |
 | `stores.ts` | every store either app keeps: its name, its key on each app, and the format written inside it; a stored value read only in its own format | `STORES`, `stamped`, `inFormat` | `StoreRegistry.swift` | `stores.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
@@ -168,8 +168,9 @@ the surface is cached rather than simulated per particle.
 
 ### It can share, if the cook says so
 
-`Sharing.swift` is the web's `src/ui/share.ts` over the same state in core
-(`INFERENCE.md` §7), and its header says what it sends and when. It is the
+`Sharing.swift` is the web's `src/ui/share.ts` over the same state, kept
+alike (`ShareQueue.swift`, `src/ui/shareState.ts`; `INFERENCE.md` §7), and
+its header says what it sends and when. It is the
 app's only network call: `URLSession`, HTTPS, to the web app's site (a debug
 build can point it at `npm run serve:dev` with `-shareServer`).
 

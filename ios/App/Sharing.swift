@@ -8,9 +8,10 @@ import EggTimerApp
 /// turns it on sends every egg in the log to the collection endpoint, the
 /// ones from before it was on included, and can delete
 /// everything this phone has sent. What it keeps, and how each step moves it,
-/// is core's (`ShareState`, `src/core/share.ts`), which the web moves alike;
-/// this holds it, writes it through and does the talking, as the web's
-/// `src/ui/share.ts` does.
+/// is `ShareQueue.swift`'s, in EggTimerApp, which the web moves alike; what
+/// the server takes and what its answers mean is core's (`Share.swift`).
+/// This holds the state, writes it through and does the talking, as the
+/// web's `src/ui/share.ts` does.
 ///
 /// What iOS adds is App Attest. When an id first sends, the
 /// phone makes a key in its Secure Enclave and has Apple attest it, bound to
@@ -21,7 +22,7 @@ import EggTimerApp
 /// One that cannot attest yet (offline, Apple's service or the server busy)
 /// waits and tries again on the next run, rather than send its whole log
 /// open for good because of a passing failure - but not for ever: after
-/// five busy answers and three days (`shareGivesUp`, core's policy) it gives
+/// five busy answers and three days (`shareGivesUp`) it gives
 /// up on the key and sends open, as a phone that lost its key does. What an
 /// answer means, for an egg as for an attestation, is core's `shareReply`.
 @MainActor
@@ -111,31 +112,9 @@ final class Sharing {
 
     // MARK: - Kept
 
-    /// What is kept, as `sharing.v1` has always held it: core's JSON, but
-    /// with `busySince` a `Date` as JSONEncoder wrote one (seconds since
-    /// 2001), where core counts epoch s, and with no key for an absent value.
-    /// Read back by core's `readShareState`, which keeps every id it can from
-    /// a damaged copy, so a deletion still pending is not lost with the rest.
-    private static func stored(_ s: ShareState) -> Data? {
-        var o = s.jsonObject.filter { !($0.value is NSNull) }
-        o["busySince_s"] = nil
-        if let since = s.busySinceS { o["busySince"] = since - Date.timeIntervalBetween1970AndReferenceDate }
-        return try? JSONSerialization.data(withJSONObject: o)
-    }
-
-    private static func read(_ data: Data?) -> ShareState {
-        let raw = data.flatMap { try? JSONSerialization.jsonObject(with: $0) }
-        guard var o = raw as? [String: Any] else { return readShareState(raw) }
-        // A number moved to epoch s; anything else left for core to refuse.
-        let since = o.removeValue(forKey: "busySince")
-        let number = (since as? NSNumber).flatMap { CFGetTypeID($0) == CFBooleanGetTypeID() ? nil : $0.doubleValue }
-        o["busySince_s"] = number.map { $0 + Date.timeIntervalBetween1970AndReferenceDate } ?? since
-        return readShareState(o)
-    }
-
     private func save(_ next: ShareState) {
         state = next
-        if let data = Self.stored(next) {
+        if let data = storedShare(next) {
             Stores.set(data, forKey: Self.stateKey)
         }
     }
@@ -155,7 +134,7 @@ final class Sharing {
     func start(host: ShareHost) {
         self.host = host
         let defaults = Stores.store
-        state = reconciled(Self.read(defaults.data(forKey: Self.stateKey)), logLength: host.log().count)
+        state = reconciled(readStoredShare(defaults.data(forKey: Self.stateKey)), logLength: host.log().count)
         attest = defaults.data(forKey: Self.attestKey).flatMap { try? JSONDecoder().decode(Attest.self, from: $0) }
         resume()
     }
@@ -374,8 +353,8 @@ final class Sharing {
 
     /// A passing failure of the attestation or of a signature, counted. Once
     /// it has gone on long enough (`shareGivesUp`: five tries and three
-    /// days, core's policy says why), the key is given up on for this id,
-    /// which then sends open, as a phone that lost its key does: an outage
+    /// days, `ShareQueue.swift` says why), the key is given up on for this
+    /// id, which then sends open, as a phone that lost its key does: an outage
     /// that does not pass, or a service out of reach from where the phone
     /// is, must not stop its sharing for good.
     private func waited(_ attest: Attest) -> Attested {

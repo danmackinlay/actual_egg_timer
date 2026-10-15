@@ -41,7 +41,7 @@ import type { BoilMemory } from '../core/boil.js';
 import type { Decision, DecisionInputs } from '../core/decide.js';
 import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.js';
 import type { Outcome } from '../core/outcome.js';
-import type { ShareState } from '../core/share.js';
+import type { ShareState } from './shareState.js';
 import type { Solution } from '../core/solve.js';
 import type { CertaintyReading } from '../core/certainty.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';

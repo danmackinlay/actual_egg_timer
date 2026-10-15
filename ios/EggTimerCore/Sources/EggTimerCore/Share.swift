@@ -1,54 +1,13 @@
 import Foundation
 
-/// Sharing's state (INFERENCE.md section 7): what
-/// a device that shares keeps beside its log, how each thing the cook does or
-/// the server answers moves it, and how a stored copy is read.
+/// Sharing's contract with the server (INFERENCE.md section 7): a cook's id
+/// as the server takes it, the number each egg is filed under, what an
+/// answer to a sent egg or an attestation means, and when a deletion is
+/// done. Transliterated from `src/core/share.ts`, whose comment says why,
+/// and held to it by `fixtures/share.json`.
 ///
-/// Transliterated from `src/core/share.ts`, whose comment says what each
-/// field is for, and held to it by `fixtures/share.json`. The app
-/// (`Sharing.swift`) holds the state, writes it through and does the talking;
-/// App Attest is the app's alone.
-///
-/// No I/O, no clock, no randomness: a new id and the time are the caller's,
-/// passed in. Every time is epoch s; the app converts `busySinceS` to what
-/// its store keeps where it reads and writes it.
-
-public struct ShareState: Sendable, Equatable {
-    public var on: Bool
-    public var uid: String?
-    public var sent: Int
-    public var seq: Int
-    public var uids: [String]
-    public var deleting: [String]
-    public var busy: Int
-    public var busySinceS: Double?
-
-    public init(
-        on: Bool = false, uid: String? = nil, sent: Int = 0, seq: Int = 0, uids: [String] = [],
-        deleting: [String] = [], busy: Int = 0, busySinceS: Double? = nil
-    ) {
-        self.on = on
-        self.uid = uid
-        self.sent = sent
-        self.seq = seq
-        self.uids = uids
-        self.deleting = deleting
-        self.busy = busy
-        self.busySinceS = busySinceS
-    }
-
-    public static let fresh = ShareState()
-
-    /// The state as core's JSON has it, for JSONSerialization: an absent
-    /// value is JSON's null, so that `readShareState` gives back the same
-    /// state.
-    public var jsonObject: [String: Any] {
-        [
-            "on": on, "uid": uid ?? NSNull(), "sent": sent, "seq": seq, "uids": uids,
-            "deleting": deleting, "busy": busy, "busySince_s": busySinceS ?? NSNull(),
-        ]
-    }
-}
+/// The queue that sends the log and the state it keeps are the app's
+/// (`ShareQueue.swift`, in EggTimerApp); App Attest is the app's alone.
 
 private let hexDigits = Array("0123456789abcdef".utf8)
 
@@ -70,13 +29,27 @@ public func isUid(_ s: String) -> Bool {
     return true
 }
 
+// MARK: - The egg's number
+
+/// The number the first egg under an id never used before is filed at. The
+/// server keeps an egg at its id and number only if that key is new, so
+/// under one id a number is never used for a second egg: the numbers start
+/// here only under a new id, each egg passed (kept, refused, or given up on)
+/// is followed by `nextSeq`'s, and nothing else moves them.
+public let firstSeq = 0
+
+/// The number the egg after one filed at `seq` goes under, the same id.
+public func nextSeq(_ seq: Int) -> Int {
+    seq + 1
+}
+
 // MARK: - The server's answers
 
 /// What an answer from the collection endpoint means to the app that sent a
 /// result or an attestation (`shareReply` in share.ts, whose comment has the
 /// reasons): kept (200, 201); busy (403, 404, 408, 429, any 5xx - an answer
 /// about the way to the server, not about what was sent), so wait and ask
-/// again on a later run, within `shareGivesUp`; or refused for good
+/// again on a later run, within the app's bound; or refused for good
 /// (anything else - 400, 409, 413, 415, 422, any other 4xx - an answer about
 /// the request itself), so the result is passed over and an attestation
 /// given up. No answer at all is the caller's: it waits, uncounted.
@@ -90,181 +63,8 @@ public func shareReply(_ status: Int) -> ShareReply {
     return .refused
 }
 
-/// How long a step waits on busy answers before giving up: at least this
-/// many busy answers, each from its own run, and at least this long since the
-/// first. Why these: `SHARE_WAIT_TRIES` in share.ts.
-public let shareWaitTries = 5
-public let shareWaitS = 3.0 * 24 * 60 * 60
-
-/// Whether a step that has had `tries` busy answers, the first `waitedS` ago,
-/// stops waiting. A negative wait is a clock set back since: the tries alone
-/// decide.
-public func shareGivesUp(tries: Int, waitedS: Double) -> Bool {
-    tries >= shareWaitTries && (waitedS >= shareWaitS || waitedS < 0)
-}
-
-// MARK: - Reads
-
-/// Whether a value JSONSerialization gave is JSON's true or false, which
-/// bridges to Bool as the numbers 0 and 1 do too.
-private func isJSONBool(_ v: Any?) -> Bool {
-    guard let n = v as? NSNumber else { return false }
-    return CFGetTypeID(n) == CFBooleanGetTypeID()
-}
-
-/// A JSON number that is not a boolean, or nil.
-private func jsonNumber(_ v: Any?) -> Double? {
-    guard !isJSONBool(v), let n = v as? NSNumber else { return nil }
-    return n.doubleValue
-}
-
-private func count(_ v: Any?) -> Int {
-    guard let d = jsonNumber(v), d >= 0, let i = Int(exactly: d) else { return 0 }
-    return i
-}
-
-private func ids(_ v: Any?) -> [String] {
-    var out: [String] = []
-    guard let list = v as? [Any] else { return out }
-    for x in list {
-        if let s = x as? String, isUid(s) { out.append(s) }
-    }
-    return out
-}
-
-/// A stored state, parsed from its JSON, in core's shape (`busySince_s` in
-/// epoch s), and read defensively: anything damaged reads as off, and every
-/// id that can be read is kept, so a deletion can still reach it. Without an
-/// id there is nothing sent to count.
-public func readShareState(_ raw: Any?) -> ShareState {
-    guard let r = raw as? [String: Any] else { return .fresh }
-    let uid = (r["uid"] as? String).flatMap { isUid($0) ? $0 : nil }
-    var uids = ids(r["uids"])
-    if let uid, !uids.contains(uid) { uids.append(uid) }
-    let on = isJSONBool(r["on"]) && (r["on"] as? NSNumber)?.boolValue == true
-    let since = jsonNumber(r["busySince_s"])
-    return ShareState(
-        on: on && uid != nil,
-        uid: uid,
-        sent: uid == nil ? 0 : count(r["sent"]),
-        seq: uid == nil ? 0 : count(r["seq"]),
-        uids: uids,
-        deleting: ids(r["deleting"]),
-        busy: uid == nil ? 0 : count(r["busy"]),
-        busySinceS: uid != nil && since?.isFinite == true ? since : nil
-    )
-}
-
-// MARK: - Transitions
-
-/// Sharing turned on: `fresh`, a newly made id, becomes the cook's if there
-/// is none; otherwise it is not used.
-public func turnedOn(_ s: ShareState, fresh: String) -> ShareState {
-    var next = s
-    next.on = true
-    if s.uid == nil {
-        next.uid = fresh
-        next.sent = 0
-        next.seq = 0
-        next.uids.append(fresh)
-        next.busy = 0
-        next.busySinceS = nil
-    }
-    return next
-}
-
-/// Sharing turned off: nothing is deleted; that is the other button.
-public func turnedOff(_ s: ShareState) -> ShareState {
-    var next = s
-    next.on = false
-    return next
-}
-
-/// The cook forgot everything: the log is empty, and the next egg is a new
-/// cook's, under `fresh`, a newly made id, if sharing is on, and under one
-/// made when it is turned on if not. The old id stays in `uids` for deletion.
-public func forgotten(_ s: ShareState, fresh: String) -> ShareState {
-    var next = s
-    next.sent = 0
-    next.seq = 0
-    next.busy = 0
-    next.busySinceS = nil
-    if s.on {
-        next.uid = fresh
-        next.uids.append(fresh)
-    } else {
-        next.uid = nil
-    }
-    return next
-}
-
-/// "Delete what I've sent": sharing goes off, every id this device has used
-/// is to be deleted, and none is kept.
-public func deletionAsked(_ s: ShareState) -> ShareState {
-    var deleting = s.deleting
-    for uid in s.uids where !deleting.contains(uid) { deleting.append(uid) }
-    return ShareState(deleting: deleting)
-}
-
-/// A log shorter than what was sent has been dropped and begun again (a
-/// damaged log): what it holds now is new.
-public func reconciled(_ s: ShareState, logLength: Int) -> ShareState {
-    guard s.sent > logLength else { return s }
-    var next = s
-    next.sent = 0
-    next.busy = 0
-    next.busySinceS = nil
-    return next
-}
-
-/// The index in the log of the next egg to send, or nil when there is none
-/// to send: sharing off, no id, or every final egg gone. `finalCount` is how
-/// many of the log's eggs are final: all, unless the last is the egg on
-/// screen, whose answers may still come.
-public func nextToSend(_ s: ShareState, finalCount: Int, logLength: Int) -> Int? {
-    let final = min(finalCount, logLength)
-    guard s.on, s.uid != nil, s.sent < final else { return nil }
-    return s.sent
-}
-
-public struct ShareAnswered: Sendable, Equatable {
-    public let next: ShareState
-    /// Whether the cursor moved on, so the run goes on to the next egg.
-    public let moved: Bool
-}
-
-/// The egg at the cursor answered `status`: whether the cursor moves on, and
-/// the state with it. Kept or refused, it does; busy, it waits - counted,
-/// unless it has waited long enough, when it is passed over as if refused, so
-/// that one egg cannot hold up the rest for good. No answer at all is not an
-/// answer: the caller leaves the state as it is. `nowS` is epoch s.
-public func answered(_ s: ShareState, status: Int, nowS: Double) -> ShareAnswered {
-    var next = s
-    if shareReply(status) == .busy {
-        let since = s.busySinceS ?? nowS
-        let busy = s.busy + 1
-        if !shareGivesUp(tries: busy, waitedS: nowS - since) {
-            next.busy = busy
-            next.busySinceS = since
-            return ShareAnswered(next: next, moved: false)
-        }
-    }
-    next.sent += 1
-    next.seq += 1
-    next.busy = 0
-    next.busySinceS = nil
-    return ShareAnswered(next: next, moved: true)
-}
-
 /// Whether a deletion the server answered `status` is done: 200, or 400, an
 /// id the server will never hold. Anything else is asked again.
 public func deletionDone(_ status: Int) -> Bool {
     status == 200 || status == 400
-}
-
-/// The server confirmed `uid` deleted: it is no longer asked for.
-public func deletionConfirmed(_ s: ShareState, uid: String) -> ShareState {
-    var next = s
-    next.deleting.removeAll { $0 == uid }
-    return next
 }

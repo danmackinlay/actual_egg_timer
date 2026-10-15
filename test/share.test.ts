@@ -1,7 +1,9 @@
 /**
- * Sharing (src/core/share.ts, and the web's src/ui/share.ts): the id, the cursor into the log, sending what is final and only
+ * Sharing on the web (src/ui/shareState.ts and src/ui/share.ts, over core's
+ * contract with the server, src/core/share.ts): the id, the cursor into the
+ * log, the number each egg is filed under, sending what is final and only
  * that, and deleting everything this browser has sent, under every id it has
- * used. fixtures/share.json holds iOS to the same moves.
+ * used.
  */
 
 import test from 'node:test';
@@ -12,12 +14,13 @@ import { STORES } from '../src/core/stores.js';
 import {
   REQUEST_TIMEOUT_MS, Sharing, Transport, fetchWithin, newUid, openSharing, readShare, storedShare,
 } from '../src/ui/share.js';
+import { FIRST_SEQ, deletionDone, isUid, nextSeq, shareReply } from '../src/core/share.js';
 import {
-  FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone,
-  forgotten, isUid, nextToSend, reconciled, shareGivesUp, shareReply, turnedOff, turnedOn,
-} from '../src/core/share.js';
+  FRESH_SHARE, SHARE_WAIT_S, SHARE_WAIT_TRIES, ShareState, answered, deletionAsked, deletionConfirmed, forgotten,
+  nextToSend, reconciled, shareGivesUp, turnedOff, turnedOn,
+} from '../src/ui/shareState.js';
 import { EggRecord } from '../src/core/record.js';
-import { recordAt } from '../tools/common.js';
+import { recordAt, rng } from '../tools/common.js';
 
 const storage = new Map<string, string>();
 (globalThis as unknown as { window: unknown }).window = {
@@ -312,4 +315,64 @@ test('11. a sender waits only on a busy server, and not for good', () => {
   assert.equal(shareGivesUp(SHARE_WAIT_TRIES - 1, 10 * SHARE_WAIT_S), false, 'a phone opened once in days tries again');
   assert.equal(shareGivesUp(100, SHARE_WAIT_S - 1), false, 'a busy afternoon is waited out');
   assert.equal(shareGivesUp(SHARE_WAIT_TRIES, -60), true, 'a clock set back: the tries decide');
+});
+
+test('12. no number is used for a second egg under one id, whatever the cook does and the server answers', () => {
+  // The server keeps the first egg at an id and number and drops any other
+  // sent there as a retry (src/core/share.ts). A long walk through every
+  // move - eggs logged, sharing on and off, a forget, a deletion, a damaged
+  // log dropped, every kind of answer, a reload - posting each egg the queue
+  // offers, and noting which egg went at each id and number. An egg is its
+  // log's (`gen`, bumped when the log is emptied or dropped) and its place.
+  // A log is dropped here only between eggs: one dropped while an egg waits
+  // on a busy answer files the new log's first egg at the number the
+  // waiting one was sent at, which the server may have kept.
+  assert.equal(FIRST_SEQ, 0);
+  assert.deepEqual([0, 1, 41].map(nextSeq), [1, 2, 42]);
+  const draw = rng(20261015);
+  let made = 0;
+  const freshUid = (): string => `${(made++).toString(16).padStart(8, '0')}-0000-4000-8000-000000000000`;
+  let s: ShareState = FRESH_SHARE;
+  let gen = 0;
+  let logLength = 0;
+  let now = 1e9;
+  const filed = new Map<string, string>();
+  let posts = 0;
+  for (let step = 0; step < 20000; step++) {
+    const u = draw();
+    if (u < 0.2) {
+      logLength += 1;
+    } else if (u < 0.25) {
+      s = draw() < 0.5 ? turnedOn(s, freshUid()) : turnedOff(s);
+    } else if (u < 0.27) {
+      s = forgotten(s, freshUid());
+      gen += 1;
+      logLength = 0;
+    } else if (u < 0.29) {
+      s = deletionAsked(s);
+      if (s.deleting.length > 0 && draw() < 0.5) s = deletionConfirmed(s, s.deleting[0]);
+    } else if (u < 0.31) {
+      // A damaged log, dropped and begun again with what came after.
+      if (s.busy > 0) continue;
+      gen += 1;
+      logLength = Math.floor(draw() * 3);
+      s = reconciled(s, logLength);
+    } else if (u < 0.33) {
+      s = reconciled(readShare(storedShare(s)), logLength);
+    } else {
+      const final = draw() < 0.8 ? logLength : Math.max(0, logLength - 1);
+      const at = nextToSend(s, final, logLength);
+      if (at === null || s.uid === null) continue;
+      const egg = `${gen}:${at}`;
+      const key = `${s.uid}/${s.seq}`;
+      const before = filed.get(key);
+      assert.ok(before === undefined || before === egg, `${key}: egg ${egg}, where egg ${before} went`);
+      filed.set(key, egg);
+      posts += 1;
+      const status = [201, 200, 400, 409, 503, 429, 404][Math.floor(draw() * 7)];
+      now += draw() < 0.5 ? 60 : 2 * 24 * 3600;
+      s = answered(s, status, now).next;
+    }
+  }
+  assert.ok(posts > 2000 && filed.size > 1000, `${posts} posts, ${filed.size} eggs filed`);
 });
