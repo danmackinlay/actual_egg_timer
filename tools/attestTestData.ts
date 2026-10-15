@@ -20,7 +20,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { APP_ID } from '../server/appAttest.ts';
-import { encode } from '../server/cbor.ts';
+import { encode } from 'cborg';
 
 const UID = '3f0b8c1e-6d2a-4b7e-9a41-0c5d2e7f8a90';
 const UID_PRODUCTION = '9b2d4f60-1a3c-4e5f-8a7b-6c5d4e3f2a10';

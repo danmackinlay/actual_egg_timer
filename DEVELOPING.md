@@ -53,7 +53,8 @@ needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
 no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
 that Netlify bundles from source on deploy and backs with its Blobs store;
-`@netlify/blobs` is its one runtime dependency, and the apps have none. Another
+`@netlify/blobs` and `cborg`, which reads App Attest's CBOR, are its only runtime
+dependencies, and the apps have none. Another
 host would serve the site, but nothing there would answer `/api/eggs`, so
 sharing would wait until the endpoint was ported; the apps keep the eggs and
 retry. esbuild bundles the page, the grid worker and the service worker into
