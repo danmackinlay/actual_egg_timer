@@ -30,29 +30,64 @@ struct Planted: View {
             MoreText(["Cool them in ice water"])
             para("Keep the lid on")
             Text(tr(.\`controls.size.measured\`, ["mass": .string(weight)]))
+            Text(plantedStage); Text(plantedUnit)
+            Label(tr(.\`more.expanded\`), systemImage: plantedSymbol)
+            Text(PlantedWords.plantedServed)
+            Link(tr(.\`more.expanded\`), destination: URL(string: PlantedWords.plantedPage)!)
         }
         .accessibilityLabel(done ? "Done" : tr(.\`more.expanded\`))
     }
 
     private func warning(_ text: String) -> some View { Text(text) }
 
+    private var plantedStage: String {
+        switch stage {
+        case .soft: "Soft yolk"
+        case .hard: tr(.\`more.expanded\`)
+        }
+    }
+
+    private var plantedUnit: String {
+        let shown = if unit == "imperial" { "Ounces" } else { tr(.\`more.expanded\`) }
+        return shown
+    }
+
+    private var plantedSymbol: String {
+        switch stage {
+        case .soft: "egg"
+        case .hard: "egg.fill"
+        }
+    }
+
     func ring() {
         content.body = "Time to pull the eggs"
         log.notice("ring stopped")
         let key = "surface|\\(id)"
         cache[key] = info["CFBundleVersion"]
+        UserDefaults.standard.set(1, forKey: PlantedWords.plantedShelf)
     }
 }
 `;
 
+/** A strings enum in a file of its own: its words are read where they are
+ *  shown; a key or a URL never shown is not. */
+const PLANTED_WORDS = `
+enum PlantedWords {
+    static let plantedServed = "Serve them warm"
+    private static let plantedShelf = "planted.shelf.v2"
+    static var plantedPage = "https://example.com/help"
+}
+`;
+
 const { sources, argumentNames } = appSources();
-const lint = lintLiterals([...sources, { file: 'Planted.swift', source: PLANTED }], argumentNames);
+const lint = lintLiterals([...sources, { file: 'Planted.swift', source: PLANTED },
+  { file: 'PlantedWords.swift', source: PLANTED_WORDS }], argumentNames);
 
 test('a literal is words wherever it reaches a screen from, and nothing else is', () => {
   const failed = lint.failures.map((f) => /"(.*)" is words/.exec(f)?.[1]);
   assert.deepEqual(failed.sort(), [
-    'Cool them in ice water', 'Done', 'Eggs are ready', 'Eggs in', 'Keep the lid on', 'Pull them out',
-    'Stir them once', 'Take the pan off the heat', 'Time to pull the eggs',
+    'Cool them in ice water', 'Done', 'Eggs are ready', 'Eggs in', 'Keep the lid on', 'Ounces', 'Pull them out',
+    'Serve them warm', 'Soft yolk', 'Stir them once', 'Take the pan off the heat', 'Time to pull the eggs',
   ]);
   assert.ok(lint.failures.every((f) => f.startsWith('Planted.swift: ')), lint.failures.join('\n'));
 });
