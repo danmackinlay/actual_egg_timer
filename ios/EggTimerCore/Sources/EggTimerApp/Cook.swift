@@ -471,9 +471,7 @@ public final class Cook {
             // take a prompt's seconds.
             if let now = running, let plan { await card.start(now, plan, atS: AppClock.nowS) }
             guard running?.idMs == cook.idMs else { return }
-            #if DEBUG
             if restored { Screenshots.log(.restored) }
-            #endif
         }
     }
 
@@ -552,9 +550,7 @@ public final class Cook {
         let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
             Stores.set(data, forKey: Self.savedKey)
-            #if DEBUG
             Screenshots.log(.stored(value: Screenshots.Encoded(value: stored)))
-            #endif
         }
     }
 
@@ -563,9 +559,7 @@ public final class Cook {
         if let data = Stores.store.data(forKey: savedKey), let stored = readStored(data),
            stored.cook.idMs != idMs { return }
         Stores.remove(savedKey)
-        #if DEBUG
         Screenshots.log(.stored(value: nil))
-        #endif
     }
 
     /// Pick up the cook stored when the app was last closed: a tick of it
@@ -592,9 +586,7 @@ public final class Cook {
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
         let s = made.step
         guard let after = s.cook, endedAtS(after) == nil else {
-            #if DEBUG
             Screenshots.log(.restoreTooOld)
-            #endif
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
@@ -603,12 +595,10 @@ public final class Cook {
             follow()
             return
         }
-        #if DEBUG
         Screenshots.log(.restore(
             phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))
-        #endif
         state = s.state
         need = s.need
         if let o = made.outcome { outcome = o }

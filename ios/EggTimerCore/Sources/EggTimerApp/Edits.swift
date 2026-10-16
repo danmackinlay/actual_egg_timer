@@ -418,9 +418,7 @@ public final class Edits {
         // The start is no setting: when its change is the one come since, it
         // stays in hand, out of this commit.
         let start = except == .startTime ? nil : startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
-        #if DEBUG
         Screenshots.log(.editCommitted(fields: touched.map { "\($0)" }, start: start))
-        #endif
         if start != nil || choices != running.choices { model.correct(choices, startedAtS: start) }
         // Nothing in hand: the panel shows the start as the cook has it once
         // the correction is stepped, and a correction refused leaves the
