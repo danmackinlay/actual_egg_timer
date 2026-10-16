@@ -29,7 +29,7 @@ import { SBC_QUANTITIES, SBC_SCENARIOS, outerShare, sbc } from '../tools/posteri
 
 for (const [i, cooks] of [[0, 300], [1, 200]] as const) {
   const scenario = SBC_SCENARIOS[i];
-  test(`${i + 1}. calibrated: ${scenario.name}, ${cooks} cooks`, () => {
+  test(`calibrated: ${scenario.name}, ${cooks} cooks`, () => {
     const r = sbc(scenario, cooks, PARTICLE_COUNT, 0x5bc, false);
     for (const q of SBC_QUANTITIES) {
       const u = r.filter[q];

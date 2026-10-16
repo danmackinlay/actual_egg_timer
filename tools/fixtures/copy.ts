@@ -21,7 +21,7 @@ import {
  * end, which falls back to the English across a change of plural rule.
  *
  * That the real catalogues load, and keep the English's keys and
- * placeholders, is a test in each app (copy.test.ts 4a, CopyConformance),
+ * placeholders, is a test in each app (copy.test.ts, CopyConformance),
  * not rows here. */
 const COPY_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5, 2.5, 0.5];
 const PLURAL_LOCALES = ['en', 'en-GB-x-1750', 'cs', 'cs-CZ', 'de'];

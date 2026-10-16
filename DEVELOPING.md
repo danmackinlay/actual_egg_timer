@@ -10,8 +10,7 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 npm install
 npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
 npm test           # the type check, then node --test
-npm run verify     # the gate: typecheck, test, validate, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
-npm run validate   # prints the validation table in README §7; fails if a check does
+npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run swift:constants  # the Swift core's constants, written from the TypeScript's
 npm run conformance      # fixtures unchanged, then the Swift core against them
@@ -54,12 +53,12 @@ from `netlify.toml` on every push and serves `origin/main`. The `og:` tags in
 `index.html` carry absolute URLs at that domain, so a domain change is a
 commit. There is no second host: the Vercel config was deleted (the owner: "we
 can add vercel later if needed"), and git has it. CI
-(`.github/workflows/verify.yml`) runs `verify`'s steps and `npm run
-test:slow`, `swift test` and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
+(`.github/workflows/verify.yml`) runs `verify`'s steps and `swift test`
+and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
 each a job of its own.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host
-needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
+needs, and the build is esbuild plus a few copies (`tools/buildSite.ts`), with
 no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
 that Netlify bundles from source on deploy and backs with the site's Blobs
@@ -72,7 +71,7 @@ retry. esbuild bundles the page, the grid worker and the service worker into
 a few files under `bundle/`, each named for its contents, so they are cached
 for a year, and a returning browser never runs last month's scripts against
 this month's page; `copy/` keeps its filenames, so it is revalidated on every
-load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.mjs` writes
+load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.ts` writes
 `sw.js`, listing every file with its SHA-256, and once a browser has it the app
 opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.

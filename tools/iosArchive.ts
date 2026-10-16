@@ -14,9 +14,8 @@
 //    diagnostics, a forced one an id that says so), since the app would
 //    silently draw from the literature's instead.
 //
-// Uploading is separate (ios/RELEASING.md, "Every release"): Organizer, or
-// xcodebuild -exportArchive with ExportOptions.plist.
-import { execFileSync } from 'node:child_process';
+// Uploading is separate: `npm run ios:upload`.
+import { type StdioOptions, execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parsePopulation } from '../src/core/population.ts';
 
@@ -24,8 +23,13 @@ const yml = 'ios/project.yml';
 const archive = 'build/ActualEggTimer.xcarchive';
 const app = `ios/${archive}/Products/Applications/Actual Egg Timer.app`;
 
-const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { stdio: 'inherit', ...opts });
-const out = (cmd, args, opts = {}) => execFileSync(cmd, args, { encoding: 'utf8', ...opts }).trim();
+/** What a step here may set: where it runs, and where its output goes. */
+interface StepOptions { cwd?: string; stdio?: StdioOptions }
+const run = (cmd: string, args: string[], opts: StepOptions = {}): void => {
+  execFileSync(cmd, args, { stdio: 'inherit', ...opts });
+};
+const out = (cmd: string, args: string[], opts: StepOptions = {}): string =>
+  execFileSync(cmd, args, { encoding: 'utf8', ...opts }).trim();
 
 if (out('git', ['status', '--porcelain', '--', yml]) !== '') {
   throw new Error(`${yml} has uncommitted changes; commit or discard them first`);

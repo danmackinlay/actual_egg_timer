@@ -53,7 +53,7 @@ function useLocks(locks: unknown): void {
   });
 }
 
-test('1. without Web Locks every page owns the app, and writes', async () => {
+test('without Web Locks every page owns the app, and writes', async () => {
   useLocks(undefined);
   assert.equal(await claimApp(false, () => assert.fail('nothing to lose')), true);
   assert.equal(ownsApp(), true);
@@ -61,7 +61,7 @@ test('1. without Web Locks every page owns the app, and writes', async () => {
   assert.equal(storage.get('aet.x'), '1');
 });
 
-test('2. a second page waits and writes nothing; a press takes the app, and the first stops writing', async () => {
+test('a second page waits and writes nothing; a press takes the app, and the first stops writing', async () => {
   storage.clear();
   const locks = lockManager();
   useLocks(locks);

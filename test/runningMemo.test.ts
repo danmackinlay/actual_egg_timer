@@ -16,11 +16,11 @@ import {
 import { knowing, rng } from '../tools/common.ts';
 import { S, C, cookOf } from './cooks.ts';
 
-test("23. the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
-  // A cold start never tapped, planned as the app plans it, at twenty moments
-  // over the two hours drawn with a fixed seed (denser early, where the guess
-  // lengthens before it creeps), on a slow hob and on a small runny egg's
-  // creeping guess. At each, the last plan's memo is taken, and the plan is
+test("the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
+  // A cold start never tapped, planned as the app plans it, at twelve
+  // moments over the two hours drawn with a fixed seed: ten in the first half
+  // hour, where the guess lengthens before it creeps, and two in the last
+  // quarter, on a slow hob and on a small runny egg's creeping guess. At each, the last plan's memo is taken, and the plan is
   // the one from the start. The memo offered to anything else the rule reads
   // is ignored, and offered to what it does not read is taken: the plan from
   // the start either way. And at each plan's own next moment (`slowHobDue`)
@@ -55,7 +55,9 @@ test("23. the slow hob's memo: a plan made with any memo is the plan from the st
     ['the taste alone moved', (k, t) => [k, tasted, 0, t + 30, true]],
     ['a correction that changes nothing', (k, t) => [corrected(k, { ...k.choices }, t + 10), C, 0, t + 30, true]],
   ];
-  for (let i = 0; i < 20; i++) {
+  // Twenty slots, early ones shorter; between the tenth and the last two the
+  // memo's place does not move (below), so those slots are left out.
+  for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 18, 19]) {
     const t = S + 7140 * ((i + random()) / 20) ** 2;
     const j = i % 2;
     const k = cooks[j];

@@ -39,7 +39,7 @@
  * THE ENVELOPE. Each level's time is chosen against that level's own
  * target, so the choices need not keep their order: after a runny white the
  * white's weight pushes the time chosen at soft past the one chosen at jammy
- * (500 s against 428 s, test/reachAnswer.test.ts 11), and asking for a softer egg
+ * (500 s against 428 s, test/reachAnswer.test.ts), and asking for a softer egg
  * would give a firmer one. The owner wants the time monotone in the level
  * (DECISIONS.md 84). So the time a level is given is the smallest of its own
  * choice and every firmer level's: a running minimum from the hard end. That

@@ -54,7 +54,7 @@ function close(actual: number, expected: number, tol: number, what: string): voi
 // 1. Series cross-validation
 // --------------------------------------------------------------------------
 
-test('1. eigenfunction and method-of-images series agree at Fo=0.0688', () => {
+test('eigenfunction and method-of-images series agree at Fo=0.0688', () => {
   // Two genuinely independent derivations of theta/theta0: the Dirichlet
   // eigenfunction expansion (slowest at small Fo) and the method of images
   // (fastest at small Fo). Agreement is a real check, not a tautology.
@@ -66,7 +66,7 @@ test('1. eigenfunction and method-of-images series agree at Fo=0.0688', () => {
   close(s, e, 1e-9, 'seriesTheta vs erfcTheta');
 });
 
-test('1b. erfc is a sane complementary error function', () => {
+test('erfc is a sane complementary error function', () => {
   close(erfc(0), 1.0, 1e-9, 'erfc(0)');
   close(erfc(-1), 2.0 - erfc(1), 1e-12, 'erfc(-x) = 2 - erfc(x)');
   assert.ok(erfc(3) > 0 && erfc(3) < 1e-4, 'erfc(3) is small and positive');
@@ -76,7 +76,7 @@ test('1b. erfc is a sane complementary error function', () => {
 // 2. One-term truncation error
 // --------------------------------------------------------------------------
 
-test('2. one-term truncation under-predicts the full series by 6-10%', () => {
+test('one-term truncation under-predicts the full series by 6-10%', () => {
   const one = oneTermTheta(0.69336, 0.0688);
   const full = seriesTheta(0.69336, 0.0688);
   close(one, 0.38231, 1e-4, 'oneTermTheta(0.69336, 0.0688)');
@@ -93,7 +93,7 @@ test('2. one-term truncation under-predicts the full series by 6-10%', () => {
 // 3. Williams' 0.76
 // --------------------------------------------------------------------------
 
-test("3. Williams' 0.76 is the first-eigenmode amplitude at the yolk boundary", () => {
+test("Williams' 0.76 is the first-eigenmode amplitude at the yolk boundary", () => {
   // At Fo = 0 the one-term form collapses to its prefactor 2*sinc(pi*x).
   // At the model's yolk boundary (YOLK_RADIUS_FRAC, yolk = 33% of egg
   // volume) that is 0.7549 — which is the origin of Williams' famous 0.76. It
@@ -108,7 +108,7 @@ test("3. Williams' 0.76 is the first-eigenmode amplitude at the yolk boundary", 
 // 4. Centre coefficient
 // --------------------------------------------------------------------------
 
-test('4. the centre coefficient is exactly 2.0', () => {
+test('the centre coefficient is exactly 2.0', () => {
   // sinc(0) = 1, so the first-mode prefactor at the centre is exactly 2. This
   // is what Williams' coefficient would have been had his criterion been the
   // YOLK CENTRE rather than the yolk boundary.
@@ -129,7 +129,7 @@ test('4. the centre coefficient is exactly 2.0', () => {
 // 5. Integrator vs closed form
 // --------------------------------------------------------------------------
 
-test('5. modal integrator reproduces the closed-form step response', () => {
+test('modal integrator reproduces the closed-form step response', () => {
   const R = 0.02383;
   const alpha = 1.70e-7;
   const T0 = 4;
@@ -159,7 +159,7 @@ test('5. modal integrator reproduces the closed-form step response', () => {
   assert.equal(checked, checkpoints.length, 'all checkpoints were reached');
 });
 
-test('5b. integrator matches the closed form off-centre too', () => {
+test('integrator matches the closed form off-centre too', () => {
   const R = 0.02383;
   const alpha = 1.70e-7;
   const s = createSphere(R, alpha, 4, 100);
@@ -177,7 +177,7 @@ test('5b. integrator matches the closed form off-centre too', () => {
 // 6. Mean temperature bracketing
 // --------------------------------------------------------------------------
 
-test('6. mean temperature is strictly between centre and surface while heating', () => {
+test('mean temperature is strictly between centre and surface while heating', () => {
   const s = createSphere(0.02383, 1.70e-7, 4, 100);
   for (let i = 0; i < 1200; i++) {
     stepSphere(s, 0.5, 100);
@@ -199,14 +199,14 @@ test('6. mean temperature is strictly between centre and surface while heating',
 // 7. Thermo
 // --------------------------------------------------------------------------
 
-test('7. boiling point at sea-level pressure is 100 C', () => {
+test('boiling point at sea-level pressure is 100 C', () => {
   close(boilingPointAtPressure(101325), 100.0, 0.02, 'boilingPointAtPressure(101325)');
   close(pressureAtAltitude(0), 101325, 1e-6, 'pressureAtAltitude(0)');
 });
 
-test('7b. the boiling point falls with altitude', () => {
+test('the boiling point falls with altitude', () => {
   // That it stays within 0.05 C of the 100 - h/300 one-liner is a row of
-  // npm run validate's table, beside the altitude table it reproduces.
+  // the validation's table (test/validation.test.ts), beside the altitude table.
   let previous = Number.POSITIVE_INFINITY;
   for (let h = 0; h <= 5000; h += 500) {
     const exact = boilingPointAtAltitude(h);
@@ -215,7 +215,7 @@ test('7b. the boiling point falls with altitude', () => {
   }
 });
 
-test('7c. salt elevation is real but negligible', () => {
+test('salt elevation is real but negligible', () => {
   const dT = saltBoilingElevation(15); // a generous tablespoon per litre
   assert.ok(dT > 0 && dT < 0.5, `salt elevation should be small and positive, got ${dT}`);
 });
@@ -224,7 +224,7 @@ test('7c. salt elevation is real but negligible', () => {
 // 8. Geometry round-trip
 // --------------------------------------------------------------------------
 
-test('8. mass -> minor diameter -> mass round-trips to 0.1%', () => {
+test('mass -> minor diameter -> mass round-trips to 0.1%', () => {
   const byMass = eggFromMass(0.057);
   const byDiameter = eggFromMinorDiameter(byMass.minorDiameter_m);
   close(byDiameter.mass_kg, 0.057, 0.057 * 0.001, 'recovered mass');
@@ -232,7 +232,7 @@ test('8. mass -> minor diameter -> mass round-trips to 0.1%', () => {
   close(byDiameter.volume_m3, byMass.volume_m3, 1e-12, 'recovered volume');
 });
 
-test('8b. radius and diffusion time increase with mass', () => {
+test('radius and diffusion time increase with mass', () => {
   let previousRadius = 0;
   let previousTau = 0;
   for (const grams of [40, 48, 58, 68, 76, 90]) {
@@ -254,7 +254,7 @@ test('8b. radius and diffusion time increase with mass', () => {
 // 9. Kinetics
 // --------------------------------------------------------------------------
 
-test('9. dose is monotonic in time and in temperature', () => {
+test('dose is monotonic in time and in temperature', () => {
   const d = createDose(Z_YOLK, TREF_YOLK_C);
   let previous = -1;
   for (let i = 0; i < 100; i++) {
@@ -275,9 +275,9 @@ test('9. dose is monotonic in time and in temperature', () => {
   close(atRef.minutes, 1.0, 1e-12, 'one minute at Tref = 1 equivalent minute');
 });
 
-test('9b. +4.65 C multiplies the dose rate by 10', () => {
+test('+4.65 C multiplies the dose rate by 10', () => {
   // Z_YOLK to within about 0.02 K of 4.65: what Vega & Mercade-Prieto's
-  // activation energy gives (npm run validate derives it), NOT the
+  // activation energy gives (test/validation.test.ts derives it), NOT the
   // food-engineering default of 33.1 K, seven times too shallow for egg
   // protein.
   const lo = createDose(Z_YOLK, TREF_YOLK_C);
@@ -297,7 +297,7 @@ test('9b. +4.65 C multiplies the dose rate by 10', () => {
 // 10. Dose monotonic in cook time — the precondition for bisection
 // --------------------------------------------------------------------------
 
-test('10. both doses increase monotonically with cook time', () => {
+test('both doses increase monotonically with cook time', () => {
   const setup = referenceSetup({});
   let previousYolk = -1;
   let previousWhite = -1;
@@ -321,7 +321,7 @@ test('10. both doses increase monotonically with cook time', () => {
 // 11. Doneness slider round-trip
 // --------------------------------------------------------------------------
 
-test('11. slider -> dose -> slider round-trips', () => {
+test('slider -> dose -> slider round-trips', () => {
   for (let i = 0; i <= 20; i++) {
     const x = i / 20;
     close(sliderFromYolkDose(donenessFromSlider(x).yolkDose_min), x, 1e-12, `slider ${x}`);
@@ -335,7 +335,7 @@ test('11. slider -> dose -> slider round-trips', () => {
 // 12. Reachability — the model's headline behavioural claim
 // --------------------------------------------------------------------------
 
-test('12. a soft yolk is unreachable on the counter but reachable from an ice bath', () => {
+test('a soft yolk is unreachable on the counter but reachable from an ice bath', () => {
   const soft = donenessFromSlider(0.1);
   const counter = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, soft);
   assert.equal(counter.reachable, false, 'soft yolk must be unreachable with counter resting');
@@ -357,7 +357,7 @@ test('12. a soft yolk is unreachable on the counter but reachable from an ice ba
 // 13. Carryover ordering
 // --------------------------------------------------------------------------
 
-test('13. identical cook, different cooling: same pull state, ordered peaks', () => {
+test('identical cook, different cooling: same pull state, ordered peaks', () => {
   const cookTime = 7.4 * 60;
   const ice = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
   const tap = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'tap' }), DEFAULT_PARAMS, cookTime);
@@ -386,7 +386,7 @@ test('13. identical cook, different cooling: same pull state, ordered peaks', ()
 // 14. Biot number
 // --------------------------------------------------------------------------
 
-test('14. the Biot number in water justifies the Dirichlet treatment', () => {
+test('the Biot number in water justifies the Dirichlet treatment', () => {
   const bi = biotNumber(H_EFF, REFERENCE_EGG.radius_m);
   assert.ok(bi > 20, `Bi in water should exceed 20, got ${bi}`);
   // Sanity: Bi scales linearly in both arguments.
@@ -398,7 +398,7 @@ test('14. the Biot number in water justifies the Dirichlet treatment', () => {
 // 15. heat off at the boil
 // --------------------------------------------------------------------------
 
-test('15a. with the heat off the water falls, and the dose saturates', () => {
+test('with the heat off the water falls, and the dose saturates', () => {
   const standing = referenceSetup({
     startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'tap',
   });
@@ -424,7 +424,7 @@ test('15a. with the heat off the water falls, and the dose saturates', () => {
   );
 });
 
-test('15b. a small pan cannot stand its way to hard', () => {
+test('a small pan cannot stand its way to hard', () => {
   const hard = donenessFromSlider(1.0);
   // Same hob, same eight-minute ramp: only the water differs. A litre holds
   // too little heat to finish the yolk once the burner is off; three do.
@@ -445,14 +445,14 @@ test('15b. a small pan cannot stand its way to hard', () => {
   close(big.hardestLevel, 1, 1e-9, 'nothing is capped when the target is reachable');
 });
 
-test('15c. holding the boil is never capped at the hard end', () => {
+test('holding the boil is never capped at the hard end', () => {
   const sol = solveCookTime(
     REFERENCE_EGG, referenceSetup({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
   );
   close(sol.hardestLevel, 1, 1e-9, 'a boiling pan can always cook harder');
 });
 
-test('15d. a pan with too little heat never sets the white at all', () => {
+test('a pan with too little heat never sets the white at all', () => {
   // Four fridge-cold eggs into a litre at the boil, then the burner off: the
   // eggs take a bite out of the only heat there is, and the water is past the
   // white's own target within minutes. There is no cook time to offer here, at
@@ -479,7 +479,7 @@ test('15d. a pan with too little heat never sets the white at all', () => {
   assert.equal(generous.whiteSets, true, 'six litres and two eggs have heat to spare');
 });
 
-test('15e. with the heat off the pan cools at a rate set by the water, not the hob', () => {
+test('with the heat off the pan cools at a rate set by the water, not the hob', () => {
   // Anchored so Williams' 8-minute boil in 2 L is exactly what the boil-time
   // rule gives, and scaled as the cube root of the volume.
   close(panTimeConstant(2), 480 / Math.log(1.5), 1e-9, 'the 2 L anchor');
@@ -528,7 +528,7 @@ function worstDoseStep(
   return worst;
 }
 
-test('16a. held at the boil, both doses are monotonic in cook time', () => {
+test('held at the boil, both doses are monotonic in cook time', () => {
   // This is what licenses `bisect`. The trajectory before the pull does not
   // depend on when you pull, so the dose banked by then only grows; and while
   // the water is at or climbing to the boil the egg is always colder than it,
@@ -550,7 +550,7 @@ test('16a. held at the boil, both doses are monotonic in cook time', () => {
   }
 });
 
-test('16b. with the heat off they are not, which is why standing scans', () => {
+test('with the heat off they are not, which is why standing scans', () => {
   // Pulling later means pulling from cooler water, so the carryover that
   // follows is smaller. Past the crossover the total dose FALLS with a longer
   // cook, and a bisection on it lands anywhere. If this test ever goes green in
@@ -585,7 +585,7 @@ function robinRoots(bi: number, count: number): number[] {
   return roots;
 }
 
-test('17a. the counter closure reproduces the closed-form Robin series', () => {
+test('the counter closure reproduces the closed-form Robin series', () => {
   // A sphere at a uniform 80 C cooling into a 20 C room by Newton's law at its
   // surface, Bi ~ 0.6. The textbook series (Carslaw & Jaeger 9.4) and the
   // modal closure share nothing but the physics: one has Robin eigenvalues,
@@ -626,7 +626,7 @@ test('17a. the counter closure reproduces the closed-form Robin series', () => {
   }
 });
 
-test("17b. the counter's time constant is the egg's own m*c/(h*A), and drying off costs ~1.2 C", () => {
+test("the counter's time constant is the egg's own m*c/(h*A), and drying off costs ~1.2 C", () => {
   const egg = REFERENCE_EGG;
   const area = 4 * Math.PI * egg.radius_m * egg.radius_m;
   close(airTimeConstant(egg), egg.mass_kg * C_EGG / (H_AIR * area), 1e-9, 'm*c/(h*A)');
@@ -644,7 +644,7 @@ test("17b. the counter's time constant is the egg's own m*c/(h*A), and drying of
   assert.ok(wetShellDrop_C(small) > wetShellDrop_C(big), 'more shell per gram on a small egg');
 });
 
-test('17c. the counter is slow cooling, not a lid', () => {
+test('the counter is slow cooling, not a lid', () => {
   // The reference cook of README section 5. An insulated egg would carry the
   // yolk to its mean at the pull, 83.9 C. The counter takes 8-9 C of that, the
   // ice bath 19. The 75.27 C is an independent explicit finite-volume
@@ -693,7 +693,7 @@ function bowlRun(setup: CookSetup, cook_s: number, after_s: number) {
   return { sphere: sphere, meanAtPull: meanAtPull, waterAtPull: waterAtPull, drive: drive };
 }
 
-test('18a. the bowl gains exactly what the eggs lose, and settles where the heat balance says', () => {
+test('the bowl gains exactly what the eggs lose, and settles where the heat balance says', () => {
   // Four eggs into a litre at 15 C, left three hours: the egg and the water
   // end at one temperature, the mixture's, (N m c Tpull + V c_w T0) / (N m c +
   // V c_w), which nothing in the model is told.
@@ -712,7 +712,7 @@ test('18a. the bowl gains exactly what the eggs lose, and settles where the heat
   close(gained, lost, 1e-9 * lost, 'two minutes in: what the water gained against what the eggs lost');
 });
 
-test('18b. the surface never steps at the pull: it leaves the boiling water for the bowl over TAU_PLUNGE', () => {
+test('the surface never steps at the pull: it leaves the boiling water for the bowl over TAU_PLUNGE', () => {
   const setup = referenceSetup({ cooling: 'bowl', bowlLitres: 2 });
   const run = bowlRun(setup, 444, 60);
   // The step that straddles the pull ends half a step out, so its drive is
@@ -736,7 +736,7 @@ test('18b. the surface never steps at the pull: it leaves the boiling water for 
   close(run.drive[run.drive.length - 1], bowl, 0.05, 'the surface follows the bowl');
 });
 
-test('18c. a bowl that never warms is running water at its temperature', () => {
+test('a bowl that never warms is running water at its temperature', () => {
   const doneness = donenessFromSlider(0.41);
   const ocean = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'bowl', bowlLitres: 1e6, coolingWater_C: 20 }), DEFAULT_PARAMS, doneness);
   const tap = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'tap', coolingWater_C: 20 }), DEFAULT_PARAMS, doneness);
@@ -748,7 +748,7 @@ test('18c. a bowl that never warms is running water at its temperature', () => {
   assert.equal(mains.result.cookTime_s, given.result.cookTime_s);
 });
 
-test('18d. less water warms more and cooks shorter, by seconds, not minutes', () => {
+test('less water warms more and cooks shorter, by seconds, not minutes', () => {
   const doneness = donenessFromSlider(0.41);
   const cook = (litres: number) => solveCookTime(
     REFERENCE_EGG, referenceSetup({ cooling: 'bowl', bowlLitres: litres, coolingWater_C: 20 }), DEFAULT_PARAMS, doneness,

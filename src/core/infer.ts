@@ -158,8 +158,8 @@ export function withUnrelatedWord(p: number): number {
  *
  * FROZEN, as literals: every stored yolk word is scored against these, so
  * they are what a word MEANT when the cook tapped it. They are today's
- * anchors' midpoints to the last bit, and a test holds them there (test
- * 1h in test/infer.test.ts), so moving an anchor in `DONENESS_ANCHORS`
+ * anchors' midpoints to the last bit, and a test holds them there
+ * (test/infer.test.ts), so moving an anchor in `DONENESS_ANCHORS`
  * fails it rather than silently rescoring every word already given. Whoever
  * moves one decides then: keep these and let the slider's words and the
  * answers' bands part, or move these too and bump `LIKELIHOOD_ID` (and so

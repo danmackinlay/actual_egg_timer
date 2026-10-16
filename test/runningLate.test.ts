@@ -16,7 +16,7 @@ import {
 } from '../src/core/running.ts';
 import { START_MS, S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';
 
-test('15. a pull the clock assumed stays open, and a correction that would pull later asks', () => {
+test('a pull the clock assumed stays open, and a correction that would pull later asks', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 1);
   const due = p.deadlines.cookEnd_s;
@@ -56,7 +56,7 @@ test('15. a pull the clock assumed stays open, and a correction that would pull 
   assert.equal(phaseAt(planned(corrected(hot, CHOICES, due - 5), due - 5).deadlines, due - 5), 'HEATING');
 });
 
-test('16. after the pull the level corrects nothing, and a cooling corrected past its end is Done', () => {
+test('after the pull the level corrects nothing, and a cooling corrected past its end is Done', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 1);
   const due = p.deadlines.cookEnd_s;
@@ -80,7 +80,7 @@ test('16. after the pull the level corrects nothing, and a cooling corrected pas
   assert.equal(phaseAt(ice.deadlines, ce + 605), 'DONE');
 });
 
-test('17. a plan the cook did not cause never moves a pull already due', () => {
+test('a plan the cook did not cause never moves a pull already due', () => {
   const hot = cookOf({ startMode: 'hot' });
   // The pull rings on the interim plan, before the surface is in.
   const interim = replan(hot, C, null, 0, S + 1);
@@ -114,7 +114,7 @@ test('17. a plan the cook did not cause never moves a pull already due', () => {
   assert.equal(eventsDue(cold, planned(cold, at + 4), at + 5).rangAt_s, null, 'heating again: the ring cleared');
 });
 
-test('18. a boil tapped after a late correction to cold runs on the remembered time', () => {
+test('a boil tapped after a late correction to cold runs on the remembered time', () => {
   // As the review ran it: a cold start tapped late runs on the tap, as ever.
   const plain = [480, 540, 600, 720].map((tap) => replan(withBoil(cookOf(), S + tap), C, null, 0, S + tap).cookTime_s);
   assert.ok(plain[0] < plain[1] && plain[1] < plain[2] && plain[2] < plain[3], `${plain.join(', ')}: later each time`);
@@ -140,7 +140,7 @@ test('18. a boil tapped after a late correction to cold runs on the remembered t
   assert.equal(replan(withBoil(corrected(hot, CHOICES, S + 240), S + 600), C, null, 0, S + 600).setup.timeToBoil_s, 600);
 });
 
-test('19. a tap made before a stray cold -> hot -> cold is still remembered', () => {
+test('a tap made before a stray cold -> hot -> cold is still remembered', () => {
   const t = withBoil(cookOf(), S + 500);
   assert.deepEqual(boilToRemember(t), { litres: 2, seconds: 500 });
   const stray = corrected(corrected(t, { ...CHOICES, startMode: 'hot' }, S + 600), CHOICES, S + 610);
@@ -155,7 +155,7 @@ test('19. a tap made before a stray cold -> hot -> cold is still remembered', ()
   assert.equal(boilToRemember(corrected(corrected(earlier, { ...CHOICES, startMode: 'hot' }, S + 600), CHOICES, S + 610)), null);
 });
 
-test('20. a cook left heating stops lengthening, and is abandoned; the one rule for too old', () => {
+test('a cook left heating stops lengthening, and is abandoned; the one rule for too old', () => {
   const most = LIMITS.timeToBoil_s.hi;
   const cold = cookOf();
   // The review's call: a cold start never tapped, twelve hours on.
@@ -184,7 +184,7 @@ test('20. a cook left heating stops lengthening, and is abandoned; the one rule 
   assert.equal(planned(out, cp.deadlines.cookEnd_s + 5).tooOldAt_s, cp.deadlines.cookEnd_s + 4 + RESTORE_WINDOW_S);
 });
 
-test('21. the open egg is the stored cook\'s, until Start again or it is too old', () => {
+test('the open egg is the stored cook\'s, until Start again or it is too old', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 1);
   assert.equal(openEggId(hot, p, S + 1), START_MS);
@@ -193,7 +193,7 @@ test('21. the open egg is the stored cook\'s, until Start again or it is too old
   assert.equal(openEggId(null, null, S + 1), null, 'nothing stored: every egg final');
 });
 
-test('22. the start has a lower bound, two hours before Start was pressed', () => {
+test('the start has a lower bound, two hours before Start was pressed', () => {
   const cold = cookOf();
   assert.equal(earliestStart_s(cold), S - LIMITS.timeToBoil_s.hi);
   assert.equal(startCorrected(cold, 1, S + 10), null, 'the review\'s call: 1970 is refused');

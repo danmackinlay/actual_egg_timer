@@ -7,7 +7,7 @@
  * against today's, word by word; each translation's twin, and whether it is
  * stale or shows the English; the regional overlays' words, as approved and
  * as they are; the surface's length budget against the longest rendering,
- * where the surface has one (test/data/surfaces.json, as copy.test.ts 5a
+ * where the surface has one (test/data/surfaces.json, as copy.test.ts
  * measures it); which apps say it, read from their sources; and the note
  * beside the catalogue (copy/en.notes.json). Then the stale twins under
  * English that is already approved. One file, no network: the styles are

@@ -1,7 +1,7 @@
 // What the three type-checks share (tsconfig.core.json, tsconfig.app.json and
 // tsconfig.json). They emit nothing: Node runs the tests, tools and studies
 // from their sources, stripping the types itself, and esbuild bundles the site
-// (tools/buildSite.mjs), so `tsc` only checks (`npm run typecheck`). So
+// (tools/buildSite.ts), so `tsc` only checks (`npm run typecheck`). So
 // imports name their sources (`./x.ts`), what is stripped must be types alone
 // (erasableSyntaxOnly), and an import that names only types says so
 // (verbatimModuleSyntax), since Node keeps every import that does not.

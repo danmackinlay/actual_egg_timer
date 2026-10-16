@@ -14,7 +14,7 @@
  *
  * The site that ships has no development tools (src/ui/dev/: the development
  * clock and the test API, main.ts), so this serves `_dev/` over `_site/`:
- * the one file the build adds for them (tools/buildSite.mjs). The page asks
+ * the one file the build adds for them (tools/buildSite.ts). The page asks
  * for it only where this server's cookie names the port it is on. TREE
  * names the checkout whose `_site/` and `_dev/` are served (this one):
  * `npm run e2e -- --tree <dir>` (tools/harness.ts).

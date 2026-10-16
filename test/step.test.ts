@@ -119,7 +119,7 @@ function logs(effects: CookEffect[]): EggRecord[] {
   return out;
 }
 
-test('1. a tick with nothing due is the state as it was: no plan, no effect', () => {
+test('a tick with nothing due is the state as it was: no plan, no effect', () => {
   const d = start();
   const plan = d.state.plan;
   const out = d.go({ kind: 'tick', now_s: S + 60 });
@@ -128,7 +128,7 @@ test('1. a tick with nothing due is the state as it was: no plan, no effect', ()
   assert.equal(out.need.wakeAt_s, d.pull, 'the next moment is the pull');
 });
 
-test('2. the pull rings once, the out silences it, Done rings, and Start again logs the egg, then forgets it', () => {
+test('the pull rings once, the out silences it, Done rings, and Start again logs the egg, then forgets it', () => {
   const d = start();
   const pull = d.pull;
   assert.deepEqual(kinds(d.go({ kind: 'tick', now_s: pull + 1 }).effects), ['persist', 'ring:pull', 'alarms']);
@@ -143,7 +143,7 @@ test('2. the pull rings once, the out silences it, Done rings, and Start again l
   assert.ok(!d.effects.slice(0, -2).some((e) => e.kind === 'sendFinal'), 'nothing final before Start again');
 });
 
-test('3. an answer is taken only at Done, once each, and the second logs in place of the first', () => {
+test('an answer is taken only at Done, once each, and the second logs in place of the first', () => {
   const d = start();
   const early = d.go({ kind: 'answered', now_s: S + 60, yolkWord: 'jammy', white: null, probe: null });
   assert.deepEqual(early.effects, [], 'not before Done');
@@ -160,7 +160,7 @@ test('3. an answer is taken only at Done, once each, and the second logs in plac
   assert.deepEqual([a.yolkWord, b.yolkWord, b.white], ['jammy', 'jammy', 'firm']);
 });
 
-test('4. a correction at Done is logged on the calibration before this egg; changed back, the first record to the bit', () => {
+test('a correction at Done is logged on the calibration before this egg; changed back, the first record to the bit', () => {
   const d = start();
   d.go({ kind: 'tick', now_s: d.pull + 1 });
   d.go({ kind: 'out', now_s: d.pull + 3 });
@@ -179,7 +179,7 @@ test('4. a correction at Done is logged on the calibration before this egg; chan
   assert.deepEqual(back, first);
 });
 
-test('5. a stored cook read back at any step is the cook as it stood', () => {
+test('a stored cook read back at any step is the cook as it stood', () => {
   const d = start({ startMode: 'cold' });
   const at = [S + 300, S + 480];
   d.go({ kind: 'tick', now_s: at[0] });
@@ -193,14 +193,14 @@ test('5. a stored cook read back at any step is the cook as it stood', () => {
   assert.deepEqual(readRunningCook(JSON.parse(JSON.stringify(cook))), cook);
 });
 
-test('6. Cancel while heating: nothing remembered, nothing logged, the alarms gone', () => {
+test('Cancel while heating: nothing remembered, nothing logged, the alarms gone', () => {
   const d = start({ startMode: 'cold' });
   const end = d.go({ kind: 'startAgain', now_s: S + 120 });
   assert.equal(end.cook, null);
   assert.deepEqual(kinds(end.effects), ['silence', 'alarms', 'forget', 'sendFinal']);
 });
 
-test('7. the readout: counting down, past the pull, and the question that holds Done back', () => {
+test('the readout: counting down, past the pull, and the question that holds Done back', () => {
   const d = start();
   const plan = d.state.plan;
   const cook = d.state.cook;
@@ -229,7 +229,7 @@ test('7. the readout: counting down, past the pull, and the question that holds 
   }
 });
 
-test('8. the surface key: equal exactly when the inputs are, numbers to the bit', () => {
+test('the surface key: equal exactly when the inputs are, numbers to the bit', () => {
   const pot = cookSetupOf(CHOICES, 480);
   const a = decisionInputs(C, pot.egg, pot.setup);
   assert.equal(inputsKey(a), inputsKey(JSON.parse(JSON.stringify(a)) as typeof a));
@@ -273,7 +273,7 @@ function tickEach(d: Driver, from_s: number, until_s: number): Trace {
 // before the pull's grace, so a cook with no cooling fell from Cooking
 // straight to Done, the pull never shown and its alarm ringing at Done.
 for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
-  test(`9. ${cooling}, ticked each second: the pull rings, holds for its whole grace, then the cooling or Done, which rings once`, () => {
+  test(`${cooling}, ticked each second: the pull rings, holds for its whole grace, then the cooling or Done, which rings once`, () => {
     const d = start({ cooling: cooling });
     const pull = Math.ceil(d.pull);
     const graceEnd = Math.ceil(d.pull + PULL_GRACE_SECONDS);
@@ -293,7 +293,7 @@ for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
   });
 }
 
-test("10. the cook's tap out of the pull: the cooling counted from the tap, or Done on the counter", () => {
+test("the cook's tap out of the pull: the cooling counted from the tap, or Done on the counter", () => {
   for (const cooling of ['ice', 'counter'] as Cooling[]) {
     const d = start({ cooling: cooling });
     const t = tickEach(d, S + 2, Math.ceil(d.pull) + 4);
@@ -309,7 +309,7 @@ test("10. the cook's tap out of the pull: the cooling counted from the tap, or D
   }
 });
 
-test('11. a cold start ticked each second heats until the boil is tapped, however slow the hob, and rings nothing', () => {
+test('a cold start ticked each second heats until the boil is tapped, however slow the hob, and rings nothing', () => {
   const d = start({ startMode: 'cold' });
   const guessed = d.pull;
   const t = tickEach(d, S + 2, S + 1400);

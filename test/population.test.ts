@@ -29,7 +29,7 @@ const SHIFTED: Population = {
 /** A fit's diagnostics, as fit/eggfit/__main__.py writes them, less the rows. */
 const PASSED = { ok: true, forced: false, failures: [] };
 
-test('1. the published file reads, and the literature is the default prior', () => {
+test('the published file reads, and the literature is the default prior', () => {
   const published = parsePopulation(JSON.parse(readFileSync('fixtures/population.json', 'utf8')));
   assert.notEqual(published, null);
   const a = createPrior(200, CALIBRATION_SEED);
@@ -41,7 +41,7 @@ test('1. the published file reads, and the literature is the default prior', () 
   assert.deepEqual(calibrationDoneness(c, 0.22), donenessFromSlider(0.22));
 });
 
-test('1b. a population file from before 0.5, with a spread for the carryover, reads as one without', () => {
+test('a population file from before 0.5, with a spread for the carryover, reads as one without', () => {
   // The web may hold an old file in its cache.
   const file = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined } };
   const old = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined, tauAirScale: { median: 1.12, logSd: 0.3 } } };
@@ -49,7 +49,7 @@ test('1b. a population file from before 0.5, with a spread for the carryover, re
   assert.notEqual(parsePopulation(old), null);
 });
 
-test('2. a fitted population moves the prior and where a new cook starts', () => {
+test('a fitted population moves the prior and where a new cook starts', () => {
   const c = freshCalibration(4000, 11, SHIFTED);
   assert.deepEqual(c.start, priorStart(SHIFTED));
   // The carryover stays at the physics whatever the population.
@@ -65,7 +65,7 @@ test('2. a fitted population moves the prior and where a new cook starts', () =>
   assert.ok(Math.abs(white.reduce((s, x) => s + x, 0) / white.length - 0.21) < 0.02);
 });
 
-test('3. a reader refuses a population it cannot trust', () => {
+test('a reader refuses a population it cannot trust', () => {
   const file = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined } };
   assert.notEqual(parsePopulation(file), null);
   for (const spoil of [
@@ -80,7 +80,7 @@ test('3. a reader refuses a population it cannot trust', () => {
   }
 });
 
-test('3b. a fit is read only if its sampler passed, or it was forced and its id says so', () => {
+test('a fit is read only if its sampler passed, or it was forced and its id says so', () => {
   const { id: _, ...prior } = SHIFTED;
   const fit = (id: string, diagnostics: unknown) => parsePopulation({ id: id, diagnostics: diagnostics, prior: prior });
   assert.deepEqual(fit('fit-x', PASSED), { ...SHIFTED, id: 'fit-x' });
@@ -103,7 +103,7 @@ test('3b. a fit is read only if its sampler passed, or it was forced and its id 
   assert.equal(parsePopulation({ id: lid, prior: nudged }), null, 'nor its id with one number moved');
 });
 
-test('4. a posterior from another population is replayed; one from this one is kept', () => {
+test('a posterior from another population is replayed; one from this one is kept', () => {
   const log = [recordAt(0.41, 470, 'jammy', 'tender')];
   const kept = { base: null, calibration: freshCalibration(64, 3), folded: 1, log: log };
   kept.calibration.eggsLogged = 1;
@@ -126,7 +126,7 @@ test('4. a posterior from another population is replayed; one from this one is k
   assert.equal(decodeKept(JSON.stringify(none), SHIFTED).path, 'rebuild');
 });
 
-test('5. a store folded under another model is replayed, and its base kept as it is', () => {
+test('a store folded under another model is replayed, and its base kept as it is', () => {
   // A base cannot be replayed. The counter's carryover is no column of the
   // store: it is the physics' for every particle.
   const log = [recordAt(0.41, 470, 'jammy', 'tender')];

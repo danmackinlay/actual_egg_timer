@@ -4,9 +4,9 @@
  * the record that says it was read.
  *
  * Placeholder parity and the length budgets are copy.test.ts's, which reads
- * every catalogue in copy/ and so this one too; 1a checks that it does. Every
+ * every catalogue in copy/ and so this one too; a test here checks that it does. Every
  * twin, of either app's key, is held to every rule here; a key without one
- * falls back to English and is listed by `npm run copy:queue` (1b).
+ * falls back to English and is listed by `npm run copy:queue` (below).
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -57,12 +57,12 @@ function wordPattern(word: string): RegExp {
 // the catalogue
 // --------------------------------------------------------------------------
 
-test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
+test('the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
   assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
   // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
-  // which neither app ships (tools/buildSite.mjs and ios/project.yml leave
+  // which neither app ships (tools/buildSite.ts and ios/project.yml leave
   // them out). Anything else would ship, so the approved record is kept in
   // test/data/.
   for (const f of readdirSync('copy')) {
@@ -71,9 +71,9 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 
-test('1b. every twin is an English key; a key without one is listed, not refused', () => {
+test('every twin is an English key; a key without one is listed, not refused', () => {
   // The twins may lag the English: a key with no twin renders in English
-  // (1c), and `npm run copy:queue` lists it, with the twins written against
+  // (below), and `npm run copy:queue` lists it, with the twins written against
   // older English. Every twin there is - the web's, and iOS's alarms, Live
   // Activity and Dynamic Island - is held to every rule below: the
   // archaisms, the spellings, the long s.
@@ -82,7 +82,7 @@ test('1b. every twin is an English key; a key without one is listed, not refused
   assert.ok(!PERIOD.messages.has('app.name'));
 });
 
-test('1b2. the small surfaces keep to a few words of period flavour', () => {
+test('the small surfaces keep to a few words of period flavour', () => {
   // LANGUAGE.md section 6, rule 2: on the Lock Screen, the Dynamic Island and
   // an alarm's title the register gets two or three words, not a paragraph.
   // The budgets bind in copy.test.ts; this holds the flavour to few words.
@@ -99,7 +99,7 @@ test('1b2. the small surfaces keep to a few words of period flavour', () => {
   assert.equal(render(PERIOD, 'activity.now'), 'NOW');
 });
 
-test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', () => {
+test('a key 1750 lacks falls back to English, with English\'s plural rule', () => {
   // app.name is iOS's, and 1750 leaves it to English.
   assert.ok(!PERIOD.messages.has('app.name'));
   assert.equal(render(PERIOD, 'app.name'), 'Actual Egg Timer');
@@ -107,7 +107,7 @@ test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', 
   assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 results');
 });
 
-test('1d. none of the eight stage-play archaisms', () => {
+test('none of the eight stage-play archaisms', () => {
   // LANGUAGE.md section 6: zero times each in the 1755 Preface.
   const banned = ["'tis", 'pray', 'forthwith', 'whilst', 'thee', 'thou', 'hath', 'doth'];
   const failures: string[] = [];
@@ -121,7 +121,7 @@ test('1d. none of the eight stage-play archaisms', () => {
   assert.ok(!wordPattern('thou').test('though'));
 });
 
-test('1e. no modern spelling the table lists: the 1755 form, as a whole word', () => {
+test('no modern spelling the table lists: the 1755 form, as a whole word', () => {
   const failures: string[] = [];
   for (const [key, t] of templates()) {
     for (const [modern, old] of Object.entries(SPELLING)) {
@@ -134,7 +134,7 @@ test('1e. no modern spelling the table lists: the 1755 form, as a whole word', (
   assert.ok(!wordPattern('show').test('showers'));
 });
 
-test('1f. the spelling table is modern to 1755, lower case, and never maps a word to itself', () => {
+test('the spelling table is modern to 1755, lower case, and never maps a word to itself', () => {
   for (const [modern, old] of Object.entries(SPELLING)) {
     assert.equal(modern, modern.toLowerCase(), modern);
     assert.notEqual(modern, old, modern);
@@ -145,7 +145,7 @@ test('1f. the spelling table is modern to 1755, lower case, and never maps a wor
   }
 });
 
-test('1g. the long s only in the title, and the title reads without it', () => {
+test('the long s only in the title, and the title reads without it', () => {
   for (const [key, t] of templates()) {
     if (key !== TITLE_KEY) assert.ok(!t.includes('ſ'), `${key}: a long s`);
   }
@@ -155,7 +155,7 @@ test('1g. the long s only in the title, and the title reads without it', () => {
   assert.equal(title.replace(/ſ/g, 's'), render(EN, TITLE_KEY));
 });
 
-test('1h. the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {
+test('the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {
   // The yolk the cook got is answered in the ticks' own
   // words, five and distinct; the white's three are distinct too.
   const yolk = ['doneness.runny', 'doneness.soft', 'doneness.jammy', 'doneness.fudgy', 'doneness.hard']
@@ -168,7 +168,7 @@ test('1h. the answers keep their meaning: the yolk in the slider\'s five words, 
   assert.equal(new Set(white).size, 3);
 });
 
-test('1i. the owner\'s alarm: their clause, after the cooling the cook chose', () => {
+test('the owner\'s alarm: their clause, after the cooling the cook chose', () => {
   // Each body into water is the catalogue's own twin, not the English left in
   // place. The first clause names the cooling the cook chose, so the three
   // differ there; the clause after the semicolon is the owner's, and the same
@@ -181,7 +181,7 @@ test('1i. the owner\'s alarm: their clause, after the cooling the cook chose', (
   assert.equal(new Set(parts.map((p) => p[1])).size, 1, 'the owner\'s clause, the same in all three');
 });
 
-test('1j. Help\'s links are the English links: the same URLs, in the same markdown', () => {
+test('Help\'s links are the English links: the same URLs, in the same markdown', () => {
   const links = (s: string): string[] => [...s.matchAll(/\]\((https:\/\/[^\s)]+)\)/g)].map((m) => m[1]);
   for (const [key, entry] of Object.entries(EN_JSON.messages)) {
     const english = typeof entry['text'] === 'string' ? entry['text'] : '';
@@ -190,7 +190,7 @@ test('1j. Help\'s links are the English links: the same URLs, in the same markdo
   }
 });
 
-test('1k. formats come from the region: the register is not a format', () => {
+test('formats come from the region: the register is not a format', () => {
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'US', null), 'en-US');
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'GB', null), 'en-GB');
   assert.equal(asRead(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US')), '1,234.5 °F');
@@ -204,7 +204,7 @@ function flip(state: LanguageState, ...flips: ('metricToImperial' | 'imperialToM
   return flips.reduce((s, f) => languageAfterFlip(s, f), state);
 }
 
-test('2a. tags: 1750 in any region, and nothing else', () => {
+test('tags: 1750 in any region, and nothing else', () => {
   for (const tag of ['en-x-1750', 'en-US-x-1750', 'EN-GB-X-1750', 'en-x-1750-a']) assert.ok(isPeriod(tag), tag);
   for (const tag of ['en', 'en-US', 'cs', 'cs-x-1750', 'en-x-17500', 'en-x-175', 'x-1750', '', 'enx-1750']) {
     assert.ok(!isPeriod(tag), tag);
@@ -212,7 +212,7 @@ test('2a. tags: 1750 in any region, and nothing else', () => {
   assert.equal(effectiveLanguage(FRESH_LANGUAGE), DEFAULT_LANGUAGE);
 });
 
-test('2b. metric to Imperial in English goes into 1750, and back to metric stays there', () => {
+test('metric to Imperial in English goes into 1750, and back to metric stays there', () => {
   const imperial = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.equal(effectiveLanguage(imperial), PERIOD_LANGUAGE);
   assert.deepEqual(flip(imperial, 'imperialToMetric'), imperial, 'back to metric leaves 1750 alone');
@@ -220,31 +220,31 @@ test('2b. metric to Imperial in English goes into 1750, and back to metric stays
   assert.equal(effectiveLanguage(flip(chosen, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
 
-test('2c. Imperial to metric never moves the language', () => {
+test('Imperial to metric never moves the language', () => {
   for (const state of [FRESH_LANGUAGE, { chosen: 'en' }, { chosen: PERIOD_LANGUAGE }, { chosen: 'cs' }]) {
     assert.deepEqual(flip(state, 'imperialToMetric'), state);
   }
 });
 
-test('2d. choosing English in the picker leaves 1750 and keeps the units as they are', () => {
+test('choosing English in the picker leaves 1750 and keeps the units as they are', () => {
   const picked = { chosen: 'en' };
   assert.equal(effectiveLanguage(picked), 'en');
   assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), 'en');
 });
 
-test('2e. 1750 chosen in the picker is not left by the units', () => {
+test('1750 chosen in the picker is not left by the units', () => {
   const picked = { chosen: PERIOD_LANGUAGE };
   assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), PERIOD_LANGUAGE);
   assert.equal(effectiveLanguage(flip(picked, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
 
-test('2f. a language that is not English is never moved', () => {
+test('a language that is not English is never moved', () => {
   const czech: LanguageState = { chosen: 'cs' };
   assert.deepEqual(flip(czech, 'metricToImperial'), czech);
   assert.deepEqual(flip(czech, 'imperialToMetric'), czech);
 });
 
-test('2g. a stored state is read defensively, and an old one still reads', () => {
+test('a stored state is read defensively, and an old one still reads', () => {
   const known = ['en', PERIOD_LANGUAGE];
   assert.deepEqual(readLanguageState(null, known), FRESH_LANGUAGE);
   assert.deepEqual(readLanguageState('en', known), FRESH_LANGUAGE);
@@ -260,7 +260,7 @@ test('2g. a stored state is read defensively, and an old one still reads', () =>
 // the record
 // --------------------------------------------------------------------------
 
-test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () => {
+test('a cook read in 1750 is recorded as 1750: lang and register both', () => {
   const choices: CookChoices = {
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
     startMode: 'hot', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,

@@ -1,7 +1,7 @@
 /**
  * Opening with no signal: which file answers which address
  * (src/ui/serviceWorker.ts), and the build's list of files and its name that
- * tools/precache.mjs writes into sw.js; and the page's side
+ * tools/precache.ts writes into sw.js; and the page's side
  * (src/ui/offline.ts): which window takes a new build, and when, and the
  * hourly look for one, which goes by the real clock.
  *
@@ -21,7 +21,7 @@ import { dirname, join } from 'node:path';
 
 import { type BuildFiles, cacheKeyFor } from '../src/ui/serviceWorker.ts';
 
-test('1. a page is answered by its index.html, a file by itself', () => {
+test('a page is answered by its index.html, a file by itself', () => {
   const files: BuildFiles = {
     'index.html': 'a', 'privacy/index.html': 'b', 'styles.css': 'c', 'bundle/main-ABCD1234.js': 'd',
   };
@@ -66,7 +66,7 @@ function buildSite(
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   }
-  execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.mjs'), dir], { cwd: host });
+  execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.ts'), dir], { cwd: host });
   const sw = readFileSync(join(dir, 'sw.js'), 'utf8');
   assert.match(sw, /^import \{ serve \} from '\.\/bundle\/serviceWorker-IJKL9012\.js';$/m);
   const m = sw.match(/^serve\('([0-9a-f]{16})', (\{[\s\S]*\})\);\s*$/m);
@@ -78,7 +78,7 @@ function sha256(text: string): string {
   return createHash('sha256').update(text).digest('hex');
 }
 
-test('2. sw.js lists what the page can ask for, hashed as served', () => {
+test('sw.js lists what the page can ask for, hashed as served', () => {
   const { files, dir } = buildSite();
   try {
     // The 512 px icons and the social card are for the system and for link
@@ -93,13 +93,13 @@ test('2. sw.js lists what the page can ask for, hashed as served', () => {
     assert.equal(files['index.html'], sha256(page));
     assert.equal(files['styles.css'], sha256(SITE['styles.css']));
     // Run twice, it would name the worker twice: it refuses.
-    assert.throws(() => execFileSync(process.execPath, ['tools/precache.mjs', dir], { stdio: 'pipe' }));
+    assert.throws(() => execFileSync(process.execPath, ['tools/precache.ts', dir], { stdio: 'pipe' }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('3. the build is named by its files and the hosts\' headers: any change is a new build', () => {
+test('the build is named by its files and the hosts\' headers: any change is a new build', () => {
   const a = buildSite();
   const b = buildSite();
   const c = buildSite({ 'copy/en.json': '{"x": 1}\n' });
@@ -124,11 +124,11 @@ test('3. the build is named by its files and the hosts\' headers: any change is 
   }
 });
 
-test('4. a site without the service worker\'s bundle fails the build', () => {
+test('a site without the service worker\'s bundle fails the build', () => {
   const dir = mkdtempSync(join(tmpdir(), 'aet-site-'));
   try {
     writeFileSync(join(dir, 'index.html'), SITE['index.html']);
-    assert.throws(() => execFileSync(process.execPath, ['tools/precache.mjs', dir], { stdio: 'pipe' }));
+    assert.throws(() => execFileSync(process.execPath, ['tools/precache.ts', dir], { stdio: 'pipe' }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -144,7 +144,7 @@ function memoryStorage(): Storage {
   } as unknown as Storage;
 }
 
-test('5. the hourly look for a new build goes by the real clock, never the development one', async () => {
+test('the hourly look for a new build goes by the real clock, never the development one', async () => {
   // A page on localhost with the development clock stopped (dev/clock.ts): the
   // cook's time moves only when a script moves it.
   let real_ms = 1_790_000_000_000;
@@ -226,7 +226,7 @@ test('5. the hourly look for a new build goes by the real clock, never the devel
   }
 });
 
-test('6. a new build: the owner takes it between cooks, waits mid-cook, and a waiting window reloads into it', async () => {
+test('a new build: the owner takes it between cooks, waits mid-cook, and a waiting window reloads into it', async () => {
   const { newBuild } = await import('../src/ui/offline.ts');
   const owner = { owner: true, cookRunning: false, touched: false, visible: true, asked: false };
   assert.equal(newBuild(owner, false), 'take', 'the owner between cooks, untouched since it loaded');

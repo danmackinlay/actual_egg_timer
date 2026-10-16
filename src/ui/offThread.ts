@@ -17,7 +17,7 @@ interface Waiting {
 }
 
 /** The grid worker's bundle, by its hashed name, beside the page's
- *  (tools/buildSite.mjs, through esbuild's `define`). */
+ *  (tools/buildSite.ts, through esbuild's `define`). */
 declare const GRID_WORKER_FILE: string;
 
 let worker: Worker | null = null;

@@ -19,7 +19,7 @@
  * old build answers every window it loaded, including the grid worker it
  * starts and the words it fetches later.
  *
- * `_site/sw.js` is written by tools/precache.mjs at build time: it imports
+ * `_site/sw.js` is written by tools/precache.ts at build time: it imports
  * this module and calls `serve` with the build's files. Nothing here runs on
  * import, so the tests can reach `cacheKeyFor`.
  */

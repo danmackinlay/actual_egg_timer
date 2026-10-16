@@ -10,7 +10,7 @@
 //                              fit needs its diagnostics, a forced one an id
 //                              that says so), since every browser would
 //                              silently draw from the literature's instead
-//   _site/sw.js                (tools/precache.mjs; it must run last, since
+//   _site/sw.js                (tools/precache.ts; it must run last, since
 //                              a file copied in after it is not in its list)
 //   _dev/bundle/dev-<hash>.js  the development tools (src/ui/dev/)
 //
@@ -36,11 +36,11 @@
 // the scripts were app/ and dist/, under fixed names, which browsers may
 // still hold (netlify.toml).
 //
-// Usage: node tools/buildSite.mjs
+// Usage: node tools/buildSite.ts
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { build } from 'esbuild';
+import { type BuildOptions, type Metafile, build } from 'esbuild';
 import { parsePopulation } from '../src/core/population.ts';
 
 const SITE = '_site';
@@ -51,7 +51,7 @@ const PAGE_SCRIPT = '<script type="module" src="src/ui/main.ts"></script>';
 const DEV_ONLY = ['aetClock', 'aetTest'];
 
 /** A node script, as a step: its output shown, its failure the build's. */
-function run(script, ...args) {
+function run(script: string, ...args: string[]): void {
   const step = spawnSync(process.execPath, [script, ...args], { stdio: 'inherit' });
   if (step.status !== 0) process.exit(step.status ?? 1);
 }
@@ -68,10 +68,10 @@ const OPTIONS = {
   chunkNames: '[name]-[hash]',
   metafile: true,
   logLevel: 'warning',
-};
+} satisfies BuildOptions;
 
 /** The output, as a path under `outdir`, that `entry` was built into. */
-function outputOf(result, entry) {
+function outputOf(result: { metafile: Metafile }, entry: string): string {
   const found = Object.entries(result.metafile.outputs).find(([, o]) => o.entryPoint === entry);
   if (found === undefined) throw new Error(`no output for ${entry}`);
   return found[0];
@@ -105,7 +105,7 @@ const main = `${BUNDLE}/${basename(outputOf(page, 'src/ui/main.ts'))}`;
 writeFileSync(join(SITE, 'index.html'), html.replace(PAGE_SCRIPT, PAGE_SCRIPT.replace('src/ui/main.ts', main)));
 for (const file of ['styles.css', 'site.webmanifest']) copyFileSync(file, join(SITE, file));
 // The notes beside a catalogue are the tools' and the tests', never the page's.
-const shipped = (path) => !path.endsWith('.notes.json');
+const shipped = (path: string): boolean => !path.endsWith('.notes.json');
 for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, join(SITE, dir), { recursive: true, filter: shipped });
 mkdirSync(join(SITE, 'fixtures'));
 const population = JSON.parse(readFileSync('fixtures/population.json', 'utf8'));
@@ -118,4 +118,4 @@ if (population.diagnostics?.forced === true) {
   console.warn(`build:site: the population ${drawn.id} was forced: its sampler failed its checks`);
 }
 copyFileSync('fixtures/population.json', join(SITE, 'fixtures', 'population.json'));
-run('tools/precache.mjs', SITE);
+run('tools/precache.ts', SITE);

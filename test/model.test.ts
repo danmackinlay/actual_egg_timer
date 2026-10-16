@@ -80,7 +80,7 @@ function kinds(effects: Effect[]): string[] {
   return effects.map((e) => (e.kind === 'ring' ? `ring:${e.moment}` : e.kind));
 }
 
-test('1. the primary button by phase: the boil, the egg out, Start again; the pull alarm the plan sets', () => {
+test('the primary button by phase: the boil, the egg out, Start again; the pull alarm the plan sets', () => {
   const p = started({ startMode: 'cold' });
   assert.ok(kinds(p.effects).includes('blip'), 'Start blips');
   assert.ok(p.m.pull_s !== null, 'an alarm for the pull');
@@ -101,7 +101,7 @@ test('1. the primary button by phase: the boil, the egg out, Start again; the pu
   assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
 });
 
-test('2. an answer to an egg too old to pick back up closes it here: nothing stepped, nothing written or logged', () => {
+test('an answer to an egg too old to pick back up closes it here: nothing stepped, nothing written or logged', () => {
   const p = started();
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
@@ -116,7 +116,7 @@ test('2. an answer to an egg too old to pick back up closes it here: nothing ste
   assert.equal(p.m.ending.length, 0);
 });
 
-test('4. a reload rings nothing, and an answer given before it puts the questions away', () => {
+test('a reload rings nothing, and an answer given before it puts the questions away', () => {
   const p = started();
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
@@ -136,7 +136,7 @@ test('4. a reload rings nothing, and an answer given before it puts the question
     'a reload past the pull writes it rung, and rings nothing');
 });
 
-test('5. a cook ended before its surface is in waits off screen, and is logged and forgotten when it lands', () => {
+test('a cook ended before its surface is in waits off screen, and is logged and forgotten when it lands', () => {
   // A page whose surface never came: the egg out and Done on the interim
   // time, with no plan as it ran kept.
   const p = new Page();

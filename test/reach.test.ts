@@ -19,8 +19,9 @@
  * at the time given, and whether advice is wanted.
  *
  * Here, the odds, the range, the shading and the advice;
- * test/reachAnswer.test.ts holds the answer at a level, and test/profiles.ts
- * what the two share.
+ * test/reachAnswer.test.ts holds the answer at a level,
+ * test/reachMonotone.test.ts the time across the slider, and test/profiles.ts
+ * what they share.
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
@@ -46,7 +47,7 @@ import { mostLikelyShown, warningKey } from '../src/core/wording.ts';
 import { appSetup, gridFor, knowing } from '../tools/common.ts';
 import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, appAt, point, pointAt } from './profiles.ts';
 
-test('1. a profile point is the odds and the certainty the app shows at that level', () => {
+test('a profile point is the odds and the certainty the app shows at that level', () => {
   const grid = gridFor(WHITE_BOUND, EGG, SETUP);
   const p = oddsProfile(WHITE_BOUND, EGG, SETUP, grid);
   // Every 0.05 from the physical edge, 19 here; a bisection at an end that
@@ -68,7 +69,7 @@ test('1. a profile point is the odds and the certainty the app shows at that lev
   assert.equal(p.bestAsked, Math.max(...p.points.map((q) => q.pAsked)));
 });
 
-test('2. a fresh install is warned of nothing, at any level, and is never very certain', () => {
+test('a fresh install is warned of nothing, at any level, and is never very certain', () => {
   for (const setup of [SETUP, COUNTER]) {
     const grid = gridFor(FRESH, EGG, setup);
     const p = oddsProfile(FRESH, EGG, setup, grid);
@@ -89,7 +90,7 @@ test('2. a fresh install is warned of nothing, at any level, and is never very c
   }
 });
 
-test('3. after an egg, the range that is not a wild guess is on the slider\'s grid, and outside it the slider stays and warns', () => {
+test('after an egg, the range that is not a wild guess is on the slider\'s grid, and outside it the slider stays and warns', () => {
   // One egg that taught little: the prior's spread, so the soft half is a
   // wild guess and the firm half a ballpark.
   const unsure: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 1 };
@@ -130,7 +131,7 @@ test('3. after an egg, the range that is not a wild guess is on the slider\'s gr
   }
 });
 
-test('3a. a white-bound cook is no wild guess anywhere, so nothing is dotted; where its time gives a firmer yolk, "most likely" says so', () => {
+test('a white-bound cook is no wild guess anywhere, so nothing is dotted; where its time gives a firmer yolk, "most likely" says so', () => {
   const grid = gridFor(WHITE_BOUND, EGG, SETUP);
   const p = oddsProfile(WHITE_BOUND, EGG, SETUP, grid);
   assert.equal(p.softest, p.physicalSoftest);
@@ -149,7 +150,7 @@ test('3a. a white-bound cook is no wild guess anywhere, so nothing is dotted; wh
   assert.equal(mostLikelyShown(shown), true);
 });
 
-test('4. when every level is a wild guess, nothing is warned of', () => {
+test('when every level is a wild guess, nothing is warned of', () => {
   // Eggs that taught nothing, and a scatter so wide that no word and its
   // neighbours hold 9 in 10 anywhere.
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
@@ -168,7 +169,7 @@ test('4. when every level is a wild guess, nothing is warned of', () => {
   }
 });
 
-test('5. a counter rest asked for soft: refused for the physical reason, landed on the physical edge, and warned of if a wild guess there', () => {
+test('a counter rest asked for soft: refused for the physical reason, landed on the physical edge, and warned of if a wild guess there', () => {
   const c = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.1 });
   const grid = gridFor(c, EGG, COUNTER);
   const p = oddsProfile(c, EGG, COUNTER, grid);
@@ -184,7 +185,7 @@ test('5. a counter rest asked for soft: refused for the physical reason, landed 
   assert.equal(key, a.verdict.worthSaying ? 'refusal.counter' : a.lowOdds ? 'warn.wildGuess' : null);
 });
 
-test('6. the warning and the verdict, on hand-made ranges', () => {
+test('the warning and the verdict, on hand-made ranges', () => {
   const profile: OddsProfile = {
     points: [], best: 0.6, bestAsked: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9, softest: 0.3, hardest: 0.8,
   };
@@ -230,7 +231,7 @@ test('6. the warning and the verdict, on hand-made ranges', () => {
   assert.equal(warningKey(said, false, 'counter')?.key, 'refusal.counter');
 });
 
-test('7. the shading is the chance of the word asked, relative to the best level\'s, and empty with nothing to shade', () => {
+test('the shading is the chance of the word asked, relative to the best level\'s, and empty with nothing to shade', () => {
   const p: OddsProfile = {
     points: [point(0, 300, 0.5, 0.025), point(0.5, 400, 0.1, 0.5), point(1, 500, 0.9, 0.25)],
     best: 0.9, bestAsked: 0.5, physicalSoftest: 0, physicalHardest: 1, softest: 0.5, hardest: 0.5,
@@ -249,7 +250,7 @@ test('7. the shading is the chance of the word asked, relative to the best level
   }
 });
 
-test('8. advice: when it is looked for, and what it says for which setup', () => {
+test('advice: when it is looked for, and what it says for which setup', () => {
   // Looked for at a wild guess only.
   assert.equal(adviceWanted('wildGuess'), true);
   assert.equal(adviceWanted('ballpark'), false);
@@ -316,7 +317,7 @@ function cookedAt(setup: CookSetup, egg: Egg, n: number, word: 'runny' | 'soft' 
   return c;
 }
 
-test('9. on the model, ice makes a counter rest surer once it has bitten, and not before', () => {
+test('on the model, ice makes a counter rest surer once it has bitten, and not before', () => {
   const egg = eggFromMass(0.058);
   const change = pricedChanges(COUNTER)[0];
   // The counter's surface and odds and ice's, for each calibration, made once.

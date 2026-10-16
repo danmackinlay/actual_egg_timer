@@ -12,7 +12,7 @@ const info = `${archive}/Products/Applications/Actual Egg Timer.app/Info.plist`;
 if (!existsSync(info)) {
   throw new Error(`${archive} is missing: run npm run ios:archive first`);
 }
-const read = (key) => execFileSync('plutil', ['-extract', key, 'raw', info], { encoding: 'utf8' }).trim();
+const read = (key: string): string => execFileSync('plutil', ['-extract', key, 'raw', info], { encoding: 'utf8' }).trim();
 const label = `${read('CFBundleShortVersionString')} (${read('CFBundleVersion')})`;
 console.log(`ios:upload: ${label}`);
 

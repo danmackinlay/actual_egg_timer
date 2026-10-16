@@ -1,8 +1,8 @@
 /**
  * Helpers the tools and the tests share: the pots they cook in, the seeded
  * draws of their simulated cooks, a record, a posterior that knows its cook,
- * a cheap decision surface, and how far a sweep goes. Each was copied
- * between files before; a change to one now reaches every user of it.
+ * and a cheap decision surface. Each was copied between files before; a
+ * change to one now reaches every user of it.
  *
  * Nothing here is the app's: the apps' own logic is in src/core/, and these
  * only build inputs for it.
@@ -25,7 +25,7 @@ import { LITERATURE_POPULATION } from '../src/core/infer.ts';
 /* Two pots, and they differ: which one a file starts from is part of what its
  * numbers mean, so each has its own name rather than sharing one. */
 
-/** The reference pot of the validation (tools/validate.ts): four eggs from
+/** The reference pot of the validation (test/validation.test.ts): four eggs from
  *  the fridge dropped into 2 L already at a rolling boil at sea level, then an
  *  ice bath. No time to boil and no after-boil setting: the literature's
  *  protocol, not an app's. The validation, the fixtures and test/core.test.ts
@@ -174,11 +174,3 @@ export function webRecordFor(
   const made = cookFactsFor(cook, plan, ctx, yolk, white, probe);
   return made.facts === null ? null : recordFor(made.facts);
 }
-
-/* ---------------------------------------------------------------- sweeps */
-
-/** Whether the tests sweep exhaustively: `npm run test:slow`, which CI runs.
- *  `npm test`, run on every commit, sweeps fewer points, chosen so that each
- *  sweep still reaches every branch the exhaustive one does; a test whose
- *  sweep shrinks asserts that it does. */
-export const EXHAUSTIVE = process.env['AET_TEST_SLOW'] === '1';

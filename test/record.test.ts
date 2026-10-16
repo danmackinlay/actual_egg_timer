@@ -6,7 +6,7 @@
  *
  * The headline claim: a posterior rebuilt from the log is BIT-identical to the
  * one the app built egg by egg, with a reload between every egg, whichever
- * order the two answers came in (recordStore.test.ts, 3b). Close is not
+ * order the two answers came in (recordStore.test.ts). Close is not
  * enough. A replay that moves a
  * posterior a little for no reason would turn every future model change into a
  * quiet change of taste, and nobody would ever find out why.
@@ -43,12 +43,12 @@ import { COARSE, assertIdentical, solvedRecord } from './records.ts';
 // 1. What a loader trusts
 // --------------------------------------------------------------------------
 
-test('1a. a record from an older app version of the same schema is accepted', () => {
+test('a record from an older app version of the same schema is accepted', () => {
   const r = { ...solvedRecord(0.4, 'jammy'), appVersion: '0.0.1', app: 'ios' };
   assert.notEqual(parseRecord(r), null);
 });
 
-test('1b. unknown fields are ignored and dropped; a field today\'s records write is never absent', () => {
+test('unknown fields are ignored and dropped; a field today\'s records write is never absent', () => {
   const r = solvedRecord(0.4, 'jammy') as unknown as Record<string, unknown>;
   const parsed = parseRecord({ ...r, futureField: 1 });
   assert.notEqual(parsed, null);
@@ -63,7 +63,7 @@ test('1b. unknown fields are ignored and dropped; a field today\'s records write
   assert.equal('id' in (parsed as object), false);
 });
 
-test('1c. the white\'s three answers load, a skip loads, and nothing else does', () => {
+test('the white\'s three answers load, a skip loads, and nothing else does', () => {
   const base = solvedRecord(0.3, null);
   for (const white of ['runny', 'tender', 'firm']) {
     assert.equal(parseRecord({ ...base, white: white })?.white, white, white);
@@ -73,7 +73,7 @@ test('1c. the white\'s three answers load, a skip loads, and nothing else does',
   assert.equal(parseRecord({ ...base, white: 'set' }), null, 'E1\'s two-level answer, gone with D1');
 });
 
-test('1c2. the five yolk words load, a skip loads, and nothing else does', () => {
+test('the five yolk words load, a skip loads, and nothing else does', () => {
   const base = solvedRecord(0.3, null);
   for (const word of ['runny', 'soft', 'jammy', 'fudgy', 'hard']) {
     assert.equal(parseRecord({ ...base, yolkWord: word })?.yolkWord, word, word);
@@ -92,19 +92,19 @@ test('1c2. the five yolk words load, a skip loads, and nothing else does', () =>
   assert.equal(parseRecord({ ...base, forecast: { ...f, yolkWord: [0.5, 0.5] } }), null);
 });
 
-test('1d. one bad record refuses the whole log', () => {
+test('one bad record refuses the whole log', () => {
   const good = solvedRecord(0.4, 'jammy');
   assert.equal(parseLog([good, good])?.length, 2);
   assert.equal(parseLog([good, { ...good, level: 2 }]), null);
   assert.equal(parseLog({ 0: good }), null);
 });
 
-test('1e. the web app version is the package version', () => {
+test('the web app version is the package version', () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
   assert.equal(APP_VERSION, pkg.version);
 });
 
-test('1f. the results file: the store as stored, a damaged one as text', () => {
+test('the results file: the store as stored, a damaged one as text', () => {
   const store = JSON.stringify({ v: 4, p: 'x', folded: 0, log: [solvedRecord(0.4, 'jammy')] });
   const meta = { app: 'web' as const, appVersion: APP_VERSION, exported: '2026-10-05T09:00:00.000Z', population: 'x', uid: null };
   const file = JSON.parse(resultsFile(meta, store)) as Record<string, unknown>;
@@ -124,7 +124,7 @@ test('1f. the results file: the store as stored, a damaged one as text', () => {
 // 2. Replay
 // --------------------------------------------------------------------------
 
-test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
+test('a replay is the egg-by-egg fold, and leaves its start alone', () => {
   const log = [solvedRecord(0.3, 'soft'), solvedRecord(0.5, 'fudgy', 70), solvedRecord(0.45, 'jammy', 55), solvedRecord(0.25, null, 64)];
   log[0].white = 'runny';
   log[3].white = 'tender';
@@ -138,7 +138,7 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
   assert.equal(c.eggsLogged, 4, 'a white alone is an egg the model learned from');
 });
 
-test('2a3. a log makes the right posterior: the filter against the exact one, in distribution', () => {
+test('a log makes the right posterior: the filter against the exact one, in distribution', () => {
   // A particle filter is random: resampling is discontinuous in the weights,
   // so a last-bit difference in exp can send the particles down another,
   // equally good path, and a posterior pinned particle by particle on one
@@ -186,14 +186,14 @@ test('2a3. a log makes the right posterior: the filter against the exact one, in
   }
 });
 
-test('2b. an unanswered egg folds nothing and builds no surface', () => {
+test('an unanswered egg folds nothing and builds no surface', () => {
   const answered = [solvedRecord(0.3, 'soft'), solvedRecord(0.5, 'fudgy', 70)];
   const withSkip = [answered[0], solvedRecord(0.4, null, 58), answered[1]];
   const start = freshCalibration(64, 7);
   assertIdentical(replay(start, withSkip, COARSE), replay(start, answered, COARSE), 'skip');
 });
 
-test('2c. the first egg is scored on a surface centred on the literature values', () => {
+test('the first egg is scored on a surface centred on the literature values', () => {
   // Not on the prior's mean, which is close to them but not them: the app solves
   // with DEFAULT_PARAMS until an egg has taught it anything, and the first
   // surface has always been built around what it solved with.
@@ -202,7 +202,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
 });
 
-test('2c2. an egg cooled in a bowl is scored in that bowl: its water and its temperature reach the fold', () => {
+test('an egg cooled in a bowl is scored in that bowl: its water and its temperature reach the fold', () => {
   const r = solvedRecord(0.4, 'jammy');
   const bowl = { ...r, setup: { ...r.setup, cooling: 'bowl' as const, bowlLitres: 0.75, coolingWater_C: 9 } };
   const q = gridRequestFor(freshCalibration(64, 7), bowl, calibrationGrid);
@@ -211,7 +211,7 @@ test('2c2. an egg cooled in a bowl is scored in that bowl: its water and its tem
   assert.equal('bowlLitres' in plain.setup || 'coolingWater_C' in plain.setup, false, 'an ice bath carries neither');
 });
 
-test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
+test('an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
   // INFERENCE.md section 4. A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
   const measured = { ...solvedRecord(0.35, 'soft'), pulled_s: 0, pulledBy: 'cook' as const };
@@ -273,7 +273,7 @@ function foldDigest(c: Calibration): number[] {
   return out;
 }
 
-test('2e. the likelihood id is pinned to what its fold makes of a fixed log', () => {
+test('the likelihood id is pinned to what its fold makes of a fixed log', () => {
   const probed = recordAt(0.45, 430, 'fudgy', null, appSetup({ cooling: 'tap', afterBoil: 'off' }));
   probed.probe = { centre_C: 66.4, after_s: 120 };
   const log = [
@@ -298,7 +298,7 @@ test('2e. the likelihood id is pinned to what its fold makes of a fixed log', ()
 // 5. The calibration grid: the bounds that decide the posterior
 // --------------------------------------------------------------------------
 
-test('5a. the grid brackets the cook that was actually performed', () => {
+test('the grid brackets the cook that was actually performed', () => {
   const g = calibrationGrid(1.4e-7, 441);
   assert.ok(g.alphaMin < 1.4e-7 && g.alphaMax > 1.4e-7, 'grid does not contain its centre');
   assert.ok(g.timeMin_s < 441 && g.timeMax_s > 441, 'grid does not contain the cook');
@@ -306,7 +306,7 @@ test('5a. the grid brackets the cook that was actually performed', () => {
   assert.equal(g.timeCount, 32);
 });
 
-test('5b. a very short cook still gets a grid with a floor on it', () => {
+test('a very short cook still gets a grid with a floor on it', () => {
   // 0.35 * 60 is 21 s, which is not a cook. The floor is what stops the
   // interpolation domain collapsing on a fast egg.
   const g = calibrationGrid(1.4e-7, 60);
@@ -314,7 +314,7 @@ test('5b. a very short cook still gets a grid with a floor on it', () => {
   assert.ok(g.timeMax_s > g.timeMin_s, 'grid has no width');
 });
 
-test('5c. the grid scales with the cook rather than sitting at fixed seconds', () => {
+test('the grid scales with the cook rather than sitting at fixed seconds', () => {
   const short = calibrationGrid(1.4e-7, 400);
   const long = calibrationGrid(1.4e-7, 800);
   assert.ok(long.timeMax_s > short.timeMax_s, 'grid did not follow the cook');

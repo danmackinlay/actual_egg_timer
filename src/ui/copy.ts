@@ -160,7 +160,7 @@ export function timeOfDay(ms: number): string {
 export function applyCopy(doc: Document): void {
   doc.documentElement.lang = activeLocale();
   for (const node of Array.from(doc.querySelectorAll<HTMLElement>('[data-copy]'))) {
-    // A key read from the page, which test 6b holds to the catalogue.
+    // A key read from the page, which copy.test.ts holds to the catalogue.
     const key = node.dataset['copy'] as CopyKey | undefined;
     if (key === undefined) continue;
     const text = t(key);

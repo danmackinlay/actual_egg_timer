@@ -14,14 +14,14 @@ import { isDevHost } from '../src/ui/now.ts';
 const REAL = 1_790_000_000_000;
 const KEPT = JSON.stringify({ speed: 60, real0_ms: REAL - 10_000, page0_ms: REAL + 3_600_000 });
 
-test('1. only localhost and 127.0.0.1 are this machine', () => {
+test('only localhost and 127.0.0.1 are this machine', () => {
   for (const h of ['localhost', '127.0.0.1']) assert.equal(isDevHost(h), true, h);
   for (const h of ['actualeggtimer.netlify.app', 'localhost.example.com', 'example.localhost', '127.0.0.2', '']) {
     assert.equal(isDevHost(h), false, h);
   }
 });
 
-test('2. off this machine the clock is the real one, whatever the address and the tab kept', () => {
+test('off this machine the clock is the real one, whatever the address and the tab kept', () => {
   for (const host of ['actualeggtimer.netlify.app', 'deploy-preview-1--actualeggtimer.netlify.app']) {
     assert.equal(devClockAt(host, '?clock=60&at=+1h', null, REAL), null);
     assert.equal(devClockAt(host, '', KEPT, REAL), null);
@@ -30,7 +30,7 @@ test('2. off this machine the clock is the real one, whatever the address and th
   }
 });
 
-test('3. spans as ?at= takes them', () => {
+test('spans as ?at= takes them', () => {
   assert.equal(parseSpan('+7m40s'), 460_000);
   assert.equal(parseSpan('-15m'), -900_000);
   assert.equal(parseSpan('1h'), 3_600_000);
@@ -40,7 +40,7 @@ test('3. spans as ?at= takes them', () => {
   for (const bad of ['', '+', 'm', 'soon', '7m40x']) assert.equal(parseSpan(bad), null, bad);
 });
 
-test('4. on localhost: the speed and the shift asked for, carried on across a reload', () => {
+test('on localhost: the speed and the shift asked for, carried on across a reload', () => {
   const c = devClockAt('localhost', '?clock=60&at=-15m', null, REAL);
   assert.deepEqual(c, { speed: 60, real0_ms: REAL, page0_ms: REAL - 900_000 });
   if (c === null) return;
@@ -60,7 +60,7 @@ test('4. on localhost: the speed and the shift asked for, carried on across a re
   assert.equal(devClockAt('localhost', '?clock=-3', '{"speed":"fast"}', REAL), null);
 });
 
-test('4b. a stopped clock: at the moment set, however much real time passes, and kept so across a reload', () => {
+test('a stopped clock: at the moment set, however much real time passes, and kept so across a reload', () => {
   const MOMENT = Date.UTC(2026, 9, 8, 7, 30);
   assert.equal(parseMoment('2026-10-08T07:30:00Z'), MOMENT);
   assert.equal(parseMoment('2026-10-08T09:30+02:00'), MOMENT);
@@ -112,7 +112,7 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
   return { m: m, win: win, local: local };
 }
 
-test('5. the page on the live site: Date.now, no handle, nothing kept', async () => {
+test('the page on the live site: Date.now, no handle, nothing kept', async () => {
   const { m, win, local } = await pageAt('actualeggtimer.netlify.app', '?clock=60&at=+2h', KEPT);
   const before = Date.now();
   const t = m.nowMs();
@@ -122,14 +122,14 @@ test('5. the page on the live site: Date.now, no handle, nothing kept', async ()
   assert.equal(local.size, 0);
 });
 
-test('6. the page on localhost: the clock asked for, and its handle', async () => {
+test('the page on localhost: the clock asked for, and its handle', async () => {
   const { m, win } = await pageAt('localhost', '?clock=60&at=+2h', null);
   assert.equal(m.clockSpeed(), 60);
   assert.ok(m.nowMs() - Date.now() > 7_190_000);
   assert.ok(win['aetClock'] !== undefined);
 });
 
-test('7. stepped from a script: stopped, set to a moment, shifted, and running again', async () => {
+test('stepped from a script: stopped, set to a moment, shifted, and running again', async () => {
   const { m, win } = await pageAt('127.0.0.1', '?clock=0&at=2026-10-08T07:30:00Z', null);
   const clock = win['aetClock'] as import('../src/ui/dev/clock.ts').ClockHandle;
   const MOMENT = Date.UTC(2026, 9, 8, 7, 30);

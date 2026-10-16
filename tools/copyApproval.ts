@@ -23,7 +23,7 @@
  * of their own.
  *
  * The overlays keep their own `base`, the English each entry was written
- * against, which copy.test.ts 7a holds to today's without any history.
+ * against, which copy.test.ts holds to today's without any history.
  */
 
 import { execFileSync } from 'node:child_process';

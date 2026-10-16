@@ -12,7 +12,7 @@
  *  (dev/index.ts: the development clock and the test API). They are
  *  imported here and only here, by a dynamic import, which the build makes
  *  a file of its own that the site that ships leaves out (`npm run
- *  build:site`, tools/buildSite.mjs). The server says it has them with a
+ *  build:site`, tools/buildSite.ts). The server says it has them with a
  *  cookie naming its port (tools/devServer.ts): cookies are shared by every
  *  port of a host, and the site that ships, served here on another
  *  (`npm run serve:site`), asks for nothing it does not have. */

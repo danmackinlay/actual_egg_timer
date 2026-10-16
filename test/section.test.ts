@@ -31,7 +31,7 @@ function relClose(actual: number, expected: number, rel: number, what: string): 
   );
 }
 
-test('section 1. the rings run centre to shell, with the yolk edge sampled as both', () => {
+test('the rings run centre to shell, with the yolk edge sampled as both', () => {
   const s = createSection(EGG, appSetup(), DEFAULT_PARAMS);
   assert.equal(s.x.length, SECTION_YOLK_SAMPLES + SECTION_WHITE_SAMPLES);
   assert.equal(s.x[CENTRE], 0);
@@ -48,7 +48,7 @@ test('section 1. the rings run centre to shell, with the yolk edge sampled as bo
   }
 });
 
-test('section 2. at t = 0 nothing is set and the shell is at the water', () => {
+test('at t = 0 nothing is set and the shell is at the water', () => {
   // Not "every ring at the egg's start": at t = 0 the shell's step from the
   // egg to the water is a fresh discontinuity, which 40 terms cannot
   // represent at the centre (CLAUDE.md, invariant 7). It is gone in seconds.
@@ -62,7 +62,7 @@ for (const [name, setup] of [
   ['hot start, ice', appSetup()],
   ['cold start, heat off, counter', appSetup({ startMode: 'cold', afterBoil: 'off', cooling: 'counter' })],
 ] as const) {
-  test(`section 3. ${name}: the centre and the innermost white are simulate's`, () => {
+  test(`${name}: the centre and the innermost white are simulate's`, () => {
     const cookTime_s = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(0.41)).result.cookTime_s;
     const result = simulate(EGG, setup, DEFAULT_PARAMS, cookTime_s);
     const s = createSection(EGG, setup, DEFAULT_PARAMS);
@@ -84,7 +84,7 @@ for (const [name, setup] of [
   });
 }
 
-test('section 4. a tick at a time is the same as one long advance', () => {
+test('a tick at a time is the same as one long advance', () => {
   const setup = appSetup({ startMode: 'cold', cooling: 'tap' });
   const a = createSection(EGG, setup, DEFAULT_PARAMS);
   const b = createSection(EGG, setup, DEFAULT_PARAMS);
@@ -99,7 +99,7 @@ test('section 4. a tick at a time is the same as one long advance', () => {
   assert.deepEqual(b.dose.map((d) => d.minutes), a.dose.map((d) => d.minutes));
 });
 
-test('section 5. nothing unsets, and the white sets from the shell in', () => {
+test('nothing unsets, and the white sets from the shell in', () => {
   const setup = appSetup();
   const s = createSection(EGG, setup, DEFAULT_PARAMS);
   let last = sectionView(s, WHITE_DOSE_TARGET).set;
@@ -116,7 +116,7 @@ test('section 5. nothing unsets, and the white sets from the shell in', () => {
   assert.ok(shellSetAt > 0 && innerSetAt > shellSetAt, `shell ${shellSetAt} s, inner ${innerSetAt} s`);
 });
 
-test('section 6. once out, the shell follows what the egg cools in', () => {
+test('once out, the shell follows what the egg cools in', () => {
   const setup = appSetup();
   const s = createSection(EGG, setup, DEFAULT_PARAMS);
   advanceSection(s, EGG, setup, 400, null);
@@ -131,7 +131,7 @@ test('section 6. once out, the shell follows what the egg cools in', () => {
   assert.equal(s.outAt_s, 400);
 });
 
-test('section 7. the egg the settings aim for is the egg as eaten: the yolk at the level asked', () => {
+test('the egg the settings aim for is the egg as eaten: the yolk at the level asked', () => {
   const cases = [
     [appSetup(), 0.41], [appSetup({ startMode: 'cold', cooling: 'tap' }), 0.62], [appSetup({ cooling: 'counter' }), 0.62],
   ] as const;

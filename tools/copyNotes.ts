@@ -49,7 +49,7 @@ export const PLURAL_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5];
 
 /** A key's longest rendering in a catalogue, in code points ("ž" is one
  *  character on a screen): at its example arguments and, for a plural, at
- *  every one of PLURAL_COUNTS. The measure a budget holds (copy.test.ts 5a)
+ *  every one of PLURAL_COUNTS. The measure a budget holds (copy.test.ts)
  *  and the review page shows. */
 export function longest(catalogue: Catalogue, key: string, notes: Record<string, Notes>): number {
   let found: Catalogue | null = catalogue;

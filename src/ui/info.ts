@@ -47,7 +47,7 @@ export function wireInfoButtons(): void {
 /** Each (i)'s name, in the language on screen. Again whenever it changes. */
 export function labelInfoButtons(): void {
   for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
-    // Keys read from the page, which test 6b holds to the catalogue.
+    // Keys read from the page, which copy.test.ts holds to the catalogue.
     const name = button.dataset['name'] as CopyKey | undefined;
     const label = button.dataset['label'] as CopyKey | undefined;
     if (name !== undefined) button.setAttribute('aria-label', t(name));

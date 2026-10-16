@@ -21,7 +21,7 @@ import { readRunningCook } from '../src/ui/storedCook.ts';
 import { gridFor } from '../tools/common.ts';
 import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';
 
-test('25. nothing passes an open question about the pull', () => {
+test('nothing passes an open question about the pull', () => {
   // The review's call: a hot cook whose grace ran out while the phone
   // slept, corrected to cold on waking, the question left unanswered past
   // the counted cooling.
@@ -58,7 +58,7 @@ test('25. nothing passes an open question about the pull', () => {
   assert.equal(l.tooOldAt_s, due + 900 + RESTORE_WINDOW_S);
 });
 
-test('26. a record is never made from a plan with no surface; the cook as it ran is kept from the pull', () => {
+test('a record is never made from a plan with no surface; the cook as it ran is kept from the pull', () => {
   const hot = cookOf({ startMode: 'hot' });
   // The pull rang and its grace ran out on the interim plan, the surface not
   // yet in (a phone asleep through the pull, a reload in the grace).
@@ -101,7 +101,7 @@ test('26. a record is never made from a plan with no surface; the cook as it ran
   assert.equal(stillIn(asked, due + 61).asRan, null);
 });
 
-test('26b. Done and the record show the cook as it ran, whatever a later posterior plans', () => {
+test('Done and the record show the cook as it ran, whatever a later posterior plans', () => {
   // At Done, answered runny, and that answer folded: the plan made again on
   // the new posterior (a relaunch, a surface landing) moves the peak; what
   // Done shows and what the record keeps do not.
@@ -147,7 +147,7 @@ test('26b. Done and the record show the cook as it ran, whatever a later posteri
   assert.equal(cookEnding(done, after, due + 1200).remake, false);
 });
 
-test('27. a cook too old ends from the tick; a screen knows its egg is no longer open', () => {
+test('a cook too old ends from the tick; a screen knows its egg is no longer open', () => {
   // A cold start never tapped, the clock moved on. The plan the
   // tick holds (made early) says too old at two hours, as a fresh one does.
   const cold = cookOf();
@@ -166,7 +166,7 @@ test('27. a cook too old ends from the tick; a screen knows its egg is no longer
   assert.equal(!cookTooOld(p, done), openEggId(hot, p, done) === hot.id_ms, 'as openEggId says');
 });
 
-test('28. a correction after Done keeps it Done, and corrects only the record', () => {
+test('a correction after Done keeps it Done, and corrects only the record', () => {
   const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
   const p = planned(counter, S + 1);
   const due = p.deadlines.cookEnd_s;

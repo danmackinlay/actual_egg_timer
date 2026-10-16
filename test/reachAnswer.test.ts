@@ -1,7 +1,7 @@
 /**
  * The answer at a level (src/core/reach.ts): at the far left, for the owner's
- * egg, the time never falling as the level rises, the envelope's bounds, and
- * the one decided answer both apps show.
+ * egg, the envelope's bounds, and the one decided answer both apps show. That
+ * the time never falls as the level rises is test/reachMonotone.test.ts.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -11,8 +11,7 @@ import assert from 'node:assert/strict';
 
 import { decide } from '../src/core/decide.ts';
 import { createPrior, updatePosterior } from '../src/core/infer.ts';
-import { type Egg, eggFromMass } from '../src/core/geometry.ts';
-import type { CookSetup } from '../src/core/protocol.ts';
+import { eggFromMass } from '../src/core/geometry.ts';
 import { logYolkTarget, solveCookTime } from '../src/core/solve.ts';
 import { snapUp } from '../src/core/slider.ts';
 import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
@@ -20,10 +19,10 @@ import { type OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer,
 import { askedWord, certaintyAt } from '../src/core/certainty.ts';
 import { predictOutcome } from '../src/core/outcome.ts';
 import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.ts';
-import { EXHAUSTIVE, appSetup, gridFor, knowing } from '../tools/common.ts';
-import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, point } from './profiles.ts';
+import { appSetup, gridFor, knowing } from '../tools/common.ts';
+import { EGG, FRESH, PARTICLES, SETUP, point } from './profiles.ts';
 
-test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
+test('the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
   // A cold start, as a fresh install has it: the white sets only from a
   // level above runny, so asked for runny, the slider goes there.
   const cold = appSetup({ startMode: 'cold' });
@@ -66,7 +65,7 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   assert.equal(o.lean, 'firm');
 });
 
-test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
+test('the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
   // One egg: soft asked, the yolk soft and the white runny, as on the
   // owner's phone (5 October 2026), where it put 3/10 at jammy. Soft is a
   // ballpark there and is not dotted: soft or a
@@ -111,66 +110,7 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   assert.equal(mostLikelyShown(sure), true);
 });
 
-/** Every slider position the pan delivers, from soft to hard, with the time the
- *  app gives there (held by the profile, as the apps hold it). `npm test`
- *  takes every fourth, and both ends; `npm run test:slow` takes them all. */
-function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: OddsProfile; times: [number, number][] } {
-  const grid = gridFor(c, egg, setup);
-  const profile = oddsProfile(c, egg, setup, grid);
-  const times: [number, number][] = [];
-  const lo = Math.round(profile.physicalSoftest * 100);
-  const hi = Math.round(profile.physicalHardest * 100);
-  const stride = EXHAUSTIVE ? 1 : 4;
-  for (let k = lo; k <= hi; k = k < hi && k + stride > hi ? hi : k + stride) {
-    const a = answerAt(c, egg, setup, k / 100, profile);
-    const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
-    times.push([a.level, d.cookTime_s]);
-  }
-  return { profile, times };
-}
-
-function assertMonotone(name: string, profile: OddsProfile, times: [number, number][]): void {
-  for (let i = 1; i < profile.points.length; i++) {
-    assert.ok(profile.points[i].cookTime_s >= profile.points[i - 1].cookTime_s,
-      `${name}: the profile's time falls at ${profile.points[i].level}`);
-  }
-  for (let i = 1; i < times.length; i++) {
-    assert.ok(times[i][1] >= times[i - 1][1],
-      `${name}: ${times[i - 1][1].toFixed(1)} s at ${times[i - 1][0]}, ${times[i][1].toFixed(1)} s at ${times[i][0]}`);
-  }
-}
-
-test('12. the time never falls as the level rises: across the slider, for the owner\'s egg, a white-bound cook, a fresh install and a counter rest', () => {
-  // The owner's egg (test 11): one egg, soft asked, the white runny.
-  const egg58 = eggFromMass(0.058);
-  const post = createPrior(PARTICLES, CALIBRATION_SEED);
-  const first: Calibration = { posterior: post, eggsLogged: 0 };
-  const asked = solveCookTime(egg58, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
-  updatePosterior(post, gridFor(first, egg58, SETUP), asked.result.cookTime_s, 'soft', 'runny');
-  const owners: Calibration = { posterior: post, eggsLogged: 1 };
-  const cases: [string, Calibration, Egg, CookSetup][] = [
-    ['the owner\'s egg', owners, egg58, SETUP],
-    ['white-bound', WHITE_BOUND, EGG, SETUP],
-    ['three eggs, counter', knowing({ particles: PARTICLES, eggsLogged: 3 }), EGG, COUNTER],
-    ['fresh', FRESH, EGG, SETUP],
-  ];
-  let fresh: [number, number][] = [];
-  for (const [name, c, egg, setup] of cases) {
-    const { profile, times } = timesAcross(c, egg, setup);
-    assert.ok(times.length > 10, `${name}: ${times.length} levels`);
-    assertMonotone(name, profile, times);
-    console.log(`# ${name}: ${times.filter((_, i) => i % 10 === 0).map(([l, t]) => `${l}:${t.toFixed(0)}`).join(' ')}`);
-    if (c === FRESH) fresh = times;
-  }
-  // A fresh install is monotone as it was: the literature's times, held by
-  // nothing, rise with the level by themselves.
-  for (const [level, t] of fresh) {
-    const sol = solveCookTime(EGG, SETUP, calibrationParams(FRESH), calibrationDoneness(FRESH, level));
-    assert.equal(t, sol.result.cookTime_s, `fresh at ${level}`);
-  }
-});
-
-test('13. the envelope\'s bounds: a point holds its own time, a level between two is held between theirs, and nothing holds a level with no profile', () => {
+test('the envelope\'s bounds: a point holds its own time, a level between two is held between theirs, and nothing holds a level with no profile', () => {
   const p: OddsProfile = {
     points: [point(0.2, 400, 0.1), point(0.25, 410, 0.3), point(0.3, 430, 0.5)],
     best: 0.5, bestAsked: 0.5, physicalSoftest: 0.2, physicalHardest: 0.3, softest: 0.25, hardest: 0.3,
@@ -185,8 +125,8 @@ test('13. the envelope\'s bounds: a point holds its own time, a level between tw
   assert.equal(envelopeBounds({ ...p, points: [] }, 0.25), null);
 });
 
-test('14. one decided answer for both apps: the soft yolk chosen again and held under jammy\'s time, the nudge where a time is chosen, and no advice where the white never sets', () => {
-  // The owner's egg (test 11).
+test('one decided answer for both apps: the soft yolk chosen again and held under jammy\'s time, the nudge where a time is chosen, and no advice where the white never sets', () => {
+  // The owner's egg (above).
   const egg = eggFromMass(0.058);
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
   const first: Calibration = { posterior: post, eggsLogged: 0 };

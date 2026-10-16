@@ -47,7 +47,7 @@ const PSEUDO = parseCatalogue(JSON.parse(readFileSync('test/pseudo-cs.json', 'ut
 // 1. numbers
 // --------------------------------------------------------------------------
 
-test('1a. numbers in each supported locale: the separators, the grouping, the precision', () => {
+test('numbers in each supported locale: the separators, the grouping, the precision', () => {
   assert.equal(formatNumber('en-US', 1234.5, 1), '1,234.5');
   assert.equal(formatNumber('en-GB', 1234.5, 1), '1,234.5');
   assert.equal(formatNumber('cs-CZ', 1234.5, 1), `1${NBSP}234,5`, 'Czech groups with a no-break space');
@@ -57,7 +57,7 @@ test('1a. numbers in each supported locale: the separators, the grouping, the pr
   assert.equal(formatNumber('cs-CZ', -1300, 0), `-1${NBSP}300`);
 });
 
-test('1b. the rounding is ours: halves up, on the decimal, and never a signed zero', () => {
+test('the rounding is ours: halves up, on the decimal, and never a signed zero', () => {
   assert.equal(roundTo(2.45, 1), 2.5);
   assert.equal(roundTo(-2.5, 0), -2, 'halves go up, as in units.ts');
   assert.ok(Object.is(roundTo(-0.4, 0), 0), 'no -0');
@@ -65,7 +65,7 @@ test('1b. the rounding is ours: halves up, on the decimal, and never a signed ze
   assert.equal(formatNumber('en-US', -0, 0), '0');
 });
 
-test('1c. a count shows the decimals it has, up to three', () => {
+test('a count shows the decimals it has, up to three', () => {
   assert.equal(countDecimals(2), 0);
   assert.equal(countDecimals(1.5), 1);
   assert.equal(countDecimals(0.125), 3);
@@ -78,7 +78,7 @@ test('1c. a count shows the decimals it has, up to three', () => {
 // 2. times of day
 // --------------------------------------------------------------------------
 
-test('2a. a time of day follows the locale\'s clock', () => {
+test('a time of day follows the locale\'s clock', () => {
   const at = (h: number, m: number): number => h * 3600 + m * 60;
   assert.equal(formatTimeOfDay('en-US', at(15, 5), false), `3:05${NNBSP}PM`);
   assert.equal(formatTimeOfDay('en-GB', at(15, 5), false), '15:05');
@@ -89,18 +89,18 @@ test('2a. a time of day follows the locale\'s clock', () => {
   assert.equal(formatTimeOfDay('en-GB', at(7, 41) + 12, true), '7:41:12');
 });
 
-test('2b. the space before AM and PM is U+202F in both apps, whatever V8 prints', () => {
+test('the space before AM and PM is U+202F in both apps, whatever V8 prints', () => {
   const raw = new Intl.DateTimeFormat('en-US', { timeStyle: 'short', timeZone: 'UTC' }).format(0);
   assert.match(raw, /12:00[  ]AM/, 'Intl prints one of the two');
   assert.equal(formatTimeOfDay('en-US', 0, false), `12:00${NNBSP}AM`);
 });
 
-test('2c. a device\'s own 12/24-hour setting rides along as -u-hc-', () => {
+test('a device\'s own 12/24-hour setting rides along as -u-hc-', () => {
   assert.equal(formatTimeOfDay('en-US-u-hc-h23', 15 * 3600 + 5 * 60, false), '15:05');
   assert.equal(formatTimeOfDay('en-GB-u-hc-h12', 15 * 3600 + 5 * 60, false), `3:05${NNBSP}pm`);
 });
 
-test('2d. no time of day zero-pads its hour, in any locale; minutes and seconds keep two digits', () => {
+test('no time of day zero-pads its hour, in any locale; minutes and seconds keep two digits', () => {
   const at = (h: number, m: number): number => h * 3600 + m * 60;
   for (const locale of ['en-GB', 'en-CZ', 'en-DE', 'cs-CZ', 'cs', 'en-US-u-hc-h23']) {
     assert.equal(formatTimeOfDay(locale, at(9, 5), false), '9:05', locale);
@@ -121,7 +121,7 @@ test('2d. no time of day zero-pads its hour, in any locale; minutes and seconds 
 // 3. the plural rule, with the decimals a number is shown with
 // --------------------------------------------------------------------------
 
-test('3a. the rules agree with Intl.PluralRules when the decimals are given', () => {
+test('the rules agree with Intl.PluralRules when the decimals are given', () => {
   for (const locale of ['en', 'cs']) {
     for (const n of [0, 1, 2, 3, 5, 21, 1.5, 0.5, 12.5]) {
       for (const v of [0, 1, 2]) {
@@ -133,7 +133,7 @@ test('3a. the rules agree with Intl.PluralRules when the decimals are given', ()
   }
 });
 
-test('3b. "2,00 l" is Czech many, and "1.0" is English other: CLDR counts visible decimals', () => {
+test('"2,00 l" is Czech many, and "1.0" is English other: CLDR counts visible decimals', () => {
   assert.equal(pluralCategory('cs', 2, 2), 'many');
   assert.equal(pluralCategory('cs', 2, 0), 'few');
   assert.equal(pluralCategory('en', 1, 1), 'other');
@@ -146,7 +146,7 @@ test('3b. "2,00 l" is Czech many, and "1.0" is English other: CLDR counts visibl
 // 4. the formatting locale
 // --------------------------------------------------------------------------
 
-test('4a. the formatting locale is the UI language in the device\'s region', () => {
+test('the formatting locale is the UI language in the device\'s region', () => {
   assert.equal(formattingLocale('en', 'GB', null), 'en-GB');
   assert.equal(formattingLocale('en', 'DE', null), 'en-DE', 'English words, German numbers');
   assert.equal(formattingLocale('cs', 'CZ', null), 'cs-CZ');
@@ -156,7 +156,7 @@ test('4a. the formatting locale is the UI language in the device\'s region', () 
   assert.equal(formattingLocale('en', 'GBR', null), 'en', 'not a region');
 });
 
-test('4b. a Czech UI formats as Czech wherever the device is; an English one follows the region', () => {
+test('a Czech UI formats as Czech wherever the device is; an English one follows the region', () => {
   assert.equal(formattingLocale('cs', 'US', null), 'cs-CZ', 'Czech has one convention of its own');
   assert.equal(formattingLocale('cs', 'GB', null), 'cs-CZ');
   assert.equal(formattingLocale('cs', null, null), 'cs-CZ');
@@ -174,7 +174,7 @@ test('4b. a Czech UI formats as Czech wherever the device is; an English one fol
 // 5. English, through the web's renderer
 // --------------------------------------------------------------------------
 
-test('5a. the screen reader hears "1 second", never "1 seconds"', () => {
+test('the screen reader hears "1 second", never "1 seconds"', () => {
   useCatalogue(EN);
   forceFormatLocale('en-GB');
   try {
@@ -188,7 +188,7 @@ test('5a. the screen reader hears "1 second", never "1 seconds"', () => {
   }
 });
 
-test('5b. English numbers and clocks by region', () => {
+test('English numbers and clocks by region', () => {
   useCatalogue(EN);
   try {
     forceFormatLocale('en-US');
@@ -204,7 +204,7 @@ test('5b. English numbers and clocks by region', () => {
 // 6. Czech formatting, end to end, with no Czech words
 // --------------------------------------------------------------------------
 
-test('6a. forced to cs-CZ, the web renders the pseudo catalogue with Czech numbers and clock', () => {
+test('forced to cs-CZ, the web renders the pseudo catalogue with Czech numbers and clock', () => {
   useCatalogue(PSEUDO);
   forceFormatLocale('cs-CZ');
   try {
@@ -228,7 +228,7 @@ test('6a. forced to cs-CZ, the web renders the pseudo catalogue with Czech numbe
   }
 });
 
-test('6b. a weekday comes from the catalogue, in both apps', () => {
+test('a weekday comes from the catalogue, in both apps', () => {
   useCatalogue(PSEUDO);
   forceFormatLocale('cs-CZ');
   try {

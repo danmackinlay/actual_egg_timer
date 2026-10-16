@@ -1,18 +1,19 @@
 // `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 123).
 //
-// Every job at once, each one's output held and printed whole under its name
+// First the two generators that write sources the others compile, then every
+// other job at once, each one's output held and printed whole under its name
 // when it ends, so no two jobs' lines interleave. Node runs the tests and
 // tools from their sources, so nothing waits for a build:
 //
-//   typecheck        tsc over core, the app and the rest (npm run typecheck)
-//   npm test         node --test over test/*.test.ts
-//   validate         the science against the literature (tools/validate.ts)
-//   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
 //                    with the files on disk (tools/copyKeys.ts --check)
 //   swift:constants  the Swift's constants made afresh from src/core/,
 //                    compared with the files on disk
 //                    (tools/swiftConstants.ts --check)
+//   then, once both have ended:
+//   typecheck        tsc over core, the app and the rest (npm run typecheck)
+//   npm test         node --test over test/*.test.ts
+//   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
 //   committed        the files those three write, as HEAD has them, once
@@ -21,6 +22,11 @@
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
 //                    have both ended
+//
+// copy:keys and swift:constants write what they make, to the Swift package
+// and src/core/copyKeys.ts, which swift build, the type check and the tests
+// read; so they run alone, a fraction of a second, and nothing reads those
+// files while they are written.
 //
 // The jobs call node and tsc directly, not npm test, which type-checks first:
 // here the type check is a job of its own, beside the tests.
@@ -44,7 +50,7 @@
 // tests, which need swift build), and verify fails naming each failed job and
 // its exit code.
 //
-// Usage: node tools/verify.mjs
+// Usage: node tools/verify.ts
 import { spawn } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -52,21 +58,27 @@ import { join } from 'node:path';
 
 const T0 = Date.now();
 const SWIFT = 'ios/EggTimerCore';
-const seconds = (ms) => (ms / 1000).toFixed(1);
+const seconds = (ms: number): string => (ms / 1000).toFixed(1);
 
-/** Run `steps` ([command, args, cwd?] each) in turn, stopping at the first
- *  that fails, with their output held. Resolves to the job's result. */
-function job(name, steps) {
+/** A command, its arguments, and the directory it runs in, `.` if none. */
+type Step = [string, string[], string?];
+
+/** How a job ended, and when, in ms from verify's start. */
+interface Result { name: string; code: number; start: number; end: number }
+
+/** Run `steps` in turn, stopping at the first that fails, with their output
+ *  held. Resolves to the job's result. */
+function job(name: string, steps: Step[]): Promise<Result> {
   return new Promise((resolve) => {
     const start = Date.now() - T0;
-    const output = [];
-    const next = (i) => {
+    const output: Buffer[] = [];
+    const next = (i: number): void => {
       if (i === steps.length) return finish(0);
       const [command, args, cwd] = steps[i];
       output.push(Buffer.from(`$ ${[command, ...args].join(' ')}\n`));
       const child = spawn(command, args, { cwd: cwd ?? '.', stdio: ['ignore', 'pipe', 'pipe'] });
-      child.stdout.on('data', (chunk) => output.push(chunk));
-      child.stderr.on('data', (chunk) => output.push(chunk));
+      child.stdout.on('data', (chunk: Buffer) => output.push(chunk));
+      child.stderr.on('data', (chunk: Buffer) => output.push(chunk));
       child.on('error', (error) => {
         output.push(Buffer.from(`${error.message}\n`));
         finish(127);
@@ -77,7 +89,7 @@ function job(name, steps) {
       });
     };
     let done = false;
-    const finish = (code) => {
+    const finish = (code: number): void => {
       if (done) return;
       done = true;
       const end = Date.now() - T0;
@@ -105,19 +117,19 @@ const GENERATED = [
 ];
 const copyKeys = job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]);
 const swiftConstants = job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]);
+await Promise.all([copyKeys, swiftConstants]);
 const fixtures = job('fixtures:check', [[node, ['tools/fixturesCheck.ts']]]);
 const committed = Promise.all([copyKeys, swiftConstants, fixtures])
   .then(() => job('committed', [['git', ['diff', '--exit-code', '--stat', 'HEAD', '--', ...GENERATED]]]));
 const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
-const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
+const swiftTests = (name: string, target: string): Promise<Result> => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
 const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
 const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
   ? swiftTests('swift core tests', 'EggTimerCoreTests')
   : null));
 const all = await Promise.all([
-  job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p) => [node, [tsc, '-p', p]])),
+  job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p): Step => [node, [tsc, '-p', p]])),
   job('npm test', [[node, ['--test', ...tests]]]),
-  job('validate', [[node, ['tools/validate.ts']]]),
   job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
   copyKeys,
   swiftConstants,
@@ -127,7 +139,7 @@ const all = await Promise.all([
   appTests,
   coreTests,
 ]);
-const results = all.filter((r) => r !== null);
+const results = all.filter((r): r is Result => r !== null);
 
 console.log('\n===== verify =====');
 for (const r of [...results].sort((a, b) => a.end - b.end)) {
