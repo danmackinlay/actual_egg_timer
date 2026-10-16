@@ -32,9 +32,9 @@ export const GROUPLESS: Readonly<Record<string, HandControl>> = {
   shareSetting: 'setting',
 };
 
-/** The buttons that move the cook on, by id. */
+/** The buttons that move the cook on, and the thermometer's Save, by id. */
 export const BUTTONS: Readonly<Record<string, HandControl>> = {
-  primary: 'primary', secondary: 'cancel', stillOut: 'stillInWater',
+  primary: 'primary', secondary: 'cancel', stillOut: 'stillInWater', probeSave: 'probe',
 };
 
 /** A field's key in the tables: a radio's name, or its id. */

@@ -315,6 +315,33 @@ extension AppTests {
         #expect(model.planner.settings.doneness == stored0.choices.level)
     }
 
+    /// A probe reading saved at Done while a larger egg settles: the change
+    /// committed and the cook corrected first, so the reading is scored on
+    /// the egg the controls say, and the record logged with it is the
+    /// corrected egg's.
+    @Test func aProbeSavedWhileAChangeSettlesIsScoredOnTheCorrectedCook() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        try await toDone(model, world)
+        // To the hundredth the record keeps.
+        let peak = (try #require(model.cook.shownPeakYolkC) * 100).rounded() / 100
+        let mass0 = try #require(model.cook.running).choices.massKg
+        world.clock.advance(5)
+        model.planner.chooseSize(model.planner.settings.sizeIndex + 1)
+        #expect(model.inHand.pending)
+        let saved = await model.saveProbe(readingC: peak)
+        #expect(!model.inHand.pending, "committed by the save")
+        let mass = try #require(model.cook.running).choices.massKg
+        #expect(mass > mass0, "the cook corrected before the reading was scored")
+        #expect(saved == .taken(peak))
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        let record = try #require(model.planner.kept.log.last)
+        #expect(record.probe?.centreC == peak)
+        #expect(abs(record.egg.massG - mass * 1000) < 0.01, "the corrected egg's record")
+    }
+
     /// A hot cook whose pull's grace ran out unanswered, so the clock
     /// assumed the eggs came out, corrected to cold 30 s after the pull: the
     /// plan asks whether they are still in the water. The pull.

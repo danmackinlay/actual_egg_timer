@@ -449,6 +449,19 @@ test('stillOut: a change still settling is committed before the pull stands', ()
   assert.equal(timers(effects)[0], 'settle:null');
 });
 
+test('probe: a change still settling is committed before the reading is scored, by keyboard too', () => {
+  const m = done();
+  const at = m.plan!.deadlines.coolEnd_s! + 5;
+  const [held] = change(m, { eggCount: 4 }, 'eggCount', 0, at);
+  assert.equal(held.cook?.choices.eggCount, m.cook?.choices.eggCount, 'in hand, not yet the cook\'s');
+  const reading = { kind: 'probe', reading_C: m.plan!.solution.result.peakYolk_C } as const;
+  const [after, effects] = go(held, reading, at + 1);
+  assert.equal(after.cook?.choices.eggCount, 4, 'the correction is the cook\'s');
+  assert.equal(after.hand?.hand, null, 'and nothing is left in hand to commit after');
+  assert.ok(!kinds(effects).includes('probeTaken'), 'not scored on the cook as it was');
+  assert.equal(after.probeHeld, true, 'held for the corrected egg\'s record, read again when its surface lands');
+});
+
 test('after the pull a new level only previews, nothing written, and the slider goes back when the aimed-for egg goes', () => {
   let m = running();
   m = go(m, { kind: 'tick' }, pull(m) + 25)[0];

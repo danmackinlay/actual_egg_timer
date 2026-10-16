@@ -68,5 +68,6 @@ test('the thermometer\'s reading, the switches and the buttons are the controls 
   assert.equal(BUTTONS['primary'], 'primary');
   assert.equal(BUTTONS['secondary'], 'cancel');
   assert.equal(BUTTONS['stillOut'], 'stillInWater');
+  assert.equal(BUTTONS['probeSave'], 'probe');
   for (const id of Object.keys(BUTTONS)) assert.match(HTML, new RegExp(`<button\\b[^>]*\\sid="${id}"`), `#${id}`);
 });

@@ -84,6 +84,8 @@ public final class Cook {
     @ObservationIgnored private(set) var ticks = 0
     #endif
     @ObservationIgnored private var log = CookLog()
+    /// Those waiting for something being built to land (`caughtUp`).
+    @ObservationIgnored private var landing: [CheckedContinuation<Void, Never>] = []
 
     init(planner: Planner, inHand: InHand? = nil) {
         self.planner = planner
@@ -91,7 +93,13 @@ public final class Cook {
         learned = planner.learner
         alarms.onScreen = { [weak self] in (self?.running, self?.asksForProbe ?? false) }
         alarms.onSettled = { [weak self] in self?.logIfSettled() }
-        surfaces.landed = { [weak self] in self?.send(.landed) }
+        surfaces.landed = { [weak self] in
+            guard let self else { return }
+            send(.landed)
+            let waiting = landing
+            landing = []
+            for w in waiting { w.resume() }
+        }
     }
 
     // MARK: - Read off the state
@@ -214,6 +222,18 @@ public final class Cook {
         let now = AppClock.nowS
         if let s = startedAtS { send(.event(.correctStart(nowS: now, startedAtS: s))) }
         send(.event(.correct(nowS: now, choices: choices)))
+    }
+
+    /// Until every step sent so far has been taken, and everything they
+    /// asked to be built has landed and been stepped in: a correction just
+    /// committed is then the cook's, planned on its own pot's surface, before
+    /// what follows reads it.
+    func caughtUp() async {
+        await stepping?.value
+        while !surfaces.idle {
+            await withCheckedContinuation { landing.append($0) }
+            await stepping?.value
+        }
     }
 
     /// An answer at Done.
