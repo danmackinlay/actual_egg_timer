@@ -183,7 +183,7 @@ export function coolingMedium_C(s: CoolingFacts): number {
  * minutes that decide the yolk, the room's exchange (a time constant near two
  * hours at 2 L) and a ceramic bowl's own heat capacity are each worth under a
  * second of cook, and eggs lying still in water that has not mixed are worth
- * one (design/bowl.md section 2.3). A bowl with no water given is no bowl: the
+ * one (README.md section 2.4). A bowl with no water given is no bowl: the
  * water never warms, as running water at its temperature.
  */
 export function bowlTemperature(egg: Egg, setup: CookSetup, meanAtPull_C: number, mean_C: number): number {
@@ -226,7 +226,7 @@ export function wetShellDrop_C(egg: Egg): number {
  * as it left the pan), and the surface follows it. Clamped, like the ice bath,
  * though free convection in still water is not quite a clamp: the time-scale
  * learned from the cook's answers absorbs that for every water cooling alike
- * (design/bowl.md section 2.3).
+ * (README.md section 2.4).
  *
  * Still air is not: Bi ~ 0.6, so the shell is neither held at the room's
  * temperature nor at the egg's mean, and it loses heat by Newton's law at

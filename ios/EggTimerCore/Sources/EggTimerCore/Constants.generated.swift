@@ -108,8 +108,7 @@ public enum Defaults {
     public static let customStartC: Double = 12.0
     public static let altitudeM: Double = 0.0
     public static let waterLitres: Double = 2.0
-    /// A mixing bowl: within 3 s of any other volume for one to six eggs (design/bowl.md section
-    /// 2.7).
+    /// A mixing bowl: within 3 s of any other volume for one to six eggs (README.md section 2.4).
     public static let bowlLitres: Double = 2.0
     public static let eggCount: Int = 2
     public static let doneness: Double = 0.41
