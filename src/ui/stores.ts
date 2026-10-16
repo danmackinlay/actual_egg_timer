@@ -21,8 +21,6 @@
  */
 
 export interface StoreSpec {
-  /** What the code calls it. */
-  name: StoreName;
   /** The format of what it holds, written inside as `v`; null for a store
    *  with none inside it. */
   format: number | null;
@@ -30,29 +28,22 @@ export interface StoreSpec {
   key: string;
 }
 
-type StoreName = 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share';
-
 export const STORES = {
   /** The settings, one value (settings.ts), the language and the alarm's
    *  sound among them. */
-  settings: { name: 'settings', format: 1, key: 'aet.settings' },
+  settings: { format: 1, key: 'aet.settings' },
   /** The running cook: what was fixed at the press, its start and its log,
    *  whether its egg was answered, and the lean last decided
    *  (storedCook.ts). */
-  cook: { name: 'cook', format: 7, key: 'aet.cook' },
+  cook: { format: 7, key: 'aet.cook' },
   /** The pans' measured times to boil (core's boil.ts), as `pans`. */
-  boilMemory: { name: 'boilMemory', format: 1, key: 'aet.boilMemory' },
+  boilMemory: { format: 1, key: 'aet.boilMemory' },
   /** The results log, the posterior and the base under it (core's
    *  record.ts). */
-  calibration: { name: 'calibration', format: 5, key: 'aet.calibration.v5' },
+  calibration: { format: 5, key: 'aet.calibration.v5' },
   /** Sharing's state (shareState.ts): its format in its key. */
-  share: { name: 'share', format: null, key: 'aet.share.v1' },
-} as const satisfies Record<StoreName, StoreSpec>;
-
-/** The table in one order, for the sweep. */
-export const STORE_LIST: StoreSpec[] = [
-  STORES.settings, STORES.cook, STORES.boilMemory, STORES.calibration, STORES.share,
-];
+  share: { format: null, key: 'aet.share.v1' },
+} as const satisfies Record<string, StoreSpec>;
 
 /** What a store holds, stamped with its format. */
 export function stamped(store: StoreSpec, body: Record<string, unknown>): Record<string, unknown> {

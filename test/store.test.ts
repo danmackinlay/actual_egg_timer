@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.ts';
 import { type RunningCook, startCook, withBoil } from '../src/core/running.ts';
-import { STORES, STORE_LIST, stamped } from '../src/ui/stores.ts';
+import { STORES, stamped } from '../src/ui/stores.ts';
 import { choicesOf } from '../src/ui/state.ts';
 import { DEFAULT_SETTINGS, type Settings, loadLanguage, openCooks, openSettings, sweepStorage } from '../src/ui/store.ts';
 
@@ -221,7 +221,7 @@ test('the sweep at boot deletes a key of an earlier build\'s; every key this bui
     'aet.calibration.v1', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.v2', 'aet.cook.unread',
     'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1', 'aet.later.v1', 'aet.newest', 'aet.devClock.used',
   ];
-  const kept = STORE_LIST.map((x) => x.key);
+  const kept = Object.values(STORES).map((x) => x.key);
   for (const key of [...earlier, ...kept, 'other.app']) storage.set(key, 'a value');
   sweepStorage();
   assert.deepEqual([...storage.keys()].sort(), [...kept, 'other.app'].sort());
