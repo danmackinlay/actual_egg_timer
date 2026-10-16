@@ -29,7 +29,7 @@ double, which is all that differing libm implementations of `exp`, `sin` and
 Every module in `src/core/` has a Swift twin of the same name in
 `EggTimerCore`, held to it by a fixture; each conformance test names the
 fixture it reads. Each file's header comment is its documentation, and the
-exports are its API. Four are otherwise:
+exports are its API. These are otherwise:
 the named constants, which `npm run swift:constants` writes into
 `Constants.generated.swift` (and `EggTimerCopy`'s); the alarm sounds'
 timing (`sounds.ts`), which is those constants and a division, with no
