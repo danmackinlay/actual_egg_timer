@@ -188,6 +188,10 @@ const TWINS: Twin[] = [
   { module: 'record.ts', name: 'RESULTS_FILE_VERSION', swift: 'resultsFileVersion', type: 'Int' },
   { module: 'record.ts', name: 'RESULTS_ABOUT', swift: 'resultsAbout', type: 'String', internal: true },
 
+  { module: 'hand.ts', name: 'SETTLE_S', swift: 'handSettleS' },
+  { module: 'hand.ts', name: 'HELD_S', swift: 'handHeldS' },
+  { module: 'hand.ts', name: 'PREVIEW_S', swift: 'handPreviewS' },
+
   { module: 'boil.ts', name: 'DEFAULT_TIME_TO_BOIL_S', swift: 'defaultTimeToBoilS' },
   { module: 'sounds.ts', name: 'ALARM_RING_S', swift: 'alarmRingS' },
   { module: 'slider.ts', name: 'SLIDER_STEPS', swift: 'sliderSteps' },

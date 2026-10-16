@@ -56,6 +56,8 @@
  *                              plan, and the phase at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
+ *   fixtures/hand.json         the correction in hand: event sequences, the
+ *                              choices a commit makes, the preview, the start
  *
  * And two for the fit (fit/, Python), held by its pytest suite, which CI runs
  * without node:
@@ -210,6 +212,13 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     const { runningFixture: f } = await import('./fixtures/running.ts');
     return { fixture: f, counts: [`${f.setups.length} cook setups and ${f.moves.length} cook moves`] };
   },
+  hand: async () => {
+    const f = (await import('./fixtures/hand.ts')).handFixture();
+    return {
+      fixture: f,
+      counts: [`${f.sequences.length} sequences of the correction in hand`, `${f.starts.length} steps of the start`],
+    };
+  },
   step: async () => {
     const { stepFixture: f } = await import('./fixtures/step.ts');
     return {
@@ -239,7 +248,7 @@ const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.js
 /** The order the summary line counts them in. */
 const COUNTED = [
   'core', 'scenarios', 'calibration', 'slider', 'texture', 'sousvide', 'sousvideCopy', 'copy', 'format', 'units',
-  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'language', 'share', 'running', 'step',
+  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'language', 'share', 'running', 'step', 'hand',
   'fitSample', 'fitRecovery',
 ];
 

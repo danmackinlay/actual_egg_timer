@@ -453,6 +453,20 @@ public let resultsFileVersion: Int = 1
 /// What the file says it is, for whoever opens it.
 let resultsAbout: String = "Actual Egg Timer: every result this device kept, as it keeps them. \"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4)."
 
+// MARK: - src/core/hand.ts
+
+/// How long a tap's change settles before it is committed, and how long the aimed-for egg stays
+/// after the last change, s.
+public let handSettleS: Double = 1.5
+
+/// A − or + pressed this long has begun to repeat (the web's stepper.ts, iOS's Stepper): a hold,
+/// committed on the lift, s.
+public let handHeldS: Double = 0.4
+
+/// How long a burst of changes waits before the aimed-for egg is planned, s: a plan is tens of
+/// milliseconds, too long for every pixel of a drag.
+public let handPreviewS: Double = 0.09
+
 // MARK: - src/core/boil.ts
 
 /// Fallback when no pan has ever been measured, s.
