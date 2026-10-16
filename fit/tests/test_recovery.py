@@ -65,8 +65,10 @@ def joint_p(draws: dict, truth: dict, prior: dict) -> float:
     """The share of posterior draws at least as far from the posterior's
     mean as the truth is, by the Mahalanobis distance under the draws'
     covariance, all nine globals on the sampler's unconstrained scale (the
-    spreads' logs). If the truth is distributed as a draw, this is uniform,
-    so the check fails a calibrated fit ALPHA of the time.
+    spreads' logs). If the truth were a draw from the prior, and the eggs
+    simulated from it, this would be uniform, and the check would fail a
+    calibrated fit ALPHA of the time; this sample's truth is one fixed
+    point, in the prior's tail.
 
     One test of the nine, not an interval each: Holm, as one pass or fail,
     is Bonferroni, failing on the worst global at ALPHA / 9 alone; Simes
