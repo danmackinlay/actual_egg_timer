@@ -6,19 +6,19 @@ import EggTimerCopy
 import EggTimerShared
 
 /// Corrections while a cook runs, made as the controls make them: a value
-/// changed on the planner is a change in hand (`Edits`), committed after its
+/// changed on the planner is a change in hand (`InHand`), committed after its
 /// settle on the cook's clock, on release, or when a button moves the cook on.
 extension AppTests {
     /// `change` made so that its settle ends, and the cook is corrected, at
     /// `s`, epoch s (to the last bit or so): the cook as planned again.
     func correct(at s: Double, _ model: AppModel, _ world: World, _ change: () -> Void) async {
-        let from = s - Edits.settle
+        let from = s - handSettleS
         world.clock.set(from)
         change()
-        #expect(model.edits.pending)
+        #expect(model.inHand.pending)
         // The settle's own sum, so the clock reaches its end exactly.
-        world.clock.set(from + Edits.settle)
-        await world.until("the change committed") { !model.edits.pending }
+        world.clock.set(from + handSettleS)
+        await world.until("the change committed") { !model.inHand.pending }
         await world.settled(model.cook)
     }
 
@@ -93,10 +93,10 @@ extension AppTests {
         let writes = world.store.writes.count
         world.clock.set(t0 + 30)
         model.planner.chooseSize(size + 1)
-        #expect(model.edits.pending)
+        #expect(model.inHand.pending)
         #expect(!world.store.writes.dropFirst(writes).contains { $0.key == Cook.savedKey })
-        world.clock.advance(Edits.settle)
-        await world.until("the change committed") { !model.edits.pending }
+        world.clock.advance(handSettleS)
+        await world.until("the change committed") { !model.inHand.pending }
         await world.settled(model.cook)
         let heavier = try pullS(model.cook)
         #expect(heavier > pull0)
@@ -148,9 +148,9 @@ extension AppTests {
         let level = try #require(model.cook.running).choices.level
         let cache = SectionCache()
         world.clock.set(pull0 - 60)
-        model.edits.fingerDown(.level, slider: true)
+        model.inHand.fingerDown(.level)
         for l in [0.3, 0.1, 0.0] { model.planner.settings.doneness = l }
-        world.clock.advance(Edits.previewDelay)
+        world.clock.advance(handPreviewS)
         await world.until("the aim drawn") { model.aimView != nil }
         #expect(model.section(phase: model.cook.phase, nowS: world.clock.seconds, cache: cache).reading == .aim)
         #expect(world.ringer.rung.isEmpty)
@@ -158,16 +158,16 @@ extension AppTests {
         for l in [0.2, level] { model.planner.settings.doneness = l }
         world.clock.advance(1)
         let writes = world.store.writes.count
-        model.edits.fingerUp()
+        model.inHand.fingerUp()
         await world.settled(model.cook)
-        #expect(!model.edits.pending)
+        #expect(!model.inHand.pending)
         #expect(!world.store.writes.dropFirst(writes).contains { $0.key == Cook.savedKey })
         #expect(world.ringer.rung.isEmpty)
         world.clock.set(pull0 - 50)
-        model.edits.fingerDown(.level, slider: true)
+        model.inHand.fingerDown(.level)
         model.planner.settings.doneness = 0
         world.clock.advance(1)
-        model.edits.fingerUp()
+        model.inHand.fingerUp()
         await world.settled(model.cook)
         #expect(try #require(model.cook.running).choices.level < 0.1)
         #expect(world.ringer.rung == [.pull])
@@ -183,26 +183,26 @@ extension AppTests {
         await started(model, world, .cold)
         let cook = try #require(model.cook.running)
         let t0 = cook.startedAtS
-        #expect(model.edits.shownStart == t0)
-        await correct(at: t0 + 150 + Edits.settle, model, world) {
-            for _ in 0..<3 { model.edits.stepStart(up: true) }
-            #expect(model.edits.startLimit?.kind == .now)
+        #expect(model.inHand.shownStart == t0)
+        await correct(at: t0 + 150 + handSettleS, model, world) {
+            for _ in 0..<3 { model.inHand.stepStart(up: true) }
+            #expect(model.inHand.startLimit?.kind == .now)
         }
         let moved = try #require(model.cook.running).startedAtS
         #expect(abs(moved - (t0 + 150)) <= 1e-6)
-        #expect(model.edits.shownStart == moved)
+        #expect(model.inHand.shownStart == moved)
         let press = t0 + 390
         world.clock.set(press)
         model.boil()
         await world.settled(model.cook)
-        await correct(at: press + 60 + Edits.settle, model, world) {
-            for _ in 0..<5 { model.edits.stepStart(up: true) }
-            #expect(model.edits.startLimit?.kind == .boil)
+        await correct(at: press + 60 + handSettleS, model, world) {
+            for _ in 0..<5 { model.inHand.stepStart(up: true) }
+            #expect(model.inHand.startLimit?.kind == .boil)
         }
         #expect(model.cook.running?.startedAtS == press)
-        await correct(at: press + 70 + Edits.settle, model, world) {
-            for _ in 0..<140 { model.edits.stepStart(up: false) }
-            #expect(model.edits.startLimit?.kind == .earliest)
+        await correct(at: press + 70 + handSettleS, model, world) {
+            for _ in 0..<140 { model.inHand.stepStart(up: false) }
+            #expect(model.inHand.startLimit?.kind == .earliest)
         }
         #expect(model.cook.running?.startedAtS == cook.idMs / 1000 - 7200)
         let said = world.announced.all
@@ -223,15 +223,15 @@ extension AppTests {
         let eggs = model.planner.settings.eggCount
         world.clock.set(t0 + 30)
         model.planner.settings.eggCount = eggs + 1
-        #expect(model.edits.pending)
-        #expect(model.edits.stepStart(up: false))
+        #expect(model.inHand.pending)
+        #expect(model.inHand.stepStart(up: false))
         await world.settled(model.cook)
         #expect(model.cook.running?.choices.eggCount == Double(eggs + 1), "the change in hand committed")
         #expect(model.cook.running?.startedAtS == t0, "without the start's")
-        #expect(model.edits.pending, "which is in hand in its turn")
-        #expect(model.edits.shownStart == t0 - 60)
-        world.clock.advance(Edits.settle)
-        await world.until("the start committed") { !model.edits.pending }
+        #expect(model.inHand.pending, "which is in hand in its turn")
+        #expect(model.inHand.shownStart == t0 - 60)
+        world.clock.advance(handSettleS)
+        await world.until("the start committed") { !model.inHand.pending }
         await world.settled(model.cook)
         #expect(model.cook.running?.startedAtS == t0 - 60)
         #expect(model.cook.running?.choices.eggCount == Double(eggs + 1))
@@ -297,15 +297,15 @@ extension AppTests {
         let stored0 = try #require(world.stored)
         let cache = SectionCache()
         world.clock.advance(5)
-        model.edits.fingerDown(.level, slider: true)
+        model.inHand.fingerDown(.level)
         for l in [0.6, 0.9] { model.planner.settings.doneness = l }
-        world.clock.advance(Edits.previewDelay)
+        world.clock.advance(handPreviewS)
         await world.until("the aim drawn") { model.aimView != nil }
         #expect(model.section(phase: .done, nowS: world.clock.seconds, cache: cache).reading == .aim)
         world.clock.advance(2)
-        model.edits.fingerUp()
+        model.inHand.fingerUp()
         await world.settled(model.cook)
-        world.clock.advance(Edits.settle)
+        world.clock.advance(handSettleS)
         await world.until("the aim gone") { model.aimView == nil }
         #expect(model.section(phase: .done, nowS: world.clock.seconds, cache: cache).reading == .ran)
         let stored = try #require(world.stored)
@@ -528,5 +528,45 @@ extension AppTests {
         let b = range()
         #expect(a.hasPrefix(out) && b.hasPrefix(out))
         #expect(a != b)
+    }
+    /// A size, then a weight: both the egg's mass, one group, so one commit
+    /// a settle after the weight.
+    @Test func aSizeThenAWeightIsOneCommit() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world)
+        let t0 = try #require(model.cook.running).startedAtS
+        let log = model.cook.running?.log.count ?? 0
+        world.clock.set(t0 + 30)
+        model.planner.chooseSize(model.planner.settings.sizeIndex + 1)
+        world.clock.set(t0 + 31)
+        model.planner.weigh(70)
+        #expect(model.cook.running?.log.count == log, "nothing committed between")
+        world.clock.set(t0 + 31 + handSettleS)
+        await world.until("the change committed") { !model.inHand.pending }
+        await world.settled(model.cook)
+        let cook = try #require(model.cook.running)
+        #expect(cook.log.count == log + 1, "one correction")
+        #expect(abs(cook.choices.massKg - 0.070) <= 1e-9)
+    }
+
+    /// The thermometer switched on mid-cook: another control, so the change in
+    /// hand is committed at once, and the switch written for the next cook.
+    @Test func theThermometerMidCookCommitsAndIsWritten() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world)
+        let t0 = try #require(model.cook.running).startedAtS
+        let count = model.planner.settings.eggCount
+        world.clock.set(t0 + 30)
+        model.planner.settings.eggCount = count + 1
+        #expect(model.inHand.pending)
+        model.planner.setProbe(!model.planner.settings.probe)
+        #expect(!model.inHand.pending, "committed at the switch")
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.eggCount == Double(count + 1))
+        #expect(SettingsStore.read(classes: model.planner.sizeClasses).probe == model.planner.settings.probe)
     }
 }

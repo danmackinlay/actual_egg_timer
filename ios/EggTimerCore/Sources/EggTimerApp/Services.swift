@@ -25,7 +25,7 @@ public enum Services {
     /// Read on the main actor, called off it in the order the cook made its
     /// calls (`CookCard`).
     @MainActor public static var card: any LockScreenCard = NoCard()
-    /// Said to VoiceOver, at once: the start's limit reached (`Edits`).
+    /// Said to VoiceOver, at once: the start's limit reached (`InHand`).
     @MainActor public static var announce: (String) -> Void = { _ in }
     @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
     @MainActor public static var language: any LanguageChoosing = LanguageChoice.shared

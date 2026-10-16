@@ -705,7 +705,7 @@ scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen
   // The second settles on the cook's clock, which stands until it is stepped.
   await run.step(run.t0 + 52);
   const second = await run.until(is('editCommitted'), { from: first.i + 1, what: 'the second change committed' });
-  run.check(first.fields.join(',') === 'mass' && second.fields.join(',') === 'water',
+  run.check(first.fields.join(',') === 'mass' && second.fields.join(',') === 'waterLitres',
     `two commits: ${say(first)}, ${say(second)}`);
   run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
 });

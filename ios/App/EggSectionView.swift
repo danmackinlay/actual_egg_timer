@@ -13,7 +13,7 @@ import EggTimerApp
 /// - `aim`, the egg the settings on screen aim for, as eaten at the end of
 ///   the cooling (`previewSection`), so the yolk reads the level asked: idle,
 ///   the controls' egg at the time on screen; during a cook, while a control
-///   is held and for a moment after (`AppModel`'s edits), the egg the
+///   is held and for a moment after (`AppModel`'s `inHand`), the egg the
 ///   correction in hand would cook.
 /// - `live`, the egg in the water now, carried forward a tick at a time and
 ///   replayed from raw when the cook's pot or start changes, on through the

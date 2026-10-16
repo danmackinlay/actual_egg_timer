@@ -23,6 +23,9 @@ struct SettingsView: View {
     /// Whether the egg on screen is in the log and still open to correction
     /// (`Cook.eggOpen`): sharing holds it back.
     var eggOpen = false
+    /// A switch here of no group of the cook's choices is another control
+    /// used, while a cook runs (`InHand`).
+    @Environment(\.editGesture) private var gesture
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
@@ -45,7 +48,7 @@ struct SettingsView: View {
                 }
                 Picker(tr(.`controls.units`), selection: Binding(
                     get: { planner.units },
-                    set: { planner.chooseUnits($0) }
+                    set: { gesture.used(.setting); planner.chooseUnits($0) }
                 )) {
                     Text(tr(.`controls.units.metric`)).tag(UnitSystem.metric)
                     Text(tr(.`controls.units.imperial`)).tag(UnitSystem.imperial)
@@ -70,7 +73,7 @@ struct SettingsView: View {
                 }
                 Picker(tr(.`controls.language`), selection: Binding(
                     get: { Copy.activeLocale },
-                    set: { LanguageChoice.shared.pick($0) }
+                    set: { gesture.used(.setting); LanguageChoice.shared.pick($0) }
                 )) {
                     Text(tr(.`language.en`)).tag(defaultLanguage)
                     Text(tr(.`language.en1750`)).tag(periodLanguage)
@@ -86,7 +89,7 @@ struct SettingsView: View {
                 }
                 Picker(tr(.`controls.alarm`), selection: Binding(
                     get: { AlarmSoundChoice.shared.sound },
-                    set: { AlarmSoundChoice.shared.pick($0) }
+                    set: { gesture.used(.setting); AlarmSoundChoice.shared.pick($0) }
                 )) {
                     Text(tr(.`controls.alarm.timer`)).tag(AlarmSound.timer)
                     Text(tr(.`controls.alarm.cuckoo`)).tag(AlarmSound.cuckoo)
@@ -116,7 +119,7 @@ struct SettingsView: View {
                     InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
                         StepperValue(
                             label: tr(.`controls.water`), measure: planner.measure(.water),
-                            value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .water
+                            value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .waterLitres
                         )
                     }
                 }
@@ -255,6 +258,7 @@ struct SettingsView: View {
             Toggle(tr(.`share.toggle`), isOn: Binding(
                 get: { s.on },
                 set: { on in
+                    gesture.used(.setting)
                     deletedHere = false
                     sharing.setSharing(on)
                     // The time moves by the nudge with it.

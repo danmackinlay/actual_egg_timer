@@ -235,7 +235,7 @@ extension Screenshots {
         /// surface, and whether it has its odds.
         case answer(cookS: Double, decided: Bool, odds: Bool)
 
-        // Corrections while a cook runs (`Edits`).
+        // Corrections while a cook runs (`InHand`).
         /// A change in hand, on this group of controls.
         case edit(group: String?)
         /// The change in hand committed: the fields it changed, and the start
@@ -393,7 +393,7 @@ extension Screenshots {
             // The finger down on the slider and moved through each level,
             // a twentieth of a second apart; it stays down.
             let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
-            model.edits.fingerDown(.level, slider: true)
+            model.inHand.fingerDown(.level)
             dragging += 1
             Task { @MainActor in
                 for level in levels {
@@ -474,7 +474,7 @@ extension Screenshots {
         return (model.cook.ticking && model.cook.ticks <= max(ticks, tappedAtTick))
             || (driving && nothingDue <= looks) || dragging > 0
             || !model.cook.isSettled
-            || model.edits.underWay
+            || model.inHand.underWay
             || planner.solver.busy || planner.learner.draining
     }
 

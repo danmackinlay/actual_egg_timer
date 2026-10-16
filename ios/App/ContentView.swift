@@ -133,12 +133,15 @@ struct ContentView: View {
                 }
             }
         }
-        // A − or + held while a cook runs is a correction committed on
-        // release, one tapped after its settle (`Edits`), here and in
-        // Settings.
-        .environment(\.editGesture, EditGesture { field, down in
-            if down { model.edits.fingerDown(field) } else { model.edits.fingerUp() }
-        })
+        // While a cook runs, a − or + is a finger down and up on its group,
+        // and a control of no group is another control used (`InHand`), here
+        // and in Settings.
+        .environment(\.editGesture, EditGesture(
+            touch: { group, down in
+                if down { model.inHand.fingerDown(group) } else { model.inHand.fingerUp() }
+            },
+            used: { model.inHand.moveOn($0) }
+        ))
         // The pull brings the egg's page back, from Settings or Help.
         .onChange(of: bringsEggBack(outerPhase)) { _, back in
             if back { path = [] }
@@ -163,7 +166,7 @@ struct ContentView: View {
         // web's "online".
         .onChange(of: scenePhase) { _, now in
             guard now == .active else {
-                model.edits.leaving()
+                model.inHand.leaving()
                 return
             }
             model.endIfNoLongerOpen()
@@ -252,12 +255,12 @@ struct ContentView: View {
                 }
                 SetupSentence(
                     planner: planner, open: $openClause,
-                    onTap: { model.edits.touchedElsewhere() }
+                    onTap: { model.inHand.moveOn(.clause) }
                 )
                 .logTop("sentence")
             }
             if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
-                ClausePanel(planner: planner, clause: clause, edits: running == nil ? nil : model.edits) {
+                ClausePanel(planner: planner, clause: clause, inHand: running == nil ? nil : model.inHand) {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(clause)

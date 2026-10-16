@@ -6,15 +6,15 @@ import EggTimerShared
 
 /// The egg screen's objects: the Planner (every input, the solve and the
 /// learning), the Cook (core's state machine running one egg, and what it
-/// asks of the app) and the corrections in hand (`Edits`). The views read
+/// asks of the app) and the correction in hand (`InHand`). The views read
 /// them; a button that moves the cook on commits a correction in hand first,
 /// here, once, rather than in whichever view has the button.
 @Observable
 @MainActor
 public final class AppModel {
     public let planner = Planner()
-    /// Corrections while a cook runs (`Edits`).
-    public let edits = Edits()
+    /// The correction in hand while a cook runs (`InHand`).
+    public let inHand = InHand()
     public let cook: Cook
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
@@ -25,13 +25,13 @@ public final class AppModel {
     public var aimView: SectionView?
 
     public init() {
-        cook = Cook(planner: planner, edits: edits)
+        cook = Cook(planner: planner, inHand: inHand)
     }
 
     /// The screen is up: read what was stored, pick up a cook that was
     /// running, and start sharing.
     public func appear() {
-        edits.model = self
+        inHand.model = self
         // Install the notification delegate before anything can fire.
         Services.alarm.activate()
         // The planner's own stored state, read here rather than in its
@@ -109,10 +109,13 @@ public final class AppModel {
     /// and core decides what the cook leaves - a pan it timed remembered, an
     /// egg cooked through logged, answered or not, its record made again
     /// first for a correction after the pull.
-    public func cancel() { startAgain() }
+    public func cancel() {
+        inHand.moveOn(.cancel)
+        cook.end()
+    }
 
     public func startAgain() {
-        edits.touchedElsewhere()
+        inHand.moveOn(.primary)
         cook.end()
     }
 
@@ -142,26 +145,26 @@ public final class AppModel {
     /// water?": a correction still settling is committed first, so the
     /// button acts on the cook as the controls say it is.
     public func boil() {
-        edits.touchedElsewhere()
+        inHand.moveOn(.primary)
         cook.boil()
     }
 
     public func pulledOut() {
-        edits.touchedElsewhere()
+        inHand.moveOn(.primary)
         cook.pulledOut()
     }
 
     public func stillIn() {
-        edits.touchedElsewhere()
+        inHand.moveOn(.stillInWater)
         cook.stillIn()
     }
 
     public func stillOut() {
-        edits.touchedElsewhere()
+        inHand.moveOn(.stillInWater)
         cook.stillOut()
     }
 
-    /// A correction committed (`Edits.commit`).
+    /// A correction committed (`InHand`).
     func correct(_ choices: CookChoices, startedAtS: Double?) {
         cook.correct(choices: choices, startedAtS: startedAtS)
     }

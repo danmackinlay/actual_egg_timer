@@ -92,7 +92,7 @@ struct FeedbackPanel: View {
                 // goes under them, since the three do not fit one line.
                 NudgeField(
                     label: tr(.`probe.entry`), measure: planner.measure(.probeTemp), text: $probeText,
-                    startSI: cook.shownPeakYolkC ?? 0, width: 96, disabled: given != nil
+                    startSI: cook.shownPeakYolkC ?? 0, width: 96, disabled: given != nil, control: .probe
                 )
                 Button(tr(.`probe.save`)) { saveProbe() }
                     .buttonStyle(.bordered)

@@ -171,7 +171,7 @@ public struct SliderReading {
             noteSolution = ran != nil ? cook.ranSolution ?? plan.solution : plan.solution
             // A change in hand: the heading and the texture are its own
             // (the readout keeps the committed plan's time).
-            if let aim = model.edits.aim {
+            if let aim = model.inHand.aim {
                 peakYolkC = aim.peakYolkC
                 level = aim.level
                 noteSolution = aim.solution ?? plan.solution
