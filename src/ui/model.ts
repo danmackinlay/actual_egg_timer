@@ -46,9 +46,9 @@ import type { WhiteReport, YolkWord } from '../core/infer.ts';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.ts';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.ts';
 import {
-  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookTooOld, endedAt_s, phaseAt,
-  plausibleProbeRange_C, replan, sameChoices,
+  answered, answersOf, asksIfStillIn, cookTooOld, endedAt_s, phaseAt, plausibleProbeRange_C, replan, sameValue,
 } from '../core/running.ts';
+import { asRanCurrent, asRanShown, cookFactsFor } from '../core/asRan.ts';
 import {
   type HandEvent, type HandGroup, type HandState, type HandTimer, type StartLimit, handChoices, handStep, nothingInHand,
   previewCook, startStepped,
@@ -58,7 +58,7 @@ import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } fr
 import { step, surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
-import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.ts';
+import { effectiveLanguage, languageAfterFlip } from './settings.ts';
 import { type PotOdds, nudgeNow, solveIdle } from './answer.ts';
 import { targetPeakYolk_C } from '../core/slider.ts';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
@@ -814,7 +814,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // Nothing about the egg changes, and the units are never touched from
       // here: that rule runs one way (LANGUAGE.md section 6).
       const before = effectiveLanguage(m.settings.language);
-      const settings = { ...m.settings, language: languageAfterPick(m.settings.language, msg.pick) };
+      const settings = { ...m.settings, language: { chosen: msg.pick } };
       const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
       return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
     }
@@ -1114,7 +1114,7 @@ function commit(m: Model, group: HandGroup, now_s: number): [Model, Effect[]] {
   if (choices === null) return [m, []];
   let next = m;
   const effects: Effect[] = [];
-  if (!sameChoices(choices, cook.choices)) {
+  if (!sameValue(choices, cook.choices)) {
     const [after, more] = updateCook(m, { kind: 'correct', choices: choices, startedAt_s: null }, now_s);
     next = after;
     effects.push(...more);

@@ -351,7 +351,7 @@ private func logRecord(_ w: inout Work, _ env: CookEnv, nowS: Double, unanswered
 /// the cook too old. See `tickDue` in `src/core/step.ts`.
 public func tickDue(_ cook: RunningCook, _ plan: CookPlan, nowS: Double) -> Bool {
     slowHobDue(plan, nowS: nowS) || cookTooOld(plan, nowS: nowS)
-        || !sameEvents(eventsDue(cook, plan: plan, nowS: nowS), cook.events)
+        || eventsDue(cook, plan: plan, nowS: nowS) != cook.events
 }
 
 /// Whether `b` is the cook `a` was: a cook moves only by an entry appended to

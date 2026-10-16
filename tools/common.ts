@@ -15,7 +15,8 @@ import type { Egg } from '../src/core/geometry.ts';
 import { type WhiteReport, type YolkWord, createPrior } from '../src/core/infer.ts';
 import type { CookSetup } from '../src/core/protocol.ts';
 import { CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, type ProbeReading, recordFor } from '../src/core/record.ts';
-import { type CookPlan, type RunningCook, cookFactsFor } from '../src/core/running.ts';
+import type { CookPlan, RunningCook } from '../src/core/running.ts';
+import { cookFactsFor } from '../src/core/asRan.ts';
 import { APP_VERSION } from '../src/ui/version.ts';
 import { LITERATURE_POPULATION } from '../src/core/infer.ts';
 

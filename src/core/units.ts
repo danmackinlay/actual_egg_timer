@@ -288,7 +288,7 @@ export function measureFor(
     bounds: null,
   };
   if (spec.limit !== null) {
-    // A trillionth of a step of slack, so that a limit that converts exactly
+    // A billionth of a step of slack, so that a limit that converts exactly
     // onto the grid (40 C is 104 F) is not pushed a whole step inward by the
     // last bit of a multiplication.
     const lo = Math.ceil(fromSI(unit, spec.limit.lo) * s.den / s.num - 1e-9);
@@ -335,7 +335,7 @@ export function nudgeFrom(m: Measure, si: number): number {
 
 /** One press of the + (`up`) or the −, from a value in the measure's unit:
  *  the next point of their grid strictly past it, so an off-grid 64.3 goes up
- *  to 65 and down to 64, and kept inside the input's bounds. A trillionth of
+ *  to 65 and down to 64, and kept inside the input's bounds. A billionth of
  *  a step of slack, so a value already on the grid moves a whole step. */
 export function stepPast(m: Measure, value: number, up: boolean): number {
   const k = value * m.nudgeDen / m.nudgeNum;

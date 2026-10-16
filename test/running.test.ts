@@ -18,10 +18,10 @@ import { T_ROOM_C } from '../src/core/constants.ts';
 import { decisionInputs } from '../src/core/decide.ts';
 import { recordFor } from '../src/core/record.ts';
 import {
-  PULL_GRACE_SECONDS, type RecordContext, type RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookEnding, cookFactsFor,
-  cookSetupOf, corrected, eventsDue, guessLengthened, keepAsRan, latestStart_s, phaseAt, replan, startCorrected,
-  withBoil, withOut, writeEvents,
+  PULL_GRACE_SECONDS, type RunningCook, SLOW_HOB_EXTRA_S, boilToRemember, cookSetupOf, corrected, eventsDue,
+  guessLengthened, latestStart_s, phaseAt, replan, startCorrected, withBoil, withOut, writeEvents,
 } from '../src/core/running.ts';
+import { type RecordContext, cookEnding, cookFactsFor, keepAsRan } from '../src/core/asRan.ts';
 import { readRunningCook } from '../src/ui/storedCook.ts';
 import { START_MS, S, CHOICES, C, asRanAgain, cookOf, factsOf, planned, surfaceFor } from './cooks.ts';
 

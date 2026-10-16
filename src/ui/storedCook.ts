@@ -11,7 +11,8 @@ import type { SizeTable } from '../core/geometry.ts';
 import type { BoilMemory } from '../core/boil.ts';
 import { YOLK_WORDS, type YolkWord } from '../core/infer.ts';
 import { type ProbeReading, parseForecast } from '../core/record.ts';
-import { type CookAsRan, type CookChoices, type CookEntry, type Pulled, type RunningCook, foldCook } from '../core/running.ts';
+import { type CookChoices, type CookEntry, type Pulled, type RunningCook, foldCook } from '../core/running.ts';
+import type { CookAsRan } from '../core/asRan.ts';
 import { STORES, inFormat, stamped } from './stores.ts';
 
 /** A finite number. */

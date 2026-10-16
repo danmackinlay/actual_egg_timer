@@ -11,7 +11,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { type CookAsRan, type CookChoices, type RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withAsRan, withBoil, writeEvents } from '../src/core/running.ts';
+import {
+  type CookChoices, type RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withBoil,
+  writeEvents,
+} from '../src/core/running.ts';
+import { type CookAsRan, withAsRan } from '../src/core/asRan.ts';
 import { STORES } from '../src/ui/stores.ts';
 import { type KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.ts';
 import { openCooks } from '../src/ui/store.ts';

@@ -10,7 +10,8 @@ import EggTimerShared
 /// the services, the clock and the store are the app's globals, and each
 /// test ends only once the planners it made are idle (`LeftIdle`). The suite
 /// goes on in CookTests.swift, CorrectionTests.swift and ScreenTests.swift,
-/// each check a device need not make that `npm run ios:e2e` once made.
+/// each check a device need not make that `npm run ios:e2e` once made, and in
+/// SharingTests.swift.
 @Suite(.serialized, .leftIdle) @MainActor
 struct AppTests {
     /// "Eggs in" on the planner's defaults, a cold start or a hot one, and

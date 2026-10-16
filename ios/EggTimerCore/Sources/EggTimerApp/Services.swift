@@ -8,11 +8,13 @@ import EggTimerShared
 /// (`KeyValueStore`).
 ///
 /// Three of the singletons live in this library (`DecisionGrids`,
-/// `LanguageChoice`, `AlarmSoundChoice`); the other three, and the card,
-/// need what only an iPhone has - notifications, sound, App Attest,
-/// ActivityKit - and live in the app (ios/App), which puts them here at
-/// launch, before anything else runs (`ActualEggTimerApp.init`). The tests
-/// put fakes here instead (ios/EggTimerCore/Tests/EggTimerAppTests).
+/// `LanguageChoice`, `AlarmSoundChoice`), and so does `Sharing`, made in the
+/// app over its `ShareTransport` (`ShareNetwork`, URLSession and App Attest);
+/// the other two, and the card, need what only an iPhone has -
+/// notifications, sound, ActivityKit - and live in the app (ios/App), which
+/// puts them here at launch, before anything else runs
+/// (`ActualEggTimerApp.init`). The tests put fakes here instead
+/// (ios/EggTimerCore/Tests/EggTimerAppTests).
 ///
 /// Until the app fills it, each is one that does nothing: no alarm, no
 /// ring, no card, nothing shared.

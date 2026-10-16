@@ -1,20 +1,17 @@
 import Foundation
 
-/// Transient heat conduction in a sphere, solved in the eigenmode basis.
-/// Transliterated from `src/core/sphere.ts` - see that file for why modes and
-/// not finite differences, and for the boundary-condition caveats.
+/// The twin of `src/core/sphere.ts`, held to it by `fixtures/core.json`; the
+/// TypeScript's comments say what each part is for, and derive it. Its
+/// functions on a `SphereState` are this struct's `init`, methods and
+/// properties; `erfcTheta`, `oneTermTheta` and `biotNumber`, which only check
+/// and document the model, have no twin.
 public struct SphereState: Sendable, Codable {
     public let radiusM: Double
-    /// Decay rate of each mode, 1/s.
     public private(set) var lambda: [Double]
-    /// Duhamel coupling of each mode to the surface drive.
     public private(set) var coef: [Double]
-    /// Mode amplitudes: the actual state.
     public private(set) var amp: [Double]
-    /// Current surface temperature, C.
     public private(set) var surfaceC: Double
 
-    /// A sphere at uniform `initialC` whose surface is held at `surfaceC`.
     public init(radiusM: Double, alphaM2s: Double, initialC: Double, surfaceC: Double) {
         self.radiusM = radiusM
         self.surfaceC = surfaceC
@@ -33,8 +30,6 @@ public struct SphereState: Sendable, Codable {
         self.amp = amp
     }
 
-    /// Advance by `dtS`, ramping the surface linearly to `nextSurfaceC`.
-    /// Exact for a linear surface ramp over the step.
     public mutating func step(dtS: Double, nextSurfaceC: Double) {
         let slope = (nextSurfaceC - surfaceC) / dtS
         for i in 0..<Constants.modeCount {
@@ -44,7 +39,7 @@ public struct SphereState: Sendable, Codable {
         surfaceC = nextSurfaceC
     }
 
-    /// Temperature at normalised radius x = r/R, in [0, 1].
+    /// x = r/R, in [0, 1].
     public func temperature(atX x: Double) -> Double {
         if x < 1e-9 { return centreTemperature }
         let r = x * radiusM
@@ -55,7 +50,6 @@ public struct SphereState: Sendable, Codable {
         return surfaceC + sum / r
     }
 
-    /// The sin(n*pi*r/R)/r factor tends to n*pi/R at the centre.
     public var centreTemperature: Double {
         var sum = 0.0
         for i in 0..<Constants.modeCount {
@@ -64,8 +58,6 @@ public struct SphereState: Sendable, Codable {
         return surfaceC + Double.pi * sum / radiusM
     }
 
-    /// Volume-average temperature, C: the ceiling on carryover, and the heat
-    /// Newton's law at the shell draws down on the counter.
     public var meanTemperature: Double {
         var sum = 0.0
         for i in 0..<Constants.modeCount {
@@ -74,12 +66,6 @@ public struct SphereState: Sendable, Codable {
         return surfaceC + 1.5 * sum / (radiusM * radiusM)
     }
 
-    /// The surface temperature to step to over the next `dtS` for a sphere
-    /// losing heat by Newton's law at its own surface (a Robin boundary),
-    /// written as the heat balance on its mean:
-    /// dTavg/dt = -(Ts - Ta)/tau - `lossC` over the step. The mean after a
-    /// linear surface ramp is linear in the new surface temperature, so the
-    /// balance fixes it. sphere.ts has the derivation.
     public func robinSurface(dtS: Double, ambientC: Double, tauS: Double, lossC: Double) -> Double {
         var now = 0.0
         var held = 0.0
@@ -104,7 +90,6 @@ public struct SphereState: Sendable, Codable {
 }
 
 public enum Sphere {
-    /// Closed form for a step change: theta/theta0 = (T - Ts)/(T0 - Ts).
     public static func seriesTheta(x: Double, fourier: Double) -> Double {
         var sum = 0.0
         for n in 1...Constants.modeCount {
@@ -117,13 +102,12 @@ public enum Sphere {
         return 2.0 * sum
     }
 
-    /// Complementary error function, Chebyshev form (Numerical Recipes).
-    ///
-    /// Swift HAS `erfc` in Foundation, and it is more accurate than this. It is
-    /// deliberately not used: the fixtures were generated from the JavaScript,
-    /// which has no erf at all, and a port that silently swapped in a better
-    /// implementation would diverge from its reference by more than the
-    /// tolerance - quietly, and only in the fourth decimal place.
+    /// The TypeScript's `erfc`. Swift HAS `erfc` in Foundation, and it is more
+    /// accurate than this. It is deliberately not used: the fixtures were
+    /// generated from the JavaScript, which has no erf at all, and a port that
+    /// silently swapped in a better implementation would diverge from its
+    /// reference by more than the tolerance - quietly, and only in the fourth
+    /// decimal place.
     public static func complementaryError(_ x: Double) -> Double {
         let cof: [Double] = [
             -1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
@@ -152,8 +136,6 @@ public enum Sphere {
     }
 }
 
-/// The standard normal CDF, from the core's own erfc - the one both languages
-/// already share - rather than the platform's.
 func normalCdf(_ x: Double) -> Double {
     0.5 * Sphere.complementaryError(-x / 2.0.squareRoot())
 }

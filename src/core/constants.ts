@@ -190,7 +190,7 @@ export const LATENT_HEAT_WATER = 2.27e6;
 /** Surface temperatures of the cooling media, C. T_COLD_TAP_C is running
  *  water's when the cook gives none: mains water near ground temperature,
  *  5-25 C across places and seasons, which moves a jammy cook by -8.5 to
- *  +6.5 s against this (design/bowl.md section 2.4), so the cook may give
+ *  +6.5 s against this (README.md section 2.4), so the cook may give
  *  their own (`CookSetup.coolingWater_C`). */
 export const T_ICE_BATH_C = 2.0;
 export const T_COLD_TAP_C = 15.0;

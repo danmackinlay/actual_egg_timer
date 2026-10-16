@@ -145,6 +145,73 @@ final class FakeSharing: ResultSharing {
     func sendFinal() { finals += 1 }
 }
 
+/// The server and App Attest, as sharing reaches them (`ShareTransport`):
+/// each request answered in turn from a list the test writes, a status or
+/// nil for no answer, and 201 for a post (200 for a delete) once it runs
+/// out; each App Attest call throws in turn what the test lists, then
+/// succeeds.
+@MainActor
+final class FakeTransport: ShareTransport {
+    var canAttest = true
+    var eggAnswers: [Int?] = []
+    var attestAnswers: [Int?] = []
+    var deleteAnswers: [Int?] = []
+    var keyFailures: [any Error] = []
+    var attestFailures: [any Error] = []
+    var assertionFailures: [any Error] = []
+
+    /// Each post, in order: its path, its body as JSON, and its assertion.
+    private(set) var posts: [(path: String, body: [String: Any], assertion: String?)] = []
+    private(set) var deletes: [String] = []
+    private(set) var keysMade = 0
+    /// The hash each attestation was asked over.
+    private(set) var attested: [Data] = []
+
+    /// The eggs posted: each one's `seq`, its record's `uid` and day, and
+    /// whether it was signed.
+    var eggs: [(seq: Int, uid: String?, day: String?, signed: Bool)] {
+        posts.filter { $0.path == "api/eggs" }.map { p in
+            let record = p.body["record"] as? [String: Any]
+            return (p.body["seq"] as? Int ?? -1, record?["uid"] as? String, record?["day"] as? String, p.assertion != nil)
+        }
+    }
+
+    /// How many attestations were posted.
+    var attestations: Int { posts.filter { $0.path == "api/attest" }.count }
+
+    private func next(_ list: inout [Int?], or fallback: Int) -> Int? {
+        list.isEmpty ? fallback : list.removeFirst()
+    }
+
+    func post(_ path: String, body: Data, assertion: String?) async -> Int? {
+        let json = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] ?? [:]
+        posts.append((path, json, assertion))
+        return path == "api/attest" ? next(&attestAnswers, or: 201) : next(&eggAnswers, or: 201)
+    }
+
+    func delete(_ path: String) async -> Int? {
+        deletes.append(path)
+        return next(&deleteAnswers, or: 200)
+    }
+
+    func generateKey() async throws -> String {
+        if !keyFailures.isEmpty { throw keyFailures.removeFirst() }
+        keysMade += 1
+        return "key-\(keysMade)"
+    }
+
+    func attestKey(_ keyId: String, clientDataHash: Data) async throws -> Data {
+        if !attestFailures.isEmpty { throw attestFailures.removeFirst() }
+        attested.append(clientDataHash)
+        return Data("attestation of \(keyId)".utf8)
+    }
+
+    func assertion(_ keyId: String, clientDataHash: Data) async throws -> Data {
+        if !assertionFailures.isEmpty { throw assertionFailures.removeFirst() }
+        return Data("signed by \(keyId)".utf8)
+    }
+}
+
 /// The Lock Screen card: each call, in the order it reached the card, with
 /// what it showed as the debug log says it (`CookCard`).
 final class FakeCard: LockScreenCard, @unchecked Sendable {

@@ -143,7 +143,7 @@
  */
 
 import {
-  type CookChoices, type RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, sameChoices,
+  type CookChoices, type RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, sameValue,
   startCorrected,
 } from './running.ts';
 import { correctable } from './step.ts';
@@ -335,7 +335,7 @@ export function takeGroup(choices: CookChoices, said: CookChoices, group: HandGr
  *  which is stepped nowhere and written nowhere. */
 export function handChoices(cook: RunningCook, said: CookChoices, group: HandGroup): CookChoices | null {
   const taken = takeGroup(cook.choices, said, group);
-  return sameChoices(correctable(cook, taken), taken) ? taken : null;
+  return sameValue(correctable(cook, taken), taken) ? taken : null;
 }
 
 /** The cook as the change in hand would make it, for the aimed-for egg's

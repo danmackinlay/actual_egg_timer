@@ -1,32 +1,15 @@
 import Foundation
 import EggTimerCopy
 
-/// Metric and Imperial, transliterated from `src/core/units.ts` and held to it
-/// by `fixtures/units.json`.
-///
-/// The model stays in SI. What lives here is making the two apps convert
-/// IDENTICALLY: one factor per unit, one step and one number of decimals per
-/// quantity per system, and the round trip - a cook who types 2.4 oz sees
-/// 2.4 oz again, never 2.39 (LANGUAGE.md §4):
-///
-///  1. the value is stored in SI and clamped by `Limits` in SI;
-///  2. what is shown is that value converted, rounded to the step, and held
-///     inside the input's bounds - the SI limits converted and rounded INWARD
-///     to the step, so every bound is a value the control accepts;
-///  3. a control writes the stored value only when the cook moves it.
-///
-/// Grid values are `n * num / den` from integers, the double nearest the
-/// decimal, and rounding is `floor(x + 0.5)` written out, because
-/// `rounded()` and JavaScript's `Math.round` disagree about negative halves.
-/// `displayText` writes plain digits with `String(format:)` and no locale, as
-/// the web's `toFixed` does; what the cook reads goes through the formatting
-/// locale (Format.swift).
-///
-/// Pure, like the rest of this package. The app asks `Locale` for the region,
-/// the measurement system and the temperature preference, and hands them in.
+/// The twin of `src/core/units.ts`, held to it by `fixtures/units.json`; the
+/// TypeScript's comments say what each part is for. `displayText` writes plain
+/// digits with `String(format:)` and no locale, as the web's `toFixed` does;
+/// what the cook reads goes through the formatting locale (Format.swift). The
+/// app asks `Locale` for the region, the measurement system and the
+/// temperature preference, and hands them in.
 
-/// The one setting. The same pair as the record's `Units`, and the same type,
-/// so that what is recorded is what was on screen with no conversion between.
+/// The record's `Units`: the same type, so that what is recorded is what was
+/// on screen with no conversion between.
 public typealias UnitSystem = Units
 
 // MARK: - The units
@@ -37,7 +20,6 @@ public enum UnitId: String, Sendable, CaseIterable, Codable {
     case inches = "in", metres = "m", feet = "ft", litres = "L", quarts = "qt", pints = "pt"
 }
 
-/// A value in SI (C, g, mm, m, L) as the given unit.
 public func fromSI(_ unit: UnitId, _ si: Double) -> Double {
     switch unit {
     case .fahrenheit: return si * 1.8 + 32
@@ -50,7 +32,6 @@ public func fromSI(_ unit: UnitId, _ si: Double) -> Double {
     }
 }
 
-/// A value in the given unit, as SI.
 public func toSI(_ unit: UnitId, _ value: Double) -> Double {
     switch unit {
     case .fahrenheit: return (value - 32) / 1.8
@@ -63,8 +44,6 @@ public func toSI(_ unit: UnitId, _ value: Double) -> Double {
     }
 }
 
-/// The catalogue's bare symbol, for a control's label, and its "value and
-/// unit" template, for everything else.
 private func unitKeys(_ unit: UnitId) -> (unit: CopyKey, format: CopyKey) {
     switch unit {
     case .celsius: (.`unit.celsius`, .`format.celsius`)
@@ -83,20 +62,11 @@ private func unitKeys(_ unit: UnitId) -> (unit: CopyKey, format: CopyKey) {
 
 // MARK: - The quantities
 
-/// Every number with a unit that either app shows or takes. `temperature` is
-/// a readout (peak yolk, the bath, the presets); `eggTemp` is the egg's
-/// temperature a cook can type (on the web); `probeTemp` is a probe
-/// thermometer's reading at the centre, typed to a tenth, stepped in whole
-/// degrees and never clamped; `roomTemp` is the kitchen's air (the room
-/// setting); `coolingWater` the water the eggs cool in, running or in a bowl;
-/// `bowl` the water in that bowl, as the pan's.
+/// The web's `girth` and `width` have no twin: the iOS app only weighs eggs.
 public enum Quantity: String, Sendable, CaseIterable, Codable {
     case temperature, eggTemp, probeTemp, roomTemp, coolingWater, boilingPoint, mass, altitude, water, bowl
 }
 
-/// A step as a ratio of integers, and the digits shown. `trim`: only the
-/// digits a value needs (`shownDecimals`). `nudge`: the step of the − and +
-/// where it is coarser than the typed step; the step otherwise.
 private struct Step {
     let unit: UnitId
     let num: Double
@@ -106,7 +76,6 @@ private struct Step {
     var nudge: (num: Double, den: Double)?
 }
 
-/// LANGUAGE.md §4's table for Imperial, and the web's inputs for metric.
 private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, imperial: Step) {
     switch q {
     case .temperature:
@@ -116,9 +85,6 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (Limits.eggTempC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
          Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
     case .probeTemp:
-        // Typed to a tenth, as a probe shows it; the − and + move in whole
-        // degrees from the peak the cook was started at: a tenth at a time is
-        // no help to a cook with a probe in hand.
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1, nudge: (1, 1)),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1, nudge: (1, 1)))
     case .roomTemp:
@@ -131,8 +97,6 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
     case .mass:
-        // Half grams, the owner's step for the − and +,
-        // shown without a ".0": 58 g, 58.5 g.
         (Limits.massG, Step(unit: .grams, num: 1, den: 2, decimals: 1, trim: true),
          Step(unit: .ounces, num: 1, den: 10, decimals: 1))
     case .altitude:
@@ -142,44 +106,31 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (Limits.waterLitres, Step(unit: .litres, num: 1, den: 4, decimals: 2),
          Step(unit: .quarts, num: 1, den: 4, decimals: 2))
     case .bowl:
-        // Said in a sentence, so shown with only the decimals it needs.
         (Limits.bowlLitres, Step(unit: .litres, num: 1, den: 4, decimals: 2, trim: true),
          Step(unit: .quarts, num: 1, den: 4, decimals: 2, trim: true))
     }
 }
 
-/// One quantity in one unit: everything a control or a readout needs.
 public struct Measure: Sendable, Equatable {
     public let quantity: Quantity
     public let unit: UnitId
-    /// The control's step, as a number: 0.1, 0.02, 100.
     public let step: Double
     public let stepNum: Double
     public let stepDen: Double
-    /// The step of the − and + beside the control (`stepPast`), as a ratio of
-    /// integers: the step itself, except for a probe reading, which is typed
-    /// to a tenth and stepped in whole degrees.
     public let nudgeNum: Double
     public let nudgeDen: Double
-    /// Digits after the point on screen: at most this many when `trim`.
     public let decimals: Int
-    /// Shown with only the decimals the value needs, up to `decimals`: "58 g"
-    /// and "58.5 g", never "58.0 g". Metric mass, and the bowl.
     public let trim: Bool
     public let unitKey: CopyKey
     public let formatKey: CopyKey
-    /// The SI limit, or nil for a readout.
     public let limit: ClosedRange<Double>?
-    /// The limit in this unit, rounded INWARD to the step. Nil for a readout.
     public let bounds: ClosedRange<Double>?
 
-    /// The n-th grid point. Never -0, which prints as "-0".
     fileprivate func onGrid(_ n: Double) -> Double {
         let v = n * stepNum / stepDen
         return v == 0 ? 0 : v
     }
 
-    /// The n-th point of the − and +'s grid. Never -0.
     fileprivate func onNudgeGrid(_ n: Double) -> Double {
         let v = n * nudgeNum / nudgeDen
         return v == 0 ? 0 : v
@@ -215,7 +166,6 @@ extension Measure: Encodable {
     }
 }
 
-/// Water under Imperial: the US quart in the US, the imperial pint elsewhere.
 func imperialWaterUnit(region: String?) -> UnitId {
     isUS(region) ? .quarts : .pints
 }
@@ -236,8 +186,6 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
     }
     let m = made(bounds: nil)
     guard let limit = s.limit else { return m }
-    // A billionth of a step of slack, so a limit that converts exactly onto
-    // the grid is not pushed a whole step inward by its last bit.
     let lo = (fromSI(unit, limit.lowerBound) * step.den / step.num - 1e-9).rounded(.up)
     let hi = (fromSI(unit, limit.upperBound) * step.den / step.num + 1e-9).rounded(.down)
     return made(bounds: m.onGrid(lo)...m.onGrid(hi))
@@ -245,19 +193,12 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
 
 // MARK: - Display and parse
 
-/// The nearest grid point to a value in the measure's unit. Halves go up.
 public func snap(_ m: Measure, _ value: Double) -> Double {
     m.onGrid((value * m.stepDen / m.stepNum + 0.5).rounded(.down))
 }
 
 // MARK: - The − and +
 
-/// Where the − and + start from when the field is empty, in the measure's
-/// unit: a value stored in SI, converted, put on their grid, and kept inside
-/// the control's bounds. A probe reading starts from the peak the cook was
-/// started at, a room from the room assumed. The field shows it greyed, as a
-/// suggestion, and a step from it is the first number in the field: nothing
-/// untouched is ever taken as typed.
 public func nudgeFrom(_ m: Measure, _ si: Double) -> Double {
     guard si.isFinite else { return m.bounds?.lowerBound ?? 0 }
     let v = m.onNudgeGrid((fromSI(m.unit, si) * m.nudgeDen / m.nudgeNum + 0.5).rounded(.down))
@@ -265,10 +206,6 @@ public func nudgeFrom(_ m: Measure, _ si: Double) -> Double {
     return clamp(v, to: bounds)
 }
 
-/// One press of the + (`up`) or the −, from a value in the measure's unit: the
-/// next point of their grid strictly past it, so an off-grid 64.3 goes up to
-/// 65 and down to 64, and kept inside the control's bounds. A trillionth of a
-/// step of slack, so a value already on the grid moves a whole step.
 public func stepPast(_ m: Measure, _ value: Double, up: Bool) -> Double {
     let k = value * m.nudgeDen / m.nudgeNum
     let n = up ? (k + 1e-9).rounded(.down) + 1 : (k - 1e-9).rounded(.up) - 1
@@ -277,9 +214,6 @@ public func stepPast(_ m: Measure, _ value: Double, up: Bool) -> Double {
     return clamp(v, to: bounds)
 }
 
-/// What the screen shows for a value stored in SI: converted, rounded to the
-/// step, and kept inside the control's bounds. Not a number shows as the floor,
-/// or zero for a readout.
 public func display(_ m: Measure, _ si: Double) -> Double {
     guard si.isFinite else { return m.bounds?.lowerBound ?? 0 }
     let v = snap(m, fromSI(m.unit, si))
@@ -287,17 +221,11 @@ public func display(_ m: Measure, _ si: Double) -> Double {
     return clamp(v, to: bounds)
 }
 
-/// `display`, as plain decimal digits with a point and no grouping: machine
-/// text, as a web input holds it. What the cook reads goes through
-/// `quantityText` and the formatting locale instead.
 public func displayText(_ m: Measure, _ si: Double) -> String {
     let v = display(m, si)
     return String(format: "%.\(shownDecimals(m, v))f", v)
 }
 
-/// How many decimals a displayed value is shown with: the measure's own, or,
-/// for a measure that trims, the fewest that say the value exactly. The value
-/// is already on the step grid, so that is the grid's decimals or none.
 public func shownDecimals(_ m: Measure, _ value: Double) -> Int {
     guard m.trim else { return m.decimals }
     for d in 0..<m.decimals where roundTo(value, d) == value {
@@ -306,8 +234,6 @@ public func shownDecimals(_ m: Measure, _ value: Double) -> Int {
     return m.decimals
 }
 
-/// What a number set on a control means, in SI: converted, then clamped by
-/// `Limits` in SI. Nil for no number at all.
 public func parse(_ m: Measure, _ typed: Double) -> Double? {
     guard typed.isFinite else { return nil }
     let si = toSI(m.unit, typed)
@@ -315,9 +241,6 @@ public func parse(_ m: Measure, _ typed: Double) -> Double? {
     return clamp(si, to: limit)
 }
 
-/// A number and its unit, as a catalogue key and the value to put in it. The
-/// renderer writes the value in the formatting locale, to the measure's
-/// decimals - "2.4 oz", "2,4 oz", "1,500 m".
 public struct QuantityText: Sendable, Equatable {
     public let key: CopyKey
     public let value: Fixed
@@ -328,9 +251,6 @@ public func quantityText(_ m: Measure, _ si: Double) -> QuantityText {
     return QuantityText(key: m.formatKey, value: Fixed(v, decimals: shownDecimals(m, v)))
 }
 
-/// What the size menu says for a class: its name and its mass in the cook's
-/// units. The classes follow the region, not the units, so only the number
-/// changes. The label rounds; the model cooks the mass to a tenth of a gram.
 public struct SizeLabel: Sendable, Equatable {
     public let key: CopyKey
     public let mass: QuantityText
@@ -338,9 +258,6 @@ public struct SizeLabel: Sendable, Equatable {
 
 public func sizeClassLabel(_ c: SizeClass, system: UnitSystem) -> SizeLabel {
     let m = measureFor(.mass, system: system, region: nil)
-    // A carton's class is named to the whole gram: the half gram is the step
-    // for an egg on the scale, and an American Extra Large is 67.3 g, not
-    // "67.5 g".
     if m.trim {
         return SizeLabel(key: c.key, mass: QuantityText(
             key: m.formatKey, value: Fixed(roundTo(c.massKg * 1000, 0), decimals: 0)
@@ -362,10 +279,7 @@ public enum TemperaturePreference: String, Sendable {
     case celsius, fahrenheit
 }
 
-/// The system a cook starts in, before they choose. The temperature preference
-/// wins where there is one; then the measurement system, where only `us` is
-/// Imperial; then the region, where only `US` is. See `regionalUnits` in
-/// units.ts for why.
+/// The TypeScript's `PlatformUnits`, as arguments.
 public func regionalUnits(
     region: String?, measurementSystem: MeasurementSystemName? = nil,
     temperature: TemperaturePreference? = nil
@@ -375,21 +289,16 @@ public func regionalUnits(
     return isUS(region) ? .imperial : .metric
 }
 
-/// The cook's choice if they made one, the region's otherwise.
 public func effectiveUnits(chosen: UnitSystem?, regional: UnitSystem) -> UnitSystem {
     chosen ?? regional
 }
 
-/// An explicit change of system. `languageAfterFlip` listens for
-/// `metricToImperial`; `imperialToMetric` moves no language.
 public enum UnitsFlip: String, Sendable {
     case metricToImperial, imperialToMetric
 }
 
 public struct UnitsChoice: Sendable, Equatable {
-    /// What to store: the cook chose this, even if it equals the default.
     public let chosen: UnitSystem
-    /// The flip it makes, or nil when the system on screen does not change.
     public let flip: UnitsFlip?
 }
 

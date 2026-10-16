@@ -188,7 +188,7 @@ for (let i = 0; i < CARRY_COOLING.length; i++) {
 
 // A bowl of still water, two eggs in 2 L at 20 C: it warms by under 3 C, so
 // it is running water at 20 C to within a couple of seconds of jammy
-// (design/bowl.md section 2.2, from a loop of its own).
+// (README.md section 2.4; studies/bowl.ts, from a loop of its own).
 {
   const bowl = cookMinutes(REFERENCE_EGG, referenceSetup({ eggCount: 2, cooling: 'bowl', bowlLitres: 2, coolingWater_C: 20 }), 0.41);
   const tap = cookMinutes(REFERENCE_EGG, referenceSetup({ eggCount: 2, cooling: 'tap', coolingWater_C: 20 }), 0.41);

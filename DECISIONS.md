@@ -142,19 +142,14 @@ The worklist's questions, answered the same day:
     every piece of back-compat for one goes** ("kill em all").
 39. **Delete `saferLevels` and everything that serves it.**
 40. **`Decision` drops `interval`, `stillLearning` and `loss`.** No screen
-    shows "still learning" as a line (93), so the decision does not compute
-    it. `npm run decide -- learning` and `test/decide.test.ts` read the
-    interval on demand from `predictCookTime`. The threshold the owner
-    preferred (26 September 2026) was the 80% interval on the cook time
-    narrowing below about ±15 s, about the width of "just right".
-41. **The Swift core drops what no app calls**: the science checks,
-    measure-not-weigh and the inference read-outs. TypeScript keeps them.
-42. **`sousvide.warn` was false**: the model sets the white after about
-    22.7 h at 58 °C. Reworded.
-43. **Choosing Weighed goes back to the last weighed mass**, as the web's
-    measured option does.
-44. **"Kitchen" is renamed "settings"**, and the key renames are finished
-    ("kitchen was a terrible name").
+    shows "still learning" (93). Where the interval is studied, the owner's
+    threshold stands: the 80% interval on the cook time narrowing below
+    about ±15 s.
+41. **The Swift core drops what no app calls**; TypeScript keeps it.
+42. **`sousvide.warn` was false**: it says what the model does, which sets
+    the white after about 22.7 h at 58 °C.
+43. **Choosing Weighed goes back to the last weighed mass**, on both apps.
+44. **"Kitchen" is renamed "settings"** ("kitchen was a terrible name").
 45. **The copy review is applied as one named draft.** Superseded by 106.
 
 Decided by the owner, 29 September 2026:
@@ -658,8 +653,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     cook that cannot be read is dropped, and the boot sweep of retired keys
     deletes `v4` with the rest ("Yes, sweep v4 too"). What stays: "Export
     my results", in Settings under What I've learned, which saves the store
-    exactly as stored to a file (a download on the web, the share sheet on
-    iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
+    to a file as data, by each app's own JSON encoder, a damaged store as
+    its text (a download on the web, the share sheet on iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
     files back for the fit, older ones included; replaying the posterior
     whenever the model it was folded under (`MODEL_ID`, kept beside it) is
     not this build's. A cook too old to
@@ -733,7 +728,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     gather it in my own beta testing"). The eggs go into a bowl and are
     left; the bowl warms by exactly the heat they give up, and the egg's
     surface follows it, blended over `TAU_PLUNGE`, as the ice bath and
-    running water are held (`design/bowl.md`, `studies/bowl.ts`): once
+    running water are held (README section 2.4, `studies/bowl.ts`): once
     volume, count and water temperature are given, about -2 to +6 s at
     jammy, surer than the air and about as sure as running water. The
     bowl's volume is asked (2 L by default); the water's temperature is

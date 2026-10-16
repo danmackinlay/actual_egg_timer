@@ -129,7 +129,7 @@ export const DEFAULTS = {
   altitude_m: 0,
   waterLitres: 2,
   /** A mixing bowl: within 3 s of any other volume for one to six eggs
-   *  (design/bowl.md section 2.7). */
+   *  (README.md section 2.4). */
   bowlLitres: 2,
   eggCount: 2,
   doneness: 0.41,

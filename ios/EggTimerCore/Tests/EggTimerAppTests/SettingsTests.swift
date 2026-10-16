@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import EggTimerApp
 import EggTimerCore
+import EggTimerCopy
 
 /// The settings as this app keeps them (Settings.swift), and the language
 /// and alarm's sound it keeps beside them: a stored copy read back with
@@ -114,5 +115,18 @@ struct SettingsTests {
         let stored = try JSONSerialization.data(withJSONObject: LanguageState(chosen: periodLanguage).jsonObject)
         #expect(readLanguageState(try JSONSerialization.jsonObject(with: stored), known: languages).chosen == periodLanguage)
         #expect(LanguageState.fresh.jsonObject["chosen"] is NSNull)
+    }
+
+    @Test func theUnitsSwitchToImperialMovesOnlyModernEnglishInto1750() {
+        let english = LanguageState(chosen: "en"), period = LanguageState(chosen: periodLanguage)
+        let czech = LanguageState(chosen: "cs")
+        #expect(effectiveLanguage(.fresh) == defaultLanguage)
+        for state in [LanguageState.fresh, english] {
+            #expect(languageAfterFlip(state, .metricToImperial) == period)
+        }
+        for state in [period, czech] { #expect(languageAfterFlip(state, .metricToImperial) == state) }
+        for state in [LanguageState.fresh, english, period, czech] {
+            #expect(languageAfterFlip(state, .imperialToMetric) == state, "back to metric leaves it")
+        }
     }
 }

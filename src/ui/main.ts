@@ -18,7 +18,7 @@
  *  (`npm run serve:site`), asks for nothing it does not have. */
 import { boot } from './app.ts';
 import { applyCopy, loadCopy } from './copy.ts';
-import { effectiveLanguage } from '../core/language.ts';
+import { effectiveLanguage } from './settings.ts';
 import { isDevHost } from './now.ts';
 import { loadLanguage } from './store.ts';
 import { loadPopulation } from './population.ts';

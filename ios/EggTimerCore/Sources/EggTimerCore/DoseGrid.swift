@@ -1,20 +1,10 @@
 import Foundation
 
-/// Cached dose surface, so Bayesian calibration is fast enough to run in a UI.
-///
-/// The particle filter needs the delivered dose for every particle at the cook
-/// time actually used. Calling `simulate()` per particle costs ~1.9 ms, so 2000
-/// particles is ~3.4 s - far too slow. Precomputing log10(dose) on a grid over
-/// (alpha, cook time) and interpolating bilinearly turns each particle lookup
-/// into a handful of flops.
-///
-/// Log dose rather than dose: it spans four orders of magnitude over three
-/// minutes of cooking (z ~ 4.65 K makes the kinetics very sharp), so linear
-/// interpolation of the raw value would be hopeless. In log space the surface is
-/// close to linear, because log10(dose) is roughly T/z and T is smooth.
-///
-/// The yolk's peak temperature is kept beside the doses, in degrees: what
-/// a probe at the centre reads when the centre peaks. See src/core/doseGrid.ts.
+/// The twin of `src/core/doseGrid.ts`; the TypeScript's comments say what each
+/// part is for.
+
+/// The cached dose surface, log10 equivalent minutes on a grid over (alpha,
+/// cook time).
 public struct DoseGrid: Sendable, Codable {
     public let logAlphaMin: Double
     public let logAlphaStep: Double
@@ -25,7 +15,7 @@ public struct DoseGrid: Sendable, Codable {
     /// log10 equivalent-minutes, row-major [alphaIndex * timeCount + timeIndex].
     public let logYolk: [Double]
     public let logWhite: [Double]
-    /// The yolk centre's peak temperature, C, same layout.
+    /// Same layout, in C.
     public let peakYolkC: [Double]
 
     public init(
@@ -68,8 +58,8 @@ public struct GridSpec: Sendable, Codable {
     }
 }
 
-/// Where the dose surface goes, given its centre and the cook. Production is
-/// `calibrationGrid` (Record.swift); fixtures and tests pass a coarser one.
+/// Production is `calibrationGrid` (Record.swift); fixtures and tests pass a
+/// coarser one.
 public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
 
 /// Everything a dose-surface build needs.
@@ -79,9 +69,6 @@ public struct GridRequest: Sendable, Codable {
     public let spec: GridSpec
 }
 
-/// Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
-/// the default 21 x 32. Rebuild only when the egg or setup change, never on
-/// every keystroke.
 public func buildDoseGrid(egg: Egg, setup: CookSetup, spec: GridSpec) -> DoseGrid {
     let (alphaMin, alphaMax, alphaCount) = (spec.alphaMin, spec.alphaMax, spec.alphaCount)
     let (timeMinS, timeMaxS, timeCount) = (spec.timeMinS, spec.timeMaxS, spec.timeCount)
@@ -140,24 +127,18 @@ private func interpolate(
         + v01 * (1 - fa) * ft + v11 * fa * ft
 }
 
-/// log10 of the yolk dose delivered, equivalent minutes at 63 C.
 public func lookupLogYolkDose(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
     interpolate(g.logYolk, g, alphaM2s, cookTimeS)
 }
 
-/// log10 of the white dose delivered, equivalent minutes at 80 C.
 public func lookupLogWhiteDose(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
     interpolate(g.logWhite, g, alphaM2s, cookTimeS)
 }
 
-/// The yolk centre's peak temperature, C.
 public func lookupPeakYolkC(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
     interpolate(g.peakYolkC, g, alphaM2s, cookTimeS)
 }
 
-/// The cook time at which `table` reaches `logDose` for this alpha, by
-/// bisection on the interpolant over the grid's time span. The dose tables are
-/// monotonic in cook time, which is all bisection needs.
 private func cookTimeFor(_ table: [Double], _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
     var lo = g.timeMinS
     var hi = g.timeMinS + g.timeStepS * Double(g.timeCount - 1)
@@ -168,12 +149,10 @@ private func cookTimeFor(_ table: [Double], _ g: DoseGrid, _ alphaM2s: Double, _
     return 0.5 * (lo + hi)
 }
 
-/// Invert the surface: the cook time delivering a given log10 yolk dose.
 public func cookTimeForLogYolkDose(_ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
     cookTimeFor(g.logYolk, g, alphaM2s, logDose)
 }
 
-/// The same for the white: the cook time delivering a given log10 white dose.
 func cookTimeForLogWhiteDose(_ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
     cookTimeFor(g.logWhite, g, alphaM2s, logDose)
 }

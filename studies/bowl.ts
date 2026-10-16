@@ -4,7 +4,7 @@
  *
  * Run: node studies/bowl.ts
  *
- * Quoted by design/bowl.md.
+ * Quoted by README.md sections 2.4 and 11.3.
  *
  * The request: the eggs come out of the pan into a bowl of water filled from
  * the tap and left alone, not running, not iced. The cook would say how much

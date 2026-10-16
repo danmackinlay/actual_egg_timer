@@ -1,38 +1,37 @@
-# INFERENCE.md — making the inference the main part
+# INFERENCE.md — the learning
 
-The design of the learning, and the facts of the model as built. Built: the
-record (§4), the ordered probit and the white offset (§3), the thermometer
-(§5), choosing the time under uncertainty, with the odds-shaded slider and
-the outcome summary (§8), opt-in collection (§7, E6), the nudge (§8, E8)
-and the population fit (§9, E7), which has yet to see a real egg. The
-owner's decisions are numbered in `DECISIONS.md`; the two measurements the design rests on, how many
-directions the answers can move and what a probe reading is worth, are
+The learning as built: what is learned (§2), what the cook is asked and how
+it is scored (§3), the record (§4), the thermometer (§5), unreliable answers
+(§6), opt-in collection (§7), choosing the time under uncertainty, with the
+odds-shaded slider, the outcome summary and the nudge (§8), and the
+population fit (§9), which has yet to see a real egg. The owner's decisions
+are numbered in `DECISIONS.md`; the two measurements the design rests on, how
+many directions the answers can move and what a probe reading is worth, are
 `npm run rank` and `npm run probe`.
 
 ---
 
-## 1. The change of stance
+## 1. The stance
 
-Today the physics is the model and the inference is a three-number patch on it,
-learned per phone, from nothing but that phone's eggs. This plan turns that
-round:
+The physics is the prior; the prediction is the model.
 
-- **The physics is a prior mean.** It is a good one - it carries the `R^2`
-  scaling, altitude, start temperature and the carryover argument, none of which
-  a cook's answers could ever teach from scratch - but it is not the thing being
-  claimed.
-- **The thing being claimed is a prediction**: given this egg, this pot and this
-  time, what will the cook say about the yolk and about the white. The model is
-  right when those predictions are calibrated, and wrong when they are not,
-  whatever `alpha` turns out to be.
-- **Evidence is pooled.** Most of what one kitchen cannot learn - because its
-  cook never varies the egg size or the cooling - a population varies for free.
+- **The physics is a prior mean.** It carries the `R^2` scaling, altitude,
+  start temperature and the carryover argument, none of which a cook's
+  answers could teach from scratch, but it is not what is claimed.
+- **What is claimed is a prediction**: given this egg, this pot and this
+  time, what the cook will say about the yolk and about the white. The model
+  is right when those predictions are calibrated, which is how it is scored
+  (§9), whatever `alpha` turns out to be.
+- **Evidence is pooled.** What one kitchen cannot learn, because its cook
+  never varies the egg's size or the cooling, a population varies for free:
+  each phone and browser learns from its own eggs, from a prior fitted to the
+  eggs everyone shares (§7, §9).
 
-A consequence worth saying once: parameters that cannot be told apart stop being
-a problem, as long as they cannot be told apart *over the cooks people actually
-do*. README §11 spends a lot of effort on whether `alpha`, `h` and the taste
-offset are separable. Under this stance the question is only whether the
-prediction is right, and the confounded directions are simply not learned.
+So parameters that cannot be told apart over the cooks people actually do
+are not a problem; they are not learned. README §11 asks whether `alpha`,
+`h` and the taste offset are separable; here the question is only whether
+the prediction is right, and the confounded directions stay at the prior
+(§2).
 
 ## 2. What is learned, and what is not
 
@@ -616,7 +615,7 @@ answers; in short:
   is added: TestFlight and App Store builds attest in production whatever
   it says. A failure to attest is never fatal; the egg goes to the open
   tier.
-- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
+- **The apps** (`src/ui/share.ts`, iOS's `Sharing.swift`, over core's
   contract with the server, `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
