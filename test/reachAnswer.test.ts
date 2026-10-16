@@ -20,7 +20,7 @@ import { type OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer,
 import { askedWord, certaintyAt } from '../src/core/certainty.ts';
 import { predictOutcome } from '../src/core/outcome.ts';
 import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.ts';
-import { EXHAUSTIVE, appSetup, gridFor, knowing } from '../tools/common.ts';
+import { appSetup, gridFor, knowing } from '../tools/common.ts';
 import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND, point } from './profiles.ts';
 
 test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
@@ -112,16 +112,17 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
 });
 
 /** Every slider position the pan delivers, from soft to hard, with the time the
- *  app gives there (held by the profile, as the apps hold it). `npm test`
- *  takes every fourth, and both ends; `npm run test:slow` takes them all. */
+ *  app gives there (held by the profile, as the apps hold it). Every
+ *  hundredth: a level is held between its profile points' times, so the time
+ *  can fall only between two levels in one gap between points, and the sweep
+ *  takes every level in each gap. */
 function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: OddsProfile; times: [number, number][] } {
   const grid = gridFor(c, egg, setup);
   const profile = oddsProfile(c, egg, setup, grid);
   const times: [number, number][] = [];
   const lo = Math.round(profile.physicalSoftest * 100);
   const hi = Math.round(profile.physicalHardest * 100);
-  const stride = EXHAUSTIVE ? 1 : 4;
-  for (let k = lo; k <= hi; k = k < hi && k + stride > hi ? hi : k + stride) {
+  for (let k = lo; k <= hi; k++) {
     const a = answerAt(c, egg, setup, k / 100, profile);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
     times.push([a.level, d.cookTime_s]);

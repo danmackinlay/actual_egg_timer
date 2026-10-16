@@ -54,8 +54,8 @@ from `netlify.toml` on every push and serves `origin/main`. The `og:` tags in
 `index.html` carry absolute URLs at that domain, so a domain change is a
 commit. There is no second host: the Vercel config was deleted (the owner: "we
 can add vercel later if needed"), and git has it. CI
-(`.github/workflows/verify.yml`) runs `verify`'s steps and `npm run
-test:slow`, `swift test` and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
+(`.github/workflows/verify.yml`) runs `verify`'s steps and `swift test`
+and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
 each a job of its own.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host

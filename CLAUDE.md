@@ -29,9 +29,7 @@ next is `PLAN.md`; the last section here says which document holds what.
 
   Any merge that touched code runs the full `npm run verify` once. A slow
   suite runs once, on the branch's final code, here or in CI on the pushed
-  branch; a later commit to documents alone needs no rerun. A sweep in
-  `npm test` may be smaller than in `npm run test:slow`, which CI runs
-  (`EXHAUSTIVE`, `tools/common.ts`).
+  branch; a later commit to documents alone needs no rerun.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
