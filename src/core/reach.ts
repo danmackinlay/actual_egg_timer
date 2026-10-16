@@ -200,14 +200,6 @@ function decisionAtLevel(
   return decide(c, grid, sol, logYolkTarget(level), bounds);
 }
 
-/** The odds the app shows when the slider sits at `level`, with `profile` - the
- *  pot's, or null before it is built - holding its time. */
-export function oddsAtLevel(
-  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number, profile: OddsProfile | null,
-): number {
-  return decisionAtLevel(c, egg, setup, grid, level, envelopeBounds(profile, level)).odds;
-}
-
 /**
  * A profile being built: the pot it is for, and the points decided on it so
  * far, as arrays kept in order of slider position. Plain data, handed to the

@@ -38,7 +38,7 @@ import { type Solution, solveCookTime } from '../src/core/solve.ts';
 import { anchorNear, snapUp, verdictFor } from '../src/core/slider.ts';
 import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
 import {
-  ADVICE_GAIN, type AdviceFacts, type OddsProfile, adviceWanted, askedNear, lowOddsAt, oddsAtLevel, answerAt, decideAnswer,
+  ADVICE_GAIN, type AdviceFacts, type OddsProfile, adviceWanted, askedNear, lowOddsAt, answerAt, decideAnswer,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.ts';
 import { askedWord, certaintyAt, wordCertainty } from '../src/core/certainty.ts';
@@ -59,7 +59,6 @@ test('1. a profile point is the odds and the certainty the app shows at that lev
     const d = shown.decision;
     assert.equal(d.odds, q.odds, `level ${q.level}`);
     assert.equal(d.cookTime_s, q.cookTime_s, `level ${q.level}`);
-    assert.equal(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, q.level, p), q.odds);
     // The line under the time, at that level and time, is the point's class.
     assert.equal(shown.certainty.words.certainty, q.certainty, `level ${q.level}`);
     assert.equal(shown.certainty.words.pAsked, q.pAsked, `level ${q.level}`);
