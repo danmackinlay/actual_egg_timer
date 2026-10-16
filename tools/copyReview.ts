@@ -1,332 +1,171 @@
 /**
- * The review queue as one page, to read on a phone.
+ * The words changed since the owner last approved them, as one page to read
+ * on a phone, and the record of his approval. LANGUAGE.md section 3.
  *
- *   npm run copy:review [out.html]      default _dev/copy-review.html
+ *   npm run copy:review [-- out.html]   default _dev/copy-review.html
+ *   npm run copy:approve                record HEAD as approved
  *
- * For each key in the queue (tools/copyApproval.ts): the approved English
- * against today's, word by word; each translation's twin, and whether it is
- * stale or shows the English; the regional overlays' words, as approved and
- * as they are; the surface's length budget against the longest rendering,
- * where the surface has one (test/data/surfaces.json, as copy.test.ts
- * measures it); which apps say it, read from their sources; and the note
- * beside the catalogue (copy/en.notes.json). Then the stale twins under
- * English that is already approved. One file, no network: the styles are
- * inline and there is no script, so it can be sent to a phone as it is.
+ * APPROVED_PATH holds the last commit whose words the owner approved. The
+ * page is copy/en.json and its regional overlays at that commit against the
+ * working tree, key by key (changed, added, retired): the English word by
+ * word, the overlay's words, and the key's note (copy/en.notes.json). One
+ * file with no script and no network, to send to a phone as it is.
+ * Approving records HEAD, and refuses while copy/ has uncommitted changes,
+ * which no commit could name. It is the owner's word; no agent gives it.
  */
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { type Catalogue, OVERLAYS, parseCatalogue } from '../src/core/copy.ts';
-import {
-  ApprovalError, CATEGORIES, type CatalogueJson, type Change, type Queued, type Templates, type TwinState, copyIsDirty,
-  readApproved, readCatalogue, reviewQueue, templatesOf, translationTags, twinStatesOf, wordsAt, wordsNow,
-} from './copyApproval.ts';
-import { type App, type Notes, type Surface, appsUsing, longest, readNotes, readSurfaces } from './copyNotes.ts';
+import { OVERLAYS, PLURAL_CATEGORIES } from '../src/core/copy.ts';
+import { readNotes } from './copyNotes.ts';
 
-/** How each translation is named on the page. */
-const NAMES: Record<string, string> = { 'en-x-1750': '1750' };
+const APPROVED_PATH = 'test/data/copy-approved.txt';
+const CATEGORIES = ['text', ...PLURAL_CATEGORIES];
+type Messages = Record<string, Record<string, unknown>>;
+type Templates = Record<string, string>;
 
-function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const git = (...args: string[]): string => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
+const copyIsDirty = (): boolean => git('status', '--porcelain', '--', 'copy') !== '';
+
+/** A catalogue's messages at a commit, or in the working tree with none. */
+function messages(tag: string, commit: string | null): Messages {
+  const text = commit === null ? readFileSync(`copy/${tag}.json`, 'utf8') : git('show', `${commit}:copy/${tag}.json`);
+  return (JSON.parse(text) as { messages: Messages }).messages;
 }
 
-/** Escaped text with each placeholder marked, so `{time}` reads as a slot. */
-function words(s: string): string {
-  return esc(s).replace(/\{[A-Za-z][A-Za-z0-9_]*\}/g, (p) => `<span class="ph">${p}</span>`);
+/** An entry's templates, by category; `base` and `count` are not words. */
+function templatesOf(entry: Record<string, unknown> | undefined): Templates | null {
+  if (entry === undefined) return null;
+  return Object.fromEntries(CATEGORIES.filter((c) => typeof entry[c] === 'string').map((c) => [c, entry[c] as string]));
 }
 
-/* ------------------------------------------------------------ the diff */
+const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const words = (s: string): string => esc(s).replace(/\{[A-Za-z]\w*\}/g, (p) => `<span class="ph">${p}</span>`);
 
-/** Words, placeholders, runs of space and single marks, so a diff moves whole words. */
-function tokens(s: string): string[] {
-  return s.match(/\{[A-Za-z][A-Za-z0-9_]*\}|[\p{L}\p{N}’'-]+|\s+|[^\s\p{L}\p{N}]/gu) ?? [];
-}
-
-type Op = { op: 'same' | 'del' | 'ins'; text: string };
-
-/** The longest common subsequence of the two strings' tokens, as runs. */
-function diff(a: string, b: string): Op[] {
-  const x = tokens(a);
-  const y = tokens(b);
-  const n = x.length;
-  const m = y.length;
-  const lcs = new Uint16Array((n + 1) * (m + 1));
-  for (let i = n - 1; i >= 0; i--) {
-    for (let j = m - 1; j >= 0; j--) {
-      lcs[i * (m + 1) + j] = x[i] === y[j]
-        ? lcs[(i + 1) * (m + 1) + j + 1] + 1
-        : Math.max(lcs[(i + 1) * (m + 1) + j], lcs[i * (m + 1) + j + 1]);
-    }
-  }
-  const ops: Op[] = [];
-  const push = (op: Op['op'], text: string): void => {
-    const last = ops[ops.length - 1];
-    if (last !== undefined && last.op === op) last.text += text;
-    else ops.push({ op: op, text: text });
-  };
-  let i = 0;
-  let j = 0;
-  while (i < n || j < m) {
-    if (i < n && j < m && x[i] === y[j]) {
-      push('same', x[i]); i++; j++;
-    } else if (j < m && (i === n || lcs[i * (m + 1) + j + 1] >= lcs[(i + 1) * (m + 1) + j])) {
-      push('ins', y[j]); j++;
-    } else {
-      push('del', x[i]); i++;
-    }
-  }
-  return ops;
-}
-
-/** A run the diff kept that is too slight to read alone between two changes:
- *  a space, or a space and a short word ("the", "a", ","). */
-function slight(text: string): boolean {
-  return text.trim().length <= 3 && !/\{/.test(text);
-}
-
-/** The diff as a reader wants it: each stretch of change once as it was,
- *  then once as it is, with the slight runs inside it folded into both, so
- *  a rewritten clause reads whole rather than word against word. */
+/** The two strings' word-by-word difference: the longest common run of
+ *  words kept, each stretch of change shown once as it was and once as it is. */
 function diffHtml(a: string, b: string): string {
-  const ops = diff(a, b);
-  const out: string[] = [];
+  const split = (s: string): string[] => s.match(/\{\w+\}|[\p{L}\p{N}’'-]+|\s+|[^\s\p{L}\p{N}]/gu) ?? [];
+  const x = split(a);
+  const y = split(b);
+  const lcs = Array.from({ length: x.length + 1 }, () => new Array<number>(y.length + 1).fill(0));
+  for (let i = x.length - 1; i >= 0; i--) {
+    for (let j = y.length - 1; j >= 0; j--) {
+      lcs[i][j] = x[i] === y[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+    }
+  }
+  const runs: { op: 'same' | 'del' | 'ins'; text: string }[] = [];
+  const push = (op: 'same' | 'del' | 'ins', text: string): void => {
+    if (runs.at(-1)?.op === op) runs[runs.length - 1].text += text;
+    else runs.push({ op: op, text: text });
+  };
+  for (let i = 0, j = 0; i < x.length || j < y.length;) {
+    if (i < x.length && j < y.length && x[i] === y[j]) { push('same', x[i++]); j++; }
+    else if (j < y.length && (i === x.length || lcs[i][j + 1] >= lcs[i + 1][j])) push('ins', y[j++]);
+    else push('del', x[i++]);
+  }
+  let out = '';
   let del = '';
   let ins = '';
   const flush = (): void => {
-    if (del !== '') out.push(`<del>${words(del)}</del>`);
-    if (ins !== '') out.push(`<ins>${words(ins)}</ins>`);
-    del = '';
-    ins = '';
+    out += (del === '' ? '' : `<del>${words(del)}</del>`) + (ins === '' ? '' : `<ins>${words(ins)}</ins>`);
+    del = ins = '';
   };
-  for (let k = 0; k < ops.length; k++) {
-    const o = ops[k];
-    const inChange = del !== '' || ins !== '';
-    const next = ops[k + 1];
-    if (o.op === 'del') del += o.text;
-    else if (o.op === 'ins') ins += o.text;
-    else if (inChange && next !== undefined && slight(o.text)) {
-      del += o.text;
-      ins += o.text;
+  runs.forEach((r, k) => {
+    if (r.op === 'del') del += r.text;
+    else if (r.op === 'ins') ins += r.text;
+    // A space or a short word between two changes is folded into both, so a rewritten clause reads whole.
+    else if ((del !== '' || ins !== '') && k + 1 < runs.length && r.text.trim().length <= 3 && !r.text.includes('{')) {
+      del += r.text;
+      ins += r.text;
     } else {
       flush();
-      out.push(words(o.text));
+      out += words(r.text);
     }
-  }
+  });
   flush();
-  return out.join('');
-}
-
-/* ---------------------------------------------------------- the lengths */
-
-function lengthHtml(n: number, budget: number | undefined): string {
-  if (budget === undefined) return `${n} characters`;
-  return n > budget ? `<span class="over">${n} of ${budget} characters: over budget</span>` : `${n} of ${budget} characters`;
-}
-
-/* ------------------------------------------------------------ the page */
-
-function templatesHtml(t: Templates, cls: string = ''): string {
-  return CATEGORIES.filter((c) => c in t).map((c) => `<p class="words ${cls}">`
-    + `${c === 'text' ? '' : `<span class="cat">${c}</span> `}${words(t[c])}</p>`).join('');
-}
-
-function diffTemplatesHtml(before: Templates, after: Templates): string {
-  return CATEGORIES.filter((c) => c in before || c in after).map((c) => {
-    const label = c === 'text' ? '' : `<span class="cat">${c}</span> `;
-    const body = !(c in before) ? `<ins>${words(after[c])}</ins>`
-      : !(c in after) ? `<del>${words(before[c])}</del>` : diffHtml(before[c], after[c]);
-    return `<p class="words">${label}${body}</p>`;
-  }).join('');
-}
-
-const TWIN_FLAG: Record<TwinState, string> = {
-  current: '',
-  stale: '<span class="flag warn">stale: written against older English</span>',
-  missing: '<span class="flag">none: shows the English</span>',
-};
-
-interface Context {
-  en: CatalogueJson;
-  english: Catalogue;
-  surfaces: Record<string, Surface>;
-  notes: Record<string, Notes>;
-  apps: Map<string, Set<App>>;
-  overlays: Map<string, Catalogue>;
-  translations: { tag: string; json: CatalogueJson; catalogue: Catalogue; states: Map<string, TwinState> }[];
+  return out;
 }
 
 /** Words as approved against words now: a diff, all new, or all gone. */
-function changeHtml(c: Change): string {
-  if (c.approved === null) return templatesHtml(c.current ?? {});
-  if (c.current === null) return templatesHtml(c.approved, 'gone');
-  return diffTemplatesHtml(c.approved, c.current);
+function changeHtml(before: Templates | null, after: Templates | null): string {
+  return CATEGORIES.filter((c) => before?.[c] !== undefined || after?.[c] !== undefined).map((c) => {
+    const a = before?.[c];
+    const b = after?.[c];
+    const body = a === undefined ? `<ins>${words(b!)}</ins>` : b === undefined ? `<del>${words(a)}</del>` : diffHtml(a, b);
+    return `<p class="words">${c === 'text' ? '' : `<span class="cat">${c}</span> `}${body}</p>`;
+  }).join('');
 }
 
-function card(q: Queued, ctx: Context): string {
-  const parts: string[] = [];
-  parts.push(`<h3><code>${esc(q.key)}</code> <span class="state ${q.state}">${q.state}</span></h3>`);
-  if (q.current === null) {
-    parts.push('<p class="meta">retired: gone from the catalogue</p>');
-    parts.push(templatesHtml(q.approved ?? {}, 'gone'));
-    return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
-  }
-  const apps = [...(ctx.apps.get(q.key) ?? [])].sort().reverse().map((a) => (a === 'ios' ? 'iOS' : a)).join(' · ') || 'no app';
-  const notes = ctx.notes[q.key];
-  const surfaceName = notes.surface;
-  const budget = ctx.surfaces[surfaceName].budget;
-  parts.push(`<p class="meta">${esc(apps)} · ${esc(surfaceName)}: `
-    + `${lengthHtml(longest(ctx.english, q.key, ctx.notes), budget)}</p>`);
-  parts.push(changeHtml(q));
-  const rows: string[] = [];
-  for (const t of ctx.translations) {
-    const state = t.states.get(q.key) ?? 'missing';
-    const twin = templatesOf(t.json.messages[q.key]);
-    rows.push(`<dt>${esc(NAMES[t.tag] ?? t.tag)} ${TWIN_FLAG[state]}</dt><dd>`
-      + `${twin === null ? '' : `${templatesHtml(twin)}<p class="meta">`
-        + `${lengthHtml(longest(t.catalogue, q.key, ctx.notes), budget)}</p>`}</dd>`);
-  }
-  for (const o of q.overlays) {
-    const catalogue = ctx.overlays.get(o.tag);
-    rows.push(`<dt>${esc(o.tag)}</dt><dd>${changeHtml(o)}${o.current === null || catalogue === undefined ? ''
-      : `<p class="meta">${lengthHtml(longest(catalogue, q.key, ctx.notes), budget)}</p>`}</dd>`);
-  }
-  if (typeof notes.note === 'string') rows.push(`<dt>Note</dt><dd><p class="note">${esc(notes.note)}</p></dd>`);
-  if (rows.length > 0) parts.push(`<dl>${rows.join('')}</dl>`);
-  return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
-}
-
-/** HEAD, and whether the words have changes it does not hold. */
-function revision(): { head: string; dirty: boolean } {
-  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  return { head: head, dirty: copyIsDirty() };
-}
-
-const STYLE = `
-:root { color-scheme: light dark; --bg: #faf8f4; --fg: #1d1b18; --muted: #6a655c; --card: #ffffff;
-  --line: #e2ddd3; --del-bg: #fbe0de; --del-fg: #8c1d18; --ins-bg: #d9f1df; --ins-fg: #14532d;
-  --warn: #9a4a00; --over: #b3261e; --ph: #ebe6f8; --accent: #3b5bab; }
-@media (prefers-color-scheme: dark) { :root { --bg: #151412; --fg: #ece8e1; --muted: #a29d93;
-  --card: #201e1b; --line: #37332d; --del-bg: #4b1f1c; --del-fg: #fbc8c4; --ins-bg: #173822;
-  --ins-fg: #bdf3cc; --warn: #f2b45a; --over: #ff8a80; --ph: #312c48; --accent: #9db4f0; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg);
-  font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+const STYLE = `:root { color-scheme: light dark; --bg: #faf8f4; --fg: #1d1b18; --muted: #6a655c; --card: #fff;
+  --line: #e2ddd3; --del: #fbe0de; --ins: #d9f1df; --ph: #ebe6f8; }
+@media (prefers-color-scheme: dark) { :root { --bg: #151412; --fg: #ece8e1; --muted: #a29d93; --card: #201e1b;
+  --line: #37332d; --del: #4b1f1c; --ins: #173822; --ph: #312c48; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 -apple-system, system-ui, sans-serif; }
 main { max-width: 40rem; margin: 0 auto; padding: 16px 16px 48px; }
-h1 { font-size: 1.5rem; margin: 0.5rem 0; }
-h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
-h3 { font-size: 1rem; margin: 0 0 0.25rem; font-weight: 600; overflow-wrap: anywhere; }
-nav a, a { color: var(--accent); }
-nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
-article { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-  padding: 12px 14px; margin: 12px 0; }
-.meta, .note, dt { color: var(--muted); font-size: 0.85rem; }
-.meta { margin: 0 0 0.5rem; }
+h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+h3 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
+article { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
+.meta, dt, .cat { color: var(--muted); font-size: 0.85rem; } dt { margin-top: 0.5rem; font-weight: 600; } dd { margin: 0; }
 .words { margin: 0.25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.gone { text-decoration: line-through; color: var(--muted); }
-.cat { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.ph { background: var(--ph); border-radius: 4px; padding: 0 2px; font-size: 0.92em; }
-del { background: var(--del-bg); color: var(--del-fg); }
-ins { background: var(--ins-bg); color: var(--ins-fg); text-decoration: none; }
-del + ins { margin-left: 0.2em; }
-dl { margin: 0.75rem 0 0; border-top: 1px solid var(--line); padding-top: 0.5rem; }
-dt { margin-top: 0.5rem; font-weight: 600; }
-dd { margin: 0; }
-dd .meta { margin: 0; }
-.state, .flag { font-size: 0.75rem; font-weight: 600; border-radius: 999px; padding: 1px 8px;
-  border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-.state.changed { color: var(--accent); } .state.added { color: var(--ins-fg); } .state.retired { color: var(--del-fg); }
-.warn { color: var(--warn); }
-.over { color: var(--over); font-weight: 600; }
-code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--line);
-  border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; }
-`;
+del { background: var(--del); } ins { background: var(--ins); text-decoration: none; } del + ins { margin-left: 0.2em; }
+.ph { background: var(--ph); border-radius: 4px; padding: 0 2px; }`;
 
-function page(): { html: string; queued: number } {
-  const approvedAt = readApproved();
-  const now = wordsNow();
-  const en = now.en;
-  const english = parseCatalogue(en);
-  const translations = translationTags().map((tag) => {
-    const json = readCatalogue(tag);
-    return { tag: tag, json: json, catalogue: parseCatalogue(json, english), states: twinStatesOf(tag, en) };
-  });
-  const ctx: Context = {
-    en: en, english: english, surfaces: readSurfaces(), notes: readNotes(), apps: appsUsing(Object.keys(en.messages)),
-    overlays: new Map(OVERLAYS.map((tag) => [tag, parseCatalogue(readCatalogue(tag), english)])),
-    translations: translations,
+function review(out: string): void {
+  const approved = readFileSync(APPROVED_PATH, 'utf8').trim();
+  if (!/^[0-9a-f]{40}$/.test(approved)) throw new Error(`${APPROVED_PATH} is not one commit's full hash`);
+  const tags = ['en', ...OVERLAYS];
+  const then = tags.map((tag) => messages(tag, approved));
+  const now = tags.map((tag) => messages(tag, null));
+  const notes = readNotes();
+  const same = (i: number, key: string): boolean =>
+    JSON.stringify(templatesOf(then[i][key])) === JSON.stringify(templatesOf(now[i][key]));
+  const queue = [...new Set([...Object.keys(now[0]), ...Object.keys(then[0])])]
+    .filter((key) => tags.some((_t, i) => !same(i, key)));
+  const state = (key: string): string => (!(key in then[0]) ? 'Added' : !(key in now[0]) ? 'Retired' : 'Changed');
+  const card = (key: string): string => {
+    const rows = tags.map((tag, i) => [tag, then[i][key], now[i][key]] as const).slice(1)
+      .filter(([, a, b]) => a !== undefined || b !== undefined)
+      .map(([tag, a, b]) => `<dt>${tag}</dt><dd>${changeHtml(templatesOf(a), templatesOf(b))}</dd>`);
+    const note = notes[key]?.note;
+    if (note !== undefined) rows.push(`<dt>Note</dt><dd class="meta">${esc(note)}</dd>`);
+    const english = changeHtml(templatesOf(then[0][key]), templatesOf(now[0][key]));
+    return `<article><h3><code>${esc(key)}</code></h3>${english}${rows.length > 0 ? `<dl>${rows.join('')}</dl>` : ''}</article>`;
   };
-
-  const queue = reviewQueue(wordsAt(approvedAt), now);
-  const inQueue = new Set(queue.map((q) => q.key));
-  const byState = (s: Queued['state']): Queued[] => queue.filter((q) => q.state === s);
-  const sections: string[] = [];
-  const nav: string[] = [];
-  for (const [state, title] of [['changed', 'Changed'], ['added', 'Added'], ['retired', 'Retired']] as const) {
-    const qs = byState(state);
-    if (qs.length === 0) continue;
-    nav.push(`<a href="#${state}">${title}: ${qs.length}</a>`);
-    sections.push(`<h2 id="${state}">${title} (${qs.length})</h2>${qs.map((q) => card(q, ctx)).join('')}`);
-  }
-  const summaries: string[] = [];
-  for (const t of translations) {
-    const name = NAMES[t.tag] ?? t.tag;
-    const stale = [...t.states].filter(([, s]) => s === 'stale').map(([k]) => k);
-    const missing = [...t.states.values()].filter((s) => s === 'missing').length;
-    summaries.push(`${esc(name)}: ${stale.length} stale, ${missing} showing the English`);
-    const rest = stale.filter((k) => !inQueue.has(k));
-    if (rest.length === 0) continue;
-    nav.push(`<a href="#twins-${esc(t.tag)}">${esc(name)} to rewrite: ${rest.length}</a>`);
-    sections.push(`<h2 id="twins-${esc(t.tag)}">${esc(name)} to rewrite, under approved English (${rest.length})</h2>`
-      + rest.map((key) => `<article id="${esc(t.tag)}-${esc(key)}"><h3><code>${esc(key)}</code> `
-        + `${TWIN_FLAG.stale}</h3>${templatesHtml(templatesOf(en.messages[key]) ?? {})}`
-        + `<dl><dt>${esc(name)}</dt><dd>${templatesHtml(templatesOf(t.json.messages[key]) ?? {})}</dd></dl></article>`).join(''));
-  }
-  const rev = revision();
-  const total = Object.keys(en.messages).length;
-  const approving = rev.dirty
-    ? '<p>The words have changes not yet committed, so no commit holds what this page shows: commit them, and write the page again.</p>'
-    : '<p>If nothing needs putting back, this approves exactly what this page shows:</p>'
-      + `<pre>npm run copy:approve -- ${esc(rev.head)}</pre>`
-      + '<p>Otherwise, say what to put back; once that is committed, <code>npm run copy:approve</code> approves the result.</p>';
+  const sections = ['Changed', 'Added', 'Retired'].map((s) => [s, queue.filter((k) => state(k) === s)] as const)
+    .filter(([, ks]) => ks.length > 0).map(([s, ks]) => `<h2>${s} (${ks.length})</h2>${ks.map(card).join('')}`);
+  const count = `${queue.length} key${queue.length === 1 ? '' : 's'}`;
+  const head = git('rev-parse', 'HEAD').slice(0, 10);
   const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Copy review queue</title>
-<style>${STYLE}</style>
-</head>
-<body>
-<main>
-<h1>The review queue</h1>
-<p class="meta">${queue.length} of ${total} keys to read: ${byState('changed').length} changed, ${byState('added').length} added and
-${byState('retired').length} retired since you approved the words at ${esc(approvedAt.slice(0, 10))}. ${summaries.join('; ')}.
-From ${esc(rev.head.slice(0, 10))}${rev.dirty ? ', with changes to the words not yet committed' : ''}.
-Struck through is what you approved, highlighted what replaced it; a slot like <span class="ph">{time}</span> is filled in by the app.</p>
-<nav>${nav.join('')}</nav>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copy review</title><style>${STYLE}</style></head>
+<body><main><h1>The words to read</h1>
+<p class="meta">${count} changed, added or retired since you approved the words at ${approved.slice(0, 10)}; the
+page is from ${head}${copyIsDirty() ? ', with changes to the words not yet committed' : ''}. Struck through is what
+you approved, highlighted what replaced it; a slot like <span class="ph">{time}</span> is filled in by the app.</p>
 ${sections.join('\n')}
-<h2 id="approve">Approving</h2>
-${approving}
-</main>
-</body>
-</html>
+<h2>Approving</h2><p>Say what to put back. Once that is committed, <code>npm run copy:approve</code> approves the
+words at HEAD.</p>
+</main></body></html>
 `;
-  return { html: html, queued: queue.length };
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, html);
+  console.log(`${out}: ${count} to read.`);
 }
 
-const out = process.argv[2] ?? '_dev/copy-review.html';
-let made: { html: string; queued: number };
+function approve(): void {
+  if (copyIsDirty()) throw new Error('copy/ has changes git has not committed, which no commit can record: commit them');
+  const head = git('rev-parse', 'HEAD');
+  writeFileSync(APPROVED_PATH, `${head}\n`);
+  console.log(`approved the words at ${head.slice(0, 10)}; commit ${APPROVED_PATH}.`);
+}
+
 try {
-  made = page();
+  if (process.argv[2] === 'approve') approve();
+  else review(process.argv[2] ?? '_dev/copy-review.html');
 } catch (e) {
-  if (!(e instanceof ApprovalError)) throw e;
-  console.error(e.message);
+  console.error((e as Error).message);
   process.exit(1);
 }
-const { html, queued } = made;
-mkdirSync(dirname(out), { recursive: true });
-writeFileSync(out, html);
-console.log(`${out}: ${queued} keys in the queue, ${html.length} characters.`);

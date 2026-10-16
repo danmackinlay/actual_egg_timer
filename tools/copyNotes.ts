@@ -1,6 +1,7 @@
 /**
  * What each key of the catalogue is for, read from beside it: the notes in
- * copy/en.notes.json, and which app shows each key, read from the sources.
+ * copy/en.notes.json, and which app shows each key, read from the sources;
+ * and which files in copy/ are catalogues.
  *
  * The catalogues hold only what the renderers read, templates and `count`
  * (DECISIONS.md 122). A key's `surface` (where it is drawn, whose length
@@ -13,9 +14,26 @@
 
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { type Catalogue, render } from '../src/core/copy.ts';
+import { type Catalogue, OVERLAYS, render } from '../src/core/copy.ts';
 
 export const NOTES_PATH = 'copy/en.notes.json';
+
+/** Whether a file in copy/ is a catalogue, `<tag>.json`: everything there
+ *  but the notes should be, since the apps ship the folder whole. */
+export function isCatalogueFile(name: string): boolean {
+  return /^[a-zA-Z0-9-]+\.json$/.test(name);
+}
+
+/** Every catalogue's tag, sorted: `en`, the overlays and the translations. */
+export function catalogueTags(): string[] {
+  return readdirSync('copy').filter(isCatalogueFile).map((f) => f.replace(/\.json$/, '')).sort();
+}
+
+/** Every translation: a catalogue that is not English and not one of its
+ *  regional overlays. Today the English of 1750. */
+export function translationTags(): string[] {
+  return catalogueTags().filter((tag) => tag !== 'en' && !OVERLAYS.includes(tag));
+}
 
 /** One key's notes. */
 export interface Notes {

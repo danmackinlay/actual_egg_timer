@@ -17,8 +17,7 @@ import {
   type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.ts';
-import { catalogueTags } from '../tools/copyApproval.ts';
-import { appsUsing, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
+import { appsUsing, catalogueTags, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {
@@ -28,7 +27,7 @@ function countOf(m: Message): string | null {
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 const SURFACES = readSurfaces();
-/** Every catalogue: `copy/<tag>.json` (`tools/copyApproval.ts`). The same
+/** Every catalogue: `copy/<tag>.json` (`tools/copyNotes.ts`). The same
  *  rule as `tools/fixtures/copy.ts`. */
 const LOCALES = catalogueTags();
 const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
