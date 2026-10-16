@@ -922,3 +922,10 @@ October:
     state: a hold on the control just tapped stops its settle; Cancel and
     "Still in the water? No" commit what is in hand first; another control's
     change commits the one in hand alone.
+138. **The Swift core's constants are made from the TypeScript, and its
+    conformance compares whole values.** `npm run swift:constants` (run by
+    `npm test`, checked by verify) writes `Constants.generated.swift` from
+    `src/core/`; no fixture carries a constant and no test compares one.
+    The Swift results are Codable with the TypeScript's field names and are
+    compared whole with the fixtures, to 1e-12 (109). No fixture pins a
+    cache key's bits: each app's key is tested in its own suite.

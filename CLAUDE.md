@@ -74,7 +74,8 @@ next is `PLAN.md`; the last section here says which document holds what.
   the cook's `step` machine; which words say what (`wording.ts`); the
   alarms' timing; the server's contract for sharing. It lands in TypeScript
   first, is fixtured by `npm run fixtures`, and is held in Swift by
-  `npm run conformance`. `ios/README.md` maps the modules. Each app's
+  `npm run conformance`; its named constants are written into Swift by
+  `npm run swift:constants`, which `npm test` runs (`DECISIONS.md` 138). `ios/README.md` maps the modules. Each app's
   plumbing (its stores, settings, share queue) is its
   own, tested in its own suite (`DECISIONS.md` 126).
 - **Fixtures are never hand-edited, and never regenerated to make Swift
