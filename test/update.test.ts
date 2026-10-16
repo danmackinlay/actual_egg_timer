@@ -404,6 +404,20 @@ test('fingerDown: on another control, the change in hand is committed first', ()
   assert.equal(down.edit?.down?.group, 7);
 });
 
+test('fingerDown: on the same control, a tap\'s settle is stopped, so a hold after it commits only on the lift', () => {
+  const m = running();
+  const [tap] = go(m, { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
+  const [changed] = change(tap, { eggCount: 4 }, 3, 50);
+  const [up] = go(changed, { kind: 'fingerUp', real_ms: 100 }, S + 60);
+  const [down, effects] = go(up, { kind: 'fingerDown', group: 3, slider: false, real_ms: 600 }, S + 61);
+  assert.deepEqual(timers(effects), ['settle:null'], 'the tap\'s settle stopped');
+  assert.equal(down.cook, m.cook, 'nothing committed with the finger down');
+  const [held] = change(down, { eggCount: 5 }, 3, 1000);
+  assert.equal(held.cook, m.cook);
+  const [lifted] = go(held, { kind: 'fingerUp', real_ms: 1200 }, S + 62);
+  assert.equal(lifted.cook?.choices.eggCount, 5, 'the hold commits on the lift');
+});
+
 test('controls mid-cook: another control\'s change by keyboard commits the one in hand alone, as it was', () => {
   const m = running();
   const [first] = change(m, { eggCount: 4 }, 3, 0);

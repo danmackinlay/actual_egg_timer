@@ -1221,11 +1221,15 @@ function release(m: Model): [Model, Effect[]] {
 }
 
 /** A finger down on a control: another than the one with a change in hand
- *  commits it; the gesture begins. */
+ *  commits it; the gesture begins. On the same one, a tap's settle stops,
+ *  so the change commits as the gesture now under way does, never with the
+ *  finger down. */
 function fingerDown(m: Model, group: number, slider: boolean, real_ms: number, now_s: number): [Model, Effect[]] {
   const e = m.edit;
   if (m.cook === null || e === null) return [m, []];
-  const [next, effects] = e.pending && group !== e.group ? commit(m, null, now_s) : [m, []];
+  const [next, effects]: [Model, Effect[]] = e.pending && group !== e.group
+    ? commit(m, null, now_s)
+    : [m, [{ kind: 'editTimer', timer: 'settle', at_ms: null }]];
   return [withEdit(next, () => ({ down: { at_ms: real_ms, group: group, slider: slider } })), effects];
 }
 
