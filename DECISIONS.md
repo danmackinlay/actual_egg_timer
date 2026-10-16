@@ -892,11 +892,16 @@ October:
 133. **The population fit's inference is checked three ways.** Its
     likelihood is the core's, at fixed points, on a sample `npm run
     fixtures` writes. In CI, NUTS recovers a simulated population with a
-    known truth: every global inside its 1 - 0.10/9 interval, so that all
-    nine cover together at 90%; R-hat below 1.01, a bulk ESS of 100 a
-    chain, no divergent transition. By hand, simulation-based calibration
-    (`python -m eggfit sbc`). Publishing `fixtures/population.json` refuses
-    a fit whose diagnostics fail, unless forced (`fit/README.md`).
+    known truth, one of them in the prior's tail: the identified globals'
+    posteriors narrow to under half the prior's spread, so a fit that lost
+    its data fails; every global lies inside its 1 - 0.10/9 interval, so
+    that all nine cover together at 90% (the width is open, `PLAN.md`);
+    R-hat below 1.01, a bulk ESS of 100 a chain, no divergent transition.
+    By hand, simulation-based calibration (`python -m eggfit sbc`). A fit
+    whose diagnostics fail is written nowhere unless forced; the published
+    `fixtures/population.json` carries its diagnostics, a forced one is
+    named by its id, and both cores refuse a file that does not vouch for
+    itself (`fit/README.md`).
 134. **No live file cites `LOGBOOK.md`**, which stays frozen (117): a
     comment that rests on a measured number states it. The shape study
     goes; its conclusion is a paragraph of README section 8.
