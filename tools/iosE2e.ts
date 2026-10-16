@@ -569,7 +569,7 @@ scenario('help-sources', "Help's sources bundled: the app finds some at launch, 
   run.note(`${found.count} sources`);
 });
 
-scenario('too-old','relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
+scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
   await started(run);
   run.terminate();
   run.launch([], { at: run.t0 + 3 * 3600 });
