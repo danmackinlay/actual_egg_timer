@@ -1030,7 +1030,9 @@ whole pipe, and its check on simulated cooks.
   literature's (`npm run population -- literature`) until a fit is published;
   the web fetches it, iOS bundles it, a stored posterior keeps the id it was
   drawn from, and a different one is replayed. The record's `prior` is that
-  id.
+  id. A fit carries whether its sampler passed its checks, and whether it
+  was written all the same (`diagnostics`); the apps refuse one without them,
+  and one forced under an id that does not end `-forced`.
 - **The emulator** (`npm run eggs -- emulate`): for each egg, its log yolk and
   white doses and peak yolk temperature at its scored cook time on 17
   time-scales, -4 to +4 literature sds, uniform in log alpha as the app's

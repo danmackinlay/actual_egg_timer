@@ -20,9 +20,14 @@ has deleted leaves this machine at the next pull, and it deletes
 one: emulate again after every pull. `population.json` and `report.md` hold
 no one's results, only counts.
 
-Read `report.md`. To publish, run the fit again with
-`--out fixtures/population.json` (it refuses unless the sampler passes its
-checks, below; `--force` overrides), then `npm run fixtures` (which reads it into
+Read `report.md`. The fit writes no population, wherever `--out` points,
+unless the sampler passes its checks (below); `--force` writes it all the
+same, with `"forced": true` in its `diagnostics` and `-forced` at the end of
+its id, so every record cooked from it says so. Both apps, `build:site` and
+`ios:archive` refuse a fitted file without `diagnostics`, and a forced one
+whose id does not say so (`src/core/population.ts`); only the literature's,
+never sampled, has none. To publish, run the fit again with
+`--out fixtures/population.json`, then `npm run fixtures` (which reads it into
 `fixtures/prior.json`) and `npm run verify`, and commit: the next release of
 both apps draws from it, and every phone and browser replays its eggs from the
 new prior. `fit/data/` is gitignored: pulled records are people's eggs.
@@ -90,8 +95,8 @@ more, a bulk ESS under 100 a chain, or a truth outside its interval (each
 1 - 0.10/9, so all nine together cover 90% of the time when the posterior is
 right). CI's `fit` job runs it with the rest of `fit/tests`, without node.
 The same R-hat, ESS and divergence checks are in every `report.md`
-(`eggfit/diagnostics.py`), and `fit` will not write
-`fixtures/population.json` when they fail.
+(`eggfit/diagnostics.py`), and `fit` writes no population when they fail,
+unless forced.
 
 **The posterior is calibrated.** Simulation-based calibration, by hand, not
 in CI: each repetition draws the globals from the fit's own prior, simulates

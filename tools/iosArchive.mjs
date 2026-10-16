@@ -8,13 +8,17 @@
 // 2. xcodegen, then xcodebuild archive (Release, generic iOS device,
 //    -allowProvisioningUpdates) into ios/build/ActualEggTimer.xcarchive.
 // 3. Checks on the archive, not the source: the build number is the new one,
-//    and the alarm's time-sensitive entitlement survived signing (if the App
-//    ID lacks the capability the entitlement is dropped, not refused).
+//    the alarm's time-sensitive entitlement survived signing (if the App
+//    ID lacks the capability the entitlement is dropped, not refused), and
+//    the bundled population reads (parsePopulation: a fit needs its
+//    diagnostics, a forced one an id that says so), since the app would
+//    silently draw from the literature's instead.
 //
 // Uploading is separate (ios/RELEASING.md, "Every release"): Organizer, or
 // xcodebuild -exportArchive with ExportOptions.plist.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { parsePopulation } from '../src/core/population.ts';
 
 const yml = 'ios/project.yml';
 const archive = 'build/ActualEggTimer.xcarchive';
@@ -49,6 +53,12 @@ if (archived !== String(build)) throw new Error(`the archive says build ${archiv
 const entitlements = out('codesign', ['-d', '--entitlements', '-', '--xml', app], { stdio: ['ignore', 'pipe', 'ignore'] });
 if (!entitlements.includes('time-sensitive')) {
   throw new Error('the time-sensitive entitlement is missing: tick Time Sensitive Notifications on the App ID');
+}
+const population = JSON.parse(readFileSync(`${app}/population.json`, 'utf8'));
+const drawn = parsePopulation(population);
+if (drawn === null) throw new Error('the archive\'s population.json does not read (src/core/population.ts)');
+if (population.diagnostics?.forced === true) {
+  console.warn(`ios:archive: the population ${drawn.id} was forced: its sampler failed its checks`);
 }
 } catch (error) {
   writeFileSync(yml, text);

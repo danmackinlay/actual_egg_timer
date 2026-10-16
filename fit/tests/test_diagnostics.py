@@ -55,3 +55,9 @@ def test_a_failed_fit_is_written_nowhere_unless_forced_and_then_says_so():
     assert not mark["ok"] and mark["forced"] and mark["failures"] == ["3 divergent transitions"]
     assert cli.gate(failed, True, pid)[0] == pid, "the suffix once"
 
+
+def test_the_forced_suffix_is_the_apps():
+    # The apps refuse a forced fit whose id lacks it (src/core/population.ts).
+    core = os.path.join(os.path.dirname(__file__), "..", "..", "src", "core", "population.ts")
+    with open(core) as fh:
+        assert f"export const FORCED_ID_SUFFIX = '{cli.FORCED_ID_SUFFIX}';" in fh.read()

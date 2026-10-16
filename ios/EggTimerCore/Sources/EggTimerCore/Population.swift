@@ -6,7 +6,10 @@ import Foundation
 ///
 /// `fixtures/population.json` is what both apps draw a new cook's prior from;
 /// the iOS app bundles it. Every field read here is checked, and anything else
-/// in the file is the fit's own record and ignored. Before any egg the app
+/// in the file is the fit's own record and ignored - but its diagnostics:
+/// a fit that failed them is refused unless forced, a forced one unless its
+/// id ends in `forcedIdSuffix`, and a file with none unless it is the
+/// literature's, number for number. Before any egg the app
 /// solves at the population's centre (`PriorStart`), which for the literature
 /// is exactly the literature's values. A file from before 0.5 has a spread for
 /// the carryover too (`tauAirScale`), which is ignored like the rest.
@@ -33,8 +36,13 @@ public func priorStart(_ p: Population) -> PriorStart {
     PriorStart(alphaM2s: p.alphaM2s.median, whiteOffset: p.whiteOffset.mean)
 }
 
-/// The file's shape: an id, and the five spreads under `prior`.
+/// The file's shape: an id, the five spreads under `prior`, and whether the
+/// sampler passed its checks, or was published all the same.
 private struct PopulationFile: Decodable {
+    struct Diagnostics: Decodable {
+        var ok: Bool
+        var forced: Bool
+    }
     struct Prior: Decodable {
         var alphaM2s: LogNormal
         var logDoseOffset: Normal
@@ -49,6 +57,7 @@ private struct PopulationFile: Decodable {
     }
     var id: String
     var prior: Prior
+    var diagnostics: Diagnostics?
 }
 
 private func valid(_ l: LogNormal) -> Bool {
@@ -59,16 +68,27 @@ private func valid(_ n: Normal) -> Bool {
     n.mean.isFinite && n.sd.isFinite && n.sd > 0
 }
 
+/// Whether the file's diagnostics let `p` be drawn from: a fit that passed;
+/// one that failed, forced, under an id that says so; or none, for the
+/// literature's alone.
+private func vouched(_ d: PopulationFile.Diagnostics?, _ p: Population) -> Bool {
+    guard let d else { return p == literaturePopulation }
+    if d.ok { return !d.forced }
+    return d.forced && p.id.hasSuffix(forcedIdSuffix)
+}
+
 /// A population read from its file, or nil if any part of it cannot be
-/// trusted: `parsePopulation`'s rules. A spread of zero is refused - every
-/// particle would be the same, and nothing could move it.
+/// trusted, or its diagnostics do not vouch for it: `parsePopulation`'s
+/// rules. A spread of zero is refused - every particle would be the same,
+/// and nothing could move it.
 public func parsePopulation(_ data: Data) -> Population? {
     guard let f = try? JSONDecoder().decode(PopulationFile.self, from: data), !f.id.isEmpty else { return nil }
     let p = f.prior
     guard valid(p.alphaM2s), valid(p.logDoseOffset), valid(p.noise),
           valid(p.whiteOffset), valid(p.whiteFirmGap) else { return nil }
-    return Population(
+    let pop = Population(
         id: f.id, alphaM2s: p.alphaM2s, logDoseOffset: p.logDoseOffset,
         noise: p.noise, whiteOffset: p.whiteOffset, whiteFirmGap: p.whiteFirmGap
     )
+    return vouched(f.diagnostics, pop) ? pop : nil
 }
