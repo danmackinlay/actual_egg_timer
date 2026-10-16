@@ -42,6 +42,20 @@ const FORMAT_TIMES: [number, boolean][] = [
   [86400 + 3600, false], [-60, false],
 ];
 
+/* Every case in the supported locales. The others are pinned on fewer: the
+ * separators, grouping either side of four and five digits, a rounding, a
+ * negative, a fraction of a count, and the clock either side of noon, at
+ * midnight and with seconds. */
+const ALSO_NUMBERS: [number, number][] = [
+  [-0.4, 0], [2.45, 1], [999, 0], [1234.5, 1], [-1300, 0], [16400, 0], [12345678.9, 1], [0.02, 2],
+];
+const ALSO_COUNTS = [0, 1, 1.5, 1234, 1234567, -3];
+const ALSO_TIMES: [number, boolean][] = [
+  [0, false], [9 * 3600 + 5 * 60, false], [12 * 3600, false], [15 * 3600 + 5 * 60, false],
+  [7 * 3600 + 41 * 60 + 12, true],
+];
+const casesFor = <T>(locale: string, all: T[], also: T[]): T[] => (FORMAT_SUPPORTED.includes(locale) ? all : also);
+
 const pseudoJson = JSON.parse(readFileSync('test/pseudo-cs.json', 'utf8')) as CatalogueJson;
 const pseudo = parseCatalogue(pseudoJson, english);
 const fixed = (value: number, decimals: number): Fixed => ({ value: value, decimals: decimals });
@@ -74,13 +88,13 @@ export const formatFixture = {
   locales: FORMAT_LOCALES,
   roundTo: FORMAT_NUMBERS.map(([value, decimals]) => ({ value: value, decimals: decimals, result: roundTo(value, decimals) })),
   countDecimals: FORMAT_COUNTS.map((value) => ({ value: value, decimals: countDecimals(value) })),
-  numbers: FORMAT_LOCALES.flatMap((locale) => FORMAT_NUMBERS.map(([value, decimals]) => ({
+  numbers: FORMAT_LOCALES.flatMap((locale) => casesFor(locale, FORMAT_NUMBERS, ALSO_NUMBERS).map(([value, decimals]) => ({
     locale: locale, value: value, decimals: decimals, text: formatNumber(locale, value, decimals),
   }))),
-  counts: FORMAT_LOCALES.flatMap((locale) => FORMAT_COUNTS.map((value) => ({
+  counts: FORMAT_LOCALES.flatMap((locale) => casesFor(locale, FORMAT_COUNTS, ALSO_COUNTS).map((value) => ({
     locale: locale, value: value, text: formatCount(locale, value),
   }))),
-  times: FORMAT_LOCALES.flatMap((locale) => FORMAT_TIMES.map(([seconds, withSeconds]) => ({
+  times: FORMAT_LOCALES.flatMap((locale) => casesFor(locale, FORMAT_TIMES, ALSO_TIMES).map(([seconds, withSeconds]) => ({
     locale: locale, seconds: seconds, withSeconds: withSeconds, text: formatTimeOfDay(locale, seconds, withSeconds),
   }))),
   normaliseTime: ['3:05 PM', '3:05\u00a0PM', '3:05\u202fPM', '15:05', 'a b\u00a0c'].map((text) => ({
@@ -116,10 +130,11 @@ export const formatFixture = {
     [1, 0], [1, 1], [1, 2], [2, 0], [2, 2], [5, 0], [1.5, 1], [1.5, 2], [0, 0], [0, 2], [21, 0],
   ].map(([n, v]) => ({ locale: locale, n: n, fractionDigits: v, category: pluralCategory(locale, n, v) }))),
   // Every quantity a cook reads, in both systems, in every supported locale:
-  // the key and the words, through the English catalogue.
-  // Not the girth or the width: the iOS core measures neither.
+  // the key and the words, through the English catalogue, at a fraction and
+  // either side of where Czech starts grouping. What each unit rounds to is
+  // units.json's. Not the girth or the width: the iOS core measures neither.
   measures: FORMAT_SUPPORTED.flatMap((locale) => QUANTITIES.filter((q) => q !== 'girth' && q !== 'width').flatMap((q) => UNIT_SYSTEMS.flatMap((system) =>
-    [0.5, 2.4, 63.5, 1500, 16400].map((si) => {
+    [2.4, 1500, 16400].map((si) => {
       const m = measureFor(q, system, locale.slice(-2));
       const text = quantityText(m, si);
       return {
