@@ -41,6 +41,7 @@ import { ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import type { ElementId } from '../src/ui/dom.ts';
 import { type Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.ts';
 
 /** How long to wait for something that will come, real ms: failure
@@ -51,6 +52,17 @@ export const WAIT_MS = 60_000;
 const THROTTLE = Number(process.env['E2E_CPU_THROTTLE'] ?? '1');
 
 /* ------------------------------------------------------------- the page */
+
+/** A selector `S`, held to the page's ids (src/ui/dom.ts, `ElementId`) where
+ *  it starts at one, `#primary` or `#tabNote p`; never, so it does not
+ *  typecheck, for an id the page does not have. */
+export type Selector<S extends string> = S extends `#${infer Id} ${string}` ? (Id extends ElementId ? S : never)
+  : S extends `#${infer Id}` ? (Id extends ElementId ? S : never) : S;
+
+/** An element of the page by its id, as a script run in the page finds it. */
+export function byId(id: ElementId): string {
+  return `document.getElementById('${id}')`;
+}
 
 /** Run in every page before the app: the sounds made and the writes, and
  *  `__snap`, the page's snapshot with the sounds counted. */
@@ -318,7 +330,7 @@ export class Tab {
   private async booted(): Promise<void> {
     await this.until("!window.__left && document.readyState === 'complete'"
       + " && (window.aetTest !== undefined || !['localhost', '127.0.0.1'].includes(location.hostname))"
-      + " && document.getElementById('phaseLabel')?.textContent !== ''"
+      + ` && ${byId('phaseLabel')}?.textContent !== ''`
       + " && document.body.dataset.tab !== undefined", 'the page to boot');
   }
 
@@ -336,7 +348,7 @@ export class Tab {
     return this.eval<string>(`window.aetTest.timeOfDay(${ms})`);
   }
 
-  async click(selector: string): Promise<void> {
+  async click<S extends string>(selector: S & Selector<S>): Promise<void> {
     await this.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
       if (e === null) throw new Error('no ${selector.replace(/'/g, '')}'); e.click(); })()`);
   }

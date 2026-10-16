@@ -30,7 +30,7 @@
 import { readFileSync } from 'node:fs';
 
 import { STORES, stamped } from '../src/ui/stores.ts';
-import { Failure, type Harness, type Scenario, type Snap, Tab, check } from './harness.ts';
+import { Failure, type Harness, type Scenario, type Selector, type Snap, Tab, byId, check } from './harness.ts';
 
 /** One state's words, as `copySnapshot.ts compare` reads them. */
 export interface CopyState {
@@ -103,13 +103,13 @@ interface Facts {
 
 const FACTS = `(() => {
   const s = window.__snap();
-  const line = document.getElementById('certaintyWord');
+  const line = ${byId('certaintyWord')};
   const box = line.getBoundingClientRect();
   return {
     phase: s.phase, startMode: s.settings.startMode,
     chosen: s.chosen !== null, certainty: s.certainty !== null, whiteSets: s.whiteSets,
     certaintyShown: !line.hidden && box.width > 0 && box.height > 0 && line.textContent.trim() !== '',
-    mute: document.getElementById('mute').textContent,
+    mute: ${byId('mute')}.textContent,
     muteWanted: window.aetTest.t(s.settings.muted ? 'readout.mute.off' : 'readout.mute.on'),
   };
 })()`;
@@ -154,7 +154,7 @@ function plan(s: Snap): NonNullable<Snap['deadlines']> {
   return s.deadlines;
 }
 
-const click = (sel: string): Step => ({ name: `click ${sel}`, run: (tab) => tab.click(sel) });
+const click = <S extends string>(sel: S & Selector<S>): Step => ({ name: `click ${sel}`, run: (tab) => tab.click<S>(sel) });
 const advance = (s: number): Step => ({ name: `+${s}s`, run: (tab) => tab.shift(s) });
 const toPull: Step = { name: 'to pull', run: async (tab) => tab.shiftTo(plan(await tab.snap()).cookEnd_s + 3) };
 /** A countdown left at exactly `s` seconds, for the spoken forms. */
@@ -182,7 +182,7 @@ const sousVide: Step = {
 /** Wait until the feedback fold is done: no note says "learning…". */
 const learned: Step = {
   name: 'learned',
-  run: (tab) => tab.until("!document.getElementById('calibNote').textContent.includes('…')", 'the fold done'),
+  run: (tab) => tab.until(`!${byId('calibNote')}.textContent.includes('…')`, 'the fold done'),
 };
 
 /* -------------------------------------------------------------- scenarios */

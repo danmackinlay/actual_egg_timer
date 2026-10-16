@@ -26,6 +26,7 @@ import type { CopyArgs } from '../../core/copy.ts';
 import type { BoilMemory } from '../../core/boil.ts';
 import { type Phase, type RunningCook, guessLengthened } from '../../core/running.ts';
 import { readStoredCook } from '../storedCook.ts';
+import type { ElementId } from '../dom.ts';
 import { STORES } from '../stores.ts';
 import type { EggRecord } from '../../core/record.ts';
 import { flushDraw, pageModel, pageStores } from '../cook.ts';
@@ -34,6 +35,7 @@ import { inHand } from '../idle.ts';
 import { isDevHost, nowMs, useRandom } from '../now.ts';
 import { jobsAnswered } from '../offThread.ts';
 import { phaseNow } from '../state.ts';
+import { idleSolution } from '../answer.ts';
 import type { Settings } from '../store.ts';
 import { finalEggs } from '../effects.ts';
 
@@ -92,7 +94,7 @@ interface TestApi {
   timeOfDay(ms: number): string;
 }
 
-const text = (id: string): string => document.getElementById(id)?.textContent ?? '';
+const text = (id: ElementId): string => document.getElementById(id)?.textContent ?? '';
 
 /** The cook stored as `text` reads, or null. */
 function storedCookOf(text: string | null): RunningCook | null {
@@ -109,6 +111,7 @@ function snapshot(): Snapshot {
   const now = nowMs();
   const m = pageModel();
   const plan = m.plan;
+  const chosen = m.solved?.chosen ?? null;
   const primary = document.getElementById('primary');
   const stores = pageStores();
   const share = stores.sharing.state();
@@ -128,14 +131,14 @@ function snapshot(): Snapshot {
     },
     settings: m.settings,
     boilMemory: m.boilMemory,
-    chosen: m.chosen === null ? null : { level: m.chosen.level },
+    chosen: chosen === null ? null : { level: chosen.level },
     cook: m.cook,
     deadlines: plan === null ? null : plan.deadlines,
     decided: plan !== null && plan.decided !== null,
     lengthened: plan !== null && guessLengthened(plan),
     certainty: plan === null ? null : plan.certainty,
     peakYolk_C: plan === null ? null : plan.solution.result.peakYolk_C,
-    whiteSets: plan !== null ? plan.solution.whiteSets : m.solution?.whiteSets ?? null,
+    whiteSets: plan !== null ? plan.solution.whiteSets : m.solved === null ? null : idleSolution(m.solved).whiteSets,
     stored: localStorage.getItem(STORES.cook.key),
     storedCook: storedCookOf(localStorage.getItem(STORES.cook.key)),
     log: stores.learner.keptState().log,

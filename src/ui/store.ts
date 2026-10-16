@@ -18,7 +18,7 @@ import {
 } from './settings.ts';
 import type { RunningCook } from '../core/running.ts';
 import { type KeptAnswers, type StoredCook, readStoredCook, storedCook } from './storedCook.ts';
-import { STORES, STORE_LIST, inFormat, stamped } from './stores.ts';
+import { STORES, inFormat, stamped } from './stores.ts';
 import { ownsApp } from './owner.ts';
 
 export type { Limit } from '../core/inputs.ts';
@@ -33,7 +33,7 @@ const BOIL_KEY = STORES.boilMemory.key;
 /** Every key this build keeps (stores.ts). Any other key of this app's
  *  (`aet.`) is an earlier build's, which this one neither reads nor
  *  collects, and is deleted at boot (`sweepStorage`). */
-const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.map((s) => s.key));
+const KEPT_KEYS: ReadonlySet<string> = new Set(Object.values(STORES).map((s) => s.key));
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see choicesOf in state.ts. */

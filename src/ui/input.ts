@@ -142,6 +142,5 @@ export function onInput(event: Event): void {
     return;
   }
   // While a cook runs, a correction in hand on the control it came from.
-  const source = target instanceof HTMLElement && target.id !== '' ? target.id : null;
-  send({ kind: 'controls', read: readInputs(target), source: source, group: groupOf(target), at_s: gestureNow_s() });
+  send({ kind: 'controls', read: readInputs(target), group: groupOf(target), at_s: gestureNow_s() });
 }

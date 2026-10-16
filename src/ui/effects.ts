@@ -102,7 +102,7 @@ function relabel(): void {
   labelTicks();
   renderVersion();
   applyLanguageToDom();
-  // The fields with a unit, and the rest drawn only when asked, drawn again.
+  // The rest the page draws, drawn again with the page solved again.
   send({ kind: 'relabelled' });
 }
 

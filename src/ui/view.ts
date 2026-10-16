@@ -30,7 +30,7 @@ import {
   type WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
   phaseKeys, refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.ts';
-import { adviceFor } from './answer.ts';
+import { type IdleAnswer, adviceFor, idleSolution } from './answer.ts';
 import { calibrationDoneness, calibrationParams } from './calibration.ts';
 import { activeLocale, t, tChosen, timeOfDay } from './copy.ts';
 import { formatClock } from './countdown.ts';
@@ -41,12 +41,12 @@ import { learnedLine, learnedView } from './learned.ts';
 import type { Learning, LearnedView } from './learned.ts';
 import { shareView } from './shareView.ts';
 import type { ShareView } from './shareView.ts';
-import type { Model, Redraws } from './model.ts';
+import type { Model } from './model.ts';
 import { type PhaseView, phaseView } from './phaseView.ts';
 import { type SetupFacts, liveSetupFacts } from './sentence.ts';
 import { sousVideCopy } from './sousvide.ts';
 import {
-  boilingPoint_C, currentEgg, idlePot, isSousVide, learning, phaseNow, sizeClasses, startModeNow,
+  boilingPoint_C, controlsOf, currentEgg, idlePot, isSousVide, learning, phaseNow, sizeClasses, startModeNow,
 } from './state.ts';
 import { type Settings, type UiStartMode, estimateTimeToBoil, hasBoilMemory } from './store.ts';
 import { measure, show } from './units.ts';
@@ -128,12 +128,8 @@ interface Screen {
   section: SectionDraw | null;
 }
 
-/** What the page shows. */
-/** The parts of the page drawn only when `update` asks (model.ts, `Part`):
- *  as they should read, with the counts that say which are asked for. */
+/** The controls and Settings, and the line over the questions. */
 export interface Sections {
-  redraws: Redraws;
-  echoSource: string | null;
   form: FormView;
   /** The line over the questions, as last said. */
   note: { rev: number; text: string };
@@ -142,8 +138,8 @@ export interface Sections {
   share: ShareView | null;
 }
 
-/** On every screen: the mute, the parts drawn only when asked, and the words
- *  the main button is sized on (`sizerWords`). */
+/** What the page shows. On every screen: the mute, the controls and
+ *  Settings, and the words the main button is sized on (`sizerWords`). */
 export type View = {
   mute: { label: string; pressed: boolean }; sections: Sections; sizers: string[];
 } & (
@@ -172,9 +168,9 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
-  const top = { mute: mute, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
+  const shown = controlsOf(m);
+  const top = { mute: mute, sections: sectionsOf(m), sizers: sizerWords(shown) };
   if (m.cook === null && m.unsolved) {
-    const shown = m.controls;
     return {
       ...top, kind: 'unsolved',
       reading: isSousVide(m) ? { level: shown.doneness, bath_C: SOUS_VIDE_BATH_C }
@@ -190,7 +186,7 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const learningOn = m.sharing && !isSousVide(m);
   // The sentence, in every phase: the controls' (the settings, or the
   // running cook's own choices).
-  const sentence = liveSetupFacts(m.controls, sizeClasses, currentEgg(m));
+  const sentence = liveSetupFacts(shown, sizeClasses, currentEgg(m));
   // When the eggs went in, in the start's panel, while a cook runs: the
   // sentence never says it.
   const startedAt = m.cook === null || m.controlsStart_s === null ? null : timeOfDay(m.controlsStart_s * 1000);
@@ -199,22 +195,19 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   // clock to start, and a start time that has already been and gone.
   if (isSousVide(m)) return { ...top, kind: 'sous', ...sousScreen(m, now_ms, sentence) };
   if (m.cook === null) {
-    const sol = m.solution;
-    if (sol === null) return blank;
-    return { ...top, kind: 'idle', ...idleScreen(m, now_ms, memo, sol, learningOn, sentence) };
+    if (m.solved === null) return blank;
+    return { ...top, kind: 'idle', ...idleScreen(m, now_ms, memo, m.solved, learningOn, sentence) };
   }
   if (m.plan === null) return blank;
   return { ...top, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
 }
 
-/** The parts drawn only when asked, for `m`. */
+/** The controls and Settings, and the line over the questions, for `m`. */
 function sectionsOf(m: Model): Sections {
   const l = learning(m);
   const said = m.note.say;
   const share = m.share;
   return {
-    redraws: m.redraws,
-    echoSource: m.echoSource,
     form: formView(m),
     note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
     learned: learnedView(l),
@@ -249,36 +242,36 @@ function sizerWords(c: Settings): string[] {
 
 /** The controls, and the answer they give. */
 function idleScreen(
-  m: Model, now_ms: number, memo: ViewMemo, sol: Solution, learningOn: boolean, sentence: SetupFacts,
+  m: Model, now_ms: number, memo: ViewMemo, solved: IdleAnswer, learningOn: boolean, sentence: SetupFacts,
 ): Screen {
   // The warning line carries a refusal or the level's low odds while idle.
   // It is advice about the slider: popping "jammy isn't reachable" onto the
   // screen while the egg is already in the water would be advice about a
   // control the user cannot reach.
-  const warning = m.idleAnswer === null ? '' : warningText(m.idleAnswer, m.settings);
-  const sure = m.chosen !== null && sol.whiteSets ? m.chosen.certainty : null;
-  const o = m.chosen !== null && sol.whiteSets ? m.outcome : null;
+  const warning = warningText(solved.answer, m.settings);
+  const sol = idleSolution(solved);
+  const chosen = sol.whiteSets ? solved.chosen : null;
   const advice = adviceFor(m);
   // The egg the controls aim for, at the time on screen, as eaten.
   const pot = idlePot(m);
-  const level = m.chosen?.level ?? m.settings.doneness;
+  const level = solved.chosen?.level ?? m.settings.doneness;
   const aim = aimedEgg(m, memo, pot.egg, pot.setup, calibrationParams(m.calib), sol.result.cookTime_s, level);
   return {
     learning: learningOn, sentence: sentence, startedAt: null,
     statBoil: show('boilingPoint', boilingPoint_C(m)),
     note: textureNote(sol),
     reading: { level: m.settings.doneness, peakYolk_C: sol.result.peakYolk_C },
-    scale: { solution: sol, odds: sol.whiteSets ? m.profile : null, bracket: sol.whiteSets ? m.chosen?.certainty.words ?? null : null },
+    scale: { solution: sol, odds: sol.whiteSets ? solved.profile : null, bracket: chosen?.certainty.words ?? null },
     readout: readoutView(m, now_ms, sol, warning),
     // "Based on history" has an (i) that says what history.
     sublineInfo: m.settings.startMode === 'cold' && hasBoilMemory(m.boilMemory),
-    certainty: certaintyView(sure, null),
-    whiteRisk: o !== null && whiteAtRisk(o),
+    certainty: certaintyView(chosen?.certainty ?? null, null),
+    whiteRisk: chosen !== null && whiteAtRisk(chosen.outcome),
     // While a new pot's surface is on its way the lines above are blank,
     // and the readout would shrink and grow back a second later, moving the
     // sentence's open choice under the thumb that just tapped it: it keeps
     // the height it had when they were last all there.
-    height: m.decision === null ? 'hold' : 'measure',
+    height: solved.chosen === null ? 'hold' : 'measure',
     advice: { link: advice.wanted && advice.surer, keys: advice.keys },
     // The one longer line under the egg while idle (UI.md section 3): a
     // refusal if there is one, and otherwise, before anything has been

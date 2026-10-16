@@ -22,7 +22,7 @@ import { roomInUse } from '../core/inputs.ts';
 import { type CookChoices, type CookPot, type Phase, cookSetupOf, phaseAt } from '../core/running.ts';
 import type { CookNeed } from '../core/step.ts';
 import type { Learning } from './learned.ts';
-import type { Model } from './model.ts';
+import type { CookSettings, Model } from './model.ts';
 import { type Settings, type UiStartMode, estimateTimeToBoil } from './store.ts';
 import { REGION } from './units.ts';
 
@@ -42,22 +42,15 @@ export const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: 
 export function emptyModel(): Model {
   return {
     settings: null!,
-    controls: null!,
+    cookControls: null,
     boilMemory: null!,
     calib: null!,
     sharing: false,
     deletedHere: false,
     share: null,
-    redraws: { controls: 0, units: 0, doneness: 0, alarm: 0, echo: 0, learned: 0, share: 0, words: 0 },
-    echoSource: null,
     note: { rev: 0, say: 'learned' },
     profiles: [],
-    idleAnswer: null,
-    solution: null,
-    decision: null,
-    outcome: null,
-    chosen: null,
-    profile: null,
+    solved: null,
     unsolved: false,
     aim: null,
     hand: null,
@@ -122,17 +115,14 @@ export function idleChoices(m: Model): CookChoices {
 }
 
 /**
- * `settings` with a cook's choices over them, as the controls show them: the
- * egg's class by its mass in `classes` (this page's carton), else the egg
- * measured, its width from its mass; the rest field by field. What the
- * choices do not hold - the units, the language, the sound, the probe - is
- * the settings'. Pure.
+ * A cook's choices as the controls show them, over `settings`: the egg's
+ * class by its mass in `classes` (this page's carton), else the egg
+ * measured, its width from its mass; the rest field by field. Pure.
  */
-export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: SizeClass[]): Settings {
+export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: SizeClass[]): CookSettings {
   const index = ch.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === ch.mass_kg) : -1;
   const byClass = index >= 0;
   return {
-    ...settings,
     sizeIndex: index,
     customMinor_mm: byClass ? settings.customMinor_mm : eggFromMass(ch.mass_kg).minorDiameter_m * 1000,
     measuredBy: byClass || ch.massFrom === 'class' ? settings.measuredBy : ch.massFrom,
@@ -152,6 +142,12 @@ export function settingsOfChoices(settings: Settings, ch: CookChoices, classes: 
   };
 }
 
+/** What the controls show: the settings while idle; while a cook runs, its
+ *  choices as the controls show them (`cookControls`) over the settings. */
+export function controlsOf(m: Model): Settings {
+  return m.cookControls === null ? m.settings : { ...m.settings, ...m.cookControls };
+}
+
 /** The egg and the pot the settings describe, for a time to a rolling boil:
  *  core's `cookSetupOf`, the one assembly both apps and a running cook share. */
 export function idlePot(m: Model, boil_s: number = timeToBoil_s(m)): CookPot {
@@ -160,23 +156,23 @@ export function idlePot(m: Model, boil_s: number = timeToBoil_s(m)): CookPot {
 
 /** The egg the controls describe. */
 export function currentEgg(m: Model): Egg {
-  return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).egg;
+  return cookSetupOf(choicesOf(controlsOf(m), REGION), timeToBoil_s(m)).egg;
 }
 
 /** The room the controls' pot is solved in, C (`ambientFor`): the cook's,
  *  or the one assumed. A bowl with no temperature given is at it. */
 export function currentAmbient_C(m: Model): number {
-  return cookSetupOf(choicesOf(m.controls, REGION), timeToBoil_s(m)).setup.ambient_C;
+  return cookSetupOf(choicesOf(controlsOf(m), REGION), timeToBoil_s(m)).setup.ambient_C;
 }
 
 /** The room as the cook gave it, or null to assume one (`roomInUse`), as
  *  the controls say. */
 export function room_C(m: Model): number | null {
-  return roomInUse(m.controls.room_C);
+  return roomInUse(controlsOf(m).room_C);
 }
 
 export function boilingPoint_C(m: Model): number {
-  return boilingPointAtAltitude(m.controls.altitude_m);
+  return boilingPointAtAltitude(controlsOf(m).altitude_m);
 }
 
 /** Sous-vide on the idle screen: it starts no cook, so a running one never

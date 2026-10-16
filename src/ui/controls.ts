@@ -1,10 +1,11 @@
 /**
  * The controls and the Settings form, as the view says them (`formView`,
- * plain data from the model) and written to the page (`drawForm`) in parts,
- * each when `update` asks for it (model.ts, `Part`): the size menu, every
- * field with a unit (its step, bounds, unit and contents), the labels that
- * carry a temperature or a mass, the radios and the language picker.
- * Reading them back is input.ts's.
+ * plain data from the model) and written to the page each frame
+ * (`drawForm`), where it says otherwise and never under the cook's typing:
+ * the size menu, every field with a unit (its step, bounds, unit and
+ * contents), the labels that carry a temperature or a mass, and the radios;
+ * the language picker as the words on screen change. Reading them back is
+ * input.ts's.
  */
 
 import { eggFromMinorDiameter } from '../core/geometry.ts';
@@ -14,10 +15,9 @@ import { SLIDER_STEPS } from '../core/slider.ts';
 import { startTempPreset_C } from '../core/inputs.ts';
 import { languageOf } from '../core/format.ts';
 import { activeLocale, t } from './copy.ts';
-import { page, selectRadio } from './dom.ts';
-import type { Model, Redraws } from './model.ts';
-import { redrawSentence } from './sentence.ts';
-import { currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.ts';
+import { page, selectRadio, setText } from './dom.ts';
+import type { Model } from './model.ts';
+import { controlsOf, currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.ts';
 import { T_COLD_TAP_C } from '../core/constants.ts';
 import { LIMITS, type Limit, START_TEMP_PRESETS_C, type Settings } from './store.ts';
 import { measure, show, unitSystem } from './units.ts';
@@ -73,7 +73,7 @@ function inputText(q: Quantity, si: number): string {
 
 /** The form for the model `m`. */
 export function formView(m: Model): FormView {
-  const c = m.controls;
+  const c = controlsOf(m);
   const egg = currentEgg(m);
   const minor_mm = egg.minorDiameter_m * 1000;
   const measures = {} as FormView['measures'];
@@ -136,120 +136,69 @@ export function formView(m: Model): FormView {
 
 /* ------------------------------------------------------------ the page */
 
-/** The parts of the form `update` asked for since they were last drawn
- *  (`drawn`, as last drawn: null for none yet), written: the controls
- *  whole; or each field with a unit, the slider, the alarm's choice, and the
- *  controls that follow a change but the field it came from (`echoSource`). */
-export function drawForm(f: FormView, now: Redraws, drawn: Redraws | null, echoSource: string | null): void {
-  const moved = (part: keyof Redraws): boolean => drawn === null || now[part] !== drawn[part];
-  if (moved('controls')) {
-    drawAll(f);
-    return;
-  }
-  if (moved('units')) drawUnits(f);
-  if (moved('echo')) drawEcho(f, echoSource);
-  if (moved('doneness')) page().doneness.value = String(f.controls.doneness);
-  if (moved('alarm')) selectRadio('alarm', f.alarm);
+/** A field's contents written where they say otherwise, but never under the
+ *  cook typing in it, so the field never fights the cursor: it keeps what
+ *  was typed, and shows the stored value, rounded to its step, once left. */
+function setValue(input: HTMLInputElement | HTMLSelectElement, value: string): void {
+  const typing = input === document.activeElement && input.type === 'number';
+  if (input.value !== value && !typing) input.value = value;
 }
 
-/** The measurement boxes but the one `except`, so filling in one fills in
- *  the rest without the field fighting the cursor: the box being typed in
- *  keeps what was typed, and the others show the stored egg rounded to their
- *  step. */
-function drawMeasurements(f: FormView, except: string | null): void {
-  for (const id of ['measureMass', 'measureGirth', 'measureMinor'] as const) {
-    if (id !== except) page()[id].value = f.values[id];
-  }
+/** An attribute written where it says otherwise. */
+function setAttr(e: Element, name: string, value: string): void {
+  if (e.getAttribute(name) !== value) e.setAttribute(name, value);
 }
 
-/** The menu's measured egg, the fields a choice opens, and the hint on the
- *  presets: what follows a change to the controls. */
-function drawEcho(f: FormView, source: string | null): void {
+/** The form written from `f`, each frame, as far as the page says otherwise:
+ *  every control, each field with a unit in the units on screen (its step,
+ *  bounds, unit and contents, from the stored SI values, so switching back
+ *  and forth never moves the egg), the labels that carry a temperature or a
+ *  mass, and the fields a choice opens. The room is one setting in two
+ *  fields, in Settings and beside "at room temperature". */
+export function drawForm(f: FormView): void {
   const c = f.controls;
-  if (c.sizeIndex === -1) page().size.value = '-1';
-  page().startTempHint.textContent = f.startTempHint;
-  page().customTempField.hidden = c.startTempMode !== 'custom';
-  drawRoom(f, source);
-  drawCoolingWater(f, source);
-  drawMeasurements(f, source);
-  page().size.options[sizeClasses.length].textContent = f.measuredLabel;
-}
-
-/** The room, in Settings and beside "at room temperature", which shows it
- *  only when Room is chosen: one setting in two fields, each written but the
- *  one being typed in (`except`). */
-function drawRoom(f: FormView, except: string | null): void {
-  page().roomFromField.hidden = f.controls.startTempMode !== 'room';
-  for (const input of [page().roomTemp, page().roomTempFrom]) {
-    if (input.id !== except) input.value = f.values.roomTemp;
-    input.placeholder = f.roomPlaceholder;
-  }
-  page().moreRoom.textContent = f.moreRoom;
-  page().moreRoomFrom.textContent = f.moreRoom;
-}
-
-/** The rows under the cooling choices, for the cooling chosen: a bowl's
- *  water, and the temperature of running water or of the bowl, each shown
- *  only with its own choice; every field but the one being typed in
- *  (`except`), which keeps what was typed. */
-function drawCoolingWater(f: FormView, except: string | null): void {
-  const cooling = f.controls.cooling;
-  page().bowlFields.hidden = cooling !== 'bowl';
-  page().coolingWaterField.hidden = cooling !== 'tap' && cooling !== 'bowl';
-  if (except !== 'bowlLitres') page().bowlLitres.value = f.values.bowlLitres;
-  if (except !== 'coolingWater') page().coolingWater.value = f.values.coolingWater;
-  page().coolingWater.placeholder = f.coolingWaterPlaceholder;
-  page().moreCoolingWater.textContent = f.moreCoolingWater;
-}
-
-/** Everything on the form that has a unit: each input's step, bounds, unit
- *  and contents, the preset labels, and the size menu, from the stored SI
- *  values - so switching back and forth never moves the egg. */
-function drawUnits(f: FormView): void {
   for (const id of Object.keys(FIELDS) as Field[]) {
     const input = page()[id];
     const ms = f.measures[id];
-    input.step = ms.step;
+    setAttr(input, 'step', ms.step);
     if (ms.min !== null && ms.max !== null) {
-      input.min = ms.min;
-      input.max = ms.max;
+      setAttr(input, 'min', ms.min);
+      setAttr(input, 'max', ms.max);
     }
-    page()[UNIT_LABELS[id] as 'unitMass'].textContent = ms.unit;
+    setText(page()[UNIT_LABELS[id] as 'unitMass'], ms.unit);
   }
-  drawMeasurements(f, null);
-  page().customTemp.value = f.values.customTemp;
-  page().litres.value = f.values.litres;
-  page().altitude.value = f.values.altitude;
-  drawRoom(f, null);
-  drawCoolingWater(f, null);
+  setValue(page().size, String(c.sizeIndex));
+  for (let i = 0; i < f.sizeLabels.length; i += 1) setText(page().size.options[i], f.sizeLabels[i]);
+  setText(page().size.options[sizeClasses.length], f.measuredLabel);
+  for (const id of ['measureMass', 'measureGirth', 'measureMinor', 'customTemp', 'litres', 'altitude', 'bowlLitres'] as const) {
+    setValue(page()[id], f.values[id]);
+  }
+  for (const input of [page().roomTemp, page().roomTempFrom]) {
+    setValue(input, f.values.roomTemp);
+    setAttr(input, 'placeholder', f.roomPlaceholder);
+  }
+  setValue(page().coolingWater, f.values.coolingWater);
+  setAttr(page().coolingWater, 'placeholder', f.coolingWaterPlaceholder);
+  setValue(page().eggCount, String(c.eggCount));
+  // The slider is never typed in: a snap moves it out from under the cook.
+  if (Number(page().doneness.value) !== c.doneness) page().doneness.value = String(c.doneness);
   selectRadio('units', f.units);
-  for (let i = 0; i < f.sizeLabels.length; i += 1) page().size.options[i].textContent = f.sizeLabels[i];
-  page().size.options[sizeClasses.length].textContent = f.measuredLabel;
-  page().startTempHint.textContent = f.startTempHint;
-  page().startSousLabel.textContent = f.sousLabel;
-  page().helpSousVide.textContent = f.helpSous;
-  // The sentence's masses and temperatures are in the units too: drawn
-  // again with the page.
-  redrawSentence();
-}
-
-/** Every control written from the controls. */
-function drawAll(f: FormView): void {
-  const c = f.controls;
-  page().size.value = String(c.sizeIndex);
-  drawUnits(f);
   selectRadio('startTemp', c.startTempMode);
   selectRadio('startMode', c.startMode);
   selectRadio('afterBoil', c.afterBoil);
   selectRadio('cooling', c.cooling);
-  selectRadio('alarm', c.alarm);
-  page().eggCount.value = String(c.eggCount);
-  page().doneness.value = String(c.doneness);
-  page().customTempField.hidden = c.startTempMode !== 'custom';
-  drawRoom(f, null);
-  drawCoolingWater(f, null);
+  selectRadio('alarm', f.alarm);
   page().probeSetting.checked = c.probe;
-  applyLanguageToDom();
+  page().customTempField.hidden = c.startTempMode !== 'custom';
+  page().roomFromField.hidden = c.startTempMode !== 'room';
+  page().bowlFields.hidden = c.cooling !== 'bowl';
+  page().coolingWaterField.hidden = c.cooling !== 'tap' && c.cooling !== 'bowl';
+  setText(page().startTempHint, f.startTempHint);
+  setText(page().moreRoom, f.moreRoom);
+  setText(page().moreRoomFrom, f.moreRoom);
+  setText(page().moreCoolingWater, f.moreCoolingWater);
+  setText(page().startSousLabel, f.sousLabel);
+  setText(page().helpSousVide, f.helpSous);
 }
 
 /** The picker, and the line under the Imperial option that says the English

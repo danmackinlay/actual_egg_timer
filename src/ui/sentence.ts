@@ -1,7 +1,7 @@
 /**
  * The setup sentence: the egg's setup as one line of prose whose clauses are
  * the buttons that open its choices, in every phase: the settings' while idle, a running cook's own choices while
- * one runs (`state.controls`).
+ * one runs (state.ts, `controlsOf`).
  */
 
 import type { Egg, SizeClass } from '../core/geometry.ts';
@@ -11,11 +11,11 @@ import { sizeClassLabel } from '../core/units.ts';
 import type { EggFrom } from '../core/record.ts';
 import { type Clause, type ClauseKeys, clauseKeys } from '../core/wording.ts';
 import { t, tChosen } from './copy.ts';
-import { el, page } from './dom.ts';
+import { type ElementId, page } from './dom.ts';
 import type { Settings, UiStartMode } from './store.ts';
 import { show, unitSystem } from './units.ts';
 
-const CLAUSE_PANELS: Record<Clause, string> = {
+const CLAUSE_PANELS: Record<Clause, ElementId & `panel${string}`> = {
   egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
 };
 
@@ -30,7 +30,7 @@ let sentenceShown = '';
 let openClause: Clause | null = null;
 
 function panelFor(clause: Clause): HTMLElement {
-  return el<HTMLElement>(CLAUSE_PANELS[clause]);
+  return page()[CLAUSE_PANELS[clause]];
 }
 
 /** What the sentence says: the cook the controls describe
@@ -61,7 +61,7 @@ function classMass(classes: SizeClass[], index: number): string {
   return t(label.mass.key, { value: label.mass.value });
 }
 
-/** The setup on the controls: `settings` (the controls', `state.controls`)
+/** The setup on the controls: `settings` (state.ts, `controlsOf`)
  *  read against this page's carton, with `egg` the egg they describe. */
 export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Egg): SetupFacts {
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
@@ -122,7 +122,8 @@ export function renderSentence(facts: SetupFacts): void {
     egg: `${SLOT}egg${SLOT}`, from: `${SLOT}from${SLOT}`,
     start: `${SLOT}start${SLOT}`, cooling: `${SLOT}cooling${SLOT}`,
   });
-  const signature = [marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
+  // The units too: the masses and temperatures are in them.
+  const signature = [unitSystem(), marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
   if (signature === sentenceShown) return;
   sentenceShown = signature;
 
@@ -159,12 +160,6 @@ export function renderSentence(facts: SetupFacts): void {
   // A choice whose clause the sentence no longer has - sous-vide drops two -
   // closes with it.
   if (openClause !== null && !clauses[openClause].isConnected) setOpenClause(null);
-}
-
-/** Draw the sentence again at its next render even if its words look the
- *  same: its masses and temperatures are in the units, which have changed. */
-export function redrawSentence(): void {
-  sentenceShown = '';
 }
 
 /** Open one clause's choice under the sentence, or none. One at a time. */

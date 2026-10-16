@@ -9,21 +9,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { STORES, STORE_LIST, inFormat, stamped } from '../src/ui/stores.ts';
+import { STORES, inFormat, stamped } from '../src/ui/stores.ts';
 
-test('every store is listed once, under its own name and a key of its own under aet.', () => {
-  assert.deepEqual(STORE_LIST.map((s) => s.name).sort(), Object.keys(STORES).sort());
-  for (const [name, store] of Object.entries(STORES)) assert.equal(store.name, name);
-  const keys = STORE_LIST.map((s) => s.key);
+test('every store has a key of its own under aet.', () => {
+  const keys = Object.values(STORES).map((s) => s.key);
   assert.equal(new Set(keys).size, keys.length, keys.join(', '));
   for (const key of keys) assert.ok(key.startsWith('aet.'), key);
 });
 
 test('a store with its format inside keeps none in its key, but the log, which keeps the key it began with', () => {
-  for (const s of STORE_LIST) {
+  for (const [name, s] of Object.entries(STORES)) {
     if (s.format === null) continue;
-    assert.ok(Number.isInteger(s.format) && s.format > 0, `${s.name}: ${s.format}`);
-    if (s.name !== 'calibration') assert.ok(!/\.v\d+$/.test(s.key), `${s.name}: ${s.key}`);
+    assert.ok(Number.isInteger(s.format) && s.format > 0, `${name}: ${s.format}`);
+    if (name !== 'calibration') assert.ok(!/\.v\d+$/.test(s.key), `${name}: ${s.key}`);
   }
 });
 

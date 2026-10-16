@@ -5,7 +5,7 @@
 
 import type { BoilMemory } from '../core/boil.ts';
 import { t } from './copy.ts';
-import { page } from './dom.ts';
+import { page, setText } from './dom.ts';
 import { showInfo } from './info.ts';
 import { send } from './send.ts';
 import { estimateTimeToBoil, hasBoilMemory } from './store.ts';
@@ -59,7 +59,7 @@ export function renderCalibNote(l: Learning): void {
 export function drawLearned(v: LearnedView): void {
   // There is something to export now.
   if (v.exported) page().exportNote.hidden = true;
-  page().learnedNote.textContent = v.text;
+  setText(page().learnedNote, v.text);
   // Not while the confirmation is up: it stands in the button's place.
   if (!v.forget) showForget(false);
   else if (page().forgetConfirm.hidden) showForget(true);

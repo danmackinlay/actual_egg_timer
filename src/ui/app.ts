@@ -26,13 +26,13 @@
 import { nudgeSeconds } from '../core/decide.ts';
 import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
-import { applyConstantsToDom, buildSizeOptions } from './controls.ts';
+import { applyConstantsToDom, applyLanguageToDom, buildSizeOptions } from './controls.ts';
 import {
   type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
   startRunner, stopRunner,
 } from './cook.ts';
 import { closeAudio, primeAudio } from './clock.ts';
-import { bindDom, el, page } from './dom.ts';
+import { bindDom, page } from './dom.ts';
 import { wireFeedback } from './feedback.ts';
 import { wireInfoButtons } from './info.ts';
 import { onInput, onToggleMute } from './input.ts';
@@ -125,12 +125,15 @@ function own(reloaded: boolean): void {
   // a script's seed (now.ts) is in place for it.
   // For the egg's record: this build, and the population of the prior.
   const initial: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: stores.pans.load(),
+    ...emptyModel(), settings: settings, boilMemory: stores.pans.load(),
     calib: learner.calibration(), nudgeDraw: nudgeSeconds(random()), appVersion: APP_VERSION,
     prior: activePopulation().id,
   };
   if (!wired) wire();
   wired = true;
+  // The language picker follows the words on screen, not each frame: they
+  // change only once a new catalogue is in (effects.ts, `followLanguage`).
+  applyLanguageToDom();
   // From here on every change to the page is a message (send.ts).
   startRunner(stores, initial);
   restoreCook(reloaded);
@@ -161,8 +164,7 @@ function wire(): void {
 
   // The egg's two controls and its sentence, and the Settings page's, are
   // read the same way: every input goes through readInputs.
-  for (const id of ['controls', 'settingsForm']) {
-    const form = el<HTMLFormElement>(id);
+  for (const form of [page().controls, page().settingsForm]) {
     form.addEventListener('input', onInput);
     form.addEventListener('change', onInput);
     form.addEventListener('submit', (event) => event.preventDefault());

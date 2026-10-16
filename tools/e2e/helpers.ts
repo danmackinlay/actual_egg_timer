@@ -8,9 +8,10 @@
 import { readFileSync } from 'node:fs';
 
 import { readStoredCook } from '../../src/ui/storedCook.ts';
+import type { ElementId } from '../../src/ui/dom.ts';
 import { STORES } from '../../src/ui/stores.ts';
 import {
-  type Cook, Failure, type Harness, type Osc, type Scenario, type Snap, Tab, WAIT_MS, check,
+  type Cook, Failure, type Harness, type Osc, type Scenario, type Selector, type Snap, Tab, WAIT_MS, byId, check,
 } from '../harness.ts';
 import { asRead } from '../text.ts';
 
@@ -75,9 +76,14 @@ export interface Box { top: number; bottom: number; left: number }
  *  the action, the slider, the sentence and the egg are, where the readout
  *  and the action end, the action's two buttons (null when not shown), and
  *  the slider's value. */
+/** The parts of the one screen whose layout is read: those that must be
+ *  shown, and those whose tops are compared. */
+const SHOWN: ElementId[] = ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'];
+const TOPS = ['actions', 'doneness', 'sentence', 'eggSection'] as const satisfies readonly ElementId[];
+
 export interface Layout {
-  shown: { id: string; visible: boolean }[];
-  top: Record<'actions' | 'doneness' | 'sentence' | 'eggSection', number>;
+  shown: { id: ElementId; visible: boolean }[];
+  top: Record<(typeof TOPS)[number], number>;
   readoutEnd: number;
   actionsEnd: number;
   primary: Box | null;
@@ -98,10 +104,10 @@ export interface RowFit {
 
 export async function layout(tab: Tab): Promise<Layout> {
   return tab.eval<Layout>(`(() => {
-    const on = (id) => { const e = document.getElementById(id); const r = e.getBoundingClientRect();
+    const on = (id, e) => { const r = e.getBoundingClientRect();
       return { id: id, visible: r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' }; };
-    const top = (id) => document.getElementById(id).getBoundingClientRect().top + window.scrollY;
-    const box = (id) => { const r = document.getElementById(id).getBoundingClientRect();
+    const top = (e) => e.getBoundingClientRect().top + window.scrollY;
+    const box = (e) => { const r = e.getBoundingClientRect();
       return r.height > 0 ? { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, left: r.left } : null; };
     const probe = document.querySelector('.buttons__probe');
     const probeMain = probe.querySelector('.buttons__main').getBoundingClientRect();
@@ -114,13 +120,13 @@ export async function layout(tab: Tab): Promise<Layout> {
         + px('borderLeftWidth') + px('borderRightWidth'); };
     const st = getComputedStyle(probe);
     return {
-      shown: ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'].map(on),
-      top: { actions: top('actions'), doneness: top('doneness'), sentence: top('sentence'), eggSection: top('eggSection') },
-      readoutEnd: document.getElementById('readout').getBoundingClientRect().bottom + window.scrollY,
-      actionsEnd: document.getElementById('actions').getBoundingClientRect().bottom + window.scrollY,
-      primary: box('primary'),
-      secondary: box('secondary'),
-      level: document.getElementById('doneness').value,
+      shown: [${SHOWN.map((id) => `on('${id}', ${byId(id)})`).join(', ')}],
+      top: { ${TOPS.map((id) => `${id}: top(${byId(id)})`).join(', ')} },
+      readoutEnd: ${byId('readout')}.getBoundingClientRect().bottom + window.scrollY,
+      actionsEnd: ${byId('actions')}.getBoundingClientRect().bottom + window.scrollY,
+      primary: box(${byId('primary')}),
+      secondary: box(${byId('secondary')}),
+      level: ${byId('doneness')}.value,
       row: {
         stacked: probeCancel.top >= probeMain.bottom - 0.5,
         main: Math.max(...[...probe.querySelectorAll('.sizer--main')].map(own)),
@@ -277,7 +283,7 @@ export function oneLayout(width: number, want: 'side by side' | 'stacked' | null
 /** The slider moved to `level` as a finger does: pressed, moved, and (unless
  *  `release` is false) let go. */
 export async function setSlider(tab: Tab, level: number, release = true): Promise<void> {
-  await tab.eval(`(() => { const e = document.getElementById('doneness');
+  await tab.eval(`(() => { const e = ${byId('doneness')};
     e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
     e.value = String(${level}); e.dispatchEvent(new Event('input', { bubbles: true }));
     if (${release}) {
@@ -290,7 +296,7 @@ export async function setSlider(tab: Tab, level: number, release = true): Promis
  *  `press` is false, the finger already down), moved, and let go if
  *  `release`. */
 export async function drag(tab: Tab, levels: number[], release = false, press = true): Promise<void> {
-  await tab.eval(`(() => { const e = document.getElementById('doneness');
+  await tab.eval(`(() => { const e = ${byId('doneness')};
     const p = (type) => e.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
     if (${press}) p('pointerdown');
     for (const v of ${JSON.stringify(levels)}) { e.value = String(v); e.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -298,14 +304,14 @@ export async function drag(tab: Tab, levels: number[], release = false, press = 
 }
 
 /** A − or + tapped, not held: pressed and let go at once. */
-export async function press(tab: Tab, selector: string): Promise<void> {
+export async function press<S extends string>(tab: Tab, selector: S & Selector<S>): Promise<void> {
   await tab.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
     const p = (type) => e.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
     p('pointerdown'); p('pointerup'); })()`);
 }
 
 /** A menu's option chosen, as a tap does (no finger held: it settles). */
-export async function pick(tab: Tab, selector: string, value: string): Promise<void> {
+export async function pick<S extends string>(tab: Tab, selector: S & Selector<S>, value: string): Promise<void> {
   await tab.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
     e.value = ${JSON.stringify(value)}; e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
 }
@@ -328,8 +334,8 @@ export async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Pro
 
 /** What the start's panel says the eggs went in at. */
 export async function panelStart(tab: Tab): Promise<string> {
-  return tab.eval<string>(`(() => { const f = document.getElementById('startedAtField');
-    return f.hidden || f.offsetParent === null ? '' : document.getElementById('startedAt').textContent; })()`);
+  return tab.eval<string>(`(() => { const f = ${byId('startedAtField')};
+    return f.hidden || f.offsetParent === null ? '' : ${byId('startedAt')}.textContent; })()`);
 }
 
 /** A moment, epoch s, as the page says a time of day. */
@@ -341,8 +347,8 @@ export async function clockAt(tab: Tab, at_s: number): Promise<string> {
  *  measure's no-break space as a space (`asRead`). */
 export async function sentenceSays(tab: Tab): Promise<{ sentence: string; clause: string }> {
   const said = await tab.eval<{ sentence: string; clause: string }>(`(() => ({
-    sentence: document.getElementById('sentence').textContent,
-    clause: document.querySelector('#sentence .clause[aria-controls="panelStart"]').textContent }))()`);
+    sentence: ${byId('sentence')}.textContent,
+    clause: ${byId('sentence')}.querySelector('.clause[aria-controls="panelStart"]').textContent }))()`);
   return { sentence: asRead(said.sentence), clause: asRead(said.clause) };
 }
 
@@ -359,7 +365,7 @@ export function storedCook(s: Snap): Cook | null {
  *  as the note that the app is open in another tab (owner.ts). */
 export async function opened(h: Harness, path: string): Promise<Tab> {
   const tab = await h.ctx.open(path, h.origin, { boot: false });
-  await tab.until("document.body.dataset.tab === 'waiting' && !document.getElementById('tabNote').hidden",
+  await tab.until(`document.body.dataset.tab === 'waiting' && !${byId('tabNote')}.hidden`,
     'the note that the app is open in another tab');
   return tab;
 }

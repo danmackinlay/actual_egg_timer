@@ -9,13 +9,13 @@
  */
 
 import type { CopyKey } from '../core/copy.ts';
-import { t, timeOfDay } from './copy.ts';
+import { activeLocale, t, timeOfDay } from './copy.ts';
 import { page } from './dom.ts';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.ts';
 import { showInfo } from './info.ts';
 import { drawForm } from './controls.ts';
 import { drawLearned, renderCalibNote } from './learned.ts';
-import type { Redraws, StartLimit } from './model.ts';
+import type { StartLimit } from './model.ts';
 import { drawShare } from './shareView.ts';
 import { renderSentence } from './sentence.ts';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.ts';
@@ -27,42 +27,33 @@ export interface Drawn {
   /** The readout's height, px, the last time it was drawn idle with a
    *  decision in: what it holds while the next one is on its way. */
   readout_px: number;
-  /** The live region's last announcement, by what it is of. */
+  /** The live region's last announcement, by what it is of and the
+   *  language it was said in. */
   announced: string;
-  /** The advice's keys, as listed. */
+  /** The advice, as listed. */
   advice: string;
   /** The egg's rings as built, and the drawing painted. */
   rings: string;
   painted: SectionDraw['view'] | null;
   reading: SectionDraw['reading'] | null;
-  /** The parts drawn only when asked, as last drawn (null: none yet), and
-   *  the line over the questions. */
-  redraws: Redraws | null;
+  /** The line over the questions, as last said. */
   note: number;
   /** The main button's words under the row, as laid out. */
   sizers: string;
 }
 
 export function drawnNothing(): Drawn {
-  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, redraws: null, note: -1, sizers: '' };
+  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, note: -1, sizers: '' };
 }
 
-/** The parts of the page drawn only when `update` asks for them, each whose
- *  count has moved since it was last drawn. */
+/** The controls, Settings, and the line over the questions each time it is
+ *  said. */
 function drawSections(s: Sections, d: Drawn): void {
-  const was = d.redraws;
-  const moved = (part: keyof Redraws): boolean => was === null || s.redraws[part] !== was[part];
-  if (moved('words')) {
-    // A new language: the words drawn only when they change, drawn again.
-    d.advice = '';
-    d.announced = '';
-  }
-  drawForm(s.form, s.redraws, was, s.echoSource);
+  drawForm(s.form);
   if (s.note.rev !== d.note) page().calibNote.textContent = s.note.text;
-  if (moved('learned')) drawLearned(s.learned);
-  if (moved('share') && s.share !== null) drawShare(s.share);
-  d.redraws = s.redraws;
   d.note = s.note.rev;
+  drawLearned(s.learned);
+  if (s.share !== null) drawShare(s.share);
 }
 
 /** Draw `v` over what `d` says is there. */
@@ -149,8 +140,9 @@ function drawReadout(r: ReadoutView, d: Drawn): void {
   page().digits.textContent = w.digits;
   page().sublineText.textContent = w.subline;
   showInfo(page().hintInfo, r.hintInfo);
-  if (r.announce.key !== d.announced) {
-    d.announced = r.announce.key;
+  const said = `${activeLocale()}|${r.announce.key}`;
+  if (said !== d.announced) {
+    d.announced = said;
     page().announce.textContent = r.announce.text;
   }
 }
@@ -194,12 +186,13 @@ function drawHeight(height: 'free' | 'hold' | 'measure', d: Drawn): void {
 function drawAdvice(a: { link: boolean; keys: CopyKey[] }, d: Drawn): void {
   page().advice.hidden = !a.link;
   page().forYou.hidden = a.keys.length === 0;
-  const shown = a.keys.join(' ');
+  const said = a.keys.map((key) => t(key));
+  const shown = said.join('\n');
   if (shown === d.advice) return;
   d.advice = shown;
-  page().adviceList.replaceChildren(...a.keys.map((key) => {
+  page().adviceList.replaceChildren(...said.map((text) => {
     const li = document.createElement('li');
-    li.textContent = t(key);
+    li.textContent = text;
     return li;
   }));
 }

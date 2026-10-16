@@ -3,7 +3,7 @@
  * a probe reading, and what is sent. Run by tools/e2e.ts.
  */
 
-import { type Scenario, check } from '../harness.ts';
+import { type Scenario, byId, check } from '../harness.ts';
 import { COOK_KEY, STOPPED, deadlines, later, pick, start } from './helpers.ts';
 
 export const recordScenarios: Record<string, Scenario> = {
@@ -59,7 +59,7 @@ export const recordScenarios: Record<string, Scenario> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       await tab.phase('DONE');
       await tab.settle();
-      const note = "document.getElementById('note').textContent";
+      const note = `${byId('note')}.textContent`;
       const before = await tab.eval<string>(note);
       await tab.click('.fb[data-yolk="runny"]');
       await tab.until('__snap().eggsLogged === 1', 'Runny folded');
@@ -116,16 +116,16 @@ export const recordScenarios: Record<string, Scenario> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       s = await tab.phase('DONE');
       const field = await tab.eval<{ shown: boolean; placeholder: string }>(`(() => ({
-        shown: !document.getElementById('probeEntry').hidden,
-        placeholder: document.getElementById('probeReading').placeholder }))()`);
+        shown: !${byId('probeEntry')}.hidden,
+        placeholder: ${byId('probeReading')}.placeholder }))()`);
       check(field.shown && field.placeholder !== '', `the probe's field, from the peak: ${JSON.stringify(field)}`);
       const save = (typed: string): Promise<void> => tab.eval(`(() => {
-        document.getElementById('probeReading').value = ${JSON.stringify(typed)};
-        document.getElementById('probeSave').click(); })()`);
+        ${byId('probeReading')}.value = ${JSON.stringify(typed)};
+        ${byId('probeSave')}.click(); })()`);
       // Freezing, in either unit: no kitchen makes it.
       await save('0');
       await tab.settle();
-      const refused = await tab.eval<string>("document.getElementById('probeNote').textContent");
+      const refused = await tab.eval<string>(`${byId('probeNote')}.textContent`);
       s = await tab.snap();
       check(s.log.length === 0 && s.cook !== null && JSON.stringify(s.cook).indexOf('"probe":{') < 0,
         `0 refused, nothing logged: ${s.log.length}`);
@@ -137,7 +137,7 @@ export const recordScenarios: Record<string, Scenario> = {
       const probe = (s.log[0] as unknown as { probe: { centre_C: number } | null }).probe;
       const peak = s.peakYolk_C ?? 0;
       check(probe !== null && Math.abs(probe.centre_C - peak) < 1, `logged ${JSON.stringify(probe)} for a peak of ${peak.toFixed(1)} °C`);
-      const settled = await tab.eval<boolean>("document.getElementById('probeReading').disabled");
+      const settled = await tab.eval<boolean>(`${byId('probeReading')}.disabled`);
       check(settled, 'the field settled on the reading');
       return `refused 0: "${refused}"; ${field.placeholder} logged as ${probe?.centre_C} °C`;
     },
@@ -159,7 +159,7 @@ export const recordScenarios: Record<string, Scenario> = {
       await tab.until('__snap().target !== ""', 'what was asked for');
       // The slider's heading, the cook's peak yolk (the one screen keeps the
       // slider where the summary under the sentence was).
-      const summary = "document.getElementById('donenessPeak').textContent";
+      const summary = `${byId('donenessPeak')}.textContent`;
       const before = await tab.eval<string>(summary);
       const asked = (await tab.snap()).target;
       check(asked.includes(before), `"${asked}" and "${before}" agree`);

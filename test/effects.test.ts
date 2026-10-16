@@ -50,7 +50,7 @@ test('the egg still open is the stored running cook\'s, on screen or not, until 
   storage.clear();
   now_ms = S * 1000 + 60_000;
   const s = stores();
-  const m = { ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, controls: { ...DEFAULT_SETTINGS }, calib: C };
+  const m = { ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, calib: C };
   assert.equal(finalEggs(s, m), 3, 'no cook stored: every egg final');
   // The log's last egg, its cook stored and not on screen: a page reloaded
   // and not yet picked it back up, or one ended and waiting on its record.

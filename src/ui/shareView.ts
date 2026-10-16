@@ -6,7 +6,7 @@
 
 import type { ShareState } from './shareState.ts';
 import { t } from './copy.ts';
-import { page } from './dom.ts';
+import { page, setText } from './dom.ts';
 import { send } from './send.ts';
 
 /** The section as sharing stands: the switch, the note under it, the random
@@ -39,11 +39,11 @@ export function shareView(s: Readonly<ShareState>, waiting: number, deletedHere:
 
 export function drawShare(v: ShareView): void {
   page().shareSetting.checked = v.on;
-  page().shareNote.textContent = v.note;
+  setText(page().shareNote, v.note);
   // The random number, to quote by email: whole, and only while there is
   // one - from the first time sharing is turned on until a deletion.
   page().shareId.hidden = v.uid === null;
-  page().shareUid.textContent = v.uid ?? '';
+  setText(page().shareUid, v.uid ?? '');
   // Not while the confirmation is up: it stands in the button's place.
   if (page().shareConfirm.hidden) page().shareDelete.hidden = !v.deletable;
 }

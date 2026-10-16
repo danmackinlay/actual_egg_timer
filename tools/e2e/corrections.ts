@@ -4,7 +4,7 @@
  */
 
 import { sleep } from '../chrome.ts';
-import { type Rec, type Scenario, type Snap, check } from '../harness.ts';
+import { type Rec, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
   COOK_KEY, SETTINGS_KEY, STOPPED, boil, clockAt, cookIn, corrected, deadlines, drag, later, near, panelStart, pick,
   press, rings, start, storedCook,
@@ -71,7 +71,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       // Nothing yet: a tap settles first. Read in the same task as the tap,
       // so no timer can run between them, however slow the page.
       const atTap = await tab.eval<number | null>(`(() => {
-        const e = document.querySelector('#size'); e.value = '3'; e.dispatchEvent(new Event('change', { bubbles: true }));
+        const e = ${byId('size')}; e.value = '3'; e.dispatchEvent(new Event('change', { bubbles: true }));
         return __snap().cook.correctedAt_s; })()`);
       check(atTap === null, 'committed before the settle');
       s = await corrected(tab, null);
@@ -136,7 +136,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       await tab.shiftTo(pull0 - 60);
       const base = (await tab.osc()).length;
       await drag(tab, [0.3, 0.1, 0]);
-      await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
+      await tab.until(`${byId('eggSection')}.dataset.egg === 'aim'`, 'the aim while held');
       // Held two seconds (a person's span, past every settle), and whatever
       // the page had pending done.
       await sleep(2000);
@@ -149,7 +149,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       s = await tab.snap();
       check(s.phase === 'COOKING' && s.cook?.correctedAt_s === null, `released at the level it had: ${s.phase}`);
       check((await tab.osc()).length === base, 'nothing rang on release');
-      const egg = await tab.eval<string>("document.getElementById('eggSection').dataset.egg");
+      const egg = await tab.eval<string>(`${byId('eggSection')}.dataset.egg`);
       check(egg === 'live', `the live egg again once the aim's settle is over: ${egg}`);
       // Released at an overdue level: it rings then.
       await drag(tab, [0], true);
@@ -173,7 +173,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       check(clock === await clockAt(tab, start0), `the panel says when: "${clock}"`);
       // + three times, a tap each: the third goes no further than now.
       for (let i = 0; i < 3; i++) await press(tab, '#startedAtMore');
-      const limit = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      const limit = await tab.eval<string>(`${byId('startedAtLimit')}.textContent`);
       const now = await tab.words('controls.startedAt.latestNow');
       check(limit === now, `the reason at now: "${limit}"`);
       s = await corrected(tab, null);
@@ -187,16 +187,16 @@ export const correctionScenarios: Record<string, Scenario> = {
       const tap = s.cook?.events.boilAt_s ?? 0;
       await tab.shift(60);
       for (let i = 0; i < 5; i++) await press(tab, '#startedAtMore');
-      const atBoil = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      const atBoil = await tab.eval<string>(`${byId('startedAtLimit')}.textContent`);
       check(atBoil.includes(await tab.timeOfDay(tap * 1000)),
         `the reason at the boil names its time: "${atBoil}"`);
       s = await corrected(tab, s);
       check(s.cook?.startedAt_s === tap, `in at the press: ${(s.cook?.startedAt_s ?? 0) - tap}`);
       // − all the way back, by the keyboard: two hours before Start was pressed.
       await later(tab);
-      await tab.eval(`(() => { const b = document.getElementById('startedAtLess');
+      await tab.eval(`(() => { const b = ${byId('startedAtLess')};
         for (let i = 0; i < 140; i++) b.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); })()`);
-      const early = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      const early = await tab.eval<string>(`${byId('startedAtLimit')}.textContent`);
       s = await corrected(tab, s);
       check(near(s.cook?.startedAt_s ?? 0, id_s - 7200, 1e-6), `two hours back: ${((s.cook?.startedAt_s ?? 0) - id_s).toFixed(1)} s`);
       return `"${clock}" → "${moved}"; "${limit}"; "${atBoil}"; "${early}"`;
@@ -211,8 +211,8 @@ export const correctionScenarios: Record<string, Scenario> = {
       await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.click('#settingsLink');
-      await tab.until("document.body.dataset.view === 'settings' && document.getElementById('litres').offsetParent !== null", 'Settings open');
-      const learned = await tab.eval<boolean>("document.getElementById('learned').offsetParent === null");
+      await tab.until(`document.body.dataset.view === 'settings' && ${byId('litres')}.offsetParent !== null`, 'Settings open');
+      const learned = await tab.eval<boolean>(`${byId('learned')}.offsetParent === null`);
       check(learned, 'what I have learned waits for the cook to end');
       for (let i = 0; i < 4; i++) await press(tab, 'button.step[data-for="litres"][data-up="0"]');
       s = await corrected(tab, null);
@@ -245,7 +245,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       await tab.click('.fb[data-yolk="runny"]');
       await tab.until('__snap().eggsLogged === 1', 'Runny folded');
       const first = (await tab.snap()).log[0];
-      const peak0 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
+      const peak0 = await tab.eval<string>(`${byId('donenessPeak')}.textContent`);
       await pick(tab, '#size', '3');
       s = await corrected(tab, null);
       await tab.until(`JSON.stringify(__snap().log[0].egg) !== ${JSON.stringify(JSON.stringify(first.egg))}`,
@@ -265,7 +265,7 @@ export const correctionScenarios: Record<string, Scenario> = {
       check(JSON.stringify(back.forecast) === JSON.stringify(first.forecast),
         `changed back, the forecast is the first, not one that knew Runny: ${JSON.stringify(back.forecast)} vs ${JSON.stringify(first.forecast)}`);
       await tab.settle();
-      const peak1 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
+      const peak1 = await tab.eval<string>(`${byId('donenessPeak')}.textContent`);
       check(peak1 === peak0, `Done shows the cook as it ran: "${peak1}" (was "${peak0}")`);
       return `heavier: a new forecast, the answer kept; back: the first forecast to the bit, "${peak1}"`;
     },
@@ -289,15 +289,15 @@ export const correctionScenarios: Record<string, Scenario> = {
       await tab.until('__snap().eggsLogged === 1', 'Jammy folded');
       const first = JSON.stringify((await tab.snap()).log[0]);
       await drag(tab, [0.6, 0.9]);
-      await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
+      await tab.until(`${byId('eggSection')}.dataset.egg === 'aim'`, 'the aim while held');
       await drag(tab, [0.9], true, false);
       await tab.settle();
-      const egg = await tab.eval<string>("document.getElementById('eggSection').dataset.egg");
+      const egg = await tab.eval<string>(`${byId('eggSection')}.dataset.egg`);
       check(egg === 'ran', `the egg as it ran again once the aim's settle is over: ${egg}`);
       s = await tab.snap();
       check(s.cook?.correctedAt_s === null, `no correction: ${s.cook?.correctedAt_s}`);
       check(JSON.stringify(s.log[0]) === first, 'the record as it was');
-      const thumb = await tab.eval<string>("document.getElementById('doneness').value");
+      const thumb = await tab.eval<string>(`${byId('doneness')}.value`);
       check(thumb === level, `the slider back at ${level}: ${thumb}`);
       return `dragged to 0.9 and let go: aim drawn, no correction, the record as it was, the slider back at ${thumb}`;
     },
@@ -326,16 +326,16 @@ export const correctionScenarios: Record<string, Scenario> = {
       let s = await asked();
       const osc0 = (await tab.osc()).length;
       check(s.primary === await words('ask.stillIn.yes'), `yes: ${s.primary}`);
-      check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
+      check(await tab.eval<boolean>(`!${byId('stillOut')}.hidden`), 'no, on screen');
       // Nothing past the question: not the white's line, a caveat about the
       // pull it doubts.
-      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question');
+      check(await tab.eval<boolean>(`${byId('whiteRisk')}.hidden`), 'no white\'s line under the question');
       // The cooling's counted end passes under the question: nothing.
       await tab.shift(600);
       await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOLING' && s.label === ask && !s.feedback, `nothing past the question: ${s.phase}, "${s.label}"`);
-      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question, settled');
+      check(await tab.eval<boolean>(`${byId('whiteRisk')}.hidden`), 'no white\'s line under the question, settled');
       check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
       check((await tab.osc()).length === osc0, 'nothing rang');
       await tab.click('#primary');

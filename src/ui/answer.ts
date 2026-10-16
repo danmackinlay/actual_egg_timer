@@ -16,6 +16,7 @@ import type { DoseGrid } from '../core/doseGrid.ts';
 import {
   type DecidedAnswer, type LevelAnswer, type OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
 } from '../core/reach.ts';
+import type { Solution } from '../core/solve.ts';
 import type { Model } from './model.ts';
 import { idleChoices, idlePot, isSousVide } from './state.ts';
 
@@ -63,14 +64,26 @@ export function wantedProfiles(m: Model): DecisionInputs[] {
   return out;
 }
 
-/** The idle page solved: the answer at the level asked, the time decided if
- *  the pot's surface is in, the pot's odds, and what is still to be built
- *  for it - the surface (asked for once the inputs settle), and the odds
- *  profiles. */
-interface IdleSolve {
+/** The idle page's answer: the answer at the level asked (its verdict is
+ *  the warning line), the time decided at it, as core decided it
+ *  (`decideAnswer`), null until the pot's surface is in, and the odds at
+ *  every level for the pot and the posterior as it stands, null until
+ *  worked out. */
+export interface IdleAnswer {
   answer: LevelAnswer;
   chosen: DecidedAnswer | null;
   profile: OddsProfile | null;
+}
+
+/** The solve behind the time on screen: the time decided's, else the
+ *  level's. */
+export function idleSolution(a: IdleAnswer): Solution {
+  return a.chosen?.solution ?? a.answer.solution;
+}
+
+/** The idle page solved, and what is still to be built for it: the surface
+ *  (asked for once the inputs settle), and the odds profiles. */
+interface IdleSolve extends IdleAnswer {
   surface: DecisionInputs | null;
   profiles: DecisionInputs[];
 }
@@ -117,7 +130,7 @@ export function solveIdle(m: Model): IdleSolve {
  *  price makes the word asked surer. Idle only, and only once the time is
  *  decided; the priced changes count as their profiles land. */
 export function adviceFor(m: Model): { keys: CopyKey[]; surer: boolean; wanted: boolean } {
-  const chosen = m.chosen;
+  const chosen = m.solved?.chosen ?? null;
   const wanted = m.cook === null && !isSousVide(m) && chosen !== null && chosen.adviceWanted;
   if (!wanted || chosen === null) return { keys: [], surer: false, wanted: false };
   const inputs = currentInputs(m);
