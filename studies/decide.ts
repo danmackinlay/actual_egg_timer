@@ -664,4 +664,42 @@ if (run('certainty')) {
   }
 }
 
+/* ---------------------------------------------- versus: D against M */
+
+/*
+ * Does the decision layer pay its way? The Bayes action D
+ * (`decide(...).cookTime_s`) against the plug-in rule M (`meanSolve(...)
+ * .sol.result.cookTime_s`), in eggs right per 100 cooks: an egg is right when
+ * the yolk is just right and the white is set, P(right) = P(yolk just right)
+ * (1 - P(runny)) through the truth's own probit. Before the first egg both
+ * cook the literature's time, as the app does.
+ *
+ * THE THRESHOLDS, decided before anything ran and not changed since:
+ *
+ *   CUT           All three hold: in test 1, D's advantage is under 1 egg
+ *                 right per 100 cooks at every egg index from 1 up, in every
+ *                 pot and level; in test 2, no regime has D's advantage above
+ *                 2 per 100; in test 5, the words agree at least 95% of the
+ *                 time.
+ *   KEEP          In test 1 or test 2, D's advantage is 3 or more per 100 in
+ *                 any pot and level a cook actually uses: soft, jammy or
+ *                 fudgy, with ice, tap or counter cooling.
+ *   OWNER'S CALL  Anything in between.
+ *
+ * How they are read, also fixed before the run:
+ *  - "D's advantage" is the mean over cooks of P(right | t_D) - P(right | t_M),
+ *    x100, a point estimate; its 95% interval is printed beside it, and a
+ *    verdict whose interval straddles its threshold is said to.
+ *  - Test 1's CUT condition is read per pot, level and egg index 1-6.
+ *  - "In any pot and level" (KEEP) and "no regime" (CUT, test 2) are read per
+ *    pot and level, as the mean over eggs 1-6, the eggs on which D can
+ *    differ from M; per-egg figures are printed too.
+ *  - Every pot here uses ice, tap or counter cooling, and every level is
+ *    soft (0.22), jammy (0.41) or fudgy (0.62), so every cell counts for KEEP.
+ *  - Test 5's "the words agree" is the certainty class AND the 90% interval
+ *    in words both the same, over the simulated cooks' states at every egg
+ *    0-6 in every pot and level; the class alone and lean's grid are printed
+ *    too.
+ */
+
 export type { DecisionInputs };
