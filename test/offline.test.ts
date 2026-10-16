@@ -1,7 +1,7 @@
 /**
  * Opening with no signal: which file answers which address
  * (src/ui/serviceWorker.ts), and the build's list of files and its name that
- * tools/precache.mjs writes into sw.js; and the page's side
+ * tools/precache.ts writes into sw.js; and the page's side
  * (src/ui/offline.ts): which window takes a new build, and when, and the
  * hourly look for one, which goes by the real clock.
  *
@@ -66,7 +66,7 @@ function buildSite(
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   }
-  execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.mjs'), dir], { cwd: host });
+  execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.ts'), dir], { cwd: host });
   const sw = readFileSync(join(dir, 'sw.js'), 'utf8');
   assert.match(sw, /^import \{ serve \} from '\.\/bundle\/serviceWorker-IJKL9012\.js';$/m);
   const m = sw.match(/^serve\('([0-9a-f]{16})', (\{[\s\S]*\})\);\s*$/m);
@@ -93,7 +93,7 @@ test('2. sw.js lists what the page can ask for, hashed as served', () => {
     assert.equal(files['index.html'], sha256(page));
     assert.equal(files['styles.css'], sha256(SITE['styles.css']));
     // Run twice, it would name the worker twice: it refuses.
-    assert.throws(() => execFileSync(process.execPath, ['tools/precache.mjs', dir], { stdio: 'pipe' }));
+    assert.throws(() => execFileSync(process.execPath, ['tools/precache.ts', dir], { stdio: 'pipe' }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -128,7 +128,7 @@ test('4. a site without the service worker\'s bundle fails the build', () => {
   const dir = mkdtempSync(join(tmpdir(), 'aet-site-'));
   try {
     writeFileSync(join(dir, 'index.html'), SITE['index.html']);
-    assert.throws(() => execFileSync(process.execPath, ['tools/precache.mjs', dir], { stdio: 'pipe' }));
+    assert.throws(() => execFileSync(process.execPath, ['tools/precache.ts', dir], { stdio: 'pipe' }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -58,7 +58,7 @@ and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
 each a job of its own.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host
-needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
+needs, and the build is esbuild plus a few copies (`tools/buildSite.ts`), with
 no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
 that Netlify bundles from source on deploy and backs with the site's Blobs
@@ -71,7 +71,7 @@ retry. esbuild bundles the page, the grid worker and the service worker into
 a few files under `bundle/`, each named for its contents, so they are cached
 for a year, and a returning browser never runs last month's scripts against
 this month's page; `copy/` keeps its filenames, so it is revalidated on every
-load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.mjs` writes
+load. `netlify.toml` says why. The built site also has a service worker: `tools/precache.ts` writes
 `sw.js`, listing every file with its SHA-256, and once a browser has it the app
 opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.

@@ -17,7 +17,7 @@
 // The page finds the worker through <meta name="service-worker">, which only
 // the built page gets: the repo root, served as it is, has no sw.js to start.
 //
-// Usage: node tools/precache.mjs [site directory, default _site]
+// Usage: node tools/precache.ts [site directory, default _site]
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,15 +34,15 @@ const LEFT_OUT = new Set([
   'assets/social.jpg',
 ]);
 
-/** The service worker's bundle, under its hashed name (tools/buildSite.mjs). */
+/** The service worker's bundle, under its hashed name (tools/buildSite.ts). */
 const WORKER = /^bundle\/serviceWorker-\w+\.js$/;
 
 const HOST_SETTINGS = ['netlify.toml'];
 
 /** Every file under `dir`, as a path from `site` with forward slashes,
  *  less hidden ones (a .DS_Store copied in with the artwork). */
-function walk(dir, prefix = '') {
-  const found = [];
+function walk(dir: string, prefix = ''): string[] {
+  const found: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue;
     const path = prefix + entry.name;
@@ -52,7 +52,7 @@ function walk(dir, prefix = '') {
   return found;
 }
 
-function sha256(data) {
+function sha256(data: string | Uint8Array): string {
   return createHash('sha256').update(data).digest('hex');
 }
 
@@ -69,15 +69,15 @@ if (!html.includes(anchor)) throw new Error(`${page}: ${anchor} not found`);
 if (html.includes(meta)) throw new Error(`${page}: already names its service worker`);
 writeFileSync(page, html.replace(anchor, `${anchor}\n${meta}`));
 
-const files = {};
+const files: Record<string, string> = {};
 for (const path of walk(site).filter((p) => !LEFT_OUT.has(p)).sort()) {
   files[path] = sha256(readFileSync(join(site, path)));
 }
-const hosts = {};
+const hosts: Record<string, string> = {};
 for (const path of HOST_SETTINGS.filter((p) => existsSync(p))) hosts[path] = sha256(readFileSync(path));
 const build = sha256(JSON.stringify({ files, hosts })).slice(0, 16);
 
-writeFileSync(join(site, 'sw.js'), `// Written by tools/precache.mjs; the code is src/ui/serviceWorker.ts.
+writeFileSync(join(site, 'sw.js'), `// Written by tools/precache.ts; the code is src/ui/serviceWorker.ts.
 import { serve } from './${workers[0]}';
 
 serve('${build}', ${JSON.stringify(files, null, 2)});

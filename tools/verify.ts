@@ -43,7 +43,7 @@
 // tests, which need swift build), and verify fails naming each failed job and
 // its exit code.
 //
-// Usage: node tools/verify.mjs
+// Usage: node tools/verify.ts
 import { spawn } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -51,21 +51,27 @@ import { join } from 'node:path';
 
 const T0 = Date.now();
 const SWIFT = 'ios/EggTimerCore';
-const seconds = (ms) => (ms / 1000).toFixed(1);
+const seconds = (ms: number): string => (ms / 1000).toFixed(1);
 
-/** Run `steps` ([command, args, cwd?] each) in turn, stopping at the first
- *  that fails, with their output held. Resolves to the job's result. */
-function job(name, steps) {
+/** A command, its arguments, and the directory it runs in, `.` if none. */
+type Step = [string, string[], string?];
+
+/** How a job ended, and when, in ms from verify's start. */
+interface Result { name: string; code: number; start: number; end: number }
+
+/** Run `steps` in turn, stopping at the first that fails, with their output
+ *  held. Resolves to the job's result. */
+function job(name: string, steps: Step[]): Promise<Result> {
   return new Promise((resolve) => {
     const start = Date.now() - T0;
-    const output = [];
-    const next = (i) => {
+    const output: Buffer[] = [];
+    const next = (i: number): void => {
       if (i === steps.length) return finish(0);
       const [command, args, cwd] = steps[i];
       output.push(Buffer.from(`$ ${[command, ...args].join(' ')}\n`));
       const child = spawn(command, args, { cwd: cwd ?? '.', stdio: ['ignore', 'pipe', 'pipe'] });
-      child.stdout.on('data', (chunk) => output.push(chunk));
-      child.stderr.on('data', (chunk) => output.push(chunk));
+      child.stdout.on('data', (chunk: Buffer) => output.push(chunk));
+      child.stderr.on('data', (chunk: Buffer) => output.push(chunk));
       child.on('error', (error) => {
         output.push(Buffer.from(`${error.message}\n`));
         finish(127);
@@ -76,7 +82,7 @@ function job(name, steps) {
       });
     };
     let done = false;
-    const finish = (code) => {
+    const finish = (code: number): void => {
       if (done) return;
       done = true;
       const end = Date.now() - T0;
@@ -108,13 +114,13 @@ const fixtures = job('fixtures:check', [[node, ['tools/fixturesCheck.ts']]]);
 const committed = Promise.all([copyKeys, swiftConstants, fixtures])
   .then(() => job('committed', [['git', ['diff', '--exit-code', '--stat', 'HEAD', '--', ...GENERATED]]]));
 const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
-const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
+const swiftTests = (name: string, target: string): Promise<Result> => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
 const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
 const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
   ? swiftTests('swift core tests', 'EggTimerCoreTests')
   : null));
 const all = await Promise.all([
-  job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p) => [node, [tsc, '-p', p]])),
+  job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p): Step => [node, [tsc, '-p', p]])),
   job('npm test', [[node, ['--test', ...tests]]]),
   job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
   copyKeys,
@@ -125,7 +131,7 @@ const all = await Promise.all([
   appTests,
   coreTests,
 ]);
-const results = all.filter((r) => r !== null);
+const results = all.filter((r): r is Result => r !== null);
 
 console.log('\n===== verify =====');
 for (const r of [...results].sort((a, b) => a.end - b.end)) {

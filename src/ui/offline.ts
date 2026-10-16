@@ -14,7 +14,7 @@
  * An app kept open for days looks for a new build when it comes back into
  * view, at most once an hour.
  *
- * Only the built site has a service worker: tools/precache.mjs writes it and
+ * Only the built site has a service worker: tools/precache.ts writes it and
  * names it in index.html's <meta name="service-worker">.
  *
  * A browser keeps a service worker whose file has gone, and would answer

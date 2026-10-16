@@ -62,7 +62,7 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
   // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
-  // which neither app ships (tools/buildSite.mjs and ios/project.yml leave
+  // which neither app ships (tools/buildSite.ts and ios/project.yml leave
   // them out). Anything else would ship, so the approved record is kept in
   // test/data/.
   for (const f of readdirSync('copy')) {

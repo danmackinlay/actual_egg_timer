@@ -13,7 +13,7 @@
  * solve and a decision per level: most of a second, and never on the page.
  *
  * Zero dependencies: esbuild bundles this, with the core it imports, into a
- * file of its own beside the page's (tools/buildSite.mjs), which offThread.ts
+ * file of its own beside the page's (tools/buildSite.ts), which offThread.ts
  * starts as a module worker; the core is the same source the page runs.
  * The request is plain data and so is the surface, so both cross by structured
  * clone, which copies doubles bit for bit: a surface built here is the surface
