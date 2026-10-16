@@ -20,7 +20,11 @@ and the map of the documents are `CLAUDE.md`.
 3. **The first real population fit (E7)**, once shared eggs arrive:
    `fit/README.md` has the loop, and publishing writes
    `fixtures/population.json` in a release. The owner's trusted ids count in
-   full and lift the open tier's cap (`DECISIONS.md` 82).
+   full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
+   chains than the recovery check's: in a 20-repetition SBC trial, 12 fits
+   had R-hat between 1.01 and 1.022 at 4 × 1000 draws, and publishing refuses
+   a fit above 1.01 (133). Run a full SBC (`python -m eggfit sbc --reps 200`)
+   before the first publish.
 4. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that
@@ -85,8 +89,8 @@ Start the QA pass here.
   "a full rolling boil" (111); the feedback's target, the probe's − and +
   and the room (79); "Export my results" (107); a soft yolk chosen again (83)
   and the time never falling as the doneness rises (84); the certainty word
-  and its range (93, 97); the one screen from setup to Done (96-99, 108); an
-  older build leaving a newer one alone (100); the alarm sounds (101); the
+  and its range (93, 97); the one screen from setup to Done (96-99, 108); the
+  alarm sounds (101); the
   action's row (125), the bracket's band (114), the bowl (115); the web's
   setup sentence while a cook runs.
 - **Sharing, live.** A record posted and deleted through the deployed

@@ -75,7 +75,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   alarms' timing; the server's contract for sharing. It lands in TypeScript
   first, is fixtured by `npm run fixtures`, and is held in Swift by
   `npm run conformance`. `ios/README.md` maps the modules. Each app's
-  plumbing (its stores, settings, share queue, newer-build guard) is its
+  plumbing (its stores, settings, share queue) is its
   own, tested in its own suite (`DECISIONS.md` 126).
 - **Fixtures are never hand-edited, and never regenerated to make Swift
   pass.** If a fixture is wrong, the TypeScript is wrong first.
@@ -138,7 +138,7 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 - **Run `cd ios && xcodegen` after adding or removing a file**, or changing
   `project.yml`. The project is generated and gitignored.
-- **A debug build takes launch arguments** (`-uiScreen`, `-seedEggs`,
+- **A debug build takes launch arguments** (`-uiScreen`,
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
   `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them.
 - **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools:
