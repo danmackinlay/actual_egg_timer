@@ -23,7 +23,7 @@ npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no literal written into a Swift text call is words
 npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html, to read on a phone
-npm run copy:approve     # record HEAD's words as approved (LANGUAGE.md §3)
+npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved (LANGUAGE.md §3)
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
 npm run build:site # the deployable tree, in _site/
@@ -104,8 +104,10 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    `copy/en-US.json` override with its `base` (the 1750 twin may lag); run
    `npm test` and `npm run fixtures:check`, which writes any fixture the
    words moved; commit the catalogue with them (CLAUDE.md, "Words").
-4. **Approve the rest**: `npm run copy:approve` records HEAD, and refuses
-   while `copy/` has uncommitted changes. Commit
+4. **Approve the rest**: `npm run copy:approve -- <commit>` records the
+   commit the page was made from, which it prints, so words committed
+   since he read it are not approved with it; `npm run copy:approve`
+   records HEAD, and refuses while `copy/` has uncommitted changes. Commit
    `test/data/copy-approved.txt`. Approval is the owner's word; no script
    or agent gives it.
 

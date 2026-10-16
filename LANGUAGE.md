@@ -269,7 +269,8 @@ read), so what a change does to the words is the catalogue's diff.
 - **Approved** on the owner's word, never on an agent's judgement, and of
   the whole catalogue: he says what to put back, and once that is
   committed, `npm run copy:approve` records HEAD (it refuses while `copy/`
-  has uncommitted changes). Nothing is approved key by key.
+  has uncommitted changes), or `-- <commit>` the commit the page was made
+  from, which the page prints. Nothing is approved key by key.
 
 A string the owner has approved (the `alarm.pull.*` bodies,
 `alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
