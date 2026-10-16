@@ -1,7 +1,8 @@
 # The gate, on every push and pull request. Separate jobs, so that each runs
 # on the runner it needs and all run side by side: web and e2e on Linux, quick
 # to start; apple on macOS, for Swift and the iOS build; fit on Linux under uv,
-# since the fit writes fixtures/population.json, which both apps ship. ios-e2e
+# with no node: its likelihood held to the core's, and NUTS recovering a known
+# population, from fixtures npm run fixtures wrote into fit/tests/. ios-e2e
 # waits for apple and builds its own app: an artifact between jobs is a zip,
 # which drops the bundle's file modes. x86 Linux differs from arm64 macOS in
 # the last bit of some numbers, so the fixture check holds them to Swift's
@@ -70,6 +71,9 @@ jobs:
 
   fit:
     runs-on: ubuntu-latest
+    # The recovery check's four chains run side by side on the runner's four
+    # cores: about a minute and a quarter on a developer's Mac.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v10.3.0

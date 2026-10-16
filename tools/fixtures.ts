@@ -57,12 +57,14 @@
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
  *
- * And one for the fit (fit/, Python), held by its pytest suite, which CI runs
+ * And two for the fit (fit/, Python), held by its pytest suite, which CI runs
  * without node:
  *
  *   fit/tests/emulated-sample.json   six simulated cooks emulated, with the
  *                              core's own likelihood for a dozen eggs: the
  *                              fit's likelihood is held to it
+ *   fit/tests/recovery-sample.json   sixty cooks from a known truth: the
+ *                              fit must recover it, and mix
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -216,12 +218,17 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     const { fitSampleFixture: f } = await import('./fixtures/fitSample.ts');
     return { fixture: f, counts: [`${f.checks.length} likelihood checks`] };
   },
+  fitRecovery: async () => {
+    const { fitRecoveryFixture: f } = await import('./fixtures/fitRecovery.ts');
+    return { fixture: f, counts: [`${f.eggs.length} eggs to recover a population from`] };
+  },
 };
 
 /** Where a fixture is written that is not fixtures/<name>.json: the fit's,
  *  beside the tests that read them. tools/fixturesCheck.ts checks these too. */
 const ELSEWHERE: Record<string, string> = {
   fitSample: 'fit/tests/emulated-sample.json',
+  fitRecovery: 'fit/tests/recovery-sample.json',
 };
 
 const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.json`;
@@ -230,11 +237,11 @@ const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.js
 const COUNTED = [
   'core', 'scenarios', 'calibration', 'slider', 'texture', 'sousvide', 'sousvideCopy', 'copy', 'format', 'units',
   'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'language', 'share', 'running', 'step',
-  'fitSample',
+  'fitSample', 'fitRecovery',
 ];
 
 /** The slowest first, so that none is started last; the rest take moments. */
-const SLOWEST = ['step', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
+const SLOWEST = ['fitRecovery', 'step', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
 
 /**
  * A particle set that repeats one earlier in the same file - an update that

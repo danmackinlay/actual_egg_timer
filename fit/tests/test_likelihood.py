@@ -115,7 +115,7 @@ def test_what_nuts_evaluates_is_the_likelihood_above():
     # included, at time-scales across the grid and beyond its ends, and at
     # noises from a hundredth of the literature's to a thousand times it,
     # where a sampler's trajectory can go: there too the end answers are open.
-    for path in (SAMPLE,):
+    for path in (SAMPLE, SAMPLE.parent / "recovery-sample.json"):
         eggs = data.load(str(path))
         c = eggs.constants
         d = model.arrays(eggs, np.ones(eggs.n))
