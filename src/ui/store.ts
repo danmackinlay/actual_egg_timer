@@ -20,9 +20,7 @@ import {
 import type { RunningCook } from '../core/running.ts';
 import { type KeptAnswers, type StoredCook, readStoredCook, storedCook } from './storedCook.ts';
 import { STORES, STORE_LIST, inFormat, stamped } from './stores.ts';
-import { type WriterVerdict, parseVersion, writerCheck } from './newer.ts';
 import { ownsApp } from './owner.ts';
-import { send } from './send.ts';
 
 export type { Limit } from '../core/inputs.ts';
 export type { KeptAnswers, StoredCook } from './storedCook.ts';
@@ -35,7 +33,7 @@ const BOIL_KEY = STORES.boilMemory.key;
 
 /** Every key this build keeps (stores.ts). Any other key of this app's
  *  (`aet.`) is an earlier build's, which this one neither reads nor
- *  collects, and is deleted at boot (`claimStorage`). */
+ *  collects, and is deleted at boot (`sweepStorage`). */
 const KEPT_KEYS: ReadonlySet<string> = new Set(STORE_LIST.map((s) => s.key));
 
 /** The Start control offers one more option than the solver understands.
@@ -52,7 +50,7 @@ export const DEFAULT_SETTINGS: Settings = STORED_DEFAULT_SETTINGS;
 
 /* ------------------------------------------------------------- raw storage */
 
-export function readStorage(key: string): string | null {
+function readStorage(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
   } catch {
@@ -61,12 +59,11 @@ export function readStorage(key: string): string | null {
 }
 
 /** Every write the app makes, of every store, comes through here or through
- *  `removeStorage`, so the guards below hold for all of them: a page that
- *  does not own the app (owner.ts) writes nothing, whatever timer of its own
- *  comes round after it lost it, and neither does one a newer build has
- *  run beside. */
+ *  `removeStorage`, so the guard holds for all of them: a page that does not
+ *  own the app (owner.ts) writes nothing, whatever timer of its own comes
+ *  round after it lost it. */
 export function writeStorage(key: string, value: string): void {
-  if (!mayWrite()) return;
+  if (!ownsApp()) return;
   try {
     window.localStorage.setItem(key, value);
   } catch {
@@ -75,7 +72,7 @@ export function writeStorage(key: string, value: string): void {
 }
 
 export function removeStorage(key: string): void {
-  if (!mayWrite()) return;
+  if (!ownsApp()) return;
   try {
     window.localStorage.removeItem(key);
   } catch {
@@ -83,43 +80,14 @@ export function removeStorage(key: string): void {
   }
 }
 
-/* ------------------------------------------------- the newest build's mark */
+/* ------------------------------------------------------------ the sweep */
 
 /**
- * The newest version of the app that has run in this browser. An older build writes what it stores whole, from the
- * fields it knows, and drops what a newer one added, so a build that finds a
- * newer version here writes nothing at all for the rest of the page's life:
- * no setting, pan, cook, result or sharing state. It still times the egg. Whether it may write is `writerCheck` (newer.ts).
- *
- * The mark is written before anything else, and checked again before every
- * write: a newer build that ran here since - it took the app over from this
- * tab, which took it back, or ran beside it where there are no Web Locks
- * (owner.ts) - is seen at this page's next write. Never removed: "Start
- * learning again" keeps it.
+ * Before anything is read for writing back, or written: delete every key of
+ * this app's that this build does not keep (`KEPT_KEYS`), an earlier build's.
  */
-const NEWEST_KEY = STORES.newest.key;
-
-/** This build's version, once `claimStorage` has been called; until then
- *  (tests, tools) every write goes through unguarded. The page's own: the
- *  browser's storage is one for the page. */
-let mine: string | null = null;
-let readOnly = false;
-
-/**
- * Before anything is read for writing back, or written: compare the mark
- * with this build, and write this build's version there if it is not older
- * than what is there; then, if this build may write, delete every key of
- * this app's that this build does not keep (`KEPT_KEYS`). A build that finds
- * a newer mark deletes nothing. Says what this page does with the stores
- * from now on. When it stops writing, then or later, the page is told once
- * (`leftAlone`).
- */
-export function claimStorage(version: string): WriterVerdict {
-  mine = version;
-  readOnly = false;
-  if (!mayWrite()) return 'readOnly';
+export function sweepStorage(): void {
   for (const key of storageKeys()) if (key.startsWith('aet.') && !KEPT_KEYS.has(key)) removeStorage(key);
-  return readOnly ? 'readOnly' : 'write';
 }
 
 /** Every key in storage now; none if there is no storage. */
@@ -137,52 +105,12 @@ function storageKeys(): string[] {
   return keys;
 }
 
-/** Whether a newer build has run here since this page started: if so this
- *  page writes nothing, sends nothing and learns nothing. */
-export function storageReadOnly(): boolean {
-  return readOnly;
-}
-
-/** The mark as stored, and this build's verdict on it; the mark brought up
- *  to this build when it may write. */
-function mayWrite(): boolean {
-  if (!ownsApp()) return false;
-  if (mine === null) return true;
-  if (readOnly) return false;
-  const mark = readStorage(NEWEST_KEY);
-  if (writerCheck(mark, mine) === 'readOnly') {
-    leftAlone();
-    return false;
-  }
-  if (mark !== mine && parseVersion(mine) !== null) {
-    try {
-      window.localStorage.setItem(NEWEST_KEY, mine);
-    } catch {
-      /* no storage: nothing else will be written either. */
-    }
-  }
-  return true;
-}
-
-/**
- * A newer build has run in this browser, found at boot or at a write:
- * what this page stores is left alone from now on. The page is told (the
- * `stores` message): the line at the top of every view says so, and the
- * questions after an egg, sharing and "Start learning again" go, since
- * nothing they do could be kept. The timer runs as before.
- */
-function leftAlone(): void {
-  readOnly = true;
-  send({ kind: 'stores' });
-}
-
 /* ------------------------------------------------------- one store's key */
 
 /**
  * One store, under its key. Text that does not read is `parse`'s to refuse,
  * as an empty store or null. A write goes through `writeStorage`, so it
- * stops at a page that does not own the app and at a newer build's mark,
- * and is read back: a write that failed leaves the store as it was.
+ * stops at a page that does not own the app, and is read back: a write that failed leaves the store as it was.
  */
 export interface StoredKey<T> {
   readonly key: string;

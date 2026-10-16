@@ -1,7 +1,7 @@
 // `npm run ios:e2e`: what only a device can check, scripted: the screen's
 // layout, a relaunch over the system's notifications and Live Activity, a
 // notification delivered while the app is gone, the app leaving the screen,
-// the store a newer build left. What the app's logic decides is
+// the keys an earlier build left. What the app's logic decides is
 // `swift test`'s (ios/EggTimerCore/Tests/EggTimerAppTests).
 //
 // A Debug build on a simulator of the script's own, the app's clock frozen
@@ -578,7 +578,7 @@ scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone 
   run.check(!(COOK in prefs), 'nothing stored');
 });
 
-scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's cook among them, are deleted at launch; its alarms left; under a newer mark, not one", async (run) => {
+scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's cook among them, are deleted at launch; its alarms left", async (run) => {
   await started(run);
   run.terminate();
   await run.prefs((p) => Boolean(p[COOK]?.cook));
@@ -588,6 +588,7 @@ scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's coo
   const old = {
     'calibration.v4': '{"v":4,"log":[]}', 'calibration.v4.unread': '[]', 'cookInProgress.v2': '{}',
     'cookInProgress.unread': '[]', 'share.v1': '{}', 'probeAsked': '1', 'coldStart': '1',
+    'newestVersion': '0.5.0', 'newestBuild': '3',
   };
   run.editPlist([COOK, 'cookInProgress'], old);
   const keys = [...Object.keys(old), 'cookInProgress'];
@@ -602,15 +603,7 @@ scenario('sweep', "the keys no build reads, 0.3's log and an earlier build's coo
   const prefs = await run.prefs((p) => keys.every((k) => !(k in p)));
   run.check(keys.every((k) => !(k in prefs)), `gone: ${keys.filter((k) => k in prefs).join(', ')}`);
   run.check(prefs['calibration.v5']?.v === 5, 'this build\'s log kept');
-  run.terminate();
-  // A newer build's mark: nothing deleted.
-  run.editPlist(null, old);
-  run.launch(['-newestVersion', '9.0.0']);
-  await run.until(is('newerNote'), { from: run.launched, what: 'the line shown' });
-  run.check(!has(run.sinceLaunch(), is('swept')), 'nothing swept under a newer mark');
-  const kept = await run.prefs((p) => Object.keys(old).every((k) => k in p));
-  run.check(Object.keys(old).every((k) => k in kept), 'each kept');
-  run.note(`${keys.length} swept, the old cook's alarms left; under 9.0.0, none`);
+  run.note(`${keys.length} swept, the old cook's alarms left`);
 });
 
 /// The readout's frames logged in these lines: { at (the moment drawn for,
@@ -707,73 +700,6 @@ scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen
   run.check(first.fields.join(',') === 'mass' && second.fields.join(',') === 'water',
     `two commits: ${say(first)}, ${say(second)}`);
   run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
-});
-
-scenario('newer-version', "a newer build's mark: the line, an egg timed to Done, answered and started again, and nothing stored; without it, the mark", async (run) => {
-  // A newer build's mark, as a launch argument, on a fresh install:
-  // UserDefaults reads it first, and an edit of the plist can be undone by
-  // the system's cached copy. Nothing at all may then be stored.
-  await started(run, ['-newestVersion', '9.0.0', '-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
-  run.check(has(run.sinceLaunch(), is('stores', (e) => e.verdict === 'readOnly' && e.mark === '9.0.0')), 'read-only at launch');
-  await run.until(is('newerNote'), { from: run.launched, what: 'the line shown' });
-  const done = await toDone(run);
-  let i = await run.step(cooledAt(done) + 20);
-  await run.until(tapped('answer'), { from: i, what: 'the answer' });
-  i = await run.step(cooledAt(done) + 40);
-  await run.until(storedNone, { from: i, what: 'Start again' });
-  run.terminate();
-  const lines = run.sinceLaunch();
-  run.check(same(phases(lines), ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `the timer ran: ${phases(lines)}`);
-  // The log line says what a save would hold: never an egg; and nothing
-  // went through the store.
-  run.check(!has(lines, is('log', (e) => e.count >= 1)), 'no egg logged');
-  run.check(!has(lines, is('wrote')), `written: ${lines.filter(is('wrote')).map((e) => e.key).join(', ')}`);
-  // The same install with no newer mark: this build marks it first.
-  run.launch();
-  const claimed = await run.until(is('stores'), { from: run.launched, what: 'the claim' });
-  run.check(claimed.verdict === 'write' && claimed.mark === undefined, `the claim: ${say(claimed)}`);
-  // The plist lags the app by seconds, and is written whole: once it holds
-  // this launch's mark, it holds whatever the launch before left with the
-  // system too. Nothing may be in it but what this launch wrote, and no egg
-  // or cook.
-  const marked = await run.prefs((p) => typeof p.newestVersion === 'string');
-  run.check(/^\d+\.\d+\.\d+$/.test(marked.newestVersion ?? ''), `the mark: ${marked.newestVersion}`);
-  const wrote = new Set(run.sinceLaunch().filter(is('wrote')).map((e) => e.key));
-  const stored = Object.keys(marked).filter((k) => !wrote.has(k));
-  run.check(stored.length === 0, `stored by the read-only launch: ${stored.join(', ')}`);
-  run.check(!(COOK in marked) && (marked['calibration.v5']?.log?.length ?? 0) === 0,
-    `a cook or an egg stored: ${Object.keys(marked).join(', ')}`);
-  run.check(!has(run.sinceLaunch(), is('newerNote')), 'no line');
-  run.note(`the line shown; Done, answered, started again; nothing stored; then marked ${marked.newestVersion}, `
-    + `the plist ${Object.keys(marked).join(', ')}`);
-});
-
-scenario('newer-build', 'a later build of the same version has run: read-only, as for a newer version; the same build writes', async (run) => {
-  // Marked by this build first, with its version and its build number.
-  run.launch();
-  const claimed = await run.until(is('stores'), { from: run.launched, what: 'the claim' });
-  const first = claimed.verdict === 'write' && claimed.mark === undefined && claimed.markBuild === undefined
-    && /^\S+$/.test(claimed.version) && /^\d+$/.test(claimed.build);
-  run.check(first, `the first claim: ${say(claimed)}`);
-  if (!first) return;
-  const { version, build } = claimed;
-  const marked = await run.prefs((p) => p.newestBuild === build);
-  run.check(marked.newestVersion === version && marked.newestBuild === build, `marked ${marked.newestVersion} build ${marked.newestBuild}`);
-  run.terminate();
-  // A later build of this version, as a launch argument (see newer-version).
-  const later = String(Number(build) + 1);
-  run.launch(['-newestVersion', version, '-newestBuild', later]);
-  const guarded = await run.until(is('stores'), { from: run.launched, what: 'the claim under a later build' });
-  run.check(guarded.verdict === 'readOnly' && guarded.mark === version && guarded.markBuild === later,
-    `the claim: ${say(guarded)}`);
-  await run.until(is('newerNote'), { from: run.launched, what: 'the line shown' });
-  run.terminate();
-  // This build's own number again: it writes.
-  run.launch(['-newestVersion', version, '-newestBuild', build]);
-  const own = await run.until(is('stores'), { from: run.launched, what: 'the claim under its own build' });
-  run.check(own.verdict === 'write', `the claim: ${say(own)}`);
-  run.check(!has(run.sinceLaunch(), is('newerNote')), 'no line');
-  run.note(`${version} build ${build}: read-only under build ${later}, writing under its own`);
 });
 
 // ------------------------------------------------------------------- main

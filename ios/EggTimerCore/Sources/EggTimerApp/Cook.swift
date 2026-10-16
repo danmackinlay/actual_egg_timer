@@ -72,10 +72,6 @@ public final class Cook {
         case event(CookEvent)
         /// Something a cook waited for has been built.
         case landed
-        #if DEBUG
-        /// The cook replaced, outside the state machine (`moveBack`).
-        case replace(RunningCook)
-        #endif
     }
     @ObservationIgnored private var jobs: [Job] = []
     private var stepping: Task<Void, Never>?
@@ -255,30 +251,6 @@ public final class Cook {
         }.value
     }
 
-    #if DEBUG
-    /// A debug build's `-uiScreen done`: the cook moved back in time so the
-    /// eggs came out on time and the cooling ended `ago` s ago.
-    public func skipToDone(ago: Double = 2) {
-        guard var cook = running, let plan else { return }
-        let cooking = plan.cookTimeS
-        let cooled = cook.choices.cooling == .counter ? 0 : plan.coolS
-        let start = AppClock.nowS - (cooking + cooled + ago)
-        cook = shiftedCook(cook, by: start - cook.startedAtS)
-        let out = start + cooking
-        cook = writeEvents(cook, CookEvents(
-            boilAtS: cook.events.boilAtS, pulled: Pulled(dueS: out, outS: out, by: .cook, confirmed: true),
-            cooledAtS: cook.choices.cooling == .counter ? nil : out + cooled
-        ))
-        send(.replace(cook))
-    }
-
-    /// A debug build's `-cookAgo`: every time in the cook moved back.
-    public func moveBack(_ seconds: Double) {
-        guard let cook = running else { return }
-        send(.replace(shiftedCook(cook, by: -seconds)))
-    }
-    #endif
-
     /// The process gone, for a test: the ticker stops, a change in hand
     /// goes uncommitted with its waits, and the store keeps what it has.
     func killed() {
@@ -308,14 +280,6 @@ public final class Cook {
                 let now = AppClock.nowS
                 if running != nil { await stepOnScreen(.surfaceLanded(nowS: now)) }
                 await stepEnding(nowS: now)
-            #if DEBUG
-            case let .replace(cook):
-                guard running != nil else { break }
-                // Planned afresh, as at a relaunch, and stored.
-                state = CookState(cook: cook, plan: nil, leanHintS: state.leanHintS)
-                await stepOnScreen(.tick(nowS: AppClock.nowS))
-                persist(running, leanHintS: state.leanHintS)
-            #endif
             }
         }
         stepping = nil
@@ -507,9 +471,7 @@ public final class Cook {
             // take a prompt's seconds.
             if let now = running, let plan { await card.start(now, plan, atS: AppClock.nowS) }
             guard running?.idMs == cook.idMs else { return }
-            #if DEBUG
             if restored { Screenshots.log(.restored) }
-            #endif
         }
     }
 
@@ -588,9 +550,7 @@ public final class Cook {
         let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
             Stores.set(data, forKey: Self.savedKey)
-            #if DEBUG
             Screenshots.log(.stored(value: Screenshots.Encoded(value: stored)))
-            #endif
         }
     }
 
@@ -599,9 +559,7 @@ public final class Cook {
         if let data = Stores.store.data(forKey: savedKey), let stored = readStored(data),
            stored.cook.idMs != idMs { return }
         Stores.remove(savedKey)
-        #if DEBUG
         Screenshots.log(.stored(value: nil))
-        #endif
     }
 
     /// Pick up the cook stored when the app was last closed: a tick of it
@@ -628,9 +586,7 @@ public final class Cook {
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
         let s = made.step
         guard let after = s.cook, endedAtS(after) == nil else {
-            #if DEBUG
             Screenshots.log(.restoreTooOld)
-            #endif
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
@@ -639,12 +595,10 @@ public final class Cook {
             follow()
             return
         }
-        #if DEBUG
         Screenshots.log(.restore(
             phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))
-        #endif
         state = s.state
         need = s.need
         if let o = made.outcome { outcome = o }
@@ -661,40 +615,3 @@ public final class Cook {
         begin(after, restored: true)
     }
 }
-
-#if DEBUG
-/// One entry with every clock time in it moved by `by`.
-private func shiftedEntry(_ entry: CookEntry, by: Double) -> CookEntry {
-    switch entry {
-    case let .boil(at): .boil(atS: at + by)
-    case let .correct(at, choices): .correct(atS: at + by, choices: choices)
-    case let .start(at, startedAt): .start(atS: at + by, startedAtS: startedAt + by)
-    case let .pulled(p):
-        .pulled(p.map { Pulled(dueS: $0.dueS + by, outS: $0.outS + by, by: $0.by, confirmed: $0.confirmed) })
-    case .stands: .stands
-    case let .cooled(at): .cooled(atS: at.map { $0 + by })
-    case let .rang(at): .rang(atS: at.map { $0 + by })
-    case let .stillIn(at): .stillIn(atS: at + by)
-    case let .ran(r):
-        .ran(r.map {
-            var moved = $0
-            moved.correctedAtS = $0.correctedAtS.map { $0 + by }
-            return moved
-        })
-    case let .answered(at, yolk, white, probe): .answered(atS: at + by, yolkWord: yolk, white: white, probe: probe)
-    case let .logged(at): .logged(atS: at + by)
-    case let .ended(at): .ended(atS: at + by)
-    }
-}
-
-/// The cook with every clock time in it moved by `by` s, the press with
-/// them: how a debug build's `-uiScreen done` and `-cookAgo` reach a moment
-/// without waiting for it.
-func shiftedCook(_ cook: RunningCook, by: Double) -> RunningCook {
-    foldCook(
-        idMs: (cook.idMs + by * 1000).rounded(), start: CookStart(atS: cook.start.atS + by, choices: cook.start.choices),
-        nudgeS: cook.nudgeS, boilMemory: cook.boilMemory, units: cook.units, lang: cook.lang,
-        log: cook.log.map { shiftedEntry($0, by: by) }
-    )
-}
-#endif

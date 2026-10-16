@@ -503,7 +503,7 @@ web's thumb moves at once.
 
 ## 10. Screenshots and checks
 
-A debug iOS build takes launch arguments (`-uiScreen`, `-seedEggs`,
+A debug iOS build takes launch arguments (`-uiScreen`, `-uiDo`,
 `-noAlarmPrompt` and others), so screens can be reached without a tap; the
 header of `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists
 them. The web's states are driven by `npm run copy:snapshot`

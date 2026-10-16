@@ -10,14 +10,12 @@
  * left behind. Before wide deployment (DECISIONS.md 107) a bump is all a
  * change of format needs; nothing is migrated.
  *
- * A store with no format inside it (`format` null) is a bare value read by
- * its own reader (the newest-build mark), or one whose key still names its
- * format, sharing's, where a change is a new key. The log has its format
+ * A store with no format inside it (`format` null) is one whose key still
+ * names its format, sharing's, where a change is a new key. The log has its format
  * inside and keeps the key it was first written under.
  *
- * The page keeps only what is listed here: once the newer-build guard says
- * this build may write (newer.ts), it deletes any key of its own (`aet.`)
- * that is not in this table (store.ts, `claimStorage`).
+ * The page keeps only what is listed here: at boot it deletes any key of its
+ * own (`aet.`) that is not in this table (store.ts, `sweepStorage`).
  *
  * Pure: a key is a name, and what is read is JSON already parsed.
  */
@@ -32,12 +30,9 @@ export interface StoreSpec {
   key: string;
 }
 
-export type StoreName = 'newest' | 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share' | 'devClockUsed';
+type StoreName = 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share';
 
 export const STORES = {
-  /** The newest version that has run here (newer.ts): under this key for
-   *  good, since an older build must find it. */
-  newest: { name: 'newest', format: null, key: 'aet.newest' },
   /** The settings, one value (settings.ts), the language and the alarm's
    *  sound among them. */
   settings: { name: 'settings', format: 1, key: 'aet.settings' },
@@ -52,15 +47,11 @@ export const STORES = {
   calibration: { name: 'calibration', format: 5, key: 'aet.calibration.v5' },
   /** Sharing's state (shareState.ts): its format in its key. */
   share: { name: 'share', format: null, key: 'aet.share.v1' },
-  /** The development clock has been used here: what is logged may hold an
-   *  egg cooked on a made-up clock, which is never sent. */
-  devClockUsed: { name: 'devClockUsed', format: null, key: 'aet.devClock.used' },
 } as const satisfies Record<StoreName, StoreSpec>;
 
 /** The table in one order, for the sweep. */
 export const STORE_LIST: StoreSpec[] = [
-  STORES.newest, STORES.settings, STORES.cook, STORES.boilMemory, STORES.calibration, STORES.share,
-  STORES.devClockUsed,
+  STORES.settings, STORES.cook, STORES.boilMemory, STORES.calibration, STORES.share,
 ];
 
 /** What a store holds, stamped with its format. */

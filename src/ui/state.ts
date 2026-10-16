@@ -46,7 +46,6 @@ export function emptyModel(): Model {
     boilMemory: null!,
     calib: null!,
     sharing: false,
-    readOnly: false,
     deletedHere: false,
     share: null,
     redraws: { controls: 0, units: 0, doneness: 0, alarm: 0, echo: 0, learned: 0, share: 0, words: 0 },

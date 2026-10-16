@@ -154,11 +154,10 @@ test('calibration: everything forgotten, the posterior and the pans new, and wha
   assert.deepEqual(m.note, { rev: 1, say: 'learned' }, 'and over the questions');
 });
 
-test('learned, relabelled, stores: solved again, and what each changed drawn', () => {
+test('learned, relabelled: solved again, and what each changed drawn', () => {
   const m = idle();
   assert.deepEqual(redrawn(m, go(m, { kind: 'learned' }, S)[0]), ['learned']);
   assert.deepEqual(redrawn(m, go(m, { kind: 'relabelled' }, S)[0]), ['units', 'learned', 'words']);
-  assert.deepEqual(redrawn(m, go(m, { kind: 'stores' }, S)[0]), ['learned', 'share']);
 });
 
 test('forget, export: carried out by the runner, the model untouched', () => {

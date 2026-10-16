@@ -374,7 +374,6 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `colophon.link` = "colophon.link"
     case `colophon.tail` = "colophon.tail"
     case `colophon.version` = "colophon.version"
-    case `newer.note` = "newer.note"
     case `tab.note` = "tab.note"
     case `tab.useHere` = "tab.useHere"
 

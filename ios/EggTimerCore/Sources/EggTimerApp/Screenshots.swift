@@ -6,7 +6,7 @@ import os
 /// Launch arguments for a debug build, and the debug log the scripted checks
 /// read. Debug builds only: a release build reads no launch argument
 /// (`arguments`), so every flag here is off and `log` writes nothing, and it
-/// has none of the screenshot kit, the taps, the waits and the seeds (the
+/// has none of the screenshot kit, the taps and the waits (the
 /// `#if DEBUG` parts below). What the rest of the app asks of this, it asks
 /// in every build, and need not say which it is in.
 ///
@@ -19,23 +19,6 @@ import os
 /// - `-uiScreen certainty-open`: open what the certainty line under the time
 ///   says when pressed.
 /// - `-uiScreen heating`: start a cook, as a tap on Start would.
-/// - `-uiScreen done`: start a cook and move it back in time, so its cooling
-///   ended a moment ago and the eggs came out on time: the questions after
-///   an egg (`Cook.skipToDone`). With `-noAlarmPrompt YES`, so no alarm is
-///   set for a moment already past.
-/// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
-///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
-///   past its guesses, or a cook about to be too old, on screen. The cook
-///   moved, not the clock: `-clockAt` moves the clock instead, which needs
-///   a cook stored to move past.
-/// - `-doneAgo 3590`: with `-uiScreen done`, the cooling ended that many
-///   seconds ago rather than 2.
-/// - `-seedEggs got-jammy,got-soft`: on a fresh install, write that many
-///   eggs into the log through the app's own store, each cooked at the level
-///   and setup on screen, and fold them (`Planner.seed`). A learned state
-///   without cooking. `got-` and one of the five words is the yolk the cook
-///   got: `got-runny` to `got-hard`. An answer about the white follows a
-///   slash: `got-jammy/firm`, `got-soft/tender`.
 /// - `-noAlarmPrompt YES`: answer the notification question with no, without
 ///   asking, so the system's alert is not in the picture.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
@@ -177,28 +160,8 @@ public enum Screenshots {
 
 #if DEBUG
 extension Screenshots {
-    /// The screenshot kit's screen, and how far its cook is moved back
-    /// (above).
+    /// The screenshot kit's screen (above).
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
-    public static var cookAgo: Double { arguments?.double(forKey: "cookAgo") ?? 0 }
-    public static var doneAgo: Double {
-        arguments.flatMap { $0.object(forKey: "doneAgo") == nil ? nil : $0.double(forKey: "doneAgo") } ?? 2
-    }
-
-    static var seedEggs: [SeedAnswer] {
-        guard let list = arguments?.string(forKey: "seedEggs") else { return [] }
-        return list.split(separator: ",").compactMap { entry in
-            // Split at the dash and the slash, or at anything else that is
-            // not a letter.
-            var words = entry.split { !$0.isLetter }.map(String.init)
-            var answer = SeedAnswer()
-            guard words.first == "got", words.count > 1, let word = YolkWord(rawValue: words[1]) else { return nil }
-            answer.yolkWord = word
-            words.removeFirst(2)
-            answer.white = words.first.flatMap(WhiteReport.init(rawValue:))
-            return answer
-        }
-    }
 }
 #endif
 
@@ -261,8 +224,7 @@ extension Screenshots {
         /// The log as written: how many eggs, how many folded, and the last.
         case log(count: Int, folded: Int, last: Encoded?)
 
-        // The stores (`Stores.claim`).
-        case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
+        // The stores (`Stores.sweep`).
         case swept(key: String)
         /// A key written to the store (`Stores`), and its value if it is a
         /// number or a text.
@@ -283,7 +245,6 @@ extension Screenshots {
         // The screen.
         /// Where a part of the screen sits, pt from the window's top.
         case layout(part: String, y: Double)
-        case newerNote
         /// One frame of the readout: the moment it was drawn for, and what
         /// it drew, the certainty's time range none with no certainty.
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)
@@ -530,12 +491,5 @@ extension Screenshots {
             for c in waiting { c.resume() }
         }
     }
-}
-
-/// One seeded egg's answers: the yolk the cook got in the five words, and
-/// the white, if given.
-struct SeedAnswer {
-    public var yolkWord: YolkWord?
-    public var white: WhiteReport?
 }
 #endif

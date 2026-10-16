@@ -8,26 +8,15 @@ import EggTimerCore
 /// likes would let two equidistant pans give the two apps different answers.
 /// This file applies the rules; it does not decide them.
 
-/// The newest version of the app that has run on this phone, and whether
-/// this one may write.
-///
-/// An older build writes what it stores whole, from the fields it knows, and
-/// drops what a newer build added there. So the mark holds the newest
-/// `MARKETING_VERSION` that has run, with its build number (`CFBundleVersion`)
-/// beside it, since every TestFlight build of one version shares the version;
-/// and a build that finds a newer one writes nothing at all until it is
-/// quit: no setting, pan, cook, result, language or sharing state. It still
-/// times the egg, and says so at the top of the screen and in Settings.
-/// Whether it may write is `writerCheckBuilt` (Newer.swift).
+/// What the app keeps, and the sweep at launch.
 ///
 /// Every write the app makes to UserDefaults goes through `set` and
-/// `remove`, so the guard holds for all of them: `test/iosStores.test.ts`
-/// fails on any other in the source, and the store (`store`, UserDefaults in
-/// the app, a fake in the tests) takes a write only with a `Pass`, which
-/// only this file can make. Reads go straight to the store. `claim` runs
-/// first thing at launch, before anything is written, and writes this
-/// build's version as the mark when it may write. The mark is never removed:
-/// "Start learning again" keeps it.
+/// `remove`, and each is in the debug log, which the scripted checks hold
+/// the store to: `test/iosStores.test.ts` fails on any other write in the
+/// source, and the store (`store`, UserDefaults in the app, a fake in the
+/// tests) takes a write only with a `Pass`, which only this file can make.
+/// Reads go straight to the store. `sweep` runs first thing at launch,
+/// before anything is written.
 public enum Stores {
     /// Where everything is kept: UserDefaults in the app; a test's own.
     /// Unsafe, but set only at launch, or by a test before it runs anything.
@@ -39,13 +28,7 @@ public enum Stores {
         fileprivate init() {}
     }
 
-    /// Under its own key, never changed: a newer build must find it.
-    static let markKey = StoreRegistry.newest.key
-    /// The build number of the build that wrote the mark. A build from
-    /// before it was kept reads only the mark, and leaves this alone.
-    static let buildKey = StoreRegistry.newestBuild.key
-
-    /// The keys deleted at launch (`claim`) rather than left on the phone
+    /// The keys deleted at launch (`sweep`) rather than left on the phone
     /// being neither read nor collected: every key an earlier build wrote
     /// that no store of this build is kept under (`StoreRegistry`).
     static var sweptKeys: [String] {
@@ -56,7 +39,7 @@ public enum Stores {
     /// Whether the sweep found an earlier build's cook in progress, until
     /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
     /// Screen, and nothing will update it again. Unsafe, but written and
-    /// read once each, at launch on the main actor (`claim`, `Cook.restore`).
+    /// read once each, at launch on the main actor (`sweep`, `Cook.restore`).
     nonisolated(unsafe) private static var retiredCook = false
 
     /// Once: whether the launch's sweep deleted an earlier build's cook.
@@ -65,53 +48,17 @@ public enum Stores {
         return retiredCook
     }
 
-    /// Set once, at launch, before the first view; read on the main actor.
-    public nonisolated(unsafe) private(set) static var readOnly = false
-
-    /// The version this build marks with: the App Store version alone, which
-    /// is package.json's without the pre-release (Newer.swift).
-    public static var mine: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
-    }
-
-    /// This build's number, which tells two builds of one version apart.
-    public static var myBuild: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
-    }
-
-    /// Compare the mark and its build with this build, and bring them up to
-    /// this build if this build may write. Says whether it may.
-    @discardableResult
-    public static func claim(
-        _ version: String = mine, build: String = myBuild
-    ) -> WriterVerdict {
+    /// Delete every key an earlier build wrote (`sweptKeys`).
+    public static func sweep() {
         let defaults = store
-        let mark = defaults.string(forKey: markKey)
-        let markBuild = defaults.string(forKey: buildKey)
-        let verdict = writerCheckBuilt(mark, markBuild, version, build)
-        readOnly = verdict == .readOnly
-        if verdict == .write, parseVersion(version) != nil {
-            if mark != version { wrote(version, forKey: markKey) }
-            if markBuild != build, parseBuild(build) != nil { wrote(build, forKey: buildKey) }
+        for key in sweptKeys where defaults.object(forKey: key) != nil {
+            if StoreRegistry.retiredCooks.contains(key) { retiredCook = true }
+            defaults.removeObject(forKey: key, Pass())
+            Screenshots.log(.swept(key: key))
         }
-        // A build that finds a newer mark deletes nothing.
-        if verdict == .write {
-            for key in sweptKeys where defaults.object(forKey: key) != nil {
-                if StoreRegistry.retiredCooks.contains(key) { retiredCook = true }
-                defaults.removeObject(forKey: key, Pass())
-                #if DEBUG
-                Screenshots.log(.swept(key: key))
-                #endif
-            }
-        }
-        #if DEBUG
-        Screenshots.log(.stores(verdict: verdict.rawValue, mark: mark, markBuild: markBuild, version: version, build: build))
-        #endif
-        return verdict
     }
 
     public static func set(_ value: Any?, forKey key: String) {
-        guard !readOnly else { return }
         wrote(value, forKey: key)
     }
 
@@ -123,7 +70,6 @@ public enum Stores {
     }
 
     public static func remove(_ key: String) {
-        guard !readOnly else { return }
         store.removeObject(forKey: key, Pass())
     }
 }

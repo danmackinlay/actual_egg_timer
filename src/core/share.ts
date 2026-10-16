@@ -68,7 +68,7 @@ export function nextSeq(seq: number): number {
  * these: it waits, and is not counted, since nothing else can get through
  * either, and nothing was learned.
  */
-export type ShareReply = 'kept' | 'busy' | 'refused';
+type ShareReply = 'kept' | 'busy' | 'refused';
 
 export function shareReply(status: number): ShareReply {
   if (status === 200 || status === 201) return 'kept';

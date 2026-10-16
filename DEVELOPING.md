@@ -170,9 +170,9 @@ behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
 back; it is kept for the tab across a reload, a red mark in the corner shows
 it, and `aetClock.shift('+20m')`, `aetClock.set(moment)` and
 `aetClock.speed(x)` move it from the console. The pull's beeps, scheduled
-ahead on the audio clock, follow it. While it is on, and in that browser
-until Forget everything, sharing sends nothing, so no egg cooked on it
-reaches a server. On the live site the clock is `Date.now()`
+ahead on the audio clock, follow it. Sharing from such a page goes to that
+server's store in memory, and the page's log is its origin's own, so no egg
+cooked on it reaches the live store. On the live site the clock is `Date.now()`
 (`test/now.test.ts`), and the development tools are never asked for (the
 `inert-off-localhost` scenario).
 
@@ -192,7 +192,7 @@ sends its worker jobs and makes its requests through `src/ui/idle.ts`, which
 counts them, so no timer, worker or request is patched) rather than for a
 fixed time; a wait for something that will come gives up after a minute,
 which is failure detection, not a measure. Two scenarios run off the
-stopped clock: the address check, and sharing, which sends nothing on
-the development clock and is checked on the real one. `E2E_CPU_THROTTLE=6`
+stopped clock: the address check, and sharing, which is checked on the
+real one. `E2E_CPU_THROTTLE=6`
 slows every page six times (DevTools' CPU throttling); with every core
 busy as well, the suite passes as it does on a quiet machine.

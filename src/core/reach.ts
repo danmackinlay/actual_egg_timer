@@ -200,14 +200,6 @@ function decisionAtLevel(
   return decide(c, grid, sol, logYolkTarget(level), bounds);
 }
 
-/** The odds the app shows when the slider sits at `level`, with `profile` - the
- *  pot's, or null before it is built - holding its time. */
-export function oddsAtLevel(
-  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number, profile: OddsProfile | null,
-): number {
-  return decisionAtLevel(c, egg, setup, grid, level, envelopeBounds(profile, level)).odds;
-}
-
 /**
  * A profile being built: the pot it is for, and the points decided on it so
  * far, as arrays kept in order of slider position. Plain data, handed to the
@@ -472,7 +464,7 @@ export interface AdviceFacts {
 
 /** A change of protocol the model can price: the same pot with one thing
  *  changed. Its odds come from its own profile, built as the pot's own is. */
-export interface PricedChange {
+interface PricedChange {
   key: CopyKey;
   setup: CookSetup;
 }
@@ -551,7 +543,7 @@ export function askedNear(profile: OddsProfile, level: number): number {
 }
 
 /** What to say, and whether to show the way to it. */
-export interface ProtocolAdvice {
+interface ProtocolAdvice {
   /** Catalogue keys in the order shown: the unpriced advice, then each
    *  priced change that makes the word asked surer. */
   keys: CopyKey[];

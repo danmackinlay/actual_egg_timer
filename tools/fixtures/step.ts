@@ -5,10 +5,9 @@
  * made of it - the cook's log as it grew, the plan's deadlines, what it still
  * needs, the effects, and the readout at that moment (src/core/readout.ts).
  *
- * The traces cover every scenario the two apps' end-to-end suites drive that
- * the cook decides (`covers`; the rest are the screen's or the store's, and
- * are listed in `screenOnly` with where they are held), and each of the
- * cook's behaviours no scenario drives on its own, named by what it holds.
+ * The traces cover what the two apps' end-to-end suites drive that the cook
+ * decides, and each of the cook's behaviours no scenario drives on its own;
+ * each trace's note says what it holds.
  *
  * What the app builds is given by the step that lands it: the surface the
  * last step needed, coarse as decide.json's (its extent written, so Swift
@@ -66,7 +65,6 @@ type StepDef = (t: Seen) => StepIn;
 
 interface TraceDef {
   note: string;
-  covers: string[];
   app: 'web' | 'ios';
   posterior: string;
   /** The calibration before this egg, when a step asks for it. */
@@ -124,8 +122,6 @@ const HOT_TO_DONE: StepDef[] = [
 const TRACES: TraceDef[] = [
   {
     note: 'a cold cook to Done: boil, the surface for the measured pot, the pull rung, out, cooled, Jammy, a firm white, Start again',
-    covers: ['e2e cold-cook', 'e2e one-layout', 'e2e egg-readings', 'ios cold', 'ios one-layout', 'ios egg-readings',
-      'e2e sharing-final-only: nothing final at Done', 'how sure, mid-cook: the range never contradicts the clock'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(2), true), tick(clock(60)), () => ({ event: at('boil', S + 480) }), land(clock(482)),
@@ -136,7 +132,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a hot start: the pull rings, the grace runs out, the cooling ends, and Start again logs the egg unanswered',
-    covers: ['e2e hot-start', 'ios hot', 'ios again-logs', 'e2e sharing-final-only: final at Start again'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }, S, -7), land(clock(1)), tick(pull(1)), tick(pull(PULL_GRACE_SECONDS + 1)),
@@ -145,7 +140,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a bowl of water: out at the pull, the cooling counted in a bowl that warms, then answered',
-    covers: ['e2e bowl', 'ios bowl'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot', cooling: 'bowl', bowlLitres: 1, bowlWater_C: 13, eggCount: 3 }, S, 4), land(clock(1)),
@@ -154,13 +148,11 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'Cancel while heating: nothing logged, nothing remembered, the alarms gone',
-    covers: ['ios cancel'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [start({}), land(clock(1)), () => ({ event: at('startAgain', S + 120) })],
   },
   {
     note: "the owner's case: boiling corrected to cold after Start, back to heating, the pull later; then the tap",
-    covers: ['e2e owner-case', 'ios owner-case'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(clock(240), { startMode: 'cold' }), land(clock(242)),
@@ -169,7 +161,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'boiling corrected to cold after the water could have boiled, then a tap: the remembered time to boil, and the tap not remembered',
-    covers: ['a boil tapped after the water could have boiled runs on the remembered time'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(clock(500), { startMode: 'cold' }),
@@ -178,7 +169,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'cold corrected to boiling after the tap: the tap kept unread, the egg overdue, the pull now',
-    covers: ['e2e cold-to-hot-after-tap', 'ios cold-to-hot-after-tap'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), () => ({ event: at('boil', S + 480) }), land(clock(482)),
@@ -187,7 +177,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a heavier egg pulls later, a lighter sooner, and back gives back the first pull exactly',
-    covers: ['e2e heavier-lighter', 'ios heavier-lighter', 'design 3: changing back gives back the plan'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(clock(60), { mass_kg: 0.076 }), land(clock(62)),
@@ -196,8 +185,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a lighter egg late makes it overdue: it rings at once; changed back within the grace, the ring stops and the pull is later',
-    covers: ['e2e overdue-and-back', 'ios overdue-and-back', 'e2e drag-no-ring and ios drag-no-ring: one commit, one event',
-      'design 3: when a correction makes the egg overdue'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(pull(-20), { mass_kg: 0.048 }), land(after(1)),
@@ -206,7 +193,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'the start corrected: two minutes earlier; refused after now, after the tap, and more than two hours before Start',
-    covers: ['e2e start-time', 'ios start-time', 'the start has a lower bound'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), () => ({ event: { kind: 'correctStart', now_s: S + 60, startedAt_s: S - 120 } }),
@@ -219,13 +205,11 @@ const TRACES: TraceDef[] = [
   },
   {
     note: "Settings' water mid-cook corrects the cook",
-    covers: ['e2e settings-mid-cook', 'ios settings-mid-cook'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [start({}), land(clock(1)), correct(clock(100), { waterLitres: 1 }), land(clock(102)), tick(clock(200))],
   },
   {
     note: 'a correction at Done after an answer: the record planned on the calibration before this egg, logged in place of the first; back, and the first again',
-    covers: ['e2e record-corrected-at-done', 'ios record-corrected-at-done', 'design 4: never from its own outcome'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, answer(after(10), 'jammy'),
@@ -235,14 +219,11 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'after the pull the slider only previews: a level alone corrects nothing',
-    covers: ['e2e slider-after-pull', 'ios slider-after-pull', 'after the pull the level corrects nothing'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [...HOT_TO_DONE, correct(after(10), { level: 0.9 })],
   },
   {
     note: 'the grace ran out asleep, then corrected to cold: the app asks whether the egg is still in, nothing passes the question; still in: heating again',
-    covers: ['e2e still-in-water (yes)', 'ios still-in-yes', 'a correction after the grace ran out asks whether the egg is still in',
-      'the question holds the cooling', 'the question shows no white line'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), tick(pull(25)), correct(after(5), { startMode: 'cold' }), land(after(1)),
@@ -251,7 +232,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'the same question answered no: the pull stands, confirmed, the cooling runs, Done for cold water',
-    covers: ['e2e still-in-water (no)', 'ios still-in-no'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), tick(pull(25)), correct(after(5), { startMode: 'cold' }), land(after(1)),
@@ -260,7 +240,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a pull the clock assumed, Jammy at Done, then cold water: the pull confirmed, nothing asked, still Done',
-    covers: ['ios answered-pull-stands', 'Done stays Done after an answer'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), tick(pull(25)), tick(cooled(1)), answer(after(5), 'jammy'),
@@ -269,8 +248,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a slow hob: the guess lengthens, the clock counts the time heated up, and at two hours the cook is ended, nothing logged',
-    covers: ['e2e slow-hob', 'e2e running-lines', 'ios slow-hob', 'ios running-lines', 'e2e too-old', 'a cook left heating ends',
-      'the slow hob lengthens once, not at every tick (the memo)', 'a cook too old is ended', 'the clock counts up'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), tick((t) => (t.plan.slowHobAt_s ?? S) + 1), tick(clock(1000)), tick(clock(1200)),
@@ -279,7 +256,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a correction the white never sets in: the longest time the pan gives, and the slot says so',
-    covers: ['e2e running-lines (the white)', 'ios white-unset', 'design 3: a correction that leaves the white unset'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(clock(30), { afterBoil: 'off', waterLitres: 0.25, eggCount: 12 }),
@@ -288,7 +264,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'Jammy at Done, then a correction and Start again at once: the corrected egg logged in place of the first, then forgotten',
-    covers: ['e2e start-again-corrected', 'ios start-again-corrected', 'ios again-not-remade', 'a correction at Done, then Start again, logs the corrected egg'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, answer(after(10), 'jammy'), correct(after(10), { mass_kg: 0.076 }),
@@ -297,7 +272,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'Done, corrected, Jammy held for the record, Start again: the egg logged with Jammy',
-    covers: ['ios again-held'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, correct(after(10), { mass_kg: 0.076 }), answer(after(5), 'jammy'),
@@ -306,7 +280,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'relaunched three hours after an answered egg was corrected: too old, the corrected egg logged',
-    covers: ['ios too-old-corrected'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, answer(after(10), 'jammy'), correct(after(10), { mass_kg: 0.076 }),
@@ -315,7 +288,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'on the counter: Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm back',
-    covers: ['e2e done-stays-done', 'ios done-stays-done', 'Done stays Done after an answer'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot', cooling: 'counter' }), land(clock(1)), tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }),
@@ -324,8 +296,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'Runny at Done, an egg folded, relaunched: Done shows the cook as it ran, and nothing is logged again',
-    covers: ['e2e done-as-ran', 'e2e done-note-as-ran', 'ios done-as-ran', 'ios done-note-as-ran', 'Done shows the cook as it ran',
-      'Done\'s texture note reads the cook as it ran'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, answer(after(10), 'runny'),
@@ -334,7 +304,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a lighter egg 15 s into the pull: the pull that rang held, its grace kept, nothing rung again',
-    covers: ['e2e grace-correction', 'ios grace-correction', 'a correction in the grace'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }, S, -7), land(clock(1)), tick(pull(1)), correct(pull(15), { mass_kg: 0.048 }), land(after(1)),
@@ -343,13 +312,11 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'a page woken 25 s past the pull rings the pull; one woken past the cooling rings the pull, not Done',
-    covers: ['e2e woken-past-pull', 'ios asleep', 'a page woken past the grace rings the pull'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [start({ startMode: 'hot' }), land(clock(1)), tick(clock(60)), tick(cooled(5))],
   },
   {
     note: 'relaunched at each phase: the same deadlines and alarms, the pull rung once',
-    covers: ['ios relaunch-heating', 'ios relaunch-cooking', 'ios relaunch-pull', 'ios relaunch-cooling', 'ios relaunch-done'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), () => ({ event: at('tick', S + 60), reload: true }), land(after(1)),
@@ -360,19 +327,16 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'relaunched while heating past the guess: the slow hob lengthens it, and the pending pull moves',
-    covers: ['ios reschedule', 'a relaunch while heating moves the alarms'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [start({}), land(clock(1)), () => ({ event: at('tick', S + 700), reload: true })],
   },
   {
     note: 'relaunched three hours on: ended, and its finished egg logged unanswered on its pot\'s surface, built for it',
-    covers: ['ios too-old', 'an egg logged at a reload has its forecast', 'a cook too old is ended'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [start({ startMode: 'hot' }), land(clock(1)), tick(pull(1)), () => ({ event: at('tick', S + 3 * 3600), reload: true }), land(after(1))],
   },
   {
     note: 'Done, relaunched near the hour, then past it: ended at the hour, a later answer not taken',
-    covers: ['e2e final-egg', 'ios final-egg', 'a final egg takes no more answers', 'an egg is final at the hour'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       ...HOT_TO_DONE, (t) => ({ event: at('tick', cooled(3500)(t)), reload: true }), land(after(1)),
@@ -381,7 +345,6 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'the grace ran out on the interim plan, the cooling ended, Jammy before the surface: held, and logged when it lands',
-    covers: ['an egg logged at a reload has its forecast', 'a surface landing never moves a pull that has rung'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), tick(pull(2)), tick(pull(PULL_GRACE_SECONDS + 1)), tick(cooled(1)),
@@ -390,13 +353,11 @@ const TRACES: TraceDef[] = [
   },
   {
     note: 'the pull rings on the interim plan; its surface lands in the grace: the pull held, nothing rung again',
-    covers: ['a surface landing never moves a pull that has rung'],
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [start({ startMode: 'hot' }), tick(pull(2)), land(after(1)), tick(after(5))],
   },
   {
     note: 'a tap, then a stray cold -> hot -> cold: the tap still remembered at the end',
-    covers: ['a change undone keeps the tap remembered'],
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), () => ({ event: at('boil', S + 500) }), correct(clock(600), { startMode: 'hot' }),
@@ -404,36 +365,6 @@ const TRACES: TraceDef[] = [
     ],
   },
 ];
-
-/** What the cook's or the clock's moments, the screen's words, the store and
- *  which tab owns the app hold, which are not the cook's: where each is held. */
-const SCREEN_ONLY: Record<string, string> = {
-  'e2e inert-off-localhost': 'the development clock (tools/e2e.ts)',
-  'e2e sentence-no-time': 'the sentence (wording.json, clauseKeys)',
-  'e2e one-tab-waits': 'one tab owns the app (web owner.ts)',
-  'e2e one-tab-takeover': 'one tab owns the app (web owner.ts)',
-  'e2e one-tab-silent': 'one tab owns the app (web owner.ts)',
-  'e2e change-kept-on-hide': 'the commit on leaving (web edit.ts; ios Edits)',
-  'e2e certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
-  'e2e unreadable-stores': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
-  'e2e retired-keys': 'the boot sweep (web store.ts; ios Stores)',
-  'e2e dev-clock-shares-nothing': 'sharing (web share.ts)',
-  'e2e newer-version': 'the newer-build guard (web newer.ts)',
-  'e2e newer-version-tab': 'the newer-build guard (web newer.ts)',
-  'ios likely-still': 'the certainty line (certainty.json)',
-  'ios likely-still-largest': 'the certainty line (certainty.json)',
-  'ios sentence-no-time': 'the sentence (wording.json, clauseKeys)',
-  'ios certainty-mid-cook': 'wording.json timeRangeWords; the plan\'s certainty here',
-  'ios one-moment': 'the readout reads one moment (readoutAt is given it)',
-  'ios change-kept-on-hide': 'the commit on leaving (ios Edits)',
-  'ios unreadable': 'the stored cook read back (web storedCook.ts; ios StoredCook.swift)',
-  'ios sweep': 'the boot sweep (ios Stores)',
-  'ios newer-version': 'the newer-build guard (ios Newer.swift)',
-  'ios newer-build': 'the newer-build guard (ios Newer.swift)',
-  'a drag is one correction, on release': 'both apps\' edits',
-  'an earlier build\'s stored cook at an upgrade': 'the boot sweep',
-  'the likely time range never contradicts the clock': 'wording.json timeRangeWords',
-};
 
 /* ------------------------------------------------------------- the run */
 
@@ -532,11 +463,10 @@ function run(def: TraceDef) {
     last = out;
     lastNow = now;
   }
-  return { note: def.note, covers: def.covers, app: def.app, posterior: def.posterior, before: def.before, steps: steps };
+  return { note: def.note, app: def.app, posterior: def.posterior, before: def.before, steps: steps };
 }
 
 export const stepFixture = {
   about: 'The running cook as one state machine (src/core/step.ts): traces of events, each with what the app had built and what step made of it, and the readout at each (src/core/readout.ts).',
   traces: TRACES.map(run),
-  screenOnly: SCREEN_ONLY,
 };

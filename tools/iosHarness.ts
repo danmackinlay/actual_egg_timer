@@ -382,14 +382,12 @@ export type Event = { t: number } & (
   | { ev: 'pending'; alarms: { id: string; at?: number }[] }
   | { ev: 'delivered'; ids: string[] }
   | { ev: 'log'; count: number; folded: number; last?: unknown }
-  | { ev: 'stores'; verdict: string; mark?: string; markBuild?: string; version: string; build: string }
   | { ev: 'swept'; key: string }
   | { ev: 'wrote'; key: string; number?: number; text?: string }
   | { ev: 'answer'; cookS: number; decided: boolean; odds: boolean }
   | { ev: 'edit'; group?: string }
   | { ev: 'editCommitted'; fields: string[]; start?: number }
   | { ev: 'layout'; part: string; y: number }
-  | { ev: 'newerNote' }
   | { ev: 'frame'; at: number; phase: string; big: string; sub: string; range?: string }
   | { ev: 'likely'; shown: boolean }
 );
@@ -402,8 +400,6 @@ export type Found<E extends Event = Event> = E & { i: number };
 /// check reads.
 export interface Prefs {
   [SETTINGS]?: { startMode?: string; waterLitres?: number; eggCount?: number; doneness?: number };
-  newestVersion?: string;
-  newestBuild?: string;
   [COOK]?: { v?: number; cook?: unknown };
   'calibration.v5'?: { v: number; log: unknown[] };
   [key: string]: unknown;

@@ -29,7 +29,7 @@ const storage = new Map<string, string>();
 
 const S = 1791363600;
 let now_ms = S * 1000;
-useClock({ now: () => now_ms, speed: () => 1, used: () => false, forget: () => undefined, mark: () => undefined });
+useClock({ now: () => now_ms, speed: () => 1 });
 
 const C = knowing({ particles: 200, eggsLogged: 3, taste: 0.1 });
 const IDS = [S * 1000 - 7_200_000, S * 1000 - 3_600_000, S * 1000];

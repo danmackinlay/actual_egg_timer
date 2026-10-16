@@ -32,7 +32,6 @@ import { localDay } from './model.ts';
 import { buildOffThread } from './offThread.ts';
 import { activePopulation } from './population.ts';
 import { APP_VERSION } from './version.ts';
-import { storageReadOnly } from './store.ts';
 
 export type { Calibration } from '../core/record.ts';
 
@@ -110,9 +109,7 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
   /**
    * Write one egg down, before anything is learned from it: a reload between the
    * answer and the fold then refolds it on load rather than losing it or folding
-   * it twice. Returns its index in the log, or -1 while a newer build's
-   * stores are left alone (store.ts): then nothing is written down, so
-   * nothing is learned either.
+   * it twice. Returns its index in the log.
    *
    * An egg already written down - the same cook, by `id` - is not written
    * twice. The record given is the cook as last corrected, so its facts
@@ -124,7 +121,6 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    * then `learn`s, as after any egg logged.
    */
   function logEgg(r: EggRecord): number {
-    if (storageReadOnly()) return -1;
     const at = eggLogged(idOf(r));
     if (at < 0) {
       kept.log.push(r);
@@ -273,7 +269,6 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
   async function recordSecondAnswer(
     index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
   ): Promise<boolean> {
-    if (storageReadOnly()) return false;
     const r = kept.log[index];
     if (r === undefined || index !== kept.log.length - 1) return false;
     if (answer.yolkWord !== undefined && r.yolkWord !== null) return false;
@@ -305,15 +300,12 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
    * one logged under its id made the record's, its first answers kept - its
    * facts replaced (`logEgg`), and each answer it adds folded as a later
    * answer (`recordSecondAnswer`), or, where that can no longer be done, the
-   * log folded again from where it starts. Whether it was kept: never while a
-   * newer build's stores are left alone.
+   * log folded again from where it starts. Whether it was kept.
    */
   async function keepRecord(r: EggRecord): Promise<boolean> {
-    if (storageReadOnly()) return false;
     const at = eggLogged(idOf(r));
     if (at < 0) {
       const index = logEgg(r);
-      if (index < 0) return false;
       await learn(index);
       return true;
     }

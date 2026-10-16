@@ -32,8 +32,7 @@ exports are its API. Apps call what is exported and nothing else, and
 anything both apps must agree on lives here, not in either app. What an app
 only stores, reads back or merges is its own (`DECISIONS.md` 126): the web's
 in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
-by `EggTimerAppTests`. The newer-build guard is `src/ui/newer.ts` and
-`Newer.swift`; the share queue `src/ui/shareState.ts` and
+by `EggTimerAppTests`. The share queue is `src/ui/shareState.ts` and
 `ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
 `StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`;
 the table of stores `src/ui/stores.ts` and `StoreRegistry.swift`; and the
@@ -232,7 +231,7 @@ app's — are in `GOTCHAS.md`.
 `npm run ios:e2e` (about four minutes) checks on a simulator what only a
 device can: the layout, relaunches over the system's notifications and Live
 Activity, a notification delivered while the app is gone, the app leaving the
-screen, a newer build's store. What the app's logic decides is `swift test`'s
+screen, the keys an earlier build left. What the app's logic decides is `swift test`'s
 (`EggTimerAppTests`). The headers say the rest: `tools/iosE2e.ts` (the
 scenarios, how to run some), `tools/iosHarness.ts` (the simulator driver), and
 in `ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it

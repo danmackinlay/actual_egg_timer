@@ -39,7 +39,6 @@ public final class AppModel {
         // the view struct and keeps only the first.
         planner.load()
         #if DEBUG
-        planner.learner.seed(Screenshots.seedEggs)
         Services.card.logAll("launch")
         Task {
             try? await Task.sleep(for: .seconds(3))

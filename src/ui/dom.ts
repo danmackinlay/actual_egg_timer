@@ -113,7 +113,6 @@ function findDom() {
     shareId: el<HTMLParagraphElement>('shareId'),
     shareUid: el<HTMLSpanElement>('shareUid'),
     appVersion: el<HTMLParagraphElement>('appVersion'),
-    newerNote: el<HTMLParagraphElement>('newerNote'),
     tabNote: el<HTMLElement>('tabNote'),
     useHere: el<HTMLButtonElement>('useHere'),
     shareDelete: el<HTMLButtonElement>('shareDelete'),
@@ -145,7 +144,7 @@ function findDom() {
   };
 }
 
-export type Dom = ReturnType<typeof findDom>;
+type Dom = ReturnType<typeof findDom>;
 
 /** Every element the code writes to. Null until `bindDom()`. */
 let bound: Dom | null = null;

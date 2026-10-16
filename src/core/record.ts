@@ -94,7 +94,7 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
  *  pan's whole cooling curve from this number (the standing method's pan
  *  constant now comes from the water volume, `panTimeConstant`), so this also
  *  says how hard those cooks leaned on it. */
-export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
+type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
 
 
 /** How the egg came out. `cook` when the cook said so - the tap out of PULL -
@@ -155,7 +155,7 @@ export function forecastOf(o: Outcome, cook_s: number): Forecast {
 export type AppName = 'web' | 'ios';
 export type Units = 'metric' | 'imperial';
 
-export interface RecordEgg {
+interface RecordEgg {
   /** Whole-egg mass, grams, rounded to 0.01 g by `recordMass_g`. */
   mass_g: number;
   massFrom: MassFrom;
@@ -171,7 +171,7 @@ export interface RecordEgg {
  *  INFERENCE.md omits it: the app derives it from the egg's start temperature by
  *  a policy rule (`ambientFor`), and a record that relied on the rule could not
  *  be replayed faithfully once the rule changed. */
-export interface RecordSetup {
+interface RecordSetup {
   startMode: StartMode;
   eggStart_C: number;
   eggFrom: EggFrom;
@@ -919,7 +919,7 @@ export interface StoreRead {
 }
 
 /** What to keep, in the parts that were read. */
-export interface LoadDecision {
+interface LoadDecision {
   path: LoadPath;
   /** The base: the stored base, the stored posterior, or none (null). */
   base: 'stored' | 'posterior' | null;

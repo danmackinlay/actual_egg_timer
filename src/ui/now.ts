@@ -22,17 +22,11 @@
  */
 
 /** A clock other than the real one: the development clock's. */
-export interface PageClock {
+interface PageClock {
   /** The page's time, ms since 1970. */
   now(): number;
   /** The cook's seconds to the real second, for what runs in real ones. */
   speed(): number;
-  /** Whether this browser's log may hold an egg cooked on it. */
-  used(): boolean;
-  /** Forget everything: the log is gone, and with it the mark. */
-  forget(): void;
-  /** The mark, once the app may write. */
-  mark(): void;
 }
 
 let clock: PageClock | null = null;
@@ -67,25 +61,6 @@ export function clockSpeed(): number {
  *  site): once, at boot (cook.ts, `startRunner`). */
 export function onClockChange(f: () => void): void {
   moved = f;
-}
-
-/** Whether this browser's log may hold an egg cooked on the development
- *  clock, so sharing sends nothing from it (share.ts): never on the live
- *  site. */
-export function devClockUsed(): boolean {
-  return clock !== null && clock.used();
-}
-
-/** Forget everything: the log is gone, and with it the mark (unless the
- *  development clock is still on). */
-export function forgetDevClockUse(): void {
-  clock?.forget();
-}
-
-/** The mark, for a development clock set when the page loaded: written by
- *  the app once it may write (app.ts, after `claimStorage`). */
-export function markDevClockUse(): void {
-  clock?.mark();
 }
 
 /** A number from [0, 1): `Math.random()`, or a script's seeded draw. */

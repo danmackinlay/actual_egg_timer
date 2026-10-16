@@ -63,7 +63,7 @@ import { REGION, REGIONAL_UNITS } from './units.ts';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,
  *  and the egg it aims for, once planned. */
-export interface Aim {
+interface Aim {
   level: number;
   peakYolk_C: number;
   solution: Solution | null;
@@ -132,7 +132,7 @@ export interface Note {
 
 /** Sharing as the runner last read it: its state, and how many of the log's
  *  eggs are final. */
-export interface ShareSeen {
+interface ShareSeen {
   state: ShareState;
   final: number;
 }
@@ -149,7 +149,7 @@ export interface Held {
 
 /** A cook ended before its egg's record could be made, and what it waits
  *  for. */
-export interface Ending extends CookState {
+interface Ending extends CookState {
   need: CookNeed;
 }
 
@@ -168,11 +168,9 @@ export interface Model extends CookState {
   /** The posterior over the model's uncertain constants, folded IN PLACE as
    *  eggs are learned (calibration.ts). */
   calib: Calibration;
-  /** Whether sharing is on (the nudge, the Learning mark), and whether a
-   *  newer build's stores are left alone (store.ts): the runner's view of
-   *  those stores, taken before each message. */
+  /** Whether sharing is on (the nudge, the Learning mark): the runner's view
+   *  of its store, taken before each message. */
   sharing: boolean;
-  readOnly: boolean;
   /** A deletion of what was shared, asked for on this page, confirmed: said
    *  under the switch until sharing is turned on again. */
   deletedHere: boolean;
@@ -317,9 +315,6 @@ export type Msg =
   /** Every word on the page in a new language: as `learned`, and the words
    *  drawn only when they change drawn again. */
   | { kind: 'relabelled' }
-  /** A newer build's mark found (store.ts): as `learned`, and the sharing
-   *  section drawn again. */
-  | { kind: 'stores' }
   | { kind: 'forget' }
   /** "Export my results". */
   | { kind: 'export' }
@@ -616,7 +611,7 @@ function close(m: Model): Model {
 
 /** The runner's view of its caches and its stores (cook.ts), taken before
  *  each message and handed in with it. */
-export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'sharing' | 'readOnly' | 'share'>;
+export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'sharing' | 'share'>;
 
 /** What `msg` does to the model at `now_ms`, with the runner's view `seen`
  *  of its caches and stores if it has a new one, and what the page must
@@ -895,8 +890,6 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       return startStep(m, msg.up, msg.group, msg.real_ms, now_s);
     case 'persisted':
       return [{ ...m, works: msg.works }, []];
-    case 'stores':
-      return solved(redraw(learnedSaid(m), 'share'), []);
     case 'forget':
       return [m, [{ kind: 'forgetAll' }]];
     case 'export':

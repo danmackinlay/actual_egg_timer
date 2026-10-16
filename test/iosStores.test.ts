@@ -1,8 +1,8 @@
 /**
  * The iOS app writes UserDefaults only through `Stores` (Store.swift, in
- * ios/EggTimerCore/Sources/EggTimerApp), which a build that finds a newer
- * build's mark turns read-only: a write anywhere else would go round that
- * guard. So outside Store.swift no Swift in the app, its logic, its shared
+ * ios/EggTimerCore/Sources/EggTimerApp), which puts every write in the debug
+ * log the scripted checks read: a write anywhere else would go unseen. So
+ * outside Store.swift no Swift in the app, its logic, its shared
  * code or its widget sets or removes a default itself; it calls
  * `Stores.set` and `Stores.remove`. The runtime twin is
  * `everyWriteGoesThroughStores` in ios/EggTimerCore/Tests/EggTimerAppTests:

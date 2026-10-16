@@ -260,10 +260,6 @@ button.disclose[aria-expanded="true"] { text-decoration-style: solid; }
 #whiteRisk { margin: 2px 0 0; font-size: 0.875rem; color: var(--warn); }
 body:not([data-start="sous"]) #whiteRisk { margin-top: calc(2px + var(--certainty-hang)); }
 
-/* An older build left running after a newer one (DECISIONS.md 100): above
-   every view, in the warning's colour. */
-#newerNote { margin: 0 0 12px; font-size: 0.875rem; color: var(--warn); }
-
 /* ------------------------------------------------------------------- (i) */
 
 /* One affordance for "tell me more about this", everywhere (UI.md section 4).

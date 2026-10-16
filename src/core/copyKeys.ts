@@ -375,7 +375,6 @@ export interface CopyKeyArgs {
   'colophon.link': never;
   'colophon.tail': never;
   'colophon.version': 'version';
-  'newer.note': never;
   'tab.note': never;
   'tab.useHere': never;
 }

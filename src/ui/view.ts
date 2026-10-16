@@ -58,7 +58,7 @@ export type ReadingView = { level: number; peakYolk_C: number } | { level: numbe
 /** The track under the slider: its stripes from a solve, its shading from
  *  the odds and its bracket from the certainty's words (slider.ts,
  *  `renderDonenessScale`); or bare, in sous-vide. */
-export type ScaleView = { solution: Solution; odds: OddsProfile | null; bracket: WordCertainty | null } | 'bare';
+type ScaleView = { solution: Solution; odds: OddsProfile | null; bracket: WordCertainty | null } | 'bare';
 
 /** The readout, the buttons under it and the questions at Done. */
 export interface ReadoutView {
@@ -141,11 +141,10 @@ export interface Sections {
   share: ShareView | null;
 }
 
-/** On every screen: the mute, the line that says a newer build's stores are
- *  left alone, the parts drawn only when asked, and the words the main
- *  button is sized on (`sizerWords`). */
+/** On every screen: the mute, the parts drawn only when asked, and the words
+ *  the main button is sized on (`sizerWords`). */
 export type View = {
-  mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections; sizers: string[];
+  mute: { label: string; pressed: boolean }; sections: Sections; sizers: string[];
 } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
@@ -160,7 +159,7 @@ export type View = {
 /** The egg previews the view draws, each worked out once for what it is of:
  *  the egg as eaten for a pot, a time and a level, and the solve of a cook as
  *  it ran. Handed in by the caller, who keeps it. */
-export interface ViewMemo {
+interface ViewMemo {
   preview: { key: string; view: SectionView | null };
   ran: { key: string; solution: Solution | null };
 }
@@ -172,7 +171,7 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
-  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
+  const top = { mute: mute, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
@@ -217,9 +216,9 @@ function sectionsOf(m: Model): Sections {
     echoSource: m.echoSource,
     form: formView(m),
     note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
-    learned: learnedView(l, m.readOnly),
+    learned: learnedView(l),
     share: share === null ? null
-      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere, m.readOnly),
+      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere),
   };
 }
 
@@ -232,7 +231,7 @@ function sectionsOf(m: Model): Sections {
  *  cooling's longer words would stack a row this cook never needs to. The
  *  controls, not the settings, so a cook under way is sized on its own
  *  choices; a correction to them, like a choice while idle, may change it. */
-export function sizerWords(c: Settings): string[] {
+function sizerWords(c: Settings): string[] {
   const phases: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
   const words: string[] = [];
   for (const phase of phases) {
@@ -405,9 +404,7 @@ function readoutView(m: Model, now_ms: number, sol: Solution, warning: string): 
   // kitchen. Asking once per egg is what closes that gap. Both questions
   // stay on screen until the cook moves on, answered or not; a reload after
   // an answer puts them away, since the second could no longer be folded.
-  // Nor while a newer build's results are left alone (store.ts): no answer
-  // could be kept.
-  const feedback = phase === 'DONE' && m.questions !== 'away' && !words.asking && !m.readOnly;
+  const feedback = phase === 'DONE' && m.questions !== 'away' && !words.asking;
   // The live region carries a coarse announcement, not a per-second one:
   // the ticking digits are aria-hidden, so a screen reader hears the phase
   // and the minute rather than being flooded once a second. The question is
@@ -556,7 +553,7 @@ function certaintyView(
  * - `ran`: at Done, the egg as it ran, eaten: the time that ran, to the egg
  *   out, with the model's parameters it ran under.
  */
-export function aimedEgg(
+function aimedEgg(
   m: Model, memo: ViewMemo, e: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, level: number,
 ): { view: SectionView; key: string } {
   const white = calibrationDoneness(m.calib, level).whiteDose_min;

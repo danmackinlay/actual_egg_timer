@@ -98,7 +98,7 @@ export const WHITE_RISK = 0.2;
  *  apps take the same steps and land on the same number. */
 const LEVEL_BISECTIONS = 20;
 
-export type Lean = 'soft' | 'firm' | 'balanced';
+type Lean = 'soft' | 'firm' | 'balanced';
 
 /** What the egg at the chosen time will be like. */
 export interface Outcome {

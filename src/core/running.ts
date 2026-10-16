@@ -102,7 +102,7 @@ export interface Pulled {
 
 /** What was observed, as clock times: the log's events folded. Kept when a
  *  correction makes one unread. */
-export interface CookEvents {
+interface CookEvents {
   /** Rolling boil, tapped. */
   boilAt_s: number | null;
   pulled: Pulled | null;
@@ -481,7 +481,7 @@ function coldHistory(cook: RunningCook): { coldSince_s: number | null; firstHotA
 
 /** What has been said about the egg: the first yolk word, white and probe
  *  reading given, each kept once said. */
-export interface CookAnswers {
+interface CookAnswers {
   yolkWord: YolkWord | null;
   white: WhiteReport | null;
   probe: ProbeReading | null;
@@ -677,7 +677,7 @@ export function pullStands(cook: RunningCook): RunningCook {
 }
 
 /** Whether two pulls are the same, every field. */
-export function samePulled(a: Pulled | null, b: Pulled | null): boolean {
+function samePulled(a: Pulled | null, b: Pulled | null): boolean {
   if (a === null || b === null) return a === b;
   return a.due_s === b.due_s && a.out_s === b.out_s && a.by === b.by && a.confirmed === b.confirmed;
 }
@@ -714,7 +714,7 @@ function sameNumbers(a: number[] | null, b: number[] | null): boolean {
 }
 
 /** Whether two plans as they ran are the same, every field. */
-export function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
+function sameAsRan(a: CookAsRan | null, b: CookAsRan | null): boolean {
   if (a === null || b === null) return a === b;
   const f = a.forecast;
   const g = b.forecast;
@@ -1395,10 +1395,10 @@ export interface RecordContext {
  *  - 'stale': the plan as it ran was kept before a correction since: the app
  *    plans the corrected cook on the calibration before this egg
  *    (`asRanCorrected`) and asks again. */
-export type FactsRefused = 'noSurface' | 'stale';
+type FactsRefused = 'noSurface' | 'stale';
 
 /** The facts, or why there are none: exactly one of the two is null. */
-export interface CookFactsResult {
+interface CookFactsResult {
   facts: CookFacts | null;
   refused: FactsRefused | null;
 }
@@ -1528,7 +1528,7 @@ function tappedAfterLateCold(cook: RunningCook): boolean {
  *  calibration before this egg), logs it in place of any logged under its
  *  id, and only then forgets the cook: the egg is final, and may be sent,
  *  once the cook is forgotten. */
-export interface CookEnding {
+interface CookEnding {
   boil: BoilToRemember | null;
   finished: boolean;
   remake: boolean;

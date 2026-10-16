@@ -20,7 +20,7 @@ import { useClock } from '../src/ui/now.ts';
 
 /** The page's clock, ms. */
 let now_ms = 1_791_363_600_000;
-useClock({ now: () => now_ms, speed: () => 1, used: () => false, forget: () => undefined, mark: () => undefined });
+useClock({ now: () => now_ms, speed: () => 1 });
 
 (globalThis as unknown as { window: unknown }).window = {
   setTimeout: (f: () => void, ms: number) => setTimeout(f, ms),

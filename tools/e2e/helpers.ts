@@ -18,7 +18,6 @@ import { asRead } from '../text.ts';
 export const COOK_KEY = STORES.cook.key;
 export const SETTINGS_KEY = STORES.settings.key;
 export const BOIL_KEY = STORES.boilMemory.key;
-export const NEWEST_KEY = STORES.newest.key;
 
 /** The pans a stored text holds: litres to the time to boil. */
 export function pansIn(text: string | null): Record<string, number> {

@@ -1,11 +1,11 @@
 /**
  * Tabs: one owns the app, a second waits and can take it over, and the first
- * then falls silent; a newer build's mark under two tabs. Run by tools/e2e.ts.
+ * then falls silent. Run by tools/e2e.ts.
  */
 
 import { type Scenario, check } from '../harness.ts';
 import {
-  DUMP, NEWEST_KEY, STOPPED, boil, deadlines, near, opened, pick, rings, scheduledAhead, start,
+  DUMP, STOPPED, boil, deadlines, near, opened, pick, rings, scheduledAhead, start,
 } from './helpers.ts';
 
 export const tabScenarios: Record<string, Scenario> = {
@@ -106,24 +106,4 @@ export const tabScenarios: Record<string, Scenario> = {
     },
   },
 
-  'newer-version-tab': {
-    what: 'a tab waiting for the app writes no mark; the tab that owns it stops writing at its next write once a newer build has marked the storage',
-    run: async (h) => {
-      const a = await h.ctx.open(STOPPED);
-      check((await a.storage(NEWEST_KEY)) !== null, 'this build marked the storage first');
-      check(await a.eval<boolean>("document.getElementById('newerNote').hidden"), 'no line while this build is the newest');
-      const before = await a.eval<string>(DUMP);
-      const b = await opened(h, STOPPED);
-      check((await b.writes()).length === 0 && (await b.eval<string>(DUMP)) === before, 'the waiting tab wrote nothing, no mark');
-      // A newer build has run since: the mark is all this build can see of it.
-      await b.eval(`localStorage.setItem('${NEWEST_KEY}', '9.0.0')`);
-      const n0 = (await a.writes()).length;
-      await pick(a, '#size', '3');
-      await a.settle();
-      await a.until("!document.getElementById('newerNote').hidden", 'the line, at the next write');
-      const after = (await a.writes()).slice(n0);
-      check(after.length === 0, `not one write after: ${after.map((w) => w.key).join(', ')}`);
-      return `the waiting tab wrote nothing; the owner shows the line at its next write and writes nothing (${n0} writes before)`;
-    },
-  },
 };

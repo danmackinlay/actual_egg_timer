@@ -395,7 +395,7 @@ export function parse(m: Measure, typed: number): number | null {
  *  The app renders `t(key, { value })`: core does not speak English, and the
  *  renderer writes the value in the formatting locale, to the measure's
  *  decimals - "2.4 oz", "2,4 oz", "1,500 m". */
-export interface QuantityText {
+interface QuantityText {
   key: CopyKey;
   value: Fixed;
 }
@@ -410,7 +410,7 @@ export function quantityText(m: Measure, si: number): QuantityText {
  *  classes follow the region and not the units (an American carton is an
  *  American carton in grams too), so only the number changes. The label rounds;
  *  the model cooks the mass to a tenth of a gram. */
-export interface SizeLabel {
+interface SizeLabel {
   key: CopyKey;
   mass: QuantityText;
 }
@@ -470,7 +470,7 @@ export function effectiveUnits(chosen: UnitSystem | null, regional: UnitSystem):
  *  moves no language. */
 export type UnitsFlip = 'metricToImperial' | 'imperialToMetric';
 
-export interface UnitsChoice {
+interface UnitsChoice {
   /** What to store: the cook chose this. Stored even when it equals the
    *  region's default, because it is still a choice. */
   chosen: UnitSystem;

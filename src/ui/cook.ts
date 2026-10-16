@@ -35,7 +35,7 @@ import { draw, drawnNothing, showStartLimit } from './render.ts';
 import { view, viewMemo } from './view.ts';
 import { send, sendTo } from './send.ts';
 import type { Sharing } from './share.ts';
-import { type CookStore, type PansStore, type SettingsStore, storageReadOnly } from './store.ts';
+import type { CookStore, PansStore, SettingsStore } from './store.ts';
 import { unitSystem, useUnits } from './units.ts';
 import {
   dropPending, finalEggs, followLanguage, forgetAll, saveNow, saveSoon, solveSoon,
@@ -150,7 +150,7 @@ function apply(msg: Msg, now: number): void {
   const built = builtFor(model.calib);
   const share = stores.sharing.state();
   const [next, effects] = update(model, msg, now, {
-    surfaces: built.surfaces, profiles: built.profiles, sharing: share.on, readOnly: storageReadOnly(),
+    surfaces: built.surfaces, profiles: built.profiles, sharing: share.on,
     share: { state: share, final: finalEggs(stores, model) },
   });
   model = next;

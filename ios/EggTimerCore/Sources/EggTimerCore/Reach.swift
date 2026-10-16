@@ -134,16 +134,6 @@ private func decisionAtLevel(
     return decide(c, grid: grid, solution: sol, logNominalTarget: logYolkTarget(level), bounds: bounds)
 }
 
-/// The odds the app shows when the slider sits at `level`, with `profile` - the
-/// pot's, or nil before it is built - holding its time.
-func oddsAtLevel(
-    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: Double, profile: OddsProfile?
-) -> Double {
-    decisionAtLevel(
-        c, egg: egg, setup: setup, grid: grid, level: level, bounds: envelopeBounds(profile, level: level)
-    ).odds
-}
-
 /// A profile being built: the pot it is for, and the points decided on it so
 /// far, as arrays kept in order of slider position. Plain data, handed to the
 /// functions below rather than closed over (core invariant 2).

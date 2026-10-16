@@ -398,8 +398,6 @@
     "colophon.tail": { "text": "are open for anyone to check." },
     "colophon.version": { "text": "Version {version}" },
 
-    "newer.note": { "text": "A newer edition of this app saved your results. Until you update this one, I’ll time your eggs but won’t save or learn anything." },
-
     "tab.note": { "text": "I’m already open in another tab. Press the button below to use me here instead. The other tab will stop, and any eggs I’m timing will carry on here, with their alarm." },
     "tab.useHere": { "text": "Use this tab" }
   }

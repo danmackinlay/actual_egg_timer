@@ -15,7 +15,7 @@ import { type OddsProfile, oddsProfile } from '../core/reach.ts';
 
 /** What a profile is computed from. Plain data: it crosses to the worker by
  *  structured clone, which copies doubles bit for bit. */
-export interface ProfileJob {
+interface ProfileJob {
   calibration: Calibration;
   egg: Egg;
   setup: CookSetup;
