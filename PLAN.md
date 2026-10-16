@@ -46,29 +46,49 @@ and the map of the documents are `CLAUDE.md`.
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
 10. **Cook real eggs**, and take the two measurements in README §11.3.
-11. **Make SBC cheap enough to run often** (`fit/eggfit/sbc.py`; next wave).
-    What it guards is the Python model's priors and hierarchy: the
-    likelihood is already pinned to the core's, and NUTS is numpyro's.
-    - Batch the repetitions: `vmap` the fit across simulated datasets, or use
-      numpyro's vectorized chains. Pad each dataset with zero-weight eggs.
-    - Rank the simulated data's log-likelihood as well as the parameters.
-      A fit that ignores the data has uniform parameter ranks; this quantity
-      catches it, and catches other bugs in fewer repetitions. Source:
-      Modrák et al., [SBC checking: the choice of test quantities shapes
-      sensitivity](https://arxiv.org/abs/2211.02383).
-    - Test the ranks' ECDF against simultaneous bands, not binned
-      chi-square. Source: Säilynoja, Bürkner and Vehtari, [Graphical test
-      for discrete uniformity](https://arxiv.org/abs/2103.10522).
-    - Run in batches and stop once the ECDF is clearly inside or outside its
-      bands. Source: Gandy and Scott, [Unit testing for MCMC and other Monte
-      Carlo methods](https://arxiv.org/abs/2001.06465).
-    - Simulate fewer cooks per repetition; the log-likelihood quantity makes
-      up the lost sensitivity.
-    - Done when SBC runs in minutes, often enough to schedule.
-    - Later, with real eggs: [SBC checking conditional on
-      data](https://arxiv.org/abs/2502.03279). Considered and set aside:
-      [discriminative calibration](https://arxiv.org/abs/2305.14593), which
-      is more machinery than this model needs.
+11. **Statistics clean-up** (the fit's checks; next wave). Nothing here
+    blocks a merge: CI's fit job is the recovery check, and SBC runs by
+    hand, needed before the first real fit is published.
+    - **The recovery check's joint test** (`DECISIONS.md` 133, owner: "more
+      modern than Bonferroni"). Each global's interval is 1 − 0.10/9, which
+      ignores the correlation between globals (`lag` and `log_g0` −0.75).
+      This is a pass/fail gate, so the error to control is the chance a
+      calibrated fit fails, which is family-wise, not FDR. Under the global
+      null Benjamini–Hochberg reduces to Simes's test, which is valid here
+      and less conservative than Bonferroni. Candidates, best first: one
+      joint test of the truth's Mahalanobis distance under the posterior's
+      covariance (χ² on 9 degrees of freedom), which uses the correlations;
+      Simes; Holm. The interval was widened after three near misses on one
+      sample, all inside 0.6 posterior sds (`fit/README.md`), and the
+      200-repetition SBC finds no bias, so the present check is not wrong,
+      only blunt.
+    - **The same for SBC's nine uniformity tests**, which `sbc.md` reads by
+      eye ("one in nine below 0.05 is chance"): one joint verdict.
+    - **Make SBC cheap enough to run often** (`fit/eggfit/sbc.py`). It takes
+      about two hours on the owner's Mac. What it guards is the Python
+      model's priors and hierarchy: the likelihood is pinned to the core's,
+      and NUTS is numpyro's.
+      - Batch the repetitions: `vmap` the fit across simulated datasets, or
+        numpyro's vectorized chains, padding each dataset with zero-weight
+        eggs.
+      - Rank the simulated data's log-likelihood as well as the parameters:
+        a fit that ignores the data has uniform parameter ranks, and this
+        quantity catches it, and other bugs, in fewer repetitions. Modrák
+        et al., [SBC checking: the choice of test quantities shapes
+        sensitivity](https://arxiv.org/abs/2211.02383).
+      - Test the ranks' ECDF against simultaneous bands, not binned
+        chi-square. Säilynoja, Bürkner and Vehtari, [Graphical test for
+        discrete uniformity](https://arxiv.org/abs/2103.10522).
+      - Run in batches and stop once the ECDF is clearly inside or outside
+        its bands. Gandy and Scott, [Unit testing for MCMC and other Monte
+        Carlo methods](https://arxiv.org/abs/2001.06465).
+      - Simulate fewer cooks per repetition; the log-likelihood quantity
+        makes up the lost sensitivity.
+      - Done when SBC runs in minutes, often enough to schedule.
+      - Later, with real eggs: [SBC checking conditional on
+        data](https://arxiv.org/abs/2502.03279). Set aside: [discriminative
+        calibration](https://arxiv.org/abs/2305.14593), more machinery than
+        this model needs.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -134,20 +154,7 @@ shell (34).
    change made during it; the web groups by `FIELDS`; one rule for leaving
    (hidden or inactive, the same in both); one list of other controls. Each
    is a test in each app's suite; the next drift is found by review again.
-7. **The recovery check's interval** (`DECISIONS.md` 133). Each global's is
-   1 − 0.10/9 (98.9%), so that all nine cover together 90% of the time; it
-   was widened from 90% after three truths fell outside 90% on the first
-   sample. Re-run there (sampler seed 0), the three missed by 0.004 (`mu_z`,
-   0.05 posterior sds; the truth at the posterior's 0.953 quantile), 0.072
-   (`lag`, 0.60 sds; 0.993) and 0.061 (`log_g0`, 0.53 sds; 0.016); `lag` and
-   `log_g0` are correlated −0.75, so it was nearly one miss. The 200-repetition
-   calibration finds every global's ranks uniform (`fit/README.md`), so
-   misses that size are chance, not bias. The check now also fails a
-   posterior that does not narrow (`fit/tests/test_recovery.py`), which is
-   what catches a fit that lost its data; the interval catches only a bias.
-   Keep 98.9%; or go back to 90% each, which fails a calibrated fit on most
-   samples (the present sample too: `tau_z` at 0.962); or hold only the
-   time-scale and the lag, the two the data identify, at 95% each.
+
 
 Waiting on someone else: the Czech review, by the owner's friend.
 
