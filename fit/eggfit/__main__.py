@@ -1,4 +1,4 @@
-"""The population fit (E7; INFERENCE.md section 9).
+"""The population fit (INFERENCE.md section 9).
 
     uv run --project fit python -m eggfit fit fit/data/emulated.json \\
         --out fit/data/population.json --report fit/data/report.md

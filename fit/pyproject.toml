@@ -1,7 +1,7 @@
 [project]
 name = "eggfit"
 version = "0.1.0"
-description = "The population fit for Actual Egg Timer (E7; INFERENCE.md section 9): shared eggs in, fixtures/population.json out."
+description = "The population fit for Actual Egg Timer (INFERENCE.md section 9): shared eggs in, fixtures/population.json out."
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=2.0",

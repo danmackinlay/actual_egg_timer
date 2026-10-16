@@ -118,7 +118,7 @@ export function probeFixture(): Record<string, unknown> {
   }
 
   return {
-    about: 'The thermometer (E4): the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, running.ts.',
+    about: 'The thermometer: the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, running.ts.',
     egg: CALIB_EGG,
     setup: CALIB_SETUP,
     grid: { spec: CALIB_GRID_SPEC, surface: grid },

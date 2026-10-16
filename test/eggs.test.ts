@@ -105,7 +105,7 @@ test('the fit reads a record from before 0.5: absent fields as null, the old yol
   const read = readFitRecord(old);
   assert.ok(read !== null);
   assert.equal(read.yolk, -1);
-  assert.equal(read.model, null, 'a record from before E6 names no model');
+  assert.equal(read.model, null, 'a record from before sharing names no model');
   assert.equal(read.record.yolkWord, null);
   assert.equal(read.record.egg.sizeTable, null);
   assert.equal(parseRecord(old), null, 'which the apps no longer read');

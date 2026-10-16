@@ -81,7 +81,7 @@ const REFUSED: { why: string; mutate: Mutation }[] = [
 ];
 
 export const priorFixture = {
-  about: 'E7: a prior drawn from a population - the published one (fixtures/population.json), the literature\'s, one shifted every way and the literature\'s as a file from before 0.5 wrote it - and the population files a reader refuses: one it cannot trust, or a fit its diagnostics do not vouch for. src/core/population.ts.',
+  about: 'A prior drawn from a population - the published one (fixtures/population.json), the literature\'s, one shifted every way and the literature\'s as a file from before 0.5 wrote it - and the population files a reader refuses: one it cannot trust, or a fit its diagnostics do not vouch for. src/core/population.ts.',
   count: PRIOR_COUNT,
   seed: PRIOR_SEED,
   populations: [
