@@ -15,6 +15,8 @@
 //                    (tools/swiftConstants.ts --check)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
+//   committed        the files those three write, as HEAD has them, once
+//                    the three have ended
 //   swift build      the package and its tests, compiled
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
@@ -31,6 +33,12 @@
 // when it builds nothing; with --skip-build neither writes it, so each passes
 // --ignore-lock. `npm test` runs alongside; the one fixture it reads,
 // population.json, is the fit's, which fixtures:check never writes.
+//
+// The three checks compare with the working tree, where an npm test has
+// already written the key types and the Swift's constants afresh, so a file
+// regenerated but never committed passes them, though CI, which checks the
+// commit, fails it. So committed fails any change to those files that HEAD
+// lacks; a fixture git does not know is fixtures:check's own failure.
 //
 // A failed job stops nothing else: every job runs to its end (but the Swift
 // tests, which need swift build), and verify fails naming each failed job and
@@ -85,7 +93,21 @@ function job(name, steps) {
 const node = process.execPath;
 const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc');
 const tests = readdirSync('test').filter((f) => f.endsWith('.test.ts')).sort().map((f) => join('test', f));
+// What copy:keys, swift:constants and fixtures:check write (TS_KEYS and
+// SWIFT_KEYS, CORE_SWIFT and COPY_SWIFT, WRITTEN in their tools).
+const GENERATED = [
+  'src/core/copyKeys.ts',
+  'ios/EggTimerCore/Sources/EggTimerCopy/CopyKeys.swift',
+  'ios/EggTimerCore/Sources/EggTimerCore/Constants.generated.swift',
+  'ios/EggTimerCore/Sources/EggTimerCopy/Constants.generated.swift',
+  'fixtures/',
+  'fit/tests/*.json',
+];
+const copyKeys = job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]);
+const swiftConstants = job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]);
 const fixtures = job('fixtures:check', [[node, ['tools/fixturesCheck.ts']]]);
+const committed = Promise.all([copyKeys, swiftConstants, fixtures])
+  .then(() => job('committed', [['git', ['diff', '--exit-code', '--stat', 'HEAD', '--', ...GENERATED]]]));
 const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
 const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
 const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));
@@ -97,9 +119,10 @@ const all = await Promise.all([
   job('npm test', [[node, ['--test', ...tests]]]),
   job('validate', [[node, ['tools/validate.ts']]]),
   job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
-  job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]),
-  job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]),
+  copyKeys,
+  swiftConstants,
   fixtures,
+  committed,
   swiftBuild,
   appTests,
   coreTests,
