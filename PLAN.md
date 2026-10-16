@@ -2,7 +2,7 @@
 
 Three lists: the next work, the owner's open decisions, and what nobody has
 checked. The session that merges brings it up to date (`DECISIONS.md` 104).
-It carries no dates and no version numbers. History is `git log`; the rules
+It carries no dates and no version numbers (130). History is `git log`; the rules
 and the map of the documents are `CLAUDE.md`.
 
 ## Next work

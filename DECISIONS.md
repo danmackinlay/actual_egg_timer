@@ -876,3 +876,22 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     run from their `.ts` sources, Node stripping the types, and `tsc` only
     type-checks. `tools/build.mjs` and `dist/` go. Core still has no runtime
     dependency (`CLAUDE.md` invariant 1).
+
+Decided by the owner, 16 October 2026, on the adversarial review of 15
+October:
+
+130. **`PLAN.md` holds only the next work, the owner's open decisions and one
+    QA list.** Each item of next work says the action to take. An open
+    decision is one that waits on the owner's choice; work an agent can do is
+    next work. Its prose carries no dates and no version numbers. Facts that
+    are not work move to their homes: the model to `README.md`, building and
+    deploying to `DEVELOPING.md`, the rules and the map of the documents to
+    `CLAUDE.md`.
+131. **`DECISIONS.md` carries no commit hashes or branch names, and states
+    each superseded chain as its current rule.** A decision keeps its date.
+    A replaced decision shrinks to its title and "Superseded by N", and the
+    latest in its chain states the whole rule; numbers are never reused,
+    since code cites them. Decisions are numbered only when merged to
+    `main`: on a branch a new decision is written as `DECISIONS.md NNN`, and
+    the session that merges gives it the next number and fixes its
+    citations.
