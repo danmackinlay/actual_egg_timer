@@ -926,7 +926,7 @@ share included). As built:
   an exact tie, the softer. It need not contain the word asked. **The most
   likely word**: the largest, the softer on a tie.
 - **The bracket under the slider** is that interval, drawn (`wordBracket`;
-  `DECISIONS.md` 97, question 14): from the outer edge of its first word's
+  `DECISIONS.md` 97): from the outer edge of its first word's
   band on the slider (the anchors' midpoints, the same cuts as above) to
   the outer edge of its last's, marked at the most likely word, which is
   always inside the interval (a word outside a run holding 0.9 holds at

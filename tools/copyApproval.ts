@@ -97,6 +97,10 @@ export function catalogueAt(commit: string, tag: string): CatalogueJson | null {
 
 const HASH = /^[0-9a-f]{40}$/;
 
+/** What is wrong with the approved record: the tools say it as it is, with
+ *  no stack. */
+export class ApprovalError extends Error {}
+
 /** What is wrong with the approved file's text, if anything: it is one
  *  commit's full hash and a newline. */
 export function approvedProblem(text: string): string | null {
@@ -107,8 +111,26 @@ export function approvedProblem(text: string): string | null {
 export function readApproved(path: string = APPROVED_PATH): string {
   const text = readFileSync(path, 'utf8');
   const problem = approvedProblem(text);
-  if (problem !== null) throw new Error(problem);
+  if (problem !== null) throw new ApprovalError(problem);
   return text.trim();
+}
+
+/** Why `commit` cannot be the approved one, if it cannot, said of the
+ *  commit: it is a commit this clone has, and, to be approved, on `main`'s
+ *  history, so that no rebase or deleted branch takes the approved words
+ *  away. */
+export function commitProblem(commit: string, onMain: boolean): string | null {
+  try {
+    git('cat-file', '-e', `${commit}^{commit}`);
+  } catch {
+    return 'is no commit in this clone: it was rebased away, or the clone is shallow';
+  }
+  try {
+    if (onMain) git('merge-base', '--is-ancestor', commit, 'main');
+  } catch {
+    return 'is not on main\'s history: approve a commit main has, once its branch is merged';
+  }
+  return null;
 }
 
 /** Whether copy/ has changes git has not committed. */
@@ -126,8 +148,10 @@ export function wordsNow(): Words {
 }
 
 export function wordsAt(commit: string): Words {
+  const problem = commitProblem(commit, false);
+  if (problem !== null) throw new ApprovalError(`${APPROVED_PATH} names ${commit}, which ${problem}`);
   const en = catalogueAt(commit, 'en');
-  if (en === null) throw new Error(`${commit} has no copy/en.json`);
+  if (en === null) throw new ApprovalError(`${commit} has no copy/en.json`);
   return { en: en, overlays: Object.fromEntries(OVERLAYS.map((tag) => [tag, catalogueAt(commit, tag)])) };
 }
 

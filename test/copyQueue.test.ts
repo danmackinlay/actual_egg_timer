@@ -6,7 +6,7 @@
  * malformed record does.
  *
  * On data of its own, not the repository's history, since CI clones
- * shallowly. Run from the repo root (npm test does). Zero dependencies.
+ * shallowly: 1b asks git only for HEAD and for a hash no clone has. Run from the repo root (npm test does). Zero dependencies.
  */
 
 import test from 'node:test';
@@ -14,8 +14,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  APPROVED_PATH, type CatalogueJson, UNCOMMITTED, type Words, approvedProblem, keyCommits, readApproved, reviewQueue,
-  twinStates,
+  APPROVED_PATH, ApprovalError, type CatalogueJson, UNCOMMITTED, type Words, approvedProblem, commitProblem, keyCommits,
+  readApproved, reviewQueue, twinStates, wordsAt,
 } from '../tools/copyApproval.ts';
 
 test('1a. the approved record is one commit\'s full hash on a line', () => {
@@ -24,6 +24,14 @@ test('1a. the approved record is one commit\'s full hash on a line', () => {
   assert.notEqual(approvedProblem('2978f81\n'), null, 'a short hash');
   assert.notEqual(approvedProblem('HEAD\n'), null, 'a ref');
   assert.notEqual(approvedProblem(`${'a'.repeat(40)}\n${'b'.repeat(40)}\n`), null, 'two lines');
+});
+
+test('1b. a record naming no commit says so, not that the commit has no catalogue', () => {
+  assert.equal(commitProblem('HEAD', false), null);
+  assert.match(commitProblem('a'.repeat(40), false) ?? '', /^is no commit in this clone/);
+  assert.throws(() => wordsAt('a'.repeat(40)), (e: Error) => e instanceof ApprovalError
+    && e.message === `${APPROVED_PATH} names ${'a'.repeat(40)}, which is no commit in this clone: it was rebased away, `
+      + 'or the clone is shallow');
 });
 
 const en = (messages: CatalogueJson['messages']): CatalogueJson => ({ locale: 'en', messages: messages });

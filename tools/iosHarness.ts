@@ -390,6 +390,7 @@ export type Event = { t: number } & (
   | { ev: 'layout'; part: string; y: number }
   | { ev: 'frame'; at: number; phase: string; big: string; sub: string; range?: string }
   | { ev: 'likely'; shown: boolean }
+  | { ev: 'helpSources'; count: number }
 );
 export type Kind = Event['ev'];
 export type EventOf<K extends Kind> = Extract<Event, { ev: K }>;

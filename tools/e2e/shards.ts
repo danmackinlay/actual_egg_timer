@@ -4,11 +4,11 @@
  * scenario in exactly one shard, the shards about as long as each other.
  *
  * The split is by how long each scenario took on GitHub's 2-core Linux
- * runner, rounded to the second (`SECONDS`, from a CI log of `npm run e2e`;
- * a Mac takes about a third of it): the longest first, each to the shard
- * with least so far. A scenario not in the table counts as `UNTIMED`, so a
- * new one needs no entry to run; the table only keeps the shards level, and
- * needs remaking only when they drift apart. Where a scenario lands depends
+ * runner, rounded to the second (`SECONDS`): the longest first, each to the
+ * shard with least so far. A scenario not in the table counts as `UNTIMED`,
+ * so a new one needs no entry to run; the table only keeps the shards level,
+ * and needs remaking only when they drift apart, from a CI run's log, by
+ * `node tools/e2e/shardTimes.ts <run id>`. Where a scenario lands depends
  * on the table and the list alone, never on the machine.
  */
 

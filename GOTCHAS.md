@@ -69,12 +69,13 @@ releasing has its own in `ios/RELEASING.md`.
   or clear the site's data. On a simulator, Safari keeps it under
   `Containers/Data/Application/<Safari>/Library/WebKit/com.apple.mobilesafari/WebsiteData/Default/`,
   and a Home Screen web app inside its `Library/WebClips/<id>.webclip`.
-- **Every worktree served on one port shares one localStorage**, the
-  newest-version mark included: `npm run serve:dev` is :8888 and
-  `serve:site` :8080 in any worktree. Serve a build of a newer version (a
-  branch that has bumped it), then an older one, and the older one writes
-  nothing, shows the update line, and looks broken. The e2e harness is
-  immune (a fresh profile each run). Give each worktree its own port
+- **Every worktree served on one port shares one localStorage**: `npm run
+  serve:dev` is :8888 and `serve:site` :8080 in any worktree. Serve a
+  branch that has bumped a store's format, then an older build, and the
+  older one reads that store as nothing stored and writes over it, and
+  deletes at boot any key it does not keep: the eggs and settings you made
+  on the branch are gone. The e2e harness is immune (a fresh profile each
+  run). Give each worktree its own port
   (`PORT=8890 npm run serve:dev`; `python3 -m http.server 8090 --directory
   _site`), or clear the site's data before switching.
 - **CSS order decides a tie**: `.pair--five > button` lost to `button.fb`'s

@@ -335,7 +335,7 @@ softest, a cold start's soft. It is not lower because a fresh install at
 soft reads 0.17 on the reference pot, and that is the prior's width.
 
 **The bracket** is the certainty line's 90% interval, drawn (core's
-`wordBracket`; `DECISIONS.md` 97, question 14: one interval for the words and
+`wordBracket`; `DECISIONS.md` 97: one interval for the words and
 the bracket). Each of the five words has a band on the slider, the levels
 whose nearest word it is, between the midpoints with its neighbours (0,
 0.11, 0.315, 0.515, 0.81, 1), where the slider's own word changes. The

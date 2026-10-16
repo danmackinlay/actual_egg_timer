@@ -250,6 +250,10 @@ extension Screenshots {
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)
         /// Whether "Most likely" shows under the certainty word.
         case likely(shown: Bool)
+        /// How many sources Help lists, read at launch from the bundled
+        /// help-sources.json (HelpView.swift `HelpSource.all`), which is none
+        /// if the file is missing.
+        case helpSources(count: Int)
     }
 
     /// A value the app stores as JSON, written into a line as it encodes.

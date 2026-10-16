@@ -662,7 +662,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
     files back for the fit, older ones included; replaying the posterior
     whenever the model it was folded under (`MODEL_ID`, kept beside it) is
-    not this build's; and the newer-build guard (100). A cook too old to
+    not this build's. No newer-build guard stays (136). A cook too old to
     pick back up that finished unanswered is logged as unanswered, and on
     iOS a second answer after a relaunch is kept when the egg is the last
     in the log and not yet shared. Export from a current build before
@@ -718,7 +718,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     under-measures the time to boil by 15-25%. Every string that names the
     button follows it; the water's state is still "a full rolling boil"
     (111); the 1750 button stays "It boils in earnest". Amends CLAUDE.md's
-    invariant 6.
+    "Words", which names the button.
 113. **The action sits under the time, in one row.** Superseded by 125.
 114. **The bracket marks the most likely word's band, not a point** (the
     owner, 12 October 2026: "yes this seems good"). The mark at the most
@@ -830,9 +830,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     the iOS sounds are rendered from; and the server's contract for
     sharing (`isUid`, `shareReply`, `deletionDone`, and that a seq is never
     reused under one id). What only stores, reads back or merges - the
-    settings, the stored cook, the share queue, the table of stores, the
-    newer-build guard, another tab's copy of a cook - is each app's own:
-    the web's in `src/ui`, tested by `test/*.test.ts`; iOS's in
+    settings, the stored cook, the share queue, the table of stores,
+    another tab's copy of a cook - is each app's own: the web's in
+    `src/ui`, tested by `test/*.test.ts`; iOS's in
     `EggTimerApp`, tested by `EggTimerAppTests`. It is no longer ported to
     Swift or fixtured.
 127. **The compilers check the catalogue's keys** (the owner, 14 October
@@ -855,8 +855,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Every tab shares one storage, so independent tabs needed the cross-tab
     merges, which go; keeping them apart would have meant a store per tab
     for the cook beside a shared one for the learning. Without Web Locks
-    (an insecure context) every tab runs as before. 100's newer-build mark
-    stays. A new build no longer waits for the site's one window: a
+    (an insecure context) every tab runs as before. No newer-build mark
+    stays (136). A new build no longer waits for the site's one window: a
     waiting tab reloads into it.
 129. **esbuild bundles the site; Node runs the TypeScript** (the owner, 14
     October 2026, on the adversarial review). The site is built by esbuild,

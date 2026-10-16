@@ -20,6 +20,9 @@ struct ActualEggTimerApp: App {
         LanguageChoice.shared.start()
         // A clock a script steps from outside (`AppClock`).
         AppClock.listen()
+        // Help's sources come from a bundled file; a debug build says how
+        // many it found, which a missing file would make none.
+        Screenshots.log(.helpSources(count: HelpSource.all.count))
     }
 
     var body: some Scene {

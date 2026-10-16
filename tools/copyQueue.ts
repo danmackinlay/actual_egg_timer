@@ -12,15 +12,17 @@
  * The queue only reports: it exits 0 whatever is in it, so it never fails
  * `verify`. Approval is the owner's word, of the whole catalogue: put back
  * what he names, commit, then approve. Approving HEAD refuses while copy/
- * has changes git has not committed, which the record could not name.
+ * has changes git has not committed, which the record could not name; and
+ * any commit refuses that is not on main's history, which a rebase or a
+ * deleted branch could take away.
  */
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 import {
-  APPROVED_PATH, type Templates, copyIsDirty, readApproved, reviewQueue, translationTags, twinStatesOf, wordsAt, wordsNow,
-  readCatalogue, templatesOf,
+  APPROVED_PATH, ApprovalError, type Templates, commitProblem, copyIsDirty, readApproved, reviewQueue, translationTags,
+  twinStatesOf, wordsAt, wordsNow, readCatalogue, templatesOf,
 } from './copyApproval.ts';
 import { appsUsing } from './copyNotes.ts';
 
@@ -86,6 +88,11 @@ function approve(args: string[]): void {
     console.error(`not a commit: ${args[0]}; copy:approve records the whole catalogue at a commit, never key by key.`);
     process.exit(2);
   }
+  const problem = commitProblem(commit, true);
+  if (problem !== null) {
+    console.error(`${commit.slice(0, 10)} ${problem}.`);
+    process.exit(2);
+  }
   const before = readApproved();
   writeFileSync(APPROVED_PATH, `${commit}\n`);
   const left = reviewQueue(wordsAt(commit), wordsNow()).length;
@@ -94,9 +101,15 @@ function approve(args: string[]): void {
 }
 
 const [mode, ...args] = process.argv.slice(2);
-if (mode === 'queue') queue();
-else if (mode === 'approve') approve(args);
-else {
-  console.error('usage: copyQueue.ts queue | approve [<commit>]');
-  process.exit(2);
+try {
+  if (mode === 'queue') queue();
+  else if (mode === 'approve') approve(args);
+  else {
+    console.error('usage: copyQueue.ts queue | approve [<commit>]');
+    process.exit(2);
+  }
+} catch (e) {
+  if (!(e instanceof ApprovalError)) throw e;
+  console.error(e.message);
+  process.exit(1);
 }

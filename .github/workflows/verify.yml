@@ -1,13 +1,12 @@
 # The gate, on every push of a branch. Separate jobs, so that each runs on
 # the runner it needs and all run side by side: web and the web e2e on Linux,
-# quick to start, the e2e in four shards; apple and ios-e2e on macOS, for
+# quick to start, the e2e in shards; apple and ios-e2e on macOS, for
 # Swift and the iOS app; fit on Linux under uv, with no node: its
 # likelihood held to the core's, and NUTS recovering a known population,
 # from fixtures npm run fixtures wrote into fit/tests/. x86 Linux differs from
 # arm64 macOS in the last bit of some numbers, so the fixture check holds
 # them to Swift's tolerance (tools/fixtureCompare.ts). The actions are @v5,
-# on Node 24. A run takes as long as ios-e2e, its longest job, 10 to 17
-# minutes; web takes 8, each e2e shard 4 to 6, apple 5.
+# on Node 24. A run takes as long as ios-e2e, its longest job.
 #
 # A pull request runs it only from a fork: a branch of this repository has
 # had its run, on the same commit, when it was pushed. A release tag is
@@ -21,7 +20,10 @@ on:
   pull_request:
 
 # One run at a time for each branch: a newer push to a branch cancels the
-# run of the older one, but on main, whose runs finish, the newer waits.
+# run of the older one. On main a run in progress finishes and the newer
+# waits for it; but GitHub keeps one waiting run a group, so a third push
+# before the first run ends cancels the waiting one, whose commit then has
+# no run of its own.
 concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -80,8 +82,8 @@ jobs:
   ios-e2e:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: macos-latest
-    # 10 to 17 minutes on a hosted runner, the build included, about ten on
-    # a developer's Mac; a new simulator's first launches are slower still.
+    # Ample: the build is included, a hosted macOS runner is slow, and a new
+    # simulator's first launches slower still.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
@@ -105,17 +107,16 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
     # The recovery check's four chains run side by side on the runner's four
-    # cores: about a minute and a quarter on a developer's Mac.
+    # cores.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v10.3.0
       - run: uv run --project fit pytest -q fit/tests
 
-  # The web e2e in four shards, a job each (tools/e2e/shards.ts): the whole
-  # takes about 23 minutes on this 2-core runner, one scenario at a time
-  # (seven on a developer's Mac), and a shard 4 to 6. Every shard runs to
-  # its end, and any that fails fails the run.
+  # The web e2e in shards, a job each (tools/e2e/shards.ts), since this
+  # 2-core runner takes one scenario at a time; the count is the matrix's
+  # alone. Every shard runs to its end, and any that fails fails the run.
   e2e:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
@@ -124,7 +125,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4]
-    name: e2e ${{ matrix.shard }}/4
+    name: e2e ${{ matrix.shard }}/${{ strategy.job-total }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -134,6 +135,6 @@ jobs:
       - run: google-chrome --version
       - run: npm run build:site
       # A scenario that fails prints the page's text.
-      - run: node tools/e2e.ts --shard ${{ matrix.shard }}/4
+      - run: node tools/e2e.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           E2E_DEBUG: '1'
