@@ -15,7 +15,7 @@ import Foundation
 ///
 /// The yolk's peak temperature is kept beside the doses, in degrees: what
 /// a probe at the centre reads when the centre peaks. See src/core/doseGrid.ts.
-public struct DoseGrid: Sendable {
+public struct DoseGrid: Sendable, Codable {
     public let logAlphaMin: Double
     public let logAlphaStep: Double
     public let alphaCount: Int
@@ -43,6 +43,11 @@ public struct DoseGrid: Sendable {
         self.logWhite = logWhite
         self.peakYolkC = peakYolkC
     }
+
+    enum CodingKeys: String, CodingKey {
+        case logAlphaMin, logAlphaStep, alphaCount, timeMinS = "timeMin_s", timeStepS = "timeStep_s"
+        case timeCount, logYolk, logWhite, peakYolkC = "peakYolk_C"
+    }
 }
 
 private func safeLog10(_ v: Double) -> Double {
@@ -50,13 +55,17 @@ private func safeLog10(_ v: Double) -> Double {
 }
 
 /// The dose surface's extent and resolution.
-public struct GridSpec: Sendable {
+public struct GridSpec: Sendable, Codable {
     public let alphaMin: Double
     public let alphaMax: Double
     public let alphaCount: Int
     public let timeMinS: Double
     public let timeMaxS: Double
     public let timeCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case alphaMin, alphaMax, alphaCount, timeMinS = "timeMin_s", timeMaxS = "timeMax_s", timeCount
+    }
 }
 
 /// Where the dose surface goes, given its centre and the cook. Production is
@@ -64,7 +73,7 @@ public struct GridSpec: Sendable {
 public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
 
 /// Everything a dose-surface build needs.
-public struct GridRequest: Sendable {
+public struct GridRequest: Sendable, Codable {
     public let egg: Egg
     public let setup: CookSetup
     public let spec: GridSpec

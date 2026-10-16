@@ -82,11 +82,7 @@ export const sliderFixture = {
       softestLevel: c.softest,
       hardestLevel: c.hardest,
       level: c.level,
-      kind: v.kind,
-      wanted: v.wanted.key,
-      limit: v.limit.key,
-      snapTo: v.snapTo === null ? null : v.snapTo,
-      worthSaying: v.worthSaying,
+      verdict: v,
     };
   }),
 };

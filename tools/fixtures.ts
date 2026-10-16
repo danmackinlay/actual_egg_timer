@@ -118,7 +118,7 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     const { calibrationFixture: f } = await import('./fixtures/calibration.ts');
     return {
       fixture: f, counts: [
-        `${f.grid.logYolk.length} grid cells`,
+        `${f.grid.surface.logYolk.length} grid cells`,
         `${f.wordUpdates.length} calibration updates`,
         `${f.wordUpdates.filter((u) => u.white !== null).length} white answers`,
       ],

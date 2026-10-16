@@ -20,10 +20,6 @@ export const textureFixture = {
   about: 'The texture bands: every boundary from both sides, a white that never sets, and the note\'s keys. src/core/texture.ts.',
   cases: TEXTURE_CASES.map(([yolk, white, whiteSets]) => {
     const t = textureFor(yolk, white, whiteSets);
-    const note = textureNoteKeys(t);
-    return {
-      peakYolk_C: yolk, peakWhite_C: white, whiteSets: whiteSets, white: t.white, yolk: t.yolk,
-      noteKey: note.key, noteWhite: note.parts['white'] ?? null, noteYolk: note.parts['yolk'] ?? null,
-    };
+    return { peakYolk_C: yolk, peakWhite_C: white, whiteSets: whiteSets, texture: t, note: textureNoteKeys(t) };
   }),
 };

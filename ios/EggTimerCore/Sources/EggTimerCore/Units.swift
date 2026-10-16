@@ -32,7 +32,7 @@ public typealias UnitSystem = Units
 // MARK: - The units
 
 /// Every unit either app can show. The raw values are the web's ids.
-public enum UnitId: String, Sendable, CaseIterable {
+public enum UnitId: String, Sendable, CaseIterable, Codable {
     case celsius = "C", fahrenheit = "F", grams = "g", ounces = "oz", millimetres = "mm"
     case inches = "in", metres = "m", feet = "ft", litres = "L", quarts = "qt", pints = "pt"
 }
@@ -90,7 +90,7 @@ private func unitKeys(_ unit: UnitId) -> (unit: CopyKey, format: CopyKey) {
 /// degrees and never clamped; `roomTemp` is the kitchen's air (the room
 /// setting); `coolingWater` the water the eggs cool in, running or in a bowl;
 /// `bowl` the water in that bowl, as the pan's.
-public enum Quantity: String, Sendable, CaseIterable {
+public enum Quantity: String, Sendable, CaseIterable, Codable {
     case temperature, eggTemp, probeTemp, roomTemp, coolingWater, boilingPoint, mass, altitude, water, bowl
 }
 
@@ -183,6 +183,35 @@ public struct Measure: Sendable, Equatable {
     fileprivate func onNudgeGrid(_ n: Double) -> Double {
         let v = n * nudgeNum / nudgeDen
         return v == 0 ? 0 : v
+    }
+}
+
+/// As the TypeScript writes one: each bound `{lo, hi}`, or null.
+extension Measure: Encodable {
+    private enum CodingKeys: String, CodingKey {
+        case quantity, unit, step, stepNum, stepDen, nudgeNum, nudgeDen, decimals, trim, unitKey, formatKey, limit, bounds
+    }
+
+    private struct Limit: Encodable {
+        let lo: Double
+        let hi: Double
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(quantity, forKey: .quantity)
+        try c.encode(unit, forKey: .unit)
+        try c.encode(step, forKey: .step)
+        try c.encode(stepNum, forKey: .stepNum)
+        try c.encode(stepDen, forKey: .stepDen)
+        try c.encode(nudgeNum, forKey: .nudgeNum)
+        try c.encode(nudgeDen, forKey: .nudgeDen)
+        try c.encode(decimals, forKey: .decimals)
+        try c.encode(trim, forKey: .trim)
+        try c.encode(unitKey, forKey: .unitKey)
+        try c.encode(formatKey, forKey: .formatKey)
+        try c.encode(limit.map { Limit(lo: $0.lowerBound, hi: $0.upperBound) }, forKey: .limit)
+        try c.encode(bounds.map { Limit(lo: $0.lowerBound, hi: $0.upperBound) }, forKey: .bounds)
     }
 }
 

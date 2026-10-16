@@ -90,14 +90,14 @@ public func targetPeakYolkC(_ level: Double) -> Double {
 ///
 /// A level the pan can deliver is never refused, however low its odds: those
 /// are warned of instead (`lowOddsAt`, Reach.swift).
-public enum RefusalKind: String, Sendable {
+public enum RefusalKind: String, Sendable, Codable {
     case none
     case tooSoftForWhite
     case harderThanPanReaches
     case whiteNeverSets
 }
 
-public struct Verdict: Sendable {
+public struct Verdict: Sendable, Codable {
     public let kind: RefusalKind
     /// The anchor the user asked for.
     public let wanted: DonenessAnchor

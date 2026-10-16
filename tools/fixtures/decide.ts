@@ -34,15 +34,6 @@ import { referenceSetup } from '../common.ts';
 export const DECIDE_EGG = eggFromMass(0.068);
 export const DECIDE_SETUP: CookSetup = referenceSetup({ timeToBoil_s: 480, eggCount: 2 });
 
-function decisionInputsRow(i: DecisionInputs) {
-  return {
-    egg: { mass_kg: i.egg.mass_kg },
-    setup: i.setup,
-    params: { alpha_m2s: i.params.alpha_m2s },
-    whiteDose_min: i.whiteDose_min,
-  };
-}
-
 const DECIDE_SPEC_INPUTS: DecisionInputs[] = [
   { egg: DECIDE_EGG, setup: DECIDE_SETUP, params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: eggFromMass(0.05), setup: DECIDE_SETUP, params: { alpha_m2s: 1.62e-7 }, whiteDose_min: 0.11 },
@@ -53,10 +44,7 @@ const DECIDE_SPEC_INPUTS: DecisionInputs[] = [
   { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'tap', coolingWater_C: 24 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
 ];
 
-const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({
-  inputs: decisionInputsRow(inputs),
-  spec: decisionGridSpec(inputs),
-}));
+const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({ inputs: inputs, spec: decisionGridSpec(inputs) }));
 
 /** The surfaces built so far, by egg, pot and spec: the fixtures ask for a
  *  few dozen pots some two hundred times, and a surface is the slow part. */
@@ -139,12 +127,6 @@ DECIDE_CASES.push({ posterior: 'learned', level: 1.0, meanCookTime_s: DECIDE_GRI
 
 /* The solution at the chosen time (`decidedSolution`), and a cook re-solved
  * mid-cook with the lean it chose at "Eggs in" carried (`carriedSolution`). */
-function decideSolutionRow(sol: Solution) {
-  return {
-    reachable: sol.reachable, cookTime_s: sol.result.cookTime_s, peakYolk_C: sol.result.peakYolk_C,
-    yolkDose_min: sol.result.yolkDose_min, whiteDose_min: sol.result.whiteDose_min,
-  };
-}
 // The second pot rests on the counter, where the softest yolk leaves the white
 // unset: no cook to choose for, so the lean is not carried.
 const DECIDE_CARRIED = [
@@ -156,20 +138,14 @@ const DECIDE_CARRIED = [
   const sol = meanSolve(pz, pot.level, pot.setup);
   return {
     posterior: pz.name, level: pot.level, setup: pot.setup, lean_s: lean_s,
-    carried: decideSolutionRow(carriedSolution(DECIDE_EGG, pot.setup, params, sol, lean_s)),
+    carried: carriedSolution(DECIDE_EGG, pot.setup, params, sol, lean_s),
   };
 }));
 
 export const decideFixture = {
   about: 'E5: decision surfaces, and the time chosen on one from three posteriors. src/core/decide.ts.',
   specs: decideSpecs,
-  grid: {
-    egg: { mass_kg: DECIDE_EGG.mass_kg },
-    setup: DECIDE_SETUP,
-    ...DECIDE_GRID_SPEC,
-    logYolk: DECIDE_GRID.logYolk,
-    logWhite: DECIDE_GRID.logWhite,
-  },
+  grid: { egg: DECIDE_EGG, setup: DECIDE_SETUP, spec: DECIDE_GRID_SPEC, surface: DECIDE_GRID },
   // The prior as its count and seed: createPrior is pinned particle by
   // particle in calibration.json, so 200 more of its particles pin nothing.
   posteriors: decidePosteriors.map((pz) => (pz.name === 'prior'
@@ -198,19 +174,14 @@ export const decideFixture = {
       held: [
         { lo_s: 0, hi_s: d.cookTime_s - 15 }, { lo_s: d.cookTime_s + 15, hi_s: d.cookTime_s + 40 },
       ].map((bounds) => {
-        const h = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, target, bounds);
-        return { bounds: bounds, cookTime_s: h.cookTime_s, odds: h.odds };
+        return { bounds: bounds, decision: decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, target, bounds) };
       }),
       // The mean solve at this level, moved to the decided time.
       level: c.level,
-      decided: decideSolutionRow(decidedSolution(
-        DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d,
-      )),
+      decided: decidedSolution(DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d),
       // The same, nudged seven seconds short: moved where a time is
       // chosen, and not where the solver's answer stands.
-      nudged: decideSolutionRow(decidedSolution(
-        DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d, -7,
-      )),
+      nudged: decidedSolution(DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d, -7),
     };
   }),
   carried: DECIDE_CARRIED,

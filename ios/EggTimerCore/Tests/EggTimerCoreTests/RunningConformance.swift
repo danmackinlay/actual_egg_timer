@@ -161,7 +161,7 @@ struct RunningConformance {
                     replan(of, c, surface: nil, leanHintS: hint, nowS: ofNow).inputs, "\(note): no surface wanted"
                 )
                 let grid = try doseGrid(s.object("grid"), egg: inputs.egg, setup: inputs.setup)
-                let profile = try (s["profile"] as? [String: Any]).map { try profileOf($0) }
+                let profile = try (s["profile"] as? [String: Any]).map { try decoded(OddsProfile.self, $0) }
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
             let memo = try (row["hint"] as? [String: Any]).map { try slowHobMemoOf($0) }

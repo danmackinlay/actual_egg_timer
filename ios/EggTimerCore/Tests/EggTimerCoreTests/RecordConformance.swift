@@ -24,30 +24,6 @@ private func decodeRecord(_ json: Any) -> EggRecord? {
     return record
 }
 
-/// A fixture value through JSON into its Codable shape; nil for null.
-private func decoded<T: Decodable>(_ type: T.Type, _ any: Any?) throws -> T? {
-    guard let any, !(any is NSNull) else { return nil }
-    let data = try JSONSerialization.data(withJSONObject: any, options: [.fragmentsAllowed])
-    return try JSONDecoder().decode(T.self, from: data)
-}
-
-/// A cook's facts as the fixture writes them.
-private func cookFacts(_ j: [String: Any]) throws -> CookFacts {
-    try CookFacts(
-        app: j.value(AppName.self, "app"), appVersion: j.str("appVersion"), prior: j.str("prior"),
-        day: j.str("day"), id: j.optionalNum("id").map { Int($0) },
-        massKg: j.num("mass_kg"), massFrom: j.value(MassFrom.self, "massFrom"),
-        sizeTable: j.optionalValue(SizeTable.self, "sizeTable"), setup: cookSetup(j.object("setup")),
-        eggFrom: j.value(EggFrom.self, "eggFrom"), boilRemembered: j.flag("boilRemembered"),
-        level: j.num("level"), cookS: j.num("cook_s"), nudgeS: j.num("nudge_s"), outS: j.optionalNum("out_s"),
-        coolS: j.num("cool_s"), yolkWord: j.optionalValue(YolkWord.self, "yolkWord"),
-        white: j.optionalValue(WhiteReport.self, "white"),
-        probe: decoded(ProbeReading.self, j["probe"]), forecast: decoded(Forecast.self, j["forecast"]),
-        lang: j.str("lang"), units: j.value(Units.self, "units"),
-        boilTapped: j["boilTapped"] as? Bool
-    )
-}
-
 private func fixtureLog() throws -> [EggRecord] {
     let rows = try #require(Fixtures.node("record.json", "replay.log") as? [Any], "no replay log")
     try #require(!rows.isEmpty, "an empty replay log")
@@ -73,27 +49,6 @@ private func fixtureGrid() throws -> GridPolicy {
 private func fixtureStart() throws -> Calibration {
     let start = try Fixtures.object("record.json", "replay.start")
     return try freshCalibration(count: Int(start.num("count")), seed: Int32(start.num("seed")))
-}
-
-private func calibration(from json: [String: Any]) throws -> Calibration {
-    try Calibration(posterior: posterior(json), eggsLogged: Int(json.num("eggsLogged")))
-}
-
-private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ label: String) throws {
-    let want = try calibration(from: expected)
-    #expect(c.eggsLogged == want.eggsLogged, "\(label): eggs logged")
-    #expect(c.posterior.rng == want.posterior.rng, "\(label): rng")
-    #expect(c.posterior.particles.count == want.posterior.particles.count, "\(label): count")
-    for i in 0..<want.posterior.particles.count {
-        let a = c.posterior.particles[i]
-        let b = want.posterior.particles[i]
-        expectClose(a.alphaM2s, b.alphaM2s, "\(label) particle \(i) alpha")
-        expectClose(a.logDoseOffset, b.logDoseOffset, "\(label) particle \(i) offset")
-        expectClose(a.noise, b.noise, "\(label) particle \(i) noise")
-        expectClose(a.whiteOffset, b.whiteOffset, "\(label) particle \(i) white offset")
-        expectClose(a.whiteFirmGap, b.whiteFirmGap, "\(label) particle \(i) firm gap")
-        expectClose(c.posterior.weights[i], want.posterior.weights[i], "\(label) weight \(i)")
-    }
 }
 
 /// Exactly equal, bit for bit: every particle, every weight, the RNG and the count.
@@ -154,48 +109,25 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 
 @Suite("The record")
 struct RecordConformance {
+    /// What a loader makes of each: the record as parsed, or null where it
+    /// refuses one.
     @Test("which records a loader trusts, case by case")
     func validation() throws {
         for c in try Fixtures.list("record.json", "cases") {
-            let why = try c.str("why")
-            let valid = try c.flag("valid")
-            let record = decodeRecord(c["record"] as Any)
-            #expect((record != nil) == valid, "\(why): valid should be \(valid)")
-            guard let record else { continue }
-            #expect(try record.id.map(Double.init) == c.optionalNum("id"), "\(why): id")
-            #expect(record.yolkWord?.rawValue == c["yolkWord"] as? String, "\(why): yolk word")
-            #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
-            // The probe reading: the same number, and the same "when".
-            let probe = c["probe"] as? [String: Any]
-            #expect((record.probe == nil) == (probe == nil), "\(why): probe")
-            if let probe, let read = record.probe {
-                #expect(try read.centreC == probe.num("centre_C"), "\(why): probe reading")
-                #expect(try read.afterS == probe.optionalNum("after_s"), "\(why): probe asked at")
-            }
-            #expect(record.model == c["model"] as? String, "\(why): model")
-            // What the app said at Eggs in: the same time and the same six numbers.
-            let forecast = c["forecast"] as? [String: Any]
-            #expect((record.forecast == nil) == (forecast == nil), "\(why): forecast")
-            if let forecast, let read = record.forecast {
-                #expect(try read.cookS == forecast.num("cook_s"), "\(why): forecast time")
-                #expect(read.yolk == forecast["yolk"] as? [Double], "\(why): forecast yolk")
-                #expect(read.white == forecast["white"] as? [Double], "\(why): forecast white")
-                #expect(read.yolkWord == forecast["yolkWord"] as? [Double], "\(why): forecast yolk words")
-            }
+            try expectJSON(decodeRecord(c["record"] as Any), c["parsed"], c.str("why"))
         }
     }
 
     /// What both apps write down for a cook: the same record from the same
-    /// facts, field for field, with `id` written only when there is one.
+    /// facts, with `id` written only when there is one.
     @Test("the record made from a cook's facts, case by case")
     func made() throws {
         for c in try Fixtures.list("record.json", "made") {
             let why = try c.str("why")
-            let made = try recordFor(cookFacts(c.object("facts")))
-            let want = try #require(try decoded(EggRecord.self, c["record"]), "\(why): no record")
-            #expect(made == want, "\(why)")
+            let made = try recordFor(decoded(CookFacts.self, c["facts"]))
+            expectJSON(made, c["record"], why)
             #expect(validRecord(made), "\(why): a record the loader reads")
-            let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(made)) as? [String: Any]
+            let written = try jsonOf(made) as? [String: Any]
             let expected = try c.object("record")
             #expect((written?["id"] == nil) == (expected["id"] == nil), "\(why): id")
         }
@@ -204,11 +136,10 @@ struct RecordConformance {
     @Test("a probe reading's when, from the end of the counted cooling")
     func probeWhen() throws {
         for c in try Fixtures.list("record.json", "probeWhen") {
-            let record = try #require(try decoded(EggRecord.self, c["record"]))
+            let record = try decoded(EggRecord.self, c["record"])
             let coolEnd = try c.optionalNum("coolEnd_s")
             let read = try probeReadingFor(record, centreC: c.num("centre_C"), coolEndS: coolEnd)
-            let want = try #require(try decoded(ProbeReading.self, c["probe"]))
-            #expect(read == want, "cooling ended at \(String(describing: coolEnd))")
+            expectJSON(read, c["probe"], "cooling ended at \(String(describing: coolEnd))")
         }
     }
 
@@ -220,21 +151,8 @@ struct RecordConformance {
         let population = try section.str("population")
         let likelihood = try section.str("likelihood")
         for c in try Fixtures.list("record.json", "load.cases") {
-            let why = try c.str("why")
-            let r = try c.object("read")
-            let read = try StoreRead(
-                readable: r.flag("readable"), base: r.optionalValue(StoredBase.self, "base"),
-                posterior: r.flag("posterior"), folded: r.optionalNum("folded").map { Int($0) },
-                records: r.optionalNum("records").map { Int($0) },
-                population: r.optionalStr("population"), likelihood: r.optionalStr("likelihood")
-            )
-            let d = try c.object("decision")
-            let want = try LoadDecision(
-                path: d.value(LoadPath.self, "path"),
-                base: d.optionalValue(KeptBase.self, "base"), calibration: d.value(KeptCalibration.self, "calibration"),
-                folded: Int(d.num("folded")), log: d.flag("log")
-            )
-            #expect(loadDecision(read, population: population, likelihood: likelihood) == want, "\(why)")
+            let read = try decoded(StoreRead.self, c["read"])
+            try expectJSON(loadDecision(read, population: population, likelihood: likelihood), c["decision"], c.str("why"))
         }
     }
 
@@ -261,11 +179,7 @@ struct RecordConformance {
             #expect(try resultsFileName(day: n.str("day")) == n.str("name"))
         }
         for c in try Fixtures.list("record.json", "resultsFile.cases") {
-            let m = try c.object("meta")
-            let meta = try ResultsMeta(
-                app: #require(AppName(rawValue: m.str("app"))), appVersion: m.str("appVersion"),
-                exported: m.str("exported"), population: m.str("population"), uid: m["uid"] as? String
-            )
+            let meta = try decoded(ResultsMeta.self, c["meta"])
             let file = resultsFile(meta, stored: c["stored"] as? String)
             #expect(try file == c.str("file"), "results file for \(meta.appVersion)")
         }
@@ -290,6 +204,28 @@ struct RecordConformance {
     }
 }
 
+/// One egg of the replay as the fixture writes it: the surface it was learned
+/// on (none for an egg with no answer), the time it was scored at, the white
+/// target the next soft egg is solved for, and the calibration after it.
+private struct ReplayStep: Encodable {
+    let spec: GridSpec?
+    let cookTimeS: Double
+    let whiteDoseAtSoft: Double
+    let after: Calibration
+
+    enum CodingKeys: String, CodingKey {
+        case spec, cookTimeS = "cookTime_s", whiteDoseAtSoft, after
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(spec, forKey: .spec)
+        try c.encode(cookTimeS, forKey: .cookTimeS)
+        try c.encode(whiteDoseAtSoft, forKey: .whiteDoseAtSoft)
+        try c.encode(after, forKey: .after)
+    }
+}
+
 @Suite("Replay")
 struct ReplayConformance {
     @Test("a fifteen-egg log in the five yolk words, egg by egg, every particle")
@@ -300,22 +236,17 @@ struct ReplayConformance {
         var c = try fixtureStart()
         try #require(steps.count == log.count)
         for (i, r) in log.enumerated() {
-            let step = steps[i]
+            var spec: GridSpec?
             if recordTeaches(r) {
                 let q = gridRequestFor(c, r, grid: grid)
-                let spec = try step.object("spec")
-                try expectClose(q.spec.alphaMin, spec.num("alphaMin"), "step \(i) alphaMin")
-                try expectClose(q.spec.timeMaxS, spec.num("timeMax_s"), "step \(i) timeMax")
-                try expectClose(recordCookTimeS(r), step.num("cookTime_s"), "step \(i) scored at")
+                spec = q.spec
                 foldRecord(&c, r, grid: buildRequestedGrid(q))
-            } else {
-                #expect(step["spec"] is NSNull, "step \(i): an unanswered egg builds no surface")
             }
-            try expectCalibration(c, step.object("after"), "step \(i)")
-            try expectClose(
-                calibrationDoneness(c, level: 0.22).whiteDoseMin, step.num("whiteDoseAtSoft"),
-                "step \(i): the white target the next soft egg is solved for"
+            let made = ReplayStep(
+                spec: spec, cookTimeS: recordCookTimeS(r),
+                whiteDoseAtSoft: calibrationDoneness(c, level: 0.22).whiteDoseMin, after: c
             )
+            expectJSON(made, steps[i], "step \(i)")
         }
     }
 
@@ -323,8 +254,8 @@ struct ReplayConformance {
     func fromBase() throws {
         let block = try Fixtures.object("record.json", "replay.fromBase")
         let tail = try Array(fixtureLog().dropFirst(Int(block.num("after"))))
-        let rebuilt = try replay(calibration(from: block.object("base")), tail, grid: fixtureGrid())
-        try expectCalibration(rebuilt, block.object("final"), "from base")
+        let rebuilt = try replay(decoded(Calibration.self, block["base"]), tail, grid: fixtureGrid())
+        expectJSON(rebuilt, block["final"], "from base")
     }
 
     /// The record's headline claim, in this language: the app folds each egg
@@ -379,16 +310,8 @@ struct CalibrationGridConformance {
     @Test("extent and resolution, including the floor on a short cook")
     func cases() throws {
         for c in try Fixtures.list("record.json", "calibrationGrid.cases") {
-            let alphaCentre = try c.num("alphaCentre")
-            let cookTimeS = try c.num("cookTime_s")
-            let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
-            let what = "grid(alpha \(alphaCentre), cook \(cookTimeS))"
-            try expectClose(g.alphaMin, c.num("alphaMin"), "\(what) alphaMin")
-            try expectClose(g.alphaMax, c.num("alphaMax"), "\(what) alphaMax")
-            try expectClose(Double(g.alphaCount), c.num("alphaCount"), "\(what) alphaCount")
-            try expectClose(g.timeMinS, c.num("timeMin_s"), "\(what) timeMinS")
-            try expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
-            try expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
+            let g = try calibrationGrid(alphaCentre: c.num("alphaCentre"), cookTimeS: c.num("cookTime_s"))
+            expectJSON(g, c["grid"], "grid(alpha \(try c.num("alphaCentre")), cook \(try c.num("cookTime_s")))")
         }
     }
 }

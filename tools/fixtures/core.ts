@@ -88,15 +88,7 @@ export const coreFixture = {
     rampResponse: rampedStep,
   },
   geometry: {
-    fromMass: MASS_CASES_G.map((g) => {
-      const egg = eggFromMass(g / 1000);
-      return {
-        mass_g: g,
-        radius_m: egg.radius_m,
-        minorDiameter_m: egg.minorDiameter_m,
-        volume_m3: egg.volume_m3,
-      };
-    }),
+    fromMass: MASS_CASES_G.map((g) => ({ mass_g: g, egg: eggFromMass(g / 1000) })),
   },
   thermo: {
     pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: pressureAtAltitude(h) })),

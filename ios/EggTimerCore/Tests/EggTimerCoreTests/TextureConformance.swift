@@ -16,12 +16,8 @@ struct TextureConformance {
             let white = try c.num("peakWhite_C")
             let sets = try c.flag("whiteSets")
             let t = textureFor(peakYolkC: yolk, peakWhiteC: white, whiteSets: sets)
-            #expect(try t.white.rawValue == c.str("white"), "white band at \(white) C, sets \(sets)")
-            #expect(try t.yolk.rawValue == c.str("yolk"), "yolk band at \(yolk) C")
-            let note = textureNoteKeys(t)
-            #expect(try note.key.rawValue == c.str("noteKey"), "note at \(yolk) / \(white) C, sets \(sets)")
-            #expect(note.parts["white"]?.rawValue == c["noteWhite"] as? String, "note's white at \(white) C")
-            #expect(note.parts["yolk"]?.rawValue == c["noteYolk"] as? String, "note's yolk at \(yolk) C")
+            expectJSON(t, c["texture"], "\(yolk) / \(white) C, sets \(sets)")
+            expectJSON(textureNoteKeys(t), c["note"], "the note at \(yolk) / \(white) C, sets \(sets)")
             if !sets { runny += 1 }
         }
         // The case the fixture exists for: without it, this suite would pass

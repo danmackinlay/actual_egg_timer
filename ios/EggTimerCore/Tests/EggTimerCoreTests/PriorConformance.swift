@@ -6,6 +6,20 @@ import Testing
 /// published population, the literature's and a shifted one, each read the
 /// same way, starting at the same centre, and drawing the same particles to
 /// the bit; and every file a reader must refuse, refused.
+
+/// A population as the fixture writes one drawn: what it reads as, its centre,
+/// the parameters and white target a fresh calibration on it solves with, the
+/// RNG's state after the draw, and the first particles drawn.
+private struct Drawn: Encodable {
+    let name: String
+    let population: Population
+    let start: PriorStart
+    let params: ModelParams
+    let whiteDoseAtSoft: Double
+    let rng: Int32
+    let particles: [Particle]
+}
+
 @Suite("The population")
 struct PriorConformance {
     private func data(_ json: Any) throws -> Data {
@@ -15,33 +29,20 @@ struct PriorConformance {
     @Test("each population reads, starts at its centre and draws the same prior")
     func populations() throws {
         let file = try Fixtures.load("prior.json")
-        let count = try Int(file.num("count"))
-        let seed = try Int32(file.num("seed"))
+        let (count, seed) = try (Int(file.num("count")), Int32(file.num("seed")))
         for row in try file.rows("populations") {
             let name = try row.str("name")
             let pop = try #require(parsePopulation(data(row["file"] as Any)), "\(name) reads")
-            let expected = try row.object("population")
-            #expect(try pop.id == expected.str("id"), "\(name) id")
-            #expect(try pop.alphaM2s.median == expected.object("alpha_m2s").num("median"), "\(name) alpha")
-            #expect(try pop.whiteOffset.mean == expected.object("whiteOffset").num("mean"), "\(name) white")
-            let start = try row.object("start")
-            #expect(try priorStart(pop) == PriorStart(
-                alphaM2s: start.num("alpha_m2s"), whiteOffset: start.num("whiteOffset")
-            ), "\(name) start")
             let c = freshCalibration(count: count, seed: seed, population: pop)
-            let params = try row.object("params")
-            #expect(try calibrationParams(c).alphaM2s == params.num("alpha_m2s"), "\(name) params")
-            try expectClose(calibrationDoneness(c, level: 0.22).whiteDoseMin, row.num("whiteDoseAtSoft"), "\(name) white dose")
-            #expect(try c.posterior.rng == Int32(row.num("rng")), "\(name) rng")
-            let rows = try row.rows("particles")
-            for (i, p) in rows.enumerated() {
-                let q = c.posterior.particles[i]
-                try expectClose(q.alphaM2s, p.num("alpha_m2s"), "\(name) particle \(i) alpha")
-                try expectClose(q.logDoseOffset, p.num("logDoseOffset"), "\(name) particle \(i) taste")
-                try expectClose(q.noise, p.num("noise"), "\(name) particle \(i) noise")
-                try expectClose(q.whiteOffset, p.num("whiteOffset"), "\(name) particle \(i) white")
-                try expectClose(q.whiteFirmGap, p.num("whiteFirmGap"), "\(name) particle \(i) gap")
-            }
+            let shown = try row.rows("particles").count
+            let drawn = Drawn(
+                name: name, population: pop, start: priorStart(pop), params: calibrationParams(c),
+                whiteDoseAtSoft: calibrationDoneness(c, level: 0.22).whiteDoseMin, rng: c.posterior.rng,
+                particles: Array(c.posterior.particles.prefix(shown))
+            )
+            var expected = row
+            expected["file"] = nil
+            expectJSON(drawn, expected, name)
         }
     }
 

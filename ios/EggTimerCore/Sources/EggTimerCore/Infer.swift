@@ -81,6 +81,10 @@ public struct Particle: Sendable, Codable, Equatable {
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
     }
+
+    enum CodingKeys: String, CodingKey {
+        case alphaM2s = "alpha_m2s", logDoseOffset, noise, whiteOffset, whiteFirmGap
+    }
 }
 
 public struct Posterior: Sendable, Codable {
@@ -163,7 +167,7 @@ public struct Normal: Sendable, Codable, Equatable {
 
 /// What a new cook's prior is drawn from: one spread per particle dimension
 /// (INFERENCE.md section 9). See src/core/infer.ts and population.ts.
-public struct Population: Sendable, Equatable {
+public struct Population: Sendable, Equatable, Codable {
     public var id: String
     public var alphaM2s: LogNormal
     public var logDoseOffset: Normal
@@ -181,6 +185,10 @@ public struct Population: Sendable, Equatable {
         self.noise = noise
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, alphaM2s = "alpha_m2s", logDoseOffset, noise, whiteOffset, whiteFirmGap
     }
 }
 
@@ -469,10 +477,14 @@ public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
     return v
 }
 
-public struct CookTimePrediction: Sendable {
+public struct CookTimePrediction: Sendable, Codable {
     public let medianS: Double
     public let lowS: Double
     public let highS: Double
+
+    enum CodingKeys: String, CodingKey {
+        case medianS = "median_s", lowS = "low_s", highS = "high_s"
+    }
 }
 
 /// The posterior over the right cook time for a nominal doneness, as a median

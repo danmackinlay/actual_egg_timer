@@ -34,35 +34,34 @@ struct SphereConformance {
         }
     }
 
+    /// Each sample as the fixture writes it: the time and what the sphere
+    /// reads then.
     @Test("integrator against a held surface")
     func stepResponse() throws {
-        var sphere = SphereState(
-            radiusM: 0.0238, alphaM2s: Constants.alphaDefault, initialC: 4.0, surfaceC: 100.0
-        )
-        for c in try Fixtures.list("core.json", "sphere.stepResponse") {
+        var sphere = SphereState(radiusM: 0.0238, alphaM2s: Constants.alphaDefault, initialC: 4.0, surfaceC: 100.0)
+        for (i, c) in try Fixtures.list("core.json", "sphere.stepResponse").enumerated() {
             sphere.step(dtS: 10.0, nextSurfaceC: 100.0)
-            let at = try "t = \(c.num("t_s")) s"
-            try expectClose(sphere.centreTemperature, c.num("centre_C"), "centre, \(at)")
-            try expectClose(
-                sphere.temperature(atX: Constants.yolkRadiusFrac), c.num("yolkBoundary_C"),
-                "yolk boundary, \(at)"
-            )
-            try expectClose(sphere.meanTemperature, c.num("mean_C"), "mean, \(at)")
+            let row = [
+                "t_s": Double(i + 1) * 10, "centre_C": sphere.centreTemperature,
+                "yolkBoundary_C": sphere.temperature(atX: Constants.yolkRadiusFrac), "mean_C": sphere.meanTemperature,
+            ]
+            expectJSON(row, c, "step \(i)")
         }
     }
 
+    /// The case the Duhamel coupling exists for. A step-only test would not
+    /// catch a sign error in the drive term.
     @Test("integrator against a moving surface")
     func rampResponse() throws {
-        // The case the Duhamel coupling exists for. A step-only test would not
-        // catch a sign error in the drive term.
-        var sphere = SphereState(
-            radiusM: 0.0238, alphaM2s: Constants.alphaDefault, initialC: 4.0, surfaceC: 20.0
-        )
-        for c in try Fixtures.list("core.json", "sphere.rampResponse") {
-            try sphere.step(dtS: 15.0, nextSurfaceC: c.num("surface_C"))
-            let at = try "t = \(c.num("t_s")) s"
-            try expectClose(sphere.centreTemperature, c.num("centre_C"), "centre, \(at)")
-            try expectClose(sphere.meanTemperature, c.num("mean_C"), "mean, \(at)")
+        var sphere = SphereState(radiusM: 0.0238, alphaM2s: Constants.alphaDefault, initialC: 4.0, surfaceC: 20.0)
+        for (i, c) in try Fixtures.list("core.json", "sphere.rampResponse").enumerated() {
+            let surface = try c.num("surface_C")
+            sphere.step(dtS: 15.0, nextSurfaceC: surface)
+            let row = [
+                "t_s": Double(i + 1) * 15, "surface_C": surface, "centre_C": sphere.centreTemperature,
+                "mean_C": sphere.meanTemperature,
+            ]
+            expectJSON(row, c, "step \(i)")
         }
     }
 }
@@ -72,14 +71,10 @@ struct GeometryConformance {
     @Test("from mass")
     func fromMass() throws {
         for c in try Fixtures.list("core.json", "geometry.fromMass") {
-            let egg = try Geometry.eggFromMass(c.num("mass_g") / 1000.0)
-            let at = try "\(c.num("mass_g")) g"
-            try expectClose(egg.radiusM, c.num("radius_m"), "radius, \(at)")
-            try expectClose(egg.minorDiameterM, c.num("minorDiameter_m"), "minor diameter, \(at)")
-            try expectClose(egg.volumeM3, c.num("volume_m3"), "volume, \(at)")
+            let g = try c.num("mass_g")
+            expectJSON(Geometry.eggFromMass(g / 1000.0), c["egg"], "\(g) g")
         }
     }
-
 }
 
 @Suite("Thermo")
@@ -88,8 +83,7 @@ struct ThermoConformance {
     func pressure() throws {
         for c in try Fixtures.list("core.json", "thermo.pressureAtAltitude") {
             try expectClose(
-                Thermo.pressureAtAltitude(c.num("altitude_m")), c.num("value"),
-                "pressure at \(c.num("altitude_m")) m"
+                Thermo.pressureAtAltitude(c.num("altitude_m")), c.num("value"), "pressure at \(c.num("altitude_m")) m"
             )
         }
     }
@@ -118,7 +112,7 @@ struct CoolingConformance {
         let rows = try Fixtures.list("core.json", "protocol.coolingMedium")
         #expect(rows.count >= 8)
         for c in rows {
-            let setup = try cookSetup(c.object("setup"))
+            let setup = try decoded(CookSetup.self, c["setup"])
             try expectClose(coolingMediumC(setup), c.num("value"), "\(setup.cooling) starts")
         }
     }
@@ -128,7 +122,7 @@ struct CoolingConformance {
         let rows = try Fixtures.list("core.json", "protocol.bowlTemperature")
         #expect(rows.count >= 30)
         for c in rows {
-            let setup = try cookSetup(c.object("setup"))
+            let setup = try decoded(CookSetup.self, c["setup"])
             let egg = Geometry.eggFromMass(try c.num("mass_g") / 1000)
             try expectClose(
                 Protocols.bowlTemperature(egg, setup, meanAtPullC: c.num("meanAtPull_C"), meanC: c.num("mean_C")),
@@ -145,8 +139,8 @@ struct KineticsConformance {
         for c in try Fixtures.list("core.json", "kinetics.holdTimeForDose") {
             let dose = try Dose(zK: c.num("z_K"), trefC: c.num("tref_C"))
             try expectClose(
-                dose.holdTimeForDose(doseMinutes: c.num("doseMinutes"), heldC: c.num("held_C")),
-                c.num("value"), "hold at \(c.num("held_C")) C"
+                dose.holdTimeForDose(doseMinutes: c.num("doseMinutes"), heldC: c.num("held_C")), c.num("value"),
+                "hold at \(c.num("held_C")) C"
             )
         }
     }

@@ -206,7 +206,7 @@ struct StepConformance {
                     case "now":
                         let inputs = try #require(need.surface, "\(what): no surface was needed")
                         let grid = try doseGrid(landed.object("grid"), egg: inputs.egg, setup: inputs.setup)
-                        let profile = try (landed["profile"] as? [String: Any]).map { try profileOf($0) }
+                        let profile = try (landed["profile"] as? [String: Any]).map { try decoded(OddsProfile.self, $0) }
                         env.surfaces.append(CookSurface(inputs: inputs, grid: grid, profile: profile))
                     case "calibrationBefore":
                         #expect(need.before, "\(what): the calibration before was not needed")

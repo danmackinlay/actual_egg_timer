@@ -15,12 +15,20 @@ public struct ModelParams: Sendable, Codable, Equatable {
     }
 
     public static let `default` = ModelParams()
+
+    enum CodingKeys: String, CodingKey {
+        case alphaM2s = "alpha_m2s"
+    }
 }
 
-public struct Doneness: Sendable {
+public struct Doneness: Sendable, Codable {
     public let level: Double
     public let yolkDoseMin: Double
     public let whiteDoseMin: Double
+
+    enum CodingKeys: String, CodingKey {
+        case level, yolkDoseMin = "yolkDose_min", whiteDoseMin = "whiteDose_min"
+    }
 }
 
 /// Map the single slider to a yolk dose target. Logarithmic, which - because
@@ -52,13 +60,17 @@ func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
 /// A labelled slider position. The name is a catalogue key, not English: each
 /// language picks its own word for each anchor, and the anchor stays at the
 /// same dose whatever it is called (LANGUAGE.md §5).
-public struct DonenessAnchor: Sendable {
+public struct DonenessAnchor: Sendable, Codable {
     public let key: CopyKey
     public let level: Double
     public let approxPeakYolkC: Double
+
+    enum CodingKeys: String, CodingKey {
+        case key, level, approxPeakYolkC = "approxPeakYolk_C"
+    }
 }
 
-public struct CookResult: Sendable {
+public struct CookResult: Sendable, Codable {
     public let cookTimeS: Double
     /// Highest temperature the yolk centre ever reaches, carryover included.
     public let peakYolkC: Double
@@ -68,6 +80,12 @@ public struct CookResult: Sendable {
     public let yolkDoseMin: Double
     public let whiteDoseMin: Double
     public let peakWhiteC: Double
+
+    enum CodingKeys: String, CodingKey {
+        case cookTimeS = "cookTime_s", peakYolkC = "peakYolk_C", peakYolkTimeS = "peakYolkTime_s"
+        case yolkAtPullC = "yolkAtPull_C", yolkDoseMin = "yolkDose_min", whiteDoseMin = "whiteDose_min"
+        case peakWhiteC = "peakWhite_C"
+    }
 }
 
 /// Run one cook and report what it does to the egg.
@@ -188,7 +206,7 @@ private func bisect(
     )
 }
 
-public struct Solution: Sendable {
+public struct Solution: Sendable, Codable {
     public let result: CookResult
     /// False when the requested doneness cannot be reached without leaving the
     /// white undercooked.
@@ -204,6 +222,10 @@ public struct Solution: Sendable {
     /// off, where the water can fall past the white's target while the egg is
     /// still in it.
     public let whiteSets: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case result, reachable, minCookTimeS = "minCookTime_s", softestLevel, hardestLevel, whiteSets
+    }
 }
 
 /// Solve for the cook time that delivers the requested doneness.

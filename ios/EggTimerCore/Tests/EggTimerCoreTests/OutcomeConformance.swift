@@ -6,14 +6,6 @@ import Foundation
 /// the three yolk answers, a runny white, the level range and the lean. The
 /// surface and three of the posteriors are decide.json's; a fourth, a cook
 /// whose three jammy eggs were all just right, is outcome.json's own.
-
-private func decideGrid() throws -> DoseGrid {
-    let g = try Fixtures.object("decide.json", "grid")
-    return try doseGrid(
-        g, egg: Geometry.eggFromMass(g.object("egg").num("mass_kg")), setup: cookSetup(g.object("setup"))
-    )
-}
-
 @Suite("Outcome")
 struct OutcomeConformance {
     @Test("the answers, the level range and the lean, from four posteriors")
@@ -25,28 +17,9 @@ struct OutcomeConformance {
         for (i, row) in try file.rows("cases").enumerated() {
             let post = try #require(byName[row.str("posterior")], "case \(i): no posterior")
             let target = try row.num("logNominalTarget")
-            let note = try row.str("note")
             for at in try row.rows("at") {
                 let t = try at.num("t")
-                let label = "case \(i) (\(note)) at \(t)"
-                let o = predictOutcome(post, grid, t, target)
-                let expected = try at.object("outcome")
-                try expectClose(o.pTooSoft, expected.num("pTooSoft"), "\(label) too soft")
-                try expectClose(o.pJustRight, expected.num("pJustRight"), "\(label) just right")
-                try expectClose(o.pTooFirm, expected.num("pTooFirm"), "\(label) too firm")
-                try expectClose(o.pWhiteRunny, expected.num("pWhiteRunny"), "\(label) runny")
-                try expectClose(o.pWhiteTender, expected.num("pWhiteTender"), "\(label) tender")
-                try expectClose(o.pWhiteFirm, expected.num("pWhiteFirm"), "\(label) white firm")
-                let words = try expected.numbers("pYolkWord")
-                let got = try #require(o.pYolkWord, "\(label) yolk words")
-                #expect(got.count == words.count, "\(label) five yolk words")
-                for k in words.indices {
-                    expectClose(got[k], words[k], "\(label) yolk word \(k)")
-                }
-                try expectClose(o.levelLow, expected.num("levelLow"), "\(label) level low")
-                try expectClose(o.levelMedian, expected.num("levelMedian"), "\(label) level median")
-                try expectClose(o.levelHigh, expected.num("levelHigh"), "\(label) level high")
-                #expect(try o.lean.rawValue == expected.str("lean"), "\(label) lean")
+                try expectJSON(predictOutcome(post, grid, t, target), at["outcome"], "case \(i) (\(row.str("note"))) at \(t)")
             }
         }
     }

@@ -30,6 +30,10 @@ public struct DecisionInputs: Sendable, Codable, Equatable {
         self.params = params
         self.whiteDoseMin = whiteDoseMin
     }
+
+    enum CodingKeys: String, CodingKey {
+        case egg, setup, params, whiteDoseMin = "whiteDose_min"
+    }
 }
 
 public func decisionInputs(_ c: Calibration, egg: Egg, setup: CookSetup) -> DecisionInputs {
@@ -200,7 +204,7 @@ public func chooseCookTime(
 
 // MARK: - The decision
 
-public struct Decision: Sendable {
+public struct Decision: Sendable, Codable {
     /// The time to pull, s from eggs in.
     public let cookTimeS: Double
     /// What the mean solve said, which the choice started from.
@@ -215,6 +219,10 @@ public struct Decision: Sendable {
     /// How far the choice leaned from the mean solve, s: what a mid-cook
     /// re-solve carries (`carriedSolution`).
     public var leanS: Double { cookTimeS - meanCookTimeS }
+
+    enum CodingKeys: String, CodingKey {
+        case cookTimeS = "cookTime_s", meanCookTimeS = "meanCookTime_s", chosen, odds, oddsTenths
+    }
 }
 
 /// Whether a solve leaves a cook to choose a time for.
@@ -230,13 +238,17 @@ public func oddsInTenths(_ odds: Double) -> Int {
 /// Where the monotone envelope holds a level's time, s: no sooner than `loS`,
 /// no later than `hiS` (`envelopeBounds`, Reach.swift). `loS` is 0 and `hiS`
 /// infinite where nothing holds that side.
-public struct TimeBounds: Sendable, Equatable {
+public struct TimeBounds: Sendable, Equatable, Codable {
     public let loS: Double
     public let hiS: Double
 
     public init(loS: Double, hiS: Double) {
         self.loS = loS
         self.hiS = hiS
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case loS = "lo_s", hiS = "hi_s"
     }
 }
 

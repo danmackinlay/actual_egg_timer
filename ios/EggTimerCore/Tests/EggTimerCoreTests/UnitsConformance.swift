@@ -14,11 +14,6 @@ import EggTimerCopy
 /// Numbers are compared at 1e-12 relative, like the rest of the port; the TEXT
 /// a cook reads is compared exactly.
 
-private func range(_ raw: Any?) throws -> ClosedRange<Double>? {
-    guard let object = raw as? [String: Any] else { return nil }
-    return try object.num("lo")...object.num("hi")
-}
-
 @Suite("Metric and Imperial match the reference implementation")
 struct UnitsConformance {
     @Test("every conversion, both ways")
@@ -41,19 +36,7 @@ struct UnitsConformance {
             let q = try c.value(Quantity.self, "quantity")
             let system = try c.value(UnitSystem.self, "system")
             let m = measureFor(q, system: system, region: c["region"] as? String)
-            let what = "\(q.rawValue) \(system.rawValue) \(String(describing: c["region"]))"
-            #expect(try m.unit.rawValue == c.str("unit"), "\(what): unit")
-            #expect(try m.step == c.num("step"), "\(what): step")
-            #expect(try m.stepNum == c.num("stepNum") && m.stepDen == c.num("stepDen"), "\(what): step ratio")
-            #expect(try m.nudgeNum == c.num("nudgeNum") && m.nudgeDen == c.num("nudgeDen"), "\(what): nudge")
-            #expect(try Double(m.decimals) == c.num("decimals"), "\(what): decimals")
-            #expect(try m.trim == c.flag("trim"), "\(what): trim")
-            #expect(try m.unitKey.rawValue == c.str("unitKey"), "\(what): unit key")
-            #expect(try m.formatKey.rawValue == c.str("formatKey"), "\(what): format key")
-            #expect(try m.limit == range(c["limit"]), "\(what): limit")
-            // Exactly: a bound is a value a control accepts, and must be the
-            // same value in both apps.
-            #expect(try m.bounds == range(c["bounds"]), "\(what): bounds \(String(describing: m.bounds))")
+            expectJSON(m, c["measure"], "\(q.rawValue) \(system.rawValue) \(String(describing: c["region"]))")
         }
     }
 

@@ -446,7 +446,7 @@ public func recordProbeC(_ centreC: Double) -> Double {
 /// frozen at "Eggs in", how the cook went, and whichever answers have been
 /// given so far. SI, every time in s from egg-in. Both apps make a record from
 /// these and nothing else (`recordFor`). See src/core/record.ts.
-public struct CookFacts: Sendable, Equatable {
+public struct CookFacts: Sendable, Equatable, Codable {
     public var app: AppName
     public var appVersion: String
     /// The population the cook's prior was drawn from: the record's `prior`.
@@ -515,6 +515,12 @@ public struct CookFacts: Sendable, Equatable {
         self.forecast = forecast
         self.lang = lang
         self.units = units
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case app, appVersion, prior, day, id, massKg = "mass_kg", massFrom, sizeTable, setup, eggFrom
+        case boilRemembered, boilTapped, level, cookS = "cook_s", nudgeS = "nudge_s", outS = "out_s"
+        case coolS = "cool_s", yolkWord, white, probe, forecast, lang, units
     }
 }
 
@@ -666,7 +672,7 @@ public func calibrationGrid(alphaCentre: Double, cookTimeS: Double) -> GridSpec 
 /// A posterior and the number of eggs that taught it. The count is state, not a
 /// statistic: while it is zero the app solves with the literature values, and
 /// the first egg's grid is centred on them - so a replay carries it exactly.
-public struct Calibration: Sendable {
+public struct Calibration: Sendable, Codable {
     public var posterior: Posterior
     public var eggsLogged: Int
     /// Where to solve while no egg has taught anything: the centre of the
@@ -792,17 +798,17 @@ public func replay(
 /// What a launch found: nothing to use (`fresh`), a log to fold again
 /// (`rebuild`), a log that cannot be used and what it taught kept as the base
 /// (`rebased`), or everything as stored (`loaded`).
-public enum LoadPath: String, Sendable {
+public enum LoadPath: String, Sendable, Codable {
     case fresh, rebuild, rebased, loaded
 }
 
 /// A stored base, read: whole, or not.
-public enum StoredBase: String, Sendable {
+public enum StoredBase: String, Sendable, Codable {
     case sound, damaged
 }
 
 /// What an app read from its store, part by part.
-public struct StoreRead: Sendable, Equatable {
+public struct StoreRead: Sendable, Equatable, Codable {
     /// Whether it is a store of this format that can be taken apart.
     public var readable: Bool
     /// The base under the posterior: nil where the store has none.
@@ -837,18 +843,18 @@ public struct StoreRead: Sendable, Equatable {
 }
 
 /// Where the kept base comes from.
-public enum KeptBase: String, Sendable {
+public enum KeptBase: String, Sendable, Codable {
     case stored, posterior
 }
 
 /// Where the kept calibration comes from: the stored posterior as it is, or
 /// a copy of the base - the prior where there is none - to fold the log onto.
-public enum KeptCalibration: String, Sendable {
+public enum KeptCalibration: String, Sendable, Codable {
     case posterior, start
 }
 
 /// What to keep, in the parts that were read.
-public struct LoadDecision: Sendable, Equatable {
+public struct LoadDecision: Sendable, Equatable, Codable {
     public var path: LoadPath
     /// The base: the stored one, the stored posterior, or none.
     public var base: KeptBase?
@@ -895,7 +901,7 @@ public func loadDecision(_ read: StoreRead, population: String, likelihood: Stri
 // `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
 
 /// What a results file says beside the store.
-public struct ResultsMeta: Sendable, Equatable {
+public struct ResultsMeta: Sendable, Equatable, Codable {
     public var app: AppName
     public var appVersion: String
     /// When it was exported: an ISO 8601 instant, UTC.

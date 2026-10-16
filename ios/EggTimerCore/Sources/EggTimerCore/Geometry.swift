@@ -11,6 +11,11 @@ public struct Egg: Sendable, Equatable, Codable {
     public let massKg: Double
     /// Egg volume, m^3.
     public let volumeM3: Double
+
+    enum CodingKeys: String, CodingKey {
+        case radiusM = "radius_m", minorDiameterM = "minorDiameter_m", massKg = "mass_kg"
+        case volumeM3 = "volume_m3"
+    }
 }
 
 /// The iOS app only weighs eggs, so only `eggFromMass` is here: the web's

@@ -103,15 +103,11 @@ export const sousvideFixture = {
       mass_g: c.mass_g,
       radius_m: egg.radius_m,
       alpha_m2s: c.alpha_m2s,
+      bath_C: c.bath_C,
       level: c.level,
       yolkDose_min: doneness.yolkDose_min,
       whiteDose_min: doneness.whiteDose_min,
-      bath_C: est.bath_C,
-      equilibrate_s: est.equilibrate_s,
-      yolkHold_s: est.yolkHold_s,
-      whiteHold_s: est.whiteHold_s,
-      total_s: est.total_s,
-      whiteBound: est.whiteBound,
+      estimate: est,
     };
   }),
 };

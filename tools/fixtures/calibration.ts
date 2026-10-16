@@ -5,13 +5,12 @@
 import { eggFromMass } from '../../src/core/geometry.ts';
 import { type GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.ts';
 import {
-  type WhiteReport, type YolkWord, answerLikelihood, createPrior,
+  type Posterior, type WhiteReport, type YolkWord, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
   yolkWordProbabilities, yolkWordProbit,
 } from '../../src/core/infer.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 
-import { particleRows } from './shared.ts';
 import { referenceSetup } from '../common.ts';
 
 /* The calibration is the one part of the core with STATE and a random number
@@ -60,21 +59,15 @@ export const PARTICLE_COUNT = 64;
 export const PRIOR_SEED = 20260917;
 export const NOMINAL_TARGET = Math.log10(6.0);
 
-function readout(post: ReturnType<typeof createPrior>) {
-  const params = posteriorParams(post);
-  const predicted = predictCookTime(post, CALIB_GRID, NOMINAL_TARGET);
+/** A posterior as it stands, every particle, weight and the RNG's state, and
+ *  what is read off it. */
+function readout(post: Posterior) {
   return {
-    rng: post.rng,
+    posterior: structuredClone(post),
     ess: effectiveSampleSize(post),
-    alpha_m2s: params.alpha_m2s,
+    alpha_m2s: posteriorParams(post).alpha_m2s,
     meanWhiteOffset: posteriorMeanWhiteOffset(post),
-    predict: {
-      low_s: predicted.low_s,
-      median_s: predicted.median_s,
-      high_s: predicted.high_s,
-    },
-    weights: post.weights.slice(),
-    particles: particleRows(post),
+    predict: predictCookTime(post, CALIB_GRID, NOMINAL_TARGET),
   };
 }
 
@@ -136,9 +129,7 @@ const WHITE_RESAMPLE_CASE = (() => {
     if (effectiveSampleSize(probe) < n / 2.0 + 2.0) break;
   }
   const before = {
-    particles: particleRows(posterior),
-    weights: weights.slice(),
-    rng: posterior.rng,
+    posterior: { particles: structuredClone(posterior.particles), weights: weights.slice(), rng: posterior.rng },
     ess: effectiveSampleSize({ particles: posterior.particles, weights: weights, rng: posterior.rng }),
   };
   const post = {
@@ -159,20 +150,9 @@ const WHITE_RESAMPLE_CASE = (() => {
 
 export const calibrationFixture = {
   about: 'The particle filter, particle by particle: the surface, its lookups, the likelihood and a sequence of folds. src/core/infer.ts, doseGrid.ts.',
-  egg: {
-    mass_kg: CALIB_EGG.mass_kg,
-    radius_m: CALIB_EGG.radius_m,
-    minorDiameter_m: CALIB_EGG.minorDiameter_m,
-  },
+  egg: CALIB_EGG,
   setup: CALIB_SETUP,
-  grid: {
-    ...CALIB_GRID_SPEC,
-    logAlphaMin: CALIB_GRID.logAlphaMin,
-    logAlphaStep: CALIB_GRID.logAlphaStep,
-    timeStep_s: CALIB_GRID.timeStep_s,
-    logYolk: CALIB_GRID.logYolk.slice(),
-    logWhite: CALIB_GRID.logWhite.slice(),
-  },
+  grid: { spec: CALIB_GRID_SPEC, surface: CALIB_GRID },
   lookups: LOOKUP_CASES.map((c) => ({
     alpha_m2s: c.alpha_m2s,
     cookTime_s: c.cookTime_s,

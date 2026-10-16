@@ -5,7 +5,7 @@ import Foundation
 ///
 /// WARNING: the standard food-engineering cook value C100 uses z = 33.1 K.
 /// That is 7x too shallow for egg protein. Do not substitute it.
-public struct Dose: Sendable {
+public struct Dose: Sendable, Codable {
     public let zK: Double
     public let trefC: Double
     /// Accumulated equivalent minutes at `trefC`.
@@ -25,5 +25,9 @@ public struct Dose: Sendable {
     /// Time held at `heldC` that reaches `doseMinutes` of this dose.
     public func holdTimeForDose(doseMinutes: Double, heldC: Double) -> Double {
         doseMinutes / pow(10.0, (heldC - trefC) / zK)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case zK = "z_K", trefC = "tref_C", minutes
     }
 }

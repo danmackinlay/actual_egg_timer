@@ -19,7 +19,7 @@ import Foundation
 /// temperature and the dose targets - and they are the numbers that make the
 /// answer what it is.
 
-public struct SousVideEstimate: Sendable {
+public struct SousVideEstimate: Sendable, Codable {
     public let bathC: Double
     /// Time for the yolk centre to reach the bath temperature.
     public let equilibrateS: Double
@@ -32,6 +32,11 @@ public struct SousVideEstimate: Sendable {
     public let totalS: Double
     /// True when the white is what makes the answer absurd.
     public let whiteBound: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case bathC = "bath_C", equilibrateS = "equilibrate_s", yolkHoldS = "yolkHold_s"
+        case whiteHoldS = "whiteHold_s", totalS = "total_s", whiteBound
+    }
 }
 
 /// Seconds for the centre of a sphere to close all but `equilibrationGap` of a

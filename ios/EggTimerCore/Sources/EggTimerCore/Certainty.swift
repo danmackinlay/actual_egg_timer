@@ -17,7 +17,7 @@ public enum Certainty: String, Sendable, Codable {
 
 /// The five words' spread, read against the word asked. Words are places in
 /// `donenessAnchors`, 0 (Runny) to 4 (Hard).
-public struct WordCertainty: Sendable, Equatable {
+public struct WordCertainty: Sendable, Equatable, Codable {
     /// The word asked: the slider's word at the level.
     public let asked: Int
     public let certainty: Certainty
@@ -34,18 +34,26 @@ public struct WordCertainty: Sendable, Equatable {
 }
 
 /// A likely time range, s from eggs in.
-public struct TimeRange: Sendable, Equatable {
+public struct TimeRange: Sendable, Equatable, Codable {
     public let lowS: Double
     public let highS: Double
+
+    enum CodingKeys: String, CodingKey {
+        case lowS = "low_s", highS = "high_s"
+    }
 }
 
 /// Everything a tap on the certainty word shows, and the cook time it was
 /// read at, s from eggs in, so a reading held over a plan that has moved can
 /// say its range about the time now (`timeRangeWords`).
-public struct CertaintyReading: Sendable, Equatable {
+public struct CertaintyReading: Sendable, Equatable, Codable {
     public let words: WordCertainty
     public let time: TimeRange
     public let atS: Double
+
+    enum CodingKeys: String, CodingKey {
+        case words, time, atS = "at_s"
+    }
 }
 
 /// The word asked at a slider level: the place of `anchorNear(level)`.
@@ -110,7 +118,7 @@ public func wordCertainty(_ p: [Double], asked: Int) -> WordCertainty {
 
 /// Where the bracket under the slider is drawn, as slider levels: from `low`
 /// to `high`, with a mark at `mark` (certainty.ts, "THE BRACKET").
-public struct WordBracket: Sendable, Equatable {
+public struct WordBracket: Sendable, Equatable, Codable {
     public let low: Double
     public let mark: Double
     public let high: Double

@@ -52,17 +52,7 @@ struct SousVideConformance {
             let what = try "\(c.str("what")): \(c.num("mass_g")) g,"
                 + " alpha \(c.num("alpha_m2s")), \(c.num("bath_C")) C,"
                 + " level \(c.num("level"))"
-
-            try expectClose(est.bathC, c.num("bath_C"), "\(what) bathC")
-            try expectClose(est.equilibrateS, c.num("equilibrate_s"), "\(what) equilibrateS")
-            try expectClose(est.yolkHoldS, c.num("yolkHold_s"), "\(what) yolkHoldS")
-            try expectClose(est.whiteHoldS, c.num("whiteHold_s"), "\(what) whiteHoldS")
-            try expectClose(est.totalS, c.num("total_s"), "\(what) totalS")
-            let whiteBound = try c.flag("whiteBound")
-            #expect(
-                est.whiteBound == whiteBound,
-                "\(what) whiteBound: expected \(whiteBound), got \(est.whiteBound)"
-            )
+            expectJSON(est, c["estimate"], what)
         }
     }
 
