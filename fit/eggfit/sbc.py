@@ -302,11 +302,17 @@ def ecdf_gamma(ranks: np.ndarray, draws: int) -> np.ndarray:
     from scipy.stats import binom
 
     ranks = np.atleast_2d(ranks)
-    n = ranks.shape[1]
-    k = np.arange(1, draws + 1)
-    counts = np.stack([np.bincount(r, minlength=draws + 1) for r in ranks]).cumsum(axis=1)[:, :draws]
-    z = k / (draws + 1)
-    tail = np.minimum(binom.cdf(counts, n, z), binom.sf(counts - 1, n, z))
+    rows, n = ranks.shape
+    # Every row's count of each rank at once, and the ECDF's counts from them.
+    flat = (ranks + (draws + 1) * np.arange(rows)[:, None]).ravel()
+    counts = np.bincount(flat, minlength=rows * (draws + 1)).reshape(rows, draws + 1).cumsum(axis=1)[:, :draws]
+    # A count is 0..n, so each point's tail is looked up in a table of every
+    # count's, made once: each point of a large null costs a lookup, not two
+    # binomial tails.
+    z = (np.arange(1, draws + 1) / (draws + 1))[:, None]
+    c = np.arange(n + 1)[None, :]
+    table = np.minimum(binom.cdf(c, n, z), binom.sf(c - 1, n, z))
+    tail = table[np.arange(draws)[None, :], counts]
     return np.minimum(1.0, 2.0 * tail.min(axis=1))
 
 
