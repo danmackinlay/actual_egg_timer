@@ -1,5 +1,5 @@
 """The calibration check's own parts (eggfit/sbc.py), without running it: it
-needs node and takes hours.
+needs node and takes minutes.
 
     uv run --project fit python -m pytest fit/tests
 """
@@ -7,6 +7,8 @@ needs node and takes hours.
 import json
 import pathlib
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 from eggfit import data, model, sbc
@@ -29,9 +31,31 @@ def test_a_truth_from_the_prior_is_one_the_simulator_reads():
         assert abs(np.log(t["noiseMedian"]) - g["log_s0"]) < 1e-12
 
 
+def test_padding_eggs_change_neither_the_likelihood_nor_its_gradient():
+    # The sample has eggs answered the old way and one probe reading, so
+    # every branch of the likelihood meets a padding egg.
+    eggs = data.load(str(TESTS / "emulated-sample.json"))
+    eggs.tier[:] = 1
+    n_eggs, n_cooks, n_old, n_probed = sbc.shape_of(eggs)
+    assert n_old > 0 and n_probed > 0
+    plain = model.arrays(eggs, np.ones(n_eggs))
+    pad = sbc.padded(eggs, n_eggs + 7, n_old + 3, n_probed + 2)
+    rng = np.random.default_rng(1)
+    v = {n: float(rng.uniform(0.1, 0.5)) for n in model.GLOBALS}
+    v.update({e: jnp.asarray(rng.normal(size=n_cooks)) for e in ("ez", "et", "ew", "es", "eg")})
+
+    def ll(d, v):
+        return model.loglik(eggs.constants, d, model.cooks_of(v))
+
+    assert abs(float(ll(pad, v)) - float(ll(plain, v))) < 1e-12 * abs(float(ll(plain, v)))
+    g_plain, g_pad = jax.grad(ll, argnums=1)(plain, v), jax.grad(ll, argnums=1)(pad, v)
+    for k in v:
+        assert np.allclose(g_pad[k], g_plain[k], rtol=1e-12, atol=1e-12), k
+
+
 def rows_of(ranks: dict, reps: int) -> list[dict]:
-    return [{"rep": i, "draws": 99, "divergences": 0, "diagnostics_ok": True, "seconds_simulate": 1.0,
-             "seconds_fit": 1.0, "ranks": {q: int(ranks[q][i]) for q in sbc.QUANTITIES}} for i in range(reps)]
+    return [{"rep": i, "draws": 99, "cooks": 20, "divergences": 0, "diagnostics_ok": True,
+             "ranks": {q: int(ranks[q][i]) for q in sbc.QUANTITIES}} for i in range(reps)]
 
 
 def test_uniform_ranks_pass_and_one_biased_or_overconfident_quantity_fails_the_verdict():

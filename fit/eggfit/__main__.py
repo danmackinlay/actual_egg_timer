@@ -179,7 +179,7 @@ def main() -> None:
                    help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
-    model.use_cores(a.chains)
+    model.use_cores(a.cores if a.command == "sbc" else a.chains)
     if a.command == "sbc":
         sys.exit(sbc.run(a))
 
