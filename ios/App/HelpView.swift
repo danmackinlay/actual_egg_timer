@@ -238,7 +238,7 @@ struct HelpSource: Decodable {
     let text: String
 
     /// help-sources.json from the repo root, bundled (ios/project.yml); none
-    /// if it is missing, which the build would have to have broken.
+    /// if it is missing, which `npm run ios:e2e`'s help-sources fails.
     static let all: [HelpSource] = {
         struct File: Decodable { let sources: [HelpSource] }
         guard let url = Bundle.main.url(forResource: "help-sources", withExtension: "json"),

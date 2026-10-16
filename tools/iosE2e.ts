@@ -1,8 +1,9 @@
 // `npm run ios:e2e`: what only a device can check, scripted: the screen's
 // layout, a relaunch over the system's notifications and Live Activity, a
 // notification delivered while the app is gone, the app leaving the screen,
-// the keys an earlier build left. What the app's logic decides is
-// `swift test`'s (ios/EggTimerCore/Tests/EggTimerAppTests).
+// the keys an earlier build left, Help's sources in the bundle. What the
+// app's logic decides is `swift test`'s
+// (ios/EggTimerCore/Tests/EggTimerAppTests).
 //
 // A Debug build on a simulator of the script's own, the app's clock frozen
 // at each moment a scenario checks and stepped from one to the next
@@ -561,7 +562,14 @@ scenario('asleep', 'killed before the pull, its notification delivered; relaunch
   run.check(!has(run.sinceLaunch(), is('ring')), 'nothing rung by the app: the notifications rang');
 });
 
-scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
+scenario('help-sources', "Help's sources bundled: the app finds some at launch, not none", async (run) => {
+  run.launch();
+  const found = await run.until(is('helpSources'), { from: run.launched, what: 'Help’s sources read' });
+  run.check(found.count > 0, `${found.count} sources: help-sources.json is not in the bundle (ios/project.yml)`);
+  run.note(`${found.count} sources`);
+});
+
+scenario('too-old','relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
   await started(run);
   run.terminate();
   run.launch([], { at: run.t0 + 3 * 3600 });
