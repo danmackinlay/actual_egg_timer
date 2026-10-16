@@ -749,11 +749,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     deleted. A twin written against older English is listed for review and
     still shown, never a failed build. Czech (F5) gets the same rule.
     CLAUDE.md's wording steps follow it.
-117. **`LOGBOOK.md` is frozen** (the owner, 14 October 2026, on the same
-    review). Nothing more is appended to it, and it is never rewritten; it
-    stays for reference. The commit messages are the log (`git log`). In
-    effect from the commit that records it, which adds the logbook's last
-    line and amends CLAUDE.md.
+117. **`LOGBOOK.md` is deleted; its history is in git** (the owner, 14
+    October 2026, on the same review; amended 16 October 2026). The commit
+    messages are the log (`git log`). A comment that rests on a measured
+    number states the number.
 118. **The iOS e2e shrinks to the checks only a device can make** (the
     owner, 14 October 2026, on the same review). The logic scenarios
     `npm run ios:e2e` drives through the simulator move into
@@ -902,9 +901,7 @@ October:
     `fixtures/population.json` carries its diagnostics, a forced one is
     named by its id, and both cores refuse a file that does not vouch for
     itself (`fit/README.md`).
-134. **No live file cites `LOGBOOK.md`**, which stays frozen (117): a
-    comment that rests on a measured number states it. The shape study
-    goes; its conclusion is a paragraph of README section 8.
+134. **No live file cites `LOGBOOK.md`.** Folded into 117.
 135. **Changing a word costs what changing a line of code costs.** The
     owner's approval is one recorded commit (`test/data/copy-approved.txt`),
     and the review page is the catalogue's diff since it. The 1750 twin's
