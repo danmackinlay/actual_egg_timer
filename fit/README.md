@@ -151,8 +151,11 @@ should, on 40 repetitions each: a fit that ignored its eggs (the
 likelihood's weights zeroed) had every log-likelihood rank in the top tenth
 and the globals' uniform; truths drawn with the white's spread `tau_w` from a
 half-normal of scale 1 where the fit's prior has 0.5 put 21 of 40 of its
-ranks in the top tenth. Both failed at Simes's p 0.0025, the least 4,000
-simulations of the band can give.
+ranks in the top tenth. Both failed at Simes's p 0.0025, the least the
+4,000 simulations of the band then drawn could give: ten over 4,001. The
+band is now simulated 200,000 times (`NULL_SIMS`), which a calibrated fit
+fails 4.9% of the time where 4,000 failed it 6.1%, and its least is ten
+over 200,001, 0.00005.
 
 The run does not stop early on a clear verdict (Gandy and Scott, [Unit
 testing for MCMC and other Monte Carlo

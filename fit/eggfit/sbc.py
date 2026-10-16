@@ -29,7 +29,8 @@ app's own probits, so a failure is the inference's or the emulator's (its
 grid ends at 4 literature sds, and a cook beyond is clamped), not a
 difference of models. The ranks are only as good as the draws are
 independent: thin to no more draws than the chains' ESS, or the histogram is
-humped for that alone.
+a U for that alone, as for a posterior too narrow, since draws that move
+together fall on the same side of the truth together.
 
 HOW IT RUNS. `--cores` workers each take a repetition, simulate it, and fit
 it on a CPU device of their own, its chains one after another (`sampler`),
@@ -302,19 +303,38 @@ def ecdf_gamma(ranks: np.ndarray, draws: int) -> np.ndarray:
     from scipy.stats import binom
 
     ranks = np.atleast_2d(ranks)
-    n = ranks.shape[1]
-    k = np.arange(1, draws + 1)
-    counts = np.stack([np.bincount(r, minlength=draws + 1) for r in ranks]).cumsum(axis=1)[:, :draws]
-    z = k / (draws + 1)
-    tail = np.minimum(binom.cdf(counts, n, z), binom.sf(counts - 1, n, z))
+    rows, n = ranks.shape
+    # Every row's count of each rank at once, and the ECDF's counts from them.
+    flat = (ranks + (draws + 1) * np.arange(rows)[:, None]).ravel()
+    counts = np.bincount(flat, minlength=rows * (draws + 1)).reshape(rows, draws + 1).cumsum(axis=1)[:, :draws]
+    # A count is 0..n, so each point's tail is looked up in a table of every
+    # count's, made once: each point of a large null costs a lookup, not two
+    # binomial tails.
+    z = (np.arange(1, draws + 1) / (draws + 1))[:, None]
+    c = np.arange(n + 1)[None, :]
+    table = np.minimum(binom.cdf(c, n, z), binom.sf(c - 1, n, z))
+    tail = table[np.arange(draws)[None, :], counts]
     return np.minimum(1.0, 2.0 * tail.min(axis=1))
 
 
-def ecdf_null(n: int, draws: int, sims: int = 4000, seed: int = 0) -> np.ndarray:
+#: How many calibrated sets of ranks `ecdf_null` draws. The verdict fails on
+#: one p of the ten below ALPHA / 10 (`simes`), the null's 0.5% point, which
+#: 4,000 sets put at their 20th-smallest value, with about 22% Monte Carlo
+#: error: at the one seed drawn, a calibrated fit failed about 6% of the
+#: time, not 5%. 200,000 put it at their 1,000th, about 3%, and the false
+#: alarms near 4.9%, for under a second of drawing. It also sets the least p
+#: a quantity can have, 1 / (NULL_SIMS + 1), and so Simes's, ten times that.
+NULL_SIMS = 200_000
+
+
+def ecdf_null(n: int, draws: int, sims: int = NULL_SIMS, seed: int = 0) -> np.ndarray:
     """`ecdf_gamma` of `sims` sets of `n` ranks drawn uniform on 0..draws,
-    sorted: its distribution when the fit is calibrated."""
+    sorted: its distribution when the fit is calibrated. Drawn in blocks, so
+    that no more than 10,000 sets are held at once."""
     rng = np.random.default_rng(seed)
-    return np.sort(ecdf_gamma(rng.integers(0, draws + 1, size=(sims, n)), draws))
+    blocks = [ecdf_gamma(rng.integers(0, draws + 1, size=(min(10_000, sims - i), n)), draws)
+              for i in range(0, sims, 10_000)]
+    return np.sort(np.concatenate(blocks))
 
 
 def ecdf_p(ranks: np.ndarray, draws: int, null: np.ndarray) -> float:
