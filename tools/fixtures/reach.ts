@@ -46,8 +46,31 @@ const reachAnswers: unknown[] = [];
 /* The answer with its time decided (`decideAnswer`), as both apps show it:
  * at levels across each pot, without the profile and with it, and nudged
  * where the profile is in. Each row is the answer at the level asked
- * (`answerAt`, snapping on), then the decision on it. */
-const DECIDED_LEVELS = [0, 0.05, 0.13, 0.22, 0.41, 0.62, 0.95, 1];
+ * (`answerAt`, snapping on), then the decision on it. A level in each word's
+ * band and both ends: 0.05 is a wild guess where 0 is not, and 0.62 is where
+ * the counter's white first sets. */
+const DECIDED_LEVELS = [0, 0.05, 0.13, 0.41, 0.62, 1];
+
+/** What a decided row shows or decides that can change from one level to
+ *  the next: the verdict and its snap, whether the odds are low, the word
+ *  asked, whether a time is chosen and whether the envelope holds it, the
+ *  certainty and its words, whether advice is wanted, and the odds in
+ *  tenths. */
+function regimeOf(r: ReturnType<typeof decidedRow>): string {
+  const w = r.decided.certainty.words;
+  return JSON.stringify([
+    r.answer.verdict.kind, r.answer.verdict.snapTo, r.answer.lowOdds, r.answer.verdict.wanted.key,
+    r.decided.decision.chosen, r.decided.decision.cookTime_s !== r.own_s, w.certainty, w.from, w.to, w.mostLikely,
+    r.decided.adviceWanted, r.decided.decision.oddsTenths,
+  ]);
+}
+
+/** Of rows in order of level, the two ends and each row either side of a
+ *  change in `regimeOf`: every switch, and nothing between them. */
+function atSwitches(rows: ReturnType<typeof decidedRow>[]): ReturnType<typeof decidedRow>[] {
+  const keys = rows.map(regimeOf);
+  return rows.filter((_r, i) => i === 0 || i === rows.length - 1 || keys[i] !== keys[i - 1] || keys[i] !== keys[i + 1]);
+}
 const DECIDED_VARIANTS = [
   { withOdds: false, nudge_s: 0 }, { withOdds: true, nudge_s: 0 }, { withOdds: true, nudge_s: -7 },
 ];
@@ -120,8 +143,9 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
  * with a runny white. Soft is chosen, the slider resting there, a ballpark;
  * its own choice is later than jammy's, and the time decided there is no
  * later than jammy's.
- * Every slider position from the softest the white allows to fudgy, so the
- * time is seen never to fall as the level rises. */
+ * The slider positions from the softest the white allows to fudgy, at each
+ * switch (`atSwitches`); that the time never falls as the level rises is
+ * test/reachMonotone.test.ts's. */
 const OWNER_EGG = eggFromMass(0.058);
 const ownerDecided = (() => {
   const post = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
@@ -141,7 +165,7 @@ const ownerDecided = (() => {
     setup: DECIDE_SETUP,
     grid: g.spec,
     profile: profile,
-    decided: levels.map((level) => decidedRow(c, OWNER_EGG, DECIDE_SETUP, g.grid, profile, level, true, 0)),
+    decided: atSwitches(levels.map((level) => decidedRow(c, OWNER_EGG, DECIDE_SETUP, g.grid, profile, level, true, 0))),
   };
 })();
 
