@@ -24,7 +24,8 @@
  * Every handling error at the pull has the same sign: a miss reads hot, a late
  * reading reads hot, and heat conducted down the stem reads hot. A hot reading
  * says the egg heats fast, which shortens the next cook - and short is the
- * direction both real eggs in LOGBOOK.md already went wrong in.
+ * direction both real eggs cooked so far already went wrong in: each, aimed
+ * at soft, came out with the white runny.
  */
 
 import type { CookSetup, Cooling } from '../src/core/protocol.ts';

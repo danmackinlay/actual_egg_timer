@@ -1,6 +1,6 @@
 /**
  * The web app driven end to end, in seconds: the checks that were done by
- * hand (the LOGBOOK of 6 to 8 October), each a named scenario with assertions on the page and on what
+ * hand, each a named scenario with assertions on the page and on what
  * it stored, and the copy capture's states (tools/copyScenarios.ts), each a
  * scenario too, every state checked for raw keys, straight quotes and the
  * certainty line. The scenarios are in tools/e2e/, a file for each area -

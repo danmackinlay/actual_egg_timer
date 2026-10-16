@@ -460,7 +460,8 @@ export function decidedSolution(
  * WHY TEN. "Just right" is about +-12 s wide on the reference egg (a 10 g size
  * class is +-24 s, twice the band; INFERENCE.md section 4), so +-10 s stays
  * inside it. What it costs is measured, not assumed (`npm run decide --
- * nudge`, LOGBOOK.md).
+ * nudge`): on 300 simulated cooks x 6 eggs the share of eggs right falls
+ * from 52.1% to 49.3%, and by a cook's sixth egg from 66.9% to 62.6%.
  */
 export const NUDGE_MAX_S = 10;
 

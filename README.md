@@ -470,7 +470,7 @@ textbook heat transfer — free convection from a sphere and radiation from the 
 Newton's law applied at the shell itself rather than at the egg's mean (§8). An
 independent finite-volume solution with `h` worked out afresh from the shell's
 temperature at every step agrees with it to 0.25 °C of peak yolk, from 48 to 76 g and
-4.9 to 12 minutes (`LOGBOOK.md`, 3 October 2026).
+4.9 to 12 minutes.
 
 ### The consequence, stated plainly
 
@@ -664,8 +664,7 @@ expected, since it is also absorbing the Dirichlet and shape errors, but it is t
 first honest external error bar the model has. The `H_EFF` row is an open problem, not
 a pass: see §11.2.
 
-`LOGBOOK.md` (29 September 2026, the planning phase's targets) carries a correction
-worth repeating: the planning estimate for
+The planning phase's targets carry a correction worth repeating: the planning estimate for
 counter-resting was 85.3 °C, computed with a model that relaxed the surface from the
 *water* temperature. A lumped egg in still air relaxes from its own *volume-average*
 temperature. Corrected in `coolingTemperature`, the figure was 76.3 °C. On 3 October 2026
@@ -843,7 +842,7 @@ one matters:
 room reaches the egg: an egg left out is at it, a cold pan starts at it, standing water
 decays toward it, a counter-rested egg cools toward it, and a bowl of water whose
 temperature is not given is taken to be at it. Measured on the default pot (68 g, 2 L, two
-eggs) as the room goes from 15 to 30 °C against 20 (LOGBOOK.md, 12 October 2026):
+eggs) as the room goes from 15 to 30 °C against 20:
 
 | where the room reaches the egg | jammy cook, per °C | across 15-30 °C | peak yolk at a fixed cook, per °C |
 |---|---|---|---|

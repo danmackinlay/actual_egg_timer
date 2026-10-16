@@ -17,7 +17,7 @@ let conformanceTolerance = 1e-12
 /// for the yolk): ~5e-12. That is what the decide fixture's `firmer`
 /// posterior meets, at a time-scale where
 /// the peak agreed to 1.5e-13 and the doses to 2-5e-12; at the neighbouring
-/// 1.69935809e-7 both agree to 1e-14 (LOGBOOK.md, 6 October 2026). Still
+/// 1.69935809e-7 both agree to 1e-14. Still
 /// eight orders tighter than anything that would change an answer.
 let wholeCookDoseTolerance = 1e-11
 

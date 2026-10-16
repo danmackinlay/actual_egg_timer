@@ -158,7 +158,7 @@ export const TAU_STANDING_SCALE = 1.0;
  *  adds 6.5 and 7.9. The sum runs 13.8 to 16.3, and while the yolk heads for
  *  its peak the shell is at 65-95 C: a constant 15 reproduces the
  *  temperature-dependent sum to 0.25 C of peak yolk for 48-76 g eggs cooked
- *  4.9-12 min (LOGBOOK.md, 3 October 2026). The counter shelters the underside
+ *  4.9-12 min. The counter shelters the underside
  *  from convection and conducts a little across the air gap at the contact;
  *  on wood or stone, together they move h by less than 10% either way.
  *  Bi = h*R/k ~ 0.6, so the shell is neither clamped nor at the egg's mean,

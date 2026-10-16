@@ -90,8 +90,8 @@ final class SolveLoop {
     /// cancels the solve in flight and waits out 90 ms afresh on every change,
     /// so a stepper held down (a change every 100 ms) or a drag lands nothing
     /// at all until the finger stops: measured on the simulator, the time on
-    /// screen froze for the whole two seconds of a hold (LOGBOOK.md, 4 October
-    /// 2026). So one solve loop runs at a time. A change while it solves is
+    /// screen froze for the whole two seconds of a hold. So one solve loop
+    /// runs at a time. A change while it solves is
     /// picked up when it finishes; the answer it just got is shown meanwhile,
     /// a step behind, without the snap (`applyInterim`).
     func recompute() {
