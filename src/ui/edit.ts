@@ -14,25 +14,49 @@ import { pressAndHold } from './stepper.ts';
 
 /** The group each field's change makes, by its id, or a radio's by its
  *  name. The cooling water's is the cooling's: running water or the bowl. */
-const FIELD_GROUPS: Record<string, HandGroup> = {
+export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup)>> = {
   size: 'mass', measureMass: 'mass', measureGirth: 'mass', measureMinor: 'mass', startTemp: 'eggFrom',
   customTemp: 'customStart', roomTemp: 'room', roomTempFrom: 'room', startMode: 'startMode', afterBoil: 'afterBoil',
   cooling: 'cooling', bowlLitres: 'bowlLitres', litres: 'waterLitres', eggCount: 'eggCount', altitude: 'altitude',
   doneness: 'level', startedAt: 'startedAt',
+  coolingWater: () => (radioValue('cooling', 'ice') === 'tap' ? 'tapWater' : 'bowlWater'),
 };
 
+/** The fields that make no choice of the cook's, by id or a radio's name,
+ *  and the control each is: the thermometer's reading, and the settings of
+ *  the kitchen and the screen (the thermometer, the units, the language, the
+ *  sound, sharing). A field in neither table throws: unmapped, a change to it
+ *  mid-cook would be taken for a setting and the correction dropped. */
+export const GROUPLESS: Readonly<Record<string, HandControl>> = {
+  probeReading: 'probe', probeSetting: 'setting', units: 'setting', language: 'setting', alarm: 'setting',
+  shareSetting: 'setting',
+};
+
+/** The buttons that move the cook on, by id. */
+export const BUTTONS: Readonly<Record<string, HandControl>> = {
+  primary: 'primary', secondary: 'cancel', stillOut: 'stillInWater',
+};
+
+/** A field's key in the tables: a radio's name, or its id. */
+function keyOf(field: HTMLElement): string {
+  return field instanceof HTMLInputElement && field.type === 'radio' ? field.name : field.id;
+}
+
 /** The group of the cook's choices a change to `field` makes; null for a
- *  field of none (the thermometer, the units, the language, the sound). */
+ *  field of none (`GROUPLESS`). */
 export function groupOf(field: EventTarget | null): HandGroup | null {
   if (!(field instanceof HTMLElement)) return null;
-  if (field.id === 'coolingWater') return radioValue('cooling', 'ice') === 'tap' ? 'tapWater' : 'bowlWater';
-  const key = field instanceof HTMLInputElement && field.type === 'radio' ? field.name : field.id;
-  return FIELD_GROUPS[key] ?? null;
+  const key = keyOf(field);
+  const group = FIELD_GROUPS[key];
+  if (group !== undefined) return typeof group === 'function' ? group() : group;
+  if (GROUPLESS[key] !== undefined) return null;
+  throw new Error(`#${key} is in no group and not listed as groupless (src/ui/edit.ts)`);
 }
 
 /** The page's controls, for a finger down: the slider, a number with its −
  *  and +, a radio group, a menu, a clause, a switch, and the buttons. */
-const CONTROLS = '.slider, .unit, .seg, select, .clause, .check, #primary, #secondary, #stillOut';
+const CONTROLS = ['.slider', '.unit', '.seg', 'select', '.clause', '.check', ...Object.keys(BUTTONS).map((id) => `#${id}`)]
+  .join(', ');
 
 /** What a finger down on `target` touched: a control of a group, another
  *  control (core `HandControl`), or none. */
@@ -40,14 +64,13 @@ export function touchOf(target: EventTarget | null): { group: HandGroup } | { co
   if (!(target instanceof Element)) return null;
   const at = target.closest(CONTROLS);
   if (at === null) return null;
-  if (at.id === 'primary') return { control: 'primary' };
-  if (at.id === 'secondary') return { control: 'cancel' };
-  if (at.id === 'stillOut') return { control: 'stillInWater' };
+  const button = BUTTONS[at.id];
+  if (button !== undefined) return { control: button };
   if (at.classList.contains('clause')) return { control: 'clause' };
   const field = at.matches('input, select') ? at : at.querySelector('input, select, output');
+  if (!(field instanceof HTMLElement)) throw new Error(`a control with no field: .${at.className}`);
   const group = groupOf(field);
-  if (group !== null) return { group: group };
-  return { control: field !== null && field.id === 'probeReading' ? 'probe' : 'setting' };
+  return group !== null ? { group: group } : { control: GROUPLESS[keyOf(field)] };
 }
 
 /** The gestures' clock, s: the page's, which no clock change moves. */
