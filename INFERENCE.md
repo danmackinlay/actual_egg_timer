@@ -127,7 +127,7 @@ they got in the slider's own five words, and the white question asks about
 the white next to the yolk. The words are the ones the cook has just read
 on the slider, so five is not too many after all, and three answers relative
 to the target threw information away and had nothing to say when the yolk
-wanted could not be chosen. The scoring is below, under "Built".
+wanted could not be chosen. The scoring is below, under "The likelihood".
 
 **The white is always OFFERED, and the model no longer decides whether to ask.**
 The September gate measurement showed that suppressing the question discards
@@ -142,7 +142,7 @@ the checks on it, since neither depends on who chose to answer.
 **A robustness component.** With small probability an answer is unrelated to the
 egg. This is what `UNRELATED` is already standing in for.
 
-**Built (E2 and E3, 27 September).** `src/core/infer.ts`, held to
+**The likelihood** is `src/core/infer.ts`, held to
 `EggTimerCore/Infer.swift` by `fixtures/calibration.json`. The particle has six
 numbers: the time-scale (`alpha`), the yolk taste offset, `tauAirScale`, and
 three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
@@ -195,7 +195,7 @@ three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
   `DECISIONS.md` 92 the question names that place, "the white next to the
   yolk", so the cook is asked about the point the model scores, not about
   the white next to the shell, which is nearly always set.
-- **The white offset** (E3) shifts the runny | tender cutpoint from
+- **The white offset** shifts the runny | tender cutpoint from
   `WHITE_DOSE_TARGET`; prior sd 0.5 decades.
 - **The tender | firm cutpoint** is a gap above it, lognormal, median **1.08
   decades**, log sd 0.4. From README §4's anchors for the reference egg (68 g,
@@ -210,10 +210,9 @@ three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
   it, against the same surface. A replay is therefore still bit-identical.
 - **The white target moves the recommendation.** The solver's white constraint
   is the runny | tender cutpoint, so the posterior mean white offset moves it
-  (`calibrationDoneness`). The taste offset did not enter the
-  recommendation, as before E2; since E5 it does, because the time is chosen
-  from every particle (§8).
-- **E1's two-level "set"** is gone (owner, 28 September: no build after 19
+  (`calibrationDoneness`). So does the taste offset, because the time is
+  chosen from every particle (§8).
+- **The first records' two-level white, "set",** is gone (owner, 28 September: no build after 19
   September left the owner's devices). A record carrying it is refused.
 
 Measured, in `test/infer.test.ts`:
@@ -235,15 +234,16 @@ Measured, in `test/infer.test.ts`:
   the white offset's 0.5, so the posterior blames the time-scale about 2:1. A
   wider white offset did not fix it either: at 0.8 and 1.2 decades the posterior
   mean runs past the cutpoint and makes jammy white-bound too. What pins the
-  time-scale is other evidence - yolk answers, the thermometer (E4), other cooks
-  (E7) - and a recommendation made from the posterior rather than its mean (E5).
-  The owner's call (27 September): leave it as it is until a probe or pooling
-  pins the time-scale. With E5, a yolk answer beside the two runny whites
+  time-scale is other evidence - yolk answers, the thermometer, other cooks
+  (the population fit) - and a time chosen from the posterior rather than its
+  mean. The owner's call (27 September): leave it as it is until a probe or
+  pooling pins the time-scale. With the time chosen from the posterior, a
+  yolk answer beside the two runny whites
   gives the asked-for shape (soft +146 s, jammy +17 s); the white alone still
   moves both. Its test in `test/infer.test.ts` stays a todo.
 
 **A thermometer reading**, for cooks who own a probe (§5). Sketched here as a
-Gaussian, sd about 1.5 C, with a small hot skew; built (E4) as a Gaussian of
+Gaussian, sd about 1.5 C, with a small hot skew; built as a Gaussian of
 1.0 C with a COLD one-sided tail, because at the moment it is read every
 handling error reads low. §5 has why and the numbers.
 
@@ -254,7 +254,7 @@ server exists. Today an answer is folded into the particles and thrown away, so
 when the likelihood changed in September the v1 posterior had to be discarded
 rather than repaired. With the observations kept, a model change is a replay.
 
-**Built (E1, 26 September).** One record per egg, stored on the device beside
+One record per egg, stored on the device beside
 the posterior; uploaded only under §7. The reference is `src/core/record.ts`,
 held to `EggTimerCore/Record.swift` by `fixtures/record.json`. Both apps make
 a record the same way, in core (`recordFor`, 6 October 2026): each gathers
@@ -302,28 +302,29 @@ fit's training data cannot drift between the two.
   on the device: sharing sends the record without it, and the server drops
   it from whatever it is sent (`sharedRecord`), because a start time to the
   millisecond says far more about a cook than `day` does.
-- **The white is always asked** since E2, so `null` is a skip. E1 asked only
-  sometimes and carried a `whiteOffered` flag to tell "not asked" from
-  "skipped"; with nothing of E1's kept, the flag went on 28 September, and a
+- **The white is always asked**, so `null` is a skip. The first records asked
+  only sometimes and carried a `whiteOffered` flag to tell "not asked" from
+  "skipped"; with none of them kept, the flag went on 28 September, and a
   record that still carries it has it ignored like any unknown field.
-- **The white's answers are `runny`, `tender` and `firm`.** E1's two-level
-  `set` went with the flag; a record carrying it is refused. Both were
+- **The white's answers are `runny`, `tender` and `firm`.** The first
+  records' two-level `set` went with the flag; a record carrying it is refused. Both were
   removed before any record left the owner's devices, so the schema stays
   `v: 1`.
 - `pulled_s` is when the cook said the egg came out, not when the alarm went -
   the tap out of PULL ("they're in the ice bath", "they're out"). When nobody
   taps and the 20 s grace runs out, `pulledBy` is `timeout` and `pulled_s` is
-  the SCHEDULED time: an assumption, marked as one, not a measurement. Since E2
-  the iOS app has the web's button too, so its pulls are measured as well.
+  the SCHEDULED time: an assumption, marked as one, not a measurement. The
+  iOS app has the web's button too, so its pulls are measured as well.
 - `recommended_s` is what the solver said; `nudge_s` is what the app added on
-  purpose (E8; zero until then). **Since E2 the likelihood is scored at
+  purpose (the nudge, §8). **The likelihood is scored at
   `pulled_s` when `pulledBy` is `cook`, and at `recommended_s + nudge_s` when it
   is `timeout`** - at the measured pull where there is one, and at the schedule,
-  which is the best guess, where there is not. E1 scored every egg at the
-  schedule; the change was made once, by replay (`recordCookTime_s`).
+  which is the best guess, where there is not. The first records were scored
+  at the schedule; the change was made once, by replay (`recordCookTime_s`).
   `recommended_s` and `prior` make the policy that produced the cook part of the
   record, so a later fit knows why the data lies where it does. `prior` is
-  `2026-09` for E1's cooks, `2026-09-e2` for E2's, whose white offset also
+  `2026-09` for the first records' cooks, `2026-09-e2` for those the white
+  offset and the always-asked white came in with, whose white offset also
   moved the recommendation, and `2026-09-e5` since, whose time is chosen from
   the whole posterior (§8).
 - `massFrom` (`scale` / `girth` / `width` / `class`) sets the egg-level noise: a
@@ -359,18 +360,18 @@ fit's training data cannot drift between the two.
 - A day, not a timestamp. A boiling point, not an altitude or a place:
   `boiling_C` is a one-to-one function of the altitude setting, so it carries
   everything the altitude would, and the altitude itself is not recorded.
-- `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
-- `forecast` (E6) is what the app actually said at "Eggs in" (§7;
+- `uid` is `null` until sharing mints one (§7). `mass_g` is rounded to 0.01 g.
+- `forecast` is what the app actually said at "Eggs in" (§7;
   `DECISIONS.md` 37): each answer's probability, unrelated share included,
   as `predictOutcome` gives them, and `cook_s`, the time they were for. On a
   cold start the boil tap re-solves the cook afterwards, so `cook_s` can
   differ from `recommended_s`. Null when the cook was started before the
-  odds were known. `model` (E6) is `MODEL_ID`, the code that made the
-  forecast and chose the time - the likelihood, the decision and, from E8,
-  the nudge - changed whenever they change. A replay says what the current
+  odds were known. `model` is `MODEL_ID`, the code that made the
+  forecast and chose the time - the likelihood, the decision and the
+  nudge - changed whenever they change. A replay says what the current
   code would have forecast; only these say what the app said. It is
   provenance only: what decides a replay is `LIKELIHOOD_ID` (below).
-- `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
+- `probe` is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the
   counted cooling - in seconds after the moment the record scores as the pull
@@ -398,11 +399,12 @@ log to it, so a change to the fold fails until it moves. A new likelihood
 is a new model, so `MODEL_ID` moves with it.
 
 **The frozen base.** The owner's v2 posterior was learned from real eggs with no
-log behind it. E1 kept it as the BASE, with the posterior `replay(base, log)`. A
-base cannot be replayed, so it could not survive a change to the likelihood,
-and **E2 dropped it** (27 September): both apps read E1's log out of its v3
-store, drop the v3 posterior and the base, and replay the log from the prior
-under the new likelihood, into v4. That was the price of the eggs before E1 not
+log behind it. The first record kept it as the BASE, with the posterior
+`replay(base, log)`. A base cannot be replayed, so it could not survive a
+change to the likelihood, and **the new likelihood dropped it** (27
+September): both apps read the log out of its v3 store, drop the v3
+posterior and the base, and replay the log from the prior under the new
+likelihood, into v4. That was the price of the eggs before the record not
 having been kept, and it has been paid. A base survives only as what a damaged
 log leaves behind (the `rebased` path above).
 
@@ -463,8 +465,8 @@ timer says, push it to the middle of the egg and tell us the lowest number you
 see."* Seeking the minimum is self-centring, since the centre is the coldest
 point.
 
-**Built (E4, 27 September), and what settled.** `src/core/infer.ts`
-(`probeLikelihood`), held to `Infer.swift` by `fixtures/probe.json`.
+**What settled.** `src/core/infer.ts` (`probeLikelihood`), held to
+`Infer.swift` by `fixtures/probe.json`.
 
 - **"Lowest" became "highest", and the skew went cold.** The centre is the
   coldest point while the egg COOKS. At the moment it peaks, after the pull,
@@ -572,16 +574,16 @@ carelessness, which the first paragraph handles.
 - **What changes in the repo:** the privacy manifest gains collected-data
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
-  web app gains its first request. (All done with E6, and the privacy page
-  rewritten for it.)
+  web app gains its first request. (All done, and the privacy page rewritten
+  for it.)
 - **Each egg carries what the app said** (`DECISIONS.md` 37). Every
-  uploaded record - and, once E6 lands, every record kept on the device - holds
+  record, uploaded or kept on the device, holds
   the full forecast at "Eggs in": the yolk's three answer probabilities (too
   soft, just right, too firm) and the white's (runny, tender, firm), as
   `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give them at the
   time started, unrelated share included - not the odds in tenths - and a
   model version. The model as shipped can then be scored after the code has
-  changed. Replay (E1, §4) regenerates what the CURRENT code would have
+  changed. Replay (§4) regenerates what the CURRENT code would have
   forecast; only the stored forecast says what the app actually said.
 - **A selection effect to remember.** The people who opt in are the people who
   weigh their eggs. Kitchen and cook effects adapt, but the published egg-to-egg
@@ -593,7 +595,7 @@ No name, no location, nothing about you - just the egg. The timer is still
 learning, so sometimes it will try a time a few seconds either way to learn
 faster. You can turn it off, and delete what you sent, whenever you like."*
 
-**Built (E6, 2 October).** The endpoint's code says what each route
+**As built**, the endpoint's code says what each route
 answers; in short:
 
 - **The endpoint** is `server/eggs.ts`, bound to Netlify Blobs by
@@ -657,7 +659,7 @@ answers; in short:
   (below), and the owner chose a small "Learning" mark on the time, with an
   (i), shown while sharing is on (`DECISIONS.md` 58).
 
-**Built (E5, 28 September).** `src/core/decide.ts`, held to
+**The choice** is `src/core/decide.ts`, held to
 `EggTimerCore/Decide.swift` by `fixtures/decide.json`: given the same posterior
 and the same pot, the two apps choose the same time to 1e-12. What settled:
 
@@ -738,8 +740,8 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   re-solve rather than waiting a second for the new pot's surface: 3 s from
   choosing again at soft, under 0.5 s at jammy.
 - **Two runny whites at soft** (`npm run decide -- runny`). With the yolk also
-  "just right", the choice moves soft 146 s and jammy 17 s: the shape §3's E3
-  asked for, which the mean solve alone did not give. With the white alone
+  "just right", the choice moves soft 146 s and jammy 17 s: the shape §3's
+  white offset asked for, which the mean solve alone did not give. With the white alone
   both move. And where the white binds the lean is long, up to the window: the
   mean solve times a white at its median, a coin flip on runny, and a runny
   white costs three. Whether that is the right trade, or the white offset's
@@ -846,7 +848,7 @@ once, at the time on screen.
 built and then deleted on the owner's word (`DECISIONS.md` 36, 39). The
 bracket under the slider does the same job without a suggestion.
 
-**Built (E8, 2 October): the nudge.** `nudgeSeconds` in `decide.ts` turns a
+**The nudge.** `nudgeSeconds` in `decide.ts` turns a
 uniform draw into a whole number of seconds from -10 to +10, each equally
 likely; `appliedNudge` takes it only where a time is chosen; both apps draw
 it at launch and after each cook and apply it while sharing is on, so the
@@ -1016,7 +1018,7 @@ wide), and the time range held the cook's own right time 89-94%.
     used for evaluation.
   README §7's table remains as the check on the prior.
 
-**Built (E7, 2 October), and checked on cooks whose answer is known.** No
+**Checked on cooks whose answer is known.** No
 shared egg exists yet, so nothing real has been fitted; what exists is the
 whole pipe, and its check on simulated cooks.
 

@@ -12,7 +12,7 @@ and the map of the documents are `CLAUDE.md`.
    `fixtures/format.json` is pinned against Node's. Run the fixture's cases in
    Safari. If Apple's ICU differs, write the formatting out in core for the
    apps' locales, or say which cases differ and why they are harmless.
-2. **The first real population fit (E7)**, once shared eggs arrive:
+2. **The first real population fit**, once shared eggs arrive:
    `fit/README.md` has the loop, and publishing writes
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer

@@ -34,9 +34,10 @@ The design they belong to is `INFERENCE.md`.
 
 ## 26 September 2026 — the record, the loss, the words
 
-6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 kept the
-   pre-log posterior as a frozen base; the new likelihood could not replay
-   it, so E2 started from the prior plus E1's log.
+6. **Eggs from before the per-egg record are dropped with the new
+   likelihood, not backfilled.** The record kept the pre-log posterior as a
+   frozen base; the new likelihood could not replay it, so it started from
+   the prior plus the record's log.
 7. **The loss ratio is 3.** A runny white counts as three times as bad as a
    yolk one step too firm (`RUNNY_WHITE_LOSS`, `INFERENCE.md` §8). A
    constant for now, and a per-cook setting only if someone asks for one.
@@ -71,7 +72,7 @@ The design they belong to is `INFERENCE.md`.
 
 ## 27 September 2026 — the odds on screen, the redesign, the voice
 
-18. **E3's attribution is left as it is**: two runny whites move jammy about
+18. **The white offset's attribution is left as it is**: two runny whites move jammy about
     as far as soft, and that stays until a probe or pooling pins the
     time-scale (`INFERENCE.md` §3). `test/infer.test.ts` pins the limit.
 19. **The protocol advice is discoverable, not intrusive**: offered in
@@ -125,7 +126,7 @@ The design they belong to is `INFERENCE.md`.
     quantile checks.** Each egg keeps the full forecast at "Eggs in" - the
     yolk's and the white's three answer probabilities, not the tenths - and a
     model version, so the model as shipped can be scored after the code
-    changes. E7 evaluates by the log score first (the ordered-probit log
+    changes. The population fit evaluates by the log score first (the ordered-probit log
     likelihood one step ahead, whose sum over a cook's eggs the filter's
     incremental weights already compute; the 0.05 unrelated share keeps it
     finite), reports the ranked probability score, scores probe readings by
@@ -178,7 +179,7 @@ Decided by the owner, 2 October 2026:
     1 for the app and the widget; an iPad still runs it in iPhone
     compatibility mode. A real iPad layout is for someday.
 51. **The privacy page lives on the Netlify site, at `/privacy`**, where the
-    opt-in data collection endpoint (E6) will live too; App Store Connect's
+    opt-in data collection endpoint lives too; App Store Connect's
     privacy policy URL points there. Plain English only, no 1750 twin.
     Help links it in both apps.
 52. **The running cook shows the egg in cross-section, as how set each
@@ -224,7 +225,8 @@ Decided by the owner, 3 October 2026:
     pull name only where the eggs are ("In the ice bath"), since the label
     above them says "Eggs out now".
 
-Decided by the owner, 2 October 2026, for E6-E8, numbered after 57, which
+Decided by the owner, 2 October 2026, for sharing, the population fit and
+the nudge, numbered after 57, which
 were merged first:
 
 58. **The nudge's "still learning" is a small badge with an (i)**, not a
@@ -900,7 +902,10 @@ October:
     R-hat below 1.01, a bulk ESS of 100 a chain, no divergent transition.
     By hand, simulation-based calibration (`python -m eggfit sbc`): the
     nine globals' ranks and the data's log likelihood's, one verdict over
-    the ten by their ECDF bands and Simes. A fit
+    the ten by their ECDF bands and Simes. It runs every repetition and
+    never stops early (the owner, 17 October 2026): early stopping was
+    asked for when a run took an hour and a half, and a run of minutes
+    would save almost nothing by it. A fit
     whose diagnostics fail is written nowhere unless forced; the published
     `fixtures/population.json` carries its diagnostics, a forced one is
     named by its id, and both cores refuse a file that does not vouch for
