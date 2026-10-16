@@ -1,31 +1,28 @@
 /**
- * The review queue for the words, on the command line; the state and its
- * rules are tools/copyApproval.ts's.
+ * The review queue for the words, on the command line; its rules are
+ * tools/copyApproval.ts's.
  *
  *   npm run copy:queue
- *       what the owner has not approved, and each translation's stale and
- *       missing twins
- *   npm run copy:approve -- <key…|--all> [--at <ref>]
- *       stamp today's English (or <ref>'s) as approved; a removed key named,
- *       or --all, drops its approval
- *   npm run copy:approve -- --translation <tag> <key…|--all>
- *       stamp the English each named twin was written against as today's;
- *       --all is every key the translation has, and a key it lacks is
- *       stamped as left to English on purpose
+ *       what changed since the approved commit, and each translation's
+ *       stale twins and the keys it leaves to English
+ *   npm run copy:approve [-- <commit>]
+ *       record the words at HEAD (or at <commit>) as approved, in
+ *       test/data/copy-approved.txt, to be committed
  *
  * The queue only reports: it exits 0 whatever is in it, so it never fails
- * `verify`. A malformed approvals or bases file (test/data/copy-review/)
- * stops it, and a stamp refuses a key the catalogue does not have.
+ * `verify`. Approval is the owner's word, of the whole catalogue: put back
+ * what he names, commit, then approve. Approving HEAD refuses while copy/
+ * has changes git has not committed, which the record could not name.
  */
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 import {
-  APPROVED_ABOUT, APPROVED_PATH, type CatalogueJson, type Templates, basePath, baseAbout, readApproved, readBases,
-  readCatalogue, reviewQueue, stamp, stampBases, translationTags, twinQueue, twinState, writeOnePerLine,
+  APPROVED_PATH, type Templates, copyIsDirty, readApproved, reviewQueue, translationTags, twinStatesOf, wordsAt, wordsNow,
+  readCatalogue, templatesOf,
 } from './copyApproval.ts';
-import { type App, appsUsing } from './copyNotes.ts';
+import { appsUsing } from './copyNotes.ts';
 
 function show(t: Templates | null): string {
   if (t === null) return '(none)';
@@ -34,101 +31,72 @@ function show(t: Templates | null): string {
   return entries.map(([c, s]) => `${c}: ${s}`).join(' | ');
 }
 
-/** The apps whose sources name a key, as `[web, ios]`; a key no longer in
- *  the catalogue is retired. */
-function appsOf(en: CatalogueJson, used: Map<string, Set<App>>, key: string): string {
-  if (!(key in en.messages)) return '[retired]';
-  return `[${(['web', 'ios'] as const).filter((a) => used.get(key)?.has(a)).join(', ')}]`;
-}
-
 function queue(): void {
-  const en = readCatalogue('en');
-  const q = reviewQueue(en, readApproved());
-  const used = appsUsing(Object.keys(en.messages));
+  const approved = readApproved();
+  const now = wordsNow();
+  const q = reviewQueue(wordsAt(approved), now);
+  const used = appsUsing(Object.keys(now.en.messages));
+  const apps = (key: string): string => (key in now.en.messages
+    ? `[${(['web', 'ios'] as const).filter((a) => used.get(key)?.has(a)).join(', ')}]` : '[retired]');
   const count = (s: string): number => q.filter((e) => e.state === s).length;
-  console.log(`The review queue: ${q.length} keys (${count('changed')} changed, ${count('added')} added, `
-    + `${count('removed')} removed) of ${Object.keys(en.messages).length} in copy/en.json.`);
+  console.log(`The review queue since ${approved.slice(0, 10)}: ${q.length} keys (${count('changed')} changed, `
+    + `${count('added')} added, ${count('retired')} retired) of ${Object.keys(now.en.messages).length} in copy/en.json.`);
   for (const e of q) {
-    console.log(`\n${e.state.padEnd(8)} ${e.key} ${appsOf(en, used, e.key)}`);
+    console.log(`\n${e.state.padEnd(8)} ${e.key} ${apps(e.key)}`);
     if (e.approved !== null) console.log(`  approved  ${show(e.approved)}`);
     if (e.current !== null) console.log(`  now       ${show(e.current)}`);
+    for (const o of e.overlays) {
+      if (JSON.stringify(o.approved) === JSON.stringify(o.current)) continue;
+      console.log(`  ${o.tag.padEnd(8)}  ${show(o.approved)} -> ${show(o.current)}`);
+    }
   }
   for (const tag of translationTags()) {
     const twins = readCatalogue(tag);
-    const bases = readBases(tag);
-    const tq = twinQueue(tag, twins, en, bases);
-    const stale = tq.filter((t) => t.state === 'stale').length;
-    const left = Object.keys(en.messages).filter((k) => twinState(k, twins, en, bases) === 'leftToEnglish');
-    console.log(`\n${tag}: ${stale} stale and ${tq.length - stale} missing of ${Object.keys(en.messages).length} keys`
-      + `${left.length > 0 ? `; left to English: ${left.join(', ')}` : ''}.`);
-    for (const t of tq) {
-      console.log(`\n${t.state.padEnd(8)} ${t.key} ${appsOf(en, used, t.key)}`);
-      if (t.twin !== null) console.log(`  twin      ${show(t.twin)}`);
-      console.log(`  English   ${show(t.english)}`);
+    const states = twinStatesOf(tag, now.en);
+    const stale = [...states].filter(([, s]) => s === 'stale').map(([k]) => k);
+    const missing = [...states].filter(([, s]) => s === 'missing').map(([k]) => k);
+    console.log(`\n${tag}: ${stale.length} stale, written against older English; ${missing.length} show the English`
+      + `${missing.length > 0 ? `: ${missing.join(', ')}` : ''}.`);
+    for (const key of stale) {
+      console.log(`\nstale    ${key} ${apps(key)}`);
+      console.log(`  twin      ${show(templatesOf(twins.messages[key]))}`);
+      console.log(`  English   ${show(templatesOf(now.en.messages[key]))}`);
     }
   }
-  console.log('\nRead it on a phone: npm run copy:review. Approve: npm run copy:approve -- <key…|--all>.');
-}
-
-/** The keys an argument list names, or `all` for `--all`; exits on a key
- *  not in `known`, or on none at all. */
-function keysFrom(args: string[], all: string[], known: Set<string>, what: string): string[] {
-  if (args.includes('--all')) return all;
-  const unknown = args.filter((k) => !known.has(k));
-  if (args.length === 0 || unknown.length > 0) {
-    console.error(args.length === 0 ? 'name the keys, or --all' : `not in ${what}: ${unknown.join(', ')}`);
-    process.exit(2);
-  }
-  return args;
+  console.log('\nRead it on a phone: npm run copy:review. Once what the owner named is put back and committed: '
+    + 'npm run copy:approve.');
 }
 
 function approve(args: string[]): void {
-  const at = args.indexOf('--at');
-  const ref = at >= 0 ? args[at + 1] : undefined;
-  if (at >= 0 && ref === undefined) {
-    console.error('--at needs a commit');
+  if (args.length > 1 || args.some((a) => a.startsWith('-'))) {
+    console.error('copy:approve records the whole catalogue at one commit, never key by key: put back what the owner '
+      + 'named, commit, then `npm run copy:approve`, or `npm run copy:approve -- <commit>` for the commit he read.');
     process.exit(2);
   }
-  const rest = at >= 0 ? args.filter((_, i) => i !== at && i !== at + 1) : args;
-  const en = readCatalogue('en');
+  if (args.length === 0 && copyIsDirty()) {
+    console.error('copy/ has changes git has not committed, which no commit can record: commit them (or put them back), '
+      + 'then approve.');
+    process.exit(2);
+  }
+  let commit: string;
+  try {
+    commit = execFileSync('git', ['rev-parse', '--verify', `${args[0] ?? 'HEAD'}^{commit}`],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch {
+    console.error(`not a commit: ${args[0]}; copy:approve records the whole catalogue at a commit, never key by key.`);
+    process.exit(2);
+  }
   const before = readApproved();
-  const from = ref === undefined ? null
-    : JSON.parse(execFileSync('git', ['show', `${ref}:copy/en.json`], { encoding: 'utf8' })) as CatalogueJson;
-  const removed = [...new Set([...Object.keys(before), ...Object.keys(from?.messages ?? {})])]
-    .filter((k) => !(k in en.messages));
-  const keys = keysFrom(rest, [...Object.keys(en.messages), ...removed],
-    new Set([...Object.keys(en.messages), ...removed]), `copy/en.json or ${APPROVED_PATH}`);
-  const after = stamp(before, en, keys, from);
-  writeFileSync(APPROVED_PATH, writeOnePerLine(APPROVED_ABOUT, { messages: after }));
-  const moved = keys.filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
-  console.log(`approved ${moved.length} key${moved.length === 1 ? '' : 's'}${ref === undefined ? '' : ` at ${ref}`}`
-    + `${moved.length > 0 && moved.length <= 20 ? `: ${moved.join(', ')}` : ''}; `
-    + `${reviewQueue(en, after).length} left in the queue.`);
-}
-
-function translated(tag: string | undefined, args: string[]): void {
-  if (tag === undefined || !translationTags().includes(tag)) {
-    console.error(`--translation names one of: ${translationTags().join(', ')}`);
-    process.exit(2);
-  }
-  const en = readCatalogue('en');
-  const twins = readCatalogue(tag);
-  const keys = keysFrom(args, Object.keys(twins.messages).filter((k) => k in en.messages),
-    new Set(Object.keys(en.messages)), 'copy/en.json');
-  const before = readBases(tag);
-  const after = stampBases(before, twins, en, keys);
-  writeFileSync(basePath(tag), writeOnePerLine(baseAbout(tag), { english: after.english, base: after.base }));
-  const left = twinQueue(tag, twins, en, after).length;
-  console.log(`${tag}: stamped ${keys.length} key${keys.length === 1 ? '' : 's'} at today’s English; `
-    + `${left} stale or missing.`);
+  writeFileSync(APPROVED_PATH, `${commit}\n`);
+  const left = reviewQueue(wordsAt(commit), wordsNow()).length;
+  console.log(`approved the words at ${commit.slice(0, 10)} (was ${before.slice(0, 10)}); ${left} keys left in the queue. `
+    + `Commit ${APPROVED_PATH}.`);
 }
 
 const [mode, ...args] = process.argv.slice(2);
-const t = args.indexOf('--translation');
 if (mode === 'queue') queue();
-else if (mode === 'approve' && t >= 0) translated(args[t + 1], args.filter((_, i) => i !== t && i !== t + 1));
 else if (mode === 'approve') approve(args);
 else {
-  console.error('usage: copyQueue.ts queue | approve <key…|--all> [--at <ref>] | approve --translation <tag> <key…|--all>');
+  console.error('usage: copyQueue.ts queue | approve [<commit>]');
   process.exit(2);
 }

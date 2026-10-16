@@ -55,8 +55,8 @@ targets:
       # A folder reference rather than a group, so a new language is a new file
       # and not a project change. Rendered by EggTimerCopy - see EggTimerShared's Copy.swift.
       # All of it ships but the notes beside the catalogue, which the last
-      # build phase takes out again (below); the review queue's state is in
-      # test/data/copy-review (en1750.test.ts 1a).
+      # build phase takes out again (below); the approved record is in
+      # test/data (en1750.test.ts 1a).
       - path: ../copy
         type: folder
         buildPhase: resources

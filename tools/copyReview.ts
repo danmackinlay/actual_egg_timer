@@ -1,26 +1,27 @@
 /**
  * The review queue as one page, to read on a phone.
  *
- *   npm run copy:review [out.html]      default copy-review.html, gitignored
+ *   npm run copy:review [out.html]      default _dev/copy-review.html
  *
  * For each key in the queue (tools/copyApproval.ts): the approved English
- * against today's, word by word; each translation's twin and whether it is
- * stale or missing; the regional overlays' words; the surface's length budget
- * against the longest rendering (test/data/surfaces.json, as copy.test.ts 5a
+ * against today's, word by word; each translation's twin, and whether it is
+ * stale or shows the English; the regional overlays' words, as approved and
+ * as they are; the surface's length budget against the longest rendering,
+ * where the surface has one (test/data/surfaces.json, as copy.test.ts 5a
  * measures it); which apps say it, read from their sources; and the note
- * beside the catalogue (copy/en.notes.json). Then the twins
- * that want rewriting under English that is already approved. One file, no
- * network: the styles are inline and there is no script, so it can be sent
- * to a phone as it is.
+ * beside the catalogue (copy/en.notes.json). Then the stale twins under
+ * English that is already approved. One file, no network: the styles are
+ * inline and there is no script, so it can be sent to a phone as it is.
  */
 
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 import { type Catalogue, OVERLAYS, parseCatalogue } from '../src/core/copy.ts';
 import {
-  CATEGORIES, type CatalogueJson, type Queued, REVIEW_DIR, type Templates, type TwinState, readApproved, readBases, readCatalogue,
-  reviewQueue, templatesOf, translationTags, twinQueue, twinState,
+  CATEGORIES, type CatalogueJson, type Change, type Queued, type Templates, type TwinState, copyIsDirty, readApproved,
+  readCatalogue, reviewQueue, templatesOf, translationTags, twinStatesOf, wordsAt, wordsNow,
 } from './copyApproval.ts';
 import { type App, type Notes, type Surface, appsUsing, longest, readNotes, readSurfaces } from './copyNotes.ts';
 
@@ -142,9 +143,8 @@ function diffTemplatesHtml(before: Templates, after: Templates): string {
 
 const TWIN_FLAG: Record<TwinState, string> = {
   current: '',
-  leftToEnglish: '<span class="flag">left to English</span>',
   stale: '<span class="flag warn">stale: written against older English</span>',
-  missing: '<span class="flag warn">missing: shows the English</span>',
+  missing: '<span class="flag">none: shows the English</span>',
 };
 
 interface Context {
@@ -153,15 +153,21 @@ interface Context {
   surfaces: Record<string, Surface>;
   notes: Record<string, Notes>;
   apps: Map<string, Set<App>>;
-  overlays: { tag: string; json: CatalogueJson; catalogue: Catalogue }[];
-  translations: { tag: string; json: CatalogueJson; catalogue: Catalogue; bases: ReturnType<typeof readBases> }[];
+  overlays: Map<string, Catalogue>;
+  translations: { tag: string; json: CatalogueJson; catalogue: Catalogue; states: Map<string, TwinState> }[];
+}
+
+/** Words as approved against words now: a diff, all new, or all gone. */
+function changeHtml(c: Change): string {
+  if (c.approved === null) return templatesHtml(c.current ?? {});
+  if (c.current === null) return templatesHtml(c.approved, 'gone');
+  return diffTemplatesHtml(c.approved, c.current);
 }
 
 function card(q: Queued, ctx: Context): string {
-  const entry = ctx.en.messages[q.key];
   const parts: string[] = [];
   parts.push(`<h3><code>${esc(q.key)}</code> <span class="state ${q.state}">${q.state}</span></h3>`);
-  if (entry === undefined) {
+  if (q.current === null) {
     parts.push('<p class="meta">retired: no app says it now</p>');
     parts.push(templatesHtml(q.approved ?? {}, 'gone'));
     return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
@@ -169,37 +175,32 @@ function card(q: Queued, ctx: Context): string {
   const apps = [...(ctx.apps.get(q.key) ?? [])].sort().reverse().map((a) => (a === 'ios' ? 'iOS' : a)).join(' · ') || 'no app';
   const notes = ctx.notes[q.key];
   const surfaceName = notes.surface;
-  const surface = ctx.surfaces[surfaceName];
+  const budget = ctx.surfaces[surfaceName].budget;
   parts.push(`<p class="meta">${esc(apps)} · ${esc(surfaceName)}: `
-    + `${lengthHtml(longest(ctx.english, q.key, ctx.notes), surface.budget)}</p>`);
-  parts.push(q.approved === null ? templatesHtml(q.current ?? {}) : diffTemplatesHtml(q.approved, q.current ?? {}));
+    + `${lengthHtml(longest(ctx.english, q.key, ctx.notes), budget)}</p>`);
+  parts.push(changeHtml(q));
   const rows: string[] = [];
   for (const t of ctx.translations) {
-    const state = twinState(q.key, t.json, ctx.en, t.bases);
-    const twin = t.json.messages[q.key];
+    const state = t.states.get(q.key) ?? 'missing';
+    const twin = templatesOf(t.json.messages[q.key]);
     rows.push(`<dt>${esc(NAMES[t.tag] ?? t.tag)} ${TWIN_FLAG[state]}</dt><dd>`
-      + `${twin === undefined ? '' : `${templatesHtml(templatesOf(twin))}<p class="meta">`
-        + `${lengthHtml(longest(t.catalogue, q.key, ctx.notes), surface.budget)}</p>`}</dd>`);
+      + `${twin === null ? '' : `${templatesHtml(twin)}<p class="meta">`
+        + `${lengthHtml(longest(t.catalogue, q.key, ctx.notes), budget)}</p>`}</dd>`);
   }
-  for (const o of ctx.overlays) {
-    const over = o.json.messages[q.key];
-    if (over === undefined) continue;
-    rows.push(`<dt>${esc(o.tag)}</dt><dd>${templatesHtml(templatesOf(over))}<p class="meta">`
-      + `${lengthHtml(longest(o.catalogue, q.key, ctx.notes), surface.budget)}</p></dd>`);
+  for (const o of q.overlays) {
+    const catalogue = ctx.overlays.get(o.tag);
+    rows.push(`<dt>${esc(o.tag)}</dt><dd>${changeHtml(o)}${o.current === null || catalogue === undefined ? ''
+      : `<p class="meta">${lengthHtml(longest(catalogue, q.key, ctx.notes), budget)}</p>`}</dd>`);
   }
   if (typeof notes.note === 'string') rows.push(`<dt>Note</dt><dd><p class="note">${esc(notes.note)}</p></dd>`);
   if (rows.length > 0) parts.push(`<dl>${rows.join('')}</dl>`);
   return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
 }
 
-function revision(): string {
-  try {
-    const head = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-    const dirty = execFileSync('git', ['status', '--porcelain', '--', 'copy', REVIEW_DIR], { encoding: 'utf8' }).trim() !== '';
-    return dirty ? `${head}, with uncommitted changes to the words or their approvals` : head;
-  } catch {
-    return 'an unknown commit';
-  }
+/** HEAD, and whether the words have changes it does not hold. */
+function revision(): { head: string; dirty: boolean } {
+  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  return { head: head, dirty: copyIsDirty() };
 }
 
 const STYLE = `
@@ -235,7 +236,7 @@ dd { margin: 0; }
 dd .meta { margin: 0; }
 .state, .flag { font-size: 0.75rem; font-weight: 600; border-radius: 999px; padding: 1px 8px;
   border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-.state.changed { color: var(--accent); } .state.added { color: var(--ins-fg); } .state.removed { color: var(--del-fg); }
+.state.changed { color: var(--accent); } .state.added { color: var(--ins-fg); } .state.retired { color: var(--del-fg); }
 .warn { color: var(--warn); }
 .over { color: var(--over); font-weight: 600; }
 code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -243,29 +244,27 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card); b
   border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; }
 `;
 
-function page(): string {
-  const en = readCatalogue('en');
+function page(): { html: string; queued: number } {
+  const approvedAt = readApproved();
+  const now = wordsNow();
+  const en = now.en;
   const english = parseCatalogue(en);
-  const surfaces = readSurfaces();
-  const overlays = OVERLAYS.map((tag) => {
-    const json = readCatalogue(tag);
-    return { tag: tag, json: json, catalogue: parseCatalogue(json, english) };
-  });
   const translations = translationTags().map((tag) => {
     const json = readCatalogue(tag);
-    return { tag: tag, json: json, catalogue: parseCatalogue(json, english), bases: readBases(tag) };
+    return { tag: tag, json: json, catalogue: parseCatalogue(json, english), states: twinStatesOf(tag, en) };
   });
   const ctx: Context = {
-    en: en, english: english, surfaces: surfaces, notes: readNotes(), apps: appsUsing(Object.keys(en.messages)),
-    overlays: overlays, translations: translations,
+    en: en, english: english, surfaces: readSurfaces(), notes: readNotes(), apps: appsUsing(Object.keys(en.messages)),
+    overlays: new Map(OVERLAYS.map((tag) => [tag, parseCatalogue(readCatalogue(tag), english)])),
+    translations: translations,
   };
 
-  const queue = reviewQueue(en, readApproved());
+  const queue = reviewQueue(wordsAt(approvedAt), now);
   const inQueue = new Set(queue.map((q) => q.key));
   const byState = (s: Queued['state']): Queued[] => queue.filter((q) => q.state === s);
   const sections: string[] = [];
   const nav: string[] = [];
-  for (const [state, title] of [['changed', 'Changed'], ['added', 'Added'], ['removed', 'Removed']] as const) {
+  for (const [state, title] of [['changed', 'Changed'], ['added', 'Added'], ['retired', 'Retired']] as const) {
     const qs = byState(state);
     if (qs.length === 0) continue;
     nav.push(`<a href="#${state}">${title}: ${qs.length}</a>`);
@@ -274,20 +273,25 @@ function page(): string {
   const summaries: string[] = [];
   for (const t of translations) {
     const name = NAMES[t.tag] ?? t.tag;
-    const all = twinQueue(t.tag, t.json, en, t.bases);
-    const stale = all.filter((x) => x.state === 'stale').length;
-    summaries.push(`${esc(name)}: ${stale} stale, ${all.length - stale} missing`);
-    const rest = all.filter((x) => !inQueue.has(x.key));
+    const stale = [...t.states].filter(([, s]) => s === 'stale').map(([k]) => k);
+    const missing = [...t.states.values()].filter((s) => s === 'missing').length;
+    summaries.push(`${esc(name)}: ${stale.length} stale, ${missing} showing the English`);
+    const rest = stale.filter((k) => !inQueue.has(k));
     if (rest.length === 0) continue;
     nav.push(`<a href="#twins-${esc(t.tag)}">${esc(name)} to rewrite: ${rest.length}</a>`);
     sections.push(`<h2 id="twins-${esc(t.tag)}">${esc(name)} to rewrite, under approved English (${rest.length})</h2>`
-      + rest.map((x) => `<article id="${esc(t.tag)}-${esc(x.key)}"><h3><code>${esc(x.key)}</code> `
-        + `${TWIN_FLAG[x.state]}</h3>${templatesHtml(x.english)}`
-        + `${x.twin === null ? '' : `<dl><dt>${esc(name)}</dt><dd>${templatesHtml(x.twin)}</dd></dl>`}</article>`).join(''));
+      + rest.map((key) => `<article id="${esc(t.tag)}-${esc(key)}"><h3><code>${esc(key)}</code> `
+        + `${TWIN_FLAG.stale}</h3>${templatesHtml(templatesOf(en.messages[key]) ?? {})}`
+        + `<dl><dt>${esc(name)}</dt><dd>${templatesHtml(templatesOf(t.json.messages[key]) ?? {})}</dd></dl></article>`).join(''));
   }
-  const keys = queue.map((q) => q.key);
+  const rev = revision();
   const total = Object.keys(en.messages).length;
-  return `<!doctype html>
+  const approving = rev.dirty
+    ? '<p>The words have changes not yet committed, so no commit holds what this page shows: commit them, and write the page again.</p>'
+    : '<p>If nothing needs putting back, this approves exactly what this page shows:</p>'
+      + `<pre>npm run copy:approve -- ${esc(rev.head)}</pre>`
+      + '<p>Otherwise, say what to put back; once that is committed, <code>npm run copy:approve</code> approves the result.</p>';
+  const html = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -299,21 +303,22 @@ function page(): string {
 <main>
 <h1>The review queue</h1>
 <p class="meta">${queue.length} of ${total} keys to read: ${byState('changed').length} changed, ${byState('added').length} added and
-${byState('removed').length} removed since you approved them. ${summaries.join('; ')}. From ${esc(revision())}.
+${byState('retired').length} retired since you approved the words at ${esc(approvedAt.slice(0, 10))}. ${summaries.join('; ')}.
+From ${esc(rev.head.slice(0, 10))}${rev.dirty ? ', with changes to the words not yet committed' : ''}.
 Struck through is what you approved, highlighted what replaced it; a slot like <span class="ph">{time}</span> is filled in by the app.</p>
 <nav>${nav.join('')}</nav>
 ${sections.join('\n')}
 <h2 id="approve">Approving</h2>
-<p>Every key on this page, once read:</p>
-<pre>npm run copy:approve -- ${keys.length === 0 ? '--all' : esc(keys.join(' '))}</pre>
-<p>A rewritten twin: <code>npm run copy:approve -- --translation en-x-1750 &lt;key…&gt;</code>.</p>
+${approving}
 </main>
 </body>
 </html>
 `;
+  return { html: html, queued: queue.length };
 }
 
-const out = process.argv[2] ?? 'copy-review.html';
-const html = page();
+const out = process.argv[2] ?? '_dev/copy-review.html';
+const { html, queued } = page();
+mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, html);
-console.log(`${out}: ${reviewQueue(readCatalogue('en'), readApproved()).length} keys in the queue, ${html.length} characters.`);
+console.log(`${out}: ${queued} keys in the queue, ${html.length} characters.`);
