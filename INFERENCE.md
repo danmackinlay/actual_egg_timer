@@ -24,8 +24,9 @@ The physics is the prior; the prediction is the model.
   (§9), whatever `alpha` turns out to be.
 - **Evidence is pooled.** What one kitchen cannot learn, because its cook
   never varies the egg's size or the cooling, a population varies for free:
-  each phone and browser learns from its own eggs, from a prior fitted to the
-  eggs everyone shares (§7, §9).
+  each phone and browser learns from its own eggs, and will start from a
+  prior fitted to the eggs everyone shares (§7, §9). Until shared eggs are
+  fitted, it starts from the literature's.
 
 So parameters that cannot be told apart over the cooks people actually do
 are not a problem; they are not learned. README §11 asks whether `alpha`,
