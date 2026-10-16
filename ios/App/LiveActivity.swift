@@ -56,19 +56,6 @@ enum LiveActivity {
         }
     }
 
-    /// End every card to go when its own stage ends, or at once if that has
-    /// passed: a card an earlier build began for a cook whose key the launch
-    /// deleted (`StoreRegistry.retired`), which nothing will update again. Until then it shows what it
-    /// showed, beside the notifications still pending for it.
-    static func endAtTheirEnds() async {
-        // The card's dates are the system's (`AppClock.real`).
-        let now = AppClock.system
-        for activity in Activity<CookActivity>.activities {
-            let ends = activity.content.state.ends
-            await activity.end(nil, dismissalPolicy: ends > now ? .after(ends) : .immediate)
-        }
-    }
-
     /// Every card the system holds for the app, its state, stage and end
     /// (in cook time), to the debug log (`Screenshots.log`).
     static func logAll(_ when: String) {
@@ -98,6 +85,5 @@ struct LiveActivityCard: LockScreenCard {
     }
     func update(_ state: CookActivity.ContentState) async { await LiveActivity.update(state) }
     func endAll() async { await LiveActivity.endAll() }
-    func endAtTheirEnds() async { await LiveActivity.endAtTheirEnds() }
     @MainActor func logAll(_ when: String) { LiveActivity.logAll(when) }
 }

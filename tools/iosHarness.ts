@@ -1,7 +1,7 @@
 // The simulator `npm run ios:e2e` drives (tools/iosE2e.ts, its scenarios):
 // a Debug build of the app, a device of the script's own, and one run of the
 // app a scenario (`Run`): its launches, its clock stepped from outside, its
-// debug log and its prefs plist. The web's is tools/harness.ts.
+// debug log and its stores' plist. The web's is tools/harness.ts.
 import { execFileSync, type ExecFileSyncOptions } from 'node:child_process';
 import {
   closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync,
@@ -11,6 +11,9 @@ import { dirname } from 'node:path';
 import { asRead } from './text.ts';
 
 export const BUNDLE = 'name.danmackinlay.actualeggtimer';
+/// The plist of the app's stores, its suite of UserDefaults (`Stores.suite`),
+/// in its data container.
+const STORES_PLIST = `Library/Preferences/${BUNDLE}.stores.plist`;
 const DERIVED = 'build/e2e';
 export const APP = `ios/${DERIVED}/Build/Products/Debug-iphonesimulator/Actual Egg Timer.app`;
 /// How long a wait for the app gives up after, the host's s: only how long
@@ -274,10 +277,10 @@ export class Run {
     return this.until(is('settled'), { from, what: 'the cook settled' });
   }
 
-  /// The prefs plist as JSON, each data value that is JSON parsed; waits
+  /// The stores' plist as JSON, each data value that is JSON parsed; waits
   /// until `ready(prefs)` holds, since the file lags the app by seconds.
   async prefs(ready: (p: Prefs) => boolean = () => true, timeoutS = WAIT_S): Promise<Prefs> {
-    const path = `${this.data}/Library/Preferences/${BUNDLE}.plist`;
+    const path = `${this.data}/${STORES_PLIST}`;
     const end = Date.now() + timeoutS * 1000;
     let last: Prefs = {};
     while (Date.now() < end) {
@@ -288,10 +291,10 @@ export class Run {
     return last;
   }
 
-  /// Edit the prefs plist, with the app terminated: a key renamed, then
+  /// Edit the stores' plist, with the app terminated: a key renamed, then
   /// keys set, each value a text stored as data, as the app stores its stores.
   editPlist(rename: [string, string] | null, values: Record<string, string> = {}): void {
-    const path = `${this.data}/Library/Preferences/${BUNDLE}.plist`;
+    const path = `${this.data}/${STORES_PLIST}`;
     out('python3', ['-c', PLIST_EDIT, path, JSON.stringify(rename), JSON.stringify(values)]);
   }
 
@@ -397,7 +400,7 @@ export type EventOf<K extends Kind> = Extract<Event, { ev: K }>;
 /// An event found by a wait, with its index in the log.
 export type Found<E extends Event = Event> = E & { i: number };
 
-/// The prefs plist as read, each data value that is JSON parsed: the keys a
+/// The stores' plist as read, each data value that is JSON parsed: the keys a
 /// check reads.
 export interface Prefs {
   [SETTINGS]?: { startMode?: string; waterLitres?: number; eggCount?: number; doneness?: number };

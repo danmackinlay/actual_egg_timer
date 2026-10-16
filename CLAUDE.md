@@ -146,8 +146,9 @@ next is `PLAN.md`; the last section here says which document holds what.
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
   `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them.
 - **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools:
-  write the value into the app's `UserDefaults` plist in the simulator
-  container and relaunch. The doneness slider is a `UISlider` (`YolkSlider`),
+  write the value into the plist of the app's stores, its suite
+  (`Library/Preferences/<bundle id>.stores.plist`, `Stores.suite`), in the
+  simulator container and relaunch. The doneness slider is a `UISlider` (`YolkSlider`),
   which takes them.
 - **`xcrun simctl spawn <udid> defaults` is not the app's UserDefaults**: it
   writes a domain the app reads but cannot delete. Drive the app to make the

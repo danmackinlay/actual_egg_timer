@@ -649,8 +649,11 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     new key (`calibration.v5` on iOS, `aet.calibration.v5` on the web)
     holding only today's record shape, and never reads 0.3's `v4`; a cook on
     0.3 starts learning again from the population prior, once. A store or
-    cook that cannot be read is dropped, and the boot sweep of retired keys
-    deletes `v4` with the rest ("Yes, sweep v4 too"). What stays: "Export
+    cook that cannot be read is dropped, and the boot sweep deletes `v4`
+    with the rest ("Yes, sweep v4 too"). On iOS the stores are in a suite
+    of their own (17 October 2026), which the sweep clears of every key the
+    table does not list; what 0.5 and earlier kept in the standard domain,
+    `v4` among it, is left there unread. What stays: "Export
     my results", in Settings under What I've learned, which saves the store
     to a file as data, by each app's own JSON encoder, a damaged store as
     its text (a download on the web, the share sheet on iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
@@ -916,7 +919,8 @@ October:
 136. **No newer-build guard, in either app**; supersedes 100. With one tab
     owning the web app (128), an older build meets a newer one's stores only
     after a rollback or a downgrade, the loss a format bump already accepts
-    (107). The old marks are retired keys, which the boot sweep deletes. The
+    (107). The old marks are keys no store lists: the web's boot sweep
+    deletes them, and on iOS they are left unread in the standard domain. The
     web's development clock no longer marks the stores either: it runs only
     on this machine, whose `/api` is the development server's.
 137. **The correction in hand stays in each app.** Superseded by 139.

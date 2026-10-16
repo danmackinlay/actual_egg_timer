@@ -85,8 +85,6 @@ public protocol LockScreenCard: Sendable {
     func start(_ attributes: CookActivity, state: CookActivity.ContentState) async
     func update(_ state: CookActivity.ContentState) async
     func endAll() async
-    /// Every card ended to go at its own end: an earlier build's.
-    func endAtTheirEnds() async
     /// Every card the system holds, to the debug log.
     @MainActor func logAll(_ when: String)
 }
@@ -122,6 +120,5 @@ struct NoCard: LockScreenCard {
     func start(_ attributes: CookActivity, state: CookActivity.ContentState) async {}
     func update(_ state: CookActivity.ContentState) async {}
     func endAll() async {}
-    func endAtTheirEnds() async {}
     func logAll(_ when: String) {}
 }

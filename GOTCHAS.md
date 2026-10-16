@@ -20,8 +20,8 @@ releasing has its own in `ios/RELEASING.md`.
 - **A `UISlider` sends `.valueChanged` again while the finger rests, and
   once more as it lifts**, with the finger's value, not one the code set
   meanwhile.
-- **The simulator's `UserDefaults` plist takes a key with a dot only
-  escaped**: `plutil -insert 'sharing\.v1'`, since plutil reads the dot as
+- **The plist of the app's stores in the simulator
+  (`<bundle id>.stores.plist`) takes a key with a dot only escaped**: `plutil -insert 'sharing\.v1'`, since plutil reads the dot as
   a path.
 - **`sudo xcode-select -s …` is a red herring** when the simulator
   integration says "Xcode is installed but not selected" while

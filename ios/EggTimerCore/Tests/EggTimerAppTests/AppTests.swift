@@ -576,30 +576,53 @@ struct AppTests {
         await world.until("the solve") { !planner.solver.busy }
     }
 
-    /// At launch every key an earlier build wrote is swept, and every key
-    /// this build keeps, and any key not the app's, stays.
-    @Test func anEarlierBuildsKeysAreSweptAndThisBuildsKept() {
-        var values: [String: Any] = ["AppleLanguages": ["en"]]
-        for key in StoreRegistry.retired { values[key] = Data("an earlier build's".utf8) }
-        for store in StoreRegistry.all { values[store.key] = Data("this build's".utf8) }
-        let world = World(store: MemoryStore(values))
+    /// At launch, in a real suite of UserDefaults, every key the table does
+    /// not list is swept and every key it lists stays. Only the suite's own
+    /// keys are read: a key in the standard domain, where the system keeps
+    /// the language the cook chose for the app, stays, and one the suite
+    /// only reads through from another domain is never asked to go.
+    @Test func theSweepTakesOnlyTheSuitesOwnKeys() throws {
+        let name = "\(Stores.suite).test"
+        let standard = UserDefaults.standard
+        let raw = try #require(UserDefaults(suiteName: name))
+        let (was, output) = (Stores.store, Screenshots.output)
+        defer {
+            (Stores.store, Screenshots.output) = (was, output)
+            standard.removePersistentDomain(forName: name)
+            standard.removeObject(forKey: "aet.standard")
+        }
+        standard.removePersistentDomain(forName: name)
+        standard.set("the system's", forKey: "aet.standard")
+        raw.register(defaults: ["aet.registered": "read through"])
+        for key in ["cookInProgress", "calibration.v4"] { raw.set(Data("an earlier build's".utf8), forKey: key) }
+        for store in StoreRegistry.all { raw.set(Data("this build's".utf8), forKey: store.key) }
+        let suite = Suite(name)
         let kept = Set(StoreRegistry.all.map(\.key))
-        #expect(!Stores.sweptKeys.isEmpty)
-        for key in StoreRegistry.retired { #expect(world.store.object(forKey: key) == nil, "\(key) swept") }
-        for key in kept { #expect(world.store.object(forKey: key) != nil, "\(key) kept") }
-        #expect(world.store.object(forKey: "AppleLanguages") != nil)
-        #expect(Set(StoreRegistry.retired).isDisjoint(with: kept), "no key both retired and kept")
-        #expect(Stores.takeRetiredCook(), "an earlier build's cook among them")
+        #expect(Set(suite.keys) == kept.union(["cookInProgress", "calibration.v4"]))
+
+        let log = EventLog()
+        Screenshots.output = { event, _ in log.add(event) }
+        Stores.store = suite
+        Stores.sweep()
+        let swept = log.events.compactMap { e -> String? in
+            if case .swept(let key) = e { return key }
+            return nil
+        }
+        #expect(swept == ["calibration.v4", "cookInProgress"])
+        #expect(Set(suite.keys) == kept)
+        #expect(standard.string(forKey: "aet.standard") == "the system's")
+        #expect(suite.string(forKey: "aet.standard") == nil, "the standard domain is not the suite's")
+        #expect(suite.string(forKey: "aet.registered") == "read through")
     }
 
-    /// The lint's runtime twin (test/iosStores.test.ts): a whole cook, ended
-    /// by Start again, writes only to the store it was given and only through
-    /// `Stores`, each write the one `Stores` logged; UserDefaults itself is
-    /// never touched.
+    /// A whole cook, ended by Start again, writes only to the store it was
+    /// given and only through `Stores`, each write the one `Stores` logged;
+    /// neither the standard domain nor the app's suite is touched.
     @Test func everyWriteGoesThroughStores() async throws {
         let keys = StoreRegistry.all.map(\.key)
         let standard = UserDefaults.standard
-        let before = keys.map { standard.object(forKey: $0).map { "\($0)" } }
+        let before = standard.dictionaryRepresentation() as NSDictionary
+        let suiteBefore = standard.persistentDomain(forName: Stores.suite) as NSDictionary?
 
         let world = World()
         let model = world.model()
@@ -627,6 +650,7 @@ struct AppTests {
         #expect(Set(world.store.writes.map(\.key)).isSuperset(of: [Cook.savedKey, "calibration.v5"]))
         // Every key written is in the table of stores.
         #expect(Set(world.store.writes.map(\.key)).isSubset(of: Set(keys)))
-        #expect(keys.map { standard.object(forKey: $0).map { "\($0)" } } == before)
+        #expect(before.isEqual(to: standard.dictionaryRepresentation()))
+        #expect(suiteBefore == standard.persistentDomain(forName: Stores.suite) as NSDictionary?)
     }
 }

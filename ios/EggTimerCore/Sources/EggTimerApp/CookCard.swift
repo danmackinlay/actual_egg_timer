@@ -46,9 +46,6 @@ final class CookCard {
 
     func endAll() { call { await $0.endAll() } }
 
-    /// Every card ended to go at its own end: an earlier build's.
-    func endAtTheirEnds() { call { await $0.endAtTheirEnds() } }
-
     /// The cook gone from the screen: its card ended, and the next cook's
     /// started afresh.
     func reset() {

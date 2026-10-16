@@ -10,17 +10,22 @@ import EggTimerCore
 
 /// What the app keeps, and the sweep at launch.
 ///
-/// Every write the app makes to UserDefaults goes through `set` and
-/// `remove`, and each is in the debug log, which the scripted checks hold
-/// the store to: `test/iosStores.test.ts` fails on any other write in the
-/// source, and the store (`store`, UserDefaults in the app, a fake in the
+/// Every write the app makes to its stores goes through `set` and `remove`,
+/// and each is in the debug log, which the scripted checks hold the store
+/// to: the store (`store`, the app's suite of UserDefaults, a fake in the
 /// tests) takes a write only with a `Pass`, which only this file can make.
 /// Reads go straight to the store. `sweep` runs first thing at launch,
 /// before anything is written.
 public enum Stores {
-    /// Where everything is kept: UserDefaults in the app; a test's own.
+    /// The app's own suite of UserDefaults, apart from the standard domain,
+    /// where the system keeps what is its own of the app (the language the
+    /// cook chose for it, `AppleLanguages`): only `Stores` writes to the
+    /// suite, so every key in it is the app's.
+    public static let suite = "name.danmackinlay.actualeggtimer.stores"
+
+    /// Where everything is kept: the suite in the app; a test's own.
     /// Unsafe, but set only at launch, or by a test before it runs anything.
-    nonisolated(unsafe) public static var store: any KeyValueStore = UserDefaults.standard
+    nonisolated(unsafe) public static var store: any KeyValueStore = Suite(suite)
 
     /// What a write to the store needs, and only `Stores` can make: so no
     /// write reaches the store except through `set` and `remove`.
@@ -28,31 +33,14 @@ public enum Stores {
         fileprivate init() {}
     }
 
-    /// The keys deleted at launch (`sweep`) rather than left on the phone
-    /// being neither read nor collected: every key an earlier build wrote
-    /// that no store of this build is kept under (`StoreRegistry`).
-    static var sweptKeys: [String] {
-        let kept = Set(StoreRegistry.all.map(\.key))
-        return StoreRegistry.retired.filter { !kept.contains($0) }
-    }
-
-    /// Whether the sweep found an earlier build's cook in progress, until
-    /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
-    /// Screen, and nothing will update it again. Unsafe, but written and
-    /// read once each, at launch on the main actor (`sweep`, `Cook.restore`).
-    nonisolated(unsafe) private static var retiredCook = false
-
-    /// Once: whether the launch's sweep deleted an earlier build's cook.
-    static func takeRetiredCook() -> Bool {
-        defer { retiredCook = false }
-        return retiredCook
-    }
-
-    /// Delete every key an earlier build wrote (`sweptKeys`).
+    /// Delete every key in the store that no store of this build is kept
+    /// under (`StoreRegistry`): what an earlier build wrote, which nothing
+    /// would read or collect. The store's own keys, never the standard
+    /// domain's.
     public static func sweep() {
         let defaults = store
-        for key in sweptKeys where defaults.object(forKey: key) != nil {
-            if StoreRegistry.retiredCooks.contains(key) { retiredCook = true }
+        let kept = Set(StoreRegistry.all.map(\.key))
+        for key in defaults.keys.sorted() where !kept.contains(key) {
             defaults.removeObject(forKey: key, Pass())
             Screenshots.log(.swept(key: key))
         }
@@ -74,10 +62,12 @@ public enum Stores {
     }
 }
 
-/// UserDefaults' reads, and its writes with a `Stores.Pass`: what the app
-/// keeps, as the logic reaches it (`Stores.store`), so a test can give it a
-/// store of its own.
+/// A store's reads, and its writes with a `Stores.Pass`: what the app keeps,
+/// as the logic reaches it (`Stores.store`), so a test can give it a store
+/// of its own.
 public protocol KeyValueStore: AnyObject {
+    /// The keys written to the store, and no others: what the sweep reads.
+    var keys: [String] { get }
     func object(forKey key: String) -> Any?
     func string(forKey key: String) -> String?
     func double(forKey key: String) -> Double
@@ -88,9 +78,32 @@ public protocol KeyValueStore: AnyObject {
     func removeObject(forKey key: String, _ pass: Stores.Pass)
 }
 
-extension UserDefaults: KeyValueStore {
-    public func set(_ value: Any?, forKey key: String, _ pass: Stores.Pass) { set(value, forKey: key) }
-    public func removeObject(forKey key: String, _ pass: Stores.Pass) { removeObject(forKey: key) }
+/// A suite of UserDefaults as a store, its own setters out of reach. A read
+/// sees a launch argument of the same key over what is stored (the argument
+/// domain), as a debug build's `-settings` relies on; never the standard
+/// domain.
+public final class Suite: KeyValueStore, @unchecked Sendable {
+    public let name: String
+    private let defaults: UserDefaults
+
+    public init(_ name: String) {
+        self.name = name
+        // nil only for the app's bundle id or the global domain's name.
+        defaults = UserDefaults(suiteName: name)!
+    }
+
+    /// The suite's persistent domain alone. Never
+    /// `dictionaryRepresentation()`, which reads through to the argument,
+    /// global and registration domains, and so to the launch's keys and
+    /// Apple's.
+    public var keys: [String] { defaults.persistentDomain(forName: name).map { Array($0.keys) } ?? [] }
+    public func object(forKey key: String) -> Any? { defaults.object(forKey: key) }
+    public func string(forKey key: String) -> String? { defaults.string(forKey: key) }
+    public func double(forKey key: String) -> Double { defaults.double(forKey: key) }
+    public func bool(forKey key: String) -> Bool { defaults.bool(forKey: key) }
+    public func data(forKey key: String) -> Data? { defaults.data(forKey: key) }
+    public func set(_ value: Any?, forKey key: String, _ pass: Stores.Pass) { defaults.set(value, forKey: key) }
+    public func removeObject(forKey key: String, _ pass: Stores.Pass) { defaults.removeObject(forKey: key) }
 }
 
 /// Where a boil memory is kept: as the web keeps it, JSON in its format, the
