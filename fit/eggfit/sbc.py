@@ -57,7 +57,13 @@ def add_parser(sub) -> None:
     s.add_argument("--cooks", type=int, default=40)
     s.add_argument("--draws", type=int, default=99, help="posterior draws each rank is out of")
     s.add_argument("--warmup", type=int, default=500)
-    s.add_argument("--samples", type=int, default=1000, help="draws a chain, before thinning")
+    # The spreads between cooks mix slowly (tests/test_recovery.py), and a
+    # truth from the prior can make them slower: on the first twenty
+    # repetitions' truths, at 1,000 draws a chain 12 failed the diagnostics
+    # (diagnostics.py; 9 of them R-hat), at 2,000 one did, at R-hat 1.0103.
+    # A repetition whose chains fail is still ranked, but its ranks are less
+    # to be believed.
+    s.add_argument("--samples", type=int, default=3000, help="draws a chain, before thinning")
     s.add_argument("--chains", type=int, default=4)
     s.add_argument("--target-accept", type=float, default=0.99)
     s.add_argument("--shard", default="0/1",
