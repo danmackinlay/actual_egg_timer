@@ -144,8 +144,8 @@ The worklist's questions, answered the same day:
 39. **Delete `saferLevels` and everything that serves it.**
 40. **`Decision` drops `interval`, `stillLearning` and `loss`.** No screen
     shows "still learning" (93). Where the interval is studied, the owner's
-    threshold stands: the 80% interval on the cook time narrowing below
-    about ±15 s.
+    threshold (26 September 2026) stands: the 80% interval on the cook time
+    narrowing below about ±15 s.
 41. **The Swift core drops what no app calls**; TypeScript keeps it.
 42. **`sousvide.warn` was false**: it says what the model does, which sets
     the white after about 22.7 h at 58 °C.
