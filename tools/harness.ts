@@ -279,13 +279,16 @@ export class Tab {
     return r.result.value as T;
   }
 
-  /** Wait for an expression to be truthy. */
+  /** Wait for an expression to be truthy. A timeout names the page's
+   *  exception only if the last look still threw one: an early one, gone
+   *  since, is not why the wait failed. */
   async until(expression: string, what: string, ms = WAIT_MS): Promise<void> {
     const end = Date.now() + ms;
     let last = '';
     while (Date.now() < end) {
       try {
         if (await this.eval<boolean>(`(async () => !!(${expression}))()`)) return;
+        last = '';
       } catch (e) {
         // The page between documents, most likely.
         last = e instanceof Error ? e.message : String(e);
