@@ -25,8 +25,10 @@
  * runs it from its source and it imports nothing generated.
  *
  * `--check` is `fixtures:check`'s rule for generated files: what is written
- * must be what was there, so in CI's clean checkout a catalogue committed
- * without its keys fails.
+ * must be what was there, in the working tree. CI runs it on the clean
+ * checkout before npm test rewrites the keys, so there a catalogue committed
+ * without its keys fails; locally `npm run verify` fails a generated file
+ * with uncommitted changes, since an npm test leaves the keys on disk fresh.
  */
 
 import { readFileSync } from 'node:fs';

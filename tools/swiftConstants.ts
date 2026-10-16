@@ -22,8 +22,12 @@
  * `npm test` runs this before it type-checks, as it does copy:keys, so the
  * Swift's constants are never a step to remember. `--check` is
  * `fixtures:check`'s rule for generated files, as in tools/copyKeys.ts: what
- * is written must be what was there, so in CI's clean checkout a constant
- * committed without its twin fails.
+ * is written must be what was there. It compares with the working tree, not
+ * the commit, so it fails a constant committed without its twin only where
+ * nothing has rewritten the twin first: CI runs it on the clean checkout
+ * before npm test, and ends with `git diff --exit-code`. Locally, after an
+ * npm test, the twin on disk is fresh whether or not it was committed, so
+ * `npm run verify` also fails a generated file with uncommitted changes.
  */
 
 import { readFileSync, readdirSync } from 'node:fs';

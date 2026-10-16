@@ -50,14 +50,18 @@ jobs:
         with:
           node-version-file: .node-version
       - run: npm ci
+      # The generated files against the commit, before npm test rewrites
+      # the key types and the Swift's constants.
+      - run: npm run copy:keys -- --check
+      - run: npm run swift:constants -- --check
+      - run: npm run fixtures:check
       - run: npm test
       # The tests again, sweeping every point where npm test sweeps fewer.
       - run: npm run test:slow
       - run: npm run validate
       - run: npm run copy:literals
-      - run: npm run copy:keys -- --check
-      - run: npm run swift:constants -- --check
-      - run: npm run fixtures:check
+      # Nothing above changed a committed file.
+      - run: git diff --exit-code
 
   # The Swift package's tests, and the app built for Release. Its Debug
   # build, the other half of `npm run ios:build`, is ios-e2e's.
