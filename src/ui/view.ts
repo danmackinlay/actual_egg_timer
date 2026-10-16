@@ -41,7 +41,7 @@ import { learnedLine, learnedView } from './learned.ts';
 import type { Learning, LearnedView } from './learned.ts';
 import { shareView } from './shareView.ts';
 import type { ShareView } from './shareView.ts';
-import type { Model, Redraws } from './model.ts';
+import type { Model } from './model.ts';
 import { type PhaseView, phaseView } from './phaseView.ts';
 import { type SetupFacts, liveSetupFacts } from './sentence.ts';
 import { sousVideCopy } from './sousvide.ts';
@@ -128,12 +128,8 @@ interface Screen {
   section: SectionDraw | null;
 }
 
-/** What the page shows. */
-/** The parts of the page drawn only when `update` asks (model.ts, `Part`):
- *  as they should read, with the counts that say which are asked for. */
+/** The controls and Settings, and the line over the questions. */
 export interface Sections {
-  redraws: Redraws;
-  echoSource: string | null;
   form: FormView;
   /** The line over the questions, as last said. */
   note: { rev: number; text: string };
@@ -142,8 +138,8 @@ export interface Sections {
   share: ShareView | null;
 }
 
-/** On every screen: the mute, the parts drawn only when asked, and the words
- *  the main button is sized on (`sizerWords`). */
+/** What the page shows. On every screen: the mute, the controls and
+ *  Settings, and the words the main button is sized on (`sizerWords`). */
 export type View = {
   mute: { label: string; pressed: boolean }; sections: Sections; sizers: string[];
 } & (
@@ -206,14 +202,12 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   return { ...top, kind: 'running', ...runningScreen(m, now_ms, memo, m.cook, m.plan, learningOn, sentence, startedAt) };
 }
 
-/** The parts drawn only when asked, for `m`. */
+/** The controls and Settings, and the line over the questions, for `m`. */
 function sectionsOf(m: Model): Sections {
   const l = learning(m);
   const said = m.note.say;
   const share = m.share;
   return {
-    redraws: m.redraws,
-    echoSource: m.echoSource,
     form: formView(m),
     note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
     learned: learnedView(l),

@@ -122,7 +122,8 @@ export function renderSentence(facts: SetupFacts): void {
     egg: `${SLOT}egg${SLOT}`, from: `${SLOT}from${SLOT}`,
     start: `${SLOT}start${SLOT}`, cooling: `${SLOT}cooling${SLOT}`,
   });
-  const signature = [marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
+  // The units too: the masses and temperatures are in them.
+  const signature = [unitSystem(), marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
   if (signature === sentenceShown) return;
   sentenceShown = signature;
 
@@ -159,12 +160,6 @@ export function renderSentence(facts: SetupFacts): void {
   // A choice whose clause the sentence no longer has - sous-vide drops two -
   // closes with it.
   if (openClause !== null && !clauses[openClause].isConnected) setOpenClause(null);
-}
-
-/** Draw the sentence again at its next render even if its words look the
- *  same: its masses and temperatures are in the units, which have changed. */
-export function redrawSentence(): void {
-  sentenceShown = '';
 }
 
 /** Open one clause's choice under the sentence, or none. One at a time. */

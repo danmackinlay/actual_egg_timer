@@ -48,8 +48,6 @@ export function emptyModel(): Model {
     sharing: false,
     deletedHere: false,
     share: null,
-    redraws: { controls: 0, units: 0, doneness: 0, alarm: 0, echo: 0, learned: 0, share: 0, words: 0 },
-    echoSource: null,
     note: { rev: 0, say: 'learned' },
     profiles: [],
     solved: null,

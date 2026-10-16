@@ -77,20 +77,6 @@ interface Aim {
 /** Where the start's − and + stopped, for the line under them. */
 export type { StartLimit };
 
-/**
- * The parts of the page drawn again only when `update` says so, each a
- * count it bumps and the view draws the part when its count moves (view.ts,
- * render.ts): the controls written whole from the model (`controls`); every
- * field with a unit, in the units on screen (`units`); the slider
- * (`doneness`); the alarm's choice (`alarm`); the controls that follow a
- * change, but the field it came from (`echo`, `echoSource`); what is said of
- * what has been learned, in Settings (`learned`); the sharing section
- * (`share`); the words drawn only when they change, after a new language
- * (`words`). A field the cook is typing in is never written under them.
- */
-export type Part = 'controls' | 'units' | 'doneness' | 'alarm' | 'echo' | 'learned' | 'share' | 'words';
-export type Redraws = Record<Part, number>;
-
 /** The line over the questions, as last said: what has been learned, "thank
  *  you" for the egg kept, or "learning" for an answer taken; `rev` moves
  *  each time it is said. */
@@ -146,10 +132,7 @@ export interface Model extends CookState {
   deletedHere: boolean;
   /** Sharing as the runner read it before this message; null before boot. */
   share: ShareSeen | null;
-  /** The parts drawn again only when they are asked for, and the line over
-   *  the questions. */
-  redraws: Redraws;
-  echoSource: string | null;
+  /** The line over the questions. */
   note: Note;
   /** The odds profiles built on the calibration as it stands, for any pot:
    *  the runner's view of its caches, like `surfaces`. */
@@ -255,9 +238,9 @@ export type Msg =
    *  on screen, in these units and words. */
   | { kind: 'begin'; units: Units; lang: string }
   /** What the controls now say (input.ts), as far as they say it, changed
-   *  on the field `source`, of the cook's choices `group` makes or of none
-   *  (edit.ts, `touchOf`), at `at_s` on the gestures' clock. */
-  | { kind: 'controls'; read: Partial<Settings>; source: string | null; group: HandGroup | null; at_s: number }
+   *  on a field of the cook's choices `group` makes or of none (edit.ts,
+   *  `groupOf`), at `at_s` on the gestures' clock. */
+  | { kind: 'controls'; read: Partial<Settings>; group: HandGroup | null; at_s: number }
   | { kind: 'units'; system: UnitSystem }
   /** A language picked in Settings. */
   | { kind: 'language'; pick: string }
@@ -267,11 +250,10 @@ export type Msg =
   | { kind: 'pans'; boilMemory: BoilMemory }
   /** A new posterior, everything forgotten, and the pans with it. */
   | { kind: 'calibration'; calib: Calibration; boilMemory: BoilMemory }
-  /** Eggs folded: the idle page solved again, and what is said of what has
-   *  been learned drawn again. */
+  /** Eggs folded: the idle page solved again, and what has been learned
+   *  said again over the questions. */
   | { kind: 'learned' }
-  /** Every word on the page in a new language: as `learned`, and the words
-   *  drawn only when they change drawn again. */
+  /** Every word on the page in a new language: as `learned`. */
   | { kind: 'relabelled' }
   | { kind: 'forget' }
   /** "Export my results". */
@@ -333,12 +315,8 @@ export type Effect =
   /** The words follow the settings' language; `before`, the one they were
    *  in. */
   | { kind: 'language'; before: string }
-  /** The controls written from the model: all of them, every field with a
-   *  unit, the slider, the alarm's choice. */
+  /** The alarm's sound, heard as it is picked. */
   | { kind: 'previewAlarm' }
-  /** The words drawn only when they change, forgotten: a new language. */
-  /** What is said of what has been learned (the note over the questions
-   *  and in Settings, or Settings' alone), and the sharing section. */
   /** A new nudge to draw; everything learned to forget. */
   | { kind: 'drawNudge' }
   | { kind: 'forgetAll' }
@@ -348,21 +326,9 @@ export type Effect =
   | { kind: 'setSharing'; on: boolean }
   | { kind: 'deleteShared' };
 
-/** `m` with these parts to be drawn again. */
-function redraw(m: Model, ...parts: Part[]): Model {
-  const r = { ...m.redraws };
-  for (const p of parts) r[p] += 1;
-  return { ...m, redraws: r };
-}
-
 /** `m` with the line over the questions saying `say`. */
 function say(m: Model, say: Note['say']): Model {
   return { ...m, note: { rev: m.note.rev + 1, say: say } };
-}
-
-/** What has been learned said again: over the questions, and in Settings. */
-function learnedSaid(m: Model): Model {
-  return redraw(say(m, 'learned'), 'learned');
 }
 
 /** The LOCAL date of a moment, ms. A day, not a timestamp. */
@@ -688,11 +654,11 @@ function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
   if (was.cook === null && m.cook !== null) {
     const shown = settingsOfChoices(m.settings, m.cook.choices, sizeClasses);
     const next: Model = { ...m, cookControls: shown, controlsStart_s: m.cook.startedAt_s, aim: null, hand: nothingInHand() };
-    return [redraw(next, 'controls'), [...effects, ...handFresh(was), { kind: 'startLimit', limit: null }]];
+    return [next, [...effects, ...handFresh(was), { kind: 'startLimit', limit: null }]];
   }
   if (was.cook !== null && m.cook === null) {
     const next: Model = { ...m, cookControls: null, controlsStart_s: null, aim: null, hand: null };
-    return [redraw(next, 'controls', 'share'), [
+    return [next, [
       ...effects, ...handFresh(was), { kind: 'startLimit', limit: null }, { kind: 'silence' },
       { kind: 'questionsReset' }, { kind: 'drawNudge' },
     ]];
@@ -719,7 +685,7 @@ function solve(m: Model): [Model, Effect[]] {
   let at = m;
   const snapTo = s.answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== m.settings.doneness) {
-    at = redraw({ ...m, settings: { ...m.settings, doneness: snapTo } }, 'doneness');
+    at = { ...m, settings: { ...m.settings, doneness: snapTo } };
     effects.push({ kind: 'save', soon: false });
   }
   if (s.surface !== null) effects.push({ kind: 'askSurface', inputs: s.surface });
@@ -753,12 +719,10 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     }
     case 'controls': {
       // While a cook runs the controls are its correction in hand, written
-      // to the settings when it is committed, not before. The controls that
-      // follow it are drawn again, but the field it came from.
-      const echoed: Model = { ...redraw(m, 'echo'), echoSource: msg.source };
-      if (m.cook !== null) return handChanged(echoed, msg.group, msg.read, msg.at_s, now_s);
+      // to the settings when it is committed, not before.
+      if (m.cook !== null) return handChanged(m, msg.group, msg.read, msg.at_s, now_s);
       return [
-        { ...echoed, settings: { ...m.settings, ...msg.read }, unsolved: true },
+        { ...m, settings: { ...m.settings, ...msg.read }, unsolved: true },
         [{ kind: 'save', soon: true }, { kind: 'solveSoon' }],
       ];
     }
@@ -775,7 +739,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
         settings = { ...settings, language: languageAfterFlip(settings.language, choice.flip) };
       }
       effects.push({ kind: 'save', soon: false });
-      return solved(redraw({ ...m, settings: settings }, 'units'), effects);
+      return solved({ ...m, settings: settings }, effects);
     }
     case 'language': {
       // Nothing about the egg changes, and the units are never touched from
@@ -796,13 +760,10 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'pans':
       return [{ ...m, boilMemory: msg.boilMemory }, []];
     case 'calibration':
-      return solved(learnedSaid({ ...m, calib: msg.calib, boilMemory: msg.boilMemory }), []);
+      return solved(say({ ...m, calib: msg.calib, boilMemory: msg.boilMemory }, 'learned'), []);
     case 'learned':
-      return solved(learnedSaid(m), []);
     case 'relabelled':
-      // Every word again: the fields with a unit, those drawn only when they
-      // change, and what is said of what has been learned.
-      return solved(learnedSaid(redraw(m, 'units', 'words')), []);
+      return solved(say(m, 'learned'), []);
     case 'hand':
       return handIn(m, msg.event, now_s);
     case 'startStep':
@@ -818,10 +779,10 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'shareDelete':
       return [m, [{ kind: 'deleteShared' }]];
     case 'shareDeleted':
-      return solved(redraw({ ...m, deletedHere: msg.confirmed }, 'share'), []);
+      return solved({ ...m, deletedHere: msg.confirmed }, []);
     case 'shared':
       // Turning sharing on or off moves the time by the nudge.
-      return solved(redraw(m, 'share'), []);
+      return solve(m);
     case 'nudge':
       return solve({ ...m, nudgeDraw: msg.draw });
     case 'kept': {
@@ -830,8 +791,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // away, since no more could be kept either.
       const cook = m.cook;
       const here = cook !== null && cook.id_ms === msg.id_ms && m.plan !== null && phaseAt(m.plan.deadlines, now_s) === 'DONE';
-      const thanked = here && msg.kept && cook !== null && answered(cook) ? say(m, 'thanks') : m;
-      const next = redraw(thanked, 'learned');
+      const next = here && msg.kept && cook !== null && answered(cook) ? say(m, 'thanks') : m;
       return [here && !msg.kept ? { ...next, questions: 'away' } : next, []];
     }
     default:
@@ -1105,7 +1065,7 @@ function letGo(m: Model): Model {
   const shown = m.cookControls;
   const next: Model = m.aim === null ? m : { ...m, aim: null };
   if (cook === null || shown === null || shown.doneness === cook.choices.level) return next;
-  return redraw({ ...next, cookControls: { ...shown, doneness: cook.choices.level } }, 'doneness');
+  return { ...next, cookControls: { ...shown, doneness: cook.choices.level } };
 }
 
 /** The start a minute earlier or later, as far as the cook allows (core

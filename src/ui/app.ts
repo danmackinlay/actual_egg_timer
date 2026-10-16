@@ -26,7 +26,7 @@
 import { nudgeSeconds } from '../core/decide.ts';
 import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
-import { applyConstantsToDom, buildSizeOptions } from './controls.ts';
+import { applyConstantsToDom, applyLanguageToDom, buildSizeOptions } from './controls.ts';
 import {
   type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
   startRunner, stopRunner,
@@ -131,6 +131,9 @@ function own(reloaded: boolean): void {
   };
   if (!wired) wire();
   wired = true;
+  // The language picker follows the words on screen, not each frame: they
+  // change only once a new catalogue is in (effects.ts, `followLanguage`).
+  applyLanguageToDom();
   // From here on every change to the page is a message (send.ts).
   startRunner(stores, initial);
   restoreCook(reloaded);

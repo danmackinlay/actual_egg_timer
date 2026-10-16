@@ -99,7 +99,7 @@ test('idle: the solve\'s time and Eggs in, the welcome before anything is learne
 
 test('a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
   const m = page({ startMode: 'hot' });
-  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, at_s: 0 }, S);
+  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, group: null, at_s: 0 }, S);
   const v = view(moved, S * 1000, viewMemo());
   assert.equal(v.kind, 'unsolved');
   if (v.kind !== 'unsolved') return;
@@ -184,10 +184,9 @@ test('the question: past the grace and corrected, "still in the water?" holds Do
   assert.equal(v.readout.announce.text, v.readout.words.spoken, 'the question is its own announcement');
 });
 
-test('the parts drawn only when asked: the form in the units on screen, the line over the questions, Settings\' note, sharing', () => {
+test('the controls and Settings: the form in the units on screen, the line over the questions, Settings\' note, sharing', () => {
   const m = page({ waterLitres: 1.5, eggCount: 3 }, { '1.5': 400 });
   const s = view(m, S * 1000, viewMemo()).sections;
-  assert.deepEqual(s.redraws, m.redraws);
   assert.equal(s.form.values.litres, '1.5');
   assert.equal(s.form.controls.eggCount, 3);
   assert.equal(s.form.units, 'metric');
@@ -217,7 +216,7 @@ test('the row of buttons is sized on the start\'s action, Rolling boil, the chos
   assert.deepEqual(view(page({ startMode: 'hot', cooling: 'bowl' }), S * 1000, viewMemo()).sizers,
     [t('action.eggsIn'), t('action.fullBoil'), t('action.pulled.bowl'), t('action.startAgain')], 'a hot start: Eggs in');
   // A change to the controls, before its solve: the new cooling's pull at once.
-  const moved = go(page({ cooling: 'ice' }), { kind: 'controls', read: { cooling: 'tap' }, source: null, group: null, at_s: 0 }, S);
+  const moved = go(page({ cooling: 'ice' }), { kind: 'controls', read: { cooling: 'tap' }, group: null, at_s: 0 }, S);
   const unsolved = view(moved, S * 1000, viewMemo());
   assert.equal(unsolved.kind, 'unsolved');
   assert.ok(unsolved.sizers.includes(t('action.pulled.tap')), 'the new cooling\'s pull before the solve');

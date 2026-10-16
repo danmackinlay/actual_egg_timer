@@ -1,5 +1,6 @@
 /**
- * The page's elements, found once at boot, and the radio groups' helpers.
+ * The page's elements, found once at boot, and the helpers that write
+ * them: words, and the radio groups.
  *
  * Nothing here touches the document when the module is imported: the
  * elements are found by `bindDom()`, which `boot()` calls first, and read
@@ -164,6 +165,12 @@ function radios(name: string): HTMLInputElement[] {
   return Array.from(
     document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${name}"]`),
   );
+}
+
+/** Words written where they say otherwise: a part of the page drawn each
+ *  frame changes nothing until what it says does. */
+export function setText(e: Element, text: string): void {
+  if (e.textContent !== text) e.textContent = text;
 }
 
 export function selectRadio(name: string, value: string): void {
