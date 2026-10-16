@@ -13,6 +13,10 @@ next release of both apps then draws from it, and every posterior is replayed
 from it. Nor then unless the sampler can be believed - every global's R-hat
 and bulk ESS, and no divergent transition (diagnostics.py) - or `--force`
 says to publish all the same; report.md says which failed either way.
+
+    uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
+
+checks the fit's calibration by simulation (sbc.py).
 """
 
 from __future__ import annotations
@@ -129,6 +133,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(prog="eggfit")
     sub = ap.add_subparsers(dest="command", required=True)
     f = sub.add_parser("fit", help="fit, score on held-out cooks, write the population")
+    from . import sbc
+    sbc.add_parser(sub)
     f.add_argument("emulated")
     f.add_argument("--out", required=True, help="where the population goes (fixtures/population.json publishes it)")
     f.add_argument("--report", required=True)
@@ -148,6 +154,8 @@ def main() -> None:
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
     model.use_cores(a.chains)
+    if a.command == "sbc":
+        sys.exit(sbc.run(a))
 
     eggs = data.load(a.emulated, data.read_trusted(a.trusted))
     fitting, held = data.split(eggs, a.holdout)
