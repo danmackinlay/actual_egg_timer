@@ -87,20 +87,6 @@ and the map of the documents are `CLAUDE.md`.
     - `src/ui/stores.ts` lists the stores twice (`STORE_LIST`): derive it.
     - Element ids are written in `index.html`, `dom.ts` and the e2e: one
       list.
-    - iOS's share loop and App Attest fallback (`ios/App/Sharing.swift`)
-      have no test: move them behind the services protocol in
-      `EggTimerApp`.
-    - The iOS debug log's events are retyped in `tools/iosHarness.ts`:
-      check them against Swift's.
-    - `ios/RELEASING.md` restates what the release scripts do: say how to
-      run them and what to do when they fail.
-    - DECISIONS 38-44 are build notes, not decisions: shrink them to what
-      was decided.
-    - `design/bowl.md` is a finished study: its conclusion to INFERENCE.md
-      or README, the file deleted.
-    - INFERENCE.md §1 reads as a proposal, with phase labels; UI.md and the
-      `ios/README.md` module table restate the code: trim to what the code
-      cannot say.
     - `tools/verify.mjs` lets `copy:keys` and `swift:constants` rewrite
       Swift files while `swift build` runs: order them first.
 

@@ -728,7 +728,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     gather it in my own beta testing"). The eggs go into a bowl and are
     left; the bowl warms by exactly the heat they give up, and the egg's
     surface follows it, blended over `TAU_PLUNGE`, as the ice bath and
-    running water are held (`design/bowl.md`, `studies/bowl.ts`): once
+    running water are held (README section 2.4, `studies/bowl.ts`): once
     volume, count and water temperature are given, about -2 to +6 s at
     jammy, surer than the air and about as sure as running water. The
     bowl's volume is asked (2 L by default); the water's temperature is
