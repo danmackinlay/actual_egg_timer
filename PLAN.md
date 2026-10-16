@@ -7,46 +7,41 @@ and the map of the documents are `CLAUDE.md`.
 
 ## Next work
 
-1. **Put the counter's approved Help line into the catalogue**
-   (`DECISIONS.md` 62). `help.unsure.counter` in `copy/en.json` still says no
-   measurement was found. Write in the approved line, with its overlay in
-   `copy/en-US.json` ("counter", "draft"); the owner makes his hand edit in
-   the queue.
-2. **Settle `Intl` inside `src/core/format.ts`.** Invariant 1 allows it there,
+1. **Settle `Intl` inside `src/core/format.ts`.** Invariant 1 allows it there,
    so the web's output depends on the browser's ICU, while
    `fixtures/format.json` is pinned against Node's. Run the fixture's cases in
    Safari. If Apple's ICU differs, write the formatting out in core for the
    apps' locales, or say which cases differ and why they are harmless.
-3. **The first real population fit (E7)**, once shared eggs arrive:
+2. **The first real population fit (E7)**, once shared eggs arrive:
    `fit/README.md` has the loop, and publishing writes
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
    chains than the recovery check's: publishing refuses a fit whose R-hat is
    1.01 or more (133), and the calibration's simulated fits needed more draws
    to pass (`fit/README.md`).
-4. **Czech (F5)**, when the owner's friend can review it. Add it to the
+3. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that
    will not move again.
-5. **Fold iOS's `PhaseActions` into the readout.** It keeps a layout per
+4. **Fold iOS's `PhaseActions` into the readout.** It keeps a layout per
    phase, though its words are already the readout's; the rest of `Cook` is
    core's `CookState`, stepped.
-6. **Generate the Swift data layer only if the drift recurs** (the owner):
+5. **Generate the Swift data layer only if the drift recurs** (the owner):
    the types, the defensive readers, `Codable` and `jsonObject`, from the
    TypeScript interfaces. The conformance fixtures catch drift meanwhile.
    Never generate the whole core: TypeScript under JavaScriptCore loses the
    JIT, and a surface would take seconds.
-7. **Read the time range against real eggs.** The range under the certainty
+6. **Read the time range against real eggs.** The range under the certainty
    word, `predictCookTime` at 5% and 95%, stays as built until then
    (`DECISIONS.md` 97; `INFERENCE.md` §8 has the alternatives).
-8. **Learn the heat-off pan's per-cook scale** once enough heat-off cooks
+7. **Learn the heat-off pan's per-cook scale** once enough heat-off cooks
    tell it from `alpha`; `TAU_STANDING_SCALE` is a global 1.0
    (`DECISIONS.md` 11).
-9. **Decide the colder coolings' surface from the owner's probe readings**:
+8. **Decide the colder coolings' surface from the owner's probe readings**:
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
-10. **Cook real eggs**, and take the two measurements in README §11.3.
-11. **Clean up the fit's statistics** (`fit/README.md` has the reasoning
+9. **Cook real eggs**, and take the two measurements in README §11.3.
+10. **Clean up the fit's statistics** (`fit/README.md` has the reasoning
     and sources). No merge waits on it: CI's fit job is the recovery check,
     and SBC runs by hand before the first real fit is published.
     - Replace the recovery check's per-global Bonferroni interval with one
@@ -56,7 +51,7 @@ and the map of the documents are `CLAUDE.md`.
     - Make SBC run in minutes: batch the repetitions, rank the data's
       log-likelihood too, test the rank ECDF against bands, stop early,
       simulate fewer cooks.
-12. **Move the correction in hand into core** (`DECISIONS.md` 139). Write the
+11. **Move the correction in hand into core** (`DECISIONS.md` 139). Write the
     reducer beside `step` in `src/core/`, with its fixture of event
     sequences, then the Swift twin under conformance. Replace the web's
     reducer (`src/ui/model.ts`, `edit.ts`) and iOS's `Edits.swift` with each
@@ -65,7 +60,7 @@ and the map of the documents are `CLAUDE.md`.
     leaving mid-settle; which touches count as another control) as event
     sequences, so they cannot come back. The after-the-pull level rule then
     lives once, beside `step`'s `correct`.
-13. **Left from the adversarial review of the drafting**, not yet decided;
+12. **Left from the adversarial review of the drafting**, not yet decided;
     each is a cut, one branch each:
     - `npm run test:slow` re-runs the whole suite in CI for one loop's
       stride (`EXHAUSTIVE`, `test/reachAnswer.test.ts`): fix the stride,
