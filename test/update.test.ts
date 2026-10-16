@@ -433,6 +433,17 @@ test('commit: the page going commits a change still settling', () => {
   assert.equal(go(held, { kind: 'commit' }, S + 61)[0].cook?.choices.eggCount, 4);
 });
 
+test('commit: the page going lets go of a finger down, so the next change settles', () => {
+  const [down] = go(running(), { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
+  const [held] = change(down, { eggCount: 4 }, 3, 50);
+  const [gone] = go(held, { kind: 'commit' }, S + 61);
+  assert.equal(gone.cook?.choices.eggCount, 4);
+  assert.equal(gone.edit?.down, null, 'no finger is down on a page that went');
+  const [next, effects] = change(gone, { eggCount: 5 }, 3, 5000, S + 70);
+  assert.ok(timers(effects).includes('settle:6500'), 'a keyboard change back on the page settles');
+  assert.equal(go(next, { kind: 'editTimer', timer: 'settle' }, S + 72)[0].cook?.choices.eggCount, 5);
+});
+
 test('primary: a change still settling is committed before the button acts', () => {
   const [held] = change(running({ startMode: 'cold' }), { eggCount: 4 }, 3, 0, S + 60);
   const [after] = go(held, { kind: 'primary' }, S + 400);

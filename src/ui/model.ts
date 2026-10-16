@@ -886,7 +886,9 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'fingerUp':
       return fingerUp(m, msg.real_ms, now_s);
     case 'commit':
-      return commit(m, null, now_s);
+      // The page hidden or gone: a finger down then is gone with it, and
+      // would otherwise keep the next change from settling.
+      return commit(withEdit(m, () => ({ down: null })), null, now_s);
     case 'editTimer':
       return msg.timer === 'settle' ? commit(m, null, now_s) : msg.timer === 'preview' ? preview(m, now_s) : release(m);
     case 'startStep':
