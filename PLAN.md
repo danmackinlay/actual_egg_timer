@@ -47,6 +47,29 @@ and the map of the documents are `CLAUDE.md`.
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
 10. **Cook real eggs**, and take the two measurements in README §11.3.
+11. **Make SBC cheap enough to run often** (`fit/eggfit/sbc.py`; next wave).
+    What it guards is the Python model's priors and hierarchy: the
+    likelihood is already pinned to the core's, and NUTS is numpyro's.
+    - Batch the repetitions: `vmap` the fit across simulated datasets, or use
+      numpyro's vectorized chains. Pad each dataset with zero-weight eggs.
+    - Rank the simulated data's log-likelihood as well as the parameters.
+      A fit that ignores the data has uniform parameter ranks; this quantity
+      catches it, and catches other bugs in fewer repetitions. Source:
+      Modrák et al., [SBC checking: the choice of test quantities shapes
+      sensitivity](https://arxiv.org/abs/2211.02383).
+    - Test the ranks' ECDF against simultaneous bands, not binned
+      chi-square. Source: Säilynoja, Bürkner and Vehtari, [Graphical test
+      for discrete uniformity](https://arxiv.org/abs/2103.10522).
+    - Run in batches and stop once the ECDF is clearly inside or outside its
+      bands. Source: Gandy and Scott, [Unit testing for MCMC and other Monte
+      Carlo methods](https://arxiv.org/abs/2001.06465).
+    - Simulate fewer cooks per repetition; the log-likelihood quantity makes
+      up the lost sensitivity.
+    - Done when SBC runs in minutes, often enough to schedule.
+    - Later, with real eggs: [SBC checking conditional on
+      data](https://arxiv.org/abs/2502.03279). Considered and set aside:
+      [discriminative calibration](https://arxiv.org/abs/2305.14593), which
+      is more machinery than this model needs.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
