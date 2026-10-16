@@ -31,9 +31,6 @@ public func alarmPeriodS(_ sound: AlarmSound, _ moment: RingDeadline) -> Double 
     }
 }
 
-/// How long an alarm the app sounds itself rings, s, unless the cook stops it.
-public let alarmRingS = 40.0
-
 /// How many periods an alarm the app sounds itself rings.
 public func alarmRepeats(_ sound: AlarmSound, _ moment: RingDeadline) -> Int {
     Int((alarmRingS / alarmPeriodS(sound, moment)).rounded())

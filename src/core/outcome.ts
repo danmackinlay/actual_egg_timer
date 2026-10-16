@@ -96,7 +96,7 @@ export const WHITE_RISK = 0.2;
 /** Bisection steps for each point of the level range, on the slider's span:
  *  2^-20 of it, a millionth, far below anything shown. A fixed count, so both
  *  apps take the same steps and land on the same number. */
-const LEVEL_BISECTIONS = 20;
+export const LEVEL_BISECTIONS = 20;
 
 type Lean = 'soft' | 'firm' | 'balanced';
 

@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.app.json && tsc -p tsconfig.json",
-    "test": "node tools/copyKeys.ts && npm run typecheck && node --test test/*.test.ts",
+    "test": "node tools/copyKeys.ts && node tools/swiftConstants.ts && npm run typecheck && node --test test/*.test.ts",
     "test:slow": "AET_TEST_SLOW=1 node --test test/*.test.ts",
     "validate": "node tools/validate.ts",
     "fixtures": "node tools/fixtures.ts",
@@ -24,6 +24,7 @@
     "sounds": "node tools/sounds.ts",
     "copy:literals": "node tools/copyLiterals.ts",
     "copy:keys": "node tools/copyKeys.ts",
+    "swift:constants": "node tools/swiftConstants.ts",
     "copy:snapshot": "npm run build:site && node tools/copySnapshot.ts",
     "copy:queue": "node tools/copyQueue.ts queue",
     "copy:approve": "node tools/copyQueue.ts approve",

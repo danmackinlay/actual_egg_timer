@@ -4,18 +4,7 @@ import Foundation
 /// far it has set, from the centre of the yolk out to the shell, at the moment
 /// on the clock. Transliterated from `src/core/section.ts` - see that file for
 /// why it runs `simulate`'s loop a tick at a time, and held to it by
-/// `fixtures/section.json`.
-public enum Section {
-    /// Samples across the yolk, centre (x = 0) to edge (x = yolkRadiusFrac).
-    public static let yolkSamples = 17
-    /// Samples across the white, inner edge (x = yolkRadiusFrac) to the shell.
-    /// The yolk's edge is sampled twice, once as yolk and once as white.
-    public static let whiteSamples = 17
-    /// How far short of its target a white dose still reads as wholly raw, in
-    /// decades.
-    static let whiteSetDecades = 1.0
-}
-
+/// `fixtures/section.json`. Its samples are `Section`'s.
 public struct EggSection: Sendable {
     public private(set) var sphere: SphereState
     /// Seconds since t = 0 of the cook, a whole number of `dtSim` steps.

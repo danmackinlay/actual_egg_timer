@@ -38,12 +38,6 @@ public struct Fixed: Sendable, Equatable {
     }
 }
 
-/// The most decimals a count is shown with: `Intl`'s own default.
-let countMaxDecimals = 3
-
-/// The space every time of day uses between its parts: U+202F.
-let timeSpace: Unicode.Scalar = "\u{202F}"
-
 // MARK: - Numbers
 
 /// A value rounded to a number of decimals, halves up, as the web does it.

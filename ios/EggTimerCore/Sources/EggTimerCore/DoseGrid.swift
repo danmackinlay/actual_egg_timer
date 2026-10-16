@@ -45,8 +45,6 @@ public struct DoseGrid: Sendable {
     }
 }
 
-private let logFloor = -12.0
-
 private func safeLog10(_ v: Double) -> Double {
     v <= 1e-12 ? logFloor : log10(v)
 }

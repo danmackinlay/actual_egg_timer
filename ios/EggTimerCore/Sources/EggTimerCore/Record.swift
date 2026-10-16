@@ -18,23 +18,9 @@ import Foundation
 /// Codable lives here so the two apps' storage and the fixtures agree on one
 /// shape; the JSON coder itself is the caller's, since this package does no I/O.
 
-public let recordVersion = 1
-
 // A record's `prior` is the id of the population the cook's prior was drawn
 // from (Population.swift): "2026-09", the literature's, until a fit publishes
 // another. Before sharing it named the policy too; `model` says that now.
-
-/// The code that made the record's forecast and chose its time: the
-/// likelihood, the decision and the nudge. Changed whenever any of
-/// them changes, so the model as it shipped can be scored after the code has
-/// moved on. The record's provenance; it never decides a
-/// replay. See src/core/record.ts.
-public let modelID = "2026-10-e10"
-
-/// What this code makes of a log: the prior's draw, the physics and the
-/// likelihood. Both apps keep it beside the posterior (the store's `m`) and
-/// replay the log when it differs. See src/core/record.ts.
-public let likelihoodID = "2026-10-e10"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -272,9 +258,6 @@ public func forecastOf(_ o: Outcome, cookS: Double) -> Forecast {
         yolkWord: o.pYolkWord
     )
 }
-
-/// How far a forecast's three answers may sum from one.
-private let forecastSumTolerance = 1e-6
 
 /// Three probabilities that sum to one, as a forecast's answers are.
 private func threeAnswers(_ v: [Double]) -> Bool {
@@ -657,15 +640,6 @@ public func validRecord(_ r: EggRecord) -> Bool {
 
 // MARK: - The calibration
 
-/// Particles in the filter, and the seed they start from. Both apps must agree
-/// or two identical kitchens learn two different things from the same egg.
-public let particleCount = 1000
-public let calibrationSeed: Int32 = 0x5eed_1e
-
-/// The calibration grid's alpha bounds, as factors of the posterior's centre.
-public let calibrationAlphaLow = 0.55
-public let calibrationAlphaHigh = 1.8
-
 /// Where to build the dose surface for one logged outcome.
 ///
 /// The most consequential choice in the calibration. The grid is handed to
@@ -920,9 +894,6 @@ public func loadDecision(_ read: StoreRead, population: String, likelihood: Stri
 // in character for character, and enough beside it to say whose and which.
 // `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
 
-/// The results file's own version.
-public let resultsFileVersion = 1
-
 /// What a results file says beside the store.
 public struct ResultsMeta: Sendable, Equatable {
     public var app: AppName
@@ -976,9 +947,6 @@ private func spliced(_ s: String) -> String {
     }
     return s
 }
-
-private let resultsAbout = "Actual Egg Timer: every result this device kept, as it keeps them. "
-    + "\"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4)."
 
 /// The results file: the meta and the store (nil when there is none). One
 /// line of JSON.

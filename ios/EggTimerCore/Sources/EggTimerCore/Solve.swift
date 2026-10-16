@@ -17,14 +17,6 @@ public struct ModelParams: Sendable, Codable, Equatable {
     public static let `default` = ModelParams()
 }
 
-/// Dose target for the white, equivalent minutes at 80 C, read at the yolk
-/// boundary - the innermost white is the last to set.
-public let whiteDoseTarget = 0.05
-
-/// Yolk dose targets at the ends of the slider, equivalent minutes at 63 C.
-public let yolkDoseRunny = 0.05
-public let yolkDoseHard = 2000.0
-
 public struct Doneness: Sendable {
     public let level: Double
     public let yolkDoseMin: Double
@@ -65,14 +57,6 @@ public struct DonenessAnchor: Sendable {
     public let level: Double
     public let approxPeakYolkC: Double
 }
-
-public let donenessAnchors: [DonenessAnchor] = [
-    DonenessAnchor(key: .`doneness.runny`, level: 0.00, approxPeakYolkC: 56),
-    DonenessAnchor(key: .`doneness.soft`, level: 0.22, approxPeakYolkC: 61),
-    DonenessAnchor(key: .`doneness.jammy`, level: 0.41, approxPeakYolkC: 65),
-    DonenessAnchor(key: .`doneness.fudgy`, level: 0.62, approxPeakYolkC: 70),
-    DonenessAnchor(key: .`doneness.hard`, level: 1.00, approxPeakYolkC: 77),
-]
 
 public struct CookResult: Sendable {
     public let cookTimeS: Double
@@ -167,10 +151,6 @@ public func simulate(
 
 // MARK: - search
 
-private let solveLoS = 20.0
-private let solveHiS = 3600.0
-private let solveTolS = 1.0
-
 private func yolkOf(_ r: CookResult) -> Double { r.yolkDoseMin }
 private func whiteOf(_ r: CookResult) -> Double { r.whiteDoseMin }
 
@@ -260,18 +240,6 @@ public func solveCookTime(
 }
 
 // MARK: - standing
-
-/// Fraction of the best available dose that counts as "as far as this pan
-/// goes". The maximum sits on a plateau, so the time worth printing is the
-/// start of it, not its peak.
-private let standingKnee = 0.99
-
-/// How long past the boil it is worth looking with the heat off.
-private let standingHorizonS = 1800.0
-
-/// Coarse step for the standing scan: fine enough that the bracket it hands to
-/// the bisection is locally monotonic, coarse enough to stay cheap.
-private let scanStepS = 30.0
 
 /// Both doses sampled at every scan step. One pass answers every question the
 /// standing solver has.

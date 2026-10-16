@@ -15,13 +15,6 @@ public enum Certainty: String, Sendable, Codable {
     case wildGuess
 }
 
-/// Nine times in ten: the mass the class and the interval are read at.
-public let certaintyMass = 0.9
-
-/// The time range's quantiles: a 90% interval, as the words' is.
-public let timeRangeLowQ = 0.05
-public let timeRangeHighQ = 0.95
-
 /// The five words' spread, read against the word asked. Words are places in
 /// `donenessAnchors`, 0 (Runny) to 4 (Hard).
 public struct WordCertainty: Sendable, Equatable {

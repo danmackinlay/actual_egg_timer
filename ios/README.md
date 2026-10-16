@@ -40,7 +40,7 @@ web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
-| `constants.ts` | every physical and model constant (README §6) | - | `Constants.swift` | `core.json` |
+| `constants.ts`, and every module's named constants | every physical and model constant (README §6), and each module's own | - | `Constants.generated.swift` (and `EggTimerCopy`'s), made by `npm run swift:constants` | none: `swift:constants --check` |
 | `thermo.ts` | altitude and pressure to a boiling point | `boilingPointAtAltitude` | `Thermo.swift` | `core.json` |
 | `geometry.ts` | an egg from its mass; the size classes by region | `eggFromMass`, `sizeClassesFor` | `Geometry.swift` | `core.json` |
 | `kinetics.ts` | the Arrhenius dose | `createDose`, `accumulateDose` | `Kinetics.swift` | `core.json` |

@@ -37,16 +37,6 @@ public enum UnitId: String, Sendable, CaseIterable {
     case inches = "in", metres = "m", feet = "ft", litres = "L", quarts = "qt", pints = "pt"
 }
 
-/// Exact by definition: the avoirdupois ounce, inch and foot of 1959, the US
-/// liquid quart, and the imperial pint.
-public enum UnitFactors {
-    public static let ounceG = 28.349523125
-    public static let inchMM = 25.4
-    public static let footM = 0.3048
-    public static let usQuartL = 0.946352946
-    public static let imperialPintL = 0.56826125
-}
-
 /// A value in SI (C, g, mm, m, L) as the given unit.
 public func fromSI(_ unit: UnitId, _ si: Double) -> Double {
     switch unit {

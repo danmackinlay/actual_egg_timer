@@ -232,16 +232,6 @@ public enum Phase: String, Sendable {
     case done = "DONE"
 }
 
-/// Counted-down cooling. Carryover is what ruins a soft egg, so this is a stage
-/// of the cook, not a suggestion appended to the end of it.
-///
-/// This is the FALLBACK: the countdown runs to the moment the yolk's
-/// centre peaks (`coolingSecondsFor`). See src/core/running.ts.
-public let coolingSeconds = 180.0
-
-/// The shortest counted cooling, s: a floor under a rounding.
-public let coolingMinSeconds = 60.0
-
 /// How long to count the cooling down, s from the pull: to the moment the
 /// yolk's centre peaks, for this cook as the solver ran it.
 public func coolingSecondsFor(_ result: CookResult) -> Double {
@@ -258,13 +248,6 @@ public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
     if cooling == .counter { return false }
     return result.peakYolkTimeS - result.cookTimeS >= coolingMinSeconds
 }
-
-/// How many prior sds of the time-scale either side of the posterior mean a
-/// kitchen may be and still have its reading taken.
-public let probeAlphaSds = 3.0
-
-/// How far past those kitchens' peaks a reading may land and still be taken, C.
-public let probeMarginC = 3.0
 
 /// The centre readings the app will take for this cook, C, as (low, high): a
 /// reading outside is refused at entry rather than folded. See
@@ -289,18 +272,6 @@ public func plausibleProbeRangeC(
     let hi = max(slow.peakYolkC, fast.peakYolkC) + probeMarginC
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
 }
-
-/// A slow hob: a cold start still not boiling this close to its provisional
-/// deadline, s, has a slower hob than assumed. Both apps push the estimate out
-/// to the time heating so far plus `slowHobExtraS`, at most once every
-/// `slowHobEveryS`.
-public let slowHobWhenLeftS = 45.0
-public let slowHobExtraS = 60.0
-public let slowHobEveryS = 10.0
-
-/// If nobody confirms the transfer, assume it happened. A stalled timer at the
-/// hob is worse than a slightly optimistic one.
-public let pullGraceSeconds = 20.0
 
 /// The deadlines a cook is made of, as epoch seconds. `coolEndS` is nil when
 /// there is no cooling step to time - resting on the counter, where the
@@ -738,12 +709,6 @@ public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
     guard let at = plan.slowHobAtS else { return false }
     return nowS > at
 }
-
-/// The most lengthenings one plan works through.
-public let slowHobMaxSteps = 100
-
-/// How long past its end a cook is still worth picking back up, s.
-public let restoreWindowS = 3600.0
 
 /// Whether a cook is too old to pick back up at `nowS`, from its plan.
 public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {

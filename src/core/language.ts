@@ -27,7 +27,7 @@ export const DEFAULT_LANGUAGE = 'en';
 export const PERIOD_LANGUAGE = 'en-x-1750';
 
 /** The private-use subtag that marks the register. */
-const PERIOD_SUBTAG = 'x-1750';
+export const PERIOD_SUBTAG = 'x-1750';
 
 export interface LanguageState {
   /** The catalogue on screen, or null for the default: the cook's pick, or

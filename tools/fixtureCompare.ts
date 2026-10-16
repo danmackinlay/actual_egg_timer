@@ -23,7 +23,7 @@
  * digits, the first read 40 and the second became a whole number.
  */
 
-import { renameSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 
 export const FIXTURE_TOLERANCE = 1e-12;
 
@@ -171,4 +171,13 @@ export function replaceFile(path: string, text: string): void {
   const part = `${path}.${process.pid}.part`;
   writeFileSync(part, text);
   renameSync(part, path);
+}
+
+/** Generated files, each path and its text: each written where it is not
+ *  already what is there, and the paths that were not, which
+ *  tools/copyKeys.ts's and tools/swiftConstants.ts's `--check` fails on. */
+export function replaceChanged(written: [string, string][]): string[] {
+  const stale = written.filter(([path, text]) => !existsSync(path) || readFileSync(path, 'utf8') !== text).map(([path]) => path);
+  for (const [path, text] of written) if (stale.includes(path)) replaceFile(path, text);
+  return stale;
 }

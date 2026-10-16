@@ -102,7 +102,7 @@ export const DECISION_TIME_STEP_S = 10;
 export const DECISION_WINDOW_S = 120;
 
 /** No decision grid starts before this, s: shorter than any egg. */
-const DECISION_TIME_MIN_S = 20;
+export const DECISION_TIME_MIN_S = 20;
 
 /** What a decision grid is built from: the pot, the egg, and where the
  *  posterior stands. Plain data, so it can cross to a Web Worker, and cheap to
@@ -273,10 +273,10 @@ export function hitOdds(
 export const LEAN_COST_PER_S = 1e-4;
 
 /** Coarse step of the search, s. */
-const CHOICE_SCAN_STEP_S = 4;
+export const CHOICE_SCAN_STEP_S = 4;
 /** The golden-section refinement stops when the bracket is this narrow, s. */
-const REFINE_TOL_S = 0.02;
-const INV_PHI = (Math.sqrt(5.0) - 1.0) / 2.0;
+export const REFINE_TOL_S = 0.02;
+export const INV_PHI = (Math.sqrt(5.0) - 1.0) / 2.0;
 
 /** What the search minimises: the expected loss, and the cost of leaning. */
 function objective(

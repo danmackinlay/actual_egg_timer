@@ -11,10 +11,6 @@ import Foundation
 
 // MARK: - The slider
 
-/// Positions per unit of slider travel. A snapped level always lands where the
-/// thumb can sit.
-public let sliderSteps = 100.0
-
 /// Round a level onto the slider's grid, away from the unreachable side. The
 /// nudge keeps a level already on the grid from being pushed a whole step by
 /// floating-point noise.

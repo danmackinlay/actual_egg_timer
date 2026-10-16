@@ -10,6 +10,9 @@
 //   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
 //                    with the files on disk (tools/copyKeys.ts --check)
+//   swift:constants  the Swift's constants made afresh from src/core/,
+//                    compared with the files on disk
+//                    (tools/swiftConstants.ts --check)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
 //   swift build      the package and its tests, compiled
@@ -95,6 +98,7 @@ const all = await Promise.all([
   job('validate', [[node, ['tools/validate.ts']]]),
   job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
   job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]),
+  job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]),
   fixtures,
   swiftBuild,
   appTests,

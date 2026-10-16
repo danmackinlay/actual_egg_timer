@@ -32,9 +32,6 @@ import EggTimerCopy
 /// the outcome and the certainty at the time given, and whether advice is
 /// wanted. Both apps call it, so a rule about the time lands in both at once.
 
-/// Slider positions between profile points.
-public let profileStep = 5
-
 /// One point of the profile: a slider level, the time the app gives there
 /// (after the envelope), the odds of that time, and how sure the app is there
 /// in words.
@@ -103,10 +100,6 @@ private func positionUp(_ level: Double) -> Int {
 private func positionDown(_ level: Double) -> Int {
     Int((snapDown(level) * sliderSteps).rounded())
 }
-
-/// How close a level must be to a point to be that point: the slider's levels
-/// are hundredths, which neither language holds exactly.
-private let sameLevel = 1e-9
 
 /// Where the envelope holds the time at `level`: no sooner than the time of the
 /// nearest point at or below it, no later than the time of the nearest point
@@ -329,10 +322,6 @@ public struct Shade: Sendable, Equatable {
     public let strength: Double
 }
 
-/// The best chance below which the track is not shaded at all: there is no
-/// "where it works best" to show.
-public let shadeBestMin = 0.05
-
 /// The shading's stops, one per profile point; empty with nothing to shade.
 public func shadingOf(_ profile: OddsProfile) -> [Shade] {
     guard profile.bestAsked >= shadeBestMin else { return [] }
@@ -346,13 +335,6 @@ public func shadingOf(_ profile: OddsProfile) -> [Shade] {
 // When to advise (reach.ts, "WHEN TO ADVISE"): the word asked is a wild
 // guess at the time on screen, and a change the model can price raises the
 // chance of that word there by `adviceGain` or more.
-
-/// How much a change must raise the chance of the word asked at this level
-/// to be worth saying: a twentieth.
-public let adviceGain = 0.05
-/// How far over the fridge preset an egg must start before "straight from the
-/// fridge" is advice, C.
-private let fridgeMarginC = 1.0
 
 /// Whether the word asked is unsure enough to look for advice: a wild guess.
 public func adviceWanted(_ c: Certainty) -> Bool {

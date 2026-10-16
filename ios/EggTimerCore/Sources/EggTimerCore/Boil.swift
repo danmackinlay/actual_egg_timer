@@ -6,9 +6,6 @@ import Foundation
 /// numbers combine is decided here. Transliterated from `src/core/boil.ts`,
 /// and held to it by `fixtures/boil.json`.
 
-/// Fallback when no pan has ever been measured, s.
-public let defaultTimeToBoilS = 480.0
-
 /// Remembered time to a rolling boil, seconds, keyed by water volume in litres
 /// to one decimal place.
 public typealias BoilMemory = [String: Double]

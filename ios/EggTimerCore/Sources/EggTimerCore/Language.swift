@@ -22,16 +22,6 @@ import EggTimerCopy
 ///
 /// No I/O. The app keeps and reads back its own (`LanguageChoice`).
 
-/// The catalogue a fresh install reads.
-public let defaultLanguage = "en"
-
-/// The English of 1750's catalogue tag.
-public let periodLanguage = "en-x-1750"
-
-
-/// The private-use subtag that marks the register.
-private let periodSubtag = "x-1750"
-
 public struct LanguageState: Sendable, Equatable {
     /// The catalogue on screen, or nil for the default: the cook's pick, or
     /// 1750 put there by the units switch.

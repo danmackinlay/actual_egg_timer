@@ -33,7 +33,7 @@ export const SOUS_VIDE_MODEL_FLOOR_C = 60.0;
 
 /** How close the centre must come to the bath before it counts as "at
  *  temperature": within 2% of the original gap. */
-const EQUILIBRATION_GAP = 0.02;
+export const EQUILIBRATION_GAP = 0.02;
 
 export interface SousVideEstimate {
   bath_C: number;

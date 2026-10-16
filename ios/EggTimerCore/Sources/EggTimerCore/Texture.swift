@@ -50,22 +50,6 @@ public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -
     return Texture(white: white, yolk: yolk)
 }
 
-/// The peak white temperature, C, below which the white is in each band; at or
-/// above the last it is firm.
-public enum WhiteBandBelowC {
-    public static let justSet = 71.0
-    public static let set = 82.0
-}
-
-/// The peak yolk temperature, C, below which the yolk is in each band; at or
-/// above the last it is set.
-public enum YolkBandBelowC {
-    public static let liquid = 58.0
-    public static let soft = 63.0
-    public static let jammy = 68.0
-    public static let fudgy = 73.0
-}
-
 /// The texture note as the catalogue's keys: the line's own key, and the key
 /// of the fragment that fills each of its placeholders. The app renders the
 /// fragments and hands them in; it chooses nothing.
