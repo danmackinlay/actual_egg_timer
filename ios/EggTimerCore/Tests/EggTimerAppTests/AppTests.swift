@@ -615,14 +615,14 @@ struct AppTests {
         #expect(suite.string(forKey: "aet.registered") == "read through")
     }
 
-    /// The lint's runtime twin (test/iosStores.test.ts): a whole cook, ended
-    /// by Start again, writes only to the store it was given and only through
-    /// `Stores`, each write the one `Stores` logged; UserDefaults itself is
-    /// never touched.
+    /// A whole cook, ended by Start again, writes only to the store it was
+    /// given and only through `Stores`, each write the one `Stores` logged;
+    /// neither the standard domain nor the app's suite is touched.
     @Test func everyWriteGoesThroughStores() async throws {
         let keys = StoreRegistry.all.map(\.key)
         let standard = UserDefaults.standard
-        let before = keys.map { standard.object(forKey: $0).map { "\($0)" } }
+        let before = standard.dictionaryRepresentation() as NSDictionary
+        let suiteBefore = standard.persistentDomain(forName: Stores.suite) as NSDictionary?
 
         let world = World()
         let model = world.model()
@@ -650,6 +650,7 @@ struct AppTests {
         #expect(Set(world.store.writes.map(\.key)).isSuperset(of: [Cook.savedKey, "calibration.v5"]))
         // Every key written is in the table of stores.
         #expect(Set(world.store.writes.map(\.key)).isSubset(of: Set(keys)))
-        #expect(keys.map { standard.object(forKey: $0).map { "\($0)" } } == before)
+        #expect(before.isEqual(to: standard.dictionaryRepresentation()))
+        #expect(suiteBefore == standard.persistentDomain(forName: Stores.suite) as NSDictionary?)
     }
 }
