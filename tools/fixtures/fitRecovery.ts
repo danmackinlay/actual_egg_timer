@@ -9,10 +9,11 @@
  *
  * The truth is tools/eggsSimulate.ts's SIMULATED_TRUTH but for the
  * time-scale's centre, which is put in the prior's tail: -2 literature sds
- * (alpha 21% below the literature's), at the prior's 2.3rd percentile. With
- * every truth inside the prior's own 90% interval, a fit that lost its
- * likelihood and returned the prior would cover them all; this one it
- * cannot.
+ * (alpha 21% below the literature's), at the prior's 2.3rd percentile, so
+ * the recovery spans the prior rather than sitting at its middle. It is
+ * still inside the test's 1 - 0.10/9 interval of the prior, so a fit that
+ * lost its likelihood and returned the prior would cover it: only the
+ * narrowing check catches that.
  */
 
 import { SIMULATED_TRUTH, emulate, simulateCooks, type Truth } from '../eggsSimulate.ts';

@@ -90,8 +90,9 @@ follows by itself.
 **The sampler recovers a known population, and mixes.**
 `tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
 a known truth, also written by `npm run fixtures`, with four chains side by
-side (under a minute). The truth's time-scale is in the prior's tail, so the
-prior alone would not find it. The test fails on a divergent transition, an
+side (under a minute). The truth's time-scale is in the prior's tail, at its
+2.3rd percentile; that is still inside the test's interval of the prior, so
+the interval alone would pass a fit that returned the prior. The test fails on a divergent transition, an
 R-hat of 1.01 or more, a bulk ESS under 100 a chain, a truth outside its
 interval (each 1 - 0.10/9, so all nine together cover 90% of the time when
 the posterior is right), or a time-scale or white's lag whose posterior sd
@@ -144,6 +145,44 @@ twenty, not the sampler, and over 200 it is 0.52. 12 repetitions failed
 their own diagnostics: four an R-hat of 1.01 or more (at most 1.013), one
 the ESS, seven a divergent transition or two. Leaving them out moves no
 p-value below 0.06.
+
+**The interval's width is to be replaced** (`DECISIONS.md` 133, `PLAN.md`).
+It was 90% for each global until three truths fell just outside on the
+first recovery sample. Re-run there with the sampler's seed 0 they miss by
+0.004 (`mu_z`: 0.05 posterior sds, the truth at the posterior's 0.953
+quantile), 0.072 (`lag`: 0.60 sds, 0.993) and 0.061 (`log_g0`: 0.53 sds,
+0.016); `lag` and `log_g0` are correlated -0.75, so nearly one miss. The
+present sample would fail 90% too (`tau_z` at 0.962). Each global's
+1 - 0.10/9 is Bonferroni, which ignores those correlations. The check is a
+pass/fail gate, so the error to bound is a calibrated fit failing, which is
+family-wise, not a false discovery rate; under the global null
+Benjamini-Hochberg is Simes's test. The candidates: Simes on the nine
+posterior-quantile p-values, which needs no Gaussian posterior, only
+positively dependent p-values; Holm; or one Mahalanobis distance of the
+truth under the posterior's covariance against chi-square on nine degrees
+of freedom, which uses the correlations but wants a near-Gaussian
+posterior, so on the unconstrained (log) scale of the spreads, not their
+own. `sbc.md`'s nine uniformity tests want the same single verdict.
+
+**Making SBC cheap enough to run often.** What it guards is this model's
+priors and hierarchy: the likelihood is held to the core's above, and NUTS
+is numpyro's. Batch the repetitions (`vmap` the fit across simulated
+datasets, or numpyro's vectorized chains, padding each dataset with
+zero-weight eggs). Rank the simulated data's log-likelihood beside the
+parameters: a fit that ignores its data has uniform parameter ranks, and
+this catches it, and other bugs, in fewer repetitions (Modrák et al., [SBC
+checking: the choice of test quantities shapes
+sensitivity](https://arxiv.org/abs/2211.02383)). Test the ranks' ECDF
+against simultaneous bands, not binned chi-square (Säilynoja, Bürkner and
+Vehtari, [Graphical test for discrete
+uniformity](https://arxiv.org/abs/2103.10522)). Run in batches and stop once
+the ECDF is clearly inside or outside its bands (Gandy and Scott, [Unit
+testing for MCMC and other Monte Carlo
+methods](https://arxiv.org/abs/2001.06465)). Simulate fewer cooks a
+repetition; the log-likelihood makes up the sensitivity. With real eggs,
+[SBC checking conditional on data](https://arxiv.org/abs/2502.03279). Set
+aside: [discriminative calibration](https://arxiv.org/abs/2305.14593), more
+machinery than this model needs.
 
 A bigger simulation, with the held-out scores (`simulate --truth <file>` for a population other than the default):
 
