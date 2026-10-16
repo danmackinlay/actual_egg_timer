@@ -10,8 +10,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { handChoices, handStep, nothingInHand, previewCook, startStepped } from '../src/core/hand.ts';
-import { startCook, withBoil, writeEvents } from '../src/core/running.ts';
+import { type HandGroup, handChoices, handStep, nothingInHand, previewCook, startStepped, takeGroup } from '../src/core/hand.ts';
+import { type CookChoices, startCook, withBoil, writeEvents } from '../src/core/running.ts';
 import { SEQUENCES, commitsOf, replay } from '../tools/fixtures/hand.ts';
 import { BASE_CHOICES, MEMORY, START_S } from '../tools/fixtures/shared.ts';
 
@@ -25,16 +25,23 @@ test('each sequence commits what it says, as the app it names sends it', () => {
   for (const q of SEQUENCES) assert.deepEqual(commitsOf(replay(q.events)), q.commits, q.note);
 });
 
-test('the drifts the apps once had: each pair of ways to send the same gestures commits alike', () => {
-  const byNote = (start: string): string[] => {
-    const q = SEQUENCES.filter((s) => s.note.startsWith(start));
-    assert.ok(q.length >= 2, start);
-    return q.map((s) => JSON.stringify(s.commits));
+test('the groups partition the cook\'s choices: each choice is taken by exactly one, and the start\'s time takes none', () => {
+  // Every HandGroup, held complete by the type.
+  const groups: Record<HandGroup, true> = {
+    mass: true, eggFrom: true, customStart: true, room: true, startMode: true, afterBoil: true, cooling: true,
+    tapWater: true, bowlLitres: true, bowlWater: true, waterLitres: true, eggCount: true, altitude: true, level: true,
+    startedAt: true,
   };
-  for (const start of ['a long press on a radio', 'a size, then a weight']) {
-    const made = byNote(start);
-    assert.ok(made.every((m) => m === made[0]), start);
+  const keys = Object.keys(BASE_CHOICES) as (keyof CookChoices)[];
+  // A value for every choice that no choice has, so what a group took shows.
+  const marked = Object.fromEntries(keys.map((k) => [k, `said ${k}`])) as unknown as CookChoices;
+  const takenBy = new Map<string, HandGroup[]>(keys.map((k) => [k, []]));
+  for (const g of Object.keys(groups) as HandGroup[]) {
+    const taken = takeGroup(BASE_CHOICES, marked, g);
+    for (const k of keys) if (taken[k] === marked[k]) takenBy.get(k)!.push(g);
+    if (g === 'startedAt') assert.deepEqual(taken, BASE_CHOICES, 'the start\'s time takes no choice');
   }
+  for (const [k, by] of takenBy) assert.equal(by.length, 1, `${k}: taken by ${by.join(', ') || 'none'}`);
 });
 
 test('a timer that comes round late, after its moment has passed, does no more than it would have', () => {
