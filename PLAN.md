@@ -21,10 +21,9 @@ and the map of the documents are `CLAUDE.md`.
    `fit/README.md` has the loop, and publishing writes
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
-   chains than the recovery check's: in a 20-repetition SBC trial, 12 fits
-   had R-hat between 1.01 and 1.022 at 4 × 1000 draws, and publishing refuses
-   a fit above 1.01 (133). Run a full SBC (`python -m eggfit sbc --reps 200`)
-   before the first publish.
+   chains than the recovery check's: publishing refuses a fit whose R-hat is
+   1.01 or more (133), and the calibration's simulated fits needed more draws
+   to pass (`fit/README.md`).
 4. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that
@@ -135,6 +134,20 @@ shell (34).
    change made during it; the web groups by `FIELDS`; one rule for leaving
    (hidden or inactive, the same in both); one list of other controls. Each
    is a test in each app's suite; the next drift is found by review again.
+7. **The recovery check's interval** (`DECISIONS.md` 133). Each global's is
+   1 − 0.10/9 (98.9%), so that all nine cover together 90% of the time; it
+   was widened from 90% after three truths fell outside 90% on the first
+   sample. Re-run there (sampler seed 0), the three missed by 0.004 (`mu_z`,
+   0.05 posterior sds; the truth at the posterior's 0.953 quantile), 0.072
+   (`lag`, 0.60 sds; 0.993) and 0.061 (`log_g0`, 0.53 sds; 0.016); `lag` and
+   `log_g0` are correlated −0.75, so it was nearly one miss. The 200-repetition
+   calibration finds every global's ranks uniform (`fit/README.md`), so
+   misses that size are chance, not bias. The check now also fails a
+   posterior that does not narrow (`fit/tests/test_recovery.py`), which is
+   what catches a fit that lost its data; the interval catches only a bias.
+   Keep 98.9%; or go back to 90% each, which fails a calibrated fit on most
+   samples (the present sample too: `tau_z` at 0.962); or hold only the
+   time-scale and the lag, the two the data identify, at 95% each.
 
 Waiting on someone else: the Czech review, by the owner's friend.
 

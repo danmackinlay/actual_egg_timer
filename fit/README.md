@@ -90,10 +90,14 @@ follows by itself.
 **The sampler recovers a known population, and mixes.**
 `tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
 a known truth, also written by `npm run fixtures`, with four chains side by
-side (about 70 s). It fails on a divergent transition, an R-hat of 1.01 or
-more, a bulk ESS under 100 a chain, or a truth outside its interval (each
-1 - 0.10/9, so all nine together cover 90% of the time when the posterior is
-right). CI's `fit` job runs it with the rest of `fit/tests`, without node.
+side (under a minute). The truth's time-scale is in the prior's tail, so the
+prior alone would not find it. The test fails on a divergent transition, an
+R-hat of 1.01 or more, a bulk ESS under 100 a chain, a truth outside its
+interval (each 1 - 0.10/9, so all nine together cover 90% of the time when
+the posterior is right), or a time-scale or white's lag whose posterior sd
+is not below half its prior's: a fit that lost its likelihood returns the
+prior, and fails there. It prints every truth's posterior quantile, pass or
+fail. CI's `fit` job runs it with the rest of `fit/tests`, without node.
 The same R-hat, ESS and divergence checks are in every `report.md`
 (`eggfit/diagnostics.py`), and `fit` writes no population when they fail,
 unless forced.
@@ -105,13 +109,41 @@ cooks from them with the app's simulator (`node tools/eggs.ts simulate
 among the posterior draws. The ranks of a calibrated fit are uniform;
 `sbc.md` has each global's histogram and a chi-square test, and how many
 repetitions' own chains failed R-hat, the ESS or divergences. A repetition
-of 40 cooks took 75 s (26 s simulating and emulating, 49 s fitting) with
-four running at once on an 18-core Mac; `--shard i/k` lets k processes share
-the work, and any run of the same `--out` summarises it:
+of 40 cooks at four chains of 3,000 draws took 129 s on average with four
+running at once on an 18-core Mac that other work shared, two hours for 200;
+`--shard i/k` lets k processes share the work, and any run of the same
+`--out` summarises it:
 
 ```
 uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
 ```
+
+**What it showed** (16 October 2026, `sbc.py`'s defaults: 40 cooks, four
+chains of 3,000 draws after 500 of warmup, each rank out of 99 draws, in ten
+bins). No global's ranks are told from uniform:
+
+| global | p | mean rank |
+|---|---|---|
+| `mu_z` | 0.60 | 0.50 |
+| `tau_z` | 0.33 | 0.54 |
+| `lag` | 0.28 | 0.51 |
+| `tau_w` | 0.04 | 0.51 |
+| `tau_t` | 0.46 | 0.48 |
+| `log_s0` | 0.06 | 0.52 |
+| `sig_s` | 0.24 | 0.45 |
+| `log_g0` | 0.78 | 0.51 |
+| `sig_g` | 0.99 | 0.49 |
+
+The smallest of nine p-values is below 0.04 about three times in ten by
+chance. `tau_w`'s histogram is ragged, not sloped or humped (its mean rank is
+0.51), and `sig_s`'s leans a little low (more ranks in the bottom half: the
+posterior sits a little above the truth). The noise's median, `log_s0`,
+had a mean rank of 0.34 (p 0.04) in a 20-repetition trial at 1,000 draws a
+chain; the same twenty truths at 3,000 draws gave 0.33, so it was those
+twenty, not the sampler, and over 200 it is 0.52. 12 repetitions failed
+their own diagnostics: four an R-hat of 1.01 or more (at most 1.013), one
+the ESS, seven a divergent transition or two. Leaving them out moves no
+p-value below 0.06.
 
 A bigger simulation, with the held-out scores (`simulate --truth <file>` for a population other than the default):
 
