@@ -3,9 +3,10 @@ import EggTimerCore
 
 /// The share queue's state (INFERENCE.md section 7): what a phone that
 /// shares keeps beside its log, how each thing the cook does or the server
-/// answers moves it, and how a stored copy is read and written. The app
-/// (`Sharing.swift`) holds it, writes it through and does the talking; what
-/// the server takes and what its answers mean is core's (`Share.swift`).
+/// answers moves it, and how a stored copy is read and written. `Sharing`
+/// holds it, writes it through and runs the sends, whose requests go through
+/// a `ShareTransport` (the app's `ShareNetwork`); what the server takes and
+/// what its answers mean is core's (`Share.swift`).
 /// The web keeps the same state alike (`src/ui/shareState.ts`), whose
 /// comment says what each field is for.
 ///

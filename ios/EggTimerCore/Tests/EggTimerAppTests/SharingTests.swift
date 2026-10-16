@@ -6,9 +6,10 @@ import EggTimerCore
 
 /// Sharing's runs (Sharing.swift) over a fake server and App Attest
 /// (`FakeTransport`): the final eggs sent in order under an attested key,
-/// and every way App Attest can fail falling back to the open tier, at
-/// once or after waiting, so the eggs still go. What each answer does to
-/// the queue is ShareQueueTests'; the web's runs are test/share.test.ts's.
+/// every way App Attest can fail falling back to the open tier, at once or
+/// after waiting, and an egg the server did not take sent again, so the
+/// eggs still go. What each answer does to the queue is ShareQueueTests';
+/// the web's runs are test/share.test.ts's.
 extension AppTests {
     static let day = 24 * 60 * 60.0
 
@@ -141,7 +142,7 @@ extension AppTests {
     }
 
     /// An attestation posted days after Apple made it, and refused, is made
-    /// again with a new key; one refused the day it was made is given up on.
+    /// again with a new key.
     @Test func anAttestationRefusedDaysLateIsMadeAgainWithANewKey() async throws {
         let world = World()
         let transport = FakeTransport()
@@ -155,6 +156,59 @@ extension AppTests {
         await sendAgain(sharing)
         #expect(transport.keysMade == 2 && transport.attested.count == 2)
         #expect(transport.eggs.count == 3 && transport.eggs.allSatisfy { $0.signed })
+    }
+
+    /// Refused the day Apple made it, the attestation is not made again: the
+    /// key is given up on for this id, and every egg goes open.
+    @Test func anAttestationRefusedTheDayItWasMadeIsGivenUpAndTheEggsGoOpen() async throws {
+        let world = World()
+        let transport = FakeTransport()
+        transport.attestAnswers = [400]
+        let (sharing, _) = try await launched(world, transport)
+        sharing.setSharing(true)
+        await ran(sharing)
+        #expect(transport.attestations == 1 && transport.keysMade == 1, "not made again")
+        #expect(sharing.attest?.status == .failed)
+        #expect(transport.eggs.map { $0.seq } == [0, 1, 2] && transport.eggs.allSatisfy { !$0.signed })
+        #expect(sharing.state.sent == 3)
+    }
+
+    /// A key the phone could not make, for any reason App Attest does not
+    /// name as passing, is given up on at once: every egg goes open.
+    @Test func aKeyThatCannotBeMadeIsGivenUpAndTheEggsGoOpen() async throws {
+        struct SomeError: Error {}
+        let world = World()
+        let transport = FakeTransport()
+        transport.keyFailures = [SomeError()]
+        let (sharing, _) = try await launched(world, transport)
+        sharing.setSharing(true)
+        await ran(sharing)
+        #expect(transport.keysMade == 0 && transport.attestations == 0)
+        #expect(sharing.attest?.status == .failed, "given up on for this id")
+        #expect(transport.eggs.map { $0.seq } == [0, 1, 2] && transport.eggs.allSatisfy { !$0.signed })
+        #expect(sharing.state.sent == 3)
+    }
+
+    /// An egg the server did not answer, or answered busy, stops the run
+    /// where it is, and goes again, under the same number, with the rest on
+    /// the next run: none is passed over. Only the busy answer is counted.
+    @Test func anEggNotAnsweredOrAnsweredBusyStopsTheRunAndGoesAgainOnTheNext() async throws {
+        for (answer, counted) in [(nil, 0), (503, 1)] as [(Int?, Int)] {
+            let world = World()
+            let transport = FakeTransport()
+            transport.eggAnswers = [answer]
+            let (sharing, _) = try await launched(world, transport)
+            sharing.setSharing(true)
+            await ran(sharing)
+            let what = answer.map { "answered \($0)" } ?? "no answer"
+            #expect(transport.eggs.map { $0.seq } == [0], "\(what): the run stops")
+            #expect(sharing.state.sent == 0 && sharing.state.busy == counted, "\(what): counted \(counted)")
+            await sendAgain(sharing)
+            #expect(transport.eggs.map { $0.seq } == [0, 0, 1, 2], "\(what): the same egg again, then the rest")
+            #expect(transport.eggs.map { $0.day } == ["2026-10-01", "2026-10-01", "2026-10-02", "2026-10-03"])
+            #expect(transport.eggs.allSatisfy { $0.signed }, "\(what): still under the key")
+            #expect(sharing.state.sent == 3 && sharing.state.busy == 0 && sharing.state.busySinceS == nil)
+        }
     }
 
     /// A signature the phone could not make waits, counted, and the egg is
