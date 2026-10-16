@@ -581,7 +581,7 @@ each with the number computed, as it does each row of the cold-start,
 carryover, slider, room, pan and altitude tables and the external comparisons
 below. The reference egg is 43.5 mm across, about 62.3 g (not the app's 68 g EU Large),
 fridge-cold at 4 °C, into boiling water, then an ice bath, jammy (slider 0.41),
-unless a row says otherwise. As of 29 September 2026, all 28 pass:
+unless a row says otherwise:
 
 | check | expected | computed | tolerance | status |
 |---|---|---|---|---|
