@@ -141,19 +141,13 @@ struct HelpView: View {
     }
 
     /// As README.md section 10 and references.bib give them, and as the web
-    /// links them; nothing else.
+    /// links them; nothing else. From help-sources.json, which the web
+    /// bundles too: citations, the same in every language, so not copy.
     private var sources: some View {
         section(.sources) {
             para(tr(.`help.sources.intro`))
             VStack(alignment: .leading, spacing: 10) {
-                source(.`help.source.williams`, "https://newton.ex.ac.uk/teaching/CDHW/egg/")
-                source(.`help.source.buay`, "https://doi.org/10.1088/0143-0807/27/1/013")
-                source(.`help.source.abbasnezhad`, "https://doi.org/10.1002/fsn3.257")
-                source(.`help.source.denys`, "https://doi.org/10.1016/j.jfoodeng.2003.06.002")
-                source(.`help.source.vega`, "https://doi.org/10.1007/s11483-010-9200-1")
-                source(.`help.source.weijers`, "https://doi.org/10.1110/ps.03242803")
-                source(.`help.source.hoyt`, "https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf")
-                source(.`help.source.usda`, "https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking")
+                ForEach(HelpSource.all, id: \.url) { source($0) }
             }
         }
     }
@@ -227,13 +221,29 @@ struct HelpView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func source(_ key: CopyKey, _ url: String) -> some View {
-        Link(destination: URL(string: url)!) {
-            Text(tr(key))
+    private func source(_ s: HelpSource) -> some View {
+        Link(destination: URL(string: s.url)!) {
+            Text(s.text)
                 .appFont(.footnote)
                 .underline()
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
+}
+
+/// One of Help's sources: its citation, and the address it links to.
+struct HelpSource: Decodable {
+    let url: String
+    let text: String
+
+    /// help-sources.json from the repo root, bundled (ios/project.yml); none
+    /// if it is missing, which the build would have to have broken.
+    static let all: [HelpSource] = {
+        struct File: Decodable { let sources: [HelpSource] }
+        guard let url = Bundle.main.url(forResource: "help-sources", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let file = try? JSONDecoder().decode(File.self, from: data) else { return [] }
+        return file.sources
+    }()
 }

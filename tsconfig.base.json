@@ -26,6 +26,7 @@
     "allowUnusedLabels": false,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM"]

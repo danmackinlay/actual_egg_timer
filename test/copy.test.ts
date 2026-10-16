@@ -38,6 +38,8 @@ const EN_JSON = JSONS.get('en') as CatalogueJson;
 const EN = parseCatalogue(EN_JSON);
 /** What each key is for: copy/en.notes.json, beside the catalogue. */
 const NOTES = readNotes();
+/** Help's sources, which are data beside the words (6c). */
+const SOURCES = (JSON.parse(readFileSync('help-sources.json', 'utf8')) as { sources: { url: string; text: string }[] }).sources;
 
 function catalogueFor(locale: string): Catalogue {
   return locale === 'en' ? EN : parseCatalogue(JSONS.get(locale), EN);
@@ -218,6 +220,7 @@ test('3c. every string a reader sees has curly apostrophes and quotes, never str
   const privacy = readFileSync('privacy/index.html', 'utf8')
     .replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '\n');
   for (const line of privacy.split('\n')) if (/['"]/.test(line)) failures.push(`privacy/index.html: ${line.trim()}`);
+  for (const s of SOURCES) if (/['"]/.test(s.text)) failures.push(`help-sources.json: ${s.text}`);
   assert.deepEqual(failures, []);
 });
 
@@ -337,6 +340,21 @@ test('6b. index.html has no words of its own below <head>, and names only real k
     .replace(/<[^>]+>/g, '\n')
     .split('\n').map((s) => s.trim()).filter((s) => s !== '');
   assert.deepEqual(text.filter((s) => s !== '--:--' && s !== '--'), []);
+});
+
+test('6c. Help\'s sources are data both apps read: an https address and a citation each', () => {
+  // help-sources.json: the web bundles it (src/ui/sources.ts), iOS has it as
+  // a bundle resource (ios/project.yml). The same in every language, so in
+  // no catalogue.
+  assert.ok(SOURCES.length >= 8);
+  for (const s of SOURCES) {
+    assert.match(s.url, /^https:\/\/\S+$/, s.text);
+    assert.ok(s.text.trim().length > 0, s.url);
+  }
+  assert.equal(new Set(SOURCES.map((s) => s.url)).size, SOURCES.length, 'each address once');
+  assert.ok(!Object.keys(EN_JSON.messages).some((k) => k.startsWith('help.source.')), 'no source is a key');
+  assert.match(readFileSync('ios/project.yml', 'utf8'), /- path: \.\.\/help-sources\.json\n\s+buildPhase: resources/);
+  assert.match(readFileSync('index.html', 'utf8'), /<ul class="sources" id="helpSources"><\/ul>/);
 });
 
 // --------------------------------------------------------------------------

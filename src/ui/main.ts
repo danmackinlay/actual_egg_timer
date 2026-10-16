@@ -22,6 +22,7 @@ import { effectiveLanguage } from '../core/language.ts';
 import { isDevHost } from './now.ts';
 import { loadLanguage } from './store.ts';
 import { loadPopulation } from './population.ts';
+import { fillSources } from './sources.ts';
 
 async function devTools(): Promise<void> {
   if (!isDevHost(location.hostname)) return;
@@ -35,5 +36,6 @@ async function devTools(): Promise<void> {
 }
 
 await Promise.all([loadCopy(effectiveLanguage(loadLanguage())), loadPopulation(), devTools()]);
+fillSources(document);
 applyCopy(document);
 await boot();

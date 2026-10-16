@@ -168,7 +168,7 @@ function card(q: Queued, ctx: Context): string {
   const parts: string[] = [];
   parts.push(`<h3><code>${esc(q.key)}</code> <span class="state ${q.state}">${q.state}</span></h3>`);
   if (q.current === null) {
-    parts.push('<p class="meta">retired: no app says it now</p>');
+    parts.push('<p class="meta">retired: gone from the catalogue</p>');
     parts.push(templatesHtml(q.approved ?? {}, 'gone'));
     return `<article id="${esc(q.key)}">${parts.join('')}</article>`;
   }

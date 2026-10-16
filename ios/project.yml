@@ -64,6 +64,10 @@ targets:
       # the web app fetches, bundled as population.json (Calibration.swift).
       - path: ../fixtures/population.json
         buildPhase: resources
+      # Help's sources, citations and their addresses: the same file the web
+      # app bundles, bundled as help-sources.json (HelpView.swift).
+      - path: ../help-sources.json
+        buildPhase: resources
     # copy/*.notes.json is the tools' and the tests', never the app's: a folder
     # reference cannot leave a file out, so it is deleted from the bundle once
     # the resources are in, before signing.
