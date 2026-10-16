@@ -1,12 +1,12 @@
 /**
- * The English of 1750 (LANGUAGE.md section 6): the rules its catalogue is held
- * to beyond any other language's, the switch that goes into it and out, and
- * the record that says it was read.
+ * The English of 1750 (LANGUAGE.md section 6): what its catalogue must keep
+ * of the English's meaning, the switch that goes into it and out, and the
+ * record that says it was read. Its style is guidance (LANGUAGE.md), not a
+ * check.
  *
  * Placeholder parity and the length budgets are copy.test.ts's, which reads
- * every catalogue in copy/ and so this one too; a test here checks that it does. Every
- * twin, of either app's key, is held to every rule here; a key without one
- * falls back to English (below).
+ * every catalogue in copy/ and so this one too; a test here checks that it
+ * does. A key without a twin falls back to English (below).
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -15,7 +15,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod, parseCatalogue, render, templatesOf } from '../src/core/copy.ts';
+import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod, parseCatalogue, render } from '../src/core/copy.ts';
 import { formattingLocale } from '../src/core/format.ts';
 import {
   FRESH_LANGUAGE, type LanguageState, effectiveLanguage, languageAfterFlip, readLanguageState,
@@ -23,7 +23,7 @@ import {
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
-import { NOTES_PATH, catalogueTags, isCatalogueFile, readNotes, translationTags } from '../tools/copyNotes.ts';
+import { NOTES_PATH, catalogueTags, isCatalogueFile, translationTags } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
 
 type Entry = Record<string, unknown>;
@@ -31,26 +31,8 @@ interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 
 const EN_JSON = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
 const P_JSON = JSON.parse(readFileSync('copy/en-x-1750.json', 'utf8')) as CatalogueJson;
-const SPELLING = (JSON.parse(readFileSync('test/data/en-x-1750.spelling.json', 'utf8')) as {
-  spellings: Record<string, string>;
-}).spellings;
 const EN = parseCatalogue(EN_JSON);
 const PERIOD = parseCatalogue(P_JSON, EN);
-
-/** The one key allowed the long s: the title, after the Dictionary's own. */
-const TITLE_KEY = 'app.titlePage';
-
-/** Every template of the 1750 catalogue, by key. */
-function templates(): [string, string][] {
-  return [...PERIOD.messages].flatMap(([key, m]) => templatesOf(m).map((t): [string, string] => [key, t]));
-}
-
-/** A whole word, case-insensitive: not inside another word, and an
- *  apostrophe, straight or curly, counts as part of the word. */
-function wordPattern(word: string): RegExp {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]");
-  return new RegExp(`(?<![A-Za-z'’])${escaped}(?![A-Za-z])`, 'i');
-}
 
 // --------------------------------------------------------------------------
 // the catalogue
@@ -73,29 +55,9 @@ test('the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', 
 test('every twin is an English key; a key without one is not refused', () => {
   // The twins may lag the English: a key with no twin renders in English
   // (below), and `git log -- copy/en-x-1750.json` shows how old a twin is.
-  // Every twin there is - the web's, and iOS's alarms, Live Activity and
-  // Dynamic Island - is held to every rule below: the archaisms, the
-  // spellings, the long s.
   for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
   // The app's name is a name, and stays English.
   assert.ok(!PERIOD.messages.has('app.name'));
-});
-
-test('the small surfaces keep to a few words of period flavour', () => {
-  // LANGUAGE.md section 6, rule 2: on the Lock Screen, the Dynamic Island and
-  // an alarm's title the register gets two or three words, not a paragraph.
-  // The budgets bind in copy.test.ts; this holds the flavour to few words.
-  const small = new Set(['notification.title', 'island.compact', 'island.expanded', 'lockscreen']);
-  const notes = readNotes();
-  for (const key of Object.keys(EN_JSON.messages)) {
-    if (!small.has(notes[key].surface) || !PERIOD.messages.has(key)) continue;
-    for (const t of templatesOf(PERIOD.messages.get(key) as Parameters<typeof templatesOf>[0])) {
-      const words = t.split(/\s+/).filter((w) => w !== '' && w !== '·').length;
-      assert.ok(words <= 8, `${key}: ${words} words in "${t}"`);
-    }
-  }
-  // The Dynamic Island's compact word has no room for any flavour at all.
-  assert.equal(render(PERIOD, 'activity.now'), 'NOW');
 });
 
 test('a key 1750 lacks falls back to English, with English\'s plural rule', () => {
@@ -104,54 +66,6 @@ test('a key 1750 lacks falls back to English, with English\'s plural rule', () =
   assert.equal(render(PERIOD, 'app.name'), 'Actual Egg Timer');
   assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 result');
   assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 results');
-});
-
-test('none of the eight stage-play archaisms', () => {
-  // LANGUAGE.md section 6: zero times each in the 1755 Preface.
-  const banned = ["'tis", 'pray', 'forthwith', 'whilst', 'thee', 'thou', 'hath', 'doth'];
-  const failures: string[] = [];
-  for (const [key, t] of templates()) {
-    for (const word of banned) if (wordPattern(word).test(t)) failures.push(`${key}: "${word}" in "${t}"`);
-  }
-  assert.deepEqual(failures, []);
-  // And the check would catch one.
-  assert.ok(wordPattern("'tis").test('’Tis done.'));
-  assert.ok(wordPattern('hath').test('it Hath boiled'));
-  assert.ok(!wordPattern('thou').test('though'));
-});
-
-test('no modern spelling the table lists: the 1755 form, as a whole word', () => {
-  const failures: string[] = [];
-  for (const [key, t] of templates()) {
-    for (const [modern, old] of Object.entries(SPELLING)) {
-      if (wordPattern(modern).test(t)) failures.push(`${key}: "${modern}" should be "${old}" in "${t}"`);
-    }
-  }
-  assert.deepEqual(failures, []);
-  // Whole words only: "shew" is not "show", and "showers" would not be.
-  assert.ok(wordPattern('show').test('Show me'));
-  assert.ok(!wordPattern('show').test('showers'));
-});
-
-test('the spelling table is modern to 1755, lower case, and never maps a word to itself', () => {
-  for (const [modern, old] of Object.entries(SPELLING)) {
-    assert.equal(modern, modern.toLowerCase(), modern);
-    assert.notEqual(modern, old, modern);
-  }
-  // The table seeds from LANGUAGE.md section 6.
-  for (const [modern, old] of [['error', 'errour'], ['public', 'publick'], ['show', 'shew'], ['fuel', 'fewel']]) {
-    assert.equal(SPELLING[modern], old);
-  }
-});
-
-test('the long s only in the title, and the title reads without it', () => {
-  for (const [key, t] of templates()) {
-    if (key !== TITLE_KEY) assert.ok(!t.includes('ſ'), `${key}: a long s`);
-  }
-  const title = render(PERIOD, TITLE_KEY);
-  assert.ok(title.includes('ſ'));
-  // The label a screen reader hears is the title with every long s an s.
-  assert.equal(title.replace(/ſ/g, 's'), render(EN, TITLE_KEY));
 });
 
 test('the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {

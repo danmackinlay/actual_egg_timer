@@ -429,220 +429,74 @@ and the steps belong in `ios/RELEASING.md`.
 
 ## 6. The easter egg: Imperial units in the English of 1750
 
-The pompous prose of the eighteenth century is a language of its own: a row
-in the language picker, which a cook reading English also reaches by
-switching to Imperial (the two ways in, below). Fahrenheit published his
-scale in 1724, so the period is justified.
+The prose of the eighteenth century is a language of its own (`DECISIONS.md`
+12), with Fahrenheit's scale of 1724 to justify it.
 
-**It is a language, with a language code of its own** (`DECISIONS.md` 12).
-The tag is the cook's own English locale with a private-use subtag, as BCP 47
-provides: `en-US-x-1750`, `en-GB-x-1750`, `en-AU-x-1750`. Everything
-maintainable about the joke follows from that:
+**The tag.** The cook's own English locale with a private-use subtag:
+`en-US-x-1750`, `en-GB-x-1750`, `en-AU-x-1750`. Strings come from the
+subtag, formats from the rest: the catalogue is `copy/en-x-1750.json`, and
+numbers, clocks and the measurement system come from the region, so an
+American in 1750 keeps "3:00 PM" and a Briton "15:00". A key the catalogue
+lacks falls back to `en`, English's plural rule with it; the twins may lag
+the English (`DECISIONS.md` 116).
 
-- **Strings come from the subtag, formats from the rest.** The catalogue is
-  `copy/en-x-1750.json`, and a missing key falls back to `en`. Numbers, clocks
-  and the measurement system come from the region, and both platforms do this
-  with no special-casing: `Intl` in Node and `Locale` in Foundation give the
-  same answers for every tag, so `en-US-x-1750` formats as en-US ("3:00 PM",
-  US system) and `en-GB-x-1750` as en-GB ("15:00", UK system). An American in
-  1750 English keeps their clock, and a Briton keeps theirs.
-- **It is one row in the language picker**, a Language row under Units in
-  Settings in both apps. iOS's own per-app language setting would not list a
-  private-use tag anyway. The picker shows it as *English (1750)*, which is
-  the discoverable way in, and choosing *English* is the way out; the two
-  are named alike in both catalogues, so either can be found from the other.
-  A cook who wants °F in modern English picks English and keeps Fahrenheit.
-- **It is under the same tests as any other language**: placeholder parity,
-  the small surfaces' budgets, and loading in both apps (§2). Its own rules,
-  below, are `test/en1750.test.ts`.
+**In and out.** The picker in Settings has a row, *English (1750)*, under
+English; choosing *English* leaves it, and keeps °F. A cook reading
+English who flips Metric to Imperial goes into 1750 too; flipping back
+changes nothing about the language (`DECISIONS.md` 77), and changing the
+language never touches the units. In an English UI one line under the
+Imperial option (`controls.units.period`) says so, for Americans, whose
+region starts them in °F (`DECISIONS.md` 13). No prompt: the joke is better
+found than delivered.
 
-**Two ways in.**
+**The register.** Samuel Johnson's *Preface to a Dictionary of the English
+Language* as first printed in 1755, which the owner chose and reviews the
+catalogue against (`DECISIONS.md` 17). Four rules keep it from costing
+anyone a breakfast:
 
-1. **The picker**, for anyone.
-2. **The switch.** When a cook whose UI is in English flips units from Metric to
-   Imperial, the app also sets the language to 1750. Flipping back to Metric
-   changes nothing about the language: the cook leaves 1750 with the picker
-   (`DECISIONS.md` 77). Changing the language never touches the units, so this
-   runs in one direction only.
+1. **Substance is not exempt.** Every string says what its modern twin
+   says; no instruction is lost to the flourish.
+2. **The small surfaces get two or three words of flavour**, not a
+   paragraph: the alarm's title, the Lock Screen and the Dynamic Island,
+   whose compact *NOW* has room for none. Their budgets are the English's
+   (§2), but the alarm's body, at 110 characters, holds the 1750 the owner
+   approved.
+3. **The answers keep their meaning.** They are data, and the record carries
+   the register (`INFERENCE.md` §4). The yolk is answered in the slider's
+   words, *Rear · Soft · Thick · Firm · Hard*; the white in *Unset · Tender ·
+   Firm*. *Rear* is Johnson's "raw; half roasted; half sodden"; *Thick* and
+   *Firm* are matched to *jammy* and *fudgy*, not translated.
+4. **Leaving is one tap and keeps °F**, so nobody gives up their units to
+   understand their timer.
 
-**Discoverable for Americans, reluctantly** (`DECISIONS.md` 13). Units
-default from the region (§4), so an American starts in °F and modern English
-and never makes the switch. Two small things find them: the picker row
-above, and, in an English UI, 1750 included, a single line under the
-Imperial option (`controls.units.period`).
+**For whoever writes a twin.** Work from Jack Lynch's transcription of the
+1755 first edition (jacklynch.net/Texts/preface.html), not Project
+Gutenberg 5430, which is the revised Preface of 1773 and modernises it. Use
+his spellings: *errour*, *publick*, *shew*, *expence*, *surprize*, *fewel*,
+and *-our* where modern English has *-or*. Avoid the stage-play archaisms,
+which the Preface never uses: *'tis*, *pray*, *forthwith*, *whilst*,
+*thee*, *thou*, *hath*, *doth*; his connectives are *hitherto*, *likewise*,
+*therefore* and *perhaps*. Write common nouns in lower case. Put the long s
+in the text only on the title (`app.titlePage`), which reads as the English
+title with every ſ an s; the face sets it everywhere else. A word in doubt
+goes to his Dictionary (johnsonsdictionaryonline.com).
 
-Nothing is pushed, and there is no first-run prompt. The joke is better found
-than delivered.
+**Where it departs from the guide, for the owner to strike.** Settings is
+*Particulars*, Help *Preface*, Sources *Authorities*, Units *Measures*,
+Metric *Metrick*; the fridge is *the ice chest*; *Cancel* is *Leave off*;
+*Rolling boil* is *It boils in earnest*; *Heat off, lid on* is *Fire out,
+lid on*; *Custom* is *Your own*; the sizes are Small, *Middling*, Large,
+*Very large*, *Largest*. The alarm's titles are *Out with them* and
+*Cooling ended*; the reset dialog *Shall I learn anew?*; Help's motto *Time
+the egg, and not the minute*. Sous-vide, probe thermometer and Help's
+citations keep their modern words.
 
-**The style guide is Samuel Johnson**, specifically the *Preface to a
-Dictionary of the English Language* **as first printed in 1755**. The owner chose
-it and reviews the catalogue against it (`DECISIONS.md` 17). There are three
-texts, and which one is used matters:
-
-- **The authority is the 1755 folio**, volume 1, scanned at archive.org as
-  `bub_gb_nCJWAAAAcAAJ`. Its OCR cannot be used as text: it reads every long s
-  as *f* (*thofe*, *difmifs*), and Google's OCR also nudges archaic spellings
-  toward modern ones.
-- **The working text is Jack Lynch's transcription** (jacklynch.net/Texts/
-  preface.html). It is taken from the first edition, keeps the spelling, and
-  drops the long s, which is exactly the form this catalogue wants. Link to it;
-  do not vendor it, because the notes and paragraph numbers are his.
-- **Not Project Gutenberg ebook 5430.** It follows Johnson's revised Preface
-  of 1773 (*explanation* for *explication*, *surely* for *freely*, "the paths
-  through which" for "the paths of"). It modernises some spellings
-  (*recompense*, *registered*), misreads *fewel* (fuel) as *jewel*, and
-  inserts editorial translations and a footnote.
-
-The rules below come from Lynch's text, counted by script (9,335 words). The
-page images were spot-checked where it mattered. The capitals and archaisms
-findings are the same in both editions.
-
-- **No capitalised common nouns.** The text prints nouns in lower case. It
-  capitalises proper names, deliberate personifications ("Learning and Genius"),
-  and now and then the subject under discussion (*Orthography*, *Etymology*).
-  A capital therefore marks a personification or a topic, and there are few of
-  either: Time, perhaps, or Heat.
-- **No stage-play archaisms.** *'tis*, *pray*, *forthwith*, *whilst*, *thee*,
-  *thou*, *hath* and *doth* occur **zero** times. They make an imitation of the
-  period, not the period itself. Johnson's own connectives are *hitherto* (7),
-  *likewise* (8), *therefore* (17) and *perhaps* (17). A test fails the
-  catalogue if any of the eight appears.
-- **His spellings, as a fixed table, and not completist.**
-  `test/data/en-x-1750.spelling.json` maps the modern form, American or British, to
-  the 1755 one, and a test fails if the catalogue uses a modern form. The table
-  starts with what the 1755 text attests and grows when a string needs a word
-  it lacks:
-
-  | pattern | 1755, as printed |
-  |---|---|
-  | *-our* where modern English has *-or*, even in British spelling | *errour*, *authour*, *superiour*, *tenour*, *translatour* |
-  | *-our* where American English has *-or* | *labour*, *honour*, *favourite*, *colouring*, *endeavour*, *rigour*, *ardour* |
-  | *-ick* for *-ic* | *publick*, *criticks*, *domestick*, *academick*, *exotick*, *fabrick*, *characteristicks* |
-  | *-ce* for *-se* | *expence*, *recompence*, *licence* |
-  | *-ize* for *-ise* | *surprize*, *enterprize* |
-  | single words | *shew*, *shewn*; *enquire*, *enquiry*; *croud*; *stile*; *chace*; *persue*; *recal*; *registred*; *intire* beside *entire*; *oeconomy*; *fewel* |
-
-  *Errour* is the one the cook will meet most often. *Fewel* is the one an egg
-  timer could actually use: it is what the fire burns.
-- **The figures that carry the voice.**
-  - Antithesis in balanced pairs: "to search was not always to find, and to find
-    was not always to be informed".
-  - Triads.
-  - Latinate abstraction.
-  - The general maxim drawn from a particular case.
-  - A melancholy, self-deprecating first person, the lexicographer as "the
-    slave of science".
-  - Semicolon chains: 0.93 semicolons per sentence.
-- **Two lengths, because the text has two.** Its median sentence is 43 words
-  and its 90th percentile is 79. That suits a hint or an explanation, and it is
-  impossible on a Lock Screen. On the small surfaces the voice comes from the
-  aphorism rather than the period, which is a mode Johnson also writes in: "To
-  have attempted much is always laudable." Antithesis survives compression.
-  Length does not.
-- **The lexicon is his Dictionary.** When a word's period sense is in doubt,
-  check the Dictionary, which is searchable at johnsonsdictionaryonline.com. One
-  word earns its place: **rear**, adjective, "Raw; half roasted; half
-  sodden". That is exactly the soft end of the doneness scale, and it is the
-  word the 1750 catalogue uses there. *Jammy* and *fudgy* are anachronisms
-  and are matched the same way as for Czech (§5), not translated.
-- **No long s (ſ) in body text.** Screen readers announce it and search does not
-  match it. It appears once, on the title, echoing the Dictionary's own title
-  page ("in which the words are deduced from their originals"), behind an
-  accessibility label that reads without it:
-
-  > *The Actual Egg-Timer: in which the times of boiling are deduced from their
-  > cauſes, and illuſtrated in their different degrees of hardneſs.*
-
-  The title heads the egg's page while idle, in 1750 only.
-
-The answer buttons change least, on purpose. They are data (rule 3 below), and
-every word of flourish on a button is a way for the fit to read taste where
-there is only style.
-
-**Four rules keep the joke from costing anyone a breakfast:**
-
-1. **Substance is not exempt.** Every string says what its modern twin says, and
-   no instruction is lost to the flourish. The owner's review of the modern
-   wording covers this catalogue too.
-2. **The length budget binds hardest here.** "Eggs out — now" has to fit the
-   Dynamic Island, and "Pray remove the Eggs from the Water forthwith" does not.
-   On the small surfaces the register gets two or three words of period flavour,
-   not a paragraph: at most eight words on an alarm's title, the Dynamic
-   Island and the Lock Screen (`test/en1750.test.ts`), and the compact
-   island's *NOW* has no room for any.
-3. **The feedback answers keep their meaning.** They are data, so the record in
-   `INFERENCE.md` §4 carries the register alongside the language. The fit can
-   then tell whether "Unset" in 1750 is answered differently from "Runny" in
-   2026. It probably is. That would be the funniest result this project could
-   produce.
-4. **Leaving is one tap and keeps °F.** Choosing *English* in the picker is
-   enough, so that a non-native reader, or anyone who reads with difficulty,
-   never has to give up their units to understand their timer. The picker's
-   (i), `controls.language.more`, says so in the register.
-
-**Where it departs from the guide, or chose where the guide was silent.**
-
-- **The alarm.** The owner approved a 1750 body longer than the 53
-  characters `notification.body` allowed, so that surface's budget is 110;
-  not yet seen on a device. The titles are *Out with them* and *Cooling
-  ended*: there the register gets three words or two.
-- **The reset dialog** is *Shall I learn anew?*; **the yolk question**, *In
-  what condition was the yolk?*
-- **The yolk is answered with the doneness words**, as in modern English
-  (`DECISIONS.md` 92): *Rear · Soft · Thick · Firm · Hard*, five letters at
-  most for the ticks. *Thick* and *Firm* stand where *jammy* and *fudgy* do,
-  matched and not translated; the texture lines say *yolk thick*, *yolk
-  firm*. The white's answers are *Unset · Tender · Firm*, *Unset* after
-  rule 3's own example; *Firm* is the white's third answer as *firm* is in
-  modern English.
-- **Names that change**, for the owner to strike: Settings is
-  *Particulars*; Help is *Preface* (its page *The Preface*); Sources are
-  *Authorities*, as in the Dictionary; Units are *Measures*, and Metric is
-  *Metrick* (the metre is forty years off, and Johnson's *metrick* is of
-  verse, which is the joke); the fridge is *the ice chest*; *Cancel* is
-  *Leave off*; *Rolling boil* is *It boils in earnest*; *Heat off, lid on*
-  is *Fire out, lid on*; *Custom* is *Your own*; the sizes are Small,
-  *Middling*, Large, *Very large*, *Largest*. The cooling methods are §3's
-  house terms. Words with no period form stay: sous-vide, probe
-  thermometer.
-- **Words the period lacks**, kept for substance (rule 1): *protein* is
-  gone ("the setting of white and yolk"), and every citation in Help is
-  printed as published, *denaturation* and all.
-- **One maxim per page, at most.** Help's is its motto, *Time the egg, and
-  not the minute*.
-
-**The face** (`DECISIONS.md` 65, 66). The register is
-set in **IM FELL English**, roman and italic: the types Bishop John Fell
-gave the Oxford press in the 1670s and 80s, Dutch in cut, as Igino
-Marini digitised them, the ink's spread and all. Google Fonts' files,
-whole and as published (the web's compressed to woff2), with the licence
-beside them; served by the app, never by a font service, which would see
-every visitor.
-
-- **Every ligature on**: fi, ff, fl, ffi, ffl, ct, and the long s's own,
-  ſi, ſl, ſh, ſt, ſſ; ſs is drawn as ß.
-- **The long s everywhere, by the face.** Its `hist` sets ſ for an s
-  before another letter, so the last s of a word stays round, as a
-  printer set it: "ſet", "paſſes", "hardneß". The catalogue is not
-  changed, so a screen reader, a search and the length tests read a plain
-  s, and the rule above (one long s, on the title) holds for the text.
-- **One weight**, as type had in 1750: nothing is made bold. Help's
-  smallest heads are in italic instead.
-- **Old-style figures only**, whose 0 is an o: right in a sentence, wrong
-  in a field. A number the cook types or steps keeps the system face, as
-  the clock does, so a value is one line in any face.
-- **On iOS, the segmented controls are in the face too**, at UIKit's own
-  13 pt, which does not grow with Dynamic Type for any face; they change
-  face with the language, in place. So are the navigation bar's title, at
-  the bar's own 17 pt, and the egg size's menu, its button and its list:
-  in 1750 these are views of the app's own in place of UIKit's, the list a
-  popover drawn as the system's menu is (`barTitle`, `MenuChoice`); in
-  modern English they are UIKit's. **What else UIKit draws keeps the
-  system face**: the menu the bar's buttons fold into at the largest text
-  sizes, the share sheet, and the system's alerts (the app raises none of
-  its own). So does the Live Activity, read at a glance across a kitchen
-  beside the system's clock; the widget bundles no font.
-  `ios/App/PeriodFace.swift` has the rest.
+**The face** (`DECISIONS.md` 65, 66) is IM FELL English, roman and italic,
+served by the app. Every ligature is on, and its `hist` sets the long s
+before another letter, so the catalogue keeps a plain s for screen readers,
+search and the length budgets. One weight, and old-style figures, except in
+a number the cook types or steps. On iOS what UIKit draws, and the Live
+Activity, keep the system face; `ios/App/PeriodFace.swift` has the rest.
 
 ## 7. Order
 
