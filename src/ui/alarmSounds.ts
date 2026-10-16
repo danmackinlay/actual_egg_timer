@@ -31,7 +31,7 @@
  * need more is left that much quieter.
  */
 
-import { type AlarmMoment, type AlarmSound, alarmPeriod_s } from '../core/sounds.ts';
+import { ALARM_PERIOD_S, type AlarmMoment, type AlarmSound } from '../core/sounds.ts';
 
 /** The hen's recordings, relative to the page (and to `assets/` in the
  *  repository for `npm run sounds`). */
@@ -53,7 +53,7 @@ export const NOTIFICATION_SOUND_MAX_S = 30;
  *  so the in-app ring can loop the same file, and with a second to spare
  *  under `NOTIFICATION_SOUND_MAX_S`. */
 export function notificationRepeats(sound: AlarmSound, moment: AlarmMoment): number {
-  return Math.floor((NOTIFICATION_SOUND_MAX_S - 1) / alarmPeriod_s(sound, moment));
+  return Math.floor((NOTIFICATION_SOUND_MAX_S - 1) / ALARM_PERIOD_S[sound][moment]);
 }
 
 /** The highest a levelled sample may reach: -1 dBFS. */
@@ -69,7 +69,7 @@ const LEAD_S = 0.05;
  *  recorded (`recordedPeriod`). */
 export function synthPeriod(sound: AlarmSound, moment: AlarmMoment, rate: number): Float32Array | null {
   if (sound === 'hen') return null;
-  const out = new Float32Array(Math.round(alarmPeriod_s(sound, moment) * rate));
+  const out = new Float32Array(Math.round(ALARM_PERIOD_S[sound][moment] * rate));
   if (sound === 'timer') timer(out, rate, LEAD_S, moment === 'pull');
   else cuckoo(out, rate, LEAD_S, moment === 'pull');
   return level(out, rate, moment);
@@ -78,7 +78,7 @@ export function synthPeriod(sound: AlarmSound, moment: AlarmMoment, rate: number
 /** A decoded recording laid at the start of its period, levelled. Longer than
  *  the period, it is cut. */
 export function recordedPeriod(samples: Float32Array, rate: number, moment: AlarmMoment): Float32Array {
-  const out = new Float32Array(Math.round(alarmPeriod_s('hen', moment) * rate));
+  const out = new Float32Array(Math.round(ALARM_PERIOD_S.hen[moment] * rate));
   out.set(samples.length > out.length ? samples.subarray(0, out.length) : samples);
   return level(out, rate, moment);
 }

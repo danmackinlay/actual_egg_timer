@@ -24,7 +24,6 @@
  *                              label, which words can be reached, the verdict
  *   fixtures/texture.json      the texture bands and the note's keys
  *   fixtures/boil.json         boil memory: a boil remembered, and estimated
- *   fixtures/sounds.json       the alarm sounds' timing
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
@@ -134,7 +133,6 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     return { fixture: f, counts: [`${f.cases.length} textures`] };
   },
   boil: async () => ({ fixture: (await import('./fixtures/boil.ts')).boilFixture, counts: [] }),
-  sounds: async () => ({ fixture: (await import('./fixtures/sounds.ts')).soundsFixture, counts: [] }),
   sousvide: async () => {
     const { sousvideFixture: f } = await import('./fixtures/sousvide.ts');
     return { fixture: f, counts: [`${f.cases.length} sous-vide`] };

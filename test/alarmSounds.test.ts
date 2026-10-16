@@ -16,7 +16,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
-import { type AlarmMoment, alarmPeriod_s } from '../src/core/sounds.ts';
+import { ALARM_PERIOD_S, type AlarmMoment } from '../src/core/sounds.ts';
 import { ALARM_SOUNDS } from '../src/ui/settings.ts';
 import {
   NOTIFICATION_SOUND_MAX_S, PEAK, RECORDINGS, beepsPeriod, loudness, notificationRepeats, recordedPeriod, synthPeriod,
@@ -39,7 +39,7 @@ test('a sound made in code is the same every time, one period long, as loud as t
         const b = synthPeriod(sound, moment, rate);
         assert.ok(a !== null && b !== null, `${sound} is made in code`);
         assert.deepEqual(a, b, `${sound} ${moment} at ${rate} Hz renders the same twice`);
-        assert.equal(a.length, Math.round(alarmPeriod_s(sound, moment) * rate));
+        assert.equal(a.length, Math.round(ALARM_PERIOD_S[sound][moment] * rate));
         assert.ok(peakOf(a) <= PEAK + 1e-6, `${sound} ${moment} peaks at ${peakOf(a)}`);
         const target = loudness(beepsPeriod(moment, rate), rate);
         assert.ok(Math.abs(loudness(a, rate) - target) < 0.05, `${sound} ${moment}: ${loudness(a, rate)} against ${target}`);
@@ -57,7 +57,7 @@ test('the hen is recorded, and a recording is laid in its period, levelled, and 
       const recording = new Float32Array(seconds * RATE);
       for (let i = 0; i < recording.length; i++) recording[i] = 0.01 * Math.sin(2 * Math.PI * 1000 * i / RATE);
       const period = recordedPeriod(recording, RATE, moment);
-      assert.equal(period.length, Math.round(alarmPeriod_s('hen', moment) * RATE));
+      assert.equal(period.length, Math.round(ALARM_PERIOD_S.hen[moment] * RATE));
       assert.ok(peakOf(period) <= PEAK + 1e-6);
       if (seconds === 1) assert.equal(period[RATE + 10], 0, 'silence after the recording');
     }
@@ -96,7 +96,7 @@ test('the iOS app has a file for every sound and moment, whole periods under 30 
       const { frames, rate, format } = cafLength(path);
       assert.equal(format, 'ima4', `${path}: a format a notification can play`);
       const seconds = frames / rate;
-      const want = notificationRepeats(sound, moment) * alarmPeriod_s(sound, moment);
+      const want = notificationRepeats(sound, moment) * ALARM_PERIOD_S[sound][moment];
       assert.ok(Math.abs(seconds - want) < 0.001, `${path}: ${seconds} s, not ${want} s; run npm run sounds`);
       assert.ok(seconds < NOTIFICATION_SOUND_MAX_S);
     }

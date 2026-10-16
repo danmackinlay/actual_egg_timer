@@ -61,7 +61,7 @@ web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 | `slider.ts` | the doneness slider: its grid, the nearest label, which words can be reached, the yolk temperature asked for, and the refusal verdict | `snapUp`, `anchorNear`, `anchorReachable`, `verdictFor` | `Slider.swift` | `slider.json` |
 | `texture.ts` | the texture bands, and the keys the note is said in | `textureFor`, `textureNoteKeys` | `Texture.swift` | `texture.json` |
 | `boil.ts` | boil memory: a boil remembered by volume, and the estimate for a volume | `rememberBoil`, `estimateTimeToBoil` | `Boil.swift` | `boil.json` |
-| `sounds.ts` | the alarm sounds and each sound's timing | `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
+| `sounds.ts` | the alarm sounds and each sound's timing, as data `swift:constants` writes into Swift | `ALARM_PERIOD_S`, `alarmRepeats` | `Sounds.swift` | none |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |

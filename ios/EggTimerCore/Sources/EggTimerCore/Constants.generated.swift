@@ -117,6 +117,17 @@ public enum Defaults {
     public static let eggMassKg: Double = 0.068
 }
 
+/// One period of each sound's pattern at each moment, s: the pattern sounds once at its start and
+/// the period repeats it.
+public enum AlarmPeriodS {
+    public static let timerPull: Double = 2.6
+    public static let timerCooled: Double = 2.6
+    public static let cuckooPull: Double = 2.2
+    public static let cuckooCooled: Double = 2.2
+    public static let henPull: Double = 1.6
+    public static let henCooled: Double = 4.4
+}
+
 /// How finely the egg in cross-section is sampled, and how far short of its target a white still
 /// reads as raw.
 public enum Section {

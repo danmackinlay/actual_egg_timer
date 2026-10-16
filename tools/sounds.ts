@@ -22,7 +22,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { type AlarmMoment, alarmPeriod_s } from '../src/core/sounds.ts';
+import { ALARM_PERIOD_S, type AlarmMoment } from '../src/core/sounds.ts';
 import { ALARM_SOUNDS } from '../src/ui/settings.ts';
 import {
   NOTIFICATION_SOUND_MAX_S, RECORDINGS, loudness, notificationRepeats, recordedPeriod, synthPeriod,
@@ -38,7 +38,7 @@ try {
     for (const moment of MOMENTS) {
       const period = synthPeriod(sound, moment, RATE) ?? recordedPeriod(decode(RECORDINGS[moment]), RATE, moment);
       const repeats = notificationRepeats(sound, moment);
-      const seconds = repeats * alarmPeriod_s(sound, moment);
+      const seconds = repeats * ALARM_PERIOD_S[sound][moment];
       if (seconds >= NOTIFICATION_SOUND_MAX_S) throw new Error(`${sound} ${moment}: ${seconds} s is too long`);
       const pcm = join(scratch, `${sound}-${moment}.wav`);
       writeFileSync(pcm, wav(period, repeats));
@@ -47,7 +47,7 @@ try {
       let peak = 0;
       for (let i = 0; i < period.length; i++) peak = Math.max(peak, Math.abs(period[i]));
       console.log(
-        `${file}: ${repeats} x ${alarmPeriod_s(sound, moment)} s = ${seconds.toFixed(1)} s, `
+        `${file}: ${repeats} x ${ALARM_PERIOD_S[sound][moment]} s = ${seconds.toFixed(1)} s, `
         + `${loudness(period, RATE).toFixed(1)} LUFS at its loudest, peak ${(20 * Math.log10(peak)).toFixed(1)} dBFS, `
         + `${Math.round(statSync(file).size / 1024)} KB`,
       );
