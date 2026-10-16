@@ -6,7 +6,7 @@ import EggTimerShared
 
 /// A control a correction can come from, for "another control touched", and
 /// the settings and the cook's choices each one makes. The web's `FIELDS`
-/// (src/ui/edit.ts), plus the start's time.
+/// (src/ui/model.ts), plus the start's time.
 public enum ControlField: Hashable, CaseIterable {
     case level, mass, eggFrom, customStart, room, start, afterBoil, cooling, tapWater, bowlLitres, bowlWater, water,
         eggCount, altitude
@@ -86,8 +86,8 @@ extension CookChoices {
     }
 }
 
-/// Corrections mid-cook (the web's src/ui/edit.ts): every control stays open after Start,
-/// showing the cook's own choices (the planner holds them while a cook runs,
+/// Corrections mid-cook (the web's src/ui/model.ts, "a correction in hand"):
+/// every control stays open after Start, showing the cook's own choices (the planner holds them while a cook runs,
 /// `Planner.adopt`), and a change to one is a correction, "it was always like
 /// this" - the cook's choices replaced (core `corrected`) and the whole cook
 /// planned again from its start.

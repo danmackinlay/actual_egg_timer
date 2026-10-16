@@ -718,7 +718,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     under-measures the time to boil by 15-25%. Every string that names the
     button follows it; the water's state is still "a full rolling boil"
     (111); the 1750 button stays "It boils in earnest". Amends CLAUDE.md's
-    invariant 6.
+    "Words", which names the button.
 113. **The action sits under the time, in one row.** Superseded by 125.
 114. **The bracket marks the most likely word's band, not a point** (the
     owner, 12 October 2026: "yes this seems good"). The mark at the most

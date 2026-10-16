@@ -292,7 +292,7 @@
     "learned.export": { "surface": "button", "note": "Saves every result this device keeps to a file the cook keeps (DECISIONS.md 107): a download on the web, the share sheet on iOS. Nothing is sent. Offered on an empty log too, which says learned.export.none." },
     "learned.export.none": { "surface": "body", "note": "Under Export my results, when it is pressed with no result kept." },
 
-    "learning.badge": { "surface": "label", "note": "A small mark on the time while sharing is on (E8, DECISIONS.md 3 and 53): the time may be nudged a few seconds, and this says the app is still learning. Its (i) is learning.badge.more." },
+    "learning.badge": { "surface": "label", "note": "A small mark on the time while sharing is on (E8, DECISIONS.md 3 and 58): the time may be nudged a few seconds, and this says the app is still learning. Its (i) is learning.badge.more." },
     "learning.badge.more": { "surface": "more", "note": "The (i) on the Learning mark: why the time may move, that it can cost a little (DECISIONS.md 61), and how to stop it." },
 
     "share.title": { "surface": "label", "note": "The heading of the Settings section for sharing (E6, INFERENCE.md section 7), with its (i), share.more." },
