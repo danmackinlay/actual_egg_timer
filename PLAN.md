@@ -17,8 +17,7 @@ and the map of the documents are `CLAUDE.md`.
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
    chains than the recovery check's: publishing refuses a fit whose R-hat is
-   1.01 or more (133), and the calibration's simulated fits needed more draws
-   to pass (`fit/README.md`).
+   1.01 or more (133).
 3. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that
@@ -40,18 +39,8 @@ and the map of the documents are `CLAUDE.md`.
 8. **Decide the colder coolings' surface from the owner's probe readings**:
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
-9. **Cook real eggs**, and take the two measurements in README §11.3.
-10. **Clean up the fit's statistics** (`fit/README.md` has the reasoning
-    and sources). No merge waits on it: CI's fit job is the recovery check,
-    and SBC runs by hand before the first real fit is published.
-    - Replace the recovery check's per-global Bonferroni interval with one
-      family-wise test (`DECISIONS.md` 133): Simes, Holm, or a Mahalanobis
-      test on the spreads' log scale.
-    - Give `sbc.md`'s nine uniformity tests the same single verdict.
-    - Make SBC run in minutes: batch the repetitions, rank the data's
-      log-likelihood too, test the rank ECDF against bands, stop early,
-      simulate fewer cooks.
-11. **Left from the adversarial review of the drafting**, not yet decided;
+9. **Cook real eggs**, and take the measurements in README §11.3.
+10. **Left from the adversarial review of the drafting**, not yet decided;
     each is a cut, one branch each:
     - Swift doc comments repeat the TypeScript's in `Running.swift`,
       `AsRan.swift` and `Record.swift`: keep only what is

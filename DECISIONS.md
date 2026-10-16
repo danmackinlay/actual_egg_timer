@@ -889,12 +889,15 @@ October:
     fixtures` writes. In CI, NUTS recovers a simulated population with a
     known truth, one of them in the prior's tail: the identified globals'
     posteriors narrow to under half the prior's spread, so a fit that lost
-    its data fails; every global lies inside its 1 - 0.10/9 interval, so
-    that all nine cover together at 90%, until a family-wise test that is
-    not Bonferroni replaces it (the owner, 16 October 2026: "more modern
-    than that"; `PLAN.md`);
+    its data fails; the nine globals' truth together is no further from the
+    posterior, by its Mahalanobis distance on the spreads' log scale
+    referred to the draws' own, than a calibrated fit puts it nine times in
+    ten, one test in place of a Bonferroni interval each (the owner, 16
+    October 2026: "more modern than that");
     R-hat below 1.01, a bulk ESS of 100 a chain, no divergent transition.
-    By hand, simulation-based calibration (`python -m eggfit sbc`). A fit
+    By hand, simulation-based calibration (`python -m eggfit sbc`): the
+    nine globals' ranks and the data's log likelihood's, one verdict over
+    the ten by their ECDF bands and Simes. A fit
     whose diagnostics fail is written nowhere unless forced; the published
     `fixtures/population.json` carries its diagnostics, a forced one is
     named by its id, and both cores refuse a file that does not vouch for
