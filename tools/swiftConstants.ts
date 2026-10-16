@@ -68,6 +68,7 @@ const NAMESPACES: Record<string, string | [string, string]> = {
   Section: 'How finely the egg in cross-section is sampled, and how far short of its target a white still reads as raw.',
   WhiteBandBelowC: ['texture.ts', 'WHITE_BAND_BELOW_C'],
   YolkBandBelowC: ['texture.ts', 'YOLK_BAND_BELOW_C'],
+  AlarmPeriodS: ['sounds.ts', 'ALARM_PERIOD_S'],
 };
 
 const C = (name: string, swift: string, type?: SwiftType): Twin => ({
@@ -190,11 +191,11 @@ const TWINS: Twin[] = [
 
   { module: 'boil.ts', name: 'DEFAULT_TIME_TO_BOIL_S', swift: 'defaultTimeToBoilS' },
   { module: 'sounds.ts', name: 'ALARM_RING_S', swift: 'alarmRingS' },
+  ...['timer', 'cuckoo', 'hen'].flatMap((s) => ['pull', 'cooled'].map((m): Twin => ({
+    module: 'sounds.ts', name: `ALARM_PERIOD_S.${s}.${m}`, swift: `AlarmPeriodS.${s}${m[0].toUpperCase()}${m.slice(1)}`,
+  }))),
   { module: 'slider.ts', name: 'SLIDER_STEPS', swift: 'sliderSteps' },
   { module: 'share.ts', name: 'FIRST_SEQ', swift: 'firstSeq', type: 'Int' },
-  { module: 'language.ts', name: 'DEFAULT_LANGUAGE', swift: 'defaultLanguage', type: 'String' },
-  { module: 'language.ts', name: 'PERIOD_LANGUAGE', swift: 'periodLanguage', type: 'String' },
-  { module: 'language.ts', name: 'PERIOD_SUBTAG', swift: 'periodSubtag', type: 'String', internal: true },
 
   { module: 'section.ts', name: 'SECTION_YOLK_SAMPLES', swift: 'Section.yolkSamples', type: 'Int' },
   { module: 'section.ts', name: 'SECTION_WHITE_SAMPLES', swift: 'Section.whiteSamples', type: 'Int' },
@@ -215,6 +216,9 @@ const TWINS: Twin[] = [
   { module: 'units.ts', name: 'US_QUART_L', swift: 'UnitFactors.usQuartL' },
   { module: 'units.ts', name: 'IMPERIAL_PINT_L', swift: 'UnitFactors.imperialPintL' },
 
+  { module: 'copy.ts', name: 'DEFAULT_LANGUAGE', swift: 'defaultLanguage', type: 'String', target: 'copy' },
+  { module: 'copy.ts', name: 'PERIOD_SUBTAG', swift: 'periodSubtag', type: 'String', internal: true, target: 'copy' },
+  { module: 'copy.ts', name: 'PERIOD_LANGUAGE', swift: 'periodLanguage', type: 'String', target: 'copy' },
   { module: 'format.ts', name: 'COUNT_MAX_DECIMALS', swift: 'countMaxDecimals', type: 'Int', internal: true, target: 'copy' },
   { module: 'format.ts', name: 'TIME_SPACE', swift: 'timeSpace', type: 'Unicode.Scalar', internal: true, target: 'copy' },
 ];

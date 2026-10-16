@@ -46,15 +46,16 @@ import type { WhiteReport, YolkWord } from '../core/infer.ts';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.ts';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.ts';
 import {
-  answered, answersOf, asRanCurrent, asRanShown, asksIfStillIn, cookFactsFor, cookTooOld, corrected, earliestStart_s, endedAt_s,
-  latestStart_s, levelPreview, phaseAt, plausibleProbeRange_C, replan, sameChoices, startCorrected,
+  answered, answersOf, asksIfStillIn, cookTooOld, corrected, earliestStart_s, endedAt_s, latestStart_s, levelPreview,
+  phaseAt, plausibleProbeRange_C, replan, sameValue, startCorrected,
 } from '../core/running.ts';
+import { asRanCurrent, asRanShown, cookFactsFor } from '../core/asRan.ts';
 import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.ts';
 import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.ts';
 import { step, surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
-import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.ts';
+import { effectiveLanguage, languageAfterFlip } from './settings.ts';
 import { type PotOdds, nudgeNow, solveIdle } from './answer.ts';
 import { targetPeakYolk_C } from '../core/slider.ts';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
@@ -848,7 +849,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // Nothing about the egg changes, and the units are never touched from
       // here: that rule runs one way (LANGUAGE.md section 6).
       const before = effectiveLanguage(m.settings.language);
-      const settings = { ...m.settings, language: languageAfterPick(m.settings.language, msg.pick) };
+      const settings = { ...m.settings, language: { chosen: msg.pick } };
       const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
       return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
     }
@@ -1196,7 +1197,7 @@ function commit(m: Model, upTo: InHand | null, now_s: number): [Model, Effect[]]
   }
   let next: Model = { ...m, edit: { ...e, pending: false, group: null, inHand: null, base: base, previewedLevel: previewedLevel } };
   const start = startInHand !== null && startInHand !== cook.startedAt_s ? startInHand : null;
-  if (start !== null || !sameChoices(choices, cook.choices)) {
+  if (start !== null || !sameValue(choices, cook.choices)) {
     const [after, more] = updateCook(next, { kind: 'correct', choices: choices, startedAt_s: start }, now_s);
     next = after;
     effects.push(...more);

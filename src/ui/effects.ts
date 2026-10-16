@@ -6,7 +6,7 @@
  * are final, for sharing.
  */
 
-import { type LanguageState, effectiveLanguage } from '../core/language.ts';
+import { type LanguageState, effectiveLanguage } from './settings.ts';
 import { type CookPlan, openEggId, replan } from '../core/running.ts';
 import type { Learner } from './calibration.ts';
 import type { Stores } from './cook.ts';

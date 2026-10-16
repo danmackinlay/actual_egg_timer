@@ -117,6 +117,17 @@ public enum Defaults {
     public static let eggMassKg: Double = 0.068
 }
 
+/// One period of each sound's pattern at each moment, s: the pattern sounds once at its start and
+/// the period repeats it.
+public enum AlarmPeriodS {
+    public static let timerPull: Double = 2.6
+    public static let timerCooled: Double = 2.6
+    public static let cuckooPull: Double = 2.2
+    public static let cuckooCooled: Double = 2.2
+    public static let henPull: Double = 1.6
+    public static let henCooled: Double = 4.4
+}
+
 /// How finely the egg in cross-section is sampled, and how far short of its target a white still
 /// reads as raw.
 public enum Section {
@@ -475,17 +486,6 @@ public let sliderSteps: Double = 100.0
 /// The server keeps an egg at `records/<tier>/<uid>/<seq>`, written only if that key is new: an egg
 /// sent again at its number is taken as a retry and dropped.
 public let firstSeq: Int = 0
-
-// MARK: - src/core/language.ts
-
-/// The catalogue a fresh install reads.
-public let defaultLanguage: String = "en"
-
-/// The English of 1750's catalogue tag.
-public let periodLanguage: String = "en-x-1750"
-
-/// The private-use subtag that marks the register.
-let periodSubtag: String = "x-1750"
 
 // MARK: - src/core/sousvide.ts
 

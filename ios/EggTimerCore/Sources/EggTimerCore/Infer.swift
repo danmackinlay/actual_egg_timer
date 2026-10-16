@@ -1,37 +1,11 @@
 import Foundation
 
-/// Sequential Bayesian calibration from ordinal feedback.
-///
-/// The model's constants are literature-derived, and the carryover term has no
-/// published measurement behind it at all. Rather than guess better, make the
-/// uncertainty explicit and let the cook's own eggs resolve it: after each cook
-/// they may say which yolk they got, in the slider's five words, and how the
-/// white was ("runny", "tender", "firm"), and we update a posterior.
-///
-/// METHOD: sequential Monte Carlo (a particle filter), NOT variational
-/// inference. There are five uncertain scalars here and a cached forward model,
-/// so particles give the exact posterior predictive with none of the machinery.
-///
-/// THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
-/// yolk, the latent quantity is the delivered log10 dose less the cook's taste
-/// offset; the answer says which of five bands it fell in (`yolkWordCuts`),
-/// seen through a Gaussian whose sd is the cook's own `noise`. A small
-/// `unrelated` share of every answer is uniform over the answers - what the
-/// fixed 0.8 / 0.1 of the first filter was standing in for.
-///
-/// TWO CHANNELS. The white is judged at `yolkRadiusFrac` against two cutpoints
-/// of its own: runny | tender at `whiteDoseTarget` shifted by the particle's
-/// `whiteOffset`, and tender | firm a learned `whiteFirmGap` above that. On one
-/// phone the white offset is the white's lag and the cook's idea of "runny"
-/// together (INFERENCE.md section 2).
-///
-/// This file is a port of src/core/infer.ts, which is the reference and says
-/// more; fixtures/calibration.json and fixtures/record.json hold the two
-/// together particle by particle.
+/// The twin of `src/core/infer.ts`, held to it particle by particle by
+/// `fixtures/calibration.json` and `fixtures/record.json`; the TypeScript's
+/// comments say what each part is for.
 
-/// What the cook reports about the YOLK after eating the egg: the yolk they got, in the slider's own words, whatever they asked for.
-/// Each is the doneness anchor of the same place in `donenessAnchors`, softest
-/// first, so `index` is its place.
+/// What the cook reports about the yolk: the yolk they got, in the slider's
+/// five words.
 public enum YolkWord: String, Sendable, Codable, CaseIterable {
     case runny
     case soft
@@ -39,7 +13,7 @@ public enum YolkWord: String, Sendable, Codable, CaseIterable {
     case fudgy
     case hard
 
-    /// The word's place, 0 (runny) to 4 (hard).
+    /// The TypeScript's `yolkWordIndex`.
     public var index: Int {
         switch self {
         case .runny: return 0
@@ -51,7 +25,6 @@ public enum YolkWord: String, Sendable, Codable, CaseIterable {
     }
 }
 
-/// What the cook reports about the WHITE: three answers.
 public enum WhiteReport: String, Sendable, Codable {
     case runny
     case tender
@@ -60,15 +33,9 @@ public enum WhiteReport: String, Sendable, Codable {
 
 public struct Particle: Sendable, Codable, Equatable {
     public var alphaM2s: Double
-    /// The cook's taste relative to the nominal doneness scale, in log10 dose
-    /// units. Stored as an OFFSET rather than an absolute target so it carries
-    /// across different slider positions.
     public var logDoseOffset: Double
-    /// The sd of the Gaussian every yolk answer is seen through, log10 yolk dose.
     public var noise: Double
-    /// Additive shift on the white's runny | tender cutpoint, log10 white dose.
     public var whiteOffset: Double
-    /// How far the tender | firm cutpoint sits above the runny | tender one.
     public var whiteFirmGap: Double
 
     public init(
@@ -99,21 +66,17 @@ public struct Posterior: Sendable, Codable {
     }
 }
 
-/// One answer's probability `p` with the unrelated share mixed in: the chance
-/// the cook gives that answer, whatever the egg did.
 func withUnrelated(_ p: Double) -> Double {
     (1.0 - unrelated) * p + unrelated / 3.0
 }
 
-/// The same for one of the five yolk words: the unrelated share spread evenly
-/// over five answers. No yolk word scores below `unrelated / 5`.
 func withUnrelatedWord(_ p: Double) -> Double {
     (1.0 - unrelated) * p + unrelated / 5.0
 }
 
 // MARK: - Deterministic RNG, so calibration is reproducible and portable
 
-/// xorshift32, written to match the reference implementation BIT FOR BIT.
+/// xorshift32, written to match the TypeScript BIT FOR BIT.
 ///
 /// The TypeScript is written in terms of JavaScript's 32-bit integer operators:
 /// `<<` and `^` coerce to a signed 32-bit int, and `>>>` is the UNSIGNED right
@@ -134,7 +97,6 @@ private func toUnit(_ state: Int32) -> Double {
     Double(UInt32(bitPattern: state) % 16_777_216) / 16_777_216.0
 }
 
-/// Box-Muller, returning one normal deviate and the advanced state.
 private func gaussian(_ state: Int32) -> (value: Double, state: Int32) {
     let s1 = nextUniform(state)
     let s2 = nextUniform(s1)
@@ -165,8 +127,7 @@ public struct Normal: Sendable, Codable, Equatable {
     }
 }
 
-/// What a new cook's prior is drawn from: one spread per particle dimension
-/// (INFERENCE.md section 9). See src/core/infer.ts and population.ts.
+/// What a new cook's prior is drawn from: one spread per particle dimension.
 public struct Population: Sendable, Equatable, Codable {
     public var id: String
     public var alphaM2s: LogNormal
@@ -194,9 +155,6 @@ public struct Population: Sendable, Equatable, Codable {
 
 // MARK: - Prior
 
-/// Five draws per particle, always in this order, in the prior and in every
-/// resample: alpha, taste offset, noise, white offset, firm gap.
-/// From the literature's population unless another is given.
 public func createPrior(count: Int, seed: Int32, population pop: Population = literaturePopulation) -> Posterior {
     var particles = [Particle]()
     particles.reserveCapacity(count)
@@ -222,9 +180,6 @@ public func createPrior(count: Int, seed: Int32, population pop: Population = li
 
 // MARK: - The likelihood
 
-/// Too soft, just right, too firm against the level asked for, for one
-/// particle, before the unrelated share: the miss the decision (Decide.swift)
-/// scores candidate times on, and the forecast's three.
 func yolkProbit(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double
 ) -> [Double] {
@@ -235,16 +190,10 @@ func yolkProbit(
     return [soft, right > 0.0 ? right : 0.0, firm]
 }
 
-/// Runny to hard, the five yolk words, for one particle, before the unrelated
-/// share: the delivered log dose less the taste offset, against
-/// `yolkWordCuts`, through the particle's noise.
 func yolkWordProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
     yolkWordBands(lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset, p.noise)
 }
 
-/// The ordered probit itself: the five yolk words' probabilities, runny to
-/// hard, for a latent log dose seen through a Gaussian of sd `noise`, against
-/// `yolkWordCuts`. See src/core/infer.ts.
 func yolkWordBands(_ latent: Double, _ noise: Double) -> [Double] {
     var out = [Double](repeating: 0.0, count: 5)
     var below = 0.0
@@ -258,8 +207,6 @@ func yolkWordBands(_ latent: Double, _ noise: Double) -> [Double] {
     return out
 }
 
-/// Posterior predictive probabilities of the five yolk words, unrelated share
-/// included.
 func yolkWordProbabilities(_ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double) -> [Double] {
     var out = [Double](repeating: 0.0, count: 5)
     var total = 0.0
@@ -273,7 +220,6 @@ func yolkWordProbabilities(_ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Dou
     return out
 }
 
-/// Runny, tender, firm, for one particle, before the unrelated share.
 func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
     let latent = lookupLogWhiteDose(grid, p.alphaM2s, cookTimeS) - (logWhiteTarget + p.whiteOffset)
     let sd = p.noise * whiteNoisePerYolk
@@ -285,9 +231,6 @@ func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Doubl
 
 // MARK: - The thermometer
 
-/// The density of `predicted - reading`: an exponentially modified Gaussian,
-/// with the erfc inside the exponent so a reading far over the peak is a small
-/// number rather than infinity times zero.
 public func probeShortfallDensity(_ shortfallC: Double) -> Double {
     let sigma = probeInstrumentSdC
     let rate = 1.0 / probeHandlingMeanC
@@ -299,7 +242,6 @@ public func probeShortfallDensity(_ shortfallC: Double) -> Double {
         * exp(0.5 * rate * rate * sigma * sigma - rate * shortfallC + log(tail))
 }
 
-/// The likelihood of a probe reading under one particle, against its own peak.
 public func probeLikelihood(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ readingC: Double
 ) -> Double {
@@ -308,9 +250,6 @@ public func probeLikelihood(
         + probeUnrelated / probeUnrelatedSpanC
 }
 
-/// The likelihood of one egg's answers under one particle: the product of the
-/// yolk's, the white's and the thermometer's, any of which may be missing. The
-/// yolk is the yolk the cook got, in the slider's five words.
 public func answerLikelihood(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double,
     yolkWord: YolkWord?, white: WhiteReport?, probeC: Double? = nil
@@ -341,10 +280,6 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
     return s <= 0.0 ? 0.0 : 1.0 / s
 }
 
-/// Fold in one egg, both of its answers and a probe reading, any of which may
-/// be nil, and resample through Liu and West's kernel if the set has
-/// degenerated. ONE fold per egg: the posterior depends on what was said, not
-/// on the order it was tapped in. See src/core/infer.ts.
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
     cookTimeS: Double, yolkWord: YolkWord?, white: WhiteReport?, probeC: Double? = nil
@@ -359,8 +294,6 @@ public func updatePosterior(
         total += post.weights[i]
     }
     if total <= 0.0 {
-        // Cannot happen - the unrelated share keeps every factor above zero -
-        // but a NaN weight must never reach a solve.
         for i in 0..<n { post.weights[i] = 1.0 / Double(n) }
         return
     }
@@ -372,8 +305,6 @@ private func kernelCoords(_ p: Particle) -> [Double] {
     [log(p.alphaM2s), p.logDoseOffset, log(p.noise), p.whiteOffset, log(p.whiteFirmGap)]
 }
 
-/// Lower-triangular Cholesky factor; a pivot that is not positive gets a zero
-/// column, as in the TypeScript.
 private func cholesky(_ cov: [[Double]]) -> [[Double]] {
     var L = [[Double]](repeating: [Double](repeating: 0.0, count: kernelDims), count: kernelDims)
     for k in 0..<kernelDims {
@@ -390,8 +321,8 @@ private func cholesky(_ cov: [[Double]]) -> [[Double]] {
     return L
 }
 
-/// Systematic resampling, then Liu and West's kernel. The same five normal draws
-/// per particle, in the same order, as the TypeScript.
+/// The same five normal draws per particle, in the same order, as the
+/// TypeScript.
 private func resample(_ post: inout Posterior) {
     let n = post.particles.count
     var cumulative = [Double](repeating: 0.0, count: n)
@@ -458,7 +389,6 @@ private func resample(_ post: inout Posterior) {
 
 // MARK: - Readout
 
-/// The parameters to solve with: the posterior mean time-scale.
 public func posteriorParams(_ post: Posterior) -> ModelParams {
     var alpha = 0.0
     for i in 0..<post.particles.count {
@@ -467,8 +397,6 @@ public func posteriorParams(_ post: Posterior) -> ModelParams {
     return ModelParams(alphaM2s: alpha)
 }
 
-/// The posterior mean of the white offset: where the runny | tender cutpoint
-/// now sits, in decades above `whiteDoseTarget`.
 public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
     var v = 0.0
     for i in 0..<post.particles.count {
@@ -487,11 +415,6 @@ public struct CookTimePrediction: Sendable, Codable {
     }
 }
 
-/// The posterior over the right cook time for a nominal doneness, as a median
-/// and an 80% credible interval: for each particle, the LATER of the time its
-/// yolk reaches the middle of "just right" and the time its white reaches its
-/// own runny | tender cutpoint. See src/core/infer.ts. `lowQ` and `highQ`
-/// move the interval's ends; the certainty's time range reads 90% here.
 public func predictCookTime(
     _ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double,
     lowQ: Double = 0.1, highQ: Double = 0.9

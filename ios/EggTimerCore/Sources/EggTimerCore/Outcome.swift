@@ -1,15 +1,7 @@
 import Foundation
 
-/// What the egg will be like: the predicted outcome at the chosen time
-/// (INFERENCE.md section 8, "The outcome").
-///
-/// The odds say how often the cook will call the egg right; this says which
-/// way the rest go. The three yolk answers and a runny white, as the cook
-/// would give them, unrelated share included; the 5%, 50% and 95% points of
-/// the delivered yolk doneness on the slider's scale, from each particle's
-/// time-scale and its own egg-to-egg noise, WITHOUT the taste offset, clamped
-/// to [0, 1]; and which way a miss leans, at a ratio of 1.5. The reasons are
-/// in src/core/outcome.ts, which this is held to by fixtures/outcome.json.
+/// The twin of `src/core/outcome.ts`, held to it by `fixtures/outcome.json`;
+/// the TypeScript's comments say what each part is for.
 
 public enum Lean: String, Sendable, Codable {
     case soft
@@ -17,44 +9,33 @@ public enum Lean: String, Sendable, Codable {
     case balanced
 }
 
-/// What the egg at the chosen time will be like. Codable, so a running cook
-/// keeps the outcome it started with across a relaunch.
+/// Codable, so a running cook keeps the outcome it started with across a
+/// relaunch.
 public struct Outcome: Sendable, Codable, Equatable {
-    /// P(the cook answers too soft / just right / too firm) about the yolk.
     public let pTooSoft: Double
     public let pJustRight: Double
     public let pTooFirm: Double
-    /// P(the cook answers runny / tender / firm) about the white. Sum to 1.
-    /// The screens read only the first; a record keeps all three as the
-    /// forecast made at "Eggs in".
     public let pWhiteRunny: Double
     public let pWhiteTender: Double
     public let pWhiteFirm: Double
-    /// P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
-    /// question the cook is asked. No screen reads them; a record
-    /// keeps them as the forecast. Nil only on an outcome a running cook kept
-    /// from a build before them.
+    /// Nil only on an outcome a running cook kept from a build before them.
     public let pYolkWord: [Double]?
-    /// The 5%, 50% and 95% points of the delivered yolk doneness, on the
-    /// slider's scale, clamped to [0, 1]. No taste offset.
     public let levelLow: Double
     public let levelMedian: Double
     public let levelHigh: Double
-    /// Which way a miss is more likely.
     public let lean: Lean
 }
 
 
-/// Which way a miss leans, from the two ways of missing.
 public func leanOf(_ pTooSoft: Double, _ pTooFirm: Double) -> Lean {
     if pTooSoft > leanRatio * pTooFirm { return .soft }
     if pTooFirm > leanRatio * pTooSoft { return .firm }
     return .balanced
 }
 
-/// The predicted outcome of pulling at `cookTimeS`, for a cook aiming at a
-/// nominal yolk dose of 10^`logNominalTarget`: the decision's inputs, read at
-/// the time it chose.
+/// The yolk's and the white's answers are summed here in the one pass that
+/// reads the centres, where the TypeScript calls `yolkAnswerProbabilities` and
+/// `whiteAnswerProbabilities`, which this package does not have.
 public func predictOutcome(
     _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double, _ logNominalTarget: Double
 ) -> Outcome {
@@ -98,7 +79,6 @@ public func predictOutcome(
         whiteFirm = 1.0 / 3.0
     }
 
-    // The share of eggs delivered at or under log dose x: the mixture's CDF.
     func cdf(_ x: Double) -> Double {
         var acc = 0.0
         for i in 0..<n {

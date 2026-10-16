@@ -1,33 +1,20 @@
 import Foundation
 
-/// The egg in cross-section, while it cooks: each ring's temperature and how
-/// far it has set, from the centre of the yolk out to the shell, at the moment
-/// on the clock. Transliterated from `src/core/section.ts` - see that file for
-/// why it runs `simulate`'s loop a tick at a time, and held to it by
-/// `fixtures/section.json`. Its samples are `Section`'s.
+/// The twin of `src/core/section.ts`, held to it by `fixtures/section.json`;
+/// the TypeScript's comments say what each part is for. Its `createSection`,
+/// `advanceSection` and `sectionView` are this struct's `init`, mutating
+/// `advance` and `view`, and its sample counts are `Section`'s.
 public struct EggSection: Sendable, Codable {
     public private(set) var sphere: SphereState
-    /// Seconds since t = 0 of the cook, a whole number of `dtSim` steps.
     public private(set) var tS: Double
-    /// When the egg left the water, s since t = 0; nil while it is in. Fixed
-    /// the first time a step crosses it.
     public private(set) var outAtS: Double?
-    /// The water's temperature as the egg left it: an ice bath or a tap
-    /// blends out of it.
     public private(set) var waterAtPullC: Double
-    /// The egg's mean temperature as it left the water: a bowl warms by what
-    /// it has fallen since.
     public private(set) var meanAtPullC: Double
-    /// Sample radii, r/R: the yolk's from the centre out, then the white's.
     public let x: [Double]
-    /// Whether each sample is yolk.
     public let yolk: [Bool]
-    /// Each ring's outer edge, r/R.
     public let outer: [Double]
-    /// The thermal dose at each sample, at the yolk's or the white's z.
     public private(set) var dose: [Dose]
 
-    /// An egg at the start of a cook, uniformly at its starting temperature.
     public init(egg: Egg, setup: CookSetup, params: ModelParams) {
         let edge = Constants.yolkRadiusFrac
         let yolkLast = Double(Section.yolkSamples - 1)
@@ -65,10 +52,6 @@ public struct EggSection: Sendable, Codable {
         self.dose = dose
     }
 
-    /// Carry the egg forward to `toS`, in whole `dtSim` steps, exactly as
-    /// `simulate` does: in the water until `outAtS`, then in whatever it cools
-    /// in. `outAtS` is nil while the egg is still in the water, however late;
-    /// once a step has crossed it, the section keeps the first value given.
     public mutating func advance(
         egg: Egg, setup: CookSetup, toS: Double, outAtS given: Double?
     ) {
@@ -97,8 +80,6 @@ public struct EggSection: Sendable, Codable {
         }
     }
 
-    /// The section as it stands. `whiteTargetMin` is the white's dose target
-    /// for this cook (`calibrationDoneness`).
     public func view(whiteTargetMin: Double) -> SectionView {
         var temperature: [Double] = []
         var set: [Double] = []
@@ -123,9 +104,6 @@ public struct EggSection: Sendable, Codable {
     }
 }
 
-/// What a screen draws: per ring, the temperature now and how far it has set,
-/// from 0 to 1 - the yolk on the doneness slider's scale, the white from clear
-/// to opaque. Never falls.
 public struct SectionView: Sendable, Codable {
     public let x: [Double]
     public let yolk: [Bool]
@@ -138,9 +116,6 @@ public struct SectionView: Sendable, Codable {
     }
 }
 
-/// The egg the settings aim for: one egg, at the posterior mean, cooked for
-/// `cookTimeS` and shown at the end of the cooling, the egg as eaten, with
-/// the whole carryover in. See `previewSection` in `src/core/section.ts`.
 public func previewSection(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
 ) -> SectionView {

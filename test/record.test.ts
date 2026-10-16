@@ -26,7 +26,7 @@ import { readFileSync } from 'node:fs';
 import { buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
   CALIBRATION_SEED, type Calibration, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
-  copyCalibration, foldRecord, freshCalibration, gridRequestFor, jsonString, parseLog, parseRecord, recordCookTime_s,
+  copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseLog, parseRecord, recordCookTime_s,
   replay, resultsFile, resultsFileName,
 } from '../src/core/record.ts';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.ts';
@@ -104,23 +104,17 @@ test('1e. the web app version is the package version', () => {
   assert.equal(APP_VERSION, pkg.version);
 });
 
-test('1f. the results file: the store spliced in as stored, a damaged one as text', () => {
-  for (const s of ['', 'plain', 'a"b\\c/d', '\n\r\t\b\f\u0000\u001f\u007f', '‘curly’ café 🥚']) {
-    assert.equal(jsonString(s), JSON.stringify(s), `escaped as JSON.stringify: ${JSON.stringify(s)}`);
-  }
+test('1f. the results file: the store as stored, a damaged one as text', () => {
   const store = JSON.stringify({ v: 4, p: 'x', folded: 0, log: [solvedRecord(0.4, 'jammy')] });
   const meta = { app: 'web' as const, appVersion: APP_VERSION, exported: '2026-10-05T09:00:00.000Z', population: 'x', uid: null };
-  const text = resultsFile(meta, store);
-  // The store's characters are in the file unchanged.
-  assert.ok(text.includes(`"stored":${store}`));
-  const file = JSON.parse(text) as Record<string, unknown>;
+  const file = JSON.parse(resultsFile(meta, store)) as Record<string, unknown>;
   assert.equal(file['file'], RESULTS_FILE_VERSION);
   assert.equal(file['model'], MODEL_ID);
   assert.equal(file['uid'], null);
   assert.deepEqual(file['stored'], JSON.parse(store));
   assert.equal('unread' in file, false);
-  for (const [stored, spliced] of [['{damaged', '{damaged'], ['[1]', [1]], ['7', '7']] as const) {
-    assert.deepEqual(JSON.parse(resultsFile(meta, stored))['stored'], spliced, 'only an object or array is spliced');
+  for (const [stored, kept] of [['{damaged', '{damaged'], ['[1]', [1]], ['7', '7']] as const) {
+    assert.deepEqual(JSON.parse(resultsFile(meta, stored))['stored'], kept, 'only an object or array is read in');
   }
   assert.equal(JSON.parse(resultsFile(meta, null))['stored'], null);
   assert.equal(resultsFileName('2026-10-05'), 'actual-egg-timer-results-2026-10-05.json');

@@ -10,8 +10,9 @@ import { SIZE_CLASSES } from '../src/core/geometry.ts';
 import type { CookFacts, ProbeReading } from '../src/core/record.ts';
 import type { WhiteReport, YolkWord } from '../src/core/infer.ts';
 import {
-  type CookChoices, type CookPlan, type CookSurface, type RecordContext, type RunningCook, asRanCorrected, cookFactsFor, replan, startCook,
+  type CookChoices, type CookPlan, type CookSurface, type RunningCook, replan, startCook,
 } from '../src/core/running.ts';
+import { type RecordContext, asRanCorrected, cookFactsFor } from '../src/core/asRan.ts';
 import { gridFor, knowing } from '../tools/common.ts';
 
 export const START_MS = 1791363600000;

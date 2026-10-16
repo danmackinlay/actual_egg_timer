@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import CoreText
 import EggTimerCore
+import EggTimerCopy
 import EggTimerShared
 
 /// The face of the English of 1750 (LANGUAGE.md section 6, *The face*): the

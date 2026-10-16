@@ -42,6 +42,23 @@ export const PLURAL_CATEGORIES: readonly PluralCategory[] = [
   'zero', 'one', 'two', 'few', 'many', 'other',
 ];
 
+/** The catalogue a fresh install reads. */
+export const DEFAULT_LANGUAGE = 'en';
+
+/** The private-use subtag that marks the English of 1750 (LANGUAGE.md
+ *  section 6): a register, not a format, so `formattingLocale` drops it. */
+export const PERIOD_SUBTAG = 'x-1750';
+
+/** The English of 1750's catalogue tag. */
+export const PERIOD_LANGUAGE = `en-${PERIOD_SUBTAG}`;
+
+/** Whether a tag is the English of 1750, in any region: `en-x-1750`,
+ *  `en-US-x-1750`. */
+export function isPeriod(tag: string): boolean {
+  const lower = tag.toLowerCase();
+  return languageOf(lower) === 'en' && (lower.endsWith(`-${PERIOD_SUBTAG}`) || lower.includes(`-${PERIOD_SUBTAG}-`));
+}
+
 /** An argument to a message. A string goes in as it is: a name, or text the
  *  app has already rendered. A number is a count, and is written in the
  *  formatting locale with the decimals it has. A `Fixed` is a measurement,

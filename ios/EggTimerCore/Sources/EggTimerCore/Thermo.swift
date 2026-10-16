@@ -1,15 +1,16 @@
 import Foundation
 
-/// Water boiling point from altitude or barometric pressure.
-/// Transliterated from `src/core/thermo.ts`.
+/// The twin of `src/core/thermo.ts`, held to it by `fixtures/core.json`; the
+/// TypeScript's comments say what each part is for. Its top-level functions
+/// are this enum's statics, and its documentation-only `boilingPointApprox`
+/// and `saltBoilingElevation` have no twin.
 public enum Thermo {
-    /// International Standard Atmosphere, troposphere (-500 m to 11000 m). Pa.
+    /// Barometric pressure at an altitude, Pa.
     public static func pressureAtAltitude(_ altitudeM: Double) -> Double {
         let h = altitudeM < -500.0 ? -500.0 : (altitudeM > 11000.0 ? 11000.0 : altitudeM)
         return 101325.0 * pow(1.0 - 2.25577e-5 * h, 5.25588)
     }
 
-    /// Antoine equation for water, Stull (1947), inverted for temperature.
     public static func boilingPointAtPressure(_ pressurePa: Double) -> Double {
         let a = 8.07131
         let b = 1730.63

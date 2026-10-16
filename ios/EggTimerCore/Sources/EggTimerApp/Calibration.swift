@@ -244,8 +244,8 @@ public enum Calibrations {
         k.log.count
     }
 
-    /// The results file (`resultsFile` in EggTimerCore): the store exactly as
-    /// stored, and the sharing ID if there is one. Read from storage when it
+    /// The results file (`resultsFile` in EggTimerCore): the store as stored,
+    /// and the sharing ID if there is one. Read from storage when it
     /// is asked for, so it is what is stored then.
     public static func exportText(uid: String?, nowS: Double = AppClock.nowS) -> String {
         let iso = ISO8601DateFormatter()

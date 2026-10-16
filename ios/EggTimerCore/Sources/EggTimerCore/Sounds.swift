@@ -1,8 +1,8 @@
 import Foundation
 
 /// The alarm sounds a cook can choose in Settings, in the order the picker
-/// lists them, and each sound's timing. Transliterated from
-/// `src/core/sounds.ts`, and held to it by `fixtures/sounds.json`. Which one
+/// lists them, and each sound's timing, `src/core/sounds.ts`'s: its periods
+/// are its data, written here by `npm run swift:constants`. Which one
 /// a fresh install rings with, and the stored choice, are the app's
 /// (`AlarmSoundChoice`). The files the app plays are rendered from the
 /// web's `src/ui/alarmSounds.ts` by `npm run sounds`, one per sound and
@@ -22,12 +22,15 @@ public enum AlarmSound: String, Sendable, Hashable, CaseIterable {
     case timer, cuckoo, hen
 }
 
-/// One period of a sound's pattern, s: it sounds once at the start of each.
+/// One period of a sound's pattern, s (`AlarmPeriodS`).
 public func alarmPeriodS(_ sound: AlarmSound, _ moment: RingDeadline) -> Double {
-    switch sound {
-    case .timer: return 2.6
-    case .cuckoo: return 2.2
-    case .hen: return moment == .pull ? 1.6 : 4.4
+    switch (sound, moment) {
+    case (.timer, .pull): AlarmPeriodS.timerPull
+    case (.timer, .cooled): AlarmPeriodS.timerCooled
+    case (.cuckoo, .pull): AlarmPeriodS.cuckooPull
+    case (.cuckoo, .cooled): AlarmPeriodS.cuckooCooled
+    case (.hen, .pull): AlarmPeriodS.henPull
+    case (.hen, .cooled): AlarmPeriodS.henCooled
     }
 }
 

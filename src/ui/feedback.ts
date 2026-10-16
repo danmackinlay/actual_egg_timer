@@ -9,9 +9,8 @@
  * Asking once per egg is what closes that gap.
  */
 
-import {
-  type CookPlan, type Phase, type RunningCook, answered, answersOf, asRanShown,
-} from '../core/running.ts';
+import { type CookPlan, type Phase, type RunningCook, answered, answersOf } from '../core/running.ts';
+import { asRanShown } from '../core/asRan.ts';
 import type { ModelParams } from '../core/solve.ts';
 import { type WhiteReport, YOLK_WORDS, type YolkWord } from '../core/infer.ts';
 import { parse, stepPast } from '../core/units.ts';

@@ -24,7 +24,6 @@
  *                              label, which words can be reached, the verdict
  *   fixtures/texture.json      the texture bands and the note's keys
  *   fixtures/boil.json         boil memory: a boil remembered, and estimated
- *   fixtures/sounds.json       the alarm sounds' timing
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
@@ -46,7 +45,6 @@
  *   fixtures/format.json       numbers and times of day in every formatting
  *                              locale, and a pseudo-Czech catalogue in cs-CZ
  *   fixtures/probe.json        the probe reading
- *   fixtures/language.json     the switch into the English of 1750 and out
  *   fixtures/share.json        sharing's contract with the server: ids, the
  *                              number each egg is filed under, and what a
  *                              sender makes of the endpoint's answers
@@ -134,7 +132,6 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     return { fixture: f, counts: [`${f.cases.length} textures`] };
   },
   boil: async () => ({ fixture: (await import('./fixtures/boil.ts')).boilFixture, counts: [] }),
-  sounds: async () => ({ fixture: (await import('./fixtures/sounds.ts')).soundsFixture, counts: [] }),
   sousvide: async () => {
     const { sousvideFixture: f } = await import('./fixtures/sousvide.ts');
     return { fixture: f, counts: [`${f.cases.length} sous-vide`] };
@@ -197,10 +194,6 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
       counts: [`${(f['updates'] as unknown[]).length} probe folds`, `${(f['solved'] as unknown[]).length} probe cooks`],
     };
   },
-  language: async () => {
-    const f = (await import('./fixtures/language.ts')).languageFixture();
-    return { fixture: f, counts: [`${(f['transitions'] as unknown[]).length} language moves`] };
-  },
   share: async () => {
     const f = (await import('./fixtures/share.ts')).shareFixture();
     return { fixture: f, counts: [`${f.replies.length} server answers`] };
@@ -239,7 +232,7 @@ const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.js
 /** The order the summary line counts them in. */
 const COUNTED = [
   'core', 'scenarios', 'calibration', 'slider', 'texture', 'sousvide', 'sousvideCopy', 'copy', 'format', 'units',
-  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'language', 'share', 'running', 'step',
+  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'share', 'running', 'step',
   'fitSample', 'fitRecovery',
 ];
 

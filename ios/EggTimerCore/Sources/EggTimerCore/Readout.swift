@@ -1,21 +1,16 @@
 import Foundation
 import EggTimerCopy
 
-/// What the readout says while a cook runs: the words above, on and under the
-/// clock, the buttons, and the numbers they take, for a cook and its plan at
-/// one moment. Transliterated from `src/core/readout.ts`, whose comments say
-/// what each part is, and held to it by `fixtures/step.json`.
+/// The twin of `src/core/readout.ts`, held to it by `fixtures/step.json`; the
+/// TypeScript's comments say what each part is for.
 
-/// One line of words: a key, and the numbers it takes by name. `time`,
-/// `elapsed`, `boil`, `after` and `cooking` are seconds, shown as a clock;
-/// `boiling` is degrees Celsius; `seconds` a whole number of seconds.
+/// One line of words: a key, and the numbers it takes by name.
 public struct ReadoutLine: Sendable, Equatable, Codable {
     public let key: CopyKey
     public let args: [String: Double]
 }
 
-/// What a screen reader hears for the clock: which line to say (the web's
-/// spoken lines; iOS speaks none of them yet), or the line under the clock.
+/// What a screen reader hears for the clock. iOS speaks none of these yet.
 public struct Spoken: Sendable, Equatable, Codable {
     public enum Say: String, Sendable, Codable {
         case heating, cooking, pull, cooling, done, probe, stillIn, subline
@@ -26,22 +21,17 @@ public struct Spoken: Sendable, Equatable, Codable {
 }
 
 public struct Readout: Sendable, Equatable, Codable {
-    /// The phase the clock reads, and whether the plan asks whether the egg
-    /// is still in.
     public let phase: Phase
     public let asking: Bool
-    /// Above the clock.
     public let label: CopyKey
-    /// The clock, s, never below zero, and whether it counts on past the pull.
     public let clockS: Double
+    /// "" or "+", the TypeScript's union.
     public let sign: String
     public let subline: ReadoutLine
     public let spoken: Spoken
-    /// The primary button, and the second (the "no" to "still in the water?").
     public let primary: CopyKey?
     public let secondary: CopyKey?
     public let hint: ReadoutLine?
-    /// Whether Cancel is offered.
     public let cancel: Bool
 
     enum CodingKeys: String, CodingKey {
@@ -49,7 +39,6 @@ public struct Readout: Sendable, Equatable, Codable {
     }
 }
 
-/// What the readout needs of the cook's probe.
 public struct ReadoutProbe: Sendable, Equatable, Codable {
     public var wanted: Bool
     public var pending: Bool
@@ -60,15 +49,11 @@ public struct ReadoutProbe: Sendable, Equatable, Codable {
     }
 }
 
-/// Whole seconds until the counted cooling starts without the cook; nil
-/// outside the pull, and on a counter rest.
 func coolingStartsInS(_ d: Deadlines, cooling: Cooling, nowS: Double) -> Double? {
     guard phaseAt(d, nowS: nowS) == .pull, cooling != .counter else { return nil }
     return max(0, (pullGraceSeconds - (nowS - d.cookEndS)).rounded(.up))
 }
 
-/// The readout for `cook` with its `plan` at `nowS`. See `readoutAt` in
-/// `src/core/readout.ts`.
 public func readoutAt(
     _ cook: RunningCook, plan: CookPlan, nowS: Double, probe: ReadoutProbe = ReadoutProbe(wanted: false, pending: false)
 ) -> Readout {

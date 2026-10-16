@@ -12,10 +12,10 @@
  */
 
 import {
-  type Catalogue, type CopyArgs, type CopyArgsOf, type CopyKey, type CopyRef, catalogueChain, parseCatalogue, render, renderRef,
+  type Catalogue, type CopyArgs, type CopyArgsOf, type CopyKey, type CopyRef, DEFAULT_LANGUAGE, catalogueChain, parseCatalogue,
+  render, renderRef,
 } from '../core/copy.ts';
 import { formatTimeOfDay, formattingLocale } from '../core/format.ts';
-import { DEFAULT_LANGUAGE } from '../core/language.ts';
 import { request } from './idle.ts';
 
 /** The language on screen, and the catalogues that render it. */
@@ -58,7 +58,7 @@ function catalogueFor(chain: readonly string[]): Promise<Catalogue> {
  *
  * A fresh install speaks DEFAULT_LANGUAGE. The cook can pick another in
  * Settings, and the units switch can move an English cook into the English of
- * 1750 (`src/core/language.ts`, LANGUAGE.md section 6); `main.ts` loads the
+ * 1750 (`languageAfterFlip` in settings.ts, LANGUAGE.md section 6); `main.ts` loads the
  * one they last had, and the page calls this again to change it in place,
  * re-rendering what it drew.
  */
