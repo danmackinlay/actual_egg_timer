@@ -4,7 +4,8 @@
  * cook too old, and one left at Done. Run by tools/e2e.ts.
  */
 
-import { type Osc, type Scenario, type Snap, check, labelSays } from '../harness.ts';
+import type { ElementId } from '../../src/ui/dom.ts';
+import { type Osc, type Scenario, type Snap, byId, check, labelSays } from '../harness.ts';
 import {
   BOIL_KEY, STOPPED, boil, corrected, deadlines, later, near, pansIn, pick, rings, scheduledAhead, sentenceSays, start,
   storedCook,
@@ -119,16 +120,16 @@ export const cookScenarios: Record<string, Scenario> = {
       await pick(tab, '#size', '0');
       s = await corrected(tab, s);
       await later(tab);
-      await tab.eval(`(() => { const e = document.getElementById('eggCount'); e.value = '1';
+      await tab.eval(`(() => { const e = ${byId('eggCount')}; e.value = '1';
         e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
       s = await corrected(tab, s);
       await later(tab);
-      await tab.eval(`(() => { const e = document.getElementById('litres'); e.value = '0.5';
+      await tab.eval(`(() => { const e = ${byId('litres')}; e.value = '0.5';
         e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
       s = await corrected(tab, s);
       await tab.settle();
       const warn = await tab.eval<{ hidden: boolean; text: string }>(
-        "(() => { const w = document.getElementById('warn'); return { hidden: w.hidden, text: w.textContent }; })()");
+        `(() => { const w = ${byId('warn')}; return { hidden: w.hidden, text: w.textContent }; })()`);
       const never = await tab.words('refusal.whiteNeverSets');
       check(!warn.hidden && warn.text === never, `the slot: "${warn.text}"`);
       return `${slow}; heat off, 0.5 L, one small egg: "${warn.text}"`;
@@ -176,8 +177,8 @@ export const cookScenarios: Record<string, Scenario> = {
       };
       const ice = minutes((await tab.snap()).digits);
       // The bowl and its numbers, each as typed into its field.
-      const type = async (id: string, value: string, settled: string): Promise<void> => {
-        await tab.eval(`(() => { const e = document.getElementById(${JSON.stringify(id)});
+      const type = async (id: ElementId, value: string, settled: string): Promise<void> => {
+        await tab.eval(`(() => { const e = ${byId(id)};
           e.value = ${JSON.stringify(value)}; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         await tab.until(settled, `${id} at ${value}`);
       };
@@ -185,8 +186,8 @@ export const cookScenarios: Record<string, Scenario> = {
       await tab.click('#coolBowl');
       await tab.until("__snap().settings.cooling === 'bowl'", 'the bowl chosen');
       const shown = await tab.eval<{ bowl: boolean; water: boolean; placeholder: string }>(`(() => ({
-        bowl: !document.getElementById('bowlFields').hidden, water: !document.getElementById('coolingWaterField').hidden,
-        placeholder: document.getElementById('coolingWater').placeholder }))()`);
+        bowl: !${byId('bowlFields')}.hidden, water: !${byId('coolingWaterField')}.hidden,
+        placeholder: ${byId('coolingWater')}.placeholder }))()`);
       check(shown.bowl && shown.water && shown.placeholder === '20',
         `the bowl's rows, its temperature greyed at the room: ${JSON.stringify(shown)}`);
       await type('bowlLitres', '1', '__snap().settings.bowlLitres === 1');

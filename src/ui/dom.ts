@@ -9,150 +9,63 @@
  * undefined.
  */
 
-export function el<T extends HTMLElement>(id: string): T {
-  const node = document.getElementById(id);
-  if (node === null) throw new Error(`missing element #${id}`);
-  return node as T;
-}
+/**
+ * The page's elements by their ids in index.html, each with its tag: every
+ * one the code writes to or reads, and those a script drives (the e2e,
+ * tools/e2e/, and the copy capture name them as an `ElementId`), each named
+ * once. An id renamed in the markup fails `npm test` (test/dom.test.ts)
+ * and boot, where `bindDom` finds each and checks its tag; one renamed here
+ * fails the typecheck wherever it is named.
+ */
+export const ELEMENTS = {
+  readout: 'section', phaseLabel: 'p', digits: 'span', announce: 'span', sublineText: 'span', sublineInfo: 'button',
+  sublineMore: 'p', certaintyWord: 'button', mostLikely: 'p', certaintyMore: 'div', certaintyInterval: 'p',
+  certaintyLikely: 'p', certaintyTime: 'p', certaintyHelp: 'p', learning: 'p', learningInfo: 'button',
+  whiteRisk: 'p',
 
-/** An SVG element by id, which `el` cannot name: SVG is not HTML. */
-function svgEl(id: string): SVGSVGElement {
-  const node = document.getElementById(id);
-  if (!(node instanceof SVGSVGElement)) throw new Error(`missing svg #${id}`);
-  return node;
-}
+  advice: 'p', adviceList: 'ul', forYou: 'div', welcome: 'p', helpSousVide: 'p', sentence: 'p', eggSection: 'svg',
+  controls: 'form', startedAtField: 'div', startedAt: 'output', startedAtLess: 'button', startedAtMore: 'button',
+  startedAtLimit: 'p', navBack: 'button', settingsTitle: 'h1', helpTitle: 'h1', statBoil: 'strong', note: 'p',
+  warn: 'p', mute: 'button', doneness: 'input', donenessOdds: 'div', donenessUnlikelySoft: 'div',
+  donenessUnlikelyHard: 'div', donenessBlockedSoft: 'div', donenessBlockedHard: 'div', donenessTicks: 'div',
+  donenessBracket: 'div', donenessLikelyBand: 'div', donenessRange: 'span', donenessPeak: 'span', size: 'select',
+  measureMass: 'input', measureGirth: 'input', measureMinor: 'input', unitMass: 'span', unitGirth: 'span',
+  unitMinor: 'span', unitTemp: 'span', unitLitres: 'span', unitAltitude: 'span', startTempHint: 'p',
+  startSousLabel: 'label', customTempField: 'div', customTemp: 'input', litres: 'input', eggCount: 'input',
+  altitude: 'input', primary: 'button', probeWords: 'span', mainWords: 'span', primaryHintText: 'span',
+  hintInfo: 'button', hintMore: 'p', secondary: 'button', stillOut: 'button', feedback: 'div', calibNote: 'p',
+  learnedNote: 'p', forget: 'button', forgetInfo: 'button', forgetConfirm: 'div', forgetYes: 'button',
+  forgetNo: 'button', exportResults: 'button', exportNote: 'p', shareSetting: 'input', shareNote: 'p', shareId: 'p',
+  shareUid: 'span', appVersion: 'p', tabNote: 'section', useHere: 'button', shareDelete: 'button',
+  shareConfirm: 'div', shareDeleteYes: 'button', shareDeleteNo: 'button', probeSetting: 'input', probeEntry: 'div',
+  probeReading: 'input', unitProbe: 'span', probeSave: 'button', probeNote: 'p', feedbackTarget: 'p',
+  roomTemp: 'input', unitRoom: 'span', roomFromField: 'div', roomTempFrom: 'input', unitRoomFrom: 'span',
+  moreRoomFrom: 'p', bowlFields: 'div', bowlLitres: 'input', unitBowl: 'span', coolingWaterField: 'div',
+  coolingWater: 'input', unitCoolingWater: 'span', moreCoolingWater: 'p', moreRoom: 'p', unitsPeriod: 'p',
 
-function findDom() {
-  return {
-    body: document.body,
-    readout: el<HTMLElement>('readout'),
-    phaseLabel: el<HTMLParagraphElement>('phaseLabel'),
-    digits: el<HTMLSpanElement>('digits'),
-    announce: el<HTMLSpanElement>('announce'),
-    sublineText: el<HTMLSpanElement>('sublineText'),
-    sublineInfo: el<HTMLButtonElement>('sublineInfo'),
-    sublineMore: el<HTMLParagraphElement>('sublineMore'),
-    certaintyWord: el<HTMLButtonElement>('certaintyWord'),
-    mostLikely: el<HTMLParagraphElement>('mostLikely'),
-    certaintyMore: el<HTMLDivElement>('certaintyMore'),
-    certaintyInterval: el<HTMLParagraphElement>('certaintyInterval'),
-    certaintyLikely: el<HTMLParagraphElement>('certaintyLikely'),
-    certaintyTime: el<HTMLParagraphElement>('certaintyTime'),
-    certaintyHelp: el<HTMLParagraphElement>('certaintyHelp'),
-    learning: el<HTMLParagraphElement>('learning'),
-    learningInfo: el<HTMLButtonElement>('learningInfo'),
-    whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
+  settingsForm: 'form', panelEgg: 'div', panelFrom: 'div', panelStart: 'div', panelCooling: 'div', settingsLink: 'a',
+  actions: 'div', learned: 'section', tempRoom: 'input', startCold: 'input', startHot: 'input', startSous: 'input',
+  coolIce: 'input', coolTap: 'input', coolBowl: 'input', coolCounter: 'input', heatOff: 'input',
+} as const satisfies Record<string, keyof HTMLElementTagNameMap | 'svg'>;
 
-    advice: el<HTMLParagraphElement>('advice'),
-    adviceList: el<HTMLUListElement>('adviceList'),
-    forYou: el<HTMLDivElement>('forYou'),
-    welcome: el<HTMLParagraphElement>('welcome'),
-    helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
-    sentence: el<HTMLParagraphElement>('sentence'),
-    eggSection: svgEl('eggSection'),
-    controls: el<HTMLFormElement>('controls'),
-    startedAtField: el<HTMLDivElement>('startedAtField'),
-    startedAt: el<HTMLOutputElement>('startedAt'),
-    startedAtLess: el<HTMLButtonElement>('startedAtLess'),
-    startedAtMore: el<HTMLButtonElement>('startedAtMore'),
-    startedAtLimit: el<HTMLParagraphElement>('startedAtLimit'),
-    navBack: el<HTMLButtonElement>('navBack'),
-    settingsTitle: el<HTMLElement>('settingsTitle'),
-    helpTitle: el<HTMLElement>('helpTitle'),
-    statBoil: el<HTMLElement>('statBoil'),
-    note: el<HTMLParagraphElement>('note'),
-    warn: el<HTMLParagraphElement>('warn'),
-    mute: el<HTMLButtonElement>('mute'),
-    doneness: el<HTMLInputElement>('doneness'),
-    donenessOdds: el<HTMLDivElement>('donenessOdds'),
-    donenessUnlikelySoft: el<HTMLDivElement>('donenessUnlikelySoft'),
-    donenessUnlikelyHard: el<HTMLDivElement>('donenessUnlikelyHard'),
-    donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
-    donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
-    donenessTicks: el<HTMLDivElement>('donenessTicks'),
-    donenessBracket: el<HTMLDivElement>('donenessBracket'),
-    donenessLikelyBand: el<HTMLDivElement>('donenessLikelyBand'),
-    donenessRange: el<HTMLSpanElement>('donenessRange'),
-    donenessPeak: el<HTMLSpanElement>('donenessPeak'),
-    size: el<HTMLSelectElement>('size'),
-    measureMass: el<HTMLInputElement>('measureMass'),
-    measureGirth: el<HTMLInputElement>('measureGirth'),
-    measureMinor: el<HTMLInputElement>('measureMinor'),
-    unitMass: el<HTMLSpanElement>('unitMass'),
-    unitGirth: el<HTMLSpanElement>('unitGirth'),
-    unitMinor: el<HTMLSpanElement>('unitMinor'),
-    unitTemp: el<HTMLSpanElement>('unitTemp'),
-    unitLitres: el<HTMLSpanElement>('unitLitres'),
-    unitAltitude: el<HTMLSpanElement>('unitAltitude'),
-    startTempHint: el<HTMLParagraphElement>('startTempHint'),
-    startSousLabel: el<HTMLLabelElement>('startSousLabel'),
-    customTempField: el<HTMLDivElement>('customTempField'),
-    customTemp: el<HTMLInputElement>('customTemp'),
-    litres: el<HTMLInputElement>('litres'),
-    eggCount: el<HTMLInputElement>('eggCount'),
-    altitude: el<HTMLInputElement>('altitude'),
-    primary: el<HTMLButtonElement>('primary'),
-    probeWords: el<HTMLSpanElement>('probeWords'),
-    mainWords: el<HTMLSpanElement>('mainWords'),
-    primaryHintText: el<HTMLSpanElement>('primaryHintText'),
-    hintInfo: el<HTMLButtonElement>('hintInfo'),
-    hintMore: el<HTMLParagraphElement>('hintMore'),
-    secondary: el<HTMLButtonElement>('secondary'),
-    stillOut: el<HTMLButtonElement>('stillOut'),
-    feedback: el<HTMLDivElement>('feedback'),
-    calibNote: el<HTMLParagraphElement>('calibNote'),
-    learnedNote: el<HTMLParagraphElement>('learnedNote'),
-    forget: el<HTMLButtonElement>('forget'),
-    forgetInfo: el<HTMLButtonElement>('forgetInfo'),
-    forgetConfirm: el<HTMLDivElement>('forgetConfirm'),
-    forgetYes: el<HTMLButtonElement>('forgetYes'),
-    forgetNo: el<HTMLButtonElement>('forgetNo'),
-    exportResults: el<HTMLButtonElement>('exportResults'),
-    exportNote: el<HTMLParagraphElement>('exportNote'),
-    shareSetting: el<HTMLInputElement>('shareSetting'),
-    shareNote: el<HTMLParagraphElement>('shareNote'),
-    shareId: el<HTMLParagraphElement>('shareId'),
-    shareUid: el<HTMLSpanElement>('shareUid'),
-    appVersion: el<HTMLParagraphElement>('appVersion'),
-    tabNote: el<HTMLElement>('tabNote'),
-    useHere: el<HTMLButtonElement>('useHere'),
-    shareDelete: el<HTMLButtonElement>('shareDelete'),
-    shareConfirm: el<HTMLDivElement>('shareConfirm'),
-    shareDeleteYes: el<HTMLButtonElement>('shareDeleteYes'),
-    shareDeleteNo: el<HTMLButtonElement>('shareDeleteNo'),
-    probeSetting: el<HTMLInputElement>('probeSetting'),
-    probeEntry: el<HTMLDivElement>('probeEntry'),
-    probeReading: el<HTMLInputElement>('probeReading'),
-    unitProbe: el<HTMLSpanElement>('unitProbe'),
-    probeSave: el<HTMLButtonElement>('probeSave'),
-    probeNote: el<HTMLParagraphElement>('probeNote'),
-    feedbackTarget: el<HTMLParagraphElement>('feedbackTarget'),
-    roomTemp: el<HTMLInputElement>('roomTemp'),
-    unitRoom: el<HTMLSpanElement>('unitRoom'),
-    roomFromField: el<HTMLDivElement>('roomFromField'),
-    roomTempFrom: el<HTMLInputElement>('roomTempFrom'),
-    unitRoomFrom: el<HTMLSpanElement>('unitRoomFrom'),
-    moreRoomFrom: el<HTMLParagraphElement>('moreRoomFrom'),
-    bowlFields: el<HTMLDivElement>('bowlFields'),
-    bowlLitres: el<HTMLInputElement>('bowlLitres'),
-    unitBowl: el<HTMLSpanElement>('unitBowl'),
-    coolingWaterField: el<HTMLDivElement>('coolingWaterField'),
-    coolingWater: el<HTMLInputElement>('coolingWater'),
-    unitCoolingWater: el<HTMLSpanElement>('unitCoolingWater'),
-    moreCoolingWater: el<HTMLParagraphElement>('moreCoolingWater'),
-    moreRoom: el<HTMLParagraphElement>('moreRoom'),
-    unitsPeriod: el<HTMLParagraphElement>('unitsPeriod'),
-  };
-}
+/** An element of the page, by its id. */
+export type ElementId = keyof typeof ELEMENTS;
 
-type Dom = ReturnType<typeof findDom>;
+type Tagged<T> = T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : SVGSVGElement;
+type Dom = { body: HTMLElement } & { [K in ElementId]: Tagged<(typeof ELEMENTS)[K]> };
 
 /** Every element the code writes to. Null until `bindDom()`. */
 let bound: Dom | null = null;
 
 /** Find the page's elements. Once, at boot, before anything reads `page()`. */
 export function bindDom(): void {
-  bound = findDom();
+  const found: Record<string, Element> = { body: document.body };
+  for (const [id, tag] of Object.entries(ELEMENTS)) {
+    const node = document.getElementById(id);
+    if (node === null || node.localName !== tag) throw new Error(`missing <${tag}> #${id}`);
+    found[id] = node;
+  }
+  bound = found as Dom;
 }
 
 /** Every element the code writes to. Throws if called before `bindDom()`. */

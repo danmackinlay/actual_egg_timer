@@ -26,6 +26,7 @@ import type { CopyArgs } from '../../core/copy.ts';
 import type { BoilMemory } from '../../core/boil.ts';
 import { type Phase, type RunningCook, guessLengthened } from '../../core/running.ts';
 import { readStoredCook } from '../storedCook.ts';
+import type { ElementId } from '../dom.ts';
 import { STORES } from '../stores.ts';
 import type { EggRecord } from '../../core/record.ts';
 import { flushDraw, pageModel, pageStores } from '../cook.ts';
@@ -93,7 +94,7 @@ interface TestApi {
   timeOfDay(ms: number): string;
 }
 
-const text = (id: string): string => document.getElementById(id)?.textContent ?? '';
+const text = (id: ElementId): string => document.getElementById(id)?.textContent ?? '';
 
 /** The cook stored as `text` reads, or null. */
 function storedCookOf(text: string | null): RunningCook | null {

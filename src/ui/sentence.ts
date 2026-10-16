@@ -11,11 +11,11 @@ import { sizeClassLabel } from '../core/units.ts';
 import type { EggFrom } from '../core/record.ts';
 import { type Clause, type ClauseKeys, clauseKeys } from '../core/wording.ts';
 import { t, tChosen } from './copy.ts';
-import { el, page } from './dom.ts';
+import { type ElementId, page } from './dom.ts';
 import type { Settings, UiStartMode } from './store.ts';
 import { show, unitSystem } from './units.ts';
 
-const CLAUSE_PANELS: Record<Clause, string> = {
+const CLAUSE_PANELS: Record<Clause, ElementId & `panel${string}`> = {
   egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
 };
 
@@ -30,7 +30,7 @@ let sentenceShown = '';
 let openClause: Clause | null = null;
 
 function panelFor(clause: Clause): HTMLElement {
-  return el<HTMLElement>(CLAUSE_PANELS[clause]);
+  return page()[CLAUSE_PANELS[clause]];
 }
 
 /** What the sentence says: the cook the controls describe

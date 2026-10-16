@@ -32,7 +32,7 @@ import {
   startRunner, stopRunner,
 } from './cook.ts';
 import { closeAudio, primeAudio } from './clock.ts';
-import { bindDom, el, page } from './dom.ts';
+import { bindDom, page } from './dom.ts';
 import { wireFeedback } from './feedback.ts';
 import { wireInfoButtons } from './info.ts';
 import { onInput, onToggleMute } from './input.ts';
@@ -164,8 +164,7 @@ function wire(): void {
 
   // The egg's two controls and its sentence, and the Settings page's, are
   // read the same way: every input goes through readInputs.
-  for (const id of ['controls', 'settingsForm']) {
-    const form = el<HTMLFormElement>(id);
+  for (const form of [page().controls, page().settingsForm]) {
     form.addEventListener('input', onInput);
     form.addEventListener('change', onInput);
     form.addEventListener('submit', (event) => event.preventDefault());

@@ -3,7 +3,7 @@
  * then falls silent. Run by tools/e2e.ts.
  */
 
-import { type Scenario, check } from '../harness.ts';
+import { type Scenario, byId, check } from '../harness.ts';
 import {
   DUMP, STOPPED, boil, deadlines, near, opened, pick, rings, scheduledAhead, start,
 } from './helpers.ts';
@@ -19,8 +19,8 @@ export const tabScenarios: Record<string, Scenario> = {
       const before = await a.eval<string>(DUMP);
       const b = await opened(h, `${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       const shown = await b.eval<{ note: string; want: string; button: string; main: boolean }>(`(() => ({
-        note: document.querySelector('#tabNote p').textContent, want: aetTest.t('tab.note'),
-        button: document.getElementById('useHere').textContent,
+        note: ${byId('tabNote')}.querySelector('p').textContent, want: aetTest.t('tab.note'),
+        button: ${byId('useHere')}.textContent,
         main: document.querySelector('main').offsetHeight > 0 }))()`);
       check(shown.note === shown.want && shown.note !== '' && shown.button !== '' && !shown.main,
         `the note alone: ${JSON.stringify(shown)}`);
@@ -84,7 +84,7 @@ export const tabScenarios: Record<string, Scenario> = {
       check((await a.osc()).some(scheduledAhead), 'A\'s alarm armed ahead');
       const b = await opened(h, `${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       await b.click('#useHere');
-      await a.until("document.body.dataset.tab === 'waiting' && !document.getElementById('tabNote').hidden", 'A waits');
+      await a.until(`document.body.dataset.tab === 'waiting' && !${byId('tabNote')}.hidden`, 'A waits');
       await b.until("document.body.dataset.tab === 'owner' && window.aetTest !== undefined", 'B owns the app');
       const closed = await a.eval<string[]>('__audio.map((c) => c.state)');
       check(closed.length > 0 && closed.every((state) => state === 'closed'), `A's audio: ${closed.join(', ')}`);

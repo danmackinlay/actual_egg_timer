@@ -5,7 +5,7 @@
  */
 
 import { wordBandHigh, wordBandLow } from '../../src/core/certainty.ts';
-import { Failure, type Scenario, type Snap, check } from '../harness.ts';
+import { Failure, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
   COOLINGS, STOPPED, boil, clockAt, corrected, deadlines, later, near, oneLayout, panelStart, pick, sentenceSays,
   setSlider, start,
@@ -29,7 +29,7 @@ export const layoutScenarios: Record<string, Scenario> = {
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       const centre = async (): Promise<{ reading: string; fill: string }> => tab.eval(`(() => {
-        const svg = document.getElementById('eggSection');
+        const svg = ${byId('eggSection')};
         return { reading: svg.dataset.egg ?? '', fill: svg.querySelector('path[data-ring="0"]')?.getAttribute('fill') ?? '' };
       })()`);
       const at = async (level: number): Promise<{ reading: string; fill: string }> => {
@@ -76,9 +76,9 @@ export const layoutScenarios: Record<string, Scenario> = {
       // the bracket's row as the track is).
       const drawn = async (): Promise<{ bracket: [number, number]; band: [number, number] }> => tab.eval(`(() => {
         const row = document.querySelector('.slider__range').getBoundingClientRect();
-        const at = (id) => { const r = document.getElementById(id).getBoundingClientRect();
+        const at = (e) => { const r = e.getBoundingClientRect();
           return [(r.left - row.left) / row.width, (r.right - row.left) / row.width]; };
-        return { bracket: at('donenessBracket'), band: at('donenessLikelyBand') };
+        return { bracket: at(${byId('donenessBracket')}), band: at(${byId('donenessLikelyBand')}) };
       })()`);
       const seen: string[] = [];
       let differs = 0;
@@ -179,7 +179,7 @@ export const layoutScenarios: Record<string, Scenario> = {
       await tab.shift(300);
       await tab.click('#certaintyWord');
       await tab.settle();
-      const line = "document.getElementById('certaintyTime').textContent";
+      const line = `${byId('certaintyTime')}.textContent`;
       // The times of day the eggs come out between, from this plan's range.
       const want = await tab.eval<string>(`(() => { const s = __snap(); const r = s.certainty.time; const t0 = s.cook.startedAt_s;
         return aetTest.t('certainty.timeOut', { low: aetTest.timeOfDay((t0 + r.low_s) * 1000), high: aetTest.timeOfDay((t0 + r.high_s) * 1000) }); })()`);
@@ -196,7 +196,7 @@ export const layoutScenarios: Record<string, Scenario> = {
       await tab.settle();
       s = await tab.phase('HEATING');
       check(s.lengthened, 'the slow hob lengthened');
-      check(await tab.eval<boolean>("!document.getElementById('certaintyTime').closest('#certaintyMore').hidden"),
+      check(await tab.eval<boolean>(`!${byId('certaintyMore')}.hidden && ${byId('certaintyMore')}.contains(${byId('certaintyTime')})`),
         'the range shown');
       const at16 = await tab.eval<string>(line);
       const pull16 = deadlines(s).cookEnd_s;
