@@ -11,10 +11,12 @@ import assert from 'node:assert/strict';
 import { calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor } from '../src/core/record.ts';
 import { type GridSpec, buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
-  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, asRanCurrent, asRanShown, cookEnding, cookFactsFor, cookTooOld,
-  coolingSecondsFor, corrected, eventsDue, keepAsRan, openEggId, phaseAt, pullStands, replan, solutionAsRan, stillIn,
-  withAsRan, withOut, writeEvents,
+  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, cookTooOld, coolingSecondsFor, corrected, eventsDue, openEggId, phaseAt,
+  pullStands, replan, stillIn, withOut, writeEvents,
 } from '../src/core/running.ts';
+import {
+  asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan, withAsRan,
+} from '../src/core/asRan.ts';
 import { readRunningCook } from '../src/ui/storedCook.ts';
 import { gridFor } from '../tools/common.ts';
 import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';

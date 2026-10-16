@@ -52,11 +52,12 @@ import { type DecisionInputs, inputsKey } from './decide.ts';
 import type { WhiteReport, YolkWord } from './infer.ts';
 import { type AppName, type Calibration, type EggRecord, type ProbeReading, type Units, recordFor } from './record.ts';
 import {
-  type BoilToRemember, type CookChoices, type CookEntry, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, answered,
-  answersLogged, answersOf, appendEntry, asRanCorrected, asRanCurrent, asksIfStillIn, cookEnding, cookFactsFor,
-  cookTooOld, corrected, endedAt_s, eventsDue, keepAsRan, phaseAt, pullStands, replan, sameChoices, sameEvents,
-  slowHobDue, startCook, startCorrected, stillIn, withBoil, withOut, writeEvents,
+  type BoilToRemember, type CookChoices, type CookEntry, type CookPlan, type CookSurface, PULL_GRACE_SECONDS,
+  type RunningCook, answered, answersLogged, answersOf, appendEntry, asksIfStillIn, cookTooOld, corrected, endedAt_s,
+  eventsDue, phaseAt, pullStands, replan, sameValue, slowHobDue, startCook, startCorrected, stillIn, withBoil, withOut,
+  writeEvents,
 } from './running.ts';
+import { asRanCorrected, asRanCurrent, cookEnding, cookFactsFor, keepAsRan } from './asRan.ts';
 
 /** What happened to the cook, at `now_s`. Cancel is `startAgain`. A reload
  *  or a relaunch is a `tick` on a stored cook with no plan yet. */
@@ -313,7 +314,7 @@ function logRecord(w: Work, env: CookEnv, now_s: number, unanswered: boolean): b
  *  the cook too old. A tick when it has not leaves the state as it is; an app
  *  may ask first, and not step at all. */
 function tickDue(cook: RunningCook, plan: CookPlan, now_s: number): boolean {
-  return slowHobDue(plan, now_s) || cookTooOld(plan, now_s) || !sameEvents(eventsDue(cook, plan, now_s), cook.events);
+  return slowHobDue(plan, now_s) || cookTooOld(plan, now_s) || !sameValue(eventsDue(cook, plan, now_s), cook.events);
 }
 
 /** Whether `b` is the cook `a` was: a cook moves only by an entry appended
@@ -329,7 +330,7 @@ function settle(w: Work, env: CookEnv, now_s: number, last: CookPlan | null): vo
   let plan = sameCook(w.plannedFor, w.cook) ? w.plan : planOn(w.cook, env.calibration, env.surfaces, w.lean, now_s, last);
   if (endedAt_s(w.cook) === null) {
     const due = eventsDue(w.cook, plan, now_s);
-    if (!sameEvents(due, w.cook.events)) {
+    if (!sameValue(due, w.cook.events)) {
       w.cook = writeEvents(w.cook, due);
       plan = planOn(w.cook, env.calibration, env.surfaces, w.lean, now_s, plan);
     }
@@ -427,8 +428,8 @@ export function step(state: CookState, event: CookEvent, env: CookEnv): CookStep
     case 'correct':
       // After the pull the yolk wanted only previews: a
       // change of it alone corrects nothing.
-      if (!ended && !sameChoices(event.choices, held.choices)
-        && !(held.events.pulled !== null && sameChoices({ ...event.choices, level: held.choices.level }, held.choices))) {
+      if (!ended && !sameValue(event.choices, held.choices)
+        && !(held.events.pulled !== null && sameValue({ ...event.choices, level: held.choices.level }, held.choices))) {
         w.cook = corrected(held, event.choices, now_s);
         // An egg answered about came out: a pull the clock assumed stands.
         if (answered(held)) w.cook = pullStands(w.cook);

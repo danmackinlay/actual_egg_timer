@@ -13,9 +13,10 @@ import {
 import type { WhiteReport, YolkWord } from '../src/core/infer.ts';
 import type { BoilMemory } from '../src/core/boil.ts';
 import {
-  type CookChoices, type CookPlan, PULL_GRACE_SECONDS, type RunningCook, cookEnding, cookTooOld, eventsDue, phaseAt, replan,
+  type CookChoices, type CookPlan, PULL_GRACE_SECONDS, type RunningCook, cookTooOld, eventsDue, phaseAt, replan,
   startCook, withBoil, withOut, writeEvents,
 } from '../src/core/running.ts';
+import { cookEnding } from '../src/core/asRan.ts';
 import { readRunningCook } from '../src/ui/storedCook.ts';
 import { type Learner, openLearner } from '../src/ui/calibration.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';

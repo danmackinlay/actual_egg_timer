@@ -11,13 +11,14 @@ import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
-  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RecordContext, type RunningCook,
-  type SlowHobMemo, type SlowHobPlace,
-  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
-  corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
-  replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
+  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook,
+  type SlowHobMemo, type SlowHobPlace, boilToRemember, cookSetupOf, corrected, earliestStart_s, eventsDue,
+  latestStart_s, openEggId, phaseAt, pullStands, replan, slowHobDue, startCook, startCorrected, stillIn, withBoil,
   withOut, writeEvents,
 } from '../../src/core/running.ts';
+import {
+  type RecordContext, asRanCorrected, asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan,
+} from '../../src/core/asRan.ts';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
 import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
