@@ -107,8 +107,8 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    read of every string rather than only the queue's.
 4. **Put back what the owner names** in `copy/en.json`, and any
    `copy/en-US.json` override with its `base` (the 1750 twin may lag); run
-   `npm run fixtures`, then `npm test` and `npm run fixtures:check`; commit
-   the catalogue with the fixtures it moved (CLAUDE.md, "Words").
+   `npm test` and `npm run fixtures:check`, which writes any fixture the
+   words moved; commit the catalogue with them (CLAUDE.md, "Words").
 5. **Approve the rest**: `npm run copy:approve` records HEAD, or `npm run
    copy:approve -- <commit>` the commit the page was made from, which it
    prints; either must be on `main`'s history, so a branch's words are
