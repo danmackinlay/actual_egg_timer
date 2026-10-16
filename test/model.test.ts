@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { SIZE_CLASSES } from '../src/core/geometry.ts';
 import { type CookChoices, type CookSurface, endedAt_s } from '../src/core/running.ts';
 import { type Effect, type Model, type Msg, update } from '../src/ui/model.ts';
-import { emptyModel } from '../src/ui/state.ts';
+import { controlsOf, emptyModel } from '../src/ui/state.ts';
 import { DEFAULT_SETTINGS } from '../src/ui/store.ts';
 import { gridFor, knowing } from '../tools/common.ts';
 
@@ -27,7 +27,7 @@ const CHOICES: CookChoices = {
 
 function idleModel(): Model {
   return {
-    ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, controls: { ...DEFAULT_SETTINGS }, boilMemory: { '2.0': 480 },
+    ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, boilMemory: { '2.0': 480 },
     calib: C, appVersion: '0.5.0-alpha.1', prior: 'test',
   };
 }
@@ -97,8 +97,7 @@ test('the primary button by phase: the boil, the egg out, Start again; the pull 
   assert.deepEqual(kinds(end).slice(6), [
     'handTimer', 'handTimer', 'handTimer', 'startLimit', 'silence', 'questionsReset', 'drawNudge',
   ], 'and the page goes back to the settings, with a new nudge');
-  assert.deepEqual(p.m.controls, p.m.settings, 'the controls show the settings again');
-  assert.notEqual(p.m.controls, p.m.settings, 'a copy of them');
+  assert.equal(controlsOf(p.m), p.m.settings, 'the controls show the settings again');
 });
 
 test('an answer to an egg too old to pick back up closes it here: nothing stepped, nothing written or logged', () => {

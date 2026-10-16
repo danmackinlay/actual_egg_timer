@@ -34,8 +34,8 @@
 
 import type { AlarmMoment, AlarmSound } from '../core/sounds.ts';
 import type { BoilMemory } from '../core/boil.ts';
-import type { Decision, DecisionInputs } from '../core/decide.ts';
-import type { DecidedAnswer, LevelAnswer, OddsProfile } from '../core/reach.ts';
+import type { DecisionInputs } from '../core/decide.ts';
+import type { OddsProfile } from '../core/reach.ts';
 import type { Outcome } from '../core/outcome.ts';
 import type { ShareState } from './shareState.ts';
 import type { Solution } from '../core/solve.ts';
@@ -59,9 +59,9 @@ import { step, surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
 import { effectiveLanguage, languageAfterFlip } from './settings.ts';
-import { type PotOdds, nudgeNow, solveIdle } from './answer.ts';
+import { type IdleAnswer, type PotOdds, nudgeNow, solveIdle } from './answer.ts';
 import { targetPeakYolk_C } from '../core/slider.ts';
-import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
+import { NO_NEED, choicesOf, controlsOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
 import type { KeptAnswers, Settings, StoredCook } from './store.ts';
 import { REGION, REGIONAL_UNITS } from './units.ts';
 
@@ -126,13 +126,14 @@ interface Ending extends CookState {
  *  `plan` and the lean (`leanHint_s`), all null and 0 while idle. */
 export interface Model extends CookState {
   /** The settings: the next cook's choices, and the page's own (the units,
-   *  the language, the sound). Replaced, never changed in place. */
+   *  the language, the sound). Replaced, never changed in place. While idle
+   *  they are what the controls show. */
   settings: Settings;
-  /** What the controls show: a copy of the settings while idle; while a
-   *  cook runs, its own choices over a copy of them (`settingsOfChoices`),
-   *  with a correction in hand on them, never the settings, which describe
-   *  the next cook. */
-  controls: Settings;
+  /** While a cook runs, what the controls show of its choices: its own
+   *  (`settingsOfChoices`), with a correction in hand on them, never the
+   *  settings, which describe the next cook; null while idle. The controls
+   *  are these over the settings (`controlsOf`). */
+  cookControls: CookSettings | null;
   boilMemory: BoilMemory;
   /** The posterior over the model's uncertain constants, folded IN PLACE as
    *  eggs are learned (calibration.ts). */
@@ -153,19 +154,9 @@ export interface Model extends CookState {
   /** The odds profiles built on the calibration as it stands, for any pot:
    *  the runner's view of its caches, like `surfaces`. */
   profiles: PotOdds[];
-  /** The idle screen's answer: the answer at the level asked (its verdict
-   *  is the warning line), the solve behind the time on screen, the choice
-   *  and the outcome at it, and the whole of it as core decided it
-   *  (`decideAnswer`); the last three null until the pot's surface is in,
-   *  and on the sous-vide screen. */
-  idleAnswer: LevelAnswer | null;
-  solution: Solution | null;
-  decision: Decision | null;
-  outcome: Outcome | null;
-  chosen: DecidedAnswer | null;
-  /** The odds at every level for the idle pot and the posterior as it
-   *  stands; null until worked out. */
-  profile: OddsProfile | null;
+  /** The idle screen's answer as last solved (answer.ts, `IdleAnswer`);
+   *  null before the first solve, and on the sous-vide screen. */
+  solved: IdleAnswer | null;
   /** The controls changed since the idle page was last solved: the slider's
    *  reading is the level's own until the solve lands. */
   unsolved: boolean;
@@ -695,12 +686,12 @@ function copySection(s: EggSection): EggSection {
  */
 function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
   if (was.cook === null && m.cook !== null) {
-    const controls = settingsOfChoices(m.settings, m.cook.choices, sizeClasses);
-    const next: Model = { ...m, controls: controls, controlsStart_s: m.cook.startedAt_s, aim: null, hand: nothingInHand() };
+    const shown = settingsOfChoices(m.settings, m.cook.choices, sizeClasses);
+    const next: Model = { ...m, cookControls: shown, controlsStart_s: m.cook.startedAt_s, aim: null, hand: nothingInHand() };
     return [redraw(next, 'controls'), [...effects, ...handFresh(was), { kind: 'startLimit', limit: null }]];
   }
   if (was.cook !== null && m.cook === null) {
-    const next: Model = { ...m, controls: { ...m.settings }, controlsStart_s: null, aim: null, hand: null };
+    const next: Model = { ...m, cookControls: null, controlsStart_s: null, aim: null, hand: null };
     return [redraw(next, 'controls', 'share'), [
       ...effects, ...handFresh(was), { kind: 'startLimit', limit: null }, { kind: 'silence' },
       { kind: 'questionsReset' }, { kind: 'drawNudge' },
@@ -722,40 +713,18 @@ function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
  */
 function solve(m: Model): [Model, Effect[]] {
   if (m.cook !== null) return [m, []];
-  if (isSousVide(m)) {
-    return [{ ...m, idleAnswer: null, chosen: null, decision: null, outcome: null, profile: null, unsolved: false }, []];
-  }
+  if (isSousVide(m)) return [{ ...m, solved: null, unsolved: false }, []];
   const s = solveIdle(m);
   const effects: Effect[] = [];
-  let settings = m.settings;
-  let controls = m.controls;
   let at = m;
   const snapTo = s.answer.verdict.snapTo;
-  if (snapTo !== null && snapTo !== settings.doneness) {
-    settings = { ...settings, doneness: snapTo };
-    controls = { ...controls, doneness: snapTo };
-    at = redraw(m, 'doneness');
+  if (snapTo !== null && snapTo !== m.settings.doneness) {
+    at = redraw({ ...m, settings: { ...m.settings, doneness: snapTo } }, 'doneness');
     effects.push({ kind: 'save', soon: false });
   }
   if (s.surface !== null) effects.push({ kind: 'askSurface', inputs: s.surface });
   for (const inputs of s.profiles) effects.push({ kind: 'askProfile', inputs: inputs });
-  const chosen = s.chosen;
-  return [{
-    ...at, settings: settings, controls: controls, idleAnswer: s.answer, profile: s.profile, chosen: chosen,
-    solution: chosen?.solution ?? s.answer.solution, decision: chosen?.decision ?? null,
-    outcome: chosen?.outcome ?? null, unsolved: false,
-  }, effects];
-}
-
-/** `m` with these settings: the controls a copy of them while idle; while a
- *  cook runs, only what the cook does not hold - the units, the language,
- *  the sound and which sound. */
-function withSettings(m: Model, settings: Settings): Model {
-  const c = m.controls;
-  const controls = m.cook === null ? { ...settings } : {
-    ...c, unitsChosen: settings.unitsChosen, language: settings.language, muted: settings.muted, alarm: settings.alarm,
-  };
-  return { ...m, settings: settings, controls: controls };
+  return [{ ...at, solved: { answer: s.answer, chosen: s.chosen, profile: s.profile }, unsolved: false }, effects];
 }
 
 /** Solved again after `effects`, idle. */
@@ -775,7 +744,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // and the cook started on it, with the lean the time on screen took.
       if (m.cook !== null) return [m, []];
       const [at, effects] = solve(m);
-      const chosen = at.chosen;
+      const chosen = at.solved?.chosen ?? null;
       const [next, more] = updateCook(at, {
         kind: 'start', choices: idleChoices(at), nudge_s: nudgeNow(at), units: msg.units, lang: msg.lang,
         leanHint_s: chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s,
@@ -787,10 +756,9 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // to the settings when it is committed, not before. The controls that
       // follow it are drawn again, but the field it came from.
       const echoed: Model = { ...redraw(m, 'echo'), echoSource: msg.source };
-      const controls = { ...m.controls, ...msg.read };
-      if (m.cook !== null) return handChanged({ ...echoed, controls: controls }, msg.group, msg.read, msg.at_s, now_s);
+      if (m.cook !== null) return handChanged(echoed, msg.group, msg.read, msg.at_s, now_s);
       return [
-        { ...echoed, controls: controls, settings: { ...controls }, unsolved: true },
+        { ...echoed, settings: { ...m.settings, ...msg.read }, unsolved: true },
         [{ kind: 'save', soon: true }, { kind: 'solveSoon' }],
       ];
     }
@@ -807,30 +775,23 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
         settings = { ...settings, language: languageAfterFlip(settings.language, choice.flip) };
       }
       effects.push({ kind: 'save', soon: false });
-      const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
-      return solved(redraw(next, 'units'), effects);
+      return solved(redraw({ ...m, settings: settings }, 'units'), effects);
     }
     case 'language': {
       // Nothing about the egg changes, and the units are never touched from
       // here: that rule runs one way (LANGUAGE.md section 6).
       const before = effectiveLanguage(m.settings.language);
       const settings = { ...m.settings, language: { chosen: msg.pick } };
-      const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
-      return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
+      return [{ ...m, settings: settings }, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
     }
     case 'mute': {
       // Sound is a setting, not a phase: the toggle works mid-cook.
-      const settings = { ...m.settings, muted: !m.settings.muted };
-      return [m.cook === null ? withSettings(m, settings) : { ...m, settings: settings }, [{ kind: 'save', soon: false }]];
+      return [{ ...m, settings: { ...m.settings, muted: !m.settings.muted } }, [{ kind: 'save', soon: false }]];
     }
     case 'alarm': {
       // Like the sound itself, a setting about the kitchen, not the egg, so
       // it holds mid-cook; heard as it is picked.
-      const settings = { ...m.settings, alarm: msg.sound };
-      return [
-        { ...m, settings: settings, controls: { ...m.controls, alarm: msg.sound } },
-        [{ kind: 'previewAlarm' }, { kind: 'save', soon: false }],
-      ];
+      return [{ ...m, settings: { ...m.settings, alarm: msg.sound } }, [{ kind: 'previewAlarm' }, { kind: 'save', soon: false }]];
     }
     case 'pans':
       return [{ ...m, boilMemory: msg.boilMemory }, []];
@@ -977,7 +938,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  * (`preview`), stored nowhere and ringing nothing.
  *
  * A running cook's controls read its own choices: what they show is
- * `controls`, drawn from the cook (`settingsOfChoices`), and a commit lays
+ * `cookControls`, drawn from the cook (`settingsOfChoices`), and a commit lays
  * the group's choices, as the controls say them, over the cook's own, so a
  * field nobody touched keeps the cook's value to the bit and changing a
  * setting back gives back the old plan exactly. The same fields are written
@@ -985,7 +946,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  */
 
 /** The settings each group of the cook's choices is made from. */
-const GROUP_SETTINGS: Record<HandGroup, (keyof Settings)[]> = {
+const GROUP_SETTINGS = {
   mass: ['sizeIndex', 'customMinor_mm', 'measuredBy'],
   eggFrom: ['startTempMode'],
   customStart: ['customStart_C'],
@@ -1001,12 +962,19 @@ const GROUP_SETTINGS: Record<HandGroup, (keyof Settings)[]> = {
   altitude: ['altitude_m'],
   level: ['doneness'],
   startedAt: [],
-};
+} as const satisfies Record<HandGroup, readonly (keyof Settings)[]>;
 
-/** The settings no group makes: the kitchen's, not the egg's. */
-function ofNoGroup(k: keyof Settings): boolean {
-  for (const g of Object.keys(GROUP_SETTINGS) as HandGroup[]) if (GROUP_SETTINGS[g].includes(k)) return false;
-  return true;
+/** The settings a cook's choices make, as the controls show them while it
+ *  runs; the rest - the units, the language, the sound and which sound, the
+ *  probe - are the kitchen's, not the egg's. */
+export type CookSettings = Pick<Settings, (typeof GROUP_SETTINGS)[HandGroup][number]>;
+
+/** Whether a group of the cook's choices makes the setting `k`. */
+function ofCook(k: keyof Settings): k is keyof CookSettings {
+  for (const g of Object.keys(GROUP_SETTINGS) as HandGroup[]) {
+    if ((GROUP_SETTINGS[g] as readonly (keyof Settings)[]).includes(k)) return true;
+  }
+  return false;
 }
 
 /** The last moment the correction in hand knows on the gestures' clock, for
@@ -1046,23 +1014,26 @@ function handIn(m: Model, event: HandEvent, now_s: number): [Model, Effect[]] {
 }
 
 /**
- * A control's value changed while a cook runs, the controls having taken it
- * in: of `group`, a change in hand, its slider's reading drawn at once and
- * the plan's to follow; of no group (the thermometer switch), another
- * control used, and what `read` says of the settings no group makes
- * written now, as the sound is.
+ * A control's value changed while a cook runs: what `read` says of the
+ * cook's choices taken into the controls; of `group`, a change in hand, its
+ * slider's reading drawn at once and the plan's to follow; of no group (the
+ * thermometer switch), another control used, and what `read` says of the
+ * settings no group makes written now, as the sound is.
  */
 function handChanged(
   m: Model, group: HandGroup | null, read: Partial<Settings>, at_s: number, now_s: number,
 ): [Model, Effect[]] {
+  if (m.cookControls === null) return [m, []];
+  const cook: Record<string, unknown> = {};
+  const own: Record<string, unknown> = {};
+  for (const k of Object.keys(read) as (keyof Settings)[]) (ofCook(k) ? cook : own)[k] = read[k];
+  const taken: Model = { ...m, cookControls: { ...m.cookControls, ...(cook as Partial<CookSettings>) } };
   if (group === null) {
-    const [next, effects] = handIn(m, { kind: 'moveOn', at_s: at_s, control: 'setting' }, now_s);
-    const own: Record<string, unknown> = {};
-    for (const k of Object.keys(read) as (keyof Settings)[]) if (ofNoGroup(k)) own[k] = read[k];
+    const [next, effects] = handIn(taken, { kind: 'moveOn', at_s: at_s, control: 'setting' }, now_s);
     return [{ ...next, settings: { ...next.settings, ...(own as Partial<Settings>) } }, [...effects, { kind: 'save', soon: false }]];
   }
-  const [next, effects] = handIn(m, { kind: 'change', at_s: at_s, group: group }, now_s);
-  const level = next.controls.doneness;
+  const [next, effects] = handIn(taken, { kind: 'change', at_s: at_s, group: group }, now_s);
+  const level = controlsOf(next).doneness;
   const section = next.aim === null ? null : next.aim.section;
   return [{ ...next, aim: { level: level, peakYolk_C: targetPeakYolk_C(level), solution: null, section: section } }, effects];
 }
@@ -1074,7 +1045,7 @@ function preview(m: Model, now_s: number): Model {
   const group = m.hand === null ? null : m.hand.hand;
   if (cook === null || group === null) return m;
   const start = m.controlsStart_s === null ? cook.startedAt_s : m.controlsStart_s;
-  const hand = previewCook(cook, choicesOf(m.controls, REGION), group, start, now_s);
+  const hand = previewCook(cook, choicesOf(controlsOf(m), REGION), group, start, now_s);
   const plan = replan(hand, m.calib, surfaceFor(m.surfaces, m.plan?.inputs ?? null), m.leanHint_s, now_s);
   const pulled = hand.events.pulled;
   const params = pulled !== null && m.plan !== null
@@ -1110,7 +1081,8 @@ function commit(m: Model, group: HandGroup, now_s: number): [Model, Effect[]] {
     }
     return [{ ...next, controlsStart_s: next.cook === null ? null : next.cook.startedAt_s }, effects];
   }
-  const choices = handChoices(cook, choicesOf(m.controls, REGION), group);
+  const controls = controlsOf(m);
+  const choices = handChoices(cook, choicesOf(controls, REGION), group);
   if (choices === null) return [m, []];
   let next = m;
   const effects: Effect[] = [];
@@ -1120,7 +1092,7 @@ function commit(m: Model, group: HandGroup, now_s: number): [Model, Effect[]] {
     effects.push(...more);
   }
   const fields: Record<string, unknown> = {};
-  for (const k of GROUP_SETTINGS[group]) fields[k] = m.controls[k];
+  for (const k of GROUP_SETTINGS[group]) fields[k] = controls[k];
   next = { ...next, settings: { ...next.settings, ...(fields as Partial<Settings>) } };
   effects.push({ kind: 'save', soon: false });
   return [next, effects];
@@ -1130,9 +1102,10 @@ function commit(m: Model, group: HandGroup, now_s: number): [Model, Effect[]] {
  *  only previewed after the pull. */
 function letGo(m: Model): Model {
   const cook = m.cook;
+  const shown = m.cookControls;
   const next: Model = m.aim === null ? m : { ...m, aim: null };
-  if (cook === null || next.controls.doneness === cook.choices.level) return next;
-  return redraw({ ...next, controls: { ...next.controls, doneness: cook.choices.level } }, 'doneness');
+  if (cook === null || shown === null || shown.doneness === cook.choices.level) return next;
+  return redraw({ ...next, cookControls: { ...shown, doneness: cook.choices.level } }, 'doneness');
 }
 
 /** The start a minute earlier or later, as far as the cook allows (core

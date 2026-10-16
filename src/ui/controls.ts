@@ -17,7 +17,7 @@ import { activeLocale, t } from './copy.ts';
 import { page, selectRadio } from './dom.ts';
 import type { Model, Redraws } from './model.ts';
 import { redrawSentence } from './sentence.ts';
-import { currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.ts';
+import { controlsOf, currentAmbient_C, currentEgg, room_C, sizeClasses } from './state.ts';
 import { T_COLD_TAP_C } from '../core/constants.ts';
 import { LIMITS, type Limit, START_TEMP_PRESETS_C, type Settings } from './store.ts';
 import { measure, show, unitSystem } from './units.ts';
@@ -73,7 +73,7 @@ function inputText(q: Quantity, si: number): string {
 
 /** The form for the model `m`. */
 export function formView(m: Model): FormView {
-  const c = m.controls;
+  const c = controlsOf(m);
   const egg = currentEgg(m);
   const minor_mm = egg.minorDiameter_m * 1000;
   const measures = {} as FormView['measures'];

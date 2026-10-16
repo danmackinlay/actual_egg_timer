@@ -1,7 +1,7 @@
 /**
  * The setup sentence: the egg's setup as one line of prose whose clauses are
  * the buttons that open its choices, in every phase: the settings' while idle, a running cook's own choices while
- * one runs (`state.controls`).
+ * one runs (state.ts, `controlsOf`).
  */
 
 import type { Egg, SizeClass } from '../core/geometry.ts';
@@ -61,7 +61,7 @@ function classMass(classes: SizeClass[], index: number): string {
   return t(label.mass.key, { value: label.mass.value });
 }
 
-/** The setup on the controls: `settings` (the controls', `state.controls`)
+/** The setup on the controls: `settings` (state.ts, `controlsOf`)
  *  read against this page's carton, with `egg` the egg they describe. */
 export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Egg): SetupFacts {
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;

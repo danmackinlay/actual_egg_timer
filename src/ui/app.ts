@@ -125,7 +125,7 @@ function own(reloaded: boolean): void {
   // a script's seed (now.ts) is in place for it.
   // For the egg's record: this build, and the population of the prior.
   const initial: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: stores.pans.load(),
+    ...emptyModel(), settings: settings, boilMemory: stores.pans.load(),
     calib: learner.calibration(), nudgeDraw: nudgeSeconds(random()), appVersion: APP_VERSION,
     prior: activePopulation().id,
   };

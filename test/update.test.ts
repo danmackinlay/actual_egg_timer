@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import type { CookSurface } from '../src/core/running.ts';
 import { type HandEvent, type HandGroup, nothingInHand } from '../src/core/hand.ts';
 import { type Effect, type Model, type Msg, type Part, update } from '../src/ui/model.ts';
-import { emptyModel } from '../src/ui/state.ts';
+import { controlsOf, emptyModel } from '../src/ui/state.ts';
 import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.ts';
 import { gridFor, knowing } from '../tools/common.ts';
 
@@ -27,7 +27,7 @@ const C = knowing({ particles: 200, eggsLogged: 4, taste: 0.1 });
 function idle(over: Partial<Settings> = {}): Model {
   const settings = { ...DEFAULT_SETTINGS, ...over };
   return {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: { '2.0': 480 }, calib: C,
+    ...emptyModel(), settings: settings, boilMemory: { '2.0': 480 }, calib: C,
     appVersion: '0.5.0-alpha.1', prior: 'test',
   };
 }
@@ -85,7 +85,7 @@ function done(): Model {
 test('solve: the idle page asks for its pot\'s surface, and answers the level asked meanwhile', () => {
   const [m, effects] = go(idle(), { kind: 'solve' }, S);
   assert.ok(kinds(effects).includes('askSurface'));
-  assert.notEqual(m.idleAnswer, null);
+  assert.notEqual(m.solved, null);
   assert.equal(m.unsolved, false);
 });
 
@@ -93,7 +93,6 @@ test('controls: idle, the settings follow the controls, saved soon and solved on
   const m = idle();
   const [next, effects] = go(m, { kind: 'controls', read: { eggCount: 4 }, source: 'eggCount', group: 'eggCount', at_s: 0 }, S);
   assert.equal(next.settings.eggCount, 4);
-  assert.notEqual(next.settings, next.controls, 'a copy');
   assert.equal(next.unsolved, true);
   assert.deepEqual(kinds(effects), ['save', 'solveSoon']);
   assert.deepEqual(redrawn(m, next), ['echo'], 'what follows it drawn, but the field it came from');
@@ -124,7 +123,7 @@ test('language: the words follow, from the language they were in; the units are 
 test('mute: the sound toggles, idle or mid-cook, and is saved', () => {
   const [muted, effects] = go(idle(), { kind: 'mute' }, S);
   assert.equal(muted.settings.muted, true);
-  assert.equal(muted.controls.muted, true);
+  assert.equal(controlsOf(muted).muted, true);
   assert.deepEqual(kinds(effects), ['save']);
   const cook = running();
   const [mid] = go(cook, { kind: 'mute' }, S + 10);
@@ -135,7 +134,7 @@ test('mute: the sound toggles, idle or mid-cook, and is saved', () => {
 test('alarm: the sound picked is heard, kept with the settings and the controls, mid-cook too', () => {
   const [m, effects] = go(running(), { kind: 'alarm', sound: 'hen' }, S + 10);
   assert.equal(m.settings.alarm, 'hen');
-  assert.equal(m.controls.alarm, 'hen');
+  assert.equal(controlsOf(m).alarm, 'hen');
   assert.deepEqual(kinds(effects), ['previewAlarm', 'save']);
 });
 
@@ -211,7 +210,7 @@ test('cancel: the cook ends, nothing in hand, the controls the settings again', 
   const [m, effects] = go(running(), { kind: 'cancel' }, S + 30);
   assert.equal(m.cook, null);
   assert.equal(m.hand, null);
-  assert.deepEqual(m.controls, m.settings);
+  assert.equal(controlsOf(m), m.settings);
   assert.ok(kinds(effects).includes('handTimer') && kinds(effects).includes('silence'));
 });
 
@@ -353,7 +352,7 @@ test('controls mid-cook: the change is in hand, not the cook\'s; a preview of it
   const m = running();
   const [held, effects] = change(m, { eggCount: 4 }, 'eggCount', 1);
   assert.equal(held.cook, m.cook, 'not committed');
-  assert.equal(held.controls.eggCount, 4);
+  assert.equal(controlsOf(held).eggCount, 4);
   assert.equal(held.settings.eggCount, m.settings.eggCount, 'nor written to the settings');
   assert.equal(held.hand?.hand, 'eggCount');
   assert.deepEqual(timers(effects), ['hold:null', 'preview:1.09', 'settle:2.5']);
@@ -467,7 +466,7 @@ test('after the pull a new level only previews, nothing written, and the slider 
   assert.equal(committed.cook, m.cook, 'the egg came out at the level it was cooked for');
   assert.equal(committed.settings.doneness, m.settings.doneness, 'nothing written for the next cook');
   const [back] = hand(committed, { kind: 'timer', at_s: 1.5, timer: 'hold' }, pull(m) + 34);
-  assert.equal(back.controls.doneness, level);
+  assert.equal(controlsOf(back).doneness, level);
   assert.deepEqual(redrawn(committed, back), ['doneness']);
 });
 

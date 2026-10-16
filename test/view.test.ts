@@ -21,6 +21,7 @@ import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.ts';
 import { formatClock } from '../src/ui/countdown.ts';
 import { type Model, type Msg, update } from '../src/ui/model.ts';
 import { emptyModel } from '../src/ui/state.ts';
+import { idleSolution } from '../src/ui/answer.ts';
 import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.ts';
 import { useUnits } from '../src/ui/units.ts';
 import { type View, view, viewMemo } from '../src/ui/view.ts';
@@ -37,7 +38,7 @@ const C = knowing({ particles: 200, eggsLogged: 3, taste: 0.1 });
 function page(over: Partial<Settings> = {}, boilMemory: Model['boilMemory'] = {}): Model {
   const settings = { ...DEFAULT_SETTINGS, ...over };
   const m: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: boilMemory, calib: C,
+    ...emptyModel(), settings: settings, boilMemory: boilMemory, calib: C,
     appVersion: '0.5.0-alpha.1', prior: 'test',
   };
   return go(m, { kind: 'solve' }, S);
@@ -74,9 +75,9 @@ test('idle: the solve\'s time and Eggs in, the welcome before anything is learne
   const m = page({ startMode: 'hot' });
   const v = screen(view(m, S * 1000, viewMemo()));
   assert.equal(v.kind, 'idle');
-  assert.ok(m.solution !== null);
+  assert.ok(m.solved !== null);
   assert.equal(v.readout.phase, 'IDLE');
-  assert.equal(v.readout.words.digits, formatClock(m.solution.result.cookTime_s));
+  assert.equal(v.readout.words.digits, formatClock(idleSolution(m.solved).result.cookTime_s));
   assert.equal(v.readout.words.primary, t('action.eggsIn'));
   assert.equal(v.readout.feedback, false);
   assert.equal(v.certainty, null, 'no surface yet: nothing to say of how sure');
@@ -88,7 +89,7 @@ test('idle: the solve\'s time and Eggs in, the welcome before anything is learne
   assert.equal(v.startedAt, null);
 
   const decided = built(m, S);
-  assert.ok(decided.chosen !== null, 'the surface in, the time decided');
+  assert.ok((decided.solved?.chosen ?? null) !== null, 'the surface in, the time decided');
   const w = screen(view(decided, S * 1000, viewMemo()));
   assert.ok(w.certainty !== null && w.certainty.word !== '', 'how sure, in words');
   assert.equal(w.height, 'measure');
@@ -107,7 +108,6 @@ test('a change to the controls: only the reading, the boiling point, the start a
   const solved = go(moved, { kind: 'solve' }, S);
   assert.equal(view(solved, S * 1000, viewMemo()).kind, 'idle');
   assert.equal(solved.settings.startMode, 'cold', 'the settings follow the controls while idle');
-  assert.notEqual(solved.controls, solved.settings, 'and are not the same object');
 });
 
 test('sous-vide: the bath\'s start time, a bare track, no button and no odds', () => {

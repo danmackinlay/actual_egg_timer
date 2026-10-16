@@ -76,7 +76,7 @@ function surfaced(m: Model, now_s: number): Model {
 function atDone(stores: Stores): Model {
   const settings = { ...DEFAULT_SETTINGS, startMode: 'hot' as const };
   const idle: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
+    ...emptyModel(), settings: settings, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
     prior: 'test',
   };
   let [m, effects] = go(idle, { kind: 'begin', units: 'metric', lang: 'en' }, S);
@@ -137,7 +137,7 @@ test('a cook ended before its record can be made stays stored until it is logged
   const { stores } = page();
   const settings = { ...DEFAULT_SETTINGS, startMode: 'hot' as const };
   const idle: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
+    ...emptyModel(), settings: settings, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
     prior: 'test',
   };
   // No surface ever comes on this page: the cook runs to Done on the interim
@@ -194,7 +194,7 @@ function heldBuilds(): Builds & { asked: string[]; land(): void } {
 test('a cook\'s surface is asked for once, however many messages ask while it is built', async () => {
   const settings = { ...DEFAULT_SETTINGS, startMode: 'hot' as const };
   const idle: Model = {
-    ...emptyModel(), settings: settings, controls: { ...settings }, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
+    ...emptyModel(), settings: settings, boilMemory: {}, calib: C, appVersion: '0.5.0-alpha.1',
     prior: 'test',
   };
   let m = go(idle, { kind: 'begin', units: 'metric', lang: 'en' }, S)[0];
