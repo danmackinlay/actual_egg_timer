@@ -26,10 +26,10 @@
 import { nudgeSeconds } from '../core/decide.ts';
 import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
-import { applyConstantsToDom, applyLanguageToDom, buildSizeOptions } from './controls.ts';
+import { applyConstantsToDom, applyLanguageToDom, buildSizeOptions, noteFocusOut } from './controls.ts';
 import {
-  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, reset, restoreCook,
-  startRunner, stopRunner,
+  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, redraw, reset,
+  restoreCook, startRunner, stopRunner,
 } from './cook.ts';
 import { closeAudio, primeAudio } from './clock.ts';
 import { bindDom, page } from './dom.ts';
@@ -167,6 +167,12 @@ function wire(): void {
   for (const form of [page().controls, page().settingsForm]) {
     form.addEventListener('input', onInput);
     form.addEventListener('change', onInput);
+    // A field left shows the stored value, rounded to its step, though
+    // nothing changed: what was typed may not be what was kept.
+    form.addEventListener('focusout', (event) => {
+      noteFocusOut(event);
+      redraw();
+    });
     form.addEventListener('submit', (event) => event.preventDefault());
   }
 

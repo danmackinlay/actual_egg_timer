@@ -1,11 +1,11 @@
 /**
  * The controls and the Settings form, as the view says them (`formView`,
- * plain data from the model) and written to the page each frame
- * (`drawForm`), where it says otherwise and never under the cook's typing:
- * the size menu, every field with a unit (its step, bounds, unit and
- * contents), the labels that carry a temperature or a mass, and the radios;
- * the language picker as the words on screen change. Reading them back is
- * input.ts's.
+ * plain data from the model) and written to the page whenever it is drawn,
+ * after every change and when a field is left (`drawForm`), where it says
+ * otherwise and never under the cook's typing (`noteInput`): the size menu,
+ * every field with a unit (its step, bounds, unit and contents), the labels
+ * that carry a temperature or a mass, and the radios; the language picker as
+ * the words on screen change. Reading them back is input.ts's.
  */
 
 import { eggFromMinorDiameter } from '../core/geometry.ts';
@@ -136,11 +136,37 @@ export function formView(m: Model): FormView {
 
 /* ------------------------------------------------------------ the page */
 
+/** The field the cook is typing in: the one the last keystroke went to, until
+ *  it is left or a value is changed any other way (`noteInput`,
+ *  `noteFocusOut`). */
+let typedIn: EventTarget | null = null;
+
+/** An `input` on the controls or the Settings form, taken as typing or not.
+ *  A keystroke is an `InputEvent`, and marks its field as typed in; anything
+ *  else - a − or +, which announces a plain `Event` (stepper.ts), a menu, a
+ *  radio, the slider - ends the typing, so the field typed in shows the
+ *  stored value again. A `change` says nothing new: it follows an `input`
+ *  from the same control, or the field being left. */
+export function noteInput(event: Event): void {
+  if (event.type !== 'input') return;
+  typedIn = event instanceof InputEvent ? event.target : null;
+}
+
+/** Focus gone from a control. A field left is no longer typed in, and shows
+ *  the stored value at the next draw. A field still focused when the window
+ *  lost focus, the cook in another app, keeps what was typed: the cook comes
+ *  back to it. */
+export function noteFocusOut(event: FocusEvent): void {
+  if (event.target !== document.activeElement) typedIn = null;
+}
+
 /** A field's contents written where they say otherwise, but never under the
  *  cook typing in it, so the field never fights the cursor: it keeps what
- *  was typed, and shows the stored value, rounded to its step, once left. */
+ *  was typed, and shows the stored value, rounded to its step, once left.
+ *  A field only focused is written: a + on another field moves this one,
+ *  and a + here next steps from what it shows. */
 function setValue(input: HTMLInputElement | HTMLSelectElement, value: string): void {
-  const typing = input === document.activeElement && input.type === 'number';
+  const typing = input === typedIn && input === document.activeElement;
   if (input.value !== value && !typing) input.value = value;
 }
 
@@ -149,7 +175,7 @@ function setAttr(e: Element, name: string, value: string): void {
   if (e.getAttribute(name) !== value) e.setAttribute(name, value);
 }
 
-/** The form written from `f`, each frame, as far as the page says otherwise:
+/** The form written from `f`, at each draw, as far as the page says otherwise:
  *  every control, each field with a unit in the units on screen (its step,
  *  bounds, unit and contents, from the stored SI values, so switching back
  *  and forth never moves the egg), the labels that carry a temperature or a

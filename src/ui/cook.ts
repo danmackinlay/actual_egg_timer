@@ -141,6 +141,13 @@ export function flushDraw(): void {
   if (framed) drawNow();
 }
 
+/** The page drawn again at the next frame with nothing new taken up: a
+ *  field left shows the stored value (app.ts). Not on a page that lost the
+ *  app (owner.ts), which draws nothing more. */
+export function redraw(): void {
+  if (ownsApp()) requestDraw();
+}
+
 /* ------------------------------------------------------------ messages */
 
 /** Take up what `msg` did, and do what it asks: the runner's view of its
