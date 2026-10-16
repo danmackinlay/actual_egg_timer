@@ -340,14 +340,14 @@ if (run('runny')) {
     return decide(c, g, m.sol, logYolkTarget(m.level));
   };
   const before = [at(PRIOR, grid0, 0.22), at(PRIOR, grid0, 0.41)];
-  for (const sequence of ['E3', 'E5'] as const) {
+  for (const sequence of ['mean', 'chosen'] as const) {
     for (const yolk of [null, 'soft'] as (YolkWord | null)[]) {
       let cal = PRIOR;
       const log: EggRecord[] = [];
       for (let i = 0; i < 2; i++) {
         const g = buildRequestedGrid(decisionGridRequest(decisionInputs(cal, REF_EGG, SETUP)));
         const d = at(cal, g, 0.22);
-        log.push(recordAt(0.22, sequence === 'E3' ? d.meanCookTime_s : d.cookTime_s, yolk, 'runny'));
+        log.push(recordAt(0.22, sequence === 'mean' ? d.meanCookTime_s : d.cookTime_s, yolk, 'runny'));
         cal = replay(PRIOR, log);
       }
       const g = buildRequestedGrid(decisionGridRequest(decisionInputs(cal, REF_EGG, SETUP)));
