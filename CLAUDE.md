@@ -1,8 +1,8 @@
 # CLAUDE.md — rules for whoever works in this repository
 
 An egg timer from physics, in two apps: the web (`src/`, `index.html`) and iOS
-(`ios/`), over one core (`src/core/`, twinned in `ios/EggTimerCore`). Where
-things stand is `PLAN.md`; its last section says which document holds what.
+(`ios/`), over one core (`src/core/`, twinned in `ios/EggTimerCore`). What is
+next is `PLAN.md`; the last section here says which document holds what.
 
 ## Working here
 
@@ -15,7 +15,7 @@ things stand is `PLAN.md`; its last section says which document holds what.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
-- **The gate is what the change touched** (`DECISIONS.md` 121, 123):
+- **The gate is what the change touched** (`DECISIONS.md` 123):
 
   | changed | before a merge |
   |---|---|
@@ -38,12 +38,22 @@ things stand is `PLAN.md`; its last section says which document holds what.
   bumps the version in its own commit, tags it `git tag -a v<version> -m
   "<one line>"` and pushes `--follow-tags`. Never move or reuse a tag.
 - **A storage format may change without a migration** until wide deployment
-  (`DECISIONS.md` 48): bump its key.
+  (`DECISIONS.md` 107): bump its key, so an old value is dropped rather than
+  misread. Each app's table of stores (`src/ui/stores.ts`,
+  `StoreRegistry.swift`) lists every key, and the boot sweep deletes any key
+  it does not list. Back-compat starts when the owner says the app is widely
+  deployed. What has been sent is another matter: the server parses its
+  records with the same `parseRecord`, so a field reinterpreted there would
+  misread every egg already kept.
 - **The documents.** The session that merges brings `PLAN.md` up to date
-  (`DECISIONS.md` 104); it holds no counts. `LOGBOOK.md` is frozen (117).
-  A closed document is deleted once its live facts have moved to `PLAN.md`,
-  the code or the model's documents (119). An owner decision goes to
-  `DECISIONS.md` with its number, date and commit.
+  (`DECISIONS.md` 104); it holds only the next work, the owner's open
+  decisions and one QA list, with no counts, dates or versions (130).
+  `LOGBOOK.md` is frozen (117). A closed document is deleted once its live
+  facts have moved to `PLAN.md`, the code or the model's documents (119). An
+  owner decision goes to `DECISIONS.md` with its date, no commit or branch,
+  and a superseded chain is stated as its current rule (131). On a branch a
+  new decision is `DECISIONS.md NNN`; the session that merges to `main`
+  gives it the next number and fixes its citations.
 - **Comments say what the code does and why**, in the code's terms
   (`DECISIONS.md` 105). A decision number only where the code would otherwise
   look wrong (z ≈ 4.65 K), never as a changelog.
@@ -141,3 +151,24 @@ things stand is `PLAN.md`; its last section says which document holds what.
   state.
 - More that cost an hour: `GOTCHAS.md`, and `ios/RELEASING.md` for
   releasing.
+
+## Where things are
+
+| file | holds |
+|---|---|
+| `CLAUDE.md` | the rules for working here: staging, the gate, both apps, core's invariants, the copy workflow, iOS gotchas; this map |
+| `PLAN.md` | the next work, the owner's open decisions, and what nobody has checked |
+| `DECISIONS.md` | every owner decision, numbered and dated, each superseded chain stated as its current rule |
+| `README.md` | the science: the model, its constants, validation, open problems |
+| `DEVELOPING.md` | building, checking and deploying: the npm scripts, the host, reviewing the words, the web app end to end |
+| `INFERENCE.md` | the learning: what is learned, the record, the probe, deciding, the fit |
+| `LANGUAGE.md` | the words: the catalogue, copy rules, units, languages, 1750 |
+| `UI.md` | the layout both apps share, as built |
+| `ios/README.md` | the Swift port, module by module, and the iOS app |
+| `ios/RELEASING.md` | getting the app onto other people's phones |
+| `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
+| `GOTCHAS.md` | things that cost an hour to find out, gathered |
+| `LOGBOOK.md` | the record kept before the commit messages took over, frozen: what was verified, measured and learned, by date |
+| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
+| `design/bowl.md` | the bowl of still water as a cooling (`DECISIONS.md` 115) |
+| `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

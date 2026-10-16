@@ -393,7 +393,7 @@ owner's call, judged on a phone.
 ### 4.3 The words
 
 New keys, drafted to `LANGUAGE.md` §3, each within its surface's budget. The
-1750 twins lag (`DECISIONS.md` 103), and the queue lists them. No en-US
+1750 twins lag (`DECISIONS.md` 116), and the queue lists them. No en-US
 overlay is needed: none of these says "pan".
 
 | key | surface | English |

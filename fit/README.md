@@ -45,7 +45,7 @@ cp fit/trusted.example.txt fit/trusted.local.txt
 ```
 
 A device's whole log, shared or not, comes in through "Export my results"
-(Settings, What I've learned) and `import` (`DECISIONS.md` 81):
+(Settings, What I've learned) and `import` (`DECISIONS.md` 107):
 
 ```
 npm run eggs -- import ~/Downloads/actual-egg-timer-results-2026-10-05.json fit/data/imported.jsonl

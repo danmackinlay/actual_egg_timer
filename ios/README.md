@@ -200,7 +200,9 @@ through a Focus mode. That level needs the
 `com.apple.developer.usernotifications.time-sensitive` entitlement, which needs
 signing, which needs the Apple Developer Program — see **Signing** below.
 Unsigned simulator builds carry no entitlement and fall back silently to the
-default level, which is the right failure: quieter, never wrong.
+default level, which is the right failure: quieter, never wrong. A device
+build carries the entitlement, signed and verified, and the alarm fires at
+`.timeSensitive` in the foreground too.
 
 The alarm sounds, `App/Sounds/alarm-<sound>-<moment>.caf`, are rendered from
 the web's sounds by `npm run sounds` (macOS; `tools/sounds.ts` says how), never
@@ -220,7 +222,8 @@ was, in fact, correct.
 the Dynamic Island: the notification says *when*, the card says *how long
 left* without unlocking anything. Every countdown is `Text(timerInterval:)`,
 ticked by the system from two absolute dates, so nothing has to wake up to keep
-it honest. Three things that cost time here — `Activity` is not Sendable, a
+it honest. It has worked on the owner's phone, on the Lock Screen and in the
+Dynamic Island. Three things that cost time here — `Activity` is not Sendable, a
 widget extension needs a real `Info.plist`, and its version must match the
 app's — are in `GOTCHAS.md`.
 

@@ -7,7 +7,7 @@
  * reader takes a store only in its own format (`inFormat`): anything else
  * reads as nothing stored, and the page's next write replaces it. So a
  * change of shape is one number bumped here, and the key stays: no key is
- * left behind. Before wide deployment (DECISIONS.md 48) a bump is all a
+ * left behind. Before wide deployment (DECISIONS.md 107) a bump is all a
  * change of format needs; nothing is migrated.
  *
  * A store with no format inside it (`format` null) is a bare value read by

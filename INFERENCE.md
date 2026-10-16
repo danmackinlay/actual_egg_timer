@@ -120,7 +120,7 @@ discontinuities for the filter to fall over.
 
 **Three answers for the yolk, three for the white, and neither is required.**
 Too soft / just right / too hard stays as it is: five levels were considered and
-are too many at breakfast (`DECISIONS.md` 4). The white gets runny / tender / firm. The
+were then too many at breakfast. The white gets runny / tender / firm. The
 comment in `infer.ts` declines a third level because it would need an unmeasured
 ceiling; pooled, the ceiling is a learned cutpoint like any other.
 **Changed by `DECISIONS.md` 92 (6 October 2026):** the cook names the yolk
@@ -728,13 +728,13 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   outer tenth, where 10% should, because the seed's noise is counted as
   overconfidence; at 4000 it is 10-11.6% and uniform.
 - **"Still learning"** is the 80% interval of the right cook time wider than
-  +-15 s (`DECISIONS.md` 9), read at the level on screen; per particle the
+  +-15 s (`DECISIONS.md` 40), read at the level on screen; per particle the
   right time is the later of the yolk's centre and the white's cutpoint
   (`predictCookTime`). With the kernel it is quiet after a median of four
   eggs and comes back for 7% of simulated cooks; on a consistent cook at
   jammy it runs +-72, 22, 13, 11, 9, 8 s over the first five eggs. No screen
-  shows it (`DECISIONS.md` 27), the decision does not compute it
-  (`DECISIONS.md` 40), and the record does not keep it: `npm run decide --
+  shows it (`DECISIONS.md` 93), and the decision does not compute it
+  (40), and the record does not keep it: `npm run decide --
   learning` and `test/decideLearning.test.ts` read it on demand.
 - **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
   re-solve rather than waiting a second for the new pot's surface: 3 s from

@@ -228,7 +228,7 @@ cost in Czech (§5).
 - Sous-vide is not "a bath". "Ice bath" stays.
 - "Pan" only where it means the pot. The boil-time memory is keyed by water
   volume, so it is "how long your water takes to boil", not "your pan".
-- "Boil" is never a metonym for cooking an egg (`DECISIONS.md` 78, 111):
+- "Boil" is never a metonym for cooking an egg (`DECISIONS.md` 111):
   not "the boil", "boil times" or "signal the boil". The state of the
   water is "a full rolling boil", the standard phrase, as the button's name
   says; "brought to the boil", "to the boil" and "Once it’s boiling" stay.
@@ -274,7 +274,7 @@ A string the owner has approved (the `alarm.pull.*` bodies,
 as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
 it like the rest, and a change puts it back in the queue.
 
-**The twins may lag the English** (`DECISIONS.md` 103). A translation's
+**The twins may lag the English** (`DECISIONS.md` 116). A translation's
 twin need not be rewritten in the commit that changes its English; the
 twins are written in batches. Each translation has a sidecar,
 `<tag>.base.json` beside the approvals (today
@@ -419,6 +419,14 @@ own words for the five anchors, and the anchors stay at the same dose. The
 per-cook taste offset absorbs the remaining difference for each cook. Pooled
 data can then show whether "soft" in one language sits somewhere else on the
 dose scale than in another (§6).
+
+**With a second language the choice becomes a menu** (the owner). It lists
+first "System (Čeština)" and the like, following the phone's or browser's
+language, then every language in its own name, with the English of 1750
+under English. The web uses a `<select>`. iOS uses a menu-style `Picker`
+that follows iOS's own per-app language setting, which appears once the app
+declares several localizations (`cs` in `CFBundleLocalizations`,
+`ios/project.yml`).
 
 **Quality bar.** A translation can be drafted by machine. It does not ship until
 someone who speaks the language, and cooks, has read it on the screen. An

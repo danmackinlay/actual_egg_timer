@@ -48,11 +48,21 @@ runs here, and what `.github/workflows/verify.yml` runs `npm run verify` on - th
 tests, fixtures identical to a fresh `npm run fixtures`, and the Swift core
 against them.
 
+The web app is live at <https://actualeggtimer.netlify.app>. Netlify builds it
+from `netlify.toml` on every push and serves `origin/main`. The `og:` tags in
+`index.html` carry absolute URLs at that domain, so a domain change is a
+commit. There is no second host: the Vercel config was deleted (the owner: "we
+can add vercel later if needed"), and git has it. CI
+(`.github/workflows/verify.yml`) runs `verify`'s steps and `npm run
+test:slow`, `swift test` and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
+each a job of its own.
+
 There is nothing else to configure. `netlify.toml` carries the settings the host
 needs, and the build is esbuild plus a few copies (`tools/buildSite.mjs`), with
 no environment variables and no secrets. The one exception is the endpoint that receives shared
 eggs (`INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
-that Netlify bundles from source on deploy and backs with its Blobs store;
+that Netlify bundles from source on deploy and backs with the site's Blobs
+store `eggs`, in Netlify's default region (`us-east-2`);
 `@netlify/blobs` and `cborg`, which reads App Attest's CBOR, are its only runtime
 dependencies, and the apps have none. Another
 host would serve the site, but nothing there would answer `/api/eggs`, so
@@ -65,6 +75,10 @@ load. `netlify.toml` says why. The built site also has a service worker: `tools/
 `sw.js`, listing every file with its SHA-256, and once a browser has it the app
 opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
+
+`tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a whole
+cook in cross-section from core's `src/core/section.ts`, how set and how hot,
+with the heat map the owner set aside beside it (`DECISIONS.md` 52).
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant
