@@ -629,14 +629,13 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     worktrees. A CLAUDE.md change.
 105. **Comments say what the code does and why** (confirmed). A decision number appears in a comment only where the code
     would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
-106. **The copy drafts give way to a review queue** (confirmed: "Yes,
-    including CLAUDE.md"). What the owner approved is recorded as one
-    commit (135); every key changed, added or retired since it is the
-    review queue, generated, never typed; `copy:approve` records the new
-    commit; a stale twin is found from git and listed rather than blocking
-    (116); a page shows the queue for review on a phone. `tools/drafts/` and
-    the draft proofs go; the no-literals lint and the small surfaces'
-    budgets stay. 9 October 2026.
+106. **The copy drafts give way to a review page** (confirmed: "Yes,
+    including CLAUDE.md"; amended 16 October 2026). What the owner approved
+    is recorded as one commit (135); every key changed, added or retired
+    since it is generated, never typed, and laid out as one page to read on
+    a phone (`copy:review`); `copy:approve` records the new commit.
+    `tools/drafts/` and the draft proofs go; the no-literals lint and the
+    small surfaces' budgets stay. 9 October 2026.
 107. **No back-compat until the app is widely deployed, the results log
     included** (the owner, 29 September 2026: "actual widespread deployment
     is what makes storage formats permanent; I will tell you when that
@@ -742,12 +741,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     a kitchen's range) and a natural place. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
 116. **The 1750 twin lags by default** (the owner, 9 October 2026, and 14
-    October 2026 on the adversarial review). An English change does not
-    rewrite its 1750 twin; the twins are rewritten in batches, and a twin is
-    never a transform of the English. A missing key falls back to the
-    English (`src/core/copy.ts`), so a twin identical to its English is
-    deleted. A twin written against older English is listed for review and
-    still shown, never a failed build. Czech (F5) gets the same rule.
+    October 2026 on the adversarial review; amended 16 October 2026). An
+    English change does not rewrite its 1750 twin; the twins are rewritten
+    in batches, and a twin is never a transform of the English. A missing
+    key falls back to the English (`src/core/copy.ts`), so a twin identical
+    to its English is deleted. A twin written against older English is
+    still shown, never a failed build, and no tool lists it:
+    `git log -- copy/en-x-1750.json` shows the twins' age. Czech (F5) gets
+    the same rule.
     CLAUDE.md's wording steps follow it.
 117. **`LOGBOOK.md` is deleted; its history is in git** (the owner, 14
     October 2026, on the same review; amended 16 October 2026). The commit
@@ -902,15 +903,16 @@ October:
     named by its id, and both cores refuse a file that does not vouch for
     itself (`fit/README.md`).
 134. **No live file cites `LOGBOOK.md`.** Folded into 117.
-135. **Changing a word costs what changing a line of code costs.** The
-    owner's approval is one recorded commit (`test/data/copy-approved.txt`),
-    and the review page is the catalogue's diff since it. The 1750 twin's
-    hash sidecar goes; a stale twin is found from git. `copy:literals` reads
-    where Swift's text reaches a screen, with no allow-list of literals.
-    `npm test` makes the key types. Only small surfaces keep a length
-    budget. Help's sources are a data file both apps read, not words. A
-    wording change that adds no key and changes no arguments needs `npm
-    test` and `fixtures:check`, not the web e2e (123).
+135. **Changing a word costs what changing a line of code costs**
+    (amended 16 October 2026). The owner's approval is one recorded commit
+    (`test/data/copy-approved.txt`), and the review page is the catalogue's
+    diff since it. The 1750 twin's hash sidecar goes, and no tool tracks a
+    stale twin (116). `copy:literals` reads where Swift's text reaches a
+    screen, with no allow-list of literals. `npm test` makes the key types.
+    Only small surfaces keep a length budget. Help's sources are a data file
+    both apps read, not words. A wording change that adds no key and
+    changes no arguments needs `npm test` and `fixtures:check`, not the web
+    e2e (123).
 136. **No newer-build guard, in either app**; supersedes 100. With one tab
     owning the web app (128), an older build meets a newer one's stores only
     after a rollback or a downgrade, the loss a format bump already accepts
