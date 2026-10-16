@@ -357,7 +357,7 @@ for (const [name, key] of [['cook', COOK], ['settings', SETTINGS]]) {
 
 /// One event of the debug log, as `Screenshots.Event` declares it: `t`, cook
 /// time, epoch s, to the millisecond; `ev`, the case; its fields, a field
-/// with no value left out.
+/// with no value left out. test/iosEvents.test.ts holds it to the Swift.
 export type Event = { t: number } & (
   | { ev: 'clock'; n: number; at: number; speed: number }
   | { ev: 'idle'; step: number }
