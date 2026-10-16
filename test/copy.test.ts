@@ -1,7 +1,7 @@
 /**
  * The catalogue: the renderer, the plural rules, and the three things every
  * language is held to - the shape of its entries, the same placeholders as the
- * English, and the length budget of the surface each string is drawn on.
+ * English, and the length budget of each small surface a string is drawn on.
  *
  * Run from the repo root (npm test does), because the catalogue is read from
  * copy/ as the apps read it, not copied into the test.
@@ -18,7 +18,7 @@ import {
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.ts';
 import { catalogueTags } from '../tools/copyApproval.ts';
-import { appsUsing, exampleOf, readNotes } from '../tools/copyNotes.ts';
+import { appsUsing, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {
@@ -27,9 +27,7 @@ function countOf(m: Message): string | null {
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
-interface Surface { budget: number; about: string }
-
-const SURFACES = JSON.parse(readFileSync('test/data/surfaces.json', 'utf8')) as Record<string, Surface>;
+const SURFACES = readSurfaces();
 /** Every catalogue: `copy/<tag>.json` (`tools/copyApproval.ts`). The same
  *  rule as `tools/fixtures/copy.ts`. */
 const LOCALES = catalogueTags();
@@ -44,14 +42,6 @@ const NOTES = readNotes();
 function catalogueFor(locale: string): Catalogue {
   return locale === 'en' ? EN : parseCatalogue(JSONS.get(locale), EN);
 }
-
-/** Code points, not UTF-16 units: "ž" is one character on a screen. */
-function width(s: string): number {
-  return [...s].length;
-}
-
-/** The counts every plural message is rendered at, for the budget. */
-const COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5];
 
 // --------------------------------------------------------------------------
 // the renderer
@@ -283,41 +273,35 @@ test('4b. the parity check catches a dropped, an invented and a miscounted place
 // the length budget
 // --------------------------------------------------------------------------
 
-/** Each key's longest rendering in a language, at its example arguments and,
- *  for a plural, at every count. */
-function longest(catalogue: Catalogue, key: string, entry: Entry): number {
-  const example = exampleOf(NOTES, key);
-  const count = entry['count'];
-  const argSets = typeof count === 'string'
-    ? [example, ...COUNTS.map((n) => ({ ...example, [count]: n }))]
-    : [example];
-  return Math.max(...argSets.map((args) => width(render(catalogue, key, args))));
-}
+// Only a small surface has a budget: a label, a button, a tick, a title, the
+// Dynamic Island, an alarm's title. Prose that wraps freely (a body, an (i)'s
+// paragraph, Help) has none, and neither does what is only read aloud.
 
 test('5a. every string in every language fits its surface\'s budget', () => {
   for (const locale of LOCALES) {
     const catalogue = catalogueFor(locale);
-    for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    for (const key of Object.keys(EN_JSON.messages)) {
       const surface = SURFACES[NOTES[key].surface];
-      const w = longest(catalogue, key, entry);
+      if (surface.budget === undefined) continue;
+      const w = longest(catalogue, key, NOTES);
       assert.ok(w <= surface.budget,
         `${locale} ${key}: ${w} characters on "${NOTES[key].surface}", budget ${surface.budget}`);
     }
   }
 });
 
-test('5b. English fits every budget, and every budget is drawn on', () => {
+test('5b. English fits every budget, and every surface is drawn on', () => {
   // A budget is set from what fits today. Raising one is a design decision
-  // about a screen, not a way to make a translation pass - so it is checked
-  // here, and moving it means editing this test and saying why.
+  // about a screen, not a way to make a translation pass: it is the owner's
+  // call, made in test/data/surfaces.json with the reason in its `about`.
   const max = new Map<string, number>();
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+  for (const key of Object.keys(EN_JSON.messages)) {
     const surface = NOTES[key].surface;
-    max.set(surface, Math.max(max.get(surface) ?? 0, longest(EN, key, entry)));
+    max.set(surface, Math.max(max.get(surface) ?? 0, longest(EN, key, NOTES)));
   }
   for (const [name, surface] of Object.entries(SURFACES)) {
     assert.ok(max.has(name), `${name}: no key is drawn on it`);
-    assert.ok((max.get(name) as number) <= surface.budget, `${name}: English is over budget`);
+    if (surface.budget !== undefined) assert.ok((max.get(name) as number) <= surface.budget, `${name}: English is over budget`);
   }
 });
 

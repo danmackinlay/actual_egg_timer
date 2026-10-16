@@ -15,19 +15,14 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 
-import { type Catalogue, OVERLAYS, parseCatalogue, render } from '../src/core/copy.ts';
+import { type Catalogue, OVERLAYS, parseCatalogue } from '../src/core/copy.ts';
 import {
-  CATEGORIES, type CatalogueJson, type Entry, type Queued, REVIEW_DIR, type Templates, type TwinState, readApproved, readBases, readCatalogue,
+  CATEGORIES, type CatalogueJson, type Queued, REVIEW_DIR, type Templates, type TwinState, readApproved, readBases, readCatalogue,
   reviewQueue, templatesOf, translationTags, twinQueue, twinState,
 } from './copyApproval.ts';
-import { type App, type Notes, appsUsing, exampleOf, readNotes } from './copyNotes.ts';
-
-interface Surface { budget: number; about: string }
-
-/** The counts every plural message is rendered at, as copy.test.ts 5a does. */
-const COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5];
+import { type App, type Notes, type Surface, appsUsing, longest, readNotes, readSurfaces } from './copyNotes.ts';
 
 /** How each translation is named on the page. */
 const NAMES: Record<string, string> = { 'en-x-1750': '1750' };
@@ -124,18 +119,8 @@ function diffHtml(a: string, b: string): string {
 
 /* ---------------------------------------------------------- the lengths */
 
-/** A key's longest rendering in a catalogue, at its example arguments and,
- *  for a plural, at every count: copy.test.ts 5a's measure, in code points. */
-function longest(catalogue: Catalogue, key: string, entry: Entry, notes: Record<string, Notes>): number {
-  const example = exampleOf(notes, key);
-  const count = entry['count'];
-  const argSets = typeof count === 'string'
-    ? [example, ...COUNTS.map((n) => ({ ...example, [count]: n }))]
-    : [example];
-  return Math.max(...argSets.map((args) => [...render(catalogue, key, args)].length));
-}
-
-function lengthHtml(n: number, budget: number): string {
+function lengthHtml(n: number, budget: number | undefined): string {
+  if (budget === undefined) return `${n} characters`;
   return n > budget ? `<span class="over">${n} of ${budget} characters: over budget</span>` : `${n} of ${budget} characters`;
 }
 
@@ -186,7 +171,7 @@ function card(q: Queued, ctx: Context): string {
   const surfaceName = notes.surface;
   const surface = ctx.surfaces[surfaceName];
   parts.push(`<p class="meta">${esc(apps)} · ${esc(surfaceName)}: `
-    + `${lengthHtml(longest(ctx.english, q.key, entry, ctx.notes), surface.budget)}</p>`);
+    + `${lengthHtml(longest(ctx.english, q.key, ctx.notes), surface.budget)}</p>`);
   parts.push(q.approved === null ? templatesHtml(q.current ?? {}) : diffTemplatesHtml(q.approved, q.current ?? {}));
   const rows: string[] = [];
   for (const t of ctx.translations) {
@@ -194,13 +179,13 @@ function card(q: Queued, ctx: Context): string {
     const twin = t.json.messages[q.key];
     rows.push(`<dt>${esc(NAMES[t.tag] ?? t.tag)} ${TWIN_FLAG[state]}</dt><dd>`
       + `${twin === undefined ? '' : `${templatesHtml(templatesOf(twin))}<p class="meta">`
-        + `${lengthHtml(longest(t.catalogue, q.key, entry, ctx.notes), surface.budget)}</p>`}</dd>`);
+        + `${lengthHtml(longest(t.catalogue, q.key, ctx.notes), surface.budget)}</p>`}</dd>`);
   }
   for (const o of ctx.overlays) {
     const over = o.json.messages[q.key];
     if (over === undefined) continue;
     rows.push(`<dt>${esc(o.tag)}</dt><dd>${templatesHtml(templatesOf(over))}<p class="meta">`
-      + `${lengthHtml(longest(o.catalogue, q.key, entry, ctx.notes), surface.budget)}</p></dd>`);
+      + `${lengthHtml(longest(o.catalogue, q.key, ctx.notes), surface.budget)}</p></dd>`);
   }
   if (typeof notes.note === 'string') rows.push(`<dt>Note</dt><dd><p class="note">${esc(notes.note)}</p></dd>`);
   if (rows.length > 0) parts.push(`<dl>${rows.join('')}</dl>`);
@@ -261,7 +246,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card); b
 function page(): string {
   const en = readCatalogue('en');
   const english = parseCatalogue(en);
-  const surfaces = JSON.parse(readFileSync('test/data/surfaces.json', 'utf8')) as Record<string, Surface>;
+  const surfaces = readSurfaces();
   const overlays = OVERLAYS.map((tag) => {
     const json = readCatalogue(tag);
     return { tag: tag, json: json, catalogue: parseCatalogue(json, english) };
