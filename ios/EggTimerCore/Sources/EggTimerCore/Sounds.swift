@@ -10,7 +10,7 @@ import Foundation
 
 /// A moment the cook is told about (`AlarmMoment`). The probe moment is not a
 /// third one: it is the end of the counted cooling, and only its words differ.
-public enum RingDeadline: String, Sendable, Hashable, CaseIterable {
+public enum RingDeadline: String, Sendable, Hashable, CaseIterable, Codable {
     /// Out of the water, now.
     case pull
     /// The counted cooling is over - or, with a probe, the moment to read it.

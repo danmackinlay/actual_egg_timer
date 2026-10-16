@@ -165,8 +165,6 @@ func expectJSON(
     #expect(differences.isEmpty, "\(what): \(differences.prefix(6).joined(separator: "; "))", sourceLocation: sourceLocation)
 }
 
-func cookSetup(_ json: [String: Any]) throws -> CookSetup { try decoded(CookSetup.self, json) }
-
 /// A particle set as the fixtures write one: every particle and every weight.
 /// The RNG state is the fixture's own unless `rng` is given, which is for the
 /// posteriors that are written without one because nothing draws from them.

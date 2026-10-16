@@ -222,28 +222,9 @@ function memoJson(m: SlowHobMemo | null) {
   return { steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
 }
 
+/** The plan whole, its memo as `memoJson` writes it. */
 function planJson(p: CookPlan) {
-  const d = p.decided;
-  return {
-    egg: { mass_kg: p.egg.mass_kg }, setup: p.setup,
-    inputs: p.inputs === null ? null : { params: p.inputs.params, whiteDose_min: p.inputs.whiteDose_min },
-    answer: {
-      level: p.answer.level, kind: p.answer.verdict.kind, snapTo: p.answer.verdict.snapTo,
-      lowOdds: p.answer.lowOdds, cookTime_s: p.answer.solution.result.cookTime_s,
-    },
-    solution: {
-      reachable: p.solution.reachable, whiteSets: p.solution.whiteSets, cookTime_s: p.solution.result.cookTime_s,
-      peakYolk_C: p.solution.result.peakYolk_C, peakYolkTime_s: p.solution.result.peakYolkTime_s,
-    },
-    decided: d === null ? null : {
-      level: d.level, cookTime_s: d.solution.result.cookTime_s, decision: d.decision, nudge_s: d.nudge_s,
-      adviceWanted: d.adviceWanted,
-    },
-    lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, memo: memoJson(p.memo),
-    tooOldAt_s: p.tooOldAt_s,
-    certainty: p.certainty, forecast: p.forecast,
-  };
+  return { ...p, memo: memoJson(p.memo) };
 }
 
 const plans: unknown[] = [];
@@ -304,12 +285,10 @@ function plan(pc: PlanCase): CookPlan {
 }
 
 /** The solve as it ran (`solutionAsRan`) of what Done shows, where it shows
- *  one: the peaks and whether the white sets, which the texture note reads. */
+ *  one: the peaks and whether the white sets are what the texture note reads. */
 function solutionShown(cook: RunningCook, p: CookPlan) {
   const ran = asRanShown(cook, p);
-  if (ran === null) return null;
-  const sol = solutionAsRan(p, ran);
-  return { peakYolk_C: sol.result.peakYolk_C, peakWhite_C: sol.result.peakWhite_C, whiteSets: sol.whiteSets };
+  return ran === null ? null : solutionAsRan(p, ran);
 }
 
 /** `asRanCorrected` on the plan's calibration and surface: its plan as it

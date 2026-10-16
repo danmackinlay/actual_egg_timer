@@ -37,6 +37,46 @@ public enum CookEvent: Sendable {
     }
 }
 
+/// An event as the web writes one: its kind, the moment, and that kind's
+/// fields.
+extension CookEvent: Decodable {
+    private enum Keys: String, CodingKey {
+        case kind, nowS = "now_s", choices, nudgeS = "nudge_s", boilMemory, units, lang, leanHintS = "leanHint_s"
+        case startedAtS = "startedAt_s", yolkWord, white, probe
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        let now = try c.decode(Double.self, forKey: .nowS)
+        switch try c.decode(String.self, forKey: .kind) {
+        case "start":
+            self = .start(
+                nowS: now, choices: try c.decode(CookChoices.self, forKey: .choices),
+                nudgeS: try c.decode(Double.self, forKey: .nudgeS), boilMemory: try c.decode(BoilMemory.self, forKey: .boilMemory),
+                units: try c.decode(Units.self, forKey: .units), lang: try c.decode(String.self, forKey: .lang),
+                leanHintS: try c.decode(Double.self, forKey: .leanHintS)
+            )
+        case "boil": self = .boil(nowS: now)
+        case "correct": self = .correct(nowS: now, choices: try c.decode(CookChoices.self, forKey: .choices))
+        case "correctStart": self = .correctStart(nowS: now, startedAtS: try c.decode(Double.self, forKey: .startedAtS))
+        case "out": self = .out(nowS: now)
+        case "stillIn": self = .stillIn(nowS: now)
+        case "pullStands": self = .pullStands(nowS: now)
+        case "tick": self = .tick(nowS: now)
+        case "surfaceLanded": self = .surfaceLanded(nowS: now)
+        case "answered":
+            self = .answered(
+                nowS: now, yolkWord: try c.decodeIfPresent(YolkWord.self, forKey: .yolkWord),
+                white: try c.decodeIfPresent(WhiteReport.self, forKey: .white),
+                probe: try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
+            )
+        case "startAgain": self = .startAgain(nowS: now)
+        case let kind:
+            throw DecodingError.dataCorruptedError(forKey: .kind, in: c, debugDescription: "no event of kind \(kind)")
+        }
+    }
+}
+
 /// What the app keeps between steps, and stores (the cook and the lean).
 public struct CookState: Sendable {
     /// The running cook, or one ended whose egg is not yet logged; nil while
@@ -90,7 +130,7 @@ public struct CookEnv: Sendable {
 }
 
 /// What the state is waiting for.
-public struct CookNeed: Sendable {
+public struct CookNeed: Sendable, Codable {
     /// The surface the plan's pot wants, with its odds profile.
     public var surface: DecisionInputs?
     /// The calibration before this egg.
@@ -101,6 +141,10 @@ public struct CookNeed: Sendable {
     public var wakeAtS: Double?
 
     static let none = CookNeed(surface: nil, before: false, beforeSurface: nil, wakeAtS: nil)
+
+    enum CodingKeys: String, CodingKey {
+        case surface, before, beforeSurface, wakeAtS = "wakeAt_s"
+    }
 }
 
 /// What the app must do.
@@ -132,6 +176,29 @@ public enum CookEffect: Sendable, Equatable {
         case .log: "log"
         case .forget: "forget"
         case .sendFinal: "sendFinal"
+        }
+    }
+}
+
+/// An effect as the web writes one: its kind, and that kind's fields.
+extension CookEffect: Encodable {
+    private enum Keys: String, CodingKey {
+        case kind, pullS = "pull_s", cooledS = "cooled_s", moment, boil, record, replaces
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(kind, forKey: .kind)
+        switch self {
+        case .persist, .silence, .forget, .sendFinal: break
+        case let .alarms(pull, cooled):
+            try c.encode(pull, forKey: .pullS)
+            try c.encode(cooled, forKey: .cooledS)
+        case let .ring(moment): try c.encode(moment, forKey: .moment)
+        case let .rememberBoil(boil): try c.encode(boil, forKey: .boil)
+        case let .log(record, replaces):
+            try c.encode(record, forKey: .record)
+            try c.encode(replaces, forKey: .replaces)
         }
     }
 }

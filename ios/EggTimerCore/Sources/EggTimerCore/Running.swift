@@ -533,7 +533,7 @@ func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Doub
 
 /// What has been said about the egg: the first yolk word, white and probe
 /// reading given, each kept once said.
-public struct CookAnswers: Sendable, Equatable {
+public struct CookAnswers: Sendable, Equatable, Codable {
     public var yolkWord: YolkWord?
     public var white: WhiteReport?
     public var probe: ProbeReading?
