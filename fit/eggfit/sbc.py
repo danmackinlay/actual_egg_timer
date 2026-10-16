@@ -10,9 +10,16 @@ Each repetition draws the nine globals from the fit's own prior
 counts how many of `--draws` posterior draws, thinned evenly from the
 chains, fall below the truth. If the fit is calibrated, that rank is uniform
 on 0..draws for every global; a hump in the middle is a posterior too wide, a
-U too narrow, a slope a bias. `sbc.md` in `--out` has one verdict for all
-nine (`verdict`), each one's p-value and histogram, and how many
-repetitions' own chains failed R-hat, the ESS or divergences.
+U too narrow, a slope a bias. The simulated eggs' log likelihood is ranked
+the same way, at the truth (every cook's own, from the simulator) against
+each draw: a fit that ignores its data has uniform ranks for every global,
+but its draws explain the eggs worse than the truth does, so this rank piles
+at the top (Modrák et al. 2023, "Simulation-based calibration checking for
+Bayesian computation: the choice of test quantities shapes sensitivity").
+
+`sbc.md` in `--out` has one verdict for all ten (`verdict`), each one's
+p-value and histogram, and how many repetitions' own chains failed R-hat,
+the ESS or divergences.
 
 What is checked is the model, not the published fit: every egg counts once
 (the open tier's discount, DECISIONS.md 2, deliberately tempers the open eggs
@@ -50,8 +57,8 @@ TO_TRUTH = {"mu_z": ("muZ", None), "tau_z": ("tauZ", None), "lag": ("lag", None)
             "tau_t": ("tauT", None), "log_s0": ("noiseMedian", math.exp), "sig_s": ("noiseLogSd", None),
             "log_g0": ("gapMedian", math.exp), "sig_g": ("gapLogSd", None)}
 
-#: What is ranked.
-QUANTITIES = model.GLOBALS
+#: What is ranked: the nine globals and the eggs' log likelihood.
+QUANTITIES = model.GLOBALS + ["loglik"]
 
 #: How often a calibrated fit may fail the verdict.
 ALPHA = 0.05
@@ -100,8 +107,22 @@ def node(*args: str) -> None:
     subprocess.run(["node", "tools/eggs.ts", *args], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 
 
+def cooks_truth(eggs: data.Eggs, path: str, n_cooks: int) -> np.ndarray:
+    """Every cook's five as the simulator drew them (truth.json), in the
+    fit's order of cooks, as `model.cooks_of` has them; a cook with no egg
+    left after emulation pads the end, as the first cook (it has no eggs)."""
+    with open(path) as fh:
+        by_uid = {c["uid"]: c for c in json.load(fh)["cooks"]}
+    rows = [[by_uid[u][k] for k in ("z", "taste", "white", "noise", "gap")] for u in eggs.cooks]
+    rows += [rows[0]] * (n_cooks - len(rows))
+    return np.array(rows)
+
+
 def one(rep: int, a, constants: dict, rng: np.random.Generator) -> dict:
     """One repetition: a truth from the prior, cooks from it, the fit, the ranks."""
+    import jax
+    import jax.numpy as jnp
+
     t0 = time.time()
     g = draw_truth(rng, constants)
     d = os.path.join(os.path.abspath(a.out), f"rep-{rep:04d}")
@@ -122,6 +143,11 @@ def one(rep: int, a, constants: dict, rng: np.random.Generator) -> dict:
     n = len(draws["mu_z"])
     keep = np.linspace(0, n - 1, a.draws).round().astype(int)
     ranks = {name: int(np.sum(draws[name][keep] < g[name])) for name in model.GLOBALS}
+    arrays = model.arrays(eggs, np.ones(eggs.n))
+    ll = jax.vmap(lambda v: model.loglik(constants, arrays, model.cooks_of(v)))(
+        {k: jnp.asarray(draws[k][keep]) for k in model.GLOBALS + ["ez", "et", "ew", "es", "eg"]})
+    truth = cooks_truth(eggs, os.path.join(d, "truth.json"), len(eggs.cooks))
+    ranks["loglik"] = int(np.sum(np.asarray(ll) < float(model.loglik(constants, arrays, jnp.asarray(truth)))))
     if not a.keep:
         for f in (sim, emulated):
             os.remove(f)
@@ -187,12 +213,12 @@ def summary(rows: list[dict]) -> dict:
 
 
 def verdict(s: dict) -> dict:
-    """One test of all nine: each quantity's ECDF test, and Simes's test of
-    the nine p-values (`simes`). Bonferroni or Holm, as one pass or fail,
-    would fail on the smallest p-value alone, below ALPHA / 9; Simes fails
+    """One test of all ten: each quantity's ECDF test, and Simes's test of
+    the ten p-values (`simes`). Bonferroni or Holm, as one pass or fail,
+    would fail on the smallest p-value alone, below ALPHA / 10; Simes fails
     whenever they do and also on several small ones together. It is exact
     for independent tests and holds its level under positive dependence
-    (Sarkar 1998); the nine are ranked in the same repetitions, so they are
+    (Sarkar 1998); the ten are ranked in the same repetitions, so they are
     not independent."""
     p = simes([s["parameters"][q]["p"] for q in QUANTITIES])
     return {"p": p, "alpha": ALPHA, "calibrated": bool(p >= ALPHA)}
@@ -204,11 +230,12 @@ def summary_md(s: dict) -> str:
              f"{s['reps']} repetitions, each rank out of {s['draws']} draws. "
              f"{s['divergent_reps']} repetitions had a divergent transition, {s['failed_diagnostics_reps']} failed "
              f"R-hat, the ESS or divergences (diagnostics.py). {s['seconds_per_rep']:.0f} s a repetition.", "",
-             f"**{'Calibrated' if v['calibrated'] else 'NOT calibrated'}**: Simes's p over the nine is {v['p']:.3f}, "
+             f"**{'Calibrated' if v['calibrated'] else 'NOT calibrated'}**: Simes's p over the ten is {v['p']:.3f}, "
              f"{'at or above' if v['calibrated'] else 'below'} {v['alpha']}.", "",
              "Each p is the ranks' ECDF against the simultaneous band of uniform ranks (Säilynoja et al. 2022); "
-             "the verdict is the one test of all nine, so no p is read on its own. Mean rank near 0.5 is unbiased: "
-             "above it, the posterior sits below the truth.", "",
+             "the verdict is the one test of all ten, so no p is read on its own. Mean rank near 0.5 is unbiased: "
+             "above it, the posterior sits below the truth. The log likelihood's piles at the top when the draws "
+             "explain the eggs worse than the truth does.", "",
              "| quantity | p | mean rank | counts by tenth |", "|---|---|---|---|"]
     for name, p in s["parameters"].items():
         lines.append(f"| {name} | {p['p']:.3f} | {p['mean_rank_fraction']:.2f} | {' '.join(str(c) for c in p['counts'])} |")

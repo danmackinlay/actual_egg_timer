@@ -47,6 +47,10 @@ def test_uniform_ranks_pass_and_one_biased_or_overconfident_quantity_fails_the_v
     # A posterior too narrow: ranks piled at both ends, a U.
     u = np.where(rng.random(200) < 0.5, rng.integers(0, 15, size=200), rng.integers(85, 100, size=200))
     assert not sbc.summary(rows_of({**ranks, "tau_t": u}, 200))["verdict"]["calibrated"]
+    # Draws that explain the eggs worse than the truth: the log likelihood's
+    # ranks at the top, the globals' uniform.
+    top = {**ranks, "loglik": rng.integers(90, 100, size=200)}
+    assert not sbc.summary(rows_of(top, 200))["verdict"]["calibrated"]
 
 
 def test_the_band_test_holds_its_level_and_simes_combines():
