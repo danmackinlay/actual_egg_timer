@@ -487,17 +487,6 @@ public let sliderSteps: Double = 100.0
 /// sent again at its number is taken as a retry and dropped.
 public let firstSeq: Int = 0
 
-// MARK: - src/core/language.ts
-
-/// The catalogue a fresh install reads.
-public let defaultLanguage: String = "en"
-
-/// The English of 1750's catalogue tag.
-public let periodLanguage: String = "en-x-1750"
-
-/// The private-use subtag that marks the register.
-let periodSubtag: String = "x-1750"
-
 // MARK: - src/core/sousvide.ts
 
 /// The bath temperature the app offers.

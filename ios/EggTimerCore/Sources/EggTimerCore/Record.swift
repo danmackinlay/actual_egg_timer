@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// The record: one observation per egg, kept beside the posterior.
 /// Transliterated from `src/core/record.ts`, and held to it by
@@ -557,7 +558,7 @@ public func recordFor(_ f: CookFacts) -> EggRecord {
         probe: f.probe,
         forecast: f.forecast,
         lang: f.lang,
-        register: registerOf(f.lang),
+        register: isPeriod(f.lang) ? "1750" : "modern",
         units: f.units
     )
 }

@@ -9,13 +9,12 @@
  */
 
 import type { SizeClass } from '../core/geometry.ts';
-import type { LanguageState } from '../core/language.ts';
 import type { StartMode } from '../core/protocol.ts';
 import { type BoilMemory, rememberBoil } from '../core/boil.ts';
 import { LIMITS, type Limit, clamp, isWithin } from '../core/inputs.ts';
 import {
-  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, type Settings as StoredSettings, readLanguageState,
-  readSettings,
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, type LanguageState, type Settings as StoredSettings,
+  readLanguageState, readSettings,
 } from './settings.ts';
 import type { RunningCook } from '../core/running.ts';
 import { type KeptAnswers, type StoredCook, readStoredCook, storedCook } from './storedCook.ts';

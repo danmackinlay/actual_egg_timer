@@ -269,6 +269,12 @@ public func catalogueChain(language: String, preferred: [String], region: String
     return ["en-" + r, "en"]
 }
 
+/// Whether a tag is the English of 1750, in any region: the web's `isPeriod`.
+public func isPeriod(_ tag: String) -> Bool {
+    let lower = tag.lowercased()
+    return languageOf(lower) == "en" && (lower.hasSuffix("-" + periodSubtag) || lower.contains("-" + periodSubtag + "-"))
+}
+
 // MARK: - Substitution
 
 /// An argument as text. A string as it is; a count in the locale, with its

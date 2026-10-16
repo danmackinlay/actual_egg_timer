@@ -196,9 +196,6 @@ const TWINS: Twin[] = [
   }))),
   { module: 'slider.ts', name: 'SLIDER_STEPS', swift: 'sliderSteps' },
   { module: 'share.ts', name: 'FIRST_SEQ', swift: 'firstSeq', type: 'Int' },
-  { module: 'language.ts', name: 'DEFAULT_LANGUAGE', swift: 'defaultLanguage', type: 'String' },
-  { module: 'language.ts', name: 'PERIOD_LANGUAGE', swift: 'periodLanguage', type: 'String' },
-  { module: 'language.ts', name: 'PERIOD_SUBTAG', swift: 'periodSubtag', type: 'String', internal: true },
 
   { module: 'section.ts', name: 'SECTION_YOLK_SAMPLES', swift: 'Section.yolkSamples', type: 'Int' },
   { module: 'section.ts', name: 'SECTION_WHITE_SAMPLES', swift: 'Section.whiteSamples', type: 'Int' },
@@ -219,6 +216,9 @@ const TWINS: Twin[] = [
   { module: 'units.ts', name: 'US_QUART_L', swift: 'UnitFactors.usQuartL' },
   { module: 'units.ts', name: 'IMPERIAL_PINT_L', swift: 'UnitFactors.imperialPintL' },
 
+  { module: 'copy.ts', name: 'DEFAULT_LANGUAGE', swift: 'defaultLanguage', type: 'String', target: 'copy' },
+  { module: 'copy.ts', name: 'PERIOD_SUBTAG', swift: 'periodSubtag', type: 'String', internal: true, target: 'copy' },
+  { module: 'copy.ts', name: 'PERIOD_LANGUAGE', swift: 'periodLanguage', type: 'String', target: 'copy' },
   { module: 'format.ts', name: 'COUNT_MAX_DECIMALS', swift: 'countMaxDecimals', type: 'Int', internal: true, target: 'copy' },
   { module: 'format.ts', name: 'TIME_SPACE', swift: 'timeSpace', type: 'Unicode.Scalar', internal: true, target: 'copy' },
 ];

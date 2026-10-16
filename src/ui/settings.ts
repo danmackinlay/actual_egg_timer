@@ -12,11 +12,12 @@
 
 import type { SizeClass } from '../core/geometry.ts';
 import { DEFAULTS, LIMITS, type Limit, clamp } from '../core/inputs.ts';
-import { DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE } from '../core/language.ts';
+import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod } from '../core/copy.ts';
+import { languageOf } from '../core/format.ts';
 import type { Cooling, HeatAfterBoil, StartMode } from '../core/protocol.ts';
 import type { EggFrom } from '../core/record.ts';
 import type { AlarmSound } from '../core/sounds.ts';
-import type { UnitSystem } from '../core/units.ts';
+import type { UnitSystem, UnitsFlip } from '../core/units.ts';
 
 /** Which of the web's three measurement boxes a measured egg came from: one
  *  number in three units, and a weighed egg and a ruler-measured one are not
@@ -61,7 +62,7 @@ export interface Settings {
    *  (`effectiveUnits`), so a default is never stored as a choice. */
   unitsChosen: UnitSystem | null;
   /** The language the cook chose, or the units switch put on screen, or
-   *  null for the default (`src/core/language.ts`). */
+   *  null for the default (`LanguageState`). */
   language: LanguageState;
   /** "I have a probe thermometer": ask for a reading at the middle of the
    *  egg when the cooling ends. Off until the cook says so. */
@@ -89,11 +90,33 @@ export function readAlarmSound(raw: unknown): AlarmSound {
   return DEFAULT_ALARM_SOUND;
 }
 
+/** Which catalogue the cook reads: `chosen` is the cook's pick, or 1750 put
+ *  there by the units switch (`languageAfterFlip`), or null for the default,
+ *  kept apart from it as the units are. */
+export interface LanguageState {
+  chosen: string | null;
+}
+
 /** Every catalogue the picker offers, in its order, and the state of a
  *  cook who never chose one. */
 export const LANGUAGES: readonly string[] = [DEFAULT_LANGUAGE, PERIOD_LANGUAGE];
 
 export const FRESH_LANGUAGE: LanguageState = { chosen: null };
+
+/** The catalogue on screen. */
+export function effectiveLanguage(state: LanguageState): string {
+  return state.chosen ?? DEFAULT_LANGUAGE;
+}
+
+/** The language after the cook's own switch of units (LANGUAGE.md section
+ *  6): metric to Imperial in modern English goes into 1750. Anything else -
+ *  back to metric, another language, 1750 already - leaves it, and the cook
+ *  leaves 1750 with the picker. */
+export function languageAfterFlip(state: LanguageState, flip: UnitsFlip): LanguageState {
+  const tag = effectiveLanguage(state);
+  if (flip !== 'metricToImperial' || languageOf(tag) !== 'en' || isPeriod(tag)) return state;
+  return { chosen: PERIOD_LANGUAGE };
+}
 
 /** A stored state, read defensively: anything malformed is the fresh one. A
  *  tag is kept only if it is one of `known`, so a catalogue that has gone

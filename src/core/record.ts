@@ -38,7 +38,7 @@ import {
 } from './infer.ts';
 import { type PriorStart, priorStart } from './population.ts';
 import type { Outcome } from './outcome.ts';
-import { registerOf } from './language.ts';
+import { isPeriod } from './copy.ts';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -379,7 +379,7 @@ export function recordFor(f: CookFacts): EggRecord {
     probe: f.probe,
     forecast: f.forecast,
     lang: f.lang,
-    register: registerOf(f.lang),
+    register: isPeriod(f.lang) ? '1750' : 'modern',
     units: f.units,
   };
   return r;

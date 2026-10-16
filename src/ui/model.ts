@@ -54,7 +54,7 @@ import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } fr
 import { step, surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
-import { effectiveLanguage, languageAfterFlip, languageAfterPick } from '../core/language.ts';
+import { effectiveLanguage, languageAfterFlip } from './settings.ts';
 import { type PotOdds, nudgeNow, solveIdle } from './answer.ts';
 import { targetPeakYolk_C } from '../core/slider.ts';
 import { NO_NEED, choicesOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
@@ -848,7 +848,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       // Nothing about the egg changes, and the units are never touched from
       // here: that rule runs one way (LANGUAGE.md section 6).
       const before = effectiveLanguage(m.settings.language);
-      const settings = { ...m.settings, language: languageAfterPick(m.settings.language, msg.pick) };
+      const settings = { ...m.settings, language: { chosen: msg.pick } };
       const next = m.cook === null ? withSettings(m, settings) : { ...m, settings: settings };
       return [next, [{ kind: 'save', soon: false }, { kind: 'language', before: before }]];
     }

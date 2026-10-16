@@ -64,7 +64,6 @@ web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 | `sounds.ts` | the alarm sounds and each sound's timing, as data `swift:constants` writes into Swift | `ALARM_PERIOD_S`, `alarmRepeats` | `Sounds.swift` | none |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
-| `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
 | `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, folded, the plan derived from them, each move the cook makes | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `foldCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember` | `Running.swift` | `running.json` |
 | `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
 | `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |

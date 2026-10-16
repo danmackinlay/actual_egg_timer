@@ -15,13 +15,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { parseCatalogue, render, templatesOf } from '../src/core/copy.ts';
+import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod, parseCatalogue, render, templatesOf } from '../src/core/copy.ts';
 import { formattingLocale } from '../src/core/format.ts';
 import {
-  DEFAULT_LANGUAGE, type LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish, isPeriod, languageAfterFlip,
-  languageAfterPick, registerOf,
-} from '../src/core/language.ts';
-import { FRESH_LANGUAGE, readLanguageState } from '../src/ui/settings.ts';
+  FRESH_LANGUAGE, type LanguageState, effectiveLanguage, languageAfterFlip, readLanguageState,
+} from '../src/ui/settings.ts';
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
 import { catalogueTags, isCatalogueFile, translationTags } from '../tools/copyApproval.ts';
@@ -206,11 +204,11 @@ function flip(state: LanguageState, ...flips: ('metricToImperial' | 'imperialToM
   return flips.reduce((s, f) => languageAfterFlip(s, f), state);
 }
 
-test('2a. tags: 1750 in any region, and modern English is English without it', () => {
-  for (const tag of ['en-x-1750', 'en-US-x-1750', 'EN-GB-X-1750']) assert.ok(isPeriod(tag), tag);
-  for (const tag of ['en', 'en-US', 'cs', 'cs-x-1750', 'en-x-17500']) assert.ok(!isPeriod(tag), tag);
-  assert.ok(isModernEnglish('en') && isModernEnglish('en-GB'));
-  assert.ok(!isModernEnglish('en-x-1750') && !isModernEnglish('cs'));
+test('2a. tags: 1750 in any region, and nothing else', () => {
+  for (const tag of ['en-x-1750', 'en-US-x-1750', 'EN-GB-X-1750', 'en-x-1750-a']) assert.ok(isPeriod(tag), tag);
+  for (const tag of ['en', 'en-US', 'cs', 'cs-x-1750', 'en-x-17500', 'en-x-175', 'x-1750', '', 'enx-1750']) {
+    assert.ok(!isPeriod(tag), tag);
+  }
   assert.equal(effectiveLanguage(FRESH_LANGUAGE), DEFAULT_LANGUAGE);
 });
 
@@ -218,7 +216,7 @@ test('2b. metric to Imperial in English goes into 1750, and back to metric stays
   const imperial = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.equal(effectiveLanguage(imperial), PERIOD_LANGUAGE);
   assert.deepEqual(flip(imperial, 'imperialToMetric'), imperial, 'back to metric leaves 1750 alone');
-  const chosen = languageAfterPick(FRESH_LANGUAGE, 'en');
+  const chosen = { chosen: 'en' };
   assert.equal(effectiveLanguage(flip(chosen, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
 
@@ -229,13 +227,13 @@ test('2c. Imperial to metric never moves the language', () => {
 });
 
 test('2d. choosing English in the picker leaves 1750 and keeps the units as they are', () => {
-  const picked = languageAfterPick(flip(FRESH_LANGUAGE, 'metricToImperial'), 'en');
+  const picked = { chosen: 'en' };
   assert.equal(effectiveLanguage(picked), 'en');
   assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), 'en');
 });
 
 test('2e. 1750 chosen in the picker is not left by the units', () => {
-  const picked = languageAfterPick(FRESH_LANGUAGE, PERIOD_LANGUAGE);
+  const picked = { chosen: PERIOD_LANGUAGE };
   assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), PERIOD_LANGUAGE);
   assert.equal(effectiveLanguage(flip(picked, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
@@ -261,13 +259,6 @@ test('2g. a stored state is read defensively, and an old one still reads', () =>
 // --------------------------------------------------------------------------
 // the record
 // --------------------------------------------------------------------------
-
-test('3a. the record\'s register follows the language', () => {
-  assert.equal(registerOf('en'), 'modern');
-  assert.equal(registerOf('cs'), 'modern');
-  assert.equal(registerOf(PERIOD_LANGUAGE), '1750');
-  assert.equal(registerOf('en-US-x-1750'), '1750');
-});
 
 test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () => {
   const choices: CookChoices = {
