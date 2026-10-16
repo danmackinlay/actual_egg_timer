@@ -168,7 +168,9 @@ export function paintEggSection(svg: SVGSVGElement, fills: string[]): void {
   }
 }
 
-function parseHex(value: string): Rgb {
+/** A CSS colour `#rgb` or `#rrggbb` as 0-255 channels. Exported for the lab
+ *  page, `tools/egg-section.html`, which reads its heat map's stops with it. */
+export function parseHex(value: string): Rgb {
   const v = value.trim().replace('#', '');
   const full = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
   return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
