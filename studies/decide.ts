@@ -293,7 +293,7 @@ if (run('nudge')) {
 
 if (run('learning')) {
   console.log('\n== learning: the interval rule, against the count (150 cooks x 8 eggs)');
-  // The owner's rule, +-15 s (DECISIONS.md 9). No screen
+  // The owner's rule, +-15 s (DECISIONS.md 40). No screen
   // shows it and `Decision` does not carry it, so it is read here, on demand,
   // from `predictCookTime`.
   const STILL_LEARNING_S = 15;

@@ -15,7 +15,7 @@ next is `PLAN.md`; the last section here says which document holds what.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
-- **The gate is what the change touched** (`DECISIONS.md` 121, 123):
+- **The gate is what the change touched** (`DECISIONS.md` 123):
 
   | changed | before a merge |
   |---|---|
@@ -38,7 +38,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   bumps the version in its own commit, tags it `git tag -a v<version> -m
   "<one line>"` and pushes `--follow-tags`. Never move or reuse a tag.
 - **A storage format may change without a migration** until wide deployment
-  (`DECISIONS.md` 48): bump its key, so an old value is dropped rather than
+  (`DECISIONS.md` 107): bump its key, so an old value is dropped rather than
   misread. Each app's table of stores (`src/ui/stores.ts`,
   `StoreRegistry.swift`) lists every key, and the boot sweep deletes any key
   it does not list. Back-compat starts when the owner says the app is widely
@@ -154,7 +154,7 @@ next is `PLAN.md`; the last section here says which document holds what.
 |---|---|
 | `CLAUDE.md` | the rules for working here: staging, the gate, both apps, core's invariants, the copy workflow, iOS gotchas; this map |
 | `PLAN.md` | the next work, the owner's open decisions, and what nobody has checked |
-| `DECISIONS.md` | every owner decision, numbered and dated |
+| `DECISIONS.md` | every owner decision, numbered and dated, each superseded chain stated as its current rule |
 | `README.md` | the science: the model, its constants, validation, open problems |
 | `DEVELOPING.md` | building, checking and deploying: the npm scripts, the host, reviewing the words, the web app end to end |
 | `INFERENCE.md` | the learning: what is learned, the record, the probe, deciding, the fit |

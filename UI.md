@@ -63,7 +63,7 @@ all):
   line when it applies (§8). It keeps its room in every phase; it goes at
   the pull, when the time it was about has passed.
 - The hint, then **the action**, directly under the time it runs
-  (`DECISIONS.md` 113): "Start heating" on a cold start, "Eggs in"
+  (`DECISIONS.md` 125): "Start heating" on a cold start, "Eggs in"
   otherwise, Rolling boil, the pull, Start again (the table below). In
   sous-vide it is dead, with the bath's hint above. The buttons are **one
   row**: while a cook runs, Cancel on the left, small and plainly secondary

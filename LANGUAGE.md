@@ -228,7 +228,7 @@ cost in Czech (§5).
 - Sous-vide is not "a bath". "Ice bath" stays.
 - "Pan" only where it means the pot. The boil-time memory is keyed by water
   volume, so it is "how long your water takes to boil", not "your pan".
-- "Boil" is never a metonym for cooking an egg (`DECISIONS.md` 78, 111):
+- "Boil" is never a metonym for cooking an egg (`DECISIONS.md` 111):
   not "the boil", "boil times" or "signal the boil". The state of the
   water is "a full rolling boil", the standard phrase, as the button's name
   says; "brought to the boil", "to the boil" and "Once it’s boiling" stay.
@@ -274,7 +274,7 @@ A string the owner has approved (the `alarm.pull.*` bodies,
 as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
 it like the rest, and a change puts it back in the queue.
 
-**The twins may lag the English** (`DECISIONS.md` 103). A translation's
+**The twins may lag the English** (`DECISIONS.md` 116). A translation's
 twin need not be rewritten in the commit that changes its English; the
 twins are written in batches. Each translation has a sidecar,
 `<tag>.base.json` beside the approvals (today

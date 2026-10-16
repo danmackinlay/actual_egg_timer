@@ -9,7 +9,7 @@ import Foundation
 /// reader takes a store only in its own format (`inFormat`): anything else
 /// reads as nothing stored, and the app's next write replaces it. So a
 /// change of shape is one number bumped here, and the key stays. Before wide
-/// deployment (DECISIONS.md 48) a bump is all a change of format needs;
+/// deployment (DECISIONS.md 107) a bump is all a change of format needs;
 /// nothing is migrated. A store with no format inside it (`format` nil) is
 /// a bare value read by its own reader (the newest-build mark and its build,
 /// the alarm's sound), or one whose key still names its format, sharing's,

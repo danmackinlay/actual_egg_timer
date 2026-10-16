@@ -1,4 +1,4 @@
-// `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 121).
+// `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 123).
 //
 // Every job at once, each one's output held and printed whole under its name
 // when it ends, so no two jobs' lines interleave. Node runs the tests and
