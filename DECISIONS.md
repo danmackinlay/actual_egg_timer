@@ -653,8 +653,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     cook that cannot be read is dropped, and the boot sweep of retired keys
     deletes `v4` with the rest ("Yes, sweep v4 too"). What stays: "Export
     my results", in Settings under What I've learned, which saves the store
-    exactly as stored to a file (a download on the web, the share sheet on
-    iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
+    to a file as data, by each app's own JSON encoder, a damaged store as
+    its text (a download on the web, the share sheet on iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
     files back for the fit, older ones included; replaying the posterior
     whenever the model it was folded under (`MODEL_ID`, kept beside it) is
     not this build's. A cook too old to

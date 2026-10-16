@@ -71,16 +71,10 @@ and the map of the documents are `CLAUDE.md`.
     - The five `tools/*.mjs` are not type-checked: make them `.ts`.
     - Test names carry numbers, and split files kept their parent's: drop
       them.
-    - `src/core/running.ts`: split the as-ran family out, take the slow-hob
-      loop out of `replan`, and replace the hand-written equality functions
-      with one.
-    - Swift doc comments repeat the TypeScript's: keep only what is about
-      the port, and point at the TypeScript.
-    - The results file is built by hand, with its own JSON escaper, so the
-      two apps' bytes match (`record.ts` `jsonString`): use each platform's
-      encoder and compare the data.
-    - `language.ts` and the alarm sounds carry the whole twin-and-fixture
-      apparatus for a few lines: inline them, or make them data.
+    - Swift doc comments repeat the TypeScript's in `Running.swift`,
+      `AsRan.swift`, `Record.swift` and `Step.swift`: keep only what is
+      about the port, and point at the TypeScript, as the rest of the twin
+      does.
     - The web model holds settings in four copies and the idle solve in six
       fields, and keeps three redraw memos: group them, and skip the field
       in focus instead.
