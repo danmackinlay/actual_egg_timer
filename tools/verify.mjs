@@ -134,7 +134,7 @@ for (const r of [...results].sort((a, b) => a.end - b.end)) {
   console.log(`${r.code === 0 ? 'ok    ' : 'FAILED'} ${r.name.padEnd(16)} ${seconds(r.start).padStart(6)} s to ${seconds(r.end).padStart(6)} s`);
 }
 const failed = results.filter((r) => r.code !== 0);
-if (results.every((r) => !r.name.startsWith('swift') || r.name === 'swift build')) {
+if (results.every((r) => !r.name.startsWith('swift ') || r.name === 'swift build')) {
   console.log('skipped the Swift tests: swift build failed');
 }
 if (failed.length > 0) {
