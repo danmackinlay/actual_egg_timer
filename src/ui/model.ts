@@ -968,8 +968,14 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       const [next, effects] = stepCook(at, { kind: 'startAgain', now_s: now_s }, now_s);
       return [next, [...first, ...effects]];
     }
-    case 'stillOut':
-      return stepCook(m, { kind: 'pullStands', now_s: now_s }, now_s);
+    case 'stillOut': {
+      // "Still in the water?" No: the pull stands on the cook as the
+      // controls say it is, a correction still settling committed first.
+      if (m.cook === null) return [m, []];
+      const [at, first] = commit(m, null, now_s);
+      const [next, effects] = stepCook(at, { kind: 'pullStands', now_s: now_s }, now_s);
+      return [next, [...first, ...effects]];
+    }
     case 'correct': {
       if (m.closed || m.cook === null) return [m, []];
       let next = m;
@@ -1026,7 +1032,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  *   anything else - a choice in a clause's panel, a − or + pressed once, a
  *   number typed - the settle starting again with each change;
  * - at once when another control is touched, or a button that moves the
- *   cook on pressed (the primary, Cancel):
+ *   cook on pressed (the primary, Cancel, "Still in the water?" No):
  *   the change in hand alone, as it was before the other control's, whether a
  *   finger or the keyboard moves on;
  * - and when the page is hidden or goes, so a reload or a closed tab inside

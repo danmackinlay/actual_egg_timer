@@ -452,6 +452,19 @@ test('cancel: a change still settling is committed first, by keyboard too, so th
   assert.equal(ended[0]!.choices.eggCount, 4, 'with the correction');
 });
 
+test('stillOut: a change still settling is committed before the pull stands', () => {
+  let m = running({ startMode: 'hot', cooling: 'ice' });
+  m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
+  m = go(m, { kind: 'correct', choices: { ...m.cook!.choices, startMode: 'cold' }, startedAt_s: null }, pull(m) + 30)[0];
+  assert.equal(m.plan?.deadlines.asking, true, 'the question is open');
+  const [held] = change(m, { eggCount: 4 }, 3, 0, pull(m) + 32);
+  const [after, effects] = go(held, { kind: 'stillOut' }, pull(m) + 35);
+  assert.equal(after.cook?.choices.eggCount, 4, 'the correction is the cook\'s');
+  assert.equal(after.edit?.pending, false, 'and nothing is left in hand to commit after');
+  assert.equal(after.plan?.deadlines.asking, false, 'the pull stands');
+  assert.equal(timers(effects)[0], 'settle:null');
+});
+
 test('after the pull a new level only previews, and the slider goes back when the aimed-for egg goes', () => {
   let m = running();
   m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
