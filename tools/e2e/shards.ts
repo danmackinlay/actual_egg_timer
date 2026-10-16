@@ -21,7 +21,7 @@ export const SECONDS: Readonly<Record<string, number>> = {
   'settings-mid-cook': 7, 'record-corrected-at-done': 30, 'slider-after-pull': 11, 'still-in-water': 18,
   'start-again-corrected': 25, 'done-stays-done': 57, 'grace-correction': 13, 'change-kept-on-hide': 16,
   'later-answer-refolds': 37, 'done-note-as-ran': 18, 'final-egg': 9, 'probe-reading': 7, 'done-as-ran': 13,
-  'sharing-final-only': 24, 'dev-clock-shares-nothing': 13, 'inert-off-localhost': 1, 'unreadable-stores': 7,
+  'sharing-final-only': 24, 'inert-off-localhost': 1, 'unreadable-stores': 7,
   'retired-keys': 14, 'newer-version': 19, 'one-tab-waits': 7, 'one-tab-takeover': 17, 'one-tab-silent': 8,
   'newer-version-tab': 11,
   'copy/idle-default': 7, 'copy/idle-hot': 6, 'copy/us-carton': 7, 'copy/us-carton-jumbo': 8,

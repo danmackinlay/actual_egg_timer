@@ -32,7 +32,7 @@ export interface StoreSpec {
   key: string;
 }
 
-export type StoreName = 'newest' | 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share' | 'devClockUsed';
+export type StoreName = 'newest' | 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share';
 
 export const STORES = {
   /** The newest version that has run here (newer.ts): under this key for
@@ -52,15 +52,11 @@ export const STORES = {
   calibration: { name: 'calibration', format: 5, key: 'aet.calibration.v5' },
   /** Sharing's state (shareState.ts): its format in its key. */
   share: { name: 'share', format: null, key: 'aet.share.v1' },
-  /** The development clock has been used here: what is logged may hold an
-   *  egg cooked on a made-up clock, which is never sent. */
-  devClockUsed: { name: 'devClockUsed', format: null, key: 'aet.devClock.used' },
 } as const satisfies Record<StoreName, StoreSpec>;
 
 /** The table in one order, for the sweep. */
 export const STORE_LIST: StoreSpec[] = [
   STORES.newest, STORES.settings, STORES.cook, STORES.boilMemory, STORES.calibration, STORES.share,
-  STORES.devClockUsed,
 ];
 
 /** What a store holds, stamped with its format. */

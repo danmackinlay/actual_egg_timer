@@ -26,7 +26,7 @@ import { request } from './idle.ts';
 import { send } from './send.ts';
 import { STORES } from './stores.ts';
 import { storageReadOnly, storedKey } from './store.ts';
-import { devClockUsed, nowMs } from './now.ts';
+import { nowMs } from './now.ts';
 
 /** Now, epoch s, as core counts it. */
 const nowS = (): number => nowMs() / 1000;
@@ -176,10 +176,8 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
 
   /** The next final egg, if there is one and sharing is on: whether to go on. */
   async function sendOne(): Promise<boolean> {
-    // Never an egg cooked on the development clock, which runs only on this
-    // machine (dev/clock.ts): nothing goes from a log that may hold one. Nor
-    // anything while a newer build's results are left alone (store.ts).
-    if (closed || devClockUsed() || storageReadOnly()) return false;
+    // Nothing while a newer build's results are left alone (store.ts).
+    if (closed || storageReadOnly()) return false;
     const s = state;
     const log = host.log();
     const at = nextToSend(s, host.finalCount(), log.length);

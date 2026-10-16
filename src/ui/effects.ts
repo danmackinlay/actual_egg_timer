@@ -20,7 +20,7 @@ import { send } from './send.ts';
 import { labelTicks } from './slider.ts';
 import { labelSteppers } from './stepper.ts';
 import type { Settings, SettingsStore } from './store.ts';
-import { forgetDevClockUse, nowMs } from './now.ts';
+import { nowMs } from './now.ts';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
 const pending = {
@@ -111,8 +111,6 @@ function relabel(): void {
 /** Take it all back: the posterior and the pan. */
 export function forgetAll(s: Stores): void {
   const calib = s.learner.clear();
-  // The log is gone, and with it any egg cooked on the development clock.
-  forgetDevClockUse();
   s.pans.clear();
   send({ kind: 'calibration', calib: calib, boilMemory: {} });
   // The next egg is a new cook's, under a new id (share.ts).

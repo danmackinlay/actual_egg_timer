@@ -212,31 +212,4 @@ export const recordScenarios: Record<string, Scenario> = {
       return `at Done: 0 sent; Start again: ${sent[0]}`;
     },
   },
-
-  'dev-clock-shares-nothing': {
-    what: 'nothing is sent from a log the development clock has touched, even with the clock off',
-    run: async (h) => {
-      const tab = await h.ctx.open(`${STOPPED}&at=-1m`);
-      await tab.click('#shareSetting');
-      await tab.until("__snap().share.on", 'sharing on');
-      const posts0 = h.posts().length;
-      let s = await start(tab, 'hot');
-      await tab.until('__snap().decided', 'the pot planned');
-      s = await tab.snap();
-      await tab.shiftTo(deadlines(s).cookEnd_s + 25);
-      s = await tab.phase('COOLING');
-      await tab.shiftTo(deadlines(s).coolEnd_s + 5);
-      await tab.phase('DONE');
-      await tab.click('#primary');
-      await tab.until('__snap().log.length === 1', 'the egg logged');
-      await tab.settle();
-      const before = await tab.sends();
-      await tab.eval('window.aetClock.off()');
-      await tab.reload();
-      await tab.settle();
-      check(before === 0 && (await tab.sends()) === 0, `nothing sent: ${before} with the clock on, ${await tab.sends()} off`);
-      check(h.posts().length === posts0, `nothing sent: ${h.posts().slice(posts0).join('; ')}`);
-      return 'the egg logged, nothing sent, the clock on or off';
-    },
-  },
 };

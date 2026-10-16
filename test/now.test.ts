@@ -96,9 +96,7 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
     setItem: (k: string, v: string) => { m.set(k, v); },
     removeItem: (k: string) => { m.delete(k); },
   }) as unknown as Storage;
-  // The store module (store.ts), which the mark is written through, reads
-  // `window.localStorage`.
-  const win: Record<string, unknown> = { localStorage: store(local) };
+  const win: Record<string, unknown> = {};
   const g = globalThis as Record<string, unknown>;
   g['window'] = win;
   g['location'] = { hostname: hostname, search: search, href: `https://${hostname}/${search}` };
@@ -114,27 +112,20 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
   return { m: m, win: win, local: local };
 }
 
-test('5. the page on the live site: Date.now, no handle, no mark, nothing kept, sharing untouched', async () => {
+test('5. the page on the live site: Date.now, no handle, nothing kept', async () => {
   const { m, win, local } = await pageAt('actualeggtimer.netlify.app', '?clock=60&at=+2h', KEPT);
   const before = Date.now();
   const t = m.nowMs();
   assert.ok(t >= before && t <= Date.now());
   assert.equal(m.clockSpeed(), 1);
-  assert.equal(m.devClockUsed(), false);
   assert.equal(win['aetClock'], undefined);
   assert.equal(local.size, 0);
 });
 
-test('6. the page on localhost: the clock asked for, its handle, and the log marked', async () => {
-  const { m, win, local } = await pageAt('localhost', '?clock=60&at=+2h', null);
+test('6. the page on localhost: the clock asked for, and its handle', async () => {
+  const { m, win } = await pageAt('localhost', '?clock=60&at=+2h', null);
   assert.equal(m.clockSpeed(), 60);
   assert.ok(m.nowMs() - Date.now() > 7_190_000);
-  assert.equal(m.devClockUsed(), true);
-  // Marked once the app may write (app.ts, after `claimStorage`), not as the
-  // module loads.
-  assert.equal(local.get('aet.devClock.used'), undefined);
-  m.markDevClockUse();
-  assert.equal(local.get('aet.devClock.used'), '1');
   assert.ok(win['aetClock'] !== undefined);
 });
 

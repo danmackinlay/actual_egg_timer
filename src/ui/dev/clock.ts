@@ -22,14 +22,12 @@
  * stopped clock is what a script steps through a cook with (`npm run e2e`):
  * it is at the moment the script set, however slow the machine running it.
  * While it is on, a mark sits in the page's corner - the speed and the
- * shift, no words - and sharing sends nothing from this browser's log until
- * Forget everything clears it (`devClockUsed`, share.ts): an egg cooked on a
- * made-up clock never reaches a server.
+ * shift, no words. What sharing sends from here goes to the development
+ * server's own store (tools/devServer.ts), and this origin's log is its own,
+ * so an egg cooked on a made-up clock never reaches the live one.
  */
 
 import { clockChanged, isDevHost, nowMs, useClock } from '../now.ts';
-import { STORES } from '../stores.ts';
-import { readStorage, removeStorage, writeStorage } from '../store.ts';
 
 export interface DevClock {
   /** The cook's seconds to the real second; 0 is stopped. */
@@ -41,8 +39,6 @@ export interface DevClock {
 
 /** sessionStorage: this tab's clock, kept across a reload. */
 const CLOCK_KEY = 'aet.devClock';
-/** localStorage: the log here may hold an egg cooked on a made-up clock. */
-const USED_KEY = STORES.devClockUsed.key;
 
 /** A span as `?at=` takes it, ms: `+7m40s`, `-15m`, `1h`, `90s`, or bare
  *  seconds (`-90`). Null if it does not read. */
@@ -114,14 +110,7 @@ export function devClockAt(hostname: string, search: string, stored: string | nu
 
 let dev: DevClock | null = null;
 
-/** Through the store's one door (store.ts), so a page that leaves a newer
- *  build's stores alone does not write this either; sharing reads the clock
- *  itself while it is on. */
-function markUsed(): void {
-  writeStorage(USED_KEY, '1');
-}
-
-function setClock(next: DevClock | null, mark = true): void {
+function setClock(next: DevClock | null): void {
   dev = next === null ? null : orNone(next);
   try {
     if (dev === null) sessionStorage.removeItem(CLOCK_KEY);
@@ -129,7 +118,6 @@ function setClock(next: DevClock | null, mark = true): void {
   } catch {
     /* kept for this page only */
   }
-  if (mark && dev !== null) markUsed();
   drawMark();
   clockChanged();
 }
@@ -225,15 +213,7 @@ export function installDevClock(): void {
   useClock({
     now: () => (dev === null ? Date.now() : devTime(dev, Date.now())),
     speed: () => (dev === null || dev.speed === 0 ? 1 : dev.speed),
-    used: () => dev !== null || readStorage(USED_KEY) !== null,
-    forget() {
-      removeStorage(USED_KEY);
-      if (dev !== null) markUsed();
-    },
-    mark() {
-      if (dev !== null) markUsed();
-    },
   });
   (window as unknown as { aetClock: ClockHandle }).aetClock = handle();
-  if (clock !== null || stored !== null) setClock(clock, false);
+  if (clock !== null || stored !== null) setClock(clock);
 }
