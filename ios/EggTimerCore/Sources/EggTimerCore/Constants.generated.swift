@@ -319,7 +319,7 @@ public let timeRangeHighQ: Double = 0.95
 
 // MARK: - src/core/decide.ts
 
-/// How much worse a runny white is than a yolk one answer off: the owner's number (DECISIONS.md 7).
+/// How much worse a runny white is than a yolk one answer off: the owner's number.
 public let runnyWhiteLoss: Double = 3.0
 
 /// The time-scale span of a decision grid, as factors on the posterior mean, and how many rows.

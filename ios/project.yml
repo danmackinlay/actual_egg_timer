@@ -106,7 +106,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer
-        # iPhone only (DECISIONS.md 50). A universal app that is portrait-only
+        # iPhone only. A universal app that is portrait-only
         # is refused at upload (ITMS-90474): iPad multitasking wants every
         # orientation. An iPad still runs it, in iPhone compatibility mode.
         # Per target, since xcodegen gives each iOS target "1,2" by default.

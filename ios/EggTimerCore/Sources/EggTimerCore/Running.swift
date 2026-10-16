@@ -711,7 +711,7 @@ public struct SlowHobMemo: Sendable, Equatable {
 }
 
 /// Where the rule got to, and not what it read: that is this core's own,
-/// and two cores' numbers agree only in distribution (DECISIONS.md 109).
+/// and two cores' numbers agree only in distribution.
 extension SlowHobMemo: Encodable {
     private enum CodingKeys: String, CodingKey {
         case steps, lastS = "last_s", rampS = "ramp_s", carriedS = "carried_s"

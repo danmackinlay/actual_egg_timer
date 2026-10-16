@@ -161,7 +161,7 @@ struct RunningConformance {
 
 /// The key of a decision surface's inputs is this core's own, as the web's is
 /// the web's: each app's caches and the plan key surfaces by it, and no
-/// fixture holds its bits (DECISIONS.md 109). What it must do, it does here.
+/// fixture holds its bits. What it must do, it does here.
 @Suite("The surface key")
 struct InputsKeyTests {
     @Test("equal exactly when the inputs are, numbers to the bit")

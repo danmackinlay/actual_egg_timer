@@ -80,7 +80,7 @@ private func absentMeans(_ key: String) -> Any? {
 
 /// Every place `actual` and `expected`, both as JSONSerialization gives them,
 /// differ: a path and the two values. Numbers agree to `tolerance` relative
-/// above 1 and absolute below (DECISIONS.md 109), or to the tolerance
+/// above 1 and absolute below, or to the tolerance
 /// `tolerances` gives their key; with `clockFrom`, a number past 1e9 is an
 /// epoch time and is compared as seconds from it, as a cook time is. A missing
 /// key, JSON's null and a non-finite number are alike; strings, booleans and

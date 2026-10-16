@@ -225,7 +225,7 @@ struct PhaseActions: View {
                 disabled: model.starting || planner.solution == nil || planner.solution?.whiteSets == false
             ) { model.eggsIn() }
         case .heating:
-            // Invariant 6: tapping at first bubbles under-measures the boil
+            // Tapping at first bubbles under-measures the boil
             // by 15-25%, so the button names the thing to wait for.
             return Main(title: tr(readout?.primary ?? .`action.fullBoil`)) { model.boil() }
         case .pull:

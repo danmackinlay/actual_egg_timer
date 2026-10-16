@@ -9,7 +9,7 @@ import Foundation
 /// reader takes a store only in its own format (`inFormat`): anything else
 /// reads as nothing stored, and the app's next write replaces it. So a
 /// change of shape is one number bumped here, and the key stays. Before wide
-/// deployment (DECISIONS.md 107) a bump is all a change of format needs;
+/// deployment a bump is all a change of format needs;
 /// nothing is migrated. A store with no format inside it (`format` nil) is
 /// a bare value read by its own reader (the alarm's sound), or one whose key
 /// still names its format, sharing's, where a change is a new key. The log has its format inside and keeps the
@@ -49,7 +49,7 @@ public enum StoreRegistry {
 
     /// Every key an earlier build wrote: the posteriors before the log
     /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
-    /// 0.5, DECISIONS.md 107), the copies 0.4 kept aside of what it could not
+    /// 0.5), the copies 0.4 kept aside of what it could not
     /// read, the cooks in progress before this one's shape, the sharing keys
     /// of an earlier 0.4 build, settings no build reads any more, the
     /// settings a key each among them, sharing's key kept with its dates as
