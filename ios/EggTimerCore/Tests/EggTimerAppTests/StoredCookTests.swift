@@ -296,3 +296,37 @@ struct SplitMix {
         return Double(z >> 11) / Double(UInt64(1) << 53)
     }
 }
+
+/// One entry with every clock time in it moved by `by`.
+private func shiftedEntry(_ entry: CookEntry, by: Double) -> CookEntry {
+    switch entry {
+    case let .boil(at): .boil(atS: at + by)
+    case let .correct(at, choices): .correct(atS: at + by, choices: choices)
+    case let .start(at, startedAt): .start(atS: at + by, startedAtS: startedAt + by)
+    case let .pulled(p):
+        .pulled(p.map { Pulled(dueS: $0.dueS + by, outS: $0.outS + by, by: $0.by, confirmed: $0.confirmed) })
+    case .stands: .stands
+    case let .cooled(at): .cooled(atS: at.map { $0 + by })
+    case let .rang(at): .rang(atS: at.map { $0 + by })
+    case let .stillIn(at): .stillIn(atS: at + by)
+    case let .ran(r):
+        .ran(r.map {
+            var moved = $0
+            moved.correctedAtS = $0.correctedAtS.map { $0 + by }
+            return moved
+        })
+    case let .answered(at, yolk, white, probe): .answered(atS: at + by, yolkWord: yolk, white: white, probe: probe)
+    case let .logged(at): .logged(atS: at + by)
+    case let .ended(at): .ended(atS: at + by)
+    }
+}
+
+/// The cook with every clock time in it moved by `by` s, the press with
+/// them.
+private func shiftedCook(_ cook: RunningCook, by: Double) -> RunningCook {
+    foldCook(
+        idMs: (cook.idMs + by * 1000).rounded(), start: CookStart(atS: cook.start.atS + by, choices: cook.start.choices),
+        nudgeS: cook.nudgeS, boilMemory: cook.boilMemory, units: cook.units, lang: cook.lang,
+        log: cook.log.map { shiftedEntry($0, by: by) }
+    )
+}

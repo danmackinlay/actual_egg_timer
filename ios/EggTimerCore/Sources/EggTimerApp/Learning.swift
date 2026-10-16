@@ -178,38 +178,4 @@ public final class Learning {
         Services.sharing.forget()
         planner.refresh()
     }
-
-    #if DEBUG
-    /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
-    /// the log through the app's own store, as if each had been cooked at the
-    /// level and setup on screen, at its mean time, and answered as given
-    /// about the yolk, in the five words, and, where given, the white; then fold
-    /// them, as a relaunch folds eggs it finds unfolded. Only into an empty
-    /// log, so a relaunch does not seed twice.
-    func seed(_ answers: [SeedAnswer]) {
-        let p = planner
-        guard kept.log.isEmpty, !answers.isEmpty, !p.isSousVide else { return }
-        let (egg, setup, calibration) = (p.egg, p.setup, p.calibration)
-        let solved = solveCookTime(
-            egg: egg, setup: setup, params: calibrationParams(calibration),
-            doneness: calibrationDoneness(calibration, level: p.settings.doneness)
-        )
-        let seconds = solved.result.cookTimeS
-        for answer in answers {
-            kept.log.append(EggRecord(
-                day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
-                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: p.massFrom, sizeTable: p.sizeTable),
-                setup: RecordSetup(
-                    setup: setup, eggFrom: p.settings.startTempMode,
-                    timeToBoilFrom: p.coldStart ? .measured : .default
-                ),
-                level: p.settings.doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
-                cooledS: p.settings.cooling == .counter ? 0 : coolingSecondsFor(solved.result),
-                yolkWord: answer.yolkWord, white: answer.white, lang: "en", units: .metric
-            ))
-        }
-        Calibrations.save(kept)
-        Task { await self.drain() }
-    }
-    #endif
 }
