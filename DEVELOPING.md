@@ -111,8 +111,9 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    the catalogue with the fixtures it moved (CLAUDE.md, "Words").
 5. **Approve the rest**: `npm run copy:approve` records HEAD, or `npm run
    copy:approve -- <commit>` the commit the page was made from, which it
-   prints; commit `test/data/copy-approved.txt`. Approval is the owner's
-   word; no script or agent gives it.
+   prints; either must be on `main`'s history, so a branch's words are
+   approved once it is merged. Commit `test/data/copy-approved.txt`.
+   Approval is the owner's word; no script or agent gives it.
 
 ## Checking the web app end to end
 

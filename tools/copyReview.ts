@@ -20,8 +20,8 @@ import { dirname } from 'node:path';
 
 import { type Catalogue, OVERLAYS, parseCatalogue } from '../src/core/copy.ts';
 import {
-  CATEGORIES, type CatalogueJson, type Change, type Queued, type Templates, type TwinState, copyIsDirty, readApproved,
-  readCatalogue, reviewQueue, templatesOf, translationTags, twinStatesOf, wordsAt, wordsNow,
+  ApprovalError, CATEGORIES, type CatalogueJson, type Change, type Queued, type Templates, type TwinState, copyIsDirty,
+  readApproved, readCatalogue, reviewQueue, templatesOf, translationTags, twinStatesOf, wordsAt, wordsNow,
 } from './copyApproval.ts';
 import { type App, type Notes, type Surface, appsUsing, longest, readNotes, readSurfaces } from './copyNotes.ts';
 
@@ -318,7 +318,15 @@ ${approving}
 }
 
 const out = process.argv[2] ?? '_dev/copy-review.html';
-const { html, queued } = page();
+let made: { html: string; queued: number };
+try {
+  made = page();
+} catch (e) {
+  if (!(e instanceof ApprovalError)) throw e;
+  console.error(e.message);
+  process.exit(1);
+}
+const { html, queued } = made;
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, html);
 console.log(`${out}: ${queued} keys in the queue, ${html.length} characters.`);
