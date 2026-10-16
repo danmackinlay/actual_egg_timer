@@ -206,7 +206,7 @@ test('7. boiling point at sea-level pressure is 100 C', () => {
 
 test('7b. the boiling point falls with altitude', () => {
   // That it stays within 0.05 C of the 100 - h/300 one-liner is a row of
-  // npm run validate's table, beside the altitude table it reproduces.
+  // the validation's table (test/validation.test.ts), beside the altitude table.
   let previous = Number.POSITIVE_INFINITY;
   for (let h = 0; h <= 5000; h += 500) {
     const exact = boilingPointAtAltitude(h);
@@ -277,7 +277,7 @@ test('9. dose is monotonic in time and in temperature', () => {
 
 test('9b. +4.65 C multiplies the dose rate by 10', () => {
   // Z_YOLK to within about 0.02 K of 4.65: what Vega & Mercade-Prieto's
-  // activation energy gives (npm run validate derives it), NOT the
+  // activation energy gives (test/validation.test.ts derives it), NOT the
   // food-engineering default of 33.1 K, seven times too shallow for egg
   // protein.
   const lo = createDose(Z_YOLK, TREF_YOLK_C);

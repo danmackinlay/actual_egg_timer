@@ -52,7 +52,7 @@ The Swift core leaves out what no app calls: the
 measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,
 `biotNumber`, `boilingPointApprox`, `saltBoilingElevation`,
 `zFromActivationEnergy`) and the inference read-outs. The TypeScript keeps
-them for `npm run validate`, the tests and the web's width input.
+them for the tests and the web's width input.
 
 Where a transliteration was most likely to go wrong, the code says why it is
 as it is. The integrator is tested against a moving surface as well as a held

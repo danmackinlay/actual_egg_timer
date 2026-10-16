@@ -64,7 +64,7 @@ export interface CookSetup {
 
 /* The egg's MASS is not here. It was, and it duplicated `Egg.mass_kg` - so
  * `simulate(egg, setup, ...)` took the same number twice and every caller had
- * to keep the two in step by hand. `tools/validate.ts` had to remember an
+ * to keep the two in step by hand. The validation had to remember an
  * override in its size sweep or it would silently have modelled four different
  * eggs against one fixed water dip. The setup is the POT; the egg is the egg. */
 

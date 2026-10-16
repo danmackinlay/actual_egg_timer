@@ -107,7 +107,7 @@ export const RAMP_R = 3.0;
  *  minutes, and it is hard-boiled - with an 8-minute boil in 2 L:
  *  480 / ln(r/(r-1)) at r = 3, i.e. 480 / ln(1.5) = 1183.8 s. So that one
  *  validation case is the same under either rule, by construction, and the
- *  Williams check in tools/validate.ts reads 75.6 C.
+ *  Williams check in test/validation.test.ts reads 75.6 C.
  *
  *  Why not derive it from the time to boil, since the ramp's tau = m*c/(U*A)
  *  is the same quantity? Because the boil time identifies it only through
@@ -132,9 +132,9 @@ export const STANDING_REF_LITRES = 2.0;
  *  loses faster than a litre in a narrow milk pan - and nothing in the app
  *  knows the pan's shape. Confidence: the direction and the rough size are
  *  physics; the exponent itself is unvalidated, and no standing cook has yet
- *  been measured at any volume but the anchor's. tools/validate.ts prints tau
- *  at 1-4 L beside what the boil-time rule would give, so the disagreement is on
- *  the page rather than hidden. */
+ *  been measured at any volume but the anchor's. test/validation.test.ts logs
+ *  tau at 1-4 L beside what the boil-time rule would give, so the
+ *  disagreement is on the page rather than hidden. */
 export const STANDING_VOLUME_EXPONENT = 1.0 / 3.0;
 
 /** Multiplier on TAU_STANDING_REF_S.

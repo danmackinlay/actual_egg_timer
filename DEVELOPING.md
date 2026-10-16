@@ -10,8 +10,7 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 npm install
 npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
 npm test           # the type check, then node --test
-npm run verify     # the gate: typecheck, test, validate, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
-npm run validate   # prints the validation table in README §7; fails if a check does
+npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run swift:constants  # the Swift core's constants, written from the TypeScript's
 npm run conformance      # fixtures unchanged, then the Swift core against them

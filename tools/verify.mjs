@@ -6,7 +6,6 @@
 //
 //   typecheck        tsc over core, the app and the rest (npm run typecheck)
 //   npm test         node --test over test/*.test.ts
-//   validate         the science against the literature (tools/validate.ts)
 //   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
 //                    with the files on disk (tools/copyKeys.ts --check)
@@ -117,7 +116,6 @@ const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built
 const all = await Promise.all([
   job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p) => [node, [tsc, '-p', p]])),
   job('npm test', [[node, ['--test', ...tests]]]),
-  job('validate', [[node, ['tools/validate.ts']]]),
   job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
   copyKeys,
   swiftConstants,
