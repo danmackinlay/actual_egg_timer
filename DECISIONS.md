@@ -920,13 +920,7 @@ October:
     (107). The old marks are retired keys, which the boot sweep deletes. The
     web's development clock no longer marks the stores either: it runs only
     on this machine, whose `/api` is the development server's.
-137. **The correction in hand stays in each app.** What a committed
-    correction does is core's `step`; when a change commits is each app's
-    reading of its own gestures and settings, which 126 keeps out of core.
-    The two apps commit at the same moments, by the design both headers
-    state: a hold on the control just tapped stops its settle; Cancel and
-    "Still in the water? No" commit what is in hand first; another control's
-    change commits the one in hand alone.
+137. **The correction in hand stays in each app.** Superseded by 139.
 138. **The Swift core's constants are made from the TypeScript, and its
     conformance compares whole values.** `npm run swift:constants` (run by
     `npm test`, checked by verify) writes `Constants.generated.swift` from
@@ -934,3 +928,15 @@ October:
     The Swift results are Codable with the TypeScript's field names and are
     compared whole with the fixtures, to 1e-12 (109). No fixture pins a
     cache key's bits: each app's key is tested in its own suite.
+139. **The correction in hand moves into core, its groups and moments with
+    it** (the owner, 16 October 2026, on the review of the cycle: "let's make
+    this sane"). Supersedes 137, and narrows 126: each app still reads its
+    own gestures and lifecycle, but the rules are core's. A reducer beside
+    `step` takes a change to a setting's group, a finger down and up, the
+    page or app left, a move to another control, and the settle, hold and
+    preview timers firing, each with its time. It returns the next state,
+    what to commit, and the timers to set or cancel. Core names the groups
+    (the settings' `FIELDS`), which touches count as another control, and
+    which moments count as leaving; each app maps its events onto those and
+    runs the timers. It is fixtured as event sequences and held in Swift by
+    conformance. Not yet built.

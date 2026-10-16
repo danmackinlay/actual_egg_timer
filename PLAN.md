@@ -89,6 +89,58 @@ and the map of the documents are `CLAUDE.md`.
         data](https://arxiv.org/abs/2502.03279). Set aside: [discriminative
         calibration](https://arxiv.org/abs/2305.14593), more machinery than
         this model needs.
+12. **Move the correction in hand into core** (`DECISIONS.md` 139). Write the
+    reducer beside `step` in `src/core/`, with its fixture of event
+    sequences, then the Swift twin under conformance. Replace the web's
+    reducer (`src/ui/model.ts`, `edit.ts`) and iOS's `Edits.swift` with each
+    app's mapping of its own events onto the reducer's. Fixture the four
+    drifts the review found (a long press on a radio; a size then a weight;
+    leaving mid-settle; which touches count as another control) as event
+    sequences, so they cannot come back. The after-the-pull level rule then
+    lives once, beside `step`'s `correct`.
+13. **Left from the adversarial review of the drafting**, not yet decided;
+    each is a cut, one branch each:
+    - `npm run test:slow` re-runs the whole suite in CI for one loop's
+      stride (`EXHAUSTIVE`, `test/reachAnswer.test.ts`): fix the stride,
+      delete the script.
+    - The slowest unit tests set `npm test`'s time (`runningMemo`,
+      `recordStore` 3b, `reachAnswer` 12): check fewer points.
+    - `tools/validate.ts` is a second test runner: make its checks tests.
+    - The five `tools/*.mjs` are not type-checked: make them `.ts`.
+    - Test names carry numbers, and split files kept their parent's: drop
+      them.
+    - `src/core/running.ts`: split the as-ran family out, take the slow-hob
+      loop out of `replan`, and replace the hand-written equality functions
+      with one.
+    - Swift doc comments repeat the TypeScript's: keep only what is about
+      the port, and point at the TypeScript.
+    - The results file is built by hand, with its own JSON escaper, so the
+      two apps' bytes match (`record.ts` `jsonString`): use each platform's
+      encoder and compare the data.
+    - `language.ts` and the alarm sounds carry the whole twin-and-fixture
+      apparatus for a few lines: inline them, or make them data.
+    - The web model holds settings in four copies and the idle solve in six
+      fields, and keeps three redraw memos: group them, and skip the field
+      in focus instead.
+    - `src/ui/stores.ts` lists the stores twice (`STORE_LIST`): derive it.
+    - Element ids are written in `index.html`, `dom.ts` and the e2e: one
+      list.
+    - iOS's share loop and App Attest fallback (`ios/App/Sharing.swift`)
+      have no test: move them behind the services protocol in
+      `EggTimerApp`.
+    - The iOS debug log's events are retyped in `tools/iosHarness.ts`:
+      check them against Swift's.
+    - `ios/RELEASING.md` restates what the release scripts do: say how to
+      run them and what to do when they fail.
+    - DECISIONS 38-44 are build notes, not decisions: shrink them to what
+      was decided.
+    - `design/bowl.md` is a finished study: its conclusion to INFERENCE.md
+      or README, the file deleted.
+    - INFERENCE.md §1 reads as a proposal, with phase labels; UI.md and the
+      `ios/README.md` module table restate the code: trim to what the code
+      cannot say.
+    - `tools/verify.mjs` lets `copy:keys` and `swift:constants` rewrite
+      Swift files while `swift build` runs: order them first.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -117,43 +169,7 @@ shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
-6. **Where the correction in hand lives** (`DECISIONS.md` 137). 137 keeps
-   it in each app (`src/ui/model.ts`, `EggTimerApp/Edits.swift`) yet says
-   both "commit at the same moments"; CLAUDE.md puts what both apps must
-   agree on in core. Against that, 126: what reads an app's own gestures is
-   the app's, and the gestures differ (pointer events and `pagehide`;
-   SwiftUI controls and `scenePhase`). The settle, hold and preview timings
-   are written twice, the after-the-pull level rule in each app's preview
-   and commit and in `step`'s `correct`. Where the apps disagree
-   today (a commit replans, moves the alarms and can ring overdue):
-   - *A long press on a radio.* Tap Room, then hold Custom: the web commits
-     Room on the lift (`fingerUp` reads a hold) and Custom after the settle;
-     iOS's picker reports no finger, and commits Custom once.
-   - *A size, then a weight.* Pick Large, type 70 g: the web groups by page
-     element (`edit.ts` `GROUPS`), so the field commits Large first; iOS
-     groups by setting (`.mass`) and commits once. Room temperature too,
-     from `#roomTempFrom` then `#roomTemp`.
-   - *Control Centre in the settle.* Tap +, pull down Control Centre, tap +:
-     iOS commits at `.inactive` (`ContentView`'s `scenePhase`), then again;
-     the web commits only when the page is hidden, so once.
-   - *The thermometer.* Tap +, then touch the probe reading or a Settings
-     switch: the web commits at the touch (`.unit`, `.check`); iOS after the
-     settle, so a reading saved inside it is scored without the change.
-   **Or core:** a reducer beside `step`, `editStep(state, event)`. In:
-   `change(group)`, `down(group, slider)`, `up`, `leave`, `moveOn` and the
-   settle, preview and release timers firing, each with its time; groups
-   are opaque ids. Out: the next state, what to commit (nothing, the hand,
-   or the hand up to the change before this one) and timer commands (set
-   at, cancel). Plain data and one top-level function, no clock, closure or
-   I/O, as `step` is; fixtured as event sequences, held in Swift by
-   conformance. That ends the first drift and the rules written twice. The
-   other three are each app's mapping onto those events, and stay unless
-   core also names the groups (the settings `FIELDS` already lists) and
-   which touches and moments are `moveOn` and `leave`.
-   **Or keep 137** and fix the four in each app: a hold commits only a
-   change made during it; the web groups by `FIELDS`; one rule for leaving
-   (hidden or inactive, the same in both); one list of other controls. Each
-   is a test in each app's suite; the next drift is found by review again.
+
 
 
 Waiting on someone else: the Czech review, by the owner's friend.
