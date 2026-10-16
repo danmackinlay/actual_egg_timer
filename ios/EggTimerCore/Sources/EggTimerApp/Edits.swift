@@ -398,6 +398,7 @@ public final class Edits {
     /// level is not corrected: the slider only previewed,
     /// and goes back to the level the egg was pulled at; nothing is written
     /// for it. The aimed-for egg stays until a settle after the last change.
+    /// `except`, another control's change come since, is left in hand.
     func commit(except: ControlField? = nil) {
         settling?.task.cancel()
         settling = nil
@@ -414,7 +415,9 @@ public final class Edits {
             next.doneness = base.doneness
             previewedLevel = true
         }
-        let start = startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
+        // The start is no setting: when its change is the one come since, it
+        // stays in hand, out of this commit.
+        let start = except == .startTime ? nil : startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
         #if DEBUG
         Screenshots.log(.editCommitted(fields: touched.map { "\($0)" }, start: start))
         #endif
@@ -422,7 +425,7 @@ public final class Edits {
         // Nothing in hand: the panel shows the start as the cook has it once
         // the correction is stepped, and a correction refused leaves the
         // cook's.
-        startInHand = nil
+        if except != .startTime { startInHand = nil }
         self.base = next
         if !touched.isEmpty {
             SettingsStore.save(planner, fields: Set(touched), level: next.doneness)

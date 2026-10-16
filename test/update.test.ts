@@ -428,6 +428,19 @@ test('controls mid-cook: another control\'s change by keyboard commits the one i
   assert.equal(second.edit?.group, 8);
 });
 
+test('startStep: after another control\'s change by keyboard, that one is committed alone, and the start settles in its turn', () => {
+  const m = running();
+  const [first] = change(m, { eggCount: 4 }, 3, 0, S + 30);
+  const [second] = go(first, { kind: 'startStep', up: false, group: 2, real_ms: 100 }, S + 30);
+  assert.equal(second.cook?.choices.eggCount, 4, 'the first committed');
+  assert.equal(second.cook?.startedAt_s, S, 'without the start');
+  assert.equal(second.controlsStart_s, S - 60, 'which is in hand in its turn');
+  assert.equal(second.edit?.pending, true);
+  const [settled] = go(second, { kind: 'editTimer', timer: 'settle' }, S + 32);
+  assert.equal(settled.cook?.startedAt_s, S - 60);
+  assert.equal(settled.cook?.choices.eggCount, 4);
+});
+
 test('commit: the page going commits a change still settling', () => {
   const [held] = change(running(), { eggCount: 4 }, 3, 0);
   assert.equal(go(held, { kind: 'commit' }, S + 61)[0].cook?.choices.eggCount, 4);
