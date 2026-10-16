@@ -11,7 +11,7 @@
 // in ios/EggTimerCore/Sources/EggTimerApp), taps by launch argument (`-uiDo`,
 // Screenshots.swift there), and what happened read from the app's debug log
 // (`Library/Caches/aet.log`, an event a line, each a JSON object:
-// `Screenshots.Event`) and its stored state (the prefs plist, through
+// `Screenshots.Event`) and its stored state (the stores' plist, through
 // plistlib). After every step the script waits until the app says it has
 // caught up (`idle`), so what it checks next, that something happened or
 // that it did not, is checked once the app is done. Nothing is timed

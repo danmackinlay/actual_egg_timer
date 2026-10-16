@@ -1,8 +1,8 @@
 import Foundation
 
 /// Every store this app keeps, in one table: its name, the key it is kept
-/// under in UserDefaults, and the format of what is kept there; and every
-/// key an earlier build wrote. The web keeps its own table
+/// under in the app's suite of UserDefaults (`Stores.suite`), and the
+/// format of what is kept there. The web keeps its own table
 /// (`src/ui/stores.ts`).
 ///
 /// The format is written inside what is stored, as `v` (`stamped`), and a
@@ -15,8 +15,8 @@ import Foundation
 /// still names its format, sharing's, where a change is a new key. The log has its format inside and keeps the
 /// key it was first written under.
 ///
-/// The app keeps only what is listed here: at launch it deletes every key an
-/// earlier build wrote that no store here is kept under (`Stores.sweep`).
+/// The app keeps only what is listed here: at launch it deletes every key in
+/// the suite that no store here is kept under (`Stores.sweep`).
 public struct StoreSpec: Sendable, Equatable {
     public let name: String
     /// The format of what it holds, written inside as `v`; nil for a store
@@ -45,26 +45,6 @@ public enum StoreRegistry {
     /// The table in one order, for the sweep.
     static let all = [
         settings, cook, boilMemory, calibration, share, shareAttest, languageState, alarmSound,
-    ]
-
-    /// Every key an earlier build wrote: the posteriors before the log
-    /// (`v1`-`v3`), the log of 0.3 and 0.4 (`v4`; the log starts fresh in
-    /// 0.5), the copies 0.4 kept aside of what it could not
-    /// read, the cooks in progress before this one's shape, the sharing keys
-    /// of an earlier 0.4 build, settings no build reads any more, the
-    /// settings a key each among them, sharing's key kept with its dates as
-    /// seconds since 2001, 0.5's keys with a format in them, from before
-    /// the table of stores, and the mark of the newest build that had run,
-    /// with its build number, which a guard since deleted kept.
-    static let retired = [
-        "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
-        "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
-        "settings.v1",
-        "share.v1", "share.attest.v1", "sharing.attest.v1", "coldStart", "fromFridge", "eggMassG", "probeAsked",
-        // The settings before they were one value (`SettingsStore`).
-        "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
-        "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
-        "newestVersion", "newestBuild",
     ]
 
     /// The keys where an earlier build kept its cook in progress.

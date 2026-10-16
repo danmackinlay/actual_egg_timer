@@ -8,7 +8,7 @@ import EggTimerShared
 // `Stores`), as the tests give it: fakes that remember what was asked of
 // them, a clock that moves only when a test moves it, and a store in memory.
 
-/// UserDefaults in memory, and every write it took, in order. A write needs
+/// The app's suite in memory, and every write it took, in order. A write needs
 /// a `Stores.Pass`, so every one of them came through `Stores`.
 final class MemoryStore: KeyValueStore, @unchecked Sendable {
     private(set) var values: [String: Any] = [:]
@@ -17,6 +17,7 @@ final class MemoryStore: KeyValueStore, @unchecked Sendable {
 
     init(_ values: [String: Any] = [:]) { self.values = values }
 
+    var keys: [String] { Array(values.keys) }
     func object(forKey key: String) -> Any? { values[key] }
     func string(forKey key: String) -> String? { values[key] as? String }
     func double(forKey key: String) -> Double { (values[key] as? NSNumber)?.doubleValue ?? 0 }
