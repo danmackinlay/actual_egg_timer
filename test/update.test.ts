@@ -14,6 +14,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import type { CookSurface } from '../src/core/running.ts';
+import { type HandEvent, type HandGroup, nothingInHand } from '../src/core/hand.ts';
 import { type Effect, type Model, type Msg, type Part, update } from '../src/ui/model.ts';
 import { emptyModel } from '../src/ui/state.ts';
 import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.ts';
@@ -90,7 +91,7 @@ test('solve: the idle page asks for its pot\'s surface, and answers the level as
 
 test('controls: idle, the settings follow the controls, saved soon and solved once they settle', () => {
   const m = idle();
-  const [next, effects] = go(m, { kind: 'controls', read: { eggCount: 4 }, source: 'eggCount', group: 1, real_ms: 0 }, S);
+  const [next, effects] = go(m, { kind: 'controls', read: { eggCount: 4 }, source: 'eggCount', group: 'eggCount', at_s: 0 }, S);
   assert.equal(next.settings.eggCount, 4);
   assert.notEqual(next.settings, next.controls, 'a copy');
   assert.equal(next.unsolved, true);
@@ -194,9 +195,8 @@ test('begin: the cook the settings describe starts, and the controls show its ow
   const [m, effects] = go(idle({ startMode: 'hot' }), { kind: 'begin', units: 'metric', lang: 'en' }, S);
   assert.notEqual(m.cook, null);
   assert.equal(m.controlsStart_s, S);
-  assert.notEqual(m.edit, null);
-  assert.equal(m.edit?.pending, false);
-  assert.ok(['persist', 'blip', 'editTimersOff'].every((k) => kinds(effects).includes(k)));
+  assert.deepEqual(m.hand, nothingInHand());
+  assert.ok(['persist', 'blip', 'handTimer'].every((k) => kinds(effects).includes(k)));
   assert.deepEqual(redrawn(idle({ startMode: 'hot' }), m), ['controls'], 'the controls drawn from the cook');
 });
 
@@ -210,9 +210,9 @@ test('start: a cook on these choices, written down, with a blip', () => {
 test('cancel: the cook ends, nothing in hand, the controls the settings again', () => {
   const [m, effects] = go(running(), { kind: 'cancel' }, S + 30);
   assert.equal(m.cook, null);
-  assert.equal(m.edit, null);
+  assert.equal(m.hand, null);
   assert.deepEqual(m.controls, m.settings);
-  assert.ok(kinds(effects).includes('editTimersOff') && kinds(effects).includes('silence'));
+  assert.ok(kinds(effects).includes('handTimer') && kinds(effects).includes('silence'));
 });
 
 test('tick: rings once per deadline, the pull and the end of the cooling, ticked a quarter second at a time', () => {
@@ -334,130 +334,100 @@ test('kept: the egg kept is thanked for at Done; one that could not be kept puts
 
 /* ------------------------------------------------- a correction in hand */
 
-/** A change to the controls mid-cook, on control `group`, at `real_ms`. */
-function change(m: Model, over: Partial<Settings>, group: number, real_ms: number, now_s = S + 60): [Model, Effect[]] {
-  return go(m, { kind: 'controls', read: { ...over }, source: null, group: group, real_ms: real_ms }, now_s);
+/** A change to the controls mid-cook, of `group`, at `at_s` on the
+ *  gestures' clock. */
+function change(m: Model, over: Partial<Settings>, group: HandGroup | null, at_s: number, now_s = S + 60): [Model, Effect[]] {
+  return go(m, { kind: 'controls', read: { ...over }, source: null, group: group, at_s: at_s }, now_s);
+}
+
+/** What the correction in hand did: a gesture or a timer. */
+function hand(m: Model, event: HandEvent, now_s = S + 60): [Model, Effect[]] {
+  return go(m, { kind: 'hand', event: event }, now_s);
 }
 
 function timers(effects: Effect[]): string[] {
-  return effects.flatMap((e) => (e.kind === 'editTimer' ? [`${e.timer}:${e.at_ms}`] : []));
+  return effects.flatMap((e) => (e.kind === 'handTimer' ? [`${e.timer}:${e.at_s}`] : []));
 }
 
 test('controls mid-cook: the change is in hand, not the cook\'s; a preview of it never commits', () => {
   const m = running();
-  const [held, effects] = change(m, { eggCount: 4 }, 3, 1000);
+  const [held, effects] = change(m, { eggCount: 4 }, 'eggCount', 1);
   assert.equal(held.cook, m.cook, 'not committed');
   assert.equal(held.controls.eggCount, 4);
   assert.equal(held.settings.eggCount, m.settings.eggCount, 'nor written to the settings');
-  assert.equal(held.edit?.pending, true);
-  assert.deepEqual(timers(effects), ['release:null', 'preview:1090', 'settle:2500']);
-  const [aimed, none] = go(held, { kind: 'editTimer', timer: 'preview' }, S + 60);
+  assert.equal(held.hand?.hand, 'eggCount');
+  assert.deepEqual(timers(effects), ['hold:null', 'preview:1.09', 'settle:2.5']);
+  const [aimed, none] = hand(held, { kind: 'timer', at_s: 1.09, timer: 'preview' });
   assert.equal(aimed.cook, m.cook, 'a preview stores nothing');
   assert.notEqual(aimed.aim?.section ?? null, null, 'the egg it aims for');
   assert.deepEqual(none, [], 'and rings and writes nothing');
 });
 
-test('editTimer: a settle commits the change in hand once', () => {
-  const [held] = change(running(), { eggCount: 4 }, 3, 1000);
-  const [committed, effects] = go(held, { kind: 'editTimer', timer: 'settle' }, S + 62);
+test('a settle commits the change in hand: the cook corrected, and the group\'s settings written for the next cook', () => {
+  const [held] = change(running(), { eggCount: 4 }, 'eggCount', 1);
+  const [committed, effects] = hand(held, { kind: 'timer', at_s: 2.5, timer: 'settle' }, S + 62);
   assert.equal(committed.cook?.choices.eggCount, 4);
   assert.equal(committed.settings.eggCount, 4, 'for the next cook too');
   assert.ok(kinds(effects).includes('persist') && kinds(effects).includes('save'));
-  assert.equal(committed.edit?.pending, false);
-  assert.ok(timers(effects).includes('release:2500'), 'the aimed-for egg goes a settle after the change');
-  const [again, more] = go(committed, { kind: 'editTimer', timer: 'settle' }, S + 63);
-  assert.equal(again.cook, committed.cook, 'nothing more to commit');
-  assert.deepEqual(more, []);
+  assert.equal(committed.hand?.hand, null);
+  assert.ok(timers(effects).includes('hold:2.5'), 'the aimed-for egg goes a settle after the change');
+  const [gone] = hand(committed, { kind: 'timer', at_s: 2.5, timer: 'hold' }, S + 62);
+  assert.equal(gone.aim, null);
 });
 
-test('editTimer: the aimed-for egg goes, unless a finger is down', () => {
-  const [held] = change(running(), { eggCount: 4 }, 3, 1000);
-  const [committed] = go(held, { kind: 'editTimer', timer: 'settle' }, S + 62);
-  assert.notEqual(committed.aim, null);
-  assert.equal(go(committed, { kind: 'editTimer', timer: 'release' }, S + 63)[0].aim, null);
-  const [down] = go(committed, { kind: 'fingerDown', group: 3, slider: false, real_ms: 3000 }, S + 63);
-  assert.notEqual(go(down, { kind: 'editTimer', timer: 'release' }, S + 63)[0].aim, null, 'a finger down keeps it');
-});
-
-test('fingerUp: the slider let go commits at once; a tap settles first; a hold commits on the lift', () => {
+test('controls mid-cook: another group\'s change by keyboard commits the one in hand alone, as it was', () => {
   const m = running();
-  const [down] = go(m, { kind: 'fingerDown', group: 5, slider: true, real_ms: 0 }, S + 60);
-  const [dragged, drag] = change(down, { doneness: 0.7 }, 5, 50);
-  assert.ok(!timers(drag).some((t) => t.startsWith('settle')), 'no settle while the finger is down');
-  const [released] = go(dragged, { kind: 'fingerUp', real_ms: 100 }, S + 60);
-  assert.equal(released.cook?.choices.level, 0.7);
-
-  const [tap] = go(m, { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
-  const [changed] = change(tap, { eggCount: 4 }, 3, 50);
-  const [up, effects] = go(changed, { kind: 'fingerUp', real_ms: 100 }, S + 60);
-  assert.equal(up.cook, m.cook, 'a tap is not committed on the lift');
-  assert.deepEqual(timers(effects), ['settle:1600']);
-  const [held] = go(changed, { kind: 'fingerUp', real_ms: 500 }, S + 60);
-  assert.equal(held.cook?.choices.eggCount, 4, 'a − or + held long enough to repeat commits on the lift');
-});
-
-test('fingerDown: on another control, the change in hand is committed first', () => {
-  const [held] = change(running(), { eggCount: 4 }, 3, 0);
-  const [down] = go(held, { kind: 'fingerDown', group: 7, slider: false, real_ms: 100 }, S + 61);
-  assert.equal(down.cook?.choices.eggCount, 4);
-  assert.equal(down.edit?.down?.group, 7);
-});
-
-test('fingerDown: on the same control, a tap\'s settle is stopped, so a hold after it commits only on the lift', () => {
-  const m = running();
-  const [tap] = go(m, { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
-  const [changed] = change(tap, { eggCount: 4 }, 3, 50);
-  const [up] = go(changed, { kind: 'fingerUp', real_ms: 100 }, S + 60);
-  const [down, effects] = go(up, { kind: 'fingerDown', group: 3, slider: false, real_ms: 600 }, S + 61);
-  assert.deepEqual(timers(effects), ['settle:null'], 'the tap\'s settle stopped');
-  assert.equal(down.cook, m.cook, 'nothing committed with the finger down');
-  const [held] = change(down, { eggCount: 5 }, 3, 1000);
-  assert.equal(held.cook, m.cook);
-  const [lifted] = go(held, { kind: 'fingerUp', real_ms: 1200 }, S + 62);
-  assert.equal(lifted.cook?.choices.eggCount, 5, 'the hold commits on the lift');
-});
-
-test('controls mid-cook: another control\'s change by keyboard commits the one in hand alone, as it was', () => {
-  const m = running();
-  const [first] = change(m, { eggCount: 4 }, 3, 0);
-  const [second] = change(first, { waterLitres: 3 }, 8, 100);
+  const [first] = change(m, { eggCount: 4 }, 'eggCount', 0);
+  const [second] = change(first, { waterLitres: 3 }, 'waterLitres', 0.1);
   assert.equal(second.cook?.choices.eggCount, 4, 'the first committed');
   assert.equal(second.cook?.choices.waterLitres, m.cook!.choices.waterLitres, 'without the second');
-  assert.equal(second.edit?.pending, true, 'which is in hand in its turn');
-  assert.equal(second.edit?.group, 8);
+  assert.equal(second.settings.waterLitres, m.settings.waterLitres);
+  assert.equal(second.hand?.hand, 'waterLitres', 'which is in hand in its turn');
 });
 
-test('startStep: after another control\'s change by keyboard, that one is committed alone, and the start settles in its turn', () => {
+test('a size, then a weight: one group, one commit, the egg weighed', () => {
   const m = running();
-  const [first] = change(m, { eggCount: 4 }, 3, 0, S + 30);
-  const [second] = go(first, { kind: 'startStep', up: false, group: 2, real_ms: 100 }, S + 30);
+  const [size] = change(m, { sizeIndex: 3 }, 'mass', 0);
+  const [weighed] = change(size, { sizeIndex: -1, customMinor_mm: 44, measuredBy: 'scale' }, 'mass', 0.5);
+  assert.equal(weighed.cook, m.cook, 'nothing committed between');
+  const [committed] = hand(weighed, { kind: 'timer', at_s: 2, timer: 'settle' }, S + 62);
+  assert.equal(committed.cook?.choices.massFrom, 'scale');
+  assert.equal(committed.settings.sizeIndex, -1);
+  assert.equal(committed.settings.customMinor_mm, 44);
+});
+
+test('startStep: after another group\'s change by keyboard, that one is committed alone, and the start settles in its turn', () => {
+  const m = running();
+  const [first] = change(m, { eggCount: 4 }, 'eggCount', 0, S + 30);
+  const [second] = go(first, { kind: 'startStep', up: false, at_s: 0.1 }, S + 30);
   assert.equal(second.cook?.choices.eggCount, 4, 'the first committed');
   assert.equal(second.cook?.startedAt_s, S, 'without the start');
   assert.equal(second.controlsStart_s, S - 60, 'which is in hand in its turn');
-  assert.equal(second.edit?.pending, true);
-  const [settled] = go(second, { kind: 'editTimer', timer: 'settle' }, S + 32);
+  assert.equal(second.hand?.hand, 'startedAt');
+  const [settled] = hand(second, { kind: 'timer', at_s: 1.6, timer: 'settle' }, S + 32);
   assert.equal(settled.cook?.startedAt_s, S - 60);
   assert.equal(settled.cook?.choices.eggCount, 4);
 });
 
-test('commit: the page going commits a change still settling', () => {
-  const [held] = change(running(), { eggCount: 4 }, 3, 0);
-  assert.equal(go(held, { kind: 'commit' }, S + 61)[0].cook?.choices.eggCount, 4);
+test('leave: the page going commits a change still settling, and lets go of a finger down', () => {
+  const [down] = hand(running(), { kind: 'down', at_s: 0, group: 'eggCount' });
+  const [held] = change(down, { eggCount: 4 }, 'eggCount', 0.05);
+  const [gone] = hand(held, { kind: 'leave', at_s: 1 }, S + 61);
+  assert.equal(gone.cook?.choices.eggCount, 4);
+  assert.equal(gone.hand?.down, null, 'no finger is down on a page that went');
 });
 
-test('commit: the page going lets go of a finger down, so the next change settles', () => {
-  const [down] = go(running(), { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
-  const [held] = change(down, { eggCount: 4 }, 3, 50);
-  const [gone] = go(held, { kind: 'commit' }, S + 61);
-  assert.equal(gone.cook?.choices.eggCount, 4);
-  assert.equal(gone.edit?.down, null, 'no finger is down on a page that went');
-  const [next, effects] = change(gone, { eggCount: 5 }, 3, 5000, S + 70);
-  assert.ok(timers(effects).includes('settle:6500'), 'a keyboard change back on the page settles');
-  assert.equal(go(next, { kind: 'editTimer', timer: 'settle' }, S + 72)[0].cook?.choices.eggCount, 5);
+test('a setting of no group mid-cook: another control, the change in hand committed, and the setting written at once', () => {
+  const m = running();
+  const [held] = change(m, { eggCount: 4 }, 'eggCount', 0);
+  const [after, effects] = change(held, { probe: true, eggCount: 4 }, null, 0.4);
+  assert.equal(after.cook?.choices.eggCount, 4, 'the change in hand committed');
+  assert.equal(after.settings.probe, true, 'the thermometer written');
+  assert.ok(kinds(effects).includes('save'));
 });
 
 test('primary: a change still settling is committed before the button acts', () => {
-  const [held] = change(running({ startMode: 'cold' }), { eggCount: 4 }, 3, 0, S + 60);
+  const [held] = change(running({ startMode: 'cold' }), { eggCount: 4 }, 'eggCount', 0, S + 60);
   const [after] = go(held, { kind: 'primary' }, S + 400);
   assert.equal(after.cook?.choices.eggCount, 4);
   assert.equal(after.cook?.events.boilAt_s, S + 400);
@@ -466,7 +436,7 @@ test('primary: a change still settling is committed before the button acts', () 
 test('cancel: a change still settling is committed first, by keyboard too, so the egg Cancel ends has it', () => {
   const m = done();
   const at = m.plan!.deadlines.coolEnd_s! + 5;
-  const [held] = change(m, { eggCount: 4 }, 3, 0, at);
+  const [held] = change(m, { eggCount: 4 }, 'eggCount', 0, at);
   const [after, effects] = go(held, { kind: 'cancel' }, at + 1);
   assert.equal(after.cook, null);
   assert.equal(after.settings.eggCount, 4, 'written for the next cook');
@@ -480,38 +450,49 @@ test('stillOut: a change still settling is committed before the pull stands', ()
   m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
   m = go(m, { kind: 'correct', choices: { ...m.cook!.choices, startMode: 'cold' }, startedAt_s: null }, pull(m) + 30)[0];
   assert.equal(m.plan?.deadlines.asking, true, 'the question is open');
-  const [held] = change(m, { eggCount: 4 }, 3, 0, pull(m) + 32);
+  const [held] = change(m, { eggCount: 4 }, 'eggCount', 0, pull(m) + 32);
   const [after, effects] = go(held, { kind: 'stillOut' }, pull(m) + 35);
   assert.equal(after.cook?.choices.eggCount, 4, 'the correction is the cook\'s');
-  assert.equal(after.edit?.pending, false, 'and nothing is left in hand to commit after');
+  assert.equal(after.hand?.hand, null, 'and nothing is left in hand to commit after');
   assert.equal(after.plan?.deadlines.asking, false, 'the pull stands');
   assert.equal(timers(effects)[0], 'settle:null');
 });
 
-test('after the pull a new level only previews, and the slider goes back when the aimed-for egg goes', () => {
+test('after the pull a new level only previews, nothing written, and the slider goes back when the aimed-for egg goes', () => {
   let m = running();
   m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
   const level = m.cook!.choices.level;
-  const [held] = change(m, { doneness: 0.9 }, 5, 0, pull(m) + 30);
-  const [committed] = go(held, { kind: 'editTimer', timer: 'settle' }, pull(m) + 32);
-  assert.equal(committed.cook?.choices.level, level, 'the egg came out at the level it was cooked for');
+  const [held] = change(m, { doneness: 0.9 }, 'level', 0, pull(m) + 30);
+  const [committed] = hand(held, { kind: 'timer', at_s: 1.5, timer: 'settle' }, pull(m) + 32);
+  assert.equal(committed.cook, m.cook, 'the egg came out at the level it was cooked for');
   assert.equal(committed.settings.doneness, m.settings.doneness, 'nothing written for the next cook');
-  const [back] = go(committed, { kind: 'editTimer', timer: 'release' }, pull(m) + 34);
+  const [back] = hand(committed, { kind: 'timer', at_s: 1.5, timer: 'hold' }, pull(m) + 34);
   assert.equal(back.controls.doneness, level);
   assert.deepEqual(redrawn(committed, back), ['doneness']);
 });
 
+test('after the pull another group is corrected, and the level the controls show stays the cook\'s', () => {
+  let m = running();
+  m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
+  const level = m.cook!.choices.level;
+  const [slid] = change(m, { doneness: 0.9 }, 'level', 0, pull(m) + 30);
+  const [counted] = change(slid, { eggCount: 4 }, 'eggCount', 0.5, pull(m) + 31);
+  const [committed] = hand(counted, { kind: 'timer', at_s: 2, timer: 'settle' }, pull(m) + 33);
+  assert.equal(committed.cook?.choices.eggCount, 4);
+  assert.equal(committed.cook?.choices.level, level);
+});
+
 test('startStep: the start a minute earlier or later, as far as the cook allows, and why it went no further', () => {
   const m = running();
-  const [later, effects] = go(m, { kind: 'startStep', up: true, group: 2, real_ms: 0 }, S + 10);
+  const [later, effects] = go(m, { kind: 'startStep', up: true, at_s: 0 }, S + 10);
   assert.equal(later.controlsStart_s, S + 10, 'no later than now');
   assert.deepEqual(effects[0], { kind: 'startLimit', limit: { kind: 'now', at_s: S + 10 } });
-  assert.equal(later.edit?.pending, true, 'a correction in hand');
-  const [same, more] = go(later, { kind: 'startStep', up: true, group: 2, real_ms: 100 }, S + 10);
+  assert.equal(later.hand?.hand, 'startedAt', 'a correction in hand');
+  const [same, more] = go(later, { kind: 'startStep', up: true, at_s: 0.1 }, S + 10);
   assert.equal(same.controlsStart_s, later.controlsStart_s, 'at the limit, nothing moves');
-  assert.equal(same.edit, later.edit);
+  assert.equal(same.hand, later.hand);
   assert.equal(more.length, 1);
-  const [earlier, none] = go(m, { kind: 'startStep', up: false, group: 2, real_ms: 0 }, S + 10);
+  const [earlier, none] = go(m, { kind: 'startStep', up: false, at_s: 0 }, S + 10);
   assert.equal(earlier.controlsStart_s, S - 60);
   assert.deepEqual(none[0], { kind: 'startLimit', limit: null });
 });

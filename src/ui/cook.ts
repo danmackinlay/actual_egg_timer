@@ -20,7 +20,8 @@ import { nudgeSeconds } from '../core/decide.ts';
 import type { BoilMemory } from '../core/boil.ts';
 import { answered } from '../core/running.ts';
 import { phaseNow } from './state.ts';
-import { type EditTimer, type Effect, type Model, type Msg, update } from './model.ts';
+import type { HandTimer } from '../core/hand.ts';
+import { type Effect, type Model, type Msg, update } from './model.ts';
 import type { Learner } from './calibration.ts';
 import {
   type Ticker, clockMoved, keepScreenAwake, blip, previewAlarm, primeAudio, pullSounding, releaseScreen, ringAlarm,
@@ -89,20 +90,19 @@ const clock = {
 /** What the page waits for, asked for once each (needs.ts). */
 let needs!: Needs;
 
-/** The timers of a correction in hand, as set (model.ts, `EditTimer`). */
-const EDIT_TIMERS: EditTimer[] = ['settle', 'preview', 'release'];
-const editTimers: Record<EditTimer, number> = { settle: 0, preview: 0, release: 0 };
+/** The timers of a correction in hand, as set (core hand.ts). */
+const handTimers: Record<HandTimer, number> = { settle: 0, preview: 0, hold: 0 };
 
-/** A correction's timer set for `at_ms`, real ms, or stopped: when it comes
- *  round, a message. */
-function editTimer(timer: EditTimer, at_ms: number | null): void {
-  cancelSoon(editTimers[timer]);
-  editTimers[timer] = 0;
-  if (at_ms === null) return;
-  editTimers[timer] = soon(() => {
-    editTimers[timer] = 0;
-    dispatch({ kind: 'editTimer', timer: timer });
-  }, Math.max(0, at_ms - performance.now()));
+/** A correction's timer set for `at_s` on the gestures' clock (edit.ts), or
+ *  stopped: when it comes round, a message, at its own moment. */
+function handTimer(timer: HandTimer, at_s: number | null): void {
+  cancelSoon(handTimers[timer]);
+  handTimers[timer] = 0;
+  if (at_s === null) return;
+  handTimers[timer] = soon(() => {
+    handTimers[timer] = 0;
+    dispatch({ kind: 'hand', event: { kind: 'timer', at_s: at_s, timer: timer } });
+  }, Math.max(0, at_s * 1000 - performance.now()));
 }
 
 /** Messages sent while one is being taken up: taken up after it, in turn,
@@ -209,7 +209,7 @@ export function stopRunner(): void {
   releaseScreen();
   window.clearTimeout(clock.wake);
   clock.wake = 0;
-  for (const timer of EDIT_TIMERS) editTimer(timer, null);
+  for (const timer of Object.keys(handTimers) as HandTimer[]) handTimer(timer, null);
   dropPending();
   stores.learner.close();
   stores.sharing.close();
@@ -255,11 +255,8 @@ function perform(effects: Effect[]): void {
       case 'probeTaken':
         probeTaken(e.reading_C);
         break;
-      case 'editTimer':
-        editTimer(e.timer, e.at_ms);
-        break;
-      case 'editTimersOff':
-        for (const timer of EDIT_TIMERS) editTimer(timer, null);
+      case 'handTimer':
+        handTimer(e.timer, e.at_s);
         break;
       case 'startLimit':
         showStartLimit(e.limit);

@@ -12,7 +12,7 @@ import { type Quantity, parse } from '../core/units.ts';
 import { DEFAULTS } from '../core/inputs.ts';
 import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.ts';
 import { page, radioValue } from './dom.ts';
-import { groupOf } from './edit.ts';
+import { gestureNow_s, groupOf } from './edit.ts';
 import { send } from './send.ts';
 import { LIMITS, type Settings, type UiStartMode, clampNumber } from './store.ts';
 import { measure } from './units.ts';
@@ -143,5 +143,5 @@ export function onInput(event: Event): void {
   }
   // While a cook runs, a correction in hand on the control it came from.
   const source = target instanceof HTMLElement && target.id !== '' ? target.id : null;
-  send({ kind: 'controls', read: readInputs(target), source: source, group: groupOf(target), real_ms: performance.now() });
+  send({ kind: 'controls', read: readInputs(target), source: source, group: groupOf(target), at_s: gestureNow_s() });
 }

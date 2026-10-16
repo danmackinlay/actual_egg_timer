@@ -98,7 +98,7 @@ test('1. idle: the solve\'s time and Eggs in, the welcome before anything is lea
 
 test('2. a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
   const m = page({ startMode: 'hot' });
-  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, real_ms: 0 }, S);
+  const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, at_s: 0 }, S);
   const v = view(moved, S * 1000, viewMemo());
   assert.equal(v.kind, 'unsolved');
   if (v.kind !== 'unsolved') return;
@@ -217,7 +217,7 @@ test('7. the row of buttons is sized on the start\'s action, Rolling boil, the c
   assert.deepEqual(view(page({ startMode: 'hot', cooling: 'bowl' }), S * 1000, viewMemo()).sizers,
     [t('action.eggsIn'), t('action.fullBoil'), t('action.pulled.bowl'), t('action.startAgain')], 'a hot start: Eggs in');
   // A change to the controls, before its solve: the new cooling's pull at once.
-  const moved = go(page({ cooling: 'ice' }), { kind: 'controls', read: { cooling: 'tap' }, source: null, group: null, real_ms: 0 }, S);
+  const moved = go(page({ cooling: 'ice' }), { kind: 'controls', read: { cooling: 'tap' }, source: null, group: null, at_s: 0 }, S);
   const unsolved = view(moved, S * 1000, viewMemo());
   assert.equal(unsolved.kind, 'unsolved');
   assert.ok(unsolved.sizers.includes(t('action.pulled.tap')), 'the new cooling\'s pull before the solve');
