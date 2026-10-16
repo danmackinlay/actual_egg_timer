@@ -470,7 +470,7 @@ textbook heat transfer — free convection from a sphere and radiation from the 
 Newton's law applied at the shell itself rather than at the egg's mean (§8). An
 independent finite-volume solution with `h` worked out afresh from the shell's
 temperature at every step agrees with it to 0.25 °C of peak yolk, from 48 to 76 g and
-4.9 to 12 minutes (`LOGBOOK.md`, 3 October 2026).
+4.9 to 12 minutes.
 
 ### The consequence, stated plainly
 
@@ -664,8 +664,7 @@ expected, since it is also absorbing the Dirichlet and shape errors, but it is t
 first honest external error bar the model has. The `H_EFF` row is an open problem, not
 a pass: see §11.2.
 
-`LOGBOOK.md` (29 September 2026, the planning phase's targets) carries a correction
-worth repeating: the planning estimate for
+The planning phase's targets carry a correction worth repeating: the planning estimate for
 counter-resting was 85.3 °C, computed with a model that relaxed the surface from the
 *water* temperature. A lumped egg in still air relaxes from its own *volume-average*
 temperature. Corrected in `coolingTemperature`, the figure was 76.3 °C. On 3 October 2026
@@ -696,6 +695,17 @@ homogeneous model to **under-predict** the time for the yolk centre. Calibration
 absorbs this into `alpha`, but it absorbs it as an average across the whole cook, not as
 a structural correction. An egg is also not a sphere: the equal-volume sphere is a good
 approximation for the centre and a worse one near the surface.
+
+**An equal-volume sphere, not an egg's shape.** Solved in a real egg's shape (ovoids and
+prolate spheroids of length-to-breadth 1.25-1.45, by finite elements, through the app's
+own cook), the sphere is slow by a near-constant 2-3% at every mass, start and doneness
+tried. A constant fraction is what the calibrated `ALPHA_DEFAULT` absorbs, since only
+R²/α is identifiable, so no shape correction is built. What weighing cannot see, the
+shape of one egg against another of the same mass, costs about ±2 s per egg (1 sd), and
+a ruler cannot recover it: it reads length-to-breadth no better than eggs already vary.
+Weighing is the most accurate input, ±2 s of cook time from a kitchen scale against
+±10-19 s from a ruler on the width. And the shape explains none of the 4.6% gap to
+Buay's thermocouple trace (§7): corrected for shape, the model is faster still, by 6.7%.
 
 **Dirichlet surface in the water, on a Biot number that is probably too high.** The
 model clamps the surface to the water temperature. With `H_EFF = 850 W/m²K` the Biot
@@ -843,7 +853,7 @@ one matters:
 room reaches the egg: an egg left out is at it, a cold pan starts at it, standing water
 decays toward it, a counter-rested egg cools toward it, and a bowl of water whose
 temperature is not given is taken to be at it. Measured on the default pot (68 g, 2 L, two
-eggs) as the room goes from 15 to 30 °C against 20 (LOGBOOK.md, 12 October 2026):
+eggs) as the room goes from 15 to 30 °C against 20:
 
 | where the room reaches the egg | jammy cook, per °C | across 15-30 °C | peak yolk at a fixed cook, per °C |
 |---|---|---|---|

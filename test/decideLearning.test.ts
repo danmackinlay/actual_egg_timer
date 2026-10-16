@@ -78,9 +78,9 @@ test('7. two runny whites at soft: what the choice does at soft and at jammy', (
   // evidence; 'E5' cooks the second egg at the time the choice made after
   // the first. The known limit stands (INFERENCE.md section 3): a runny white
   // is blamed on the time-scale about 2:1, so jammy moves too, and the choice
-  // does not try to fix that. The LOGBOOK's numbers (28 September) are `npm run
-  // decide -- runny`, on the app's surfaces; these are coarser, and within a
-  // few seconds of them.
+  // does not try to fix that. The full numbers are `npm run decide --
+  // runny`, on the app's surfaces; these are coarser, and within a few
+  // seconds of them.
   const rows: string[] = [];
   const before = [decideFor(PRIOR, PRIOR_GRID, 0.22), decideFor(PRIOR, PRIOR_GRID, 0.41)];
   for (const sequence of ['E3', 'E5'] as const) {

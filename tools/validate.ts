@@ -203,8 +203,7 @@ function jammySeaLevel(): number {
 }
 
 // Altitude table. Also re-checks the 100 - h/300 one-liner, which the
-// planning phase claimed holds to 0.03 C over 0-5000 m (LOGBOOK.md, 29
-// September 2026).
+// planning phase claimed holds to 0.03 C over 0-5000 m.
 const altitudeRows: string[][] = [];
 let worstApproxError = 0;
 for (let h = 0; h <= 5000; h += 500) {

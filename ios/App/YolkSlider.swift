@@ -97,8 +97,8 @@ struct YolkSlider: UIViewRepresentable {
         /// `updateUIView` leaves alone while tracking, and nothing need redraw
         /// after the finger lifts. Without this, and `sent`, the thumb rested
         /// on the stripes at the far left while the time and the bracket were
-        /// for the level the slider had been moved to (LOGBOOK.md, 5 October
-        /// 2026). The web's thumb goes there.
+        /// for the level the slider had been moved to. The web's thumb goes
+        /// there.
         @objc func pressed(_ slider: TracklessSlider) {
             parent.onTouch?(true)
         }

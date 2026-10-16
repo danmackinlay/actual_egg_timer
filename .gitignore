@@ -12,9 +12,6 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 
-# The shape study's runs, made again by studies/shape-study/RESULTS.md's commands
-studies/shape-study/results*.json
-
 # Agents' worktrees, and the briefs, handoffs and reports that pass between
 # the agents and the session that reviews them: working files, never committed
 # (the commits and DECISIONS.md are the record).

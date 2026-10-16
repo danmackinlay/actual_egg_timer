@@ -10,7 +10,7 @@
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * INFERENCE.md section 8 (and DECISIONS.md and UI.md, which cite its
- * sections) and LOGBOOK.md, 28 September 2026; the claims they rest
+ * sections); the claims they rest
  * on are asserted, more cheaply, in test/decide.test.ts.
  */
 

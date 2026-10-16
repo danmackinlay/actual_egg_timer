@@ -91,7 +91,7 @@ export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | nu
  *  without a probe thermometer. It once counted only with the probe on; it
  *  moves the right time by about 5 s a degree for eggs left out, as much as
  *  a size class across a kitchen's 15-30 C, so it is offered where it is
- *  used (LOGBOOK.md, 12 October 2026). Clamped, like everything typed or
+ *  used. Clamped, like everything typed or
  *  stored. */
 export function roomInUse(room_C: number | null): number | null {
   if (room_C === null || !Number.isFinite(room_C)) return null;

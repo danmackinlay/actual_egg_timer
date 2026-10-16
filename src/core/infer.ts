@@ -201,8 +201,9 @@ export const NOISE_MEDIAN = 0.2;
 export const NOISE_LOG_SD = 0.5;
 
 /** The white offset's prior sd, decades of white dose. Wide: half a decade is
- *  about 2.5 C of inner white, and both real eggs in LOGBOOK.md say a constant
- *  white target was wrong. */
+ *  about 2.5 C of inner white, and both real eggs cooked so far, each aimed
+ *  at soft, came out with the white runny: a constant white target was
+ *  wrong. */
 export const WHITE_OFFSET_SD = 0.5;
 
 /**

@@ -650,7 +650,7 @@ test('17c. the counter is slow cooling, not a lid', () => {
   // ice bath 19. The 75.27 C is an independent explicit finite-volume
   // solution with h from Churchill's correlation and radiation as functions
   // of the shell's temperature, and the film evaporating by the heat-mass
-  // analogy (LOGBOOK.md, 3 October 2026).
+  // analogy.
   const cookTime = 7.4 * 60;
   const ice = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
   const counter = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);

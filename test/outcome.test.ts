@@ -91,8 +91,8 @@ test('the level range keeps the noise: it is wider than the particles alone, and
     return rows[rows.length - 1].t;
   };
   // About 1.2 times as wide here, from seed to seed 1.12-1.36 at 400
-  // particles and 1.17-1.24 at 4000, measured on the 80% range (LOGBOOK.md,
-  // 6 October 2026); the range here is the 90% one.
+  // particles and 1.17-1.24 at 4000, measured on the 80% range; the range
+  // here is the 90% one.
   assert.ok(o.levelHigh - o.levelLow > 1.1 * (q(LEVEL_HIGH_Q) - q(LEVEL_LOW_Q)), `${o.levelLow}-${o.levelHigh} against ${q(LEVEL_LOW_Q)}-${q(LEVEL_HIGH_Q)}`);
   // With next to no noise the mixture is the particles, and its points are
   // theirs, to within the step between neighbouring particles.

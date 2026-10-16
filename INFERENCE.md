@@ -5,9 +5,9 @@ record (§4), the ordered probit and the white offset (§3), the thermometer
 (§5), choosing the time under uncertainty, with the odds-shaded slider and
 the outcome summary (§8), opt-in collection (§7, E6), the nudge (§8, E8)
 and the population fit (§9, E7), which has yet to see a real egg. The
-owner's decisions are numbered in `DECISIONS.md`; the two measurements the design rests on are in
-`LOGBOOK.md` (21 September 2026) and re-run with `npm run rank` and
-`npm run probe`.
+owner's decisions are numbered in `DECISIONS.md`; the two measurements the design rests on, how many
+directions the answers can move and what a probe reading is worth, are
+`npm run rank` and `npm run probe`.
 
 ---
 
@@ -90,8 +90,8 @@ nothing in the record or the UI names one.
 
 The present particle - `alpha`, taste offset, `tauAirScale` (until 0.5) - is
 already most of this. The dimension it lacks is the white lag, which is the second-strongest
-direction in the data and is held at a constant. Both real eggs in `LOGBOOK.md`
-came out with a runny white at a soft target, which is what holding it wrong
+direction in the data and is held at a constant. Both real eggs cooked in September
+2026 came out with a runny white at a soft target, which is what holding it wrong
 looks like.
 
 **On one phone, the white lag and the white cutpoint are the same number.** A
@@ -710,7 +710,7 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   not: it holds alpha's spread above its own size whatever the answers say,
   pulls apart the time-scale-and-taste combination the answers pin, and makes
   the right time's spread climb back at every resample, which showed as odds
-  4-6 points low from the fourth egg (LOGBOOK.md, 28 September). With the
+  4-6 points low from the fourth egg. With the
   kernel, Phase C's recovery is egg 2, 12.2 s short, sd 3.0%; the answers'
   calibration 1.3%; and one probe reading keeps the time-scale at 2.6-2.8%.
 - **The seed.** The filter is random, and a last-bit difference in `exp`
@@ -739,7 +739,7 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
 - **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
   re-solve rather than waiting a second for the new pot's surface: 3 s from
   choosing again at soft, under 0.5 s at jammy.
-- **Two runny whites at soft** (LOGBOOK.md, 28 September). With the yolk also
+- **Two runny whites at soft** (`npm run decide -- runny`). With the yolk also
   "just right", the choice moves soft 146 s and jammy 17 s: the shape §3's E3
   asked for, which the mean solve alone did not give. With the white alone
   both move. And where the white binds the lean is long, up to the window: the
@@ -847,7 +847,6 @@ once, at the time on screen.
 **Playing safe** - a suggested level that errs the cook's preferred way - was
 built and then deleted on the owner's word (`DECISIONS.md` 36, 39). The
 bracket under the slider does the same job without a suggestion.
-LOGBOOK.md, 27 and 28 September, has what it measured.
 
 **Built (E8, 2 October): the nudge.** `nudgeSeconds` in `decide.ts` turns a
 uniform draw into a whole number of seconds from -10 to +10, each equally

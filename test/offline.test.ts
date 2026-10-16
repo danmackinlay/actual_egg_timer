@@ -6,7 +6,7 @@
  * hourly look for one, which goes by the real clock.
  *
  * The worker itself runs only in a browser; it was checked there, offline,
- * in the built site (LOGBOOK, 3 October 2026).
+ * in the built site.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */

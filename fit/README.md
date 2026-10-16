@@ -79,7 +79,7 @@ uv run --project fit python -m eggfit fit fit/data/sim-emulated.json \
 
 The report then has the recovery of every global parameter and the held-out
 score of the truth's own population beside the fit's and the literature's.
-`LOGBOOK.md` (2 October 2026) has what it showed.
+`INFERENCE.md` section 9 has what it showed.
 
 ## What is in it
 

@@ -1,7 +1,6 @@
 # GOTCHAS.md — things that cost an hour to find out
 
-Each was found the slow way. Gathered from `LOGBOOK.md`, where each first
-appears under its date; a new one is added here. The two met most often,
+Each was found the slow way; a new one is added here. The two met most often,
 the simulator's `Slider` and `simctl … defaults`, are in `CLAUDE.md`;
 releasing has its own in `ios/RELEASING.md`.
 
