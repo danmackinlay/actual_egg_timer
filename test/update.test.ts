@@ -404,6 +404,20 @@ test('fingerDown: on another control, the change in hand is committed first', ()
   assert.equal(down.edit?.down?.group, 7);
 });
 
+test('fingerDown: on the same control, a tap\'s settle is stopped, so a hold after it commits only on the lift', () => {
+  const m = running();
+  const [tap] = go(m, { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
+  const [changed] = change(tap, { eggCount: 4 }, 3, 50);
+  const [up] = go(changed, { kind: 'fingerUp', real_ms: 100 }, S + 60);
+  const [down, effects] = go(up, { kind: 'fingerDown', group: 3, slider: false, real_ms: 600 }, S + 61);
+  assert.deepEqual(timers(effects), ['settle:null'], 'the tap\'s settle stopped');
+  assert.equal(down.cook, m.cook, 'nothing committed with the finger down');
+  const [held] = change(down, { eggCount: 5 }, 3, 1000);
+  assert.equal(held.cook, m.cook);
+  const [lifted] = go(held, { kind: 'fingerUp', real_ms: 1200 }, S + 62);
+  assert.equal(lifted.cook?.choices.eggCount, 5, 'the hold commits on the lift');
+});
+
 test('controls mid-cook: another control\'s change by keyboard commits the one in hand alone, as it was', () => {
   const m = running();
   const [first] = change(m, { eggCount: 4 }, 3, 0);
@@ -414,9 +428,33 @@ test('controls mid-cook: another control\'s change by keyboard commits the one i
   assert.equal(second.edit?.group, 8);
 });
 
+test('startStep: after another control\'s change by keyboard, that one is committed alone, and the start settles in its turn', () => {
+  const m = running();
+  const [first] = change(m, { eggCount: 4 }, 3, 0, S + 30);
+  const [second] = go(first, { kind: 'startStep', up: false, group: 2, real_ms: 100 }, S + 30);
+  assert.equal(second.cook?.choices.eggCount, 4, 'the first committed');
+  assert.equal(second.cook?.startedAt_s, S, 'without the start');
+  assert.equal(second.controlsStart_s, S - 60, 'which is in hand in its turn');
+  assert.equal(second.edit?.pending, true);
+  const [settled] = go(second, { kind: 'editTimer', timer: 'settle' }, S + 32);
+  assert.equal(settled.cook?.startedAt_s, S - 60);
+  assert.equal(settled.cook?.choices.eggCount, 4);
+});
+
 test('commit: the page going commits a change still settling', () => {
   const [held] = change(running(), { eggCount: 4 }, 3, 0);
   assert.equal(go(held, { kind: 'commit' }, S + 61)[0].cook?.choices.eggCount, 4);
+});
+
+test('commit: the page going lets go of a finger down, so the next change settles', () => {
+  const [down] = go(running(), { kind: 'fingerDown', group: 3, slider: false, real_ms: 0 }, S + 60);
+  const [held] = change(down, { eggCount: 4 }, 3, 50);
+  const [gone] = go(held, { kind: 'commit' }, S + 61);
+  assert.equal(gone.cook?.choices.eggCount, 4);
+  assert.equal(gone.edit?.down, null, 'no finger is down on a page that went');
+  const [next, effects] = change(gone, { eggCount: 5 }, 3, 5000, S + 70);
+  assert.ok(timers(effects).includes('settle:6500'), 'a keyboard change back on the page settles');
+  assert.equal(go(next, { kind: 'editTimer', timer: 'settle' }, S + 72)[0].cook?.choices.eggCount, 5);
 });
 
 test('primary: a change still settling is committed before the button acts', () => {
@@ -424,6 +462,31 @@ test('primary: a change still settling is committed before the button acts', () 
   const [after] = go(held, { kind: 'primary' }, S + 400);
   assert.equal(after.cook?.choices.eggCount, 4);
   assert.equal(after.cook?.events.boilAt_s, S + 400);
+});
+
+test('cancel: a change still settling is committed first, by keyboard too, so the egg Cancel ends has it', () => {
+  const m = done();
+  const at = m.plan!.deadlines.coolEnd_s! + 5;
+  const [held] = change(m, { eggCount: 4 }, 3, 0, at);
+  const [after, effects] = go(held, { kind: 'cancel' }, at + 1);
+  assert.equal(after.cook, null);
+  assert.equal(after.settings.eggCount, 4, 'written for the next cook');
+  const ended = effects.flatMap((e) => (e.kind === 'persistEnded' ? [e.cook] : []));
+  assert.equal(ended.length, 1, 'the egg ended, waiting on its record');
+  assert.equal(ended[0]!.choices.eggCount, 4, 'with the correction');
+});
+
+test('stillOut: a change still settling is committed before the pull stands', () => {
+  let m = running({ startMode: 'hot', cooling: 'ice' });
+  m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
+  m = go(m, { kind: 'correct', choices: { ...m.cook!.choices, startMode: 'cold' }, startedAt_s: null }, pull(m) + 30)[0];
+  assert.equal(m.plan?.deadlines.asking, true, 'the question is open');
+  const [held] = change(m, { eggCount: 4 }, 3, 0, pull(m) + 32);
+  const [after, effects] = go(held, { kind: 'stillOut' }, pull(m) + 35);
+  assert.equal(after.cook?.choices.eggCount, 4, 'the correction is the cook\'s');
+  assert.equal(after.edit?.pending, false, 'and nothing is left in hand to commit after');
+  assert.equal(after.plan?.deadlines.asking, false, 'the pull stands');
+  assert.equal(timers(effects)[0], 'settle:null');
 });
 
 test('after the pull a new level only previews, and the slider goes back when the aimed-for egg goes', () => {

@@ -210,6 +210,33 @@ extension AppTests {
         #expect(said.first == tr(.`controls.startedAt.latestNow`))
     }
 
+    /// A change in hand, then the start's − with no finger down first (as
+    /// VoiceOver adjusts it): the change in hand is committed alone, as it
+    /// was, and the start is in hand in its turn, committed after its own
+    /// settle - two corrections, as another control's change makes.
+    @Test func theStartAfterAnotherChangeIsCommittedInItsTurn() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world, .cold)
+        let t0 = try #require(model.cook.running).startedAtS
+        let eggs = model.planner.settings.eggCount
+        world.clock.set(t0 + 30)
+        model.planner.settings.eggCount = eggs + 1
+        #expect(model.edits.pending)
+        #expect(model.edits.stepStart(up: false))
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.eggCount == Double(eggs + 1), "the change in hand committed")
+        #expect(model.cook.running?.startedAtS == t0, "without the start's")
+        #expect(model.edits.pending, "which is in hand in its turn")
+        #expect(model.edits.shownStart == t0 - 60)
+        world.clock.advance(Edits.settle)
+        await world.until("the start committed") { !model.edits.pending }
+        await world.settled(model.cook)
+        #expect(model.cook.running?.startedAtS == t0 - 60)
+        #expect(model.cook.running?.choices.eggCount == Double(eggs + 1))
+    }
+
     /// Settings' water while a cook runs corrects the cook and the next
     /// cook's, and writes nothing else; the pull brings the egg's page back.
     @Test func waterChangedInSettingsCorrectsTheCookAndTheNext() async throws {

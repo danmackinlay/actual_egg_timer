@@ -408,7 +408,7 @@ function startCookNow(): void {
   dispatch({ kind: 'begin', units: unitSystem(), lang: activeLocale() });
 }
 
-/** Cancel: a correction still settling goes with the cook. */
+/** Cancel: a correction still settling is committed first (`update`). */
 export function reset(): void {
   stopAlarm();
   if (model.cook !== null) dispatch({ kind: 'cancel' });

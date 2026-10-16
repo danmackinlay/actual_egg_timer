@@ -726,11 +726,11 @@ function copySection(s: EggSection): EggSection {
 /**
  * The controls follow a cook begun or ended. Begun: they show its own
  * choices, never the settings, which describe the next cook, with nothing
- * in hand. Ended: whatever was in hand goes with it; they show the settings
- * again, the alarm stops, the questions start empty, a new cook
- * gets a new nudge (and the idle page is solved again with it), and the egg
- * just finished is final once it is forgotten: no answer can be added to
- * it.
+ * in hand. Ended: by a button, whatever was in hand was committed first;
+ * else it goes with the cook. They show the settings again, the alarm
+ * stops, the questions start empty, a new cook gets a new nudge (and the
+ * idle page is solved again with it), and the egg just finished is final
+ * once it is forgotten: no answer can be added to it.
  */
 function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
   if (was.cook === null && m.cook !== null) {
@@ -886,7 +886,9 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'fingerUp':
       return fingerUp(m, msg.real_ms, now_s);
     case 'commit':
-      return commit(m, null, now_s);
+      // The page hidden or gone: a finger down then is gone with it, and
+      // would otherwise keep the next change from settling.
+      return commit(withEdit(m, () => ({ down: null })), null, now_s);
     case 'editTimer':
       return msg.timer === 'settle' ? commit(m, null, now_s) : msg.timer === 'preview' ? preview(m, now_s) : release(m);
     case 'startStep':
@@ -960,10 +962,22 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       const [next, effects] = pressed(at, now_s);
       return [next, [...first, { kind: 'silence' }, ...effects]];
     }
-    case 'cancel':
-      return stepCook(m, { kind: 'startAgain', now_s: now_s }, now_s);
-    case 'stillOut':
-      return stepCook(m, { kind: 'pullStands', now_s: now_s }, now_s);
+    case 'cancel': {
+      // A correction still settling is committed first, as for any button
+      // that moves the cook on: after the pull, the egg Cancel logs has it.
+      if (m.cook === null) return [m, []];
+      const [at, first] = commit(m, null, now_s);
+      const [next, effects] = stepCook(at, { kind: 'startAgain', now_s: now_s }, now_s);
+      return [next, [...first, ...effects]];
+    }
+    case 'stillOut': {
+      // "Still in the water?" No: the pull stands on the cook as the
+      // controls say it is, a correction still settling committed first.
+      if (m.cook === null) return [m, []];
+      const [at, first] = commit(m, null, now_s);
+      const [next, effects] = stepCook(at, { kind: 'pullStands', now_s: now_s }, now_s);
+      return [next, [...first, ...effects]];
+    }
     case 'correct': {
       if (m.closed || m.cook === null) return [m, []];
       let next = m;
@@ -1019,7 +1033,8 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  * - after a tap's settle (`SETTLE_MS`, about 1.5 s, design section 5) for
  *   anything else - a choice in a clause's panel, a − or + pressed once, a
  *   number typed - the settle starting again with each change;
- * - at once when another control is touched, or the primary button pressed:
+ * - at once when another control is touched, or a button that moves the
+ *   cook on pressed (the primary, Cancel, "Still in the water?" No):
  *   the change in hand alone, as it was before the other control's, whether a
  *   finger or the keyboard moves on;
  * - and when the page is hidden or goes, so a reload or a closed tab inside
@@ -1221,11 +1236,15 @@ function release(m: Model): [Model, Effect[]] {
 }
 
 /** A finger down on a control: another than the one with a change in hand
- *  commits it; the gesture begins. */
+ *  commits it; the gesture begins. On the same one, a tap's settle stops,
+ *  so the change commits as the gesture now under way does, never with the
+ *  finger down. */
 function fingerDown(m: Model, group: number, slider: boolean, real_ms: number, now_s: number): [Model, Effect[]] {
   const e = m.edit;
   if (m.cook === null || e === null) return [m, []];
-  const [next, effects] = e.pending && group !== e.group ? commit(m, null, now_s) : [m, []];
+  const [next, effects]: [Model, Effect[]] = e.pending && group !== e.group
+    ? commit(m, null, now_s)
+    : [m, [{ kind: 'editTimer', timer: 'settle', at_ms: null }]];
   return [withEdit(next, () => ({ down: { at_ms: real_ms, group: group, slider: slider } })), effects];
 }
 
