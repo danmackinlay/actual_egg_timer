@@ -20,12 +20,16 @@
  *   or an init's parameter, or a struct's stored property, that reaches a
  *   text call or property in its body is text, by its label or position;
  * - and back from there, through names: what `name = …` (`let`, `var`, an
- *   assignment) gives a name in the same file, and what
- *   a computed property or function of type String returns, anywhere.
- *   `let s = "…"; Text(s)` and `var title: String { "…" }` are read.
+ *   assignment) gives a name in the same file, and what a `static let` or
+ *   `static var` is given, or a computed property or function of type
+ *   String returns, anywhere. `let s = "…"; Text(s)`, `Text(Words.done)`
+ *   and `var title: String { "…" }` are read, and a `switch` or `if`
+ *   expression's branches, less its subject, condition and patterns.
  * Names are matched by spelling, not by Swift's scopes, which can only read
  * more than Swift would show. Not read: a closure's body, a subscript's key,
  * or an argument labelled for something else, unless a text call is inside.
+ * Known misses: a parameter's default value (`_ s: String = "…"`), and a
+ * value that starts on the line after its `=`.
  *
  * Read: ios/App, ios/Widget, EggTimerApp and EggTimerShared, less what only a
  * debug build compiles (an `#if DEBUG` branch, Screenshots.swift). The
@@ -246,8 +250,9 @@ function textSites(tokens: Token[], helpers: Helpers): Token[] {
 type Values = Map<string, Token[][]>;
 const add = (m: Values, name: string, ts: Token[]): void => { m.set(name, [...(m.get(name) ?? []), ts]); };
 
-/** What `name = …` gives each name in `tokens`, `let name: T = …` included. */
-function assigned(tokens: Token[]): Values {
+/** What `name = …` gives each name in `tokens`, `let name: T = …` included;
+ *  a `static` one's into `shared`, which every file reads. */
+function assigned(tokens: Token[], shared: Values): Values {
   const out: Values = new Map();
   for (let j = 0; j < tokens.length; j++) {
     const t = tokens[j];
@@ -255,7 +260,7 @@ function assigned(tokens: Token[]): Values {
     let eq = j + 1;
     const end = lineEnd(tokens, j);
     if (isId(tokens[j - 1], 'let', 'var') && isP(tokens[eq], ':')) while (eq < end && !isP(tokens[eq], '=')) eq++;
-    if (isP(tokens[eq], '=')) add(out, t.text, tokens.slice(eq + 1, lineEnd(tokens, eq + 1)));
+    if (isP(tokens[eq], '=')) add(isId(tokens[j - 2], 'static') ? shared : out, t.text, tokens.slice(eq + 1, lineEnd(tokens, eq + 1)));
   }
   return out;
 }
@@ -284,7 +289,8 @@ const PASSING = new Set(['String', 'Substring']);
 
 /** What of an expression is its value: what reaches a text call inside it,
  *  and all of it but a call's arguments (unless it passes them on), a
- *  closure and a subscript's key. */
+ *  closure, a subscript's key, and a `switch` or `if`'s subject, condition
+ *  and case patterns. */
 function valueTokens(tokens: Token[], helpers: Helpers): Token[] {
   const out: Token[] = textSites(tokens, helpers);
   for (let j = 0; j < tokens.length; j++) {
@@ -294,6 +300,13 @@ function valueTokens(tokens: Token[], helpers: Helpers): Token[] {
     if (isP(t, '(') && isId(before, ...PASSING)) {
       for (const a of argumentsAt(tokens, j)) out.push(...valueTokens(a.tokens, helpers));
       j = closing(tokens, j) - 1;
+    } else if (isId(t, 'switch', 'if', 'else')) {
+      let k = j + 1;
+      while (k < tokens.length && !isP(tokens[k], '{')) k = isP(tokens[k], '(') || isP(tokens[k], '[') ? closing(tokens, k) : k + 1;
+      out.push(...valueTokens(tokens.slice(k + 1, closing(tokens, k) - 1), helpers));
+      j = closing(tokens, k) - 1;
+    } else if (isId(t, 'case', 'default') && !isP(before, '.')) {
+      while (j < tokens.length && !isP(tokens[j], ':')) j = isP(tokens[j], '(') || isP(tokens[j], '[') ? closing(tokens, j) : j + 1;
     } else if (isP(t, '{') || ((isP(t, '(') || isP(t, '[')) && after)) {
       j = closing(tokens, j) - 1;
     } else {
@@ -397,9 +410,9 @@ function isWords(text: string): boolean {
 export function lintLiterals(sources: { file: string; source: string }[], argumentNames: Set<string>):
   { read: { file: string; text: string }[]; helpers: Helpers; failures: string[] } {
   const files = sources.map((s) => ({ file: s.file, tokens: lex(releaseOnly(s.source)) }));
-  const computed: Values = new Map();
-  for (const f of files) returned(f.tokens, computed);
-  const scoped = files.map((f) => ({ ...f, values: [assigned(f.tokens), computed], declared: declarations(f.tokens) }));
+  const shared: Values = new Map();
+  for (const f of files) returned(f.tokens, shared);
+  const scoped = files.map((f) => ({ ...f, values: [assigned(f.tokens, shared), shared], declared: declarations(f.tokens) }));
   const helpers: Helpers = new Map();
   for (let changed = true; changed;) {
     changed = false;
