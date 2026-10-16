@@ -75,6 +75,43 @@ shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
+6. **Where the correction in hand lives** (`DECISIONS.md` 137). 137 keeps
+   it in each app (`src/ui/model.ts`, `EggTimerApp/Edits.swift`) yet says
+   both "commit at the same moments"; CLAUDE.md puts what both apps must
+   agree on in core. Against that, 126: what reads an app's own gestures is
+   the app's, and the gestures differ (pointer events and `pagehide`;
+   SwiftUI controls and `scenePhase`). The settle, hold and preview timings
+   are written twice, the after-the-pull level rule in each app's preview
+   and commit and in `step`'s `correct`. Where the apps disagree
+   today (a commit replans, moves the alarms and can ring overdue):
+   - *A long press on a radio.* Tap Room, then hold Custom: the web commits
+     Room on the lift (`fingerUp` reads a hold) and Custom after the settle;
+     iOS's picker reports no finger, and commits Custom once.
+   - *A size, then a weight.* Pick Large, type 70 g: the web groups by page
+     element (`edit.ts` `GROUPS`), so the field commits Large first; iOS
+     groups by setting (`.mass`) and commits once. Room temperature too,
+     from `#roomTempFrom` then `#roomTemp`.
+   - *Control Centre in the settle.* Tap +, pull down Control Centre, tap +:
+     iOS commits at `.inactive` (`ContentView`'s `scenePhase`), then again;
+     the web commits only when the page is hidden, so once.
+   - *The thermometer.* Tap +, then touch the probe reading or a Settings
+     switch: the web commits at the touch (`.unit`, `.check`); iOS after the
+     settle, so a reading saved inside it is scored without the change.
+   **Or core:** a reducer beside `step`, `editStep(state, event)`. In:
+   `change(group)`, `down(group, slider)`, `up`, `leave`, `moveOn` and the
+   settle, preview and release timers firing, each with its time; groups
+   are opaque ids. Out: the next state, what to commit (nothing, the hand,
+   or the hand up to the change before this one) and timer commands (set
+   at, cancel). Plain data and one top-level function, no clock, closure or
+   I/O, as `step` is; fixtured as event sequences, held in Swift by
+   conformance. That ends the first drift and the rules written twice. The
+   other three are each app's mapping onto those events, and stay unless
+   core also names the groups (the settings `FIELDS` already lists) and
+   which touches and moments are `moveOn` and `leave`.
+   **Or keep 137** and fix the four in each app: a hold commits only a
+   change made during it; the web groups by `FIELDS`; one rule for leaving
+   (hidden or inactive, the same in both); one list of other controls. Each
+   is a test in each app's suite; the next drift is found by review again.
 
 Waiting on someone else: the Czech review, by the owner's friend.
 
