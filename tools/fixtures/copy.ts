@@ -5,7 +5,7 @@
 
 import {
   type Catalogue, type CopyArg, type CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
-  pluralCategory, regionOf, render,
+  isPeriod, pluralCategory, regionOf, render,
 } from '../../src/core/copy.ts';
 
 /* The renderer's contract, pinned on catalogues that exist only here, so
@@ -131,7 +131,7 @@ const probeCases: { key: string; args: CopyArgs }[] = [
 ];
 
 export const copyFixture = {
-  about: 'The renderer\'s contract on catalogues of its own: placeholders and their formats, plural forms, the fallback from a translation and an overlay to the English, malformed braces; the plural rule of every language at its edges; and a probe catalogue. None of it is copy/\'s words. src/core/copy.ts.',
+  about: 'The renderer\'s contract on catalogues of its own: placeholders and their formats, plural forms, the fallback from a translation and an overlay to the English, malformed braces; the plural rule of every language at its edges; which tags are the English of 1750; and a probe catalogue. None of it is copy/\'s words. src/core/copy.ts.',
   catalogues: { 'en': englishCase, 'en-x-1750': translationCase, 'en-US': overlayCase },
   render: renderCases.map((c) => ({
     ...c, text: render(caseCatalogues[c.catalogue], c.key, c.args, c.formatLocale),
@@ -159,6 +159,13 @@ export const copyFixture = {
   ] as [string[], string | null][]).map(([preferred, region]) => ({
     language: language, preferred: preferred, region: region, chain: catalogueChain(language, preferred, region),
   }))),
+  // Which tags are the English of 1750: the subtag in any region and any
+  // case, ahead of a further subtag, and not a longer or shorter number, a
+  // tag in another language, or no language at all.
+  periods: [
+    'en', 'en-US', 'en-GB', 'EN-gb', 'en-x-1750', 'en-US-x-1750', 'en-GB-x-1750', 'EN-GB-X-1750', 'en-x-1750-a',
+    'en-x-17500', 'en-x-175', 'cs', 'cs-CZ', 'cs-x-1750', 'x-1750', '', 'enx-1750',
+  ].map((tag) => ({ tag: tag, isPeriod: isPeriod(tag) })),
   probe: {
     catalogue: probeJson,
     cases: probeCases.map((c) => ({ ...c, text: render(probe, c.key, c.args) })),
