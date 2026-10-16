@@ -1,35 +1,32 @@
 /**
- * The review queue for the words: which English the owner has approved, which
- * English each translation's twin was written against, and so what is left to
- * read. `tools/copyQueue.ts` is its command line, `tools/copyReview.ts` its
- * page, and `test/copyQueue.test.ts` holds the files' shape.
+ * The review queue for the words: what has changed since the owner last
+ * approved them, and which twins of a translation were written against older
+ * English. `tools/copyQueue.ts` is its command line, `tools/copyReview.ts`
+ * its page, and `test/copyQueue.test.ts` holds its rules. LANGUAGE.md
+ * section 3.
  *
- * Two kinds of file, in test/data/copy-review/ and not beside the
- * catalogues they describe: the apps ship copy/ whole (the site its
- * catalogues, iOS the folder in its bundle), and no app reads these.
+ * Approval is of the whole catalogue at a commit. APPROVED_PATH holds one
+ * line, the hash of the last commit whose words the owner approved; the
+ * queue is copy/ at that commit against copy/ in the working tree, key by
+ * key: a key whose English or regional overlay (copy/en-US.json) differs is
+ * changed, one the commit lacks is added, and one only the commit has is
+ * retired. The owner says what to put back; once it is, `npm run
+ * copy:approve` records the commit. Nothing is approved key by key.
  *
- *   approved.json           per key of copy/en.json, the English the owner
- *                           approved: its templates and their hash
- *   <tag>.base.json         per key of a translation (copy/<tag>.json, a
- *                           catalogue that is not English and not a regional
- *                           overlay), the hash of the English its twin was
- *                           written against (`base`), or, for a key it leaves
- *                           to English on purpose, of the English it was
- *                           judged to need no twin at (`english`)
+ * A translation's twin (copy/en-x-1750.json) may lag the English. Which
+ * twins are stale is read from git, as each catalogue has one key per line:
+ * a twin is stale when the last commit that changed its key's English line
+ * is not one the last commit that changed the twin's line descends from.
+ * A key the translation lacks shows the English (src/core/copy.ts). Both
+ * are listed, and neither fails a build. That needs the history, so it is
+ * local tooling: CI's clone is shallow, and the tests hold the rules on data
+ * of their own.
  *
- * A key is in the queue when its English hashes otherwise than the approved,
- * or it has no approval (added), or it has an approval and is gone from the
- * English (removed). A twin is stale when its base is not today's English; a
- * key the translation lacks is missing unless it is left to English at
- * today's English (`app.name`). A stale twin keeps showing and a missing one
- * falls back to English (src/core/copy.ts); both are listed, and neither
- * fails a build: the twins may lag the English. A malformed file does.
- *
- * The overlays (copy/en-US.json) keep their own `base`, the English text
- * itself, which copy.test.ts 7a holds to today's.
+ * The overlays keep their own `base`, the English each entry was written
+ * against, which copy.test.ts 7a holds to today's without any history.
  */
 
-import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import { OVERLAYS, PLURAL_CATEGORIES } from '../src/core/copy.ts';
@@ -41,19 +38,11 @@ export type Entry = Record<string, unknown>;
 
 export interface CatalogueJson { locale: string; about?: string; messages: Record<string, Entry> }
 
-/** Approved English for one key: its templates, and their hash. */
-export type Approval = { hash: string } & Templates;
+/** The commit whose words the owner last approved, as one line. Not in
+ *  copy/, which the apps ship whole. */
+export const APPROVED_PATH = 'test/data/copy-approved.txt';
 
-/** Where the review queue's state is kept: out of copy/, which the apps ship. */
-export const REVIEW_DIR = 'test/data/copy-review';
-
-export const APPROVED_PATH = `${REVIEW_DIR}/approved.json`;
-
-export function basePath(tag: string): string {
-  return `${REVIEW_DIR}/${tag}.base.json`;
-}
-
-/** The categories a template can be under, in the order they are hashed and shown. */
+/** The categories a template can be under, in the order they are shown. */
 export const CATEGORIES: readonly string[] = ['text', ...PLURAL_CATEGORIES];
 
 /** Whether a file in copy/ is a catalogue, `<tag>.json`: everything there
@@ -73,9 +62,10 @@ export function translationTags(): string[] {
   return catalogueTags().filter((tag) => tag !== 'en' && !OVERLAYS.includes(tag));
 }
 
-/** An entry's templates, in `CATEGORIES` order; anything else in it (surface,
- *  apps, note, example, count, base) is not words. */
-export function templatesOf(entry: Entry): Templates {
+/** An entry's templates, in `CATEGORIES` order; anything else in it
+ *  (`count`, an overlay's `base`) is not words. */
+export function templatesOf(entry: Entry | undefined): Templates | null {
+  if (entry === undefined) return null;
   const out: Templates = {};
   for (const c of CATEGORIES) {
     const t = entry[c];
@@ -84,238 +74,160 @@ export function templatesOf(entry: Entry): Templates {
   return out;
 }
 
-/** The hash of a message's words: sha256 over its templates as
- *  `[[category, template], …]` in `CATEGORIES` order, 16 hex digits. */
-export function hashTemplates(t: Templates): string {
-  const pairs = CATEGORIES.filter((c) => typeof t[c] === 'string').map((c) => [c, t[c]]);
-  return createHash('sha256').update(JSON.stringify(pairs)).digest('hex').slice(0, 16);
-}
-
-function readJson(path: string): unknown {
-  return JSON.parse(readFileSync(path, 'utf8')) as unknown;
+function same(a: Templates | null, b: Templates | null): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export function readCatalogue(tag: string): CatalogueJson {
-  return readJson(`copy/${tag}.json`) as CatalogueJson;
+  return JSON.parse(readFileSync(`copy/${tag}.json`, 'utf8')) as CatalogueJson;
 }
 
-/* ------------------------------------------------------ the files' shape */
-
-const HASH = /^[0-9a-f]{16}$/;
-
-function isObject(x: unknown): x is Record<string, unknown> {
-  return typeof x === 'object' && x !== null && !Array.isArray(x);
+function git(...args: string[]): string {
+  return execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-/** What is wrong with an approvals file, if anything: an `about`, and per key
- *  a hash and at least one template, nothing else, the hash the templates'. */
-export function approvedProblems(json: unknown): string[] {
-  if (!isObject(json) || typeof json['about'] !== 'string' || !isObject(json['messages'])) {
-    return ['not { "about": string, "messages": { … } }'];
-  }
-  const problems: string[] = [];
-  for (const [key, a] of Object.entries(json['messages'])) {
-    if (!isObject(a) || typeof a['hash'] !== 'string' || !HASH.test(a['hash'])) {
-      problems.push(`${key}: no hash of 16 hex digits`);
-      continue;
-    }
-    const others = Object.keys(a).filter((k) => k !== 'hash');
-    const bad = others.filter((k) => !CATEGORIES.includes(k) || typeof a[k] !== 'string');
-    if (others.length === 0 || bad.length > 0) {
-      problems.push(`${key}: holds ${others.join(', ') || 'nothing'}, not templates by category`);
-    } else if (hashTemplates(templatesOf(a)) !== a['hash']) {
-      problems.push(`${key}: its hash is not its templates' (edited by hand?)`);
-    }
-  }
-  return problems;
-}
-
-/** A translation's sources: per key with a twin, the hash of the English it
- *  was written against; per key left to English on purpose, the hash of the
- *  English it was judged at. */
-export interface Bases { base: Record<string, string>; english: Record<string, string> }
-
-/** What is wrong with a translation's bases file, if anything. */
-export function baseProblems(json: unknown): string[] {
-  if (!isObject(json) || typeof json['about'] !== 'string' || !isObject(json['base']) || !isObject(json['english'])) {
-    return ['not { "about": string, "english": { … }, "base": { … } }'];
-  }
-  const problems: string[] = [];
-  for (const field of ['english', 'base'] as const) {
-    for (const [key, h] of Object.entries(json[field] as Record<string, unknown>)) {
-      if (typeof h !== 'string' || !HASH.test(h)) problems.push(`${field} ${key}: not a hash of 16 hex digits`);
-    }
-  }
-  for (const key of Object.keys(json['english'])) {
-    if (key in json['base']) problems.push(`${key}: both a twin's base and left to English`);
-  }
-  return problems;
-}
-
-/** The approvals; none before the first stamp. Throws on a malformed file. */
-export function readApproved(path: string = APPROVED_PATH): Record<string, Approval> {
-  let json: unknown;
+/** A catalogue as a commit has it, or null if the commit has none. */
+export function catalogueAt(commit: string, tag: string): CatalogueJson | null {
   try {
-    json = readJson(path);
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return {};
-    throw new Error(`${path}: ${(e as Error).message}`);
+    return JSON.parse(git('show', `${commit}:copy/${tag}.json`)) as CatalogueJson;
+  } catch {
+    return null;
   }
-  const problems = approvedProblems(json);
-  if (problems.length > 0) throw new Error(`${path} is malformed:\n  ${problems.join('\n  ')}`);
-  return (json as { messages: Record<string, Approval> }).messages;
 }
 
-/** A translation's bases; none before its first stamp. Throws on a malformed file. */
-export function readBases(tag: string): Bases {
-  const path = basePath(tag);
-  let json: unknown;
-  try {
-    json = readJson(path);
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return { base: {}, english: {} };
-    throw new Error(`${path}: ${(e as Error).message}`);
-  }
-  const problems = baseProblems(json);
-  if (problems.length > 0) throw new Error(`${path} is malformed:\n  ${problems.join('\n  ')}`);
-  const b = json as Bases;
-  return { base: b.base, english: b.english };
+const HASH = /^[0-9a-f]{40}$/;
+
+/** What is wrong with the approved file's text, if anything: it is one
+ *  commit's full hash and a newline. */
+export function approvedProblem(text: string): string | null {
+  return HASH.test(text.replace(/\n$/, '')) ? null : `${APPROVED_PATH} is not one commit's full hash on a line`;
+}
+
+/** The commit whose words were last approved. Throws on a malformed file. */
+export function readApproved(path: string = APPROVED_PATH): string {
+  const text = readFileSync(path, 'utf8');
+  const problem = approvedProblem(text);
+  if (problem !== null) throw new Error(problem);
+  return text.trim();
+}
+
+/** Whether copy/ has changes git has not committed. */
+export function copyIsDirty(): boolean {
+  return git('status', '--porcelain', '--', 'copy').trim() !== '';
 }
 
 /* ----------------------------------------------------------- the queue */
 
-export type QueueState = 'changed' | 'added' | 'removed';
+/** The English and its overlays, as they were or as they are. */
+export interface Words { en: CatalogueJson; overlays: Record<string, CatalogueJson | null> }
 
-export interface Queued {
+export function wordsNow(): Words {
+  return { en: readCatalogue('en'), overlays: Object.fromEntries(OVERLAYS.map((tag) => [tag, readCatalogue(tag)])) };
+}
+
+export function wordsAt(commit: string): Words {
+  const en = catalogueAt(commit, 'en');
+  if (en === null) throw new Error(`${commit} has no copy/en.json`);
+  return { en: en, overlays: Object.fromEntries(OVERLAYS.map((tag) => [tag, catalogueAt(commit, tag)])) };
+}
+
+export type QueueState = 'changed' | 'added' | 'retired';
+
+/** One side of a change: the approved words and today's, null where absent. */
+export interface Change { approved: Templates | null; current: Templates | null }
+
+export interface Queued extends Change {
   key: string;
-  /** `changed`: approved once, and the English has moved since; `added`:
-   *  never approved; `removed`: approved, and gone from the English. */
+  /** `changed`: the English or an overlay moved since the approval; `added`:
+   *  not in the approved catalogue; `retired`: only in it. */
   state: QueueState;
-  approved: Templates | null;
-  current: Templates | null;
+  /** Each overlay that has the key on either side, changed or not. */
+  overlays: ({ tag: string } & Change)[];
 }
 
-/** The keys whose English is not the approved English: in catalogue order,
- *  then the removed ones in the approvals' order. */
-export function reviewQueue(en: CatalogueJson, approved: Record<string, Approval>): Queued[] {
+/** The keys whose words are not the approved words: in today's order, then
+ *  the retired ones in the approved catalogue's. */
+export function reviewQueue(approved: Words, now: Words): Queued[] {
   const out: Queued[] = [];
-  for (const [key, entry] of Object.entries(en.messages)) {
-    const current = templatesOf(entry);
-    const a = approved[key];
-    if (a === undefined) out.push({ key: key, state: 'added', approved: null, current: current });
-    else if (a.hash !== hashTemplates(current)) {
-      out.push({ key: key, state: 'changed', approved: templatesOf(a), current: current });
+  const queued = (key: string, state: QueueState): void => {
+    const overlays = Object.keys({ ...approved.overlays, ...now.overlays }).map((tag) => ({
+      tag: tag,
+      approved: templatesOf(approved.overlays[tag]?.messages[key]),
+      current: templatesOf(now.overlays[tag]?.messages[key]),
+    })).filter((o) => o.approved !== null || o.current !== null);
+    out.push({
+      key: key, state: state, approved: templatesOf(approved.en.messages[key]),
+      current: templatesOf(now.en.messages[key]), overlays: overlays,
+    });
+  };
+  for (const key of Object.keys(now.en.messages)) {
+    if (!(key in approved.en.messages)) {
+      queued(key, 'added');
+      continue;
     }
+    const moved = !same(templatesOf(approved.en.messages[key]), templatesOf(now.en.messages[key]))
+      || OVERLAYS.some((tag) => !same(templatesOf(approved.overlays[tag]?.messages[key]), templatesOf(now.overlays[tag]?.messages[key])));
+    if (moved) queued(key, 'changed');
   }
-  for (const [key, a] of Object.entries(approved)) {
-    if (!(key in en.messages)) out.push({ key: key, state: 'removed', approved: templatesOf(a), current: null });
-  }
+  for (const key of Object.keys(approved.en.messages)) if (!(key in now.en.messages)) queued(key, 'retired');
   return out;
 }
 
-export type TwinState = 'current' | 'leftToEnglish' | 'stale' | 'missing';
+/* ----------------------------------------------------------- the twins */
 
-/** Where a translation's twin of one English key stands. */
-export function twinState(key: string, twins: CatalogueJson, en: CatalogueJson, bases: Bases): TwinState {
-  const english = en.messages[key];
-  const has = key in twins.messages;
-  const now = english === undefined ? null : hashTemplates(templatesOf(english));
-  if (has) return bases.base[key] === now ? 'current' : 'stale';
-  return bases.english[key] === now ? 'leftToEnglish' : 'missing';
-}
+/** What `git blame` names as the commit of a line the working tree has
+ *  changed and git has not committed. */
+export const UNCOMMITTED = '0'.repeat(40);
 
-export interface TwinQueued {
-  tag: string;
-  key: string;
-  state: 'stale' | 'missing';
-  twin: Templates | null;
-  english: Templates;
-}
-
-/** The twins of a translation that want rewriting: stale or missing, in the
- *  English's order. */
-export function twinQueue(tag: string, twins: CatalogueJson, en: CatalogueJson, bases: Bases): TwinQueued[] {
-  const out: TwinQueued[] = [];
-  for (const [key, entry] of Object.entries(en.messages)) {
-    const state = twinState(key, twins, en, bases);
-    if (state !== 'stale' && state !== 'missing') continue;
-    const twin = twins.messages[key];
-    out.push({ tag: tag, key: key, state: state, twin: twin === undefined ? null : templatesOf(twin), english: templatesOf(entry) });
-  }
-  return out;
-}
-
-/* ---------------------------------------------------------- the stamps */
-
-/** The approvals with `keys` stamped at the English of `en` (or at `from`,
- *  the English of an older commit, for a key it has), and a named key that
- *  neither has dropped. In catalogue order, the removed keys after. */
-export function stamp(
-  approved: Record<string, Approval>, en: CatalogueJson, keys: readonly string[], from: CatalogueJson | null = null,
-): Record<string, Approval> {
-  const wanted = new Set(keys);
-  const out: Record<string, Approval> = {};
-  for (const [key, entry] of Object.entries(en.messages)) {
-    const source = from === null ? entry : from.messages[key];
-    if (wanted.has(key) && source !== undefined) {
-      const t = templatesOf(source);
-      out[key] = { hash: hashTemplates(t), ...t };
-    } else if (approved[key] !== undefined) {
-      out[key] = approved[key];
+/** The commit that last changed each key's line, from `git blame
+ *  --porcelain`: a catalogue writes one key per line, `"key": { … }`. */
+export function keyCommits(porcelain: string): Map<string, string> {
+  const out = new Map<string, string>();
+  let commit = '';
+  for (const line of porcelain.split('\n')) {
+    const header = /^([0-9a-f]{40}) \d+ \d+/.exec(line);
+    if (header !== null) {
+      commit = header[1];
+      continue;
     }
-  }
-  for (const [key, a] of Object.entries(approved)) {
-    if (!(key in en.messages) && !wanted.has(key)) out[key] = a;
-  }
-  for (const [key, entry] of Object.entries(from?.messages ?? {})) {
-    if (!(key in en.messages) && wanted.has(key)) {
-      const t = templatesOf(entry);
-      out[key] = { hash: hashTemplates(t), ...t };
-    }
+    const key = /^\t\s*"([^"]+)": \{/.exec(line);
+    if (key !== null) out.set(key[1], commit);
   }
   return out;
 }
 
-/** A translation's bases with `keys` stamped at today's English: a key with
- *  a twin as written against it, a key without as left to English at it. A
- *  key the English no longer has is dropped, and so is a stamp the twin's
- *  coming or going has made wrong. In the English's order. */
-export function stampBases(bases: Bases, twins: CatalogueJson, en: CatalogueJson, keys: readonly string[]): Bases {
-  const wanted = new Set(keys);
-  const out: Bases = { base: {}, english: {} };
-  for (const [key, entry] of Object.entries(en.messages)) {
-    const field = key in twins.messages ? 'base' : 'english';
-    if (wanted.has(key)) out[field][key] = hashTemplates(templatesOf(entry));
-    else if (bases[field][key] !== undefined) out[field][key] = bases[field][key];
+export type TwinState = 'current' | 'stale' | 'missing';
+
+/** Where each English key's twin stands. Missing, if the translation has
+ *  none. Otherwise its line was last written at a commit, and the twin is
+ *  current if the English then is the English now, and stale if the English
+ *  has moved since. Comparing the words rather than which commit last
+ *  touched the English line keeps a change beside the words (C7 took every
+ *  key's notes off its line) from staling every twin. A twin line not yet
+ *  committed is current: it is being written against the English as it is. */
+export function twinStates(
+  now: CatalogueJson, twinCommits: Map<string, string>, englishAt: (commit: string) => CatalogueJson | null,
+): Map<string, TwinState> {
+  const out = new Map<string, TwinState>();
+  for (const [key, entry] of Object.entries(now.messages)) {
+    const commit = twinCommits.get(key);
+    if (commit === undefined) out.set(key, 'missing');
+    else if (commit === UNCOMMITTED) out.set(key, 'current');
+    else out.set(key, same(templatesOf(englishAt(commit)?.messages[key]), templatesOf(entry)) ? 'current' : 'stale');
   }
   return out;
 }
 
-/** JSON with an `about` and one entry of each field per line, as the
- *  catalogues are written, so a stamp is a one-line diff. */
-export function writeOnePerLine(about: string, fields: Record<string, Record<string, unknown>>): string {
-  const blocks = Object.entries(fields).map(([field, entries]) => {
-    const lines = Object.entries(entries).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v)}`);
-    return `  ${JSON.stringify(field)}: {${lines.length === 0 ? '' : `\n${lines.join(',\n')}\n  `}}`;
-  });
-  return `{\n  "about": ${JSON.stringify(about)},\n${blocks.join(',\n')}\n}\n`;
-}
-
-export const APPROVED_ABOUT = 'The English the owner has approved, per key of copy/en.json: its templates and their '
-  + 'hash (sha256 of [[category, template], …] in the order text, zero, one, two, few, many, other; 16 hex digits). '
-  + 'A key whose English hashes otherwise, or is not here, or is here and gone from the English, is in the review '
-  + 'queue: `npm run copy:queue` lists it, `npm run copy:review` writes a page to read it on, and '
-  + '`npm run copy:approve -- <key…|--all>` stamps today’s English. Begun from the English of e3a81cb, the last time '
-  + 'the owner read every string (`npm run copy:approve -- --all --at e3a81cb` on no file). Never edited by hand: a '
-  + 'hash that is not its templates’ fails the tests. Not a catalogue, and no app reads it, so it is kept out of '
-  + 'copy/, which the apps ship. LANGUAGE.md section 3.';
-
-export function baseAbout(tag: string): string {
-  return `The English each twin in copy/${tag}.json was written against, per key: the hash of its templates, as in `
-    + `${APPROVED_PATH} (\`base\`), and the English each key it leaves to English on purpose was judged at `
-    + '(`english`). A twin whose English has moved since is stale, and a key with no twin and not left to English '
-    + 'at today’s English is missing: each keeps showing (a missing one in English), and `npm run copy:queue` lists '
-    + `it. Rewrite the twin, then \`npm run copy:approve -- --translation ${tag} <key…|--all>\` stamps today’s `
-    + 'English (a key named that has no twin is left to English). Never edited by hand. '
-    + 'Not a catalogue, and no app reads it, so it is kept out of copy/, which the apps ship. LANGUAGE.md section 3.';
+/** Where each English key's twin stands in a translation, from git: the
+ *  translation's lines blamed in the working tree (whitespace ignored, and a
+ *  line moved within the file keeps its commit), and the English read at
+ *  each commit named, once. */
+export function twinStatesOf(tag: string, now: CatalogueJson): Map<string, TwinState> {
+  const twins = keyCommits(git('blame', '--porcelain', '-w', '-M', '--', `copy/${tag}.json`));
+  const at = new Map<string, CatalogueJson | null>();
+  const englishAt = (commit: string): CatalogueJson | null => {
+    if (!at.has(commit)) at.set(commit, catalogueAt(commit, 'en'));
+    return at.get(commit) ?? null;
+  };
+  return twinStates(now, twins, englishAt);
 }

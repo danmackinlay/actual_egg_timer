@@ -1,39 +1,29 @@
 /**
  * The standing lint on the words in the Swift sources.
  *
- *   npm run copy:literals
+ *   npm run copy:literals [-- --list]     --list prints every literal read
  *
  * No word reaches an iOS screen except through copy/, so what a wording
- * change changed is the catalogue's diff, which the review queue reads
- * (tools/copyQueue.ts). This holds it for the code that draws or says
- * anything: ios/App, ios/Widget, the app's logic (EggTimerApp) and what the
- * app and the widget share (EggTimerShared). Every string literal there,
- * not only a view's arguments, since a notification's body and the Live
- * Activity's text never pass through `Text(`; `+` chains joined and each
- * `\(...)` interpolation reduced to `{}`. A key is no literal: it is a
- * `CopyKey` case, which the compiler holds to the catalogue (npm run
- * copy:keys). So each literal must be an argument's name in key position, or
- * on the NOT_COPY list below with the reason it is not words.
+ * change changed is the catalogue's diff. This reads the string literals
+ * written straight into the arguments of a call that puts text on screen or
+ * says it (TEXT_CALLS: the system's Text, Button, .accessibilityLabel, …,
+ * less arguments labelled for something else, NOT_TEXT; and APP_CALLS, the
+ * app's own views and functions that take text, by label or position), and
+ * into a property that holds text (`label.text =`, a notification's `title`
+ * and `body`). One with a letter in it, less interpolations and number
+ * formats, is words, and fails, unless it is a catalogue argument's name in
+ * a dictionary's key position (`["grams": .int(68)]`) or on NOT_COPY. A
+ * literal elsewhere (a log line, a stored key, a URL, an SF Symbol) is not
+ * read. Nor is a literal reaching a text call through a name (`let s =
+ * "…"; Text(s)`, a computed property, a new helper not yet on APP_CALLS):
+ * rare, and left to the review of the diff.
  *
- * Not scanned, because no cook can see it:
- * - the core (EggTimerCore), pure numerics that hands the app catalogue
- *   keys, never sentences; what it says is held by fixtures/wording.json;
- * - what a debug build alone compiles: the part of an `#if DEBUG` before
- *   its `#else` (the `#else` half is the release build's, and is scanned),
- *   and the debug file, Screenshots.swift, which acts only on launch
- *   arguments a release build never reads;
- * - the files that only write and read back what the app stores (FORMAT_FILES):
- *   every literal there is a stored key, a field's name or a version's syntax.
- *
- * A NOT_COPY entry that no scanned literal needs fails too, so the list
- * holds only what the code says now.
- *
- * The web half of the words is the copy capture (tools/copyScenarios.ts,
- * tools/copySnapshot.ts), which renders the running app. What neither
- * proves: that each key is rendered with the right argument in the right
- * slot, or on the right branch. Those are one-line call sites, reviewed in
- * the diff and built by xcodebuild; the renderer itself is held to the
- * web's by fixtures/copy.json.
+ * Read: ios/App, ios/Widget, EggTimerApp and EggTimerShared, less what only a
+ * debug build compiles (an `#if DEBUG` branch, Screenshots.swift). A NOT_COPY
+ * entry no literal read needs fails, so the list holds only what the code
+ * says now. Planted in a Text, a Label's title, an accessibility label, a
+ * ternary, a notification's body, MoreText and a Help paragraph, a literal
+ * fails (16 October 2026).
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -51,277 +41,233 @@ const DEBUG_FILES = new Set([
   'ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift',
 ]);
 
-/** Files that draw and say nothing: they only write and read back what the
- *  app stores, so every literal in them is a stored field's name, a key, or
- *  the syntax of a version. */
-const FORMAT_FILES = new Set([
-  'ios/EggTimerCore/Sources/EggTimerApp/Newer.swift',
-  'ios/EggTimerCore/Sources/EggTimerApp/Settings.swift',
-  'ios/EggTimerCore/Sources/EggTimerApp/ShareQueue.swift',
-  'ios/EggTimerCore/Sources/EggTimerApp/StoreRegistry.swift',
-  'ios/EggTimerCore/Sources/EggTimerApp/StoredCook.swift',
+/** The system's calls whose arguments are text a cook sees or hears. */
+const TEXT_CALLS = new Set([
+  // SwiftUI views
+  'Text', 'Button', 'Label', 'Toggle', 'Picker', 'TextField', 'SecureField', 'Link', 'ShareLink', 'Menu', 'Section',
+  'LabeledContent', 'Stepper', 'NavigationLink', 'ProgressView', 'Gauge', 'DisclosureGroup', 'ContentUnavailableView',
+  'AttributedString', 'NSAttributedString',
+  // SwiftUI modifiers
+  'navigationTitle', 'navigationBarTitle', 'accessibilityLabel', 'accessibilityHint', 'accessibilityValue',
+  'accessibilityInputLabels', 'accessibilityAction', 'alert', 'confirmationDialog', 'help', 'badge',
+  // UIKit, notifications, and the app's own VoiceOver announcement
+  'setTitle', 'UIAlertController', 'UIAlertAction', 'UIAction', 'UIMenu', 'UNNotificationAction', 'announce',
 ]);
 
-/** Literals that are not words on a screen, and why. Exact raw text. */
-const NOT_COPY: Record<string, string> = {
-  // identifiers
-  start: 'debug log (CookCard.log), never shown',
-  'cook.pull': 'notification identifier',
-  'cook.cool': 'notification identifier',
-  // SF Symbols
-  'flame.fill': 'SF Symbol',
-  timer: 'SF Symbol',
-  'bell.fill': 'SF Symbol',
-  snowflake: 'SF Symbol',
-  // number formats: machine text, or formatted for the locale elsewhere
-  '%d:%02d': 'clock format',
-  '{}': 'a number on its own, "\\(value)"',
-  '--:--': 'the empty clock, not words',
-  ' ': 'a spacer that keeps a line\'s height while learning',
-  '': 'the empty string',
-  // the catalogue's own plumbing (EggTimerShared/Copy.swift)
-  en: 'locale tag',
-  json: 'file extension',
-  copy: 'bundle folder',
-  'copy/{}.json is not in the bundle - see the copy folder in ios/project.yml': 'developer error, never shown',
-  'copy/{}.json: {}': 'developer error, never shown',
-  'tr({}): given {}, takes {}': 'a debug build\'s check of a key\'s arguments, never shown',
-  // the record (INFERENCE.md §4): schema, never shown
-  CFBundleShortVersionString: 'Info.plist key',
-  CFBundleVersion: 'Info.plist key',
-  '{} ({})': 'the version and its build, "0.4.0 (2)": numbers, not words',
-  unknown: 'record field value, never shown',
-  '%04d-%02d-%02d': 'record day format, never shown',
-  // the store and the prior (INFERENCE.md section 4): schema, never shown
-  'surface|{}': 'a build\'s key in Cook, never shown',
-  'before|{}': 'a build\'s key in Cook, never shown',
-  'beforeSurface|{}|{}': 'a build\'s key in Cook, never shown',
-  boiling: 'a readout argument\'s name, read from core\'s readoutAt',
-  // fields of what is stored, outside the files that only hold stored formats
-  pans: 'stored pans field name (Store.swift, `BoilMemories`)',
-  chosen: 'stored language state field (LanguageChoice.swift)',
-  // the record's own fields, as the app fills them in: never shown
-  '{}+{}': 'the app version a record carries: version, plus, build number',
-  'alarm-{}-{}.caf': 'bundle resource name: an alarm sound\'s file (tools/sounds.ts)',
-  flip: 'notification userInfo key',
-  unitsFlipped: 'notification name',
-  s: 'string format suffix, never shown',
-  'init(coder:) is not used': 'developer error, never shown',
-  // the debug clock (EggTimerApp/AppClock.swift) and what the scripted checks
-  // read and tap with (tools/iosE2e.ts)
-  update: 'debug log (Screenshots.log), never shown',
-  // the one screen's checks (tools/iosE2e.ts): where each part sits, and
-  // what the idle screen shows
-  action: 'debug log name of a part of the screen, never shown',
-  main: 'debug log name of a part of the screen, never shown',
-  slider: 'debug log name of a part of the screen, never shown',
-  egg: 'debug log name of a part of the screen, never shown',
-  sentence: 'debug log name of a part of the screen, never shown',
-  '{}|{}|{}|{}': 'cache key, never shown',
-  '{}|{}|{}|{}|{}': 'cache key, never shown',
-  // the face of 1750 (ios/App/PeriodFace.swift)
-  IM_FELL_English_Roman: 'font name',
-  IM_FELL_English_Italic: 'font name',
-  liga: 'OpenType feature tag',
-  dlig: 'OpenType feature tag',
-  hist: 'OpenType feature tag',
-  '{} is not registered: see UIAppFonts in project.yml': 'developer error, never shown',
-  '{}#{}|{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
-  // links, symbols, separators and digits that size a line, the ring's
-  // log, and sharing's endpoint: none of them words on a screen
-  'https://github.com/danmackinlay/actual_egg_timer': 'URL',
-  'https://actualeggtimer.netlify.app/privacy': 'URL',
-  'https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf': 'URL',
-  'https://doi.org/10.1002/fsn3.257': 'URL',
-  'https://doi.org/10.1007/s11483-010-9200-1': 'URL',
-  'https://doi.org/10.1016/j.jfoodeng.2003.06.002': 'URL',
-  'https://doi.org/10.1088/0143-0807/27/1/013': 'URL',
-  'https://doi.org/10.1110/ps.03242803': 'URL',
-  'https://newton.ex.ac.uk/teaching/CDHW/egg/': 'URL',
-  'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking': 'URL',
-  https: 'URL scheme',
-  '{}://{}': 'URL built from parts',
-  'eggtimer-clause': 'URL scheme, never shown',
-  'u{1}': 'separator character, never shown',
-  'u{1}{}u{1}': 'separator-wrapped placeholder, never shown',
-  '•': 'list bullet',
-  ',': 'separator',
-  '.': 'decimal point, parsed not shown',
-  '0': 'digit, parsed not shown',
-  ' \n ': 'two hidden lines holding a height, never shown',
-  '00:00': 'digits sizing the countdown, never shown',
-  '0:00': 'digits sizing the countdown, never shown',
-  '0:00:00': 'digits sizing the countdown, never shown',
-  'arrow.right': 'SF Symbol',
-  checkmark: 'SF Symbol',
-  'chevron.up.chevron.down': 'SF Symbol',
-  'info.circle': 'SF Symbol',
-  'info.circle.fill': 'SF Symbol',
-  'name.danmackinlay.actualeggtimer': 'log subsystem',
-  ring: 'log category',
-  'ring stopped': 'log message, never shown',
-  'audio engine: {}': 'log message, never shown',
-  'audio session: {}': 'log message, never shown',
-  'ringing for {}: no notification holds it': 'log message, never shown',
-  'playing {} frames at {} Hz{}': 'log message, never shown',
-  ', looped': 'log message, never shown',
-  'no sound to play: its file is missing or unreadable': 'log message, never shown',
-  population: 'bundle resource name (Calibration.swift)',
-  'https://actualeggtimer.netlify.app': 'the endpoint\'s site, never shown',
-  'x-egg-assertion': 'HTTP header name',
-  'application/json': 'HTTP content type',
-  'content-type': 'HTTP header name',
-  POST: 'HTTP method',
-  DELETE: 'HTTP method',
-  'api/eggs': 'endpoint path',
-  'api/eggs/{}': 'endpoint path',
-  'api/attest': 'endpoint path',
-  uid: 'endpoint field name',
-  keyId: 'endpoint field name',
-  attestation: 'endpoint field name',
-  '%.{}f': 'number format, never shown',
+/** The app's own views and functions that take text: the labels, or the
+ *  positions of unlabelled arguments, that carry it. */
+const APP_CALLS: Record<string, (string | number)[]> = {
+  request: ['title', 'body'], // the alarm's notification (Alarm.swift)
+  StepperValue: ['label'], StepperRow: ['label'], CountValue: ['label'], ListChoice: ['label'],
+  MeasureField: ['label', 'spoken', 'shown'], NudgeField: ['label', 'text'], RoomField: ['shown'],
+  CoolingWaterField: ['shown'], MenuChoice: ['label', 'chosen'], YolkSlider: ['label', 'valueText'],
+  InfoButton: ['name'], InfoRow: ['name', 'more'], MoreText: [0], BarTitle: ['title'], barTitle: [0],
+  linked: [0], para: [0], aside: [0], subhead: [0], footnote: [0], answerButton: [0], answerRow: [0],
+  whiteButton: [0],
 };
+
+/** Arguments of a text call that name something other than text. */
+const NOT_TEXT = new Set([
+  'systemImage', 'systemName', 'image', 'named', 'destination', 'url', 'identifier', 'id', 'forKey', 'tag', 'bundle',
+  'tableName', 'comment', 'format', 'specifier', 'in', 'for', 'locale', 'language',
+]);
+
+/** Properties whose value is drawn or spoken: `x.text = …`. */
+const TEXT_PROPERTIES = new Set([
+  'text', 'attributedText', 'title', 'subtitle', 'body', 'placeholder', 'prompt', 'accessibilityLabel',
+  'accessibilityValue', 'accessibilityHint',
+]);
+
+/** Literals read that have a letter but are not words a cook reads, and
+ *  why: none today. */
+const NOT_COPY: Record<string, string> = {};
 
 /* ------------------------------------------------------------- the lexer */
 
-/** A literal, and whether it is a dictionary key - `"grams": .int(68)` - which
- *  is an argument's name rather than a word. */
-interface Literal { text: string; argument: boolean }
+type Token =
+  | { k: 'id'; text: string }
+  | { k: 'p'; text: string }
+  | { k: 'nl' }
+  | { k: 'str'; text: string; key: boolean; inner: Token[] };
 
-/** Every string literal in Swift source, `+` chains joined, interpolations
- *  as `{}`. Comments are skipped; nested literals inside an interpolation are
- *  literals of their own (a `specifier: "%.1f"`). */
-function literals(source: string): Literal[] {
-  const out: Literal[] = [];
+/** Swift as tokens, comments dropped. A string literal keeps its text (an
+ *  interpolation as `{}`), its interpolations' tokens, and whether a colon
+ *  follows at once: a dictionary key, where a ternary's has a space. */
+function lex(source: string): Token[] {
   let i = 0;
-  let pending: string | null = null;
-
-  // A colon straight after the quote is a dictionary key; a ternary's colon
-  // has a space before it.
-  const flush = (): void => {
-    if (pending !== null) out.push({ text: pending, argument: source[i] === ':' });
-    pending = null;
+  // Tokens up to the end, or, in an interpolation, up to its closing `)`.
+  const run = (inner: boolean): Token[] => {
+    const out: Token[] = [];
+    let depth = 0;
+    while (i < source.length) {
+      const c = source[i];
+      const rest = source.slice(i, i + 200);
+      const word = /^[A-Za-z_][A-Za-z0-9_]*/.exec(rest);
+      if (rest.startsWith('//')) i = source.indexOf('\n', i) < 0 ? source.length : source.indexOf('\n', i);
+      else if (rest.startsWith('/*')) i = source.indexOf('*/', i) + 2;
+      else if (rest.startsWith('"""')) throw new Error('multi-line literal: extend the lexer');
+      else if (c === '"') out.push(literal());
+      else if (c === '`') {
+        const end = source.indexOf('`', i + 1);
+        out.push({ k: 'id', text: source.slice(i + 1, end) });
+        i = end + 1;
+      } else if (word !== null) {
+        out.push({ k: 'id', text: word[0] });
+        i += word[0].length;
+      } else if (/^(==|!=|<=|>=|\+=|->)/.test(rest)) {
+        out.push({ k: 'p', text: rest.slice(0, 2) });
+        i += 2;
+      } else {
+        i += 1;
+        if (c === '\n') out.push({ k: 'nl' });
+        if (/\s/.test(c)) continue;
+        if (inner && c === ')' && depth-- === 0) return out;
+        if (c === '(') depth += 1;
+        out.push({ k: 'p', text: c });
+      }
+    }
+    return out;
   };
-
-  /** Read a literal whose opening quote is at `i`; returns its text and the
-   *  index after the closing quote. */
-  const read = (start: number): [string, number] => {
-    let j = start + 1;
+  const literal = (): Token => {
     let text = '';
-    while (j < source.length && source[j] !== '"') {
-      if (source[j] === '\\' && source[j + 1] === '(') {
-        // An interpolation: skip to the matching paren, lexing any literal
-        // inside it as a literal of its own.
-        let depth = 1;
-        j += 2;
-        while (j < source.length && depth > 0) {
-          if (source[j] === '"') {
-            const [inner, next] = read(j);
-            out.push({ text: inner, argument: false });
-            j = next;
-            continue;
-          }
-          if (source[j] === '(') depth += 1;
-          if (source[j] === ')') depth -= 1;
-          j += 1;
-        }
+    const inner: Token[] = [];
+    for (i += 1; i < source.length && source[i] !== '"'; i += 1) {
+      if (source[i] !== '\\') { text += source[i]; continue; }
+      const e = source[++i];
+      if (e === '(') {
+        i += 1;
+        inner.push(...run(true));
+        i -= 1;
         text += '{}';
-        continue;
-      }
-      if (source[j] === '\\') {
-        const escaped = source[j + 1];
-        text += escaped === 'n' ? '\n' : escaped === 't' ? '\t' : escaped;
-        j += 2;
-        continue;
-      }
-      text += source[j];
-      j += 1;
-    }
-    return [text, j + 1];
-  };
-
-  while (i < source.length) {
-    if (source.startsWith('//', i)) {
-      i = source.indexOf('\n', i);
-      if (i < 0) break;
-      continue;
-    }
-    if (source.startsWith('/*', i)) {
-      i = source.indexOf('*/', i) + 2;
-      continue;
-    }
-    if (source[i] === '"') {
-      if (source.startsWith('"""', i)) throw new Error('multi-line literal: extend the lexer');
-      const [text, next] = read(i);
-      pending = pending === null ? text : pending + text;
-      i = next;
-      // A `+` and another literal continue the chain; anything else ends it.
-      const rest = /^\s*\+\s*"/.exec(source.slice(i));
-      if (rest !== null) {
-        i += rest[0].length - 1;
-        continue;
-      }
-      flush();
-      continue;
+      } else if (e === 'u' && source[i + 1] === '{') {
+        const end = source.indexOf('}', i);
+        text += String.fromCodePoint(parseInt(source.slice(i + 2, end), 16));
+        i = end;
+      } else text += e === 'n' ? '\n' : e === 't' ? '\t' : e;
     }
     i += 1;
+    return { k: 'str', text: text, key: source[i] === ':', inner: inner };
+  };
+  return run(false);
+}
+
+const isP = (t: Token | undefined, text: string): boolean => t !== undefined && t.k === 'p' && t.text === text;
+const OPEN: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
+
+/** The index after the bracket that closes the one at `start`. */
+function closing(tokens: Token[], start: number): number {
+  const stack: string[] = [];
+  for (let j = start; j < tokens.length; j++) {
+    const t = tokens[j];
+    if (t.k === 'p' && t.text in OPEN) stack.push(OPEN[t.text]);
+    else if (t.k === 'p' && t.text === stack[stack.length - 1] && (stack.pop(), stack.length === 0)) return j + 1;
   }
-  flush();
+  return tokens.length;
+}
+
+/** A call's arguments, between the parentheses at `open`: each with its
+ *  label, if it has one, and its tokens after the label. */
+function argumentsAt(tokens: Token[], open: number): { label: string | null; tokens: Token[] }[] {
+  const end = closing(tokens, open) - 1;
+  const args: Token[][] = [[]];
+  for (let j = open + 1; j < end; j++) {
+    const t = tokens[j];
+    if (t.k === 'p' && t.text in OPEN) {
+      args[args.length - 1].push(...tokens.slice(j, closing(tokens, j)));
+      j = closing(tokens, j) - 1;
+    } else if (isP(t, ',')) args.push([]);
+    else if (t.k !== 'nl') args[args.length - 1].push(t);
+  }
+  return args.filter((a) => a.length > 0).map((a) => (a[0].k === 'id' && isP(a[1], ':')
+    ? { label: a[0].text, tokens: a.slice(2) }
+    : { label: null, tokens: a }));
+}
+
+/** What of an expression reaches the screen: all of it, interpolations
+ *  too, but a closure, a subscript's key and a nested call's arguments
+ *  labelled for something else. */
+function textTokens(tokens: Token[]): Token[] {
+  const out: Token[] = [];
+  for (let j = 0; j < tokens.length; j++) {
+    const t = tokens[j];
+    // An array literal follows anything but a name, `?`, `!`, `)` or `]`.
+    const before = tokens[j - 1];
+    if (isP(t, '{') || (isP(t, '[') && (before?.k === 'id' || ['?', '!', ')', ']'].some((x) => isP(before, x))))) {
+      j = closing(tokens, j) - 1;
+      continue;
+    }
+    if (isP(t, '(') && before?.k === 'id') {
+      for (const a of argumentsAt(tokens, j)) if (a.label === null || !NOT_TEXT.has(a.label)) out.push(...textTokens(a.tokens));
+      j = closing(tokens, j) - 1;
+      continue;
+    }
+    out.push(t);
+    if (t.k === 'str') out.push(...textTokens(t.inner));
+  }
   return out;
 }
 
-function swiftFiles(dir: string): string[] {
-  return readdirSync(dir).filter((f) => f.endsWith('.swift')).map((f) => join(dir, f));
+/** Whether an argument of a call to `name` carries text: any argument of
+ *  the system's text calls not labelled for something else, and the app's
+ *  by its label or position. */
+function carriesText(name: string, label: string | null, position: number): boolean {
+  if (TEXT_CALLS.has(name)) return label === null || !NOT_TEXT.has(label);
+  return APP_CALLS[name]?.includes(label ?? position) ?? false;
 }
 
-/** `source` with what only a debug build compiles blanked, line for line:
- *  an `#if DEBUG` branch up to its `#elseif` or `#else`, and what follows
- *  the `#elseif` or `#else` of an `#if !DEBUG`. Any other condition
- *  (`os(iOS)`) is scanned on both sides, since a release build may compile
- *  either. */
+/** What reaches the screen in `tokens`: the text arguments of every text
+ *  call, and the value given each text property. */
+function textSites(tokens: Token[]): Token[] {
+  const out: Token[] = [];
+  const walk = (ts: Token[]): void => {
+    for (let j = 0; j < ts.length; j++) {
+      const t = ts[j];
+      if (t.k === 'str') walk(t.inner);
+      if (t.k !== 'id') continue;
+      if (isP(ts[j + 1], '(') && !isP(ts[j - 1], 'func')) {
+        argumentsAt(ts, j + 1).forEach((a, n) => {
+          if (carriesText(t.text, a.label, n)) out.push(...textTokens(a.tokens));
+        });
+      }
+      if (TEXT_PROPERTIES.has(t.text) && isP(ts[j - 1], '.') && isP(ts[j + 1], '=')) {
+        let end = j + 2;
+        while (end < ts.length && ts[end].k !== 'nl') {
+          end = isP(ts[end], '(') || isP(ts[end], '[') || isP(ts[end], '{') ? closing(ts, end) : end + 1;
+        }
+        out.push(...textTokens(ts.slice(j + 2, end)));
+      }
+    }
+  };
+  walk(tokens);
+  return out;
+}
+
+/* --------------------------------------------------------------- sources */
+
+/** `source` less what only a debug build compiles: an `#if DEBUG` branch
+ *  before its `#else`, and an `#if !DEBUG`'s after. Other conditions are
+ *  read on both sides. */
 function releaseOnly(source: string): string {
-  // Each open `#if`: which half a debug build alone compiles (the half
-  // before its `#elseif`/`#else`, the half after, or neither), and whether
-  // that point is passed.
-  const open: { debugOnly: 'before' | 'after' | null; past: boolean }[] = [];
+  const open: { debug: 'before' | 'after' | null; past: boolean }[] = [];
   return source.split('\n').map((line) => {
-    const directive = /^\s*#(if|elseif|else|endif)\b\s*(.*?)\s*(\/\/.*)?$/.exec(line);
-    if (directive === null) {
-      const skipped = open.some((o) => (o.debugOnly === 'before' && !o.past) || (o.debugOnly === 'after' && o.past));
-      return skipped ? '' : line;
-    }
-    const [, word, condition] = directive;
-    if (word === 'if') {
-      const debugOnly = condition === 'DEBUG' ? 'before' : /^!\s*DEBUG$/.test(condition) ? 'after' : null;
-      open.push({ debugOnly: debugOnly, past: false });
-    } else if (word === 'endif') {
-      open.pop();
-    } else {
-      const top = open[open.length - 1];
-      if (top === undefined) throw new Error(`#${word} outside an #if`);
-      top.past = true;
-    }
+    const d = /^\s*#(if|elseif|else|endif)\b\s*(.*?)\s*(\/\/.*)?$/.exec(line);
+    if (d === null) return open.some((o) => o.debug !== null && (o.debug === 'before') !== o.past) ? '' : line;
+    if (d[1] === 'if') open.push({ debug: d[2] === 'DEBUG' ? 'before' : /^!\s*DEBUG$/.test(d[2]) ? 'after' : null, past: false });
+    else if (d[1] === 'endif') open.pop();
+    else if (open.length > 0) open[open.length - 1].past = true;
     return '';
   }).join('\n');
 }
 
-function sources(): Map<string, string> {
-  const files = new Map<string, string>();
-  for (const dir of DIRS) {
-    for (const name of swiftFiles(dir)) {
-      if (!DEBUG_FILES.has(name) && !FORMAT_FILES.has(name)) files.set(name, releaseOnly(readFileSync(name, 'utf8')));
-    }
-  }
-  return files;
+/** Whether a literal is words: a letter left without its interpolations and
+ *  printf-style number formats (`%d`, `%.{}f`). */
+function isWords(text: string): boolean {
+  return /\p{L}/u.test(text.replace(/%[-+ 0#]*(\d+|\{\})?(\.(\d+|\{\}))?(ll|l|h)?[a-zA-Z@]/g, '').replace(/\{\}/g, ''));
 }
 
 /* ------------------------------------------------------------------ main */
 
-// No literal in the Swift sources is words: each is an argument's name in key
-// position, or on the NOT_COPY list with the reason it is not copy; and no
-// NOT_COPY entry is one none needs.
 const en = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
-const now = [...sources().entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
 
 /** The names of arguments the catalogue takes: `"grams": .int(68)` in a call
  *  is not a word, as long as it is one of these and in key position. */
@@ -330,21 +276,28 @@ const argumentNames = new Set([...en.messages.values()]
 
 const failures: string[] = [];
 const needed = new Set<string>();
-for (const l of now) {
-  if (l.argument && argumentNames.has(l.text)) continue;
-  if (l.text in NOT_COPY) { needed.add(l.text); continue; }
-  failures.push(`${l.file}: "${l.text}" is still a literal`);
+let read = 0;
+const files = DIRS.flatMap((dir) => readdirSync(dir).filter((f) => f.endsWith('.swift')).map((f) => join(dir, f)));
+for (const file of files.filter((f) => !DEBUG_FILES.has(f))) {
+  for (const t of textSites(lex(releaseOnly(readFileSync(file, 'utf8'))))) {
+    if (t.k !== 'str') continue;
+    read += 1;
+    if (process.argv.includes('--list')) console.log(`${file}: ${JSON.stringify(t.text)}`);
+    if (t.key && argumentNames.has(t.text)) continue;
+    if (!isWords(t.text)) continue;
+    if (t.text in NOT_COPY) { needed.add(t.text); continue; }
+    failures.push(`${file}: "${t.text}" is words on a screen; give it a key in copy/en.json`);
+  }
 }
-for (const name of [...DEBUG_FILES, ...FORMAT_FILES]) {
-  if (!existsSync(name)) failures.push(`${name} is skipped and is no file; take it off its list`);
-}
+for (const name of DEBUG_FILES) if (!existsSync(name)) failures.push(`${name} is skipped and is no file; take it off its list`);
 for (const entry of Object.keys(NOT_COPY)) {
-  if (!needed.has(entry)) failures.push(`NOT_COPY: "${entry}" is no scanned literal that needs it; delete it`);
+  if (!needed.has(entry)) failures.push(`NOT_COPY: "${entry}" is no literal read that needs it; delete it`);
 }
 
-console.log(`${now.length} Swift literals: arguments' names, or on NOT_COPY.`);
+console.log(`${read} literals in the text arguments of ${TEXT_CALLS.size} of the system's calls and `
+  + `${Object.keys(APP_CALLS).length} of the app's, and in text properties.`);
 if (failures.length > 0) {
   console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
   process.exit(1);
 }
-console.log('no Swift literal is words, and every NOT_COPY entry is needed.');
+console.log('none of them is words, and every NOT_COPY entry is needed.');

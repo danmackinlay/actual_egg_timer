@@ -213,14 +213,6 @@ export interface CopyKeyArgs {
   'help.unsure.sousVide': 'floor';
   'help.sources.title': never;
   'help.sources.intro': never;
-  'help.source.williams': never;
-  'help.source.buay': never;
-  'help.source.abbasnezhad': never;
-  'help.source.denys': never;
-  'help.source.vega': never;
-  'help.source.weijers': never;
-  'help.source.hoyt': never;
-  'help.source.usda': never;
   'help.privacy': never;
   'help.credit': never;
   'nav.back': never;

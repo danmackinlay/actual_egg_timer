@@ -39,7 +39,7 @@ Which app shows a key is read from the sources (`tools/copyNotes.ts`).
 
 **Changing the words.** The steps are `CLAUDE.md`'s "To change wording";
 reading and approving them is `DEVELOPING.md`'s "Reviewing the words"; the
-review queue and the twins' stamps are §3.
+review queue and the twins' lag are §3.
 
 **Plurals.** A small hand-written rule function chooses the category for
 each shipped language. On the web this could be `Intl.PluralRules`, but
@@ -68,9 +68,9 @@ still lists the languages.
 
 **Core speaks no English.** Core returns keys and numbers, never sentences:
 a `CopyRef`, `{ key, args }`. A key is a `CopyKey`, made from
-`copy/en.json` by `npm run copy:keys` (`DECISIONS.md` 127): a key the
-catalogue lacks, or a web `t()` call with a missing or extra argument, does
-not compile.
+`copy/en.json` by `npm run copy:keys`, which `npm test` runs first
+(`DECISIONS.md` 127): a key the catalogue lacks, or a web `t()` call with a
+missing or extra argument, does not compile.
 
 - The doneness anchors carry a `key`, not a label.
 - A size class's label takes its grams from the mass, as an argument, so a
@@ -100,6 +100,10 @@ not compile.
   twin and no translation, because it is a statement that must mean exactly
   one thing, and its speaker is the owner, not the app (`DECISIONS.md` 51).
   Only the Help link to it, `help.privacy`, is copy.
+- **Help's sources** (`help-sources.json`): each citation and the address
+  it links to, as `README.md` section 10 gives them. They are the same in
+  every language, so they are data both apps read (the web bundles the
+  file, iOS has it as a resource), not words to review or translate.
 
 **Regional overlays** (`DECISIONS.md` 55). English is one language with one
 catalogue, `copy/en.json`, and it is Australian. A region whose kitchen says
@@ -122,17 +126,21 @@ in running water or in the air, not under a cold tap or on a bench
   part, so a wording change to an overlaid key rewrites the overlay too.
 - A British overlay ("worktop") waits until someone asks for one.
 
-**Conformance.** `fixtures/copy.json` renders every key, with representative
-arguments, in every shipped locale. Both apps must produce it byte for byte.
-Two tests run against that fixture:
+**Conformance.** `fixtures/copy.json` pins the renderer on catalogues of
+its own, every kind of placeholder, plural form, fallback and malformed
+brace, so a wording change never rewrites it; both apps must render it
+byte for byte. The shipped catalogues are held by each app's tests
+(`copy.test.ts`, `CopyConformance`):
 
 - **Placeholder parity.** Every translation uses exactly the same placeholders
   as the English. A dropped `{limit}` is a sentence that lies about the egg.
-- **Length budget.** Each surface has a maximum rendered width: Dynamic
-  Island compact, Lock Screen, notification title, button, body text and the
-  rest. `test/data/surfaces.json` holds one budget per surface, not per key:
-  a per-key budget set from the English would fail every language that runs
-  longer than English, which is all of them.
+- **Length budget, on the small surfaces.** A tick, a segment, a button, a
+  label, a title, the alarm, the Lock Screen and the Dynamic Island each
+  have a maximum rendered width, one per surface in `test/data/surfaces.json`,
+  not per key: a per-key budget set from the English would fail every
+  language that runs longer than English, which is all of them. Prose that
+  wraps freely (a body, an (i)'s paragraph, Help) and what is only read
+  aloud have none.
 
 **Numbers and times of day** go through the platform's formatters, with an
 explicit locale: `Intl` on the web, `NumberFormatter` and `DateFormatter` on
@@ -237,37 +245,33 @@ cost in Czech (§5).
 - Wording is judged in place on a phone, not approved row by row in a table
   (`UI.md` §6).
 
-**How a wording change is made, read and approved** (`DECISIONS.md` 106).
-Every word is in `copy/*.json`, and `npm run copy:literals` keeps words out
-of the Swift code, so what a change does to the words is the catalogue's
-diff. `CLAUDE.md` has the steps.
+**How a wording change is made, read and approved.** Every word is in
+`copy/*.json`, and `npm run copy:literals` keeps words out of the places
+Swift puts text on a screen, so what a change does to the words is the
+catalogue's diff.
 
 - **Made**: an edit to `copy/en.json`, in both apps, with each
-  `copy/en-US.json` entry it reaches and that entry's `base` (§2), each
-  string within its surface's budget (`test/data/surfaces.json`); then
-  `npm run copy:keys` when a key or its arguments change, and
-  `npm run fixtures`.
-- **Approval is stored.** `test/data/copy-review/approved.json` holds, per
-  key, the English the owner approved and its hash. It began from the
-  English of `e3a81cb` (the `notes` draft, 3 October 2026), the last time he
-  read every string.
-  Every key whose English hashes otherwise (changed), that has no approval
-  (added), or that has one and is gone from the English (removed) is the
-  review queue: generated, never typed. `npm run copy:queue` prints it, each
-  key with its approved and current English and its apps. The queue never
-  fails a build; a malformed `approved.json` does (`test/copyQueue.test.ts`).
-- **Read** on a phone: `npm run copy:review` writes `copy-review.html`
-  (gitignored), one file with no script and no network, light or dark. For
-  each key: the approved English against today's, word by word; the 1750
-  twin, and whether it is stale or missing; the en-US words; the surface's
-  budget against the longest rendering, as `copy.test.ts` 5a measures it;
-  which apps say it; and its note. The words are still judged in place, in
-  the apps (`UI.md` §6); the page says what to look at.
-- **Approved** on the owner's word, never on an agent's judgement:
-  `npm run copy:approve -- <key…|--all>` stamps today's English for those
-  keys. A removed key named, or `--all`, drops its approval. `--at <ref>`
-  stamps a commit's English instead, which is how the file began
-  (`--all --at e3a81cb`).
+  `copy/en-US.json` entry it reaches and that entry's `base` (§2), then
+  `npm test` and `npm run fixtures:check` (`CLAUDE.md` has the gate).
+  What holds it: placeholder parity, curly quotes, the small surfaces'
+  budgets, the overlays' `base`, keys and arguments checked by both
+  compilers, and no raw key on screen (`copy.test.ts`, `copy:literals`).
+- **Approval is one commit.** `test/data/copy-approved.txt` holds the hash
+  of the last commit whose words the owner approved. The review queue is
+  `copy/` at that commit against the working tree, key by key: changed (the
+  English or an overlay), added or retired. It is generated, never typed;
+  `npm run copy:queue` prints it, and it never fails a build.
+- **Read** on a phone: `npm run copy:review` writes
+  `_dev/copy-review.html`, one file with no script and no network, light
+  or dark. For each key: the approved English against today's, word by
+  word; the 1750 twin, and whether it is stale; the en-US words; a small
+  surface's budget against the longest rendering; which apps say it; and
+  its note. The words are still judged in place, in the apps (`UI.md` §6).
+- **Approved** on the owner's word, never on an agent's judgement, and of
+  the whole catalogue: he says what to put back, and once that is
+  committed, `npm run copy:approve` records HEAD (it refuses while `copy/`
+  has uncommitted changes), or `-- <commit>` the commit the page was made
+  from, which the page prints. Nothing is approved key by key.
 
 A string the owner has approved (the `alarm.pull.*` bodies,
 `alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
@@ -276,22 +280,14 @@ it like the rest, and a change puts it back in the queue.
 
 **The twins may lag the English** (`DECISIONS.md` 116). A translation's
 twin need not be rewritten in the commit that changes its English; the
-twins are written in batches. Each translation has a sidecar,
-`<tag>.base.json` beside the approvals (today
-`test/data/copy-review/en-x-1750.base.json`): per key with a twin, the hash
-of the English it was written against (`base`); per key left to English on
-purpose, the hash of the English it was judged at (`english`; `npm run copy:queue`
-lists them). A twin whose English has moved since is stale, and keeps
-showing. A key with no twin that is not left to English is missing, and
-renders in English (`src/core/copy.ts`). The queue and the page list both,
-and neither fails a build. Once a twin is rewritten,
-`npm run copy:approve -- --translation <tag> <key…|--all>` stamps it; a key
-named that has no twin is stamped as left to English. No app reads the
-sidecars or the approvals, so they are kept out of `copy/`, which holds
-only catalogues (`en1750.test.ts` 1a): the site and the iOS bundle ship
-that folder whole. Czech (F5) gets the same by adding its catalogue and
-stamping it. A regional overlay may not lag: it keeps its own `base`, held
-by `copy.test.ts` 7a (§2).
+twins are written in batches. A twin is stale when the English at the
+commit that last wrote its line (`git blame`; a catalogue has one key per
+line) is not today's English; a key with no twin shows the English
+(`src/core/copy.ts`). The queue and the page list both, and neither fails
+a build. That reads history, so it is local tooling, not CI's, whose clone
+is shallow. A stale twin stops being stale when it is rewritten. A regional
+overlay may not lag: it keeps its own `base`, held by `copy.test.ts` 7a
+(§2).
 
 **Rules the drafts settled, which stand:**
 
@@ -460,9 +456,9 @@ maintainable about the joke follows from that:
   the discoverable way in, and choosing *English* is the way out; the two
   are named alike in both catalogues, so either can be found from the other.
   A cook who wants °F in modern English picks English and keeps Fahrenheit.
-- **It is under the same tests as any other language**: placeholder parity, the
-  length budget, and the conformance fixture. Its own rules, below, are
-  `test/en1750.test.ts`.
+- **It is under the same tests as any other language**: placeholder parity,
+  the small surfaces' budgets, and loading in both apps (§2). Its own rules,
+  below, are `test/en1750.test.ts`.
 
 **Two ways in.**
 
@@ -656,6 +652,5 @@ every visitor.
 
 Czech (F5) waits for its reviewer, and wants English that will not move
 again. A new language adds its catalogue, its plural rule and a fixture row
-(§2), an `OWN_CONVENTION` entry if it writes numbers one way everywhere
-(§2) and its stamps in the review sidecars (§3), and stays behind a build
-flag until it is read (§5).
+(§2) and an `OWN_CONVENTION` entry if it writes numbers one way everywhere
+(§2), and stays behind a build flag until it is read (§5).

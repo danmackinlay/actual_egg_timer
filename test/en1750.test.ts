@@ -24,7 +24,7 @@ import {
 import { FRESH_LANGUAGE, readLanguageState } from '../src/ui/settings.ts';
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
-import { catalogueTags, isCatalogueFile, readBases, translationTags, twinState } from '../tools/copyApproval.ts';
+import { catalogueTags, isCatalogueFile, translationTags } from '../tools/copyApproval.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
 import { NOTES_PATH, readNotes } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
@@ -65,28 +65,23 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   assert.ok(translationTags().includes(PERIOD_LANGUAGE));
   // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
   // which neither app ships (tools/buildSite.mjs and ios/project.yml leave
-  // them out). Anything else would ship, so the review queue's state is kept
-  // in test/data/copy-review/.
+  // them out). Anything else would ship, so the approved record is kept in
+  // test/data/.
   for (const f of readdirSync('copy')) {
     assert.ok(isCatalogueFile(f) || `copy/${f}` === NOTES_PATH, `${f}: not a catalogue, and the apps would ship it`);
   }
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 
-/** Keys 1750 leaves to English on purpose: the app's name, which is a name. */
-const LEFT_TO_ENGLISH = new Set(['app.name']);
-
 test('1b. every twin is an English key; a key without one is listed, not refused', () => {
-  // The twins may lag the English: a key with no twin
-  // renders in English (1c), and `npm run copy:queue` lists it as missing
-  // unless its base says it is left to English on purpose. Every twin there
-  // is - the web's, and iOS's alarms, Live Activity and Dynamic Island - is
-  // held to every rule below: the archaisms, the spellings, the long s.
+  // The twins may lag the English: a key with no twin renders in English
+  // (1c), and `npm run copy:queue` lists it, with the twins written against
+  // older English. Every twin there is - the web's, and iOS's alarms, Live
+  // Activity and Dynamic Island - is held to every rule below: the
+  // archaisms, the spellings, the long s.
   for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
-  for (const key of LEFT_TO_ENGLISH) {
-    assert.ok(!PERIOD.messages.has(key), `${key}: left to English`);
-    assert.equal(twinState(key, P_JSON, EN_JSON, readBases(PERIOD_LANGUAGE)), 'leftToEnglish', key);
-  }
+  // The app's name is a name, and stays English.
+  assert.ok(!PERIOD.messages.has('app.name'));
 });
 
 test('1b2. the small surfaces keep to a few words of period flavour', () => {

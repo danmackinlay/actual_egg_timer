@@ -55,14 +55,18 @@ targets:
       # A folder reference rather than a group, so a new language is a new file
       # and not a project change. Rendered by EggTimerCopy - see EggTimerShared's Copy.swift.
       # All of it ships but the notes beside the catalogue, which the last
-      # build phase takes out again (below); the review queue's state is in
-      # test/data/copy-review (en1750.test.ts 1a).
+      # build phase takes out again (below); the approved record is in
+      # test/data (en1750.test.ts 1a).
       - path: ../copy
         type: folder
         buildPhase: resources
       # The population a new cook's prior is drawn from: the same file
       # the web app fetches, bundled as population.json (Calibration.swift).
       - path: ../fixtures/population.json
+        buildPhase: resources
+      # Help's sources, citations and their addresses: the same file the web
+      # app bundles, bundled as help-sources.json (HelpView.swift).
+      - path: ../help-sources.json
         buildPhase: resources
     # copy/*.notes.json is the tools' and the tests', never the app's: a folder
     # reference cannot leave a file out, so it is deleted from the bundle once
