@@ -46,12 +46,7 @@ and the map of the documents are `CLAUDE.md`.
       `AsRan.swift` and `Record.swift`: keep only what is
       about the port, and point at the TypeScript, as the rest of the twin
       does.
-    - The web model holds settings in four copies and the idle solve in six
-      fields, and keeps three redraw memos: group them, and skip the field
-      in focus instead.
-    - `src/ui/stores.ts` lists the stores twice (`STORE_LIST`): derive it.
-    - Element ids are written in `index.html`, `dom.ts` and the e2e: one
-      list.
+    - The web model's `sharing` repeats `share.state.on`: derive it.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
