@@ -46,49 +46,16 @@ and the map of the documents are `CLAUDE.md`.
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
 10. **Cook real eggs**, and take the two measurements in README §11.3.
-11. **Statistics clean-up** (the fit's checks; next wave). Nothing here
-    blocks a merge: CI's fit job is the recovery check, and SBC runs by
-    hand, needed before the first real fit is published.
-    - **The recovery check's joint test** (`DECISIONS.md` 133, owner: "more
-      modern than Bonferroni"). Each global's interval is 1 − 0.10/9, which
-      ignores the correlation between globals (`lag` and `log_g0` −0.75).
-      This is a pass/fail gate, so the error to control is the chance a
-      calibrated fit fails, which is family-wise, not FDR. Under the global
-      null Benjamini–Hochberg reduces to Simes's test, which is valid here
-      and less conservative than Bonferroni. Candidates, best first: one
-      joint test of the truth's Mahalanobis distance under the posterior's
-      covariance (χ² on 9 degrees of freedom), which uses the correlations;
-      Simes; Holm. The interval was widened after three near misses on one
-      sample, all inside 0.6 posterior sds (`fit/README.md`), and the
-      200-repetition SBC finds no bias, so the present check is not wrong,
-      only blunt.
-    - **The same for SBC's nine uniformity tests**, which `sbc.md` reads by
-      eye ("one in nine below 0.05 is chance"): one joint verdict.
-    - **Make SBC cheap enough to run often** (`fit/eggfit/sbc.py`). It takes
-      about two hours on the owner's Mac. What it guards is the Python
-      model's priors and hierarchy: the likelihood is pinned to the core's,
-      and NUTS is numpyro's.
-      - Batch the repetitions: `vmap` the fit across simulated datasets, or
-        numpyro's vectorized chains, padding each dataset with zero-weight
-        eggs.
-      - Rank the simulated data's log-likelihood as well as the parameters:
-        a fit that ignores the data has uniform parameter ranks, and this
-        quantity catches it, and other bugs, in fewer repetitions. Modrák
-        et al., [SBC checking: the choice of test quantities shapes
-        sensitivity](https://arxiv.org/abs/2211.02383).
-      - Test the ranks' ECDF against simultaneous bands, not binned
-        chi-square. Säilynoja, Bürkner and Vehtari, [Graphical test for
-        discrete uniformity](https://arxiv.org/abs/2103.10522).
-      - Run in batches and stop once the ECDF is clearly inside or outside
-        its bands. Gandy and Scott, [Unit testing for MCMC and other Monte
-        Carlo methods](https://arxiv.org/abs/2001.06465).
-      - Simulate fewer cooks per repetition; the log-likelihood quantity
-        makes up the lost sensitivity.
-      - Done when SBC runs in minutes, often enough to schedule.
-      - Later, with real eggs: [SBC checking conditional on
-        data](https://arxiv.org/abs/2502.03279). Set aside: [discriminative
-        calibration](https://arxiv.org/abs/2305.14593), more machinery than
-        this model needs.
+11. **Clean up the fit's statistics** (`fit/README.md` has the reasoning
+    and sources). No merge waits on it: CI's fit job is the recovery check,
+    and SBC runs by hand before the first real fit is published.
+    - Replace the recovery check's per-global Bonferroni interval with one
+      family-wise test (`DECISIONS.md` 133): Simes, Holm, or a Mahalanobis
+      test on the spreads' log scale.
+    - Give `sbc.md`'s nine uniformity tests the same single verdict.
+    - Make SBC run in minutes: batch the repetitions, rank the data's
+      log-likelihood too, test the rank ECDF against bands, stop early,
+      simulate fewer cooks.
 12. **Move the correction in hand into core** (`DECISIONS.md` 139). Write the
     reducer beside `step` in `src/core/`, with its fixture of event
     sequences, then the Swift twin under conformance. Replace the web's

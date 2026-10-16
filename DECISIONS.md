@@ -662,7 +662,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     iOS, nothing sent); `npm run eggs -- import`, which reads the owner's
     files back for the fit, older ones included; replaying the posterior
     whenever the model it was folded under (`MODEL_ID`, kept beside it) is
-    not this build's. No newer-build guard stays (136). A cook too old to
+    not this build's. A cook too old to
     pick back up that finished unanswered is logged as unanswered, and on
     iOS a second answer after a relaunch is kept when the egg is the last
     in the log and not yet shared. Export from a current build before
@@ -855,8 +855,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Every tab shares one storage, so independent tabs needed the cross-tab
     merges, which go; keeping them apart would have meant a store per tab
     for the cook beside a shared one for the learning. Without Web Locks
-    (an insecure context) every tab runs as before. No newer-build mark
-    stays (136). A new build no longer waits for the site's one window: a
+    (an insecure context) every tab runs as before. A new build no longer
+    waits for the site's one window: a
     waiting tab reloads into it.
 129. **esbuild bundles the site; Node runs the TypeScript** (the owner, 14
     October 2026, on the adversarial review). The site is built by esbuild,
@@ -895,7 +895,9 @@ October:
     known truth, one of them in the prior's tail: the identified globals'
     posteriors narrow to under half the prior's spread, so a fit that lost
     its data fails; every global lies inside its 1 - 0.10/9 interval, so
-    that all nine cover together at 90% (the width is open, `PLAN.md`);
+    that all nine cover together at 90%, until a family-wise test that is
+    not Bonferroni replaces it (the owner, 16 October 2026: "more modern
+    than that"; `PLAN.md`);
     R-hat below 1.01, a bulk ESS of 100 a chain, no divergent transition.
     By hand, simulation-based calibration (`python -m eggfit sbc`). A fit
     whose diagnostics fail is written nowhere unless forced; the published
