@@ -29,10 +29,10 @@
  * without its keys fails.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.ts';
-import { replaceFile } from './fixtureCompare.ts';
+import { replaceChanged } from './fixtureCompare.ts';
 
 export const TS_KEYS = 'src/core/copyKeys.ts';
 export const SWIFT_KEYS = 'ios/EggTimerCore/Sources/EggTimerCopy/CopyKeys.swift';
@@ -85,8 +85,7 @@ ${named.join('\n')}
 
 const keys = keysOf('copy/en.json');
 const written: [string, string][] = [[TS_KEYS, typescript(keys)], [SWIFT_KEYS, swift(keys)]];
-const stale = written.filter(([path, text]) => !existsSync(path) || readFileSync(path, 'utf8') !== text).map(([path]) => path);
-for (const [path, text] of written) if (stale.includes(path)) replaceFile(path, text);
+const stale = replaceChanged(written);
 
 if (process.argv.includes('--check')) {
   if (stale.length > 0) {

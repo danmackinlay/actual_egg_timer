@@ -51,10 +51,10 @@ export function isFixed(value: unknown): value is Fixed {
 /** The most decimals a count is shown with. A count is a whole number almost
  *  always; this is the cap for the day one is not, and it is `Intl`'s own
  *  default. */
-const COUNT_MAX_DECIMALS = 3;
+export const COUNT_MAX_DECIMALS = 3;
 
 /** The space every time of day uses between its parts: U+202F. */
-const TIME_SPACE = '\u202F';
+export const TIME_SPACE = '\u202F';
 
 /* -------------------------------------------------------------- numbers */
 

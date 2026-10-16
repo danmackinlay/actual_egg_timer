@@ -6,14 +6,13 @@
 
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.ts';
 import { oddsProfile } from '../../src/core/reach.ts';
-import { decisionInputs, inputsKey } from '../../src/core/decide.ts';
 import type { GridSpec } from '../../src/core/doseGrid.ts';
 import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
-  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RecordContext, type RunningCook,
-  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, type SlowHobMemo, type SlowHobPlace,
+  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RecordContext, type RunningCook,
+  type SlowHobMemo, type SlowHobPlace,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
   corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
   replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
@@ -67,18 +66,7 @@ const setupChoices: CookChoices[] = [];
 const setups = setupChoices.map((choices, i) => {
   const timeToBoil_s = [480, 30, 7200, 611.25][i % 4];
   const pot = cookSetupOf(choices, timeToBoil_s);
-  const inputs = decisionInputs(calibrationOf(named('learned')), pot.egg, pot.setup);
-  return {
-    choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup,
-    // The key's numbers in its order, as text that every reader parses to
-    // the bit (a JSON reader may read a 17-digit number an ulp off).
-    keyNumbers: [
-      pot.egg.radius_m, pot.egg.minorDiameter_m, pot.egg.mass_kg, pot.egg.volume_m3, pot.setup.eggStart_C,
-      pot.setup.ambient_C, pot.setup.boiling_C, pot.setup.timeToBoil_s, pot.setup.waterLitres, pot.setup.eggCount,
-      inputs.params.alpha_m2s, inputs.whiteDose_min,
-    ].map(String),
-    inputsKey: inputsKey(inputs),
-  };
+  return { choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup };
 });
 
 /* ---------------------------------------------------------------- moves */
@@ -194,7 +182,8 @@ interface PlanCase {
   surface: SurfaceAsk;
   outs?: number[];
   dues?: number[];
-  /** The slow hob's hint handed to the plan. */
+  /** The slow hob's hint handed to the plan here, which must not move it:
+   *  the fixture writes the plan, which is the plan made with none. */
   hint?: SlowHobMemo | null;
   /** Moments to ask whether the slow hob's moment has come (`slowHobDue`). */
   hobDue?: number[];
@@ -224,37 +213,18 @@ function surfaceFor(
 }
 
 /** The slow hob's memo as the fixtures write it: where the rule got to, and
- *  the key of what it read, which a core whose numbers differ in their last
- *  bits makes otherwise, and then works the rule from the start: the same
- *  plan. */
+ *  not the key of what it read. The key is each core's own, every number to
+ *  the bit, and two cores' numbers agree in distribution, not in bits
+ *  (DECISIONS.md 109): each core holds its own memo to its own plans. */
 function memoJson(m: SlowHobMemo | null) {
   if (m === null) return null;
   const p = m as SlowHobPlace;
-  return { key: p.key, steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
+  return { steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
 }
 
+/** The plan whole, its memo as `memoJson` writes it. */
 function planJson(p: CookPlan) {
-  const d = p.decided;
-  return {
-    egg: { mass_kg: p.egg.mass_kg }, setup: p.setup,
-    inputs: p.inputs === null ? null : { params: p.inputs.params, whiteDose_min: p.inputs.whiteDose_min },
-    answer: {
-      level: p.answer.level, kind: p.answer.verdict.kind, snapTo: p.answer.verdict.snapTo,
-      lowOdds: p.answer.lowOdds, cookTime_s: p.answer.solution.result.cookTime_s,
-    },
-    solution: {
-      reachable: p.solution.reachable, whiteSets: p.solution.whiteSets, cookTime_s: p.solution.result.cookTime_s,
-      peakYolk_C: p.solution.result.peakYolk_C, peakYolkTime_s: p.solution.result.peakYolkTime_s,
-    },
-    decided: d === null ? null : {
-      level: d.level, cookTime_s: d.solution.result.cookTime_s, decision: d.decision, nudge_s: d.nudge_s,
-      adviceWanted: d.adviceWanted,
-    },
-    lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, memo: memoJson(p.memo),
-    tooOldAt_s: p.tooOldAt_s,
-    certainty: p.certainty, forecast: p.forecast,
-  };
+  return { ...p, memo: memoJson(p.memo) };
 }
 
 const plans: unknown[] = [];
@@ -293,7 +263,7 @@ function plan(pc: PlanCase): CookPlan {
   }
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
-    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: memoJson(hint),
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s,
     surface: built === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
       grid: built.spec,
@@ -315,12 +285,10 @@ function plan(pc: PlanCase): CookPlan {
 }
 
 /** The solve as it ran (`solutionAsRan`) of what Done shows, where it shows
- *  one: the peaks and whether the white sets, which the texture note reads. */
+ *  one: the peaks and whether the white sets are what the texture note reads. */
 function solutionShown(cook: RunningCook, p: CookPlan) {
   const ran = asRanShown(cook, p);
-  if (ran === null) return null;
-  const sol = solutionAsRan(p, ran);
-  return { peakYolk_C: sol.result.peakYolk_C, peakWhite_C: sol.result.peakWhite_C, whiteSets: sol.whiteSets };
+  return ran === null ? null : solutionAsRan(p, ran);
 }
 
 /** `asRanCorrected` on the plan's calibration and surface: its plan as it
@@ -660,18 +628,11 @@ function stored(node: unknown): unknown {
 
 export const runningFixture = stored({
   about: 'A running cook: its egg and pot, the moves the cook makes, the plan derived from it, and the phase at every boundary. src/core/running.ts.',
-  constants: {
-    slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
-    slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS, restoreWindow_s: RESTORE_WINDOW_S,
-  },
   setups: setups,
   moves: moves,
   plans: plans,
   remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
   phase: {
-    coolingSeconds: COOLING_SECONDS,
-    pullGraceSeconds: PULL_GRACE_SECONDS,
-    slowHob: { whenLeft_s: SLOW_HOB_WHEN_LEFT_S, extra_s: SLOW_HOB_EXTRA_S, every_s: SLOW_HOB_EVERY_S },
     /* Two timelines from the same cook, differing only in whether there is a
      * cooling step to time. The counter one matters most: with no cooling
      * deadline, a port could fall from COOKING straight to DONE and never show

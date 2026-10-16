@@ -5,37 +5,11 @@ import Foundation
 /// How sure the timer is, in words, against `fixtures/certainty.json`: the
 /// word asked at every slider position, each word's band on the slider, the
 /// class, the interval and the bracket from spreads written to hit every
-/// edge, and the whole reading and its bracket from real
-/// posteriors at the time decided. The surface and three posteriors are
-/// decide.json's; the fourth is outcome.json's.
-
-private func expectWords(_ w: WordCertainty, _ json: [String: Any], _ label: String) throws {
-    #expect(try w.asked == Int(json.num("asked")), "\(label) asked")
-    #expect(try w.certainty.rawValue == json.str("certainty"), "\(label) certainty")
-    try expectClose(w.pAsked, json.num("pAsked"), "\(label) pAsked")
-    try expectClose(w.pNear, json.num("pNear"), "\(label) pNear")
-    #expect(try w.from == Int(json.num("from")), "\(label) from")
-    #expect(try w.to == Int(json.num("to")), "\(label) to")
-    try expectClose(w.pInterval, json.num("pInterval"), "\(label) pInterval")
-    #expect(try w.mostLikely == Int(json.num("mostLikely")), "\(label) most likely")
-}
-
-private func expectBracket(_ b: WordBracket, _ json: [String: Any], _ label: String) throws {
-    #expect(try b.low == json.num("low"), "\(label) bracket low")
-    #expect(try b.mark == json.num("mark"), "\(label) bracket mark")
-    #expect(try b.high == json.num("high"), "\(label) bracket high")
-}
-
+/// edge, and the whole reading and its bracket from real posteriors at the
+/// time decided. The surface and three posteriors are decide.json's; the
+/// fourth is outcome.json's.
 @Suite("Certainty")
 struct CertaintyConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("certainty.json", "constants")
-        #expect(try certaintyMass == c.num("certaintyMass"))
-        #expect(try timeRangeLowQ == c.num("timeRangeLowQ"))
-        #expect(try timeRangeHighQ == c.num("timeRangeHighQ"))
-    }
-
     @Test("the word asked, at every slider position and where the word changes")
     func asked() throws {
         for row in try Fixtures.list("certainty.json", "asked") {
@@ -48,8 +22,7 @@ struct CertaintyConformance {
     func bands() throws {
         for row in try Fixtures.list("certainty.json", "bands") {
             let k = try Int(row.num("word"))
-            #expect(try wordBandLow(k) == row.num("low"), "word \(k) low")
-            #expect(try wordBandHigh(k) == row.num("high"), "word \(k) high")
+            expectJSON(["word": Double(k), "low": wordBandLow(k), "high": wordBandHigh(k)], row, "word \(k)")
         }
     }
 
@@ -58,17 +31,14 @@ struct CertaintyConformance {
         for row in try Fixtures.list("certainty.json", "spreads") {
             let w = try wordCertainty(row.numbers("p"), asked: Int(row.num("asked")))
             let note = try row.str("note")
-            try expectWords(w, row.object("words"), note)
-            try expectBracket(wordBracket(w), row.object("bracket"), note)
+            expectJSON(w, row["words"], note)
+            expectJSON(wordBracket(w), row["bracket"], "\(note): the bracket")
         }
     }
 
     @Test("the reading at the time decided, from four posteriors")
     func readings() throws {
-        let g = try Fixtures.object("decide.json", "grid")
-        let grid = try doseGrid(
-            g, egg: Geometry.eggFromMass(g.object("egg").num("mass_kg")), setup: cookSetup(g.object("setup"))
-        )
+        let grid = try decideGrid()
         var byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
         for (name, post) in try posteriorsByName(Fixtures.list("outcome.json", "posteriors")) {
             byName[name] = post
@@ -77,13 +47,8 @@ struct CertaintyConformance {
             let post = try #require(byName[row.str("posterior")], "case \(i): no posterior")
             let label = try "case \(i) (\(row.str("note")))"
             let r = try certaintyAt(post, grid, row.num("cookTime_s"), level: row.num("level"))
-            let expected = try row.object("reading")
-            try expectWords(r.words, expected.object("words"), label)
-            try expectBracket(wordBracket(r.words), row.object("bracket"), label)
-            let time = try expected.object("time")
-            try expectClose(r.time.lowS, time.num("low_s"), "\(label) time low")
-            try expectClose(r.time.highS, time.num("high_s"), "\(label) time high")
-            #expect(try r.atS == expected.num("at_s"), "\(label) read at")
+            expectJSON(r, row["reading"], label)
+            expectJSON(wordBracket(r.words), row["bracket"], "\(label): the bracket")
         }
     }
 }

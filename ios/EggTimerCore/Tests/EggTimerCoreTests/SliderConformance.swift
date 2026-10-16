@@ -12,25 +12,15 @@ import Foundation
 
 @Suite("Snapping and the labels match the reference implementation")
 struct SliderConformance {
-    @Test("the slider grid is the same grid")
-    func steps() throws {
-        try expectClose(sliderSteps, Fixtures.number("slider.json", "steps"), "sliderSteps")
-    }
-
     @Test("snapUp, snapDown, anchorNear and the target temperature, every case")
     func cases() throws {
         for c in try Fixtures.list("slider.json", "cases") {
             let level = try c.num("level")
-            try expectClose(snapUp(level), c.num("snapUp"), "snapUp(\(level))")
-            try expectClose(snapDown(level), c.num("snapDown"), "snapDown(\(level))")
-            try expectClose(
-                targetPeakYolkC(level), c.num("targetPeakYolk_C"), "targetPeakYolkC(\(level))"
-            )
-            let anchor = try c.str("anchor")
-            #expect(
-                anchorNear(level).key.rawValue == anchor,
-                "anchorNear(\(level)): expected \(anchor), got \(anchorNear(level).key)"
-            )
+            let got: [String: Any] = [
+                "level": level, "snapUp": snapUp(level), "snapDown": snapDown(level),
+                "anchor": anchorNear(level).key.rawValue, "targetPeakYolk_C": targetPeakYolkC(level),
+            ]
+            expectJSON(got, c, "level \(level)")
         }
     }
 }
@@ -40,16 +30,9 @@ struct ReachableWordsConformance {
     @Test("anchorReachable, every case")
     func cases() throws {
         for c in try Fixtures.list("slider.json", "reachableWords") {
-            let softest = try c.num("softest")
-            let hardest = try c.num("hardest")
-            let want = try #require(c["reachable"] as? [Bool], "reachable")
-            #expect(want.count == donenessAnchors.count)
-            for i in donenessAnchors.indices {
-                #expect(
-                    anchorReachable(i, softest: softest, hardest: hardest) == want[i],
-                    "anchorReachable(\(i), \(softest), \(hardest))"
-                )
-            }
+            let (softest, hardest) = try (c.num("softest"), c.num("hardest"))
+            let reachable = donenessAnchors.indices.map { anchorReachable($0, softest: softest, hardest: hardest) }
+            expectJSON(reachable, c["reachable"], "between \(softest) and \(hardest)")
         }
     }
 }
@@ -86,24 +69,10 @@ struct VerdictConformance {
                 softestLevel: c.num("softestLevel"),
                 hardestLevel: c.num("hardestLevel")
             )
-            let v = verdictFor(sol, level: level)
             let what = "verdict(level \(level), reachable \(sol.reachable),"
                 + " whiteSets \(sol.whiteSets), softest \(sol.softestLevel),"
                 + " hardest \(sol.hardestLevel))"
-
-            #expect(try v.kind.rawValue == c.str("kind"), "\(what) kind")
-            #expect(try v.wanted.key.rawValue == c.str("wanted"), "\(what) wanted")
-            #expect(try v.limit.key.rawValue == c.str("limit"), "\(what) limit")
-            #expect(try v.worthSaying == c.flag("worthSaying"), "\(what) worthSaying")
-
-            switch (v.snapTo, try c.optionalNum("snapTo")) {
-            case (nil, nil):
-                break
-            case let (actual?, expected?):
-                expectClose(actual, expected, "\(what) snapTo")
-            case let (actual, expected):
-                Issue.record("\(what) snapTo: expected \(String(describing: expected)), got \(String(describing: actual))")
-            }
+            expectJSON(verdictFor(sol, level: level), c["verdict"], what)
         }
     }
 }

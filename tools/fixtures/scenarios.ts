@@ -48,10 +48,7 @@ const SCENARIOS: Scenario[] = [
 
 export const scenariosFixture = {
   about: 'Whole cooks, solved end to end. src/core/solve.ts.',
-  egg: {
-    mass_kg: REFERENCE_EGG.mass_kg,
-    radius_m: REFERENCE_EGG.radius_m,
-  },
+  egg: REFERENCE_EGG,
   params: DEFAULT_PARAMS,
   cases: SCENARIOS.map((s) => {
     const sol = solveCookTime(REFERENCE_EGG, s.setup, DEFAULT_PARAMS, donenessFromSlider(s.level));
@@ -60,24 +57,8 @@ export const scenariosFixture = {
       name: s.name,
       level: s.level,
       setup: s.setup,
-      solution: {
-        reachable: sol.reachable,
-        whiteSets: sol.whiteSets,
-        softestLevel: sol.softestLevel,
-        hardestLevel: sol.hardestLevel,
-        minCookTime_s: sol.minCookTime_s,
-        cookTime_s: sol.result.cookTime_s,
-        peakYolk_C: sol.result.peakYolk_C,
-        peakWhite_C: sol.result.peakWhite_C,
-        yolkAtPull_C: sol.result.yolkAtPull_C,
-        yolkDose_min: sol.result.yolkDose_min,
-        whiteDose_min: sol.result.whiteDose_min,
-      },
-      atFixed444s: {
-        peakYolk_C: fixed.peakYolk_C,
-        yolkDose_min: fixed.yolkDose_min,
-        whiteDose_min: fixed.whiteDose_min,
-      },
+      solution: sol,
+      atFixed444s: fixed,
     };
   }),
 };

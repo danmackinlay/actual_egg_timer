@@ -10,7 +10,7 @@ import Foundation
 
 /// A moment the cook is told about (`AlarmMoment`). The probe moment is not a
 /// third one: it is the end of the counted cooling, and only its words differ.
-public enum RingDeadline: String, Sendable, Hashable, CaseIterable {
+public enum RingDeadline: String, Sendable, Hashable, CaseIterable, Codable {
     /// Out of the water, now.
     case pull
     /// The counted cooling is over - or, with a probe, the moment to read it.
@@ -30,9 +30,6 @@ public func alarmPeriodS(_ sound: AlarmSound, _ moment: RingDeadline) -> Double 
     case .hen: return moment == .pull ? 1.6 : 4.4
     }
 }
-
-/// How long an alarm the app sounds itself rings, s, unless the cook stops it.
-public let alarmRingS = 40.0
 
 /// How many periods an alarm the app sounds itself rings.
 public func alarmRepeats(_ sound: AlarmSound, _ moment: RingDeadline) -> Int {

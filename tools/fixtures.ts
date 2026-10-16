@@ -18,8 +18,8 @@
  *   fixtures/section.json      the egg in cross-section, a tick at a time, and
  *                              the egg the settings aim for
  *   fixtures/inputs.json       what a cook enters and a fresh install starts
- *                              from: bounds, defaults, both size-class tables,
- *                              the room, the egg-temperature buttons
+ *                              from: which size-class table, the room, the
+ *                              egg-temperature buttons
  *   fixtures/slider.json       the doneness slider: snapping, the nearest
  *                              label, which words can be reached, the verdict
  *   fixtures/texture.json      the texture bands and the note's keys
@@ -30,8 +30,8 @@
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
  *   fixtures/calibration.json  the particle filter, particle by particle
  *   fixtures/record.json       the record (INFERENCE.md section 4): which records
- *                              a loader trusts, and a replayed log; the
- *                              calibration grid, and the filter's size and seed
+ *                              a loader trusts, and a replayed log; and the
+ *                              calibration grid
  *   fixtures/decide.json       decision surfaces and the time chosen on one
  *   fixtures/outcome.json      the predicted outcome at the chosen time
  *   fixtures/certainty.json    how sure, in words: the word asked, the class,
@@ -65,6 +65,9 @@
  *                              fit's likelihood is held to it
  *   fit/tests/recovery-sample.json   sixty cooks from a known truth: the
  *                              fit must recover it, and mix
+ *
+ * No fixture carries a constant: tools/swiftConstants.ts writes them into the
+ * Swift, from the same exports (npm run swift:constants).
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -115,7 +118,7 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     const { calibrationFixture: f } = await import('./fixtures/calibration.ts');
     return {
       fixture: f, counts: [
-        `${f.grid.logYolk.length} grid cells`,
+        `${f.grid.surface.logYolk.length} grid cells`,
         `${f.wordUpdates.length} calibration updates`,
         `${f.wordUpdates.filter((u) => u.white !== null).length} white answers`,
       ],

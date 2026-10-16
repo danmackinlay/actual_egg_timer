@@ -1,37 +1,20 @@
 /**
  * fixtures/inputs.json: what a cook enters and what a fresh install starts
- * from (src/core/inputs.ts) - the bounds and defaults, both size-class
- * tables, the room assumed from the egg and the room as measured, and the
- * egg-temperature buttons.
+ * from (src/core/inputs.ts) - which region gets which size-class table, the
+ * room assumed from the egg and the room as measured, and the
+ * egg-temperature buttons. The bounds, the defaults and the tables are
+ * constants, which tools/swiftConstants.ts writes into the Swift.
  */
 
-import { SIZE_CLASSES, US_SIZE_CLASSES, type SizeClass, sizeTableFor } from '../../src/core/geometry.ts';
-import {
-  DEFAULTS, DEFAULT_EGG_MASS_KG, LIMITS, ROOM_EGG_FROM_C, START_TEMP_PRESETS_C, ambientFor, roomInUse,
-  startTempPreset_C,
-} from '../../src/core/inputs.ts';
-
-/** A size class as the fixture states it: the key and the mass the model
- *  cooks. What its label shows, in either system, is in units.json. */
-function sizeClassRow(c: SizeClass): { key: string; mass_kg: number } {
-  return { key: c.key, mass_kg: c.mass_kg };
-}
+import { sizeTableFor } from '../../src/core/geometry.ts';
+import { ambientFor, roomInUse, startTempPreset_C } from '../../src/core/inputs.ts';
 
 export const inputsFixture = {
-  about: 'What a cook enters and what a fresh install starts from: the bounds and defaults, both size-class tables, the room assumed and the room measured, the egg-temperature buttons. src/core/inputs.ts.',
-  defaults: {
-    ...DEFAULTS,
-    eggMass_kg: DEFAULT_EGG_MASS_KG,
-    fridge_C: START_TEMP_PRESETS_C.fridge,
-    room_C: START_TEMP_PRESETS_C.room,
-  },
-  /* Both tables whole, and which region gets which. The regions include the
-   * near misses a port might accept - lower case is the same region, `USA`
-   * is not a region code at all, and null is a language tag that names no
-   * region. */
+  about: 'What a cook enters and what a fresh install starts from: which region gets which size-class table, the room assumed and the room measured, the egg-temperature buttons. src/core/inputs.ts.',
+  /* Which region gets which table. The regions include the near misses a
+   * port might accept - lower case is the same region, `USA` is not a region
+   * code at all, and null is a language tag that names no region. */
   sizeClasses: {
-    eu: SIZE_CLASSES.map(sizeClassRow),
-    us: US_SIZE_CLASSES.map(sizeClassRow),
     regions: ['US', 'us', 'GB', 'CZ', 'CA', 'USA', '', null].map((region) => ({
       region: region,
       table: sizeTableFor(region),
@@ -54,6 +37,4 @@ export const inputsFixture = {
     room_C: room_C,
     eggStart_C: startTempPreset_C(preset, room_C),
   }))),
-  limits: LIMITS,
-  roomEggFrom_C: ROOM_EGG_FROM_C,
 };

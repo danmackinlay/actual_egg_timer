@@ -299,14 +299,14 @@ export function probeLikelihood(
 
 /** log10 of the dose at which the innermost white is set: the runny | tender
  *  cutpoint before any offset. */
-const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
+export const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
 
 /** The white's noise, from the yolk's: the same degrees of peak temperature,
  *  converted through Z_WHITE instead of Z_YOLK. Degrees are what a person is
  *  judging. */
-const WHITE_NOISE_PER_YOLK = Z_YOLK / Z_WHITE;
+export const WHITE_NOISE_PER_YOLK = Z_YOLK / Z_WHITE;
 
-const PRIOR_OFFSET_SD = 0.22;
+export const PRIOR_OFFSET_SD = 0.22;
 
 /* ---- deterministic RNG, so calibration is reproducible and portable ---- */
 
@@ -608,10 +608,10 @@ export function whiteAnswerProbabilities(
  * prior's order.
  */
 export const KERNEL_DISCOUNT = 0.98;
-const KERNEL_SHRINK = (3.0 * KERNEL_DISCOUNT - 1.0) / (2.0 * KERNEL_DISCOUNT);
-const KERNEL_SPREAD = Math.sqrt(1.0 - KERNEL_SHRINK * KERNEL_SHRINK);
+export const KERNEL_SHRINK = (3.0 * KERNEL_DISCOUNT - 1.0) / (2.0 * KERNEL_DISCOUNT);
+export const KERNEL_SPREAD = Math.sqrt(1.0 - KERNEL_SHRINK * KERNEL_SHRINK);
 
-const KERNEL_DIMS = 5;
+export const KERNEL_DIMS = 5;
 
 /** A particle in the kernel's coordinates: every dimension additive. */
 function kernelCoords(p: Particle): number[] {

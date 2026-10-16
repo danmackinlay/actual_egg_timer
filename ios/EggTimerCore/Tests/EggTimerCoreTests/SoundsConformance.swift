@@ -9,8 +9,6 @@ import Foundation
 struct SoundsConformance {
     @Test("the alarm sounds, and each one's timing")
     func alarmSounds() throws {
-        let a = try Fixtures.load("sounds.json")
-        try expectClose(alarmRingS, a.num("ring_s"), "ring_s")
         let rows = try Fixtures.list("sounds.json", "timing")
         // Every sound, in the picker's order, as the rows first name them.
         var named: [String] = []

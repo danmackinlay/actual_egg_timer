@@ -11,6 +11,11 @@ public struct Egg: Sendable, Equatable, Codable {
     public let massKg: Double
     /// Egg volume, m^3.
     public let volumeM3: Double
+
+    enum CodingKeys: String, CodingKey {
+        case radiusM = "radius_m", minorDiameterM = "minorDiameter_m", massKg = "mass_kg"
+        case volumeM3 = "volume_m3"
+    }
 }
 
 /// The iOS app only weighs eggs, so only `eggFromMass` is here: the web's
@@ -49,30 +54,6 @@ public struct SizeClass: Sendable, Equatable {
     public let key: CopyKey
     public let massKg: Double
 }
-
-/// EU Regulation 589/2008 Art. 4, at a representative mass inside each band.
-public let sizeClasses: [SizeClass] = [
-    SizeClass(key: .`size.eu.small`, massKg: 0.048),
-    SizeClass(key: .`size.eu.medium`, massKg: 0.058),
-    SizeClass(key: .`size.eu.large`, massKg: 0.068),
-    SizeClass(key: .`size.eu.extraLarge`, massKg: 0.076),
-]
-
-/// The classes printed on an American carton. USDA defines each by a MINIMUM
-/// net weight per dozen - Small 18 oz, Medium 21, Large 24, Extra large 27,
-/// Jumbo 30 - so a class runs from its own minimum up to the next class's, and
-/// the mass here is the midpoint of that run, per egg.
-///
-/// Jumbo has no upper bound, so its 74 g is a guess: the 70.9 g floor plus half
-/// the width of the class below it. Labels round to the gram; the model cooks
-/// the midpoint to a tenth.
-public let usSizeClasses: [SizeClass] = [
-    SizeClass(key: .`size.us.small`, massKg: 0.0461),
-    SizeClass(key: .`size.us.medium`, massKg: 0.0532),
-    SizeClass(key: .`size.us.large`, massKg: 0.0602),
-    SizeClass(key: .`size.us.extraLarge`, massKg: 0.0673),
-    SizeClass(key: .`size.us.jumbo`, massKg: 0.074),
-]
 
 /// The size classes for a region: the American carton in region `US`, the EU
 /// classes everywhere else, including when the region is unknown.

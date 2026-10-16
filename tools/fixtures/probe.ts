@@ -19,27 +19,24 @@ import { eggFromMass } from '../../src/core/geometry.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 import { lookupPeakYolk_C } from '../../src/core/doseGrid.ts';
 import {
-  PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   type Posterior, type WhiteReport, type YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../../src/core/infer.ts';
 import {
-  COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor, plausibleProbeRange_C,
+  coolingSecondsFor, plausibleProbeRange_C,
   probeMomentFor,
 } from '../../src/core/running.ts';
 
 import {
   CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, PARTICLE_COUNT, PRIOR_SEED,
 } from './calibration.ts';
-import { particleRows } from './shared.ts';
 
+/** A posterior as it stands, and what is read off it. */
 function readout(post: Posterior) {
   return {
-    rng: post.rng,
+    posterior: structuredClone(post),
     ess: effectiveSampleSize(post),
     alpha_m2s: posteriorParams(post).alpha_m2s,
-    weights: post.weights.slice(),
-    particles: particleRows(post),
   };
 }
 
@@ -110,7 +107,7 @@ export function probeFixture(): Record<string, unknown> {
       const moved = { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * 1.07 };
       solved.push({
         mass_kg: s.mass_kg, setup: setup, level: level,
-        cookTime_s: r.cookTime_s, peakYolkTime_s: r.peakYolkTime_s, peakYolk_C: r.peakYolk_C,
+        result: r,
         coolingSeconds: coolingSecondsFor(r),
         moment: probeMomentFor(r, setup.cooling),
         range: plausibleProbeRange_C(egg, setup, DEFAULT_PARAMS, r.cookTime_s),
@@ -122,19 +119,9 @@ export function probeFixture(): Record<string, unknown> {
 
   return {
     about: 'The thermometer (E4): the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, running.ts.',
-    constants: {
-      instrumentSd_C: PROBE_INSTRUMENT_SD_C,
-      handlingMean_C: PROBE_HANDLING_MEAN_C,
-      unrelated: PROBE_UNRELATED,
-      unrelatedSpan_C: PROBE_UNRELATED_SPAN_C,
-      alphaSds: PROBE_ALPHA_SDS,
-      margin_C: PROBE_MARGIN_C,
-      coolingSeconds: COOLING_SECONDS,
-      coolingMinSeconds: COOLING_MIN_SECONDS,
-    },
-    egg: { mass_kg: CALIB_EGG.mass_kg },
+    egg: CALIB_EGG,
     setup: CALIB_SETUP,
-    grid: { ...CALIB_GRID_SPEC, peakYolk_C: grid.peakYolk_C },
+    grid: { spec: CALIB_GRID_SPEC, surface: grid },
     lookups: lookups,
     density: density,
     likelihood: likelihood,

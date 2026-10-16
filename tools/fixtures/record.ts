@@ -1,15 +1,14 @@
 /**
  * fixtures/record.json: the record (INFERENCE.md section 4): which records a
- * loader trusts, and a replayed log; and the calibration grid's geometry and
- * the filter's size and seed.
+ * loader trusts, and a replayed log; and the calibration grid's geometry.
  */
 
 import { eggFromMass } from '../../src/core/geometry.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.ts';
 import {
-  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
-  MODEL_ID, PARTICLE_COUNT, RECORD_VERSION, RESULTS_FILE_VERSION, type ResultsMeta, type StoreRead, calibrationDoneness,
+  type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
+  MODEL_ID, type ResultsMeta, type StoreRead, calibrationDoneness,
   calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
   probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
   resultsFileName,
@@ -18,7 +17,6 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
 import { COOLING_SECONDS, coolingSecondsFor } from '../../src/core/running.ts';
 
-import { particleRows } from './shared.ts';
 import { referenceSetup } from '../common.ts';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
@@ -218,13 +216,10 @@ const REPLAY_LOG: EggRecord[] = [
   }),
 ];
 
-function calibrationRows(c: Calibration) {
-  return {
-    eggsLogged: c.eggsLogged,
-    rng: c.posterior.rng,
-    weights: c.posterior.weights.slice(),
-    particles: particleRows(c.posterior),
-  };
+/** A calibration as it stands, apart from the one the fold goes on to
+ *  change in place. */
+function calibrationRows(c: Calibration): Calibration {
+  return structuredClone(c);
 }
 
 /* Egg by egg, the way an app folds them: a surface, then both answers. After
@@ -449,29 +444,13 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
 const recordCases = RECORD_CASES.map((c) => {
   const record = mutated(c.mutate);
   const parsed = parseRecord(record);
-  return {
-    why: c.why,
-    record: record,
-    valid: parsed !== null,
-    id: parsed === null ? null : parsed.id ?? null,
-    yolkWord: parsed === null ? null : parsed.yolkWord,
-    white: parsed === null ? null : parsed.white,
-    probe: parsed === null ? null : parsed.probe,
-    model: parsed === null ? null : parsed.model,
-    forecast: parsed === null ? null : parsed.forecast,
-  };
+  return { why: c.why, record: record, parsed: parsed };
 });
 // A log is all or nothing: one bad record refuses the lot.
 recordCases.push({
   why: 'not an object',
   record: [CANONICAL] as unknown as Record<string, unknown>,
-  valid: parseRecord([CANONICAL]) !== null,
-  id: null,
-  yolkWord: null,
-  white: null,
-  probe: null,
-  model: null,
-  forecast: null,
+  parsed: parseRecord([CANONICAL]),
 });
 
 /* The results file: the same store makes the same file in
@@ -650,10 +629,6 @@ const loadCases = LOAD_CASES.map((c) => {
 
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
-  version: RECORD_VERSION,
-  prior: LITERATURE_POPULATION.id,
-  model: MODEL_ID,
-  likelihood: LIKELIHOOD_ID,
   cases: recordCases,
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
@@ -669,36 +644,19 @@ export const recordFixture = {
   // of this population and likelihood.
   load: { population: LOAD_POPULATION, likelihood: LOAD_LIKELIHOOD, cases: loadCases },
   resultsFile: {
-    version: RESULTS_FILE_VERSION,
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),
     cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored) })),
   },
-  // The grid one logged outcome is learned on in the apps, with its alpha
-  // factors by name, and the filter's size and seed: both apps must agree,
-  // or two identical kitchens learn two things from the same egg.
+  // The grid one logged outcome is learned on in the apps: both apps must
+  // agree, or two identical kitchens learn two things from the same egg.
   calibrationGrid: {
-    alphaLow: CALIBRATION_ALPHA_LOW,
-    alphaHigh: CALIBRATION_ALPHA_HIGH,
     cases: [
       { alphaCentre: 1.4e-7, cookTime_s: 441 },
       { alphaCentre: 1.4e-7, cookTime_s: 60 },
       { alphaCentre: 1.4e-7, cookTime_s: 120 },
       { alphaCentre: 2.0e-7, cookTime_s: 800 },
-    ].map((c) => {
-      const g = calibrationGrid(c.alphaCentre, c.cookTime_s);
-      return {
-        alphaCentre: c.alphaCentre,
-        cookTime_s: c.cookTime_s,
-        alphaMin: g.alphaMin,
-        alphaMax: g.alphaMax,
-        alphaCount: g.alphaCount,
-        timeMin_s: g.timeMin_s,
-        timeMax_s: g.timeMax_s,
-        timeCount: g.timeCount,
-      };
-    }),
+    ].map((c) => ({ ...c, grid: calibrationGrid(c.alphaCentre, c.cookTime_s) })),
   },
-  calibration: { particles: PARTICLE_COUNT, seed: CALIBRATION_SEED },
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },

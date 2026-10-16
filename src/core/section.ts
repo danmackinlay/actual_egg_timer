@@ -42,7 +42,7 @@ export const SECTION_WHITE_SAMPLES = 17;
 
 /** How far short of its target a white dose still reads as wholly raw, in
  *  decades. Between this and the target the white goes from clear to opaque. */
-const WHITE_SET_DECADES = 1.0;
+export const WHITE_SET_DECADES = 1.0;
 
 export interface EggSection {
   sphere: SphereState;

@@ -8,7 +8,7 @@ import EggTimerCopy
 
 /// What the pan makes of the white: `runny` when it never gets the white the
 /// dose that sets it, and otherwise what its peak temperature makes of it.
-public enum WhiteBand: String, Sendable {
+public enum WhiteBand: String, Sendable, Codable {
     case runny
     case justSet
     case set
@@ -16,7 +16,7 @@ public enum WhiteBand: String, Sendable {
 }
 
 /// What the yolk's peak temperature makes of it.
-public enum YolkBand: String, Sendable {
+public enum YolkBand: String, Sendable, Codable {
     case liquid
     case soft
     case jammy
@@ -24,7 +24,7 @@ public enum YolkBand: String, Sendable {
     case set
 }
 
-public struct Texture: Sendable, Equatable {
+public struct Texture: Sendable, Equatable, Codable {
     public let white: WhiteBand
     public let yolk: YolkBand
 }
@@ -50,26 +50,10 @@ public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -
     return Texture(white: white, yolk: yolk)
 }
 
-/// The peak white temperature, C, below which the white is in each band; at or
-/// above the last it is firm.
-public enum WhiteBandBelowC {
-    public static let justSet = 71.0
-    public static let set = 82.0
-}
-
-/// The peak yolk temperature, C, below which the yolk is in each band; at or
-/// above the last it is set.
-public enum YolkBandBelowC {
-    public static let liquid = 58.0
-    public static let soft = 63.0
-    public static let jammy = 68.0
-    public static let fudgy = 73.0
-}
-
 /// The texture note as the catalogue's keys: the line's own key, and the key
 /// of the fragment that fills each of its placeholders. The app renders the
 /// fragments and hands them in; it chooses nothing.
-public struct TextureNote: Sendable, Equatable {
+public struct TextureNote: Sendable, Equatable, Codable {
     public let key: CopyKey
     public let parts: [String: CopyKey]
 }

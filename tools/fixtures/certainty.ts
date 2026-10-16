@@ -3,7 +3,7 @@
  */
 
 import {
-  CERTAINTY_MASS, TIME_RANGE_HIGH_Q, TIME_RANGE_LOW_Q, askedWord, certaintyAt, wordBandHigh, wordBandLow,
+  askedWord, certaintyAt, wordBandHigh, wordBandLow,
   wordBracket, wordCertainty,
 } from '../../src/core/certainty.ts';
 import { decideAt, decisionApplies } from '../../src/core/decide.ts';
@@ -63,7 +63,6 @@ const CASES: { posterior: string; level: number; note: string }[] = [
 
 export const certaintyFixture = {
   about: 'How sure the timer is, in words: the word asked, the class, the 90% interval, the bracket drawn from it and the time range. src/core/certainty.ts. Surface and posteriors are decide.json\'s, and outcome.json\'s consistent.',
-  constants: { certaintyMass: CERTAINTY_MASS, timeRangeLowQ: TIME_RANGE_LOW_Q, timeRangeHighQ: TIME_RANGE_HIGH_Q },
   asked: LEVELS.map((level) => ({ level: level, asked: askedWord(level) })),
   bands: [0, 1, 2, 3, 4].map((k) => ({ word: k, low: wordBandLow(k), high: wordBandHigh(k) })),
   spreads: SPREADS.map((s) => {

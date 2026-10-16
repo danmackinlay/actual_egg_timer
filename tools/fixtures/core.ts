@@ -3,10 +3,7 @@
  */
 
 import {
-  MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
-  H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
-  STANDING_VOLUME_EXPONENT, H_AIR, WET_SHELL_KG_M2, LATENT_HEAT_WATER, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY,
-  C_WATER, C_EGG, RHO_EGG, EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM, CARRYOVER_WINDOW,
+  ALPHA_DEFAULT, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C,
 } from '../../src/core/constants.ts';
 import { eggFromMass } from '../../src/core/geometry.ts';
 import { pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude } from '../../src/core/thermo.ts';
@@ -83,14 +80,7 @@ const COOLING_SETUPS: CookSetup[] = [
 const BOWL_MEANS: Array<[number, number, number]> = [[68, 83.1, 83.1], [68, 83.1, 61.4], [53, 79.6, 40.2], [76, 85, 20]];
 
 export const coreFixture = {
-  about: 'Pure functions: the sphere, geometry, boiling, what the egg cools in and the dose, with the constants they use. src/core/sphere.ts, geometry.ts, thermo.ts, protocol.ts, kinetics.ts.',
-  constants: {
-    MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
-    TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
-    STANDING_REF_LITRES, STANDING_VOLUME_EXPONENT, H_AIR, WET_SHELL_KG_M2, LATENT_HEAT_WATER, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY,
-    C_WATER, C_EGG, RHO_EGG, EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM,
-    CARRYOVER_WINDOW,
-  },
+  about: 'Pure functions: the sphere, geometry, boiling, what the egg cools in and the dose. src/core/sphere.ts, geometry.ts, thermo.ts, protocol.ts, kinetics.ts.',
   sphere: {
     seriesTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: seriesTheta(x, fo) })),
     erfc: ERFC_CASES.map((x) => ({ x: x, value: erfc(x) })),
@@ -98,15 +88,7 @@ export const coreFixture = {
     rampResponse: rampedStep,
   },
   geometry: {
-    fromMass: MASS_CASES_G.map((g) => {
-      const egg = eggFromMass(g / 1000);
-      return {
-        mass_g: g,
-        radius_m: egg.radius_m,
-        minorDiameter_m: egg.minorDiameter_m,
-        volume_m3: egg.volume_m3,
-      };
-    }),
+    fromMass: MASS_CASES_G.map((g) => ({ mass_g: g, egg: eggFromMass(g / 1000) })),
   },
   thermo: {
     pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: pressureAtAltitude(h) })),

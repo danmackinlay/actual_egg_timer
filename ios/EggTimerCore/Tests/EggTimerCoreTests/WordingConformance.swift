@@ -6,13 +6,6 @@ import Foundation
 /// `fixtures/wording.json` (src/core/wording.ts).
 @Suite("Wording")
 struct WordingConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("wording.json", "constants")
-
-        #expect(try whiteRisk == c.num("whiteRisk"))
-    }
-
     @Test("the warning line's key: a refusal, or a wild guess")
     func warning() throws {
         for row in try Fixtures.list("wording.json", "warning") {

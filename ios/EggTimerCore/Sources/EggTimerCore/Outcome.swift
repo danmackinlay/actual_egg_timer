@@ -11,22 +11,6 @@ import Foundation
 /// to [0, 1]; and which way a miss leans, at a ratio of 1.5. The reasons are
 /// in src/core/outcome.ts, which this is held to by fixtures/outcome.json.
 
-/// How much likelier one way of missing has to be than the other before the
-/// outcome leans that way: three misses in five.
-public let leanRatio = 1.5
-
-/// The quantiles the level range is read at: a 90% interval, the one the
-/// certainty's words state (`certaintyMass`).
-public let levelLowQ = 0.05
-public let levelHighQ = 0.95
-
-/// P(runny) at or above which the white is a risk: one egg in five. Both
-/// apps' line for the white shows from here.
-public let whiteRisk = 0.2
-
-/// Bisection steps for each point of the level range: 2^-20 of the slider.
-private let levelBisections = 20
-
 public enum Lean: String, Sendable, Codable {
     case soft
     case firm

@@ -19,19 +19,7 @@ import Foundation
 /// temperature and the dose targets - and they are the numbers that make the
 /// answer what it is.
 
-/// The bath temperature the app offers. 58 C is squarely inside the range the
-/// low-temperature literature argues about, which is the point.
-public let sousVideBathC = 58.0
-
-/// Below this the albumen stays liquid and convects, and the conduction model
-/// here is out of its depth. The warning quotes it, in the cook's units.
-public let sousVideModelFloorC = 60.0
-
-/// How close the centre must come to the bath before it counts as "at
-/// temperature": within 2% of the original gap.
-private let equilibrationGap = 0.02
-
-public struct SousVideEstimate: Sendable {
+public struct SousVideEstimate: Sendable, Codable {
     public let bathC: Double
     /// Time for the yolk centre to reach the bath temperature.
     public let equilibrateS: Double
@@ -44,6 +32,11 @@ public struct SousVideEstimate: Sendable {
     public let totalS: Double
     /// True when the white is what makes the answer absurd.
     public let whiteBound: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case bathC = "bath_C", equilibrateS = "equilibrate_s", yolkHoldS = "yolkHold_s"
+        case whiteHoldS = "whiteHold_s", totalS = "total_s", whiteBound
+    }
 }
 
 /// Seconds for the centre of a sphere to close all but `equilibrationGap` of a

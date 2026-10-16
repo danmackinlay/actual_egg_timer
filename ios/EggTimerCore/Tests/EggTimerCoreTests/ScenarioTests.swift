@@ -9,33 +9,14 @@ import Foundation
 /// dose integrals, the bisection, and the standing scan - including the two
 /// cases that exist only with the heat off, where the pan cannot reach the
 /// requested doneness and where it never sets the white at all.
-private struct Scenario {
-    let name: String
-    let level: Double
-    let setup: CookSetup
-    let solution: [String: Any]
-    let atFixed: [String: Any]
-}
-
-private func loadScenarios() throws -> (egg: Egg, params: ModelParams, cases: [Scenario]) {
+/// The fixture's egg is rebuilt from its mass, and held to the one written,
+/// so the geometry is exercised here too: if eggFromMass drifts, every
+/// scenario moves and this is where it shows.
+private func loadScenarios() throws -> (egg: Egg, params: ModelParams, cases: [[String: Any]]) {
     let file = try Fixtures.load("scenarios.json")
-    let eggJSON = try file.object("egg")
-    let paramsJSON = try file.object("params")
-
-    // Rebuilt from the recorded mass rather than read field by field, so the
-    // geometry is exercised here too: if eggFromMass drifts, every scenario
-    // moves and this is where it shows.
-    let egg = try Geometry.eggFromMass(eggJSON.num("mass_kg"))
-    let params = try ModelParams(alphaM2s: paramsJSON.num("alpha_m2s"))
-
-    let cases = try file.rows("cases").map { c -> Scenario in
-        let setup = try cookSetup(c.object("setup"))
-        return try Scenario(
-            name: c.str("name"), level: c.num("level"), setup: setup,
-            solution: c.object("solution"), atFixed: c.object("atFixed444s")
-        )
-    }
-    return (egg, params, cases)
+    let egg = try Geometry.eggFromMass(decoded(Egg.self, file["egg"]).massKg)
+    expectJSON(egg, file["egg"], "the egg")
+    return (egg, try decoded(ModelParams.self, file["params"]), try file.rows("cases"))
 }
 
 // Whole cooks are held to the same `conformanceTolerance` (1e-12, relative)
@@ -54,41 +35,23 @@ struct ScenarioConformance {
     @Test("every scenario solves to the same cook")
     func solutions() throws {
         let (egg, params, cases) = try loadScenarios()
-        for scenario in cases {
-            let solution = solveCookTime(
-                egg: egg, setup: scenario.setup, params: params,
-                doneness: donenessFromSlider(scenario.level)
+        for c in cases {
+            let solution = try solveCookTime(
+                egg: egg, setup: decoded(CookSetup.self, c["setup"]), params: params,
+                doneness: donenessFromSlider(c.num("level"))
             )
-            let expected = scenario.solution
-            let at = scenario.name
-
-            #expect(try solution.reachable == expected.flag("reachable"), "reachable, \(at)")
-            #expect(try solution.whiteSets == expected.flag("whiteSets"), "whiteSets, \(at)")
-            try expectClose(solution.softestLevel, expected.num("softestLevel"), "softestLevel, \(at)")
-            try expectClose(solution.hardestLevel, expected.num("hardestLevel"), "hardestLevel, \(at)")
-            try expectClose(solution.minCookTimeS, expected.num("minCookTime_s"), "minCookTime, \(at)")
-            try expectClose(solution.result.cookTimeS, expected.num("cookTime_s"), "cookTime, \(at)")
-            try expectClose(solution.result.peakYolkC, expected.num("peakYolk_C"), "peak yolk, \(at)")
-            try expectClose(solution.result.peakWhiteC, expected.num("peakWhite_C"), "peak white, \(at)")
-            try expectClose(solution.result.yolkAtPullC, expected.num("yolkAtPull_C"), "yolk at pull, \(at)")
-            try expectClose(solution.result.yolkDoseMin, expected.num("yolkDose_min"), "yolk dose, \(at)")
-            try expectClose(solution.result.whiteDoseMin, expected.num("whiteDose_min"), "white dose, \(at)")
+            try expectJSON(solution, c["solution"], c.str("name"))
         }
     }
 
+    /// No search involved: straight integration, so a difference here is the
+    /// simulation itself rather than a bisection landing on a different step.
     @Test("a fixed 7.4 minute cook lands identically")
     func fixedCook() throws {
-        // No search involved: straight integration, so a difference here is the
-        // simulation itself rather than a bisection landing on a different step.
         let (egg, params, cases) = try loadScenarios()
-        for scenario in cases {
-            let r = simulate(
-                egg: egg, setup: scenario.setup, params: params, cookTimeS: 7.4 * 60
-            )
-            let at = scenario.name
-            try expectClose(r.peakYolkC, scenario.atFixed.num("peakYolk_C"), "peak yolk, \(at)")
-            try expectClose(r.yolkDoseMin, scenario.atFixed.num("yolkDose_min"), "yolk dose, \(at)")
-            try expectClose(r.whiteDoseMin, scenario.atFixed.num("whiteDose_min"), "white dose, \(at)")
+        for c in cases {
+            let r = try simulate(egg: egg, setup: decoded(CookSetup.self, c["setup"]), params: params, cookTimeS: 7.4 * 60)
+            try expectJSON(r, c["atFixed444s"], c.str("name"))
         }
     }
 }

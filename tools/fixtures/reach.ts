@@ -12,7 +12,7 @@ import { decide, decisionInputs } from '../../src/core/decide.ts';
 import type { DoseGrid } from '../../src/core/doseGrid.ts';
 import { logYolkTarget, solveCookTime } from '../../src/core/solve.ts';
 import {
-  ADVICE_GAIN, type LevelOdds, type OddsProfile, PROFILE_STEP,
+  type LevelOdds, type OddsProfile, 
   SHADE_BEST_MIN, adviceWanted, answerAt, askedNear, decideAnswer, envelopeBounds, lowOddsAt, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.ts';
@@ -61,20 +61,11 @@ function decidedRow(
   const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, odds, nudge_s);
   return {
     withOdds: withOdds, asked: level, drawn_s: nudge_s,
-    answeredLevel: a.level, lowOdds: a.lowOdds,
+    answer: a,
     // The level's own choice, held by nothing: where the envelope binds, the
     // time decided differs from it.
     own_s: decide(c, grid, a.solution, logYolkTarget(a.level)).cookTime_s,
-    level: d.level,
-    solution: {
-      reachable: d.solution.reachable, whiteSets: d.solution.whiteSets,
-      cookTime_s: d.solution.result.cookTime_s, peakYolk_C: d.solution.result.peakYolk_C,
-    },
-    decision: d.decision,
-    outcome: d.outcome,
-    certainty: d.certainty,
-    nudge_s: d.nudge_s,
-    adviceWanted: d.adviceWanted,
+    decided: d,
   };
 }
 
@@ -89,18 +80,16 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   )));
   for (const withOdds of [false, true]) {
     for (const level of [0, 0.05, 0.41, 0.95, 1]) {
-      const a = answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null);
       reachAnswers.push({
         profile: index, withOdds: withOdds, level: level,
-        kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level, lowOdds: a.lowOdds,
-        reachable: a.solution.reachable, cookTime_s: a.solution.result.cookTime_s,
+        answer: answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null),
       });
     }
   }
   return {
     posterior: rc.posterior,
     eggsLogged: pz.eggsLogged,
-    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    egg: DECIDE_EGG,
     setup: rc.setup,
     grid: g.spec,
     profile: profile,
@@ -115,12 +104,10 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     // time the app gives there, its answer decided within them. No bound
     // above is null: JSON has no infinity.
     envelope: [0, 0.05, 0.13, 0.22, 0.29 + 1e-12, 0.41, 0.625, 0.99, 1].map((level) => {
-      const bounds = envelopeBounds(profile, level);
       const a = answerAt(c, DECIDE_EGG, rc.setup, level, profile);
       return {
         level: level,
-        bounds: bounds === null ? null
-          : { lo_s: bounds.lo_s, hi_s: Number.isFinite(bounds.hi_s) ? bounds.hi_s : null },
+        bounds: envelopeBounds(profile, level),
         held_s: decide(c, g.grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level)).cookTime_s,
       };
     }),
@@ -150,7 +137,7 @@ const ownerDecided = (() => {
   return {
     eggsLogged: c.eggsLogged,
     posterior: { name: 'owner', weights: post.weights, particles: particleRows(post) },
-    egg: { mass_kg: OWNER_EGG.mass_kg },
+    egg: OWNER_EGG,
     setup: DECIDE_SETUP,
     grid: g.spec,
     profile: profile,
@@ -171,7 +158,7 @@ const neverSets = (() => {
   return {
     posterior: pz.name,
     eggsLogged: pz.eggsLogged,
-    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    egg: DECIDE_EGG,
     setup: NEVER_SETS_SETUP,
     grid: g.spec,
     profile: profile,
@@ -224,11 +211,6 @@ const ADVICE_PROFILE: OddsProfile = {
 
 export const reachFixture = {
   about: 'The odds and the certainty at every level, the range that is not a wild guess, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
-  constants: {
-    profileStep: PROFILE_STEP,
-    adviceGain: ADVICE_GAIN,
-    shadeBestMin: SHADE_BEST_MIN,
-  },
   profiles: reachProfiles,
   owner: ownerDecided,
   neverSets: neverSets,

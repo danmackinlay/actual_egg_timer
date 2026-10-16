@@ -14,21 +14,7 @@ import Foundation
 /// in src/core/decide.ts, which this is held to by fixtures/decide.json: two
 /// apps given the same posterior and the same pot must choose the same time.
 
-/// How much worse a runny white is than a yolk one answer off: the owner's
-/// number (DECISIONS.md 7).
-public let runnyWhiteLoss = 3.0
-
 // MARK: - The surface
-
-public let decisionAlphaLo = 0.6
-public let decisionAlphaHi = 1.65
-public let decisionAlphaCount = 13
-/// The time axis, s between columns.
-public let decisionTimeStepS = 10.0
-/// How far either side of the mean solve's time the choice may go, s.
-public let decisionWindowS = 120.0
-/// No decision grid starts before this, s.
-private let decisionTimeMinS = 20.0
 
 /// What a decision grid is built from: the pot, the egg, and where the
 /// posterior stands. Codable, so the app can key a cache on it.
@@ -43,6 +29,10 @@ public struct DecisionInputs: Sendable, Codable, Equatable {
         self.setup = setup
         self.params = params
         self.whiteDoseMin = whiteDoseMin
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case egg, setup, params, whiteDoseMin = "whiteDose_min"
     }
 }
 
@@ -64,8 +54,9 @@ public func numberKey(_ x: Double) -> String {
 
 /// The key of a decision surface's inputs, every number to the bit
 /// (`numberKey`), in a fixed order: what the plan and this app's caches of
-/// surfaces and odds key them by, and the web's alike (`inputsKey`,
-/// `fixtures/running.json`).
+/// surfaces and odds key them by. The web makes its own the same way
+/// (`inputsKey`); neither reads the other's, so no fixture holds its bits
+/// (DECISIONS.md 109), and `InputsKeyTests` holds this one.
 public func inputsKey(_ inputs: DecisionInputs) -> String {
     let e = inputs.egg
     let s = inputs.setup
@@ -162,15 +153,6 @@ public func hitOdds(
     return total > 0.0 ? hit / total : 0.0
 }
 
-/// What leaning costs, in eggs per second away from the mean solve: ten
-/// seconds cost a thousandth of an egg. It is what makes the choice defined
-/// where the loss is flat - see src/core/decide.ts.
-public let leanCostPerS = 1e-4
-
-private let choiceScanStepS = 4.0
-private let refineTolS = 0.02
-private let invPhi = (5.0.squareRoot() - 1.0) / 2.0
-
 /// The time that minimises the expected loss plus `leanCostPerS` for every
 /// second away from `aroundS`, within `decisionWindowS` of it and inside the
 /// grid: a scan, then a golden section around its best sample. The same steps
@@ -223,7 +205,7 @@ public func chooseCookTime(
 
 // MARK: - The decision
 
-public struct Decision: Sendable {
+public struct Decision: Sendable, Codable {
     /// The time to pull, s from eggs in.
     public let cookTimeS: Double
     /// What the mean solve said, which the choice started from.
@@ -238,6 +220,10 @@ public struct Decision: Sendable {
     /// How far the choice leaned from the mean solve, s: what a mid-cook
     /// re-solve carries (`carriedSolution`).
     public var leanS: Double { cookTimeS - meanCookTimeS }
+
+    enum CodingKeys: String, CodingKey {
+        case cookTimeS = "cookTime_s", meanCookTimeS = "meanCookTime_s", chosen, odds, oddsTenths
+    }
 }
 
 /// Whether a solve leaves a cook to choose a time for.
@@ -253,13 +239,17 @@ public func oddsInTenths(_ odds: Double) -> Int {
 /// Where the monotone envelope holds a level's time, s: no sooner than `loS`,
 /// no later than `hiS` (`envelopeBounds`, Reach.swift). `loS` is 0 and `hiS`
 /// infinite where nothing holds that side.
-public struct TimeBounds: Sendable, Equatable {
+public struct TimeBounds: Sendable, Equatable, Codable {
     public let loS: Double
     public let hiS: Double
 
     public init(loS: Double, hiS: Double) {
         self.loS = loS
         self.hiS = hiS
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case loS = "lo_s", hiS = "hi_s"
     }
 }
 
@@ -327,10 +317,6 @@ public func decidedSolution(
 }
 
 // MARK: - The nudge
-
-/// The most the nudge moves a time, s, either way (INFERENCE.md section 8).
-/// Why, and why ten: src/core/decide.ts.
-public let nudgeMaxS = 10.0
 
 /// A uniform draw on [0, 1) as the nudge: a whole number of seconds from
 /// -nudgeMaxS to +nudgeMaxS, each equally likely. The app supplies the

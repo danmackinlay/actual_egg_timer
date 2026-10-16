@@ -4,19 +4,8 @@ import Foundation
 /// far it has set, from the centre of the yolk out to the shell, at the moment
 /// on the clock. Transliterated from `src/core/section.ts` - see that file for
 /// why it runs `simulate`'s loop a tick at a time, and held to it by
-/// `fixtures/section.json`.
-public enum Section {
-    /// Samples across the yolk, centre (x = 0) to edge (x = yolkRadiusFrac).
-    public static let yolkSamples = 17
-    /// Samples across the white, inner edge (x = yolkRadiusFrac) to the shell.
-    /// The yolk's edge is sampled twice, once as yolk and once as white.
-    public static let whiteSamples = 17
-    /// How far short of its target a white dose still reads as wholly raw, in
-    /// decades.
-    static let whiteSetDecades = 1.0
-}
-
-public struct EggSection: Sendable {
+/// `fixtures/section.json`. Its samples are `Section`'s.
+public struct EggSection: Sendable, Codable {
     public private(set) var sphere: SphereState
     /// Seconds since t = 0 of the cook, a whole number of `dtSim` steps.
     public private(set) var tS: Double
@@ -127,17 +116,26 @@ public struct EggSection: Sendable {
         }
         return SectionView(x: x, yolk: yolk, outer: outer, temperatureC: temperature, set: set)
     }
+
+    enum CodingKeys: String, CodingKey {
+        case sphere, tS = "t_s", outAtS = "outAt_s", waterAtPullC = "waterAtPull_C"
+        case meanAtPullC = "meanAtPull_C", x, yolk, outer, dose
+    }
 }
 
 /// What a screen draws: per ring, the temperature now and how far it has set,
 /// from 0 to 1 - the yolk on the doneness slider's scale, the white from clear
 /// to opaque. Never falls.
-public struct SectionView: Sendable {
+public struct SectionView: Sendable, Codable {
     public let x: [Double]
     public let yolk: [Bool]
     public let outer: [Double]
     public let temperatureC: [Double]
     public let set: [Double]
+
+    enum CodingKeys: String, CodingKey {
+        case x, yolk, outer, temperatureC = "temperature_C", set
+    }
 }
 
 /// The egg the settings aim for: one egg, at the posterior mean, cooked for

@@ -3,7 +3,7 @@ import Foundation
 /// Transient heat conduction in a sphere, solved in the eigenmode basis.
 /// Transliterated from `src/core/sphere.ts` - see that file for why modes and
 /// not finite differences, and for the boundary-condition caveats.
-public struct SphereState: Sendable {
+public struct SphereState: Sendable, Codable {
     public let radiusM: Double
     /// Decay rate of each mode, 1/s.
     public private(set) var lambda: [Double]
@@ -96,6 +96,10 @@ public struct SphereState: Sendable {
         let g = w * gain
         return (ts + w * now - a * (0.5 * ts - ambientC) - lossC - g * ts - w * held)
             / (1.0 - g + 0.5 * a)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case radiusM = "radius_m", lambda, coef, amp, surfaceC = "surface_C"
     }
 }
 

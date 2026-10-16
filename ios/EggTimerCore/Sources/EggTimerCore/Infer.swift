@@ -81,6 +81,10 @@ public struct Particle: Sendable, Codable, Equatable {
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
     }
+
+    enum CodingKeys: String, CodingKey {
+        case alphaM2s = "alpha_m2s", logDoseOffset, noise, whiteOffset, whiteFirmGap
+    }
 }
 
 public struct Posterior: Sendable, Codable {
@@ -95,14 +99,6 @@ public struct Posterior: Sendable, Codable {
     }
 }
 
-/// Half-width of the "just right" band, log10 dose units: the decision's miss
-/// around the level asked for (`yolkProbit`) cuts at -+ this.
-public let feedbackBand = 0.28
-
-/// The share of answers that have nothing to do with the egg, spread evenly
-/// over the answers. No likelihood falls below `unrelated / 3`.
-public let unrelated = 0.05
-
 /// One answer's probability `p` with the unrelated share mixed in: the chance
 /// the cook gives that answer, whatever the egg did.
 func withUnrelated(_ p: Double) -> Double {
@@ -114,41 +110,6 @@ func withUnrelated(_ p: Double) -> Double {
 func withUnrelatedWord(_ p: Double) -> Double {
     (1.0 - unrelated) * p + unrelated / 5.0
 }
-
-/// The four cutpoints between the five yolk words, log10 nominal yolk dose,
-/// softest first: where the slider's word changes, the midpoint between two
-/// adjacent anchors (`anchorNear`). Frozen as literals: every stored yolk word
-/// is scored against them, so moving an anchor must not rescore those words
-/// unseen. `CalibrationTests.yolkWordCutsFrozen` and test/infer.test.ts
-/// hold them to today's anchors. See src/core/infer.ts.
-public let yolkWordCuts: [Double] = [
-    -0.7948033966179053, 0.1486189016043269, 1.0690308998699196, 2.4266385973116686,
-]
-
-/// The noise scale's prior: lognormal, median `noiseMedian` decades of yolk
-/// dose. 0.20 gives "just right" 0.81 at the band's centre and 0.093 one
-/// band-width out, where the likelihood it replaces gave 0.8 and 0.1. See
-/// src/core/infer.ts for the arithmetic and what it costs.
-public let noiseMedian = 0.2
-public let noiseLogSd = 0.5
-
-/// The white offset's prior sd, decades of white dose.
-public let whiteOffsetSd = 0.5
-
-/// The tender | firm cutpoint's prior: lognormal, median 1.08 decades above the
-/// runny | tender one - midway between the reference egg's inner-white dose at
-/// Soft and at Jammy (README section 4). See src/core/infer.ts.
-public let whiteFirmGapMedian = 1.08
-public let whiteFirmGapLogSd = 0.4
-
-/// log10 of the dose at which the innermost white is set: the runny | tender
-/// cutpoint before any offset.
-let logWhiteTarget = log10(whiteDoseTarget)
-
-/// The white's noise from the yolk's: the same degrees of peak temperature.
-private let whiteNoisePerYolk = Constants.zYolk / Constants.zWhite
-
-private let priorOffsetSd = 0.22
 
 // MARK: - Deterministic RNG, so calibration is reproducible and portable
 
@@ -206,7 +167,7 @@ public struct Normal: Sendable, Codable, Equatable {
 
 /// What a new cook's prior is drawn from: one spread per particle dimension
 /// (INFERENCE.md section 9). See src/core/infer.ts and population.ts.
-public struct Population: Sendable, Equatable {
+public struct Population: Sendable, Equatable, Codable {
     public var id: String
     public var alphaM2s: LogNormal
     public var logDoseOffset: Normal
@@ -225,19 +186,11 @@ public struct Population: Sendable, Equatable {
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
     }
-}
 
-/// The literature's population: the prior every cook drew from before the
-/// population fit,
-/// number for number, less the carryover, which is not a particle.
-public let literaturePopulation = Population(
-    id: "2026-09",
-    alphaM2s: LogNormal(median: Constants.alphaDefault, logSd: Constants.alphaRelSD),
-    logDoseOffset: Normal(mean: 0.0, sd: priorOffsetSd),
-    noise: LogNormal(median: noiseMedian, logSd: noiseLogSd),
-    whiteOffset: Normal(mean: 0.0, sd: whiteOffsetSd),
-    whiteFirmGap: LogNormal(median: whiteFirmGapMedian, logSd: whiteFirmGapLogSd)
-)
+    enum CodingKeys: String, CodingKey {
+        case id, alphaM2s = "alpha_m2s", logDoseOffset, noise, whiteOffset, whiteFirmGap
+    }
+}
 
 // MARK: - Prior
 
@@ -332,15 +285,6 @@ func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Doubl
 
 // MARK: - The thermometer
 
-/// A reading at the centre's peak is the peak plus the thermometer's error
-/// (Gaussian) minus a handling error (exponential) that reads COLD, because at
-/// the peak the centre is the warmest point in space and time. See
-/// src/core/infer.ts for the argument and the numbers.
-public let probeInstrumentSdC = 1.0
-public let probeHandlingMeanC = 0.4
-public let probeUnrelated = 0.02
-public let probeUnrelatedSpanC = 60.0
-
 /// The density of `predicted - reading`: an exponentially modified Gaussian,
 /// with the erfc inside the exponent so a reading far over the peak is a small
 /// number rather than infinity times zero.
@@ -423,17 +367,6 @@ public func updatePosterior(
     for i in 0..<n { post.weights[i] /= total }
     if effectiveSampleSize(post) < Double(n) / 2.0 { resample(&post) }
 }
-
-/// The resample's kernel: Liu and West's shrinkage, with discount
-/// `kernelDiscount`. Each resampled particle is shrunk toward the weighted mean
-/// and moved by a draw from the weighted covariance, in coordinates where every
-/// dimension is additive, so the posterior's mean and covariance survive the
-/// resample. It replaced a fixed jitter (2% on alpha) that widened the
-/// posterior at every resample; see src/core/infer.ts for what that cost.
-public let kernelDiscount = 0.98
-private let kernelShrink = (3.0 * kernelDiscount - 1.0) / (2.0 * kernelDiscount)
-private let kernelSpread = (1.0 - kernelShrink * kernelShrink).squareRoot()
-private let kernelDims = 5
 
 private func kernelCoords(_ p: Particle) -> [Double] {
     [log(p.alphaM2s), p.logDoseOffset, log(p.noise), p.whiteOffset, log(p.whiteFirmGap)]
@@ -544,10 +477,14 @@ public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
     return v
 }
 
-public struct CookTimePrediction: Sendable {
+public struct CookTimePrediction: Sendable, Codable {
     public let medianS: Double
     public let lowS: Double
     public let highS: Double
+
+    enum CodingKeys: String, CodingKey {
+        case medianS = "median_s", lowS = "low_s", highS = "high_s"
+    }
 }
 
 /// The posterior over the right cook time for a nominal doneness, as a median

@@ -40,7 +40,7 @@ web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 
 | module | what it answers | main entry points | Swift | fixture |
 |---|---|---|---|---|
-| `constants.ts` | every physical and model constant (README §6) | - | `Constants.swift` | `core.json` |
+| `constants.ts`, and every module's named constants | every physical and model constant (README §6), and each module's own | - | `Constants.generated.swift` (and `EggTimerCopy`'s), made by `npm run swift:constants` | none: `swift:constants --check` |
 | `thermo.ts` | altitude and pressure to a boiling point | `boilingPointAtAltitude` | `Thermo.swift` | `core.json` |
 | `geometry.ts` | an egg from its mass; the size classes by region | `eggFromMass`, `sizeClassesFor` | `Geometry.swift` | `core.json` |
 | `kinetics.ts` | the Arrhenius dose | `createDose`, `accumulateDose` | `Kinetics.swift` | `core.json` |
@@ -53,7 +53,7 @@ web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
 | `infer.ts` | the particle filter: prior, likelihood, fold | `createPrior`, `updatePosterior`, `probeLikelihood` | `Infer.swift` | `calibration.json`, `probe.json` |
 | `record.ts` | the egg log, and the posterior as its replay; the record both apps make of a cook; what a launch keeps of the store; the calibration grid, and the filter's size and seed | `recordFor`, `parseLog`, `foldRecord`, `replay`, `loadDecision`, `calibrationGrid` | `Record.swift` | `record.json` |
 | `population.ts` | the population a prior is drawn from (E7), and its centre | `parsePopulation`, `priorStart` | `Population.swift` | `prior.json` |
-| `decide.ts` | the chosen time and its odds, and the nudge (E8); the key of a decision surface, every number to the bit, which the plan and both apps' caches use | `decide`, `chooseCookTime`, `hitOdds`, `nudgeSeconds`, `inputsKey` | `Decide.swift` | `decide.json` |
+| `decide.ts` | the chosen time and its odds, and the nudge (E8); the key of a decision surface, every number to the bit, which the plan and each app's own caches use | `decide`, `chooseCookTime`, `hitOdds`, `nudgeSeconds`, `inputsKey` | `Decide.swift` | `decide.json` |
 | `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
 | `certainty.ts` | how sure, in words: very certain, a ballpark or a wild guess; the 90% interval in words; a likely time range | `certaintyAt`, `wordCertainty`, `askedWord` | `Certainty.swift` | `certainty.json` |
 | `reach.ts` | the odds at every level, the shading, the advice, and the answer on screen with its time decided | `oddsProfile`, `answerAt`, `decideAnswer`, `protocolAdvice` | `Reach.swift` | `reach.json` |

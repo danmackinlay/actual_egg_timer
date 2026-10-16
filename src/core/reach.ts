@@ -170,7 +170,7 @@ function positionDown(level: number): number {
 
 /** How close a level must be to a point to be that point: the slider's
  *  levels are hundredths, which neither language holds exactly. */
-const SAME_LEVEL = 1e-9;
+export const SAME_LEVEL = 1e-9;
 
 /**
  * Where the envelope holds the time at `level`: no sooner than the time of
@@ -452,7 +452,7 @@ export const ADVICE_GAIN = 0.05;
 
 /** How far over the fridge preset an egg must start before "straight from the
  *  fridge" is advice rather than what the cook already does, C. */
-const FRIDGE_MARGIN_C = 1;
+export const FRIDGE_MARGIN_C = 1;
 
 /** What the setup alone does not say about the egg: whether its size is a
  *  class off the carton, and whether its start temperature is a preset's

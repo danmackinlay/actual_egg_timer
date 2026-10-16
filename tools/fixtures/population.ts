@@ -68,7 +68,6 @@ export const priorFixture = {
   about: 'E7: a prior drawn from a population - the published one (fixtures/population.json), the literature\'s, one shifted every way and the literature\'s as a file from before 0.5 wrote it - and the population files a reader refuses. src/core/population.ts.',
   count: PRIOR_COUNT,
   seed: PRIOR_SEED,
-  literatureId: LITERATURE_POPULATION.id,
   populations: [
     drawn('published', published),
     drawn('literature', fileOf(LITERATURE_POPULATION)),

@@ -60,7 +60,7 @@ export interface GridRequest {
   spec: GridSpec;
 }
 
-const LOG_FLOOR = -12.0;
+export const LOG_FLOOR = -12.0;
 
 function safeLog10(v: number): number {
   return v <= 1e-12 ? LOG_FLOOR : Math.log10(v);

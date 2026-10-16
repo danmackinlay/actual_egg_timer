@@ -13,7 +13,7 @@ import Foundation
 
 /// Where a calibration that has learned nothing solves: the population's
 /// centre.
-public struct PriorStart: Sendable, Equatable {
+public struct PriorStart: Sendable, Equatable, Codable {
     public var alphaM2s: Double
     /// The white's runny | tender cutpoint, decades of white dose above
     /// `whiteDoseTarget`.
@@ -22,6 +22,10 @@ public struct PriorStart: Sendable, Equatable {
     public init(alphaM2s: Double, whiteOffset: Double) {
         self.alphaM2s = alphaM2s
         self.whiteOffset = whiteOffset
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case alphaM2s = "alpha_m2s", whiteOffset
     }
 }
 

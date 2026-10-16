@@ -18,23 +18,9 @@ import Foundation
 /// Codable lives here so the two apps' storage and the fixtures agree on one
 /// shape; the JSON coder itself is the caller's, since this package does no I/O.
 
-public let recordVersion = 1
-
 // A record's `prior` is the id of the population the cook's prior was drawn
 // from (Population.swift): "2026-09", the literature's, until a fit publishes
 // another. Before sharing it named the policy too; `model` says that now.
-
-/// The code that made the record's forecast and chose its time: the
-/// likelihood, the decision and the nudge. Changed whenever any of
-/// them changes, so the model as it shipped can be scored after the code has
-/// moved on. The record's provenance; it never decides a
-/// replay. See src/core/record.ts.
-public let modelID = "2026-10-e10"
-
-/// What this code makes of a log: the prior's draw, the physics and the
-/// likelihood. Both apps keep it beside the posterior (the store's `m`) and
-/// replay the log when it differs. See src/core/record.ts.
-public let likelihoodID = "2026-10-e10"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -273,9 +259,6 @@ public func forecastOf(_ o: Outcome, cookS: Double) -> Forecast {
     )
 }
 
-/// How far a forecast's three answers may sum from one.
-private let forecastSumTolerance = 1e-6
-
 /// Three probabilities that sum to one, as a forecast's answers are.
 private func threeAnswers(_ v: [Double]) -> Bool {
     answers(v, count: 3)
@@ -463,7 +446,7 @@ public func recordProbeC(_ centreC: Double) -> Double {
 /// frozen at "Eggs in", how the cook went, and whichever answers have been
 /// given so far. SI, every time in s from egg-in. Both apps make a record from
 /// these and nothing else (`recordFor`). See src/core/record.ts.
-public struct CookFacts: Sendable, Equatable {
+public struct CookFacts: Sendable, Equatable, Codable {
     public var app: AppName
     public var appVersion: String
     /// The population the cook's prior was drawn from: the record's `prior`.
@@ -532,6 +515,12 @@ public struct CookFacts: Sendable, Equatable {
         self.forecast = forecast
         self.lang = lang
         self.units = units
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case app, appVersion, prior, day, id, massKg = "mass_kg", massFrom, sizeTable, setup, eggFrom
+        case boilRemembered, boilTapped, level, cookS = "cook_s", nudgeS = "nudge_s", outS = "out_s"
+        case coolS = "cool_s", yolkWord, white, probe, forecast, lang, units
     }
 }
 
@@ -657,15 +646,6 @@ public func validRecord(_ r: EggRecord) -> Bool {
 
 // MARK: - The calibration
 
-/// Particles in the filter, and the seed they start from. Both apps must agree
-/// or two identical kitchens learn two different things from the same egg.
-public let particleCount = 1000
-public let calibrationSeed: Int32 = 0x5eed_1e
-
-/// The calibration grid's alpha bounds, as factors of the posterior's centre.
-public let calibrationAlphaLow = 0.55
-public let calibrationAlphaHigh = 1.8
-
 /// Where to build the dose surface for one logged outcome.
 ///
 /// The most consequential choice in the calibration. The grid is handed to
@@ -692,7 +672,7 @@ public func calibrationGrid(alphaCentre: Double, cookTimeS: Double) -> GridSpec 
 /// A posterior and the number of eggs that taught it. The count is state, not a
 /// statistic: while it is zero the app solves with the literature values, and
 /// the first egg's grid is centred on them - so a replay carries it exactly.
-public struct Calibration: Sendable {
+public struct Calibration: Sendable, Codable {
     public var posterior: Posterior
     public var eggsLogged: Int
     /// Where to solve while no egg has taught anything: the centre of the
@@ -818,17 +798,17 @@ public func replay(
 /// What a launch found: nothing to use (`fresh`), a log to fold again
 /// (`rebuild`), a log that cannot be used and what it taught kept as the base
 /// (`rebased`), or everything as stored (`loaded`).
-public enum LoadPath: String, Sendable {
+public enum LoadPath: String, Sendable, Codable {
     case fresh, rebuild, rebased, loaded
 }
 
 /// A stored base, read: whole, or not.
-public enum StoredBase: String, Sendable {
+public enum StoredBase: String, Sendable, Codable {
     case sound, damaged
 }
 
 /// What an app read from its store, part by part.
-public struct StoreRead: Sendable, Equatable {
+public struct StoreRead: Sendable, Equatable, Codable {
     /// Whether it is a store of this format that can be taken apart.
     public var readable: Bool
     /// The base under the posterior: nil where the store has none.
@@ -863,18 +843,18 @@ public struct StoreRead: Sendable, Equatable {
 }
 
 /// Where the kept base comes from.
-public enum KeptBase: String, Sendable {
+public enum KeptBase: String, Sendable, Codable {
     case stored, posterior
 }
 
 /// Where the kept calibration comes from: the stored posterior as it is, or
 /// a copy of the base - the prior where there is none - to fold the log onto.
-public enum KeptCalibration: String, Sendable {
+public enum KeptCalibration: String, Sendable, Codable {
     case posterior, start
 }
 
 /// What to keep, in the parts that were read.
-public struct LoadDecision: Sendable, Equatable {
+public struct LoadDecision: Sendable, Equatable, Codable {
     public var path: LoadPath
     /// The base: the stored one, the stored posterior, or none.
     public var base: KeptBase?
@@ -920,11 +900,8 @@ public func loadDecision(_ read: StoreRead, population: String, likelihood: Stri
 // in character for character, and enough beside it to say whose and which.
 // `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
 
-/// The results file's own version.
-public let resultsFileVersion = 1
-
 /// What a results file says beside the store.
-public struct ResultsMeta: Sendable, Equatable {
+public struct ResultsMeta: Sendable, Equatable, Codable {
     public var app: AppName
     public var appVersion: String
     /// When it was exported: an ISO 8601 instant, UTC.
@@ -976,9 +953,6 @@ private func spliced(_ s: String) -> String {
     }
     return s
 }
-
-private let resultsAbout = "Actual Egg Timer: every result this device kept, as it keeps them. "
-    + "\"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4)."
 
 /// The results file: the meta and the store (nil when there is none). One
 /// line of JSON.

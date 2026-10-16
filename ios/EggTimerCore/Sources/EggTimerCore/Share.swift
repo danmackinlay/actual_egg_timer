@@ -31,13 +31,6 @@ public func isUid(_ s: String) -> Bool {
 
 // MARK: - The egg's number
 
-/// The number the first egg under an id never used before is filed at. The
-/// server keeps an egg at its id and number only if that key is new, so
-/// under one id a number is never used for a second egg: the numbers start
-/// here only under a new id, each egg passed (kept, refused, or given up on)
-/// is followed by `nextSeq`'s, and nothing else moves them.
-public let firstSeq = 0
-
 /// The number the egg after one filed at `seq` goes under, the same id.
 public func nextSeq(_ seq: Int) -> Int {
     seq + 1

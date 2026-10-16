@@ -9,15 +9,15 @@ import EggTimerCopy
 /// One line of words: a key, and the numbers it takes by name. `time`,
 /// `elapsed`, `boil`, `after` and `cooking` are seconds, shown as a clock;
 /// `boiling` is degrees Celsius; `seconds` a whole number of seconds.
-public struct ReadoutLine: Sendable, Equatable {
+public struct ReadoutLine: Sendable, Equatable, Codable {
     public let key: CopyKey
     public let args: [String: Double]
 }
 
 /// What a screen reader hears for the clock: which line to say (the web's
 /// spoken lines; iOS speaks none of them yet), or the line under the clock.
-public struct Spoken: Sendable, Equatable {
-    public enum Say: String, Sendable {
+public struct Spoken: Sendable, Equatable, Codable {
+    public enum Say: String, Sendable, Codable {
         case heating, cooking, pull, cooling, done, probe, stillIn, subline
     }
 
@@ -25,7 +25,7 @@ public struct Spoken: Sendable, Equatable {
     public let args: [String: Double]
 }
 
-public struct Readout: Sendable, Equatable {
+public struct Readout: Sendable, Equatable, Codable {
     /// The phase the clock reads, and whether the plan asks whether the egg
     /// is still in.
     public let phase: Phase
@@ -43,10 +43,14 @@ public struct Readout: Sendable, Equatable {
     public let hint: ReadoutLine?
     /// Whether Cancel is offered.
     public let cancel: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case phase, asking, label, clockS = "clock_s", sign, subline, spoken, primary, secondary, hint, cancel
+    }
 }
 
 /// What the readout needs of the cook's probe.
-public struct ReadoutProbe: Sendable, Equatable {
+public struct ReadoutProbe: Sendable, Equatable, Codable {
     public var wanted: Bool
     public var pending: Bool
 

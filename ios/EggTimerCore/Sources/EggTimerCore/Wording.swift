@@ -7,6 +7,10 @@ import EggTimerCopy
 /// two apps cannot choose differently, and the fixture tests the choice once
 /// for both; each app's screens only render it.
 
+/// A key in a core value's JSON is spelled as the catalogue spells it, as the
+/// TypeScript's is.
+extension CopyKey: Codable {}
+
 // MARK: - The refusal
 
 /// The refusal's sentence, or nil when there is nothing worth saying. The app

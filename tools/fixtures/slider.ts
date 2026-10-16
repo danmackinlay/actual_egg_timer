@@ -13,7 +13,7 @@
 
 import { DONENESS_ANCHORS, type Solution } from '../../src/core/solve.ts';
 import {
-  SLIDER_STEPS, anchorNear, anchorReachable, snapDown, snapUp, targetPeakYolk_C, verdictFor,
+  anchorNear, anchorReachable, snapDown, snapUp, targetPeakYolk_C, verdictFor,
 } from '../../src/core/slider.ts';
 
 const SNAP_LEVELS: number[] = [];
@@ -53,7 +53,6 @@ for (const level of [0.0, 0.22, 0.41, 0.5, 0.62, 0.9, 1.0]) {
 
 export const sliderFixture = {
   about: 'The doneness slider: snapping, the nearest label, the target temperature, which tick words can be reached, and the refusal verdict. src/core/slider.ts.',
-  steps: SLIDER_STEPS,
   cases: SNAP_LEVELS.map((level) => ({
     level: level,
     snapUp: snapUp(level),
@@ -83,11 +82,7 @@ export const sliderFixture = {
       softestLevel: c.softest,
       hardestLevel: c.hardest,
       level: c.level,
-      kind: v.kind,
-      wanted: v.wanted.key,
-      limit: v.limit.key,
-      snapTo: v.snapTo === null ? null : v.snapTo,
-      worthSaying: v.worthSaying,
+      verdict: v,
     };
   }),
 };

@@ -17,13 +17,6 @@ private func state(_ raw: Any?) throws -> LanguageState {
 
 @Suite("The English of 1750 switches as the reference implementation does")
 struct LanguageConformance {
-    @Test("the constants")
-    func constants() throws {
-        let fixture = try Fixtures.load("language.json")
-        #expect(try defaultLanguage == fixture.str("defaultLanguage"))
-        #expect(try periodLanguage == fixture.str("periodLanguage"))
-    }
-
     @Test("which tags are 1750, which are modern English, and the register")
     func tags() throws {
         for c in try Fixtures.list("language.json", "tags") {

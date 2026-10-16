@@ -74,6 +74,27 @@ public struct CookSetup: Sendable, Codable, Equatable {
         self.coolingWaterC = coolingWaterC
         self.bowlLitres = bowlLitres
     }
+
+    enum CodingKeys: String, CodingKey {
+        case startMode, eggStartC = "eggStart_C", ambientC = "ambient_C", boilingC = "boiling_C"
+        case timeToBoilS = "timeToBoil_s", cooling, waterLitres, afterBoil, eggCount
+        case coolingWaterC = "coolingWater_C", bowlLitres
+    }
+
+    /// As the TypeScript reads one: no `afterBoil` is `hold`.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            startMode: try c.decode(StartMode.self, forKey: .startMode), eggStartC: try c.decode(Double.self, forKey: .eggStartC),
+            ambientC: try c.decode(Double.self, forKey: .ambientC), boilingC: try c.decode(Double.self, forKey: .boilingC),
+            timeToBoilS: try c.decode(Double.self, forKey: .timeToBoilS), cooling: try c.decode(Cooling.self, forKey: .cooling),
+            waterLitres: try c.decode(Double.self, forKey: .waterLitres),
+            afterBoil: try c.decodeIfPresent(HeatAfterBoil.self, forKey: .afterBoil) ?? .hold,
+            eggCount: try c.decode(Double.self, forKey: .eggCount),
+            coolingWaterC: try c.decodeIfPresent(Double.self, forKey: .coolingWaterC),
+            bowlLitres: try c.decodeIfPresent(Double.self, forKey: .bowlLitres)
+        )
+    }
 }
 
 public enum Protocols {

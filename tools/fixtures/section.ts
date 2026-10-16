@@ -7,11 +7,17 @@ import { eggFromMass } from '../../src/core/geometry.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.ts';
 import {
-  SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, previewSection, sectionView,
+  type EggSection, advanceSection, createSection, previewSection, sectionView,
 } from '../../src/core/section.ts';
 import { appSetup } from '../common.ts';
 
 const EGG = eggFromMass(0.060);
+
+/** The section as it stands, apart from the one `advanceSection` goes on to
+ *  change in place. */
+function copied(s: EggSection): EggSection {
+  return structuredClone(s);
+}
 
 /** A white target the eggs have moved (`calibrationDoneness`), so the port's
  *  white is read against a target that is not the constant. */
@@ -69,20 +75,17 @@ const PREVIEWS: { name: string; setup: CookSetup; level: number }[] = [
 
 export const sectionFixture = {
   about: 'The egg in cross-section, carried forward a tick at a time: each ring\'s temperature, dose and how set, at each tick; and the egg the settings aim for. src/core/section.ts.',
-  egg: { mass_kg: EGG.mass_kg },
+  egg: EGG,
   params: DEFAULT_PARAMS,
-  samples: { yolk: SECTION_YOLK_SAMPLES, white: SECTION_WHITE_SAMPLES },
   whiteTargets: [WHITE_DOSE_TARGET, MOVED_WHITE_TARGET],
-  rings: (() => {
-    const s = createSection(EGG, appSetup(), DEFAULT_PARAMS);
-    return { x: s.x, yolk: s.yolk, outer: s.outer };
-  })(),
   cases: CASES.map((c) => {
     const s = createSection(EGG, c.setup, DEFAULT_PARAMS);
     return {
       name: c.name,
       setup: c.setup,
       out_s: c.out_s,
+      // The rings, the sphere and the doses before the first tick.
+      start: copied(s),
       ticks: c.ticks.map((tick) => {
         // The time out is known only once the clock has reached it, as on a
         // screen: before then the egg is still in the water.
@@ -91,16 +94,10 @@ export const sectionFixture = {
         return {
           to_s: tick,
           givenOut_s: out,
-          t_s: s.t_s,
-          outAt_s: s.outAt_s,
-          waterAtPull_C: s.waterAtPull_C,
-          meanAtPull_C: s.meanAtPull_C,
-          surface_C: s.sphere.surface_C,
-          dose_min: s.dose.map((d) => d.minutes),
-          views: [WHITE_DOSE_TARGET, MOVED_WHITE_TARGET].map((target) => {
-            const v = sectionView(s, target);
-            return { temperature_C: v.temperature_C, set: v.set };
-          }),
+          // The section as it stands at the tick, whole: the sphere's modes,
+          // the moment out, each ring's dose.
+          section: copied(s),
+          views: [WHITE_DOSE_TARGET, MOVED_WHITE_TARGET].map((target) => sectionView(s, target)),
         };
       }),
     };
@@ -108,10 +105,9 @@ export const sectionFixture = {
   previews: PREVIEWS.map((p, i) => {
     const sol = solveCookTime(EGG, p.setup, DEFAULT_PARAMS, donenessFromSlider(p.level));
     const target = i % 2 === 0 ? WHITE_DOSE_TARGET : MOVED_WHITE_TARGET;
-    const view = previewSection(EGG, p.setup, DEFAULT_PARAMS, sol.result.cookTime_s, target);
     return {
       name: p.name, setup: p.setup, cookTime_s: sol.result.cookTime_s, level: p.level, whiteTarget_min: target,
-      temperature_C: view.temperature_C, set: view.set,
+      view: previewSection(EGG, p.setup, DEFAULT_PARAMS, sol.result.cookTime_s, target),
     };
   }),
 };

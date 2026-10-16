@@ -464,7 +464,7 @@ function answersOf(v: unknown, count: number): v is number[] {
 
 /** How far a forecast's three answers may sum from one: far above what three
  *  doubles add up to, far below any probability that means something. */
-const FORECAST_SUM_TOLERANCE = 1e-6;
+export const FORECAST_SUM_TOLERANCE = 1e-6;
 
 /** Whether `o` has `key` at all: a field today's records always write,
  *  null or not, is refused when it is missing. */
@@ -1044,7 +1044,7 @@ function spliced(s: string): string {
 }
 
 /** What the file says it is, for whoever opens it. */
-const RESULTS_ABOUT = 'Actual Egg Timer: every result this device kept, as it keeps them. '
+export const RESULTS_ABOUT = 'Actual Egg Timer: every result this device kept, as it keeps them. '
   + '"stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4).';
 
 /** The results file: the meta and the store (`stored`, null when there is

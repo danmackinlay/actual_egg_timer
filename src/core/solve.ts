@@ -188,9 +188,9 @@ export function simulate(
 
 /* ------------------------------------------------------------------ search */
 
-const SOLVE_LO_S = 20.0;
-const SOLVE_HI_S = 3600.0;
-const SOLVE_TOL_S = 1.0;
+export const SOLVE_LO_S = 20.0;
+export const SOLVE_HI_S = 3600.0;
+export const SOLVE_TOL_S = 1.0;
 
 /** Which dose a search is looking at. */
 type Metric = (r: CookResult) => number;
@@ -286,17 +286,17 @@ export function solveCookTime(
  *  goes". The maximum sits on a plateau - the last per cent of the dose can
  *  take another quarter of an hour and change the yolk by a tenth of a degree -
  *  so the time worth printing is the start of that plateau, not its peak. */
-const STANDING_KNEE = 0.99;
+export const STANDING_KNEE = 0.99;
 
 /** How long past the boil it is worth looking, with the heat off. The water is
  *  falling; half an hour after the burner dies there is nothing left to give,
  *  and a longer search only costs simulations. */
-const STANDING_HORIZON_S = 1800.0;
+export const STANDING_HORIZON_S = 1800.0;
 
 /** Coarse step for the standing scan, seconds. Fine enough that the bracket it
  *  hands to the bisection is locally monotonic; coarse enough to keep the scan
  *  to a few dozen simulations. */
-const SCAN_STEP_S = 30.0;
+export const SCAN_STEP_S = 30.0;
 
 /** Both doses sampled at every scan step, from the shortest cook to the
  *  horizon. One pass answers every question the standing solver has. */

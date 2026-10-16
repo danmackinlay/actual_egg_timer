@@ -15,20 +15,20 @@ public struct ModelParams: Sendable, Codable, Equatable {
     }
 
     public static let `default` = ModelParams()
+
+    enum CodingKeys: String, CodingKey {
+        case alphaM2s = "alpha_m2s"
+    }
 }
 
-/// Dose target for the white, equivalent minutes at 80 C, read at the yolk
-/// boundary - the innermost white is the last to set.
-public let whiteDoseTarget = 0.05
-
-/// Yolk dose targets at the ends of the slider, equivalent minutes at 63 C.
-public let yolkDoseRunny = 0.05
-public let yolkDoseHard = 2000.0
-
-public struct Doneness: Sendable {
+public struct Doneness: Sendable, Codable {
     public let level: Double
     public let yolkDoseMin: Double
     public let whiteDoseMin: Double
+
+    enum CodingKeys: String, CodingKey {
+        case level, yolkDoseMin = "yolkDose_min", whiteDoseMin = "whiteDose_min"
+    }
 }
 
 /// Map the single slider to a yolk dose target. Logarithmic, which - because
@@ -60,21 +60,17 @@ func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
 /// A labelled slider position. The name is a catalogue key, not English: each
 /// language picks its own word for each anchor, and the anchor stays at the
 /// same dose whatever it is called (LANGUAGE.md §5).
-public struct DonenessAnchor: Sendable {
+public struct DonenessAnchor: Sendable, Codable {
     public let key: CopyKey
     public let level: Double
     public let approxPeakYolkC: Double
+
+    enum CodingKeys: String, CodingKey {
+        case key, level, approxPeakYolkC = "approxPeakYolk_C"
+    }
 }
 
-public let donenessAnchors: [DonenessAnchor] = [
-    DonenessAnchor(key: .`doneness.runny`, level: 0.00, approxPeakYolkC: 56),
-    DonenessAnchor(key: .`doneness.soft`, level: 0.22, approxPeakYolkC: 61),
-    DonenessAnchor(key: .`doneness.jammy`, level: 0.41, approxPeakYolkC: 65),
-    DonenessAnchor(key: .`doneness.fudgy`, level: 0.62, approxPeakYolkC: 70),
-    DonenessAnchor(key: .`doneness.hard`, level: 1.00, approxPeakYolkC: 77),
-]
-
-public struct CookResult: Sendable {
+public struct CookResult: Sendable, Codable {
     public let cookTimeS: Double
     /// Highest temperature the yolk centre ever reaches, carryover included.
     public let peakYolkC: Double
@@ -84,6 +80,12 @@ public struct CookResult: Sendable {
     public let yolkDoseMin: Double
     public let whiteDoseMin: Double
     public let peakWhiteC: Double
+
+    enum CodingKeys: String, CodingKey {
+        case cookTimeS = "cookTime_s", peakYolkC = "peakYolk_C", peakYolkTimeS = "peakYolkTime_s"
+        case yolkAtPullC = "yolkAtPull_C", yolkDoseMin = "yolkDose_min", whiteDoseMin = "whiteDose_min"
+        case peakWhiteC = "peakWhite_C"
+    }
 }
 
 /// Run one cook and report what it does to the egg.
@@ -167,10 +169,6 @@ public func simulate(
 
 // MARK: - search
 
-private let solveLoS = 20.0
-private let solveHiS = 3600.0
-private let solveTolS = 1.0
-
 private func yolkOf(_ r: CookResult) -> Double { r.yolkDoseMin }
 private func whiteOf(_ r: CookResult) -> Double { r.whiteDoseMin }
 
@@ -208,7 +206,7 @@ private func bisect(
     )
 }
 
-public struct Solution: Sendable {
+public struct Solution: Sendable, Codable {
     public let result: CookResult
     /// False when the requested doneness cannot be reached without leaving the
     /// white undercooked.
@@ -224,6 +222,10 @@ public struct Solution: Sendable {
     /// off, where the water can fall past the white's target while the egg is
     /// still in it.
     public let whiteSets: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case result, reachable, minCookTimeS = "minCookTime_s", softestLevel, hardestLevel, whiteSets
+    }
 }
 
 /// Solve for the cook time that delivers the requested doneness.
@@ -260,18 +262,6 @@ public func solveCookTime(
 }
 
 // MARK: - standing
-
-/// Fraction of the best available dose that counts as "as far as this pan
-/// goes". The maximum sits on a plateau, so the time worth printing is the
-/// start of it, not its peak.
-private let standingKnee = 0.99
-
-/// How long past the boil it is worth looking with the heat off.
-private let standingHorizonS = 1800.0
-
-/// Coarse step for the standing scan: fine enough that the bracket it hands to
-/// the bisection is locally monotonic, coarse enough to stay cheap.
-private let scanStepS = 30.0
 
 /// Both doses sampled at every scan step. One pass answers every question the
 /// standing solver has.

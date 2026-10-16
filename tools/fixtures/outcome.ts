@@ -4,7 +4,7 @@
 
 import { UNRELATED, createPrior, updatePosterior } from '../../src/core/infer.ts';
 import { decideAt, decisionApplies } from '../../src/core/decide.ts';
-import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../../src/core/outcome.ts';
+import { leanOf, predictOutcome } from '../../src/core/outcome.ts';
 
 import { particleRows } from './shared.ts';
 import {
@@ -38,7 +38,6 @@ const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [
 
 export const outcomeFixture = {
   about: 'The predicted outcome at the chosen time: answers, level range and lean. src/core/outcome.ts. Surface and posteriors prior, learned and firmer are decide.json\'s.',
-  constants: { leanRatio: LEAN_RATIO, levelLowQ: LEVEL_LOW_Q, levelHighQ: LEVEL_HIGH_Q },
   posteriors: [{
     name: 'consistent',
     eggsLogged: 3,

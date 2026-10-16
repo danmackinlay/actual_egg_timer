@@ -32,13 +32,10 @@ import EggTimerCopy
 /// the outcome and the certainty at the time given, and whether advice is
 /// wanted. Both apps call it, so a rule about the time lands in both at once.
 
-/// Slider positions between profile points.
-public let profileStep = 5
-
 /// One point of the profile: a slider level, the time the app gives there
 /// (after the envelope), the odds of that time, and how sure the app is there
 /// in words.
-public struct LevelOdds: Sendable, Equatable {
+public struct LevelOdds: Sendable, Equatable, Codable {
     public let level: Double
     public let cookTimeS: Double
     public let odds: Double
@@ -58,9 +55,13 @@ public struct LevelOdds: Sendable, Equatable {
         self.pAsked = pAsked
         self.certainty = certainty
     }
+
+    enum CodingKeys: String, CodingKey {
+        case level, cookTimeS = "cookTime_s", odds, pAsked, certainty
+    }
 }
 
-public struct OddsProfile: Sendable, Equatable {
+public struct OddsProfile: Sendable, Equatable, Codable {
     /// Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
     /// the white never sets.
     public let points: [LevelOdds]
@@ -103,10 +104,6 @@ private func positionUp(_ level: Double) -> Int {
 private func positionDown(_ level: Double) -> Int {
     Int((snapDown(level) * sliderSteps).rounded())
 }
-
-/// How close a level must be to a point to be that point: the slider's levels
-/// are hundredths, which neither language holds exactly.
-private let sameLevel = 1e-9
 
 /// Where the envelope holds the time at `level`: no sooner than the time of the
 /// nearest point at or below it, no later than the time of the nearest point
@@ -285,7 +282,7 @@ public func lowOddsAt(_ profile: OddsProfile?, level: Double) -> Bool {
 
 /// A solve, the verdict on it, the level it is for, and whether the odds there
 /// are warned of.
-public struct LevelAnswer: Sendable {
+public struct LevelAnswer: Sendable, Codable {
     public let solution: Solution
     public let verdict: Verdict
     /// The level the solution is for: the one asked, or the one it snapped to.
@@ -324,14 +321,10 @@ public func answerAt(
 
 /// How strongly the track is shaded at a level: the chance of the word asked
 /// there over the best level's, 0 to 1.
-public struct Shade: Sendable, Equatable {
+public struct Shade: Sendable, Equatable, Codable {
     public let level: Double
     public let strength: Double
 }
-
-/// The best chance below which the track is not shaded at all: there is no
-/// "where it works best" to show.
-public let shadeBestMin = 0.05
 
 /// The shading's stops, one per profile point; empty with nothing to shade.
 public func shadingOf(_ profile: OddsProfile) -> [Shade] {
@@ -347,20 +340,13 @@ public func shadingOf(_ profile: OddsProfile) -> [Shade] {
 // guess at the time on screen, and a change the model can price raises the
 // chance of that word there by `adviceGain` or more.
 
-/// How much a change must raise the chance of the word asked at this level
-/// to be worth saying: a twentieth.
-public let adviceGain = 0.05
-/// How far over the fridge preset an egg must start before "straight from the
-/// fridge" is advice, C.
-private let fridgeMarginC = 1.0
-
 /// Whether the word asked is unsure enough to look for advice: a wild guess.
 public func adviceWanted(_ c: Certainty) -> Bool {
     c == .wildGuess
 }
 
 /// What the setup alone does not say about the egg.
-public struct AdviceFacts: Sendable, Equatable {
+public struct AdviceFacts: Sendable, Equatable, Codable {
     public let eggFromClass: Bool
     public let startAssumed: Bool
 
@@ -371,7 +357,7 @@ public struct AdviceFacts: Sendable, Equatable {
 }
 
 /// A change of protocol the model can price: the same pot, one thing changed.
-public struct PricedChange: Sendable, Equatable {
+public struct PricedChange: Sendable, Equatable, Codable {
     public let key: CopyKey
     public let setup: CookSetup
 }
@@ -430,7 +416,7 @@ public func askedNear(_ profile: OddsProfile, level: Double) -> Double {
 }
 
 /// What to say, and whether to show the way to it.
-public struct ProtocolAdvice: Sendable, Equatable {
+public struct ProtocolAdvice: Sendable, Equatable, Codable {
     /// Catalogue keys in the order shown: the unpriced advice, then each
     /// priced change that makes the word asked surer.
     public let keys: [CopyKey]
@@ -460,7 +446,7 @@ public func protocolAdvice(
 /// The answer at a level, with its time decided on the pot's surface: what
 /// the screen shows, and what a cook started now carries. Both apps' one
 /// copy of it.
-public struct DecidedAnswer: Sendable {
+public struct DecidedAnswer: Sendable, Codable {
     /// The level decided for: the answer's (`LevelAnswer.level`), after any
     /// snap. The advice is priced here, against the chance of the word asked
     /// in `certainty`.
@@ -482,6 +468,10 @@ public struct DecidedAnswer: Sendable {
     /// sets, so there is a cook to advise on: the advice is looked for. The
     /// link shows when `protocolAdvice` also finds a change that helps.
     public let adviceWanted: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case level, solution, decision, outcome, certainty, nudgeS = "nudge_s", adviceWanted
+    }
 }
 
 /// Decide an answer: the time for `sol`, the mean solve at `level` (an

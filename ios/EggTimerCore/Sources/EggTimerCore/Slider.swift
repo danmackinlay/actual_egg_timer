@@ -11,10 +11,6 @@ import Foundation
 
 // MARK: - The slider
 
-/// Positions per unit of slider travel. A snapped level always lands where the
-/// thumb can sit.
-public let sliderSteps = 100.0
-
 /// Round a level onto the slider's grid, away from the unreachable side. The
 /// nudge keeps a level already on the grid from being pushed a whole step by
 /// floating-point noise.
@@ -94,14 +90,14 @@ public func targetPeakYolkC(_ level: Double) -> Double {
 ///
 /// A level the pan can deliver is never refused, however low its odds: those
 /// are warned of instead (`lowOddsAt`, Reach.swift).
-public enum RefusalKind: String, Sendable {
+public enum RefusalKind: String, Sendable, Codable {
     case none
     case tooSoftForWhite
     case harderThanPanReaches
     case whiteNeverSets
 }
 
-public struct Verdict: Sendable {
+public struct Verdict: Sendable, Codable {
     public let kind: RefusalKind
     /// The anchor the user asked for.
     public let wanted: DonenessAnchor

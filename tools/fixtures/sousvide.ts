@@ -6,7 +6,7 @@
 import { ALPHA_DEFAULT } from '../../src/core/constants.ts';
 import { eggFromMass } from '../../src/core/geometry.ts';
 import {
-  SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
+  SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
 } from '../../src/core/sousvide.ts';
 import { donenessFromSlider } from '../../src/core/solve.ts';
 
@@ -86,8 +86,6 @@ for (const mass_g of SOUS_VIDE_EGGS_G) {
 
 export const sousvideFixture = {
   about: 'The isothermal limit: no pan, no ramp, no cooling, and an answer in hours. src/core/sousvide.ts.',
-  bath_C: SOUS_VIDE_BATH_C,
-  modelFloor_C: SOUS_VIDE_MODEL_FLOOR_C,
   /* The bisection's answer stripped of its scaling: at R = 1 m and
    * alpha = 1 m^2/s the return value IS the Fourier number it converged on.
    * Every other equilibration number in this file is that one times R^2/alpha,
@@ -105,15 +103,11 @@ export const sousvideFixture = {
       mass_g: c.mass_g,
       radius_m: egg.radius_m,
       alpha_m2s: c.alpha_m2s,
+      bath_C: c.bath_C,
       level: c.level,
       yolkDose_min: doneness.yolkDose_min,
       whiteDose_min: doneness.whiteDose_min,
-      bath_C: est.bath_C,
-      equilibrate_s: est.equilibrate_s,
-      yolkHold_s: est.yolkHold_s,
-      whiteHold_s: est.whiteHold_s,
-      total_s: est.total_s,
-      whiteBound: est.whiteBound,
+      estimate: est,
     };
   }),
 };

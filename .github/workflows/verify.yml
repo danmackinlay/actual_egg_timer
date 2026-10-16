@@ -54,6 +54,7 @@ jobs:
       - run: npm run validate
       - run: npm run copy:literals
       - run: npm run copy:keys -- --check
+      - run: npm run swift:constants -- --check
       - run: npm run fixtures:check
 
   # The Swift package's tests, and the app built for Release. Its Debug

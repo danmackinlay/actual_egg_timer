@@ -14,7 +14,7 @@ import Foundation
 
 /// The cook as chosen: what the sentence, the slider and Settings' pot rows
 /// say, in SI.
-public struct CookChoices: Sendable, Equatable {
+public struct CookChoices: Sendable, Equatable, Codable {
     public var massKg: Double
     public var massFrom: MassFrom
     public var sizeTable: SizeTable?
@@ -61,10 +61,16 @@ public struct CookChoices: Sendable, Equatable {
         self.altitudeM = altitudeM
         self.level = level
     }
+
+    enum CodingKeys: String, CodingKey {
+        case massKg = "mass_kg", massFrom, sizeTable, eggFrom, customStartC = "customStart_C"
+        case roomC = "room_C", startMode, afterBoil, cooling, tapWaterC = "tapWater_C", bowlLitres
+        case bowlWaterC = "bowlWater_C", waterLitres, eggCount, altitudeM = "altitude_m", level
+    }
 }
 
 /// The pull: when it was due, when the egg came out, and who said so.
-public struct Pulled: Sendable, Equatable {
+public struct Pulled: Sendable, Equatable, Codable {
     public var dueS: Double
     public var outS: Double
     public var by: PulledBy
@@ -78,10 +84,14 @@ public struct Pulled: Sendable, Equatable {
         self.by = by
         self.confirmed = confirmed
     }
+
+    enum CodingKeys: String, CodingKey {
+        case dueS = "due_s", outS = "out_s", by, confirmed
+    }
 }
 
 /// What was observed, as clock times: the log's events folded.
-public struct CookEvents: Sendable, Equatable {
+public struct CookEvents: Sendable, Equatable, Codable {
     public var boilAtS: Double?
     public var pulled: Pulled?
     /// The counted cooling ended. Never written on the counter.
@@ -99,11 +109,15 @@ public struct CookEvents: Sendable, Equatable {
 
     /// A cook with nothing observed yet.
     public static let none = CookEvents()
+
+    enum CodingKeys: String, CodingKey {
+        case boilAtS = "boilAt_s", pulled, cooledAtS = "cooledAt_s", rangAtS = "rangAt_s"
+    }
 }
 
 /// The plan as the cook ran: what the record says was said for this egg, and
 /// what Done shows. See `CookAsRan` in `src/core/running.ts`.
-public struct CookAsRan: Sendable, Equatable {
+public struct CookAsRan: Sendable, Equatable, Codable {
     /// The cook's `correctedAtS` when it was taken (`asRanCurrent`).
     public var correctedAtS: Double?
     public var level: Double
@@ -129,16 +143,25 @@ public struct CookAsRan: Sendable, Equatable {
         self.probeMoment = probeMoment
         self.params = params
     }
+
+    enum CodingKeys: String, CodingKey {
+        case correctedAtS = "correctedAt_s", level, cookS = "cook_s", nudgeS = "nudge_s", forecast
+        case peakYolkC = "peakYolk_C", probeMoment, params
+    }
 }
 
 /// When the egg went in and the choices, as at the press of Start.
-public struct CookStart: Sendable, Equatable {
+public struct CookStart: Sendable, Equatable, Codable {
     public let atS: Double
     public let choices: CookChoices
 
     public init(atS: Double, choices: CookChoices) {
         self.atS = atS
         self.choices = choices
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case atS = "at_s", choices
     }
 }
 
@@ -218,12 +241,97 @@ public struct RunningCook: Sendable, Equatable {
     }
 }
 
+/// An entry as the web writes one: its kind, and that kind's fields.
+extension CookEntry: Codable {
+    private enum Keys: String, CodingKey {
+        case kind, atS = "at_s", choices, startedAtS = "startedAt_s", pulled, asRan, yolkWord, white, probe
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        let at = { try c.decode(Double.self, forKey: .atS) }
+        switch try c.decode(String.self, forKey: .kind) {
+        case "boil": self = .boil(atS: try at())
+        case "correct": self = .correct(atS: try at(), choices: try c.decode(CookChoices.self, forKey: .choices))
+        case "start": self = .start(atS: try at(), startedAtS: try c.decode(Double.self, forKey: .startedAtS))
+        case "pulled": self = .pulled(try c.decodeIfPresent(Pulled.self, forKey: .pulled))
+        case "stands": self = .stands
+        case "cooled": self = .cooled(atS: try c.decodeIfPresent(Double.self, forKey: .atS))
+        case "rang": self = .rang(atS: try c.decodeIfPresent(Double.self, forKey: .atS))
+        case "stillIn": self = .stillIn(atS: try at())
+        case "ran": self = .ran(try c.decodeIfPresent(CookAsRan.self, forKey: .asRan))
+        case "answered":
+            self = .answered(
+                atS: try at(), yolkWord: try c.decodeIfPresent(YolkWord.self, forKey: .yolkWord),
+                white: try c.decodeIfPresent(WhiteReport.self, forKey: .white),
+                probe: try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
+            )
+        case "logged": self = .logged(atS: try at())
+        case "ended": self = .ended(atS: try at())
+        case let kind:
+            throw DecodingError.dataCorruptedError(forKey: .kind, in: c, debugDescription: "no entry of kind \(kind)")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(kind, forKey: .kind)
+        switch self {
+        case let .boil(at), let .stillIn(at), let .logged(at), let .ended(at): try c.encode(at, forKey: .atS)
+        case let .correct(at, choices):
+            try c.encode(at, forKey: .atS)
+            try c.encode(choices, forKey: .choices)
+        case let .start(at, startedAt):
+            try c.encode(at, forKey: .atS)
+            try c.encode(startedAt, forKey: .startedAtS)
+        case let .pulled(p): try c.encode(p, forKey: .pulled)
+        case .stands: break
+        case let .cooled(at), let .rang(at): try c.encode(at, forKey: .atS)
+        case let .ran(r): try c.encode(r, forKey: .asRan)
+        case let .answered(at, yolk, white, probe):
+            try c.encode(at, forKey: .atS)
+            try c.encode(yolk, forKey: .yolkWord)
+            try c.encode(white, forKey: .white)
+            try c.encode(probe, forKey: .probe)
+        }
+    }
+}
+
+/// A cook as both apps store it: what was fixed at the press, the start and
+/// the log, and no more, since the rest is the log folded, again on reading.
+extension RunningCook: Codable {
+    private enum Keys: String, CodingKey {
+        case idMs = "id_ms", nudgeS = "nudge_s", boilMemory, units, lang, start, log
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self = foldCook(
+            idMs: try c.decode(Double.self, forKey: .idMs), start: try c.decode(CookStart.self, forKey: .start),
+            nudgeS: try c.decode(Double.self, forKey: .nudgeS), boilMemory: try c.decode(BoilMemory.self, forKey: .boilMemory),
+            units: try c.decode(Units.self, forKey: .units), lang: try c.decode(String.self, forKey: .lang),
+            log: try c.decode([CookEntry].self, forKey: .log)
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(idMs, forKey: .idMs)
+        try c.encode(nudgeS, forKey: .nudgeS)
+        try c.encode(boilMemory, forKey: .boilMemory)
+        try c.encode(units, forKey: .units)
+        try c.encode(lang, forKey: .lang)
+        try c.encode(start, forKey: .start)
+        try c.encode(log, forKey: .log)
+    }
+}
+
 // MARK: - The phases and deadlines
 
 /// The phases of a cook, in order.
 ///
 ///     IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
-public enum Phase: String, Sendable {
+public enum Phase: String, Sendable, Codable {
     case idle = "IDLE"
     case heating = "HEATING"
     case cooking = "COOKING"
@@ -231,16 +339,6 @@ public enum Phase: String, Sendable {
     case cooling = "COOLING"
     case done = "DONE"
 }
-
-/// Counted-down cooling. Carryover is what ruins a soft egg, so this is a stage
-/// of the cook, not a suggestion appended to the end of it.
-///
-/// This is the FALLBACK: the countdown runs to the moment the yolk's
-/// centre peaks (`coolingSecondsFor`). See src/core/running.ts.
-public let coolingSeconds = 180.0
-
-/// The shortest counted cooling, s: a floor under a rounding.
-public let coolingMinSeconds = 60.0
 
 /// How long to count the cooling down, s from the pull: to the moment the
 /// yolk's centre peaks, for this cook as the solver ran it.
@@ -258,13 +356,6 @@ public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
     if cooling == .counter { return false }
     return result.peakYolkTimeS - result.cookTimeS >= coolingMinSeconds
 }
-
-/// How many prior sds of the time-scale either side of the posterior mean a
-/// kitchen may be and still have its reading taken.
-public let probeAlphaSds = 3.0
-
-/// How far past those kitchens' peaks a reading may land and still be taken, C.
-public let probeMarginC = 3.0
 
 /// The centre readings the app will take for this cook, C, as (low, high): a
 /// reading outside is refused at entry rather than folded. See
@@ -290,18 +381,6 @@ public func plausibleProbeRangeC(
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
 }
 
-/// A slow hob: a cold start still not boiling this close to its provisional
-/// deadline, s, has a slower hob than assumed. Both apps push the estimate out
-/// to the time heating so far plus `slowHobExtraS`, at most once every
-/// `slowHobEveryS`.
-public let slowHobWhenLeftS = 45.0
-public let slowHobExtraS = 60.0
-public let slowHobEveryS = 10.0
-
-/// If nobody confirms the transfer, assume it happened. A stalled timer at the
-/// hob is worse than a slightly optimistic one.
-public let pullGraceSeconds = 20.0
-
 /// The deadlines a cook is made of, as epoch seconds. `coolEndS` is nil when
 /// there is no cooling step to time - resting on the counter, where the
 /// carryover IS the point rather than something to wait out.
@@ -325,6 +404,22 @@ public struct Deadlines: Sendable {
         self.provisional = provisional
         self.outAtS = outAtS
         self.asking = asking
+    }
+}
+
+/// The TypeScript's, with no `asking` for not asking.
+extension Deadlines: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case cookEndS = "cookEnd_s", coolEndS = "coolEnd_s", provisional, outAtS = "outAt_s", asking
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            cookEndS: try c.decode(Double.self, forKey: .cookEndS), coolEndS: try c.decodeIfPresent(Double.self, forKey: .coolEndS),
+            provisional: try c.decode(Bool.self, forKey: .provisional), outAtS: try c.decodeIfPresent(Double.self, forKey: .outAtS),
+            asking: try c.decodeIfPresent(Bool.self, forKey: .asking) ?? false
+        )
     }
 }
 
@@ -438,7 +533,7 @@ func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Doub
 
 /// What has been said about the egg: the first yolk word, white and probe
 /// reading given, each kept once said.
-public struct CookAnswers: Sendable, Equatable {
+public struct CookAnswers: Sendable, Equatable, Codable {
     public var yolkWord: YolkWord?
     public var white: WhiteReport?
     public var probe: ProbeReading?
@@ -488,7 +583,7 @@ public func boilRemembered(_ cook: RunningCook) -> Bool {
 // MARK: - The egg and the pot
 
 /// The solver's egg and pot.
-public struct CookPot: Sendable, Equatable {
+public struct CookPot: Sendable, Equatable, Codable {
     public let egg: Egg
     public let setup: CookSetup
 }
@@ -655,9 +750,25 @@ public struct SlowHobMemo: Sendable, Equatable {
     let carriedS: Double?
 }
 
+/// Where the rule got to, and not its key: the key is this core's own, to the
+/// bit, and two cores' numbers agree only in distribution (DECISIONS.md 109).
+extension SlowHobMemo: Encodable {
+    private enum CodingKeys: String, CodingKey {
+        case steps, lastS = "last_s", rampS = "ramp_s", carriedS = "carried_s"
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(steps, forKey: .steps)
+        try c.encode(lastS, forKey: .lastS)
+        try c.encode(rampS, forKey: .rampS)
+        try c.encode(carriedS, forKey: .carriedS)
+    }
+}
+
 /// Everything derived from a cook. Never stored as truth. `replan` in
 /// `src/core/running.ts` says what each part is.
-public struct CookPlan: Sendable {
+public struct CookPlan: Sendable, Encodable {
     public let egg: Egg
     public let setup: CookSetup
     /// Nil while the slow hob has lengthened the guess (`guessLengthened`).
@@ -683,6 +794,12 @@ public struct CookPlan: Sendable {
     public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
+
+    enum CodingKeys: String, CodingKey {
+        case egg, setup, inputs, answer, solution, decided, leanS = "lean_s", nudgeS = "nudge_s"
+        case cookTimeS = "cookTime_s", overdue, coolS = "cool_s", probeMoment, deadlines
+        case slowHobAtS = "slowHobAt_s", memo, tooOldAtS = "tooOldAt_s", certainty, forecast
+    }
 }
 
 /// Whether the slow hob has lengthened the guess: the pull moves with the
@@ -738,12 +855,6 @@ public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
     guard let at = plan.slowHobAtS else { return false }
     return nowS > at
 }
-
-/// The most lengthenings one plan works through.
-public let slowHobMaxSteps = 100
-
-/// How long past its end a cook is still worth picking back up, s.
-public let restoreWindowS = 3600.0
 
 /// Whether a cook is too old to pick back up at `nowS`, from its plan.
 public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
@@ -1057,7 +1168,7 @@ public func asRanCorrected(
 /// What an app adds to a cook's facts: which app and build, the prior's
 /// population, the local day the cook started, and the record's id (none on
 /// iOS).
-public struct RecordContext: Sendable, Equatable {
+public struct RecordContext: Sendable, Equatable, Codable {
     public var app: AppName
     public var appVersion: String
     public var prior: String
@@ -1074,12 +1185,12 @@ public struct RecordContext: Sendable, Equatable {
 }
 
 /// Why `cookFactsFor` made no facts.
-public enum FactsRefused: String, Sendable, Equatable {
+public enum FactsRefused: String, Sendable, Equatable, Codable {
     case noSurface, stale
 }
 
 /// The facts, or why there are none: exactly one is nil.
-public struct CookFactsResult: Sendable, Equatable {
+public struct CookFactsResult: Sendable, Equatable, Codable {
     public let facts: CookFacts?
     public let refused: FactsRefused?
 }
@@ -1117,7 +1228,7 @@ public func cookFactsFor(
 }
 
 /// A measured time to a rolling boil, for the boil memory.
-public struct BoilToRemember: Sendable, Equatable {
+public struct BoilToRemember: Sendable, Equatable, Codable {
     public let litres: Double
     public let seconds: Double
 }
@@ -1147,7 +1258,7 @@ private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
 }
 
 /// What a cook leaves when it ends, by Cancel or by Start again.
-public struct CookEnding: Sendable, Equatable {
+public struct CookEnding: Sendable, Equatable, Codable {
     public let boil: BoilToRemember?
     public let finished: Bool
     /// The record must be made again before the cook is forgotten.

@@ -156,7 +156,6 @@ export function wordingFixture(): Record<string, unknown> {
 
   return {
     about: 'Which catalogue key each part of the screen says, from the facts of the cook. src/core/wording.ts.',
-    constants: { whiteRisk: WHITE_RISK },
     warning: warning,
     outcome: outcome,
     range: range,
