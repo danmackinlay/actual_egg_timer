@@ -3,17 +3,18 @@
  * fit's recovery check (fit/tests/test_recovery.py, run in CI's `fit` job,
  * which has no node). Sixty cooks drawn from RECOVERY_TRUTH with a fixed
  * seed and emulated, with the truth beside them; NUTS on these must find
- * every global's truth inside its interval, narrow the prior where the data
- * identify a global, mix and never diverge. No likelihood checks:
- * emulated-sample.json has those.
+ * the globals' truth no further from the posterior than a calibrated fit
+ * would, narrow the prior where the data identify a global, mix and never
+ * diverge. No likelihood checks: emulated-sample.json has those.
  *
  * The truth is tools/eggsSimulate.ts's SIMULATED_TRUTH but for the
  * time-scale's centre, which is put in the prior's tail: -2 literature sds
  * (alpha 21% below the literature's), at the prior's 2.3rd percentile, so
- * the recovery spans the prior rather than sitting at its middle. It is
- * still inside the test's 1 - 0.10/9 interval of the prior, so a fit that
- * lost its likelihood and returned the prior would cover it: only the
- * narrowing check catches that.
+ * the recovery spans the prior rather than sitting at its middle. Taken
+ * with the other eight it is no further from the prior than most of the
+ * prior's own draws, so a fit that lost its likelihood and returned the
+ * prior would pass the test of distance: only the narrowing check catches
+ * that.
  */
 
 import { SIMULATED_TRUTH, emulate, simulateCooks, type Truth } from '../eggsSimulate.ts';
