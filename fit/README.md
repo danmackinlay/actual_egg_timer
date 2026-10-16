@@ -85,10 +85,14 @@ follows by itself.
 **The sampler recovers a known population, and mixes.**
 `tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
 a known truth, also written by `npm run fixtures`, with four chains side by
-side (about 70 s). It fails on a divergent transition, an R-hat of 1.01 or
-more, a bulk ESS under 100 a chain, or a truth outside its interval (each
-1 - 0.10/9, so all nine together cover 90% of the time when the posterior is
-right). CI's `fit` job runs it with the rest of `fit/tests`, without node.
+side (under a minute). The truth's time-scale is in the prior's tail, so the
+prior alone would not find it. The test fails on a divergent transition, an
+R-hat of 1.01 or more, a bulk ESS under 100 a chain, a truth outside its
+interval (each 1 - 0.10/9, so all nine together cover 90% of the time when
+the posterior is right), or a time-scale or white's lag whose posterior sd
+is not below half its prior's: a fit that lost its likelihood returns the
+prior, and fails there. It prints every truth's posterior quantile, pass or
+fail. CI's `fit` job runs it with the rest of `fit/tests`, without node.
 The same R-hat, ESS and divergence checks are in every `report.md`
 (`eggfit/diagnostics.py`), and `fit` will not write
 `fixtures/population.json` when they fail.
