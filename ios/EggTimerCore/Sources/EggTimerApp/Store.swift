@@ -83,7 +83,6 @@ public protocol KeyValueStore: AnyObject {
     func double(forKey key: String) -> Double
     func bool(forKey key: String) -> Bool
     func data(forKey key: String) -> Data?
-    func dictionary(forKey key: String) -> [String: Any]?
     /// Writes, which only `Stores` can make.
     func set(_ value: Any?, forKey key: String, _ pass: Stores.Pass)
     func removeObject(forKey key: String, _ pass: Stores.Pass)

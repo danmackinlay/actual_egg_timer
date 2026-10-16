@@ -59,11 +59,6 @@ final class Ringer {
         }
     }
 
-    /// Start watching whether the app is on screen. Called when a cook starts
-    /// or is restored, so that the first deadline is measured against then and
-    /// not against whenever this object happened to be made.
-    func activate() {}
-
     func ring(_ deadline: RingDeadline) {
         stop()
         // It cannot sound from the background anyway: the app has no

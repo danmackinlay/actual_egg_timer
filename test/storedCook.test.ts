@@ -15,7 +15,7 @@ import {
   type CookChoices, type RunningCook, appendEntry, corrected, pullStands, startCook, startCorrected, withBoil,
   writeEvents,
 } from '../src/core/running.ts';
-import { type CookAsRan, withAsRan } from '../src/core/asRan.ts';
+import type { CookAsRan } from '../src/core/asRan.ts';
 import { STORES } from '../src/ui/stores.ts';
 import { type KeptAnswers, readRunningCook, readStoredCook, storedCook } from '../src/ui/storedCook.ts';
 import { openCooks } from '../src/ui/store.ts';
@@ -53,7 +53,7 @@ const hot = cookOf({ startMode: 'hot' }, -7);
 const tapped = withBoil(cold, S + 532.5);
 const pulled = writeEvents(tapped, { ...tapped.events, pulled: { due_s: S + 851.2, out_s: S + 858.9, by: 'cook', confirmed: true } });
 const cooled = writeEvents(pulled, { ...pulled.events, cooledAt_s: S + 1031.9 });
-const kept = withAsRan(cooled, AS_RAN);
+const kept = appendEntry(cooled, { kind: 'ran', asRan: AS_RAN });
 const answered = appendEntry(cooled, {
   kind: 'answered', at_s: S + 1100, yolkWord: 'jammy', white: null, probe: { centre_C: 66.4, after_s: 180 },
 });

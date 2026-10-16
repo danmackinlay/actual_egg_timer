@@ -13,7 +13,7 @@ import type { WhiteReport, YolkWord } from './infer.ts';
 import type { AppName, Calibration, CookFacts, Forecast, ProbeReading } from './record.ts';
 import {
   type BoilToRemember, type CookPlan, type CookSurface, type RunningCook, appendEntry, asksIfStillIn, boilRemembered,
-  boilTapCounts, boilToRemember, phaseAt, replan, sameValue,
+  boilTapCounts, boilToRemember, phaseAt, replan,
 } from './running.ts';
 
 /**
@@ -81,12 +81,6 @@ export function keepAsRan(cook: RunningCook, plan: CookPlan): RunningCook {
   if (cook.asRan !== null || cook.events.pulled === null) return cook;
   const asRan = asRanOf(cook, plan);
   return asRan === null ? cook : appendEntry(cook, { kind: 'ran', asRan: asRan });
-}
-
-/** The cook with `asRan` as its plan as it ran: logged if it differs. */
-export function withAsRan(cook: RunningCook, asRan: CookAsRan | null): RunningCook {
-  if (sameValue(asRan, cook.asRan)) return cook;
-  return appendEntry(cook, { kind: 'ran', asRan: asRan });
 }
 
 /** Whether the cook's plan as it ran is kept and still its own: taken since

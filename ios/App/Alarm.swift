@@ -27,10 +27,6 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         centre.delegate = self
     }
 
-    /// Touch the singleton early, so the delegate below is installed before any
-    /// notification can be delivered.
-    func activate() {}
-
     /// Present the alarm even when the app is already open.
     ///
     /// Without this iOS hands a foreground notification straight to the app and

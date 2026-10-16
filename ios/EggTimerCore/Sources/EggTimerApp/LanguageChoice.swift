@@ -13,7 +13,7 @@ import EggTimerShared
 /// when the cook changes the system on screen and never for a default.
 /// Nothing here touches the units: a change of language never changes them.
 @MainActor
-public final class LanguageChoice: LanguageChoosing {
+public final class LanguageChoice {
     public static let shared = LanguageChoice()
 
     /// Under its own key, not "language": a launch argument of that name

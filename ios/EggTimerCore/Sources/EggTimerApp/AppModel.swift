@@ -32,8 +32,6 @@ public final class AppModel {
     /// running, and start sharing.
     public func appear() {
         inHand.model = self
-        // Install the notification delegate before anything can fire.
-        Services.alarm.activate()
         // The planner's own stored state, read here rather than in its
         // init: @State evaluates its initial value on every construction of
         // the view struct and keeps only the first.

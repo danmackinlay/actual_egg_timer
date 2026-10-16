@@ -46,13 +46,13 @@ next is `PLAN.md`; the last section here says which document holds what.
   misread every egg already kept.
 - **The documents.** The session that merges brings `PLAN.md` up to date
   (`DECISIONS.md` 104); it holds only the next work, the owner's open
-  decisions and one QA list, with no counts, dates or versions (130).
-  `LOGBOOK.md` is frozen (117). A closed document is deleted once its live
-  facts have moved to `PLAN.md`, the code or the model's documents (119). An
-  owner decision goes to `DECISIONS.md` with its date, no commit or branch,
-  and a superseded chain is stated as its current rule (131). On a branch a
-  new decision is `DECISIONS.md NNN`; the session that merges to `main`
-  gives it the next number and fixes its citations.
+  decisions and one QA list, with no counts, dates or versions (130). A
+  closed document is deleted once its live facts have moved to `PLAN.md`,
+  the code or the model's documents (119). An owner decision goes to
+  `DECISIONS.md` with its date, no commit or branch, and a superseded chain
+  is stated as its current rule (131). On a branch a new decision is
+  `DECISIONS.md NNN`; the session that merges to `main` gives it the next
+  number and fixes its citations.
 - **Comments say what the code does and why**, in the code's terms
   (`DECISIONS.md` 105). A decision number only where the code would otherwise
   look wrong (z ≈ 4.65 K), never as a changelog.
@@ -169,6 +169,5 @@ next is `PLAN.md`; the last section here says which document holds what.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
-| `LOGBOOK.md` | the record kept before the commit messages took over, frozen: what was verified, measured and learned, by date |
 | `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

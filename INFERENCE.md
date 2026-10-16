@@ -4,10 +4,10 @@ The learning as built: what is learned (§2), what the cook is asked and how
 it is scored (§3), the record (§4), the thermometer (§5), unreliable answers
 (§6), opt-in collection (§7), choosing the time under uncertainty, with the
 odds-shaded slider, the outcome summary and the nudge (§8), and the
-population fit (§9), which has yet to see a real egg. The owner's decisions
-are numbered in `DECISIONS.md`; the two measurements the design rests on, how
-many directions the answers can move and what a probe reading is worth, are
-`npm run rank` and `npm run probe`.
+population fit (§9). The owner's decisions are numbered in `DECISIONS.md`;
+the two measurements the design rests on, how many directions the answers
+can move and what a probe reading is worth, are `npm run rank` and
+`npm run probe`.
 
 ---
 

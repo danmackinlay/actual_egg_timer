@@ -434,9 +434,10 @@ and the steps belong in `ios/RELEASING.md`.
 
 ## 6. The easter egg: Imperial units in the English of 1750
 
-When an English-language UI is switched to Imperial, every string also switches
-to the pompous prose of the eighteenth century. Fahrenheit published his scale
-in 1724, so the period is justified.
+The pompous prose of the eighteenth century is a language of its own: a row
+in the language picker, which a cook reading English also reaches by
+switching to Imperial (the two ways in, below). Fahrenheit published his
+scale in 1724, so the period is justified.
 
 **It is a language, with a language code of its own** (`DECISIONS.md` 12).
 The tag is the cook's own English locale with a private-use subtag, as BCP 47
