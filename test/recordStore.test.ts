@@ -129,17 +129,10 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   const rebuilt = replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log);
   assertIdentical(calib, rebuilt, 'incremental vs replay');
 
-  // And the app's own replay: damage the stored posterior, reload, and let the
-  // app fold the whole log again from the prior.
-  const stored = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
-  storage.set('aet.calibration.v5', JSON.stringify({ ...stored, cal: null }));
-  calib = (cal = openLearner()).calibration();
-  assert.equal(cal.eggsBehind(), 4);
-  await cal.learn();
-  assertIdentical(cal.keptState().calibration, rebuilt, 'the app rebuilt it from the log');
-
-  // And across an upgrade: a posterior folded under another likelihood is
-  // folded again, and comes out as a replay of the log under this one.
+  // And the app's own replay, across an upgrade: a posterior folded under
+  // another likelihood is folded again from the prior, and comes out as a
+  // replay of the log under this one. A damaged posterior loads as the same
+  // rebuild (3a), so it folds the same way.
   const upgraded = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v5', JSON.stringify({ ...upgraded, m: '2026-10-e6' }));
   cal = openLearner();

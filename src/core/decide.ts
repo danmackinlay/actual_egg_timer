@@ -392,7 +392,7 @@ export interface TimeBounds {
  * gives them, so that a softer level is never given a later time than a
  * firmer one (reach.ts, "the envelope"). The odds are read
  * at the time held. The literature's time is never moved: before the first
- * egg it is already monotone in the level (test/reachAnswer.test.ts).
+ * egg it is already monotone in the level (test/reachMonotone.test.ts).
  */
 export function decideAt(
   post: Posterior, eggsLogged: number, grid: DoseGrid, meanCookTime_s: number, applies: boolean,

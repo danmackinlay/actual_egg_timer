@@ -19,8 +19,9 @@
  * at the time given, and whether advice is wanted.
  *
  * Here, the odds, the range, the shading and the advice;
- * test/reachAnswer.test.ts holds the answer at a level, and test/profiles.ts
- * what the two share.
+ * test/reachAnswer.test.ts holds the answer at a level,
+ * test/reachMonotone.test.ts the time across the slider, and test/profiles.ts
+ * what they share.
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
