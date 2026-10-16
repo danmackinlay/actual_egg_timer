@@ -68,7 +68,7 @@ function rendered(m: Measure, si: number): string {
 // 1. The conversions
 // --------------------------------------------------------------------------
 
-test('1a. the fixed points convert exactly', () => {
+test('the fixed points convert exactly', () => {
   assert.equal(fromSI('F', 0), 32);
   assert.equal(fromSI('F', 100), 212);
   assert.equal(fromSI('F', -40), -40);
@@ -81,7 +81,7 @@ test('1a. the fixed points convert exactly', () => {
   for (const unit of ['C', 'g', 'mm', 'm', 'L'] as const) assert.equal(fromSI(unit, 12.34), 12.34);
 });
 
-test('1b. every conversion undoes itself to a trillionth', () => {
+test('every conversion undoes itself to a trillionth', () => {
   for (const unit of ['C', 'F', 'g', 'oz', 'mm', 'in', 'm', 'ft', 'L', 'qt', 'pt'] as const) {
     for (const x of [-400, -2, 0, 0.25, 4, 44, 68, 100, 5000]) {
       const back = toSI(unit, fromSI(unit, x));
@@ -94,7 +94,7 @@ test('1b. every conversion undoes itself to a trillionth', () => {
 // 2. The table
 // --------------------------------------------------------------------------
 
-test('2a. the steps are LANGUAGE.md §4\'s table', () => {
+test('the steps are LANGUAGE.md §4\'s table', () => {
   const imperial = (q: Quantity, region: string | null = 'US') => measureFor(q, 'imperial', region);
   assert.deepEqual([imperial('temperature').unit, imperial('temperature').step], ['F', 1]);
   assert.deepEqual([imperial('eggTemp').unit, imperial('eggTemp').step], ['F', 1]);
@@ -111,14 +111,14 @@ test('2a. the steps are LANGUAGE.md §4\'s table', () => {
   assert.deepEqual([measureFor('mass', 'metric', null).unit, measureFor('mass', 'metric', null).step], ['g', 0.5]);
 });
 
-test('2b. the decimals shown are the decimals of the step', () => {
+test('the decimals shown are the decimals of the step', () => {
   for (const m of everyMeasure()) {
     const places = String(m.step).split('.')[1]?.length ?? 0;
     assert.equal(m.decimals, places, `${m.quantity} in ${m.unit}`);
   }
 });
 
-test('2c. an input\'s bounds are on its grid, inside the model\'s limits, and as wide as they can be', () => {
+test('an input\'s bounds are on its grid, inside the model\'s limits, and as wide as they can be', () => {
   for (const m of everyMeasure()) {
     if (m.limit === null) {
       assert.equal(m.bounds, null, `${m.quantity} is a readout`);
@@ -146,7 +146,7 @@ test('2c. an input\'s bounds are on its grid, inside the model\'s limits, and as
 // 3. The round trip
 // --------------------------------------------------------------------------
 
-test('3a. a cook who types 2.4 oz sees 2.4 oz again', () => {
+test('a cook who types 2.4 oz sees 2.4 oz again', () => {
   const oz = measureFor('mass', 'imperial', 'US');
   const stored = parse(oz, 2.4) as number;
   assert.ok(Math.abs(stored - 2.4 * OUNCE_G) < 1e-9);
@@ -154,7 +154,7 @@ test('3a. a cook who types 2.4 oz sees 2.4 oz again', () => {
   assert.equal(rendered(oz, stored), '2.4 oz');
 });
 
-test('3b. every value every input can hold comes back as typed', () => {
+test('every value every input can hold comes back as typed', () => {
   let checked = 0;
   for (const m of everyMeasure()) {
     for (const typed of grid(m)) {
@@ -169,7 +169,7 @@ test('3b. every value every input can hold comes back as typed', () => {
   assert.ok(checked > 900, `${checked} values`);
 });
 
-test('3c. and through the egg: mass and girth come back through the one diameter they are stored as', () => {
+test('and through the egg: mass and girth come back through the one diameter they are stored as', () => {
   // The web stores a measured egg as its minor diameter and rebuilds all three
   // boxes from it after a reload. Each box must still say what was typed.
   for (const system of UNIT_SYSTEMS) {
@@ -189,7 +189,7 @@ test('3c. and through the egg: mass and girth come back through the one diameter
   }
 });
 
-test('3c2. grams and the bowl show only the decimals they need; every other measure keeps its own', () => {
+test('grams and the bowl show only the decimals they need; every other measure keeps its own', () => {
   const g = measureFor('mass', 'metric', null);
   assert.equal(g.trim, true);
   assert.equal(displayText(g, 58), '58');
@@ -210,7 +210,7 @@ test('3c2. grams and the bowl show only the decimals they need; every other meas
   assert.equal(displayText(bowl, 1.25), '1.25');
 });
 
-test('3d. a stored value at a limit shows as the input\'s bound, never a step outside it', () => {
+test('a stored value at a limit shows as the input\'s bound, never a step outside it', () => {
   for (const m of everyMeasure()) {
     if (m.limit === null || m.bounds === null) continue;
     assert.equal(display(m, m.limit.lo), m.bounds.lo, `${m.quantity} ${m.unit} floor`);
@@ -222,7 +222,7 @@ test('3d. a stored value at a limit shows as the input\'s bound, never a step ou
   assert.equal(displayText(measureFor('mass', 'imperial', 'US'), 25), '0.9');
 });
 
-test('3e. typed past a bound is clamped in SI, and nothing typed is no reading', () => {
+test('typed past a bound is clamped in SI, and nothing typed is no reading', () => {
   const f = measureFor('eggTemp', 'imperial', 'US');
   assert.equal(parse(f, 500), LIMITS.eggTemp_C.hi);
   assert.equal(parse(f, -500), LIMITS.eggTemp_C.lo);
@@ -234,7 +234,7 @@ test('3e. typed past a bound is clamped in SI, and nothing typed is no reading',
   assert.equal(displayText(oz, 2.43 * OUNCE_G), '2.4');
 });
 
-test('3f. switching systems moves nothing: the value is stored, not the text', () => {
+test('switching systems moves nothing: the value is stored, not the text', () => {
   const litres = 2;
   const metric = measureFor('water', 'metric', 'US');
   const imperial = measureFor('water', 'imperial', 'US');
@@ -243,7 +243,7 @@ test('3f. switching systems moves nothing: the value is stored, not the text', (
   assert.equal(displayText(metric, litres), '2.00', 'and back again, still 2 L');
 });
 
-test('3g. readouts: every temperature carries its unit', () => {
+test('readouts: every temperature carries its unit', () => {
   const c = measureFor('temperature', 'metric', null);
   const f = measureFor('temperature', 'imperial', null);
   assert.equal(rendered(c, 4), '4 °C');
@@ -262,7 +262,7 @@ test('3g. readouts: every temperature carries its unit', () => {
 // 4. The setting
 // --------------------------------------------------------------------------
 
-test('4a. only the US starts in Imperial on the web', () => {
+test('only the US starts in Imperial on the web', () => {
   assert.equal(regionalUnits({ region: 'US' }), 'imperial');
   assert.equal(regionalUnits({ region: 'us' }), 'imperial');
   for (const region of ['GB', 'AU', 'CA', 'CZ', 'LR', '', null]) {
@@ -270,7 +270,7 @@ test('4a. only the US starts in Imperial on the web', () => {
   }
 });
 
-test('4b. on iOS the temperature preference wins, then the measurement system', () => {
+test('on iOS the temperature preference wins, then the measurement system', () => {
   assert.equal(regionalUnits({ region: 'US', measurementSystem: 'us', temperature: 'celsius' }), 'metric');
   assert.equal(regionalUnits({ region: 'AU', measurementSystem: 'metric', temperature: 'fahrenheit' }), 'imperial');
   assert.equal(regionalUnits({ region: 'GB', measurementSystem: 'uk' }), 'metric');
@@ -278,7 +278,7 @@ test('4b. on iOS the temperature preference wins, then the measurement system', 
   assert.equal(regionalUnits({ region: 'US', measurementSystem: 'metric' }), 'metric');
 });
 
-test('4c. a choice is stored as a choice, and only a change of system is a flip', () => {
+test('a choice is stored as a choice, and only a change of system is a flip', () => {
   assert.deepEqual(chooseUnits(null, 'metric', 'imperial'), { chosen: 'imperial', flip: 'metricToImperial' });
   assert.deepEqual(chooseUnits('imperial', 'metric', 'metric'), { chosen: 'metric', flip: 'imperialToMetric' });
   // Choosing what is already on screen is still a choice, and not a flip.
@@ -297,7 +297,7 @@ function labelOf(table: typeof SIZE_CLASSES, i: number, system: UnitSystem): str
   return asRead(render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) }));
 }
 
-test('5a. a size class shows its own mass in either system, and keeps its region\'s name', () => {
+test('a size class shows its own mass in either system, and keeps its region\'s name', () => {
   assert.equal(labelOf(SIZE_CLASSES, 2, 'metric'), 'Large — 68 g');
   assert.equal(labelOf(SIZE_CLASSES, 2, 'imperial'), 'Large — 2.4 oz');
   assert.equal(labelOf(US_SIZE_CLASSES, 2, 'metric'), 'Large — 60 g');
@@ -305,7 +305,7 @@ test('5a. a size class shows its own mass in either system, and keeps its region
   assert.equal(labelOf(SIZE_CLASSES, 1, 'imperial'), 'Medium — 2.0 oz', 'the tenth is kept');
 });
 
-test('5b. the record says which system the cook was reading, and stays SI', () => {
+test('the record says which system the cook was reading, and stays SI', () => {
   const cook = startCook(1_750_000_000, {
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge', customStart_C: 12, room_C: null,
     startMode: 'hot', afterBoil: 'hold', cooling: 'ice', tapWater_C: null, bowlLitres: 2, bowlWater_C: null, waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
@@ -327,7 +327,7 @@ test('5b. the record says which system the cook was reading, and stays SI', () =
 // 6. The − and + where they step coarser than the typing, and the room
 // --------------------------------------------------------------------------
 
-test('6a. a probe reading is typed to a tenth and stepped in whole degrees', () => {
+test('a probe reading is typed to a tenth and stepped in whole degrees', () => {
   const c = measureFor('probeTemp', 'metric', null);
   const f = measureFor('probeTemp', 'imperial', null);
   assert.equal(c.step, 0.1);
@@ -340,7 +340,7 @@ test('6a. a probe reading is typed to a tenth and stepped in whole degrees', () 
   assert.equal(stepPast(f, 148.9, true), 149);
 });
 
-test('6b. the room steps in whole degrees inside its bounds', () => {
+test('the room steps in whole degrees inside its bounds', () => {
   const c = measureFor('roomTemp', 'metric', null);
   const f = measureFor('roomTemp', 'imperial', null);
   assert.deepEqual(c.bounds, LIMITS.room_C);

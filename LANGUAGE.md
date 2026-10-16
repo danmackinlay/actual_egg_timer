@@ -122,7 +122,7 @@ in running water or in the air, not under a cold tap or on a bench
   `lang` and the units switch never see an overlay's tag; only the words
   move. The English of 1750 has no overlay, and may lag the English (§3).
 - **An overlay cannot go stale unseen.** Each entry carries `base`, the
-  English it was written against, and `copy.test.ts` 7a fails when the two
+  English it was written against, and `copy.test.ts` fails when the two
   part, so a wording change to an overlaid key rewrites the overlay too.
 - A British overlay ("worktop") waits until someone asks for one.
 
@@ -216,7 +216,7 @@ normalisation covers the one difference known in advance.
   me"). An aside another string already says is cut. The 1750 register is
   exempt: its semicolons and its stately asides are the joke.
 - Curly apostrophes and quotes, never straight ones: ’ ‘ ’ “ ”
-  (`DECISIONS.md` 56; `copy.test.ts` 3c).
+  (`DECISIONS.md` 56; `copy.test.ts`).
 - Name what a cook sees by what it tells them, not only by where it sits,
   and use the house terms (`DECISIONS.md` 57): the line under the countdown
   is "below the time display"; the cooling methods are "an ice bath",
@@ -286,7 +286,7 @@ line) is not today's English; a key with no twin shows the English
 (`src/core/copy.ts`). The queue and the page list both, and neither fails
 a build. That reads history, so it is local tooling, not CI's, whose clone
 is shallow. A stale twin stops being stale when it is rewritten. A regional
-overlay may not lag: it keeps its own `base`, held by `copy.test.ts` 7a
+overlay may not lag: it keeps its own `base`, held by `copy.test.ts`
 (§2).
 
 **Rules the drafts settled, which stand:**
@@ -572,7 +572,7 @@ there is only style.
    Dynamic Island, and "Pray remove the Eggs from the Water forthwith" does not.
    On the small surfaces the register gets two or three words of period flavour,
    not a paragraph: at most eight words on an alarm's title, the Dynamic
-   Island and the Lock Screen (`test/en1750.test.ts` 1b2), and the compact
+   Island and the Lock Screen (`test/en1750.test.ts`), and the compact
    island's *NOW* has no room for any.
 3. **The feedback answers keep their meaning.** They are data, so the record in
    `INFERENCE.md` §4 carries the register alongside the language. The fit can

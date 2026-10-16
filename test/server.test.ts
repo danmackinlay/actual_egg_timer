@@ -36,7 +36,7 @@ async function send(store: Store, req: Request): Promise<{ status: number; body:
   return { status: res.status, body: await res.json() as Record<string, unknown> };
 }
 
-test('1. an egg is kept once, in the open tier, as the loader reads it', async () => {
+test('an egg is kept once, in the open tier, as the loader reads it', async () => {
   const store = new MemoryStore();
   const first = await send(store, post('/api/eggs', { seq: 0, record: { ...egg(), extra: 'dropped' } }));
   assert.deepEqual(first, { status: 201, body: { tier: 'open', stored: true } });
@@ -56,7 +56,7 @@ test('1. an egg is kept once, in the open tier, as the loader reads it', async (
   assert.deepEqual(await store.list(`records/open/${UID}/`), [recordKey('open', UID, 0), recordKey('open', UID, 1), recordKey('open', UID, 9)]);
 });
 
-test('2. what a phone would refuse, the server refuses', async () => {
+test('what a phone would refuse, the server refuses', async () => {
   const store = new MemoryStore();
   const refused: [string, unknown, number][] = [
     ['no id', { seq: 0, record: egg(null) }, 400],
@@ -100,7 +100,7 @@ test('2. what a phone would refuse, the server refuses', async () => {
   assert.equal((await handle(new Request(SITE + `/api/eggs/${UID}`), store)).status, 405);
 });
 
-test('3. DELETE removes every egg under the id, in both tiers, and its key', async () => {
+test('DELETE removes every egg under the id, in both tiers, and its key', async () => {
   const store = new MemoryStore();
   await store.set(recordKey('open', UID, 0), '{}', true);
   await store.set(recordKey('open', UID, 1), '{}', true);
@@ -118,7 +118,7 @@ test('3. DELETE removes every egg under the id, in both tiers, and its key', asy
   assert.equal((await del('')).status, 405, 'DELETE /api/eggs/ is DELETE /api/eggs, which takes only POST');
 });
 
-test('4. an iPhone from TestFlight or the App Store attests once, and its eggs go to the attested tier', async () => {
+test('an iPhone from TestFlight or the App Store attests once, and its eggs go to the attested tier', async () => {
   const store = new MemoryStore();
   const P = SYNTH.production;
   const attest = { uid: P.uid, keyId: P.keyId, attestation: P.attestation };
@@ -168,7 +168,7 @@ test('4. an iPhone from TestFlight or the App Store attests once, and its eggs g
   assert.equal((await send(store, post('/api/eggs', nokey, { 'x-egg-assertion': '!!' }))).status, 200);
 });
 
-test('5. a development build attests, but its eggs go to the open tier, as if unsigned', async () => {
+test('a development build attests, but its eggs go to the open tier, as if unsigned', async () => {
   const store = new MemoryStore();
   const attest = { uid: SYNTH.uid, keyId: SYNTH.keyId, attestation: SYNTH.attestation };
   // The key is verified and kept, so the path can be tried on the owner's phone.
@@ -189,14 +189,14 @@ test('5. a development build attests, but its eggs go to the open tier, as if un
   assert.equal(store.blobs.size, 0);
 });
 
-test('6. the tier a kept record counts in, for the fit: attested only under a key from production', () => {
+test('the tier a kept record counts in, for the fit: attested only under a key from production', () => {
   assert.equal(countedTier('attested', { environment: 'production' }), 'attested');
   assert.equal(countedTier('attested', { environment: 'development' }), 'open', 'filed before the rule, or by hand');
   assert.equal(countedTier('attested', null), 'open', 'no key left to vouch for it');
   assert.equal(countedTier('open', { environment: 'production' }), 'open', 'an unsigned egg stays open');
 });
 
-test('7. the yolk the cook got is kept, and capped like everything else', async () => {
+test('the yolk the cook got is kept, and capped like everything else', async () => {
   const store = new MemoryStore();
   const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
   const forecast = { cook_s: 412, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: five };
@@ -242,7 +242,7 @@ test('7. the yolk the cook got is kept, and capped like everything else', async 
   assert.equal((await send(store, post('/api/eggs', { seq: 3, record: longest }))).status, 201);
 });
 
-test('7b. an egg cooled in a bowl, or under running water at its own temperature, is kept with its water', async () => {
+test('an egg cooled in a bowl, or under running water at its own temperature, is kept with its water', async () => {
   const store = new MemoryStore();
   const base = egg();
   const bowl = { ...base, setup: { ...base.setup, cooling: 'bowl' as const, bowlLitres: 1.5, coolingWater_C: 11 } };
@@ -257,7 +257,7 @@ test('7b. an egg cooled in a bowl, or under running water at its own temperature
   assert.equal((await send(store, post('/api/eggs', { seq: 2, record: unsaid }))).status, 400);
 });
 
-test('8. the model a record names is its provenance: any is kept as sent, and the fit reads it back', async () => {
+test('the model a record names is its provenance: any is kept as sent, and the fit reads it back', async () => {
   // The store's likelihood id stays on the device and is never sent, so a
   // new one changes nothing here; a new MODEL_ID is a new name on new
   // records, and those already kept under the older names still read.

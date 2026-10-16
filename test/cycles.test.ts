@@ -74,14 +74,14 @@ function importCycles(graph: Map<string, string[]>): string[][] {
   return found;
 }
 
-test('1. src/ has no import cycle', () => {
+test('src/ has no import cycle', () => {
   const graph = importGraph('src');
   assert.ok(graph.size > 50 && (graph.get('ui/app.ts') ?? []).length > 10, 'the walk found the app and its imports');
   const cycles = importCycles(graph).map((c) => c.join(' -> '));
   assert.deepEqual(cycles, []);
 });
 
-test('2. a cycle is caught, through any static import, but not through a type-only one or import()', () => {
+test('a cycle is caught, through any static import, but not through a type-only one or import()', () => {
   const dir = mkdtempSync(join(tmpdir(), 'aet-cycles-'));
   const write = (files: Record<string, string>): void => {
     for (const [path, text] of Object.entries(files)) {

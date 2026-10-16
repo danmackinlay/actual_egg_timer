@@ -25,7 +25,7 @@ import { type RecordContext, cookEnding, cookFactsFor, keepAsRan } from '../src/
 import { readRunningCook } from '../src/ui/storedCook.ts';
 import { START_MS, S, CHOICES, C, asRanAgain, cookOf, factsOf, planned, surfaceFor } from './cooks.ts';
 
-test('1. the egg and the pot: the presets, a measured room, and the room an egg sitting out is', () => {
+test('the egg and the pot: the presets, a measured room, and the room an egg sitting out is', () => {
   const fridge = cookSetupOf(CHOICES, 480).setup;
   assert.equal(fridge.eggStart_C, START_TEMP_PRESETS_C.fridge);
   assert.equal(fridge.ambient_C, T_ROOM_C, 'a fridge egg says nothing about the room');
@@ -44,7 +44,7 @@ test('1. the egg and the pot: the presets, a measured room, and the room an egg 
   ], 'in the order the web keys its decision surfaces by');
 });
 
-test('2. the boil is tapped once, on a cold start still heating, and not before the start', () => {
+test('the boil is tapped once, on a cold start still heating, and not before the start', () => {
   const cold = cookOf();
   const tapped = withBoil(cold, S + 500);
   assert.equal(tapped.events.boilAt_s, S + 500);
@@ -56,7 +56,7 @@ test('2. the boil is tapped once, on a cold start still heating, and not before 
   assert.equal(withBoil(out, S + 900), out);
 });
 
-test('3. a correction keeps the start and the events; the tap is read by when the cook was told cold', () => {
+test('a correction keeps the start and the events; the tap is read by when the cook was told cold', () => {
   const tapped = withBoil(cookOf(), S + 500);
   const remembered = { litres: 2, seconds: 500 };
   assert.deepEqual(boilToRemember(tapped), remembered, 'cold from the start: the tap is the boil');
@@ -77,7 +77,7 @@ test('3. a correction keeps the start and the events; the tap is read by when th
   assert.deepEqual(boilToRemember(owner), { litres: 2, seconds: 600 }, 'watched from the correction to cold');
 });
 
-test('4. the start is corrected to no later than now or the first event, an unread one included', () => {
+test('the start is corrected to no later than now or the first event, an unread one included', () => {
   const cold = cookOf();
   assert.equal(latestStart_s(cold, S + 200), S + 200);
   assert.equal(startCorrected(cold, S - 120, S + 200)?.startedAt_s, S - 120);
@@ -93,7 +93,7 @@ test('4. the start is corrected to no later than now or the first event, an unre
   assert.equal(corrected2?.id_ms, START_MS, 'the id never moves');
 });
 
-test('5. a stored cook is read whole, or not at all', () => {
+test('a stored cook is read whole, or not at all', () => {
   const tapped = withBoil(cookOf({}, 4), S + 500);
   const stages: RunningCook[] = [
     cookOf(), tapped,
@@ -131,7 +131,7 @@ test('5. a stored cook is read whole, or not at all', () => {
 
 /* ---------------------------------------------------------------- the plan */
 
-test('6. with nothing corrected, a plan is the cook it started: its time decided on its own surface', () => {
+test('with nothing corrected, a plan is the cook it started: its time decided on its own surface', () => {
   const hot = cookOf({ startMode: 'hot' }, 4);
   const interim = replan(hot, C, null, 0, S + 30);
   assert.equal(interim.decided, null, 'no surface, nothing decided');
@@ -151,7 +151,7 @@ test('6. with nothing corrected, a plan is the cook it started: its time decided
   assert.equal(replan(hot, C, other, 0, S + 30).decided, null);
 });
 
-test('7. changing a setting back gives back the old plan exactly', () => {
+test('changing a setting back gives back the old plan exactly', () => {
   const tapped = withBoil(cookOf(), S + 500);
   const p = planned(tapped, S + 600);
   const heavier = corrected(tapped, { ...CHOICES, mass_kg: 0.076 }, S + 600);
@@ -163,7 +163,7 @@ test('7. changing a setting back gives back the old plan exactly', () => {
   assert.deepEqual(planned(corrected(boiling, CHOICES, S + 630), S + 630), p, 'the tap read again');
 });
 
-test("8. the owner's case: boiling corrected to cold goes back to heating, later than before", () => {
+test("the owner's case: boiling corrected to cold goes back to heating, later than before", () => {
   const hot = cookOf({ startMode: 'hot' });
   const before = planned(hot, S + 240);
   const cold = corrected(hot, CHOICES, S + 240);
@@ -173,7 +173,7 @@ test("8. the owner's case: boiling corrected to cold goes back to heating, later
   assert.equal(phaseAt(planned(withBoil(cold, S + 500), S + 500).deadlines, S + 500), 'COOKING');
 });
 
-test('9. a correction that makes the egg overdue pulls it then; back within the grace, and it cooks on', () => {
+test('a correction that makes the egg overdue pulls it then; back within the grace, and it cooks on', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 60);
   const end = p.deadlines.cookEnd_s;
@@ -194,7 +194,7 @@ test('9. a correction that makes the egg overdue pulls it then; back within the 
   assert.deepEqual(due.pulled, { due_s: end - 20, out_s: end - 20 + PULL_GRACE_SECONDS, by: 'timeout', confirmed: false });
 });
 
-test('10. an ordinary pull, planned again after its grace ran out, is where it was', () => {
+test('an ordinary pull, planned again after its grace ran out, is where it was', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 60);
   const end = p.deadlines.cookEnd_s;
@@ -210,7 +210,7 @@ test('10. an ordinary pull, planned again after its grace ran out, is where it w
   assert.deepEqual(withOut(hot, p, end + 5).events.pulled, { due_s: end, out_s: end + 5, by: 'cook', confirmed: true });
 });
 
-test("11. the slow hob's rule, a function of how long the pan has heated", () => {
+test("the slow hob's rule, a function of how long the pan has heated", () => {
   const cold = cookOf();
   const p = replan(cold, C, null, 0, S + 60);
   const at = p.slowHobAt_s as number;
@@ -227,7 +227,7 @@ test("11. the slow hob's rule, a function of how long the pan has heated", () =>
   assert.equal(replan(cookOf({ startMode: 'hot' }), C, null, 0, S + 3000).slowHobAt_s, null);
 });
 
-test('12. after the pull, a correction changes what the time did to the egg, not the time', () => {
+test('after the pull, a correction changes what the time did to the egg, not the time', () => {
   const hot = cookOf({ startMode: 'hot' });
   const p = planned(hot, S + 60);
   const end = p.deadlines.cookEnd_s;
@@ -251,7 +251,7 @@ test('12. after the pull, a correction changes what the time did to the egg, not
   assert.equal(eventsDue(counter, planned(counter, end + 1000), end + 2000).cooledAt_s, done.events.cooledAt_s);
 });
 
-test('13. the record is the cook as last corrected, at the time that ran', () => {
+test('the record is the cook as last corrected, at the time that ran', () => {
   const ctx: RecordContext = { app: 'web', appVersion: '0.5.0-alpha.1', prior: '2026-09', day: '2026-10-07', id: START_MS };
   const tapped = withBoil(cookOf({}, 5), S + 500);
   const p = planned(tapped, S + 600);
@@ -284,7 +284,7 @@ test('13. the record is the cook as last corrected, at the time that ran', () =>
   assert.equal(cookEnding(tapped, p, S + 600).finished, false, 'cancelled while it cooks');
 });
 
-test('14. the boil memory learns the tap the cook was watching for, and only that', () => {
+test('the boil memory learns the tap the cook was watching for, and only that', () => {
   const cold = cookOf();
   assert.deepEqual(boilToRemember(withBoil(cold, S + 512)), { litres: 2, seconds: 512 });
   assert.equal(boilToRemember(cold), null);

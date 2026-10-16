@@ -59,7 +59,7 @@ function oldFile(stored: string, aside: string[]): string {
   return JSON.stringify(file);
 }
 
-test('1. every record comes back as it went in, in its place, under the file\'s ID', () => {
+test('every record comes back as it went in, in its place, under the file\'s ID', () => {
   const records = log();
   const got = importResults(file(store(records)));
   assert.equal(got.uid, UID);
@@ -80,7 +80,7 @@ test('1. every record comes back as it went in, in its place, under the file\'s 
   assert.throws(() => importResults('{"file":2}'), /version/);
 });
 
-test('2. a file from before 0.5: what its app set aside follows the log; an egg seen twice is written once', () => {
+test('a file from before 0.5: what its app set aside follows the log; an egg seen twice is written once', () => {
   const records = log();
   const newer = { ...records[1], v: 2, fromTheFuture: true };
   // The store as an older build left it: one record it could not read, set
@@ -98,7 +98,7 @@ test('2. a file from before 0.5: what its app set aside follows the log; an egg 
   assert.equal(got.duplicates, 1, 'records[0] is in the older copy too');
 });
 
-test('2b. the fit reads a record from before 0.5: absent fields as null, the old yolk answer kept', () => {
+test('the fit reads a record from before 0.5: absent fields as null, the old yolk answer kept', () => {
   const r = { ...log()[0], uid: UID } as Record<string, unknown>;
   const old: Record<string, unknown> = { ...r, yolk: -1, egg: { mass_g: 68, massFrom: 'scale' } };
   for (const key of ['yolkWord', 'model', 'probe', 'forecast']) delete old[key];
@@ -114,7 +114,7 @@ test('2b. the fit reads a record from before 0.5: absent fields as null, the old
   assert.deepEqual(readFitRecord(r), { record: parseRecord(r), yolk: null, model: MODEL_ID });
 });
 
-test('3. the trusted list: a file and the environment, comments and separators', () => {
+test('the trusted list: a file and the environment, comments and separators', () => {
   assert.deepEqual(parseTrusted('# mine\nabc  # the phone\n\n def,ghi\n'), ['abc', 'def', 'ghi']);
   const dir = mkdtempSync(join(tmpdir(), 'trusted-'));
   try {
@@ -137,7 +137,7 @@ test('3. the trusted list: a file and the environment, comments and separators',
   assert.equal(lines.some((l) => l.trusted !== undefined), false, 'untagged when the list no longer has it');
 });
 
-test('4. one egg is one key, whichever app wrote it and in whatever key order', () => {
+test('one egg is one key, whichever app wrote it and in whatever key order', () => {
   const r = { ...log()[0], uid: UID };
   const reordered = Object.fromEntries(Object.entries(r).reverse());
   assert.equal(canonical(reordered), canonical(r));
@@ -148,7 +148,7 @@ test('4. one egg is one key, whichever app wrote it and in whatever key order', 
   assert.notEqual(sameEggKey({ ...r, yolkWord: null, yolk: 1 }), sameEggKey(r));
 });
 
-test('5. the command line: import, then emulate keeps the pull\'s copy of an egg shared too, trusted from the file', () => {
+test('the command line: import, then emulate keeps the pull\'s copy of an egg shared too, trusted from the file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'import-'));
   try {
     const input = join(dir, 'actual-egg-timer-results-2026-10-05.json');

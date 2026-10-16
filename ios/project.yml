@@ -56,7 +56,7 @@ targets:
       # and not a project change. Rendered by EggTimerCopy - see EggTimerShared's Copy.swift.
       # All of it ships but the notes beside the catalogue, which the last
       # build phase takes out again (below); the approved record is in
-      # test/data (en1750.test.ts 1a).
+      # test/data (en1750.test.ts).
       - path: ../copy
         type: folder
         buildPhase: resources

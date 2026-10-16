@@ -53,7 +53,7 @@ const ONE_EGG_GRID = gridFor(ONE_EGG, EGG, SETUP);
 // 1. The loss and the odds
 // --------------------------------------------------------------------------
 
-test('1a. for one particle, the loss is the answers\' less a constant, and the odds their product', () => {
+test('for one particle, the loss is the answers\' less a constant, and the odds their product', () => {
   // The unrelated share adds the same amount to every candidate time, so the
   // loss leaves it out; the odds keep it, because they are about what a cook
   // will SAY.
@@ -70,7 +70,7 @@ test('1a. for one particle, the loss is the answers\' less a constant, and the o
   }
 });
 
-test('1b. across particles the two answers are correlated: the odds are not the product of the marginals', () => {
+test('across particles the two answers are correlated: the odds are not the product of the marginals', () => {
   // A slow time-scale makes the yolk soft AND the white runny, so a cook who
   // misses on one tends to miss on both, and the joint beats the product.
   const t = 419;
@@ -88,7 +88,7 @@ test('1b. across particles the two answers are correlated: the odds are not the 
 const NEUTRAL = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0, white: 0 });
 const NEUTRAL_GRID = gridFor(NEUTRAL, EGG, SETUP);
 
-test('2a. a posterior that knows the cook likes a firmer yolk moves the time later, at every level', () => {
+test('a posterior that knows the cook likes a firmer yolk moves the time later, at every level', () => {
   // The mean solve never lets the taste offset reach the time. The mean solve for these two posteriors is the same to the second, because
   // their time-scales are; the choice is not.
   const firmer = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0.2, white: 0 });
@@ -106,7 +106,7 @@ test('2a. a posterior that knows the cook likes a firmer yolk moves the time lat
   }
 });
 
-test('2b. whites known to set late move the soft end later, and leave the hard end alone', () => {
+test('whites known to set late move the soft end later, and leave the hard end alone', () => {
   const late = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0, white: 0.6 });
   const soft = [decideFor(NEUTRAL, NEUTRAL_GRID, 0.22), decideFor(late, NEUTRAL_GRID, 0.22)];
   const hard = [decideFor(NEUTRAL, NEUTRAL_GRID, 1.0), decideFor(late, NEUTRAL_GRID, 1.0)];
@@ -114,7 +114,7 @@ test('2b. whites known to set late move the soft end later, and leave the hard e
   assert.ok(Math.abs(hard[1].cookTime_s - hard[0].cookTime_s) < 2, `hard ${hard[0].cookTime_s.toFixed(1)} -> ${hard[1].cookTime_s.toFixed(1)}`);
 });
 
-test('2c. a cook the model knows is offered close to the mean solve, and good odds', () => {
+test('a cook the model knows is offered close to the mean solve, and good odds', () => {
   for (const level of LEVELS) {
     const d = decideFor(NEUTRAL, NEUTRAL_GRID, level);
     assert.ok(Math.abs(d.cookTime_s - d.meanCookTime_s) < 6, `L${level}: leaned ${(d.cookTime_s - d.meanCookTime_s).toFixed(1)} s`);
@@ -122,7 +122,7 @@ test('2c. a cook the model knows is offered close to the mean solve, and good od
   }
 });
 
-test('2d. the choice is the minimum inside its window, and the cost of leaning moves it by under a second', () => {
+test('the choice is the minimum inside its window, and the cost of leaning moves it by under a second', () => {
   const target = logYolkTarget(0.41);
   const around = 464;
   const t = chooseCookTime(ONE_EGG.posterior, ONE_EGG_GRID, target, around);
@@ -137,7 +137,7 @@ test('2d. the choice is the minimum inside its window, and the cost of leaning m
   assert.ok(Math.abs(bare - t) < 1, `the loss alone is lowest at ${bare.toFixed(2)}, the choice ${t.toFixed(2)}`);
 });
 
-test('2e. where the loss is flat, the choice stops at the earliest time that is as good as any', () => {
+test('where the loss is flat, the choice stops at the earliest time that is as good as any', () => {
   // Resting on the counter at the softest level the pot allows, every time
   // past a point loses a whole egg - the yolk certainly too firm, the white
   // certainly set. Without the cost of leaning the minimum would be wherever
@@ -158,7 +158,7 @@ test('2e. where the loss is flat, the choice stops at the earliest time that is 
 // 3. Before any feedback, and just after it
 // --------------------------------------------------------------------------
 
-test('3a. before any egg the time is the literature\'s, exactly, on every pot', () => {
+test('before any egg the time is the literature\'s, exactly, on every pot', () => {
   for (const over of [{}, { startMode: 'cold' as const }, { cooling: 'tap' as const }, { eggStart_C: 20 }]) {
     const setup = appSetup(over);
     const grid = gridFor(PRIOR, EGG, setup);
@@ -172,7 +172,7 @@ test('3a. before any egg the time is the literature\'s, exactly, on every pot', 
   }
 });
 
-test('3b. ...because under the prior alone the choice would run far from it (measured, not shipped)', () => {
+test('...because under the prior alone the choice would run far from it (measured, not shipped)', () => {
   // The prior's time-scale sd is about +-70 s of cook time, so the yolk's part
   // of the loss is nearly flat and the white's tail steers. Measured on 28
   // September: jammy +42 s, soft +86 s, hard +2 s (`npm run decide -- lean`).
@@ -185,7 +185,7 @@ test('3b. ...because under the prior alone the choice would run far from it (mea
   assert.ok(lean(1.0) < 12, `hard would lean ${lean(1.0).toFixed(1)} s`);
 });
 
-test('3c. after one egg the choice leans by seconds, whichever level is asked for next', () => {
+test('after one egg the choice leans by seconds, whichever level is asked for next', () => {
   for (const level of [0.22, 0.41, 0.62, 1.0]) {
     const d = decideFor(ONE_EGG, ONE_EGG_GRID, level);
     assert.ok(d.chosen);
@@ -205,7 +205,7 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
 // 6. The refusals, and a cook under way
 // --------------------------------------------------------------------------
 
-test('6a. the refusals still decide what the slider may ask for; the choice is made where they leave it', () => {
+test('the refusals still decide what the slider may ask for; the choice is made where they leave it', () => {
   // Runny is out of reach once the whites have been runny: the verdict snaps it
   // to the softest level whose white sets, and the choice leans from there.
   const twoRunny = replay(PRIOR, [recordAt(0.22, 419, null, 'runny'), recordAt(0.22, 419, null, 'runny')], COARSE);
@@ -229,7 +229,7 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
   assert.equal(none.cookTime_s, sol.result.cookTime_s);
 });
 
-test('6b. a cold start re-solved for its measured boil keeps its lean, to within a few seconds of choosing again', () => {
+test('a cold start re-solved for its measured boil keeps its lean, to within a few seconds of choosing again', () => {
   // The boil is tapped with the egg in the water; a new surface is a second
   // away, so the lean chosen at "Eggs in" is carried (`carriedSolution`).
   const assumed = appSetup({ startMode: 'cold', timeToBoil_s: 480 });
@@ -252,7 +252,7 @@ test('6b. a cold start re-solved for its measured boil keeps its lean, to within
   console.log(`# carried lean, 480 s ramp assumed, 600 s measured: ${rows.join('; ')}`);
 });
 
-test('6c. one surface serves every level: the slider never waits for a grid', () => {
+test('one surface serves every level: the slider never waits for a grid', () => {
   // The surface is keyed on the pot and the posterior, never the level, and it
   // reaches past the soft and hard ends by the choice's whole window.
   const spec = decisionGridSpec(decisionInputs(ONE_EGG, EGG, SETUP));
@@ -262,7 +262,7 @@ test('6c. one surface serves every level: the slider never waits for a grid', ()
     assert.ok(t + DECISION_WINDOW_S <= spec.timeMax_s + 1e-9, `L${level.toFixed(1)} high`);
   }
 });
-test('6d. the decided solution is the mean solve moved to the chosen time, and the mean solve itself at its own time', () => {
+test('the decided solution is the mean solve moved to the chosen time, and the mean solve itself at its own time', () => {
   const learned = replay(PRIOR, [recordAt(0.41, 464, 'jammy', 'firm')], COARSE);
   const params = calibrationParams(learned);
   const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
@@ -280,7 +280,7 @@ test('6d. the decided solution is the mean solve moved to the chosen time, and t
   assert.equal(decidedSolution(EGG, SETUP, params, sol, { ...d, cookTime_s: sol.result.cookTime_s }), sol);
 });
 
-test('6e. the nudge: every whole second from -10 to +10 alike, and only where a time is chosen', () => {
+test('the nudge: every whole second from -10 to +10 alike, and only where a time is chosen', () => {
   const counts = new Map<number, number>();
   for (let i = 0; i < 2100; i++) {
     const n = nudgeSeconds((i + 0.5) / 2100);

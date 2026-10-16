@@ -77,7 +77,7 @@ function withAt(raw: unknown, path: string[], value: unknown): unknown {
   return copy;
 }
 
-test('1. a cook at each stage is read back as it was written', () => {
+test('a cook at each stage is read back as it was written', () => {
   const stages: RunningCook[] = [
     cold, hot, tapped, pulled, cooled, kept, answered, timedOut, pullStands(timedOut), rung, moved, heavier,
     corrected(kept, { ...kept.choices, mass_kg: 0.06 }, S + 1200),
@@ -177,7 +177,7 @@ const REFUSED: [string, string, string[], unknown][] = [
   ['the plan as it ran, corrected before 1970', 'kept', ['log', '3', 'asRan', 'correctedAt_s'], -1],
 ];
 
-test('2. a cook damaged anywhere is refused whole; what is written beside its log is not read', () => {
+test('a cook damaged anywhere is refused whole; what is written beside its log is not read', () => {
   for (const [note, from, path, value] of REFUSED) {
     assert.equal(readRunningCook(withAt(FROM[from], path, value)), null, note);
   }
@@ -189,7 +189,7 @@ test('2. a cook damaged anywhere is refused whole; what is written beside its lo
   assert.deepEqual(readRunningCook(withAt(pulled, ['ticket'], { old: true })), pulled, 'extra fields are ignored');
 });
 
-test('3. the store takes a stored cook in its format, whole, and refuses the rest', () => {
+test('the store takes a stored cook in its format, whole, and refuses the rest', () => {
   const cooks = openCooks();
   const base = storedCook({ cook: answered, answers: 'none', leanHint_s: 0 });
   /** The cook as it stood, which builds before this one wrote beside the log. */

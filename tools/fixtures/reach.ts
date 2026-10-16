@@ -115,7 +115,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   };
 });
 
-/* The owner's egg (test/reachAnswer.test.ts 11): 58 g from the fridge into
+/* The owner's egg (test/reachAnswer.test.ts): 58 g from the fridge into
  * boiling water and an ice bath, after one egg asked soft that came out soft
  * with a runny white. Soft is chosen, the slider resting there, a ballpark;
  * its own choice is later than jammy's, and the time decided there is no

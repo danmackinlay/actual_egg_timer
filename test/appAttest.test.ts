@@ -49,7 +49,7 @@ function throwsAt(step: string, f: () => unknown): void {
   assert.throws(f, (e: unknown) => e instanceof AttestError && e.message.startsWith(step), step);
 }
 
-test('1. Apple\'s sample attestation verifies against Apple\'s root, step by step', () => {
+test('Apple\'s sample attestation verifies against Apple\'s root, step by step', () => {
   const k = sample();
   assert.equal(k.environment, 'production');
   assert.equal(k.category, 1, 'apple_validation_category_01');
@@ -59,7 +59,7 @@ test('1. Apple\'s sample attestation verifies against Apple\'s root, step by ste
   assert.deepEqual(sha256(der.subarray(der.length - 65)), b64(SAMPLE.keyId));
 });
 
-test('2. each of Apple\'s steps refuses what it should', () => {
+test('each of Apple\'s steps refuses what it should', () => {
   throwsAt('1:', () => sample({ now: new Date('2026-10-02T00:00:00Z') }));
   throwsAt('1:', () => sample({ root: SYNTH.root }));
   throwsAt('4:', () => sample({ clientDataHash: new TextEncoder().encode('another challenge') }));
@@ -72,7 +72,7 @@ test('2. each of Apple\'s steps refuses what it should', () => {
   throwsAt('the attestation is not a map', () => sample({ attestation: new TextEncoder().encode('not cbor at all') }));
 });
 
-test('3. the synthetic attestation is this app\'s, bound to the cook\'s id', () => {
+test('the synthetic attestation is this app\'s, bound to the cook\'s id', () => {
   const clientDataHash = sha256(new TextEncoder().encode(SYNTH.uid));
   const k = verifyAttestation({
     attestation: b64(SYNTH.attestation), keyId: b64(SYNTH.keyId), clientDataHash: clientDataHash, root: SYNTH.root,
@@ -97,7 +97,7 @@ test('3. the synthetic attestation is this app\'s, bound to the cook\'s id', () 
   assert.equal(kp.environment, 'production');
 });
 
-test('3b. only a key from production vouches for a genuine copy of the app', () => {
+test('only a key from production vouches for a genuine copy of the app', () => {
   assert.equal(countsAsGenuine('production'), true, 'TestFlight and the App Store');
   assert.equal(countsAsGenuine('development'), false, 'a build installed from Xcode');
   assert.equal(countsAsGenuine(''), false);
@@ -110,7 +110,7 @@ function attestedKey(): string {
   }).publicKey;
 }
 
-test('4. an assertion verifies, and only for its body, its app and a counter that went up', () => {
+test('an assertion verifies, and only for its body, its app and a counter that went up', () => {
   const key = attestedKey();
   const body = new TextEncoder().encode('{"seq":0}');
   const a = makeAssertion(SYNTH.leafPrivateKey, body, 1);
@@ -131,7 +131,7 @@ test('4. an assertion verifies, and only for its body, its app and a counter tha
   }));
 });
 
-test('5. CBOR: what is encoded decodes, and what is broken is refused', () => {
+test('CBOR: what is encoded decodes, and what is broken is refused', () => {
   const value = new Map<string | number, unknown>([
     ['a', 1], [-7, new Uint8Array([1, 2, 3])], ['list', [0, 23, 24, 255, 256, 65535, 65536, -1, -25, 'x']],
     ['t', true], ['f', false], ['n', null],
@@ -144,7 +144,7 @@ test('5. CBOR: what is encoded decodes, and what is broken is refused', () => {
   assert.throws(() => decodeCbor(new Uint8Array([0x45, 1, 2])), CborError, 'truncated');
 });
 
-test('5b. CBOR: everything Apple never writes is refused', () => {
+test('CBOR: everything Apple never writes is refused', () => {
   const nest = (n: number): number[] => [...Array<number>(n).fill(0x81), 0x00];
   const refused: [string, number[]][] = [
     ['an indefinite byte string', [0x5f, 0x41, 0x00, 0xff]],

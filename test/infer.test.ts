@@ -96,7 +96,7 @@ function whiteProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
 // 1. The probit
 // --------------------------------------------------------------------------
 
-test('1a. the answers are a distribution, for every particle, on both questions', () => {
+test('the answers are a distribution, for every particle, on both questions', () => {
   const c = cookAt(0.41);
   for (const d of [-2, -0.5, -0.28, 0, 0.1, 0.28, 0.9, 3]) {
     const s = yolkProbs(c, particleAtYolk(c, d)).reduce((a, b) => a + b, 0);
@@ -108,7 +108,7 @@ test('1a. the answers are a distribution, for every particle, on both questions'
   }
 });
 
-test('1b. the cutpoints sit at -+FEEDBACK_BAND, so the old band keeps its meaning', () => {
+test('the cutpoints sit at -+FEEDBACK_BAND, so the old band keeps its meaning', () => {
   const c = cookAt(0.41);
   // Delivered exactly what was wanted: "just right" is the likeliest answer,
   // and the two wrong ones are equally likely.
@@ -120,7 +120,7 @@ test('1b. the cutpoints sit at -+FEEDBACK_BAND, so the old band keeps its meanin
   assert.ok(Math.abs(edge[1] - edge[2]) < 0.01, `at the upper cut: ${edge}`);
 });
 
-test('1c. at the prior median, as confident as the old 0.8 / 0.1 where that one described an egg', () => {
+test('at the prior median, as confident as the old 0.8 / 0.1 where that one described an egg', () => {
   // NOISE_MEDIAN's justification, executed: the probit gives "just right" 0.80
   // at the centre of the band and 0.10 one band-width outside it, as the fixed
   // likelihood it replaces did, to within the rounding of 0.207 to 0.20.
@@ -132,7 +132,7 @@ test('1c. at the prior median, as confident as the old 0.8 / 0.1 where that one 
   assert.ok(Math.abs(centre / out - 8) < 1, `ratio ${centre / out}`);
 });
 
-test('1d. no answer can kill a particle: every likelihood is at least the unrelated share', () => {
+test('no answer can kill a particle: every likelihood is at least the unrelated share', () => {
   const c = cookAt(0.22);
   const floor = UNRELATED / 3;
   for (const d of [-5, 5]) {
@@ -156,7 +156,7 @@ function particleDelivering(c: ReturnType<typeof cookAt>, x: number, over: Parti
   return particle({ ...over, logDoseOffset: delivered - x });
 }
 
-test('1g. the five yolk words are a distribution, and no word scores under the unrelated fifth', () => {
+test('the five yolk words are a distribution, and no word scores under the unrelated fifth', () => {
   const c = cookAt(0.41);
   for (const x of [-4, -1.3, -0.795, 0, 0.149, 1.07, 2.43, 3.3, 7]) {
     const probs = wordProbs(c, particleDelivering(c, x));
@@ -166,7 +166,7 @@ test('1g. the five yolk words are a distribution, and no word scores under the u
   }
 });
 
-test('1h. the words are the slider\'s: each cut is where anchorNear changes word, and each anchor names itself', () => {
+test('the words are the slider\'s: each cut is where anchorNear changes word, and each anchor names itself', () => {
   assert.deepEqual(YOLK_WORDS.map((w) => `doneness.${w}`), DONENESS_ANCHORS.map((a) => a.key));
   for (let i = 0; i < YOLK_WORDS.length - 1; i++) {
     const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
@@ -192,7 +192,7 @@ test('1h. the words are the slider\'s: each cut is where anchorNear changes word
   assert.ok(Math.abs(edge[1] - edge[2]) < 1e-5, `on the soft | jammy cut: ${edge}`);
 });
 
-test('1i. the taste offset moves the words: a cook who likes it firmer calls the same yolk softer', () => {
+test('the taste offset moves the words: a cook who likes it firmer calls the same yolk softer', () => {
   const c = cookAt(0.41);
   const plain = particleAtYolk(c, 0);
   const firmer = { ...plain, logDoseOffset: plain.logDoseOffset + 0.5 };
@@ -202,7 +202,7 @@ test('1i. the taste offset moves the words: a cook who likes it firmer calls the
   assert.ok(mean(b) < mean(a), `${mean(b)} against ${mean(a)}`);
 });
 
-test('1j. soft asked for and runny got: the next soft egg goes longer; runny asked for and got: nearly not', () => {
+test('soft asked for and runny got: the next soft egg goes longer; runny asked for and got: nearly not', () => {
   const answer = (level: number, word: YolkWord): number => {
     const c = cookAt(level);
     const post = createPrior(PARTICLE_COUNT, CALIBRATION_SEED);
@@ -223,7 +223,7 @@ test('1j. soft asked for and runny got: the next soft egg goes longer; runny ask
   assert.equal(predicted.indexOf(Math.max(...predicted)), 2, `jammy: ${predicted.map((p) => p.toFixed(2))}`);
 });
 
-test('1f. the white\'s noise is the yolk\'s, in degrees', () => {
+test('the white\'s noise is the yolk\'s, in degrees', () => {
   // A white answer three quarters of the yolk's noise in decades is the same
   // peak temperature, because Z_WHITE > Z_YOLK: 50% of the way from runny to
   // tender takes the same fraction of a degree as from soft to just right.
@@ -253,7 +253,7 @@ test('1f. the white\'s noise is the yolk\'s, in degrees', () => {
 // 2. Two observables
 // --------------------------------------------------------------------------
 
-test('2a. white and yolk dose respond differently to alpha, so the white is a second observable', () => {
+test('white and yolk dose respond differently to alpha, so the white is a second observable', () => {
   const c = cookAt(0.22);
   const lo = DEFAULT_PARAMS.alpha_m2s * 0.9;
   const hi = DEFAULT_PARAMS.alpha_m2s * 1.1;
@@ -263,7 +263,7 @@ test('2a. white and yolk dose respond differently to alpha, so the white is a se
   assert.ok(dWhite / dYolk < 0.85, `the white responds ${(100 * dWhite / dYolk).toFixed(0)}% as strongly`);
 });
 
-test('2b. a runny white raises the white offset and lowers alpha; a firm one does the opposite', () => {
+test('a runny white raises the white offset and lowers alpha; a firm one does the opposite', () => {
   const c = cookAt(0.22);
   const before = createPrior(600, 0x5eed1e);
   const moved: Record<string, Posterior> = {};
@@ -280,7 +280,7 @@ test('2b. a runny white raises the white offset and lowers alpha; a firm one doe
   assert.ok(posteriorParams(moved['firm']).alpha_m2s > a0, 'firm: the heat got in fast');
 });
 
-test('2c. a white answer barely touches the yolk\'s taste offset', () => {
+test('a white answer barely touches the yolk\'s taste offset', () => {
   // The taste offset is on the yolk's axis and does not enter the white's
   // likelihood, so only its correlation with alpha - none, in the prior - can
   // move it.
@@ -292,7 +292,7 @@ test('2c. a white answer barely touches the yolk\'s taste offset', () => {
   assert.ok(dOffset < 0.03, `the white moved the taste offset by ${dOffset}`);
 });
 
-test('2d. one fold per egg: the answers together are the product, whichever arrived first', () => {
+test('one fold per egg: the answers together are the product, whichever arrived first', () => {
   const c = cookAt(0.3);
   const together = createPrior(200, 11);
   updatePosterior(together, c.grid, c.cookTime_s, 'soft', 'runny');
@@ -320,7 +320,7 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
 // 3. The recovery experiment
 // --------------------------------------------------------------------------
 
-test('3. an injected alpha and taste are recovered in a few eggs, to a band\'s error', (t) => {
+test('an injected alpha and taste are recovered in a few eggs, to a band\'s error', (t) => {
   // alpha = 1.535e-7 with a taste offset of +0.20 decades,
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,
@@ -367,7 +367,7 @@ test('3. an injected alpha and taste are recovered in a few eggs, to a band\'s e
 // 4. The predictive is calibrated on simulated cooks
 // --------------------------------------------------------------------------
 
-test('4. P(answer) is calibrated: simulated cooks answer as often as the model says they will', (t) => {
+test('P(answer) is calibrated: simulated cooks answer as often as the model says they will', (t) => {
   // Draw each cook's truth from the prior, cook them a few eggs at assorted
   // levels, and before each egg ask the model how likely each answer is. Then
   // draw the answers from the truth - the probit, the unrelated share and all -
@@ -473,7 +473,7 @@ function nextTimes(cal: Calibration): { soft: number; jammy: number; softWhiteBo
 
 /** Two eggs at soft, white runny, from a fresh prior, on the app's own grid.
  *  At 4000 particles: at the app's 1000, how far jammy
- *  moves against soft (5b) is 0.38-1.14 from seed to seed, and a test of
+ *  moves against soft is 0.38-1.14 from seed to seed, and a test of
  *  it on one seed tests the seed; at 4000, 0.69-0.85. */
 const TWO_RUNNY_PARTICLES = 4 * PARTICLE_COUNT;
 const twoRunny = (() => {
@@ -492,7 +492,7 @@ const twoRunny = (() => {
   return out;
 })();
 
-test('5a. two runny whites at soft move the next soft recommendation later', (t) => {
+test('two runny whites at soft move the next soft recommendation later', (t) => {
   for (const kind of ['whiteOnly', 'withYolk'] as const) {
     const r = twoRunny[kind];
     t.diagnostic(`${kind}: soft ${r.before.soft.toFixed(1)} -> ${r.after.soft.toFixed(1)}, jammy ${r.before.jammy.toFixed(1)} -> ${r.after.jammy.toFixed(1)}`);
@@ -512,7 +512,7 @@ test('5a. two runny whites at soft move the next soft recommendation later', (t)
 // so until a probe or pooling pins the time-scale (DECISIONS.md 18).
 // This holds the limit as it stands, so a change
 // that moves it - either way - is seen and has to be argued for.
-test('5b. ...and, a known limit, move a jammy one about as far', (t) => {
+test('...and, a known limit, move a jammy one about as far', (t) => {
   for (const kind of ['whiteOnly', 'withYolk'] as const) {
     const r = twoRunny[kind];
     const softMove = r.after.soft - r.before.soft;

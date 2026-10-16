@@ -20,7 +20,7 @@ function match(file: string, re: RegExp): string {
   return m[1];
 }
 
-test('1. the version is one number: package.json, its lockfile and iOS', () => {
+test('the version is one number: package.json, its lockfile and iOS', () => {
   const lock = JSON.parse(readFileSync('package-lock.json', 'utf8')) as { version: string };
   assert.equal(lock.version, pkg.version, 'package-lock.json');
   // iOS takes integers only, so it carries the version without its
@@ -28,7 +28,7 @@ test('1. the version is one number: package.json, its lockfile and iOS', () => {
   assert.equal(match('ios/project.yml', /MARKETING_VERSION:\s*"([^"]+)"/), pkg.version.replace(/-.*$/, ''), 'ios/project.yml');
 });
 
-test('2. the iOS team ID is the same for building and for exporting', () => {
+test('the iOS team ID is the same for building and for exporting', () => {
   assert.equal(
     match('ios/ExportOptions.plist', /<key>teamID<\/key>\s*<string>([^<]+)<\/string>/),
     match('ios/project.yml', /DEVELOPMENT_TEAM:\s*(\S+)/),

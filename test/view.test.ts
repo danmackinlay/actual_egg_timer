@@ -70,7 +70,7 @@ function screen(v: View): Extract<View, { kind: 'idle' | 'running' | 'sous' }> {
   return v;
 }
 
-test('1. idle: the solve\'s time and Eggs in, the welcome before anything is learned, the egg aimed for', () => {
+test('idle: the solve\'s time and Eggs in, the welcome before anything is learned, the egg aimed for', () => {
   const m = page({ startMode: 'hot' });
   const v = screen(view(m, S * 1000, viewMemo()));
   assert.equal(v.kind, 'idle');
@@ -96,7 +96,7 @@ test('1. idle: the solve\'s time and Eggs in, the welcome before anything is lea
   assert.deepEqual(view(decided, S * 1000, viewMemo()), view(decided, S * 1000, viewMemo()));
 });
 
-test('2. a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
+test('a change to the controls: only the reading, the boiling point, the start and the sentence until it is solved', () => {
   const m = page({ startMode: 'hot' });
   const moved = go(m, { kind: 'controls', read: { doneness: 0.7, startMode: 'cold' }, source: null, group: null, real_ms: 0 }, S);
   const v = view(moved, S * 1000, viewMemo());
@@ -110,7 +110,7 @@ test('2. a change to the controls: only the reading, the boiling point, the star
   assert.notEqual(solved.controls, solved.settings, 'and are not the same object');
 });
 
-test('3. sous-vide: the bath\'s start time, a bare track, no button and no odds', () => {
+test('sous-vide: the bath\'s start time, a bare track, no button and no odds', () => {
   const m = page({ startMode: 'sous' });
   const v = screen(view(m, S * 1000, viewMemo()));
   assert.equal(v.kind, 'sous');
@@ -123,7 +123,7 @@ test('3. sous-vide: the bath\'s start time, a bare track, no button and no odds'
   assert.ok('bath_C' in v.reading);
 });
 
-test('4. a cold cook in each phase: Heating, Cooking, the pull, the cooling, Done and its questions', () => {
+test('a cold cook in each phase: Heating, Cooking, the pull, the cooling, Done and its questions', () => {
   let m = built(page({ startMode: 'cold', cooling: 'ice' }, { '2.0': 480 }), S);
   m = go(m, { kind: 'begin', units: 'metric', lang: 'en' }, S);
   m = built(m, S + 1);
@@ -167,7 +167,7 @@ test('4. a cold cook in each phase: Heating, Cooking, the pull, the cooling, Don
   if (answered.kind === 'running') assert.equal(answered.readout.notes, null, 'what was said stays said');
 });
 
-test('5. the question: past the grace and corrected, "still in the water?" holds Done back', () => {
+test('the question: past the grace and corrected, "still in the water?" holds Done back', () => {
   let m = built(page({ startMode: 'hot', cooling: 'ice' }), S);
   m = built(go(m, { kind: 'begin', units: 'metric', lang: 'en' }, S), S + 1);
   const pull = m.plan!.deadlines.cookEnd_s;
@@ -184,7 +184,7 @@ test('5. the question: past the grace and corrected, "still in the water?" holds
   assert.equal(v.readout.announce.text, v.readout.words.spoken, 'the question is its own announcement');
 });
 
-test('6. the parts drawn only when asked: the form in the units on screen, the line over the questions, Settings\' note, sharing', () => {
+test('the parts drawn only when asked: the form in the units on screen, the line over the questions, Settings\' note, sharing', () => {
   const m = page({ waterLitres: 1.5, eggCount: 3 }, { '1.5': 400 });
   const s = view(m, S * 1000, viewMemo()).sections;
   assert.deepEqual(s.redraws, m.redraws);
@@ -205,7 +205,7 @@ test('6. the parts drawn only when asked: the form in the units on screen, the l
   });
 });
 
-test('7. the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {
+test('the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {
   const pulls = { ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter' } as const;
   for (const [cooling, key] of Object.entries(pulls) as [keyof typeof pulls, CopyKey][]) {
     const v = view(page({ startMode: 'cold', cooling: cooling }), S * 1000, viewMemo());

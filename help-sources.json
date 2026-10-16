@@ -1,5 +1,5 @@
 {
-  "about": "The sources Help lists, in order, as README.md section 10 and references.bib give them: each a citation and the address it links to. Data, not words: the same in every language, so it is in no catalogue, and it is not reviewed as copy. The web bundles it (src/ui/sources.ts) and iOS has it as a bundle resource (ios/project.yml, HelpView.swift). Curly quotes, as in the catalogues (copy.test.ts 3c).",
+  "about": "The sources Help lists, in order, as README.md section 10 and references.bib give them: each a citation and the address it links to. Data, not words: the same in every language, so it is in no catalogue, and it is not reviewed as copy. The web bundles it (src/ui/sources.ts) and iOS has it as a bundle resource (ios/project.yml, HelpView.swift). Curly quotes, as in the catalogues (copy.test.ts).",
   "sources": [
     { "url": "https://newton.ex.ac.uk/teaching/CDHW/egg/", "text": "C. D. H. Williams, “The Science of Boiling an Egg”, University of Exeter (1998). newton.ex.ac.uk/teaching/CDHW/egg (the host is gone; the page is in the Internet Archive)" },
     { "url": "https://doi.org/10.1088/0143-0807/27/1/013", "text": "D. Buay, S. K. Foong, D. Kiang, L. Kuppan and V. H. Liew, “How long does it take to boil an egg? Revisited”, European Journal of Physics 27, 119-131 (2006). doi:10.1088/0143-0807/27/1/013" },

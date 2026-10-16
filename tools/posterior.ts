@@ -1,6 +1,6 @@
 /**
  * Is the filter sampling the right posterior? (INFERENCE.md section 8, "the
- * resample"; test/record.test.ts 2a3; test/sbc.test.ts.)
+ * resample"; test/record.test.ts; test/sbc.test.ts.)
  *
  * A particle filter is a random algorithm. Resampling and the kernel's draws
  * are discontinuous in the weights, so a last-bit difference in `exp` (Linux's
@@ -19,7 +19,7 @@
  *       the fridge into boiling water and then ice. 50 seeds by default;
  *       about 7 s a seed, nearly all of it building the dose surfaces.
  *   npm run posterior -- reference
- *       rewrites test/data/word-answers-posterior.json, which test 2a3 checks
+ *       rewrites test/data/word-answers-posterior.json, which test/record.test.ts checks
  *       the filter against. See `writeReference`.
  *   npm run sbc [replications] [particles]
  *       simulation-based calibration (Talts et al. 2018). See `sbc`.
@@ -217,7 +217,7 @@ export function seedOf(k: number): number {
 
 /* -------------------------------------------------------- the reference */
 
-/** What test 2a3 reads. */
+/** What test/record.test.ts reads. */
 export interface PosteriorReference {
   about: string;
   surfaces: string;
@@ -237,7 +237,7 @@ const EXACT_SEED = 0x0e9ac7;
 const REFERENCE_SEEDS = 400;
 
 /**
- * The reference for test 2a3: the word log's posterior, exactly (importance
+ * The reference for test/record.test.ts: the word log's posterior, exactly (importance
  * sampling from the prior, no filter), and the filter's own distribution of
  * the same summaries over REFERENCE_SEEDS seeds. Regenerate it only on
  * purpose - when the likelihood, the prior, the decision or the filter is
@@ -288,7 +288,7 @@ function writeReference(): void {
   printComparison(exact, se, filter.mean, filter.sd, REFERENCE_SEEDS);
 
   const ref: PosteriorReference = {
-    about: 'The posterior ten eggs answered in the five yolk words (tools/posterior.ts wordLog) make, for test/record.test.ts 2a3. '
+    about: 'The posterior ten eggs answered in the five yolk words (tools/posterior.ts wordLog) make, for test/record.test.ts. '
       + 'Written by `npm run posterior -- reference` (tools/posterior.ts), and rewritten only when the likelihood, '
       + 'the prior, the decision or the filter is meant to change.',
     surfaces: 'Each egg on calibrationGrid at 7 x 9, centred on the literature time-scale (tools/posterior.ts fixedSurfaces).',

@@ -16,7 +16,7 @@ import {
 import { knowing, rng } from '../tools/common.ts';
 import { S, C, cookOf } from './cooks.ts';
 
-test("23. the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
+test("the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
   // A cold start never tapped, planned as the app plans it, at twelve
   // moments over the two hours drawn with a fixed seed: ten in the first half
   // hour, where the guess lengthens before it creeps, and two in the last

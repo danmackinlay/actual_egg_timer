@@ -246,7 +246,7 @@ test('the standing method: Williams\' seventeen minutes, a dose that saturates, 
   );
   // A typical hob: 2 L to a rolling boil in 8 minutes, and in proportion.
   // That a litre cannot stand its way to hard, and three litres can, is
-  // test/core.test.ts 15b; the table shows it.
+  // test/core.test.ts; the table shows it.
   for (const litres of [1, 2, 3, 4]) {
     const boil = 240 * litres;
     const tau = panTimeConstant(litres);

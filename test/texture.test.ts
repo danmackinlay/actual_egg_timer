@@ -21,7 +21,7 @@ import { parseCatalogue, render } from '../src/core/copy.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
-test('4. texture bands are ordered and half-open at the stated thresholds', () => {
+test('texture bands are ordered and half-open at the stated thresholds', () => {
   assert.deepEqual(textureFor(57.9, 70.9, true), { white: 'justSet', yolk: 'liquid' });
   assert.deepEqual(textureFor(58.0, 71.0, true), { white: 'set', yolk: 'soft' });
   assert.deepEqual(textureFor(65.0, 81.9, true), { white: 'set', yolk: 'jammy' });
@@ -29,7 +29,7 @@ test('4. texture bands are ordered and half-open at the stated thresholds', () =
   assert.deepEqual(textureFor(73.0, 90.0, true), { white: 'firm', yolk: 'set' });
 });
 
-test('4b. the jammy band contains the default slider position', () => {
+test('the jammy band contains the default slider position', () => {
   // DEFAULTS.doneness is meant to be Jammy; if the anchors or the bands move,
   // this is what notices.
   assert.equal(anchorNear(DEFAULTS.doneness).key, 'doneness.jammy');
@@ -43,7 +43,7 @@ function noteText(peakYolk_C: number, peakWhite_C: number, whiteSets: boolean): 
   return render(EN, note.key, parts);
 }
 
-test('4c. a white the pan never sets is runny whatever its peak, and is the whole note', () => {
+test('a white the pan never sets is runny whatever its peak, and is the whole note', () => {
   // The peak-temperature scale's softest word is "white just set", so reading
   // the peak alone said that of a white that stays runny. iOS did, until the
   // decision moved here.
@@ -57,7 +57,7 @@ test('4c. a white the pan never sets is runny whatever its peak, and is the whol
   assert.equal(noteText(50, 90, true), 'white firm, yolk liquid');
 });
 
-test('4d. heat off, too little water: the solver\'s white never sets, and the note does not say "just set"', () => {
+test('heat off, too little water: the solver\'s white never sets, and the note does not say "just set"', () => {
   const setup: CookSetup = {
     startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
     cooling: 'ice', afterBoil: 'off', waterLitres: 0.5, eggCount: 2,

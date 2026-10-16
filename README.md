@@ -235,7 +235,7 @@ by exactly what they lose,
 T_bowl(t) = T_bowl,0 + N * m * c_egg * (Tmean,pull - Tmean(t)) / (V * c_water)
 ```
 
-with `Tmean` the egg's own modal mean, so the heat balance closes exactly (test 18a), and
+with `Tmean` the egg's own modal mean, so the heat balance closes exactly (`test/core.test.ts`), and
 `T_bowl,0` the cook's number or the room's. It is held well mixed and clamped like the ice
 bath, though free convection in still water is not quite a clamp: the study
 (`studies/bowl.ts`, `node studies/bowl.ts`) puts the surface treatment at 16 s and 1.2 °C of
@@ -766,7 +766,7 @@ itself, `-k dT/dr = h (Ts - Ta)`, written as the heat balance it implies on the 
 egg (`robinSurface` in `sphere.ts`): the egg's mean falls by exactly what the shell sends
 out, and the shell starts where the water left it, hot while the outer white's heat is
 still arriving. It needs no change of basis, and it reproduces the closed-form Robin
-series to 0.02 °C (`test/core.test.ts` 17a). `h` is textbook: free convection from a
+series to 0.02 °C (`test/core.test.ts`). `h` is textbook: free convection from a
 sphere plus radiation, 15 W/m²K over the shell temperatures that matter (§6). The water
 on the shell evaporates in seconds, tens of times faster than convection takes heat, and
 its latent heat is withdrawn over `TAU_PLUNGE`.

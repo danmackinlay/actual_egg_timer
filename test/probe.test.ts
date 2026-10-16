@@ -85,7 +85,7 @@ function nextCook(cal: ReturnType<typeof freshCalibration>): number {
 // 1. the error model
 // --------------------------------------------------------------------------
 
-test('1a. the shortfall density is a density, its mean is the handling error, and its sd about a degree', () => {
+test('the shortfall density is a density, its mean is the handling error, and its sd about a degree', () => {
   let mass = 0.0;
   let mean = 0.0;
   let second = 0.0;
@@ -103,7 +103,7 @@ test('1a. the shortfall density is a density, its mean is the handling error, an
   assert.ok(Math.abs(sd - expected) < 1e-3, `sd ${sd} against ${expected}`);
 });
 
-test('1b. the skew is COLD: a reading under the peak costs less than one the same distance over', () => {
+test('the skew is COLD: a reading under the peak costs less than one the same distance over', () => {
   // At the moment the centre peaks it is the warmest point in the egg, in space
   // and in time, so every handling error - a probe off-centre, a reading late,
   // a probe still climbing - reads low. None reads high.
@@ -116,7 +116,7 @@ test('1b. the skew is COLD: a reading under the peak costs less than one the sam
   assert.ok(at.peakYolkTime_s > at.cookTime_s, 'the centre peaks after the pull');
 });
 
-test('1c. no reading can kill a particle, and none makes a NaN', () => {
+test('no reading can kill a particle, and none makes a NaN', () => {
   const grid = buildDoseGrid(
     EGG, appSetup(), {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
@@ -138,7 +138,7 @@ test('1c. no reading can kill a particle, and none makes a NaN', () => {
   }
 });
 
-test('1d. the grid carries the peak, and interpolates it to within a tenth of a degree', () => {
+test('the grid carries the peak, and interpolates it to within a tenth of a degree', () => {
   const spec = calibrationGrid(DEFAULT_PARAMS.alpha_m2s, COOK_S);
   const grid = buildDoseGrid(EGG, appSetup(), spec);
   assert.equal(grid.peakYolk_C.length, spec.alphaCount * spec.timeCount);
@@ -182,7 +182,7 @@ function oneReading(reading_C: number): {
 
 const READINGS = [-1, 0, 1].map((off) => ({ off: off, ...oneReading(truePeak(1.0) + off) }));
 
-test('2a. one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%', (t) => {
+test('one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%', (t) => {
   const prior = posteriorAlphaRelSd(createPrior(PARTICLE_COUNT, CALIBRATION_SEED));
   t.diagnostic(`prior ${(100 * prior).toFixed(2)}%`);
   for (const r of READINGS) {
@@ -203,7 +203,7 @@ test('2a. one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%'
   }
 });
 
-test('2b. a hot reading says the egg heats fast, so the next cook is shorter; a cold one, longer', (t) => {
+test('a hot reading says the egg heats fast, so the next cook is shorter; a cold one, longer', (t) => {
   const byOff = new Map(READINGS.map((r) => [r.off, r]));
   const hot = byOff.get(1)!;
   const cold = byOff.get(-1)!;
@@ -221,7 +221,7 @@ test('2b. a hot reading says the egg heats fast, so the next cook is shorter; a 
 // 3. one fold per egg, and the record
 // --------------------------------------------------------------------------
 
-test('3a. the reading multiplies into the answers: one fold, whatever arrived first', () => {
+test('the reading multiplies into the answers: one fold, whatever arrived first', () => {
   const grid = buildDoseGrid(
     EGG, appSetup(), {
       alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
@@ -247,7 +247,7 @@ test('3a. the reading multiplies into the answers: one fold, whatever arrived fi
   assert.deepEqual(a, b);
 });
 
-test('3b. a probe-only record teaches, and its replay is the app\'s fold, bit for bit', () => {
+test('a probe-only record teaches, and its replay is the app\'s fold, bit for bit', () => {
   const rec = recordWith(truePeak(1.0) + 0.5);
   assert.ok(recordTeaches(rec));
   assert.ok(!recordTeaches(recordWith(null)));
@@ -264,7 +264,7 @@ test('3b. a probe-only record teaches, and its replay is the app\'s fold, bit fo
   assert.deepEqual(replay(start, [back as EggRecord], coarse), byHand);
 });
 
-test('3c. the loader takes a reading the egg could have been, and refuses one it could not', () => {
+test('the loader takes a reading the egg could have been, and refuses one it could not', () => {
   const ok = (probe: unknown, over: Partial<EggRecord> = {}): boolean =>
     parseRecord({ ...recordWith(null, over), probe: probe }) !== null;
   assert.ok(ok(null));
@@ -299,7 +299,7 @@ test('3c. the loader takes a reading the egg could have been, and refuses one it
 // 4. the moment, and the range the apps take at entry
 // --------------------------------------------------------------------------
 
-test('4a. the cooling countdown runs to the peak, for the cooling actually used', (t) => {
+test('the cooling countdown runs to the peak, for the cooling actually used', (t) => {
   const ice = coolingSecondsFor(COOK.result);
   const tapSol = solveCookTime(EGG, appSetup({ cooling: 'tap' }), DEFAULT_PARAMS, donenessFromSlider(JAMMY));
   const tap = coolingSecondsFor(tapSol.result);
@@ -312,7 +312,7 @@ test('4a. the cooling countdown runs to the peak, for the cooling actually used'
   assert.ok(!probeMomentFor(COOK.result, 'counter'), 'nothing is counted on the counter');
 });
 
-test('4b. no peak after the pull, no probe, and the flat three minutes', () => {
+test('no peak after the pull, no probe, and the flat three minutes', () => {
   const before: CookResult = { ...COOK.result, peakYolkTime_s: COOK.result.cookTime_s - 200 };
   assert.equal(coolingSecondsFor(before), COOLING_SECONDS);
   assert.ok(!probeMomentFor(before, 'ice'));
@@ -321,7 +321,7 @@ test('4b. no peak after the pull, no probe, and the flat three minutes', () => {
   assert.ok(!probeMomentFor(soon, 'ice'));
 });
 
-test('4c. the entry range holds every reading a kitchen could make, and not a typo', (t) => {
+test('the entry range holds every reading a kitchen could make, and not a typo', (t) => {
   const [lo, hi] = plausibleProbeRange_C(EGG, appSetup(), DEFAULT_PARAMS, COOK_S);
   t.diagnostic(`68 g jammy in ice, peak ${truePeak(1.0).toFixed(1)} C: takes ${lo.toFixed(1)} to ${hi.toFixed(1)} C`);
   for (const factor of [0.72, 1.0, 1.4]) {
@@ -346,7 +346,7 @@ function runningCook(startMode: 'cold' | 'hot', cooling: 'ice' | 'tap'): Running
   }, 0, { '2.0': 480 }, 'metric', 'en');
 }
 
-test('5a. the cooling counts to the peak of the time that ran, from the egg out, and the boil moves it', () => {
+test('the cooling counts to the peak of the time that ran, from the egg out, and the boil moves it', () => {
   const c = knowing({ particles: 50, eggsLogged: 0 });
   const hot = runningCook('hot', 'ice');
   const plan = replan(hot, c, null, 0, 1000);
@@ -366,7 +366,7 @@ test('5a. the cooling counts to the peak of the time that ran, from the egg out,
   assert.notEqual(tapped.cool_s, replan(cold, c, null, 0, 1000).cool_s);
 });
 
-test('5b. a cooling that has ended is kept as it ran', () => {
+test('a cooling that has ended is kept as it ran', () => {
   const c = knowing({ particles: 50, eggsLogged: 0 });
   const hot = runningCook('hot', 'ice');
   const plan = replan(hot, c, null, 0, 1000);

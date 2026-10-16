@@ -33,7 +33,7 @@ const storage = new Map<string, string>();
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 
-test('1. an id is a version 4 UUID in lower case, from random bytes and nothing else', () => {
+test('an id is a version 4 UUID in lower case, from random bytes and nothing else', () => {
   const uid = newUid();
   assert.match(uid, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.notEqual(newUid(), uid);
@@ -41,7 +41,7 @@ test('1. an id is a version 4 UUID in lower case, from random bytes and nothing 
   assert.equal(newUid((b) => b.fill(0)), '00000000-0000-4000-8000-000000000000');
 });
 
-test('2. what storage holds is read defensively, and every readable id is kept', () => {
+test('what storage holds is read defensively, and every readable id is kept', () => {
   assert.deepEqual(readShare(null), FRESH_SHARE);
   assert.deepEqual(readShare('not json'), FRESH_SHARE);
   assert.deepEqual(readShare('[1]'), FRESH_SHARE);
@@ -54,7 +54,7 @@ test('2. what storage holds is read defensively, and every readable id is kept',
   assert.deepEqual([damaged.busy, damaged.busySince_s], [0, null]);
 });
 
-test('2b. what is written is what was always stored, busySince in whole ms, and reads back', () => {
+test('what is written is what was always stored, busySince in whole ms, and reads back', () => {
   const s: ShareState = { ...turnedOn(FRESH_SHARE, A), sent: 2, seq: 3, busy: 1, busySince_s: 1791244800.25 };
   const stored = JSON.parse(storedShare(s)) as Record<string, unknown>;
   assert.deepEqual(Object.keys(stored), ['on', 'uid', 'sent', 'seq', 'uids', 'deleting', 'busy', 'busySince']);
@@ -63,7 +63,7 @@ test('2b. what is written is what was always stored, busySince in whole ms, and 
   assert.equal(JSON.parse(storedShare(FRESH_SHARE)).busySince, null);
 });
 
-test('3. on, off, forget, delete: the id lives as long as the log it sends', () => {
+test('on, off, forget, delete: the id lives as long as the log it sends', () => {
   let s: ShareState = turnedOn(FRESH_SHARE, A);
   assert.deepEqual([s.on, s.uid, s.uids], [true, A, [A]]);
   s = { ...s, sent: 4, seq: 4 };
@@ -96,7 +96,7 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
     [true, true, false, false, false, false]);
 });
 
-test('3b. a busy server is waited on, counted, and given up on after five busy answers and three days', () => {
+test('a busy server is waited on, counted, and given up on after five busy answers and three days', () => {
   const DAY = 24 * 3600;
   let s: ShareState = { ...turnedOn(FRESH_SHARE, A), sent: 2, seq: 7 };
   const at = [0, 1, 2, 2.9, 3.5].map((d) => 1e9 + d * DAY);
@@ -156,7 +156,7 @@ const LOG: EggRecord[] = [0, 1, 2].map((i) => ({
   ...recordAt(0.41, 400 + i, 'jammy', null), day: `2026-10-0${i + 1}`, id: 1759700000000 + i,
 }));
 
-test('4. turning sharing on sends the log so far, in order, each copy carrying the id', async () => {
+test('turning sharing on sends the log so far, in order, each copy carrying the id', async () => {
   storage.clear();
   const t = fake();
   sh = openSharing(page(LOG, 2), t);
@@ -174,7 +174,7 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
   assert.equal(JSON.parse(storage.get('aet.share.v1') ?? '{}').sent, 2, 'written through');
 });
 
-test('5. a refused egg is passed over; a busy server or none stops the run until the next', async () => {
+test('a refused egg is passed over; a busy server or none stops the run until the next', async () => {
   storage.clear();
   const t = fake([500]);
   sh = openSharing(page(LOG), t, () => 1e9);
@@ -191,7 +191,7 @@ test('5. a refused egg is passed over; a busy server or none stops the run until
   assert.equal(ok.posts.length, 3, 'nothing is sent twice');
 });
 
-test('5b. an egg the server stays busy for, or out of reach, is passed over in the end, and the rest go', async () => {
+test('an egg the server stays busy for, or out of reach, is passed over in the end, and the rest go', async () => {
   storage.clear();
   let clock = 1e9;
   // Down, then a bad deploy (404), then a firewall (403): all waited on.
@@ -206,7 +206,7 @@ test('5b. an egg the server stays busy for, or out of reach, is passed over in t
   assert.deepEqual(t.posts.map((p) => p['seq']), [0, 0, 0, 0, 0, 1, 2]);
 });
 
-test('6. forgetting starts a new cook; deleting reaches every id, after what was in flight', async () => {
+test('forgetting starts a new cook; deleting reaches every id, after what was in flight', async () => {
   storage.clear();
   let release: (status: number) => void = () => {};
   const slow: Transport & { removes: string[]; order: string[] } = {
@@ -230,7 +230,7 @@ test('6. forgetting starts a new cook; deleting reaches every id, after what was
   assert.deepEqual(sh.state(), FRESH_SHARE, 'off, no id, nothing left to delete');
 });
 
-test('7. a deletion the server did not confirm is asked again at the next load', async () => {
+test('a deletion the server did not confirm is asked again at the next load', async () => {
   storage.clear();
   storage.set('aet.share.v1', JSON.stringify({ on: false, uid: null, uids: [], deleting: [A, B] }));
   const t = fake(['offline']);
@@ -246,7 +246,7 @@ test('7. a deletion the server did not confirm is asked again at the next load',
   assert.deepEqual(sh.state().deleting, []);
 });
 
-test('10. a request the server never answers is given up, so a deletion waiting on it goes ahead', async () => {
+test('a request the server never answers is given up, so a deletion waiting on it goes ahead', async () => {
   assert.ok(REQUEST_TIMEOUT_MS > 0 && REQUEST_TIMEOUT_MS <= 30000);
   let signal: AbortSignal | null = null;
   const stalled = (_url: string, init: RequestInit): Promise<Response> => new Promise((_resolve, reject) => {
@@ -260,7 +260,7 @@ test('10. a request the server never answers is given up, so a deletion waiting 
   assert.equal((await fetchWithin('/api/eggs', {}, 5, quick)).status, 201);
 });
 
-test('11. a sender waits only on a busy server, and not for good', () => {
+test('a sender waits only on a busy server, and not for good', () => {
   assert.deepEqual([200, 201].map(shareReply), ['kept', 'kept']);
   // The way to the server - down, limited, a bad deploy, a firewall - may be
   // put right: wait, within the bound.
@@ -273,7 +273,7 @@ test('11. a sender waits only on a busy server, and not for good', () => {
   assert.equal(shareGivesUp(SHARE_WAIT_TRIES, -60), true, 'a clock set back: the tries decide');
 });
 
-test('12. no number is used for a second egg under one id, whatever the cook does and the server answers', () => {
+test('no number is used for a second egg under one id, whatever the cook does and the server answers', () => {
   // The server keeps the first egg at an id and number and drops any other
   // sent there as a retry (src/core/share.ts). A long walk through every
   // move - eggs logged, sharing on and off, a forget, a deletion, a damaged

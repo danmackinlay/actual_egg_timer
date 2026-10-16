@@ -147,7 +147,7 @@ export function disableSteppers(input: HTMLInputElement, disabled: boolean): voi
 export function labelSteppers(): void {
   for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.step'))) {
     const id = button.dataset['for'] ?? '';
-    // A key read from the page, which test 6b holds to the catalogue.
+    // A key read from the page, which copy.test.ts holds to the catalogue.
     const labelKey = document.querySelector<HTMLElement>(`label[for="${id}"]`)?.dataset['copy'] as CopyKey | undefined;
     if (labelKey === undefined) continue;
     const key = button.dataset['up'] === '1' ? 'controls.more' : 'controls.less';

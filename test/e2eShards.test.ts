@@ -15,7 +15,7 @@ import { parseShard, shard } from '../tools/e2e/shards.ts';
 
 const names = Object.keys(allScenarios());
 
-test('1. for any count, the shards hold every scenario once, each in the order run', () => {
+test('for any count, the shards hold every scenario once, each in the order run', () => {
   for (let n = 1; n <= 8; n++) {
     const shards = Array.from({ length: n }, (_, i) => shard(names, i + 1, n));
     const union = shards.flat();
@@ -25,12 +25,12 @@ test('1. for any count, the shards hold every scenario once, each in the order r
   }
 });
 
-test('2. the split is the same every time, and one shard is the whole list', () => {
+test('the split is the same every time, and one shard is the whole list', () => {
   assert.deepEqual(shard(names, 2, 4), shard([...names], 2, 4));
   assert.deepEqual(shard(names, 1, 1), names);
 });
 
-test('3. --shard reads i/n, one-based, and nothing else', () => {
+test('--shard reads i/n, one-based, and nothing else', () => {
   assert.deepEqual(parseShard('2/4'), { i: 2, n: 4 });
   for (const bad of ['0/4', '5/4', '1/0', '2', 'a/b', '', '1/4/2']) assert.throws(() => parseShard(bad), bad);
 });

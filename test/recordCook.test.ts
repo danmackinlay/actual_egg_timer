@@ -66,7 +66,7 @@ function ranTo(cook: RunningCook, now_s: number): { cook: RunningCook; plan: Coo
   return { cook: next, plan: onSurface(next, now_s) };
 }
 
-test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
+test('the cook\'s tap out of PULL is recorded as a measured pull', () => {
   const cook = cookOf();
   const plan = onSurface(cook, S0);
   const pull = plan.deadlines.cookEnd_s;
@@ -82,7 +82,7 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   assert.notEqual(parseRecord(r), null);
 });
 
-test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time', () => {
+test('a pull nobody confirmed is recorded as assumed, at the scheduled time', () => {
   const cook = cookOf({ cooling: 'counter', level: 0.6 });
   const plan = onSurface(cook, S0);
   const after = ranTo(cook, plan.deadlines.cookEnd_s + PULL_GRACE_SECONDS);
@@ -93,7 +93,7 @@ test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time'
   assert.equal(r.cooled_s, 0);
 });
 
-test('4b2. a class names its carton, and a weighed egg names none', () => {
+test('a class names its carton, and a weighed egg names none', () => {
   const us = cookOf({ mass_kg: 0.0602, massFrom: 'class', sizeTable: 'us' });
   const r = rec(us, onSurface(us, S0), 'jammy');
   assert.equal(r.egg.sizeTable, 'us');
@@ -105,7 +105,7 @@ test('4b2. a class names its carton, and a weighed egg names none', () => {
   assert.equal(parseRecord({ ...r, egg: { ...r.egg, sizeTable: null } }), null);
 });
 
-test('4b3. the time to boil says whether this cook measured it', () => {
+test('the time to boil says whether this cook measured it', () => {
   const plain = cookOf();
   assert.equal(rec(plain, onSurface(plain, S0), 'jammy').setup.timeToBoilFrom, 'default');
   const known = cookOf({}, 0, { '2.0': 450 });
@@ -116,7 +116,7 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
 
-test('4b4. a nudged cook is recorded as the time recommended and the nudge, apart', () => {
+test('a nudged cook is recorded as the time recommended and the nudge, apart', () => {
   // The plan runs the nudged time; the record splits it, and scores an egg
   // nobody pulled at the time that actually ran.
   const cook = cookOf({}, -7);
@@ -128,7 +128,7 @@ test('4b4. a nudged cook is recorded as the time recommended and the nudge, apar
   assert.notEqual(parseRecord(r), null);
 });
 
-test('4b5. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
+test('the record keeps what the app said for the cook that ran, and names the model that said it', () => {
   const cook = cookOf();
   const interim = replan(cook, C4, null, 0, S0);
   assert.equal(webRecordFor(cook, interim, 'jammy'), null, 'no surface in, nothing said: no record');
@@ -143,7 +143,7 @@ test('4b5. the record keeps what the app said for the cook that ran, and names t
   assert.deepEqual(parseRecord(JSON.parse(JSON.stringify(r))), r);
 });
 
-test('4c. a stored cook keeps who pulled it: read back, the same record', () => {
+test('a stored cook keeps who pulled it: read back, the same record', () => {
   const cook = cookOf();
   const plan = onSurface(cook, S0);
   const out = withOut(cook, plan, plan.deadlines.cookEnd_s + 5);
@@ -155,7 +155,7 @@ test('4c. a stored cook keeps who pulled it: read back, the same record', () => 
   );
 });
 
-test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the clock', () => {
+test('a cook too old to pick back up is still an egg: run on to DONE, by the clock', () => {
   const later = S0 + 3 * 3600;
   const stale = ranTo(cookOf(), later);
   assert.equal(cookTooOld(stale.plan, later), true, 'not picked back up');
@@ -171,7 +171,7 @@ test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the
   assert.equal(cookEnding(heating.cook, heating.plan, later).finished, false);
 });
 
-test('4e. the same egg logged again keeps its facts as last corrected, and the answers already given', async () => {
+test('the same egg logged again keeps its facts as last corrected, and the answers already given', async () => {
   storage.clear();
   cal = openLearner();
   const cook = cookOf();

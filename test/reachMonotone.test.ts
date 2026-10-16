@@ -49,8 +49,8 @@ function assertMonotone(name: string, profile: OddsProfile, times: [number, numb
   }
 }
 
-test('12. the time never falls as the level rises: across the slider, for the owner\'s egg, a white-bound cook, a fresh install and a counter rest', () => {
-  // The owner's egg (test/reachAnswer.test.ts 11): one egg, soft asked, the
+test('the time never falls as the level rises: across the slider, for the owner\'s egg, a white-bound cook, a fresh install and a counter rest', () => {
+  // The owner's egg (test/reachAnswer.test.ts): one egg, soft asked, the
   // white runny.
   const egg58 = eggFromMass(0.058);
   const post = createPrior(PARTICLES, CALIBRATION_SEED);

@@ -218,7 +218,7 @@ function bisectBetween(
 }
 
 /** Bisect the whole search range. Both doses are monotonically increasing in
- *  cook time while the water is held at the boil (test 16a pins this), so
+ *  cook time while the water is held at the boil (test/core.test.ts pins this), so
  *  bisection is exact there. See solveStanding for what happens when the heat
  *  goes off. */
 function bisect(

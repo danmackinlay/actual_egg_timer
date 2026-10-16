@@ -153,7 +153,7 @@ struct CopyConformance {
         #expect(PluralCategory.allCases.map(\.rawValue) == expected)
     }
 
-    @Test("a word set mid-sentence loses its first capital and keeps the rest, as copy.test.ts 1e")
+    @Test("a word set mid-sentence loses its first capital and keeps the rest, as copy.test.ts")
     func midSentenceCase() {
         #expect(midSentence("Last Wednesday", locale: "en") == "last Wednesday")
         #expect(midSentence("Jammy", locale: "en-x-1750") == "jammy")

@@ -6,8 +6,8 @@
  * malformed record does.
  *
  * On data of its own, not the repository's history, since CI clones
- * shallowly: 1b asks git only for HEAD and for a hash no clone has, and 1c
- * makes a history of its own in a scratch repository. Run from the repo
+ * shallowly: a record's tests ask git only for HEAD and for a hash no clone
+ * has, and copy:approve's makes a history of its own in a scratch repository. Run from the repo
  * root (npm test does). Zero dependencies.
  */
 
@@ -23,7 +23,7 @@ import {
   readApproved, reviewQueue, twinStates, wordsAt,
 } from '../tools/copyApproval.ts';
 
-test('1a. the approved record is one commit\'s full hash on a line', () => {
+test('the approved record is one commit\'s full hash on a line', () => {
   assert.equal(approvedProblem(readFileSync(APPROVED_PATH, 'utf8')), null);
   assert.match(readApproved(), /^[0-9a-f]{40}$/);
   assert.notEqual(approvedProblem('2978f81\n'), null, 'a short hash');
@@ -31,7 +31,7 @@ test('1a. the approved record is one commit\'s full hash on a line', () => {
   assert.notEqual(approvedProblem(`${'a'.repeat(40)}\n${'b'.repeat(40)}\n`), null, 'two lines');
 });
 
-test('1b. a record naming no commit says so, not that the commit has no catalogue', () => {
+test('a record naming no commit says so, not that the commit has no catalogue', () => {
   assert.equal(commitProblem('HEAD', false), null);
   assert.match(commitProblem('a'.repeat(40), false) ?? '', /^is no commit in this clone/);
   assert.throws(() => wordsAt('a'.repeat(40)), (e: Error) => e instanceof ApprovalError
@@ -39,7 +39,7 @@ test('1b. a record naming no commit says so, not that the commit has no catalogu
       + 'or the clone is shallow');
 });
 
-test('1c. copy:approve refuses a commit not on main\'s history, and only it', () => {
+test('copy:approve refuses a commit not on main\'s history, and only it', () => {
   const dir = mkdtempSync(join(tmpdir(), 'copy-approve-'));
   const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 't',
     GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -91,7 +91,7 @@ const NOW: Words = {
   overlays: { 'en-US': { locale: 'en-US', messages: { pot: { base: 'the pan', text: 'the saucepan' } } } },
 };
 
-test('2a. the queue: changed, added and retired keys, nothing approved', () => {
+test('the queue: changed, added and retired keys, nothing approved', () => {
   const q = reviewQueue(THEN, NOW);
   assert.deepEqual(q.map((e) => [e.key, e.state]),
     [['moved', 'changed'], ['pot', 'changed'], ['fresh', 'added'], ['gone', 'retired']]);
@@ -104,7 +104,7 @@ test('2a. the queue: changed, added and retired keys, nothing approved', () => {
   assert.deepEqual(reviewQueue(NOW, NOW), []);
 });
 
-test('2b. which commit last wrote each key, from git blame --porcelain', () => {
+test('which commit last wrote each key, from git blame --porcelain', () => {
   const a = 'a'.repeat(40);
   const porcelain = [
     `${a} 1 1 2`, 'author x', 'filename copy/en-x-1750.json', '\t{',
@@ -114,7 +114,7 @@ test('2b. which commit last wrote each key, from git blame --porcelain', () => {
   assert.deepEqual([...keyCommits(porcelain)], [['same', UNCOMMITTED], ['moved', a]]);
 });
 
-test('2c. a twin is current while its English is the English it was written against', () => {
+test('a twin is current while its English is the English it was written against', () => {
   const t1 = '1'.repeat(40);
   const t2 = '2'.repeat(40);
   const atCommit = new Map([[t1, THEN.en], [t2, NOW.en]]);

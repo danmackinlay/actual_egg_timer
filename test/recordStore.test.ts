@@ -22,7 +22,7 @@ let cal: Learner;
 // 3. The web app's keeping
 // --------------------------------------------------------------------------
 
-test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
+test('loading: rebuild, rebase, and refuse a damaged log', () => {
   const r = solvedRecord(0.4, 'jammy');
 
   assert.equal(decodeKept(null).path, 'fresh');
@@ -59,7 +59,7 @@ test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
   assert.equal(decodeKept(JSON.stringify(ahead)).path, 'rebased');
 });
 
-test('3a3. a posterior folded under another likelihood is replayed', () => {
+test('a posterior folded under another likelihood is replayed', () => {
   const k = { base: null, calibration: freshCalibration(32, 3), folded: 1, log: [solvedRecord(0.4, 'jammy')] };
   const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
   assert.equal(stored['m'], LIKELIHOOD_ID);
@@ -73,7 +73,7 @@ test('3a3. a posterior folded under another likelihood is replayed', () => {
   assert.equal(decodeKept(JSON.stringify(before)).path, 'rebuild', 'a store that names no likelihood');
 });
 
-test('3a4. a store this build cannot read is dropped; the export is the store as stored', () => {
+test('a store this build cannot read is dropped; the export is the store as stored', () => {
   storage.clear();
   storage.set('aet.calibration.v5', '{damaged');
   cal = openLearner();
@@ -89,7 +89,7 @@ test('3a4. a store this build cannot read is dropped; the export is the store as
   assert.equal(cal.exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
 });
 
-test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {
+test('eggs answered in either order with a reload between: bit-identical to a replay', async () => {
   storage.clear();
   let calib = (cal = openLearner()).calibration();
   assert.equal(cal.keptState().base, null);
@@ -132,7 +132,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   // And the app's own replay, across an upgrade: a posterior folded under
   // another likelihood is folded again from the prior, and comes out as a
   // replay of the log under this one. A damaged posterior loads as the same
-  // rebuild (3a), so it folds the same way.
+  // rebuild (above), so it folds the same way.
   const upgraded = JSON.parse(storage.get('aet.calibration.v5') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v5', JSON.stringify({ ...upgraded, m: '2026-10-e6' }));
   cal = openLearner();
@@ -142,7 +142,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   assert.equal((JSON.parse(storage.get('aet.calibration.v5') as string) as { m: string }).m, LIKELIHOOD_ID);
 });
 
-test('3c. forget everything clears the log, the base and the posterior', () => {
+test('forget everything clears the log, the base and the posterior', () => {
   storage.clear();
   cal = openLearner();
   cal.logEgg(solvedRecord(0.4, null));

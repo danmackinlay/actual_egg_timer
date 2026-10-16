@@ -31,7 +31,7 @@ function stillLearning(interval: CookTimePrediction): boolean {
   return 0.5 * (interval.high_s - interval.low_s) > 15;
 }
 
-test('5b. the interval narrows below +-15 s after a few consistent eggs, stays there, and a forget widens it', () => {
+test('the interval narrows below +-15 s after a few consistent eggs, stays there, and a forget widens it', () => {
   // A kitchen that is exactly the literature's, cooked at jammy at the times
   // the app chooses, answering as the truth would without noise. Measured on
   // 28 September on the app's surfaces: the interval is +-72 s before any
@@ -71,10 +71,10 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
 // 7. Two runny whites at soft, under the choice
 // --------------------------------------------------------------------------
 
-test('7. two runny whites at soft: what the choice does at soft and at jammy', () => {
+test('two runny whites at soft: what the choice does at soft and at jammy', () => {
   // Two eggs at soft, the white runny - alone, or with the yolk just right -
   // built two ways. 'E3' cooks each at the time the MEAN solve recommends
-  // (test/infer.test.ts 5), so it shows what the choice makes of the same
+  // (test/infer.test.ts), so it shows what the choice makes of the same
   // evidence; 'E5' cooks the second egg at the time the choice made after
   // the first. The known limit stands (INFERENCE.md section 3): a runny white
   // is blamed on the time-scale about 2:1, so jammy moves too, and the choice

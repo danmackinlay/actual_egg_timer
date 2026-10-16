@@ -25,7 +25,7 @@ import { asRead } from '../tools/text.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
-test('6. every limit is non-empty and every default sits inside its limit', () => {
+test('every limit is non-empty and every default sits inside its limit', () => {
   for (const [name, limit] of Object.entries(LIMITS)) {
     assert.ok(limit.lo < limit.hi, `${name} has an empty range`);
   }
@@ -39,7 +39,7 @@ test('6. every limit is non-empty and every default sits inside its limit', () =
   assert.ok(isWithin(DEFAULTS.sizeIndex, LIMITS.sizeIndex));
 });
 
-test('6b. the default mass is the default size class, not a second opinion', () => {
+test('the default mass is the default size class, not a second opinion', () => {
   assert.equal(DEFAULT_EGG_MASS_KG, SIZE_CLASSES[DEFAULTS.sizeIndex].mass_kg);
   assert.ok(isWithin(DEFAULT_EGG_MASS_KG * 1000, LIMITS.mass_g));
 });
@@ -53,7 +53,7 @@ function labelOf(c: SizeClass): string {
   return asRead(render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) }));
 }
 
-test('6c. the default size is Large in both tables, and a shared index is a shared name', () => {
+test('the default size is Large in both tables, and a shared index is a shared name', () => {
   assert.equal(className(SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
   assert.equal(className(US_SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
   const shared = Math.min(SIZE_CLASSES.length, US_SIZE_CLASSES.length);
@@ -71,7 +71,7 @@ test('6c. the default size is Large in both tables, and a shared index is a shar
   }
 });
 
-test('6d. an American class is the midpoint of its USDA range, per egg', () => {
+test('an American class is the midpoint of its USDA range, per egg', () => {
   // USDA minimum net weight per dozen, oz: Small, Medium, Large, Extra large, Jumbo.
   const perDozen_oz = [18, 21, 24, 27, 30];
   const perEgg_g = (oz: number) => oz * 28.349523125 / 12;
@@ -83,7 +83,7 @@ test('6d. an American class is the midpoint of its USDA range, per egg', () => {
   assert.ok(US_SIZE_CLASSES[4].mass_kg * 1000 > perEgg_g(perDozen_oz[4]));
 });
 
-test('6e. region US, and only region US, gets the American carton', () => {
+test('region US, and only region US, gets the American carton', () => {
   assert.equal(sizeClassesFor('US'), US_SIZE_CLASSES);
   assert.equal(sizeClassesFor('us'), US_SIZE_CLASSES);
   for (const region of ['GB', 'CZ', 'CA', 'AU', '', 'USA', null, undefined]) {
@@ -91,7 +91,7 @@ test('6e. region US, and only region US, gets the American carton', () => {
   }
 });
 
-test('6g. clamp pins to the bounds and refuses to pass a non-number through', () => {
+test('clamp pins to the bounds and refuses to pass a non-number through', () => {
   assert.equal(clamp(5, LIMITS.eggCount), 5);
   assert.equal(clamp(0, LIMITS.eggCount), LIMITS.eggCount.lo);
   assert.equal(clamp(99, LIMITS.eggCount), LIMITS.eggCount.hi);
@@ -99,13 +99,13 @@ test('6g. clamp pins to the bounds and refuses to pass a non-number through', ()
   assert.equal(clamp(Infinity, LIMITS.eggCount), LIMITS.eggCount.lo);
 });
 
-test('6h. the room follows the egg only once the egg says something about it', () => {
+test('the room follows the egg only once the egg says something about it', () => {
   assert.equal(ambientFor(START_TEMP_PRESETS_C.fridge, null), T_ROOM_C, 'a fridge egg says nothing');
   assert.equal(ambientFor(START_TEMP_PRESETS_C.room, null), T_ROOM_C);
   assert.equal(ambientFor(26, null), 26, 'an egg left out in a hot kitchen IS the kitchen');
 });
 
-test('6i. a room given is the room, and moves the Room button, with or without a probe', () => {
+test('a room given is the room, and moves the Room button, with or without a probe', () => {
   assert.equal(ambientFor(4, 27), 27, 'a fridge egg in a measured room');
   assert.equal(ambientFor(26, 22), 22, 'the room as measured beats the room as guessed');
   assert.equal(startTempPreset_C('room', 27), 27, 'an egg left out is at the room');

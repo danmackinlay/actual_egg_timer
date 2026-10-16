@@ -38,7 +38,7 @@ const EN_JSON = JSONS.get('en') as CatalogueJson;
 const EN = parseCatalogue(EN_JSON);
 /** What each key is for: copy/en.notes.json, beside the catalogue. */
 const NOTES = readNotes();
-/** Help's sources, which are data beside the words (6c). */
+/** Help's sources, which are data beside the words. */
 const SOURCES = (JSON.parse(readFileSync('help-sources.json', 'utf8')) as { sources: { url: string; text: string }[] }).sources;
 
 function catalogueFor(locale: string): Catalogue {
@@ -57,11 +57,11 @@ const TINY = parseCatalogue({
   },
 }, EN);
 
-test('1a. placeholders are substituted, repeated ones every time, missing ones left showing', () => {
+test('placeholders are substituted, repeated ones every time, missing ones left showing', () => {
   assert.equal(render(TINY, 'greeting', { name: 'Dan' }), 'Hello, Dan. Dan again, and {missing}.');
 });
 
-test('1b. the plural form is chosen by the count argument, in the catalogue\'s language', () => {
+test('the plural form is chosen by the count argument, in the catalogue\'s language', () => {
   assert.equal(render(TINY, 'eggs', { n: 1 }), '1 vejce');
   assert.equal(render(TINY, 'eggs', { n: 5 }), '5 vajec');
   // Written in the catalogue's own locale when no other is given: Czech,
@@ -69,16 +69,16 @@ test('1b. the plural form is chosen by the count argument, in the catalogue\'s l
   assert.equal(render(TINY, 'eggs', { n: 1.5 }), '1,5 vejce');
 });
 
-test('1c. a key the language lacks falls back to English, with the English plural rule', () => {
+test('a key the language lacks falls back to English, with the English plural rule', () => {
   assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), 'Learned from 1 result');
   assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), 'Learned from 2 results');
 });
 
-test('1d. a key nobody has renders as itself, so it is seen rather than blank', () => {
+test('a key nobody has renders as itself, so it is seen rather than blank', () => {
   assert.equal(render(EN, 'no.such.key'), 'no.such.key');
 });
 
-test('1e. a word set mid-sentence loses its first capital and keeps the rest', () => {
+test('a word set mid-sentence loses its first capital and keeps the rest', () => {
   assert.equal(midSentence('Last Wednesday', 'en'), 'last Wednesday');
   assert.equal(midSentence('Jammy', 'en-GB-x-1750'), 'jammy');
   assert.equal(midSentence('To-day', 'en'), 'to-day');
@@ -86,14 +86,14 @@ test('1e. a word set mid-sentence loses its first capital and keeps the rest', (
   assert.equal(midSentence('', 'en'), '');
 });
 
-test('1f. a CopyRef from core renders with the app\'s extra arguments', () => {
+test('a CopyRef from core renders with the app\'s extra arguments', () => {
   assert.equal(renderRef(EN, { key: 'sousvide.start.lastWeekday', args: {} }, { weekday: 'Tuesday' }),
     'Last Tuesday');
   assert.equal(renderRef(EN, { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } }),
     '22 h 43 min');
 });
 
-test('1g. a malformed catalogue is refused, naming the key', () => {
+test('a malformed catalogue is refused, naming the key', () => {
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { a: { count: 'n', one: 'x' } } }), /a:/);
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { b: {} } }), /b:/);
   assert.throws(() => parseCatalogue({ locale: 'en', messages: { c: { text: 'x', one: 'y' } } }), /c:/);
@@ -107,7 +107,7 @@ test('1g. a malformed catalogue is refused, naming the key', () => {
 /** Every rule this file has, checked against the platform's own CLDR data.
  *  Node carries full ICU; Swift does not expose it, which is why the rules are
  *  hand-written and fixtured at all. */
-test('2a. the hand-written rules agree with Intl.PluralRules', () => {
+test('the hand-written rules agree with Intl.PluralRules', () => {
   const numbers = [0, 1, 2, 3, 4, 5, 10, 11, 12, 21, 22, 25, 100, 101, 102, 0.5, 1.5, 2.5, 4.25, 5.5];
   for (const locale of ['en', 'en-US', 'en-GB-x-1750', 'cs', 'cs-CZ']) {
     const intl = new Intl.PluralRules(locale);
@@ -117,7 +117,7 @@ test('2a. the hand-written rules agree with Intl.PluralRules', () => {
   }
 });
 
-test('2b. Czech, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
+test('Czech, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
   const expected: [number, string][] = [
     [0, 'other'], [1, 'one'], [2, 'few'], [4, 'few'], [5, 'other'], [1.5, 'many'],
     [21, 'other'], [22, 'other'],
@@ -125,7 +125,7 @@ test('2b. Czech, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
   for (const [n, category] of expected) assert.equal(pluralCategory('cs', n), category, `cs ${n}`);
 });
 
-test('2c. a language with no rule gets other, the one form every message has', () => {
+test('a language with no rule gets other, the one form every message has', () => {
   assert.equal(pluralCategory('de', 1), 'other');
   assert.equal(pluralCategory('en', NaN), 'other');
 });
@@ -134,7 +134,7 @@ test('2c. a language with no rule gets other, the one form every message has', (
 // the catalogue's shape
 // --------------------------------------------------------------------------
 
-test('3a. every English key has notes beside it: its surface, and an example for each placeholder', () => {
+test('every English key has notes beside it: its surface, and an example for each placeholder', () => {
   assert.deepEqual(Object.keys(NOTES), Object.keys(EN_JSON.messages), 'the notes have the catalogue\'s keys, in its order');
   for (const key of Object.keys(EN_JSON.messages)) {
     const surface = NOTES[key].surface;
@@ -150,7 +150,7 @@ test('3a. every English key has notes beside it: its surface, and an example for
   }
 });
 
-test('3a2. a catalogue holds only what the renderers read: templates, `count`, and an overlay\'s `base`', () => {
+test('a catalogue holds only what the renderers read: templates, `count`, and an overlay\'s `base`', () => {
   for (const [locale, json] of JSONS) {
     const allowed = new Set(['text', 'count', ...PLURAL_CATEGORIES, ...(OVERLAYS.includes(locale) ? ['base'] : [])]);
     for (const [key, entry] of Object.entries(json.messages)) {
@@ -159,7 +159,7 @@ test('3a2. a catalogue holds only what the renderers read: templates, `count`, a
   }
 });
 
-test('3b. no template has a brace that is not a placeholder', () => {
+test('no template has a brace that is not a placeholder', () => {
   for (const [key, message] of EN.messages) {
     for (const template of templatesOf(message)) {
       const stripped = placeholders(template).reduce((t, name) => t.split(`{${name}}`).join(''), template);
@@ -201,7 +201,7 @@ function parityFailures(json: CatalogueJson): string[] {
   return failures;
 }
 
-test('3c. every string a reader sees has curly apostrophes and quotes, never straight ones', () => {
+test('every string a reader sees has curly apostrophes and quotes, never straight ones', () => {
   const failures: string[] = [];
   for (const [locale, json] of JSONS) {
     for (const [key, entry] of Object.entries(json.messages)) {
@@ -227,7 +227,7 @@ test('3c. every string a reader sees has curly apostrophes and quotes, never str
 /** U+00A0. The other tests read it as a space (tools/text.ts); this one is about it. */
 const NBSP = ' ';
 
-test('3d. a measure never breaks across a line: format.* joins value and unit with a no-break space', () => {
+test('a measure never breaks across a line: format.* joins value and unit with a no-break space', () => {
   const failures: string[] = [];
   let checked = 0;
   for (const [locale, json] of JSONS) {
@@ -248,14 +248,14 @@ test('3d. a measure never breaks across a line: format.* joins value and unit wi
   assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
 });
 
-test('4a. every language uses exactly the English placeholders', () => {
+test('every language uses exactly the English placeholders', () => {
   for (const [locale, json] of JSONS) {
     if (locale === 'en') continue;
     assert.deepEqual(parityFailures(json), [], locale);
   }
 });
 
-test('4b. the parity check catches a dropped, an invented and a miscounted placeholder', () => {
+test('the parity check catches a dropped, an invented and a miscounted placeholder', () => {
   const broken: CatalogueJson = {
     locale: 'cs',
     messages: {
@@ -280,7 +280,7 @@ test('4b. the parity check catches a dropped, an invented and a miscounted place
 // Dynamic Island, an alarm's title. Prose that wraps freely (a body, an (i)'s
 // paragraph, Help) has none, and neither does what is only read aloud.
 
-test('5a. every string in every language fits its surface\'s budget', () => {
+test('every string in every language fits its surface\'s budget', () => {
   for (const locale of LOCALES) {
     const catalogue = catalogueFor(locale);
     for (const key of Object.keys(EN_JSON.messages)) {
@@ -293,7 +293,7 @@ test('5a. every string in every language fits its surface\'s budget', () => {
   }
 });
 
-test('5b. English fits every budget, and every surface is drawn on', () => {
+test('English fits every budget, and every surface is drawn on', () => {
   // A budget is set from what fits today. Raising one is a design decision
   // about a screen, not a way to make a translation pass: it is the owner's
   // call, made in test/data/surfaces.json with the reason in its `about`.
@@ -308,7 +308,7 @@ test('5b. English fits every budget, and every surface is drawn on', () => {
   }
 });
 
-test('5c. there are the plural categories CLDR has, and no others', () => {
+test('there are the plural categories CLDR has, and no others', () => {
   assert.deepEqual([...PLURAL_CATEGORIES], ['zero', 'one', 'two', 'few', 'many', 'other']);
 });
 
@@ -316,7 +316,7 @@ test('5c. there are the plural categories CLDR has, and no others', () => {
 // the catalogue and the code agree
 // --------------------------------------------------------------------------
 
-test('6a. every key is shown by an app', () => {
+test('every key is shown by an app', () => {
   // Which app shows a key is read from the sources, never typed
   // (tools/copyNotes.ts): a key an app's code names is that app's. A key in
   // a core counts for the app that core ships in. That every key the code
@@ -325,7 +325,7 @@ test('6a. every key is shown by an app', () => {
   for (const key of EN.messages.keys()) assert.ok(used.has(key), `${key}: no app shows it`);
 });
 
-test('6b. index.html has no words of its own below <head>, and names only real keys', () => {
+test('index.html has no words of its own below <head>, and names only real keys', () => {
   const html = readFileSync('index.html', 'utf8');
   const body = html.slice(html.indexOf('<body'));
   for (const m of body.matchAll(/<([a-z]+)[^>]*\sdata-copy="([^"]+)"[^>]*>([^<]*)</g)) {
@@ -342,7 +342,7 @@ test('6b. index.html has no words of its own below <head>, and names only real k
   assert.deepEqual(text.filter((s) => s !== '--:--' && s !== '--'), []);
 });
 
-test('6c. Help\'s sources are data both apps read: an https address and a citation each', () => {
+test('Help\'s sources are data both apps read: an https address and a citation each', () => {
   // help-sources.json: the web bundles it (src/ui/sources.ts), iOS has it as
   // a bundle resource (ios/project.yml). The same in every language, so in
   // no catalogue.
@@ -361,7 +361,7 @@ test('6c. Help\'s sources are data both apps read: an https address and a citati
 // regional overlays
 // --------------------------------------------------------------------------
 
-test('7a. an overlay says only what its region says differently, against today\'s English', () => {
+test('an overlay says only what its region says differently, against today\'s English', () => {
   const regional = LOCALES.filter((l) => l !== 'en' && !l.includes('-x-'));
   assert.deepEqual([...regional].sort(), [...OVERLAYS].sort(), 'every regional catalogue is an overlay, and every overlay ships');
   const failures: string[] = [];
@@ -385,7 +385,7 @@ test('7a. an overlay says only what its region says differently, against today\'
   assert.deepEqual(failures, []);
 });
 
-test('7b. the region of a tag, and the catalogues that render a language', () => {
+test('the region of a tag, and the catalogues that render a language', () => {
   const regions: [string, string | null][] = [
     ['en-US', 'US'], ['en_US', 'US'], ['en-us', 'US'], ['en-Latn-US', 'US'], ['zh-Hant-TW', 'TW'],
     ['es-419', '419'], ['en-US-x-1750', 'US'], ['en', null], ['en-x-us', null], ['en-Latn', null], ['', null],

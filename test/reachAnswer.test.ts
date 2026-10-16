@@ -22,7 +22,7 @@ import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.ts
 import { appSetup, gridFor, knowing } from '../tools/common.ts';
 import { EGG, FRESH, PARTICLES, SETUP, point } from './profiles.ts';
 
-test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
+test('the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
   // A cold start, as a fresh install has it: the white sets only from a
   // level above runny, so asked for runny, the slider goes there.
   const cold = appSetup({ startMode: 'cold' });
@@ -65,7 +65,7 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   assert.equal(o.lean, 'firm');
 });
 
-test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
+test('the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
   // One egg: soft asked, the yolk soft and the white runny, as on the
   // owner's phone (5 October 2026), where it put 3/10 at jammy. Soft is a
   // ballpark there and is not dotted: soft or a
@@ -110,7 +110,7 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   assert.equal(mostLikelyShown(sure), true);
 });
 
-test('13. the envelope\'s bounds: a point holds its own time, a level between two is held between theirs, and nothing holds a level with no profile', () => {
+test('the envelope\'s bounds: a point holds its own time, a level between two is held between theirs, and nothing holds a level with no profile', () => {
   const p: OddsProfile = {
     points: [point(0.2, 400, 0.1), point(0.25, 410, 0.3), point(0.3, 430, 0.5)],
     best: 0.5, bestAsked: 0.5, physicalSoftest: 0.2, physicalHardest: 0.3, softest: 0.25, hardest: 0.3,
@@ -125,8 +125,8 @@ test('13. the envelope\'s bounds: a point holds its own time, a level between tw
   assert.equal(envelopeBounds({ ...p, points: [] }, 0.25), null);
 });
 
-test('14. one decided answer for both apps: the soft yolk chosen again and held under jammy\'s time, the nudge where a time is chosen, and no advice where the white never sets', () => {
-  // The owner's egg (test 11).
+test('one decided answer for both apps: the soft yolk chosen again and held under jammy\'s time, the nudge where a time is chosen, and no advice where the white never sets', () => {
+  // The owner's egg (above).
   const egg = eggFromMass(0.058);
   const post = createPrior(PARTICLES, CALIBRATION_SEED);
   const first: Calibration = { posterior: post, eggsLogged: 0 };

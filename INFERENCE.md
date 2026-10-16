@@ -183,7 +183,7 @@ three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
   / 1), is no longer read or scored by the apps: the log started fresh in
   0.5 (`DECISIONS.md` 107, §4). The fit still reads the owner's older
   exported results and scores those answers itself (`tools/eggsImport.ts`
-  `readFitRecord`, `fit/`). `test/record.test.ts` 2a3 holds the posterior
+  `readFitRecord`, `fit/`). `test/record.test.ts` holds the posterior
   ten eggs answered in the words make (`tools/posterior.ts` `wordLog`) to
   the exact one, in distribution (below, "the seed"). The decision still scores a
   candidate time by the three-way miss around the asked-for level
@@ -240,7 +240,7 @@ Measured, in `test/infer.test.ts`:
   The owner's call (27 September): leave it as it is until a probe or pooling
   pins the time-scale. With E5, a yolk answer beside the two runny whites
   gives the asked-for shape (soft +146 s, jammy +17 s); the white alone still
-  moves both. `test/infer.test.ts` 5b stays a todo.
+  moves both. Its test in `test/infer.test.ts` stays a todo.
 
 **A thermometer reading**, for cooks who own a probe (§5). Sketched here as a
 Gaussian, sd about 1.5 C, with a small hot skew; built (E4) as a Gaussian of
@@ -938,7 +938,7 @@ share included). As built:
   word. It replaced the odds of "just right" under 5/10 or 3/10 short of
   the best. A fresh install's wild guesses are the prior's width, which no
   setup narrows, so it is never advised; one egg on a counter called
-  runny makes ice worth 0.28 at the soft end (test/reach.test.ts 9).
+  runny makes ice worth 0.28 at the soft end (test/reach.test.ts).
 - **The likely time range**: the 90% credible interval of the right cook
   time for the level, `predictCookTime` read at 5% and 95% - per particle,
   the later of the time its yolk reaches the middle of the level (taste

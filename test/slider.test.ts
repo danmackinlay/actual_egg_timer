@@ -33,7 +33,7 @@ function solutionOf(over: Partial<Solution>): Solution {
   return { ...base, ...over };
 }
 
-test('1. snapping lands on the slider grid and never leaves the track', () => {
+test('snapping lands on the slider grid and never leaves the track', () => {
   for (let i = 0; i <= 200; i++) {
     const level = i / 200;
     for (const snapped of [snapUp(level), snapDown(level)]) {
@@ -47,7 +47,7 @@ test('1. snapping lands on the slider grid and never leaves the track', () => {
   }
 });
 
-test('1b. snapping rounds away from the unreachable side', () => {
+test('snapping rounds away from the unreachable side', () => {
   assert.equal(snapUp(0.413), 0.42);
   assert.equal(snapDown(0.417), 0.41);
   // Bracketing, which is the property the refusal path depends on.
@@ -58,7 +58,7 @@ test('1b. snapping rounds away from the unreachable side', () => {
   }
 });
 
-test('1c. a level already on the grid is left alone by both', () => {
+test('a level already on the grid is left alone by both', () => {
   // The 1e-9 nudge exists for exactly this: 0.41*100 is 41.000000000000006.
   for (let i = 0; i <= SLIDER_STEPS; i++) {
     const level = i / SLIDER_STEPS;
@@ -67,13 +67,13 @@ test('1c. a level already on the grid is left alone by both', () => {
   }
 });
 
-test('2. every anchor is its own nearest anchor', () => {
+test('every anchor is its own nearest anchor', () => {
   for (const anchor of DONENESS_ANCHORS) {
     assert.equal(anchorNear(anchor.level).key, anchor.key);
   }
 });
 
-test('2b. anchorNear breaks an exact tie toward the softer anchor', () => {
+test('anchorNear breaks an exact tie toward the softer anchor', () => {
   // 0.11 is exactly equidistant from Runny (0.00) and Soft (0.22) - one of the
   // few midpoints that is a true tie in binary floating point rather than a
   // near-miss. The rule is "first in the table wins", and it is pinned here
@@ -81,7 +81,7 @@ test('2b. anchorNear breaks an exact tie toward the softer anchor', () => {
   assert.equal(anchorNear(0.11).key, 'doneness.runny');
 });
 
-test('2c. anchorNear really is the nearest anchor, everywhere', () => {
+test('anchorNear really is the nearest anchor, everywhere', () => {
   // Brute force against the definition. This is what stops a port's loop
   // bounds or comparison from quietly relabelling part of the track.
   for (let i = 0; i <= 1000; i++) {
@@ -94,7 +94,7 @@ test('2c. anchorNear really is the nearest anchor, everywhere', () => {
   }
 });
 
-test('2d. the target temperature is monotonic and hits the anchors exactly', () => {
+test('the target temperature is monotonic and hits the anchors exactly', () => {
   for (const anchor of DONENESS_ANCHORS) {
     close(
       targetPeakYolk_C(anchor.level), anchor.approxPeakYolk_C, 1e-12,
@@ -109,14 +109,14 @@ test('2d. the target temperature is monotonic and hits the anchors exactly', () 
   }
 });
 
-test('3. a reachable solution refuses nothing and moves nothing', () => {
+test('a reachable solution refuses nothing and moves nothing', () => {
   const v = verdictFor(solutionOf({ reachable: true }), 0.41);
   assert.equal(v.kind, 'none');
   assert.equal(v.snapTo, null);
   assert.equal(v.worthSaying, false);
 });
 
-test('3b. too soft for the white snaps UP, past the softest reachable level', () => {
+test('too soft for the white snaps UP, past the softest reachable level', () => {
   const v = verdictFor(
     solutionOf({ reachable: false, softestLevel: 0.608 }), 0.22,
   );
@@ -126,7 +126,7 @@ test('3b. too soft for the white snaps UP, past the softest reachable level', ()
   assert.equal(v.worthSaying, true);
 });
 
-test('3c. harder than the pan reaches snaps DOWN, and never past the limit', () => {
+test('harder than the pan reaches snaps DOWN, and never past the limit', () => {
   const v = verdictFor(
     solutionOf({ reachable: false, hardestLevel: 0.735 }), 1.0,
   );
@@ -135,7 +135,7 @@ test('3c. harder than the pan reaches snaps DOWN, and never past the limit', () 
   assert.equal(v.worthSaying, true);
 });
 
-test('3d. a white that never sets offers nowhere to snap to', () => {
+test('a white that never sets offers nowhere to snap to', () => {
   const v = verdictFor(
     solutionOf({ reachable: false, whiteSets: false, softestLevel: 1, hardestLevel: 0 }), 0.41,
   );
@@ -144,7 +144,7 @@ test('3d. a white that never sets offers nowhere to snap to', () => {
   assert.equal(v.worthSaying, true, 'the one refusal always worth a sentence');
 });
 
-test('3e. a sliver of unreachable track is not worth a sentence', () => {
+test('a sliver of unreachable track is not worth a sentence', () => {
   // Asking for Jammy when the softest is a hair softer than Jammy: the labels
   // agree, so there is nothing a cook could taste and nothing to explain.
   const v = verdictFor(
@@ -155,7 +155,7 @@ test('3e. a sliver of unreachable track is not worth a sentence', () => {
   assert.notEqual(v.snapTo, null, 'the slider still moves; only the sentence is suppressed');
 });
 
-test('3f. the verdict never snaps the slider backwards', () => {
+test('the verdict never snaps the slider backwards', () => {
   for (let i = 0; i <= 100; i++) {
     const level = i / 100;
     const soft = verdictFor(solutionOf({ reachable: false, softestLevel: 0.5 }), level);
@@ -169,7 +169,7 @@ test('3f. the verdict never snaps the slider backwards', () => {
   }
 });
 
-test('7g. a tick word is struck through only when none of its positions can be reached', () => {
+test('a tick word is struck through only when none of its positions can be reached', () => {
   const reach = (softest: number, hardest: number): boolean[] => DONENESS_ANCHORS.map(
     (_, i) => anchorReachable(i, softest, hardest),
   );

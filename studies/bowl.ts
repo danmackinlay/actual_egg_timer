@@ -50,7 +50,7 @@
  * Cross-checks before anything is believed: the loop here reproduces
  * `simulate` for ice, tap and air; `robinSurface` reproduces the closed-form
  * Robin series for a sphere at the Biot numbers the bowl has (10-30), not
- * only the counter's 0.6 that test 17a checks.
+ * only the counter's 0.6 that test/core.test.ts checks.
  *
  * What it prints, for a 68 g egg from the fridge into boiling water, held,
  * aiming at jammy (0.41): (1) h from the shell's temperature; (2) the bowl
