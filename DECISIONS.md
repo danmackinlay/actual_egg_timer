@@ -1,165 +1,141 @@
 # DECISIONS.md — what the owner decided
 
 Every decision the owner has taken, numbered in the order it was taken, with
-the date, the commit that recorded it and the commit that built it. Code and
-the other documents cite these by number ("DECISIONS.md 7"). A number is never
-reused: a decision the owner later changes stays here, with a line saying
-which later decision changed it.
+the date. Code and the other documents cite these by number ("DECISIONS.md
+7"). A number is never reused: a decision the owner later changes stays here,
+with a line saying which later decision changed it.
 
-What waits on the owner is not here; it is `PLAN.md`'s owner queue.
+What waits on the owner is not here; it is `PLAN.md`'s open decisions.
 
 ---
 
 ## 21 September 2026 — the inference, pooled
 
-Recorded in `7e142e0` and `b7a5e31`. The design they belong to is
-`INFERENCE.md`.
+The design they belong to is `INFERENCE.md`.
 
 1. **The endpoint is a Netlify function, and the controller is the owner, in
    their own name.** `INFERENCE.md` §7 has the shape. The contact address is
-   forgetmyeggs@danmackinlay.name, chosen and created 26 September
-   (`dc886ed`). Not built (E6).
+   forgetmyeggs@danmackinlay.name, chosen and created 26 September.
 2. **The web app contributes, at a lower weight**: a tempered likelihood in
    the global fit and a cap on the tier's effective sample size, with no
    discount on what a web cook's answers teach their own browser
-   (`INFERENCE.md` §6). Not built (E7).
+   (`INFERENCE.md` §6).
 3. **The nudge is fine, provided the app says it is learning.** The point is
    to manage expectations, so the wording belongs on the screen with the
-   time, not only in the consent (`INFERENCE.md` §8). Not built (E8). Whether
-   the direction sentence meets this, now that no "still learning" line is
-   shown (27), is in the owner queue.
+   time, not only in the consent (`INFERENCE.md` §8). 58 says how: a
+   Learning mark by the time, with an (i).
 4. **Three yolk answers, not five, and every answer is optional.** A skip is
    recorded as a skip. This decision has a statistical cost, and the cost is
-   accepted rather than engineered away. Built with E2 (`e7035c3`,
-   `4e8e619`). Changed by 92: the cook names the yolk they got in the
+   accepted rather than engineered away. Changed by 92: the cook names the yolk they got in the
    slider's five words; the old three answers are kept and scored as
    they were.
 5. **"Tender" stands, for now.** Slightly odd, not pathological, and no
    picture could do better. Revisit if real cooks stumble on it; the record
-   will show whether the middle answer is used. Built with E2.
+   will show whether the middle answer is used.
 
 ## 26 September 2026 — the record, the loss, the words
 
 6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 kept the
    pre-log posterior as a frozen base; the new likelihood could not replay
-   it, so E2 started from the prior plus E1's log. Recorded `595eac2`; built
-   `e7035c3`, `e95bdaa`.
+   it, so E2 started from the prior plus E1's log.
 7. **The loss ratio is 3.** A runny white counts as three times as bad as a
    yolk one step too firm (`RUNNY_WHITE_LOSS`, `INFERENCE.md` §8). A
    constant for now, and a per-cook setting only if someone asks for one.
-   Recorded `595eac2`; built `31ebf05`.
 8. **The odds are always on screen, and brief: "7/10 eggs hit the mark"** -
    the probability that the white is not runny and the yolk would be answered
-   "just right", in tenths. Recorded `595eac2`; built `e2b63db`. Changed by
+   "just right", in tenths. Changed by
    27 and 32: no screen shows the number now. The odds still shade the
    slider (20) and set its reach.
 9. **"Still learning" goes when the 80% interval on the cook time narrows
    below about ±15 s**, about the width of "just right"; a fixed number of
    eggs if that proves fiddly. The owner's view: cooks will barely notice the
-   difference, so the threshold is preferred but not worth a fight. Recorded
-   `595eac2`; built as the threshold `3be2ff5`, after the resample was fixed
-   (`1f35699`). No longer shown (27), and no longer computed by the decision
+   difference, so the threshold is preferred but not worth a fight. No longer shown (27), and no longer computed by the decision
    (40): `npm run decide -- learning` and `test/decide.test.ts` read it on
    demand from `predictCookTime`.
 10. **No kitchens.** Pans and hobs vary within a kitchen and nobody maintains
     profiles, so the kitchen level folds into the cook (`INFERENCE.md` §2).
-    Recorded `3f36421`.
 11. **The heat-off pan's constant comes from the water volume, not the boil
     time.** Deriving it from the boil time with `RAMP_R` fixed reads the hob
     as the pan: a hob twice as strong as assumed made the pan look about 2.2
     times faster to cool. Anchored so Williams' 17-minute method (a 480 s
     boil, 2 L) is unchanged, and scaled as `V^(1/3)`. Lid and pan material
     become a per-cook scale learned only from heat-off cooks; nobody is asked
-    to time an empty pan. Recorded `3f36421`; built `e7261d9`, but for the
-    per-cook scale, which is deferred (`PLAN.md`).
+    to time an empty pan. The per-cook scale is deferred (`PLAN.md`).
 12. **1750 is a language code**, `<region>-x-1750`, reached by the picker or
     by switching an English UI to Imperial, and left by picking English
-    (`LANGUAGE.md` §6). Recorded `7aa6849`; built `0efc3d8` (web), `01c621e`
-    and `05e92ae` (iOS).
+    (`LANGUAGE.md` §6).
 13. **Americans should be able to find it**: a picker row and one line under
-    the Imperial option, and nothing more insistent. Recorded `7aa6849`;
-    built with 12.
+    the Imperial option, and nothing more insistent.
 14. **Support burden is not a design constraint.** The app is free, and
     feature requests come as pull requests. No choice is made or unmade on
-    the grounds that it will generate questions. Recorded `7aa6849`.
+    the grounds that it will generate questions.
 15. **Czech is the first language after English**, reviewed by a friend of
-    the owner (`LANGUAGE.md` §5). Recorded `dbfd1f1`. Not built (F5): it
-    waits for the reviewer.
+    the owner (`LANGUAGE.md` §5). It waits for the reviewer.
 16. **US carton size classes in region US**, at the midpoint of each USDA
     range: an EU Large had been overcooking an American Large by about 34 s
-    (`LANGUAGE.md` §4). Recorded `dbfd1f1`; built `e973786`.
+    (`LANGUAGE.md` §4).
 17. **The owner reviews the 1750**, against Johnson's *Preface*
-    (`LANGUAGE.md` §6). Recorded `b5895e5`. The review is in the owner queue.
+    (`LANGUAGE.md` §6). The review waits on the owner (`PLAN.md`).
 
 ## 27 September 2026 — the odds on screen, the redesign, the voice
 
 18. **E3's attribution is left as it is**: two runny whites move jammy about
     as far as soft, and that stays until a probe or pooling pins the
-    time-scale (`INFERENCE.md` §3). Recorded `69cff74`; `test/infer.test.ts`
-    5b pins the limit (`031dfd3`).
+    time-scale (`INFERENCE.md` §3). `test/infer.test.ts` 5b pins the limit.
 19. **The protocol advice is discoverable, not intrusive**: offered in
-    place under low odds, no modal and no popover. Recorded `69cff74`; built
-    `3d11469`, `1f6f00b`. Since 26 it is a link into Help, not a disclosure.
+    place under low odds, no modal and no popover. Since 26 it is a link into Help, not a disclosure.
 20. **An odds-shaded slider in both apps, threshold 3/10.** Reachability
     ("softest possible") comes from the odds, not the mean solve, and the
     shading is relative to the best level, so a fresh install still shows
-    where the pan works. Recorded `69cff74`; built `ade3223`, `3d11469`,
-    `1f6f00b`. Amended by 83: under 3/10 is warned of, not refused.
+    where the pan works. Amended by 83: under 3/10 is warned of, not refused.
 21. **The fresh install's odds stay on screen, with an (i) saying why they
-    start low.** Recorded `69cff74`; built `3d11469`. Changed by 27.
+    start low.** Changed by 27.
 22. **No time of day zero-pads its hour**, in either app, in any locale:
-    "9:05", never "09:05". The countdown is not a time of day. Built
-    `550091f`.
+    "9:05", never "09:05". The countdown is not a time of day.
 23. **Numbers follow the UI's language**, and the region only where the
     language has no convention of its own: a Czech UI writes "1 234,5" in
     the US as in Czechia; English follows the region, so `en-DE` writes
-    "2,4". Built `b74cc35`.
+    "2,4".
 24. **Push `main` after previewing the web app.** No real eggs for now: the
-    owner is travelling. Recorded `69cff74`. The push is in the owner queue.
+    owner is travelling.
 25. **Fewer controls, room for sentences.** Brief controls get a longer (i);
     few enough controls are on screen that longer strings fit, for clarity or
     comedy; wording is judged in place on a phone, not approved row by row in
-    tables (`UI.md`). Recorded `80799d0`; built on the web `1a6fada`, on iOS
-    `9d60304`, `3f771c6`.
+    tables (`UI.md`).
 26. **Two tiers: the (i) is for one control's meaning, Help for the whole
     story.** One (i) component everywhere; Help is a page of its own, opened
-    on purpose. **Never narrate what the interface visibly did.** Recorded
-    `1a6fada`; built with 25.
+    on purpose. **Never narrate what the interface visibly did.**
 27. **Say which way a miss goes, not the number.** "7/10 eggs hit the mark"
     does not say which way the other three miss, so a sentence saying which
     way the egg is likely to miss replaces it under the time, with a bracket
     under the slider for the yolk's likely range; then the number leaves the
     (i) too, and "I'm still learning" goes as a line of its own, since
-    beside "I can't call it yet" it said the same thing twice. Built
-    `7b9059f`, `1c4143d` (web), `3f771c6` (iOS).
+    beside "I can't call it yet" it said the same thing twice.
 28. **The app speaks in the first person singular, in the active voice.**
     The app is "I", the cook is "you", and a sentence has someone doing
-    something; instructions stay imperative. Built `439dcd1`, `9675222`.
+    something; instructions stay imperative.
 29. **The owner's wording rules**: sous-vide is not "a bath" ("ice bath"
-    stays); "pan" only where it means the pot. Recorded `1a6fada`; applied in
-    the redesign's draft.
+    stays); "pan" only where it means the pot.
 30. **The rest of F2's wording is approved**, as the owner edited it, but for
-    rows over budget or untrue, which were held back. Built `b1fddc9`; the
-    held-back rows went in with later drafts, the last three in `tidy` (45).
+    rows over budget or untrue, which were held back; those went in later.
 31. **The doneness track is a yolk**: deep orange at runny to pale yellow at
-    hard, the odds as its opacity. Built `b207188`.
+    hard, the odds as its opacity.
 
 ## 28 September 2026 — after cooking on a phone, and the worklist
 
 32. **No odds on the Lock Screen**: "I'd rather say nothing than waste space
-    on useless odds". `odds.hitTheMark` is retired. Built `05e92ae`.
+    on useless odds". `odds.hitTheMark` is retired.
 33. **The pull names the cooling chosen**, in the alarm and word for word on
     the Lock Screen card; the card ends at once when the cooling does; and
-    "carryover" leaves the cooled alarm. Built `2c090c9`.
+    "carryover" leaves the cooled alarm.
 34. **The egg's mass tops out at 90 g**, a hen's egg; other birds' eggs, emu
-    first, someday. Built `0e0ec98`. On the web a typed girth or width can
-    still make a bigger egg, and that is accepted: "if the user gets to a
-    weird place by dragging some slider, that's on them" (`055bd4e`).
-35. **Sous-vide is never remembered** across a reload or relaunch. Built
-    `d12a978`.
+    first, someday. On the web a typed girth or width can still make a
+    bigger egg, and that is accepted: "if the user gets to a weird place by
+    dragging some slider, that's on them".
+35. **Sous-vide is never remembered** across a reload or relaunch.
 36. **The doneness heading carries the peak yolk; the play-safe suggestion
     goes from both apps; the setup sentence stays on screen while a cook
-    runs.** Built `e04d72c`.
+    runs.**
 37. **Calibration is checked with proper scoring rules, not home-made
     quantile checks.** Each egg keeps the full forecast at "Eggs in" - the
     yolk's and the white's three answer probabilities, not the tenths - and a
@@ -173,39 +149,33 @@ Recorded in `7e142e0` and `b7a5e31`. The design they belong to is
     score, relative to the population model, screens unreliable or hostile
     contributors. The direction sentence, the bracket and the "still
     learning" interval are display and decision heuristics, not evaluation
-    (`INFERENCE.md` §6, §7, §9). Recorded `2e9a67c`. Not built (E6, E7).
+    (`INFERENCE.md` §6, §7, §9).
 
-The worklist's questions (WORKLIST.md §1, D1-D8; in git at `14603cd`), answered the same day:
+The worklist's questions, answered the same day:
 
 38. **No build newer than 19 September ran outside the owner's devices, so
-    every piece of back-compat for one goes** ("kill em all", D1). Built
-    `521c15d`, `de235e8`, `bbb1c99`, `232c414`, `86b0bf9`, `1c8c388`,
-    `d5f52a9`.
-39. **Delete `saferLevels` and everything that serves it** (D2). Built
-    `23e6d3d`.
-40. **`Decision` drops `interval`, `stillLearning` and `loss`** (D3). Built
-    `527e1a4`.
+    every piece of back-compat for one goes** ("kill em all").
+39. **Delete `saferLevels` and everything that serves it.**
+40. **`Decision` drops `interval`, `stillLearning` and `loss`.**
 41. **The Swift core drops what no app calls**: the science checks,
-    measure-not-weigh and the inference read-outs. TypeScript keeps them
-    (D4). Built `af0602f`.
+    measure-not-weigh and the inference read-outs. TypeScript keeps them.
 42. **`sousvide.warn` was false**: the model sets the white after about
-    22.7 h at 58 °C. Reworded (D5). Built `eb1fddf`.
+    22.7 h at 58 °C. Reworded.
 43. **Choosing Weighed goes back to the last weighed mass**, as the web's
-    measured option does (D6). Built `d767bff`.
+    measured option does.
 44. **"Kitchen" is renamed "settings"**, and the key renames are finished
-    (D7: "kitchen was a terrible name"). Built `6b060d9`, `7bdb816`.
+    ("kitchen was a terrible name").
 45. **The copy review is applied as one named draft**, `tidy`, which the
-    owner reads on a phone and trims back (D8). Built `eb1fddf`, `25a36f4`.
-    The review is in the owner queue.
+    owner reads on a phone and trims back.
 
 Decided by the owner, 29 September 2026:
 
 46. **Push `main`** ("yes push"): the first push since 19 September,
-    `2f341b4..5ff6940`, tagged `v0.2.0`. Recorded `cbd8d66`.
+    tagged `v0.2.0`.
 47. **Agents in worktrees commit on their branch and do not merge; the
     session that sent them verifies their work and merges it to local
     `main`.** Pushing stays the owner's call. This was already how the work
-    ran before the rule said so (FOLLOWUP §0, in git at `14603cd`). Rule `5a9b290`.
+    ran before the rule said so.
 48. **Alpha: no back-compat until the app is widely deployed**, and the owner
     says when that is ("actual widespread deployment is what makes storage
     formats permanent; I will tell you when that happens"). A public site
@@ -231,7 +201,7 @@ Decided by the owner, 2 October 2026:
 51. **The privacy page lives on the Netlify site, at `/privacy`**, where the
     opt-in data collection endpoint (E6) will live too; App Store Connect's
     privacy policy URL points there. Plain English only, no 1750 twin.
-    Built `a3930e1`, linked from Help in both apps `48eb443`.
+    Help links it in both apps.
 52. **The running cook shows the egg in cross-section, as how set each
     layer is**, in both apps ("prioritise the 'how set' view"). The
     prototype offered how hot as well, a tap away. The heat map waits for
@@ -240,7 +210,7 @@ Decided by the owner, 2 October 2026:
     beside the setup sentence, not on a line of its own ("it burns
     vertical space for a nicety"). Its outline is an ovoid ("go ovoid"),
     though the model's egg is a sphere. Its raw white is clearer, with a
-    touch of blue. Prototype `953c698`..`3ed187c`.
+    touch of blue.
 
 Decided by the owner, 3 October 2026:
 
@@ -249,23 +219,22 @@ Decided by the owner, 3 October 2026:
     on the cooking screen: the motto heads Help in both apps and leads the
     web page's description; "Made by Dan MacKinlay" ends Help and links the
     blog, as the privacy page's name and the README do. It is also the App
-    Store subtitle. The `motto` draft.
+    Store subtitle.
 54. **The words read as a person who cooks would say them, not as a model
     writes.** Much of the copy "reads very Claudish". The model rewrite, of
     the Help line on cooling: "The cooling time also counts as cooking time,
     since the egg is still warm inside." The strings recorded as approved
     were approved as "good enough for now", not as final, and a style pass
-    reads them like the rest. The `plain` draft; the rules are in
-    `LANGUAGE.md` §3.
+    reads them like the rest. The rules are in `LANGUAGE.md` §3.
 55. **The words are Australian English, with an American overlay.** The
     base catalogue says what an Australian kitchen says: the egg cools on
     the bench, under the cold tap, in a pan. An American reads
     `copy/en-US.json` over it, holding only the words an American kitchen
-    says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.
+    says differently. The overlay is `LANGUAGE.md` §2.
 56. **Curly apostrophes and quotes, never straight ones**, in every string
     a reader sees: ’ for an apostrophe, ‘ ’ and “ ” for quotation, in both
     apps, every catalogue, the web page's descriptions and the privacy
-    page. `copy.test.ts` 3c holds it. The `quotes` draft.
+    page. `copy.test.ts` 3c holds it.
 57. **The cooling methods are named for what they are: an ice bath,
     running water, the air.** Not "cold tap" ("tap" is also the screen
     gesture) and not a surface the eggs sit on ("bench", "counter" and
@@ -274,24 +243,20 @@ Decided by the owner, 3 October 2026:
     to "pot" for the pan. The line under the countdown is "below the time
     display": "under the time" read as "in less time". The buttons at the
     pull name only where the eggs are ("In the ice bath"), since the label
-    above them says "Eggs out now". The `owner` draft, which also carries
-    the owner's own edits of 3 October.
+    above them says "Eggs out now".
 
-Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`), numbered
-after 57: `main` took 52-57 while E6-E8 were built on a branch:
+Decided by the owner, 2 October 2026, for E6-E8, numbered after 57, which
+were merged first:
 
 58. **The nudge's "still learning" is a small badge with an (i)**, not a
     line: "A whole line saying still learning? How about a tiny badge over
     the UI with a disclosure (i)". It answers 3: a cook who is sharing sees
     a "Learning" mark by the time, and its (i) says why the time may move.
-    Built with E8 (`82aff4b`).
 59. **Turning sharing on sends the log so far**, not only the eggs after it:
     the per-cook effects and the per-cook log score (37) need each cook's
-    whole sequence. The consent text says so. Built with E6 (`f7f9e90`,
-    `0f93576`).
+    whole sequence. The consent text says so.
 60. **App Attest is built now**, the iOS side and the server's verification
     together. An iPhone that cannot attest still sends, to the open tier.
-    Built with E6 (`00186b1`, `0f93576`).
 61. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
     first (`npm run decide -- nudge`, 300 simulated cooks x 6 eggs): the
     share of eggs that come out right - the yolk just right and the white
@@ -299,16 +264,15 @@ after 57: `main` took 52-57 while E6-E8 were built on a branch:
     by a cook's sixth egg; +-5 s would cost under a point (51.3%) and teach a
     quarter as much per egg, +-3 s a third of a point and a ninth as much.
     The owner chose +-10 s. The Learning mark's (i) says the time may leave
-    an egg a little softer or firmer. Built with E8 (`82aff4b`).
+    an egg a little softer or firmer.
 
-Decided by the owner, 3 October 2026, on the counter-physics branch, numbered
-after 61 on `0.4.x`:
+Decided by the owner, 3 October 2026, on the counter's physics:
 
 62. **Cooling on the bench is textbook physics, and the model treats it
     so.** Still air on a bench is "standard Newtonian/convective cooling";
     nobody would publish an egg-specific measurement of it, and the model
-    should be no weaker, nor make odd choices, for the lack of one. Built
-    `9d00f48`: convection and radiation from correlations, Newton's law at
+    should be no weaker, nor make odd choices, for the lack of one. The
+    model takes convection and radiation from correlations, Newton's law at
     the shell, the wet shell's latent heat (`LOGBOOK.md`, 3 October 2026).
     The Help line that said no measurement was found becomes, approved as
     proposed: "On the bench, I assume the egg sits in still air. In a
@@ -317,15 +281,13 @@ after 61 on `0.4.x`:
     the owner's hand edit of the words. The prior on `tauAirScale` stays
     at 0.35, "fine for now".
 
-Decided by the owner, 3 October 2026, on the offline branch, numbered after
-62 on `0.4.x`:
+Decided by the owner, 3 October 2026, on opening offline:
 
 63. **The web app opens with no signal.** Asked whether the app needed
     work to sit on a Home Screen, the one gap was opening offline: "do the
     open-offline work". A service worker keeps one build of the site whole,
     and a new build takes over only between cooks, so an update never costs
-    a running cook its alarm. Deleting `sw.js` takes it out. Built
-    `6af878f`.
+    a running cook its alarm. Deleting `sw.js` takes it out.
 
 Decided by the owner, 3 October 2026:
 
@@ -345,8 +307,7 @@ Decided by the owner, 3 October 2026:
     the font handle it automatically everywhere? I'm fine with that". The
     catalogue still spells it only on the title.
 
-Decided by the owner, 3 October 2026, on the privacy questions of
-`SHIP-0.4.md` sections B and C, for 0.4. Recorded in `d5d9870`.
+Decided by the owner, 3 October 2026, on the privacy questions for 0.4:
 
 67. **Settings shows the random number**, in both apps, in the sharing
     section, so that a person can quote it in an email asking for their
@@ -354,8 +315,7 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     forgetmyeggs@danmackinlay.name with your random number"). Shown once
     sharing has been turned on, since there is none before; whole, never
     shortened, since the email needs all of it; and selectable, to copy.
-    Built `546fda7` (the `sharingid` draft, "Your random number"); the
-    privacy page says where it is (`8deebf5`).
+    The privacy page says where it is.
 68. **Results from the owner's own development builds do not count as from
     a genuine copy of the app**: asked whether they should, "ideally not".
     The server treats a key attested in App Attest's development
@@ -364,14 +324,13 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     if they were unsigned. Production attestations, which TestFlight and the
     App Store always make, count. The key is still verified and kept, so the
     whole path can be tried on a phone. The fit's pull reads each record's
-    tier by the same rule. Built `d90e3cd`.
+    tier by the same rule.
 69. **Turning sharing off keeps what was sent**: "keep what was sent".
     It stops sending; consent for the results already sent is withdrawn by
-    deleting them, with the button or by email, the answer to the GDPR
-    Art. 17(1)(b) question `SHIP-0.4.md` B raised. The privacy page says so
-    plainly (`8deebf5`).
+    deleting them, with the button or by email, which answers GDPR
+    Art. 17(1)(b). The privacy page says so plainly.
 70. **The privacy page says the owner lives in Australia.** Its `OWNER`
-    mark is gone (`8deebf5`).
+    mark is gone.
 71. **No EU representative** (GDPR Art. 27): the owner chose to "accept
     the risk of having no EU representative", knowing the exemption for
     occasional processing likely does not apply. The privacy page says
@@ -382,7 +341,7 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     hangs off the same random id, which is declared as Device ID, and the
     use is App Functionality, whose definition includes "prevent fraud,
     implement security measures" (Apple's App Privacy Details page).
-    `ios/RELEASING.md` step 6 says so (`fbaa94c`).
+    `ios/RELEASING.md` step 6 says so.
 73. **No fixed retention period**: shared results are kept while the app
     works out starting guesses from them, until the person deletes them or
     the owner stops making the app ("this seems extremely non-personal
@@ -412,8 +371,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     English still goes into 1750; Imperial to metric changes nothing about
     the language, and the picker is the way out. The stored `flippedFrom`
     that made the switch back possible is gone and ignored when read, so no
-    storage key changed. `LANGUAGE.md` §6; the `stay` draft drops the (i)'s
-    "and back when you pick Metric". Built `9c9ea24`.
+    storage key changed, and the (i) no longer says "and back when you pick
+    Metric" (`LANGUAGE.md` §6).
 78. **"Boil" is never a noun** in anything a person reads: "the boil", "a
     full boil", "the rolling boil", "boil times" and "signal the boil"
     sound medical. "Boiling" is fine, and so is "boil" the verb ("water
@@ -425,7 +384,6 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     verb. The setting "After the boil" is **"Once it's boiling"** ("Once it
     boils" in 1750). Every English, en-US and 1750 included, and the
     privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
-    The `boiling` draft, `89d5aa1`; the privacy page, `7bf35a6`.
     Amended by 111: "a full rolling boil" is the water's state, and fine.
 79. **The feedback reminds the cook what they asked for, the probe reading
     steps, and a probe owner can give the room.** Three requests, in both
@@ -440,8 +398,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     egg left out at room temperature. Not a reversal of the old rule that
     the room needs no input of its own: without a measured room that rule
     stands. The record's `ambient_C` already holds the room, so no record
-    format changed. The `feedback2` draft; built on the
-    `probe-target-room` branch.
+    format changed.
     Amended by 115: the room is shown without the probe, in the panel of
     "at room temperature" and in Settings.
 
@@ -451,7 +408,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     right of the thumb; the direction sentence says so. Not hatched or
     skipped, and the 3× runny-white cost is unchanged. 5 October 2026.
     Amended by 84: the soft end still leans late.
-    Amended by 97 (question 14): the bracket is the certainty line's
+    Amended by 97: the bracket is the certainty line's
     interval in words, and its most likely word is marked.
 81. **The owner's results are kept, and can be exported**: "build an
     export function", and protect the log. Amends 48 for this one store:
@@ -471,10 +428,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     again" deletes what was kept aside with the rest. A cook too old to
     pick back up that finished unanswered is logged as unanswered, and on
     iOS a second answer after a relaunch is kept when the egg is the last
-    in the log and not yet shared. The results file `8d1ab68`; the log
-    kept, web `2e37357` and iOS `301668c`; dropped cooks and the second
-    answer `5a24742`; the `export` draft `7596437`; import `6910cbd`; the
-    privacy page `8354d8a`. Replaced by 107: the log starts fresh in 0.5,
+    in the log and not yet shared. Replaced by 107: the log starts fresh in 0.5,
     under 48 like any other store.
 82. **The owner's own random IDs are trusted in the population fit**:
     "trust my random id explicitly". An egg under an ID the owner lists
@@ -485,8 +439,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     results: `fit/trusted.local.txt` (gitignored) and `EGGFIT_TRUSTED`.
     `npm run eggs -- pull` and `import` mark the lines, and the fit reads
     the list again. The published population counts trusted eggs and names
-    no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).
-    Amended 6 October 2026 (archive/REVIEW-0.4.x.md; `f11ddf6`): an ID on the list
+    no one.
+    Amended 6 October 2026: an ID on the list
     is not enough, since anyone who learns it could post at full weight
     under it. A result counts in full only if it is in a results file the
     owner exported and imported, or is the pulled twin of one that is.
@@ -502,9 +456,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     there, the time, the direction and the bracket are for that level, and
     the warning line says "Soft: I get this right fewer than 3 times in 10
     so far." The advice link stays. No warning and no dots before the first
-    egg that taught something, as before. 5 October 2026; the `warn` draft.
-    Built `36eb766` (core, Swift, the draft), web `fd6e2cc`, iOS
-    `5adebf9`, on the `warn-low-odds` branch.
+    egg that taught something, as before. 5 October 2026.
 84. **The time never falls as the doneness rises** ("yes, I want it
     monotone"). Each level's time was chosen against that level's own
     target, so after a runny white soft's time leant past jammy's (58 g
@@ -516,9 +468,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     level whose choice is sooner. Amends 80: the soft end still leans late
     to set the white, but never past a firmer level's time. The 3×
     runny-white cost is unchanged. Before the pot's profile lands, and
-    before the first egg, nothing changes. 5 October 2026. Built `22eadb5`
-    (core, Swift), web `ffba100`, iOS `2a3d7b7`, on the `monotone` branch.
-    Amended 6 October 2026 (archive/REVIEW-0.4.x.md, "agreed"): monotone at the
+    before the first egg, nothing changes. 5 October 2026.
+    Amended 6 October 2026 ("agreed"): monotone at the
     profile's points, and within about a second of it between them, where
     the choice can dip inside its bounds (0.61 at 716.1 s, 0.62 at 715.2 s).
     Exact would cost up to four more solves a drag; not worth it.
@@ -543,14 +494,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     risk is that someone who learns an ID can delete that person's
     results; IDs are 122 random bits, shown only in that person's own
     Settings, and deleting is that person's right in any case.
-    6 October 2026; archive/REVIEW-0.4.x.md.
+    6 October 2026.
 87. **A phone restored from a backup sends unverified** ("Accepted"). The
     App Attest key does not survive a restore, and the server refuses a
     second key for an ID. The phone keeps its random ID and sends without
-    App Attest from then on (since `a4a5cf1`, explicitly), so its results
+    App Attest from then on, explicitly, so its results
     weigh as the web's do (85). A new ID would split one person in two for
     the fit; a second key per ID could be claimed by anyone with an iPhone
-    and someone else's ID. 6 October 2026; archive/REVIEW-0.4.x.md.
+    and someone else's ID. 6 October 2026.
 88. **Settings shows only the current random ID** ("an open and shut
     privacy non-problem"). A device can hold older IDs it has stopped
     using; "Delete shared results" deletes under every one of them, and an
@@ -559,8 +510,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     previews kept.** The function keeps `aggregateBy: ['ip', 'domain']`,
     the only grouping Netlify's free plan offers; the owner checks the
     deploy log's post-processing stage for the rule after the next deploy.
-    A deploy's own address cannot reach the live store since `0ab1eee`,
-    so a separate count per address costs nothing there. The owner deletes
+    A deploy's own address cannot reach the live store, so a separate
+    count per address costs nothing there. The owner deletes
     the deploys built between `00186b1` and `2850f40` in the dashboard.
     Deploy previews stay on for branches of this repository (the owner's
     own testing, e.g. PR #2). A pull request from someone else's fork of
@@ -574,14 +525,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     later?" - yes): the time decision, record assembly, the sharing state
     machine and the decode decision moved into core with fixtures; `app.ts`
     and `calibration.ts` split; `oddsProfile` without closures; and the
-    tidy-ups (the shape study's quick results, `vercel.json`, WORKLIST and
-    FOLLOWUP, finished drafts, the fit's tests in CI). 0.4 ships without
-    them. 6 October 2026.
-    Built on the 0.5 line (`archive/SHIP-0.5.md` A2-A6, A8, B): `2b4db15`
-    (`decideAnswer`), `18b428a` (`recordFor`), `f531e4d`
-    (`loadDecision`), `f8c9e74` (sharing's state), `37de3ab`
-    (`oddsProfile`), `0ac5c80` (the fit in CI), `5633510` and `3dcb123`
-    (the split). The tidy-ups' choices are still the owner's.
+    tidy-ups (the shape study's quick results, the Vercel config, the
+    closed worklists, finished drafts, the fit's tests in CI). 6 October
+    2026.
 91. **One screen for setting up and boiling, with changes allowed after
     the start: 0.5** (testing 0.4 on a phone after a reinstall, the owner
     started an egg set to "into boiling water" when it had gone into cold
@@ -589,8 +535,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     much the same: the sentence and the time. Early in a cook, the start
     (cold or boiling water), the egg and the pot can still change, since
     nothing yet commits the egg to either; the timer should take the
-    change and re-plan from what has already happened. It needs real
-    interface design, so it waits for 0.5. 6 October 2026.
+    change and re-plan from what has already happened. It needed real
+    interface design, so it went to 0.5. 6 October 2026.
     Added the same day: the egg in cross-section (52) stays on that
     screen all the time. While the settings are chosen it previews the
     yolk and white they aim for; when the timer starts it goes back to
@@ -607,10 +553,6 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     offered as a question; it is a field below the yolk and white
     answers. Proposed for 0.4, so shared results start in this form;
     older answers are kept and fitted as they were. 6 October 2026.
-    Built `bb1cc9d` (the ticks), `67bc66d` (core, Swift, the record),
-    `9e156e5` (the server, the privacy page), `1676676` (the fit),
-    `a67e329` (web, the `afteregg` draft), `1c91378` (iOS) and `aab4ce3`
-    (the proof), on the `after-egg` branch.
 93. **0.5 says how sure it is in words; the numbers are a tap away**
     ("two-sided interval communication under uncertainty... switch our
     communication to 'Very certain, ballpark, wild guess'... if they tap
@@ -624,10 +566,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     or a neighbour; a wild guess when wider. A tap shows the interval in
     the cook's words ("9 times in 10: between Soft and Fudgy. Most likely
     Jammy."), and a likely time range. The 3/10 warning, the lean line and
-    the ticks' colours are restated in these terms. Built with the one
-    screen (91). 0.4 keeps today's odds. 6 October 2026.
-    Its arithmetic built in core, no words yet: `781bfa8` (`archive/SHIP-0.5.md`
-    A7).
+    the ticks' colours are restated in these terms. 6 October 2026.
 94. **The apps keep 1000 particles** ("let's not raise the particle count
     for the users. That is costly. we can raise it in testing if that is
     reassuring"). At 1000 the chosen time moves 2-3 s with the seed and
@@ -644,10 +583,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     counter-rested cooks only, and their answers mostly teach alpha and the
     taste offset. In 0.5 it leaves the particle and the population fit and
     is held at 1.0; that changes the stored posterior, so `MODEL_ID` moves
-    and stored posteriors are replayed. `INFERENCE.md` §2 is corrected now.
-    6 October 2026. Built `97a51cd` (`archive/SHIP-0.5.md` A1).
+    and stored posteriors are replayed. 6 October 2026.
 96. **Every change after the start is a correction; everything stays
-    open** (the owner, answering `design/one-screen.md`: "they should be
+    open** (the owner, on the one screen's design: "they should be
     able to change everything in principle", "leave the displays as
     similar as possible between pre-cooking and cooking"; of the
     correction, "we want this one"; "agreed"). Every setting can still be
@@ -664,12 +602,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     control, the egg those settings aim for. Turning the heat off at a
     moment ("heat off now") is not a correction and is not in 0.5; it may
     come later as an event, a button like Full rolling boil, not a
-    setting. Supersedes the draft's questions 1 and 2. 7 October 2026.
+    setting. 7 October 2026.
 97. **The one screen's remaining questions: the recommendations, but each
     tab keeps its own cook** ("Your recommendations all look fine. I would
     like you to accept them all except where one accrues substantially
-    more maintenance burden than the alternative"). `design/one-screen.md`
-    §7 as recommended: a change applies at once, unconfirmed; one that
+    more maintenance burden than the alternative"). As recommended: a
+    change applies at once, unconfirmed; one that
     makes the egg overdue goes to the pull and rings, and changing it back
     within the grace cancels that; the record's forecast is the corrected
     cook's, with no new field; the boil memory learns at the end, and not
@@ -682,29 +620,28 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     an event's own time not correctable in 0.5; a correction updates the
     settings for the next cook; a 0.4 cook running at the upgrade kept
     aside, not converted ("choose what is least burdensome"). The one
-    exception is question 23: each tab runs the cook it started, as today
-    ("sharing across tabs is counter-intuitive"), which costs nothing new.
-    Also answered: A2's advice priced at the level the odds are for
-    ("seems fine"); the finished copy drafts stay compiled; this line
-    becomes `0.5.x`; A7's time range stays as built until real eggs show
-    how it reads. 7 October 2026.
-98. **The red-team review's choices, under 97's rule**
-    (`archive/design/one-screen-review.md`; 97: "accept them all except where one
-    accrues substantially more maintenance burden than the alternative").
+    exception: each tab runs the cook it started, as today ("sharing across
+    tabs is counter-intuitive"), which costs nothing new. Also answered: the
+    protocol advice priced at the level the odds are for ("seems fine"); the
+    likely time range stays as built until real eggs show how it reads.
+    7 October 2026.
+98. **The one screen's red-team review: its choices, under 97's rule**
+    (97: "accept them all except where one accrues substantially more
+    maintenance burden than the alternative").
     A pull the clock assumed (the grace ran out) is not an observation: it
     stays correctable, and a correction that would move it later asks
-    whether the egg is still in the water (review 1.1; the alternative
-    left the owner's own case uncorrectable once the alarm had rung). A
+    whether the egg is still in the water (the alternative left the
+    owner's own case uncorrectable once the alarm had rung). A
     boil tapped after a boiling-to-cold correction made later than the
     pot's remembered time to boil is planned on the remembered time, and
-    on the tap only when nothing is remembered (1.2; a tap that carries
-    its own time is the more burdensome alternative, and would reverse
-    97's answer to question 21). After the pull the slider only previews:
-    the yolk asked for was not a mistake, so it is not corrected (2.3;
-    narrows 96 for that one setting). The aimed-for egg is the egg at the
-    end of the cooling, the egg as eaten, not at the yolk's peak, where a
-    jammy yolk (0.41) reads 0.34 (97's question 10, answered again on what
-    C2 measured). The review's other findings are fixes, not choices.
+    on the tap only when nothing is remembered (a tap that carries its own
+    time is the more burdensome alternative, and would reverse 97's answer
+    on the boil memory). After the pull the slider only previews: the yolk
+    asked for was not a mistake, so it is not corrected (this narrows 96
+    for that one setting). The aimed-for egg is the egg at the end of the
+    cooling, the egg as eaten, not at the yolk's peak, where a jammy yolk
+    (0.41) reads 0.34 (97's aimed-for egg, answered again on what was
+    measured). The review's other findings are fixes, not choices.
     7 October 2026.
 99. **The boil time says no certainty of its own, and the time's two
     lines sit closer** (the owner, 9 October 2026, on the one screen: "I
@@ -728,17 +665,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     rest of the session, says so in one line at the top of the screen, and
     still times the egg. The order is semantic versioning's, core's
     `writerCheck` (`fixtures/newer.json`); iOS marks with
-    `MARKETING_VERSION`, without the pre-release. Built on `0.4.x`, so every
-    release from 0.4 on carries it: `bc294b1` (core), `36d46cd` (web),
-    `c2a156f` (iOS), `93e9ab3` (the `newer` draft), on the
-    `0.4.x-newer-version-guard` branch, and merged into `0.5.x`, where it
-    covers the running cook (`aet.cook.v4`, `cookInProgress.v3`) and every
-    store 0.5 adds. 0.3 cannot be given it. 9 October 2026.
+    `MARKETING_VERSION`, without the pre-release. It covers the running
+    cook and every store. 0.3 cannot be given it. 9 October 2026.
 101. **The alarm's sound is chosen in Settings: the wind-up timer, the
     cuckoo clock or the hen** ("I like the recorded hens, the cuckoo clock
     and the wind-up timer. Let's give the user a selector to choose from
-    the 3 on the settings page"; the default, "Wind-up timer"; the line,
-    "0.5.x"). Chosen from eight sounds made in the browser and heard on an
+    the 3 on the settings page"; the default, "Wind-up timer"). Chosen from eight sounds made in the browser and heard on an
     auditions page, and two CC0 recordings the owner found on Freesound:
     the hen's egg song (Jofae) when the eggs have cooled, and her alarm
     call (Rudmer Rotteveel) at the pull; credited in the (i), though CC0
@@ -748,45 +680,35 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     sounds` renders into the files iOS ships, rather than a Swift copy of
     each synth made on the phone; so an iOS notification now rings in the
     cook's sound for up to 30 s, not iOS's short default. Each is as loud
-    as the beeps were at the same moment. Built on `0.5.x`: `db878e5`
-    (core), `e6da9e1` (the sounds and the iOS files), `f9766a0` (both
-    apps, the `alarm` draft). 9 October 2026.
+    as the beeps were at the same moment. 9 October 2026.
 102. **0.4 does not ship; 0.5 is the next release, and `0.4.x` retires**
-    (the owner, 9 October 2026, through the 0.5 red team's worklist,
-    `archive/REFACTOR-0.5.md` 4.3, and confirmed: "All correct"). 0.5 forked from
+    (the owner, 9 October 2026, confirmed: "All correct"). 0.5 forked from
     0.4 before 0.4 shipped, so the two were one line in practice and every
-    fix was built twice (`0.4.x-newer-version-guard`, `0.5.x-…`). The
-    guard (100) ships in 0.5. CLAUDE.md's branch rule changes with it. Recorded `9bec001`; CLAUDE.md
-    `ffa7972`.
-103. **The English of 1750 may lag the English** (the same worklist, 4.6;
-    confirmed). A wording change may ship without its 1750 twin; the twins
+    fix was built twice. The guard (100) ships in 0.5. CLAUDE.md's branch
+    rule changes with it.
+103. **The English of 1750 may lag the English** (confirmed). A wording change may ship without its 1750 twin; the twins
     are written in batches. A missing key falls back to the English
     (`src/core/copy.ts`), and a twin written against older English is
     listed for review and still shown, never a failed build. Czech (F5)
-    gets the same rule. Recorded `9bec001`; built with the review queue,
-    `d198678`.
+    gets the same rule.
 104. **`PLAN.md` is updated at merge, by the session that merges**, not in
-    each working commit (the worklist, 4.1; confirmed): it was touched by a
+    each working commit (confirmed): it was touched by a
     quarter of all commits and was the commonest merge conflict across
-    worktrees. A CLAUDE.md change. Recorded `9bec001`; CLAUDE.md `ffa7972`.
-105. **Comments say what the code does and why** (the worklist, 2.3;
-    confirmed). A decision number appears in a comment only where the code
-    would otherwise look wrong (z ≈ 4.65 K), never as a changelog. Recorded
-    `9bec001`; CLAUDE.md `ffa7972`.
-106. **The copy drafts give way to a review queue** (the worklist, 2.2;
-    confirmed: "Yes, including CLAUDE.md"). What the owner approved is
-    stored, as a hash of each key's English (`copy/approved.json`, from
-    the English he last read whole, `e3a81cb`); every key that no longer
+    worktrees. A CLAUDE.md change.
+105. **Comments say what the code does and why** (confirmed). A decision number appears in a comment only where the code
+    would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
+106. **The copy drafts give way to a review queue** (confirmed: "Yes,
+    including CLAUDE.md"). What the owner approved is stored, as a hash of
+    each key's English, in `test/data/copy-review/`, beside the 1750 base,
+    so iOS does not ship them; every key that no longer
     matches is the review queue, generated, never typed; a script stamps
     approval; each translation records the English it was written
     against, so a stale twin is listed rather than blocking (103); a page
     shows the queue for review on a phone. `tools/drafts/` and the draft
     proofs go; the no-literals lint and the surfaces' budgets stay.
-    9 October 2026. Recorded `9bec001`; built `d198678`. The stored
-    hashes and the 1750 base now live in `test/data/copy-review/`
-    (`4c7d1b5`), so iOS no longer ships them.
+    9 October 2026.
 107. **The results log starts fresh in 0.5, and 81's protection goes**
-    (the worklist, 2.6, 2.8, 2.9 and 2.14; the owner: "The data is not
+    (the owner: "The data is not
     so important that we should be excessively complicated in order to
     maintain it", and "yeah, let's be simple"). Replaces 81's rule that
     the log changes only with a migration: the log is ordinary data under
@@ -803,10 +725,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     stored), replaying the posterior when `MODEL_ID` changes, the
     newer-build guard (100), and the import tool reading the owner's
     older files. Export from a current build before installing 0.5 to
-    keep your own eggs. 9 October 2026. Recorded `cd0c260`; built `7583ab6`.
+    keep your own eggs. 9 October 2026.
     Confirmed to the 0.5 foundations session the same day ("Yes, sweep v4
     too"): the boot sweep of retired keys deletes `v4` with the rest, on
-    every device 0.5 runs on. `6eeff78`.
+    every device 0.5 runs on.
 108. **The start time leaves the setup sentence; it stays correctable in
     the start's panel** (the owner, 9 October 2026, of "set in cold water
     at 19:42": "I think it wastes screen real estate with useless
@@ -814,9 +736,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     timer"; of keeping the correction in the panel: "Sounds perfect").
     The sentence says "into cold water, brought to the boil" before and
     during a cook; pressing the start clause opens its panel, where "Eggs
-    in at 19:42" with − and + still corrects the start (97's question 20,
-    moved). The four "…at {time}" start clauses go. Recorded `7a09eb7`; built
-    `dbfa28d`.
+    in at 19:42" with − and + still corrects the start (97's start-time
+    correction, moved). The four "…at {time}" start clauses go.
 109. **Numbers agree in distribution, not in bits** (the owner, 7 October
     2026: "we almost never care about bitwise accuracy for posterior
     sampling, just stochastic indistinguishability"; 10 October 2026, of
@@ -830,15 +751,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     not a question for the owner; where its cause is understood, loosen and
     say so in the commit. The filter is tested as a distribution
     (`record.test.ts` 2a3, `npm run sbc`), never by matching draws.
-    Recorded with the revert of the 1e-13 bound, `0fe3c2d`.
 110. **0.5 is released: `main` is the 0.5 line, and 0.3 a historical branch**
     (the owner, 10 October 2026: "I am happy to make 0.5.x the main branch
     and relegate 0.3.x to a historical branch", conditional on the tests
-    passing; the push authorised). `0.3.x` keeps 0.3 at `v0.3.4-alpha.1`
-    (`f31e8aa`); `main` moves to `0.5.x` once CI passes on it, tagged
+    passing; the push authorised). `0.3.x` keeps 0.3 at `v0.3.4-alpha.1`;
+    `main` moves to `0.5.x` once CI passes on it, tagged
     `v0.5.0-alpha.1`, and the web app deploys from it. The owner exported
     his results first (107). Kept with it: iOS's Live Activity card in this
-    build's shape only (`e1e0b36`), so a 0.3 card on the Lock Screen at the
+    build's shape only, so a 0.3 card on the Lock Screen at the
     upgrade lasts until the system ends it ("approved"); and nothing of
     0.3's settings, pans or language carried over ("users can forgive us
     this"). CLAUDE.md's branch rule changes with it.
@@ -846,7 +766,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     cooking of an egg** (the owner, 10 October 2026, reading the review
     queue: "'A full rolling boil' is an acceptable description of the state
     of the pan. 'boil' is not acceptable as a metonym for cooking an egg").
-    Amends 78, whose `boiling` draft (`89d5aa1`) had turned every "full
+    Amends 78, which had turned every "full
     rolling boil" describing the water into "boiling hard (all over)": seven
     strings say "a full rolling boil" again, in en and en-US. Still out:
     "the boil", "boil times", "signal the boil". In the same reading, the
@@ -874,8 +794,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     rest; one button alone fills the row. The row is one button high in
     every phase, so nothing below it moves and nothing is left empty; it
     stacks only where it cannot fit (a 320 px web page, the largest iOS
-    text sizes), with the room of both. Built `action-under-time`, merged
-    `273e49f`.
+    text sizes), with the room of both.
 114. **The bracket marks the most likely word's band, not a point** (the
     owner, 12 October 2026: "yes this seems good"). The mark at the most
     likely word's anchor sat away from the thumb at about a third of the
@@ -883,7 +802,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     are points and the thumb moves freely; the band holds the thumb
     whenever the most likely word is the one asked, and sits beside it,
     honestly, when it is not. Core's `wordBandLow`/`wordBandHigh`; no core
-    change. Built `bracket-likely-band`, merged `9630354`.
+    change.
 115. **A bowl of still water is a fourth cooling** (the owner, 12 October
     2026, from his brother's request; "We should ship the feature then I'll
     gather it in my own beta testing"). The eggs go into a bowl and are
@@ -900,16 +819,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     shown without the probe (amends 79), in the panel of "at room
     temperature" and in Settings, on the two tests the owner set: its
     leverage (-4.8 s a degree for eggs left out, about a size class across
-    a kitchen's range) and a natural place. Built `bowl-cooling`, merged
-    `4f3251b`. Whether ice and running water should take free convection
+    a kitchen's range) and a natural place. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
 116. **The 1750 twin lags by default** (the owner, 14 October 2026, on the
     adversarial review). Goes past 103: an English change no longer
     rewrites its 1750 twin at all; the twins are rewritten in batches, and
     one written then is still never a transform of the English. A twin
     identical to its English is to be deleted, since a missing key renders
-    the English. Decided, not yet built: the deletion is a later round.
-    CLAUDE.md's wording steps follow it now.
+    the English. CLAUDE.md's wording steps follow it.
 117. **`LOGBOOK.md` is frozen** (the owner, 14 October 2026, on the same
     review). Nothing more is appended to it, and it is never rewritten; it
     stays for reference. The commit messages are the log (`git log`). In
@@ -919,13 +836,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     owner, 14 October 2026, on the same review). The logic scenarios
     `npm run ios:e2e` drives through the simulator move into
     `EggTimerAppTests`, under `swift test`; the e2e keeps what needs the
-    app on a device. Decided, not yet built.
+    app on a device.
 119. **Closed documents are deleted, not kept** (the owner, 14 October
-    2026, answering the adversarial review). `archive/`, `SHIP-0.4.md`,
-    `COLLECTIVE.md` and `design/one-screen.md` go; git keeps them. A
+    2026, answering the adversarial review). The archive, the ship lists,
+    the collection design and the one-screen design go; git keeps them. A
     document's live facts move first: to `PLAN.md` if someone waits on
-    them, otherwise to the code, `INFERENCE.md` or `README.md`. Built
-    `ceremony`.
+    them, otherwise to the code, `INFERENCE.md` or `README.md`.
 120. **No branch per version line** (the owner, 14 October 2026, on the
     same review). Supersedes the branch rule of 64, 102 and 110. Work
     happens on short-lived branches off `main`, named for what they do; a
@@ -943,7 +859,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     October 2026, on the same review). A message's `note`, `surface` and
     `example` move to a sidecar the apps never load, and its `apps` is
     derived from the sources, not typed. The catalogues keep only what the
-    renderers read. Built `ceremony`.
+    renderers read.
 123. **The gate is what the change touched** (the owner, 14 October 2026:
     the reruns of every suite at the smallest change were "tanking our
     velocity"). Refines 121. Before a merge: nothing for documents and
@@ -970,7 +886,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     missing from the web's sizers, is in. A change of cooling, at idle or
     as a correction mid-cook (96), may restack the row, in both apps.
     Amends 113's "a 320 px web page": with Apple's fonts the ice bath and
-    the air fit one row there. Built `web-row-sizing`, merged `4b490a7`.
+    the air fit one row there.
 126. **App plumbing leaves `src/core/`** (the owner, 14 October 2026, on
     the adversarial review). Core keeps what both apps must agree on: the
     physics, the inference and the decisions; the record's wire schema
@@ -983,7 +899,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     newer-build guard, another tab's copy of a cook - is each app's own:
     the web's in `src/ui`, tested by `test/*.test.ts`; iOS's in
     `EggTimerApp`, tested by `EggTimerAppTests`. It is no longer ported to
-    Swift or fixtured. Built `core-narrow`.
+    Swift or fixtured.
 127. **The compilers check the catalogue's keys** (the owner, 14 October
     2026, on the adversarial review: generate the key type from the
     catalogue). `npm run copy:keys` writes, from `copy/en.json`, the
@@ -994,10 +910,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     holds them to the catalogue in verify and CI. A key the catalogue lacks
     fails `tsc` or `swift build`, and so does a `t()` call with a missing or
     extra argument; Swift's `tr()` checks argument names in a debug build.
-    Built `gate-speed`.
 128. **One tab owns the web app** (the owner, 14 October 2026, on the
     adversarial review; "let's KISS", 15 October). Supersedes 97's
-    exception to question 23, "each tab runs the cook it started". The
+    one exception, "each tab runs the cook it started". The
     first tab runs the app under an exclusive Web Lock; any other tab says
     the app is open in another tab, with a button that moves the app, its
     cook and alarm, to it, and writes and sounds nothing until pressed. Given up:
@@ -1007,10 +922,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     for the cook beside a shared one for the learning. Without Web Locks
     (an insecure context) every tab runs as before. 100's newer-build mark
     stays. A new build no longer waits for the site's one window: a
-    waiting tab reloads into it. Built `one-tab`.
+    waiting tab reloads into it.
 129. **esbuild bundles the site; Node runs the TypeScript** (the owner, 14
     October 2026, on the adversarial review). The site is built by esbuild,
     a dev dependency, into a few content-hashed files; the tests and tools
     run from their `.ts` sources, Node stripping the types, and `tsc` only
     type-checks. `tools/build.mjs` and `dist/` go. Core still has no runtime
-    dependency (`CLAUDE.md` invariant 1). Built `bundle-and-strip`.
+    dependency (`CLAUDE.md` invariant 1).
