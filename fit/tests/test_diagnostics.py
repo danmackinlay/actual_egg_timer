@@ -35,7 +35,23 @@ def test_independent_chains_pass_and_bad_ones_do_not():
     assert not diagnostics.check({"a": good["a"][:1]}, 0, ["a"])["ok"]
 
 
-def test_only_the_apps_population_file_is_publishing(tmp_path):
-    assert cli.publishes(cli.PUBLISHED)
-    assert cli.publishes(os.path.relpath(cli.PUBLISHED))
-    assert not cli.publishes(str(tmp_path / "population.json"))
+def test_a_failed_fit_is_written_nowhere_unless_forced_and_then_says_so():
+    rng = np.random.default_rng(1)
+    good = {"a": rng.normal(size=(4, 1000))}
+    passed = diagnostics.check(good, 0, ["a"])
+    failed = diagnostics.check(good, 3, ["a"])
+
+    pid, mark, refused = cli.gate(passed, False, "fit-x")
+    assert (pid, refused) == ("fit-x", None) and mark["ok"] and not mark["forced"]
+    # --force changes nothing for a fit that passed.
+    assert cli.gate(passed, True, "fit-x")[:2] == (pid, mark)
+
+    # Whatever --out is: the gate never sees it.
+    pid, mark, refused = cli.gate(failed, False, "fit-x")
+    assert mark is None and "3 divergent transitions" in refused
+
+    pid, mark, refused = cli.gate(failed, True, "fit-x")
+    assert refused is None and pid == "fit-x" + cli.FORCED_ID_SUFFIX
+    assert not mark["ok"] and mark["forced"] and mark["failures"] == ["3 divergent transitions"]
+    assert cli.gate(failed, True, pid)[0] == pid, "the suffix once"
+

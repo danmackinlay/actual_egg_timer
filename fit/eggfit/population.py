@@ -42,7 +42,11 @@ def new_cooks(draws: dict, per_draw: int = 40, seed: int = 1) -> dict:
     }
 
 
-def population(draws: dict, constants: dict, pid: str, source: dict, settings: dict) -> dict:
+def population(draws: dict, constants: dict, pid: str, diagnostics: dict | None, source: dict,
+               settings: dict) -> dict:
+    """The file both apps read. `diagnostics` is whether the sampler passed
+    its checks and whether it was written all the same (__main__.gate),
+    which the apps hold a fit to."""
     a0 = constants["alphaDefault"]
     sz = constants["alphaRelSd"]
     new = new_cooks(draws)
@@ -55,8 +59,9 @@ def population(draws: dict, constants: dict, pid: str, source: dict, settings: d
     }
     g = np.stack([draws[k] for k in GLOBALS], axis=1)
     return {
-        "about": "The population a new cook's prior is drawn from (src/core/population.ts, INFERENCE.md section 9), as fitted by fit/ (eggfit) from shared eggs: an id, and one spread per particle dimension under \"prior\". \"global\" is the fit's posterior over its global parameters, for the record; the apps read only id and prior. Not hand-edited.",
+        "about": "The population a new cook's prior is drawn from (src/core/population.ts, INFERENCE.md section 9), as fitted by fit/ (eggfit) from shared eggs: an id, and one spread per particle dimension under \"prior\". \"global\" is the fit's posterior over its global parameters, for the record; the apps read id and prior, and hold it to \"diagnostics\": whether the sampler passed its checks, and whether it was written all the same (forced). Not hand-edited.",
         "id": pid,
+        "diagnostics": diagnostics,
         "fitted": datetime.date.today().isoformat(),
         "source": source,
         "settings": settings,
