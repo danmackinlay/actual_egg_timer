@@ -10,8 +10,9 @@ Each repetition draws the nine globals from the fit's own prior
 counts how many of `--draws` posterior draws, thinned evenly from the
 chains, fall below the truth. If the fit is calibrated, that rank is uniform
 on 0..draws for every global; a hump in the middle is a posterior too wide, a
-U too narrow, a slope a bias. `sbc.md` in `--out` has each global's rank
-histogram and a chi-square test of uniformity on the binned ranks.
+U too narrow, a slope a bias. `sbc.md` in `--out` has one verdict for all
+nine (`verdict`), each one's p-value and histogram, and how many
+repetitions' own chains failed R-hat, the ESS or divergences.
 
 What is checked is the model, not the published fit: every egg counts once
 (the open tier's discount, DECISIONS.md 2, deliberately tempers the open eggs
@@ -49,6 +50,12 @@ TO_TRUTH = {"mu_z": ("muZ", None), "tau_z": ("tauZ", None), "lag": ("lag", None)
             "tau_t": ("tauT", None), "log_s0": ("noiseMedian", math.exp), "sig_s": ("noiseLogSd", None),
             "log_g0": ("gapMedian", math.exp), "sig_g": ("gapLogSd", None)}
 
+#: What is ranked.
+QUANTITIES = model.GLOBALS
+
+#: How often a calibrated fit may fail the verdict.
+ALPHA = 0.05
+
 
 def add_parser(sub) -> None:
     s = sub.add_parser("sbc", help="simulation-based calibration of the fit, by hand")
@@ -69,7 +76,6 @@ def add_parser(sub) -> None:
     s.add_argument("--shard", default="0/1",
                    help="i/k: run only the repetitions numbered i mod k, so k processes share --out")
     s.add_argument("--seed", type=int, default=20261016)
-    s.add_argument("--bins", type=int, default=10, help="at most; fewer while a bin expects under five")
     s.add_argument("--keep", action="store_true", help="keep each repetition's records and emulated eggs")
 
 
@@ -125,48 +131,87 @@ def one(rep: int, a, constants: dict, rng: np.random.Generator) -> dict:
             "seconds_simulate": round(t1 - t0, 1), "seconds_fit": round(time.time() - t1, 1)}
 
 
-def bins_for(reps: int, ranks: int, most: int) -> int:
-    """The most bins, up to `most`, that divide the ranks evenly and expect at
-    least five repetitions each (two at the least)."""
-    for b in range(min(most, max(2, reps // 5)), 1, -1):
-        if ranks % b == 0:
-            return b
-    return 2
+def ecdf_gamma(ranks: np.ndarray, draws: int) -> np.ndarray:
+    """Säilynoja, Bürkner and Vehtari's (2022, "Graphical test for discrete
+    uniformity and its applications in goodness-of-fit evaluation and
+    multiple sample comparison") statistic for each row of `ranks` (sets of
+    ranks on 0..draws): over every point of the ranks' ECDF, the smallest
+    two-sided binomial tail probability of its count, which is binomial
+    under uniformity. A row's ECDF leaves the simultaneous band of a level
+    when this is below the band's adjusted level."""
+    from scipy.stats import binom
+
+    ranks = np.atleast_2d(ranks)
+    n = ranks.shape[1]
+    k = np.arange(1, draws + 1)
+    counts = np.stack([np.bincount(r, minlength=draws + 1) for r in ranks]).cumsum(axis=1)[:, :draws]
+    z = k / (draws + 1)
+    tail = np.minimum(binom.cdf(counts, n, z), binom.sf(counts - 1, n, z))
+    return np.minimum(1.0, 2.0 * tail.min(axis=1))
 
 
-def summary(rows: list[dict], most_bins: int) -> dict:
-    from scipy.stats import chi2
+def ecdf_null(n: int, draws: int, sims: int = 4000, seed: int = 0) -> np.ndarray:
+    """`ecdf_gamma` of `sims` sets of `n` ranks drawn uniform on 0..draws,
+    sorted: its distribution when the fit is calibrated."""
+    rng = np.random.default_rng(seed)
+    return np.sort(ecdf_gamma(rng.integers(0, draws + 1, size=(sims, n)), draws))
 
+
+def ecdf_p(ranks: np.ndarray, draws: int, null: np.ndarray) -> float:
+    """The chance a calibrated fit's ranks have an ECDF at least this far
+    outside the band: the simultaneous band test's p-value."""
+    g = float(ecdf_gamma(ranks, draws)[0])
+    return (1 + int(np.searchsorted(null, g, side="right"))) / (len(null) + 1)
+
+
+def simes(ps: list[float]) -> float:
+    """Simes's (1986) p-value that every one of `ps` is from a calibrated
+    quantity: the smallest of m p_(i) / i over the sorted p-values."""
+    s = np.sort(ps)
+    return float(min(1.0, np.min(len(s) * s / np.arange(1, len(s) + 1))))
+
+
+def summary(rows: list[dict]) -> dict:
     draws = rows[0]["draws"]
-    b = bins_for(len(rows), draws + 1, most_bins)
-    width = (draws + 1) // b
-    out = {"reps": len(rows), "draws": draws, "bins": b, "parameters": {}}
-    for name in model.GLOBALS:
-        r = np.array([row["ranks"][name] for row in rows])
-        counts = np.bincount(r // width, minlength=b)[:b]
-        expected = len(r) / b
-        stat = float(np.sum((counts - expected) ** 2 / expected))
-        out["parameters"][name] = {"counts": counts.tolist(), "chi2": stat, "df": b - 1,
-                                   "p": float(chi2.sf(stat, b - 1)), "mean_rank_fraction": float(np.mean(r) / draws)}
+    null = ecdf_null(len(rows), draws)
+    out = {"reps": len(rows), "draws": draws, "parameters": {}}
+    for q in QUANTITIES:
+        r = np.array([row["ranks"][q] for row in rows])
+        out["parameters"][q] = {"p": ecdf_p(r, draws, null), "mean_rank_fraction": float(np.mean(r) / draws),
+                                "counts": np.bincount(r * 10 // (draws + 1), minlength=10)[:10].tolist()}
+    out["verdict"] = verdict(out)
     out["divergent_reps"] = sum(1 for row in rows if row["divergences"] > 0)
     out["failed_diagnostics_reps"] = sum(1 for row in rows if not row["diagnostics_ok"])
     out["seconds_per_rep"] = float(np.mean([row["seconds_simulate"] + row["seconds_fit"] for row in rows]))
     return out
 
 
+def verdict(s: dict) -> dict:
+    """One test of all nine: each quantity's ECDF test, and Simes's test of
+    the nine p-values (`simes`). Bonferroni or Holm, as one pass or fail,
+    would fail on the smallest p-value alone, below ALPHA / 9; Simes fails
+    whenever they do and also on several small ones together. It is exact
+    for independent tests and holds its level under positive dependence
+    (Sarkar 1998); the nine are ranked in the same repetitions, so they are
+    not independent."""
+    p = simes([s["parameters"][q]["p"] for q in QUANTITIES])
+    return {"p": p, "alpha": ALPHA, "calibrated": bool(p >= ALPHA)}
+
+
 def summary_md(s: dict) -> str:
+    v = s["verdict"]
     lines = ["# Simulation-based calibration of the fit", "",
-             f"{s['reps']} repetitions, each rank out of {s['draws']} draws, in {s['bins']} bins of "
-             f"{(s['draws'] + 1) // s['bins']} ranks; {s['reps'] / s['bins']:.1f} repetitions a bin if uniform. "
+             f"{s['reps']} repetitions, each rank out of {s['draws']} draws. "
              f"{s['divergent_reps']} repetitions had a divergent transition, {s['failed_diagnostics_reps']} failed "
              f"R-hat, the ESS or divergences (diagnostics.py). {s['seconds_per_rep']:.0f} s a repetition.", "",
-             "A p-value is the chi-square test of the binned ranks against uniform; with nine globals, one below "
-             "0.05 in nine tests is what chance gives about a third of the time. Mean rank near 0.5 is unbiased: "
+             f"**{'Calibrated' if v['calibrated'] else 'NOT calibrated'}**: Simes's p over the nine is {v['p']:.3f}, "
+             f"{'at or above' if v['calibrated'] else 'below'} {v['alpha']}.", "",
+             "Each p is the ranks' ECDF against the simultaneous band of uniform ranks (Säilynoja et al. 2022); "
+             "the verdict is the one test of all nine, so no p is read on its own. Mean rank near 0.5 is unbiased: "
              "above it, the posterior sits below the truth.", "",
-             "| parameter | counts by bin | chi-square | p | mean rank |", "|---|---|---|---|---|"]
+             "| quantity | p | mean rank | counts by tenth |", "|---|---|---|---|"]
     for name, p in s["parameters"].items():
-        lines.append(f"| {name} | {' '.join(str(c) for c in p['counts'])} | {p['chi2']:.1f} on {p['df']} | "
-                     f"{p['p']:.3f} | {p['mean_rank_fraction']:.2f} |")
+        lines.append(f"| {name} | {p['p']:.3f} | {p['mean_rank_fraction']:.2f} | {' '.join(str(c) for c in p['counts'])} |")
     lines += ["", "## Histograms", ""]
     for name, p in s["parameters"].items():
         top = max(p["counts"]) or 1
@@ -211,11 +256,11 @@ def run(a) -> int:
     rows = [rows[k] for k in sorted(rows)]
     if not rows:
         return 0
-    s = summary(rows, a.bins)
+    s = summary(rows)
     with open(os.path.join(a.out, "sbc.json"), "w") as fh:
         json.dump(s, fh, indent=2)
     md = summary_md(s)
     with open(os.path.join(a.out, "sbc.md"), "w") as fh:
         fh.write(md)
     print(md)
-    return 0
+    return 0 if s["verdict"]["calibrated"] else 1

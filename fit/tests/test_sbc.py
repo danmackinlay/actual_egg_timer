@@ -29,15 +29,33 @@ def test_a_truth_from_the_prior_is_one_the_simulator_reads():
         assert abs(np.log(t["noiseMedian"]) - g["log_s0"]) < 1e-12
 
 
-def test_uniform_ranks_pass_and_a_biased_posterior_does_not():
+def rows_of(ranks: dict, reps: int) -> list[dict]:
+    return [{"rep": i, "draws": 99, "divergences": 0, "diagnostics_ok": True, "seconds_simulate": 1.0,
+             "seconds_fit": 1.0, "ranks": {q: int(ranks[q][i]) for q in sbc.QUANTITIES}} for i in range(reps)]
+
+
+def test_uniform_ranks_pass_and_one_biased_or_overconfident_quantity_fails_the_verdict():
     rng = np.random.default_rng(0)
-    rows = [{"rep": i, "draws": 99, "divergences": 0, "diagnostics_ok": True, "seconds_simulate": 1.0,
-             "seconds_fit": 1.0, "ranks": {n: int(rng.integers(0, 100)) for n in model.GLOBALS}} for i in range(200)]
-    s = sbc.summary(rows, 10)
-    assert s["bins"] == 10 and all(sum(p["counts"]) == 200 for p in s["parameters"].values())
-    assert min(p["p"] for p in s["parameters"].values()) > 0.001
-    for row in rows:
-        row["ranks"]["lag"] = min(99, row["ranks"]["lag"] + 30)  # the posterior below the truth
-    assert sbc.summary(rows, 10)["parameters"]["lag"]["p"] < 1e-6
-    # Few repetitions, few bins: at least five expected in each.
-    assert sbc.bins_for(20, 100, 10) == 4 and sbc.bins_for(7, 100, 10) == 2
+    ranks = {q: rng.integers(0, 100, size=200) for q in sbc.QUANTITIES}
+    s = sbc.summary(rows_of(ranks, 200))
+    assert s["verdict"]["calibrated"], s["verdict"]
+    assert all(sum(p["counts"]) == 200 for p in s["parameters"].values())
+    # The posterior below the truth, for one global.
+    biased = {**ranks, "lag": np.minimum(99, ranks["lag"] + 20)}
+    s = sbc.summary(rows_of(biased, 200))
+    assert not s["verdict"]["calibrated"] and s["parameters"]["lag"]["p"] < 0.001
+    # A posterior too narrow: ranks piled at both ends, a U.
+    u = np.where(rng.random(200) < 0.5, rng.integers(0, 15, size=200), rng.integers(85, 100, size=200))
+    assert not sbc.summary(rows_of({**ranks, "tau_t": u}, 200))["verdict"]["calibrated"]
+
+
+def test_the_band_test_holds_its_level_and_simes_combines():
+    # The band test's p-value is uniform for uniform ranks: about 5% of
+    # calibrated sets fall below 0.05.
+    rng = np.random.default_rng(2)
+    null = sbc.ecdf_null(100, 99)
+    ps = [sbc.ecdf_p(rng.integers(0, 100, size=100), 99, null) for _ in range(400)]
+    assert 0.02 < np.mean(np.array(ps) < 0.05) < 0.09
+    assert sbc.simes([0.5, 0.5, 0.5]) == 0.5
+    assert abs(sbc.simes([0.01, 0.9, 0.9]) - 0.03) < 1e-12
+    assert abs(sbc.simes([0.02, 0.03, 0.9]) - 0.045) < 1e-12
