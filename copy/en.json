@@ -216,7 +216,7 @@
     "help.odds.p1": { "text": "Cooking is always a little random. Below the time display I say how certain I am. Very certain means that 9 times in 10 you’ll get a yolk with the target softness. A ballpark figure means that 9 times in 10 you’ll get within one softness category. Anything less sure is a wild guess. Press the words to see a likely range for the right time." },
     "help.odds.aside": { "text": "Nine eggs out of ten will cook to a target inside the bracket. I try to err on the side of cooking too long, since a runny white is usually worse than an overfirm yolk. The stronger the shading on the slider, the more sure I am. Dots mark the regions that are still a wild guess." },
     "help.unsure.title": { "text": "Where I’m unsure" },
-    "help.unsure.counter": { "text": "I’m least sure about cooling in the air, because I couldn’t find any published measurements of how fast an egg cools in still air." },
+    "help.unsure.counter": { "text": "On the bench, I assume the egg sits in still air. In a draught the yolk comes out a little softer, and in an egg cup a little firmer." },
     "help.unsure.bowl": { "text": "In a bowl, I assume the water is still and the eggs lie side by side on the bottom. If you stir the water the yolk comes out a little softer, and if you stack the eggs a little firmer." },
     "help.unsure.heatOff": { "text": "With the heat off, I assume an ordinary pan with its lid on. A heavy pot or a loose lid will change the time." },
     "help.unsure.white": { "text": "When you say a white was runny, I can’t tell whether it set late or whether you call a tender white runny." },
