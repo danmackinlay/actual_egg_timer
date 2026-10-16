@@ -11,11 +11,11 @@ import assert from 'node:assert/strict';
 import { calibrationGrid, copyCalibration, foldRecord, gridRequestFor, recordFor } from '../src/core/record.ts';
 import { type GridSpec, buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
-  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, cookTooOld, coolingSecondsFor, corrected, eventsDue, openEggId, phaseAt,
+  PULL_GRACE_SECONDS, RESTORE_WINDOW_S, appendEntry, cookTooOld, coolingSecondsFor, corrected, eventsDue, openEggId, phaseAt,
   pullStands, replan, stillIn, withOut, writeEvents,
 } from '../src/core/running.ts';
 import {
-  asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan, withAsRan,
+  asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan,
 } from '../src/core/asRan.ts';
 import { readRunningCook } from '../src/ui/storedCook.ts';
 import { gridFor } from '../tools/common.ts';
@@ -134,7 +134,7 @@ test('Done and the record show the cook as it ran, whatever a later posterior pl
   assert.equal(cookFactsFor(corr, after, CTX, 'runny', null, null).refused, 'stale');
   const fixed = asRanAgain(corr, due + 1200);
   assert.equal(asRanCurrent(fixed), true);
-  assert.deepEqual(fixed.asRan, keepAsRan(withAsRan(corr, null), planned(corr, due + 1200)).asRan, 'planned on C');
+  assert.deepEqual(fixed.asRan, keepAsRan(appendEntry(corr, { kind: 'ran', asRan: null }), planned(corr, due + 1200)).asRan, 'planned on C');
   assert.notEqual(fixed.asRan?.peakYolk_C, ran.peakYolk_C, 'a lighter egg peaks lower');
   // What Done says beside the peak reads the cook as it ran too, and an
   // ending with a stale record makes it again first.
