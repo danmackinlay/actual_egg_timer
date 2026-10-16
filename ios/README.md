@@ -296,8 +296,7 @@ prefix.
 
 TestFlight, and it is a different job from this one: an App Store Connect record,
 two explicit App IDs, and a family who need no cable. **`RELEASING.md`** has the
-whole of it, including the two upload prerequisites already committed here and
-the three ways a first archive wastes a day.
+whole of it.
 
 ### Onto the phone
 
