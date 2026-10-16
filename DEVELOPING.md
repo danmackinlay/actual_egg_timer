@@ -21,7 +21,7 @@ npm run probe      # is a probe thermometer worth an egg? (README §11.3)
                    # (these four are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
-npm run copy:literals    # no literal where Swift puts text on screen is words
+npm run copy:literals    # no literal written into a Swift text call is words
 npm run copy:queue       # the words changed since the approved commit, and stale 1750 twins (LANGUAGE.md §3)
 npm run copy:review      # the same, as _dev/copy-review.html, to read on a phone
 npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved
