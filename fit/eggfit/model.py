@@ -124,7 +124,9 @@ def tier_weights(eggs: Eggs, open_power: float, open_cap: float) -> np.ndarray:
 
 
 def egg_loglik(c: dict, d: dict, z, taste, white_offset, noise, gap):
-    """The log likelihood of every egg's answers and reading."""
+    """The log likelihood of every egg's answers and reading, as the app's
+    probits put it, every answer's probability and then the one given: the
+    form the tests hold to infer.ts. NUTS runs `fast_loglik`."""
     z0 = float(d["z_grid"][0])
     dz = float(d["z_grid"][1] - d["z_grid"][0])
     ly = interp(d["log_yolk"], z, z0, dz)
@@ -144,37 +146,120 @@ def egg_loglik(c: dict, d: dict, z, taste, white_offset, noise, gap):
     return ll_y + ll_yw + ll_w + ll_p
 
 
-def model(c: dict, d: dict, n_cooks: int):
+#: Beyond any cut, in sds: an open end of an ordered probit, finite so that
+#: no gradient meets an infinity. In sds, not in doses: a cook drawn with a
+#: large noise must still find the end categories open.
+OPEN_END = 1e3
+
+
+def _ends(k, last: int, a, b):
+    """The standardised bounds of answer `k` of 0..last: `a` below and `b`
+    above, open at the two ends."""
+    return jnp.where(k == 0, -OPEN_END, a), jnp.where(k == last, OPEN_END, b)
+
+
+def _between(a, b):
+    """Phi(b) - Phi(a), for a <= b, from whichever tail is the smaller, so a
+    category far up the scale keeps its digits as one far down does."""
+    sign = jnp.where(a + b > 0.0, -1.0, 1.0)
+    return jnp.maximum(sign * (norm.cdf(sign * b) - norm.cdf(sign * a)), 0.0)
+
+
+def fast_loglik(c: dict, d: dict, z, taste, white_offset, noise, gap):
+    """`egg_loglik`, as NUTS evaluates it: the same numbers
+    (tests/test_likelihood.py holds the two together), computed for each
+    egg's own answer only - two normal cdfs an answer, not one for every cut
+    - and the old yolk answer and the probe only on the eggs that have them.
+    The sampler spends nearly all its time here."""
+    z0 = float(d["z_grid"][0])
+    dz = float(d["z_grid"][1] - d["z_grid"][0])
+    k = d["log_yolk"].shape[1]
+    x = jnp.clip((z - z0) / dz, 0.0, k - 1.0)
+    i = jnp.clip(jnp.floor(x).astype(jnp.int32), 0, k - 2)
+    f = x - i
+    rows = jnp.arange(z.shape[0])
+    ly = d["log_yolk"][rows, i] * (1.0 - f) + d["log_yolk"][rows, i + 1] * f
+    lw = d["log_white"][rows, i] * (1.0 - f) + d["log_white"][rows, i + 1] * f
+    u = c["unrelated"]
+    ll = jnp.zeros_like(z)
+
+    if "yolkWordCuts" in c:  # absent from a file emulated before the five words, which has none
+        said = ly - taste
+        p = _between(*_ends(d["yolk_word"], 4, (d["word_lo"] - said) / noise, (d["word_hi"] - said) / noise))
+        ll = ll + jnp.where(d["yolk_word"] >= 0, jnp.log((1.0 - u) * p + u / 5.0), 0.0)
+
+    wl = lw - (c["logWhiteTarget"] + white_offset)
+    sw = noise * c["whiteNoisePerYolk"]
+    w = d["white"]
+    lo = jnp.where(w == 2, gap, 0.0)
+    hi = jnp.where(w == 0, 0.0, gap)
+    p = _between(*_ends(w, 2, (lo - wl) / sw, (hi - wl) / sw))
+    ll = ll + jnp.where(w >= 0, jnp.log((1.0 - u) * p + u / 3.0), 0.0)
+
+    old = d["old"]
+    if old.size > 0:
+        band = c["feedbackBand"]
+        latent = ly[old] - (d["target"][old] + taste[old])
+        y = d["yolk"][old]
+        lo = jnp.where(y == 2, band, -band)
+        hi = jnp.where(y == 0, -band, band)
+        n = noise[old]
+        p = _between(*_ends(y, 2, (lo - latent) / n, (hi - latent) / n))
+        ll = ll.at[old].add(jnp.log((1.0 - u) * p + u / 3.0))
+
+    probed = d["probed"]
+    if probed.size > 0:
+        fp, ip = f[probed], i[probed]
+        pk = d["peak"][probed, ip] * (1.0 - fp) + d["peak"][probed, ip + 1] * fp
+        ll = ll.at[probed].add(jnp.log(probe_density(c, pk, d["probe"][probed])))
+    return ll
+
+
+def prior(c: dict) -> dict:
+    """The globals' prior, by name, in GLOBALS' order: the model samples from
+    it, and so does the calibration check (sbc.py), so the two cannot drift."""
     lit = c["literature"]
-    mu_z = numpyro.sample("mu_z", dist.Normal(0.0, 1.0))
-    tau_z = numpyro.sample("tau_z", dist.HalfNormal(0.7))
-    lag = numpyro.sample("lag", dist.Normal(0.0, 0.5))
-    tau_w = numpyro.sample("tau_w", dist.HalfNormal(0.5))
-    tau_t = numpyro.sample("tau_t", dist.HalfNormal(0.3))
-    log_s0 = numpyro.sample("log_s0", dist.Normal(math.log(lit["noise"]["median"]), 0.5))
-    sig_s = numpyro.sample("sig_s", dist.HalfNormal(0.5))
-    log_g0 = numpyro.sample("log_g0", dist.Normal(math.log(lit["whiteFirmGap"]["median"]), 0.4))
-    sig_g = numpyro.sample("sig_g", dist.HalfNormal(0.4))
+    return {
+        "mu_z": dist.Normal(0.0, 1.0),
+        "tau_z": dist.HalfNormal(0.7),
+        "lag": dist.Normal(0.0, 0.5),
+        "tau_w": dist.HalfNormal(0.5),
+        "tau_t": dist.HalfNormal(0.3),
+        "log_s0": dist.Normal(math.log(lit["noise"]["median"]), 0.5),
+        "sig_s": dist.HalfNormal(0.5),
+        "log_g0": dist.Normal(math.log(lit["whiteFirmGap"]["median"]), 0.4),
+        "sig_g": dist.HalfNormal(0.4),
+    }
+
+
+def model(c: dict, d: dict, n_cooks: int):
+    g = {name: numpyro.sample(name, p) for name, p in prior(c).items()}
+    mu_z, tau_z, lag, tau_w, tau_t = g["mu_z"], g["tau_z"], g["lag"], g["tau_w"], g["tau_t"]
+    log_s0, sig_s, log_g0, sig_g = g["log_s0"], g["sig_s"], g["log_g0"], g["sig_g"]
     with numpyro.plate("cooks", n_cooks):
         ez = numpyro.sample("ez", dist.StudentT(4.0, 0.0, 1.0))
         et = numpyro.sample("et", dist.StudentT(4.0, 0.0, 1.0))
         ew = numpyro.sample("ew", dist.StudentT(4.0, 0.0, 1.0))
         es = numpyro.sample("es", dist.Normal(0.0, 1.0))
         eg = numpyro.sample("eg", dist.Normal(0.0, 1.0))
-    cook = d["cook"]
-    ll = egg_loglik(
-        c, d,
-        z=(mu_z + tau_z * ez)[cook],
-        taste=(tau_t * et)[cook],
-        white_offset=(lag + tau_w * ew)[cook],
-        noise=jnp.exp(log_s0 + sig_s * es)[cook],
-        gap=jnp.exp(log_g0 + sig_g * eg)[cook],
-    )
+    # Every cook's five, to each of its eggs in one gather.
+    each = jnp.stack([mu_z + tau_z * ez, tau_t * et, lag + tau_w * ew,
+                      jnp.exp(log_s0 + sig_s * es), jnp.exp(log_g0 + sig_g * eg)], axis=-1)[d["cook"]]
+    ll = fast_loglik(c, d, z=each[:, 0], taste=each[:, 1], white_offset=each[:, 2], noise=each[:, 3], gap=each[:, 4])
     numpyro.factor("eggs", jnp.sum(d["weight"] * ll))
 
 
 def arrays(eggs: Eggs, weight: np.ndarray) -> dict:
+    # Each word answer's cuts, below and above; the ends are opened in
+    # `fast_loglik`.
+    cuts = np.concatenate([[0.0], eggs.constants.get("yolkWordCuts", [0.0] * 4), [0.0]])
+    word = np.maximum(eggs.yolk_word, 0)
     return {
+        "word_lo": jnp.asarray(cuts[word]),
+        "word_hi": jnp.asarray(cuts[word + 1]),
+        # The eggs answered the old way, and those with a probe reading.
+        "old": np.flatnonzero(eggs.yolk >= 0),
+        "probed": np.flatnonzero(~np.isnan(eggs.probe)),
         "cook": jnp.asarray(eggs.cook),
         "target": jnp.asarray(eggs.target),
         "yolk": jnp.asarray(eggs.yolk),
@@ -189,17 +274,33 @@ def arrays(eggs: Eggs, weight: np.ndarray) -> dict:
     }
 
 
+def use_cores(chains: int) -> None:
+    """One CPU device a chain, so `fit` runs them in parallel. Only before
+    JAX first computes anything: call it first thing."""
+    import os
+
+    numpyro.set_host_device_count(min(chains, os.cpu_count() or 1))
+
+
 def fit(eggs: Eggs, open_power: float = 0.0, open_cap: float = 1.0, warmup: int = 600,
-        samples: int = 600, chains: int = 2, seed: int = 0) -> dict:
-    """NUTS over the globals and every cook's effects. Returns the draws."""
+        samples: int = 600, chains: int = 2, seed: int = 0, target_accept: float = 0.99) -> dict:
+    """NUTS over the globals and every cook's effects. Returns the draws,
+    pooled over the chains, and the globals' chain by chain in `_chains`."""
+    import jax
     from jax import random
     from numpyro.infer import MCMC, NUTS
 
     weight = tier_weights(eggs, open_power, open_cap)
-    mcmc = MCMC(NUTS(model, target_accept_prob=0.9), num_warmup=warmup, num_samples=samples,
-                num_chains=chains, chain_method="sequential", progress_bar=False)
+    # The chains side by side where there is a device for each (`use_cores`):
+    # it is one compilation, not one a chain, and the chains run at once.
+    method = "parallel" if jax.local_device_count() >= chains else "sequential"
+    mcmc = MCMC(NUTS(model, target_accept_prob=target_accept), num_warmup=warmup, num_samples=samples,
+                num_chains=chains, chain_method=method, progress_bar=False)
     mcmc.run(random.PRNGKey(seed), eggs.constants, arrays(eggs, weight), len(eggs.cooks))
     draws = {k: np.asarray(v) for k, v in mcmc.get_samples().items()}
+    # The globals chain by chain, for R-hat and the ESS (diagnostics.py).
+    by_chain = mcmc.get_samples(group_by_chain=True)
+    draws["_chains"] = {k: np.asarray(by_chain[k]) for k in GLOBALS}
     extra = mcmc.get_extra_fields()
     draws["_divergences"] = np.asarray(extra["diverging"]).sum()
     full = full_weight(eggs)

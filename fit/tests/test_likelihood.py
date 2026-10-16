@@ -17,6 +17,7 @@ import json
 import math
 import pathlib
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -106,6 +107,31 @@ def test_each_egg_scores_the_yolk_answer_it_has():
             want += math.log(float(white[e, eggs.white[e]]))
         if np.isnan(eggs.probe[e]):
             np.testing.assert_allclose(ll[e], want, rtol=1e-6, atol=1e-9)
+
+
+def test_what_nuts_evaluates_is_the_likelihood_above():
+    # model.fast_loglik, which the sampler runs, against egg_loglik, which the
+    # tests above hold to the app's, egg by egg, probes and old answers
+    # included, at time-scales across the grid and beyond its ends, and at
+    # noises from a hundredth of the literature's to a thousand times it,
+    # where a sampler's trajectory can go: there too the end answers are open.
+    for path in (SAMPLE,):
+        eggs = data.load(str(path))
+        c = eggs.constants
+        d = model.arrays(eggs, np.ones(eggs.n))
+        n = eggs.n
+        rng = np.random.default_rng(1)
+        for spread in (0.3, 1.0, 3.0):
+            z = jnp.asarray(rng.normal(0.0, 2.5 * spread, n))
+            taste, wo = jnp.asarray(rng.normal(0.0, 0.2 * spread, n)), jnp.asarray(rng.normal(0.2, 0.4 * spread, n))
+            noise = jnp.asarray(np.exp(rng.normal(-1.6, spread, n)))
+            gap = jnp.asarray(np.exp(rng.normal(0.0, 0.4 * spread, n)))
+            args = (c, d, z, taste, wo, noise, gap)
+            np.testing.assert_allclose(np.asarray(model.fast_loglik(*args)), np.asarray(model.egg_loglik(*args)),
+                                       rtol=1e-9, atol=1e-9)
+            grad = [np.asarray(jax.grad(lambda *v: jnp.sum(f(c, d, *v)), argnums=(0, 1, 2, 3, 4))(*args[2:]))
+                    for f in (model.fast_loglik, model.egg_loglik)]
+            np.testing.assert_allclose(grad[0], grad[1], rtol=1e-6, atol=1e-6)
 
 
 def test_an_older_emulated_file_still_loads_with_no_yolk_words(tmp_path):
