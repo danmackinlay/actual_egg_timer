@@ -46,9 +46,6 @@ public enum StoreRegistry {
     static let all = [
         settings, cook, boilMemory, calibration, share, shareAttest, languageState, alarmSound,
     ]
-
-    /// The keys where an earlier build kept its cook in progress.
-    static let retiredCooks: Set<String> = ["cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4"]
 }
 
 /// What a store holds, stamped with its format.

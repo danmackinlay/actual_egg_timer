@@ -234,7 +234,6 @@ final class FakeCard: LockScreenCard, @unchecked Sendable {
         case start(Shown)
         case update(Shown)
         case endAll
-        case endAtTheirEnds
 
         /// What an update showed.
         var updated: Shown? { if case .update(let s) = self { s } else { nil } }
@@ -260,7 +259,6 @@ final class FakeCard: LockScreenCard, @unchecked Sendable {
     }
     func update(_ state: CookActivity.ContentState) async { lock.withLock { made.append(.update(Shown(state))) } }
     func endAll() async { lock.withLock { made.append(.endAll) } }
-    func endAtTheirEnds() async { lock.withLock { made.append(.endAtTheirEnds) } }
     @MainActor func logAll(_ when: String) {}
 }
 

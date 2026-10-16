@@ -613,7 +613,6 @@ struct AppTests {
         #expect(standard.string(forKey: "aet.standard") == "the system's")
         #expect(suite.string(forKey: "aet.standard") == nil, "the standard domain is not the suite's")
         #expect(suite.string(forKey: "aet.registered") == "read through")
-        #expect(Stores.takeRetiredCook(), "an earlier build's cook among them")
     }
 
     /// The lint's runtime twin (test/iosStores.test.ts): a whole cook, ended

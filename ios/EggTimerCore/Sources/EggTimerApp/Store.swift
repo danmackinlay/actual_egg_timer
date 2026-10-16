@@ -33,18 +33,6 @@ public enum Stores {
         fileprivate init() {}
     }
 
-    /// Whether the sweep found an earlier build's cook in progress, until
-    /// `takeRetiredCook` is asked: its Live Activity is still on the Lock
-    /// Screen, and nothing will update it again. Unsafe, but written and
-    /// read once each, at launch on the main actor (`sweep`, `Cook.restore`).
-    nonisolated(unsafe) private static var retiredCook = false
-
-    /// Once: whether the launch's sweep deleted an earlier build's cook.
-    static func takeRetiredCook() -> Bool {
-        defer { retiredCook = false }
-        return retiredCook
-    }
-
     /// Delete every key in the store that no store of this build is kept
     /// under (`StoreRegistry`): what an earlier build wrote, which nothing
     /// would read or collect. The store's own keys, never the standard
@@ -53,7 +41,6 @@ public enum Stores {
         let defaults = store
         let kept = Set(StoreRegistry.all.map(\.key))
         for key in defaults.keys.sorted() where !kept.contains(key) {
-            if StoreRegistry.retiredCooks.contains(key) { retiredCook = true }
             defaults.removeObject(forKey: key, Pass())
             Screenshots.log(.swept(key: key))
         }

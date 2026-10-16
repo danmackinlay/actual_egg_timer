@@ -571,9 +571,6 @@ public final class Cook {
     /// as Start again ends it. Called by the view, not from `init`.
     func restore() {
         guard running == nil, ending.isEmpty else { return }
-        // An earlier build's cook, its key deleted at launch: its
-        // notifications are left, and its card ended at its own end.
-        if Stores.takeRetiredCook() { card.endAtTheirEnds() }
         guard let data = Stores.store.data(forKey: Self.savedKey) else { return }
         // A cook this build cannot read whole is dropped, with what timed it.
         guard let stored = Self.readStored(data) else {
