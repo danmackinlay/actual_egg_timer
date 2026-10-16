@@ -758,6 +758,6 @@ test('18d. less water warms more and cooks shorter, by seconds, not minutes', ()
   const never = cook(1e6);
   assert.ok(small < big && big <= never, `0.5 L ${small} s, 4 L ${big} s, no warming ${never} s`);
   // Four eggs in half a litre is the crowded end, and still within half a
-  // minute of a bowl that never warms (design/bowl.md section 2.5).
+  // minute of a bowl that never warms (README.md section 2.4).
   assert.ok(never - small < 30, `the crowded bowl is ${never - small} s short`);
 });

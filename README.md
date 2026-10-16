@@ -238,7 +238,7 @@ T_bowl(t) = T_bowl,0 + N * m * c_egg * (Tmean,pull - Tmean(t)) / (V * c_water)
 with `Tmean` the egg's own modal mean, so the heat balance closes exactly (test 18a), and
 `T_bowl,0` the cook's number or the room's. It is held well mixed and clamped like the ice
 bath, though free convection in still water is not quite a clamp: the study
-(`studies/bowl.ts`, `design/bowl.md`) puts the surface treatment at 16 s and 1.2 °C of
+(`studies/bowl.ts`, `node studies/bowl.ts`) puts the surface treatment at 16 s and 1.2 °C of
 peak, for the ice bath as much as the bowl, and the time-scale learned from the cook's
 answers absorbs it for every water cooling alike. The room's exchange through the bowl, the
 bowl's own heat capacity and the water standing unmixed round the eggs are each worth a
@@ -246,6 +246,25 @@ second or less, and are left out. Two eggs in 2 L warm it by under 3 °C and coo
 second of running water at the same temperature; even twelve eggs in half a litre are
 within half a minute of a bowl that never warms. What a crowded bowl costs is the wait
 before the eggs can be handled, not the yolk.
+
+What the bowl's inputs are worth, in the same study (68 g fridge eggs into boiling water,
+held, aimed at jammy, two eggs in 2 L at 20 °C unless said): the water's temperature moves
+the cook about 0.8 s a degree, so a bowl from a cold tap 6 °C colder than the room assumed
+is 4.5-6.5 s and 0.3-0.4 °C of peak, the size of running water's own unknown (mains at 5
+or 25 °C against the 15 °C assumed, `T_COLD_TAP_C`, is -8.5 to +6.5 s). The volume hardly
+moves the cook (3.5 s from 0.5 to 4 L), so 2 L is within 3 s of any other volume for one to
+six eggs; the egg count adds 5.5 s from 1 to 12 eggs in 2 L. The ratio of egg to water
+decides the handling instead: past about 0.5 kg of egg per kilogram of water (about seven
+large eggs a litre) the bowl settles near 40 °C and the eggs take ten minutes or more to
+be cool enough to peel, and past about 0.8 never are until the water is changed. Below
+0.5 the warming is worth under 9 s. Nothing in the yolk's numbers asks for a warning
+(there is none, `DECISIONS.md` 115): the softest yolk with the white set is 0.04 of the
+slider at the base and at most 0.20 across 1-12 eggs in 0.5-4 L, so soft (0.22) is always
+in reach, and the bowl's refusal is only ever at the runny end. Given its
+inputs, the bowl's own unknowns (mixing, its own heat capacity, the room, the volume ±25%,
+the water ±2 °C) are under 7 s and 0.4 °C, a quarter of one prior sd of the counter's
+`tauAirScale`. No measurement of eggs, or of food-sized spheres, cooling in a bowl of still
+water was found; §11.3 has the kitchen one that would check this.
 
 **Boiling point.** ISA barometric formula for pressure against altitude, then the
 Antoine equation (Stull 1947) inverted for temperature. The engineering one-liner
@@ -1172,6 +1191,19 @@ answers are recorded here rather than deleted, because each one was a plausible 
    more often than it should. One thermocouple, one pot, forty minutes — heat it, log the
    boil time, kill the heat, keep logging — would settle `RAMP_R` and the 2 L constant at
    once and beat every source found; the same at 1 L and 4 L would test the exponent.
+
+4. **An egg cooling in a bowl of still water**, the one measurement that would check the
+   bowl (§2.4) and the clamp every water cooling shares. Cook one egg for the bowl's jammy
+   time, push a probe through the blunt end to the middle of the yolk as it goes into 2 L
+   of water at a known temperature, read it every minute for 15 minutes without stirring,
+   then stir and read the water. The peak alone cannot tell the surface from the
+   time-scale, which trade; the reading ten minutes after the pull, against the peak, can:
+   with peaks a degree apart, a free surface reads 4.4 °C warmer at 10 minutes than a
+   clamped one, four times a probe's error (`node studies/bowl.ts` §8 prints the curves).
+   The bowl's rise, 2.7 °C for two eggs in 2 L, checks the heat balance. The same in an
+   ice bath would say whether the ice bath, running water and the bowl should all move to
+   Newton's law at the shell (§11.4): run under free convection, the ice bath moves 17 s
+   and 1.2 °C against its clamp, as the bowl does.
 
 ### 11.4 Modelling work deliberately not done
 

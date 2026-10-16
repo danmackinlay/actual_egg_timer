@@ -117,27 +117,11 @@ Store first. That, not the invitation, is the step non-technical people stall on
 
 ### 5. Already done in this repo
 
-These are committed and verified in a built app, and listed here only so nobody
-removes them as clutter:
-
-- **`ios/App/PrivacyInfo.xcprivacy`** — `UserDefaults` is a required-reason API
-  and this app uses it in `Store.swift`, `Calibration.swift`, `Cook.swift` and
-  `LanguageChoice.swift` (and `Screenshots.swift`, in Debug builds only).
-  Reason `CA92.1`, not `1C8F.1`, because there is no App Group. Apple states this
-  as an upload requirement; in practice it has often arrived as an `ITMS-91053`
-  email after the fact, which is a slow way to learn it.
-- **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. When
-  a person turns sharing on, the app sends results over HTTPS through
-  `URLSession` to its own site, and hashes with SHA-256 for App Attest. Both
-  are the operating system's encryption and exempt, so NO ("no non-exempt
-  encryption") is the true answer (Apple's "Complying with encryption export
-  regulations", checked 3 October 2026). Without the key, every build arrives
-  as **Missing Compliance** and has to be answered by hand before anyone can
-  install it.
-- **The privacy manifest's collected data**: sharing's records (Other Data
-  Types) and its random id (Device ID), neither linked to the user nor used for
-  tracking, for App Functionality. They must match the App Privacy answers
-  below.
+Committed, each with its reason in its file, and not clutter:
+`ios/App/PrivacyInfo.xcprivacy` (the required reason for `UserDefaults`, and
+the data collected, which must match step 6's answers) and
+`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO` in `project.yml` (without
+it every build arrives as **Missing Compliance**, to be answered by hand).
 
 ### 6. For a public link: the privacy policy, and the privacy answers
 
@@ -216,104 +200,56 @@ App Privacy Details page).
 
 ## Every release
 
-### 1. Bump the build number
-
-**`npm run ios:archive` does steps 1-3 and 5 in one go** (`tools/iosArchive.mjs`):
-it adds one to `CURRENT_PROJECT_VERSION`, regenerates, archives, checks that the
-archive carries the new number and the time-sensitive entitlement, and commits
-that one line of `project.yml`. A failed archive puts the number back.
-**`npm run ios:upload` is step 4**: it sends that archive with
-`ExportOptions.plist`, and if `xcodebuild` cannot use an Apple Account it
-opens the archive in the Organizer and says what to click (untick "Manage
-version and build number"). **`npm run ios:release` runs both.** The manual
-steps below are what they do.
-
-The build number is `CURRENT_PROJECT_VERSION` in `ios/project.yml`. A build
-string can be uploaded exactly once; re-using one is rejected **after** the
-whole archive-and-upload cycle, which is a slow way to discover a one-line edit.
-
-Both targets read the project-level setting, so the app and the widget cannot
-drift apart. Do not "simplify" the widget's `CFBundleShortVersionString` and
-`CFBundleVersion` lines out — an extension whose version disagrees with its
-host app is rejected at upload.
-
-### 2. Regenerate, and mean it
-
 ```sh
-cd ios && xcodegen
+npm run ios:release
 ```
 
-**This is the step that bites.** The project is generated (`ios/README.md`,
-"The app"), so a source file added since the last generation is not in the
-target — which shows up as
-`cannot find X in scope` on a tree that a moment ago compiled fine. `npm run ios:archive` runs it before it
-archives; anything else that archives must too.
+That is `npm run ios:archive` and then `npm run ios:upload`; either runs
+alone, to redo one step. Run it from a clean `ios/project.yml`: the archive
+bumps the build number and commits that one line, and each script's header
+says what it checks. With automatic distribution on, the family's phones get
+the build once Apple has processed it, minutes to an hour later, and there is
+nothing else to do.
 
-### 3. Archive
+### When it fails
 
-```sh
-xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer \
-  -destination 'generic/platform=iOS' -configuration Release \
-  -archivePath build/ActualEggTimer.xcarchive \
-  -allowProvisioningUpdates archive
-```
+A failed archive puts the build number back, so fix the cause and run it
+again.
 
-### 4. Export straight to App Store Connect
-
-`ios/ExportOptions.plist`:
-
-```xml
-<dict>
-  <key>method</key><string>app-store-connect</string>
-  <key>destination</key><string>upload</string>
-  <key>teamID</key><string>L4D3TWC3A4</string>
-  <key>manageAppVersionAndBuildNumber</key><false/>
-  <key>uploadSymbols</key><true/>
-</dict>
-```
-
-```sh
-xcodebuild -exportArchive \
-  -archivePath build/ActualEggTimer.xcarchive \
-  -exportOptionsPlist ExportOptions.plist \
-  -allowProvisioningUpdates
-```
-
-`manageAppVersionAndBuildNumber` **defaults to YES**, and that default is wrong
-for this repo: Xcode silently rewrites the build number inside the archive, so
-the number in `project.yml` and the number App Store Connect saw immediately
-disagree — in a project regenerated from `project.yml`, with nowhere for the
-rewritten value to live. Set it false and own the number yourself.
-
-This needs an Apple Account in Xcode's Accounts pane, or an App Store Connect API
-key via `-authenticationKeyPath` / `-authenticationKeyID` /
-`-authenticationKeyIssuerID`. `notarytool` has nothing to do with any of this —
-notarisation is a macOS Developer ID concept.
-
-Uploading with Xcode's GUI works too, but its "Manage version and build number"
-checkbox and its Signing & Capabilities editing both write into a project file
-that the next `xcodegen` deletes. Script it instead.
-
-### 5. Check the entitlement survived
-
-```sh
-(cd build/ActualEggTimer.xcarchive &&
-  codesign -d --entitlements - --xml 'Products/Applications/Actual Egg Timer.app') |
-  grep time-sensitive
-```
-
-A build that merely succeeded proves nothing here. If the App ID does not grant
-the capability, the entitlement is **dropped from the signature rather than
-failing the build** — so the app installs, runs, and quietly loses the ability to
-cut through a Focus mode. Which is the alarm. Which is the reason this is an app
-and not a bookmark.
-
-Run it against the **Release archive**, not a Debug device build.
-
-### 6. Wait for the email
-
-Processing takes minutes, occasionally an hour. With automatic distribution on,
-the family's phones get it without you doing anything else.
+- **"has uncommitted changes"**: commit or discard `ios/project.yml` first.
+- **"the time-sensitive entitlement is missing"**: the App ID lacks Time
+  Sensitive Notifications (once, step 2). Signing drops the entitlement
+  rather than failing, so the app would install and lose the alarm's way
+  through a Focus mode.
+- **"population.json does not read"**: the bundled population fit does not
+  vouch for itself; `fit/README.md` says how to publish one. A forced one
+  only warns.
+- **A signing or provisioning error**: both App IDs registered, explicit
+  (once, step 2), and an Apple Account in Xcode's Accounts pane.
+- **The upload opens Xcode's Organizer**: `xcodebuild` could not use an
+  Apple Account. Distribute App → App Store Connect → Upload, and **untick
+  "Manage version and build number"**, which would rewrite the build number
+  (`ios/ExportOptions.plist` says why). Signing in again in Xcode's Accounts
+  pane makes the script work next time.
+- **"Copy failed"**: Homebrew's rsync is ahead of Apple's on the PATH; the
+  distribution log
+  (`$TMPDIR/ActualEggTimer_*.xcdistributionlogs/IDEDistributionPipeline.log`)
+  shows `rsync: on remote machine: --extended-attributes: unknown option`.
+  `brew unlink rsync`, and upload again. Met 2 October 2026.
+- **"App Store Connect access … is required" while signed in**: Xcode's App
+  Store Connect helper (`com.apple.dt.Xcode.ITunesSoftwareService`) is
+  crashing (`~/Library/Logs/DiagnosticReports`), and Xcode reports it as no
+  account. On 2 October 2026 it cleared after quitting Xcode, signing in
+  again and uploading from a clean PATH; which of those fixed it is not
+  known. A way round that needs no Xcode account: set `destination` to
+  `export` in `ios/ExportOptions.plist`, which leaves an `.ipa` in
+  `ios/build/export`, and deliver that with Apple's Transporter app.
+- **The build string was used already**: App Store Connect refuses it only
+  at the end of the upload. `npm run ios:archive` makes a new one.
+- **"Not Available for Testing … missing an application identifier"**, after
+  an upload that succeeded: a wildcard profile (once, step 2).
+- **The output piped into `head`** kills the upload when the pipe closes.
+  Send it to a file.
 
 ### Never roll back; roll forward
 
@@ -344,8 +280,8 @@ A build is installable for **90 days**. After that App Store Connect shows it as
 *What the tester sees is not documented by Apple and I could not confirm it.*
 From experience the build shows as expired and an installed copy stops launching
 — which, for an egg timer, is a failure that lands at breakfast. Treat that as
-unverified, and do not let it happen: re-upload around **day 80**. Bump, archive,
-export; automatic distribution does the rest.
+unverified, and do not let it happen: re-upload around **day 80**, with
+`npm run ios:release`; automatic distribution does the rest.
 
 The real cliff is the membership, not the 90 days. If the Developer Program
 lapses, the distribution certificate goes with it.
@@ -375,12 +311,6 @@ already has.
 
 ## Things that cost an hour
 
-- **Not running `xcodegen`.** See step 2. The error does not mention the project
-  file.
-- **`manageAppVersionAndBuildNumber` left at its default.** See step 4.
-- **A wildcard provisioning profile.** The upload succeeds and the build is then
-  unusable. Two round trips to discover a checkbox.
-- **Re-using a build string.** Rejected at the end of the cycle, never the start.
 - **The unsigned Business agreement.** Blocks creating the app record, which
   blocks everything.
 - **A three-day invitation expiry.** The failure looks like a broken link rather
@@ -392,28 +322,6 @@ already has.
   creating the record rather than finding out.
 - **Promising it to someone on iOS 16, or on a managed Apple Account.** Neither
   can install it, and neither failure explains itself.
-- **Homebrew's rsync in front of Apple's, on the command line.** `-exportArchive`
-  fails with "Copy failed"; the distribution log
-  (`$TMPDIR/ActualEggTimer_*.xcdistributionlogs/IDEDistributionPipeline.log`)
-  shows `rsync: on remote machine: --extended-attributes: unknown option
-  … [server=3.5.0]`. Xcode runs `/usr/bin/rsync` (openrsync), which starts
-  its other half by name, and a PATH with `/opt/homebrew/bin` first hands it
-  Homebrew's rsync 3.x. Run the export with a clean PATH
-  (`env PATH=/usr/bin:/bin:/usr/sbin:/sbin xcodebuild -exportArchive …`), or
-  `brew unlink rsync`. Xcode's own Organizer does not use the shell's PATH.
-  Met 2 October 2026.
-- **"App Store Connect access … is required" while signed in.** On
-  2 October 2026 Xcode's App Store Connect helper
-  (`com.apple.dt.Xcode.ITunesSoftwareService`) crashed on every start, a
-  stack overflow inside ContentDelivery (`~/Library/Logs/DiagnosticReports`),
-  and Xcode reported the dead helper as "no account"; signing in again did not
-  help. It cleared after a session of quitting Xcode, re-signing in and
-  exporting from a clean PATH; which of those fixed it is not known. Check the
-  crash reports before re-entering a password. A fallback that needs no
-  Xcode account: export with `destination` `export` (an `.ipa` in
-  `build/export`) and deliver it with Apple's Transporter app.
-- **Piping `xcodebuild` into `head`.** It kills the upload when the pipe
-  closes. Send the output to a file.
 
 ## App Review's information request (October 2026)
 

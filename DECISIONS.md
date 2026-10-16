@@ -142,19 +142,14 @@ The worklist's questions, answered the same day:
     every piece of back-compat for one goes** ("kill em all").
 39. **Delete `saferLevels` and everything that serves it.**
 40. **`Decision` drops `interval`, `stillLearning` and `loss`.** No screen
-    shows "still learning" as a line (93), so the decision does not compute
-    it. `npm run decide -- learning` and `test/decide.test.ts` read the
-    interval on demand from `predictCookTime`. The threshold the owner
-    preferred (26 September 2026) was the 80% interval on the cook time
-    narrowing below about ±15 s, about the width of "just right".
-41. **The Swift core drops what no app calls**: the science checks,
-    measure-not-weigh and the inference read-outs. TypeScript keeps them.
-42. **`sousvide.warn` was false**: the model sets the white after about
-    22.7 h at 58 °C. Reworded.
-43. **Choosing Weighed goes back to the last weighed mass**, as the web's
-    measured option does.
-44. **"Kitchen" is renamed "settings"**, and the key renames are finished
-    ("kitchen was a terrible name").
+    shows "still learning" (93). Where the interval is studied, the owner's
+    threshold stands: the 80% interval on the cook time narrowing below
+    about ±15 s.
+41. **The Swift core drops what no app calls**; TypeScript keeps it.
+42. **`sousvide.warn` was false**: it says what the model does, which sets
+    the white after about 22.7 h at 58 °C.
+43. **Choosing Weighed goes back to the last weighed mass**, on both apps.
+44. **"Kitchen" is renamed "settings"** ("kitchen was a terrible name").
 45. **The copy review is applied as one named draft.** Superseded by 106.
 
 Decided by the owner, 29 September 2026:
