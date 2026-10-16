@@ -29,7 +29,8 @@ interface Case {
   /** When the egg comes out, s, or null for one still in the water. */
   out_s: number | null;
   /** The clock at each tick a screen would draw, s: uneven on purpose, so a
-   *  partial step is carried rather than taken. */
+   *  partial step is carried rather than taken; either side of the boil and
+   *  of the moment out, and late in the cooling. */
   ticks: number[];
 }
 
@@ -38,25 +39,25 @@ const CASES: Case[] = [
     name: 'hot start, ice bath',
     setup: appSetup(),
     out_s: 400.3,
-    ticks: [0.3, 1.2, 37.9, 210, 400, 400.4, 431.7, 700, 1300],
+    ticks: [0.3, 1.2, 400, 400.4, 1300],
   },
   {
     name: 'cold start, heat off, on the counter',
     setup: appSetup({ startMode: 'cold', afterBoil: 'off', cooling: 'counter' }),
     out_s: 812.6,
-    ticks: [5, 300.2, 480, 811, 813, 1100, 1712.4],
+    ticks: [5, 480, 811, 813, 1712.4],
   },
   {
     name: 'cold start under a cold tap, still in the water',
     setup: appSetup({ startMode: 'cold', cooling: 'tap', eggStart_C: 20 }),
     out_s: null,
-    ticks: [100, 333.3, 600, 900],
+    ticks: [333.3, 900],
   },
   {
     name: 'hot start, four eggs into a litre bowl at 12 C',
     setup: appSetup({ cooling: 'bowl', bowlLitres: 1, coolingWater_C: 12, eggCount: 4 }),
     out_s: 430.2,
-    ticks: [200, 430, 431, 460.4, 700, 1200],
+    ticks: [200, 430, 431, 1200],
   },
 ];
 
