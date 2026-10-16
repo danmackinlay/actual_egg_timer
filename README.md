@@ -696,6 +696,17 @@ absorbs this into `alpha`, but it absorbs it as an average across the whole cook
 a structural correction. An egg is also not a sphere: the equal-volume sphere is a good
 approximation for the centre and a worse one near the surface.
 
+**An equal-volume sphere, not an egg's shape.** Solved in a real egg's shape (ovoids and
+prolate spheroids of length-to-breadth 1.25-1.45, by finite elements, through the app's
+own cook), the sphere is slow by a near-constant 2-3% at every mass, start and doneness
+tried. A constant fraction is what the calibrated `ALPHA_DEFAULT` absorbs, since only
+R²/α is identifiable, so no shape correction is built. What weighing cannot see, the
+shape of one egg against another of the same mass, costs about ±2 s per egg (1 sd), and
+a ruler cannot recover it: it reads length-to-breadth no better than eggs already vary.
+Weighing is the most accurate input, ±2 s of cook time from a kitchen scale against
+±10-19 s from a ruler on the width. And the shape explains none of the 4.6% gap to
+Buay's thermocouple trace (§7): corrected for shape, the model is faster still, by 6.7%.
+
 **Dirichlet surface in the water, on a Biot number that is probably too high.** The
 model clamps the surface to the water temperature. With `H_EFF = 850 W/m²K` the Biot
 number is `h*R/k ~ 34` and pure Dirichlet under-predicts cook time by roughly 5%, which

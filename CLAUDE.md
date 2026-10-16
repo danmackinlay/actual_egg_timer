@@ -169,6 +169,6 @@ next is `PLAN.md`; the last section here says which document holds what.
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
 | `LOGBOOK.md` | the record kept before the commit messages took over, frozen: what was verified, measured and learned, by date |
-| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, the shape study), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
+| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
 | `design/bowl.md` | the bowl of still water as a cooling (`DECISIONS.md` 115) |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

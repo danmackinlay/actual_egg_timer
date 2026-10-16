@@ -18,7 +18,7 @@ npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (README §11.2)
 npm run rank       # how many parameters can feedback move? (INFERENCE.md §2)
 npm run probe      # is a probe thermometer worth an egg? (README §11.3)
-                   # (these four, and studies/shape-study, are in studies/, run only by hand)
+                   # (these four are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no Swift literal is words
