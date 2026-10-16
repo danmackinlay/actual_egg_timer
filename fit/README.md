@@ -91,15 +91,20 @@ follows by itself.
 `tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
 a known truth, also written by `npm run fixtures`, with four chains side by
 side (under a minute). The truth's time-scale is in the prior's tail, at its
-2.3rd percentile; that is still inside the test's interval of the prior, so
-the interval alone would pass a fit that returned the prior. The test fails on a divergent transition, an
-R-hat of 1.01 or more, a bulk ESS under 100 a chain, a truth outside its
-interval (each 1 - 0.10/9, so all nine together cover 90% of the time when
-the posterior is right), or a time-scale or white's lag whose posterior sd
-is not below half its prior's: a fit that lost its likelihood returns the
-prior, and fails there. It prints every truth's posterior quantile, pass or
-fail. CI's `fit` job runs it with the rest of `fit/tests`, without node.
-The same R-hat, ESS and divergence checks are in every `report.md`
+2.3rd percentile. The test fails on a divergent transition, an R-hat of
+1.01 or more, a bulk ESS under 100 a chain, a truth further from the
+posterior than a calibrated fit puts it nine times in ten, or a time-scale
+or white's lag whose posterior sd is not below half its prior's. The
+distance is one test of all nine globals together: the truth's Mahalanobis
+distance under the draws' covariance, the spreads on their log scale,
+against the draws' own distances (the test says why not Bonferroni, Holm,
+Simes or chi-square). Taken with the other eight, the tail truth is no
+further from the prior than most of the prior's draws, so a fit that lost
+its likelihood and returned the prior passes the distance (82% of its draws
+further out) and fails on the narrowing (sd 0.995 and 1.005 of the prior's).
+It prints every truth's posterior quantile and the distance, pass or fail.
+CI's `fit` job runs it with the rest of `fit/tests`, without node. The same
+R-hat, ESS and divergence checks are in every `report.md`
 (`eggfit/diagnostics.py`), and `fit` writes no population when they fail,
 unless forced.
 
@@ -107,82 +112,56 @@ unless forced.
 in CI: each repetition draws the globals from the fit's own prior, simulates
 cooks from them with the app's simulator (`node tools/eggs.ts simulate
 --truth`, so node is needed), emulates and fits them, and ranks the truth
-among the posterior draws. The ranks of a calibrated fit are uniform;
-`sbc.md` has each global's histogram and a chi-square test, and how many
-repetitions' own chains failed R-hat, the ESS or divergences. A repetition
-of 40 cooks at four chains of 3,000 draws took 129 s on average with four
-running at once on an 18-core Mac that other work shared, two hours for 200;
-`--shard i/k` lets k processes share the work, and any run of the same
-`--out` summarises it:
+among the posterior draws, and the eggs' log likelihood at the truth among
+its values at the draws. The ranks of a calibrated fit are uniform; `sbc.md`
+gives one verdict for all ten (each rank's ECDF against its simultaneous
+band, then Simes's test of the ten), each one's histogram, and how many
+repetitions' own chains failed R-hat, the ESS or divergences. `sbc` exits 1
+when the verdict fails. A worker a core simulates and fits a repetition at
+a time; any run of the same `--out` resumes it and summarises it:
 
 ```
-uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
+uv run --project fit python -m eggfit sbc --out fit/data/sbc
 ```
 
-**What it showed** (16 October 2026, `sbc.py`'s defaults: 40 cooks, four
-chains of 3,000 draws after 500 of warmup, each rank out of 99 draws, in ten
-bins). No global's ranks are told from uniform:
+**What it showed** (16 October 2026, `sbc.py`'s defaults: 200 repetitions of
+20 cooks, two chains of 1,000 draws after 500 of warmup, each rank out of 99
+draws; 20 minutes on eight cores of an 18-core Mac that other work shared,
+at a load of about 12). Calibrated: Simes's p over the ten is 0.29.
 
-| global | p | mean rank |
+| quantity | p | mean rank |
 |---|---|---|
-| `mu_z` | 0.60 | 0.50 |
-| `tau_z` | 0.33 | 0.54 |
-| `lag` | 0.28 | 0.51 |
-| `tau_w` | 0.04 | 0.51 |
-| `tau_t` | 0.46 | 0.48 |
-| `log_s0` | 0.06 | 0.52 |
-| `sig_s` | 0.24 | 0.45 |
-| `log_g0` | 0.78 | 0.51 |
-| `sig_g` | 0.99 | 0.49 |
+| `mu_z` | 0.41 | 0.48 |
+| `tau_z` | 0.41 | 0.53 |
+| `lag` | 0.48 | 0.51 |
+| `tau_w` | 0.38 | 0.53 |
+| `tau_t` | 0.78 | 0.49 |
+| `log_s0` | 0.90 | 0.51 |
+| `sig_s` | 0.03 | 0.48 |
+| `log_g0` | 0.99 | 0.51 |
+| `sig_g` | 0.86 | 0.48 |
+| log likelihood | 0.32 | 0.48 |
 
-The smallest of nine p-values is below 0.04 about three times in ten by
-chance. `tau_w`'s histogram is ragged, not sloped or humped (its mean rank is
-0.51), and `sig_s`'s leans a little low (more ranks in the bottom half: the
-posterior sits a little above the truth). The noise's median, `log_s0`,
-had a mean rank of 0.34 (p 0.04) in a 20-repetition trial at 1,000 draws a
-chain; the same twenty truths at 3,000 draws gave 0.33, so it was those
-twenty, not the sampler, and over 200 it is 0.52. 12 repetitions failed
-their own diagnostics: four an R-hat of 1.01 or more (at most 1.013), one
-the ESS, seven a divergent transition or two. Leaving them out moves no
-p-value below 0.06.
+`sig_s`'s ranks lean a little low (29 of 200 in the bottom tenth), as they
+did at 40 cooks and four chains of 3,000, an hour and a half on sixteen
+cores; one p of ten as low is what chance gives. 56 repetitions had an R-hat
+of 1.01 or more (at most 1.033: two chains make R-hat noisy), 19 an ESS
+under 100 a chain, three a divergent transition. The check fails what it
+should, on 40 repetitions each: a fit that ignored its eggs (the
+likelihood's weights zeroed) had every log-likelihood rank in the top tenth
+and the globals' uniform; truths drawn with the white's spread `tau_w` from a
+half-normal of scale 1 where the fit's prior has 0.5 put 21 of 40 of its
+ranks in the top tenth. Both failed at Simes's p 0.0025, the least 4,000
+simulations of the band can give.
 
-**The interval's width is to be replaced** (`DECISIONS.md` 133, `PLAN.md`).
-It was 90% for each global until three truths fell just outside on the
-first recovery sample. Re-run there with the sampler's seed 0 they miss by
-0.004 (`mu_z`: 0.05 posterior sds, the truth at the posterior's 0.953
-quantile), 0.072 (`lag`: 0.60 sds, 0.993) and 0.061 (`log_g0`: 0.53 sds,
-0.016); `lag` and `log_g0` are correlated -0.75, so nearly one miss. The
-present sample would fail 90% too (`tau_z` at 0.962). Each global's
-1 - 0.10/9 is Bonferroni, which ignores those correlations. The check is a
-pass/fail gate, so the error to bound is a calibrated fit failing, which is
-family-wise, not a false discovery rate; under the global null
-Benjamini-Hochberg is Simes's test. The candidates: Simes on the nine
-posterior-quantile p-values, which needs no Gaussian posterior, only
-positively dependent p-values; Holm; or one Mahalanobis distance of the
-truth under the posterior's covariance against chi-square on nine degrees
-of freedom, which uses the correlations but wants a near-Gaussian
-posterior, so on the unconstrained (log) scale of the spreads, not their
-own. `sbc.md`'s nine uniformity tests want the same single verdict.
-
-**Making SBC cheap enough to run often.** What it guards is this model's
-priors and hierarchy: the likelihood is held to the core's above, and NUTS
-is numpyro's. Batch the repetitions (`vmap` the fit across simulated
-datasets, or numpyro's vectorized chains, padding each dataset with
-zero-weight eggs). Rank the simulated data's log-likelihood beside the
-parameters: a fit that ignores its data has uniform parameter ranks, and
-this catches it, and other bugs, in fewer repetitions (Modrák et al., [SBC
-checking: the choice of test quantities shapes
-sensitivity](https://arxiv.org/abs/2211.02383)). Test the ranks' ECDF
-against simultaneous bands, not binned chi-square (Säilynoja, Bürkner and
-Vehtari, [Graphical test for discrete
-uniformity](https://arxiv.org/abs/2103.10522)). Run in batches and stop once
-the ECDF is clearly inside or outside its bands (Gandy and Scott, [Unit
+The run does not stop early on a clear verdict (Gandy and Scott, [Unit
 testing for MCMC and other Monte Carlo
-methods](https://arxiv.org/abs/2001.06465)). Simulate fewer cooks a
-repetition; the log-likelihood makes up the sensitivity. With real eggs,
-[SBC checking conditional on data](https://arxiv.org/abs/2502.03279). Set
-aside: [discriminative calibration](https://arxiv.org/abs/2305.14593), more
-machinery than this model needs.
+methods](https://arxiv.org/abs/2001.06465)): a failure like those above is
+plain in the first tens of `ranks.jsonl`, and a pass needs every repetition.
+With real eggs, [SBC checking conditional on
+data](https://arxiv.org/abs/2502.03279). Set aside: [discriminative
+calibration](https://arxiv.org/abs/2305.14593), more machinery than this
+model needs.
 
 A bigger simulation, with the held-out scores (`simulate --truth <file>` for a population other than the default):
 
