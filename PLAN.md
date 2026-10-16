@@ -47,6 +47,11 @@ and the map of the documents are `CLAUDE.md`.
       about the port, and point at the TypeScript, as the rest of the twin
       does.
     - The web model's `sharing` repeats `share.state.on`: derive it.
+11. **Move the web e2e to Playwright Test** if `tools/chrome.ts` and
+    `tools/harness.ts` keep drawing fixes of their own: its sharding,
+    waiting, retries, traces and `page.clock` replace the DevTools client and
+    most of the harness; the app's hooks (`__snap`, the oscillator capture)
+    move across. `git log` on the two files says when.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
