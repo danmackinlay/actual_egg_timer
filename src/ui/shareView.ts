@@ -9,12 +9,10 @@ import { t } from './copy.ts';
 import { page } from './dom.ts';
 import { send } from './send.ts';
 
-/** The section as sharing stands: the switch, whether it can be moved,
- *  the note under it, the random number, and whether there is anything to
- *  delete. */
+/** The section as sharing stands: the switch, the note under it, the random
+ *  number, and whether there is anything to delete. */
 export interface ShareView {
   on: boolean;
-  frozen: boolean;
   note: string;
   uid: string | null;
   deletable: boolean;
@@ -24,11 +22,9 @@ export interface ShareView {
  * The section as sharing `s` stands. `waiting` is how many final eggs have
  * not gone yet: shown only when some have gone, since before the first one
  * "Nothing sent yet" says it. `deletedHere`: a deletion this page asked for
- * has been confirmed, said until sharing is turned on again. While a newer
- * build's results are left alone (`frozen`) nothing is sent or deleted, so
- * the switch cannot be moved.
+ * has been confirmed, said until sharing is turned on again.
  */
-export function shareView(s: Readonly<ShareState>, waiting: number, deletedHere: boolean, frozen: boolean): ShareView {
+export function shareView(s: Readonly<ShareState>, waiting: number, deletedHere: boolean): ShareView {
   let note = '';
   if (s.deleting.length > 0) {
     note = t('share.deleting');
@@ -38,12 +34,11 @@ export function shareView(s: Readonly<ShareState>, waiting: number, deletedHere:
     note = s.sent === 0 ? t('share.none') : t('share.sent', { eggs: s.sent });
     if (s.sent > 0 && waiting > 0) note += ` ${t('share.waiting', { eggs: waiting })}`;
   }
-  return { on: s.on, frozen: frozen, note: note, uid: s.uid, deletable: s.uids.length > 0 && !frozen };
+  return { on: s.on, note: note, uid: s.uid, deletable: s.uids.length > 0 };
 }
 
 export function drawShare(v: ShareView): void {
   page().shareSetting.checked = v.on;
-  page().shareSetting.disabled = v.frozen;
   page().shareNote.textContent = v.note;
   // The random number, to quote by email: whole, and only while there is
   // one - from the first time sharing is turned on until a deletion.

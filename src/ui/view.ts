@@ -141,11 +141,10 @@ export interface Sections {
   share: ShareView | null;
 }
 
-/** On every screen: the mute, the line that says a newer build's stores are
- *  left alone, the parts drawn only when asked, and the words the main
- *  button is sized on (`sizerWords`). */
+/** On every screen: the mute, the parts drawn only when asked, and the words
+ *  the main button is sized on (`sizerWords`). */
 export type View = {
-  mute: { label: string; pressed: boolean }; newer: boolean; sections: Sections; sizers: string[];
+  mute: { label: string; pressed: boolean }; sections: Sections; sizers: string[];
 } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
@@ -172,7 +171,7 @@ export function viewMemo(): ViewMemo {
 /** The page at `now_ms`. */
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
-  const top = { mute: mute, newer: m.readOnly, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
+  const top = { mute: mute, sections: sectionsOf(m), sizers: sizerWords(m.controls) };
   if (m.cook === null && m.unsolved) {
     const shown = m.controls;
     return {
@@ -217,9 +216,9 @@ function sectionsOf(m: Model): Sections {
     echoSource: m.echoSource,
     form: formView(m),
     note: { rev: m.note.rev, text: said === 'learned' ? learnedLine(l) : t(said === 'thanks' ? 'feedback.thanks' : 'feedback.learning') },
-    learned: learnedView(l, m.readOnly),
+    learned: learnedView(l),
     share: share === null ? null
-      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere, m.readOnly),
+      : shareView(share.state, Math.max(0, share.final - share.state.sent), m.deletedHere),
   };
 }
 
@@ -405,9 +404,7 @@ function readoutView(m: Model, now_ms: number, sol: Solution, warning: string): 
   // kitchen. Asking once per egg is what closes that gap. Both questions
   // stay on screen until the cook moves on, answered or not; a reload after
   // an answer puts them away, since the second could no longer be folded.
-  // Nor while a newer build's results are left alone (store.ts): no answer
-  // could be kept.
-  const feedback = phase === 'DONE' && m.questions !== 'away' && !words.asking && !m.readOnly;
+  const feedback = phase === 'DONE' && m.questions !== 'away' && !words.asking;
   // The live region carries a coarse announcement, not a per-second one:
   // the ticking digits are aria-hidden, so a screen reader hears the phase
   // and the minute rather than being flooded once a second. The question is

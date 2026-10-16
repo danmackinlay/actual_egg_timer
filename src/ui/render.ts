@@ -71,7 +71,6 @@ export function draw(v: View, d: Drawn): void {
   drawSizers(v.sizers, d);
   page().mute.textContent = v.mute.label;
   page().mute.setAttribute('aria-pressed', v.mute.pressed ? 'true' : 'false');
-  page().newerNote.hidden = !v.newer;
   if (v.kind === 'unsolved') {
     drawReading(v.reading);
     page().statBoil.textContent = v.statBoil;
@@ -91,7 +90,7 @@ export function draw(v: View, d: Drawn): void {
   drawReading(v.reading);
   if (v.scale === 'bare') renderBareScale();
   else renderDonenessScale(v.scale.solution, v.scale.odds, v.scale.bracket);
-  drawReadout(v.readout, d, v.newer);
+  drawReadout(v.readout, d);
   showInfo(page().sublineInfo, v.sublineInfo);
   drawCertainty(v.certainty);
   page().whiteRisk.hidden = !v.whiteRisk;
@@ -124,7 +123,7 @@ function drawReading(r: ReadingView): void {
 }
 
 /** The readout, the buttons under it and the questions at Done. */
-function drawReadout(r: ReadoutView, d: Drawn, readOnly: boolean): void {
+function drawReadout(r: ReadoutView, d: Drawn): void {
   page().body.dataset['phase'] = r.phase;
   page().body.dataset['start'] = r.start;
   page().warn.textContent = r.warning;
@@ -139,7 +138,7 @@ function drawReadout(r: ReadoutView, d: Drawn, readOnly: boolean): void {
   // "Still in the water?": the primary says yes, and this says no.
   page().stillOut.hidden = !w.asking;
   page().feedback.hidden = !r.feedback;
-  if (r.notes !== null) renderCalibNote(r.notes, readOnly);
+  if (r.notes !== null) renderCalibNote(r.notes);
   page().probeEntry.hidden = !r.probe.shown;
   if (r.probe.placeholder !== null) page().probeReading.placeholder = r.probe.placeholder;
   if (r.target !== null) {

@@ -48,7 +48,7 @@ import { buildTicks } from './slider.ts';
 import { emptyModel, sizeClasses } from './state.ts';
 import { activePopulation } from './population.ts';
 import { setStepRule, wireSteppers } from './stepper.ts';
-import { claimStorage, openCooks, openPans, openSettings } from './store.ts';
+import { openCooks, openPans, openSettings, sweepStorage } from './store.ts';
 import { APP_VERSION } from './version.ts';
 import { measure, useUnits } from './units.ts';
 import { learnBehind } from './effects.ts';
@@ -109,10 +109,8 @@ let wired = false;
 function own(reloaded: boolean): void {
   page().body.dataset['tab'] = 'owner';
   page().tabNote.hidden = true;
-  // Before anything is written: whether a newer build has run here, and the
-  // mark brought up to this one if not, and then the keys
-  // no build reads any more deleted.
-  claimStorage(APP_VERSION);
+  // Before anything is written: the keys no build reads any more deleted.
+  sweepStorage();
   // The stores, opened: the runner holds them (cook.ts). Sharing, if the
   // cook turned it on: every egg in the log is final but the stored running
   // cook's, which may still be answered or corrected (`finalEggs`).

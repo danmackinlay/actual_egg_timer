@@ -25,7 +25,7 @@ import {
 import { request } from './idle.ts';
 import { send } from './send.ts';
 import { STORES } from './stores.ts';
-import { storageReadOnly, storedKey } from './store.ts';
+import { storedKey } from './store.ts';
 import { nowMs } from './now.ts';
 
 /** Now, epoch s, as core counts it. */
@@ -139,7 +139,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
 
   /** Sharing on or off. On sends the log so far; the promise is that run. */
   function setSharing(on: boolean): Promise<void> {
-    if (storageReadOnly() || on === state.on) return Promise.resolve();
+    if (on === state.on) return Promise.resolve();
     generation += 1;
     save(on ? turnedOn(state, newUid()) : turnedOff(state));
     return on ? sendFinal() : Promise.resolve();
@@ -176,8 +176,7 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
 
   /** The next final egg, if there is one and sharing is on: whether to go on. */
   async function sendOne(): Promise<boolean> {
-    // Nothing while a newer build's results are left alone (store.ts).
-    if (closed || storageReadOnly()) return false;
+    if (closed) return false;
     const s = state;
     const log = host.log();
     const at = nextToSend(s, host.finalCount(), log.length);
@@ -198,7 +197,6 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
 
   /** "Delete what I've sent", confirmed: off, and every id asked for. */
   async function deleteSent(): Promise<void> {
-    if (storageReadOnly()) return;
     generation += 1;
     save(deletionAsked(state));
     await retryDeletes();
@@ -208,7 +206,6 @@ export function openSharing(host: ShareHost, transport: Transport = fetchTranspo
    *  egg on its way has landed, so that it cannot arrive after the deletion
    *  and outlive it. At every load, and after the cook asks. */
   async function retryDeletes(): Promise<void> {
-    if (storageReadOnly()) return;
     if (pumping !== null) await pumping;
     for (const uid of [...state.deleting]) {
       if (closed) return;

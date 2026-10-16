@@ -201,12 +201,8 @@ test('6. the parts drawn only when asked: the form in the units on screen, the l
   const sharing = { ...m, share: { state: { ...FRESH_SHARE, on: true, uid: 'u', uids: ['u'], sent: 2 }, final: 3 } };
   const v = view(sharing, S * 1000, viewMemo()).sections.share;
   assert.deepEqual(v, {
-    on: true, frozen: false, note: `${t('share.sent', { eggs: 2 })} ${t('share.waiting', { eggs: 1 })}`, uid: 'u', deletable: true,
+    on: true, note: `${t('share.sent', { eggs: 2 })} ${t('share.waiting', { eggs: 1 })}`, uid: 'u', deletable: true,
   });
-  const frozen = view({ ...sharing, readOnly: true }, S * 1000, viewMemo()).sections;
-  assert.equal(frozen.share?.frozen, true, 'a newer build\'s stores: the switch cannot be moved');
-  assert.equal(frozen.share?.deletable, false);
-  assert.equal(frozen.learned.readOnly, true);
 });
 
 test('7. the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {

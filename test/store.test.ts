@@ -14,9 +14,9 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.ts';
 import { type RunningCook, startCook, withBoil } from '../src/core/running.ts';
-import { STORES, stamped } from '../src/ui/stores.ts';
+import { STORES, STORE_LIST, stamped } from '../src/ui/stores.ts';
 import { choicesOf } from '../src/ui/state.ts';
-import { DEFAULT_SETTINGS, type Settings, loadLanguage, openCooks, openSettings } from '../src/ui/store.ts';
+import { DEFAULT_SETTINGS, type Settings, loadLanguage, openCooks, openSettings, sweepStorage } from '../src/ui/store.ts';
 
 /** localStorage, in memory, as in test/records.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */
@@ -26,6 +26,8 @@ const storage = new Map<string, string>();
     getItem: (k: string) => storage.get(k) ?? null,
     setItem: (k: string, v: string) => { storage.set(k, v); },
     removeItem: (k: string) => { storage.delete(k); },
+    get length() { return storage.size; },
+    key: (i: number) => [...storage.keys()][i] ?? null,
   },
 };
 
@@ -209,4 +211,18 @@ test('the alarm sound comes back as stored, and anything else, or nothing, is th
   delete before['alarm'];
   storage.set(SETTINGS_KEY, settingsText(before));
   assert.equal(settings.load().alarm, 'timer', 'a record from before the choice');
+});
+
+test('the sweep at boot deletes a key of an earlier build\'s; every key this build keeps, and any other app\'s, stays', () => {
+  storage.clear();
+  // 0.3's and 0.4's logs and cooks, their copies kept aside, 0.5's keys
+  // before the table of stores, and the marks of a guard since gone.
+  const earlier = [
+    'aet.calibration.v1', 'aet.calibration.v4', 'aet.calibration.v4.unread', 'aet.cook.v2', 'aet.cook.unread',
+    'aet.cook.v5', 'aet.settings.v1', 'aet.boil.v1', 'aet.later.v1', 'aet.newest', 'aet.devClock.used',
+  ];
+  const kept = STORE_LIST.map((x) => x.key);
+  for (const key of [...earlier, ...kept, 'other.app']) storage.set(key, 'a value');
+  sweepStorage();
+  assert.deepEqual([...storage.keys()].sort(), [...kept, 'other.app'].sort());
 });
