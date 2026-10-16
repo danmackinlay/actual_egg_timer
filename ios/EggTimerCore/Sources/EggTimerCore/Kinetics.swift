@@ -1,10 +1,9 @@
 import Foundation
 
-/// Doneness as accumulated thermal dose, not peak temperature.
-/// Transliterated from `src/core/kinetics.ts`.
-///
-/// WARNING: the standard food-engineering cook value C100 uses z = 33.1 K.
-/// That is 7x too shallow for egg protein. Do not substitute it.
+/// The twin of `src/core/kinetics.ts`, held to it by `fixtures/core.json`; the
+/// TypeScript's comments say what each part is for. Its `createDose` and
+/// `accumulateDose` are this struct's `init` and a mutating method, and its
+/// documentation-only `zFromActivationEnergy` has no twin.
 public struct Dose: Sendable, Codable {
     public let zK: Double
     public let trefC: Double
@@ -17,12 +16,10 @@ public struct Dose: Sendable, Codable {
         self.minutes = 0.0
     }
 
-    /// Accumulate `dtS` seconds at `temperatureC`.
     public mutating func accumulate(temperatureC: Double, dtS: Double) {
         minutes += pow(10.0, (temperatureC - trefC) / zK) * dtS / 60.0
     }
 
-    /// Time held at `heldC` that reaches `doseMinutes` of this dose.
     public func holdTimeForDose(doseMinutes: Double, heldC: Double) -> Double {
         doseMinutes / pow(10.0, (heldC - trefC) / zK)
     }

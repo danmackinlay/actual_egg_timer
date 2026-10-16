@@ -1,25 +1,13 @@
 import Foundation
 
-/// The population a cook's prior is drawn from (INFERENCE.md section 9).
-/// Transliterated from `src/core/population.ts`, and held to it by
-/// `fixtures/prior.json`.
-///
-/// `fixtures/population.json` is what both apps draw a new cook's prior from;
-/// the iOS app bundles it. Every field read here is checked, and anything else
-/// in the file is the fit's own record and ignored - but its diagnostics:
-/// a fit that failed them is refused unless forced, a forced one unless its
-/// id ends in `forcedIdSuffix`, and a file with none unless it is the
-/// literature's, number for number. Before any egg the app
-/// solves at the population's centre (`PriorStart`), which for the literature
-/// is exactly the literature's values. A file from before 0.5 has a spread for
-/// the carryover too (`tauAirScale`), which is ignored like the rest.
+/// The twin of `src/core/population.ts`, held to it by `fixtures/prior.json`;
+/// the TypeScript's comments say what each part is for. The iOS app bundles
+/// `fixtures/population.json`.
 
 /// Where a calibration that has learned nothing solves: the population's
 /// centre.
 public struct PriorStart: Sendable, Equatable, Codable {
     public var alphaM2s: Double
-    /// The white's runny | tender cutpoint, decades of white dose above
-    /// `whiteDoseTarget`.
     public var whiteOffset: Double
 
     public init(alphaM2s: Double, whiteOffset: Double) {
@@ -36,8 +24,9 @@ public func priorStart(_ p: Population) -> PriorStart {
     PriorStart(alphaM2s: p.alphaM2s.median, whiteOffset: p.whiteOffset.mean)
 }
 
-/// The file's shape: an id, the five spreads under `prior`, and whether the
-/// sampler passed its checks, or was published all the same.
+/// The file's shape, for `JSONDecoder`: where the TypeScript walks the parsed
+/// JSON field by field, this decodes the fields it needs and ignores the rest,
+/// and `valid` checks what the decoder cannot.
 private struct PopulationFile: Decodable {
     struct Diagnostics: Decodable {
         var ok: Bool
@@ -68,19 +57,15 @@ private func valid(_ n: Normal) -> Bool {
     n.mean.isFinite && n.sd.isFinite && n.sd > 0
 }
 
-/// Whether the file's diagnostics let `p` be drawn from: a fit that passed;
-/// one that failed, forced, under an id that says so; or none, for the
-/// literature's alone.
+/// The literature's population is recognised by `Population`'s `Equatable`,
+/// where the TypeScript compares it field by field (`isLiterature`).
 private func vouched(_ d: PopulationFile.Diagnostics?, _ p: Population) -> Bool {
     guard let d else { return p == literaturePopulation }
     if d.ok { return !d.forced }
     return d.forced && p.id.hasSuffix(forcedIdSuffix)
 }
 
-/// A population read from its file, or nil if any part of it cannot be
-/// trusted, or its diagnostics do not vouch for it: `parsePopulation`'s
-/// rules. A spread of zero is refused - every particle would be the same,
-/// and nothing could move it.
+/// Takes the file's bytes, where the TypeScript takes it parsed.
 public func parsePopulation(_ data: Data) -> Population? {
     guard let f = try? JSONDecoder().decode(PopulationFile.self, from: data), !f.id.isEmpty else { return nil }
     let p = f.prior

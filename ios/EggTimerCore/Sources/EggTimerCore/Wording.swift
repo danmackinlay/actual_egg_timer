@@ -1,11 +1,8 @@
 import Foundation
 import EggTimerCopy
 
-/// Which catalogue key each part of the screen says, from the facts of the
-/// cook: src/core/wording.ts, against `fixtures/wording.json`. The app renders
-/// the keys and fills in its own arguments; the CHOICE of key is here, so the
-/// two apps cannot choose differently, and the fixture tests the choice once
-/// for both; each app's screens only render it.
+/// The twin of `src/core/wording.ts`, held to it by `fixtures/wording.json`;
+/// the TypeScript's comments say what each part is for.
 
 /// A key in a core value's JSON is spelled as the catalogue spells it, as the
 /// TypeScript's is.
@@ -13,9 +10,6 @@ extension CopyKey: Codable {}
 
 // MARK: - The refusal
 
-/// The refusal's sentence, or nil when there is nothing worth saying. The app
-/// adds `limit` and, for `refusal.harderThanPan`, `water`. A yolk too soft for
-/// the white is blamed on the cooling the cook chose.
 public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
     guard v.worthSaying else { return nil }
     switch v.kind {
@@ -32,13 +26,6 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
     }
 }
 
-/// The warning line while idle: the refusal, when there is one worth saying,
-/// since it says what to change; otherwise, when the level on screen is a
-/// dotted one (`lowOddsAt`: a wild guess, softer or firmer than every level
-/// that is not), that it is a wild guess so far. The app adds `doneness`, the
-/// word for the level on screen. One line, not two: a slider just moved out of
-/// the stripes says why it moved, and the next answer there carries the
-/// warning.
 public func warningKey(_ v: Verdict, lowOdds: Bool, cooling: Cooling) -> CopyRef? {
     if let refusal = refusalKey(v, cooling: cooling) { return refusal }
     guard lowOdds else { return nil }
@@ -47,8 +34,6 @@ public func warningKey(_ v: Verdict, lowOdds: Bool, cooling: Cooling) -> CopyRef
 
 // MARK: - The certainty
 
-/// The catalogue key of the line under the time (src/core/wording.ts, "How
-/// sure, in words").
 public func certaintyKey(_ c: Certainty) -> CopyKey {
     switch c {
     case .veryCertain: return .`certainty.veryCertain`
@@ -57,17 +42,12 @@ public func certaintyKey(_ c: Certainty) -> CopyKey {
     }
 }
 
-/// A key with its counts (`args`, as a `CopyRef`'s) and its inserted words
-/// (`words`, each itself a doneness key for the caller to render).
 public struct WordsRef: Sendable, Equatable {
     public let key: CopyKey
     public let args: [String: Double]
     public let words: [String: CopyKey]
 }
 
-/// The likely time range as words take it (`timeRangeWords`): the key, and
-/// `low` and `high` as cook times, s (m:ss), or, `ofDay`, clock times, epoch
-/// s, said as times of day.
 public struct TimeRangeWords: Sendable, Equatable {
     public let key: CopyKey
     public let lowS: Double
@@ -75,12 +55,6 @@ public struct TimeRangeWords: Sendable, Equatable {
     public let ofDay: Bool
 }
 
-/// The likely time range in the clock's own terms:
-/// before Start, whole times (`certainty.time`); once a cook runs, when to
-/// take the eggs out, as times of day (`certainty.timeOut`), the start plus
-/// the range, and for a reading held over a plan it was not read on (a slow
-/// hob's lengthened guess, a pot still building), as far either side of the
-/// plan's time now as of the time it was read at. wording.ts says why.
 public func timeRangeWords(_ sure: CertaintyReading, startedAtS: Double?, cookTimeS: Double) -> TimeRangeWords {
     let r = sure.time
     guard let start = startedAtS else {
@@ -95,8 +69,6 @@ public func timeRangeWords(_ sure: CertaintyReading, startedAtS: Double?, cookTi
     )
 }
 
-/// The 90% interval in the slider's words: "9 times in 10: Soft to Fudgy.",
-/// or one word when one word holds it. `hits` in `of` is `certaintyMass`.
 public func intervalWords(_ w: WordCertainty) -> WordsRef {
     let args: [String: Double] = ["hits": (certaintyMass * 10).rounded(), "of": 10]
     if w.from == w.to {
@@ -108,43 +80,28 @@ public func intervalWords(_ w: WordCertainty) -> WordsRef {
     )
 }
 
-/// "Most likely: Fudgy."
 public func mostLikelyWords(_ w: WordCertainty) -> WordsRef {
     WordsRef(key: .`certainty.mostLikely`, args: [:], words: ["word": donenessAnchors[w.mostLikely].key])
 }
 
-/// Whether "Most likely" shows under the line before it is pressed: only when
-/// the most likely word is not the word asked.
 public func mostLikelyShown(_ w: WordCertainty) -> Bool {
     w.mostLikely != w.asked
 }
 
-/// Whether "Most likely" is in what pressing the line opens: when it is not
-/// already under the line, and the interval is more than one word.
 public func mostLikelyOpened(_ w: WordCertainty) -> Bool {
     !mostLikelyShown(w) && w.from != w.to
 }
 
 // MARK: - The outcome
 
-/// No line gives a direction ("Probably just right. If not, a little
-/// firm."): the cook names the yolk they got, and "just right" is not what
-/// they are asked. The line under the time is `certaintyKey`'s.
-
-/// Whether the white gets its line.
 public func whiteAtRisk(_ o: Outcome) -> Bool {
     o.pWhiteRunny >= whiteRisk
 }
 
-/// The same, for a cook as it ran: its forecast's chance of a runny white
-/// (`forecastOf`). Done reads this, not a plan made since.
 public func forecastWhiteAtRisk(_ f: Forecast) -> Bool {
     f.white[0] >= whiteRisk
 }
 
-/// The bracket in the slider's words: a key and its arguments, each argument
-/// itself a doneness key for the caller to render: the certainty's 90%
-/// interval's first and last words, or its one word (`wordBracket` draws it).
 public func rangeWords(_ w: WordCertainty) -> (key: CopyKey, args: [String: CopyKey]) {
     let low = donenessAnchors[w.from].key
     if w.from == w.to { return (.`outcome.range.one`, ["level": low]) }
@@ -153,18 +110,13 @@ public func rangeWords(_ w: WordCertainty) -> (key: CopyKey, args: [String: Copy
 
 // MARK: - The phase
 
-/// What the readout's words depend on. While a cook runs, every field is the
-/// cook's own (its ticket), never the controls'.
 public struct PhaseFacts: Sendable {
     public var phase: Phase
     public var startMode: StartMode
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
-    /// Idle only: whether the white sets at all, so there is a cook to start.
     public var whiteSets: Bool
-    /// Idle only: whether this pan's time to boil is remembered, not guessed.
     public var boilKnown: Bool
-    /// Cooling only: whether the countdown ends in a probe reading.
     public var probeWanted: Bool
 
     public init(
@@ -181,20 +133,13 @@ public struct PhaseFacts: Sendable {
     }
 }
 
-/// The readout's keys in one phase. The app supplies the arguments.
 public struct PhaseKeys: Sendable, Equatable {
-    /// Above the clock.
     public let label: CopyKey
-    /// Under the clock.
     public let subline: CopyKey
-    /// The primary button, or nil when the phase has none.
     public let action: CopyKey?
-    /// What the primary button (or, without one, the pan) asks of the cook, or
-    /// nil when there is nothing true to add.
     public let hint: CopyKey?
 }
 
-/// Where the eggs go at the pull, as the button says it.
 public func pulledKey(_ cooling: Cooling) -> CopyKey {
     switch cooling {
     case .ice: .`action.pulled.ice`
@@ -204,14 +149,11 @@ public func pulledKey(_ cooling: Cooling) -> CopyKey {
     }
 }
 
-/// The readout's keys: `phaseKeys` in wording.ts, which says why each is.
 public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     let cold = f.startMode == .cold
     let standing = f.afterBoil == .off
     switch f.phase {
     case .idle:
-        // The time to boil, guessed or remembered, says no certainty of its
-        // own: the certainty line speaks for both.
         let subline: CopyKey = cold ? .`readout.sub.coldAssumes` : (standing ? .`readout.sub.standing` : .`readout.sub.hot`)
         let hint: CopyKey = !f.whiteSets
             ? .`action.hint.whiteNeverSets`
@@ -232,8 +174,6 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
             hint: standing ? .`action.hint.cookingStanding` : .`action.hint.cookingBoiling`
         )
     case .pull:
-        // On a counter rest nothing starts on its own: the grace runs out into
-        // done, and the subline already says the yolk is still cooking.
         return PhaseKeys(
             label: .`readout.phase.pull`, subline: .`readout.sub.pull`, action: pulledKey(f.cooling),
             hint: f.cooling == .counter ? nil : .`action.hint.pull`
@@ -255,11 +195,6 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
 
 // MARK: - The sentence
 
-/// One clause of the setup sentence: its words in the sentence, the name of
-/// the control it opens, and that control's value. A nil `value` is the
-/// argument itself (the egg's mass, or the cook's own temperature). The app
-/// supplies `count` and `mass` (the egg), `temp` (the egg's own, or the
-/// cooling water's), `bath` (sous-vide) and `water` (the bowl's).
 public struct ClauseKeys: Sendable, Equatable {
     public let text: CopyKey
     public let label: CopyKey
@@ -271,15 +206,12 @@ public enum Clause: String, Sendable, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-/// What the setup sentence's clauses depend on.
 public struct ClauseFacts: Sendable {
     public var eggFrom: EggFrom
     public var startMode: StartMode
     public var sousVide: Bool
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
-    /// Whether the cook gave the temperature of the water the eggs cool in,
-    /// running or in a bowl. Read only for those two.
     public var coolingWaterGiven: Bool
 
     public init(
@@ -295,10 +227,6 @@ public struct ClauseFacts: Sendable {
     }
 }
 
-/// The setup sentence's keys. The start clause carries the boil, and the
-/// standing when the heat goes off: "into cold water" alone reads as if the
-/// eggs never boil. It never says when the eggs went in, idle or mid-cook:
-/// the countdown already does, and the start's panel corrects it.
 public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
     let standing = f.afterBoil == .off
     let from: ClauseKeys = switch f.eggFrom {
@@ -344,24 +272,6 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
 
 // MARK: - The sous-vide clock's units
 
-/*
- * The sous-vide clock's two unit choices, here rather than in the app or in
- * the physics (SousVide.swift, which says nothing).
- *
- * These are not sentences. They are UNIT CHOICES - when minutes stop being a
- * useful unit and become hours, when hours become days, when a date stops being
- * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
- * identically or the same number reads differently on each, and at a 58 C bath
- * only two of the six branches below are ever reached, so a copy kept by hand
- * in each app would go untested.
- *
- * They return a catalogue key and its numbers, not English, because
- * "22 h 43 min" is English, and so is the order of the words in "3 weeks ago".
- * Core picks the bucket; the catalogue says it.
- */
-
-/// 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
-/// numbers it needs.
 public func longDuration(_ seconds: Double) -> CopyRef {
     let minutes = Int((seconds / 60.0).rounded())
     if minutes < 90 { return CopyRef(.`duration.minutes`, ["minutes": Double(minutes)]) }
@@ -377,15 +287,6 @@ public func longDuration(_ seconds: Double) -> CopyRef {
     return CopyRef(.`duration.weeks`, ["weeks": (Double(days) / 7.0).rounded()])
 }
 
-/// How long ago the cook should have started: today, yesterday, last Tuesday,
-/// last week, 3 weeks ago, 4 months ago - as a key and its numbers.
-///
-/// Takes the day count rather than a date, so it is pure and so the calendar
-/// arithmetic stays where it belongs: `Calendar` counts whole days across a
-/// local midnight correctly, and this package should not reimplement it. For
-/// the same reason `sousvide.start.lastWeekday` wants a `{weekday}` this does
-/// not supply. The app adds it, from the catalogue through `weekdayKey`, as the
-/// web does.
 public func startPhrase(daysAgo: Int) -> CopyRef {
     if daysAgo <= 0 { return CopyRef(.`sousvide.start.today`) }
     if daysAgo == 1 { return CopyRef(.`sousvide.start.yesterday`) }
@@ -395,10 +296,6 @@ public func startPhrase(daysAgo: Int) -> CopyRef {
     return CopyRef(.`sousvide.start.monthsAgo`, ["months": (Double(daysAgo) / 30.0).rounded()])
 }
 
-/// The catalogue key of a weekday's name, numbered as JavaScript's
-/// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
-/// from 1, so the app subtracts one. Both apps name weekdays from the
-/// catalogue, not the platform (LANGUAGE.md §2).
 let weekdayKeys: [CopyKey] = [
     .`weekday.sunday`, .`weekday.monday`, .`weekday.tuesday`, .`weekday.wednesday`,
     .`weekday.thursday`, .`weekday.friday`, .`weekday.saturday`,

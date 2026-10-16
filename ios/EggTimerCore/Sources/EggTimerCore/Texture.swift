@@ -1,13 +1,10 @@
 import Foundation
 import EggTimerCopy
 
-/// What the pan makes of the white and the yolk, as bands read from their
-/// peak temperatures, and the catalogue keys the texture note is said in.
-/// Transliterated from `src/core/texture.ts`, and held to it by
-/// `fixtures/texture.json`.
+/// The twin of `src/core/texture.ts`, held to it by `fixtures/texture.json`;
+/// the TypeScript's comments say what each part is for. Its string unions are
+/// enums here, their raw values the TypeScript's spellings.
 
-/// What the pan makes of the white: `runny` when it never gets the white the
-/// dose that sets it, and otherwise what its peak temperature makes of it.
 public enum WhiteBand: String, Sendable, Codable {
     case runny
     case justSet
@@ -15,7 +12,6 @@ public enum WhiteBand: String, Sendable, Codable {
     case firm
 }
 
-/// What the yolk's peak temperature makes of it.
 public enum YolkBand: String, Sendable, Codable {
     case liquid
     case soft
@@ -29,13 +25,6 @@ public struct Texture: Sendable, Equatable, Codable {
     public let yolk: YolkBand
 }
 
-/// The texture note's thresholds, which are a reading of the model rather than
-/// a turn of phrase - so they are decided here and worded in the app.
-///
-/// The bands read PEAK TEMPERATURES, while the white's own criterion is a dose
-/// (`Solution.whiteSets`). The two disagree only when the pan never gets the
-/// white there at all, and then the dose is the one telling the truth: the
-/// white is runny, whatever its peak. See src/core/texture.ts.
 public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
     let white: WhiteBand = !whiteSets ? .runny
         : (peakWhiteC < WhiteBandBelowC.justSet ? .justSet : (peakWhiteC < WhiteBandBelowC.set ? .set : .firm))
@@ -50,18 +39,13 @@ public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -
     return Texture(white: white, yolk: yolk)
 }
 
-/// The texture note as the catalogue's keys: the line's own key, and the key
-/// of the fragment that fills each of its placeholders. The app renders the
-/// fragments and hands them in; it chooses nothing.
+/// The texture note as the catalogue's keys: the line's own, and one for each
+/// placeholder.
 public struct TextureNote: Sendable, Equatable, Codable {
     public let key: CopyKey
     public let parts: [String: CopyKey]
 }
 
-/// Which words a texture is said in. A white that never sets is the whole
-/// note, "white stays runny" with no yolk after it, as the web has always said
-/// it; every other white is named with its yolk. The keys are written out
-/// whole so that the copy tests can find each one.
 public func textureNoteKeys(_ t: Texture) -> TextureNote {
     let white: CopyKey
     switch t.white {

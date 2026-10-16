@@ -1,13 +1,10 @@
 import Foundation
 import EggTimerCopy
 
-/// Putting it together: simulate a cook, and invert for the cook time that hits
-/// a doneness target. Transliterated from `src/core/solve.ts`.
+/// The twin of `src/core/solve.ts`, held to it by `fixtures/scenarios.json`;
+/// the TypeScript's comments say what each part is for.
 
-/// The calibratable parameters. Everything else is fixed physics.
 public struct ModelParams: Sendable, Codable, Equatable {
-    /// Thermal diffusivity, m^2/s. Absorbs all geometry and property error,
-    /// since only tau = R^2/alpha is identifiable.
     public var alphaM2s: Double
 
     public init(alphaM2s: Double = Constants.alphaDefault) {
@@ -31,8 +28,6 @@ public struct Doneness: Sendable, Codable {
     }
 }
 
-/// Map the single slider to a yolk dose target. Logarithmic, which - because
-/// dose goes as 10^(T/z) - makes the slider linear in peak yolk temperature.
 public func donenessFromSlider(_ level: Double) -> Doneness {
     let clamped = level < 0.0 ? 0.0 : (level > 1.0 ? 1.0 : level)
     let lo = log10(yolkDoseRunny)
@@ -44,8 +39,6 @@ public func donenessFromSlider(_ level: Double) -> Doneness {
     )
 }
 
-/// log10 of the yolk dose the slider asks for at `level`: the target every
-/// fold, forecast and odds is scored against.
 public func logYolkTarget(_ level: Double) -> Double {
     log10(donenessFromSlider(level).yolkDoseMin)
 }
@@ -57,9 +50,7 @@ func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
     return level < 0.0 ? 0.0 : (level > 1.0 ? 1.0 : level)
 }
 
-/// A labelled slider position. The name is a catalogue key, not English: each
-/// language picks its own word for each anchor, and the anchor stays at the
-/// same dose whatever it is called (LANGUAGE.md §5).
+/// A labelled slider position.
 public struct DonenessAnchor: Sendable, Codable {
     public let key: CopyKey
     public let level: Double
@@ -72,10 +63,8 @@ public struct DonenessAnchor: Sendable, Codable {
 
 public struct CookResult: Sendable, Codable {
     public let cookTimeS: Double
-    /// Highest temperature the yolk centre ever reaches, carryover included.
     public let peakYolkC: Double
     public let peakYolkTimeS: Double
-    /// Yolk centre at the moment the egg leaves the water.
     public let yolkAtPullC: Double
     public let yolkDoseMin: Double
     public let whiteDoseMin: Double
@@ -88,7 +77,6 @@ public struct CookResult: Sendable, Codable {
     }
 }
 
-/// Run one cook and report what it does to the egg.
 public func simulate(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double
 ) -> CookResult {
@@ -108,9 +96,6 @@ public func simulate(
     var pullRecorded = false
     var prevYolk = setup.eggStartC
     var peakDoseRate = 0.0
-    // Captured when the egg leaves the water: an ice bath or a tap blends out
-    // of it, and a bowl warms by what the egg's mean has fallen since. On the
-    // counter the surface needs nothing but the egg's own state.
     var waterAtPull = initialSurface
     var meanAtPull = setup.eggStartC
 
@@ -148,8 +133,6 @@ public func simulate(
             pullRecorded = true
         }
 
-        // Stop once the egg is past its peak and the remaining dose rate is a
-        // millionth of the peak: further integration cannot change the answer.
         let rate = pow(10.0, (yolkCentre - Constants.tRefYolkC) / Constants.zYolk)
         if rate > peakDoseRate { peakDoseRate = rate }
         if t > cookTimeS && yolkCentre < prevYolk && rate < 1e-6 * peakDoseRate { break }
@@ -172,11 +155,6 @@ public func simulate(
 private func yolkOf(_ r: CookResult) -> Double { r.yolkDoseMin }
 private func whiteOf(_ r: CookResult) -> Double { r.whiteDoseMin }
 
-/// Cook time in [lo, hi] at which `metric` first reaches `target`, assuming the
-/// metric is monotonic across that bracket. Returns the UPPER end of the final
-/// bracket: the shortest cook known to meet the target. The midpoint would be
-/// as accurate but could sit a hair short, and callers compare the dose at the
-/// answer against the target.
 private func bisectBetween(
     egg: Egg, setup: CookSetup, params: ModelParams,
     target: Double, metric: (CookResult) -> Double, loS: Double, hiS: Double
@@ -194,8 +172,6 @@ private func bisectBetween(
     return hi
 }
 
-/// Bisect the whole range. Both doses increase monotonically with cook time
-/// while the water is held at the boil, so this is exact there.
 private func bisect(
     egg: Egg, setup: CookSetup, params: ModelParams,
     target: Double, metric: (CookResult) -> Double
@@ -208,19 +184,10 @@ private func bisect(
 
 public struct Solution: Sendable, Codable {
     public let result: CookResult
-    /// False when the requested doneness cannot be reached without leaving the
-    /// white undercooked.
     public let reachable: Bool
-    /// Shortest cook that still sets the white.
     public let minCookTimeS: Double
-    /// Softest yolk doneness achievable, as a slider position.
     public let softestLevel: Double
-    /// Hardest achievable. 1 whenever the water stays at the boil; less when
-    /// the heat is off and the pan runs out before the yolk gets there.
     public let hardestLevel: Double
-    /// False when the white never sets at all - only possible with the heat
-    /// off, where the water can fall past the white's target while the egg is
-    /// still in it.
     public let whiteSets: Bool
 
     enum CodingKeys: String, CodingKey {
@@ -228,7 +195,6 @@ public struct Solution: Sendable, Codable {
     }
 }
 
-/// Solve for the cook time that delivers the requested doneness.
 public func solveCookTime(
     egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness
 ) -> Solution {
@@ -244,7 +210,6 @@ public func solveCookTime(
     let whiteSets = atMin.whiteDoseMin >= doneness.whiteDoseMin
 
     if atMin.yolkDoseMin >= doneness.yolkDoseMin {
-        // Even the shortest white-setting cook overcooks the yolk.
         return Solution(
             result: atMin, reachable: false, minCookTimeS: minCook,
             softestLevel: softestLevel, hardestLevel: 1.0, whiteSets: whiteSets
@@ -263,8 +228,6 @@ public func solveCookTime(
 
 // MARK: - standing
 
-/// Both doses sampled at every scan step. One pass answers every question the
-/// standing solver has.
 private struct DoseCurve {
     var timesS: [Double] = []
     var yolk: [Double] = []
@@ -292,14 +255,6 @@ private func indexOfMax(_ values: [Double]) -> Int {
     return best
 }
 
-/// First cook time at which a sampled dose reaches `target`, WITHOUT assuming
-/// monotonicity - or -1 if it never does.
-///
-/// With the heat off, pulling later means pulling from cooler water, so the
-/// carryover that follows is smaller and past a point the total dose FALLS with
-/// a longer cook. Bisection on that does not lose accuracy, it lands anywhere.
-/// So: walk the samples to the first crossing, then bisect inside that one
-/// step, where the function is still rising.
 private func firstCrossing(
     egg: Egg, setup: CookSetup, params: ModelParams,
     curve: DoseCurve, values: [Double], target: Double, metric: (CookResult) -> Double
@@ -315,15 +270,9 @@ private func firstCrossing(
     return -1.0
 }
 
-/// The same question with the heat off, where neither dose is monotonic in cook
-/// time and every shortcut above stops being valid. The scan runs to the
-/// horizon regardless of where the target is crossed, so `hardestLevel` is the
-/// true ceiling of this pan and not merely "at least what was asked".
 private func solveStanding(
     egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness
 ) -> Solution {
-    // The heat goes off at the boil: after the ramp on a cold start, at once on
-    // a hot one, whose remembered time to boil has no business here.
     let heatOffS = setup.startMode == .cold ? setup.timeToBoilS : 0.0
     let curve = scanStanding(
         egg: egg, setup: setup, params: params, horizonS: heatOffS + standingHorizonS
@@ -347,10 +296,6 @@ private func solveStanding(
     let softestLevel = sliderFromYolkDose(atMin.yolkDoseMin)
 
     if !whiteSets || yolkCook < 0 {
-        // Either the water never gets the white where it needs to go, or it
-        // runs out before the yolk does. Answer with the furthest this pan
-        // goes - but the START of the plateau, since waiting past it achieves
-        // nothing.
         let knee = firstCrossing(
             egg: egg, setup: setup, params: params, curve: curve, values: curve.yolk,
             target: standingKnee * maxDose, metric: yolkOf
@@ -370,7 +315,6 @@ private func solveStanding(
         )
     }
 
-    // Both constraints have to hold at the same pull: take the later crossing.
     let cook = yolkCook > whiteCook ? yolkCook : whiteCook
     return Solution(
         result: simulate(egg: egg, setup: setup, params: params, cookTimeS: cook),
