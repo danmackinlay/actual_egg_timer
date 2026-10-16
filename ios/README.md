@@ -26,51 +26,25 @@ double, which is all that differing libm implementations of `exp`, `sin` and
 
 ## The core, module by module
 
-Every module in `src/core/` has a Swift twin, held to it by a fixture. This
-table is the map; each file's header comment is its documentation, and the
-exports are its API. Apps call what is exported and nothing else, and
-anything both apps must agree on lives here, not in either app. What an app
-only stores, reads back or merges is its own (`DECISIONS.md` 126): the web's
-in `src/ui`, tested by `test/*.test.ts`; this app's in `EggTimerApp`, tested
-by `EggTimerAppTests`. The share queue is `src/ui/shareState.ts` and
-`ShareQueue.swift`; the stored cook `src/ui/storedCook.ts` and
-`StoredCook.swift`; the settings `src/ui/settings.ts` and `Settings.swift`;
-the table of stores `src/ui/stores.ts` and `StoreRegistry.swift`; and the
-web's alone, which of its tabs runs the app, `src/ui/owner.ts`.
+Every module in `src/core/` has a Swift twin of the same name in
+`EggTimerCore`, held to it by a fixture; each conformance test names the
+fixture it reads. Each file's header comment is its documentation, and the
+exports are its API. Three are otherwise:
+the named constants, which `npm run swift:constants` writes into
+`Constants.generated.swift` (and `EggTimerCopy`'s); the catalogue's renderer
+and the locale formats (`copy.ts`, `format.ts`), which are `EggTimerCopy`,
+so the widget links the words without the physics; and the catalogue's keys,
+which `npm run copy:keys` writes into `EggTimerCopy`'s `CopyKeys.swift`.
 
-| module | what it answers | main entry points | Swift | fixture |
-|---|---|---|---|---|
-| `constants.ts`, and every module's named constants | every physical and model constant (README §6), and each module's own | - | `Constants.generated.swift` (and `EggTimerCopy`'s), made by `npm run swift:constants` | none: `swift:constants --check` |
-| `thermo.ts` | altitude and pressure to a boiling point | `boilingPointAtAltitude` | `Thermo.swift` | `core.json` |
-| `geometry.ts` | an egg from its mass; the size classes by region | `eggFromMass`, `sizeClassesFor` | `Geometry.swift` | `core.json` |
-| `kinetics.ts` | the Arrhenius dose | `createDose`, `accumulateDose` | `Kinetics.swift` | `core.json` |
-| `sphere.ts` | the modal/Duhamel solver | `createSphere`, `stepSphere` | `Sphere.swift` | `core.json` |
-| `protocol.ts` | the water's schedule: ramp, dip, heat off, cooling | `bathTemperature`, `panTimeConstant` | `Protocol.swift` | via `scenarios.json` |
-| `solve.ts` | the cook time for a doneness, and what is reachable | `solveCookTime`, `simulate`, `donenessFromSlider` | `Solve.swift` | `scenarios.json` |
-| `section.ts` | the egg in cross-section, a tick at a time: each ring's temperature and how set; the egg the settings aim for | `createSection`, `advanceSection`, `sectionView`, `previewSection` | `Section.swift` (`EggSection`) | `section.json` |
-| `sousvide.ts` | the isothermal limit | `sousVideEstimate` | `SousVide.swift` | `sousvide.json` |
-| `doseGrid.ts` | the cached dose surface and its lookups | `buildDoseGrid`, `buildRequestedGrid` | `DoseGrid.swift` | `calibration.json` |
-| `infer.ts` | the particle filter: prior, likelihood, fold | `createPrior`, `updatePosterior`, `probeLikelihood` | `Infer.swift` | `calibration.json`, `probe.json` |
-| `record.ts` | the egg log, and the posterior as its replay; the record both apps make of a cook; what a launch keeps of the store; the calibration grid, and the filter's size and seed | `recordFor`, `parseLog`, `foldRecord`, `replay`, `loadDecision`, `calibrationGrid` | `Record.swift` | `record.json` |
-| `population.ts` | the population a prior is drawn from (E7), and its centre | `parsePopulation`, `priorStart` | `Population.swift` | `prior.json` |
-| `decide.ts` | the chosen time and its odds, and the nudge (E8); the key of a decision surface, every number to the bit, which the plan and each app's own caches use | `decide`, `chooseCookTime`, `hitOdds`, `nudgeSeconds`, `inputsKey` | `Decide.swift` | `decide.json` |
-| `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
-| `certainty.ts` | how sure, in words: very certain, a ballpark or a wild guess; the 90% interval in words; a likely time range | `certaintyAt`, `wordCertainty`, `askedWord` | `Certainty.swift` | `certainty.json` |
-| `reach.ts` | the odds at every level, the shading, the advice, and the answer on screen with its time decided | `oddsProfile`, `answerAt`, `decideAnswer`, `protocolAdvice` | `Reach.swift` | `reach.json` |
-| `inputs.ts` | what a cook enters and a fresh install starts from: the bounds on every number, the defaults, the egg-temperature buttons, the room the model is told about | `LIMITS`, `DEFAULTS`, `clamp`, `roomInUse`, `ambientFor` | `Inputs.swift` | `inputs.json` |
-| `slider.ts` | the doneness slider: its grid, the nearest label, which words can be reached, the yolk temperature asked for, and the refusal verdict | `snapUp`, `anchorNear`, `anchorReachable`, `verdictFor` | `Slider.swift` | `slider.json` |
-| `texture.ts` | the texture bands, and the keys the note is said in | `textureFor`, `textureNoteKeys` | `Texture.swift` | `texture.json` |
-| `boil.ts` | boil memory: a boil remembered by volume, and the estimate for a volume | `rememberBoil`, `estimateTimeToBoil` | `Boil.swift` | `boil.json` |
-| `sounds.ts` | the alarm sounds and each sound's timing | `alarmPeriod_s`, `alarmRepeats` | `Sounds.swift` | `sounds.json` |
-| `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
-| `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
-| `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
-| `running.ts` | a running cook: its phases over its deadlines, its start and the log of everything since, folded, the plan derived from them, each move the cook makes | `phaseAt`, `cookSetupOf`, `replan`, `eventsDue`, `writeEvents`, `startCook`, `foldCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember` | `Running.swift` | `running.json` |
-| `step.ts` | the running cook as one state machine: an event in, the cook, its plan, what it waits for and the effects out (persist, alarms, ring, log, forget, send) | `step` | `Step.swift` | `step.json` |
-| `readout.ts` | what the readout says while a cook runs: keys and the numbers they take | `readoutAt` | `Readout.swift` | `step.json` |
-| `share.ts` | sharing's contract with the server: an id, the number each egg is filed under, what a sender makes of the endpoint's answer, when a deletion is done | `isUid` (the server's too), `nextSeq`, `shareReply`, `deletionDone` | `Share.swift` | `share.json` |
-| `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
-| `copyKeys.ts`, made by `npm run copy:keys` | the catalogue's keys, and each key's arguments | `CopyKey`, `CopyKeyArgs` | `EggTimerCopy`: `CopyKeys.swift`, made with it | none: `copy:keys --check` |
+Apps call what is exported and nothing else, and anything both apps must
+agree on lives here, not in either app. What an app only stores, reads back
+or merges is its own (`DECISIONS.md` 126): the web's in `src/ui`, tested by
+`test/*.test.ts`; this app's in `EggTimerApp`, tested by `EggTimerAppTests`.
+The share queue is `src/ui/shareState.ts` and `ShareQueue.swift`; the stored
+cook `src/ui/storedCook.ts` and `StoredCook.swift`; the settings
+`src/ui/settings.ts` and `Settings.swift`; the table of stores
+`src/ui/stores.ts` and `StoreRegistry.swift`; and the web's alone, which of
+its tabs runs the app, `src/ui/owner.ts`.
 
 The Swift core leaves out what no app calls: the
 measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,
