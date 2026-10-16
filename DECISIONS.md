@@ -902,7 +902,10 @@ October:
     R-hat below 1.01, a bulk ESS of 100 a chain, no divergent transition.
     By hand, simulation-based calibration (`python -m eggfit sbc`): the
     nine globals' ranks and the data's log likelihood's, one verdict over
-    the ten by their ECDF bands and Simes. A fit
+    the ten by their ECDF bands and Simes. It runs every repetition and
+    never stops early (the owner, 17 October 2026): early stopping was
+    asked for when a run took an hour and a half, and a run of minutes
+    would save almost nothing by it. A fit
     whose diagnostics fail is written nowhere unless forced; the published
     `fixtures/population.json` carries its diagnostics, a forced one is
     named by its id, and both cores refuse a file that does not vouch for
