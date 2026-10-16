@@ -50,9 +50,4 @@ struct BoilMemoryConformance {
             )
         }
     }
-
-    @Test("the fallback is the same fallback")
-    func fallback() throws {
-        try expectClose(defaultTimeToBoilS, Fixtures.number("boil.json", "defaultSeconds"), "defaultTimeToBoilS")
-    }
 }

@@ -21,19 +21,6 @@ private func fixtureGrid() throws -> DoseGrid {
 
 @Suite("The thermometer")
 struct ProbeConformance {
-    @Test("the constants match the reference")
-    func constants() throws {
-        let c = try Fixtures.object("probe.json", "constants")
-        try expectClose(probeInstrumentSdC, c.num("instrumentSd_C"), "instrument sd")
-        try expectClose(probeHandlingMeanC, c.num("handlingMean_C"), "handling mean")
-        try expectClose(probeUnrelated, c.num("unrelated"), "unrelated share")
-        try expectClose(probeUnrelatedSpanC, c.num("unrelatedSpan_C"), "unrelated span")
-        try expectClose(probeAlphaSds, c.num("alphaSds"), "alpha sds")
-        try expectClose(probeMarginC, c.num("margin_C"), "margin")
-        try expectClose(coolingSeconds, c.num("coolingSeconds"), "cooling fallback")
-        try expectClose(coolingMinSeconds, c.num("coolingMinSeconds"), "cooling floor")
-    }
-
     @Test("the peak in every cell of the grid, and between them")
     func grid() throws {
         let grid = try fixtureGrid()

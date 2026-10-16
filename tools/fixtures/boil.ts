@@ -4,7 +4,7 @@
  * and not.
  */
 
-import { type BoilMemory, DEFAULT_TIME_TO_BOIL_S, estimateTimeToBoil, rememberBoil } from '../../src/core/boil.ts';
+import { type BoilMemory, estimateTimeToBoil, rememberBoil } from '../../src/core/boil.ts';
 
 /* Two pans remembered in both orders, so a port that iterates an unordered map
  * is caught rather than merely lucky. */
@@ -13,7 +13,7 @@ const BOIL_MEMORY_BACKWARD: BoilMemory = rememberBoil(rememberBoil({}, 3, 900), 
 const BOIL_QUERY_LITRES = [0.5, 1, 1.5, 2, 2.5, 3, 4, 12];
 
 export const boilFixture = {
-  about: 'Boil memory: a measurement blended, one refused, the estimate for every volume from two pans remembered in both orders, and the fallback. src/core/boil.ts.',
+  about: 'Boil memory: a measurement blended, one refused, the estimate for every volume from two pans remembered in both orders. src/core/boil.ts.',
   blend: [
     { previous: null, measured: 480, result: estimateTimeToBoil(rememberBoil({}, 2, 480), 2) },
     {
@@ -30,5 +30,4 @@ export const boilFixture = {
     forward: estimateTimeToBoil(BOIL_MEMORY_FORWARD, litres),
     backward: estimateTimeToBoil(BOIL_MEMORY_BACKWARD, litres),
   })),
-  defaultSeconds: DEFAULT_TIME_TO_BOIL_S,
 };

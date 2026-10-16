@@ -26,14 +26,6 @@ func profileOf(_ json: [String: Any]) throws -> OddsProfile {
 
 @Suite("Reach")
 struct ReachConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("reach.json", "constants")
-        #expect(try profileStep == Int(c.num("profileStep")))
-        #expect(try adviceGain == c.num("adviceGain"))
-        #expect(try shadeBestMin == c.num("shadeBestMin"))
-    }
-
     @Test("no shading when the best chance is under a twentieth")
     func shadingThreshold() throws {
         for row in try Fixtures.list("reach.json", "shading") {

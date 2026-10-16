@@ -12,11 +12,6 @@ import Foundation
 
 @Suite("Snapping and the labels match the reference implementation")
 struct SliderConformance {
-    @Test("the slider grid is the same grid")
-    func steps() throws {
-        try expectClose(sliderSteps, Fixtures.number("slider.json", "steps"), "sliderSteps")
-    }
-
     @Test("snapUp, snapDown, anchorNear and the target temperature, every case")
     func cases() throws {
         for c in try Fixtures.list("slider.json", "cases") {

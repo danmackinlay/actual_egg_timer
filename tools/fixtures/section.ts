@@ -7,7 +7,7 @@ import { eggFromMass } from '../../src/core/geometry.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.ts';
 import {
-  SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, previewSection, sectionView,
+  advanceSection, createSection, previewSection, sectionView,
 } from '../../src/core/section.ts';
 import { appSetup } from '../common.ts';
 
@@ -71,7 +71,6 @@ export const sectionFixture = {
   about: 'The egg in cross-section, carried forward a tick at a time: each ring\'s temperature, dose and how set, at each tick; and the egg the settings aim for. src/core/section.ts.',
   egg: { mass_kg: EGG.mass_kg },
   params: DEFAULT_PARAMS,
-  samples: { yolk: SECTION_YOLK_SAMPLES, white: SECTION_WHITE_SAMPLES },
   whiteTargets: [WHITE_DOSE_TARGET, MOVED_WHITE_TARGET],
   rings: (() => {
     const s = createSection(EGG, appSetup(), DEFAULT_PARAMS);

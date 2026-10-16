@@ -17,7 +17,6 @@ struct PriorConformance {
         let file = try Fixtures.load("prior.json")
         let count = try Int(file.num("count"))
         let seed = try Int32(file.num("seed"))
-        #expect(try literaturePopulation.id == file.str("literatureId"))
         for row in try file.rows("populations") {
             let name = try row.str("name")
             let pop = try #require(parsePopulation(data(row["file"] as Any)), "\(name) reads")

@@ -12,8 +12,8 @@ import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
-  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, RESTORE_WINDOW_S, type RecordContext, type RunningCook,
-  SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_MAX_STEPS, SLOW_HOB_WHEN_LEFT_S, type SlowHobMemo, type SlowHobPlace,
+  COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RecordContext, type RunningCook,
+  type SlowHobMemo, type SlowHobPlace,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf,
   corrected, earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, phaseAt, pullStands,
   replan, slowHobDue, solutionAsRan, startCook, startCorrected, stillIn, withBoil,
@@ -660,18 +660,11 @@ function stored(node: unknown): unknown {
 
 export const runningFixture = stored({
   about: 'A running cook: its egg and pot, the moves the cook makes, the plan derived from it, and the phase at every boundary. src/core/running.ts.',
-  constants: {
-    slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
-    slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS, restoreWindow_s: RESTORE_WINDOW_S,
-  },
   setups: setups,
   moves: moves,
   plans: plans,
   remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
   phase: {
-    coolingSeconds: COOLING_SECONDS,
-    pullGraceSeconds: PULL_GRACE_SECONDS,
-    slowHob: { whenLeft_s: SLOW_HOB_WHEN_LEFT_S, extra_s: SLOW_HOB_EXTRA_S, every_s: SLOW_HOB_EVERY_S },
     /* Two timelines from the same cook, differing only in whether there is a
      * cooling step to time. The counter one matters most: with no cooling
      * deadline, a port could fall from COOKING straight to DONE and never show

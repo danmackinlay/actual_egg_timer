@@ -19,12 +19,6 @@ import Foundation
 
 @Suite("The isothermal limit matches the reference implementation")
 struct SousVideConformance {
-    @Test("the bath the app offers is the same bath")
-    func bath() throws {
-        try expectClose(sousVideBathC, Fixtures.number("sousvide.json", "bath_C"), "sousVideBathC")
-        try expectClose(sousVideModelFloorC, Fixtures.number("sousvide.json", "modelFloor_C"), "sousVideModelFloorC")
-    }
-
     /// The bisection is the only iteration in this module, and the fixture
     /// carries its answer with the R^2/alpha scaling divided out - so a bracket
     /// a port narrowed, or a comparison it flipped, fails here on a bare number

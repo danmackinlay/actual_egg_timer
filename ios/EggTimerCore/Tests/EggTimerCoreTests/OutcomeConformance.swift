@@ -16,14 +16,6 @@ private func decideGrid() throws -> DoseGrid {
 
 @Suite("Outcome")
 struct OutcomeConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("outcome.json", "constants")
-        #expect(try leanRatio == c.num("leanRatio"))
-        #expect(try levelLowQ == c.num("levelLowQ"))
-        #expect(try levelHighQ == c.num("levelHighQ"))
-    }
-
     @Test("the answers, the level range and the lean, from four posteriors")
     func outcomes() throws {
         let file = try Fixtures.load("outcome.json")

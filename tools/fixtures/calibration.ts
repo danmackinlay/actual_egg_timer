@@ -5,8 +5,7 @@
 import { eggFromMass } from '../../src/core/geometry.ts';
 import { type GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.ts';
 import {
-  FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
-  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, type WhiteReport, YOLK_WORD_CUTS, type YolkWord, answerLikelihood, createPrior,
+  type WhiteReport, type YolkWord, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
   yolkWordProbabilities, yolkWordProbit,
 } from '../../src/core/infer.ts';
@@ -185,17 +184,6 @@ export const calibrationFixture = {
     logDose: c.logDose,
     cookTime_s: cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose),
   })),
-  likelihood: {
-    feedbackBand: FEEDBACK_BAND,
-    unrelated: UNRELATED,
-    noiseMedian: NOISE_MEDIAN,
-    noiseLogSd: NOISE_LOG_SD,
-    whiteOffsetSd: WHITE_OFFSET_SD,
-    whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
-    whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
-    kernelDiscount: KERNEL_DISCOUNT,
-    yolkWordCuts: YOLK_WORD_CUTS.slice(),
-  },
   whiteResample: WHITE_RESAMPLE_CASE,
   // The target every readout's `predict` is made for.
   logNominalTarget: NOMINAL_TARGET,

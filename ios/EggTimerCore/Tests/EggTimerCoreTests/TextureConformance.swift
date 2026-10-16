@@ -3,23 +3,11 @@ import Foundation
 @testable import EggTimerCore
 
 /// Conformance against `fixtures/texture.json`, generated from
-/// `src/core/texture.ts`: the bands' edges, every boundary from both sides,
-/// and the keys the texture note is said in.
+/// `src/core/texture.ts`: every band boundary from both sides, and the keys
+/// the texture note is said in.
 
 @Suite("Texture bands match the reference implementation")
 struct TextureConformance {
-    @Test("the bands' edges")
-    func edges() throws {
-        let white = try Fixtures.object("texture.json", "whiteBandBelow_C")
-        let yolk = try Fixtures.object("texture.json", "yolkBandBelow_C")
-        #expect(try WhiteBandBelowC.justSet == white.num("justSet"))
-        #expect(try WhiteBandBelowC.set == white.num("set"))
-        #expect(try YolkBandBelowC.liquid == yolk.num("liquid"))
-        #expect(try YolkBandBelowC.soft == yolk.num("soft"))
-        #expect(try YolkBandBelowC.jammy == yolk.num("jammy"))
-        #expect(try YolkBandBelowC.fudgy == yolk.num("fudgy"))
-    }
-
     @Test("every band boundary, from both sides, and a white that never sets")
     func cases() throws {
         var runny = 0

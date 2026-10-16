@@ -12,49 +12,8 @@ import Foundation
 /// wrong in the TypeScript first, and `npm test` is what should catch it.
 ///
 /// The tolerance, and why it is 1e-12, is `conformanceTolerance` in Support.swift.
-
-@Suite("Constants match the reference implementation")
-struct ConstantsConformance {
-    @Test("every constant the fixtures carry")
-    func constants() throws {
-        let fixture = try Fixtures.object("core.json", "constants")
-        let swift: [(name: String, value: Double)] = [
-            ("MODE_COUNT", Double(Constants.modeCount)),
-            ("ALPHA_DEFAULT", Constants.alphaDefault),
-            ("ALPHA_REL_SD", Constants.alphaRelSD),
-            ("YOLK_RADIUS_FRAC", Constants.yolkRadiusFrac),
-            ("Z_YOLK", Constants.zYolk),
-            ("TREF_YOLK_C", Constants.tRefYolkC),
-            ("Z_WHITE", Constants.zWhite),
-            ("TREF_WHITE_C", Constants.tRefWhiteC),
-            ("H_EFF", Constants.hEff),
-            ("K_EGG", Constants.kEgg),
-            ("RAMP_R", Constants.rampR),
-            ("TAU_STANDING_SCALE", Constants.tauStandingScale),
-            ("TAU_STANDING_REF_S", Constants.tauStandingRefS),
-            ("STANDING_REF_LITRES", Constants.standingRefLitres),
-            ("STANDING_VOLUME_EXPONENT", Constants.standingVolumeExponent),
-            ("H_AIR", Constants.hAir),
-            ("WET_SHELL_KG_M2", Constants.wetShellKgM2),
-            ("LATENT_HEAT_WATER", Constants.latentHeatWater),
-            ("T_ICE_BATH_C", Constants.tIceBathC),
-            ("T_COLD_TAP_C", Constants.tColdTapC),
-            ("T_ROOM_C", Constants.tRoomC),
-            ("TAU_PLUNGE", Constants.tauPlunge),
-            ("TAU_DIP_RECOVERY", Constants.tauDipRecovery),
-            ("C_WATER", Constants.cWater),
-            ("C_EGG", Constants.cEgg),
-            ("RHO_EGG", Constants.rhoEgg),
-            ("EGG_VOLUME_COEFF", Constants.eggVolumeCoeff),
-            ("EGG_LENGTH_RATIO", Constants.eggLengthRatio),
-            ("DT_SIM", Constants.dtSim),
-            ("CARRYOVER_WINDOW", Constants.carryoverWindow),
-        ]
-        for constant in swift {
-            try expectClose(constant.value, fixture.num(constant.name), constant.name)
-        }
-    }
-}
+/// The constants are not compared: they are the TypeScript's, written into
+/// Constants.generated.swift by `npm run swift:constants`.
 
 @Suite("Sphere")
 struct SphereConformance {

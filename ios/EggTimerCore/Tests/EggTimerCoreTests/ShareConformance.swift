@@ -18,7 +18,6 @@ struct ShareConformance {
     @Test("the number each egg is filed under")
     func seq() throws {
         let seq = try Fixtures.object("share.json", "seq")
-        #expect(Double(firstSeq) == (try seq.num("first")))
         for c in try seq.rows("next") {
             #expect(try Double(nextSeq(Int(c.num("seq")))) == c.num("next"), "\(c)")
         }

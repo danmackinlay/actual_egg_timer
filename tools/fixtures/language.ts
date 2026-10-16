@@ -60,8 +60,6 @@ export function languageFixture(): Record<string, unknown> {
 
   return {
     about: 'The switch into the English of 1750: tags and transitions. src/core/language.ts.',
-    defaultLanguage: DEFAULT_LANGUAGE,
-    periodLanguage: PERIOD_LANGUAGE,
     tags,
     transitions,
   };

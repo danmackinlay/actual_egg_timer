@@ -19,12 +19,11 @@ import { eggFromMass } from '../../src/core/geometry.ts';
 import type { CookSetup } from '../../src/core/protocol.ts';
 import { lookupPeakYolk_C } from '../../src/core/doseGrid.ts';
 import {
-  PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   type Posterior, type WhiteReport, type YolkWord, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../../src/core/infer.ts';
 import {
-  COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor, plausibleProbeRange_C,
+  coolingSecondsFor, plausibleProbeRange_C,
   probeMomentFor,
 } from '../../src/core/running.ts';
 
@@ -122,16 +121,6 @@ export function probeFixture(): Record<string, unknown> {
 
   return {
     about: 'The thermometer (E4): the peak on the surface, the reading\'s likelihood, folds with readings, and when a probe is asked for. src/core/infer.ts, running.ts.',
-    constants: {
-      instrumentSd_C: PROBE_INSTRUMENT_SD_C,
-      handlingMean_C: PROBE_HANDLING_MEAN_C,
-      unrelated: PROBE_UNRELATED,
-      unrelatedSpan_C: PROBE_UNRELATED_SPAN_C,
-      alphaSds: PROBE_ALPHA_SDS,
-      margin_C: PROBE_MARGIN_C,
-      coolingSeconds: COOLING_SECONDS,
-      coolingMinSeconds: COOLING_MIN_SECONDS,
-    },
     egg: { mass_kg: CALIB_EGG.mass_kg },
     setup: CALIB_SETUP,
     grid: { ...CALIB_GRID_SPEC, peakYolk_C: grid.peakYolk_C },

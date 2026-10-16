@@ -12,7 +12,7 @@ import { decide, decisionInputs } from '../../src/core/decide.ts';
 import type { DoseGrid } from '../../src/core/doseGrid.ts';
 import { logYolkTarget, solveCookTime } from '../../src/core/solve.ts';
 import {
-  ADVICE_GAIN, type LevelOdds, type OddsProfile, PROFILE_STEP,
+  type LevelOdds, type OddsProfile, 
   SHADE_BEST_MIN, adviceWanted, answerAt, askedNear, decideAnswer, envelopeBounds, lowOddsAt, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.ts';
@@ -224,11 +224,6 @@ const ADVICE_PROFILE: OddsProfile = {
 
 export const reachFixture = {
   about: 'The odds and the certainty at every level, the range that is not a wild guess, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
-  constants: {
-    profileStep: PROFILE_STEP,
-    adviceGain: ADVICE_GAIN,
-    shadeBestMin: SHADE_BEST_MIN,
-  },
   profiles: reachProfiles,
   owner: ownerDecided,
   neverSets: neverSets,

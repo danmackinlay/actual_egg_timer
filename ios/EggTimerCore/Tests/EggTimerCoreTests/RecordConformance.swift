@@ -154,18 +154,6 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 
 @Suite("The record")
 struct RecordConformance {
-    /// Stamped into every iOS record, so a record from either app names the
-    /// same schema, prior and model; and the likelihood beside the stored
-    /// posterior, so either app replays on the same change.
-    @Test("the record's version, prior, model and likelihood are the reference's")
-    func identity() throws {
-        let file = try Fixtures.load("record.json")
-        #expect(try recordVersion == Int(file.num("version")))
-        #expect(try literaturePopulation.id == file.str("prior"))
-        #expect(try modelID == file.str("model"))
-        #expect(try likelihoodID == file.str("likelihood"))
-    }
-
     @Test("which records a loader trusts, case by case")
     func validation() throws {
         for c in try Fixtures.list("record.json", "cases") {
@@ -269,8 +257,6 @@ struct RecordConformance {
     /// The same store makes the same results file, character for character.
     @Test("the results file is the TypeScript's, character for character")
     func resultsFiles() throws {
-        let section = try Fixtures.object("record.json", "resultsFile")
-        #expect(try Int(section.num("version")) == resultsFileVersion)
         for n in try Fixtures.list("record.json", "resultsFile.names") {
             #expect(try resultsFileName(day: n.str("day")) == n.str("name"))
         }
@@ -390,13 +376,6 @@ struct CalibrationGridConformance {
     /// The one that matters most: these six numbers are handed to
     /// `buildDoseGrid`, so they decide what the filter can see and therefore
     /// what the posterior becomes.
-    @Test("the alpha factors are the same factors")
-    func factors() throws {
-        let grid = try Fixtures.object("record.json", "calibrationGrid")
-        #expect(try calibrationAlphaLow == grid.num("alphaLow"))
-        #expect(try calibrationAlphaHigh == grid.num("alphaHigh"))
-    }
-
     @Test("extent and resolution, including the floor on a short cook")
     func cases() throws {
         for c in try Fixtures.list("record.json", "calibrationGrid.cases") {
@@ -411,12 +390,5 @@ struct CalibrationGridConformance {
             try expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
             try expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
         }
-    }
-
-    @Test("the particle count and seed are the same kitchen")
-    func particles() throws {
-        let calibration = try Fixtures.object("record.json", "calibration")
-        try expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
-        try expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
     }
 }

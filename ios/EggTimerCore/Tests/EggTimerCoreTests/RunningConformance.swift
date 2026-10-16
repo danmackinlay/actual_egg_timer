@@ -133,17 +133,6 @@ struct RunningConformance {
         }
     }
 
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("running.json", "constants")
-        #expect(try slowHobWhenLeftS == c.num("slowHobWhenLeft_s"))
-        #expect(try slowHobExtraS == c.num("slowHobExtra_s"))
-        #expect(try slowHobEveryS == c.num("slowHobEvery_s"))
-        #expect(try slowHobMaxSteps == Int(c.num("slowHobMaxSteps")))
-        #expect(try pullGraceSeconds == c.num("pullGrace_s"))
-        #expect(try restoreWindowS == c.num("restoreWindow_s"))
-    }
-
     /// Every plan, made as the app makes it: with no surface, which says the
     /// pot it wants, then on that surface, rebuilt from the fixture's extent.
     /// A surface for another pot is the other cook's, and must go unread.
@@ -481,16 +470,5 @@ struct PhaseConformance {
                 #expect(try asking.rawValue == sample.str("asking"), "\(name) at \(nowS) s, asking")
             }
         }
-    }
-
-    @Test("the cooling step and the pull grace are the same lengths")
-    func constants() throws {
-        let phase = try Fixtures.object("running.json", "phase")
-        try expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
-        try expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
-        let slowHob = try phase.object("slowHob")
-        try expectClose(slowHobWhenLeftS, slowHob.num("whenLeft_s"), "slowHobWhenLeftS")
-        try expectClose(slowHobExtraS, slowHob.num("extra_s"), "slowHobExtraS")
-        try expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
     }
 }

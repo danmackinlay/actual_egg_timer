@@ -204,23 +204,6 @@ struct InferenceConformance {
         try expectPosterior(post, after, "whiteResample", grid, target)
     }
 
-    @Test("the likelihood's constants and priors match the reference")
-    func constants() throws {
-        let c = try loadCalibration()
-        let l = try c.file.object("likelihood")
-        try expectClose(feedbackBand, l.num("feedbackBand"), "FEEDBACK_BAND")
-        try expectClose(unrelated, l.num("unrelated"), "UNRELATED")
-        try expectClose(noiseMedian, l.num("noiseMedian"), "NOISE_MEDIAN")
-        try expectClose(noiseLogSd, l.num("noiseLogSd"), "NOISE_LOG_SD")
-        try expectClose(whiteOffsetSd, l.num("whiteOffsetSd"), "WHITE_OFFSET_SD")
-        try expectClose(whiteFirmGapMedian, l.num("whiteFirmGapMedian"), "WHITE_FIRM_GAP_MEDIAN")
-        try expectClose(whiteFirmGapLogSd, l.num("whiteFirmGapLogSd"), "WHITE_FIRM_GAP_LOG_SD")
-        try expectClose(kernelDiscount, l.num("kernelDiscount"), "KERNEL_DISCOUNT")
-        let cuts = try l.numbers("yolkWordCuts")
-        #expect(cuts.count == yolkWordCuts.count, "four cutpoints between five words")
-        for k in cuts.indices { expectClose(yolkWordCuts[k], cuts[k], "YOLK_WORD_CUTS[\(k)]") }
-    }
-
     /// The cuts are literals so that stored words keep their meaning; this
     /// fails when an anchor moves, so whoever moves one chooses what the
     /// stored words mean then (src/core/infer.ts, `YOLK_WORD_CUTS`).

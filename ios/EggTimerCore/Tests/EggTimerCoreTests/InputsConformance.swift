@@ -6,30 +6,15 @@ import Foundation
 /// `src/core/inputs.ts`.
 ///
 /// Everything it covers is a decision both apps make, so a copy that drifts
-/// shows on screen: the eggs in the pan, the default egg, the presets, the
-/// bounds on what a cook can enter.
+/// shows on screen: the room the model is told about, the egg-temperature
+/// buttons, and the size classes a region gets. The defaults, the bounds and
+/// the tables themselves are constants, the TypeScript's
+/// (Constants.generated.swift).
 
-@Suite("Defaults and bounds match the reference implementation")
+@Suite("The room and the presets match the reference implementation")
 struct DefaultsConformance {
-    /// Both apps open on the same eggs in the pan and the same egg.
-    @Test("a fresh install starts from the same kitchen")
-    func defaults() throws {
-        let d = try Fixtures.object("inputs.json", "defaults")
-        try expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
-        try expectClose(Defaults.customMinorMm, d.num("customMinor_mm"), "customMinor_mm")
-        try expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
-        try expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
-        try expectClose(Defaults.waterLitres, d.num("waterLitres"), "waterLitres")
-        try expectClose(Double(Defaults.eggCount), d.num("eggCount"), "eggCount")
-        try expectClose(Defaults.doneness, d.num("doneness"), "doneness")
-        try expectClose(Defaults.eggMassKg, d.num("eggMass_kg"), "eggMass_kg")
-        try expectClose(StartTempPresets.fridgeC, d.num("fridge_C"), "fridge preset")
-        try expectClose(StartTempPresets.roomC, d.num("room_C"), "room preset")
-    }
-
     @Test("the room follows the egg at the same threshold, and a measured room wins")
     func ambient() throws {
-        try expectClose(roomEggFromC, Fixtures.number("inputs.json", "roomEggFrom_C"), "roomEggFromC")
         for c in try Fixtures.list("inputs.json", "ambient") {
             let start = try c.num("eggStart_C")
             let room = try c.optionalNum("room_C")
@@ -54,51 +39,10 @@ struct DefaultsConformance {
             try expectClose(startTempPresetC(preset, roomC: room), c.num("eggStart_C"), "\(preset) preset")
         }
     }
-
-    @Test("every bound is the same bound")
-    func limits() throws {
-        let limits = try Fixtures.object("inputs.json", "limits")
-        let pairs: [(String, ClosedRange<Double>)] = [
-            ("mass_g", Limits.massG),
-            ("minor_mm", Limits.minorMm),
-            ("eggTemp_C", Limits.eggTempC),
-            ("room_C", Limits.roomC),
-            ("altitude_m", Limits.altitudeM),
-            ("waterLitres", Limits.waterLitres),
-            ("eggCount", Limits.eggCount),
-            ("doneness", Limits.doneness),
-            ("sizeIndex", Limits.sizeIndex),
-            ("timeToBoil_s", Limits.timeToBoilS),
-        ]
-        for (name, range) in pairs {
-            guard let bounds = limits[name] as? [String: Any] else {
-                Issue.record("fixtures/inputs.json has no limit \(name)")
-                continue
-            }
-            try expectClose(range.lowerBound, bounds.num("lo"), "\(name) lower bound")
-            try expectClose(range.upperBound, bounds.num("hi"), "\(name) upper bound")
-        }
-    }
 }
 
 @Suite("Size classes by region match the reference implementation")
 struct SizeClassConformance {
-    /// Every key and every mass, in order (what each label shows, in either
-    /// system, is UnitsConformance's). A US Large 8 g lighter than an EU
-    /// one is half a minute of cooking, so a table that differs by a row is a
-    /// different egg on the default path.
-    @Test("both tables are the same tables")
-    func tables() throws {
-        for (name, classes) in [("eu", sizeClasses), ("us", usSizeClasses)] {
-            let expected = try Fixtures.list("inputs.json", "sizeClasses.\(name)")
-            #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
-            for (actual, c) in zip(classes, expected) {
-                #expect(try actual.key.rawValue == c.str("key"), "\(name): \(actual.key)")
-                try expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
-            }
-        }
-    }
-
     @Test("the same regions get the American carton")
     func regions() throws {
         for c in try Fixtures.list("inputs.json", "sizeClasses.regions") {

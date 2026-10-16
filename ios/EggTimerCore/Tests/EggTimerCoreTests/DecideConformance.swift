@@ -37,18 +37,6 @@ private func expectSolution(_ s: Solution, _ json: [String: Any], _ label: Strin
 
 @Suite("Decide")
 struct DecideConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("decide.json", "constants")
-        #expect(try runnyWhiteLoss == c.num("runnyWhiteLoss"))
-        #expect(try leanCostPerS == c.num("leanCostPerS"))
-        #expect(try decisionAlphaLo == c.num("decisionAlphaLo"))
-        #expect(try decisionAlphaHi == c.num("decisionAlphaHi"))
-        #expect(try decisionAlphaCount == Int(c.num("decisionAlphaCount")))
-        #expect(try decisionTimeStepS == c.num("decisionTimeStep_s"))
-        #expect(try decisionWindowS == c.num("decisionWindow_s"))
-    }
-
     @Test("where each pot's decision surface goes")
     func specs() throws {
         for (i, row) in try Fixtures.list("decide.json", "specs").enumerated() {
@@ -145,9 +133,7 @@ struct DecideConformance {
 
     @Test("the nudge from a uniform draw: each whole second alike, clamped at the ends")
     func nudges() throws {
-        let file = try Fixtures.load("decide.json")
-        #expect(try nudgeMaxS == file.num("nudgeMax_s"))
-        for row in try file.rows("nudges") {
+        for row in try Fixtures.list("decide.json", "nudges") {
             let u = try row.num("u")
             #expect(try nudgeSeconds(u) == row.num("nudge_s"), "draw \(u)")
         }

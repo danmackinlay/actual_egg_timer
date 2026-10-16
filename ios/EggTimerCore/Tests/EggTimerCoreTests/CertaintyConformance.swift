@@ -28,14 +28,6 @@ private func expectBracket(_ b: WordBracket, _ json: [String: Any], _ label: Str
 
 @Suite("Certainty")
 struct CertaintyConformance {
-    @Test("the constants")
-    func constants() throws {
-        let c = try Fixtures.object("certainty.json", "constants")
-        #expect(try certaintyMass == c.num("certaintyMass"))
-        #expect(try timeRangeLowQ == c.num("timeRangeLowQ"))
-        #expect(try timeRangeHighQ == c.num("timeRangeHighQ"))
-    }
-
     @Test("the word asked, at every slider position and where the word changes")
     func asked() throws {
         for row in try Fixtures.list("certainty.json", "asked") {

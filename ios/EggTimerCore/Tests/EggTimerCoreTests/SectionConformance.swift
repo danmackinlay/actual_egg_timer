@@ -11,9 +11,6 @@ struct SectionConformance {
     @Test("the rings: where each sample is, which is yolk, and each outer edge")
     func rings() throws {
         let file = try Fixtures.load("section.json")
-        let samples = try file.object("samples")
-        #expect(try Double(Section.yolkSamples) == samples.num("yolk"))
-        #expect(try Double(Section.whiteSamples) == samples.num("white"))
         let rings = try file.object("rings")
         let section = EggSection(
             egg: Geometry.eggFromMass(0.060), setup: try cookSetup(file.rows("cases")[0].object("setup")),
