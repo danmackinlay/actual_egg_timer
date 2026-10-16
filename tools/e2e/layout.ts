@@ -1,14 +1,16 @@
 /**
  * The one screen's layout and what it reads: the screen at two widths from
  * idle to Done, the egg's readings, the likely band, the sentence and the
- * likely time range. Run by tools/e2e.ts.
+ * likely time range; and the egg's weight box, focused while the girth is
+ * stepped, and typed in. Run by tools/e2e.ts.
  */
 
 import { wordBandHigh, wordBandLow } from '../../src/core/certainty.ts';
+import { eggFromMinorDiameter } from '../../src/core/geometry.ts';
 import { Failure, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
-  COOLINGS, STOPPED, boil, clockAt, corrected, deadlines, later, near, oneLayout, panelStart, pick, sentenceSays,
-  setSlider, start,
+  COOLINGS, STOPPED, boil, clockAt, corrected, deadlines, later, near, oneLayout, panelStart, pick, press,
+  sentenceSays, setSlider, start,
 } from './helpers.ts';
 
 export const layoutScenarios: Record<string, Scenario> = {
@@ -212,6 +214,58 @@ export const layoutScenarios: Record<string, Scenario> = {
       const at20 = await tab.eval<string>(line);
       check(at20 !== at16, `the range moved with the guess: still "${at16}"`);
       return `cooking: "${cooking}"; heating 16:00: "${at16}"; 20:00: "${at20}"`;
+    },
+  },
+
+  'focused-field-follows': {
+    what: 'a field focused but not typed in follows the egg: + on the girth with the weight focused shows the new weight there, focused and once left; a box typed in keeps what was typed until it is left',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.until("__snap().chosen !== null", 'the time decided');
+      await tab.settle();
+      await tab.click('#sentence .clause[aria-controls="panelEgg"]');
+      await tab.until(`${byId('measureMass')}.offsetParent !== null`, "the egg's panel open");
+      const box = (): Promise<{ value: string; step: number; focused: boolean }> => tab.eval(`(() => {
+        const e = ${byId('measureMass')};
+        return { value: e.value, step: Number(e.step), focused: document.activeElement === e }; })()`);
+      await tab.eval(`${byId('measureMass')}.focus()`);
+      const before = await box();
+      check(before.focused, 'the weight focused');
+      await press(tab, 'button.step[data-for="measureGirth"][data-up="1"]');
+      await tab.until("__snap().settings.measuredBy === 'girth'", 'the girth measured');
+      await tab.settle();
+      // The weight the model now has, from the egg's width as the girth
+      // stepped it: the box shows it to its step.
+      const minor_mm = (await tab.snap()).settings['customMinor_mm'] as number;
+      const want_g = eggFromMinorDiameter(minor_mm / 1000).mass_kg * 1000;
+      const shows = (b: { value: string; step: number }): boolean => near(Number(b.value), want_g, b.step / 2 + 1e-9);
+      check(!near(Number(before.value), want_g, before.step),
+        `the girth's + moved the egg less than a step of weight: ${before.value} g, now ${want_g.toFixed(2)} g`);
+      const focused = await box();
+      check(focused.focused, 'the weight still focused after the girth\'s +');
+      check(shows(focused), `focused, the weight box shows ${focused.value} g, the egg ${want_g.toFixed(2)} g`);
+      await tab.eval(`${byId('measureMass')}.blur()`);
+      await tab.settle();
+      await tab.snap();
+      const left = await box();
+      check(!left.focused && shows(left), `left, the weight box shows ${left.value} g, the egg ${want_g.toFixed(2)} g`);
+      // Typed in, the box keeps what was typed while the cook is in it, and
+      // shows the egg kept once left.
+      await tab.eval(`(() => { const e = ${byId('measureMass')}; e.focus(); e.select();
+        document.execCommand('insertText', false, '7'); })()`);
+      await tab.settle();
+      await tab.snap();
+      const typing = await box();
+      check(typing.focused && typing.value === '7', `typing, the weight box shows ${typing.value}`);
+      await tab.eval(`${byId('measureMass')}.blur()`);
+      await tab.settle();
+      const kept_mm = (await tab.snap()).settings['customMinor_mm'] as number;
+      const kept_g = eggFromMinorDiameter(kept_mm / 1000).mass_kg * 1000;
+      const typedLeft = await box();
+      check(near(Number(typedLeft.value), kept_g, typedLeft.step / 2 + 1e-9),
+        `typed 7 and left, the weight box shows ${typedLeft.value} g, the egg ${kept_g.toFixed(2)} g`);
+      return `the weight ${before.value} g, the girth's + with it focused: ${focused.value} g, then ${left.value} g once left `
+        + `(the egg ${want_g.toFixed(2)} g); 7 typed, kept while typing, ${typedLeft.value} g once left`;
     },
   },
 };

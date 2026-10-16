@@ -11,6 +11,7 @@ import type { Cooling } from '../core/protocol.ts';
 import { type Quantity, parse } from '../core/units.ts';
 import { DEFAULTS } from '../core/inputs.ts';
 import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.ts';
+import { noteInput } from './controls.ts';
 import { page, radioValue } from './dom.ts';
 import { gestureNow_s, groupOf } from './edit.ts';
 import { send } from './send.ts';
@@ -119,6 +120,9 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
 /** Every input and change on the egg's controls, its sentence and the
  *  Settings form. */
 export function onInput(event: Event): void {
+  // Whether the cook is typing, and where, before anything is drawn: the
+  // field typed in is left as typed (controls.ts).
+  noteInput(event);
   // The units are a setting about the screen, not about the egg, and have
   // their own path.
   const target = event.target;

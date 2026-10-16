@@ -983,7 +983,9 @@ function handIn(m: Model, event: HandEvent, now_s: number): [Model, Effect[]] {
 function handChanged(
   m: Model, group: HandGroup | null, read: Partial<Settings>, at_s: number, now_s: number,
 ): [Model, Effect[]] {
-  if (m.cookControls === null) return [m, []];
+  // A cook's controls are set whenever a cook is (`around`). Without them
+  // the change would be dropped unseen, a correction lost.
+  if (m.cookControls === null) throw new Error('a control changed while a cook runs, and the cook has no controls to take it');
   const cook: Record<string, unknown> = {};
   const own: Record<string, unknown> = {};
   for (const k of Object.keys(read) as (keyof Settings)[]) (ofCook(k) ? cook : own)[k] = read[k];
