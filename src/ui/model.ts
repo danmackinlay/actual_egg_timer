@@ -726,11 +726,11 @@ function copySection(s: EggSection): EggSection {
 /**
  * The controls follow a cook begun or ended. Begun: they show its own
  * choices, never the settings, which describe the next cook, with nothing
- * in hand. Ended: whatever was in hand goes with it; they show the settings
- * again, the alarm stops, the questions start empty, a new cook
- * gets a new nudge (and the idle page is solved again with it), and the egg
- * just finished is final once it is forgotten: no answer can be added to
- * it.
+ * in hand. Ended: by a button, whatever was in hand was committed first;
+ * else it goes with the cook. They show the settings again, the alarm
+ * stops, the questions start empty, a new cook gets a new nudge (and the
+ * idle page is solved again with it), and the egg just finished is final
+ * once it is forgotten: no answer can be added to it.
  */
 function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
   if (was.cook === null && m.cook !== null) {
@@ -960,8 +960,14 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       const [next, effects] = pressed(at, now_s);
       return [next, [...first, { kind: 'silence' }, ...effects]];
     }
-    case 'cancel':
-      return stepCook(m, { kind: 'startAgain', now_s: now_s }, now_s);
+    case 'cancel': {
+      // A correction still settling is committed first, as for any button
+      // that moves the cook on: after the pull, the egg Cancel logs has it.
+      if (m.cook === null) return [m, []];
+      const [at, first] = commit(m, null, now_s);
+      const [next, effects] = stepCook(at, { kind: 'startAgain', now_s: now_s }, now_s);
+      return [next, [...first, ...effects]];
+    }
     case 'stillOut':
       return stepCook(m, { kind: 'pullStands', now_s: now_s }, now_s);
     case 'correct': {
@@ -1019,7 +1025,8 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  * - after a tap's settle (`SETTLE_MS`, about 1.5 s, design section 5) for
  *   anything else - a choice in a clause's panel, a − or + pressed once, a
  *   number typed - the settle starting again with each change;
- * - at once when another control is touched, or the primary button pressed:
+ * - at once when another control is touched, or a button that moves the
+ *   cook on pressed (the primary, Cancel):
  *   the change in hand alone, as it was before the other control's, whether a
  *   finger or the keyboard moves on;
  * - and when the page is hidden or goes, so a reload or a closed tab inside

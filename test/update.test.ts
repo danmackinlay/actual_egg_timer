@@ -440,6 +440,18 @@ test('primary: a change still settling is committed before the button acts', () 
   assert.equal(after.cook?.events.boilAt_s, S + 400);
 });
 
+test('cancel: a change still settling is committed first, by keyboard too, so the egg Cancel ends has it', () => {
+  const m = done();
+  const at = m.plan!.deadlines.coolEnd_s! + 5;
+  const [held] = change(m, { eggCount: 4 }, 3, 0, at);
+  const [after, effects] = go(held, { kind: 'cancel' }, at + 1);
+  assert.equal(after.cook, null);
+  assert.equal(after.settings.eggCount, 4, 'written for the next cook');
+  const ended = effects.flatMap((e) => (e.kind === 'persistEnded' ? [e.cook] : []));
+  assert.equal(ended.length, 1, 'the egg ended, waiting on its record');
+  assert.equal(ended[0]!.choices.eggCount, 4, 'with the correction');
+});
+
 test('after the pull a new level only previews, and the slider goes back when the aimed-for egg goes', () => {
   let m = running();
   m = go(m, { kind: 'tick' }, pull(m) + 25)[0];
