@@ -22,7 +22,6 @@ final class MemoryStore: KeyValueStore, @unchecked Sendable {
     func double(forKey key: String) -> Double { (values[key] as? NSNumber)?.doubleValue ?? 0 }
     func bool(forKey key: String) -> Bool { (values[key] as? NSNumber)?.boolValue ?? false }
     func data(forKey key: String) -> Data? { values[key] as? Data }
-    func dictionary(forKey key: String) -> [String: Any]? { values[key] as? [String: Any] }
 
     func set(_ value: Any?, forKey key: String, _ pass: Stores.Pass) {
         values[key] = value
@@ -103,7 +102,6 @@ final class FakeAlarm: AlarmScheduling {
         }
     }
 
-    func activate() {}
     func authorize() async -> Bool { authorized }
     func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
         scheduled.append((pullS, cooledS))
@@ -128,7 +126,6 @@ final class FakeRinger: AlarmRinging {
     private(set) var rung: [RingDeadline] = []
     private(set) var stops = 0
     var onScreenSinceS: Double?
-    func activate() {}
     func ring(_ deadline: RingDeadline) { rung.append(deadline) }
     func stop() { stops += 1 }
     func preview(_ sound: AlarmSound) {}

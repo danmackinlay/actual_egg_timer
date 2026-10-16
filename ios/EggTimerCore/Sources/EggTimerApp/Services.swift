@@ -2,15 +2,15 @@ import Foundation
 import EggTimerCore
 import EggTimerShared
 
-/// What the app's logic reaches outside itself, as protocols: the six
+/// What the app's logic reaches outside itself, as protocols: the four
 /// singletons, the Lock Screen card and VoiceOver here, the clock in
 /// AppClock.swift (`CookClock`) and the store in Store.swift
 /// (`KeyValueStore`).
 ///
-/// Three of the singletons live in this library (`DecisionGrids`,
-/// `LanguageChoice`, `AlarmSoundChoice`), and so does `Sharing`, made in the
-/// app over its `ShareTransport` (`ShareNetwork`, URLSession and App Attest);
-/// the other two, and the card, need what only an iPhone has -
+/// One of the singletons lives in this library (`DecisionGrids`), and so
+/// does `Sharing`, made in the app over its `ShareTransport` (`ShareNetwork`,
+/// URLSession and App Attest); the other two, and the card, need what only
+/// an iPhone has -
 /// notifications, sound, ActivityKit - and live in the app (ios/App), which
 /// puts them here at launch, before anything else runs
 /// (`ActualEggTimerApp.init`). The tests put fakes here instead
@@ -28,16 +28,12 @@ public enum Services {
     /// Said to VoiceOver, at once: the start's limit reached (`InHand`).
     @MainActor public static var announce: (String) -> Void = { _ in }
     @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
-    @MainActor public static var language: any LanguageChoosing = LanguageChoice.shared
-    @MainActor static var alarmSound: any AlarmSoundChoosing = AlarmSoundChoice.shared
 }
 
 /// The cook's alarms, with the system (`Alarm`, UserNotifications): set at
 /// absolute moments, and read back rather than assumed.
 @MainActor
 public protocol AlarmScheduling: AnyObject {
-    /// Ready for a notification to fire: before anything can.
-    func activate()
     /// Whether alarms may be set, asking the cook the first time.
     func authorize() async -> Bool
     /// These alarms and no others, at these moments, epoch s in cook time:
@@ -54,7 +50,6 @@ public protocol AlarmRinging: AnyObject {
     /// Since when the app has been on screen, epoch s in cook time, or nil
     /// while it is not.
     var onScreenSinceS: Double? { get }
-    func activate()
     func ring(_ deadline: RingDeadline)
     func stop()
     /// One sound played once, as the cook picks it.
@@ -105,25 +100,9 @@ public protocol DecisionSurfaces: Sendable {
     func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile
 }
 
-/// The language the cook reads (`LanguageChoice`).
-@MainActor
-public protocol LanguageChoosing: AnyObject {
-    var state: LanguageState { get }
-    func start()
-    func pick(_ tag: String)
-}
-
-/// The alarm's sound (`AlarmSoundChoice`).
-@MainActor
-public protocol AlarmSoundChoosing: AnyObject {
-    var sound: AlarmSound { get }
-    func pick(_ next: AlarmSound)
-}
-
 /// What stands in until the app fills `Services`: nothing happens.
 @MainActor
 final class Unwired: AlarmScheduling, AlarmRinging, ResultSharing {
-    func activate() {}
     func authorize() async -> Bool { false }
     func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {}
     func cancel() {}

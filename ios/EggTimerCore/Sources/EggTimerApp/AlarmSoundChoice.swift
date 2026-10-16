@@ -13,7 +13,7 @@ import Observation
 /// running cook keeps the sound it was scheduled with.
 @MainActor
 @Observable
-public final class AlarmSoundChoice: AlarmSoundChoosing {
+public final class AlarmSoundChoice {
     public static let shared = AlarmSoundChoice()
 
     /// Under its own key, as the language is (`LanguageChoice`).

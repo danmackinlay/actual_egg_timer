@@ -38,7 +38,6 @@ public final class CookAlarms {
     /// The cook `id` begun on screen: the alarms asked for, set if they may
     /// be, and read back.
     func begin(_ id: Double) async {
-        Services.ringer.activate()
         let ok = await Services.alarm.authorize()
         guard onScreen().cook?.idMs == id else { return }
         authorized = ok
