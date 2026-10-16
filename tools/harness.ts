@@ -308,11 +308,15 @@ export class Tab {
     await this.booted();
   }
 
-  /** The app painted, and on this machine its test API in place. */
+  /** The app painted, on this machine its test API in place, and booted as
+   *  far as owning the app or waiting for it (`data-tab`). The words and the
+   *  test API are in before boot asks for the one-tab lock (app.ts), so a
+   *  tap before `data-tab` lands on a page that does not run yet. */
   private async booted(): Promise<void> {
     await this.until("!window.__left && document.readyState === 'complete'"
       + " && (window.aetTest !== undefined || !['localhost', '127.0.0.1'].includes(location.hostname))"
-      + " && document.getElementById('phaseLabel')?.textContent !== ''", 'the page to boot');
+      + " && document.getElementById('phaseLabel')?.textContent !== ''"
+      + " && document.body.dataset.tab !== undefined", 'the page to boot');
   }
 
   snap(): Promise<Snap> {
