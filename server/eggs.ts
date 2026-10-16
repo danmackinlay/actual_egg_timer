@@ -15,7 +15,7 @@
  * against the key attested for its id in Apple's production environment, and
  * `open` otherwise - the web app, any iPhone that cannot attest, and a
  * development build, whose key is kept but vouches for nothing
- * (`appAttest.ts`, DECISIONS.md 68).
+ * (`appAttest.ts`).
  *
  * The record must pass `parseRecord`, the loader both apps use, so the
  * server refuses exactly what a phone would; what is kept is what it
@@ -59,7 +59,7 @@ export type Tier = 'attested' | 'open';
 export const MAX_BODY_BYTES = 16384;
 
 /** The largest record kept, as JSON: a record is about 750 bytes, with every
- *  answer and a forecast, the five yolk words' included (DECISIONS.md 92), and
+ *  answer and a forecast, the five yolk words' included, and
  *  about 1.4 KB with every string at MAX_STRING and every number at full
  *  precision. A cap, so that free ids cannot fill the store with long strings
  *  in the fields the loader takes as any text. The yolk word itself is one of
@@ -171,7 +171,7 @@ function base64(v: unknown): Uint8Array | null {
 /**
  * The tier a kept record counts in, given the key kept for its id: attested
  * only if it was kept as attested and its key is from production
- * (`countsAsGenuine`, DECISIONS.md 68). The server files by the same rule;
+ * (`countsAsGenuine`). The server files by the same rule;
  * the fit's pull reads every record through this, so that a record filed
  * before the rule, or by hand, cannot count for more than it should.
  */
@@ -182,7 +182,7 @@ export function countedTier(kept: Tier, key: { environment: string } | null): Ti
 /** Which tier an egg belongs in: attested if its assertion verifies against
  *  the key kept for its id and that key is from production, and the counter
  *  is then moved on. A development key's results are open, exactly as if
- *  unsigned (DECISIONS.md 68): its assertion is not even read. */
+ *  unsigned: its assertion is not even read. */
 async function tierOf(store: Store, uid: string, body: Uint8Array, req: Request, opts: Options): Promise<Tier> {
   const assertion = base64(req.headers.get(ASSERTION_HEADER));
   if (assertion === null) return 'open';

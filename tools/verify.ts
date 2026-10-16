@@ -1,4 +1,4 @@
-// `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 123).
+// `npm run verify`: the full gate, run before a merge.
 //
 // First the two generators that write sources the others compile, then every
 // other job at once, each one's output held and printed whole under its name

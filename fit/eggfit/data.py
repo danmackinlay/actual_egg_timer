@@ -5,7 +5,7 @@ peak yolk temperature at its scored cook time, on a grid of time-scales in
 literature sds (`zGrid`) - so the likelihood never runs the physics, only
 interpolates (INFERENCE.md section 9).
 
-TRUSTED IDS (DECISIONS.md 82): the owner vouches for their own random IDs,
+TRUSTED IDS: the owner vouches for their own random IDs,
 and the fit gives those cooks' eggs the attested tier's full weight whatever
 tier they came in (`model.tier_weights`). The list is never committed: it
 is read from `fit/trusted.local.txt` (gitignored; `trusted.example.txt`
@@ -62,8 +62,8 @@ class Eggs:
     trusted: np.ndarray  # bool: the cook's ID is on the owner's trusted list
     seq: np.ndarray
     target: np.ndarray  # log10 yolk dose the cook asked for
-    yolk: np.ndarray  # 0 too soft, 1 just right, 2 too firm, -1 not answered (before DECISIONS.md 92)
-    yolk_word: np.ndarray  # 0 runny ... 4 hard, the yolk the cook got (DECISIONS.md 92), -1 not answered
+    yolk: np.ndarray  # 0 too soft, 1 just right, 2 too firm, -1 not answered (the question before the yolk words)
+    yolk_word: np.ndarray  # 0 runny ... 4 hard, the yolk the cook got, -1 not answered
     white: np.ndarray  # 0 runny, 1 tender, 2 firm, -1 not answered
     probe: np.ndarray  # C, nan when none
     log_yolk: np.ndarray  # (eggs, z)

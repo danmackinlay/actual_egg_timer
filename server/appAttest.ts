@@ -1,5 +1,5 @@
 /**
- * App Attest (DECISIONS.md 60): telling an egg sent by a genuine copy of the
+ * App Attest: telling an egg sent by a genuine copy of the
  * iPhone app from one sent by anything else.
  *
  * Two objects come from the phone. The ATTESTATION, once, when the cook turns
@@ -58,8 +58,8 @@ export const APP_ID = 'L4D3TWC3A4.name.danmackinlay.actualeggtimer';
 export type AttestEnvironment = 'development' | 'production';
 
 /**
- * Whether a key from this environment vouches for a genuine copy of the app
- * (DECISIONS.md 68). Only production: TestFlight and the App Store always
+ * Whether a key from this environment vouches for a genuine copy of the app.
+ * Only production: TestFlight and the App Store always
  * attest there. A development key is a build installed from Xcode, the
  * owner's own phones, whose results do not count as a genuine copy's; it is
  * still verified and kept, so the path can be tried on a phone, but its

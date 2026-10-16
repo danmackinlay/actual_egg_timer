@@ -40,7 +40,7 @@ public func numberKey(_ x: Double) -> String {
 }
 
 /// The web makes its own the same way; neither reads the other's, so no
-/// fixture holds its bits (DECISIONS.md 109), and `InputsKeyTests` holds this
+/// fixture holds its bits, and `InputsKeyTests` holds this
 /// one.
 public func inputsKey(_ inputs: DecisionInputs) -> String {
     let e = inputs.egg

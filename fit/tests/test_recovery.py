@@ -5,8 +5,8 @@ tests/recovery-sample.json is sixty cooks drawn from a known truth (`truth`,
 tools/fixtures/fitRecovery.ts's RECOVERY_TRUTH: tools/eggsSimulate.ts's
 SIMULATED_TRUTH with the time-scale's centre in the prior's tail) with a
 fixed seed and emulated, written by `npm run fixtures`, so this runs without
-node. NUTS on it, every egg at full weight (the open tier's discount,
-DECISIONS.md 2, tempers the open eggs on purpose and is not a posterior),
+node. NUTS on it, every egg at full weight (the open tier's discount
+tempers the open eggs on purpose and is not a posterior),
 must:
 
 - find the nine globals' truth, together, no further from the posterior

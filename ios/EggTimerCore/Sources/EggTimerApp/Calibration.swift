@@ -35,7 +35,7 @@ public struct Kept: Sendable {
 public enum Calibrations {
     /// The posterior, the base under it, and the log: a particle of six
     /// numbers, and records of today's shape only. The log started fresh in
-    /// 0.5, and 0.3's v4 is never read (DECISIONS.md 107).
+    /// 0.5, and 0.3's v4 is never read.
     private static let key = StoreRegistry.calibration.key
 
     /// Carried on every record: the web app deploys on push and this one ships

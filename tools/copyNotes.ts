@@ -3,8 +3,8 @@
  * copy/en.notes.json, and which app shows each key, read from the sources;
  * and which files in copy/ are catalogues.
  *
- * The catalogues hold only what the renderers read, templates and `count`
- * (DECISIONS.md 122). A key's `surface` (where it is drawn, whose length
+ * The catalogues hold only what the renderers read, templates and `count`.
+ * A key's `surface` (where it is drawn, whose length
  * budget, if it is small, is test/data/surfaces.json's), its `note` and its
  * `example` (the arguments the budget and the review render it with) live in
  * the sidecar,

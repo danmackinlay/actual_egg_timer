@@ -116,8 +116,8 @@ test('the centre coefficient is exactly 2.0', () => {
   // Note the full series is NOT 2 at Fo = 0: 2*sum(-1)^(n+1) is the classic
   // Abel-summable alternating series, whose truncation to an even number of
   // terms gives 0 and whose true limit at the centre is 1 (the initial
-  // condition). Only the FIRST MODE has amplitude 2. Same artefact as
-  // CLAUDE.md invariant 7, seen in the closed form.
+  // condition). Only the FIRST MODE has amplitude 2. Same artefact as the
+  // one behind never stepping the surface temperature, seen in the closed form.
   // Once Fo is large enough for the higher modes to have died (at Fo = 0.25
   // mode 2 is down by exp(-3*pi^2*Fo) ~ 6e-4 relative to mode 1), the full
   // series collapses onto the one-term form, whose centre prefactor is 2.0.
@@ -147,7 +147,7 @@ test('modal integrator reproduces the closed-form step response', () => {
     if (checkpoints.indexOf(t) >= 0) {
       // NOTE: deliberately no checkpoint at t = 0 or t < 2 s. A truncated modal
       // basis cannot represent a fresh discontinuity at the centre (modes are
-      // weighted by n there) — CLAUDE.md invariant 7. The closed-form series has
+      // weighted by n there), which is why the surface is never stepped. The closed-form series has
       // precisely the same artefact, so the comparison would still "pass" while
       // both were wrong; excluding it keeps this an honest check.
       const fourier = alpha * t / (R * R);
@@ -183,7 +183,7 @@ test('mean temperature is strictly between centre and surface while heating', ()
     stepSphere(s, 0.5, 100);
     // Skip the first 2 s: a truncated modal basis rings at a fresh
     // discontinuity (the centre briefly reads 12.5 C instead of 4 C — the
-    // exact artefact CLAUDE.md invariant 7 documents), so the bracket is
+    // exact artefact that keeps the surface from ever being stepped), so the bracket is
     // meaningless there. It holds for every step afterwards.
     if (i < 4) continue;
     const centre = centreTemperature(s);

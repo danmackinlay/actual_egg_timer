@@ -82,7 +82,7 @@ import {
 import { type Calibration, calibrationDoneness, calibrationParams } from './record.ts';
 
 /** How much worse a runny white is than a yolk one answer off: the owner's
- *  number (DECISIONS.md 7). */
+ *  number. */
 export const RUNNY_WHITE_LOSS = 3;
 
 /* ------------------------------------------------------------ the surface */
