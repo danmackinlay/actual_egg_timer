@@ -232,21 +232,31 @@ def prior(c: dict) -> dict:
     }
 
 
-def model(c: dict, d: dict, n_cooks: int):
-    g = {name: numpyro.sample(name, p) for name, p in prior(c).items()}
-    mu_z, tau_z, lag, tau_w, tau_t = g["mu_z"], g["tau_z"], g["lag"], g["tau_w"], g["tau_t"]
-    log_s0, sig_s, log_g0, sig_g = g["log_s0"], g["sig_s"], g["log_g0"], g["sig_g"]
-    with numpyro.plate("cooks", n_cooks):
-        ez = numpyro.sample("ez", dist.StudentT(4.0, 0.0, 1.0))
-        et = numpyro.sample("et", dist.StudentT(4.0, 0.0, 1.0))
-        ew = numpyro.sample("ew", dist.StudentT(4.0, 0.0, 1.0))
-        es = numpyro.sample("es", dist.Normal(0.0, 1.0))
-        eg = numpyro.sample("eg", dist.Normal(0.0, 1.0))
-    # Every cook's five, to each of its eggs in one gather.
-    each = jnp.stack([mu_z + tau_z * ez, tau_t * et, lag + tau_w * ew,
-                      jnp.exp(log_s0 + sig_s * es), jnp.exp(log_g0 + sig_g * eg)], axis=-1)[d["cook"]]
+def cooks_of(v: dict):
+    """Every cook's time-scale, taste, white offset, noise and firm gap, from
+    the globals and the cooks' standardised effects in `v`."""
+    return jnp.stack([v["mu_z"] + v["tau_z"] * v["ez"], v["tau_t"] * v["et"], v["lag"] + v["tau_w"] * v["ew"],
+                      jnp.exp(v["log_s0"] + v["sig_s"] * v["es"]), jnp.exp(v["log_g0"] + v["sig_g"] * v["eg"])],
+                     axis=-1)
+
+
+def loglik(c: dict, d: dict, cooks):
+    """The eggs' log likelihood, each at its weight, given every cook's five
+    (`cooks_of`, cooks by five): each cook's to its eggs in one gather."""
+    each = cooks[d["cook"]]
     ll = fast_loglik(c, d, z=each[:, 0], taste=each[:, 1], white_offset=each[:, 2], noise=each[:, 3], gap=each[:, 4])
-    numpyro.factor("eggs", jnp.sum(d["weight"] * ll))
+    return jnp.sum(d["weight"] * ll)
+
+
+def model(c: dict, d: dict, n_cooks: int):
+    v = {name: numpyro.sample(name, p) for name, p in prior(c).items()}
+    with numpyro.plate("cooks", n_cooks):
+        v["ez"] = numpyro.sample("ez", dist.StudentT(4.0, 0.0, 1.0))
+        v["et"] = numpyro.sample("et", dist.StudentT(4.0, 0.0, 1.0))
+        v["ew"] = numpyro.sample("ew", dist.StudentT(4.0, 0.0, 1.0))
+        v["es"] = numpyro.sample("es", dist.Normal(0.0, 1.0))
+        v["eg"] = numpyro.sample("eg", dist.Normal(0.0, 1.0))
+    numpyro.factor("eggs", loglik(c, d, cooks_of(v)))
 
 
 def arrays(eggs: Eggs, weight: np.ndarray) -> dict:

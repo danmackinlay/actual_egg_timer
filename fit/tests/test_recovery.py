@@ -9,14 +9,8 @@ node. NUTS on it, every egg at full weight (the open tier's discount,
 DECISIONS.md 2, tempers the open eggs on purpose and is not a posterior),
 must:
 
-- put every global's truth inside its central interval. The interval is
-  1 - 0.10/9 wide, not 90%: nine 90% intervals all cover only about 40% of
-  the time when the posterior is exactly right, so a check of each at 90%
-  would fail most samples it could be given. At 98.9% each, all nine cover
-  at least 90% of the time (Bonferroni). On the first sample, drawn from
-  SIMULATED_TRUTH itself, three truths lay just outside their 90% intervals -
-  the white's lag and firm gap, which are correlated (-0.75), and the
-  time-scale's centre - and inside these.
+- find the nine globals' truth, together, no further from the posterior
+  than a calibrated fit puts it nine times in ten (`joint_p`, below).
 - narrow the prior on the globals the data identify (IDENTIFIED), so that a
   fit which lost its likelihood, and so returned the prior, fails here even
   where the prior happens to cover the truth.
@@ -49,8 +43,8 @@ from eggfit.__main__ import TRUTH_OF
 SAMPLE = pathlib.Path(__file__).parent / "recovery-sample.json"
 
 CHAINS, WARMUP, SAMPLES, TARGET_ACCEPT = 4, 500, 1500, 0.99
-#: Each global's interval, so that all nine cover the truth together at 90%.
-LEVEL = 1.0 - 0.10 / len(model.GLOBALS)
+#: How often a calibrated fit may fail the joint test.
+ALPHA = 0.10
 #: The globals the eggs identify: the time-scale's centre and the white's lag
 #: (model.py's two learned globals; INFERENCE.md section 9 recovers both on
 #: simulated cooks). The spreads between cooks, the noise and the firm gap
@@ -67,6 +61,35 @@ IDENTIFIED = ("mu_z", "lag")
 NARROWED = 0.5
 
 
+def joint_p(draws: dict, truth: dict, prior: dict) -> float:
+    """The share of posterior draws at least as far from the posterior's
+    mean as the truth is, by the Mahalanobis distance under the draws'
+    covariance, all nine globals on the sampler's unconstrained scale (the
+    spreads' logs). If the truth is distributed as a draw, this is uniform,
+    so the check fails a calibrated fit ALPHA of the time.
+
+    One test of the nine, not an interval each: Holm, as one pass or fail,
+    is Bonferroni, failing on the worst global at ALPHA / 9 alone; Simes
+    counts several near misses but not that globals are correlated, as the
+    white's lag and firm gap are (-0.75), so two misses that are one in the
+    posterior count twice. The distance takes the correlations whole.
+    Referred to chi-square on nine degrees of freedom it would assume the
+    posterior Gaussian, which even on the log scale it is not: the draws'
+    own 90th percentile is 15.7 to 16.0 over four seeds, chi-square's 14.7,
+    so a calibrated fit would fail 12% of the time, not 10%. Referred to the
+    draws, it assumes nothing of the posterior's shape."""
+    from numpyro.distributions import biject_to
+
+    def free(name, x):
+        return np.asarray(biject_to(prior[name].support).inv(np.asarray(x, dtype=float)))
+
+    d = np.stack([free(n, draws[n]) for n in model.GLOBALS], axis=1)
+    t = np.array([free(n, truth[n]) for n in model.GLOBALS])
+    m, precision = d.mean(axis=0), np.linalg.inv(np.cov(d, rowvar=False))
+    far = np.einsum("ij,jk,ik->i", d - m, precision, d - m)
+    return float(np.mean(far >= (t - m) @ precision @ (t - m)))
+
+
 def test_the_fit_recovers_a_known_population_and_mixes(capsys):
     raw = json.loads(SAMPLE.read_text())
     eggs = data.load(str(SAMPLE))
@@ -74,22 +97,25 @@ def test_the_fit_recovers_a_known_population_and_mixes(capsys):
     draws = model.fit(eggs, warmup=WARMUP, samples=SAMPLES, chains=CHAINS, seed=0, target_accept=TARGET_ACCEPT)
     diag = diagnostics.check(draws["_chains"], int(draws["_divergences"]), model.GLOBALS)
     prior = model.prior(eggs.constants)
-    lo_q, hi_q = (1.0 - LEVEL) / 2.0, 1.0 - (1.0 - LEVEL) / 2.0
+    truth = {}
     rows, failures = [], []
     for name, d in zip(model.GLOBALS, diag["rows"]):
         key, f = TRUTH_OF[name]
-        truth = f(raw["truth"][key]) if f else raw["truth"][key]
+        truth[name] = f(raw["truth"][key]) if f else raw["truth"][key]
         x = draws[name]
-        lo, hi = np.quantile(x, [lo_q, hi_q])
+        lo, hi = np.quantile(x, [0.05, 0.95])
         narrowed = float(np.std(x) / np.sqrt(prior[name].variance))
-        rows.append(f"{name}: truth {truth:.3f} at posterior quantile {np.mean(x < truth):.3f}, "
-                    f"{100 * LEVEL:.1f}% {lo:.3f} to {hi:.3f}, sd {narrowed:.3f} of the prior's, "
+        rows.append(f"{name}: truth {truth[name]:.3f} at posterior quantile {np.mean(x < truth[name]):.3f}, "
+                    f"90% {lo:.3f} to {hi:.3f}, sd {narrowed:.3f} of the prior's, "
                     f"R-hat {d['rhat']:.4f}, bulk ESS {d['ess_bulk']:.0f}")
-        if not lo <= truth <= hi:
-            failures.append(f"{name}'s truth {truth:.3f} outside {lo:.3f} to {hi:.3f}")
         if name in IDENTIFIED and not narrowed < NARROWED:
             failures.append(f"{name}'s posterior sd is {narrowed:.3f} of its prior's, not below {NARROWED}: "
                             "the data did not narrow it")
+    p = joint_p(draws, truth, prior)
+    rows.append(f"all nine: {100 * p:.1f}% of the draws are at least as far from the posterior's mean as the truth")
+    if not p >= ALPHA:
+        failures.append(f"the truth is further from the posterior than all but {100 * p:.1f}% of its draws, "
+                        f"under {100 * ALPHA:.0f}%")
     if not diag["ok"]:
         failures.append(f"the sampler failed: {'; '.join(diag['failures'])}")
     table = "\n".join(rows)

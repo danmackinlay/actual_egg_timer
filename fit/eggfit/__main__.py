@@ -19,7 +19,7 @@ and whether it was forced, and a forced fit's id ends in FORCED_ID_SUFFIX, so
 every record cooked from it names it so. The apps refuse a fit without
 diagnostics, and a forced one without the suffix (src/core/population.ts).
 
-    uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
+    uv run --project fit python -m eggfit sbc --out fit/data/sbc
 
 checks the fit's calibration by simulation (sbc.py).
 """
@@ -179,7 +179,7 @@ def main() -> None:
                    help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
-    model.use_cores(a.chains)
+    model.use_cores(a.cores if a.command == "sbc" else a.chains)
     if a.command == "sbc":
         sys.exit(sbc.run(a))
 
