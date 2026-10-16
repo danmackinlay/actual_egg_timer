@@ -54,7 +54,7 @@
  *    alpha; with the white offset, whatever the white does that alpha cannot
  *    explain has somewhere to go.
  *  - The counter's carryover (the egg's time constant in still air) is not
- *    learned (DECISIONS.md 95). Only counter-rested cooks could inform it,
+ *    learned. Only counter-rested cooks could inform it,
  *    and their answers mostly teach alpha and the taste offset.
  *  - The noise scale is learned from how consistent a cook's answers are, which
  *    takes many eggs. Until then it sits near its prior, which is chosen (see

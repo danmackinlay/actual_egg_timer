@@ -51,7 +51,7 @@ test('the rings run centre to shell, with the yolk edge sampled as both', () => 
 test('at t = 0 nothing is set and the shell is at the water', () => {
   // Not "every ring at the egg's start": at t = 0 the shell's step from the
   // egg to the water is a fresh discontinuity, which 40 terms cannot
-  // represent at the centre (CLAUDE.md, invariant 7). It is gone in seconds.
+  // represent at the centre, which is why the surface is never stepped. It is gone in seconds.
   const setup = appSetup({ startMode: 'cold' });
   const v = sectionView(createSection(EGG, setup, DEFAULT_PARAMS), WHITE_DOSE_TARGET);
   assert.ok(Math.abs(v.temperature_C[SHELL] - setup.ambient_C) < 1e-9, 'the shell at the water');

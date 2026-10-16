@@ -215,8 +215,8 @@ function surfaceFor(
 
 /** The slow hob's memo as the fixtures write it: where the rule got to, and
  *  not the key of what it read. The key is each core's own, every number to
- *  the bit, and two cores' numbers agree in distribution, not in bits
- *  (DECISIONS.md 109): each core holds its own memo to its own plans. */
+ *  the bit, and two cores' numbers agree in distribution, not in bits:
+ *  each core holds its own memo to its own plans. */
 function memoJson(m: SlowHobMemo | null) {
   if (m === null) return null;
   const p = m as SlowHobPlace;

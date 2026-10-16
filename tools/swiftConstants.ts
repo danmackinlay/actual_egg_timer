@@ -11,7 +11,7 @@
  * from the module's export, so a derived constant (480 / ln 1.5) is the
  * TypeScript's double, and is printed as JavaScript prints it, the shortest
  * decimal that reads back to the same double, which Swift's literal does
- * (DECISIONS.md 109 asks no more, but a literal costs nothing). Each keeps
+ * (the twins need agree only to 1e-12, but a literal costs nothing). Each keeps
  * the first sentence of its doc comment; the rest of its provenance is the
  * TypeScript's.
  *

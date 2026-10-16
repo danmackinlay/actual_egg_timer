@@ -1,5 +1,5 @@
 /**
- * The catalogue's keys, as types both compilers check (DECISIONS.md 127).
+ * The catalogue's keys, as types both compilers check.
  *
  *   npm run copy:keys            write them from copy/en.json (npm test does)
  *   npm run copy:keys -- --check write them, and fail if that changed them

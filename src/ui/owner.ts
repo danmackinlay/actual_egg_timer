@@ -1,5 +1,5 @@
 /**
- * One tab owns the app (DECISIONS.md 128). Every tab of the site shares one
+ * One tab owns the app. Every tab of the site shares one
  * localStorage, and the app writes each store whole, so two tabs running it
  * would write over each other. The first tab to boot holds an exclusive Web
  * Lock for as long as it is open, and runs the app; any other tab waits

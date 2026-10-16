@@ -1,5 +1,5 @@
 /**
- * One tab owns the web app (src/ui/owner.ts, DECISIONS.md 128): the lock
+ * One tab owns the web app (src/ui/owner.ts): the lock
  * asked for at boot and taken over on a press, against a lock manager in
  * memory, and the store's one door (src/ui/store.ts), which refuses every
  * write from a page that does not own the app.
