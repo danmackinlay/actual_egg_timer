@@ -1,17 +1,19 @@
 // `npm run verify`: the full gate, run before a merge (`DECISIONS.md` 123).
 //
-// Every job at once, each one's output held and printed whole under its name
+// First the two generators that write sources the others compile, then every
+// other job at once, each one's output held and printed whole under its name
 // when it ends, so no two jobs' lines interleave. Node runs the tests and
 // tools from their sources, so nothing waits for a build:
 //
-//   typecheck        tsc over core, the app and the rest (npm run typecheck)
-//   npm test         node --test over test/*.test.ts
-//   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
 //                    with the files on disk (tools/copyKeys.ts --check)
 //   swift:constants  the Swift's constants made afresh from src/core/,
 //                    compared with the files on disk
 //                    (tools/swiftConstants.ts --check)
+//   then, once both have ended:
+//   typecheck        tsc over core, the app and the rest (npm run typecheck)
+//   npm test         node --test over test/*.test.ts
+//   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
 //   committed        the files those three write, as HEAD has them, once
@@ -20,6 +22,11 @@
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
 //                    have both ended
+//
+// copy:keys and swift:constants write what they make, to the Swift package
+// and src/core/copyKeys.ts, which swift build, the type check and the tests
+// read; so they run alone, a fraction of a second, and nothing reads those
+// files while they are written.
 //
 // The jobs call node and tsc directly, not npm test, which type-checks first:
 // here the type check is a job of its own, beside the tests.
@@ -110,6 +117,7 @@ const GENERATED = [
 ];
 const copyKeys = job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]);
 const swiftConstants = job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]);
+await Promise.all([copyKeys, swiftConstants]);
 const fixtures = job('fixtures:check', [[node, ['tools/fixturesCheck.ts']]]);
 const committed = Promise.all([copyKeys, swiftConstants, fixtures])
   .then(() => job('committed', [['git', ['diff', '--exit-code', '--stat', 'HEAD', '--', ...GENERATED]]]));
