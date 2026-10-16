@@ -108,23 +108,24 @@ struct FeedbackPanel: View {
         }
     }
 
+    /// The reading saved (`AppModel.saveProbe`, which commits a change in
+    /// hand first), and the line under it: the range it should be in, or
+    /// the reading taken.
     private func saveProbe() {
-        guard let plan = cook.plan, said?.probe == nil else { return }
         let reading = parseTyped(probeText).flatMap { parse(planner.measure(.probeTemp), $0) }
-        guard let scored = model.liveRecord().map(recordCookTimeS) else { return }
-        let range = planner.probeRange(egg: plan.egg, setup: plan.setup, cookTimeS: scored)
-        guard let reading, reading >= range.low, reading <= range.high else {
-            probeNote = tr(.`probe.refused`, [
-                "low": .text(planner.show(.probeTemp, range.low)),
-                "high": .text(planner.show(.probeTemp, range.high)),
-            ])
-            return
+        Task {
+            switch await model.saveProbe(readingC: reading) {
+            case let .refused(low, high):
+                probeNote = tr(.`probe.refused`, [
+                    "low": .text(planner.show(.probeTemp, low)),
+                    "high": .text(planner.show(.probeTemp, high)),
+                ])
+            case let .taken(reading):
+                probeNote = planner.show(.probeTemp, reading)
+            case nil:
+                break
+            }
         }
-        guard let record = model.liveRecord(), let probe = cook.probeReading(centreC: reading, against: record) else {
-            return
-        }
-        probeNote = planner.show(.probeTemp, reading)
-        model.answer(yolk: nil, white: nil, probe: probe)
     }
 
     // MARK: - The two questions

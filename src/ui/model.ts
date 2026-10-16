@@ -830,9 +830,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       // A correction still settling is committed first: the button acts on
       // the cook as the controls say it is. The alarm stops.
       if (m.cook === null) return [m, []];
-      const [at, first] = handIn(m, {
-        kind: 'moveOn', at_s: lastGesture(m), control: phaseOf(m, now_s) === 'ASKING' ? 'stillInWater' : 'primary',
-      }, now_s);
+      const [at, first] = handIn(m, { kind: 'moveOn', at_s: lastGesture(m), control: 'primary' }, now_s);
       const [next, effects] = pressed(at, now_s);
       return [next, [...first, { kind: 'silence' }, ...effects]];
     }
@@ -880,8 +878,13 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       if (!taken || (msg.yolkWord === null && msg.white === null)) return [next, effects];
       return [say(next, 'learning'), [...effects, { kind: 'answerTaken', yolkWord: msg.yolkWord, white: msg.white }]];
     }
-    case 'probe':
-      return probeRead(m, msg.reading_C, now_s);
+    case 'probe': {
+      // A correction still settling is committed first, by keyboard too:
+      // the reading is scored on the cook as the controls say it is.
+      const [at, first] = handIn(m, { kind: 'moveOn', at_s: lastGesture(m), control: 'probe' }, now_s);
+      const [next, effects] = probeRead(at, msg.reading_C, now_s);
+      return [next, [...first, ...effects]];
+    }
     default:
       return [m, []];
   }

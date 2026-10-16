@@ -130,6 +130,32 @@ public final class AppModel {
         cook.logged ? planner.kept.log.last : cook.eggRecord()
     }
 
+    /// What a probe reading saved came to: refused, with the range it should
+    /// be in, or taken.
+    public enum ProbeSaved: Equatable {
+        case refused(lowC: Double, highC: Double)
+        case taken(Double)
+    }
+
+    /// A probe reading typed at Done, in SI, or nil for one that is not a
+    /// number. A change in hand is committed first, and the cook corrected,
+    /// so the reading is scored on the cook as the controls say it is; then
+    /// it is refused outside the range this egg could read, or taken as an
+    /// answer. Nil when there is nothing to score it on, or a reading has
+    /// been given.
+    public func saveProbe(readingC: Double?) async -> ProbeSaved? {
+        inHand.moveOn(.probe)
+        await cook.caughtUp()
+        guard let plan = cook.plan, cook.answers?.probe == nil, let record = liveRecord() else { return nil }
+        let range = planner.probeRange(egg: plan.egg, setup: plan.setup, cookTimeS: recordCookTimeS(record))
+        guard let readingC, readingC >= range.low, readingC <= range.high else {
+            return .refused(lowC: range.low, highC: range.high)
+        }
+        guard let probe = cook.probeReading(centreC: readingC, against: record) else { return nil }
+        answer(yolk: nil, white: nil, probe: probe)
+        return .taken(readingC)
+    }
+
     /// One answer, about the yolk, the white or the probe, in whichever order
     /// they come: the cook keeps it, and logs the egg as core makes its
     /// record (`Cook`).

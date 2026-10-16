@@ -88,7 +88,10 @@
  *   the language, the sound and the alarm, sharing. A finger down on one is
  *   using it; so is a button pressed by the keyboard or VoiceOver. A touch
  *   on no control (the page, the egg drawn, the clock, a scroll) is none of
- *   these, and the app sends nothing.
+ *   these, and the app sends nothing. The control is a label, for the
+ *   fixtures and a reader: `handStep` commits alike whichever it is, and
+ *   never reads it. Which of an app's controls is which is that app's
+ *   mapping (the web's edit.ts, iOS's views), not core's.
  * - `timer`, `timer`: a timer this set come round. `settle`: the change in
  *   hand committed. `preview`: the aimed-for egg planned, if a change is in
  *   hand. `hold`: the aimed-for egg let go, unless a change is in hand or a
@@ -164,7 +167,8 @@ export type HandGroup =
   | 'bowlWater' | 'waterLitres' | 'eggCount' | 'altitude' | 'level' | 'startedAt';
 
 /** A control that makes no choice of the cook's, or a button that moves the
- *  cook on: using one commits the change in hand. */
+ *  cook on: using one commits the change in hand. A label: core never reads
+ *  it, and each app maps its own controls onto it. */
 export type HandControl = 'primary' | 'cancel' | 'stillInWater' | 'clause' | 'probe' | 'setting';
 
 /** The settle before a commit, the plan of the aimed-for egg, and the

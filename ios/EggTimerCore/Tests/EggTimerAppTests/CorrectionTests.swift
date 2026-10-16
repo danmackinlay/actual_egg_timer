@@ -173,6 +173,22 @@ extension AppTests {
         #expect(world.ringer.rung == [.pull])
     }
 
+    /// A level set without a finger down (VoiceOver's adjust, a key): it
+    /// settles, the cook is corrected, and the slider stays where it was
+    /// set as the aimed-for egg goes, before the pull as after a commit.
+    @Test func aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world)
+        let pull0 = try pullS(model.cook)
+        await correct(at: pull0 - 120, model, world) { model.planner.settings.doneness = 0.62 }
+        await world.until("the aim gone") { model.aimView == nil && model.inHand.aim == nil }
+        await world.settled(model.cook)
+        #expect(try #require(model.cook.running).choices.level == 0.62)
+        #expect(model.planner.settings.doneness == 0.62)
+    }
+
     /// When the eggs went in, corrected a minute at a time: stopped with its
     /// reason at now, at the press of Rolling boil and two hours before
     /// Start, each said to VoiceOver; the start's panel shows the start.
@@ -313,6 +329,33 @@ extension AppTests {
         #expect(stored.choices.level == stored0.choices.level)
         #expect(model.planner.kept.log == [first])
         #expect(model.planner.settings.doneness == stored0.choices.level)
+    }
+
+    /// A probe reading saved at Done while a larger egg settles: the change
+    /// committed and the cook corrected first, so the reading is scored on
+    /// the egg the controls say, and the record logged with it is the
+    /// corrected egg's.
+    @Test func aProbeSavedWhileAChangeSettlesIsScoredOnTheCorrectedCook() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        try await toDone(model, world)
+        // To the hundredth the record keeps.
+        let peak = (try #require(model.cook.shownPeakYolkC) * 100).rounded() / 100
+        let mass0 = try #require(model.cook.running).choices.massKg
+        world.clock.advance(5)
+        model.planner.chooseSize(model.planner.settings.sizeIndex + 1)
+        #expect(model.inHand.pending)
+        let saved = await model.saveProbe(readingC: peak)
+        #expect(!model.inHand.pending, "committed by the save")
+        let mass = try #require(model.cook.running).choices.massKg
+        #expect(mass > mass0, "the cook corrected before the reading was scored")
+        #expect(saved == .taken(peak))
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        let record = try #require(model.planner.kept.log.last)
+        #expect(record.probe?.centreC == peak)
+        #expect(abs(record.egg.massG - mass * 1000) < 0.01, "the corrected egg's record")
     }
 
     /// A hot cook whose pull's grace ran out unanswered, so the clock
