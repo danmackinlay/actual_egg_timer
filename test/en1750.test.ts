@@ -6,7 +6,7 @@
  * Placeholder parity and the length budgets are copy.test.ts's, which reads
  * every catalogue in copy/ and so this one too; a test here checks that it does. Every
  * twin, of either app's key, is held to every rule here; a key without one
- * falls back to English and is listed by `npm run copy:queue` (below).
+ * falls back to English (below).
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -22,9 +22,8 @@ import {
 } from '../src/ui/settings.ts';
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
-import { catalogueTags, isCatalogueFile, translationTags } from '../tools/copyApproval.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
-import { NOTES_PATH, readNotes } from '../tools/copyNotes.ts';
+import { NOTES_PATH, catalogueTags, isCatalogueFile, readNotes, translationTags } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
 
 type Entry = Record<string, unknown>;
@@ -71,12 +70,12 @@ test('the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', 
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 
-test('every twin is an English key; a key without one is listed, not refused', () => {
+test('every twin is an English key; a key without one is not refused', () => {
   // The twins may lag the English: a key with no twin renders in English
-  // (below), and `npm run copy:queue` lists it, with the twins written against
-  // older English. Every twin there is - the web's, and iOS's alarms, Live
-  // Activity and Dynamic Island - is held to every rule below: the
-  // archaisms, the spellings, the long s.
+  // (below), and `git log -- copy/en-x-1750.json` shows how old a twin is.
+  // Every twin there is - the web's, and iOS's alarms, Live Activity and
+  // Dynamic Island - is held to every rule below: the archaisms, the
+  // spellings, the long s.
   for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
   // The app's name is a name, and stays English.
   assert.ok(!PERIOD.messages.has('app.name'));

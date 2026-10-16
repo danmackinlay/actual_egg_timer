@@ -116,8 +116,9 @@ next is `PLAN.md`; the last section here says which document holds what.
   override with its `base`; run `npm test` and `npm run fixtures:check`;
   commit. A small surface has a length budget (`test/data/surfaces.json`;
   raising one is the owner's call). The 1750 twin may lag (`DECISIONS.md`
-  116), and `npm run copy:queue` lists the stale ones; a twin rewritten
-  never transforms the English.
+  116): a key without one falls back to English, and `git log --
+  copy/en-x-1750.json` shows its age; a twin rewritten never transforms the
+  English.
 - **Approving English is the owner's word, never an agent's call.** He reads
   `npm run copy:review` on a phone and says what to put back; once that is
   committed, `npm run copy:approve` records the commit. What he approved was

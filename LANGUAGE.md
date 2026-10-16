@@ -3,7 +3,7 @@
 How both apps get their words, units and languages, and the rules the words
 are held to. Czech (F5) waits for its reviewer. The owner's decisions are in
 `DECISIONS.md`, cited where they apply; what he has yet to read is the
-review queue (§3).
+words changed since he last approved them (§3).
 
 ---
 
@@ -39,7 +39,7 @@ Which app shows a key is read from the sources (`tools/copyNotes.ts`).
 
 **Changing the words.** The steps are `CLAUDE.md`'s "To change wording";
 reading and approving them is `DEVELOPING.md`'s "Reviewing the words"; the
-review queue and the twins' lag are §3.
+review page and the twins' lag are §3.
 
 **Plurals.** A small hand-written rule function chooses the category for
 each shipped language. On the web this could be `Intl.PluralRules`, but
@@ -257,16 +257,15 @@ read), so what a change does to the words is the catalogue's diff.
   budgets, the overlays' `base`, keys and arguments checked by both
   compilers, and no raw key on screen (`copy.test.ts`, `copy:literals`).
 - **Approval is one commit.** `test/data/copy-approved.txt` holds the hash
-  of the last commit whose words the owner approved. The review queue is
-  `copy/` at that commit against the working tree, key by key: changed (the
-  English or an overlay), added or retired. It is generated, never typed;
-  `npm run copy:queue` prints it, and it never fails a build.
+  of the last commit whose words the owner approved. What he has yet to
+  read is `copy/` at that commit against the working tree, key by key:
+  changed (the English or an overlay), added or retired. It is generated,
+  never typed, and never fails a build.
 - **Read** on a phone: `npm run copy:review` writes
   `_dev/copy-review.html`, one file with no script and no network, light
   or dark. For each key: the approved English against today's, word by
-  word; the 1750 twin, and whether it is stale; the en-US words; a small
-  surface's budget against the longest rendering; which apps say it; and
-  its note. The words are still judged in place, in the apps (`UI.md` §6).
+  word; the en-US words; and its note. The words are still judged in
+  place, in the apps (`UI.md` §6).
 - **Approved** on the owner's word, never on an agent's judgement, and of
   the whole catalogue: he says what to put back, and once that is
   committed, `npm run copy:approve` records HEAD (it refuses while `copy/`
@@ -276,18 +275,14 @@ read), so what a change does to the words is the catalogue's diff.
 A string the owner has approved (the `alarm.pull.*` bodies,
 `alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
 as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
-it like the rest, and a change puts it back in the queue.
+it like the rest, and a change puts it back on the review page.
 
 **The twins may lag the English** (`DECISIONS.md` 116). A translation's
 twin need not be rewritten in the commit that changes its English; the
-twins are written in batches. A twin is stale when the English at the
-commit that last wrote its line (`git blame`; a catalogue has one key per
-line) is not today's English; a key with no twin shows the English
-(`src/core/copy.ts`). The queue and the page list both, and neither fails
-a build. That reads history, so it is local tooling, not CI's, whose clone
-is shallow. A stale twin stops being stale when it is rewritten. A regional
-overlay may not lag: it keeps its own `base`, held by `copy.test.ts`
-(§2).
+twins are written in batches. A key with no twin shows the English
+(`src/core/copy.ts`), and `git log -- copy/en-x-1750.json` shows how old
+the twins are. Neither fails a build. A regional overlay may not lag: it
+keeps its own `base`, held by `copy.test.ts` (§2).
 
 **Rules the drafts settled, which stand:**
 

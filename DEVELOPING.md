@@ -22,9 +22,8 @@ npm run probe      # is a probe thermometer worth an egg? (README §11.3)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no literal written into a Swift text call is words
-npm run copy:queue       # the words changed since the approved commit, and stale 1750 twins (LANGUAGE.md §3)
-npm run copy:review      # the same, as _dev/copy-review.html, to read on a phone
-npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved
+npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html, to read on a phone
+npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved (LANGUAGE.md §3)
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
 npm run build:site # the deployable tree, in _site/
@@ -91,28 +90,26 @@ has approved is one commit (`test/data/copy-approved.txt`), so the words
 not yet read are a diff the tools make, not a list anybody keeps. The rules
 the words are held to, and the machinery, are `LANGUAGE.md` §3.
 
-1. **See what is waiting.** `npm run copy:queue` prints every key changed,
-   added or retired since the approved commit, with both Englishes and the
-   apps that show it, and the 1750 twins written against older English.
-2. **Read it on a phone.** `npm run copy:review` writes
+1. **Read what is waiting, on a phone.** `npm run copy:review` writes
    `_dev/copy-review.html` (`npm run build:site` clears `_dev/`), one file
-   with no script and no network: for each key, the approved English
-   against today's word by word, the 1750 twin, the US English, a small
-   surface's length budget against the longest rendering, and which apps
-   say it. Send it to the phone (AirDrop, or open it from a synced folder).
-3. **Read it in place.** A string is judged where it appears, in the apps,
-   not only in the table (`UI.md` §6). `npm run copy:snapshot -- capture
+   with no script and no network: every key changed, added or retired
+   since the approved commit, with the approved English against today's
+   word by word, the US English, and the key's note. Send it to the phone
+   (AirDrop, or open it from a synced folder).
+2. **Read it in place.** A string is judged where it appears, in the apps,
+   not only on the page (`UI.md` §6). `npm run copy:snapshot -- capture
    <out.json>` renders every web screen the copy scenarios reach, for a
-   read of every string rather than only the queue's.
-4. **Put back what the owner names** in `copy/en.json`, and any
+   read of every string rather than only the changed ones.
+3. **Put back what the owner names** in `copy/en.json`, and any
    `copy/en-US.json` override with its `base` (the 1750 twin may lag); run
    `npm test` and `npm run fixtures:check`, which writes any fixture the
    words moved; commit the catalogue with them (CLAUDE.md, "Words").
-5. **Approve the rest**: `npm run copy:approve` records HEAD, or `npm run
-   copy:approve -- <commit>` the commit the page was made from, which it
-   prints; either must be on `main`'s history, so a branch's words are
-   approved once it is merged. Commit `test/data/copy-approved.txt`.
-   Approval is the owner's word; no script or agent gives it.
+4. **Approve the rest**: `npm run copy:approve -- <commit>` records the
+   commit the page was made from, which it prints, so words committed
+   since he read it are not approved with it; `npm run copy:approve`
+   records HEAD, and refuses while `copy/` has uncommitted changes. Commit
+   `test/data/copy-approved.txt`. Approval is the owner's word; no script
+   or agent gives it.
 
 ## Checking the web app end to end
 
