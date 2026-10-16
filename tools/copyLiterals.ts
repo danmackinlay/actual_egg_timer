@@ -55,7 +55,6 @@ const DEBUG_FILES = new Set([
  *  app stores, so every literal in them is a stored field's name, a key, or
  *  the syntax of a version. */
 const FORMAT_FILES = new Set([
-  'ios/EggTimerCore/Sources/EggTimerApp/Newer.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/Settings.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/ShareQueue.swift',
   'ios/EggTimerCore/Sources/EggTimerApp/StoreRegistry.swift',

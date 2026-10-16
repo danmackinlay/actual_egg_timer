@@ -349,8 +349,8 @@ fit's training data cannot drift between the two.
   gave it (absent, it was assumed: 15 °C running, the room's in a bowl), and
   `bowlLitres`, which every bowl carries and nothing else may. A record from
   before them reads as it always did, so the schema stays `v: 1`; a build
-  from before them refuses a log holding a bowl, and the newer-build guard
-  (each app's `writerCheck`) keeps it from writing over one.
+  from before them refuses a log holding a bowl, and writes a log of its own
+  over it, the loss any return to an older build takes (`DECISIONS.md` 107).
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
@@ -422,14 +422,13 @@ base and the posterior together.
 **Today's shape only** (`DECISIONS.md` 107, 9 October 2026). The log started
 fresh in 0.5, under a new key in each app (`aet.calibration.v5`,
 `calibration.v5`), and the stores of 0.3 and 0.4 (`v4`) are not read; each
-app deletes them at launch with every other key it no longer uses, once the
-newer-build guard (`DECISIONS.md` 100) has said it may write. A loader reads
+app deletes them at launch with every other key it no longer uses. A loader reads
 only the record `recordFor` writes: every field present, `null` or not, and
 only `id` may be absent. It ignores fields it does not know, so a later build
 of the same schema may add one, and a different `v` is refused. Every record
-carries `appVersion`, which any value may be. An older build cannot write over
-a newer one's log, because the guard stops it writing at all, so the apps keep
-no copy of what they cannot read. The owner's older exported files, with their
+carries `appVersion`, which any value may be. An older build, after a rollback
+or a downgrade, refuses a newer one's log and writes over it, as a change of
+format does; the apps keep no copy of what they cannot read. The owner's older exported files, with their
 old answers and the fields an older record could leave out, are read by the
 import tool for the fit, outside core (`readFitRecord`).
 

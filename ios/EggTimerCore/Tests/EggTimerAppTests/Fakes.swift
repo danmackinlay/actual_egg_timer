@@ -276,8 +276,7 @@ extension Trait where Self == LeftIdle {
     static var leftIdle: Self { Self() }
 }
 
-/// One test's world: every service a fake, the store empty but for this
-/// build's mark, the clock at a fixed moment, and the words read from the
+/// One test's world: every service a fake, the store empty, the clock at a fixed moment, and the words read from the
 /// repository's copy/. A test makes its models and planners here
 /// (`model()`, `planner()`), so that it ends once they are idle (`LeftIdle`);
 /// a world that still finds one busy, or a model made while another of the
@@ -292,10 +291,6 @@ struct World {
     let card = FakeCard()
     let log = EventLog()
     let announced = Announced()
-
-    /// The version this build is, as the tests say it.
-    static let version = "0.5.0"
-    static let build = "3"
 
     /// One set of surfaces for every test, none ever dropped: they are a pure
     /// function of the pot and the posterior, and a build is seconds.
@@ -322,7 +317,7 @@ struct World {
         Services.announce = { announced.add($0) }
         let log = log
         Screenshots.output = { event, _ in log.add(event) }
-        Stores.claim(Self.version, build: Self.build)
+        Stores.sweep()
     }
 
     /// A model, as the app makes it at launch, kept to check it is left idle.

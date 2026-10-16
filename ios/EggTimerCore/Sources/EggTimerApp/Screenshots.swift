@@ -224,8 +224,7 @@ extension Screenshots {
         /// The log as written: how many eggs, how many folded, and the last.
         case log(count: Int, folded: Int, last: Encoded?)
 
-        // The stores (`Stores.claim`).
-        case stores(verdict: String, mark: String?, markBuild: String?, version: String, build: String)
+        // The stores (`Stores.sweep`).
         case swept(key: String)
         /// A key written to the store (`Stores`), and its value if it is a
         /// number or a text.
@@ -246,7 +245,6 @@ extension Screenshots {
         // The screen.
         /// Where a part of the screen sits, pt from the window's top.
         case layout(part: String, y: Double)
-        case newerNote
         /// One frame of the readout: the moment it was drawn for, and what
         /// it drew, the certainty's time range none with no certainty.
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)

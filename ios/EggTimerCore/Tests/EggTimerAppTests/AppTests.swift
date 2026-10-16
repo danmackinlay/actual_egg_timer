@@ -581,9 +581,7 @@ struct AppTests {
         var values: [String: Any] = ["AppleLanguages": ["en"]]
         for key in StoreRegistry.retired { values[key] = Data("an earlier build's".utf8) }
         for store in StoreRegistry.all { values[store.key] = Data("this build's".utf8) }
-        values[Stores.markKey] = "0.4.0"
         let world = World(store: MemoryStore(values))
-        #expect(!Stores.readOnly)
         let kept = Set(StoreRegistry.all.map(\.key))
         #expect(!Stores.sweptKeys.isEmpty)
         for key in StoreRegistry.retired { #expect(world.store.object(forKey: key) == nil, "\(key) swept") }
@@ -591,37 +589,6 @@ struct AppTests {
         #expect(world.store.object(forKey: "AppleLanguages") != nil)
         #expect(Set(StoreRegistry.retired).isDisjoint(with: kept), "no key both retired and kept")
         #expect(Stores.takeRetiredCook(), "an earlier build's cook among them")
-    }
-
-    /// A build that finds a newer build's mark sweeps nothing.
-    @Test func aReadOnlyBuildSweepsNothing() {
-        var values: [String: Any] = [Stores.markKey: "9.0.0", Stores.buildKey: "1"]
-        for key in StoreRegistry.retired { values[key] = Data("an earlier build's".utf8) }
-        let world = World(store: MemoryStore(values))
-        #expect(Stores.readOnly)
-        #expect(world.store.writes.isEmpty)
-        #expect(world.store.values.count == values.count)
-    }
-
-    /// Under a newer build's mark this build writes nothing at all, and
-    /// still times the egg.
-    @Test func aNewerMarkWritesNothing() async throws {
-        let world = World(store: MemoryStore([Stores.markKey: "9.0.0", Stores.buildKey: "1"]))
-        #expect(Stores.readOnly)
-        let planner = world.planner()
-        let cook = Cook(planner: planner)
-        defer { cook.killed() }
-        await start(cook, planner, world)
-        #expect(cook.phase == .heating)
-        world.clock.advance(300)
-        cook.boil()
-        await world.settled(cook)
-        #expect(cook.running?.events.boilAtS != nil)
-        Stores.set("x", forKey: "doneness")
-        Stores.remove(Stores.markKey)
-        #expect(world.store.writes.isEmpty)
-        #expect(world.store.values.count == 2)
-        #expect(world.store.string(forKey: Stores.markKey) == "9.0.0")
     }
 
     /// The lint's runtime twin (test/iosStores.test.ts): a whole cook, ended

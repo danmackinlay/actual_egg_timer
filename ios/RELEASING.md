@@ -318,21 +318,21 @@ the family's phones get it without you doing anything else.
 ### Never roll back; roll forward
 
 An older build writes what it stores whole, from the fields it knows, and
-drops what a newer one added. From 0.4 on a build that finds a newer
-version's mark writes nothing (`EggTimerApp/Newer.swift`); 0.3 has no such guard,
-and 0.5's first launch deletes 0.3's results log (`DECISIONS.md` 107). So:
+drops what a newer one added; a store in a format it does not know it reads
+as nothing, and replaces at its next write, the results log among them. And
+0.5's first launch deletes 0.3's results log (`DECISIONS.md` 107). So:
 
 - **Never offer a 0.3 build again** on a device 0.5 has run on, on the web or
   on a phone.
 - **A web deploy never goes back before 0.5, nor to an older version than one
-  already served.** Every browser that ran the newer one keeps its mark, so
-  the older build writes nothing there and tells the cook to update, with
-  nothing to update to; and its service worker replaces the newer build. To
+  already served.** In every browser that ran the newer one, the older build
+  drops what the newer one stored that it cannot read; and its service
+  worker replaces the newer build. To
   undo a web release, revert on `main`, bump the version past the one being
   undone, tag, and deploy that. If a rollback has already gone out, the same
   new version clears it.
-- **On iOS, going back to an earlier 0.5 build** loses nothing the newer one
-  stored, and keeps nothing done on the older one.
+- **On iOS, going back to an earlier build** loses what the newer one stored
+  that the older cannot read, as on the web.
 
 ---
 

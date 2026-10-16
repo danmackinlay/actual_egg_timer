@@ -65,11 +65,6 @@ struct ContentView: View {
         return NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: 22) {
-                    // A newer version has run on this phone, and this one
-                    // leaves every store alone (`Stores`):
-                    // said first, before a setting is changed that will not
-                    // be kept.
-                    if Stores.readOnly { NewerNote() }
                     // In every phase, so nothing moves at the start.
                     if period { titlePage }
                     // The readout and the action are functions of the CLOCK,
@@ -110,9 +105,7 @@ struct ContentView: View {
                             // property, so nothing outside would redraw and
                             // the question would never appear. At Done the
                             // questions end the page.
-                            // Not while a newer build's results are left
-                            // alone (`Stores`): no answer could be kept.
-                            if phase == .done && !Stores.readOnly { FeedbackPanel(model: model) }
+                            if phase == .done { FeedbackPanel(model: model) }
                         }
                     }
                     .id(tick)
@@ -327,18 +320,4 @@ extension View {
 
 #Preview {
     ContentView()
-}
-
-/// A newer version of the app has run on this phone, and this one leaves
-/// every store alone (`Stores`): the line that says so, at
-/// the top of the egg screen and of Settings, in the warning's colour.
-struct NewerNote: View {
-    var body: some View {
-        Text(tr(.`newer.note`))
-            .appFont(.footnote)
-            .foregroundStyle(.orange)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .onAppear { Screenshots.log(.newerNote) }
-    }
 }

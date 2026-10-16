@@ -11,14 +11,12 @@ import Foundation
 /// change of shape is one number bumped here, and the key stays. Before wide
 /// deployment (DECISIONS.md 107) a bump is all a change of format needs;
 /// nothing is migrated. A store with no format inside it (`format` nil) is
-/// a bare value read by its own reader (the newest-build mark and its build,
-/// the alarm's sound), or one whose key still names its format, sharing's,
-/// where a change is a new key. The log has its format inside and keeps the
+/// a bare value read by its own reader (the alarm's sound), or one whose key
+/// still names its format, sharing's, where a change is a new key. The log has its format inside and keeps the
 /// key it was first written under.
 ///
-/// The app keeps only what is listed here: once the newer-build guard says
-/// this build may write, it deletes every key an earlier build wrote that no
-/// store here is kept under (`Stores.claim`).
+/// The app keeps only what is listed here: at launch it deletes every key an
+/// earlier build wrote that no store here is kept under (`Stores.sweep`).
 public struct StoreSpec: Sendable, Equatable {
     public let name: String
     /// The format of what it holds, written inside as `v`; nil for a store
@@ -28,10 +26,6 @@ public struct StoreSpec: Sendable, Equatable {
 }
 
 public enum StoreRegistry {
-    /// The newest version that has run, and its build: under these keys for
-    /// good, since an older build must find them.
-    public static let newest = StoreSpec(name: "newest", format: nil, key: "newestVersion")
-    public static let newestBuild = StoreSpec(name: "newestBuild", format: nil, key: "newestBuild")
     /// The settings, one value (Settings.swift).
     public static let settings = StoreSpec(name: "settings", format: 1, key: "settings")
     /// The running cook (StoredCook.swift).
@@ -50,7 +44,7 @@ public enum StoreRegistry {
 
     /// The table in one order, for the sweep.
     static let all = [
-        newest, newestBuild, settings, cook, boilMemory, calibration, share, shareAttest, languageState, alarmSound,
+        settings, cook, boilMemory, calibration, share, shareAttest, languageState, alarmSound,
     ]
 
     /// Every key an earlier build wrote: the posteriors before the log
@@ -59,8 +53,9 @@ public enum StoreRegistry {
     /// read, the cooks in progress before this one's shape, the sharing keys
     /// of an earlier 0.4 build, settings no build reads any more, the
     /// settings a key each among them, sharing's key kept with its dates as
-    /// seconds since 2001, and 0.5's keys with a format in them, from before
-    /// the table of stores.
+    /// seconds since 2001, 0.5's keys with a format in them, from before
+    /// the table of stores, and the mark of the newest build that had run,
+    /// with its build number, which a guard since deleted kept.
     static let retired = [
         "calibration.v1", "calibration.v2", "calibration.v3", "calibration.v4", "calibration.v4.unread",
         "cookInProgress", "cookInProgress.v2", "cookInProgress.v3", "cookInProgress.v4", "cookInProgress.unread",
@@ -69,6 +64,7 @@ public enum StoreRegistry {
         // The settings before they were one value (`SettingsStore`).
         "doneness", "weighedMassG", "sizeIndex", "altitudeM", "waterLitres", "eggCount", "startTemp",
         "customStartC", "start", "heatOff", "cooling", "probe", "roomC", "unitsChosen",
+        "newestVersion", "newestBuild",
     ]
 
     /// The keys where an earlier build kept its cook in progress.

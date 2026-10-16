@@ -46,9 +46,6 @@ public final class Learning {
     /// from, if it says anything. In place of the egg logged last when
     /// `replaces`: a later answer, or a correction after the pull.
     func logRecord(_ record: EggRecord, replaces: Bool) {
-        // A newer build's results are left alone (`Stores`): nothing is
-        // written down, so nothing is learned either.
-        guard !Stores.readOnly else { return }
         if replaces, let index = kept.log.indices.last {
             replaceLogged(index, record)
             return

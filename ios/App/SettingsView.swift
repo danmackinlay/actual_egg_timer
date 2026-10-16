@@ -39,11 +39,6 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            // The egg screen's line, again where the settings that will not
-            // be kept are changed (`Stores`).
-            if Stores.readOnly {
-                Section { NewerNote() }
-            }
             Section {
                 InfoRow(name: about(.`controls.units`), more: [tr(.`controls.units.more.ios`)]) {
                     Text(tr(.`controls.units`))
@@ -212,9 +207,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            // Not while a newer build's results are left alone (`Stores`):
-            // there is nothing this build may forget.
-            if (planner.eggsLogged > 0 || planner.hasBoilMemory) && !Stores.readOnly {
+            if planner.eggsLogged > 0 || planner.hasBoilMemory {
                 if confirming {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(tr(.`learned.confirm.title`))
@@ -268,9 +261,6 @@ struct SettingsView: View {
                     planner.refresh()
                 }
             ))
-            // Nothing is sent or deleted while a newer build's results are
-            // left alone (`Stores`).
-            .disabled(Stores.readOnly)
             if let note = shareNote(s) {
                 Text(note)
                     .appFont(.footnote)
@@ -309,7 +299,7 @@ struct SettingsView: View {
                 Button(tr(.`share.confirm.keep`)) {
                     confirmingDelete = false
                 }
-            } else if !s.uids.isEmpty && !Stores.readOnly {
+            } else if !s.uids.isEmpty {
                 Button(tr(.`share.delete`), role: .destructive) {
                     withAnimation(.snappy) { confirmingDelete = true }
                 }
