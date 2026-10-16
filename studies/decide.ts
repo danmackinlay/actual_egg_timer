@@ -6,7 +6,10 @@
  * Run: npm run decide            (all of it, about nine minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
  *                                 learning, runny, reach, advice, outcome,
- *                                 nudge, certainty)
+ *                                 nudge, certainty, versus)
+ *      npm run decide -- versus  (D against M, about 20 minutes on a pool of
+ *                                 worker threads; the thresholds are in its
+ *                                 section's header)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * INFERENCE.md section 8 (and DECISIONS.md and UI.md, which cite its
@@ -14,23 +17,31 @@
  * on are asserted, more cheaply, in test/decide.test.ts.
  */
 
+import { availableParallelism } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import {
-  type Decision, type DecisionInputs, NUDGE_MAX_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt,
-  decisionGridRequest, decisionGridSpec, decisionInputs, oddsInTenths,
+  CHOICE_SCAN_STEP_S, DECISION_WINDOW_S, type Decision, type DecisionInputs, INV_PHI, LEAN_COST_PER_S, NUDGE_MAX_S,
+  REFINE_TOL_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt, decisionApplies,
+  decisionGridRequest, decisionGridSpec, decisionInputs, expectedLoss, oddsInTenths,
 } from '../src/core/decide.ts';
 import { type DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.ts';
 import {
-  FEEDBACK_BAND, type Particle, type WhiteReport, YOLK_WORDS, type YolkWord, createPrior, yolkWordBands, yolkWordProbit,
+  FEEDBACK_BAND, type Particle, type Posterior, type WhiteReport, WHITE_OFFSET_SD, YOLK_WORDS, YOLK_WORD_CUTS, type YolkWord,
+  createPrior, yolkWordBands, yolkWordProbit,
   withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.ts';
-import { ALPHA_DEFAULT } from '../src/core/constants.ts';
+import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.ts';
+import { normalCdf } from '../src/core/sphere.ts';
 import { eggFromMass, type Egg } from '../src/core/geometry.ts';
 import type { CookSetup } from '../src/core/protocol.ts';
 import { type Solution, logYolkTarget } from '../src/core/solve.ts';
 import { type LevelOdds, type OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.ts';
 import { predictOutcome } from '../src/core/outcome.ts';
-import { CERTAINTY_MASS, type CertaintyReading, certaintyAt } from '../src/core/certainty.ts';
+import {
+  CERTAINTY_MASS, type CertaintyReading, type WordCertainty, askedWord, certaintyAt, wordCertainty,
+} from '../src/core/certainty.ts';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.ts';
 import { UNRELATED } from '../src/core/infer.ts';
 import { sliderFromYolkDose } from '../src/core/solve.ts';
@@ -40,7 +51,8 @@ import {
 } from '../src/core/record.ts';
 import { appSetup, draw, recordAt, rng } from '../tools/common.ts';
 
-const only = process.argv[2] ?? 'all';
+// A `versus` worker thread runs none of the sections: it only takes jobs.
+const only = isMainThread ? process.argv[2] ?? 'all' : 'versus-worker';
 const run = (name: string): boolean => only === 'all' || only === name;
 
 const REF_EGG = eggFromMass(0.068);
@@ -89,6 +101,19 @@ function truthSays(grid: DoseGrid, truth: Particle, t: number, random: () => num
   const white = WHITES[draw(whiteProbit(grid, truth, t).map(withUnrelated), random())];
   const word = YOLK_WORDS[draw(yolkWordProbit(grid, truth, t).map(withUnrelatedWord), random())];
   return { white: white, word: word };
+}
+
+/** A cook `p`'s own loss at `t`, through its probit - P(too soft) + P(too
+ *  firm) + `runnyLoss` P(runny), the decision's loss read through the truth
+ *  rather than the posterior - and whether the egg comes out right: the yolk
+ *  just right and the white not runny. No unrelated share: this is the egg,
+ *  not what is said about it. */
+function trueLossOf(
+  grid: DoseGrid, p: Particle, t: number, target: number, runnyLoss = RUNNY_WHITE_LOSS,
+): { loss: number; right: number } {
+  const y = yolkProbit(grid, p, t, target);
+  const w = whiteProbit(grid, p, t);
+  return { loss: y[0] + y[2] + runnyLoss * w[0], right: y[1] * (1 - w[0]) };
 }
 
 /* ------------------------------------------------------------------ cost */
@@ -239,11 +264,7 @@ if (run('nudge')) {
   const random = rng(20261002);
   const truths = createPrior(300, 20261002 ^ 0x2545f49).particles;
   const levels = [0.22, 0.41, 0.62];
-  const lossOf = (p: Particle, t: number, target: number): { loss: number; right: number } => {
-    const y = yolkProbit(grid, p, t, target);
-    const w = whiteProbit(grid, p, t);
-    return { loss: y[0] + y[2] + RUNNY_WHITE_LOSS * w[0], right: y[1] * (1 - w[0]) };
-  };
+  const lossOf = (p: Particle, t: number, target: number): { loss: number; right: number } => trueLossOf(grid, p, t, target);
   // Each size of nudge, on the same cooks: the cost of a nudge goes with its
   // variance, and so does what it teaches about the slope.
   const SIZES = [3, 5, NUDGE_MAX_S];
@@ -662,6 +683,577 @@ if (run('certainty')) {
     console.log(`  ${name}: ${c.n} eggs; the word asked ${pc(c.asked, c.n)}, it or a neighbour ${pc(c.near, c.n)} `
       + `(the class promises ${CERTAINTY_MASS * 100}% of one or the other)`);
   }
+}
+
+/* ---------------------------------------------- versus: D against M */
+
+/*
+ * Does the decision layer pay its way? The Bayes action D
+ * (`decide(...).cookTime_s`) against the plug-in rule M (`meanSolve(...)
+ * .sol.result.cookTime_s`), in eggs right per 100 cooks: an egg is right when
+ * the yolk is just right and the white is set, P(right) = P(yolk just right)
+ * (1 - P(runny)) through the truth's own probit. Before the first egg both
+ * cook the literature's time, as the app does.
+ *
+ * THE THRESHOLDS, decided before anything ran and not changed since:
+ *
+ *   CUT           All three hold: in test 1, D's advantage is under 1 egg
+ *                 right per 100 cooks at every egg index from 1 up, in every
+ *                 pot and level; in test 2, no regime has D's advantage above
+ *                 2 per 100; in test 5, the words agree at least 95% of the
+ *                 time.
+ *   KEEP          In test 1 or test 2, D's advantage is 3 or more per 100 in
+ *                 any pot and level a cook actually uses: soft, jammy or
+ *                 fudgy, with ice, tap or counter cooling.
+ *   OWNER'S CALL  Anything in between.
+ *
+ * How they are read, also fixed before the run:
+ *  - "D's advantage" is the mean over cooks of P(right | t_D) - P(right | t_M),
+ *    x100, a point estimate; its 95% interval is printed beside it, and a
+ *    verdict whose interval straddles its threshold is said to.
+ *  - Test 1's CUT condition is read per pot, level and egg index 1-6.
+ *  - "In any pot and level" (KEEP) and "no regime" (CUT, test 2) are read per
+ *    pot and level, as the mean over eggs 1-6, the eggs on which D can
+ *    differ from M; per-egg figures are printed too.
+ *  - Every pot here uses ice, tap or counter cooling, and every level is
+ *    soft (0.22), jammy (0.41) or fudgy (0.62), so every cell counts for KEEP.
+ *  - Test 5's "the words agree" is the certainty class AND the 90% interval
+ *    in words both the same, over the simulated cooks' states at every egg
+ *    0-6 in every pot and level; the class alone and lean's grid are printed
+ *    too.
+ *
+ * The design (set after a timing pilot, before the run):
+ *  - Test 0 is lean's grid, on the production surfaces, in this thread.
+ *  - Tests 1, 2, 3 and 5 are simulated cooks, in a pool of worker threads.
+ *    Each pot has one wide surface (25 rows, 0.4-2.5 of the literature's
+ *    time-scale, 10 s), built here and handed to every worker; the filter,
+ *    the choice and the scoring all read it, as `simulate` does its one.
+ *    `simulate` itself is one policy in one pot, so the duel is its loop
+ *    twice: the same truth, the same particles' seed and the same stream of
+ *    answer draws (two per egg, `truthSays`), each policy folding its own
+ *    eggs.
+ *  - The truths of a pot and level are the same in every regime and loss,
+ *    so the regimes differ only by what they change.
+ *  - Each policy's egg is scored against the level its own mean solve left
+ *    (a snap by the white can differ between them); how often it does is
+ *    printed.
+ *  - Test 3's choice at a loss other than 3 is `chooseWithLoss`, a copy of
+ *    `chooseCookTime` with the loss's weight as an argument (src/ is read
+ *    only), checked against it at 3 to the bit before it is used.
+ *  - Test 5's "spread" source, the obvious mapping: the time on screen is
+ *    the mean solve's (no decision, so no lean); `predictCookTime`'s median
+ *    m and its 80% interval as an sd, s_T = (p90 - p10) / 2.563; the likely
+ *    time range m -+ 1.645 s_T; and the five words from one Gaussian in log
+ *    yolk dose, centred at the level's target + k (t - m), with k the
+ *    surface's slope d log10(dose) / dt at the posterior mean time-scale and
+ *    sd sqrt((k s_T)^2 + E[noise^2]), cut at YOLK_WORD_CUTS, the unrelated
+ *    share mixed in, then `wordCertainty` as the app reads it. "The grid" is
+ *    `certaintyAt` at the time the app shows today (the decision's). The
+ *    verdict reads the grid at the decided time against the spread at the
+ *    mean solve's; the grid at the mean solve's is printed beside it, so the
+ *    mapping and the time can be told apart.
+ *  - How many cooks: 400 per pot and level for test 1 (7200), 40 for each
+ *    regime of test 2 and 30 for each other loss of test 3, all the 20
+ *    minutes allow. A pilot at a twentieth of the scale (`versus 0.05`) put
+ *    the sd of one cook's D - M at about 16 per 100 over eggs 1-6 and 24 at
+ *    one egg: once the two policies' eggs differ, their answers and so their
+ *    posteriors part, and common random numbers no longer pair them. The
+ *    full duel's intervals are therefore wider than half an egg per 100;
+ *    beside it is printed the ONE STEP - on D's own posterior, at every
+ *    egg, P(right) at D's time against at M's - which pairs exactly and
+ *    is the choice's effect without the learning's. Runny whites per 100
+ *    are printed too: the loss trades them for yolks, and P(right) does not
+ *    weigh them as the loss does.
+ */
+
+/** The pots the duel cooks in: lean's, less the heat off. */
+const VS_POTS: Pot[] = [POTS[0], POTS[2], POTS[3], POTS[1], POTS[5], POTS[6]];
+const VS_LEVELS = [0.22, 0.41, 0.62];
+/** Eggs 0 to 6. */
+const VS_EGGS = 7;
+const Z95 = 1.959963984540054;
+/** Cooks per pot and level: test 1; each regime of test 2; each other loss of
+ *  test 3. Scaled by `npm run decide -- versus <scale>` for a pilot. */
+const VS_SCALE = Number(process.argv[3] ?? '1');
+const VS_COOKS = { model: Math.round(400 * VS_SCALE), regime: Math.round(40 * VS_SCALE), loss: Math.round(30 * VS_SCALE) };
+const VS_CHUNK = 25;
+
+type RegimeName = 'model' | 'wide' | 'wideFast' | 'whiteLate' | 'whiteEarly' | 'noisy';
+interface Regime { name: RegimeName; what: string; truth: (p: Particle) => Particle; answerNoise: number }
+const LOG_ALPHA_MEDIAN = Math.log(ALPHA_DEFAULT);
+/** A truth's time-scale moved `sds` prior sds and its spread about the median
+ *  made `spread` times the prior's. */
+const alphaMoved = (p: Particle, spread: number, sds: number): Particle => ({
+  ...p, alpha_m2s: Math.exp(LOG_ALPHA_MEDIAN + ALPHA_REL_SD * sds + spread * (Math.log(p.alpha_m2s) - LOG_ALPHA_MEDIAN)),
+});
+const REGIMES: Regime[] = [
+  { name: 'model', what: 'the truths drawn from the prior', truth: (p) => p, answerNoise: 1 },
+  { name: 'wide', what: '(a) time-scale spread 2x the prior sd', truth: (p) => alphaMoved(p, 2, 0), answerNoise: 1 },
+  { name: 'wideFast', what: '(b) the same, +1 prior sd (eggs that cook faster)', truth: (p) => alphaMoved(p, 2, 1), answerNoise: 1 },
+  { name: 'whiteLate', what: '(c+) white offset +1 prior sd (sets later: the runny tail)', truth: (p) => ({ ...p, whiteOffset: p.whiteOffset + WHITE_OFFSET_SD }), answerNoise: 1 },
+  { name: 'whiteEarly', what: '(c-) white offset -1 prior sd (sets sooner)', truth: (p) => ({ ...p, whiteOffset: p.whiteOffset - WHITE_OFFSET_SD }), answerNoise: 1 },
+  { name: 'noisy', what: '(d) answers through twice the noise (scored on the egg)', truth: (p) => p, answerNoise: 2 },
+];
+
+/** The expected loss with `runnyLoss` for the 3: `expectedLoss`, to the bit
+ *  at 3. */
+function expectedLossWith(post: Posterior, grid: DoseGrid, t: number, target: number, runnyLoss: number): number {
+  let loss = 0.0;
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    const w = post.weights[i];
+    if (w === 0.0) continue;
+    const p = post.particles[i];
+    const yolk = yolkProbit(grid, p, t, target);
+    const white = whiteProbit(grid, p, t);
+    loss += w * (yolk[0] + yolk[2] + runnyLoss * white[0]);
+    total += w;
+  }
+  return total > 0.0 ? loss / total : 0.0;
+}
+
+/** `chooseCookTime` with the runny white's weight as an argument: the same
+ *  scan, the same golden section, the same lean cost. */
+function chooseWithLoss(post: Posterior, grid: DoseGrid, target: number, around_s: number, runnyLoss: number): number {
+  const gridHi = grid.timeMin_s + grid.timeStep_s * (grid.timeCount - 1);
+  const lo = Math.max(grid.timeMin_s, around_s - DECISION_WINDOW_S);
+  const hi = Math.min(gridHi, around_s + DECISION_WINDOW_S);
+  if (!(hi > lo)) return around_s;
+  const f = (t: number): number => expectedLossWith(post, grid, t, target, runnyLoss) + LEAN_COST_PER_S * Math.abs(t - around_s);
+  const steps = Math.ceil((hi - lo) / CHOICE_SCAN_STEP_S);
+  const step = (hi - lo) / steps;
+  let best = 0;
+  let bestValue = Number.POSITIVE_INFINITY;
+  for (let k = 0; k <= steps; k++) {
+    const v = f(lo + step * k);
+    if (v < bestValue) { bestValue = v; best = k; }
+  }
+  let a = lo + step * (best > 0 ? best - 1 : 0);
+  let b = lo + step * (best < steps ? best + 1 : steps);
+  let c = b - INV_PHI * (b - a);
+  let d = a + INV_PHI * (b - a);
+  let fc = f(c);
+  let fd = f(d);
+  while (b - a > REFINE_TOL_S) {
+    if (fc <= fd) { b = d; d = c; fd = fc; c = b - INV_PHI * (b - a); fc = f(c); } else { a = c; c = d; fc = fd; d = a + INV_PHI * (b - a); fd = f(d); }
+  }
+  const mid = 0.5 * (a + b);
+  return f(mid) <= bestValue ? mid : lo + step * best;
+}
+
+/** The posterior's P(right) at `t`: each particle's P(yolk just right)
+ *  (1 - P(runny)), no unrelated share. */
+function posteriorRight(post: Posterior, grid: DoseGrid, t: number, target: number): number {
+  let s = 0.0;
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    s += post.weights[i] * trueLossOf(grid, post.particles[i], t, target).right;
+    total += post.weights[i];
+  }
+  return s / total;
+}
+
+/** Test 5's "spread" source: the words and the likely time range from
+ *  `predictCookTime`'s spread alone, at `t` (see the header). */
+function spreadCertainty(post: Posterior, grid: DoseGrid, t: number, level: number): { words: WordCertainty; low_s: number; high_s: number } {
+  const target = logYolkTarget(level);
+  const q = predictCookTime(post, grid, target);
+  const sdT = (q.high_s - q.low_s) / (2 * 1.2815515655446004);
+  const a = posteriorParams(post).alpha_m2s;
+  const slope = (lookupLogYolkDose(grid, a, t + 5) - lookupLogYolkDose(grid, a, t - 5)) / 10;
+  let n2 = 0.0;
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    n2 += post.weights[i] * post.particles[i].noise ** 2;
+    total += post.weights[i];
+  }
+  const mu = target + slope * (t - q.median_s);
+  const sd = Math.sqrt((slope * sdT) ** 2 + n2 / total);
+  const p: number[] = [];
+  let below = 0.0;
+  for (let k = 0; k < 4; k++) {
+    const upTo = normalCdf((YOLK_WORD_CUTS[k] - mu) / sd);
+    p.push(withUnrelatedWord(upTo - below));
+    below = upTo;
+  }
+  p.push(withUnrelatedWord(1 - below));
+  return { words: wordCertainty(p, askedWord(level)), low_s: q.median_s - 1.6448536269514722 * sdT, high_s: q.median_s + 1.6448536269514722 * sdT };
+}
+
+/** The duel's surface for a pot: wide enough for every truth the regimes
+ *  draw and every time either policy picks. */
+function versusGrid(pot: Pot): DoseGrid {
+  const spec = decisionGridSpec(decisionInputs(PRIOR, pot.egg, pot.setup));
+  const lo = Math.max(20, spec.timeMin_s - 150);
+  const count = Math.round((spec.timeMax_s + 250 - lo) / 10) + 1;
+  return buildDoseGrid(pot.egg, pot.setup, {
+    alphaMin: ALPHA_DEFAULT * 0.4, alphaMax: ALPHA_DEFAULT * 2.5, alphaCount: 25, timeMin_s: lo, timeMax_s: lo + 10 * (count - 1), timeCount: count,
+  });
+}
+
+interface VsJob {
+  test: 'model' | 'regime' | 'loss';
+  regime: RegimeName;
+  runnyLoss: number;
+  pot: number;
+  level: number;
+  /** Cooks `from` to `to` - 1 of the cell's `cooks`. */
+  from: number;
+  to: number;
+  cooks: number;
+  /** Whether to read test 5's words on D's eggs. */
+  words: boolean;
+}
+
+/** One cook's eggs, 0 to 6, under each policy. */
+interface VsCook {
+  tD: number[]; tM: number[];
+  /** P(right), the loss and P(runny) under the truth, at each policy's time. */
+  rD: number[]; rM: number[]; lD: number[]; lM: number[]; wD: number[]; wM: number[];
+  /** P(right) at the mean solve's time on D's own posterior: the same state,
+   *  the other time, so D's choice is seen without the paths parting. */
+  rDm: number[];
+  snapDiffers: number; offGrid: number;
+}
+
+/** Test 5's tally, for one job. */
+interface VsWords {
+  n: number[]; cls: number[]; interval: number[]; both: number[]; bothAtM: number[]; clsAtM: number[];
+  dLow: number[]; dHigh: number[]; widthGrid: number[]; widthSpread: number[];
+}
+
+interface VsResult { job: VsJob; cooks: VsCook[]; words: VsWords | null; ms: number }
+
+/** The seed of a cell's truths, and of one of its cooks. */
+const cellSeed = (job: VsJob): number => 20261017 + 7919 * job.pot + 104729 * VS_LEVELS.indexOf(job.level);
+const cookSeed = (job: VsJob, k: number): number => ((cellSeed(job) * 2654435761) ^ (k * 40503 + 1)) | 0 || 1;
+
+function runVersusJob(job: VsJob, grids: DoseGrid[]): VsResult {
+  const t0 = performance.now();
+  const pot = VS_POTS[job.pot];
+  const grid = grids[job.pot];
+  const gridHi = grid.timeMin_s + grid.timeStep_s * (grid.timeCount - 1);
+  const regime = REGIMES.find((r) => r.name === job.regime) as Regime;
+  const truths = createPrior(job.cooks, cellSeed(job) ^ 0x2545f49).particles;
+  const cooks: VsCook[] = [];
+  const words: VsWords | null = job.words ? {
+    n: new Array<number>(VS_EGGS).fill(0), cls: new Array<number>(VS_EGGS).fill(0), interval: new Array<number>(VS_EGGS).fill(0),
+    both: new Array<number>(VS_EGGS).fill(0), bothAtM: new Array<number>(VS_EGGS).fill(0), clsAtM: new Array<number>(VS_EGGS).fill(0),
+    dLow: [], dHigh: [], widthGrid: [], widthSpread: [],
+  } : null;
+  for (let k = job.from; k < job.to; k++) {
+    const truth = regime.truth(truths[k]);
+    const answerer: Particle = { ...truth, noise: truth.noise * regime.answerNoise };
+    const seed = cookSeed(job, k);
+    const postSeed = 1 + Math.floor(rng(seed)() * 2147483646);
+    const cook: VsCook = { tD: [], tM: [], rD: [], rM: [], lD: [], lM: [], wD: [], wM: [], rDm: [], snapDiffers: 0, offGrid: 0 };
+    const levels: number[][] = [[], []];
+    for (const policy of ['D', 'M'] as const) {
+      const random = rng(seed ^ 0x5bd1e995);
+      const cal: Calibration = { posterior: createPrior(PARTICLE_COUNT, postSeed), eggsLogged: 0 };
+      for (let egg = 0; egg < VS_EGGS; egg++) {
+        const m = meanSolve(cal, pot.egg, pot.setup, job.level);
+        const target = logYolkTarget(m.level);
+        const mean = m.sol.result.cookTime_s;
+        let t = mean;
+        if (policy === 'D') {
+          t = job.runnyLoss === RUNNY_WHITE_LOSS
+            ? decide(cal, grid, m.sol, target).cookTime_s
+            : decisionApplies(m.sol) && cal.eggsLogged > 0 ? chooseWithLoss(cal.posterior, grid, target, mean, job.runnyLoss) : mean;
+        }
+        if (t < grid.timeMin_s || t > gridHi) cook.offGrid += 1;
+        const s = trueLossOf(grid, truth, t, target, job.runnyLoss);
+        (policy === 'D' ? cook.tD : cook.tM).push(t);
+        (policy === 'D' ? cook.rD : cook.rM).push(s.right);
+        (policy === 'D' ? cook.lD : cook.lM).push(s.loss);
+        (policy === 'D' ? cook.wD : cook.wM).push(whiteProbit(grid, truth, t)[0]);
+        if (policy === 'D') cook.rDm.push(trueLossOf(grid, truth, mean, target).right);
+        levels[policy === 'D' ? 0 : 1].push(m.level);
+        if (policy === 'D' && words !== null) {
+          const g = certaintyAt(cal.posterior, grid, t, m.level);
+          const gm = certaintyAt(cal.posterior, grid, mean, m.level);
+          const sp = spreadCertainty(cal.posterior, grid, mean, m.level);
+          const sameInterval = (w: WordCertainty): boolean => w.from === sp.words.from && w.to === sp.words.to;
+          words.n[egg] += 1;
+          words.cls[egg] += g.words.certainty === sp.words.certainty ? 1 : 0;
+          words.interval[egg] += sameInterval(g.words) ? 1 : 0;
+          words.both[egg] += g.words.certainty === sp.words.certainty && sameInterval(g.words) ? 1 : 0;
+          words.clsAtM[egg] += gm.words.certainty === sp.words.certainty ? 1 : 0;
+          words.bothAtM[egg] += gm.words.certainty === sp.words.certainty && sameInterval(gm.words) ? 1 : 0;
+          words.dLow.push(sp.low_s - g.time.low_s);
+          words.dHigh.push(sp.high_s - g.time.high_s);
+          words.widthGrid.push(g.time.high_s - g.time.low_s);
+          words.widthSpread.push(sp.high_s - sp.low_s);
+        }
+        const said = truthSays(grid, answerer, t, random);
+        updatePosterior(cal.posterior, grid, t, said.word, said.white);
+        cal.eggsLogged += 1;
+      }
+    }
+    for (let e = 0; e < VS_EGGS; e++) cook.snapDiffers += levels[0][e] === levels[1][e] ? 0 : 1;
+    cooks.push(cook);
+  }
+  return { job: job, cooks: cooks, words: words, ms: performance.now() - t0 };
+}
+
+if (!isMainThread && parentPort !== null && (workerData as { versus?: boolean } | null)?.versus === true) {
+  const port = parentPort;
+  const grids = (workerData as { grids: DoseGrid[] }).grids;
+  port.on('message', (job: VsJob) => port.postMessage(runVersusJob(job, grids)));
+}
+
+/** Every job, through a pool of worker threads, the longest first. */
+function versusPool(jobs: VsJob[], grids: DoseGrid[], workers: number): Promise<VsResult[]> {
+  return new Promise((resolve, reject) => {
+    const results: VsResult[] = [];
+    let next = 0;
+    let done = 0;
+    const pool: Worker[] = [];
+    const feed = (w: Worker): void => {
+      if (next < jobs.length) w.postMessage(jobs[next++]);
+    };
+    for (let i = 0; i < Math.min(workers, jobs.length); i++) {
+      const w = new Worker(fileURLToPath(import.meta.url), { workerData: { versus: true, grids: grids } });
+      w.on('message', (r: VsResult) => {
+        results.push(r);
+        done += 1;
+        if (done % 20 === 0 || done === jobs.length) process.stderr.write(`  versus: ${done}/${jobs.length} jobs\n`);
+        if (done === jobs.length) {
+          for (const p of pool) void p.terminate();
+          resolve(results);
+        } else {
+          feed(w);
+        }
+      });
+      w.on('error', reject);
+      pool.push(w);
+      feed(w);
+    }
+  });
+}
+
+/** Mean and 95% half-width. */
+function meanCi(xs: number[]): { mean: number; half: number; n: number } {
+  const n = xs.length;
+  let s = 0;
+  for (const x of xs) s += x;
+  const mean = s / n;
+  let v = 0;
+  for (const x of xs) v += (x - mean) ** 2;
+  return { mean: mean, half: n > 1 ? Z95 * Math.sqrt(v / (n - 1) / n) : Number.NaN, n: n };
+}
+/** Per 100, with its interval. */
+const per100 = (xs: number[]): string => {
+  const c = meanCi(xs);
+  return `${c.mean >= 0 ? '+' : ''}${(100 * c.mean).toFixed(2)} [${(100 * (c.mean - c.half)).toFixed(2)}, ${(100 * (c.mean + c.half)).toFixed(2)}]`;
+};
+const avg = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / xs.length;
+/** A cook's D - M over eggs 1-6. */
+const laterEggs = (c: VsCook, f: (c: VsCook, e: number) => number): number => {
+  let s = 0;
+  for (let e = 1; e < VS_EGGS; e++) s += f(c, e);
+  return s / (VS_EGGS - 1);
+};
+const advantage = (c: VsCook, e: number): number => c.rD[e] - c.rM[e];
+const lossGain = (c: VsCook, e: number): number => c.lM[e] - c.lD[e];
+const leanOf = (c: VsCook, e: number): number => c.tD[e] - c.tM[e];
+const oneStep = (c: VsCook, e: number): number => c.rD[e] - c.rDm[e];
+const runnyDiff = (c: VsCook, e: number): number => c.wD[e] - c.wM[e];
+
+/** The tables for one set of cells: by egg, by level, by pot, and each cell. */
+function versusTables(results: VsResult[], title: string): { maxCellEgg: number; maxCellEggAt: string; maxCell: number; maxCellAt: string; minCell: number; minCellAt: string } {
+  const all = results.flatMap((r) => r.cooks);
+  console.log(`\n-- ${title}: ${all.length} cooks; D - M in eggs right per 100 cooks [95%]`);
+  console.log('by egg: D right%, M right%, D - M; one step on D\'s posterior, D - M; runny whites per 100, D - M; loss M - D (x100); lean t_D - t_M mean (mean |lean|) s');
+  for (let e = 0; e < VS_EGGS; e++) {
+    console.log(`  ${e}: ${(100 * avg(all.map((c) => c.rD[e]))).toFixed(1)}%, ${(100 * avg(all.map((c) => c.rM[e]))).toFixed(1)}%, `
+      + `${per100(all.map((c) => advantage(c, e)))}; ${per100(all.map((c) => oneStep(c, e)))}; ${per100(all.map((c) => runnyDiff(c, e)))}; `
+      + `${per100(all.map((c) => lossGain(c, e)))}; ${avg(all.map((c) => leanOf(c, e))).toFixed(1)} (${avg(all.map((c) => Math.abs(leanOf(c, e)))).toFixed(1)})`);
+  }
+  const by = (label: string, keyOf: (j: VsJob) => string): void => {
+    const keys = [...new Set(results.map((r) => keyOf(r.job)))];
+    console.log(`by ${label}, eggs 1-6: D - M; one step; runny per 100, D - M; loss M - D (x100); mean lean s`);
+    for (const k of keys) {
+      const cs = results.filter((r) => keyOf(r.job) === k).flatMap((r) => r.cooks);
+      console.log(`  ${k}: ${per100(cs.map((c) => laterEggs(c, advantage)))}; ${per100(cs.map((c) => laterEggs(c, oneStep)))}; `
+        + `${per100(cs.map((c) => laterEggs(c, runnyDiff)))}; ${per100(cs.map((c) => laterEggs(c, lossGain)))}; ${avg(cs.map((c) => laterEggs(c, leanOf))).toFixed(1)}`);
+    }
+  };
+  by('level', (j) => String(j.level));
+  by('pot', (j) => VS_POTS[j.pot].name);
+  console.log('each pot and level, eggs 1-6: D - M; one step; the egg where D - M is largest, and its value; mean lean s; eggs on another level than M\'s; eggs off the surface');
+  let maxCellEgg = -Infinity;
+  let maxCellEggAt = '';
+  let maxCell = -Infinity;
+  let maxCellAt = '';
+  let minCell = Infinity;
+  let minCellAt = '';
+  for (let p = 0; p < VS_POTS.length; p++) {
+    for (const level of VS_LEVELS) {
+      const cs = results.filter((r) => r.job.pot === p && r.job.level === level).flatMap((r) => r.cooks);
+      if (cs.length === 0) continue;
+      const cell = meanCi(cs.map((c) => laterEggs(c, advantage)));
+      let bestE = 1;
+      let bestV = -Infinity;
+      for (let e = 1; e < VS_EGGS; e++) {
+        const v = avg(cs.map((c) => advantage(c, e)));
+        if (v > bestV) { bestV = v; bestE = e; }
+      }
+      const where = `${VS_POTS[p].name}, ${level}`;
+      if (bestV > maxCellEgg) { maxCellEgg = bestV; maxCellEggAt = `${where}, egg ${bestE} ${per100(cs.map((c) => advantage(c, bestE)))}`; }
+      if (cell.mean > maxCell) { maxCell = cell.mean; maxCellAt = `${where} ${per100(cs.map((c) => laterEggs(c, advantage)))}`; }
+      if (cell.mean < minCell) { minCell = cell.mean; minCellAt = `${where} ${per100(cs.map((c) => laterEggs(c, advantage)))}`; }
+      console.log(`  ${where}: ${per100(cs.map((c) => laterEggs(c, advantage)))}; ${per100(cs.map((c) => laterEggs(c, oneStep)))}; egg ${bestE} ${per100(cs.map((c) => advantage(c, bestE)))}; `
+        + `${avg(cs.map((c) => laterEggs(c, leanOf))).toFixed(1)} s; ${cs.reduce((a, c) => a + c.snapDiffers, 0)}; ${cs.reduce((a, c) => a + c.offGrid, 0)}`);
+    }
+  }
+  console.log(`largest cell (eggs 1-6): ${maxCellAt}; smallest: ${minCellAt}; largest at one egg: ${maxCellEggAt}`);
+  return { maxCellEgg: maxCellEgg, maxCellEggAt: maxCellEggAt, maxCell: maxCell, maxCellAt: maxCellAt, minCell: minCell, minCellAt: minCellAt };
+}
+
+if (run('versus')) {
+  const started = performance.now();
+  console.log(`\n== versus: the Bayes action D against the plug-in rule M (${PARTICLE_COUNT} particles)`);
+
+  /* Test 0, and test 5 and test 3's lean on lean's grid: production surfaces. */
+  let t0 = performance.now();
+  console.log('\n-- test 0: what the posterior believes M costs, on lean\'s grid (production surfaces)');
+  console.log('   per level: lean t_D - t_M s; E_post[L(t_M)] - E_post[L(t_D)] x100; E_post[P(right) at t_D] - at t_M x100 (prior: what D WOULD choose)');
+  let maxRegret = 0;
+  let wordsN = 0;
+  let wordsBoth = 0;
+  let wordsCls = 0;
+  const leanByLoss: Record<number, number[]> = { 1: [], 3: [], 10: [] };
+  // The check that chooseWithLoss is chooseCookTime at 3.
+  let checked = 0;
+  let mismatched = 0;
+  const words5: string[] = [];
+  for (const pot of POTS) {
+    console.log(`${pot.name}:`);
+    for (const [name, c] of Object.entries(LEARNED)) {
+      const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, pot.egg, pot.setup)));
+      const row: string[] = [];
+      for (const level of [0.22, 0.41, 0.62, 1.0]) {
+        const m = meanSolve(c, pot.egg, pot.setup, level);
+        const target = logYolkTarget(m.level);
+        const tM = m.sol.result.cookTime_s;
+        const tD = chooseCookTime(c.posterior, grid, target, tM);
+        const regret = expectedLoss(c.posterior, grid, tM, target) - expectedLoss(c.posterior, grid, tD, target);
+        const right = posteriorRight(c.posterior, grid, tD, target) - posteriorRight(c.posterior, grid, tM, target);
+        if (c.eggsLogged > 0) maxRegret = Math.max(maxRegret, regret);
+        row.push(`${m.level}: ${tD - tM >= 0 ? '+' : ''}${(tD - tM).toFixed(0)} s ${(100 * regret).toFixed(2)} ${right >= 0 ? '+' : ''}${(100 * right).toFixed(2)}`);
+        // Test 3's lean, at one and three eggs, where the app chooses.
+        if (c.eggsLogged > 0 && decisionApplies(m.sol)) {
+          for (const W of [1, 3, 10]) leanByLoss[W].push(chooseWithLoss(c.posterior, grid, target, tM, W) - tM);
+          checked += 1;
+          if (chooseWithLoss(c.posterior, grid, target, tM, RUNNY_WHITE_LOSS) !== tD) mismatched += 1;
+        }
+        // Test 5 on lean's grid: the words as the app reads them today, at
+        // the decision's time, against the spread's at the mean solve's.
+        const d = decide(c, grid, m.sol, target);
+        const g = certaintyAt(c.posterior, grid, d.cookTime_s, m.level);
+        const sp = spreadCertainty(c.posterior, grid, tM, m.level);
+        const same = g.words.certainty === sp.words.certainty && g.words.from === sp.words.from && g.words.to === sp.words.to;
+        wordsN += 1;
+        wordsBoth += same ? 1 : 0;
+        wordsCls += g.words.certainty === sp.words.certainty ? 1 : 0;
+        words5.push(`${pot.name}, ${name}, ${m.level}: grid ${g.words.certainty} ${YOLK_WORDS[g.words.from]}-${YOLK_WORDS[g.words.to]} `
+          + `${g.time.low_s.toFixed(0)}-${g.time.high_s.toFixed(0)} s | spread ${sp.words.certainty} ${YOLK_WORDS[sp.words.from]}-${YOLK_WORDS[sp.words.to]} `
+          + `${sp.low_s.toFixed(0)}-${sp.high_s.toFixed(0)} s${same ? '' : '  <- differ'}`);
+      }
+      console.log(`  ${name}${c.eggsLogged === 0 ? ' [would]' : ''}: ${row.join('; ')}`);
+    }
+  }
+  console.log(`largest regret after an egg: ${(100 * maxRegret).toFixed(2)} per 100 (of loss)`);
+  console.log(`chooseWithLoss at 3 against chooseCookTime: ${checked - mismatched} of ${checked} to the bit`);
+  if (mismatched > 0) throw new Error('chooseWithLoss is not chooseCookTime at 3');
+  console.log('\n-- test 3 on lean\'s grid (one egg, three eggs firmer; every pot and level where the app chooses): lean t_D - t_M s at each loss');
+  for (const W of [1, 3, 10]) {
+    const xs = leanByLoss[W];
+    console.log(`  runny white x${W}: mean ${avg(xs).toFixed(1)}, range ${Math.min(...xs).toFixed(1)} to ${Math.max(...xs).toFixed(1)}`);
+  }
+  console.log(`\n-- test 5 on lean's grid: class and 90% interval the same in ${wordsBoth} of ${wordsN} (class alone ${wordsCls})`);
+  for (const w of words5) console.log(`  ${w}`);
+  console.log(`(test 0, test 3's and test 5's grids: ${((performance.now() - t0) / 1000).toFixed(0)} s)`);
+
+  /* Tests 1, 2, 3 and 5: the duel. */
+  t0 = performance.now();
+  const grids = VS_POTS.map(versusGrid);
+  console.log(`\n(the duel's surfaces: ${((performance.now() - t0) / 1000).toFixed(0)} s)`);
+  const jobs: VsJob[] = [];
+  const add = (test: VsJob['test'], regime: RegimeName, runnyLoss: number, cooks: number, words: boolean): void => {
+    for (let p = 0; p < VS_POTS.length; p++) {
+      for (const level of VS_LEVELS) {
+        for (let from = 0; from < cooks; from += VS_CHUNK) {
+          jobs.push({ test: test, regime: regime, runnyLoss: runnyLoss, pot: p, level: level, from: from, to: Math.min(cooks, from + VS_CHUNK), cooks: cooks, words: words });
+        }
+      }
+    }
+  };
+  add('model', 'model', RUNNY_WHITE_LOSS, VS_COOKS.model, true);
+  for (const r of REGIMES) if (r.name !== 'model') add('regime', r.name, RUNNY_WHITE_LOSS, VS_COOKS.regime, false);
+  for (const W of [1, 10]) add('loss', 'model', W, VS_COOKS.loss, false);
+  // The counter's mean solve is twice the others': its jobs first.
+  jobs.sort((a, b) => (VS_POTS[b.pot].setup.cooling === 'counter' ? 1 : 0) - (VS_POTS[a.pot].setup.cooling === 'counter' ? 1 : 0));
+  const workers = Math.max(1, Math.min(14, availableParallelism() - 2));
+  t0 = performance.now();
+  const results = await versusPool(jobs, grids, workers);
+  const wall = (performance.now() - t0) / 1000;
+  const cpu = (test: VsJob['test']): string => `${(results.filter((r) => r.job.test === test).reduce((a, r) => a + r.ms, 0) / 1000).toFixed(0)} s`;
+  console.log(`(the duel: ${jobs.length} jobs on ${workers} workers in ${wall.toFixed(0)} s; worker time: test 1 and 5 ${cpu('model')}, test 2 ${cpu('regime')}, test 3 ${cpu('loss')})`);
+
+  const model = results.filter((r) => r.job.test === 'model');
+  const t1 = versusTables(model, `test 1: the model correct (${VS_COOKS.model} cooks per pot and level)`);
+  const t2: Record<string, ReturnType<typeof versusTables>> = {};
+  for (const r of REGIMES) {
+    if (r.name === 'model') continue;
+    t2[r.name] = versusTables(results.filter((x) => x.job.test === 'regime' && x.job.regime === r.name), `test 2 ${r.what} (${VS_COOKS.regime} cooks per pot and level)`);
+  }
+  for (const W of [1, 10]) {
+    versusTables(results.filter((x) => x.job.test === 'loss' && x.job.runnyLoss === W), `test 3: a runny white costs ${W} (${VS_COOKS.loss} cooks per pot and level)`);
+  }
+
+  // Test 5, from the duel's D eggs.
+  const tallies = model.map((r) => r.words as VsWords);
+  const sumAt = (f: (w: VsWords) => number[], e: number): number => tallies.reduce((a, w) => a + f(w)[e], 0);
+  console.log(`\n-- test 5: the words from the grid (at t_D, today) against the spread (at t_M), on test 1's cooks`);
+  console.log('by egg: class and interval the same (the verdict\'s); class alone; interval alone; both, the grid read at t_M');
+  let n5 = 0;
+  let both5 = 0;
+  for (let e = 0; e < VS_EGGS; e++) {
+    const n = sumAt((w) => w.n, e);
+    n5 += n;
+    both5 += sumAt((w) => w.both, e);
+    const pc = (x: number): string => `${(100 * x / n).toFixed(1)}%`;
+    console.log(`  ${e}: ${pc(sumAt((w) => w.both, e))}, ${pc(sumAt((w) => w.cls, e))}, ${pc(sumAt((w) => w.interval, e))}, ${pc(sumAt((w) => w.bothAtM, e))} (${n})`);
+  }
+  for (let p = 0; p < VS_POTS.length; p++) {
+    const ts = model.filter((r) => r.job.pot === p).map((r) => r.words as VsWords);
+    const n = ts.reduce((a, w) => a + w.n.reduce((x, y) => x + y, 0), 0);
+    const b = ts.reduce((a, w) => a + w.both.reduce((x, y) => x + y, 0), 0);
+    console.log(`  ${VS_POTS[p].name}: ${(100 * b / n).toFixed(1)}% of ${n}`);
+  }
+  const q = (xs: number[], p: number): number => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
+  const dLow = tallies.flatMap((w) => w.dLow);
+  const dHigh = tallies.flatMap((w) => w.dHigh);
+  const absEnd = dLow.map((x, i) => Math.max(Math.abs(x), Math.abs(dHigh[i])));
+  console.log(`the likely time range, spread - grid: low end mean ${avg(dLow).toFixed(1)} s, high end ${avg(dHigh).toFixed(1)} s; `
+    + `the farther end median ${q(absEnd, 0.5).toFixed(1)} s, 95th percentile ${q(absEnd, 0.95).toFixed(1)} s, largest ${Math.max(...absEnd).toFixed(1)} s; `
+    + `mean width ${avg(tallies.flatMap((w) => w.widthGrid)).toFixed(0)} s (grid) and ${avg(tallies.flatMap((w) => w.widthSpread)).toFixed(0)} s (spread)`);
+  const agree5 = both5 / n5;
+
+  // The verdict, against the thresholds in the header.
+  const t2max = Math.max(...Object.values(t2).map((x) => x.maxCell));
+  const t2maxAt = Object.entries(t2).find(([, x]) => x.maxCell === t2max);
+  const keep = Math.max(t1.maxCell, t2max) >= 0.03;
+  const cut = t1.maxCellEgg < 0.01 && t2max <= 0.02 && agree5 >= 0.95;
+  console.log('\n-- the verdict');
+  console.log(`test 1, largest D - M at any pot, level and egg 1-6: ${(100 * t1.maxCellEgg).toFixed(2)} per 100 (${t1.maxCellEggAt}); CUT needs < 1`);
+  console.log(`test 1, largest pot and level (eggs 1-6): ${(100 * t1.maxCell).toFixed(2)} (${t1.maxCellAt}); KEEP needs >= 3`);
+  console.log(`test 2, largest pot and level in any regime (eggs 1-6): ${(100 * t2max).toFixed(2)} (${t2maxAt?.[0]}: ${t2maxAt?.[1].maxCellAt}); CUT needs <= 2, KEEP >= 3`);
+  console.log(`test 5, the words agree: ${(100 * agree5).toFixed(1)}%; CUT needs >= 95%`);
+  console.log(`=> ${keep ? 'KEEP' : cut ? 'CUT' : 'OWNER\'S CALL'}`);
+  console.log(`(versus: ${((performance.now() - started) / 1000).toFixed(0)} s in all)`);
 }
 
 export type { DecisionInputs };
