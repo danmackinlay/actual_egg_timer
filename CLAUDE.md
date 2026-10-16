@@ -23,7 +23,8 @@ next is `PLAN.md`; the last section here says which document holds what.
   | tests, tools | `npm test` |
   | core, fixture generators | `npm test`, `fixtures:check`; `swift test` if the Swift twin moves |
   | Swift outside the twin | `copy:literals`, `swift test`, `ios:build` |
-  | the web's screens or words (`src/ui`, `index.html`, `styles.css`, `copy/`) | the rows above that apply, and `npm run e2e` |
+  | words in `copy/` that add no key and change no arguments | `npm test`, `fixtures:check` |
+  | the web's screens (`src/ui`, `index.html`, `styles.css`), or a key or its arguments in `copy/` | the rows above that apply, and `npm run e2e` |
   | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e` |
 
   Any merge that touched code runs the full `npm run verify` once. A slow
@@ -102,24 +103,22 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 ## Words
 
-- **Every word either app shows is a key in `copy/en.json`**; no literal on
-  an iOS screen is words (`npm run copy:literals`). Read `LANGUAGE.md` §3
-  before writing one. A key is a `CopyKey`, which `npm run copy:keys` makes
-  from the catalogue and both compilers check (`DECISIONS.md` 127).
-- **To change wording** (`DECISIONS.md` 106): edit `copy/en.json`, and any
-  `copy/en-US.json` override with its `base`; fit the string to its
-  surface's budget (`test/data/surfaces.json`; raising a small surface's
-  budget is the owner's call); then `npm run copy:keys` when a key or its
-  arguments change, and `npm run fixtures`. A key's note and
-  surface live in `copy/en.notes.json`, which no app loads; the apps that
-  show it are derived from their sources (`DECISIONS.md` 122). The 1750
-  twin lags (116): it is not part of a wording change. A twin rewritten
-  never transforms the English, and is stamped with
-  `npm run copy:approve -- --translation en-x-1750 <key…>`.
-- **Approving English is the owner's word, never an agent's call**
-  (`npm run copy:approve -- <key…>`). He reads `npm run copy:review` on a
-  phone, not in a table. What he approved was good enough for now
-  (`DECISIONS.md` 54), and changes like anything else.
+- **Every word either app shows is a key in `copy/en.json`**; no literal
+  where iOS puts text on screen is words (`npm run copy:literals`). Read
+  `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which
+  `npm test` makes from the catalogue and both compilers check
+  (`DECISIONS.md` 127). A key's note and surface are in
+  `copy/en.notes.json`.
+- **To change wording**: edit `copy/en.json`, and any `copy/en-US.json`
+  override with its `base`; run `npm test` and `npm run fixtures:check`;
+  commit. A small surface has a length budget (`test/data/surfaces.json`;
+  raising one is the owner's call). The 1750 twin may lag (`DECISIONS.md`
+  116), and `npm run copy:queue` lists the stale ones; a twin rewritten
+  never transforms the English.
+- **Approving English is the owner's word, never an agent's call.** He reads
+  `npm run copy:review` on a phone and says what to put back; once that is
+  committed, `npm run copy:approve` records the commit. What he approved was
+  good enough for now (`DECISIONS.md` 54), and changes like anything else.
 - The boil button says **"Rolling boil"** (`action.fullBoil`), under the
   hint "wait for the whole surface to roll": tapping at first bubbles
   under-measures the time to boil by 15-25% (`DECISIONS.md` 112).
