@@ -9,8 +9,9 @@
 //   validate         the science against the literature (tools/validate.ts)
 //   copy:literals    no Swift literal is words (tools/copyLiterals.ts)
 //   copy:keys        the key types made afresh from copy/en.json, compared
-//                    with git's (tools/copyKeys.ts --check)
-//   fixtures:check   the fixtures made afresh, compared with git's
+//                    with the files on disk (tools/copyKeys.ts --check)
+//   fixtures:check   the fixtures made afresh, compared with the files on
+//                    disk (tools/fixturesCheck.ts)
 //   swift build      the package and its tests, compiled
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
@@ -81,7 +82,7 @@ function job(name, steps) {
 const node = process.execPath;
 const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc');
 const tests = readdirSync('test').filter((f) => f.endsWith('.test.ts')).sort().map((f) => join('test', f));
-const fixtures = job('fixtures:check', [[node, ['tools/fixtures.ts']], [node, ['tools/fixturesCheck.ts']]]);
+const fixtures = job('fixtures:check', [[node, ['tools/fixturesCheck.ts']]]);
 const swiftBuild = job('swift build', [['swift', ['build', '--build-tests'], SWIFT]]);
 const swiftTests = (name, target) => job(name, [['swift', ['test', '--skip-build', '--ignore-lock', '--filter', target], SWIFT]]);
 const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swift app tests', 'EggTimerAppTests') : null));

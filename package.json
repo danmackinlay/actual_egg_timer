@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.app.json && tsc -p tsconfig.json",
-    "test": "npm run typecheck && node --test test/*.test.ts",
+    "test": "node tools/copyKeys.ts && npm run typecheck && node --test test/*.test.ts",
     "test:slow": "AET_TEST_SLOW=1 node --test test/*.test.ts",
     "validate": "node tools/validate.ts",
     "fixtures": "node tools/fixtures.ts",
@@ -28,7 +28,7 @@
     "copy:queue": "node tools/copyQueue.ts queue",
     "copy:approve": "node tools/copyQueue.ts approve",
     "copy:review": "node tools/copyReview.ts",
-    "fixtures:check": "npm run fixtures && node tools/fixturesCheck.ts",
+    "fixtures:check": "node tools/fixturesCheck.ts",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "node tools/verify.mjs",
     "ios:archive": "node tools/iosArchive.mjs",

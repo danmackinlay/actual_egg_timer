@@ -1,8 +1,8 @@
 /**
  * The catalogue's keys, as types both compilers check (DECISIONS.md 127).
  *
- *   npm run copy:keys            write them from copy/en.json
- *   npm run copy:keys -- --check write them, and fail unless git has them
+ *   npm run copy:keys            write them from copy/en.json (npm test does)
+ *   npm run copy:keys -- --check write them, and fail if that changed them
  *
  * From copy/en.json, two files, committed, since neither Xcode nor SwiftPM
  * runs node:
@@ -19,18 +19,17 @@
  * A key's arguments are the placeholders of every template it has, and the
  * plural count, which a template need not show.
  *
- * `--check` is `fixtures:check`'s rule for generated files: what is written
- * must be what git's index has, so a catalogue changed without its keys
- * fails verify and CI.
+ * `npm test` runs this before it type-checks, so a key or an argument added
+ * to the catalogue is in the types before the compiler reads them. It runs
+ * even when the code does not compile against the old types, since node
+ * runs it from its source and it imports nothing generated.
  *
- * `npm run copy:keys` runs this even when the build before it fails: the
- * code is checked against these types, so a catalogue changed ahead of them
- * (a key added and already used, or one put back) fails the build until they
- * are made again. tsc emits this file all the same.
+ * `--check` is `fixtures:check`'s rule for generated files: what is written
+ * must be what was there, so in CI's clean checkout a catalogue committed
+ * without its keys fails.
  */
 
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.ts';
 import { replaceFile } from './fixtureCompare.ts';
@@ -86,19 +85,10 @@ ${named.join('\n')}
 
 const keys = keysOf('copy/en.json');
 const written: [string, string][] = [[TS_KEYS, typescript(keys)], [SWIFT_KEYS, swift(keys)]];
-for (const [path, text] of written) replaceFile(path, text);
+const stale = written.filter(([path, text]) => !existsSync(path) || readFileSync(path, 'utf8') !== text).map(([path]) => path);
+for (const [path, text] of written) if (stale.includes(path)) replaceFile(path, text);
 
 if (process.argv.includes('--check')) {
-  const stale: string[] = [];
-  for (const [path, text] of written) {
-    let committed: string | null = null;
-    try {
-      committed = execFileSync('git', ['show', `:${path}`], { encoding: 'utf8', maxBuffer: 1 << 26 });
-    } catch {
-      committed = null;
-    }
-    if (committed !== text) stale.push(path);
-  }
   if (stale.length > 0) {
     console.error(`copy:keys: ${stale.join(' and ')} not as copy/en.json makes them; written, to be committed (\`git diff\`)`);
     process.exit(1);
