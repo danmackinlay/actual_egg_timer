@@ -29,7 +29,8 @@ app's own probits, so a failure is the inference's or the emulator's (its
 grid ends at 4 literature sds, and a cook beyond is clamped), not a
 difference of models. The ranks are only as good as the draws are
 independent: thin to no more draws than the chains' ESS, or the histogram is
-humped for that alone.
+a U for that alone, as for a posterior too narrow, since draws that move
+together fall on the same side of the truth together.
 
 HOW IT RUNS. `--cores` workers each take a repetition, simulate it, and fit
 it on a CPU device of their own, its chains one after another (`sampler`),
