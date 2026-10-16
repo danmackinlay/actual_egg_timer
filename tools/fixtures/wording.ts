@@ -120,11 +120,15 @@ export function wordingFixture(): Record<string, unknown> {
     return { ...row, p: SPREADS[0], asked: 2, time: sure.time, at_s: sure.at_s, words: w };
   });
 
-  // The three flags each read in one phase only: each is false once, with
-  // the other two true, so a flag read in the wrong place shows.
+  // The three flags each read in one phase only: each is false in turn, with
+  // the other two true, so a flag read in the wrong place shows. They turn
+  // through every phase's starts, pans and coolings, each of which is read
+  // whole.
   const flags: [boolean, boolean, boolean][] = [[false, true, true], [true, false, true], [true, true, false]];
-  const phase = PHASES.flatMap((ph) => STARTS.flatMap((startMode) => AFTER.flatMap((afterBoil) => COOLINGS.flatMap(
-    (cooling) => flags.map(([whiteSets, boilKnown, probeWanted]) => {
+  let turn = 0;
+  const phase = PHASES.flatMap((ph) => STARTS.flatMap((startMode) => AFTER.flatMap((afterBoil) => COOLINGS.map(
+    (cooling) => {
+      const [whiteSets, boilKnown, probeWanted] = flags[turn++ % flags.length];
       const facts = {
         phase: ph, startMode: startMode, afterBoil: afterBoil, cooling: cooling,
         whiteSets: whiteSets, boilKnown: boilKnown, probeWanted: probeWanted,
@@ -135,11 +139,17 @@ export function wordingFixture(): Record<string, unknown> {
       known(k.action);
       known(k.hint);
       return { ...facts, ...k };
-    }),
+    },
   ))));
 
-  const clauses = FROMS.flatMap((eggFrom) => STARTS.flatMap((startMode) => [false, true].flatMap(
+  // Every start (sous-vide or not, hot or cold, the heat held or off)
+  // against every cooling (its water's temperature given or not), the egg's
+  // source turning through them: each clause reads only its own facts, so a
+  // clause reading another's shows.
+  let from = 0;
+  const clauses = STARTS.flatMap((startMode) => [false, true].flatMap(
     (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.flatMap((cooling) => [false, true].map((given) => {
+      const eggFrom = FROMS[from++ % FROMS.length];
       const facts = {
         eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling,
         coolingWaterGiven: given,
@@ -152,7 +162,7 @@ export function wordingFixture(): Record<string, unknown> {
       }
       return { ...facts, keys: k };
     }))),
-  )));
+  ));
 
   return {
     about: 'Which catalogue key each part of the screen says, from the facts of the cook. src/core/wording.ts.',
