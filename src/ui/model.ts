@@ -830,9 +830,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       // A correction still settling is committed first: the button acts on
       // the cook as the controls say it is. The alarm stops.
       if (m.cook === null) return [m, []];
-      const [at, first] = handIn(m, {
-        kind: 'moveOn', at_s: lastGesture(m), control: phaseOf(m, now_s) === 'ASKING' ? 'stillInWater' : 'primary',
-      }, now_s);
+      const [at, first] = handIn(m, { kind: 'moveOn', at_s: lastGesture(m), control: 'primary' }, now_s);
       const [next, effects] = pressed(at, now_s);
       return [next, [...first, { kind: 'silence' }, ...effects]];
     }
