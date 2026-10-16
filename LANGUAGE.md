@@ -420,6 +420,14 @@ per-cook taste offset absorbs the remaining difference for each cook. Pooled
 data can then show whether "soft" in one language sits somewhere else on the
 dose scale than in another (§6).
 
+**With a second language the choice becomes a menu** (the owner). It lists
+first "System (Čeština)" and the like, following the phone's or browser's
+language, then every language in its own name, with the English of 1750
+under English. The web uses a `<select>`. iOS uses a menu-style `Picker`
+that follows iOS's own per-app language setting, which appears once the app
+declares several localizations (`cs` in `CFBundleLocalizations`,
+`ios/project.yml`).
+
 **Quality bar.** A translation can be drafted by machine. It does not ship until
 someone who speaks the language, and cooks, has read it on the screen. An
 unreviewed language stays behind a build flag.

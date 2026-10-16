@@ -1193,7 +1193,12 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 ### 11.5 Known software gaps
 
-What the software does not yet do is `PLAN.md`, under Open items.
+What the software does not yet do is `PLAN.md`, under Next work.
+
+The web can make an egg over 90 g, on purpose (`DECISIONS.md` 34). Both apps
+cap the mass at 90 g, but the web's girth (90-200 mm) and width (30-60 mm)
+keep their own limits, so a typed measurement reaches about 160-195 g. The
+model is a hen's egg's, so those times are extrapolated.
 
 ### 11.6 Sources that returned fabricated citations
 
