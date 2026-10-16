@@ -32,6 +32,7 @@
 
 import { readFileSync, readdirSync } from 'node:fs';
 
+import { ALARM_PERIOD_S } from '../src/core/sounds.ts';
 import { replaceChanged } from './fixtureCompare.ts';
 
 export const CORE_SWIFT = 'ios/EggTimerCore/Sources/EggTimerCore/Constants.generated.swift';
@@ -195,7 +196,9 @@ const TWINS: Twin[] = [
 
   { module: 'boil.ts', name: 'DEFAULT_TIME_TO_BOIL_S', swift: 'defaultTimeToBoilS' },
   { module: 'sounds.ts', name: 'ALARM_RING_S', swift: 'alarmRingS' },
-  ...['timer', 'cuckoo', 'hen'].flatMap((s) => ['pull', 'cooled'].map((m): Twin => ({
+  // Every sound at every moment, from the table itself, so a sound added to
+  // the TypeScript is twinned with it.
+  ...Object.entries(ALARM_PERIOD_S).flatMap(([s, moments]) => Object.keys(moments).map((m): Twin => ({
     module: 'sounds.ts', name: `ALARM_PERIOD_S.${s}.${m}`, swift: `AlarmPeriodS.${s}${m[0].toUpperCase()}${m.slice(1)}`,
   }))),
   { module: 'slider.ts', name: 'SLIDER_STEPS', swift: 'sliderSteps' },
