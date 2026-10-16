@@ -257,7 +257,7 @@ Decided by the owner, 3 October 2026, on the counter's physics:
     nobody would publish an egg-specific measurement of it, and the model
     should be no weaker, nor make odd choices, for the lack of one. The
     model takes convection and radiation from correlations, Newton's law at
-    the shell, the wet shell's latent heat (`LOGBOOK.md`, 3 October 2026).
+    the shell, the wet shell's latent heat.
     The Help line that said no measurement was found becomes, approved as
     proposed: "On the bench, I assume the egg sits in still air. In a
     draught the yolk comes out a little softer, and in an egg cup a little
@@ -609,20 +609,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     the word is not read as the boil time's and its press target does not
     move when the line wraps (1750, large text), but the space under the
     digits and between the lines is tightened, in both apps.
-100. **An older build leaves a newer one's stores alone** ("yes please", to
-    the guard as proposed). 0.4 wrote the store around the log, the
-    settings, the pans, the sharing state and the cook whole from the
-    fields it knew, so 0.4 running after 0.5 would drop what 0.5 added.
-    Each build marks what it stored with its version (`aet.newest` on the
-    web, `newestVersion` on iOS, written before anything else), a string
-    whose format never changes. A build that finds a newer build's mark
-    writes none of the app's stores, logs and learns from no egg and shares
-    nothing for the rest of the session, says so in one line at the top of
-    the screen, and still times the egg. The order is semantic
-    versioning's; iOS marks with `MARKETING_VERSION`, without the
-    pre-release. It covers the running cook and every store. Each app keeps
-    its own guard (`src/ui/newer.ts`, `EggTimerApp/Newer.swift`), tested in
-    its own suite (126). 0.3 cannot be given it. 9 October 2026.
+100. **An older build leaves a newer one's stores alone.** Superseded by
+    136.
 101. **The alarm's sound is chosen in Settings: the wind-up timer, the
     cuckoo clock or the hen** ("I like the recorded hens, the cuckoo clock
     and the wind-up timer. Let's give the user a selector to choose from
@@ -647,15 +635,13 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
 105. **Comments say what the code does and why** (confirmed). A decision number appears in a comment only where the code
     would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
 106. **The copy drafts give way to a review queue** (confirmed: "Yes,
-    including CLAUDE.md"). What the owner approved is stored, as a hash of
-    each key's English, in `test/data/copy-review/`, beside the 1750 base,
-    so iOS does not ship them; every key that no longer
-    matches is the review queue, generated, never typed; a script stamps
-    approval; each translation records the English it was written
-    against, so a stale twin is listed rather than blocking (116); a page
-    shows the queue for review on a phone. `tools/drafts/` and the draft
-    proofs go; the no-literals lint and the surfaces' budgets stay.
-    9 October 2026.
+    including CLAUDE.md"). What the owner approved is recorded as one
+    commit (135); every key changed, added or retired since it is the
+    review queue, generated, never typed; `copy:approve` records the new
+    commit; a stale twin is found from git and listed rather than blocking
+    (116); a page shows the queue for review on a phone. `tools/drafts/` and
+    the draft proofs go; the no-literals lint and the small surfaces'
+    budgets stay. 9 October 2026.
 107. **No back-compat until the app is widely deployed, the results log
     included** (the owner, 29 September 2026: "actual widespread deployment
     is what makes storage formats permanent; I will tell you when that
@@ -803,7 +789,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     checks for what it touches. Before a merge: nothing for documents and
     comments alone; `npm test` for tests and tools; `fixtures:check`, and
     `swift test` where the Swift twin moves, for core and the fixture
-    generators; `npm run e2e` for the web's screens and words; `ios:build`
+    generators; `npm run e2e` for the web's screens and for a key or its
+    arguments in `copy/`, and `npm test` and `fixtures:check` for other
+    wording (135); `ios:build`
     and `ios:e2e` for the iOS app. The full `verify` runs before any merge
     that touched code. Each slow suite runs once, on the branch's final
     code; a later commit to documents alone needs no rerun. The reviewer
@@ -895,3 +883,42 @@ October:
     `main`: on a branch a new decision is written as `DECISIONS.md NNN`, and
     the session that merges gives it the next number and fixes its
     citations.
+132. **CI runs once per commit, and the web e2e in shards.** A newer push
+    to a branch cancels its older run; on `main` the newer waits. A release
+    tag's own run checks only that it names `package.json`'s version and
+    that its commit is on `main`, whose run is the tag's. A pull request
+    runs the gate only from a fork. The web e2e runs in four parallel jobs
+    (`tools/e2e/shards.ts`); `npm run e2e` still runs every scenario.
+133. **The population fit's inference is checked three ways.** Its
+    likelihood is the core's, at fixed points, on a sample `npm run
+    fixtures` writes. In CI, NUTS recovers a simulated population with a
+    known truth: every global inside its 1 - 0.10/9 interval, so that all
+    nine cover together at 90%; R-hat below 1.01, a bulk ESS of 100 a
+    chain, no divergent transition. By hand, simulation-based calibration
+    (`python -m eggfit sbc`). Publishing `fixtures/population.json` refuses
+    a fit whose diagnostics fail, unless forced (`fit/README.md`).
+134. **No live file cites `LOGBOOK.md`**, which stays frozen (117): a
+    comment that rests on a measured number states it. The shape study
+    goes; its conclusion is a paragraph of README section 8.
+135. **Changing a word costs what changing a line of code costs.** The
+    owner's approval is one recorded commit (`test/data/copy-approved.txt`),
+    and the review page is the catalogue's diff since it. The 1750 twin's
+    hash sidecar goes; a stale twin is found from git. `copy:literals` reads
+    where Swift's text reaches a screen, with no allow-list of literals.
+    `npm test` makes the key types. Only small surfaces keep a length
+    budget. Help's sources are a data file both apps read, not words. A
+    wording change that adds no key and changes no arguments needs `npm
+    test` and `fixtures:check`, not the web e2e (123).
+136. **No newer-build guard, in either app**; supersedes 100. With one tab
+    owning the web app (128), an older build meets a newer one's stores only
+    after a rollback or a downgrade, the loss a format bump already accepts
+    (107). The old marks are retired keys, which the boot sweep deletes. The
+    web's development clock no longer marks the stores either: it runs only
+    on this machine, whose `/api` is the development server's.
+137. **The correction in hand stays in each app.** What a committed
+    correction does is core's `step`; when a change commits is each app's
+    reading of its own gestures and settings, which 126 keeps out of core.
+    The two apps commit at the same moments, by the design both headers
+    state: a hold on the control just tapped stops its settle; Cancel and
+    "Still in the water? No" commit what is in hand first; another control's
+    change commits the one in hand alone.
