@@ -173,6 +173,22 @@ extension AppTests {
         #expect(world.ringer.rung == [.pull])
     }
 
+    /// A level set without a finger down (VoiceOver's adjust, a key): it
+    /// settles, the cook is corrected, and the slider stays where it was
+    /// set as the aimed-for egg goes, before the pull as after a commit.
+    @Test func aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world)
+        let pull0 = try pullS(model.cook)
+        await correct(at: pull0 - 120, model, world) { model.planner.settings.doneness = 0.62 }
+        await world.until("the aim gone") { model.aimView == nil && model.inHand.aim == nil }
+        await world.settled(model.cook)
+        #expect(try #require(model.cook.running).choices.level == 0.62)
+        #expect(model.planner.settings.doneness == 0.62)
+    }
+
     /// When the eggs went in, corrected a minute at a time: stopped with its
     /// reason at now, at the press of Rolling boil and two hours before
     /// Start, each said to VoiceOver; the start's panel shows the start.
