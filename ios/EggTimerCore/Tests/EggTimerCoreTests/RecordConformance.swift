@@ -172,7 +172,9 @@ struct RecordConformance {
         }
     }
 
-    /// The same store makes the same results file, as data.
+    /// The same store makes the same results file, as data, with the same
+    /// keys: `jsonDifferences` reads a missing key as null, and a file that
+    /// left out a key the TypeScript writes as null would pass on values alone.
     @Test("the results file is the TypeScript's")
     func resultsFiles() throws {
         for n in try Fixtures.list("record.json", "resultsFile.names") {
@@ -181,7 +183,10 @@ struct RecordConformance {
         for c in try Fixtures.list("record.json", "resultsFile.cases") {
             let meta = try decoded(ResultsMeta.self, c["meta"])
             let file = try JSONSerialization.jsonObject(with: Data(resultsFile(meta, stored: c["stored"] as? String).utf8))
-            let differences = jsonDifferences(file, c["file"])
+            let expected = try c.object("file")
+            let keys = try #require(file as? [String: Any], "results file for \(meta.appVersion) is not an object").keys
+            #expect(Set(keys) == Set(expected.keys), "results file for \(meta.appVersion): its keys")
+            let differences = jsonDifferences(file, expected)
             #expect(differences.isEmpty, "results file for \(meta.appVersion): \(differences.prefix(6))")
         }
     }

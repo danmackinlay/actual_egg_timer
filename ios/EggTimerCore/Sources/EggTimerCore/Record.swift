@@ -943,7 +943,12 @@ public func resultsFile(_ meta: ResultsMeta, stored: String?) -> String {
         "stored": stored.map(storedValue) ?? NSNull(),
     ]
     // Strings, a number, nulls and what JSONSerialization itself read: it
-    // writes them all.
-    let data = try? JSONSerialization.data(withJSONObject: file, options: [.sortedKeys, .withoutEscapingSlashes])
-    return data.map { String(decoding: $0, as: UTF8.self) } ?? ""
+    // writes them all, so a throw here is a broken encoder, never a store it
+    // could not write, and an empty file would hide it.
+    do {
+        let data = try JSONSerialization.data(withJSONObject: file, options: [.sortedKeys, .withoutEscapingSlashes])
+        return String(decoding: data, as: UTF8.self)
+    } catch {
+        preconditionFailure("the results file did not encode: \(error)")
+    }
 }

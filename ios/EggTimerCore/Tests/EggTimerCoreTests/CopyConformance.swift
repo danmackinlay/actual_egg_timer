@@ -9,8 +9,9 @@ import Foundation
 /// second to the first byte for byte on catalogues of the fixture's own:
 /// placeholders and their formats, plural forms, the fallback from a
 /// translation and an overlay to the English, every malformed brace; the
-/// plural rule of every language at its edges; and a probe catalogue. None of
-/// it is the app's words, so a change of wording never moves it.
+/// plural rule of every language at its edges; which tags are the English of
+/// 1750; and a probe catalogue. None of it is the app's words, so a change of
+/// wording never moves it.
 ///
 /// That the app's own catalogues, read from `copy/` as the app bundles them,
 /// load and keep the English's keys and placeholders is the last test here.
@@ -81,6 +82,17 @@ struct CopyConformance {
             let region = c["region"] as? String
             let chain = catalogueChain(language: language, preferred: preferred, region: region)
             #expect(chain == c["chain"] as? [String], "\(language), \(preferred), \(region ?? "no region")")
+        }
+    }
+
+    @Test("which tags are the English of 1750")
+    func periods() throws {
+        let rows = try Fixtures.list("copy.json", "periods")
+        #expect(rows.contains { (try? $0.flag("isPeriod")) == true })
+        #expect(rows.contains { (try? $0.flag("isPeriod")) == false })
+        for c in rows {
+            let tag = try c.str("tag")
+            #expect(isPeriod(tag) == (try c.flag("isPeriod")), "isPeriod(\(tag))")
         }
     }
 
