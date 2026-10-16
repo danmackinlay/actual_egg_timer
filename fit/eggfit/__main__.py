@@ -10,9 +10,14 @@ truth a simulation was drawn from (--truth), against the truth's and with
 the recovery of every global parameter. It never writes
 fixtures/population.json unless told to (--out), which is publishing: the
 next release of both apps then draws from it, and every posterior is replayed
-from it. Nor then unless the sampler can be believed - every global's R-hat
-and bulk ESS, and no divergent transition (diagnostics.py) - or `--force`
-says to publish all the same; report.md says which failed either way.
+from it. It writes no population anywhere unless the sampler can be believed
+- every global's R-hat and bulk ESS, and no divergent transition
+(diagnostics.py) - or `--force` says to write it all the same; report.md says
+which failed either way. A file written elsewhere and copied in is the same
+file, so the mark goes in it: `diagnostics` says whether the sampler passed
+and whether it was forced, and a forced fit's id ends in FORCED_ID_SUFFIX, so
+every record cooked from it names it so. The apps refuse a fit without
+diagnostics, and a forced one without the suffix (src/core/population.ts).
 
     uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
 
@@ -24,20 +29,37 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import os
 import sys
 
 import numpy as np
 
 from . import data, diagnostics, model, population, score
 
-PUBLISHED = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                         "fixtures", "population.json")
+# src/core/population.ts's FORCED_ID_SUFFIX, which tests/test_diagnostics.py holds this to.
+FORCED_ID_SUFFIX = "-forced"
 
 
-def publishes(out: str) -> bool:
-    """Whether writing `out` is publishing: it is the apps' fixtures/population.json."""
-    return os.path.realpath(out) == os.path.realpath(PUBLISHED)
+def gate(diag: dict, force: bool, pid: str) -> tuple[str, dict | None, str | None]:
+    """What the fit may write, wherever --out is: the population's id, its
+    file's `diagnostics`, and why it writes nothing (None when it writes)."""
+    if not diag["ok"] and not force:
+        return pid, None, (f"the sampler failed its checks ({'; '.join(diag['failures'])}), so no population is "
+                           "written. Run longer (--warmup, --samples, --chains), or write it all the same with --force.")
+    forced = not diag["ok"]
+    if forced and not pid.endswith(FORCED_ID_SUFFIX):
+        pid += FORCED_ID_SUFFIX
+    return pid, {
+        "ok": bool(diag["ok"]), "forced": forced, "failures": list(diag["failures"]),
+        "chains": diag["chains"], "divergences": diag["divergences"], "rhatMax": diag["rhat_max"],
+        "essMin": diag["ess_min"],
+        # A NaN (a chain stuck at one value) would make the file no JSON at all.
+        "rows": [{"parameter": r["parameter"], "rhat": finite_or_none(r["rhat"]), "essBulk": finite_or_none(r["ess_bulk"])}
+                 for r in diag["rows"]],
+    }, None
+
+
+def finite_or_none(x: float) -> float | None:
+    return float(x) if math.isfinite(x) else None
 
 
 def literature_file(constants: dict) -> dict:
@@ -90,7 +112,10 @@ def report_md(r: dict) -> str:
              f"{r['weights']['open']:.0f} open at weight {r['weights']['open_weight']}); scored on {r['held_out_cooks']} held-out cooks "
              f"({r['held_out_eggs']} eggs). NUTS: {r['samples']} draws, {r['divergences']} divergent.", ""]
     if r.get("refused"):
-        lines += [f"**Not published:** {r['refused']}", ""]
+        lines += [f"**Not written:** {r['refused']}", ""]
+    elif r["population"]["diagnostics"]["forced"]:
+        lines += ["**Forced:** the sampler failed its checks and the population was written all the same, "
+                  f"as {r['population']['id']}.", ""]
     lines += diagnostics.report_lines(r["diagnostics"])
     if r.get("recovery"):
         lines += ["## Recovery of the globals", "", "| parameter | truth | posterior mean | sd | 90% interval | covered |",
@@ -136,7 +161,8 @@ def main() -> None:
     from . import sbc
     sbc.add_parser(sub)
     f.add_argument("emulated")
-    f.add_argument("--out", required=True, help="where the population goes (fixtures/population.json publishes it)")
+    f.add_argument("--out", required=True, help="where the population goes (fixtures/population.json publishes it); "
+                                               "nowhere if the sampler fails its checks, unless --force")
     f.add_argument("--report", required=True)
     f.add_argument("--truth", help="the simulation's truth, for recovery and the oracle's score")
     f.add_argument("--id", help="the population's id; fit-<date> by default")
@@ -148,7 +174,7 @@ def main() -> None:
     f.add_argument("--chains", type=int, default=4)
     f.add_argument("--target-accept", type=float, default=0.99)
     f.add_argument("--force", action="store_true",
-                   help="publish to fixtures/population.json even if R-hat, the ESS or divergences fail")
+                   help="write the population even if R-hat, the ESS or divergences fail, marked forced")
     f.add_argument("--trusted", default=data.TRUSTED_FILE,
                    help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
@@ -174,16 +200,10 @@ def main() -> None:
     # Counts only: the trusted IDs themselves never leave the owner's machine.
     source = {"cooks": len(train.cooks), "eggs": train.n, "attested": int(np.sum(train.tier == 1)),
               "open": int(np.sum(train.tier == 0)), "trusted": int(np.sum(train.trusted))}
-    pop = population.population(draws, eggs.constants, pid, source, settings)
-    refused = None
-    if publishes(a.out) and not diag["ok"]:
-        if a.force:
-            print(f"publishing all the same (--force): {'; '.join(diag['failures'])}", file=sys.stderr)
-        else:
-            refused = (f"the sampler failed its checks ({'; '.join(diag['failures'])}), so {a.out} is "
-                       "unchanged. Run longer (--warmup, --samples, --chains), or publish all the same with --force.")
-    elif not diag["ok"]:
-        print(f"the sampler failed its checks: {'; '.join(diag['failures'])}", file=sys.stderr)
+    pid, mark, refused = gate(diag, a.force, pid)
+    pop = population.population(draws, eggs.constants, pid, mark, source, settings)
+    if mark is not None and mark["forced"]:
+        print(f"written all the same (--force), as {pid}: {'; '.join(diag['failures'])}", file=sys.stderr)
     if refused is None:
         with open(a.out, "w") as fh:
             json.dump(pop, fh, indent=2)
@@ -205,7 +225,7 @@ def main() -> None:
         json.dump(report, fh, indent=2, default=float)
     print(report_md(report))
     if refused is not None:
-        print(f"not published: {refused}", file=sys.stderr)
+        print(f"not written: {refused}", file=sys.stderr)
         sys.exit(1)
 
 

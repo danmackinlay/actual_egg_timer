@@ -5,7 +5,11 @@
 //   _site/bundle/              the scripts, bundled by esbuild (below)
 //   _site/assets, copy, privacy                      copied as they are, but
 //                              copy/*.notes.json, which no app loads
-//   _site/fixtures/population.json                   the prior's population
+//   _site/fixtures/population.json                   the prior's population,
+//                              refused unless it reads (parsePopulation: a
+//                              fit needs its diagnostics, a forced one an id
+//                              that says so), since every browser would
+//                              silently draw from the literature's instead
 //   _site/sw.js                (tools/precache.mjs; it must run last, since
 //                              a file copied in after it is not in its list)
 //   _dev/bundle/dev-<hash>.js  the development tools (src/ui/dev/)
@@ -37,6 +41,7 @@ import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { build } from 'esbuild';
+import { parsePopulation } from '../src/core/population.ts';
 
 const SITE = '_site';
 const DEV = '_dev';
@@ -103,5 +108,14 @@ for (const file of ['styles.css', 'site.webmanifest']) copyFileSync(file, join(S
 const shipped = (path) => !path.endsWith('.notes.json');
 for (const dir of ['assets', 'copy', 'privacy']) cpSync(dir, join(SITE, dir), { recursive: true, filter: shipped });
 mkdirSync(join(SITE, 'fixtures'));
+const population = JSON.parse(readFileSync('fixtures/population.json', 'utf8'));
+const drawn = parsePopulation(population);
+if (drawn === null) {
+  throw new Error('fixtures/population.json does not read (src/core/population.ts): a fit needs its diagnostics, '
+    + 'and one forced past them an id that says so');
+}
+if (population.diagnostics?.forced === true) {
+  console.warn(`build:site: the population ${drawn.id} was forced: its sampler failed its checks`);
+}
 copyFileSync('fixtures/population.json', join(SITE, 'fixtures', 'population.json'));
 run('tools/precache.mjs', SITE);

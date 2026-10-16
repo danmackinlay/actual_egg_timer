@@ -131,6 +131,7 @@ const TWINS: Twin[] = [
   { module: 'infer.ts', name: 'KERNEL_SHRINK', swift: 'kernelShrink', internal: true },
   { module: 'infer.ts', name: 'KERNEL_SPREAD', swift: 'kernelSpread', internal: true },
   { module: 'infer.ts', name: 'KERNEL_DIMS', swift: 'kernelDims', type: 'Int', internal: true },
+  { module: 'population.ts', name: 'FORCED_ID_SUFFIX', swift: 'forcedIdSuffix', type: 'String' },
 
   { module: 'certainty.ts', name: 'CERTAINTY_MASS', swift: 'certaintyMass' },
   { module: 'certainty.ts', name: 'TIME_RANGE_LOW_Q', swift: 'timeRangeLowQ' },

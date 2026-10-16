@@ -2,7 +2,8 @@
  * The population a prior is drawn from (src/core/population.ts): the
  * literature's is the default prior, a fitted one moves where a new cook
  * starts, and a posterior drawn from one population is replayed from the
- * next (src/ui/calibrationStore.ts).
+ * next (src/ui/calibrationStore.ts). A fit is read only when its sampler
+ * passed its checks, or was forced under an id that says so.
  */
 
 import test from 'node:test';
@@ -10,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { LITERATURE_POPULATION, type Population, createPrior } from '../src/core/infer.ts';
-import { parsePopulation, priorStart } from '../src/core/population.ts';
+import { FORCED_ID_SUFFIX, parsePopulation, priorStart } from '../src/core/population.ts';
 import { CALIBRATION_SEED, calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider } from '../src/core/solve.ts';
 import { decodeKept, encodeKept } from '../src/ui/calibrationStore.ts';
@@ -24,6 +25,9 @@ const SHIFTED: Population = {
   whiteOffset: { mean: 0.21, sd: 0.33 },
   whiteFirmGap: { median: 0.97, logSd: 0.31 },
 };
+
+/** A fit's diagnostics, as fit/eggfit/__main__.py writes them, less the rows. */
+const PASSED = { ok: true, forced: false, failures: [] };
 
 test('1. the published file reads, and the literature is the default prior', () => {
   const published = parsePopulation(JSON.parse(readFileSync('fixtures/population.json', 'utf8')));
@@ -39,8 +43,8 @@ test('1. the published file reads, and the literature is the default prior', () 
 
 test('1b. a population file from before 0.5, with a spread for the carryover, reads as one without', () => {
   // The web may hold an old file in its cache.
-  const file = { id: 'x', prior: { ...SHIFTED, id: undefined } };
-  const old = { id: 'x', prior: { ...SHIFTED, id: undefined, tauAirScale: { median: 1.12, logSd: 0.3 } } };
+  const file = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined } };
+  const old = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined, tauAirScale: { median: 1.12, logSd: 0.3 } } };
   assert.deepEqual(parsePopulation(old), parsePopulation(file));
   assert.notEqual(parsePopulation(old), null);
 });
@@ -62,7 +66,7 @@ test('2. a fitted population moves the prior and where a new cook starts', () =>
 });
 
 test('3. a reader refuses a population it cannot trust', () => {
-  const file = { id: 'x', prior: { ...SHIFTED, id: undefined } };
+  const file = { id: 'x', diagnostics: PASSED, prior: { ...SHIFTED, id: undefined } };
   assert.notEqual(parsePopulation(file), null);
   for (const spoil of [
     (f: Record<string, unknown>) => { f['id'] = ''; },
@@ -74,6 +78,29 @@ test('3. a reader refuses a population it cannot trust', () => {
     spoil(f);
     assert.equal(parsePopulation(f), null);
   }
+});
+
+test('3b. a fit is read only if its sampler passed, or it was forced and its id says so', () => {
+  const { id: _, ...prior } = SHIFTED;
+  const fit = (id: string, diagnostics: unknown) => parsePopulation({ id: id, diagnostics: diagnostics, prior: prior });
+  assert.deepEqual(fit('fit-x', PASSED), { ...SHIFTED, id: 'fit-x' });
+  const forced = { ok: false, forced: true, failures: ['3 divergent transitions'] };
+  assert.equal(fit(`fit-x${FORCED_ID_SUFFIX}`, forced)?.id, `fit-x${FORCED_ID_SUFFIX}`, 'forced, and named so');
+  assert.equal(fit('fit-x', forced), null, 'forced, its id silent');
+  assert.equal(fit('fit-x', { ...PASSED, ok: false }), null, 'failed, not forced');
+  assert.equal(fit('fit-x', { ...PASSED, forced: true }), null, 'passed and forced');
+  assert.equal(fit('fit-x', { ok: 'true', forced: false }), null);
+  assert.equal(fit('fit-x', { ok: true }), null, 'no forced');
+  // No diagnostics: a fit copied in without them, refused; the literature's,
+  // never sampled, read - the app would draw from it anyway.
+  assert.equal(fit('fit-x', undefined), null);
+  assert.equal(fit('fit-x', null), null);
+  assert.equal(fit(LITERATURE_POPULATION.id, null), null, 'the literature\'s id is not enough');
+  const { id: lid, ...literature } = LITERATURE_POPULATION;
+  assert.deepEqual(parsePopulation({ id: lid, diagnostics: null, prior: literature }), LITERATURE_POPULATION);
+  assert.deepEqual(parsePopulation({ id: lid, prior: literature }), LITERATURE_POPULATION);
+  const nudged = { ...literature, noise: { median: 0.2, logSd: 0.51 } };
+  assert.equal(parsePopulation({ id: lid, prior: nudged }), null, 'nor its id with one number moved');
 });
 
 test('4. a posterior from another population is replayed; one from this one is kept', () => {

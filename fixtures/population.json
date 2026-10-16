@@ -1,7 +1,8 @@
 {
-  "about": "The population a new cook's prior is drawn from (src/core/population.ts, INFERENCE.md section 9): an id, and one spread per particle dimension under \"prior\" - lognormal (median, logSd) or normal (mean, sd). This one is the literature's, README section 6's numbers, written by tools/population.ts until a fit of shared eggs publishes another (fit/). Both apps read it: the web fetches it, iOS bundles it. Not hand-edited.",
+  "about": "The population a new cook's prior is drawn from (src/core/population.ts, INFERENCE.md section 9): an id, and one spread per particle dimension under \"prior\" - lognormal (median, logSd) or normal (mean, sd). This one is the literature's, README section 6's numbers, written by tools/population.ts until a fit of shared eggs publishes another (fit/); it was never sampled, so it has no diagnostics. Both apps read it: the web fetches it, iOS bundles it. Not hand-edited.",
   "id": "2026-09",
   "fitted": null,
+  "diagnostics": null,
   "prior": {
     "alpha_m2s": {
       "median": 1.7e-7,

@@ -291,6 +291,12 @@ let kernelSpread: Double = 0.1424922453445811
 
 let kernelDims: Int = 5
 
+// MARK: - src/core/population.ts
+
+/// What ends the id of a population whose sampler failed its checks and was published all the same
+/// (fit/eggfit/__main__.py writes it).
+public let forcedIdSuffix: String = "-forced"
+
 // MARK: - src/core/certainty.ts
 
 /// Nine times in ten: the mass the class and the interval are read at.
