@@ -316,11 +316,24 @@ def ecdf_gamma(ranks: np.ndarray, draws: int) -> np.ndarray:
     return np.minimum(1.0, 2.0 * tail.min(axis=1))
 
 
-def ecdf_null(n: int, draws: int, sims: int = 4000, seed: int = 0) -> np.ndarray:
+#: How many calibrated sets of ranks `ecdf_null` draws. The verdict fails on
+#: one p of the ten below ALPHA / 10 (`simes`), the null's 0.5% point, which
+#: 4,000 sets put at their 20th-smallest value, with about 22% Monte Carlo
+#: error: at the one seed drawn, a calibrated fit failed about 6% of the
+#: time, not 5%. 200,000 put it at their 1,000th, about 3%, and the false
+#: alarms near 4.9%, for under a second of drawing. It also sets the least p
+#: a quantity can have, 1 / (NULL_SIMS + 1), and so Simes's, ten times that.
+NULL_SIMS = 200_000
+
+
+def ecdf_null(n: int, draws: int, sims: int = NULL_SIMS, seed: int = 0) -> np.ndarray:
     """`ecdf_gamma` of `sims` sets of `n` ranks drawn uniform on 0..draws,
-    sorted: its distribution when the fit is calibrated."""
+    sorted: its distribution when the fit is calibrated. Drawn in blocks, so
+    that no more than 10,000 sets are held at once."""
     rng = np.random.default_rng(seed)
-    return np.sort(ecdf_gamma(rng.integers(0, draws + 1, size=(sims, n)), draws))
+    blocks = [ecdf_gamma(rng.integers(0, draws + 1, size=(min(10_000, sims - i), n)), draws)
+              for i in range(0, sims, 10_000)]
+    return np.sort(np.concatenate(blocks))
 
 
 def ecdf_p(ranks: np.ndarray, draws: int, null: np.ndarray) -> float:
