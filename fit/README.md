@@ -21,7 +21,8 @@ one: emulate again after every pull. `population.json` and `report.md` hold
 no one's results, only counts.
 
 Read `report.md`. To publish, run the fit again with
-`--out fixtures/population.json`, then `npm run fixtures` (which reads it into
+`--out fixtures/population.json` (it refuses unless the sampler passes its
+checks, below; `--force` overrides), then `npm run fixtures` (which reads it into
 `fixtures/prior.json`) and `npm run verify`, and commit: the next release of
 both apps draws from it, and every phone and browser replays its eggs from the
 new prior. `fit/data/` is gitignored: pulled records are people's eggs.
@@ -67,7 +68,47 @@ the fit scores those answers as it always did. A device keeps no such
 record once 0.5 has run on it, which deletes its earlier log at first
 launch (`DECISIONS.md` 107): export from the build before.
 
-## Checking it on cooks whose answer is known
+## Whether the fit can be believed
+
+Three checks, each guarding a different way the fit could be wrong.
+
+**The likelihood is the app's.** `tests/test_likelihood.py` holds the fit's
+likelihood (the JAX model's and the NumPy scorer's) to `src/core/infer.ts`'s
+own numbers, to the digit, on `tests/emulated-sample.json`. `npm run
+fixtures` writes that sample (`tools/fixtures/fitSample.ts`) with the core's
+`LIKELIHOOD_ID` in it, so a change to the core's likelihood changes the
+sample, `npm run fixtures:check` fails until it is committed, and pytest then
+fails until the fit follows. A constant the emulated file carries (the
+unrelated share, the cuts, the probe's) the fit reads from the file, and
+follows by itself.
+
+**The sampler recovers a known population, and mixes.**
+`tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
+a known truth, also written by `npm run fixtures`, with four chains side by
+side (about 70 s). It fails on a divergent transition, an R-hat of 1.01 or
+more, a bulk ESS under 100 a chain, or a truth outside its interval (each
+1 - 0.10/9, so all nine together cover 90% of the time when the posterior is
+right). CI's `fit` job runs it with the rest of `fit/tests`, without node.
+The same R-hat, ESS and divergence checks are in every `report.md`
+(`eggfit/diagnostics.py`), and `fit` will not write
+`fixtures/population.json` when they fail.
+
+**The posterior is calibrated.** Simulation-based calibration, by hand, not
+in CI: each repetition draws the globals from the fit's own prior, simulates
+cooks from them with the app's simulator (`node tools/eggs.ts simulate
+--truth`, so node is needed), emulates and fits them, and ranks the truth
+among the posterior draws. The ranks of a calibrated fit are uniform;
+`sbc.md` has each global's histogram and a chi-square test, and how many
+repetitions' own chains failed R-hat, the ESS or divergences. A repetition
+of 40 cooks took 75 s (26 s simulating and emulating, 49 s fitting) with
+four running at once on an 18-core Mac; `--shard i/k` lets k processes share
+the work, and any run of the same `--out` summarises it:
+
+```
+uv run --project fit python -m eggfit sbc --reps 200 --out fit/data/sbc
+```
+
+A bigger simulation, with the held-out scores (`simulate --truth <file>` for a population other than the default):
 
 ```
 npm run eggs -- simulate fit/data/sim.jsonl fit/data/sim-truth.json 400
@@ -93,8 +134,11 @@ score of the truth's own population beside the fit's and the literature's.
 - `eggfit/score.py` — held-out cooks, one step ahead: the log score, the
   ranked probability score, reliability and a randomised PIT
   (`DECISIONS.md` 37).
-- `tests/` — the likelihood held to the app's to the digit, on a small sample
-  `npm run eggs -- emulate` wrote:
+- `eggfit/diagnostics.py` — R-hat, the bulk ESS and divergences, and the
+  thresholds the fit publishes by.
+- `eggfit/sbc.py` — simulation-based calibration.
+- `tests/` — the likelihood held to the app's, the diagnostics, and the
+  recovery check, on the samples `npm run fixtures` wrote:
 
   ```
   uv run --project fit python -m pytest fit/tests
