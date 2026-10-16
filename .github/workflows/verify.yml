@@ -1,8 +1,9 @@
 # The gate, on every push of a branch. Separate jobs, so that each runs on
 # the runner it needs and all run side by side: web and the web e2e on Linux,
 # quick to start, the e2e in four shards; apple and ios-e2e on macOS, for
-# Swift and the iOS app; fit on Linux under uv, since the fit writes
-# fixtures/population.json, which both apps ship. x86 Linux differs from
+# Swift and the iOS app; fit on Linux under uv, with no node: its
+# likelihood held to the core's, and NUTS recovering a known population,
+# from fixtures npm run fixtures wrote into fit/tests/. x86 Linux differs from
 # arm64 macOS in the last bit of some numbers, so the fixture check holds
 # them to Swift's tolerance (tools/fixtureCompare.ts). The actions are @v5,
 # on Node 24. A run takes as long as ios-e2e, its longest job, 10 to 17
@@ -102,6 +103,9 @@ jobs:
   fit:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
+    # The recovery check's four chains run side by side on the runner's four
+    # cores: about a minute and a quarter on a developer's Mac.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v10.3.0

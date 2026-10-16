@@ -1,5 +1,6 @@
 /**
- * That the committed fixtures are what the TypeScript makes of them now.
+ * That the committed fixtures are what the TypeScript makes of them now:
+ * fixtures/, and the fit's beside its tests in fit/tests/.
  *
  *   npm run fixtures:check     (npm run fixtures, then this)
  *
@@ -23,8 +24,10 @@ import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from '
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 
-const untracked = git('ls-files', '--others', '--exclude-standard', '--', 'fixtures/').split('\n').filter(Boolean);
-const tracked = git('ls-files', '--', 'fixtures/').split('\n').filter((f) => f.endsWith('.json'));
+// fixtures/, and the fit's fixtures beside its tests (tools/fixtures.ts).
+const WRITTEN = ['fixtures/', 'fit/tests/*.json'];
+const untracked = git('ls-files', '--others', '--exclude-standard', '--', ...WRITTEN).split('\n').filter(Boolean);
+const tracked = git('ls-files', '--', ...WRITTEN).split('\n').filter((f) => f.endsWith('.json'));
 
 let failed = false;
 for (const file of untracked) {
