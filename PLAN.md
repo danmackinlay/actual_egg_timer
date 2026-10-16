@@ -80,6 +80,17 @@ shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
+6. **What a runny white costs in choosing the time** (`RUNNY_WHITE_LOSS`).
+   `npm run decide -- versus` found the chosen time trading eggs right for
+   fewer runny whites against the posterior-mean time; at a lower weight it
+   gains eggs right. Before deciding: rerun it at the lower weights at full
+   size, find why the counter's soft and jammy snap to one level and lean to
+   the window's edge, and try a mean solve that takes the learned taste
+   offset.
+7. **iOS's `previewedLevel` in `InHand`**: keep the flag, or restore the
+   slider in `letGo` only when the level is not in hand. Restoring always,
+   as the web does, puts back an old level a correction has not reached
+   yet (`aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted`).
 
 
 
