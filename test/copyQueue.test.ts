@@ -6,12 +6,17 @@
  * malformed record does.
  *
  * On data of its own, not the repository's history, since CI clones
- * shallowly: 1b asks git only for HEAD and for a hash no clone has. Run from the repo root (npm test does). Zero dependencies.
+ * shallowly: 1b asks git only for HEAD and for a hash no clone has, and 1c
+ * makes a history of its own in a scratch repository. Run from the repo
+ * root (npm test does). Zero dependencies.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 import {
   APPROVED_PATH, ApprovalError, type CatalogueJson, UNCOMMITTED, type Words, approvedProblem, commitProblem, keyCommits,
@@ -32,6 +37,34 @@ test('1b. a record naming no commit says so, not that the commit has no catalogu
   assert.throws(() => wordsAt('a'.repeat(40)), (e: Error) => e instanceof ApprovalError
     && e.message === `${APPROVED_PATH} names ${'a'.repeat(40)}, which is no commit in this clone: it was rebased away, `
       + 'or the clone is shallow');
+});
+
+test('1c. copy:approve refuses a commit not on main\'s history, and only it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'copy-approve-'));
+  const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 't',
+    GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
+  const git = (...args: string[]): string => execFileSync('git', args, { cwd: dir, env: env, encoding: 'utf8' }).trim();
+  const here = process.cwd();
+  try {
+    git('init', '-q', '-b', 'main');
+    git('commit', '-q', '--allow-empty', '-m', 'on main');
+    const merged = git('rev-parse', 'HEAD');
+    git('checkout', '-q', '-b', 'side');
+    git('commit', '-q', '--allow-empty', '-m', 'on a branch');
+    const unmerged = git('rev-parse', 'HEAD');
+    git('checkout', '-q', 'main');
+    const run = spawnSync(process.execPath, [resolve('tools/copyQueue.ts'), 'approve', unmerged],
+      { cwd: dir, env: env, encoding: 'utf8' });
+    assert.equal(run.status, 2, run.stderr);
+    assert.equal(run.stderr, `${unmerged.slice(0, 10)} is not on main's history: approve a commit main has, once its `
+      + 'branch is merged.\n');
+    process.chdir(dir);
+    assert.equal(commitProblem(merged, true), null);
+    assert.equal(commitProblem(unmerged, false), null);
+  } finally {
+    process.chdir(here);
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 const en = (messages: CatalogueJson['messages']): CatalogueJson => ({ locale: 'en', messages: messages });
