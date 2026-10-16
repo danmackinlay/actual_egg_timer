@@ -53,7 +53,7 @@
      the key of the control's own label, for "About {label}"; data-name, where
      a label will not read inside that, the key of the whole name. -->
 <!-- In place of the app, while it is open in another tab of this browser
-     (src/ui/owner.ts, DECISIONS.md 128): this tab saves and sounds nothing
+     (src/ui/owner.ts): this tab saves and sounds nothing
      until its button moves the app here. -->
 <section id="tabNote" hidden>
   <p data-copy="tab.note"></p>
@@ -82,7 +82,7 @@
   <section id="readout">
     <p id="phaseLabel" data-copy="readout.phase.total"></p>
 
-    <!-- The Learning mark (DECISIONS.md 58): over the time while sharing
+    <!-- The Learning mark: over the time while sharing
          is on, since the time may then be nudged a few seconds. -->
     <p id="learning" hidden><span class="badge" data-copy="learning.badge"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-label="learning.badge" hidden></button></p>
     <p id="learningMore" class="disclosed" hidden data-copy="learning.badge.more"></p>
@@ -362,8 +362,8 @@
 
   <!-- ---------------------------------------------------------- feedback -->
   <!-- At Done, ending the page: two questions, always both, and under
-       them the thermometer reading, none required (INFERENCE.md section 3,
-       DECISIONS.md 92). Each answer is folded the moment it is tapped; one
+       them the thermometer reading, none required (INFERENCE.md section 3).
+       Each answer is folded the moment it is tapped; one
        left unanswered is recorded as skipped when the next cook starts. -->
   <div id="feedback" hidden>
     <!-- What this cook was started for, from its ticket. -->
@@ -447,7 +447,7 @@
         </div>
       </fieldset>
 
-      <!-- The alarm's sound (DECISIONS.md 101). Choosing one plays it. -->
+      <!-- The alarm's sound. Choosing one plays it. -->
       <fieldset class="setting" aria-labelledby="lblAlarm">
         <div class="setting__head">
           <span id="lblAlarm" data-copy="controls.alarm"></span>
@@ -533,7 +533,7 @@
         <span id="lblLearned" data-copy="learned.title"></span>
       </div>
       <p class="hint" id="learnedNote" tabindex="-1"></p>
-      <!-- Every result kept here, saved to a file (DECISIONS.md 107). Offered
+      <!-- Every result kept here, saved to a file. Offered
            on an empty log too, which says there is nothing to save. -->
       <div class="forget__row">
         <button type="button" id="exportResults" class="secondary" data-copy="learned.export"></button>
@@ -567,7 +567,7 @@
       <label class="check" for="shareSetting"><input type="checkbox" id="shareSetting"><span data-copy="share.toggle"></span></label>
       <p class="hint" id="shareNote" tabindex="-1" aria-live="polite"></p>
       <!-- The random number, whole and selectable, once sharing has been
-           turned on, to quote by email (DECISIONS.md 67). -->
+           turned on, to quote by email. -->
       <p class="hint" id="shareId" hidden><span data-copy="share.id"></span>
         <span id="shareUid" class="share__uid" translate="no"></span></p>
       <div class="forget__row">

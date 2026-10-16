@@ -194,7 +194,7 @@ button.mute[aria-pressed="true"] {
   color: var(--dim);
 }
 
-/* The time's two lines sit close under the digits (DECISIONS.md 99): the
+/* The time's two lines sit close under the digits: the
    digits have no descenders, so the clock gives back the room under its
    baseline, and the boil line follows with no gap of its own. */
 #bigtime {
@@ -220,7 +220,7 @@ button.mute[aria-pressed="true"] {
    open, in place, what it means (UI.md section 8); under it "most likely"
    when that is not the word asked; then the white's line. While idle the
    line holds two lines' room, the word and "most likely", the word at its
-   top, close under the boil line (DECISIONS.md 99): so a drag that brings
+   top, close under the boil line: so a drag that brings
    "most likely" or takes it away moves neither the word nor the slider under
    the thumb. The second line's room hangs the word's x-height (0.5rem, 8 px)
    into the panel's foot, so the folded word has no more empty room under it
@@ -463,7 +463,7 @@ body:not([data-start="sous"]) #certaintyMore { margin-top: calc(8px + var(--cert
    link a thumb can find, tinted while its choice is open. The line height
    gives each clause a target taller than the text. */
 /* The egg in cross-section on the left and the sentence beside it, so the
-   egg costs the column no height of its own (DECISIONS.md 52); the open
+   egg costs the column no height of its own; the open
    clause's choice under both. In sous-vide there is no egg to draw, and
    the sentence has the row. */
 #setup {
