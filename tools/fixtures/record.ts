@@ -453,10 +453,9 @@ recordCases.push({
   parsed: parseRecord([CANONICAL]),
 });
 
-/* The results file: the same store makes the same file in
- * both apps, character for character. A store spliced in as it is, a missing
- * store, damaged and bare stores kept as strings, and every character the
- * escaping treats specially. */
+/* The results file: the same store makes the same file in both apps, as
+ * data. A store read in, a missing store, damaged and bare stores kept as
+ * strings, and every character JSON escapes. */
 const STORE_TEXT = JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: LIKELIHOOD_ID, folded: 1, log: [REPLAY_LOG[0]] });
 const RESULTS_CASES: { meta: ResultsMeta; stored: string | null }[] = [
   {
@@ -645,7 +644,7 @@ export const recordFixture = {
   load: { population: LOAD_POPULATION, likelihood: LOAD_LIKELIHOOD, cases: loadCases },
   resultsFile: {
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),
-    cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored) })),
+    cases: RESULTS_CASES.map((c) => ({ ...c, file: JSON.parse(resultsFile(c.meta, c.stored)) as unknown })),
   },
   // The grid one logged outcome is learned on in the apps: both apps must
   // agree, or two identical kitchens learn two things from the same egg.

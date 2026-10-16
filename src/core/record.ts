@@ -973,14 +973,12 @@ export function loadDecision(read: StoreRead, population: string, likelihood: st
 /* ---------------------------------------------------------- the results file */
 
 /* EXPORT. "Export my results", in Settings, saves what a device keeps about
- * its eggs to a file the cook keeps: the store EXACTLY as
- * stored - spliced in character for character, not parsed and written again -
- * with enough beside it to say whose and which. `npm run eggs -- import`
- * reads it back for the fit.
- *
- * Both apps write it with these functions (Record.swift twins them), so the
- * same store makes the same file, which fixtures/record.json pins. Nothing
- * here reads a clock: the moment of the export is handed in. */
+ * its eggs to a file the cook keeps: the store, with enough beside it to say
+ * whose and which. `npm run eggs -- import` reads it back for the fit. Each
+ * app writes it with its own JSON encoder (Record.swift twins this), so the
+ * two files hold the same data, which fixtures/record.json pins, not the same
+ * characters. Nothing here reads a clock: the moment of the export is handed
+ * in. */
 
 /** The results file's own version. A reader refuses any other. A file of
  *  this version from before 0.5 also has `unread`, the stored copies its app
@@ -1005,42 +1003,17 @@ export function resultsFileName(day: string): string {
   return `actual-egg-timer-results-${day}.json`;
 }
 
-/** A JSON string literal: `"`, the backslash and the control characters
- *  escaped as JSON.stringify escapes them, and nothing else - so the Swift
- *  twin writes the same characters without its encoder, which escapes `/`. */
-export function jsonString(s: string): string {
-  let out = '"';
-  for (let i = 0; i < s.length; i++) {
-    const c = s.charCodeAt(i);
-    if (c === 0x22) out += '\\"';
-    else if (c === 0x5c) out += '\\\\';
-    else if (c === 0x08) out += '\\b';
-    else if (c === 0x0c) out += '\\f';
-    else if (c === 0x0a) out += '\\n';
-    else if (c === 0x0d) out += '\\r';
-    else if (c === 0x09) out += '\\t';
-    else if (c < 0x20) out += '\\u' + c.toString(16).padStart(4, '0');
-    else out += s.charAt(i);
-  }
-  return out + '"';
-}
-
-/** Whether a stored text is a JSON object or array, and so can be spliced in
- *  as it is. Anything else - damaged, or a bare value - goes in as a string. */
-function isJsonContainer(s: string): boolean {
+/** A stored text as it goes into the file: its value when it is a JSON
+ *  object or array, the text itself, as a string, when not, so a damaged
+ *  store is kept too. */
+function storedValue(s: string): unknown {
   try {
     const v: unknown = JSON.parse(s);
-    return v !== null && typeof v === 'object';
+    if (v !== null && typeof v === 'object') return v;
   } catch {
-    return false;
+    // Not JSON: kept as the text it is.
   }
-}
-
-/** A stored text as it goes into the file: itself when it is a JSON object
- *  or array, a JSON string holding it when not, so a damaged store is kept
- *  too. */
-function spliced(s: string): string {
-  return isJsonContainer(s) ? s : jsonString(s);
+  return s;
 }
 
 /** What the file says it is, for whoever opens it. */
@@ -1050,13 +1023,9 @@ export const RESULTS_ABOUT = 'Actual Egg Timer: every result this device kept, a
 /** The results file: the meta and the store (`stored`, null when there is
  *  none). One line of JSON. */
 export function resultsFile(meta: ResultsMeta, stored: string | null): string {
-  return '{"about":' + jsonString(RESULTS_ABOUT)
-    + ',"file":' + String(RESULTS_FILE_VERSION)
-    + ',"app":' + jsonString(meta.app)
-    + ',"appVersion":' + jsonString(meta.appVersion)
-    + ',"exported":' + jsonString(meta.exported)
-    + ',"population":' + jsonString(meta.population)
-    + ',"model":' + jsonString(MODEL_ID)
-    + ',"uid":' + (meta.uid === null ? 'null' : jsonString(meta.uid))
-    + ',"stored":' + (stored === null ? 'null' : spliced(stored)) + '}';
+  return JSON.stringify({
+    about: RESULTS_ABOUT, file: RESULTS_FILE_VERSION, app: meta.app, appVersion: meta.appVersion,
+    exported: meta.exported, population: meta.population, model: MODEL_ID, uid: meta.uid,
+    stored: stored === null ? null : storedValue(stored),
+  });
 }

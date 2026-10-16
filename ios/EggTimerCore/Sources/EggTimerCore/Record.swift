@@ -897,9 +897,9 @@ public func loadDecision(_ read: StoreRead, population: String, likelihood: Stri
 
 // MARK: - The results file
 
-// "Export my results": the store exactly as stored, spliced
-// in character for character, and enough beside it to say whose and which.
-// `resultsFile` in src/core/record.ts, held to it by `fixtures/record.json`.
+// "Export my results": `resultsFile` in src/core/record.ts, written with
+// JSONSerialization, and held to the TypeScript's by `fixtures/record.json`
+// as data, not characters.
 
 /// What a results file says beside the store.
 public struct ResultsMeta: Sendable, Equatable, Codable {
@@ -926,48 +926,24 @@ public func resultsFileName(day: String) -> String {
     "actual-egg-timer-results-\(day).json"
 }
 
-/// A JSON string literal, escaped as JSON.stringify escapes one and no
-/// further: JSONEncoder would also escape `/`.
-func jsonString(_ s: String) -> String {
-    var out = "\""
-    for u in s.unicodeScalars {
-        switch u.value {
-        case 0x22: out += "\\\""
-        case 0x5C: out += "\\\\"
-        case 0x08: out += "\\b"
-        case 0x0C: out += "\\f"
-        case 0x0A: out += "\\n"
-        case 0x0D: out += "\\r"
-        case 0x09: out += "\\t"
-        case 0..<0x20: out += String(format: "\\u%04x", u.value)
-        default: out.unicodeScalars.append(u)
-        }
-    }
-    return out + "\""
-}
-
-/// A stored text as it goes into the file: itself when it is a JSON object
-/// or array, a JSON string holding it when not, so a damaged store is kept too.
-private func spliced(_ s: String) -> String {
-    guard let data = s.data(using: .utf8), (try? JSONSerialization.jsonObject(with: data)) != nil else {
-        return jsonString(s)
-    }
-    return s
+/// A stored text as it goes into the file: its value when it is a JSON
+/// object or array, the text itself when not.
+private func storedValue(_ s: String) -> Any {
+    guard let data = s.data(using: .utf8), let v = try? JSONSerialization.jsonObject(with: data),
+          v is [String: Any] || v is [Any] else { return s }
+    return v
 }
 
 /// The results file: the meta and the store (nil when there is none). One
-/// line of JSON.
+/// line of JSON. Its fields sorted, since a dictionary has no order.
 public func resultsFile(_ meta: ResultsMeta, stored: String?) -> String {
-    let fields: [(String, String)] = [
-        ("about", jsonString(resultsAbout)),
-        ("file", String(resultsFileVersion)),
-        ("app", jsonString(meta.app.rawValue)),
-        ("appVersion", jsonString(meta.appVersion)),
-        ("exported", jsonString(meta.exported)),
-        ("population", jsonString(meta.population)),
-        ("model", jsonString(modelID)),
-        ("uid", meta.uid.map(jsonString) ?? "null"),
-        ("stored", stored.map(spliced) ?? "null"),
+    let file: [String: Any] = [
+        "about": resultsAbout, "file": resultsFileVersion, "app": meta.app.rawValue, "appVersion": meta.appVersion,
+        "exported": meta.exported, "population": meta.population, "model": modelID, "uid": meta.uid ?? NSNull(),
+        "stored": stored.map(storedValue) ?? NSNull(),
     ]
-    return "{" + fields.map { "\"\($0.0)\":\($0.1)" }.joined(separator: ",") + "}"
+    // Strings, a number, nulls and what JSONSerialization itself read: it
+    // writes them all.
+    let data = try? JSONSerialization.data(withJSONObject: file, options: [.sortedKeys, .withoutEscapingSlashes])
+    return data.map { String(decoding: $0, as: UTF8.self) } ?? ""
 }

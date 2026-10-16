@@ -83,8 +83,8 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
   }
 
   /**
-   * The results file (`resultsFile` in core): the store exactly as stored, and
-   * the sharing ID if there is one. Its name is the local day. Null when there
+   * The results file (`resultsFile` in core): the store as stored, and the
+   * sharing ID if there is one. Its name is the local day. Null when there
    * is no egg to export.
    */
   function exportResults(uid: string | null, now_ms: number): { name: string; text: string } | null {
