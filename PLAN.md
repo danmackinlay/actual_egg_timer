@@ -51,28 +51,10 @@ and the map of the documents are `CLAUDE.md`.
     - Make SBC run in minutes: batch the repetitions, rank the data's
       log-likelihood too, test the rank ECDF against bands, stop early,
       simulate fewer cooks.
-11. **Move the correction in hand into core** (`DECISIONS.md` 139). Write the
-    reducer beside `step` in `src/core/`, with its fixture of event
-    sequences, then the Swift twin under conformance. Replace the web's
-    reducer (`src/ui/model.ts`, `edit.ts`) and iOS's `Edits.swift` with each
-    app's mapping of its own events onto the reducer's. Fixture the four
-    drifts the review found (a long press on a radio; a size then a weight;
-    leaving mid-settle; which touches count as another control) as event
-    sequences, so they cannot come back. The after-the-pull level rule then
-    lives once, beside `step`'s `correct`.
-12. **Left from the adversarial review of the drafting**, not yet decided;
+11. **Left from the adversarial review of the drafting**, not yet decided;
     each is a cut, one branch each:
-    - `npm run test:slow` re-runs the whole suite in CI for one loop's
-      stride (`EXHAUSTIVE`, `test/reachAnswer.test.ts`): fix the stride,
-      delete the script.
-    - The slowest unit tests set `npm test`'s time (`runningMemo`,
-      `recordStore` 3b, `reachAnswer` 12): check fewer points.
-    - `tools/validate.ts` is a second test runner: make its checks tests.
-    - The five `tools/*.mjs` are not type-checked: make them `.ts`.
-    - Test names carry numbers, and split files kept their parent's: drop
-      them.
     - Swift doc comments repeat the TypeScript's in `Running.swift`,
-      `AsRan.swift`, `Record.swift` and `Step.swift`: keep only what is
+      `AsRan.swift` and `Record.swift`: keep only what is
       about the port, and point at the TypeScript, as the rest of the twin
       does.
     - The web model holds settings in four copies and the idle solve in six
@@ -81,8 +63,6 @@ and the map of the documents are `CLAUDE.md`.
     - `src/ui/stores.ts` lists the stores twice (`STORE_LIST`): derive it.
     - Element ids are written in `index.html`, `dom.ts` and the e2e: one
       list.
-    - `tools/verify.mjs` lets `copy:keys` and `swift:constants` rewrite
-      Swift files while `swift build` runs: order them first.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab

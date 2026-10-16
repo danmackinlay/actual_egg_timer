@@ -73,7 +73,7 @@ The design they belong to is `INFERENCE.md`.
 
 18. **E3's attribution is left as it is**: two runny whites move jammy about
     as far as soft, and that stays until a probe or pooling pins the
-    time-scale (`INFERENCE.md` §3). `test/infer.test.ts` 5b pins the limit.
+    time-scale (`INFERENCE.md` §3). `test/infer.test.ts` pins the limit.
 19. **The protocol advice is discoverable, not intrusive**: offered in
     place under low odds, no modal and no popover. Since 26 it is a link into Help, not a disclosure.
 20. **An odds-shaded slider in both apps, threshold 3/10.** Superseded by
@@ -213,7 +213,7 @@ Decided by the owner, 3 October 2026:
 56. **Curly apostrophes and quotes, never straight ones**, in every string
     a reader sees: ’ for an apostrophe, ‘ ’ and “ ” for quotation, in both
     apps, every catalogue, the web page's descriptions and the privacy
-    page. `copy.test.ts` 3c holds it.
+    page. `copy.test.ts` holds it.
 57. **The cooling methods are named for what they are: an ice bath,
     running water, the air.** Not "cold tap" ("tap" is also the screen
     gesture) and not a surface the eggs sit on ("bench", "counter" and
@@ -683,7 +683,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     finding, not a reason to tighten a check or test another platform, and
     not a question for the owner; where its cause is understood, loosen and
     say so in the commit. The filter is tested as a distribution
-    (`record.test.ts` 2a3, `npm run sbc`), never by matching draws.
+    (`record.test.ts`, `npm run sbc`), never by matching draws.
 110. **0.5 is released: `main` is the 0.5 line, and 0.3 a historical
     branch.** Superseded by 120.
 111. **"Boil" is never a noun for cooking; "a full rolling boil" is the
@@ -935,5 +935,8 @@ October:
     what to commit, and the timers to set or cancel. Core names the groups
     (the settings' `FIELDS`), which touches count as another control, and
     which moments count as leaving; each app maps its events onto those and
-    runs the timers. It is fixtured as event sequences and held in Swift by
-    conformance. Not yet built.
+    runs the timers. It is `src/core/hand.ts`, fixtured as event sequences
+    (`fixtures/hand.json`) and held in Swift by conformance (`Hand.swift`);
+    the web maps its gestures in `src/ui/edit.ts`, iOS in `InHand.swift`.
+    Leaving is the last word an app is sure to have before it may be
+    stopped: the web's page hidden or gone, iOS's scene no longer active.
