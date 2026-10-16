@@ -24,17 +24,22 @@ export const CHROME = process.env['CHROME'] ?? PLACES.find((p) => existsSync(p))
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-export async function waitForHttp(url: string): Promise<Response> {
-  for (let i = 0; i < 100; i++) {
+/** The first good answer at `url` within `ms`; a throw, sooner if `gone`
+ *  says why nothing will answer (the process that would has ended). */
+export async function waitForHttp(url: string, ms = 10_000, gone: () => string | null = () => null): Promise<Response> {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
     try {
       const res = await fetch(url);
       if (res.ok) return res;
     } catch {
       /* not up yet */
     }
+    const why = gone();
+    if (why !== null) throw new Error(`nothing answered at ${url}: ${why}`);
     await sleep(100);
   }
-  throw new Error(`nothing answered at ${url}`);
+  throw new Error(`nothing answered at ${url} in ${ms / 1000} s`);
 }
 
 interface Message {
@@ -126,10 +131,14 @@ export async function launchChrome(args: string[], debugPort: number): Promise<B
     ...(process.env['CI'] !== undefined ? ['--no-sandbox'] : []),
     ...args,
   ], { stdio: 'ignore' });
+  let ended: string | null = null;
+  child.on('exit', (code, signal) => { ended = `Chrome ended (${signal ?? code})`; });
   return {
     debugPort: debugPort,
     async socket() {
-      const v = await (await waitForHttp(`http://127.0.0.1:${debugPort}/json/version`)).json() as {
+      // A fresh runner's first Chrome has taken more than ten seconds to
+      // answer; a minute is failure detection only.
+      const v = await (await waitForHttp(`http://127.0.0.1:${debugPort}/json/version`, 60_000, () => ended)).json() as {
         webSocketDebuggerUrl: string;
       };
       return v.webSocketDebuggerUrl;
