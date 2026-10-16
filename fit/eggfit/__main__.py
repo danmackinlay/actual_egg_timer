@@ -176,7 +176,7 @@ def main() -> None:
     f.add_argument("--force", action="store_true",
                    help="write the population even if R-hat, the ESS or divergences fail, marked forced")
     f.add_argument("--trusted", default=data.TRUSTED_FILE,
-                   help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
+                   help="the owner's trusted IDs, one per line; "
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
     model.use_cores(a.cores if a.command == "sbc" else a.chains)

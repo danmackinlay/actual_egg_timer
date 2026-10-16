@@ -1,5 +1,5 @@
-"""Scoring a population on cooks the fit never saw (DECISIONS.md 37,
-INFERENCE.md section 9): one step ahead, by proper scoring rules.
+"""Scoring a population on cooks the fit never saw (INFERENCE.md
+section 9): one step ahead, by proper scoring rules.
 
 For each held-out cook, a cloud of particles is drawn from the population -
 what the app would draw on a fresh install - and the cook's eggs are taken in
@@ -11,7 +11,7 @@ likelihood.
 - The LOG SCORE is primary: the log of the probability given to the answer.
   The 5% unrelated share keeps it finite.
 - The RANKED PROBABILITY SCORE, for the ordered answers: three for the
-  white and the old yolk question, five for the yolk words (DECISIONS.md 92).
+  white and the old yolk question, five for the yolk words.
   The two yolk questions are scored apart, since a score over three answers
   and one over five are not the same scale.
 - RELIABILITY: the predicted chance of each answer against how often it was

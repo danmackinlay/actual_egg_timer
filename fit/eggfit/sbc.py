@@ -22,7 +22,7 @@ p-value and histogram, and how many repetitions' own chains failed R-hat,
 the ESS or divergences.
 
 What is checked is the model, not the published fit: every egg counts once
-(the open tier's discount, DECISIONS.md 2, deliberately tempers the open eggs
+(the open tier's discount deliberately tempers the open eggs
 and is not a posterior), and nothing is held out. The simulator's cooks are
 Student-t and lognormal as the model's are, and its answers go through the
 app's own probits, so a failure is the inference's or the emulator's (its

@@ -10,24 +10,24 @@ PER COOK, heavy-tailed (Student-t, 4 degrees of freedom), so a cluster of
 odd cooks is absorbed as outlying cooks rather than moving the centre: a
 time-scale `z`, a taste offset, a white cutpoint (the lag plus what this cook
 calls runny), and lognormal noise and firm gap - the app's particle, which
-since 0.5 has no carryover: the apps hold it at the physics (DECISIONS.md 95,
+since 0.5 has no carryover: the apps hold it at the physics (INFERENCE.md
 section 2).
 
 THE LIKELIHOOD is the app's own (src/core/infer.ts): the ordered probit for
 the yolk and the white, each with the 5% unrelated share, and the probe's
 exponentially modified Gaussian with its 2% floor, read off each egg's
 emulator column. The yolk is the yolk the cook got, in the slider's five
-words, cut where the slider's word changes (DECISIONS.md 92), or on an egg
+words, cut where the slider's word changes, or on an egg
 answered before that, too soft / just right / too firm against the level
 asked for, scored as it always was.
 
-THE TIERS (DECISIONS.md 2): an attested egg counts once; an open one (the
+THE TIERS: an attested egg counts once; an open one (the
 web, an iPhone that could not attest) enters at a power below one - 0.5 to
 start - and the open tier's total weight is capped at the attested tier's,
 so no number of browser tabs can outvote the phones. The discount is only on
 what open eggs teach the population; nothing here touches what they teach
 their own cook's app. An egg under an ID on the owner's trusted list counts
-once, as an attested one does, whatever its tier (DECISIONS.md 82; data.py).
+once, as an attested one does, whatever its tier (data.py).
 """
 
 from __future__ import annotations
@@ -104,15 +104,14 @@ def probe_density(c: dict, peak, reading):
 
 def full_weight(eggs: Eggs) -> np.ndarray:
     """The eggs that count once: attested, or under an ID the owner vouches
-    for (DECISIONS.md 82), whatever tier it came in."""
+    for, whatever tier it came in."""
     return (eggs.tier == 1) | eggs.trusted
 
 
 def tier_weights(eggs: Eggs, open_power: float, open_cap: float) -> np.ndarray:
     """Each egg's power in the likelihood: 1 attested or trusted; for the
     other open eggs `open_power`, lowered further if need be so their total
-    weight is at most `open_cap` times the full-weight eggs' (DECISIONS.md
-    2). A trusted egg counts as attested on both sides of the cap: the owner
+    weight is at most `open_cap` times the full-weight eggs'. A trusted egg counts as attested on both sides of the cap: the owner
     has vouched for it as Apple vouches for a phone."""
     full = full_weight(eggs)
     n_full = float(np.sum(full))

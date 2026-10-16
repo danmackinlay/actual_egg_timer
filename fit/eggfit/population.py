@@ -7,8 +7,8 @@ lognormal or normal per particle dimension (infer.ts `createPrior`), so each
 dimension is summarised by its median and a robust spread - half the width
 of its central 68% - which matches a Gaussian's sd and is not inflated by the
 Student-t tails the fit gives cooks. The taste's centre is 0, by the fit's
-convention. The counter's carryover is not a particle dimension
-(DECISIONS.md 95): the apps hold it at 1.0, and the file has no spread for it.
+convention. The counter's carryover is not a particle dimension:
+the apps hold it at 1.0, and the file has no spread for it.
 """
 
 from __future__ import annotations

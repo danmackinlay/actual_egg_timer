@@ -4,7 +4,7 @@ tests/emulated-sample.json is six simulated cooks emulated, the default seed,
 written by `npm run fixtures` (tools/fixtures/fitSample.ts), so a change to
 the core's likelihood changes it and `npm run fixtures:check` says so; it
 carries the core's `likelihood` id. Its `checks` are the TypeScript's own
-answer probabilities - the five yolk words (DECISIONS.md 92), the old
+answer probabilities - the five yolk words, the old
 three-way yolk answer and the white - and probe likelihoods for a dozen eggs,
 at three time-scales, under one particle. Both the fit's model (JAX) and its
 scorer (NumPy) must give the same numbers from the same emulator columns.
