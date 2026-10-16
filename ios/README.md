@@ -172,8 +172,10 @@ the surface is cached rather than simulated per particle.
 
 `Sharing.swift` is the web's `src/ui/share.ts` over the same state, kept
 alike (`ShareQueue.swift`, `src/ui/shareState.ts`; `INFERENCE.md` §7), and
-its header says what it sends and when. It is the
-app's only network call: `URLSession`, HTTPS, to the web app's site (a debug
+its header says what it sends and when. It is in EggTimerApp, and reaches
+the server and App Attest through `ShareTransport`, so `swift test` runs its
+sends and its fallbacks against a fake. The app's `ShareNetwork.swift` makes
+its only network call: `URLSession`, HTTPS, to the web app's site (a debug
 build can point it at `npm run serve:dev` with `-shareServer`).
 
 What iOS adds is App Attest. No entitlement is set: a development build uses

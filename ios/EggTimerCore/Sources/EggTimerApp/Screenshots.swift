@@ -56,7 +56,7 @@ import os
 ///   simulator nobody taps.
 ///
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
-/// rather than to the live site (`Sharing.server`), for `npm run serve:dev`.
+/// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
 ///
 /// `log` writes one event as a line of JSON, to standard error and to
 /// `Library/Caches/aet.log` in the app's container: the phases, each plan,

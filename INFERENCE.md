@@ -616,7 +616,7 @@ answers; in short:
   is added: TestFlight and App Store builds attest in production whatever
   it says. A failure to attest is never fatal; the egg goes to the open
   tier.
-- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
+- **The apps** (`src/ui/share.ts`, iOS's `Sharing.swift`, over core's
   contract with the server, `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far

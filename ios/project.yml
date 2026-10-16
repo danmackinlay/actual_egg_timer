@@ -127,8 +127,8 @@ targets:
         # Answered here rather than per build in App Store Connect. When a
         # person turns sharing on, the app sends results over HTTPS through
         # URLSession to its own site, and hashes with SHA-256 for App Attest
-        # (Sharing.swift). Both are the operating system's encryption and
-        # exempt, so NO - "no non-exempt encryption" - is the honest answer
+        # (ShareNetwork.swift, Sharing.swift). Both are the operating system's
+        # encryption and exempt, so NO - "no non-exempt encryption" - is the honest answer
         # (Apple's "Complying with encryption export regulations", checked
         # 3 October 2026). Without the key every upload arrives as "Missing
         # Compliance" and has to be answered by hand before testers can install
