@@ -84,25 +84,6 @@ struct RunningConformance {
             #expect(pot.setup.eggCount == expected.eggCount, "\(label) eggs")
             #expect(pot.setup.coolingWaterC == expected.coolingWaterC, "\(label) cooling water")
             #expect(pot.setup.bowlLitres == expected.bowlLitres, "\(label) bowl")
-            // The key of this pot's inputs, under the fixture's parameters: the
-            // same fields in the same order as the web's, each word the same
-            // and each number to tolerance (DECISIONS.md 109).
-            let n = try #require(row["keyNumbers"] as? [String], "\(label): no key numbers").compactMap(Double.init)
-            #expect(n.count == 12, "\(label): key numbers")
-            guard n.count == 12 else { continue }
-            let inputs = DecisionInputs(
-                egg: pot.egg, setup: pot.setup, params: ModelParams(alphaM2s: n[10]), whiteDoseMin: n[11]
-            )
-            let got = keyFields(inputsKey(inputs))
-            let want = keyFields(try row.str("inputsKey"))
-            #expect(got.count == want.count, "\(label) inputs key \(inputsKey(inputs))")
-            #expect(want.filter { if case .number = $0 { true } else { false } }.count >= 12, "\(label): key numbers")
-            for (i, (a, b)) in zip(got, want).enumerated() {
-                switch (a, b) {
-                case let (.number(x), .number(y)): expectClose(x, y, "\(label) inputs key, field \(i)")
-                default: #expect(a == b, "\(label) inputs key, field \(i)")
-                }
-            }
         }
     }
 
@@ -142,6 +123,7 @@ struct RunningConformance {
         let rows = try Fixtures.list("running.json", "plans")
         #expect(rows.count >= 30)
         var hobsAsked = 0
+        var memosHanded = 0
         for row in rows {
             let note = try row.str("note")
             let post = try #require(byName[row.str("posterior")], "\(note): no posterior")
@@ -164,8 +146,7 @@ struct RunningConformance {
                 let profile = try (s["profile"] as? [String: Any]).map { try decoded(OddsProfile.self, $0) }
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
-            let memo = try (row["hint"] as? [String: Any]).map { try slowHobMemoOf($0) }
-            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, memo: memo)
+            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
             for out in try row.rows("outs", mayBeEmpty: true) {
@@ -189,12 +170,22 @@ struct RunningConformance {
                 )
             }
             // At the slow hob's moment itself (this core's, to the bit) it has
-            // not come, and the plan made then is the plan already made: a
-            // clock stopped there plans nothing more.
-            if let at = plan.slowHobAtS, plan.memo != nil {
+            // not come, and the plan made then on this plan's memo is the plan
+            // already made: a clock stopped there plans nothing more. And this
+            // core's memo handed back, as each app hands it, makes the plan
+            // that working the rule from the start makes, to the bit. Neither
+            // is the web's to say: the memo's key is each core's own.
+            if let at = plan.slowHobAtS, let memo = plan.memo {
+                memosHanded += 1
                 #expect(!slowHobDue(plan, nowS: at), "\(note): due at its own moment")
                 let then = replan(cook, c, surface: surface, leanHintS: hint, nowS: at, memo: memo)
                 #expect(then.slowHobAtS == at, "\(note): planned again at its moment, it moved")
+                for later in [now + 15, at + 1] {
+                    let fromMemo = try jsonOf(replan(cook, c, surface: surface, leanHintS: hint, nowS: later, memo: memo))
+                    let fromStart = try jsonOf(replan(cook, c, surface: surface, leanHintS: hint, nowS: later))
+                    let moved = jsonDifferences(fromMemo, fromStart, tolerance: 0)
+                    #expect(moved.isEmpty, "\(note): planned on its memo at \(later - cook.startedAtS), \(moved.prefix(3))")
+                }
             }
             // The record, the boil remembered, and how the cook ends.
             let ctx = try row.object("context")
@@ -250,6 +241,7 @@ struct RunningConformance {
             #expect(try ending.remake == expectedEnding.flag("remake"), "\(note): made again first")
         }
         #expect(hobsAsked >= 7, "the slow hob's moment asked of too few plans")
+        #expect(memosHanded >= 5, "too few plans with a memo to hand back")
     }
 
     @Test("what the boil memory learns from a cook, and what it does not")
@@ -260,20 +252,6 @@ struct RunningConformance {
             let note = try row.str("note")
             try expectBoil(boilToRemember(runningCookOf(row["cook"], note)), row["boil"], note)
         }
-    }
-}
-
-/// A field of a decision surface's key: a number, read back from the
-/// sixteen hex digits of its bits (`numberKey`), or a word as it is.
-private enum KeyField: Equatable {
-    case number(Double)
-    case word(String)
-}
-
-private func keyFields(_ key: String) -> [KeyField] {
-    key.split(separator: "|", omittingEmptySubsequences: false).map { part in
-        if part.count == 16, let bits = UInt64(part, radix: 16) { return .number(Double(bitPattern: bits)) }
-        return .word(String(part))
     }
 }
 
@@ -292,31 +270,9 @@ private func expectAsRan(_ a: CookAsRan?, _ json: Any?, _ what: String) {
     #expect(sameJSON(a?.jsonObject, json, relative: conformanceTolerance), "\(what)")
 }
 
-/// The slow hob's memo as the fixtures write one: its place, and the key of
-/// what the web's core read, which this core may make otherwise in the last
-/// bits; a memo that does not fit is ignored, and the plan is the same.
-private func slowHobMemoOf(_ json: [String: Any]) throws -> SlowHobMemo {
-    try SlowHobMemo(
-        key: json.str("key"), steps: Int(json.num("steps")), lastS: json.num("last_s"), rampS: json.num("ramp_s"),
-        carriedS: json.optionalNum("carried_s")
-    )
-}
-
+/// The slow hob's memo: where the rule got to, without its key.
 private func expectMemo(_ h: SlowHobMemo?, _ json: Any?, _ note: String) throws {
-    guard let j = json as? [String: Any] else {
-        #expect(h == nil, "\(note): no slow hob's memo")
-        return
-    }
-    let hint = try #require(h, "\(note): a slow hob's memo")
-    let want = try slowHobMemoOf(j)
-    #expect(hint.steps == want.steps, "\(note): memo steps")
-    expectClose(hint.lastS, want.lastS, "\(note): memo's last")
-    expectClose(hint.rampS, want.rampS, "\(note): memo's ramp")
-    switch (hint.carriedS, want.carriedS) {
-    case (nil, nil): break
-    case let (a?, b?): expectClose(a, b, "\(note): hint's carried time")
-    default: Issue.record("\(note): hint's carried time")
-    }
+    expectJSON(h, json, "\(note): the slow hob's memo")
 }
 
 /// A clock time, as seconds from the cook's start: an epoch time's relative
@@ -427,6 +383,27 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
         }
     } else {
         #expect(p.forecast == nil, "\(note): forecast")
+    }
+}
+
+/// The key of a decision surface's inputs is this core's own, as the web's is
+/// the web's: each app's caches and the plan key surfaces by it, and no
+/// fixture holds its bits (DECISIONS.md 109). What it must do, it does here.
+@Suite("The surface key")
+struct InputsKeyTests {
+    @Test("equal exactly when the inputs are, numbers to the bit")
+    func key() throws {
+        let row = try Fixtures.list("running.json", "setups")[0]
+        let pot = try cookSetupOf(choicesOf(row.object("choices")), timeToBoilS: row.num("timeToBoil_s"))
+        let a = DecisionInputs(egg: pot.egg, setup: pot.setup, params: .default, whiteDoseMin: whiteDoseTarget)
+        let again = try JSONDecoder().decode(DecisionInputs.self, from: JSONEncoder().encode(a))
+        #expect(inputsKey(again) == inputsKey(a), "the same inputs, through JSON")
+        var nudged = pot.setup
+        nudged.eggStartC += 1e-12
+        #expect(inputsKey(DecisionInputs(egg: pot.egg, setup: nudged, params: .default, whiteDoseMin: whiteDoseTarget)) != inputsKey(a))
+        #expect(numberKey(0) == numberKey(-0.0))
+        #expect(numberKey(480) == "407e000000000000")
+        #expect(numberKey(0.1) == "3fb999999999999a")
     }
 }
 

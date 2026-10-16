@@ -6,7 +6,6 @@
 
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.ts';
 import { oddsProfile } from '../../src/core/reach.ts';
-import { decisionInputs, inputsKey } from '../../src/core/decide.ts';
 import type { GridSpec } from '../../src/core/doseGrid.ts';
 import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
@@ -67,18 +66,7 @@ const setupChoices: CookChoices[] = [];
 const setups = setupChoices.map((choices, i) => {
   const timeToBoil_s = [480, 30, 7200, 611.25][i % 4];
   const pot = cookSetupOf(choices, timeToBoil_s);
-  const inputs = decisionInputs(calibrationOf(named('learned')), pot.egg, pot.setup);
-  return {
-    choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup,
-    // The key's numbers in its order, as text that every reader parses to
-    // the bit (a JSON reader may read a 17-digit number an ulp off).
-    keyNumbers: [
-      pot.egg.radius_m, pot.egg.minorDiameter_m, pot.egg.mass_kg, pot.egg.volume_m3, pot.setup.eggStart_C,
-      pot.setup.ambient_C, pot.setup.boiling_C, pot.setup.timeToBoil_s, pot.setup.waterLitres, pot.setup.eggCount,
-      inputs.params.alpha_m2s, inputs.whiteDose_min,
-    ].map(String),
-    inputsKey: inputsKey(inputs),
-  };
+  return { choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup };
 });
 
 /* ---------------------------------------------------------------- moves */
@@ -194,7 +182,8 @@ interface PlanCase {
   surface: SurfaceAsk;
   outs?: number[];
   dues?: number[];
-  /** The slow hob's hint handed to the plan. */
+  /** The slow hob's hint handed to the plan here, which must not move it:
+   *  the fixture writes the plan, which is the plan made with none. */
   hint?: SlowHobMemo | null;
   /** Moments to ask whether the slow hob's moment has come (`slowHobDue`). */
   hobDue?: number[];
@@ -224,13 +213,13 @@ function surfaceFor(
 }
 
 /** The slow hob's memo as the fixtures write it: where the rule got to, and
- *  the key of what it read, which a core whose numbers differ in their last
- *  bits makes otherwise, and then works the rule from the start: the same
- *  plan. */
+ *  not the key of what it read. The key is each core's own, every number to
+ *  the bit, and two cores' numbers agree in distribution, not in bits
+ *  (DECISIONS.md 109): each core holds its own memo to its own plans. */
 function memoJson(m: SlowHobMemo | null) {
   if (m === null) return null;
   const p = m as SlowHobPlace;
-  return { key: p.key, steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
+  return { steps: p.steps, last_s: p.last_s, ramp_s: p.ramp_s, carried_s: p.carried_s };
 }
 
 function planJson(p: CookPlan) {
@@ -293,7 +282,7 @@ function plan(pc: PlanCase): CookPlan {
   }
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
-    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: memoJson(hint),
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s,
     surface: built === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
       grid: built.spec,

@@ -54,8 +54,9 @@ public func numberKey(_ x: Double) -> String {
 
 /// The key of a decision surface's inputs, every number to the bit
 /// (`numberKey`), in a fixed order: what the plan and this app's caches of
-/// surfaces and odds key them by, and the web's alike (`inputsKey`,
-/// `fixtures/running.json`).
+/// surfaces and odds key them by. The web makes its own the same way
+/// (`inputsKey`); neither reads the other's, so no fixture holds its bits
+/// (DECISIONS.md 109), and `InputsKeyTests` holds this one.
 public func inputsKey(_ inputs: DecisionInputs) -> String {
     let e = inputs.egg
     let s = inputs.setup
