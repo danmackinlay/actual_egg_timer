@@ -26,7 +26,7 @@ struct SetupSentence: View {
     /// Whether a clause opens its choice.
     var editable = true
     /// A clause pressed: another control than one with a change in hand,
-    /// which commits it (`Edits.touchedElsewhere`).
+    /// which commits it (`InHand.moveOn`).
     var onTap: () -> Void = {}
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -100,7 +100,7 @@ struct ClausePanel: View {
     /// While a cook runs, its corrections: the start's panel then has when
     /// the eggs went in, and no sous-vide, which starts no cook. Nil while
     /// idle.
-    var edits: Edits? = nil
+    var inHand: InHand? = nil
     let done: () -> Void
     @State private var more = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -153,13 +153,13 @@ struct ClausePanel: View {
             Picker(tr(.`controls.start`), selection: $planner.start) {
                 Text(tr(.`controls.start.cold`)).tag(StartChoice.cold)
                 Text(tr(.`controls.start.hot`)).tag(StartChoice.hot)
-                if edits == nil {
+                if inHand == nil {
                     Text(tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]))
                         .tag(StartChoice.sousVide)
                 }
             }
             .segmented()
-            if let edits, let start = edits.shownStart { startedAt(edits, start) }
+            if let inHand, let start = inHand.shownStart { startedAt(inHand, start) }
         case .cooling: cooling
         }
     }
@@ -212,7 +212,7 @@ struct ClausePanel: View {
     /// the press of Rolling boil or the pull, no earlier than two hours
     /// before Start; when a press goes no further, the line under it says
     /// why, and the time it stopped at.
-    private func startedAt(_ edits: Edits, _ start: Double) -> some View {
+    private func startedAt(_ inHand: InHand, _ start: Double) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(tr(.`controls.startedAt`))
@@ -223,17 +223,17 @@ struct ClausePanel: View {
                     .foregroundStyle(.secondary)
                     .fixedSize()
                 Stepper(tr(.`controls.startedAt`)) {
-                    edits.stepStart(up: true)
+                    inHand.stepStart(up: true)
                 } onDecrement: {
-                    edits.stepStart(up: false)
+                    inHand.stepStart(up: false)
                 } onEditingChanged: { on in
-                    if on { edits.fingerDown(.startTime) } else { edits.fingerUp() }
+                    if on { inHand.fingerDown(.startedAt) } else { inHand.fingerUp() }
                 }
                 .labelsHidden()
                 .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
             }
             .appFont(.subheadline)
-            if let limit = edits.startLimit {
+            if let limit = inHand.startLimit {
                 Text(trChosen(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)

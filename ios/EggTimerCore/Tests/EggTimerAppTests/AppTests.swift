@@ -349,7 +349,7 @@ struct AppTests {
     }
 
     /// A tap's change is committed once it has settled on the cook's clock,
-    /// not before; a − or + held past `Edits.held` commits on release.
+    /// not before; a − or + held past `handHeldS` commits on release.
     @Test func aTapSettlesOnTheCooksClock() async throws {
         let world = World()
         let model = world.model()
@@ -357,22 +357,22 @@ struct AppTests {
         await started(model, world)
         let water = model.planner.settings.waterLitres
         model.planner.settings.waterLitres = water + 1
-        #expect(model.edits.pending)
-        world.clock.advance(Edits.settle - 0.1)
+        #expect(model.inHand.pending)
+        world.clock.advance(handSettleS - 0.1)
         // The clock short of the settle: nothing, however long the Mac waits.
         try await Task.sleep(for: .milliseconds(50))
-        #expect(model.edits.pending)
+        #expect(model.inHand.pending)
         #expect(model.cook.running?.choices.waterLitres == water)
         world.clock.advance(0.2)
-        await world.until("the settle") { !model.edits.pending }
+        await world.until("the settle") { !model.inHand.pending }
         await world.settled(model.cook)
         #expect(model.cook.running?.choices.waterLitres == water + 1)
         let eggs = model.planner.settings.eggCount
-        model.edits.fingerDown(.eggCount)
+        model.inHand.fingerDown(.eggCount)
         model.planner.settings.eggCount = eggs + 1
-        world.clock.advance(Edits.held + 0.1)
-        model.edits.fingerUp()
-        #expect(!model.edits.pending)
+        world.clock.advance(handHeldS + 0.1)
+        model.inHand.fingerUp()
+        #expect(!model.inHand.pending)
         await world.settled(model.cook)
         #expect(model.cook.running?.choices.eggCount == Double(eggs + 1))
     }
@@ -421,9 +421,9 @@ struct AppTests {
         let first = try await answeredAtDone(model, world)
         let finals = world.sharing.finals
         model.planner.chooseSize(model.planner.settings.sizeIndex + 1)
-        #expect(model.edits.pending)
+        #expect(model.inHand.pending)
         model.startAgain()
-        #expect(!model.edits.pending)
+        #expect(!model.inHand.pending)
         await world.settled(model.cook)
         await world.learned(model.planner)
         #expect(model.cook.running == nil)

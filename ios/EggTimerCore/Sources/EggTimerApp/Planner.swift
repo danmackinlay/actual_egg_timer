@@ -23,7 +23,7 @@ public final class Planner {
 
     /// The controls, as this app keeps them: `AppSettings`, one value,
     /// stored as it is (`SettingsStore`). While a cook runs they are its own
-    /// choices (`adopt`), and a change is a correction in hand (`Edits`).
+    /// choices (`adopt`), and a change is a correction in hand (`InHand`).
     public var settings = AppSettings.defaults { didSet { settingsChanged(from: oldValue) } }
 
     /// A sous-vide on screen: never stored, so the pan under it
@@ -330,11 +330,11 @@ public final class Planner {
     }
 
     /// A change of the controls: saved and solved for, or, while a cook runs,
-    /// a correction in hand (`Edits`), neither saved nor solved for here.
+    /// a correction in hand (`InHand`), neither saved nor solved for here.
     public func changed() {
         guard !applying else { return }
         // While a cook runs the controls are its own: a change is a
-        // correction in hand (`Edits`), neither saved nor solved for here.
+        // correction in hand (`InHand`), neither saved nor solved for here.
         if let onEdit {
             onEdit()
             return
@@ -349,7 +349,7 @@ public final class Planner {
     var boilMemory: BoilMemory = [:]
     private var loaded = false
     /// Set while a cook runs: a change to a control is then a correction in
-    /// hand (`Edits.controlsChanged`), and is neither saved nor solved for.
+    /// hand (`InHand.controlsChanged`), and is neither saved nor solved for.
     @ObservationIgnored var onEdit: (() -> Void)?
 
     /// The controls set to a running cook's own choices, as they stood when

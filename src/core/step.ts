@@ -159,6 +159,16 @@ export interface CookStep extends CookState {
 
 const NO_NEED: CookNeed = { surface: null, before: false, beforeSurface: null, wakeAt_s: null };
 
+/** The choices a correction of `cook` may make: `choices`, but once the egg
+ *  is out its level stays the cook's. The egg came out at the level it was
+ *  cooked for, so after the pull the slider only previews the egg a level
+ *  aims for in this pot (`levelPreview`), and a change of it alone corrects
+ *  nothing. The one place this rule is written: `correct` takes its choices
+ *  through it, and so does the correction in hand (hand.ts). */
+export function correctable(cook: RunningCook, choices: CookChoices): CookChoices {
+  return cook.events.pulled === null ? choices : { ...choices, level: cook.choices.level };
+}
+
 /** The surface in `surfaces` for these inputs, or null. */
 export function surfaceFor(surfaces: CookSurface[], inputs: DecisionInputs | null): CookSurface | null {
   if (inputs === null) return null;
@@ -425,16 +435,15 @@ export function step(state: CookState, event: CookEvent, env: CookEnv): CookStep
     case 'boil':
       if (!ended && phase === 'HEATING') w.cook = withBoil(held, now_s);
       break;
-    case 'correct':
-      // After the pull the yolk wanted only previews: a
-      // change of it alone corrects nothing.
-      if (!ended && !sameValue(event.choices, held.choices)
-        && !(held.events.pulled !== null && sameValue({ ...event.choices, level: held.choices.level }, held.choices))) {
-        w.cook = corrected(held, event.choices, now_s);
+    case 'correct': {
+      const choices = correctable(held, event.choices);
+      if (!ended && !sameValue(choices, held.choices)) {
+        w.cook = corrected(held, choices, now_s);
         // An egg answered about came out: a pull the clock assumed stands.
         if (answered(held)) w.cook = pullStands(w.cook);
       }
       break;
+    }
     case 'correctStart':
       if (!ended && event.startedAt_s !== held.startedAt_s) {
         w.cook = startCorrected(held, event.startedAt_s, now_s) ?? held;

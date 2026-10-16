@@ -215,6 +215,15 @@ public struct CookStep: Sendable {
     public var state: CookState { CookState(cook: cook, plan: plan, leanHintS: leanHintS) }
 }
 
+/// The choices a correction of `cook` may make: `choices`, but once the egg
+/// is out its level stays the cook's. See `correctable` in `src/core/step.ts`.
+public func correctable(_ cook: RunningCook, _ choices: CookChoices) -> CookChoices {
+    guard cook.events.pulled != nil else { return choices }
+    var kept = choices
+    kept.level = cook.choices.level
+    return kept
+}
+
 /// The surface in `surfaces` for these inputs, or nil.
 public func surfaceFor(_ surfaces: [CookSurface], _ inputs: DecisionInputs?) -> CookSurface? {
     guard let inputs else { return nil }
@@ -431,12 +440,9 @@ public func step(_ state: CookState, _ event: CookEvent, _ env: CookEnv) -> Cook
         break
     case .boil:
         if !ended, !asking, phase == .heating { w.cook = withBoil(held, nowS: nowS) }
-    case let .correct(_, choices):
-        var levelAside = choices
-        levelAside.level = held.choices.level
-        // After the pull the yolk wanted only previews: a change of it alone
-        // corrects nothing.
-        if !ended, choices != held.choices, !(held.events.pulled != nil && levelAside == held.choices) {
+    case let .correct(_, said):
+        let choices = correctable(held, said)
+        if !ended, choices != held.choices {
             w.cook = corrected(held, choices: choices, nowS: nowS)
             // An egg answered about came out: a pull the clock assumed stands.
             if answered(held) { w.cook = pullStands(w.cook) }

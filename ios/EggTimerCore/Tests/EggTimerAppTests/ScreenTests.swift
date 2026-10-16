@@ -77,8 +77,8 @@ extension AppTests {
         model.boil()
         await world.settled(model.cook)
         let cooking = said()
-        model.edits.touchedElsewhere()
-        #expect(model.edits.shownStart == start)
+        model.inHand.moveOn(.clause)
+        #expect(model.inHand.shownStart == start)
         await correct(at: start + 320, model, world) { model.planner.heatOff = true }
         let off = said()
         for line in [idle, heating, cooking, off] {

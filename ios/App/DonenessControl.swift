@@ -57,8 +57,8 @@ struct DonenessControl: View {
                     label: tr(.`controls.doneness`), valueText: donenessValue(r), inset: $thumbInset,
                     onTouch: { down in
                         // While a cook runs a drag is a correction committed
-                        // on release (`Edits`).
-                        if down { model.edits.fingerDown(.level, slider: true) } else { model.edits.fingerUp() }
+                        // on release (`InHand`).
+                        if down { model.inHand.fingerDown(.level) } else { model.inHand.fingerUp() }
                     }
                 )
             }

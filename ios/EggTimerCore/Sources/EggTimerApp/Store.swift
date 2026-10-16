@@ -136,15 +136,17 @@ enum SettingsStore {
         return saved
     }
 
-    /// Only the settings a correction changed, so the next cook starts from
-    /// what was done, not from the mistake: the rest stay as they were, and
-    /// a level the slider only previewed after the pull is never written.
+    /// Only the settings a correction changed, `groups`, so the next cook
+    /// starts from what was done, not from the mistake, and the settings no
+    /// group makes (the thermometer) as they stand: the rest stay as they
+    /// were, and a level the slider only previewed after the pull is never
+    /// written.
     @MainActor
-    public static func save(_ planner: Planner, fields: Set<ControlField>, level: Double) {
-        var now = planner.settings
-        now.doneness = level
+    public static func save(_ planner: Planner, groups: Set<HandGroup>) {
+        let now = planner.settings
         var next = saved
-        for field in fields { next.take(field, from: now) }
+        for group in groups { next.take(group, from: now) }
+        next.takeNoGroup(from: now)
         write(next)
     }
 

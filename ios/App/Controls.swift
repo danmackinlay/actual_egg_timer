@@ -6,12 +6,13 @@ import EggTimerShared
 /// The small controls the setup sentence's panels and Settings share: a stored
 /// SI value on a stepper or in a typed field, in the cook's units.
 
-/// What a − or + tells about the finger on it while a cook runs: down (true)
-/// and up (false), for its field, so a hold is committed on release and a
-/// tap after its settle (`Edits`). Set once, at the screen's root; nothing
-/// while idle.
+/// What a control tells the correction in hand while a cook runs (`InHand`):
+/// a finger down (true) and up (false) on a − or + of a group of the cook's
+/// choices, and a control of no group used (core `HandControl`). Set once,
+/// at the screen's root; nothing while idle.
 struct EditGesture {
-    var touch: (ControlField, Bool) -> Void = { _, _ in }
+    var touch: (HandGroup, Bool) -> Void = { _, _ in }
+    var used: (HandControl) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
@@ -44,8 +45,9 @@ struct StepperValue: View {
     let measure: Measure
     @Binding var value: Double
     let show: (Double) -> String
-    /// The control a correction from it is, while a cook runs.
-    var field: ControlField? = nil
+    /// The group of the cook's choices a change of it makes, while a cook
+    /// runs.
+    var field: HandGroup? = nil
     @Environment(\.editGesture) private var gesture
 
     var body: some View {
@@ -73,7 +75,7 @@ struct StepperRow: View {
     let measure: Measure
     @Binding var value: Double
     let show: (Double) -> String
-    var field: ControlField? = nil
+    var field: HandGroup? = nil
 
     var body: some View {
         HStack {
@@ -91,7 +93,7 @@ struct CountValue: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Double>
-    var field: ControlField? = nil
+    var field: HandGroup? = nil
     @Environment(\.editGesture) private var gesture
 
     var body: some View {
@@ -131,7 +133,7 @@ struct MeasureField: View {
     let measure: Measure
     let value: Double
     let set: (Double) -> Void
-    var field: ControlField? = nil
+    var field: HandGroup? = nil
     @Environment(\.editGesture) private var gesture
     @Environment(\.dynamicTypeSize) private var size
     @State private var text = ""
@@ -247,7 +249,10 @@ struct NudgeField: View {
     var disabled = false
     /// When the typing ends, for a field that shows what was stored.
     var endEditing: () -> Void = {}
-    var field: ControlField? = nil
+    var field: HandGroup? = nil
+    /// The control it is, when it makes no choice of the cook's: the probe's
+    /// reading.
+    var control: HandControl? = nil
     @Environment(\.editGesture) private var gesture
     @FocusState private var focused: Bool
 
@@ -270,13 +275,16 @@ struct NudgeField: View {
             } onDecrement: {
                 step(up: false)
             } onEditingChanged: { on in
-                if let field { gesture.touch(field, on) }
+                if let field { gesture.touch(field, on) } else if on, let control { gesture.used(control) }
             }
             .labelsHidden()
             .disabled(disabled)
             .accessibilityValue(text.isEmpty ? fieldText(measure, start) : text)
         }
-        .onChange(of: focused) { if !focused { endEditing() } }
+        .onChange(of: focused) {
+            if focused, field == nil, let control { gesture.used(control) }
+            if !focused { endEditing() }
+        }
     }
 
     private var start: Double { nudgeFrom(measure, startSI) }

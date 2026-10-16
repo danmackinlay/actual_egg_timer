@@ -47,6 +47,8 @@ cook `src/ui/storedCook.ts` and `StoredCook.swift`; the settings
 `src/ui/settings.ts` and `Settings.swift`; the table of stores
 `src/ui/stores.ts` and `StoreRegistry.swift`; and the web's alone, which of
 its tabs runs the app, `src/ui/owner.ts`.
+Each app maps its own gestures onto the correction in hand's events
+(`hand.ts`): the web in `src/ui/edit.ts`, this app in `InHand.swift`.
 
 The Swift core leaves out what no app calls: the
 measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,

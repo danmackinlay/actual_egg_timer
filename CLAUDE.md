@@ -69,8 +69,11 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 - What both apps must agree on lives in `src/core/`: the physics, the
   inference and the decisions; the record's wire schema (`parseRecord`);
-  the cook's `step` machine; which words say what (`wording.ts`); the
-  alarms' timing; the server's contract for sharing. It lands in TypeScript
+  the cook's `step` machine; when a correction in hand is committed
+  (`hand.ts`: its groups, which touches are another control, which moments
+  are leaving; each app maps its own gestures onto it, `DECISIONS.md` 139);
+  which words say what (`wording.ts`); the alarms' timing; the server's
+  contract for sharing. It lands in TypeScript
   first, is fixtured by `npm run fixtures`, and is held in Swift by
   `npm run conformance`; its named constants are written into Swift by
   `npm run swift:constants`, which `npm test` runs (`DECISIONS.md` 138). `ios/README.md` maps the modules. Each app's

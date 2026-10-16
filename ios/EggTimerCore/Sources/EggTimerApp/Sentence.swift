@@ -82,7 +82,7 @@ struct SetupFacts {
     var units: UnitSystem
 
     /// The setup on the controls: the settings while idle, a running cook's
-    /// own choices while one runs (`AppModel`'s edits).
+    /// own choices while one runs (`AppModel`'s `inHand`).
     @MainActor init(_ planner: Planner) {
         units = planner.units
         mass = planner.sizeClasses.indices.contains(planner.settings.sizeIndex)

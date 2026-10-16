@@ -25,7 +25,7 @@ struct YolkSlider: UIViewRepresentable {
     /// Where the thumb's centre stops short of each end, pt: half a thumb.
     @Binding var inset: CGFloat
     /// The finger comes down on the slider (true) and lifts (false): while a
-    /// cook runs, a drag is a correction committed on release (`Edits`).
+    /// cook runs, a drag is a correction committed on release (`InHand`).
     var onTouch: ((Bool) -> Void)? = nil
 
     func makeUIView(context: Context) -> TracklessSlider {

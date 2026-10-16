@@ -63,7 +63,7 @@ public final class Cook {
     private let surfaces = CookSurfaces()
 
     @ObservationIgnored private let planner: Planner
-    @ObservationIgnored private let edits: Edits?
+    @ObservationIgnored private let inHand: InHand?
     /// Where the calibration before an egg comes from: the planner's
     /// learning, or a test's.
     @ObservationIgnored var learned: any LearnedBefore
@@ -85,9 +85,9 @@ public final class Cook {
     #endif
     @ObservationIgnored private var log = CookLog()
 
-    init(planner: Planner, edits: Edits? = nil) {
+    init(planner: Planner, inHand: InHand? = nil) {
         self.planner = planner
-        self.edits = edits
+        self.inHand = inHand
         learned = planner.learner
         alarms.onScreen = { [weak self] in (self?.running, self?.asksForProbe ?? false) }
         alarms.onSettled = { [weak self] in self?.logIfSettled() }
@@ -208,7 +208,7 @@ public final class Cook {
     /// Cancel, or Start again: core decides what the cook leaves.
     func end() { send(.event(.startAgain(nowS: AppClock.nowS))) }
 
-    /// A correction committed (`Edits`): the start and the choices replaced,
+    /// A correction committed (`InHand`): the start and the choices replaced,
     /// two steps, the start first.
     func correct(choices: CookChoices, startedAtS: Double?) {
         let now = AppClock.nowS
@@ -256,7 +256,7 @@ public final class Cook {
     func killed() {
         ticker?.cancel()
         ticker = nil
-        edits?.end()
+        inHand?.end()
     }
 
     // MARK: - The steps
@@ -457,7 +457,7 @@ public final class Cook {
     /// the card started.
     private func begin(_ cook: RunningCook, restored: Bool = false) {
         planner.adopt(cook.choices)
-        edits?.begin()
+        inHand?.begin()
         startTicking()
         busy += 1
         Task {
@@ -478,6 +478,9 @@ public final class Cook {
     /// The cook has left the screen (ended, or gone): its ticker, ring and
     /// card go, and the controls answer to the idle screen again.
     private func leave() {
+        // While the cook is still here, so a level only previewed after the
+        // pull goes back to its own.
+        inHand?.end()
         state = CookState(cook: nil, plan: nil, leanHintS: 0)
         need = nil
         outcome = nil
@@ -488,7 +491,6 @@ public final class Cook {
         card.reset()
         ticker?.cancel()
         ticker = nil
-        edits?.end()
     }
 
     // MARK: - The ticker

@@ -218,9 +218,9 @@ const TRACES: TraceDef[] = [
     ],
   },
   {
-    note: 'after the pull the slider only previews: a level alone corrects nothing',
+    note: 'after the pull the slider only previews: a level alone corrects nothing, and with another choice the level stays the cook\'s',
     app: 'ios', posterior: 'learned', before: 'learned',
-    steps: [...HOT_TO_DONE, correct(after(10), { level: 0.9 })],
+    steps: [...HOT_TO_DONE, correct(after(10), { level: 0.9 }), correct(after(10), { level: 0.9, eggCount: 3 }), land(after(1))],
   },
   {
     note: 'the grace ran out asleep, then corrected to cold: the app asks whether the egg is still in, nothing passes the question; still in: heating again',
