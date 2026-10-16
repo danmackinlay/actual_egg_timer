@@ -85,7 +85,7 @@ export interface Snapshot {
   gridJobs: { offThread: number; onThread: number };
 }
 
-export interface TestApi {
+interface TestApi {
   snapshot(): Snapshot;
   whenIdle(timeout_ms?: number): Promise<void>;
   t(key: string, args?: CopyArgs): string;

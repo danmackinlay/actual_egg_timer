@@ -165,7 +165,7 @@ export function encodeKept(k: Kept, pop: Population = activePopulation(), likeli
 
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
-export interface Decoded {
+interface Decoded {
   kept: Kept;
   path: LoadPath;
 }

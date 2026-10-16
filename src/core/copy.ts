@@ -36,7 +36,7 @@ export function midSentence(text: string, locale: string): string {
 }
 
 /** The CLDR plural categories. English uses two, Czech four. */
-export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
 export const PLURAL_CATEGORIES: readonly PluralCategory[] = [
   'zero', 'one', 'two', 'few', 'many', 'other',
@@ -69,7 +69,7 @@ export interface CopyRef {
 
 /** One template per plural category. `other` is always present, and is what
  *  a category with no template of its own falls back to. */
-export type PluralForms = Partial<Record<PluralCategory, string>> & { other: string };
+type PluralForms = Partial<Record<PluralCategory, string>> & { other: string };
 
 /** One message: a template, or, when it has a count in it, one template per
  *  plural category and the argument that picks among them. */

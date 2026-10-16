@@ -312,7 +312,7 @@ function logRecord(w: Work, env: CookEnv, now_s: number, unanswered: boolean): b
  *  this plan: an event the clock writes, the slow hob's next lengthening, or
  *  the cook too old. A tick when it has not leaves the state as it is; an app
  *  may ask first, and not step at all. */
-export function tickDue(cook: RunningCook, plan: CookPlan, now_s: number): boolean {
+function tickDue(cook: RunningCook, plan: CookPlan, now_s: number): boolean {
   return slowHobDue(plan, now_s) || cookTooOld(plan, now_s) || !sameEvents(eventsDue(cook, plan, now_s), cook.events);
 }
 

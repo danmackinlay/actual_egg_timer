@@ -134,7 +134,7 @@ export function mostLikelyOpened(w: WordCertainty): boolean {
  *  its `low` and `high` either as cook times, s, to be shown as the clock
  *  shows a time (m:ss), or, `ofDay`, as clock times, epoch s, to be shown as
  *  times of day. */
-export interface TimeRangeWords {
+interface TimeRangeWords {
   key: CopyKey;
   low_s: number;
   high_s: number;
@@ -217,7 +217,7 @@ export function rangeWords(w: WordCertainty): { key: CopyKey; args: Record<strin
 
 /** What the readout's words depend on. While a cook runs, every field is the
  *  cook's own (its ticket), never the controls'. */
-export interface PhaseFacts {
+interface PhaseFacts {
   phase: Phase;
   startMode: StartMode;
   afterBoil: HeatAfterBoil;
@@ -234,7 +234,7 @@ export interface PhaseFacts {
 
 /** The readout's keys in one phase. The app supplies the arguments: `boil`,
  *  `water`, `time`, `elapsed`, `after`, `cooking`, `boiling`, `seconds`. */
-export interface PhaseKeys {
+interface PhaseKeys {
   /** Above the clock. */
   label: CopyKey;
   /** Under the clock. */
@@ -343,7 +343,7 @@ export interface ClauseKeys {
 export type Clause = 'egg' | 'from' | 'start' | 'cooling';
 
 /** What the setup sentence's clauses depend on. */
-export interface ClauseFacts {
+interface ClauseFacts {
   eggFrom: EggFrom;
   startMode: StartMode;
   sousVide: boolean;

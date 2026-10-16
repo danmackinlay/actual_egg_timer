@@ -22,7 +22,7 @@
  */
 
 /** A clock other than the real one: the development clock's. */
-export interface PageClock {
+interface PageClock {
   /** The page's time, ms since 1970. */
   now(): number;
   /** The cook's seconds to the real second, for what runs in real ones. */

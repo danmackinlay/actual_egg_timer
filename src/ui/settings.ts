@@ -21,7 +21,7 @@ import type { UnitSystem } from '../core/units.ts';
 /** Which of the web's three measurement boxes a measured egg came from: one
  *  number in three units, and a weighed egg and a ruler-measured one are not
  *  equally sure (the record's `massFrom`). */
-export type MeasuredBy = 'scale' | 'girth' | 'width';
+type MeasuredBy = 'scale' | 'girth' | 'width';
 
 export interface Settings {
   /** Index into the region's size classes, or -1 for an egg measured.

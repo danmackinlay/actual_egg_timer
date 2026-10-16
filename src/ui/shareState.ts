@@ -162,7 +162,7 @@ export function nextToSend(s: ShareState, finalCount: number, logLength: number)
   return s.sent;
 }
 
-export interface ShareAnswered {
+interface ShareAnswered {
   next: ShareState;
   /** Whether the cursor moved on, so the run goes on to the next egg. */
   moved: boolean;

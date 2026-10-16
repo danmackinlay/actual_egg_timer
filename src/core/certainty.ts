@@ -102,7 +102,7 @@ export interface WordCertainty {
 }
 
 /** A likely time range, s from eggs in. */
-export interface TimeRange {
+interface TimeRange {
   low_s: number;
   high_s: number;
 }
@@ -119,7 +119,7 @@ export interface CertaintyReading {
 
 /** Where the bracket under the slider is drawn, as slider levels: from
  *  `low` to `high`, with a mark at `mark`. See the header. */
-export interface WordBracket {
+interface WordBracket {
   low: number;
   mark: number;
   high: number;

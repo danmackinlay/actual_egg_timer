@@ -63,7 +63,7 @@ import { REGION, REGIONAL_UNITS } from './units.ts';
 
 /** A correction in hand: the slider's reading for it, the plan's solve,
  *  and the egg it aims for, once planned. */
-export interface Aim {
+interface Aim {
   level: number;
   peakYolk_C: number;
   solution: Solution | null;
@@ -132,7 +132,7 @@ export interface Note {
 
 /** Sharing as the runner last read it: its state, and how many of the log's
  *  eggs are final. */
-export interface ShareSeen {
+interface ShareSeen {
   state: ShareState;
   final: number;
 }
@@ -149,7 +149,7 @@ export interface Held {
 
 /** A cook ended before its egg's record could be made, and what it waits
  *  for. */
-export interface Ending extends CookState {
+interface Ending extends CookState {
   need: CookNeed;
 }
 

@@ -11,11 +11,11 @@ import type { CopyKey } from './copyKeys.ts';
 
 /** What the pan makes of the white: `runny` when it never gets the white the
  *  dose that sets it, and otherwise what its peak temperature makes of it. */
-export type WhiteBand = 'runny' | 'justSet' | 'set' | 'firm';
+type WhiteBand = 'runny' | 'justSet' | 'set' | 'firm';
 /** What the yolk's peak temperature makes of it. */
-export type YolkBand = 'liquid' | 'soft' | 'jammy' | 'fudgy' | 'set';
+type YolkBand = 'liquid' | 'soft' | 'jammy' | 'fudgy' | 'set';
 
-export interface Texture {
+interface Texture {
   white: WhiteBand;
   yolk: YolkBand;
 }
@@ -52,7 +52,7 @@ export const YOLK_BAND_BELOW_C = { liquid: 58, soft: 63, jammy: 68, fudgy: 73 } 
 /** The texture note as the catalogue's keys: the line's own key, and the key
  *  of the fragment that fills each of its placeholders. The app renders the
  *  fragments and hands them in; it chooses nothing. */
-export interface TextureNote {
+interface TextureNote {
   key: CopyKey;
   parts: Readonly<Record<string, CopyKey>>;
 }

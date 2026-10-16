@@ -150,7 +150,7 @@ function standingTemperature(
 
 /** What the cooling reads of a pot: the method, the room, and the water the
  *  cook gave. A `CookSetup` is one, and so is a record's setup. */
-export interface CoolingFacts {
+interface CoolingFacts {
   cooling: Cooling;
   ambient_C: number;
   coolingWater_C?: number;

@@ -464,7 +464,7 @@ export interface AdviceFacts {
 
 /** A change of protocol the model can price: the same pot with one thing
  *  changed. Its odds come from its own profile, built as the pot's own is. */
-export interface PricedChange {
+interface PricedChange {
   key: CopyKey;
   setup: CookSetup;
 }
@@ -543,7 +543,7 @@ export function askedNear(profile: OddsProfile, level: number): number {
 }
 
 /** What to say, and whether to show the way to it. */
-export interface ProtocolAdvice {
+interface ProtocolAdvice {
   /** Catalogue keys in the order shown: the unpriced advice, then each
    *  priced change that makes the word asked surer. */
   keys: CopyKey[];

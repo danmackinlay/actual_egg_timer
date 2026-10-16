@@ -58,7 +58,7 @@ export type ReadingView = { level: number; peakYolk_C: number } | { level: numbe
 /** The track under the slider: its stripes from a solve, its shading from
  *  the odds and its bracket from the certainty's words (slider.ts,
  *  `renderDonenessScale`); or bare, in sous-vide. */
-export type ScaleView = { solution: Solution; odds: OddsProfile | null; bracket: WordCertainty | null } | 'bare';
+type ScaleView = { solution: Solution; odds: OddsProfile | null; bracket: WordCertainty | null } | 'bare';
 
 /** The readout, the buttons under it and the questions at Done. */
 export interface ReadoutView {
@@ -159,7 +159,7 @@ export type View = {
 /** The egg previews the view draws, each worked out once for what it is of:
  *  the egg as eaten for a pot, a time and a level, and the solve of a cook as
  *  it ran. Handed in by the caller, who keeps it. */
-export interface ViewMemo {
+interface ViewMemo {
   preview: { key: string; view: SectionView | null };
   ran: { key: string; solution: Solution | null };
 }
@@ -231,7 +231,7 @@ function sectionsOf(m: Model): Sections {
  *  cooling's longer words would stack a row this cook never needs to. The
  *  controls, not the settings, so a cook under way is sized on its own
  *  choices; a correction to them, like a choice while idle, may change it. */
-export function sizerWords(c: Settings): string[] {
+function sizerWords(c: Settings): string[] {
   const phases: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
   const words: string[] = [];
   for (const phase of phases) {
@@ -553,7 +553,7 @@ function certaintyView(
  * - `ran`: at Done, the egg as it ran, eaten: the time that ran, to the egg
  *   out, with the model's parameters it ran under.
  */
-export function aimedEgg(
+function aimedEgg(
   m: Model, memo: ViewMemo, e: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, level: number,
 ): { view: SectionView; key: string } {
   const white = calibrationDoneness(m.calib, level).whiteDose_min;

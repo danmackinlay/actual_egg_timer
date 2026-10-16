@@ -27,7 +27,7 @@ export interface PotOdds {
 
 /** The odds profile for `inputs` on the calibration as it stands, if it is
  *  in. */
-export function oddsIn(m: Model, inputs: DecisionInputs): OddsProfile | null {
+function oddsIn(m: Model, inputs: DecisionInputs): OddsProfile | null {
   const key = inputsKey(inputs);
   for (const p of m.profiles) if (inputsKey(p.inputs) === key) return p.profile;
   return null;
@@ -67,7 +67,7 @@ export function wantedProfiles(m: Model): DecisionInputs[] {
  *  the pot's surface is in, the pot's odds, and what is still to be built
  *  for it - the surface (asked for once the inputs settle), and the odds
  *  profiles. */
-export interface IdleSolve {
+interface IdleSolve {
   answer: LevelAnswer;
   chosen: DecidedAnswer | null;
   profile: OddsProfile | null;

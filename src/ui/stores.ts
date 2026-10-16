@@ -30,7 +30,7 @@ export interface StoreSpec {
   key: string;
 }
 
-export type StoreName = 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share';
+type StoreName = 'settings' | 'cook' | 'boilMemory' | 'calibration' | 'share';
 
 export const STORES = {
   /** The settings, one value (settings.ts), the language and the alarm's

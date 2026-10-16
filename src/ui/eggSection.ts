@@ -92,7 +92,7 @@ function pathData(points: [number, number][]): string {
 
 /* -------------------------------------------------------------- the colours */
 
-export type Rgb = [number, number, number];
+type Rgb = [number, number, number];
 
 /** The colours a section is drawn in, from the page's palette
  *  (`readPalette`), or a test's. */
@@ -168,7 +168,7 @@ export function paintEggSection(svg: SVGSVGElement, fills: string[]): void {
   }
 }
 
-export function parseHex(value: string): Rgb {
+function parseHex(value: string): Rgb {
   const v = value.trim().replace('#', '');
   const full = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
   return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];

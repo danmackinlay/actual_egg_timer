@@ -103,7 +103,7 @@ export function storedShare(s: ShareState): string {
 /* ---------------------------------------------------------------- state */
 
 /** What sharing needs of the page, read when it needs it. */
-export interface ShareHost {
+interface ShareHost {
   log(): readonly EggRecord[];
   /** How many of the log's eggs are final: all, unless the last is the egg
    *  on screen, whose answers may still come. */

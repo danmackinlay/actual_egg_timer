@@ -29,7 +29,7 @@
 
 import { clockChanged, isDevHost, nowMs, useClock } from '../now.ts';
 
-export interface DevClock {
+interface DevClock {
   /** The cook's seconds to the real second; 0 is stopped. */
   speed: number;
   /** The real time and the page's time when the clock was last set, ms. */

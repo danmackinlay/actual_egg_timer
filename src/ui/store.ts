@@ -50,7 +50,7 @@ export const DEFAULT_SETTINGS: Settings = STORED_DEFAULT_SETTINGS;
 
 /* ------------------------------------------------------------- raw storage */
 
-export function readStorage(key: string): string | null {
+function readStorage(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
   } catch {

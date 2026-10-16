@@ -36,7 +36,7 @@ const LOOK_EVERY_MS = 60 * 60 * 1000;
 /** A window, as a new build finds it: whether it owns the app (owner.ts) and
  *  runs a cook, whether the cook has touched it since it loaded, whether it
  *  is in view, and whether it asked the build to take over. */
-export interface BuildWindow {
+interface BuildWindow {
   owner: boolean;
   cookRunning: boolean;
   touched: boolean;
