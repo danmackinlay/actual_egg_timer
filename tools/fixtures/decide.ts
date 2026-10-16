@@ -143,7 +143,7 @@ const DECIDE_CARRIED = [
 }));
 
 export const decideFixture = {
-  about: 'E5: decision surfaces, and the time chosen on one from three posteriors. src/core/decide.ts.',
+  about: 'The choice from the posterior: decision surfaces, and the time chosen on one from three posteriors. src/core/decide.ts.',
   specs: decideSpecs,
   grid: { egg: DECIDE_EGG, setup: DECIDE_SETUP, spec: DECIDE_GRID_SPEC, surface: DECIDE_GRID },
   // The prior as its count and seed: createPrior is pinned particle by

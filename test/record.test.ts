@@ -70,7 +70,7 @@ test('the white\'s three answers load, a skip loads, and nothing else does', () 
   }
   assert.equal(parseRecord({ ...base, white: null })?.white, null, 'skipped');
   assert.equal(parseRecord({ ...base, white: 'soft' }), null, 'not a white answer');
-  assert.equal(parseRecord({ ...base, white: 'set' }), null, 'E1\'s two-level answer, gone with D1');
+  assert.equal(parseRecord({ ...base, white: 'set' }), null, 'the first records\' two-level answer, refused');
 });
 
 test('the five yolk words load, a skip loads, and nothing else does', () => {

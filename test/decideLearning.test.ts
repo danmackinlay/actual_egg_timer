@@ -73,9 +73,9 @@ test('the interval narrows below +-15 s after a few consistent eggs, stays there
 
 test('two runny whites at soft: what the choice does at soft and at jammy', () => {
   // Two eggs at soft, the white runny - alone, or with the yolk just right -
-  // built two ways. 'E3' cooks each at the time the MEAN solve recommends
+  // built two ways. 'mean' cooks each at the time the MEAN solve recommends
   // (test/infer.test.ts), so it shows what the choice makes of the same
-  // evidence; 'E5' cooks the second egg at the time the choice made after
+  // evidence; 'chosen' cooks the second egg at the time the choice made after
   // the first. The known limit stands (INFERENCE.md section 3): a runny white
   // is blamed on the time-scale about 2:1, so jammy moves too, and the choice
   // does not try to fix that. The full numbers are `npm run decide --
@@ -83,13 +83,13 @@ test('two runny whites at soft: what the choice does at soft and at jammy', () =
   // seconds of them.
   const rows: string[] = [];
   const before = [decideFor(PRIOR, PRIOR_GRID, 0.22), decideFor(PRIOR, PRIOR_GRID, 0.41)];
-  for (const sequence of ['E3', 'E5'] as const) {
+  for (const sequence of ['mean', 'chosen'] as const) {
     for (const yolk of [null, 'soft'] as (YolkWord | null)[]) {
       let cal = PRIOR;
       const log: EggRecord[] = [];
       for (let i = 0; i < 2; i++) {
         const d = decideFor(cal, gridFor(cal, EGG, SETUP), 0.22);
-        log.push(recordAt(0.22, sequence === 'E3' ? d.meanCookTime_s : d.cookTime_s, yolk, 'runny'));
+        log.push(recordAt(0.22, sequence === 'mean' ? d.meanCookTime_s : d.cookTime_s, yolk, 'runny'));
         cal = replay(PRIOR, log, COARSE);
       }
       const grid = gridFor(cal, EGG, SETUP);
