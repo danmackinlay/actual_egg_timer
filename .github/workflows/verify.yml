@@ -1,5 +1,5 @@
-# The gate, on every push and pull request. Separate jobs, so that each runs
-# on the runner it needs and all run side by side: web and e2e on Linux,
+# The gate, on every push of a branch. Separate jobs, so that each runs on
+# the runner it needs and all run side by side: web and e2e on Linux,
 # quick to start, the e2e in four shards; apple on macOS, for Swift and the
 # iOS build; fit on Linux under uv, since the fit writes
 # fixtures/population.json, which both apps ship. ios-e2e waits for apple and
@@ -7,14 +7,39 @@
 # bundle's file modes. x86 Linux differs from arm64 macOS in the last bit of
 # some numbers, so the fixture check holds them to Swift's tolerance
 # (tools/fixtureCompare.ts). The actions are @v5, on Node 24.
+#
+# A pull request runs it only from a fork: a branch of this repository has
+# had its run, on the same commit, when it was pushed. A release tag is
+# pushed with main (`--follow-tags`), on main's commit, so main's run is the
+# tag's; the tag's own run checks only that it names package.json's version
+# and that its commit is on main.
 name: verify
 
 on:
   push:
   pull_request:
 
+# One run at a time for each branch: a newer push to a branch cancels the
+# run of the older one, but on main, whose runs finish, the newer waits.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
+  tag:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # A release tag names the version it releases: v<package.json version>.
+      - if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
+      - run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
   web:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -22,9 +47,6 @@ jobs:
         with:
           node-version-file: .node-version
       - run: npm ci
-      # A release tag names the version it releases: v<package.json version>.
-      - if: startsWith(github.ref, 'refs/tags/v')
-        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
       - run: npm test
       # The tests again, sweeping every point where npm test sweeps fewer.
       - run: npm run test:slow
@@ -34,6 +56,7 @@ jobs:
       - run: npm run fixtures:check
 
   apple:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -70,6 +93,7 @@ jobs:
           AET_E2E_LOG: "1"
 
   fit:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -81,6 +105,7 @@ jobs:
   # (seven on a developer's Mac), and a shard about six. Every shard runs to
   # its end, and any that fails fails the run.
   e2e:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
