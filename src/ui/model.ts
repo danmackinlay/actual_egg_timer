@@ -3,7 +3,7 @@
  * the controls, the settings, the answer they give - and the running cook.
  *
  * `update` is pure: what it needs from storage, the clock and the worker
- * comes in the message or the model (`surfaces`, `profiles`, `sharing`: the
+ * comes in the message or the model (`surfaces`, `profiles`, `share`: the
  * runner's view of its caches and stores, taken before each message), and
  * everything it changes is in what it returns, with what the page must do
  * (`Effect`). Carrying the effects out, building what the model waits for
@@ -124,9 +124,6 @@ export interface Model extends CookState {
   /** The posterior over the model's uncertain constants, folded IN PLACE as
    *  eggs are learned (calibration.ts). */
   calib: Calibration;
-  /** Whether sharing is on (the nudge, the Learning mark): the runner's view
-   *  of its store, taken before each message. */
-  sharing: boolean;
   /** A deletion of what was shared, asked for on this page, confirmed: said
    *  under the switch until sharing is turned on again. */
   deletedHere: boolean;
@@ -534,7 +531,7 @@ function close(m: Model): Model {
 
 /** The runner's view of its caches and its stores (cook.ts), taken before
  *  each message and handed in with it. */
-export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'sharing' | 'share'>;
+export type Seen = Pick<Model, 'surfaces' | 'profiles' | 'share'>;
 
 /** What `msg` does to the model at `now_ms`, with the runner's view `seen`
  *  of its caches and stores if it has a new one, and what the page must

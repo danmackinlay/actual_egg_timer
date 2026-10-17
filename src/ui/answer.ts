@@ -41,11 +41,17 @@ function gridIn(m: Model, inputs: DecisionInputs): DoseGrid | null {
   return null;
 }
 
+/** Whether sharing is on (the nudge, the Learning mark), as the runner
+ *  last read it; off before boot. */
+export function sharingOn(m: Model): boolean {
+  return m.share !== null && m.share.state.on;
+}
+
 /** The nudge the time takes now: the draw while sharing is on, and none
  *  while it is off - the consent covers it, and nothing else does. A cook
  *  started now keeps it (`startCook`). */
 export function nudgeNow(m: Model): number {
-  return m.sharing ? m.nudgeDraw : 0;
+  return sharingOn(m) ? m.nudgeDraw : 0;
 }
 
 /** The pot the settings describe as a decision's inputs: what its surface
