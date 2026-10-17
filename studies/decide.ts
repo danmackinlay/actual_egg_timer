@@ -840,6 +840,10 @@ if (run('counter')) {
  *    is the choice's effect without the learning's. Runny whites per 100
  *    are printed too: the loss trades them for yolks, and P(right) does not
  *    weigh them as the loss does.
+ *
+ * The first run's D had no envelope; D is now held by the pot's odds profile
+ * as the app holds it (`envelopeBounds`), in tests 0, 1, 2 and 5 but not in
+ * test 3's other losses, whose profile `oddsProfile` cannot build.
  */
 
 /** The pots the duel cooks in: lean's, less the heat off. */
@@ -852,6 +856,10 @@ const Z95 = 1.959963984540054;
  *  test 3. Scaled by `npm run decide -- versus <scale>` for a pilot. */
 const VS_SCALE = Number(process.argv[3] ?? '1');
 const VS_COOKS = { model: Math.round(400 * VS_SCALE), regime: Math.round(40 * VS_SCALE), loss: Math.round(30 * VS_SCALE) };
+/** Which of the duel's tests to run (`npm run decide -- versus 1 model,regime`):
+ *  all three by default. The envelope's profile is a second or so an egg, so
+ *  the whole duel no longer fits in twenty minutes. */
+const VS_TESTS = (process.argv[4] ?? 'model,regime,loss').split(',');
 const VS_CHUNK = 25;
 
 type RegimeName = 'model' | 'wide' | 'wideFast' | 'whiteLate' | 'whiteEarly' | 'noisy';
@@ -1033,8 +1041,12 @@ function runVersusJob(job: VsJob, grids: DoseGrid[]): VsResult {
         const mean = m.sol.result.cookTime_s;
         let t = mean;
         if (policy === 'D') {
+          // Held by the pot's odds profile, as `decideAnswer` holds it; the
+          // profile matters only where a time is chosen, after an egg.
+          const profile = job.runnyLoss === RUNNY_WHITE_LOSS && cal.eggsLogged > 0 && decisionApplies(m.sol)
+            ? oddsProfile(cal, pot.egg, pot.setup, grid) : null;
           t = job.runnyLoss === RUNNY_WHITE_LOSS
-            ? decide(cal, grid, m.sol, target).cookTime_s
+            ? decide(cal, grid, m.sol, target, envelopeBounds(profile, m.level)).cookTime_s
             : decisionApplies(m.sol) && cal.eggsLogged > 0 ? chooseWithLoss(cal.posterior, grid, target, mean, job.runnyLoss) : mean;
         }
         if (t < grid.timeMin_s || t > gridHi) cook.offGrid += 1;
@@ -1187,7 +1199,7 @@ function versusTables(results: VsResult[], title: string): { maxCellEgg: number;
   return { maxCellEgg: maxCellEgg, maxCellEggAt: maxCellEggAt, maxCell: maxCell, maxCellAt: maxCellAt, minCell: minCell, minCellAt: minCellAt };
 }
 
-if (run('versus')) {
+if (run('versus')) versus: {
   const started = performance.now();
   console.log(`\n== versus: the Bayes action D against the plug-in rule M (${PARTICLE_COUNT} particles)`);
 
@@ -1208,25 +1220,31 @@ if (run('versus')) {
     console.log(`${pot.name}:`);
     for (const [name, c] of Object.entries(LEARNED)) {
       const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, pot.egg, pot.setup)));
+      // After an egg the choice is held by the pot's odds profile, as the app
+      // holds it; under the prior what D WOULD choose is unheld, as before.
+      const profile = c.eggsLogged > 0 ? oddsProfile(c, pot.egg, pot.setup, grid) : null;
       const row: string[] = [];
       for (const level of [0.22, 0.41, 0.62, 1.0]) {
         const m = meanSolve(c, pot.egg, pot.setup, level);
         const target = logYolkTarget(m.level);
         const tM = m.sol.result.cookTime_s;
-        const tD = chooseCookTime(c.posterior, grid, target, tM);
+        const tFree = chooseCookTime(c.posterior, grid, target, tM);
+        const bounds = envelopeBounds(profile, m.level);
+        const tD = bounds !== null && decisionApplies(m.sol) ? Math.max(bounds.lo_s, Math.min(bounds.hi_s, tFree)) : tFree;
         const regret = expectedLoss(c.posterior, grid, tM, target) - expectedLoss(c.posterior, grid, tD, target);
         const right = posteriorRight(c.posterior, grid, tD, target) - posteriorRight(c.posterior, grid, tM, target);
         if (c.eggsLogged > 0) maxRegret = Math.max(maxRegret, regret);
-        row.push(`${m.level}: ${tD - tM >= 0 ? '+' : ''}${(tD - tM).toFixed(0)} s ${(100 * regret).toFixed(2)} ${right >= 0 ? '+' : ''}${(100 * right).toFixed(2)}`);
+        const unheld = Math.abs(tD - tFree) > 0.5 ? ` (unheld ${tFree - tM >= 0 ? '+' : ''}${(tFree - tM).toFixed(0)} s)` : '';
+        row.push(`${m.level}: ${tD - tM >= 0 ? '+' : ''}${(tD - tM).toFixed(0)} s${unheld} ${(100 * regret).toFixed(2)} ${right >= 0 ? '+' : ''}${(100 * right).toFixed(2)}`);
         // Test 3's lean, at one and three eggs, where the app chooses.
         if (c.eggsLogged > 0 && decisionApplies(m.sol)) {
           for (const W of [1, 3, 10]) leanByLoss[W].push(chooseWithLoss(c.posterior, grid, target, tM, W) - tM);
           checked += 1;
-          if (chooseWithLoss(c.posterior, grid, target, tM, RUNNY_WHITE_LOSS) !== tD) mismatched += 1;
+          if (chooseWithLoss(c.posterior, grid, target, tM, RUNNY_WHITE_LOSS) !== tFree) mismatched += 1;
         }
         // Test 5 on lean's grid: the words as the app reads them today, at
         // the decision's time, against the spread's at the mean solve's.
-        const d = decide(c, grid, m.sol, target);
+        const d = decide(c, grid, m.sol, target, envelopeBounds(profile, m.level));
         const g = certaintyAt(c.posterior, grid, d.cookTime_s, m.level);
         const sp = spreadCertainty(c.posterior, grid, tM, m.level);
         const same = g.words.certainty === sp.words.certainty && g.words.from === sp.words.from && g.words.to === sp.words.to;
@@ -1266,9 +1284,9 @@ if (run('versus')) {
       }
     }
   };
-  add('model', 'model', RUNNY_WHITE_LOSS, VS_COOKS.model, true);
-  for (const r of REGIMES) if (r.name !== 'model') add('regime', r.name, RUNNY_WHITE_LOSS, VS_COOKS.regime, false);
-  for (const W of [1, 10]) add('loss', 'model', W, VS_COOKS.loss, false);
+  if (VS_TESTS.includes('model')) add('model', 'model', RUNNY_WHITE_LOSS, VS_COOKS.model, true);
+  if (VS_TESTS.includes('regime')) for (const r of REGIMES) if (r.name !== 'model') add('regime', r.name, RUNNY_WHITE_LOSS, VS_COOKS.regime, false);
+  if (VS_TESTS.includes('loss')) for (const W of [1, 10]) add('loss', 'model', W, VS_COOKS.loss, false);
   // The counter's mean solve is twice the others': its jobs first.
   jobs.sort((a, b) => (VS_POTS[b.pot].setup.cooling === 'counter' ? 1 : 0) - (VS_POTS[a.pot].setup.cooling === 'counter' ? 1 : 0));
   const workers = Math.max(1, Math.min(14, availableParallelism() - 2));
@@ -1279,13 +1297,14 @@ if (run('versus')) {
   console.log(`(the duel: ${jobs.length} jobs on ${workers} workers in ${wall.toFixed(0)} s; worker time: test 1 and 5 ${cpu('model')}, test 2 ${cpu('regime')}, test 3 ${cpu('loss')})`);
 
   const model = results.filter((r) => r.job.test === 'model');
+  if (model.length === 0) break versus;
   const t1 = versusTables(model, `test 1: the model correct (${VS_COOKS.model} cooks per pot and level)`);
   const t2: Record<string, ReturnType<typeof versusTables>> = {};
   for (const r of REGIMES) {
-    if (r.name === 'model') continue;
+    if (r.name === 'model' || !VS_TESTS.includes('regime')) continue;
     t2[r.name] = versusTables(results.filter((x) => x.job.test === 'regime' && x.job.regime === r.name), `test 2 ${r.what} (${VS_COOKS.regime} cooks per pot and level)`);
   }
-  for (const W of [1, 10]) {
+  for (const W of VS_TESTS.includes('loss') ? [1, 10] : []) {
     versusTables(results.filter((x) => x.job.test === 'loss' && x.job.runnyLoss === W), `test 3: a runny white costs ${W} (${VS_COOKS.loss} cooks per pot and level)`);
   }
 
@@ -1318,7 +1337,11 @@ if (run('versus')) {
     + `mean width ${avg(tallies.flatMap((w) => w.widthGrid)).toFixed(0)} s (grid) and ${avg(tallies.flatMap((w) => w.widthSpread)).toFixed(0)} s (spread)`);
   const agree5 = both5 / n5;
 
-  // The verdict, against the thresholds in the header.
+  // The verdict, against the thresholds in the header: it needs test 2.
+  if (!VS_TESTS.includes('regime')) {
+    console.log(`\n-- no verdict: test 2 was not run (versus: ${((performance.now() - started) / 1000).toFixed(0)} s in all)`);
+    break versus;
+  }
   const t2max = Math.max(...Object.values(t2).map((x) => x.maxCell));
   const t2maxAt = Object.entries(t2).find(([, x]) => x.maxCell === t2max);
   const keep = Math.max(t1.maxCell, t2max) >= 0.03;
