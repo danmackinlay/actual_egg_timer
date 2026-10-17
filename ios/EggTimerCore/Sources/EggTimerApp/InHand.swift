@@ -90,10 +90,6 @@ public final class InHand {
     @ObservationIgnored private var state: HandState?
     /// The controls as last seen, so a change can be put down to its group.
     @ObservationIgnored private var seen: AppSettings?
-    /// The last commit of the level was one a correction cannot make (after
-    /// the pull): the slider goes back to the cook's level when the
-    /// aimed-for egg is let go.
-    @ObservationIgnored private var previewedLevel = false
     /// A timer `handStep` set, and the moment it comes round, epoch s.
     private struct Wait {
         let task: Task<Void, Never>
@@ -150,7 +146,7 @@ public final class InHand {
     /// first by a button, `moveOn`), a level only previewed back at the
     /// cook's, and the controls answer to the idle screen again.
     public func end() {
-        if previewedLevel, let level = cook?.running?.choices.level { restoreLevel(level) }
+        restoreRefusedLevel()
         fresh()
         state = nil
         seen = nil
@@ -162,7 +158,6 @@ public final class InHand {
         let out = handStep(state ?? nothingInHand(), .fresh(atS: AppClock.nowS))
         generation &+= 1
         for t in out.timers { setTimer(t.timer, t.atS) }
-        previewedLevel = false
         startInHand = nil
         startLimit = nil
         aim = nil
@@ -264,11 +259,9 @@ public final class InHand {
             return
         }
         guard let choices = handChoices(running, said: planner.choices, group: group) else {
-            previewedLevel = true
             Screenshots.log(.editCommitted(fields: [], start: nil))
             return
         }
-        if group == .level { previewedLevel = false }
         Screenshots.log(.editCommitted(fields: [group.rawValue], start: nil))
         if choices != running.choices { model.correct(choices, startedAtS: nil) }
         SettingsStore.save(planner, groups: [group])
@@ -311,19 +304,21 @@ public final class InHand {
     /// The aimed-for egg goes, and a level the slider only previewed after
     /// the pull goes back to the cook's.
     private func letGo() {
-        if previewedLevel, let level = cook?.running?.choices.level {
-            previewedLevel = false
-            restoreLevel(level)
-        }
+        restoreRefusedLevel()
         if aim != nil { aim = nil }
         if model?.aimView != nil { model?.aimView = nil }
     }
 
-    /// The slider back at `level`, without it counting as a change.
-    private func restoreLevel(_ level: Double) {
-        guard let planner else { return }
+    /// The slider back at the cook's level, without it counting as a
+    /// change, when the level it shows is one a correction cannot make
+    /// (after the pull, core `handChoices`). A level a correction can make
+    /// stays: a commit may not have reached the cook yet, since the step
+    /// runs off the main actor.
+    private func restoreRefusedLevel() {
+        guard let planner, let running = cook?.running,
+              handChoices(running, said: planner.choices, group: .level) == nil else { return }
         planner.applying = true
-        planner.settings.doneness = level
+        planner.settings.doneness = running.choices.level
         planner.applying = false
         seen = planner.settings
     }
