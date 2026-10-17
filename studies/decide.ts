@@ -6,7 +6,7 @@
  * Run: npm run decide            (all of it, about nine minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
  *                                 learning, runny, reach, advice, outcome,
- *                                 nudge, certainty, versus)
+ *                                 nudge, certainty, counter, versus)
  *      npm run decide -- versus  (D against M, about 20 minutes on a pool of
  *                                 worker threads; the thresholds are in its
  *                                 section's header)
@@ -28,7 +28,7 @@ import {
 import { type DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.ts';
 import {
   FEEDBACK_BAND, type Particle, type Posterior, type WhiteReport, WHITE_OFFSET_SD, YOLK_WORDS, YOLK_WORD_CUTS, type YolkWord,
-  createPrior, yolkWordBands, yolkWordProbit,
+  LOG_WHITE_TARGET, createPrior, yolkWordBands, yolkWordProbabilities, yolkWordProbit,
   withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.ts';
@@ -42,7 +42,7 @@ import { predictOutcome } from '../src/core/outcome.ts';
 import {
   CERTAINTY_MASS, type CertaintyReading, type WordCertainty, askedWord, certaintyAt, wordCertainty,
 } from '../src/core/certainty.ts';
-import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.ts';
+import { cookTimeForLogWhiteDose, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.ts';
 import { UNRELATED } from '../src/core/infer.ts';
 import { sliderFromYolkDose } from '../src/core/solve.ts';
 import {
@@ -682,6 +682,82 @@ if (run('certainty')) {
     if (c.n === 0) continue;
     console.log(`  ${name}: ${c.n} eggs; the word asked ${pc(c.asked, c.n)}, it or a neighbour ${pc(c.near, c.n)} `
       + `(the class promises ${CERTAINTY_MASS * 100}% of one or the other)`);
+  }
+}
+
+/* ------------------------------------- counter: why soft and jammy lean */
+
+/*
+ * On the counter soft and jammy snap to the softest level the white allows,
+ * and the choice leans far past the mean solve (`versus`, test 0). This lays
+ * the decision out at one egg (lean's 'one egg'), against ice: the loss term
+ * by term at the mean solve's time, at the time chosen with no envelope (as
+ * `versus` decides), and at the time the app gives, held by the pot's odds
+ * profile (`envelopeBounds`); how fast each dose rises with the time; and
+ * when, across the posterior, the white sets and the yolk enters and leaves
+ * "just right".
+ */
+if (run('counter')) {
+  console.log('\n== counter: the counter\'s soft and jammy against ice, at one egg (68 g, fridge, boiling)');
+  const c = LEARNED['one egg'];
+  const alpha = calibrationParams(c).alpha_m2s;
+  const quantiles = (rows: { t: number; w: number }[]): string => {
+    rows.sort((a, b) => a.t - b.t);
+    const total = rows.reduce((a, r) => a + r.w, 0);
+    return [0.05, 0.5, 0.95].map((q) => {
+      let acc = 0;
+      for (const r of rows) {
+        acc += r.w / total;
+        if (acc >= q) return r.t.toFixed(0);
+      }
+      return rows[rows.length - 1].t.toFixed(0);
+    }).join('/');
+  };
+  for (const pot of [POTS[0], POTS[3]]) {
+    const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, pot.egg, pot.setup)));
+    const profile = oddsProfile(c, pot.egg, pot.setup, grid);
+    for (const level of [0.22, 0.41]) {
+      const a = answerAt(c, pot.egg, pot.setup, level, profile);
+      const target = logYolkTarget(a.level);
+      const tM = a.solution.result.cookTime_s;
+      const times: [string, number][] = [
+        ['M', tM],
+        ['D, no envelope', decide(c, grid, a.solution, target).cookTime_s],
+        ['D, the app', decide(c, grid, a.solution, target, envelopeBounds(profile, a.level)).cookTime_s],
+      ];
+      console.log(`${pot.name}, asked ${level}, decided at ${a.level} (${a.verdict.kind}):`);
+      for (const [name, t] of times) {
+        let soft = 0;
+        let firm = 0;
+        let runny = 0;
+        let total = 0;
+        for (let i = 0; i < c.posterior.particles.length; i++) {
+          const w = c.posterior.weights[i];
+          const y = yolkProbit(grid, c.posterior.particles[i], t, target);
+          soft += w * y[0];
+          firm += w * y[2];
+          runny += w * whiteProbit(grid, c.posterior.particles[i], t)[0];
+          total += w;
+        }
+        const words = yolkWordProbabilities(c.posterior, grid, t).map((p) => p.toFixed(2)).join('/');
+        console.log(`  ${name}: ${t.toFixed(1)} s (lean ${(t - tM).toFixed(1)}): too soft ${(soft / total).toFixed(3)} + too firm ${(firm / total).toFixed(3)} `
+          + `+ 3 x runny ${(runny / total).toFixed(3)} = ${expectedLoss(c.posterior, grid, t, target).toFixed(3)}; `
+          + `P(right) ${posteriorRight(c.posterior, grid, t, target).toFixed(3)}; words runny-hard ${words}`);
+      }
+      const rise = (f: (g: DoseGrid, al: number, t: number) => number): string => (f(grid, alpha, tM + 5) - f(grid, alpha, tM - 5)).toFixed(3);
+      const white: { t: number; w: number }[] = [];
+      const enters: { t: number; w: number }[] = [];
+      const leaves: { t: number; w: number }[] = [];
+      for (let i = 0; i < c.posterior.particles.length; i++) {
+        const p = c.posterior.particles[i];
+        const w = c.posterior.weights[i];
+        white.push({ t: cookTimeForLogWhiteDose(grid, p.alpha_m2s, LOG_WHITE_TARGET + p.whiteOffset), w: w });
+        enters.push({ t: cookTimeForLogYolkDose(grid, p.alpha_m2s, target + p.logDoseOffset - FEEDBACK_BAND), w: w });
+        leaves.push({ t: cookTimeForLogYolkDose(grid, p.alpha_m2s, target + p.logDoseOffset + FEEDBACK_BAND), w: w });
+      }
+      console.log(`  at M, decades per 10 s: yolk +${rise(lookupLogYolkDose)}, white +${rise(lookupLogWhiteDose)}; `
+        + `across the posterior, s (5/50/95%): the white sets ${quantiles(white)}, the yolk enters just right ${quantiles(enters)} and leaves ${quantiles(leaves)}`);
+    }
   }
 }
 
