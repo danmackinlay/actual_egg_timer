@@ -41,6 +41,10 @@ The design they belong to is `INFERENCE.md`.
 7. **The loss ratio is 3.** A runny white counts as three times as bad as a
    yolk one step too firm (`RUNNY_WHITE_LOSS`, `INFERENCE.md` §8). A
    constant for now, and a per-cook setting only if someone asks for one.
+   Confirmed by the owner on 17 October 2026, after `npm run decide --
+   versus` showed the chosen time giving up eggs right for fewer runny
+   whites against the posterior-mean time, and winning in this loss: the
+   decision layer stays.
 8. **The odds are always on screen, and brief: "7/10 eggs hit the mark".**
    Superseded by 32 and 93.
 9. **"Still learning" goes when the 80% interval on the cook time narrows

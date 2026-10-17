@@ -52,6 +52,11 @@ and the map of the documents are `CLAUDE.md`.
     waiting, retries, traces and `page.clock` replace the DevTools client and
     most of the harness; the app's hooks (`__snap`, the oscillator capture)
     move across. `git log` on the two files says when.
+12. **Find why the counter's soft and jammy lean to the window's edge.**
+    Under counter cooling both snap to one level and the chosen time leans
+    far past the posterior-mean time, losing more eggs right than on any
+    other pot (`npm run decide -- versus`): a bug, a surface the loss reads
+    wrongly, or the physics of a slow cooling.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -80,14 +85,7 @@ shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
-6. **What a runny white costs in choosing the time** (`RUNNY_WHITE_LOSS`).
-   `npm run decide -- versus` found the chosen time trading eggs right for
-   fewer runny whites against the posterior-mean time; at a lower weight it
-   gains eggs right. Before deciding: rerun it at the lower weights at full
-   size, find why the counter's soft and jammy snap to one level and lean to
-   the window's edge, and try a mean solve that takes the learned taste
-   offset.
-7. **iOS's `previewedLevel` in `InHand`**: keep the flag, or restore the
+6. **iOS's `previewedLevel` in `InHand`**: keep the flag, or restore the
    slider in `letGo` only when the level is not in hand. Restoring always,
    as the web does, puts back an old level a correction has not reached
    yet (`aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted`).
