@@ -4,38 +4,26 @@ import Foundation
 ///
 /// Transliterated from `src/core/running.ts`, whose comments say what each
 /// part is for, and held to it by `fixtures/running.json` and
-/// `fixtures/step.json`. A cook is its start (when the egg went in, and the
-/// choices then) and an append-only log; the cook as it stands is the log
-/// folded (`appendEntry`), and the plan (`replan`) is derived from it each
-/// time, never stored as truth. Times are epoch seconds, except the record's
-/// id, the web's milliseconds. Nothing here reads a clock.
+/// `fixtures/step.json`.
 
 // MARK: - The types
 
-/// The cook as chosen: what the sentence, the slider and Settings' pot rows
-/// say, in SI.
 public struct CookChoices: Sendable, Equatable, Codable {
     public var massKg: Double
     public var massFrom: MassFrom
     public var sizeTable: SizeTable?
     public var eggFrom: EggFrom
     public var customStartC: Double
-    /// The room as measured, while it counts (`roomInUse`), or nil.
     public var roomC: Double?
     public var startMode: StartMode
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
-    /// Running water's temperature, C, or nil to assume mains water. Read
-    /// only for `tap`.
     public var tapWaterC: Double?
-    /// The bowl's water, litres, and its temperature, C, or nil to assume
-    /// the room. Read only for `bowl`.
     public var bowlLitres: Double
     public var bowlWaterC: Double?
     public var waterLitres: Double
     public var eggCount: Double
     public var altitudeM: Double
-    /// The yolk wanted, [0, 1]: the slider.
     public var level: Double
 
     public init(
@@ -69,13 +57,10 @@ public struct CookChoices: Sendable, Equatable, Codable {
     }
 }
 
-/// The pull: when it was due, when the egg came out, and who said so.
 public struct Pulled: Sendable, Equatable, Codable {
     public var dueS: Double
     public var outS: Double
     public var by: PulledBy
-    /// Whether the egg is known to have come out then: a cook's tap always; a
-    /// pull by `timeout` only once the cook says it stands (`pullStands`).
     public var confirmed: Bool
 
     public init(dueS: Double, outS: Double, by: PulledBy, confirmed: Bool) {
@@ -90,14 +75,10 @@ public struct Pulled: Sendable, Equatable, Codable {
     }
 }
 
-/// What was observed, as clock times: the log's events folded.
 public struct CookEvents: Sendable, Equatable, Codable {
     public var boilAtS: Double?
     public var pulled: Pulled?
-    /// The counted cooling ended. Never written on the counter.
     public var cooledAtS: Double?
-    /// The pull rang, the egg still in: held by a plan the cook did not
-    /// cause, cleared by anything the cook tells the plan after it.
     public var rangAtS: Double?
 
     public init(boilAtS: Double? = nil, pulled: Pulled? = nil, cooledAtS: Double? = nil, rangAtS: Double? = nil) {
@@ -107,7 +88,6 @@ public struct CookEvents: Sendable, Equatable, Codable {
         self.rangAtS = rangAtS
     }
 
-    /// A cook with nothing observed yet.
     public static let none = CookEvents()
 
     enum CodingKeys: String, CodingKey {
@@ -115,7 +95,6 @@ public struct CookEvents: Sendable, Equatable, Codable {
     }
 }
 
-/// When the egg went in and the choices, as at the press of Start.
 public struct CookStart: Sendable, Equatable, Codable {
     public let atS: Double
     public let choices: CookChoices
@@ -130,8 +109,6 @@ public struct CookStart: Sendable, Equatable, Codable {
     }
 }
 
-/// One thing that happened to a cook, as the log keeps it. See `CookEntry` in
-/// `src/core/running.ts`.
 public enum CookEntry: Sendable, Equatable {
     case boil(atS: Double)
     case correct(atS: Double, choices: CookChoices)
@@ -165,23 +142,16 @@ public enum CookEntry: Sendable, Equatable {
     }
 }
 
-/// A running cook: what was fixed at the press, the start and the log, and
-/// the log folded, which only core sets (`appendEntry` and the moves over
-/// it). See `RunningCook` in `src/core/running.ts`.
+/// The fields from `startedAtS` on are the log folded, which only core sets
+/// (`appendEntry` and the moves over it).
 public struct RunningCook: Sendable, Equatable {
-    /// When Start was pressed, whole ms since 1970: the record's id on the
-    /// web. Never corrected.
     public internal(set) var idMs: Double
-    /// The nudge this cook drew: 0 when sharing was off at the start.
     public internal(set) var nudgeS: Double
-    /// The pans as remembered at the start.
     public internal(set) var boilMemory: BoilMemory
     public internal(set) var units: Units
     public internal(set) var lang: String
     public internal(set) var start: CookStart
     public internal(set) var log: [CookEntry]
-    /// The log folded: when the egg went in, the choices, the events, when
-    /// last corrected, and the plan as it ran.
     public internal(set) var startedAtS: Double
     public internal(set) var choices: CookChoices
     public internal(set) var events: CookEvents
@@ -262,8 +232,8 @@ extension CookEntry: Codable {
     }
 }
 
-/// A cook as both apps store it: what was fixed at the press, the start and
-/// the log, and no more, since the rest is the log folded, again on reading.
+/// Coded as the TypeScript's: what was fixed at the press, the start and the
+/// log, and no more; the rest is the log folded again on reading (`foldCook`).
 extension RunningCook: Codable {
     private enum Keys: String, CodingKey {
         case idMs = "id_ms", nudgeS = "nudge_s", boilMemory, units, lang, start, log
@@ -293,9 +263,6 @@ extension RunningCook: Codable {
 
 // MARK: - The phases and deadlines
 
-/// The phases of a cook, in order.
-///
-///     IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
 public enum Phase: String, Sendable, Codable {
     case idle = "IDLE"
     case heating = "HEATING"
@@ -305,8 +272,6 @@ public enum Phase: String, Sendable, Codable {
     case done = "DONE"
 }
 
-/// How long to count the cooling down, s from the pull: to the moment the
-/// yolk's centre peaks, for this cook as the solver ran it.
 public func coolingSecondsFor(_ result: CookResult) -> Double {
     let toPeak = result.peakYolkTimeS - result.cookTimeS
     if !(toPeak > 0.0) { return coolingSeconds }
@@ -314,17 +279,11 @@ public func coolingSecondsFor(_ result: CookResult) -> Double {
     return whole < coolingMinSeconds ? coolingMinSeconds : whole
 }
 
-/// Whether this cook has a moment to take a probe reading at: a counted
-/// cooling that ends when the yolk's centre peaks. Not on the counter, and not
-/// when the centre peaked before the egg came out.
 public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
     if cooling == .counter { return false }
     return result.peakYolkTimeS - result.cookTimeS >= coolingMinSeconds
 }
 
-/// The centre readings the app will take for this cook, C, as (low, high): a
-/// reading outside is refused at entry rather than folded. See
-/// src/core/running.ts.
 public func plausibleProbeRangeC(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double
 ) -> (low: Double, high: Double) {
@@ -346,21 +305,11 @@ public func plausibleProbeRangeC(
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
 }
 
-/// The deadlines a cook is made of, as epoch seconds. `coolEndS` is nil when
-/// there is no cooling step to time - resting on the counter, where the
-/// carryover IS the point rather than something to wait out.
 public struct Deadlines: Sendable {
     public let cookEndS: Double
     public let coolEndS: Double?
-    /// True on a cold start until the boil is tapped: the deadline is a guess.
     public let provisional: Bool
-    /// When the cook said the eggs were out, inside the pull's grace; nil until
-    /// they do. The tap ends the pull, and the cooling (whose deadline the app
-    /// then times from the tap) starts there.
     public let outAtS: Double?
-    /// The plan asks whether the egg is still in the water (`asksIfStillIn`):
-    /// nothing past the question, so the phase that would be Done reads
-    /// Cooling until it is answered.
     public let asking: Bool
 
     public init(cookEndS: Double, coolEndS: Double?, provisional: Bool, outAtS: Double? = nil, asking: Bool = false) {
@@ -388,19 +337,6 @@ extension Deadlines: Codable {
     }
 }
 
-/// Which phase a cook is in at a given instant.
-///
-/// Pure, and it takes the clock rather than reading it, so one render sees one
-/// time. This is the rule both apps derive from, and it exists here because
-/// they did not agree on it: this app checked for a cooling deadline BEFORE
-/// checking the pull grace, so a counter rest - which has no cooling deadline -
-/// fell straight from COOKING to DONE. "Out of the water — now" never appeared,
-/// the 20 s grace never ran, and the phone still fired the pull notification at
-/// a screen that already said Done. The web app always passed through PULL.
-///
-/// PULL is therefore unconditional: every cook has a moment where the egg has
-/// to come out, whatever happens to it next. It ends early only when the cook
-/// says the eggs are out (`outAtS`).
 public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
     if d.provisional { return .heating }
     if nowS < d.cookEndS { return .cooking }
@@ -414,15 +350,12 @@ public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
 
 // MARK: - The log
 
-/// The cook with one more entry in its log, folded in: the one place the
-/// cook as it stands changes.
 public func appendEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook {
     var next = applyEntry(cook, entry)
     next.log.append(entry)
     return next
 }
 
-/// What one entry does to the cook as it stands.
 private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook {
     var c = cook
     switch entry {
@@ -465,8 +398,6 @@ private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook 
     return c
 }
 
-/// The cook folded from its start and log: what a stored cook is read back
-/// as.
 public func foldCook(
     idMs: Double, start: CookStart, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String,
     log: [CookEntry]
@@ -476,9 +407,6 @@ public func foldCook(
     return cook
 }
 
-/// Since when the choices have said a cold start, and the first moment they
-/// said a boiling one, from the start and the corrections in the log. See
-/// `coldHistory` in `src/core/running.ts`.
 func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Double?) {
     var mode = cook.start.choices.startMode
     var since: Double? = mode == .cold ? cook.start.atS : nil
@@ -496,8 +424,6 @@ func coldHistory(_ cook: RunningCook) -> (coldSinceS: Double?, firstHotAtS: Doub
     return (since, firstHot)
 }
 
-/// What has been said about the egg: the first yolk word, white and probe
-/// reading given, each kept once said.
 public struct CookAnswers: Sendable, Equatable, Codable {
     public var yolkWord: YolkWord?
     public var white: WhiteReport?
@@ -515,24 +441,20 @@ private func answersIn(_ log: [CookEntry], count: Int) -> CookAnswers {
     return a
 }
 
-/// What has been said about the egg so far.
 public func answersOf(_ cook: RunningCook) -> CookAnswers {
     answersIn(cook.log, count: cook.log.count)
 }
 
-/// What had been said when the egg's record was last written, or nil.
 public func answersLogged(_ cook: RunningCook) -> CookAnswers? {
     guard let i = cook.log.lastIndex(where: { $0.kind == "logged" }) else { return nil }
     return answersIn(cook.log, count: i)
 }
 
-/// Whether anything has been said about the egg.
 public func answered(_ cook: RunningCook) -> Bool {
     let a = answersOf(cook)
     return a.yolkWord != nil || a.white != nil || a.probe != nil
 }
 
-/// When the cook ended (Start again, Cancel, or too old), or nil while it runs.
 public func endedAtS(_ cook: RunningCook) -> Double? {
     for entry in cook.log.reversed() {
         if case let .ended(at) = entry { return at }
@@ -540,20 +462,17 @@ public func endedAtS(_ cook: RunningCook) -> Double? {
     return nil
 }
 
-/// Whether a measured pan was on file at the start.
 public func boilRemembered(_ cook: RunningCook) -> Bool {
     hasBoilMemory(cook.boilMemory)
 }
 
 // MARK: - The egg and the pot
 
-/// The solver's egg and pot.
 public struct CookPot: Sendable, Equatable, Codable {
     public let egg: Egg
     public let setup: CookSetup
 }
 
-/// The egg's temperature as it goes in, C.
 func eggStartOf(_ ch: CookChoices) -> Double {
     switch ch.eggFrom {
     case .custom: ch.customStartC
@@ -562,8 +481,6 @@ func eggStartOf(_ ch: CookChoices) -> Double {
     }
 }
 
-/// The egg and the pot the solver is told, for these choices and a time to a
-/// rolling boil: the one assembly of both.
 public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
     let eggStart = eggStartOf(ch)
     return CookPot(
@@ -589,8 +506,6 @@ public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
 
 // MARK: - The transitions
 
-/// A cook started at `nowS` with these choices, the nudge it drew and the
-/// pans as remembered now.
 public func startCook(
     nowS: Double, choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: Units, lang: String
 ) -> RunningCook {
@@ -600,8 +515,6 @@ public func startCook(
     )
 }
 
-/// Rolling boil, tapped at `nowS`: taken only on a cold start still
-/// heating, and not before the start.
 public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
     let e = cook.events
     if cook.choices.startMode != .cold || e.boilAtS != nil || e.pulled != nil { return cook }
@@ -609,14 +522,10 @@ public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
     return appendEntry(cook, .boil(atS: nowS))
 }
 
-/// A correction at `nowS`: the choices replaced, as if they had always been
-/// these. See `corrected` in `src/core/running.ts`.
 public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -> RunningCook {
     appendEntry(cook, .correct(atS: nowS, choices: choices))
 }
 
-/// The latest the start can be corrected to at `nowS`: now, or the first
-/// event, whichever is sooner, an unread one included.
 public func latestStartS(_ cook: RunningCook, nowS: Double) -> Double {
     var latest = nowS
     let e = cook.events
@@ -626,35 +535,26 @@ public func latestStartS(_ cook: RunningCook, nowS: Double) -> Double {
     return latest
 }
 
-/// The earliest the start can be corrected to: the most the app takes for a
-/// time to boil before Start was pressed (`idMs`), fixed at the press.
 public func earliestStartS(_ cook: RunningCook) -> Double {
     cook.idMs / 1000 - Limits.timeToBoilS.upperBound
 }
 
-/// The start corrected to `startedAtS` at `nowS`, or nil: refused when it is
-/// later than `latestStartS`, earlier than `earliestStartS`, or not a time.
 public func startCorrected(_ cook: RunningCook, startedAtS: Double, nowS: Double) -> RunningCook? {
     if !startedAtS.isFinite || startedAtS > latestStartS(cook, nowS: nowS) { return nil }
     if startedAtS < earliestStartS(cook) { return nil }
     return appendEntry(cook, .start(atS: nowS, startedAtS: startedAtS))
 }
 
-/// The cook's answer when a plan asks whether the egg is still in the water,
-/// at `nowS`: it is. The pull the clock assumed is dropped, with its cooling.
 public func stillIn(_ cook: RunningCook, nowS: Double) -> RunningCook {
     guard let p = cook.events.pulled, p.by == .timeout, !p.confirmed else { return cook }
     return appendEntry(cook, .stillIn(atS: nowS))
 }
 
-/// The other answer: the egg came out when the clock assumed. The pull stands.
 public func pullStands(_ cook: RunningCook) -> RunningCook {
     guard let p = cook.events.pulled, !p.confirmed else { return cook }
     return appendEntry(cook, .stands)
 }
 
-/// The cook with its events made `events`: an entry logged for each that
-/// differs. The same cook when none does.
 public func writeEvents(_ cook: RunningCook, _ events: CookEvents) -> RunningCook {
     var next = cook
     let e = cook.events
@@ -665,10 +565,6 @@ public func writeEvents(_ cook: RunningCook, _ events: CookEvents) -> RunningCoo
     return next
 }
 
-/// The cook a level asked for after the pull would have made, for the
-/// slider's preview: these choices, as if not yet pulled and never corrected.
-/// A cook for a plan and nothing else, never stored or stepped. See
-/// `levelPreview` in `src/core/running.ts`.
 public func levelPreview(_ cook: RunningCook, choices: CookChoices) -> RunningCook {
     var c = cook
     c.log = cook.log.filter { ["boil", "correct", "start"].contains($0.kind) }
@@ -683,8 +579,6 @@ public func levelPreview(_ cook: RunningCook, choices: CookChoices) -> RunningCo
 
 // MARK: - The plan
 
-/// A pot's decision surface, as the app built it off the main thread, with
-/// the inputs it was built for and the pot's odds profile if that is in.
 public struct CookSurface: Sendable {
     public let inputs: DecisionInputs
     public let grid: DoseGrid
@@ -697,16 +591,13 @@ public struct CookSurface: Sendable {
     }
 }
 
-/// Where the slow hob's rule got to in one plan, handed to the next
-/// (`replan`'s `memo`). Opaque to the apps, which hand it back and never read
-/// it. See `SlowHobMemo` and `SlowHobPlace` in `src/core/running.ts`.
+/// Its fields are core's alone: the apps hand it back to `replan` and never
+/// read it.
 public struct SlowHobMemo: Sendable, Equatable {
-    /// What the rule read (`slowHobReads`).
     let reads: SlowHobReads
     let steps: Int
     let lastS: Double
     let rampS: Double
-    /// The carried cook time at `rampS`; nil when no plan needed it.
     let carriedS: Double?
 }
 
@@ -726,12 +617,9 @@ extension SlowHobMemo: Encodable {
     }
 }
 
-/// Everything derived from a cook. Never stored as truth. `replan` in
-/// `src/core/running.ts` says what each part is.
 public struct CookPlan: Sendable, Encodable {
     public let egg: Egg
     public let setup: CookSetup
-    /// Nil while the slow hob has lengthened the guess (`guessLengthened`).
     public let inputs: DecisionInputs?
     public let answer: LevelAnswer
     public let solution: Solution
@@ -742,15 +630,9 @@ public struct CookPlan: Sendable, Encodable {
     public let overdue: Bool
     public let coolS: Double
     public let probeMoment: Bool
-    /// What `phaseAt` reads: `provisional` while the time to boil is a
-    /// guess, `asking` while the plan asks whether the egg is still in.
     public let deadlines: Deadlines
-    /// While provisional, when the slow hob's rule next lengthens the guess:
-    /// the app plans again once the clock is past it (`slowHobDue`).
     public let slowHobAtS: Double?
-    /// While provisional, where the slow hob's rule got to, for the next plan.
     public let memo: SlowHobMemo?
-    /// When the cook is too old to pick back up (`cookTooOld`).
     public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
@@ -762,18 +644,14 @@ public struct CookPlan: Sendable, Encodable {
     }
 }
 
-/// Whether the slow hob has lengthened the guess: the pull moves with the
-/// clock, so no time left is shown from it.
 public func guessLengthened(_ plan: CookPlan) -> Bool {
     plan.inputs == nil
 }
 
-/// Whether the plan asks whether the egg is still in the water.
 public func asksIfStillIn(_ plan: CookPlan) -> Bool {
     plan.deadlines.asking
 }
 
-/// What the slow hob's rule reads.
 struct SlowHobReads: Sendable, Equatable {
     let startedAtS: Double
     let choices: CookChoices
@@ -792,10 +670,7 @@ private func slowHobReads(_ cook: RunningCook, _ c: Calibration, leanHintS: Doub
     )
 }
 
-/// Whether the slow hob's memo may be taken for `cook` under `c` with
-/// `leanHintS`, at `nowS`: still heating on a guess, worked out under the
-/// same start, choices, remembered time, lean and nudge, parameters and white
-/// target, and the clock past the place kept. Otherwise it is ignored.
+/// The TypeScript's `memoPlace`, as whether the memo's place may be taken.
 func slowHobMemoFits(
     _ memo: SlowHobMemo?, _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double
 ) -> Bool {
@@ -806,38 +681,28 @@ func slowHobMemoFits(
     return memo.steps == 0 || nowS > cook.startedAtS + memo.lastS
 }
 
-/// Whether the slow hob's moment has come at `nowS`: strictly past
-/// `slowHobAtS`, the one comparison `replan` lengthens by.
 public func slowHobDue(_ plan: CookPlan, nowS: Double) -> Bool {
     guard let at = plan.slowHobAtS else { return false }
     return nowS > at
 }
 
-/// Whether a cook is too old to pick back up at `nowS`, from its plan.
 public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
     nowS > plan.tooOldAtS
 }
 
-/// The id of the egg still open to correction: the stored running cook's,
-/// until it is too old to pick back up; nil when there is none.
 public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
     guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
     return cook.idMs
 }
 
-/// Where the slow hob's rule got to in one plan (`slowHob`).
 private struct SlowHob {
     let pot: CookPot
-    /// The mean solve on `pot`, or nil where the rule never needed it.
     let found: LevelAnswer?
     let lengthened: Bool
     let atS: Double?
     let place: SlowHobMemo
 }
 
-/// The slow hob's rule for a cook still heating on a guess, at `nowS`, from
-/// the remembered time to boil, or from `memo`'s place when it fits. See
-/// `slowHob` in `src/core/running.ts`.
 private func slowHob(
     _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double, memo: SlowHobMemo?, rememberedS: Double
 ) -> SlowHob {
@@ -923,8 +788,6 @@ private func slowHob(
     return SlowHob(pot: pot, found: found, lengthened: lengthened, atS: at, place: place)
 }
 
-/// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by
-/// the slow hob's rule alone. See `replan` in `src/core/running.ts`.
 public func replan(
     _ cook: RunningCook, _ c: Calibration, surface: CookSurface?, leanHintS: Double, nowS: Double,
     memo: SlowHobMemo? = nil
@@ -1057,15 +920,11 @@ public func replan(
     )
 }
 
-/// The cook's tap out of the pull at `nowS`: taken only while `plan` says
-/// Pull, and the pull it records is the one that rang.
 public func withOut(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> RunningCook {
     if cook.events.pulled != nil || phaseAt(plan.deadlines, nowS: nowS) != .pull { return cook }
     return appendEntry(cook, .pulled(Pulled(dueS: plan.deadlines.cookEndS, outS: nowS, by: .cook, confirmed: true)))
 }
 
-/// The events the clock alone decides, as of `nowS`, from the plan that rang.
-/// See `eventsDue` in `src/core/running.ts`.
 public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEvents {
     if asksIfStillIn(plan) { return cook.events }
     let d = plan.deadlines
@@ -1084,13 +943,11 @@ public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Cook
 
 // MARK: - The memory
 
-/// A measured time to a rolling boil, for the boil memory.
 public struct BoilToRemember: Sendable, Equatable, Codable {
     public let litres: Double
     public let seconds: Double
 }
 
-/// What the boil memory learns from this cook, written when it ends.
 public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     let ch = cook.choices
     guard ch.startMode == .cold, let tap = cook.events.boilAtS else { return nil }
@@ -1099,21 +956,16 @@ public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     return BoilToRemember(litres: ch.waterLitres, seconds: tap - cook.startedAtS)
 }
 
-/// When the cook began watching for the boil tapped at `tap`.
 private func watchedFromS(_ cook: RunningCook, tap: Double) -> Double {
     let h = coldHistory(cook)
     if let hot = h.firstHotAtS, tap >= hot { return h.coldSinceS ?? cook.startedAtS }
     return cook.idMs / 1000
 }
 
-/// Whether the cook's boil tap is the time to boil the plan runs on and the
-/// record says was tapped (`boilTapCounts` in `src/core/running.ts`).
 func boilTapCounts(_ cook: RunningCook) -> Bool {
     cook.events.boilAtS != nil && !(boilRemembered(cook) && tappedAfterLateCold(cook))
 }
 
-/// Whether the boil was tapped after a correction from boiling to cold made
-/// later than this water's remembered time to boil.
 private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
     guard let tap = cook.events.boilAtS, let hot = coldHistory(cook).firstHotAtS, tap >= hot else { return false }
     let remembered = estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)
