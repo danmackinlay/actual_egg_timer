@@ -152,6 +152,28 @@ extension View {
     func barTitle(_ title: String) -> some View {
         modifier(BarTitle(title: title))
     }
+
+    /// A button's words in the navigation bar, in the face of the language
+    /// on screen at the bar's own size.
+    func barItem() -> some View {
+        modifier(BarItem())
+    }
+}
+
+/// The bar sets its buttons' words at one size, which Dynamic Type does not
+/// change. The period face is set at the text size's (`periodFace`), so in
+/// 1750 at the largest sizes the bar's words grew past the bar: the title
+/// was pushed out and Help folded into a menu. So in 1750 a bar button's
+/// words are the face at the default size, as the title's are (`BarTitle`);
+/// in modern English they are the system's, as before.
+private struct BarItem: ViewModifier {
+    func body(content: Content) -> some View {
+        if isPeriod(Copy.activeLocale) {
+            content.font(PeriodFace.font(.body, size: .large))
+        } else {
+            content
+        }
+    }
 }
 
 /// The bar draws its title itself, in the system face, and takes another

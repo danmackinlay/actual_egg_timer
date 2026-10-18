@@ -117,10 +117,10 @@ struct ContentView: View {
             .toolbar {
                 // In every phase: Settings' pot rows correct a running cook.
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink(value: Route.settings) { Text(tr(.`controls.settings`)) }
+                    NavigationLink(value: Route.settings) { Text(tr(.`controls.settings`)).barItem() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(value: Route.help(nil)) { Text(tr(.`help.link`)) }
+                    NavigationLink(value: Route.help(nil)) { Text(tr(.`help.link`)).barItem() }
                 }
             }
             .navigationDestination(for: Route.self) { route in
