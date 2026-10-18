@@ -400,6 +400,35 @@ extension AppTests {
         #expect(model.cook.plan.map(asksIfStillIn) == false)
     }
 
+    /// A level previewed after the pull, then "Still in the water? Yes"
+    /// while the aimed-for egg is held: the level was refused when it was
+    /// committed, so the slider goes back to the cook's level as the egg is
+    /// let go, though the cook, back in the water, could now take it.
+    @Test func aLevelPreviewedAfterThePullGoesBackOnceStillIn() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let pull = try await askedStillIn(model, world)
+        let level = try #require(model.cook.running).choices.level
+        world.clock.set(pull + 40)
+        model.inHand.fingerDown(.level)
+        model.planner.settings.doneness = 0.9
+        world.clock.set(pull + 40.5)
+        model.inHand.fingerUp()
+        await world.settled(model.cook)
+        #expect(!model.inHand.pending)
+        // Within the hold, which ends a settle after the change.
+        world.clock.set(pull + 41)
+        model.stillIn()
+        await world.quiet(model.cook)
+        #expect(model.cook.running?.events.pulled == nil)
+        world.clock.advance(handSettleS)
+        await world.until("the aim gone") { model.aimView == nil && model.inHand.aim == nil }
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.level == level)
+        #expect(model.planner.settings.doneness == level)
+    }
+
     /// "Still in the water?" answered no: the pull the clock assumed stands,
     /// confirmed, and the record is made again for cold water.
     @Test func stillInTheWaterNo() async throws {
