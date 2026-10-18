@@ -37,7 +37,8 @@
  * The ring follows the log: the pull rings when this step wrote the pull
  * ringing (`rangAt_s`, the first time the clock passed it, or again after the
  * cook said the egg was still in); Done rings when this step finished the egg
- * - the counted cooling written ended, or the egg out in the air - unless
+ * - the counted cooling written ended (an egg cup's at its opening), or the
+ * egg out on the counter - unless
  * the pull rang in the same step (a phone woken past the cooling rings the
  * pull, not Done). The ring stops when the cook took the egg out, said the
  * pull stands, or a correction undid the ring.
@@ -58,7 +59,7 @@ import {
   writeEvents,
 } from './running.ts';
 import { asRanCorrected, asRanCurrent, cookEnding, cookFactsFor, keepAsRan } from './asRan.ts';
-import { restsInAir } from './protocol.ts';
+import { countsDown } from './protocol.ts';
 
 /** What happened to the cook, at `now_s`. Cancel is `startAgain`. A reload
  *  or a relaunch is a `tick` on a stored cook with no plan yet. */
@@ -135,8 +136,8 @@ export interface CookNeed {
 export type CookEffect =
   /** Write the cook and the lean down. */
   | { kind: 'persist' }
-  /** Hold these alarms and no others: the pull's and the cooling's end, each
-   *  null for none. */
+  /** Hold these alarms and no others: the pull's and the cooling's end (an
+   *  egg cup's opening), each null for none. */
   | { kind: 'alarms'; pull_s: number | null; cooled_s: number | null }
   /** Ring now. */
   | { kind: 'ring'; moment: AlarmMoment }
@@ -210,11 +211,11 @@ function alarmsOf(cook: RunningCook | null, plan: CookPlan | null): Alarms {
   };
 }
 
-/** Whether the cook is Done by its events: out, and resting in the air or
- *  its counted cooling ended. */
+/** Whether the cook is Done by its events: out, and on the counter or its
+ *  counted cooling ended. */
 function doneByEvents(cook: RunningCook): boolean {
   const e = cook.events;
-  return e.pulled !== null && (restsInAir(cook.choices.cooling) || e.cooledAt_s !== null);
+  return e.pulled !== null && (!countsDown(cook.choices.cooling) || e.cooledAt_s !== null);
 }
 
 /** The next moment the clock decides something for this cook, after

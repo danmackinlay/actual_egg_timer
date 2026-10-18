@@ -298,10 +298,10 @@ const SCENARIOS: CopyScenario[] = [
   },
   {
     // The egg cup's words in place: the sentence, the pull's button, soft
-    // offered, and Done at the pull.
+    // offered, the countdown to the opening, and Done there.
     name: 'hot egg cup, soft',
     settings: { muted: true, startMode: 'hot', cooling: 'eggCup', doneness: 0.22 },
-    steps: [click('#primary'), advance(30), toPull, click('#primary'),
+    steps: [click('#primary'), advance(30), toPull, click('#primary'), advance(30), toCoolEnd,
       click('button.fb[data-yolk="soft"]'), learned, click('#primary')],
   },
   {

@@ -9,6 +9,7 @@ import { oddsProfile } from '../../src/core/reach.ts';
 import type { GridSpec } from '../../src/core/doseGrid.ts';
 import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
+import { EGG_CUP_OPENED_S } from '../../src/core/constants.ts';
 import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
   COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook,
@@ -108,8 +109,9 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
   { note: 'corrected to a bowl of water after the cooling ended', cook: cooled, move: { correct: { ...cooled.choices, cooling: 'bowl', bowlLitres: 1, bowlWater_C: 14 }, now: START_S + 1100 } },
   { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
-  { note: 'done in an egg cup, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
-  { note: 'done in an egg cup, corrected to the counter: still in the air, nothing ended', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter' }, now: START_S + 900 } },
+  { note: 'out in an egg cup, corrected to ice: counted still, nothing ended', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
+  { note: 'out in an egg cup, corrected to the counter: nothing ended, nothing counted', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter' }, now: START_S + 900 } },
+  { note: 'done on the counter, corrected to an egg cup: its opening by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'eggCup' }, now: START_S + 900 } },
   { note: 'done on the counter, another correction: nothing ended', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
   { note: 'a correction after the pull rang: planned afresh', cook: rung, move: { correct: { ...hot.choices, mass_kg: 0.076 }, now: START_S + 385 } },
@@ -591,16 +593,22 @@ const S = START_S;
 }
 
 {
-  // Eaten warm from an egg cup: in the air, as on the counter, nothing
-  // counted and done at the out; then corrected to ice a minute on, Done
-  // kept and the ice bath ended by the correction. After every case above,
-  // so none moves.
+  // Eaten warm from an egg cup: in the air, as on the counter, and counted
+  // down from the out to the opening, EGG_CUP_OPENED_S on; corrected to ice
+  // a minute on, the ice bath counted from the out; opened and then
+  // corrected to ice, Done kept as it ran; and the grace run out, counted
+  // from its end. After every case above, so none moves.
   const cup = cookOf({ startMode: 'hot', cooling: 'eggCup' });
   const up = plan({ note: 'hot, in an egg cup, cooking', posterior: 'learned', cook: cup, leanHint_s: 0, now_s: S + 60, surface: 'own' });
   const uEnd = up.deadlines.cookEnd_s;
   const cupOut = withEvents(cup, withOut(cup, up, uEnd + 4).events);
-  plan({ note: 'hot, in an egg cup, out: done', posterior: 'learned', cook: cupOut, leanHint_s: 0, now_s: uEnd + 30, surface: 'own', dues: [uEnd + 30] });
-  plan({ note: 'done in an egg cup, then ice a minute after the out: Done kept, the ice bath to the correction', posterior: 'learned', cook: corrected(cupOut, { ...cup.choices, cooling: 'ice' }, uEnd + 64), leanHint_s: 0, now_s: uEnd + 65, surface: 'own', dues: [uEnd + 66, uEnd + 900] });
+  const opening = uEnd + 4 + EGG_CUP_OPENED_S;
+  const counting = plan({ note: 'hot, in an egg cup, out: counted down to the opening', posterior: 'learned', cook: cupOut, leanHint_s: 0, now_s: uEnd + 30, surface: 'own', dues: [uEnd + 30, opening - 0.5, opening, opening + 1] });
+  plan({ note: 'in an egg cup, then ice a minute after the out: the ice bath counted from the out', posterior: 'learned', cook: corrected(cupOut, { ...cup.choices, cooling: 'ice' }, uEnd + 64), leanHint_s: 0, now_s: uEnd + 65, surface: 'own', dues: [uEnd + 66, uEnd + 900] });
+  const opened = withEvents(cupOut, eventsDue(cupOut, counting, opening + 1));
+  plan({ note: 'opened, then corrected to ice: Done kept, the countdown as it ran', posterior: 'learned', cook: corrected(opened, { ...cup.choices, cooling: 'ice' }, opening + 60), leanHint_s: 0, now_s: opening + 61, surface: 'own', dues: [opening + 62] });
+  const cupTimedOut = withEvents(cup, eventsDue(cup, up, uEnd + PULL_GRACE_SECONDS + 1));
+  plan({ note: 'in an egg cup, the grace run out: counted to the opening from its end', posterior: 'learned', cook: cupTimedOut, leanHint_s: 0, now_s: uEnd + PULL_GRACE_SECONDS + 1, surface: 'own', dues: [uEnd + PULL_GRACE_SECONDS + EGG_CUP_OPENED_S + 1] });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

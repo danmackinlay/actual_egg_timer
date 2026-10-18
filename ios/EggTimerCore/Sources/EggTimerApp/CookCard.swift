@@ -108,7 +108,8 @@ final class CookCard {
             )
         case .cooling:
             let from = running.events.pulled?.outS ?? d.cookEndS + pullGraceSeconds
-            return .init(stage: .cooling, began: at(from), ends: at(d.coolEndS ?? from), provisional: false, cook: cook)
+            let stage: CookActivity.Stage = running.choices.cooling == .eggCup ? .opening : .cooling
+            return .init(stage: stage, began: at(from), ends: at(d.coolEndS ?? from), provisional: false, cook: cook)
         }
     }
 

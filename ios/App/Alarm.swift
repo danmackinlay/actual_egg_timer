@@ -74,7 +74,8 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     ///
     /// The cooling ends when the yolk's centre peaks. For a cook with a
     /// probe thermometer that is the moment to take the reading, so the second
-    /// alarm asks for it instead of announcing the end.
+    /// alarm asks for it instead of announcing the end. In an egg cup the
+    /// countdown ends at the opening, and the second alarm says to open them.
     ///
     /// The pull alarm names the cooling the cook chose (`pullLineKey`).
     func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
@@ -89,10 +90,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         }
 
         if let coolDoneAt = cooledS.map(Date.init(timeIntervalSince1970:)) {
+            let opened = cooling == .eggCup
             request(
                 id: coolID, moment: .cooled, at: coolDoneAt,
-                title: tr(probe ? .`alarm.probe.title` : .`alarm.cooled.title`),
-                body: tr(probe ? .`alarm.probe.body` : .`alarm.cooled.body`)
+                title: tr(probe ? .`alarm.probe.title` : opened ? .`alarm.opened.title` : .`alarm.cooled.title`),
+                body: tr(probe ? .`alarm.probe.body` : opened ? .`alarm.opened.body` : .`alarm.cooled.body`)
             )
         }
     }

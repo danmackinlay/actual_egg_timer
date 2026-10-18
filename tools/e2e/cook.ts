@@ -406,7 +406,7 @@ export const cookScenarios: Record<string, Scenario> = {
   },
 
   'egg-cup': {
-    what: 'eaten warm from an egg cup: soft offered where the air snaps it, the sentence and the pull say the egg cup, Done at the pull with nothing counted, and the record',
+    what: 'eaten warm from an egg cup: soft offered where the air snaps it, the sentence and the pull say the egg cup, counted down to the opening, rung there, Done, and the record',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.click('#startHot');
@@ -436,22 +436,37 @@ export const cookScenarios: Record<string, Scenario> = {
       s = await tab.snap();
       check(s.cook?.choices.cooling === 'eggCup' && near(s.cook.choices.level, soft, 1e-9),
         `the cook: ${s.cook?.choices.cooling} at ${s.cook?.choices.level}`);
-      check(s.deadlines?.coolEnd_s === null, `nothing counted after the pull: ${s.deadlines?.coolEnd_s}`);
       await tab.shiftTo(deadlines(s).cookEnd_s + 2);
       s = await tab.phase('PULL');
       const pull = EN['action.pulled.eggCup'].text;
       check(s.primary === pull, `the pull says "${pull}": "${s.primary}"`);
       await tab.click('#primary');
+      // Counted down from the out to the opening, two minutes on.
+      s = await tab.phase('COOLING');
+      const out = storedCook(s)?.events.pulled?.out_s ?? NaN;
+      const opening = deadlines(s).coolEnd_s;
+      check(near(opening - out, 120, 1e-6), `the opening ${(opening - out).toFixed(3)} s after the out`);
+      check(!s.feedback, 'no questions before the opening');
+      await tab.shiftTo(opening - 60);
+      await tab.settle();
+      s = await tab.snap();
+      const sub = EN['readout.sub.coolingEggCup'].text;
+      check(s.phase === 'COOLING' && s.digits === '1:00' && s.subline === sub,
+        `a minute before the opening: ${s.phase} ${s.digits} "${s.subline}"`);
+      const oscBeforeDone = (await tab.osc()).length;
+      await tab.shiftTo(opening + 1);
       s = await tab.phase('DONE');
-      check(s.feedback, 'the questions at Done, at the pull');
-      check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
+      await tab.settle();
+      check(rings((await tab.osc()).slice(oscBeforeDone)).length === 1, "the opening's ring");
+      check(s.feedback, 'the questions at the opening');
+      check(near(storedCook(s)?.events.cooledAt_s ?? NaN, opening, 1e-6), 'the opening written as the countdown\'s end');
       await tab.click('.fb[data-yolk="soft"]');
       await tab.until('__snap().log.length === 1', 'the egg logged');
       const rec = (await tab.snap()).log[0] as Rec & { cooled_s: number; setup: { cooling: string } };
-      check(rec.setup.cooling === 'eggCup' && rec.cooled_s === 0 && rec.yolkWord === 'soft',
+      check(rec.setup.cooling === 'eggCup' && rec.cooled_s === 120 && rec.yolkWord === 'soft',
         `the record: ${rec.setup.cooling}, cooled ${rec.cooled_s}, ${rec.yolkWord}`);
       return `soft in the air snapped to ${inAir.toFixed(2)}, in an egg cup ${inCup}; "${said.sentence}"; `
-        + `recommended ${rec.recommended_s.toFixed(1)} s`;
+        + `recommended ${rec.recommended_s.toFixed(1)} s, opened ${rec.cooled_s} s after the out`;
     },
   },
 };

@@ -30,7 +30,7 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, restsInAir,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown,
 } from './protocol.ts';
 import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
 import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
@@ -228,8 +228,8 @@ export interface EggRecord {
   /** When the egg came out, s from egg-in. See `pulledBy`. */
   pulled_s: number;
   pulledBy: PulledBy;
-  /** The counted cooling the app ran, s; 0 for an egg resting in the air,
-   *  on the counter or in an egg cup, where there is none. */
+  /** The counted cooling the app ran, s: in water to the yolk's peak, in an
+   *  egg cup to its opening; 0 on the counter, where there is none. */
   cooled_s: number;
   /** The yolk the cook got, in the slider's words, or null
    *  when the question was on screen and the cook moved on without answering. */
@@ -317,7 +317,7 @@ export interface CookFacts {
    *  grace ran out. A tap at or before egg-in measures nothing. */
   out_s: number | null;
   /** How long the counted cooling ran from the pull: read only for a
-   *  cooling that is counted (`restsInAir`). */
+   *  cooling that is counted (`countsDown`). */
   cool_s: number;
   yolkWord: YolkWord | null;
   white: WhiteReport | null;
@@ -376,7 +376,7 @@ export function recordFor(f: CookFacts): EggRecord {
     nudge_s: f.nudge_s,
     pulled_s: measured ? f.out_s as number : f.cook_s,
     pulledBy: measured ? 'cook' : 'timeout',
-    cooled_s: restsInAir(s.cooling) ? 0 : f.cool_s,
+    cooled_s: countsDown(s.cooling) ? f.cool_s : 0,
     yolkWord: f.yolkWord,
     white: f.white,
     probe: f.probe,

@@ -256,11 +256,11 @@ function pulledKey(cooling: Cooling): CopyKey {
   return PULLED_KEYS[cooling];
 }
 
-/** The label while the cooling counts down. Never read for an egg resting
- *  in the air, which has no counted cooling. */
+/** The label while the cooling counts down, or an egg cup's wait to its
+ *  opening. Never read for the counter, which has no counted cooling. */
 const COOLING_LABELS: Record<Cooling, CopyKey> = {
   ice: 'readout.phase.coolingIce', tap: 'readout.phase.coolingTap', bowl: 'readout.phase.coolingBowl',
-  counter: 'readout.phase.coolingTap', eggCup: 'readout.phase.coolingTap',
+  counter: 'readout.phase.coolingTap', eggCup: 'readout.phase.coolingEggCup',
 };
 
 /**
@@ -271,7 +271,8 @@ const COOLING_LABELS: Record<Cooling, CopyKey> = {
  * minutes. With the heat off, the idle subline names the water, the most
  * load-bearing number in that cook; on a hot start the time to boil plays no
  * part and is not mentioned. A counted cooling is the ice bath, running water
- * or a bowl; an egg resting in the air has no cooling phase.
+ * or a bowl, each to the yolk's peak, or an egg cup to its opening; an egg
+ * left on the counter has no cooling phase.
  */
 export function phaseKeys(f: PhaseFacts): PhaseKeys {
   const cold = f.startMode === 'cold';
@@ -303,8 +304,9 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
         hint: standing ? 'action.hint.cookingStanding' : 'action.hint.cookingBoiling',
       };
     case 'PULL':
-      // Resting in the air nothing starts on its own: the grace runs out into
-      // done, and the subline already says the yolk is still cooking.
+      // Resting in the air no water waits to be beaten: the grace runs out
+      // into Done on the counter, into the wait to the opening in an egg cup,
+      // and the subline already says the yolk is still cooking.
       return {
         label: 'readout.phase.pull',
         subline: 'readout.sub.pull',
@@ -314,7 +316,9 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
     case 'COOLING':
       return {
         label: COOLING_LABELS[f.cooling],
-        subline: f.probeWanted ? 'readout.sub.coolingProbe' : 'readout.sub.coolingPeak',
+        subline: f.cooling === 'eggCup'
+          ? 'readout.sub.coolingEggCup'
+          : f.probeWanted ? 'readout.sub.coolingProbe' : 'readout.sub.coolingPeak',
         action: null,
         hint: null,
       };

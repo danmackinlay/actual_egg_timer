@@ -74,7 +74,8 @@ export interface ReadoutProbe {
 
 /** Whole seconds until the counted cooling starts without the cook, if they
  *  do not tap first; null outside the pull, and for an egg resting in the
- *  air, where nothing starts - the grace runs out into Done. */
+ *  air, where no water waits to be beaten - the grace runs out into Done on
+ *  the counter, and into the wait to the opening in an egg cup. */
 export function coolingStartsIn_s(d: Deadlines, cooling: Cooling, now_s: number): number | null {
   if (phaseAt(d, now_s) !== 'PULL' || restsInAir(cooling)) return null;
   return Math.max(0, Math.ceil(PULL_GRACE_SECONDS - (now_s - d.cookEnd_s)));

@@ -166,7 +166,7 @@ struct CookLiveActivity: Widget {
         case .heating: state.provisional ? .`activity.note.estimate` : .`activity.note.heating`
         case .cooking: state.provisional ? .`activity.note.estimate` : .`activity.note.cooking`
         case .pull: pullLineKey(cooling: state.cook.cooling)
-        case .cooling: .`activity.note.cooling`
+        case .cooling, .opening: .`activity.note.cooling`
         }
         return tr(key, in: attributes.lang)
     }
@@ -177,6 +177,7 @@ struct CookLiveActivity: Widget {
         case .cooking: .accentColor
         case .pull: .orange
         case .cooling: .cyan
+        case .opening: .orange
         }
     }
 }

@@ -11,6 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.ts';
+import { EGG_CUP_OPENED_S } from '../src/core/constants.ts';
 import type { Cooling } from '../src/core/protocol.ts';
 import { decisionInputs, inputsKey, numberKey } from '../src/core/decide.ts';
 import type { EggRecord } from '../src/core/record.ts';
@@ -219,11 +220,13 @@ test('the readout: counting down, past the pull, and the question that holds Don
   assert.deepEqual([r.asking, r.label, r.primary, r.secondary, r.hint, r.sign], [true, 'ask.stillIn', 'ask.stillIn.yes', 'ask.stillIn.no', null, '+']);
   assert.deepEqual(kinds(asked.effects).filter((k) => k === 'alarms'), ['alarms'], 'the alarms cancelled while it asks');
   // "Cooling starts on its own" counts down only in the pull, and only where
-  // the grace runs out into a cooling: on the counter it runs out into Done.
+  // the grace runs out into water: on the counter it runs out into Done, and
+  // in an egg cup into the wait to the opening.
   const d0 = plan.deadlines;
-  for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
+  for (const cooling of ['ice', 'tap', 'counter', 'eggCup'] as Cooling[]) {
     const left = coolingStartsIn_s(d0, cooling, d0.cookEnd_s + 5.5);
-    assert.equal(left, cooling === 'counter' ? null : Math.ceil(PULL_GRACE_SECONDS - 5.5), cooling);
+    const air = cooling === 'counter' || cooling === 'eggCup';
+    assert.equal(left, air ? null : Math.ceil(PULL_GRACE_SECONDS - 5.5), cooling);
     assert.equal(coolingStartsIn_s(d0, cooling, d0.cookEnd_s - 1), null, 'only in the pull');
     assert.equal(coolingStartsIn_s(d0, cooling, d0.cookEnd_s + PULL_GRACE_SECONDS + 3), null, 'not once it has');
   }
@@ -272,7 +275,7 @@ function tickEach(d: Driver, from_s: number, until_s: number): Trace {
 // The counter rest is the old regression: iOS looked for the cooling's end
 // before the pull's grace, so a cook with no cooling fell from Cooking
 // straight to Done, the pull never shown and its alarm ringing at Done.
-for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
+for (const cooling of ['ice', 'tap', 'counter', 'eggCup'] as Cooling[]) {
   test(`${cooling}, ticked each second: the pull rings, holds for its whole grace, then the cooling or Done, which rings once`, () => {
     const d = start({ cooling: cooling });
     const pull = Math.ceil(d.pull);
@@ -289,12 +292,16 @@ for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
     const done = cooling === 'counter' ? graceEnd : Math.ceil(d.coolEnd);
     assert.deepEqual(t.rings, [[pull, 'ring:pull'], [done, 'ring:cooled']]);
     if (cooling !== 'counter') assert.notEqual(cook.events.cooledAt_s, null, 'the cooling ended, written down');
+    if (cooling === 'eggCup') {
+      assert.equal(cook.events.cooledAt_s, (cook.events.pulled?.out_s ?? NaN) + EGG_CUP_OPENED_S,
+        "opened two minutes after the grace's end");
+    }
     assert.ok(t.plans <= 8, `planned ${t.plans} times in an hour of ticks, never every tick`);
   });
 }
 
 test("the cook's tap out of the pull: the cooling counted from the tap, or Done on the counter", () => {
-  for (const cooling of ['ice', 'counter'] as Cooling[]) {
+  for (const cooling of ['ice', 'counter', 'eggCup'] as Cooling[]) {
     const d = start({ cooling: cooling });
     const t = tickEach(d, S + 2, Math.ceil(d.pull) + 4);
     const out = Math.ceil(d.pull) + 5;
@@ -304,6 +311,7 @@ test("the cook's tap out of the pull: the cooling counted from the tap, or Done 
     assert.equal(d.state.cook.events.pulled?.by, 'cook');
     assert.equal(phaseAt(plan.deadlines, out), cooling === 'counter' ? 'DONE' : 'COOLING');
     if (cooling === 'ice') assert.equal(plan.deadlines.coolEnd_s, out + plan.cool_s, 'counted from the tap');
+    if (cooling === 'eggCup') assert.equal(plan.deadlines.coolEnd_s, out + EGG_CUP_OPENED_S, 'the opening, from the tap');
     const rings = [...t.rings.map(([, k]) => k), ...kinds(step.effects).filter((k) => k.startsWith('ring:'))];
     assert.deepEqual(rings, cooling === 'counter' ? ['ring:pull', 'ring:cooled'] : ['ring:pull']);
   }
