@@ -43,6 +43,16 @@ function isWords(literal: string): boolean {
     .replace(/\\u\{[0-9a-fA-F]+\}|\\./g, '').replace(/%[-+ 0#]*\d*(\.\d+)?(ll|l|h)?[a-zA-Z@]/g, ''));
 }
 
+/** Whether the literal at `at`, `length` long, is a dictionary key: a colon
+ *  straight after it, and where a key can stand, first on the line or after
+ *  `[` or `,`. A ternary's branch (`c ? "Yes": "No"`) is not one. `masked`
+ *  is the line with its literals blanked. */
+function isKey(masked: string, at: number, length: number): boolean {
+  if (masked[at + length] !== ':') return false;
+  const before = masked.slice(0, at).trimEnd();
+  return before === '' || before.endsWith('[') || before.endsWith(',');
+}
+
 /** Each literal in `source` that is words in a text call, as `file:line: "…"`. */
 export function lintSwift(file: string, source: string): string[] {
   const failures: string[] = [];
@@ -74,7 +84,7 @@ export function lintSwift(file: string, source: string): string[] {
         else if (masked[end] === ')') depth--;
       }
       for (const lit of raw.slice(0, end).matchAll(LITERAL)) {
-        if (lit.index < call.index || raw[lit.index + lit[0].length] === ':' || flagged.has(lit.index)) continue;
+        if (lit.index < call.index || isKey(masked, lit.index, lit[0].length) || flagged.has(lit.index)) continue;
         if (NOT_TEXT.test(raw.slice(0, lit.index)) || !isWords(lit[0])) continue;
         flagged.add(lit.index);
         failures.push(`${where}: ${lit[0]} is words on a screen; give it a key in copy/en.json`);
