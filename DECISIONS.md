@@ -661,7 +661,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     with the rest ("Yes, sweep v4 too"). On iOS the stores are in a suite
     of their own (17 October 2026), which the sweep clears of every key the
     table does not list; what 0.5 and earlier kept in the standard domain,
-    `v4` among it, is left there unread. What stays: "Export
+    `v4` among it, is left there unread, but sharing's two keys, carried
+    into the suite once at launch so that what was sent stays deletable
+    (19 October 2026). What stays: "Export
     my results", in Settings under What I've learned, which saves the store
     to a file as data, by each app's own JSON encoder, a damaged store as
     its text (a download on the web, the share sheet on iOS, nothing sent); `npm run eggs -- import`, which reads the owner's

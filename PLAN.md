@@ -119,6 +119,11 @@ Start the QA pass here.
   Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
   the bracket's words, and focus after a press. Both apps' names were read
   from the accessibility tree, not heard.
+- **The 0.5.1 upgrade, on a phone**: sharing on and an egg sent under
+  `v0.5.1-alpha.1`, then this build: sharing still on under the same ID,
+  and "Delete shared results" reaching the eggs sent before (only the fake
+  store has run it). And VoiceOver's swipe at a stepper's bound after the
+  pull, which must not write a level only previewed.
 - **The egg's two pictures**: its name, hint and activation heard with
   VoiceOver on a device; and, for the owner's eye, the heat map at idle,
   which shows the aimed egg as eaten, cold after ice, where the egg at the
