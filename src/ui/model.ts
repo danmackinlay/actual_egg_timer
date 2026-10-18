@@ -40,8 +40,8 @@ import type { Outcome } from '../core/outcome.ts';
 import type { ShareState } from './shareState.ts';
 import type { Solution } from '../core/solve.ts';
 import type { CertaintyReading } from '../core/certainty.ts';
-import { CARRYOVER_WINDOW } from '../core/constants.ts';
 import { type EggSection, type SectionView, advanceSection, createSection, previewSection } from '../core/section.ts';
+import { carryoverWindow_s } from '../core/protocol.ts';
 import type { WhiteReport, YolkWord } from '../core/infer.ts';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.ts';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.ts';
@@ -629,7 +629,8 @@ function liveEgg(m: Model, now_s: number): Model {
   const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
   const section = m.live === null || m.live.key !== key ? createSection(plan.egg, plan.setup, params) : copySection(m.live.section);
   const t_s = now_s - cook.startedAt_s;
-  advanceSection(section, plan.egg, plan.setup, out_s === null ? t_s : Math.min(t_s, out_s + CARRYOVER_WINDOW), out_s);
+  const to_s = out_s === null ? t_s : Math.min(t_s, out_s + carryoverWindow_s(plan.setup.cooling));
+  advanceSection(section, plan.egg, plan.setup, to_s, out_s);
   return { ...m, live: { key: key, section: section } };
 }
 

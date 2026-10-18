@@ -271,7 +271,7 @@ extension AppModel {
         let elapsedS = nowS - start
         return (cache.live(
             egg: plan.egg, setup: plan.setup, startedAtS: start, params: params,
-            toS: outS.map { min(elapsedS, $0 + Constants.carryoverWindow) } ?? elapsedS,
+            toS: outS.map { min(elapsedS, $0 + carryoverWindowS(plan.setup.cooling)) } ?? elapsedS,
             outAtS: outS, whiteTargetMin: whiteTarget
         ), .live)
     }
