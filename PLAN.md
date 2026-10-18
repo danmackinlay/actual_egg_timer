@@ -122,9 +122,9 @@ Start the QA pass here.
   stop, no ring on the authorised path, the refused and failed notification
   states, and the slider's haptic tick, and whether the owner wants it.
 - **Screen readers.** VoiceOver: the sentence and its clauses, the (i)'s
-  Expanded and Collapsed, the slider's adjustable swipe, the bracket's words,
-  and focus after a press. The web's names were read from the DOM, not heard.
-- **Dynamic Type** at large sizes on iOS.
+  Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
+  the bracket's words, and focus after a press. Both apps' names were read
+  from the accessibility tree, not heard.
 - **The web on a phone, and Safari.** The web's checks run an emulated
   viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
   digits), no alarm heard, no Home Screen opening
