@@ -270,7 +270,7 @@ export const layoutScenarios: Record<string, Scenario> = {
   },
 
   'touch-targets': {
-    what: 'at 390 and 320 px, every − and + in the egg\'s panel and in Settings takes a tap 44 px wide and tall, and its field still takes a tap at either edge; the sound pill keeps the page\'s 16 px gutter; a choice in Settings keeps 10 px either side of its words',
+    what: 'at 390 and 320 px, every − and + in the egg\'s panel and in Settings takes a tap 44 px wide and tall, and its field still takes a tap at either edge; the sound pill keeps the page\'s 16 px gutter; a choice in Settings keeps 10 px either side of its words; no Settings row runs past the page\'s edge',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.until("__snap().chosen !== null", 'the time decided');
@@ -322,9 +322,25 @@ export const layoutScenarios: Record<string, Scenario> = {
             const room = Math.min(words.left - r.left, r.right - words.right) - 1;
             return room < 9.5 || l.scrollWidth > l.clientWidth ? [l.textContent + ' ' + room.toFixed(1) + ' px'] : []; })`);
         check(cramped.length === 0, `at ${width} px, words nearer their choice's edge than 10 px: ${cramped.join('; ')}`);
+        // Nothing in a Settings row reaches past the row's right edge, and the
+        // page scrolls only up and down.
+        const over = await tab.eval<{ wide: number; seen: number; rows: string[] }>(`(() => {
+          const rows = [];
+          for (const s of document.querySelectorAll('#settings .setting')) {
+            if (s.offsetParent === null) continue;
+            const edge = s.getBoundingClientRect().right;
+            for (const e of s.querySelectorAll('*')) {
+              const r = e.getBoundingClientRect();
+              if (r.width > 0 && r.right > edge + 0.5) rows.push((e.id || e.tagName.toLowerCase()) + ' ' + (r.right - edge).toFixed(1) + ' px past');
+            }
+          }
+          return { wide: document.documentElement.scrollWidth - document.documentElement.clientWidth, seen: document.querySelectorAll('#settings .setting').length, rows: rows };
+        })()`);
+        check(over.seen > 0, 'no Settings row found');
+        check(over.rows.length === 0 && over.wide <= 0, `at ${width} px Settings is ${over.wide} px too wide: ${over.rows.join('; ')}`);
         said.push(`${width} px: pill ${pill} px in`);
       }
-      return `every − and + takes 44 px or more, its field whole; ${said.join(', ')}; Settings' choices keep 10 px`;
+      return `every − and + takes 44 px or more, its field whole; ${said.join(', ')}; Settings' choices keep 10 px, and its rows the page's width`;
     },
   },
 };
