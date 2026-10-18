@@ -104,6 +104,7 @@ struct ClausePanel: View {
     let done: () -> Void
     @State private var more = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.editGesture) private var gesture
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -222,6 +223,8 @@ struct ClausePanel: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .fixedSize()
+                    // The stepper says it, as its value.
+                    .accessibilityHidden(true)
                 Stepper(tr(.`controls.startedAt`)) {
                     inHand.stepStart(up: true)
                 } onDecrement: {
@@ -230,7 +233,10 @@ struct ClausePanel: View {
                     if on { inHand.fingerDown(.startedAt) } else { inHand.fingerUp() }
                 }
                 .labelsHidden()
-                .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
+                .adjustable(
+                    tr(.`controls.startedAt`), value: timeOfDay(Date(timeIntervalSince1970: start)),
+                    field: .startedAt, gesture: gesture
+                ) { inHand.stepStart(up: $0) }
             }
             .appFont(.subheadline)
             if let limit = inHand.startLimit {
@@ -250,6 +256,8 @@ struct ClausePanel: View {
             // by side, the menu left the name a column a letter wide, or
             // nothing. There the menu's button wraps its choice rather than
             // run past the screen (`MenuChoice`).
+            // The menu says its name, so the name beside it is drawn for the
+            // eye alone and not read twice.
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(tr(.`controls.size`))
@@ -257,7 +265,10 @@ struct ClausePanel: View {
                     sizeMenu
                 }
             } else {
-                LabeledContent(tr(.`controls.size`)) {
+                HStack {
+                    Text(tr(.`controls.size`))
+                        .accessibilityHidden(true)
+                    Spacer(minLength: 8)
                     sizeMenu.fixedSize()
                 }
             }

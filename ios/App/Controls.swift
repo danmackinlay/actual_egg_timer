@@ -26,6 +26,38 @@ func parseTyped(_ text: String) -> Double? {
     Double(text.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces))
 }
 
+extension View {
+    /// A stepper as VoiceOver hears it: in place of its two halves, read as
+    /// "Decrement" and "Increment", one adjustable element of its size with
+    /// the field's name and value, swiped up and down. A finger still
+    /// presses and holds the − and + themselves. A swipe is one press: down
+    /// and up on the field's group while a cook runs (`EditGesture`), as a
+    /// tap is.
+    func adjustable(
+        _ label: String, value: String, field: HandGroup? = nil, gesture: EditGesture,
+        step: @escaping (_ up: Bool) -> Void
+    ) -> some View {
+        accessibilityRepresentation {
+            Rectangle()
+                .fill(.clear)
+                .accessibilityElement()
+                .accessibilityLabel(label)
+                .accessibilityValue(value)
+                .accessibilityAdjustableAction { direction in
+                    let up: Bool
+                    switch direction {
+                    case .increment: up = true
+                    case .decrement: up = false
+                    @unknown default: return
+                    }
+                    if let field { gesture.touch(field, true) }
+                    step(up)
+                    if let field { gesture.touch(field, false) }
+                }
+        }
+    }
+}
+
 /// An SI binding seen through a measure: it reads the stored value as
 /// displayed, and a control's value as SI, clamped by the limit.
 func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
@@ -64,7 +96,15 @@ struct StepperValue: View {
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
-                .accessibilityValue(show(value))
+        }
+        // The value and its stepper, one element to VoiceOver.
+        .adjustable(label, value: show(value), field: field, gesture: gesture) { up in
+            // As the stepper steps: the displayed value by a step, inside
+            // its bounds.
+            let shown = measured(measure, $value)
+            var next = shown.wrappedValue + (up ? measure.step : -measure.step)
+            if let b = measure.bounds { next = min(b.upperBound, max(b.lowerBound, next)) }
+            shown.wrappedValue = next
         }
     }
 }
@@ -122,7 +162,10 @@ struct CountValue: View {
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
-                .accessibilityValue(countText(Double(value)))
+        }
+        // The count and its stepper, one element to VoiceOver.
+        .adjustable(label, value: countText(Double(value)), field: field, gesture: gesture) { up in
+            value = min(Int(range.upperBound), max(Int(range.lowerBound), value + (up ? 1 : -1)))
         }
     }
 }
@@ -156,16 +199,20 @@ struct MeasureField: View {
     @FocusState private var focused: Bool
 
     var body: some View {
+        // The label is drawn for the eye; the field and the stepper each say
+        // it themselves, so it is read once with each and never twice.
         Group {
             if size.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
-                    // The field, named by the same words, says it.
                     Text(label)
                         .accessibilityHidden(true)
                     controls(large: true)
                 }
             } else {
-                LabeledContent(label) {
+                HStack {
+                    Text(label)
+                        .accessibilityHidden(true)
+                    Spacer(minLength: 8)
                     controls(large: false)
                 }
             }
@@ -187,6 +234,7 @@ struct MeasureField: View {
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: large ? .infinity : 72)
                 .focused($focused)
+                .accessibilityLabel(label)
                 .onChange(of: text) {
                     guard focused else { return }
                     if let typed = parseTyped(text), let si = parse(measure, typed) { set(si) }
@@ -194,6 +242,8 @@ struct MeasureField: View {
             Text(tr(measure.unitKey))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: large, vertical: large)
+                // The stepper says the value with its unit.
+                .accessibilityHidden(true)
             Stepper(label) {
                 step(up: true)
             } onDecrement: {
@@ -202,7 +252,7 @@ struct MeasureField: View {
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
-                .accessibilityValue(spoken)
+                .adjustable(label, value: spoken, field: field, gesture: gesture) { step(up: $0) }
         }
     }
 
@@ -286,6 +336,8 @@ struct NudgeField: View {
             Text(tr(measure.unitKey))
                 .foregroundStyle(.secondary)
                 .fixedSize()
+                // The stepper says the value with its unit.
+                .accessibilityHidden(true)
             Stepper(label) {
                 step(up: true)
             } onDecrement: {
@@ -295,7 +347,11 @@ struct NudgeField: View {
             }
             .labelsHidden()
             .disabled(disabled)
-            .accessibilityValue(text.isEmpty ? fieldText(measure, start) : text)
+            .adjustable(label, value: spokenValue, field: field, gesture: gesture) { up in
+                guard !disabled else { return }
+                if field == nil, let control { gesture.used(control) }
+                step(up: up)
+            }
         }
         .onChange(of: focused) {
             if focused, field == nil, let control { gesture.used(control) }
@@ -304,6 +360,13 @@ struct NudgeField: View {
     }
 
     private var start: Double { nudgeFrom(measure, startSI) }
+
+    /// What the field holds, or where an empty one starts, with its unit:
+    /// "20 °C".
+    private var spokenValue: String {
+        let shown = text.isEmpty ? fieldText(measure, start) : text
+        return "\(shown) \(tr(measure.unitKey))"
+    }
 
     private func step(up: Bool) {
         focused = false
