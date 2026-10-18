@@ -29,8 +29,8 @@ struct RunningConformance {
         }
     }
 
-    /// Exactly: a cook's fields are stored values, and a move does no
-    /// arithmetic on them.
+    /// Exactly, and as stored, nulls and all: a cook's fields are stored
+    /// values, and a move does no arithmetic on them.
     @Test("the boil tap, a correction and a corrected start, taken and refused")
     func moves() throws {
         let rows = try Fixtures.list("running.json", "moves")
@@ -54,7 +54,7 @@ struct RunningConformance {
                 try expectClose(earliestStartS(cook), row.num("earliest_s"), "\(note): earliest start")
                 after = startCorrected(cook, startedAtS: try move.optionalNum("start") ?? .nan, nowS: now)
             }
-            expectJSON(after, row["after"], note, tolerance: 0)
+            expectJSON(after, row["after"], note, tolerance: 0, strict: true)
         }
     }
 
@@ -130,13 +130,13 @@ struct RunningConformance {
                 cook, plan: plan, context: decoded(RecordContext.self, row["context"]), yolkWord: answers.yolkWord,
                 white: answers.white, probe: answers.probe
             )
-            expectJSON(made.facts.map(recordFor), row["record"], "\(note): the record")
+            expectJSON(made.facts.map(recordFor), row["record"], "\(note): the record", strict: true)
             expectJSON(made.refused, row["refused"], "\(note): why refused")
             // The cook as it ran: current, kept, shown, and planned again on
             // the plan's calibration and surface.
             let ran = try row.object("asRan")
             #expect(try asRanCurrent(cook) == ran.flag("current"), "\(note): as it ran, current")
-            expectJSON(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept")
+            expectJSON(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept", strict: true)
             let shown = asRanShown(cook, plan: plan)
             expectJSON(shown, ran["shown"], "\(note): as it ran, shown")
             expectJSON(shown.map { solutionAsRan(plan, ran: $0) }, ran["solution"], "\(note): as it ran, solved")

@@ -110,26 +110,23 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 @Suite("The record")
 struct RecordConformance {
     /// What a loader makes of each: the record as parsed, or null where it
-    /// refuses one.
+    /// refuses one, written back with the TypeScript's keys.
     @Test("which records a loader trusts, case by case")
     func validation() throws {
         for c in try Fixtures.list("record.json", "cases") {
-            try expectJSON(decodeRecord(c["record"] as Any), c["parsed"], c.str("why"))
+            try expectJSON(decodeRecord(c["record"] as Any), c["parsed"], c.str("why"), strict: true)
         }
     }
 
     /// What both apps write down for a cook: the same record from the same
-    /// facts, with `id` written only when there is one.
+    /// facts, with its nulls written and `id` only when there is one.
     @Test("the record made from a cook's facts, case by case")
     func made() throws {
         for c in try Fixtures.list("record.json", "made") {
             let why = try c.str("why")
             let made = try recordFor(decoded(CookFacts.self, c["facts"]))
-            expectJSON(made, c["record"], why)
+            expectJSON(made, c["record"], why, strict: true)
             #expect(validRecord(made), "\(why): a record the loader reads")
-            let written = try jsonOf(made) as? [String: Any]
-            let expected = try c.object("record")
-            #expect((written?["id"] == nil) == (expected["id"] == nil), "\(why): id")
         }
     }
 
@@ -139,7 +136,7 @@ struct RecordConformance {
             let record = try decoded(EggRecord.self, c["record"])
             let coolEnd = try c.optionalNum("coolEnd_s")
             let read = try probeReadingFor(record, centreC: c.num("centre_C"), coolEndS: coolEnd)
-            expectJSON(read, c["probe"], "cooling ended at \(String(describing: coolEnd))")
+            expectJSON(read, c["probe"], "cooling ended at \(String(describing: coolEnd))", strict: true)
         }
     }
 
@@ -173,8 +170,7 @@ struct RecordConformance {
     }
 
     /// The same store makes the same results file, as data, with the same
-    /// keys: `jsonDifferences` reads a missing key as null, and a file that
-    /// left out a key the TypeScript writes as null would pass on values alone.
+    /// keys.
     @Test("the results file is the TypeScript's")
     func resultsFiles() throws {
         for n in try Fixtures.list("record.json", "resultsFile.names") {
@@ -183,29 +179,20 @@ struct RecordConformance {
         for c in try Fixtures.list("record.json", "resultsFile.cases") {
             let meta = try decoded(ResultsMeta.self, c["meta"])
             let file = try JSONSerialization.jsonObject(with: Data(resultsFile(meta, stored: c["stored"] as? String).utf8))
-            let expected = try c.object("file")
-            let keys = try #require(file as? [String: Any], "results file for \(meta.appVersion) is not an object").keys
-            #expect(Set(keys) == Set(expected.keys), "results file for \(meta.appVersion): its keys")
-            let differences = jsonDifferences(file, expected)
+            let differences = jsonDifferences(file, c["file"], strict: true)
             #expect(differences.isEmpty, "results file for \(meta.appVersion): \(differences.prefix(6))")
         }
     }
 
-    /// Written with explicit nulls, and read back as the same record.
+    /// Written with explicit nulls, as the TypeScript wrote the log, and read
+    /// back as the same record.
     @Test("a record survives its own JSON, nulls and all")
     func roundTrip() throws {
-        for record in try fixtureLog() {
-            let data = try JSONEncoder().encode(record)
-            let back = try JSONDecoder().decode(EggRecord.self, from: data)
-            #expect(back == record)
-            let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            #expect(object?["white"] is NSNull || object?["white"] is String, "white written")
-            #expect(
-                record.probe == nil ? object?["probe"] is NSNull : object?["probe"] is [String: Any],
-                "probe written, as null when there is none"
-            )
-            #expect(object?["yolk"] == nil, "no answer from before the five words")
-            #expect(object?["yolkWord"] != nil, "yolk word written, as null when there is none")
+        let rows = try #require(Fixtures.node("record.json", "replay.log") as? [Any], "no replay log")
+        for (i, (row, record)) in zip(rows, try fixtureLog()).enumerated() {
+            expectJSON(record, row, "log record \(i)", strict: true)
+            let back = try JSONDecoder().decode(EggRecord.self, from: JSONEncoder().encode(record))
+            #expect(back == record, "log record \(i), read back")
         }
     }
 }

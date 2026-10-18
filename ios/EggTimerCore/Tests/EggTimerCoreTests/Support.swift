@@ -82,12 +82,18 @@ private func absentMeans(_ key: String) -> Any? {
 /// differ: a path and the two values. Numbers agree to `tolerance` relative
 /// above 1 and absolute below, or to the tolerance
 /// `tolerances` gives their key; with `clockFrom`, a number past 1e9 is an
-/// epoch time and is compared as seconds from it, as a cook time is. A missing
-/// key, JSON's null and a non-finite number are alike; strings, booleans and
-/// lengths are compared exactly.
+/// epoch time and is compared as seconds from it, as a cook time is. JSON's
+/// null and a non-finite number are alike; strings, booleans and lengths are
+/// compared exactly.
+///
+/// A missing key reads as null, or as what `absentMeans` says it means:
+/// Swift's own Codable leaves a nil out where the TypeScript writes null, and
+/// a result that only these tests encode need not spell its nulls. What is
+/// stored or sent is held `strict`: a key is in both or in neither, so a null
+/// left out is found, as the server's `parseRecord` would refuse it.
 func jsonDifferences(
     _ actual: Any?, _ expected: Any?, tolerance: Double = conformanceTolerance,
-    tolerances: [String: Double] = [:], clockFrom: Double? = nil, at path: String = ""
+    tolerances: [String: Double] = [:], clockFrom: Double? = nil, strict: Bool = false, at path: String = ""
 ) -> [String] {
     func isNull(_ v: Any?) -> Bool { v == nil || v is NSNull || (v as? String) == nonFinite }
     func shown(_ v: Any?) -> String {
@@ -105,10 +111,15 @@ func jsonDifferences(
     }
     if let a = actual as? [String: Any], let e = expected as? [String: Any] {
         return Set(a.keys).union(e.keys).sorted().flatMap { key -> [String] in
-            let (x, y) = (a[key] ?? absentMeans(key), e[key] ?? absentMeans(key))
+            let at = path.isEmpty ? key : "\(path).\(key)"
+            if strict, (a[key] == nil) != (e[key] == nil) {
+                let (x, y) = (a[key].map { shown($0) } ?? "absent", e[key].map { shown($0) } ?? "absent")
+                return ["\(at): \(x), expected \(y)"]
+            }
+            let (x, y) = strict ? (a[key], e[key]) : (a[key] ?? absentMeans(key), e[key] ?? absentMeans(key))
             return jsonDifferences(
                 x, y, tolerance: tolerances[key] ?? tolerance, tolerances: tolerances, clockFrom: clockFrom,
-                at: path.isEmpty ? key : "\(path).\(key)"
+                strict: strict, at: at
             )
         }
     }
@@ -116,7 +127,8 @@ func jsonDifferences(
         guard a.count == e.count else { return ["\(here): \(a.count) items, expected \(e.count)"] }
         return zip(a, e).enumerated().flatMap { i, pair in
             jsonDifferences(
-                pair.0, pair.1, tolerance: tolerance, tolerances: tolerances, clockFrom: clockFrom, at: "\(path)[\(i)]"
+                pair.0, pair.1, tolerance: tolerance, tolerances: tolerances, clockFrom: clockFrom, strict: strict,
+                at: "\(path)[\(i)]"
             )
         }
     }
@@ -138,14 +150,17 @@ func jsonDifferences(
 }
 
 /// The comparison every conformance suite makes: a result of this core,
-/// whole, against the fixture's, as `jsonDifferences` compares them.
+/// whole, against the fixture's, as `jsonDifferences` compares them; `strict`
+/// for what is stored or sent.
 func expectJSON<T: Encodable>(
     _ actual: T, _ expected: Any?, _ what: String, tolerance: Double = conformanceTolerance,
-    tolerances: [String: Double] = [:], clockFrom: Double? = nil, sourceLocation: SourceLocation = #_sourceLocation
+    tolerances: [String: Double] = [:], clockFrom: Double? = nil, strict: Bool = false,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) {
     do {
         let differences = jsonDifferences(
-            try jsonOf(actual), expected, tolerance: tolerance, tolerances: tolerances, clockFrom: clockFrom
+            try jsonOf(actual), expected, tolerance: tolerance, tolerances: tolerances, clockFrom: clockFrom,
+            strict: strict
         )
         let shown = differences.prefix(6).joined(separator: "; ")
         let more = differences.count > 6 ? "; and \(differences.count - 6) more" : ""
@@ -241,5 +256,14 @@ struct WholeValueTests {
         #expect(jsonDifferences(other, fixture, clockFrom: 2e9).count == found.count, "seconds from the clock")
         #expect(jsonDifferences(try jsonOf([1.0, .infinity]), [1, NSNull()]).isEmpty, "a non-finite number is null")
         #expect(jsonDifferences([1, 2], [1]).count == 1, "a length")
+        let strictly = jsonDifferences(same, fixture, strict: true).map { String($0.prefix { $0 != ":" }) }
+        #expect(strictly == ["afterBoil", "b.d"], "strict: a key left out is not its null, nor what it means")
+        let written = try json(
+            #"{"a": 1.5, "b": {"c": [1, 2e9], "d": null}, "e": true, "f": "x", "afterBoil": "hold", "g": null}"#
+        )
+        #expect(jsonDifferences(written, fixture, strict: true).count == 1, "strict: a null not in the fixture")
+        let (leftOut, null): (Any, Any) = ([[String: Any]()], [["x": NSNull()]])
+        #expect(jsonDifferences(leftOut, null).isEmpty, "lenient: in a list")
+        #expect(jsonDifferences(leftOut, null, strict: true).count == 1, "strict: in a list")
     }
 }
