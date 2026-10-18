@@ -272,10 +272,9 @@ struct MenuChoice<Tag: Hashable>: View {
                     open = false
                 } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        Image(systemName: "checkmark")
-                            .font(.body.weight(.semibold))
-                            .opacity(picked ? 1 : 0)
-                            .accessibilityHidden(true)
+                        // On the chosen row alone, room held on the others.
+                        let tick = Image(systemName: "checkmark").font(.body.weight(.semibold))
+                        if picked { tick.accessibilityHidden(true) } else { tick.hidden() }
                         Text(choices[i].title)
                             .appFont(.body)
                             .fixedSize(horizontal: false, vertical: true)

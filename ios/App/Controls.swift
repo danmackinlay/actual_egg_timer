@@ -470,10 +470,11 @@ struct ListChoice<Tag: Hashable>: View {
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
-                        Image(systemName: "checkmark")
-                            .font(.subheadline.weight(.semibold))
-                            .opacity(picked ? 1 : 0)
-                            .accessibilityHidden(true)
+                        // Drawn on the chosen row alone, and only held
+                        // room for on the others, so no other row has a
+                        // tick to be read as "Selected".
+                        let tick = Image(systemName: "checkmark").font(.subheadline.weight(.semibold))
+                        if picked { tick.accessibilityHidden(true) } else { tick.hidden() }
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 11)
