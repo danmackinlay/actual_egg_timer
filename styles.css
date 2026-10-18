@@ -136,11 +136,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   transform: rotate(45deg);
 }
 
-/* Mute: a pill, not a bar. It has to be reachable from every phase. */
+/* Mute: a pill, not a bar. It has to be reachable from every phase. The bar
+   reaches 8 px into the gutter, where the links' padding goes; the pill's
+   edge is drawn, so it keeps the page's 16 px. */
 button.mute {
   width: auto;
   min-height: 36px;
   margin-left: auto;
+  margin-right: 8px;
   padding: 6px 14px;
   font-size: 0.8125rem;
   color: var(--dim);
@@ -602,6 +605,7 @@ select { max-width: 60vw; }
    field, so the row is no taller; the glyphs are drawn here, so the markup
    holds no words. A press is a hold, never a selection or a menu. */
 button.step {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -622,6 +626,18 @@ button.step {
 button.step--less::before { content: "\2212"; }
 button.step--more::before { content: "+"; }
 button.step:active { background: var(--line); }
+/* Drawn 34 px wide, a − or + takes a tap 44 px wide: 3 px more on the
+   field's side, short of the 4 px gap to it, so a tap at the field's edge
+   stays the field's however its edges round to pixels, and 7 px more on the
+   other, across the gap to the label, or the 6 px to a unit and a pixel of
+   it, which is words and takes no tap of its own. */
+button.step::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+}
+button.step--less::after { left: -8px; right: -4px; }
+button.step--more::after { left: -4px; right: -8px; }
 .unit:has(button.step) { gap: 4px; }
 .unit:has(button.step) input[type="number"] { width: 4rem; padding-inline: 8px; }
 /* When the eggs went in, mid-cook: a time of day between its − and +, read
@@ -675,6 +691,11 @@ input[data-stepper]::-webkit-outer-spin-button { -webkit-appearance: none; margi
   font-size: 0.9375rem;
   cursor: pointer;
 }
+/* In Settings a group spans the page, so its choices can spare the room:
+   their words wrap to a second line before they come nearer the edge than
+   10 px ("Wind-up timer" on a phone). A clause's panel is narrower, and
+   keeps them on as few lines as it can. */
+.setting .seg label { padding-inline: 10px; }
 .seg input[type="radio"]:checked + label {
   background: var(--accent);
   color: var(--accent-fg);
