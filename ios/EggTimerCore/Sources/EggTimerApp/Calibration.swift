@@ -205,6 +205,12 @@ public enum Calibrations {
         return kept
     }
 
+    /// Whether this build reads `data` as a store: anything of it kept, the
+    /// log or the posterior, rather than dropped for the prior.
+    static func reads(_ data: Data) -> Bool {
+        decode(data).path != .fresh
+    }
+
     private static func decode(_ v4: Data?) -> (Kept, path: LoadPath) {
         let decoder = JSONDecoder()
         let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }
