@@ -9,7 +9,15 @@ public enum StartMode: String, Sendable, Codable {
 }
 
 public enum Cooling: String, Sendable, Codable, CaseIterable {
-    case ice, tap, bowl, counter
+    case ice, tap, bowl, counter, eggCup
+}
+
+public func restsInAir(_ cooling: Cooling) -> Bool {
+    cooling == .counter || cooling == .eggCup
+}
+
+public func carryoverWindowS(_ cooling: Cooling) -> Double {
+    cooling == .eggCup ? Constants.eggCupOpenedS : Constants.carryoverWindow
 }
 
 public enum HeatAfterBoil: String, Sendable, Codable {
@@ -124,7 +132,7 @@ public enum Protocols {
         sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePullS: Double, dtS: Double,
         waterAtPullC: Double, meanAtPullC: Double
     ) -> Double {
-        if setup.cooling == .counter {
+        if restsInAir(setup.cooling) {
             let before = elapsedSincePullS > dtS ? elapsedSincePullS - dtS : 0.0
             let drying = wetShellDropC(egg)
                 * (exp(-before / Constants.tauPlunge) - exp(-elapsedSincePullS / Constants.tauPlunge))
@@ -179,7 +187,7 @@ public enum Protocols {
 public func coolingMediumC(_ cooling: Cooling, ambientC: Double, waterC: Double?) -> Double {
     switch cooling {
     case .ice: return Constants.tIceBathC
-    case .counter: return ambientC
+    case .counter, .eggCup: return ambientC
     case .tap: return waterC ?? Constants.tColdTapC
     case .bowl: return waterC ?? ambientC
     }

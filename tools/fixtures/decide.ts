@@ -39,6 +39,7 @@ const DECIDE_SPEC_INPUTS: DecisionInputs[] = [
   { egg: eggFromMass(0.05), setup: DECIDE_SETUP, params: { alpha_m2s: 1.62e-7 }, whiteDose_min: 0.11 },
   { egg: DECIDE_EGG, setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 540 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'counter' }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'eggCup' }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ afterBoil: 'off', waterLitres: 4 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'bowl', bowlLitres: 1, coolingWater_C: 9 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'tap', coolingWater_C: 24 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
@@ -128,10 +129,12 @@ DECIDE_CASES.push({ posterior: 'learned', level: 1.0, meanCookTime_s: DECIDE_GRI
 /* The solution at the chosen time (`decidedSolution`), and a cook re-solved
  * mid-cook with the lean it chose at "Eggs in" carried (`carriedSolution`). */
 // The second pot rests on the counter, where the softest yolk leaves the white
-// unset: no cook to choose for, so the lean is not carried.
+// unset: no cook to choose for, so the lean is not carried. The third is eaten
+// warm from an egg cup, at soft.
 const DECIDE_CARRIED = [
   { level: 0.41, setup: DECIDE_SETUP },
   { level: 0, setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+  { level: 0.22, setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'eggCup' }) },
 ].flatMap((pot) => [0, -12, 18].map((lean_s) => {
   const pz = decidePosteriors[1];
   const params = calibrationParams(calibrationOf(pz));

@@ -22,7 +22,7 @@ import { WHITE_RISK } from '../../src/core/outcome.ts';
 const PHASES: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
 const STARTS: StartMode[] = ['hot', 'cold'];
 const AFTER: HeatAfterBoil[] = ['hold', 'off'];
-const COOLINGS: Cooling[] = ['ice', 'tap', 'bowl', 'counter'];
+const COOLINGS: Cooling[] = ['ice', 'tap', 'bowl', 'counter', 'eggCup'];
 const FROMS: EggFrom[] = ['fridge', 'room', 'custom'];
 const KINDS: RefusalKind[] = ['none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets'];
 

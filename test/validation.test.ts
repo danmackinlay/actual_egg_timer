@@ -147,7 +147,7 @@ test('altitude: Denver\'s hard-boiled penalty, and the boiling point\'s one-line
 });
 
 test('carryover: the same 7.4 min cook under each cooling, against the insulated ceiling', () => {
-  const carry: [CookSetup['cooling'], number][] = [['ice', 65.0], ['tap', 65.6], ['counter', 75.3]];
+  const carry: [CookSetup['cooling'], number][] = [['ice', 65.0], ['tap', 65.6], ['counter', 75.3], ['eggCup', 63.3]];
   let iceAtPull = 0;
   for (const [cooling, expected] of carry) {
     const r = simulate(REFERENCE_EGG, referenceSetup({ cooling: cooling }), DEFAULT_PARAMS, 7.4 * 60);

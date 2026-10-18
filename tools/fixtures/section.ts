@@ -48,6 +48,12 @@ const CASES: Case[] = [
     ticks: [5, 480, 811, 813, 1712.4],
   },
   {
+    name: 'hot start, eaten warm from an egg cup',
+    setup: appSetup({ cooling: 'eggCup' }),
+    out_s: 372.4,
+    ticks: [372, 373, 480, 600],
+  },
+  {
     name: 'cold start under a cold tap, still in the water',
     setup: appSetup({ startMode: 'cold', cooling: 'tap', eggStart_C: 20 }),
     out_s: null,
@@ -70,6 +76,7 @@ const PREVIEWS: { name: string; setup: CookSetup; level: number }[] = [
   { name: 'hot start, ice bath, runny', setup: appSetup(), level: 0.05 },
   { name: 'cold start, cold tap, fudgy', setup: appSetup({ startMode: 'cold', cooling: 'tap' }), level: 0.62 },
   { name: 'hot start, on the counter, hard', setup: appSetup({ cooling: 'counter' }), level: 1 },
+  { name: 'hot start, in an egg cup, soft', setup: appSetup({ cooling: 'eggCup' }), level: 0.22 },
   { name: 'hot start, a bowl at the room, soft', setup: appSetup({ cooling: 'bowl', bowlLitres: 2 }), level: 0.22 },
   { name: 'heat off, little water, many eggs', setup: appSetup({ afterBoil: 'off', waterLitres: 0.5, eggCount: 8 }), level: 1 },
 ];

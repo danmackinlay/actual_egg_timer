@@ -474,7 +474,9 @@ interface PricedChange {
  * shown: into ice water instead of resting on the counter, and with the heat
  * off, twice the water (up to the most the controls take). Each is kept only
  * where its profile raises the chance of the word asked at the level on
- * screen by ADVICE_GAIN or more (`protocolAdvice`).
+ * screen by ADVICE_GAIN or more (`protocolAdvice`). Not ice for an egg eaten
+ * warm from an egg cup: the cook chose to eat it warm, and an ice bath makes
+ * another dish.
  *
  * A cold tap is not here. On the model it does what ice does, to the tenth,
  * at every level and after any number of eggs (`npm run decide -- advice`):

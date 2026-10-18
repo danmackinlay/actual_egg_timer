@@ -310,6 +310,7 @@ test('the cooling countdown runs to the peak, for the cooling actually used', (t
   assert.ok(probeMomentFor(COOK.result, 'ice'));
   assert.ok(probeMomentFor(tapSol.result, 'tap'));
   assert.ok(!probeMomentFor(COOK.result, 'counter'), 'nothing is counted on the counter');
+  assert.ok(!probeMomentFor(COOK.result, 'eggCup'), 'nor in an egg cup');
 });
 
 test('no peak after the pull, no probe, and the flat three minutes', () => {

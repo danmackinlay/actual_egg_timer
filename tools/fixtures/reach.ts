@@ -36,6 +36,7 @@ const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
   { posterior: 'prior', setup: DECIDE_SETUP },
   { posterior: 'learned', setup: DECIDE_SETUP },
   { posterior: 'learned', setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+  { posterior: 'learned', setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'eggCup' }) },
 ];
 
 /* The answer at a level (`answerAt`): the solve, the verdict, the retry at
@@ -213,6 +214,7 @@ const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: bo
   { setup: DECIDE_SETUP, eggFromClass: false, startAssumed: false },
   { setup: DECIDE_SETUP, eggFromClass: true, startAssumed: false },
   { setup: referenceSetup({ eggStart_C: 20, cooling: 'counter', afterBoil: 'off', waterLitres: 3 }), eggFromClass: true, startAssumed: true },
+  { setup: referenceSetup({ eggStart_C: 20, cooling: 'eggCup', afterBoil: 'off', waterLitres: 3 }), eggFromClass: true, startAssumed: true },
   { setup: referenceSetup({ eggStart_C: 20, cooling: 'tap' }), eggFromClass: false, startAssumed: false },
   { setup: referenceSetup({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
   { setup: referenceSetup({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },

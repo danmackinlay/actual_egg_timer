@@ -18,14 +18,14 @@
 
 import {
   ALPHA_DEFAULT, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
-  YOLK_RADIUS_FRAC, DT_SIM, CARRYOVER_WINDOW, TAU_PLUNGE,
+  YOLK_RADIUS_FRAC, DT_SIM, TAU_PLUNGE,
 } from '../src/core/constants.ts';
 import {
   type SphereState, createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, robinSurface,
 } from '../src/core/sphere.ts';
 import {
-  type CookSetup, airTimeConstant, bathTemperature, coolingTemperature, initialSurfaceTemperature,
-  wetShellDrop_C,
+  type CookSetup, airTimeConstant, bathTemperature, carryoverWindow_s, coolingTemperature,
+  initialSurfaceTemperature, restsInAir, wetShellDrop_C,
 } from '../src/core/protocol.ts';
 import { type Egg, eggFromMass } from '../src/core/geometry.ts';
 import { DEFAULT_EGG_MASS_KG } from '../src/core/inputs.ts';
@@ -79,13 +79,13 @@ function eggFor(mass_kg: number, th: Theta): Egg {
   };
 }
 
-/** `coolingTemperature` (protocol.ts), its counter branch restated with the
+/** `coolingTemperature` (protocol.ts), its branch for the air restated with the
  *  time constant scaled by `tauAirScale`. */
 function cooling(
   sphere: SphereState, egg: Egg, setup: CookSetup, elapsed_s: number, dt_s: number,
   waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
 ): number {
-  if (setup.cooling !== 'counter') {
+  if (!restsInAir(setup.cooling)) {
     return coolingTemperature(sphere, egg, setup, elapsed_s, dt_s, waterAtPull_C, meanAtPull_C);
   }
   const before = elapsed_s > dt_s ? elapsed_s - dt_s : 0.0;
@@ -121,7 +121,7 @@ export function runPerturbed(
   let pulled = false;
   let probe_C = Number.NaN;
   const probeAt = cook_s + probe.after_s;
-  const end = cook_s + CARRYOVER_WINDOW;
+  const end = cook_s + carryoverWindow_s(setup.cooling);
 
   while (t < end) {
     const tNext = t + DT_SIM;

@@ -12,7 +12,7 @@
  */
 
 import type { CopyKey } from './copyKeys.ts';
-import type { Cooling } from './protocol.ts';
+import { type Cooling, restsInAir } from './protocol.ts';
 import {
   type CookPlan, type Deadlines, PULL_GRACE_SECONDS, type Phase, type RunningCook, asksIfStillIn, guessLengthened, phaseAt,
 } from './running.ts';
@@ -73,10 +73,10 @@ export interface ReadoutProbe {
 }
 
 /** Whole seconds until the counted cooling starts without the cook, if they
- *  do not tap first; null outside the pull, and on a counter rest, where
- *  nothing starts - the grace runs out into Done. */
+ *  do not tap first; null outside the pull, and for an egg resting in the
+ *  air, where nothing starts - the grace runs out into Done. */
 export function coolingStartsIn_s(d: Deadlines, cooling: Cooling, now_s: number): number | null {
-  if (phaseAt(d, now_s) !== 'PULL' || cooling === 'counter') return null;
+  if (phaseAt(d, now_s) !== 'PULL' || restsInAir(cooling)) return null;
   return Math.max(0, Math.ceil(PULL_GRACE_SECONDS - (now_s - d.cookEnd_s)));
 }
 

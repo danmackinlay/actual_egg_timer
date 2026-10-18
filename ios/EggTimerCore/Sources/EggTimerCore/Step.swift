@@ -262,7 +262,7 @@ private func alarmsOf(_ cook: RunningCook?, _ plan: CookPlan?) -> Alarms {
 
 /// Whether the cook is Done by its events.
 private func doneByEvents(_ cook: RunningCook) -> Bool {
-    cook.events.pulled != nil && (cook.choices.cooling == .counter || cook.events.cooledAtS != nil)
+    cook.events.pulled != nil && (restsInAir(cook.choices.cooling) || cook.events.cooledAtS != nil)
 }
 
 /// The next moment the clock decides something for this cook, after `nowS`.

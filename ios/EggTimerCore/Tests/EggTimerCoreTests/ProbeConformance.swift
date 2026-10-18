@@ -121,7 +121,7 @@ struct ProbeConformance {
                 "cookTime_s": r.cookTimeS, "peakYolkTime_s": r.peakYolkTimeS, "coolingSeconds": coolingSecondsFor(r),
                 "moment": [
                     "ice": probeMomentFor(r, cooling: .ice), "tap": probeMomentFor(r, cooling: .tap),
-                    "counter": probeMomentFor(r, cooling: .counter),
+                    "counter": probeMomentFor(r, cooling: .counter), "eggCup": probeMomentFor(r, cooling: .eggCup),
                 ],
             ]
             expectJSON(got, row, "peak at \(r.peakYolkTimeS - r.cookTimeS) s")

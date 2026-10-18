@@ -37,7 +37,7 @@
  * The ring follows the log: the pull rings when this step wrote the pull
  * ringing (`rangAt_s`, the first time the clock passed it, or again after the
  * cook said the egg was still in); Done rings when this step finished the egg
- * - the counted cooling written ended, or the egg out on the counter - unless
+ * - the counted cooling written ended, or the egg out in the air - unless
  * the pull rang in the same step (a phone woken past the cooling rings the
  * pull, not Done). The ring stops when the cook took the egg out, said the
  * pull stands, or a correction undid the ring.
@@ -58,6 +58,7 @@ import {
   writeEvents,
 } from './running.ts';
 import { asRanCorrected, asRanCurrent, cookEnding, cookFactsFor, keepAsRan } from './asRan.ts';
+import { restsInAir } from './protocol.ts';
 
 /** What happened to the cook, at `now_s`. Cancel is `startAgain`. A reload
  *  or a relaunch is a `tick` on a stored cook with no plan yet. */
@@ -209,11 +210,11 @@ function alarmsOf(cook: RunningCook | null, plan: CookPlan | null): Alarms {
   };
 }
 
-/** Whether the cook is Done by its events: out, and on the counter or its
- *  counted cooling ended. */
+/** Whether the cook is Done by its events: out, and resting in the air or
+ *  its counted cooling ended. */
 function doneByEvents(cook: RunningCook): boolean {
   const e = cook.events;
-  return e.pulled !== null && (cook.choices.cooling === 'counter' || e.cooledAt_s !== null);
+  return e.pulled !== null && (restsInAir(cook.choices.cooling) || e.cooledAt_s !== null);
 }
 
 /** The next moment the clock decides something for this cook, after

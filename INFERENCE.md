@@ -344,7 +344,9 @@ fit's training data cannot drift between the two.
 - `ambient_C` is recorded rather than re-derived from the egg's start
   temperature, so a change to that rule cannot quietly change a replay.
 - `cooling` is `ice`, `tap`, `bowl` (12 October 2026: a bowl of still water
-  the eggs warm) or `counter`. Two optional fields say the water the eggs
+  the eggs warm), `counter` or `eggCup` (18 October 2026: eaten warm from an
+  egg cup, its doses stopped at the opening, README.md section 5; `cooled_s`
+  0, as on the counter). Two optional fields say the water the eggs
   cooled in, each present only where the cooling reads it and never `null`:
   `coolingWater_C`, running water's or the bowl's temperature as the cook
   gave it (absent, it was assumed: 15 °C running, the room's in a bowl), and

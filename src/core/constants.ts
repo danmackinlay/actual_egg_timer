@@ -233,3 +233,16 @@ export const DT_SIM = 0.5;
 /** How long to keep integrating after the egg leaves the water, s.
  *  Carryover peaks 4-5 minutes in; 15 minutes captures it fully. */
 export const CARRYOVER_WINDOW = 900.0;
+
+/** How long after the pull an egg eaten warm from an egg cup is opened, s:
+ *  where its doses stop (`carryoverWindow_s`). An assumption about the cook,
+ *  not a measurement. An egg served in a cup is carried to the table and
+ *  topped within a minute or so of leaving the pan, and the first spoonfuls
+ *  of yolk come within a minute of the top coming off; from then the yolk is
+ *  being eaten, so what it would reach later is not what the cook tastes.
+ *  Two minutes is the middle of that, well before the yolk's centre peaks,
+ *  six to eight minutes after the pull on the counter. It weighs: each 30 s
+ *  later takes about 30 s off soft's time (`npm run decide -- counter`).
+ *  README.md section 5, "In an egg cup", says what a probe reading at the
+ *  opening would test. */
+export const EGG_CUP_OPENED_S = 120.0;

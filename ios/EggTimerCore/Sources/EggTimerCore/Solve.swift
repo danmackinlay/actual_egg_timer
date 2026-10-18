@@ -99,7 +99,7 @@ public func simulate(
     var waterAtPull = initialSurface
     var meanAtPull = setup.eggStartC
 
-    let endTime = cookTimeS + Constants.carryoverWindow
+    let endTime = cookTimeS + carryoverWindowS(setup.cooling)
     while t < endTime {
         let tNext = t + Constants.dtSim
         let next: Double

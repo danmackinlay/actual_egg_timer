@@ -31,7 +31,7 @@ import {
 } from '../src/core/solve.ts';
 import {
   H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S, H_AIR, K_EGG, C_EGG,
-  ALPHA_DEFAULT, DT_SIM, C_WATER, T_COLD_TAP_C, TAU_PLUNGE,
+  ALPHA_DEFAULT, DT_SIM, C_WATER, T_COLD_TAP_C, TAU_PLUNGE, EGG_CUP_OPENED_S,
 } from '../src/core/constants.ts';
 import { referenceSetup } from '../tools/common.ts';
 
@@ -351,6 +351,21 @@ test('a soft yolk is unreachable on the counter but reachable from an ice bath',
     ice.softestLevel <= soft.level,
     `ice softestLevel (${ice.softestLevel}) must not exceed the requested level`,
   );
+});
+
+test('in an egg cup the counter\'s egg is eaten at the opening: its doses stop there, and soft is in reach', () => {
+  const cookTime = 7.4 * 60;
+  const counter = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
+  const cup = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'eggCup' }), DEFAULT_PARAMS, cookTime);
+  close(cup.yolkAtPull_C, counter.yolkAtPull_C, 1e-12, 'the same egg at the pull');
+  assert.ok(cup.peakYolkTime_s <= cookTime + EGG_CUP_OPENED_S, 'nothing counted after the opening');
+  assert.ok(cup.peakYolk_C < counter.peakYolk_C - 5, `opened at ${cup.peakYolk_C}, left whole ${counter.peakYolk_C}`);
+  assert.ok(cup.yolkDose_min < counter.yolkDose_min && cup.whiteDose_min < counter.whiteDose_min);
+
+  const soft = donenessFromSlider(0.22);
+  const solved = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'eggCup' }), DEFAULT_PARAMS, soft);
+  assert.equal(solved.reachable, true, 'soft in reach from an egg cup');
+  assert.equal(solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, soft).reachable, false);
 });
 
 // --------------------------------------------------------------------------

@@ -206,14 +206,14 @@
     }
   ],
   "cooling": [
-    {"cookTime_s": 400, "peakYolkTime_s": 583.2, "coolingSeconds": 183, "moment": {"ice": true, "tap": true, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 612.5, "coolingSeconds": 213, "moment": {"ice": true, "tap": true, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 460.4, "coolingSeconds": 60, "moment": {"ice": true, "tap": true, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 459.6, "coolingSeconds": 60, "moment": {"ice": false, "tap": false, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 420, "coolingSeconds": 60, "moment": {"ice": false, "tap": false, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 400, "coolingSeconds": 180, "moment": {"ice": false, "tap": false, "counter": false}},
-    {"cookTime_s": 400, "peakYolkTime_s": 150, "coolingSeconds": 180, "moment": {"ice": false, "tap": false, "counter": false}},
-    {"cookTime_s": 987.25, "peakYolkTime_s": 1152, "coolingSeconds": 165, "moment": {"ice": true, "tap": true, "counter": false}}
+    {"cookTime_s": 400, "peakYolkTime_s": 583.2, "coolingSeconds": 183, "moment": {"ice": true, "tap": true, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 612.5, "coolingSeconds": 213, "moment": {"ice": true, "tap": true, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 460.4, "coolingSeconds": 60, "moment": {"ice": true, "tap": true, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 459.6, "coolingSeconds": 60, "moment": {"ice": false, "tap": false, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 420, "coolingSeconds": 60, "moment": {"ice": false, "tap": false, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 400, "coolingSeconds": 180, "moment": {"ice": false, "tap": false, "counter": false, "eggCup": false}},
+    {"cookTime_s": 400, "peakYolkTime_s": 150, "coolingSeconds": 180, "moment": {"ice": false, "tap": false, "counter": false, "eggCup": false}},
+    {"cookTime_s": 987.25, "peakYolkTime_s": 1152, "coolingSeconds": 165, "moment": {"ice": true, "tap": true, "counter": false, "eggCup": false}}
   ],
   "solved": [
     {"mass_kg": 0.068, "setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 0, "cooling": "ice", "waterLitres": 2, "eggCount": 4, "afterBoil": "hold"}, "level": 0.22, "result": {"cookTime_s": 422.9248046875, "peakYolk_C": 60.680319261636285, "peakYolkTime_s": 614, "yolkAtPull_C": 41.122223135961306, "yolkDose_min": 0.5357749981474442, "whiteDose_min": 0.31364163375444304, "peakWhite_C": 77.92646183621596}, "coolingSeconds": 191, "moment": true, "range": [43.952013177356456, 77.892555039195], "rangeMoved": [46.42254992447093, 80.4333244055371], "moved": {"alpha_m2s": 1.819e-7}},

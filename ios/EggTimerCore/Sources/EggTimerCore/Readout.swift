@@ -50,7 +50,7 @@ public struct ReadoutProbe: Sendable, Equatable, Codable {
 }
 
 func coolingStartsInS(_ d: Deadlines, cooling: Cooling, nowS: Double) -> Double? {
-    guard phaseAt(d, nowS: nowS) == .pull, cooling != .counter else { return nil }
+    guard phaseAt(d, nowS: nowS) == .pull, !restsInAir(cooling) else { return nil }
     return max(0, (pullGraceSeconds - (nowS - d.cookEndS)).rounded(.up))
 }
 

@@ -17,15 +17,16 @@ import { CERTAINTY_MASS, type Certainty, type CertaintyReading, type WordCertain
 import { type Outcome, WHITE_RISK } from './outcome.ts';
 import type { Phase } from './running.ts';
 import type { Verdict } from './slider.ts';
-import type { Cooling, HeatAfterBoil, StartMode } from './protocol.ts';
+import { type Cooling, type HeatAfterBoil, type StartMode, restsInAir } from './protocol.ts';
 import type { EggFrom, Forecast } from './record.ts';
 import { DONENESS_ANCHORS } from './solve.ts';
 
 /* ----------------------------------------------------------- the refusal */
 
-/** A yolk too soft for the white, blamed on each cooling. */
+/** A yolk too soft for the white, blamed on each cooling. An egg cup has
+ *  no words of its own and says the counter's: the egg rests in the air. */
 const REFUSAL_KEYS: Record<Cooling, CopyKey> = {
-  ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter',
+  ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter', eggCup: 'refusal.counter',
 };
 
 /**
@@ -246,20 +247,22 @@ interface PhaseKeys {
   hint: CopyKey | null;
 }
 
-/** Where the eggs go at the pull, as the button says it. */
+/** Where the eggs go at the pull, as the button says it: an egg cup as the
+ *  counter, in the air. */
 const PULLED_KEYS: Record<Cooling, CopyKey> = {
   ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter',
+  eggCup: 'action.pulled.counter',
 };
 
 function pulledKey(cooling: Cooling): CopyKey {
   return PULLED_KEYS[cooling];
 }
 
-/** The label while the cooling counts down. Never the counter's, which has
- *  no counted cooling. */
+/** The label while the cooling counts down. Never read for an egg resting
+ *  in the air, which has no counted cooling. */
 const COOLING_LABELS: Record<Cooling, CopyKey> = {
   ice: 'readout.phase.coolingIce', tap: 'readout.phase.coolingTap', bowl: 'readout.phase.coolingBowl',
-  counter: 'readout.phase.coolingTap',
+  counter: 'readout.phase.coolingTap', eggCup: 'readout.phase.coolingTap',
 };
 
 /**
@@ -270,7 +273,7 @@ const COOLING_LABELS: Record<Cooling, CopyKey> = {
  * minutes. With the heat off, the idle subline names the water, the most
  * load-bearing number in that cook; on a hot start the time to boil plays no
  * part and is not mentioned. A counted cooling is the ice bath, running water
- * or a bowl; a counter rest has no cooling phase.
+ * or a bowl; an egg resting in the air has no cooling phase.
  */
 export function phaseKeys(f: PhaseFacts): PhaseKeys {
   const cold = f.startMode === 'cold';
@@ -302,13 +305,13 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
         hint: standing ? 'action.hint.cookingStanding' : 'action.hint.cookingBoiling',
       };
     case 'PULL':
-      // On a counter rest nothing starts on its own: the grace runs out into
+      // Resting in the air nothing starts on its own: the grace runs out into
       // done, and the subline already says the yolk is still cooking.
       return {
         label: 'readout.phase.pull',
         subline: 'readout.sub.pull',
         action: pulledKey(f.cooling),
-        hint: f.cooling === 'counter' ? null : 'action.hint.pull',
+        hint: restsInAir(f.cooling) ? null : 'action.hint.pull',
       };
     case 'COOLING':
       return {
@@ -371,7 +374,8 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
       ? { text: standing ? 'setup.start.coldStanding' : 'setup.start.cold', label: 'controls.start', value: 'controls.start.cold' }
       : { text: standing ? 'setup.start.hotStanding' : 'setup.start.hot', label: 'controls.start', value: 'controls.start.hot' };
   // Running water and a bowl name the water's temperature only when the cook
-  // gave it: one assumed is the (i)'s to say, not the sentence's.
+  // gave it: one assumed is the (i)'s to say, not the sentence's. An egg cup
+  // says the counter's clause: the egg rests in the air.
   const at = f.coolingWaterGiven;
   const cooling: ClauseKeys = f.cooling === 'ice'
     ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.cooling.ice' }
