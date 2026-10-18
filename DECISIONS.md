@@ -972,7 +972,7 @@ Decided by the owner, 18 October 2026:
 
 Decided by the owner, 19 October 2026:
 
-NNN. **The egg cup counts down to its opening**, as a cooling counts down to
+141. **The egg cup counts down to its opening**, as a cooling counts down to
     its end. From the pull the apps count to `EGG_CUP_OPENED_S` after it,
     ring there, and come to Done; the record's `cooled_s` is the time
     counted. The counter stays as it is: Done at the pull, nothing counted.

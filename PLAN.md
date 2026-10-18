@@ -54,6 +54,14 @@ and the map of the documents are `CLAUDE.md`.
     `test_recovery` mixed under its R-hat limit; the check should pass on
     any honest sample, so it wants longer chains or a sample it was not
     tuned on.
+12. **A probe reading at the egg cup's opening**, the one measurement that
+    would settle `EGG_CUP_OPENED_S`. Not asked for yet: at the opening the
+    yolk's centre is still climbing and the coldest point, so a reading off
+    centre or late reads hot, where `probeLikelihood` and the fit's
+    `probe_density` take every handling error as reading cold, which holds
+    only at the peak. It needs a likelihood whose handling errors can read
+    hot (`infer.ts`, its twin, the fit), and then `probeMomentFor` true for
+    the egg cup.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -83,9 +91,6 @@ shell (34).
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
 
-6. **Whether the egg cup counts down to its opening**, as a cooling counts
-   down to its end; today Done comes at the pull, as on the counter
-   (`restsInAir` is the seam).
 
 Waiting on someone else: the Czech review, by the owner's friend.
 
@@ -132,6 +137,9 @@ Start the QA pass here.
   viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
   digits), no alarm heard, no Home Screen opening
   offline, no new build taken after a deploy.
+- **The egg cup's countdown on a device**: the notification at the
+  opening, and the Lock Screen and Dynamic Island card counting down under
+  "Open them in".
 - **The egg cup's opening** (`EGG_CUP_OPENED_S`, 120 s) is the model's
   guess: a probe in the yolk's centre as the egg is topped, with the
   seconds since the pull, says when cooks open it and whether a cup keeps
