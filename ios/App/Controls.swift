@@ -76,12 +76,28 @@ struct StepperRow: View {
     @Binding var value: Double
     let show: (Double) -> String
     var field: HandGroup? = nil
+    @Environment(\.dynamicTypeSize) private var size
 
     var body: some View {
-        HStack {
-            Text(label)
-            Spacer(minLength: 8)
-            StepperValue(label: label, measure: measure, value: $value, show: show, field: field)
+        // At the accessibility sizes the value and its stepper go under the
+        // label, at the end, rather than squeeze it. The stepper says the
+        // label, so it is drawn for the eye alone.
+        if size.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(label)
+                    .accessibilityHidden(true)
+                HStack {
+                    Spacer(minLength: 0)
+                    StepperValue(label: label, measure: measure, value: $value, show: show, field: field)
+                }
+            }
+        } else {
+            HStack {
+                Text(label)
+                    .accessibilityHidden(true)
+                Spacer(minLength: 8)
+                StepperValue(label: label, measure: measure, value: $value, show: show, field: field)
+            }
         }
     }
 }
