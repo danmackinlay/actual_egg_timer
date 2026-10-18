@@ -4,7 +4,7 @@
  */
 
 import { eggFromMass } from '../../src/core/geometry.ts';
-import { type CookSetup, restsInAir } from '../../src/core/protocol.ts';
+import { type CookSetup, countsDown } from '../../src/core/protocol.ts';
 import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.ts';
 import {
   type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
@@ -15,7 +15,7 @@ import {
 } from '../../src/core/record.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
-import { COOLING_SECONDS, coolingSecondsFor } from '../../src/core/running.ts';
+import { COOLING_SECONDS, coolingSecondsFor, countedCooling_s } from '../../src/core/running.ts';
 
 import { referenceSetup } from '../common.ts';
 
@@ -110,7 +110,8 @@ function recordOf(e: EggSpec): EggRecord {
     nudge_s: 0,
     pulled_s: recommended + e.late_s,
     pulledBy: e.pulledBy,
-    cooled_s: restsInAir(setup.cooling) ? 0 : probe !== null ? coolingSecondsFor(solved) : COOLING_SECONDS,
+    cooled_s: !countsDown(setup.cooling) ? 0
+      : probe !== null || setup.cooling === 'eggCup' ? countedCooling_s(solved, setup.cooling) : COOLING_SECONDS,
     yolkWord: e.yolkWord,
     white: e.white,
     probe: probe,
@@ -364,7 +365,7 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'no water', mutate: (r) => { setupPart(r)['waterLitres'] = 0; } },
   { why: 'no eggs in the pan', mutate: (r) => { setupPart(r)['eggCount'] = 0; } },
   { why: 'an unknown cooling', mutate: (r) => { setupPart(r)['cooling'] = 'snow'; } },
-  { why: 'eaten warm from an egg cup', mutate: (r) => { setupPart(r)['cooling'] = 'eggCup'; r['cooled_s'] = 0; } },
+  { why: 'eaten warm from an egg cup, counted to its opening', mutate: (r) => { setupPart(r)['cooling'] = 'eggCup'; r['cooled_s'] = 120; } },
   {
     why: 'a bowl of water, its temperature given',
     mutate: (r) => { setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 1.5; setupPart(r)['coolingWater_C'] = 11; },
@@ -540,7 +541,7 @@ const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
   },
   { why: 'rested on the counter: no counted cooling', over: { setup: referenceSetup({ cooling: 'counter' }), out_s: null } },
   { why: 'rested on the counter, tapped out', over: { setup: referenceSetup({ cooling: 'counter' }) } },
-  { why: 'eaten warm from an egg cup: no counted cooling', over: { setup: referenceSetup({ cooling: 'eggCup' }) } },
+  { why: 'eaten warm from an egg cup: counted to the opening', over: { setup: referenceSetup({ cooling: 'eggCup' }), cool_s: 120 } },
   { why: 'nudged later', over: { nudge_s: 10, cook_s: 412.75 } },
   { why: 'nudged sooner, and nobody tapped', over: { nudge_s: -7, cook_s: 395.75, out_s: null } },
   { why: 'the yolk the cook got and the white', over: { yolkWord: 'jammy', white: 'firm' } },

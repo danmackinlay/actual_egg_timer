@@ -48,6 +48,7 @@ export interface CopyKeyArgs {
   'readout.phase.coolingIce': never;
   'readout.phase.coolingTap': never;
   'readout.phase.coolingBowl': never;
+  'readout.phase.coolingEggCup': never;
   'readout.phase.done': never;
   'readout.phase.startTime': never;
   'readout.sub.coldAssumes': 'boil';
@@ -61,6 +62,7 @@ export interface CopyKeyArgs {
   'readout.sub.pull': never;
   'readout.sub.coolingPeak': never;
   'readout.sub.coolingProbe': never;
+  'readout.sub.coolingEggCup': never;
   'readout.sub.doneCold': 'boil' | 'cooking';
   'readout.sub.doneHot': never;
   'readout.alarm.setting': never;
@@ -367,12 +369,15 @@ export interface CopyKeyArgs {
   'alarm.pull.bodyEggCup': never;
   'alarm.cooled.title': never;
   'alarm.cooled.body': never;
+  'alarm.opened.title': never;
+  'alarm.opened.body': never;
   'alarm.probe.title': never;
   'alarm.probe.body': never;
   'activity.stage.heating': never;
   'activity.stage.cooking': never;
   'activity.stage.pull': never;
   'activity.stage.cooling': never;
+  'activity.stage.opening': never;
   'activity.now': never;
   'activity.target': 'doneness' | 'yolk';
   'activity.summary': 'doneness' | 'mass' | 'yolk';

@@ -429,9 +429,10 @@ export class Tab {
  *  here hold the boil and cool in ice, or in a bowl), as a function for the
  *  page. */
 const LABEL_SAYS = `(s) => {
-  const bowl = s.cook !== null && s.cook.choices.cooling === 'bowl';
+  const cooling = s.cook === null ? null : s.cook.choices.cooling;
   const want = { HEATING: s.labels.heating, PULL: s.labels.pull, DONE: s.labels.done,
-    COOLING: bowl ? s.labels.coolingBowl : s.labels.coolingIce, COOKING: s.labels.cookingBoiling };
+    COOLING: cooling === 'bowl' ? s.labels.coolingBowl : cooling === 'eggCup' ? s.labels.coolingEggCup : s.labels.coolingIce,
+    COOKING: s.labels.cookingBoiling };
   return want[s.phase] === undefined || want[s.phase] === s.label;
 }`;
 

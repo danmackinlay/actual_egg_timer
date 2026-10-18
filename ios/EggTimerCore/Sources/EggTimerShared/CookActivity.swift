@@ -87,6 +87,8 @@ public struct CookActivity: Codable, Hashable, Sendable {
         case cooking
         case pull
         case cooling
+        /// An egg cup's countdown, from the pull to the opening.
+        case opening
 
         /// The stage's name, in the activity's language.
         public func title(in lang: String) -> String {
@@ -95,6 +97,7 @@ public struct CookActivity: Codable, Hashable, Sendable {
             case .cooking: tr(.`activity.stage.cooking`, in: lang)
             case .pull: tr(.`activity.stage.pull`, in: lang)
             case .cooling: tr(.`activity.stage.cooling`, in: lang)
+            case .opening: tr(.`activity.stage.opening`, in: lang)
             }
         }
 
@@ -104,14 +107,16 @@ public struct CookActivity: Codable, Hashable, Sendable {
             case .cooking: "timer"
             case .pull: "bell.fill"
             case .cooling: "snowflake"
+            case .opening: "fork.knife"
             }
         }
 
-        /// Three stages are counted down. `pull` is a moment; a timer on it
-        /// would count toward nothing. There is no done stage: the card ends
-        /// at once when the cooling does (`LiveActivity.endAll`).
+        /// Every stage but `pull` is counted down. `pull` is a moment; a
+        /// timer on it would count toward nothing. There is no done stage: the
+        /// card ends at once when the cooling, or the wait to the opening,
+        /// does (`LiveActivity.endAll`).
         public var countsDown: Bool {
-            self == .heating || self == .cooking || self == .cooling
+            self != .pull
         }
     }
 }

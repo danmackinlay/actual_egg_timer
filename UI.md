@@ -134,9 +134,10 @@ and sharing are too.
 
 **Help** is the whole story (§7), reachable in every phase.
 
-**The phases.** A counter rest, and an egg eaten warm from an egg cup, have
-no cooling phase: the pull runs out into Done. The cooling counts down to the yolk's peak. While the slow hob has
-lengthened the guess the clock counts the time heated up, still Heating.
+**The phases.** A counter rest has no cooling phase: the pull runs out into
+Done. The cooling counts down to the yolk's peak, and in an egg cup to the
+opening, two minutes after the egg comes out, with the words to leave the
+eggs whole until then. While the slow hob has lengthened the guess the clock counts the time heated up, still Heating.
 
 **The questions after an egg** (`DECISIONS.md` 92), on one panel at Done,
 none required: what the cook asked for; how the yolk was, with the slider's
@@ -185,8 +186,10 @@ cools change nothing, so the sentence leaves them out.
 - **The egg cup is the air's egg, eaten warm** (`DECISIONS.md` 140): the
   sentence says "then eaten warm from an egg cup", soft is offered where in
   the air it is striped out, and the pull's button and alarm ask for the egg
-  cups. Nothing counts down to the opening: Done comes at the pull, as on
-  the counter, and the times assume it is opened two minutes after the pull.
+  cups. From the pull the clock counts down to the opening, two minutes on,
+  which the times assume; its alarm says to open them, and Done comes
+  there; iOS's Lock Screen card counts down to it as it does to a cooling's
+  end. No probe reading is asked for at the opening (`probeMomentFor`).
 - **To a screen reader** each clause is a button named for its label and
   value, expanded or collapsed.
 - **While a cook runs** the sentence is the cook's own choices, and stays

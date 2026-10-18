@@ -969,3 +969,12 @@ Decided by the owner, 18 October 2026:
     Soft is in reach of a cook who eats the egg warm, as it is not on the
     counter. The opening time is a constant of the model until a probe
     reading says otherwise.
+
+Decided by the owner, 19 October 2026:
+
+NNN. **The egg cup counts down to its opening**, as a cooling counts down to
+    its end. From the pull the apps count to `EGG_CUP_OPENED_S` after it,
+    ring there, and come to Done; the record's `cooled_s` is the time
+    counted. The counter stays as it is: Done at the pull, nothing counted.
+    The physics' question, whether the egg rests in the air, is
+    `restsInAir`; whether the cook waits for an end is `countsDown`.

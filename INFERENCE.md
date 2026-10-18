@@ -346,8 +346,10 @@ fit's training data cannot drift between the two.
 - `cooling` is `ice`, `tap`, `bowl` (12 October 2026: a bowl of still water
   the eggs warm), `counter` or `eggCup` (18 October 2026: eaten warm from an
   egg cup, its doses stopped at the opening, README.md section 5; `cooled_s`
-  0, as on the counter). Two optional fields say the water the eggs
-  cooled in, each present only where the cooling reads it and never `null`:
+  the app's countdown to the opening, 120 s from the out). `cooled_s` is 0
+  only on the counter, where nothing is counted. Two optional fields say the
+  water the eggs cooled in, each present only where the cooling reads it and
+  never `null`:
   `coolingWater_C`, running water's or the bowl's temperature as the cook
   gave it (absent, it was assumed: 15 °C running, the room's in a bowl), and
   `bowlLitres`, which every bowl carries and nothing else may. A record from

@@ -295,11 +295,27 @@ const TRACES: TraceDef[] = [
     ],
   },
   {
-    note: 'in an egg cup, soft: Done at the out, Runny, nothing counted and nothing rung after',
+    note: 'in an egg cup, soft: out, counted down to the opening, the opening rung, Done, Runny, nothing rung after',
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }),
-      answer(after(10), 'runny'), tick(after(900)),
+      answer(after(10), 'runny'), tick(cooled(-60)), tick(cooled(1)), answer(after(10), 'runny'), tick(after(900)),
+    ],
+  },
+  {
+    note: 'in an egg cup, nobody taps: the grace runs out into the countdown, and Start again past the opening logs the egg unanswered',
+    app: 'web', posterior: 'learned', before: 'learned',
+    steps: [
+      start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(PULL_GRACE_SECONDS + 1)),
+      tick(cooled(-30)), (t) => ({ event: at('startAgain', cooled(5)(t)) }),
+    ],
+  },
+  {
+    note: 'in an egg cup, the countdown corrected to the counter: Done at once, rung',
+    app: 'web', posterior: 'learned', before: 'learned',
+    steps: [
+      start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }),
+      correct(after(30), { cooling: 'counter' }), land(after(1)), land(after(1)), tick(after(900)),
     ],
   },
   {

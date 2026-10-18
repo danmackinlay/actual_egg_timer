@@ -34,10 +34,10 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, restsInAir,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown, restsInAir,
 } from './protocol.ts';
 import { boilingPointAtAltitude } from './thermo.ts';
-import { ALPHA_REL_SD } from './constants.ts';
+import { ALPHA_REL_SD, EGG_CUP_OPENED_S } from './constants.ts';
 import { LIMITS, ambientFor, startTempPreset_C } from './inputs.ts';
 import { type BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.ts';
 import { type CookResult, type ModelParams, type Solution, logYolkTarget, simulate } from './solve.ts';
@@ -110,8 +110,9 @@ interface CookEvents {
   /** Rolling boil, tapped. */
   boilAt_s: number | null;
   pulled: Pulled | null;
-  /** The counted cooling ended. Never written for an egg resting in the
-   *  air (`restsInAir`), where nothing is counted. */
+  /** The counted cooling ended: the water's, or the egg cup's wait to its
+   *  opening. Never written for an egg left on the counter (`countsDown`),
+   *  where nothing is counted. */
   cooledAt_s: number | null;
   /** The pull rang: the plan's pull, the first time the clock passed it with
    *  the egg still in (`eventsDue`). A plan keeps it - a surface landing, an
@@ -207,7 +208,8 @@ export interface RunningCook {
 export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
 
 /** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
- *  stage of the cook, not a suggestion appended to the end of it.
+ *  stage of the cook, not a suggestion appended to the end of it. In an egg
+ *  cup it is the wait to the opening (`countedCooling_s`).
  *
  *  This is the FALLBACK: the countdown runs to the moment the yolk's centre
  *  peaks (`coolingSecondsFor`), and this flat three minutes is only what a
@@ -231,7 +233,8 @@ export const COOLING_MIN_SECONDS = 60;
  *
  * `result` is the solve the cook is running on, for its own cooling method -
  * the peak comes about 20 s later under a tap than in ice. In the air, on the
- * counter or in an egg cup, nothing is counted, and this is not asked.
+ * counter or in an egg cup, the yolk peaks minutes later, and this is not
+ * asked (`countedCooling_s`).
  */
 export function coolingSecondsFor(result: CookResult): number {
   const toPeak = result.peakYolkTime_s - result.cookTime_s;
@@ -240,13 +243,24 @@ export function coolingSecondsFor(result: CookResult): number {
   return whole < COOLING_MIN_SECONDS ? COOLING_MIN_SECONDS : whole;
 }
 
+/** How long the cook's countdown after the pull runs, s, for a cooling that
+ *  counts down (`countsDown`): in water to the yolk's peak
+ *  (`coolingSecondsFor`), in an egg cup to its opening, EGG_CUP_OPENED_S,
+ *  where its doses stop. */
+export function countedCooling_s(result: CookResult, cooling: Cooling): number {
+  return cooling === 'eggCup' ? EGG_CUP_OPENED_S : coolingSecondsFor(result);
+}
+
 /**
  * Whether this cook has a moment to take a probe reading at: a counted
- * cooling that ends when the yolk's centre peaks. Not in the air, where
- * nothing is counted: on the counter the peak is nine minutes off with the
- * carryover constant in it (INFERENCE.md section 5), and an egg cup is
- * opened before its yolk peaks. And not when the centre peaked
- * before the egg came out, where there is no peak after the pull to read.
+ * cooling that ends when the yolk's centre peaks. Not in the air: on the
+ * counter the peak is nine minutes off with the carryover constant in it
+ * (INFERENCE.md section 5), and an egg cup's countdown ends at the opening,
+ * before its yolk peaks, while the centre still climbs about a degree in ten
+ * seconds and is the coldest point in the egg, so a probe off-centre or
+ * late reads hot, where the likelihood (`probeLikelihood`) has every
+ * handling error read cold. And not when the centre peaked before the egg
+ * came out, where there is no peak after the pull to read.
  */
 export function probeMomentFor(result: CookResult, cooling: Cooling): boolean {
   if (restsInAir(cooling)) return false;
@@ -300,9 +314,9 @@ export const SLOW_HOB_EVERY_S = 10;
 export const PULL_GRACE_SECONDS = 20;
 
 /** The deadlines a cook is made of, as epoch seconds. `coolEnd_s` is null when
- *  there is no cooling step to time - resting in the air, on the counter or
- *  in an egg cup, where the carryover IS the point rather than something to
- *  wait out. */
+ *  there is no cooling step to time - resting on the counter, where the
+ *  carryover IS the point rather than something to wait out (`countsDown`);
+ *  in an egg cup it is the opening. */
 export interface Deadlines {
   cookEnd_s: number;
   coolEnd_s: number | null;
@@ -364,13 +378,13 @@ function applyEntry(cook: RunningCook, entry: CookEntry): RunningCook {
     case 'correct': {
       // After the pull the yolk wanted is not corrected: it was not a
       // mistake, so the record keeps the level the egg was pulled at, and the
-      // slider only previews. Done in the air and
+      // slider only previews. Done on the counter and
       // corrected to a counted cooling: that cooling ended here at the
       // latest, so Done stays Done and the plan takes the counted time if it
       // is sooner (`replan`, `eventsDue`).
       const choices = e.pulled === null ? entry.choices : { ...entry.choices, level: cook.choices.level };
-      const doneInAir = e.pulled !== null && e.cooledAt_s === null && restsInAir(cook.choices.cooling)
-        && !restsInAir(entry.choices.cooling);
+      const doneInAir = e.pulled !== null && e.cooledAt_s === null && !countsDown(cook.choices.cooling)
+        && countsDown(entry.choices.cooling);
       return {
         ...cook, choices: choices, events: doneInAir ? { ...e, cooledAt_s: entry.at_s } : e,
         correctedAt_s: entry.at_s,
@@ -944,7 +958,7 @@ export interface CookPlan {
    *  for the next plan (`replan`'s `memo`); null otherwise. */
   memo: SlowHobMemo | null;
   /** When the cook is too old to pick back up (`cookTooOld`): an hour past
-   *  its end (the cooling's, or the out's in the air), or, still
+   *  its end (the cooling's, or the out's on the counter), or, still
    *  heating, when the pan has heated for the most the app takes for a time
    *  to boil, which abandons it. */
   tooOldAt_s: number;
@@ -1064,11 +1078,12 @@ export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s
  * writes nothing; `cookEnding` is not finished; and the cook is too old an
  * hour after the question, if that is later than an hour after its end.
  *
- * THE COOLING. To the yolk's peak for the cook time that ran
- * (`coolingSecondsFor`), from the egg out - the cook's tap, or the grace
- * running out - and once ended, as it ran. A correction whose counted end has
- * already passed is Done at once, with the counted time, so the cooling is
- * not stretched to the correction; and one after Done in the air, which
+ * THE COOLING. To the yolk's peak for the cook time that ran, or an egg
+ * cup's opening (`countedCooling_s`), from the egg out - the cook's tap, or
+ * the grace running out - and once ended, as it ran; none on the counter. A
+ * correction whose counted end has already passed is Done at once, with the
+ * counted time, so the cooling is not stretched to the correction; and one
+ * after Done on the counter, which
  * ends the cooling it brings at the correction, never takes the cook back to
  * Cooling: the counted time if that is sooner, which `eventsDue` then writes
  * down.
@@ -1153,12 +1168,12 @@ export function replan(
     ask = (cold && boilAt === null) || start + planned.result.cookTime_s > cook.correctedAt_s;
   }
 
-  let cool = coolingSecondsFor(ran.result);
+  let cool = countedCooling_s(ran.result, ch.cooling);
   let coolEnd: number | null = null;
-  if (!restsInAir(ch.cooling)) {
+  if (countsDown(ch.cooling)) {
     const out = pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
     if (pulled !== null && e.cooledAt_s !== null) {
-      // As it ran; but a cooling a correction ended (Done in the air),
+      // As it ran; but a cooling a correction ended (Done on the counter),
       // not yet written down as counted, ends at the counted time if that is
       // sooner.
       const stamped = e.cooledAt_s === cook.correctedAt_s && out + cool < e.cooledAt_s;

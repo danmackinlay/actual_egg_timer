@@ -522,11 +522,23 @@ ice, and the white is set from about 5 minutes (`npm run decide -- counter`). Th
 softest level the white allows stays at runny until the opening is past four minutes,
 and soft goes out of reach between five and seven.
 
+The cook is told when: from the pull the app counts down to the opening, as it counts a
+cooling down to the yolk's peak, rings there, and says to open the eggs; Done comes at
+the opening, and the record's `cooled_s` is the 120 s counted.
+
 The opening time weighs: each 30 s later takes about 30 s off soft's time. It is the
 model's one guess about the cook here, and a probe reading would test it: the centre's
 temperature at the moment the egg is topped, with the seconds since the pull. The
 seconds say when this cook opens the egg; the centre, against the model's at those
 seconds, says whether the cup keeps more heat than still air.
+
+The app does not ask for that reading, because the filter would misread it. At the
+opening the centre is still climbing, about a degree every ten seconds, and it is the
+coldest point in the egg: for a 60 g egg from the fridge, cooked 400 s, a probe 3 mm off
+the centre reads 1.0 °C hot and one 15 s late 1.7 °C hot. The probe's likelihood
+(INFERENCE.md section 5) is written for the peak, where every handling error reads cold,
+and a hot reading would say the egg heats fast and shorten the next cook. A reading at
+the opening wants a likelihood of its own, with the handling on the hot side.
 
 ---
 

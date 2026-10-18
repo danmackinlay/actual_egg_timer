@@ -16,6 +16,10 @@ public func restsInAir(_ cooling: Cooling) -> Bool {
     cooling == .counter || cooling == .eggCup
 }
 
+public func countsDown(_ cooling: Cooling) -> Bool {
+    cooling != .counter
+}
+
 public func carryoverWindowS(_ cooling: Cooling) -> Double {
     cooling == .eggCup ? Constants.eggCupOpenedS : Constants.carryoverWindow
 }

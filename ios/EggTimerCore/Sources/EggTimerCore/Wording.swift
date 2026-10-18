@@ -183,8 +183,10 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     case .cooling:
         return PhaseKeys(
             label: f.cooling == .ice ? .`readout.phase.coolingIce`
-                : f.cooling == .bowl ? .`readout.phase.coolingBowl` : .`readout.phase.coolingTap`,
-            subline: f.probeWanted ? .`readout.sub.coolingProbe` : .`readout.sub.coolingPeak`,
+                : f.cooling == .bowl ? .`readout.phase.coolingBowl`
+                : f.cooling == .eggCup ? .`readout.phase.coolingEggCup` : .`readout.phase.coolingTap`,
+            subline: f.cooling == .eggCup ? .`readout.sub.coolingEggCup`
+                : f.probeWanted ? .`readout.sub.coolingProbe` : .`readout.sub.coolingPeak`,
             action: nil, hint: nil
         )
     case .done:

@@ -22,13 +22,13 @@ import {
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
 } from '../src/core/infer.ts';
-import { type CookSetup, restsInAir } from '../src/core/protocol.ts';
+import { type CookSetup, countsDown, restsInAir } from '../src/core/protocol.ts';
 import {
   type EggRecord, LIKELIHOOD_ID, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches,
 } from '../src/core/record.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate, solveCookTime } from '../src/core/solve.ts';
-import { coolingSecondsFor } from '../src/core/running.ts';
+import { coolingSecondsFor, countedCooling_s } from '../src/core/running.ts';
 import { normalCdf } from '../src/core/sphere.ts';
 import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.ts';
 import { appSetup, rng } from './common.ts';
@@ -212,7 +212,7 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
           waterLitres: kitchen.setup.waterLitres, eggCount: kitchen.setup.eggCount,
         },
         level: level, recommended_s: solved.result.cookTime_s, nudge_s: nudge, pulled_s: time, pulledBy: 'cook',
-        cooled_s: restsInAir(kitchen.setup.cooling) ? 0 : coolingSecondsFor(solved.result),
+        cooled_s: countsDown(kitchen.setup.cooling) ? countedCooling_s(solved.result, kitchen.setup.cooling) : 0,
         yolk: yolk, yolkWord: yolkWord, white: white,
         probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
         forecast: null, lang: 'en', register: 'modern', units: 'metric',

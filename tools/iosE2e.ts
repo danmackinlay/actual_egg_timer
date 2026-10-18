@@ -29,7 +29,7 @@
 // the app in that locale rather than en-AU (`localeArgs`).
 //
 // Needs Xcode, xcodegen and python3; not in `npm run verify`.
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
 import type { BoilMemory } from '../src/core/boil.ts';
@@ -508,6 +508,27 @@ scenario('relaunch-cooling-done', 'relaunched while cooling: the same end, one a
   await run.step(cooledAt(was) + 90);
   for (let k = 1; k < 4; k += 1) await run.tick();
   run.check(!has(run.sinceLaunch(), is('ring')), 'nothing rung again');
+});
+
+scenario('eggcup-opening', 'an egg cup counted down from the out to its opening: the alarm and the card at the opening, the readout counting to it, Done there', async (run) => {
+  await started(run, [...settingsArg({ ...HOT_SETTINGS, cooling: 'eggCup', doneness: 0.22 }), '-uiDo', 'out@pull+3']);
+  const was = await toCooling(run, 3);
+  const out = storedIn(run.lines()).cook.events.pulled!.out_s;
+  const opening = cooledAt(was);
+  run.check(near(opening, out + 120, EXACT), `the opening at +${(opening - out).toFixed(3)} s from the out, not 120`);
+  const alarm = scheduled(run.lines())['cook.cool'];
+  run.check(near(alarm, opening, EXACT), `the opening's alarm ${alarm} for ${opening}`);
+  run.check(has(run.lines(), is('activity', (e) => e.stage === 'opening' && near(e.ends, opening, 1))),
+    'the card counting to the opening');
+  const i = await run.step(opening - 60);
+  const f = await run.until(is('frame', (e) => e.at.toFixed(3) === (opening - 60).toFixed(3)), {
+    from: i, what: 'a frame a minute before the opening',
+  });
+  const words = JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, { text: string }> };
+  const sub = words.messages['readout.sub.coolingEggCup']!.text;
+  run.check(f.phase === 'COOLING' && f.big === '1:00' && f.sub === sub, `a minute before the opening: ${say(f)}`);
+  const j = await run.step(opening + 1);
+  await run.settled((await run.until(phaseIs('DONE'), { from: j, what: 'phase DONE at the opening' })).i);
 });
 
 scenario('alarms', "the notifications as the system holds them: a cold cook's two pending at its plan's moments; relaunched past the guess, the pending pull moved to it; cancelled, none at the next launch", async (run) => {

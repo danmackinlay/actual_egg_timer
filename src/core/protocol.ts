@@ -25,10 +25,19 @@ export type StartMode = 'cold' | 'hot';
 export type Cooling = 'ice' | 'tap' | 'bowl' | 'counter' | 'eggCup';
 
 /** Whether the egg rests in the air after the pull, on the counter or in an
- *  egg cup: its shell cools by Newton's law (`coolingTemperature`), and
- *  nothing is counted down, since no cooling ends on its own. */
+ *  egg cup: its shell cools by Newton's law (`coolingTemperature`). The
+ *  physics' question; whether the cook waits for an end is `countsDown`. */
 export function restsInAir(cooling: Cooling): boolean {
   return cooling === 'counter' || cooling === 'eggCup';
+}
+
+/** Whether the cook's flow counts down from the pull to an end: a cooling in
+ *  water to the yolk's peak, and an egg cup to its opening, EGG_CUP_OPENED_S
+ *  after the pull (`countedCooling_s` in running.ts). Not the counter, whose
+ *  egg is left until it is cool: nothing ends there on its own, and Done
+ *  comes at the pull. */
+export function countsDown(cooling: Cooling): boolean {
+  return cooling !== 'counter';
 }
 
 /** How long after the pull the doses count, s: the whole carryover
