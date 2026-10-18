@@ -136,11 +136,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   transform: rotate(45deg);
 }
 
-/* Mute: a pill, not a bar. It has to be reachable from every phase. */
+/* Mute: a pill, not a bar. It has to be reachable from every phase. The bar
+   reaches 8 px into the gutter, where the links' padding goes; the pill's
+   edge is drawn, so it keeps the page's 16 px. */
 button.mute {
   width: auto;
   min-height: 36px;
   margin-left: auto;
+  margin-right: 8px;
   padding: 6px 14px;
   font-size: 0.8125rem;
   color: var(--dim);
