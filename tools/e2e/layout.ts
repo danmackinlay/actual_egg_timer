@@ -313,7 +313,7 @@ export const layoutScenarios: Record<string, Scenario> = {
   },
 
   'touch-targets': {
-    what: 'at 390 and 320 px, every − and + in the egg\'s panel and in Settings takes a tap 44 px wide and tall, and its field still takes a tap at either edge; the sound pill keeps the page\'s 16 px gutter; a choice in Settings keeps 10 px either side of its words; no Settings row runs past the page\'s edge',
+    what: 'at 390 and 320 px, every − and + in the egg\'s panel and in Settings takes a tap 44 px wide and tall, and its field still takes a tap at either edge; at both widths and at 100% and 130% text, no − or + takes a tap from any other control in a clause\'s panel or Settings; the sound pill keeps the page\'s 16 px gutter; a choice in Settings keeps 10 px either side of its words; no Settings row runs past the page\'s edge',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       await tab.until("__snap().chosen !== null", 'the time decided');
@@ -341,6 +341,63 @@ export const layoutScenarios: Record<string, Scenario> = {
         }
         return out; })()`);
       const gutter = (): Promise<number> => tab.eval<number>(`document.documentElement.clientWidth - ${byId('mute')}.getBoundingClientRect().right`);
+      // Every other visible control under `root`, probed with
+      // elementFromPoint across its own box, in half pixels: along its top,
+      // middle and foot, and down its sides and centre. A point that lands
+      // on a − or + (its hit area reaches past its drawn box) is a tap the
+      // control has lost to it.
+      const covered = (root: string): Promise<string[]> => tab.eval<string[]>(`(() => {
+        const out = [];
+        const controls = [...document.querySelector(${JSON.stringify(root)}).querySelectorAll(
+          'button, input, select, textarea, output, label, a[href], [role="button"]')]
+          .filter((c) => !c.matches('button.step, input[type="radio"], input[type="checkbox"]') && c.offsetParent !== null);
+        for (const c of controls) {
+          c.scrollIntoView({ block: 'center' });
+          const r = c.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+          let hit = null, n = 0;
+          const at = (x, y) => {
+            const s = document.elementFromPoint(x, y)?.closest('button.step');
+            if (s && !c.contains(s)) { n++; hit ??= s; }
+          };
+          for (const y of [r.top + 0.25, (r.top + r.bottom) / 2, r.bottom - 0.25]) for (let x = r.left + 0.25; x < r.right; x += 0.5) at(x, y);
+          for (const x of [r.left + 0.25, (r.left + r.right) / 2, r.right - 0.25]) for (let y = r.top + 0.25; y < r.bottom; y += 0.5) at(x, y);
+          const name = c.id || c.getAttribute('aria-controls') || c.getAttribute('for') || c.dataset.copy || c.tagName.toLowerCase();
+          if (hit !== null) out.push(name + ' loses ' + n + ' points to ' + hit.dataset.for + (hit.dataset.up === '1' ? ' +' : ' −'));
+        }
+        return out; })()`);
+      // Each clause's panel open in turn, with each choice that shows a
+      // number of its own; then Settings.
+      const panels: [string, string[]][] = [
+        ['panelEgg', []], ['panelFrom', ['tempCustom', 'tempRoom']], ['panelStart', []],
+        ['panelCooling', ['coolTap', 'coolBowl']],
+      ];
+      const lost: string[] = [];
+      for (const width of [390, 320]) {
+        await tab.viewport(width);
+        for (const text of ['100%', '130%']) {
+          // The browser's text size: the default font size, which rem follows.
+          await tab.eval(`document.documentElement.style.fontSize = '${text}'`);
+          await tab.eval("location.hash = ''");
+          await tab.until(`${byId('sentence')}.offsetParent !== null`, 'the egg\'s page shown');
+          for (const [panel, choices] of panels) {
+            await tab.eval(`(() => { const c = document.querySelector('#sentence .clause[aria-controls="${panel}"]');
+              if (c.getAttribute('aria-expanded') !== 'true') c.click(); })()`);
+            await tab.until(`document.getElementById('${panel}').offsetParent !== null`, `${panel} open`);
+            for (const choice of [null, ...choices]) {
+              if (choice !== null) await tab.eval(`document.getElementById('${choice}').click()`);
+              await tab.settle();
+              for (const l of await covered(`#${panel}`)) lost.push(`${width} px, ${text} text, ${panel}${choice === null ? '' : ` (${choice})`}: ${l}`);
+            }
+          }
+          await tab.eval("location.hash = '#settings'");
+          await tab.until(`${byId('altitude')}.offsetParent !== null`, 'Settings shown');
+          await tab.settle();
+          for (const l of await covered('#settings')) lost.push(`${width} px, ${text} text, Settings: ${l}`);
+        }
+      }
+      check(lost.length === 0, `a − or + takes a tap from another control: ${lost.join('; ')}`);
+      await tab.eval("document.documentElement.style.fontSize = ''");
       const said: string[] = [];
       for (const width of [390, 320]) {
         await tab.viewport(width);
@@ -383,7 +440,7 @@ export const layoutScenarios: Record<string, Scenario> = {
         check(over.rows.length === 0 && over.wide <= 0, `at ${width} px Settings is ${over.wide} px too wide: ${over.rows.join('; ')}`);
         said.push(`${width} px: pill ${pill} px in`);
       }
-      return `every − and + takes 44 px or more, its field whole; ${said.join(', ')}; Settings' choices keep 10 px, and its rows the page's width`;
+      return `every − and + takes 44 px or more, its field whole, and no other control's tap; ${said.join(', ')}; Settings' choices keep 10 px, and its rows the page's width`;
     },
   },
 };
