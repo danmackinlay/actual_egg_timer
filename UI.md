@@ -90,11 +90,17 @@ to bottom, in every phase:
 **The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98). An ovoid
 with a round yolk, drawn ring by ring, showing how set each layer is: the
 yolk in the slider track's colours, the white from a clear, faintly blue raw
-white to opaque. A picture of what the sentence and the time already say,
-it has no words and a screen reader passes over it. Idle, and while a
-control is held during a cook and for a moment after, it is the egg the
-settings aim for, as eaten at the end of the cooling; otherwise the egg in
-the water now, through the cooling; at Done, the egg as it ran.
+white to opaque. A tap turns it over to how hot each layer is, blue below
+the room through a grey at 40 °C to red toward the boil, and back; the
+choice is kept from cook to cook, in both apps' own settings. Its colours
+sit at `HEAT_STOPS_C` (src/core/section.ts), and are tokens in styles.css
+and `Palette` on iOS, for the dark scheme and the light. In the first
+second of a cook the heat map draws the egg as it went in
+(`HEAT_SETTLED_S`). A button to a screen reader, named for the picture it
+shows, offering the other. Idle, and while a control is held during a cook
+and for a moment after, it is the egg the settings aim for, as eaten at the
+end of the cooling; otherwise the egg in the water now, through the
+cooling; at Done, the egg as it ran.
 
 **Corrections** (`DECISIONS.md` 96 to 98). After Start every clause of the
 sentence, the slider and Settings' pot rows stay open, showing the cook's

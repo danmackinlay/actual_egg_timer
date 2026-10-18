@@ -44,6 +44,19 @@ export const SECTION_WHITE_SAMPLES = 17;
  *  decades. Between this and the target the white goes from clear to opaque. */
 export const WHITE_SET_DECADES = 1.0;
 
+/** Where the heat map's five colours sit, C, coldest first: blue from the
+ *  ice to the room, a neutral grey at 40 C where nothing in an egg has begun
+ *  to set, red toward the boil. Two hues and a grey, never a rainbow. Both
+ *  apps draw the egg's other picture, how hot each layer is, between these. */
+export const HEAT_STOPS_C: number[] = [0.0, 20.0, 40.0, 70.0, 100.0];
+
+/** How long into a cook the heat map draws the egg at its starting
+ *  temperature, s. A section starts with the water at the shell and the egg
+ *  at its own temperature, a step the modal series rings across until the
+ *  first step or two have smoothed it; the doses are taken only after a
+ *  step, so how set never sees it. */
+export const HEAT_SETTLED_S = 1.0;
+
 export interface EggSection {
   sphere: SphereState;
   /** Seconds since t = 0 of the cook (protocol.ts), always a whole number of

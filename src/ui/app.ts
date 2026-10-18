@@ -35,7 +35,7 @@ import { closeAudio, primeAudio } from './clock.ts';
 import { bindDom, page } from './dom.ts';
 import { wireFeedback } from './feedback.ts';
 import { wireInfoButtons } from './info.ts';
-import { onInput, onToggleMute } from './input.ts';
+import { onInput, onToggleEgg, onToggleMute } from './input.ts';
 import { wireExport, wireForget } from './learned.ts';
 import { startOffline } from './offline.ts';
 import { stopWorker } from './offThread.ts';
@@ -183,6 +183,7 @@ function wire(): void {
   page().secondary.addEventListener('click', reset);
   page().stillOut.addEventListener('click', onStillOut);
   page().mute.addEventListener('click', onToggleMute);
+  page().eggToggle.addEventListener('click', onToggleEgg);
   wireForget();
   wireExport();
   // Every (i) opens in place. They are buttons, so the keyboard reaches and

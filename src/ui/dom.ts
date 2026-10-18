@@ -24,6 +24,7 @@ export const ELEMENTS = {
   whiteRisk: 'p',
 
   advice: 'p', adviceList: 'ul', forYou: 'div', welcome: 'p', helpSousVide: 'p', sentence: 'p', eggSection: 'svg',
+  eggToggle: 'button', eggToggleOffer: 'span',
   controls: 'form', startedAtField: 'div', startedAt: 'output', startedAtLess: 'button', startedAtMore: 'button',
   startedAtLimit: 'p', navBack: 'button', settingsTitle: 'h1', helpTitle: 'h1', statBoil: 'strong', note: 'p',
   warn: 'p', mute: 'button', doneness: 'input', donenessOdds: 'div', donenessUnlikelySoft: 'div',

@@ -101,7 +101,9 @@ test('settings the build before stored, with the iPhone\'s weighed egg in them, 
   };
   storage.set(SETTINGS_KEY, JSON.stringify(written));
   const { v: _v, weighedMass_g: _weighed, ...read } = written;
-  assert.deepEqual(settings.load(), read);
+  // And the egg how set, which it never stored: a field added since reads
+  // as its default, so the format stands.
+  assert.deepEqual(settings.load(), { ...read, eggView: 'set' });
   assert.equal(loadLanguage().chosen, 'en-x-1750', 'the reader of 1750 stays in 1750');
 });
 

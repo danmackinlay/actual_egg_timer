@@ -26,6 +26,49 @@ export const layoutScenarios: Record<string, Scenario> = {
     run: oneLayout(320, 'stacked', COOLINGS[2]),
   },
 
+  'egg-heat-toggle': {
+    what: 'DECISIONS.md 52: a tap on the egg shows how hot, named so and offering how set; a tap again shows how set; how hot is kept over a reload, and on into a cook, where the live egg is drawn how hot',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.until("__snap().chosen !== null", 'the time decided');
+      await tab.settle();
+      const egg = (): Promise<{ shows: string; reading: string; label: string; offer: string; fill: string; stored: unknown }> => tab.eval(`(() => {
+        const svg = ${byId('eggSection')};
+        const stored = JSON.parse(localStorage.getItem('aet.settings') ?? '{}');
+        return {
+          shows: svg.dataset.shows ?? '', reading: svg.dataset.egg ?? '',
+          label: ${byId('eggToggle')}.getAttribute('aria-label') ?? '', offer: ${byId('eggToggleOffer')}.textContent ?? '',
+          fill: svg.querySelector('path[data-ring="0"]')?.getAttribute('fill') ?? '', stored: stored.eggView ?? null,
+        }; })()`);
+      const tap = async (): Promise<void> => {
+        await tab.click('#eggToggle');
+        await tab.settle();
+      };
+      const set = await egg();
+      check(set.shows === 'set' && set.label !== '' && set.offer !== '', `a fresh egg shows how set, named: ${JSON.stringify(set)}`);
+      await tap();
+      const heat = await egg();
+      check(heat.shows === 'heat', `a tap shows how hot: ${heat.shows}`);
+      check(heat.fill !== set.fill, `the centre drawn alike in both: ${heat.fill}`);
+      check(heat.label !== set.label && heat.offer !== set.offer, `the name says how set still: ${heat.label} / ${heat.offer}`);
+      check(heat.stored === 'heat', `how hot not stored: ${String(heat.stored)}`);
+      await tap();
+      const back = await egg();
+      check(back.shows === 'set' && back.fill === set.fill && back.label === set.label, `a tap again is not how set: ${JSON.stringify(back)}`);
+      await tap();
+      await tab.reload();
+      await tab.until("__snap().chosen !== null", 'the time decided again');
+      await tab.settle();
+      const kept = await egg();
+      check(kept.shows === 'heat' && kept.label === heat.label, `how hot not kept over a reload: ${JSON.stringify(kept)}`);
+      await start(tab, 'cold');
+      await tab.until(`${byId('eggSection')}.dataset.egg === 'live'`, 'the live egg drawn');
+      const live = await egg();
+      check(live.shows === 'heat', `the live egg drawn how set: ${live.shows}`);
+      return `set ${set.fill}, heat ${heat.fill}; kept over a reload; the live egg ${live.fill}`;
+    },
+  },
+
   'egg-readings': {
     what: 'the egg aimed for at idle (softer and firmer differ), the live egg from raw at the start, the egg as it ran at Done',
     run: async (h) => {

@@ -8,8 +8,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { type SectionPalette, ringFills, ringPoints } from '../src/ui/eggSection.ts';
-import { advanceSection, createSection, sectionView } from '../src/core/section.ts';
+import { type SectionPalette, heatAt, heatFills, ringFills, ringPoints } from '../src/ui/eggSection.ts';
+import { HEAT_STOPS_C, advanceSection, createSection, sectionView } from '../src/core/section.ts';
+import { readFileSync } from 'node:fs';
 import { eggFromMass } from '../src/core/geometry.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../src/core/solve.ts';
 import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../src/core/constants.ts';
@@ -78,4 +79,34 @@ test('a raw egg is runny yolk and clear white; a hard one is the other ends', ()
   const hard = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(hard[0], '#0000ff');
   assert.equal(hard[hard.length - 1], '#fafafa');
+});
+
+/** A colour at each heat stop, told apart by its red. */
+const HEAT: [number, number, number][] = [[0, 0, 0], [50, 0, 0], [100, 0, 0], [150, 0, 0], [200, 0, 0]];
+
+test('the heat map is each stop\'s colour at its temperature, blended between, held beyond', () => {
+  for (let i = 0; i < HEAT_STOPS_C.length; i++) assert.deepEqual(heatAt(HEAT_STOPS_C[i], HEAT), HEAT[i]);
+  assert.deepEqual(heatAt(-5, HEAT), HEAT[0]);
+  assert.deepEqual(heatAt(130, HEAT), HEAT[HEAT.length - 1]);
+  const between = heatAt((HEAT_STOPS_C[2] + HEAT_STOPS_C[3]) / 2, HEAT);
+  assert.equal(between[0], 125);
+});
+
+test('a raw egg in the fridge is cold all through; a boiled one hot at the shell; the first moment uniform', () => {
+  const setup = appSetup();
+  const egg = eggFromMass(0.060);
+  const s = createSection(egg, setup, DEFAULT_PARAMS);
+  const start = heatFills(sectionView(s, WHITE_DOSE_TARGET), HEAT, setup.eggStart_C);
+  assert.ok(start.every((f) => f === start[0]), 'every ring at the egg\'s own temperature');
+  advanceSection(s, egg, setup, 900, null);
+  const hot = heatFills(sectionView(s, WHITE_DOSE_TARGET), HEAT, null);
+  assert.ok(parseInt(hot[hot.length - 1].slice(1, 3), 16) > parseInt(hot[0].slice(1, 3), 16), 'the shell hotter than the centre');
+});
+
+test('styles.css has a heat colour for each stop, in both schemes', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  for (const name of ['--heat-cold', '--heat-cool', '--heat-mid', '--heat-warm', '--heat-hot']) {
+    assert.equal(css.split(`${name}:`).length - 1, 2, `${name} in the dark and the light`);
+  }
+  assert.equal(HEAT_STOPS_C.length, 5);
 });

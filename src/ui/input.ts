@@ -45,6 +45,11 @@ export function onToggleMute(): void {
   send({ kind: 'mute' });
 }
 
+/** A tap on the egg: its other picture, how set or how hot. */
+export function onToggleEgg(): void {
+  send({ kind: 'eggView' });
+}
+
 /** What the controls now say, read back as far as they say it: the choices,
  *  and, of the fields with a unit, only `source`, the one being edited (see
  *  `readField`). A field that holds no number says nothing, and the

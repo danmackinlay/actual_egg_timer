@@ -130,8 +130,8 @@ public enum AlarmPeriodS {
     public static let henCooled: Double = 4.4
 }
 
-/// How finely the egg in cross-section is sampled, and how far short of its target a white still
-/// reads as raw.
+/// How finely the egg in cross-section is sampled, how far short of its target a white still reads
+/// as raw, and where its heat map's colours sit.
 public enum Section {
     /// Samples across the yolk, from its centre (x = 0) to its edge (x = YOLK_RADIUS_FRAC), evenly
     /// in radius.
@@ -140,6 +140,17 @@ public enum Section {
     public static let whiteSamples: Int = 17
     /// How far short of its target a white dose still reads as wholly raw, in decades.
     static let whiteSetDecades: Double = 1.0
+    /// Where the heat map's five colours sit, C, coldest first: blue from the ice to the room, a
+    /// neutral grey at 40 C where nothing in an egg has begun to set, red toward the boil.
+    public static let heatStopsC: [Double] = [
+        0.0,
+        20.0,
+        40.0,
+        70.0,
+        100.0,
+    ]
+    /// How long into a cook the heat map draws the egg at its starting temperature, s.
+    public static let heatSettledS: Double = 1.0
 }
 
 /// The peak white temperature, C, below which the white is in each band; at or above the last it is

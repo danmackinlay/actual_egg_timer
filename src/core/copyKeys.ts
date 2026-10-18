@@ -241,6 +241,10 @@ export interface CopyKeyArgs {
   'setup.cooling.counter': never;
   'setup.clause': 'label' | 'value';
   'setup.close': never;
+  'egg.shows.set': never;
+  'egg.shows.heat': never;
+  'egg.offer.heat': never;
+  'egg.offer.set': never;
   'idle.welcome': never;
   'controls.units': never;
   'controls.units.metric': never;

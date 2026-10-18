@@ -146,6 +146,21 @@ public final class Planner {
         settings.probe = on
     }
 
+    /// The egg's other picture, how set or how hot: a way of looking, not a
+    /// choice of the cook's, so it is saved at once and touches nothing in
+    /// hand. While a cook runs, the controls are its own choices, so only
+    /// the settings no group makes are written (`takeNoGroup`).
+    public func turnEgg() {
+        applying = true
+        settings.eggView = settings.eggView.other
+        applying = false
+        if onEdit == nil {
+            SettingsStore.save(self)
+        } else {
+            SettingsStore.save(self, groups: [])
+        }
+    }
+
     /// The room, from Settings or beside "at room temperature"; nil is "not
     /// given", and the room is assumed. Clamped like anything typed.
     public func setRoom(_ c: Double?) {

@@ -11,7 +11,7 @@
 import type { CopyKey } from '../core/copy.ts';
 import { activeLocale, t, timeOfDay } from './copy.ts';
 import { page } from './dom.ts';
-import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.ts';
+import { buildEggSection, heatFills, paintEggSection, readHeat, readPalette, ringFills } from './eggSection.ts';
 import { showInfo } from './info.ts';
 import { drawForm } from './controls.ts';
 import { drawLearned, renderCalibNote } from './learned.ts';
@@ -20,7 +20,7 @@ import { drawShare } from './shareView.ts';
 import { renderSentence } from './sentence.ts';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.ts';
 import { APP_VERSION } from './version.ts';
-import type { CertaintyView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.ts';
+import type { CertaintyView, EggToggleView, ReadingView, ReadoutView, SectionDraw, Sections, View } from './view.ts';
 
 /** What is on the page now, as far as the writer needs to know it. */
 export interface Drawn {
@@ -32,10 +32,11 @@ export interface Drawn {
   announced: string;
   /** The advice, as listed. */
   advice: string;
-  /** The egg's rings as built, and the drawing painted. */
+  /** The egg's rings as built, and the drawing painted: what it was of, and
+   *  in which picture. */
   rings: string;
-  painted: SectionDraw['view'] | null;
-  reading: SectionDraw['reading'] | null;
+  painted: SectionDraw | null;
+  heat: boolean;
   /** The line over the questions, as last said. */
   note: number;
   /** The main button's words under the row, as laid out. */
@@ -43,7 +44,9 @@ export interface Drawn {
 }
 
 export function drawnNothing(): Drawn {
-  return { readout_px: 0, announced: '', advice: '', rings: '', painted: null, reading: null, note: -1, sizers: '' };
+  return {
+    readout_px: 0, announced: '', advice: '', rings: '', painted: null, heat: false, note: -1, sizers: '',
+  };
 }
 
 /** The controls, Settings, and the line over the questions each time it is
@@ -62,6 +65,7 @@ export function draw(v: View, d: Drawn): void {
   drawSizers(v.sizers, d);
   page().mute.textContent = v.mute.label;
   page().mute.setAttribute('aria-pressed', v.mute.pressed ? 'true' : 'false');
+  drawEggToggle(v.egg, d);
   if (v.kind === 'unsolved') {
     drawReading(v.reading);
     page().statBoil.textContent = v.statBoil;
@@ -88,7 +92,15 @@ export function draw(v: View, d: Drawn): void {
   drawHeight(v.height, d);
   drawAdvice(v.advice, d);
   page().welcome.hidden = !v.welcome;
-  if (v.section !== null) drawSection(v.section, d);
+  if (v.section !== null) drawSection(v.section, v.egg.heat, d);
+}
+
+/** The egg's button: its name, what a press shows instead, and the egg
+ *  painted again in the other picture when it was turned over. */
+function drawEggToggle(e: EggToggleView, d: Drawn): void {
+  page().eggToggle.setAttribute('aria-label', e.label);
+  page().eggToggleOffer.textContent = e.offer;
+  if (e.heat !== d.heat && d.painted !== null) drawSection(d.painted, e.heat, d);
 }
 
 /** The words the row of buttons is sized on, laid out hidden twice: in the
@@ -197,20 +209,24 @@ function drawAdvice(a: { link: boolean; keys: CopyKey[] }, d: Drawn): void {
   }));
 }
 
-/** The egg in cross-section, painted when what it shows changed, its rings
- *  built again when they did; named on the drawing as `data-egg`. */
-function drawSection(s: SectionDraw, d: Drawn): void {
-  if (s.view === d.painted && s.reading === d.reading) return;
+/** The egg in cross-section, painted when what it shows changed, or the
+ *  picture it is in, its rings built again when they did; named on the
+ *  drawing as `data-egg`, and its picture as `data-shows`. */
+function drawSection(s: SectionDraw, heat: boolean, d: Drawn): void {
+  const was = d.painted;
+  if (was !== null && s.view === was.view && s.reading === was.reading && heat === d.heat) return;
   const svg = page().eggSection;
   const rings = JSON.stringify(s.view.outer);
   if (rings !== d.rings) {
     buildEggSection(svg, s.view.outer);
     d.rings = rings;
   }
-  paintEggSection(svg, ringFills(s.view, readPalette(page().body)));
+  const fills = heat ? heatFills(s.view, readHeat(page().body), s.uniform_C) : ringFills(s.view, readPalette(page().body));
+  paintEggSection(svg, fills);
   svg.dataset['egg'] = s.reading;
-  d.painted = s.view;
-  d.reading = s.reading;
+  svg.dataset['shows'] = heat ? 'heat' : 'set';
+  d.painted = s;
+  d.heat = heat;
 }
 
 /** The last line of Settings, "Version 0.4.0-alpha.1": the words from the

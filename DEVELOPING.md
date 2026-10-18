@@ -76,8 +76,9 @@ opens with no signal, from one build kept whole. A new build takes over only
 between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
 
 `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a whole
-cook in cross-section from core's `src/core/section.ts`, how set and how hot,
-with the heat map the owner set aside beside it (`DECISIONS.md` 52).
+cook in cross-section from core's `src/core/section.ts`, how set and how hot
+side by side, in the app's own colours (`src/ui/eggSection.ts`, styles.css;
+`DECISIONS.md` 52).
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant

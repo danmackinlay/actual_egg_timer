@@ -194,10 +194,14 @@
     <!-- The setup sentence. Its clauses are buttons, built by the app from
          setup.* in the catalogue; each opens its choice below, in place.
          Beside it, the egg in cross-section (src/ui/eggSection.ts, UI.md
-         section 3): how set each layer is. A picture of what the sentence
-         and the time say, with no words, so hidden from a screen reader. -->
+         section 3): how set each layer is, or, pressed, how hot. The
+         button's name says which it shows, and its description offers the
+         other (render.ts); the drawing itself has no words. -->
     <div id="setup">
-      <svg id="eggSection" class="egg-section pan-only" aria-hidden="true" focusable="false"></svg>
+      <button type="button" id="eggToggle" class="egg-toggle pan-only" aria-describedby="eggToggleOffer">
+        <svg id="eggSection" class="egg-section" aria-hidden="true" focusable="false"></svg>
+        <span id="eggToggleOffer" class="sr-only"></span>
+      </button>
       <p id="sentence"></p>
 
       <div class="panel" id="panelEgg" role="group" aria-labelledby="lblEgg" hidden>

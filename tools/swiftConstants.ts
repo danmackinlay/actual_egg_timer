@@ -66,7 +66,7 @@ const NAMESPACES: Record<string, string | [string, string]> = {
   StartTempPresets: ['inputs.ts', 'START_TEMP_PRESETS_C'],
   Defaults: ['inputs.ts', 'DEFAULTS'],
   UnitFactors: ['units.ts', 'OUNCE_G'],
-  Section: 'How finely the egg in cross-section is sampled, and how far short of its target a white still reads as raw.',
+  Section: 'How finely the egg in cross-section is sampled, how far short of its target a white still reads as raw, and where its heat map\'s colours sit.',
   WhiteBandBelowC: ['texture.ts', 'WHITE_BAND_BELOW_C'],
   YolkBandBelowC: ['texture.ts', 'YOLK_BAND_BELOW_C'],
   AlarmPeriodS: ['sounds.ts', 'ALARM_PERIOD_S'],
@@ -208,6 +208,8 @@ const TWINS: Twin[] = [
   { module: 'section.ts', name: 'SECTION_YOLK_SAMPLES', swift: 'Section.yolkSamples', type: 'Int' },
   { module: 'section.ts', name: 'SECTION_WHITE_SAMPLES', swift: 'Section.whiteSamples', type: 'Int' },
   { module: 'section.ts', name: 'WHITE_SET_DECADES', swift: 'Section.whiteSetDecades', internal: true },
+  { module: 'section.ts', name: 'HEAT_STOPS_C', swift: 'Section.heatStopsC', type: '[Double]' },
+  { module: 'section.ts', name: 'HEAT_SETTLED_S', swift: 'Section.heatSettledS' },
 
   { module: 'sousvide.ts', name: 'SOUS_VIDE_BATH_C', swift: 'sousVideBathC' },
   { module: 'sousvide.ts', name: 'SOUS_VIDE_MODEL_FLOOR_C', swift: 'sousVideModelFloorC' },
