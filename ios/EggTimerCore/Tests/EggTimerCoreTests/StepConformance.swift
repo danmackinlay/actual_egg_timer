@@ -194,7 +194,11 @@ struct StepConformance {
                 )
                 var expected = s
                 for input in ["event", "reload", "posterior", "landed", "probe"] { expected[input] = nil }
-                expectJSON(made, expected, what, clockFrom: out.cook?.start.atS ?? was?.start.atS ?? now)
+                let clock = out.cook?.start.atS ?? was?.start.atS ?? now
+                expectJSON(made, expected, what, clockFrom: clock)
+                // The entries as the log stores them, nulls and all.
+                let added = (expected["cook"] as? [String: Any])?["added"]
+                expectJSON(made.cook?.added, added, "\(what): the entries added", clockFrom: clock, strict: true)
                 state = out.state
                 last = out
                 steps += 1

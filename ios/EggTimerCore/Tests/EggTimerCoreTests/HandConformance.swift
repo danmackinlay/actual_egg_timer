@@ -69,7 +69,7 @@ struct HandConformance {
             let cook = try #require(cooks[c.str("cook")])
             let group = try c.value(HandGroup.self, "group")
             let made = handChoices(cook, said: said, group: group)
-            expectJSON(made, c["choices"], "\(try c.str("cook")), \(group)")
+            expectJSON(made, c["choices"], "\(try c.str("cook")), \(group)", strict: true)
         }
     }
 
