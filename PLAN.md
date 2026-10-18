@@ -44,13 +44,16 @@ and the map of the documents are `CLAUDE.md`.
    waiting, retries, traces and `page.clock` replace the DevTools client and
    most of the harness; the app's hooks (`__snap`, the oscillator capture)
    move across. `git log` on the two files says when.
-10. **Eat it warm, in both apps** (`DECISIONS.md` 140). Core has `eggCup`
-    (`EGG_CUP_OPENED_S`, `restsInAir`); the apps offer it next: its words
-    (the refusal, the pull, the setup clause, the alarm's line), the heat
-    map's window from `carryoverWindow_s`, the web's settings and stored
-    cook accepting it, and the fit's simulated kitchens cooking it. Then
-    whether the snap reads a white the loss accepts, measured after the
-    first egg.
+10. **The texture line from the doses, not the peak.** At the egg cup's
+    soft the line says the yolk is jammy: it reads the yolk's peak
+    temperature, which an egg opened warm reaches before the yolk has been
+    hot for long, where the doses, and the slider, say soft. Core's texture
+    and its twin.
+11. **The fit's recovery check is sensitive to its sample.** Adding the
+    egg cup's kitchens took three draws of the simulated sample before
+    `test_recovery` mixed under its R-hat limit; the check should pass on
+    any honest sample, so it wants longer chains or a sample it was not
+    tuned on.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -79,11 +82,10 @@ shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id.
-6. **iOS's `previewedLevel` in `InHand`**: keep the flag, or restore the
-   slider in `letGo` only when the level is not in hand. Restoring always,
-   as the web does, puts back an old level a correction has not reached
-   yet (`aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted`).
 
+6. **Whether the egg cup counts down to its opening**, as a cooling counts
+   down to its end; today Done comes at the pull, as on the counter
+   (`restsInAir` is the seam).
 
 Waiting on someone else: the Czech review, by the owner's friend.
 
