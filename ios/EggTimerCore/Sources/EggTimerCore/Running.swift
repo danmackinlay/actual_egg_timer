@@ -55,6 +55,28 @@ public struct CookChoices: Sendable, Equatable, Codable {
         case roomC = "room_C", startMode, afterBoil, cooling, tapWaterC = "tapWater_C", bowlLitres
         case bowlWaterC = "bowlWater_C", waterLitres, eggCount, altitudeM = "altitude_m", level
     }
+
+    /// Nulls are written, not omitted, as the TypeScript stores a cook's
+    /// choices: the synthesized coding would leave each nil out.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(massKg, forKey: .massKg)
+        try c.encode(massFrom, forKey: .massFrom)
+        try c.encode(sizeTable, forKey: .sizeTable)
+        try c.encode(eggFrom, forKey: .eggFrom)
+        try c.encode(customStartC, forKey: .customStartC)
+        try c.encode(roomC, forKey: .roomC)
+        try c.encode(startMode, forKey: .startMode)
+        try c.encode(afterBoil, forKey: .afterBoil)
+        try c.encode(cooling, forKey: .cooling)
+        try c.encode(tapWaterC, forKey: .tapWaterC)
+        try c.encode(bowlLitres, forKey: .bowlLitres)
+        try c.encode(bowlWaterC, forKey: .bowlWaterC)
+        try c.encode(waterLitres, forKey: .waterLitres)
+        try c.encode(eggCount, forKey: .eggCount)
+        try c.encode(altitudeM, forKey: .altitudeM)
+        try c.encode(level, forKey: .level)
+    }
 }
 
 public struct Pulled: Sendable, Equatable, Codable {

@@ -33,6 +33,20 @@ public struct CookAsRan: Sendable, Equatable, Codable {
         case correctedAtS = "correctedAt_s", level, cookS = "cook_s", nudgeS = "nudge_s", forecast
         case peakYolkC = "peakYolk_C", probeMoment, params
     }
+
+    /// `correctedAt_s` is written as null rather than omitted, as the
+    /// TypeScript stores it in the cook's log.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(correctedAtS, forKey: .correctedAtS)
+        try c.encode(level, forKey: .level)
+        try c.encode(cookS, forKey: .cookS)
+        try c.encode(nudgeS, forKey: .nudgeS)
+        try c.encode(forecast, forKey: .forecast)
+        try c.encode(peakYolkC, forKey: .peakYolkC)
+        try c.encode(probeMoment, forKey: .probeMoment)
+        try c.encode(params, forKey: .params)
+    }
 }
 
 // MARK: - The cook as it ran
