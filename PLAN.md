@@ -44,11 +44,13 @@ and the map of the documents are `CLAUDE.md`.
    waiting, retries, traces and `page.clock` replace the DevTools client and
    most of the harness; the app's hooks (`__snap`, the oscillator capture)
    move across. `git log` on the two files says when.
-10. **Eat it warm, a fifth cooling** (`DECISIONS.md` 140): the counter's
-    physics until the egg is opened a fixed time after the pull, when the
-    doses stop (`npm run decide -- counter` shows why the counter alone
-    cannot give a soft yolk). Then whether the snap reads a white the loss
-    accepts, measured after the first egg.
+10. **Eat it warm, in both apps** (`DECISIONS.md` 140). Core has `eggCup`
+    (`EGG_CUP_OPENED_S`, `restsInAir`); the apps offer it next: its words
+    (the refusal, the pull, the setup clause, the alarm's line), the heat
+    map's window from `carryoverWindow_s`, the web's settings and stored
+    cook accepting it, and the fit's simulated kitchens cooking it. Then
+    whether the snap reads a white the loss accepts, measured after the
+    first egg.
 11. **A tap on the egg toggles how set and how hot**, in both apps
     (`DECISIONS.md` 52). Core already gives each ring's temperature
     (`SectionView.temperature_C`, twinned), so this is drawing and a
@@ -127,6 +129,11 @@ Start the QA pass here.
   viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
   digits), no alarm heard, no Home Screen opening
   offline, no new build taken after a deploy.
+- **The egg cup's opening** (`EGG_CUP_OPENED_S`, 120 s) is the model's
+  guess: a probe in the yolk's centre as the egg is topped, with the
+  seconds since the pull, says when cooks open it and whether a cup keeps
+  more heat than still air. Each 30 s it is off moves soft's time by
+  about 30 s.
 - **Real eggs.** None cooked at a chosen time (the odds are calibrated
   against the model's own idea of cooks); none probed (the 1.0 C instrument
   sd and 0.4 C handling mean are the model's); no hot-start heat-off cook,
