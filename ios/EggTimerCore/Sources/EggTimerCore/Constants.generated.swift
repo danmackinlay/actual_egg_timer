@@ -64,6 +64,9 @@ public enum Constants {
     public static let dtSim: Double = 0.5
     /// How long to keep integrating after the egg leaves the water, s.
     public static let carryoverWindow: Double = 900.0
+    /// How long after the pull an egg eaten warm from an egg cup is opened, s: where its doses stop
+    /// (`carryoverWindow_s`).
+    public static let eggCupOpenedS: Double = 120.0
 }
 
 /// Bounds on every number a user can type or drag, in one place.

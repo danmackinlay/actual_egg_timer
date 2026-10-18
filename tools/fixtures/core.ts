@@ -70,9 +70,11 @@ const rampedStep = (() => {
 })();
 
 /** What each cooling starts at, and a bowl as it warms: the cook's water or
- *  the one assumed, an ice bath and the air, and a bowl with no water. */
+ *  the one assumed, an ice bath and the air, on the counter and in an egg
+ *  cup, and a bowl with no water. */
 const COOLING_SETUPS: CookSetup[] = [
-  appSetup(), appSetup({ cooling: 'counter', ambient_C: 26 }), appSetup({ cooling: 'tap' }),
+  appSetup(), appSetup({ cooling: 'counter', ambient_C: 26 }), appSetup({ cooling: 'eggCup', ambient_C: 17 }),
+  appSetup({ cooling: 'tap' }),
   appSetup({ cooling: 'tap', coolingWater_C: 24 }), appSetup({ cooling: 'bowl', bowlLitres: 2 }),
   appSetup({ cooling: 'bowl', bowlLitres: 2, ambient_C: 27 }), appSetup({ cooling: 'bowl', bowlLitres: 0.5, coolingWater_C: 9, eggCount: 6 }),
   appSetup({ cooling: 'bowl', bowlLitres: 4, coolingWater_C: 31, eggCount: 1 }), appSetup({ cooling: 'bowl' }),

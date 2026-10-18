@@ -19,11 +19,11 @@
  */
 
 import {
-  YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, DT_SIM, CARRYOVER_WINDOW,
+  YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, DT_SIM,
 } from './constants.ts';
 import type { Egg } from './geometry.ts';
 import {
-  type CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, bathTemperature, carryoverWindow_s, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.ts';
 import {
   type SphereState, createSphere, meanTemperature, stepSphere, temperatureAt,
@@ -180,7 +180,7 @@ export function sectionView(s: EggSection, whiteTarget_min: number): SectionView
 /**
  * The egg the settings aim for: one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
  * shown at the end of the cooling, the egg as eaten: carried through the
- * whole carryover (`CARRYOVER_WINDOW`), as `simulate` counts it, so the yolk
+ * whole carryover (`carryoverWindow_s`), as `simulate` counts it, so the yolk
  * reads the level the slider asked for. At the yolk centre's peak, which is
  * Done, the dose is not all in: a jammy (0.41) yolk read 0.34 there. About
  * 2,700 steps for a soft-boiled egg: once per solve, not per frame.
@@ -189,6 +189,6 @@ export function previewSection(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, whiteTarget_min: number,
 ): SectionView {
   const s = createSection(egg, setup, params);
-  advanceSection(s, egg, setup, cookTime_s + CARRYOVER_WINDOW, cookTime_s);
+  advanceSection(s, egg, setup, cookTime_s + carryoverWindow_s(setup.cooling), cookTime_s);
   return sectionView(s, whiteTarget_min);
 }

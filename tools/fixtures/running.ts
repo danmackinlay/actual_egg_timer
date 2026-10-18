@@ -62,6 +62,8 @@ const setupChoices: CookChoices[] = [];
       k += 1;
     }
   }
+  // Eaten warm from an egg cup: the room's air, as on the counter.
+  setupChoices.push({ ...BASE_CHOICES, startMode: 'hot', cooling: 'eggCup', room_C: 18, eggCount: 2 });
 }
 
 const setups = setupChoices.map((choices, i) => {
@@ -106,6 +108,8 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
   { note: 'corrected to a bowl of water after the cooling ended', cook: cooled, move: { correct: { ...cooled.choices, cooling: 'bowl', bowlLitres: 1, bowlWater_C: 14 }, now: START_S + 1100 } },
   { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
+  { note: 'done in an egg cup, corrected to ice: the cooling ended by the correction at the latest', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
+  { note: 'done in an egg cup, corrected to the counter: still in the air, nothing ended', cook: writeEvents(cookOf({ cooling: 'eggCup' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter' }, now: START_S + 900 } },
   { note: 'done on the counter, another correction: nothing ended', cook: writeEvents(cookOf({ cooling: 'counter' }), pulled.events), move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
   { note: 'a correction after the pull rang: planned afresh', cook: rung, move: { correct: { ...hot.choices, mass_kg: 0.076 }, now: START_S + 385 } },
@@ -584,6 +588,19 @@ const S = START_S;
   const next = replan(c0, learned, null, 0, at + 1).slowHobAt_s as number;
   plan({ note: 'cold, heating: the slow hob\'s moment not yet come, then past', posterior: 'learned', cook: c0, leanHint_s: 0, now_s: S + 60, surface: 'none', hobDue: [S + 61, at - 0.5, at + 0.5, at + 3000] });
   plan({ note: 'cold, heating, a second past the slow hob\'s moment: lengthened, and its next moment not yet come, then past', posterior: 'learned', cook: c0, leanHint_s: 0, now_s: at + 1, surface: 'none', hobDue: [at + 1, next - 0.5, next + 0.5] });
+}
+
+{
+  // Eaten warm from an egg cup: in the air, as on the counter, nothing
+  // counted and done at the out; then corrected to ice a minute on, Done
+  // kept and the ice bath ended by the correction. After every case above,
+  // so none moves.
+  const cup = cookOf({ startMode: 'hot', cooling: 'eggCup' });
+  const up = plan({ note: 'hot, in an egg cup, cooking', posterior: 'learned', cook: cup, leanHint_s: 0, now_s: S + 60, surface: 'own' });
+  const uEnd = up.deadlines.cookEnd_s;
+  const cupOut = withEvents(cup, withOut(cup, up, uEnd + 4).events);
+  plan({ note: 'hot, in an egg cup, out: done', posterior: 'learned', cook: cupOut, leanHint_s: 0, now_s: uEnd + 30, surface: 'own', dues: [uEnd + 30] });
+  plan({ note: 'done in an egg cup, then ice a minute after the out: Done kept, the ice bath to the correction', posterior: 'learned', cook: corrected(cupOut, { ...cup.choices, cooling: 'ice' }, uEnd + 64), leanHint_s: 0, now_s: uEnd + 65, surface: 'own', dues: [uEnd + 66, uEnd + 900] });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

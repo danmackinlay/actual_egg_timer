@@ -32,12 +32,21 @@ import {
   withUnrelated, withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.ts';
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.ts';
-import { normalCdf } from '../src/core/sphere.ts';
+import {
+  ALPHA_DEFAULT, ALPHA_REL_SD, DT_SIM, EGG_CUP_OPENED_S, TREF_WHITE_C, TREF_YOLK_C, YOLK_RADIUS_FRAC, Z_WHITE, Z_YOLK,
+} from '../src/core/constants.ts';
+import {
+  centreTemperature, createSphere, meanTemperature, normalCdf, stepSphere, temperatureAt,
+} from '../src/core/sphere.ts';
+import { accumulateDose, createDose } from '../src/core/kinetics.ts';
 import { eggFromMass, type Egg } from '../src/core/geometry.ts';
-import type { CookSetup } from '../src/core/protocol.ts';
-import { type Solution, logYolkTarget } from '../src/core/solve.ts';
-import { type LevelOdds, type OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.ts';
+import {
+  type CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+} from '../src/core/protocol.ts';
+import { type ModelParams, type Solution, logYolkTarget, solveCookTime } from '../src/core/solve.ts';
+import {
+  type LevelOdds, type OddsProfile, answerAt, decideAnswer, envelopeBounds, oddsProfile,
+} from '../src/core/reach.ts';
 import { predictOutcome } from '../src/core/outcome.ts';
 import {
   CERTAINTY_MASS, type CertaintyReading, type WordCertainty, askedWord, certaintyAt, wordCertainty,
@@ -759,6 +768,109 @@ if (run('counter')) {
         + `across the posterior, s (5/50/95%): the white sets ${quantiles(white)}, the yolk enters just right ${quantiles(enters)} and leaves ${quantiles(leaves)}`);
     }
   }
+
+  /*
+   * Eaten warm from an egg cup (DECISIONS.md 140): the counter's egg, its
+   * doses stopped at the opening, EGG_CUP_OPENED_S after the pull. The cook's
+   * view for a 60 g egg from the fridge into boiling water, on a fresh install
+   * and after one egg, beside ice and the counter: the time for soft and for
+   * jammy as the app gives it, whether the level is in reach or what it snaps
+   * to, the certainty, P(runny) and the decision's lean off the mean solve.
+   * Then how the softest level and soft's time move with the opening, at the
+   * posterior mean, so the constant's weight can be read.
+   */
+  const egg60 = eggFromMass(0.06);
+  const cupPots: Pot[] = [
+    { name: '60 g, ice', egg: egg60, setup: appSetup() },
+    { name: '60 g, counter', egg: egg60, setup: appSetup({ cooling: 'counter' }) },
+    { name: '60 g, egg cup', egg: egg60, setup: appSetup({ cooling: 'eggCup' }) },
+  ];
+  console.log(`\n== counter: eaten warm from an egg cup, opened ${EGG_CUP_OPENED_S} s after the pull (60 g, fridge, boiling)`);
+  const WORDS = ['runny', 'soft', 'jammy', 'fudgy', 'hard'];
+  for (const name of ['prior', 'one egg']) {
+    const c = LEARNED[name];
+    for (const pot of cupPots) {
+      const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, pot.egg, pot.setup)));
+      const profile = oddsProfile(c, pot.egg, pot.setup, grid);
+      for (const level of [0.22, 0.41]) {
+        const a = answerAt(c, pot.egg, pot.setup, level, profile);
+        const d = decideAnswer(c, pot.egg, pot.setup, grid, a.solution, a.level, profile, 0);
+        const w = d.certainty.words;
+        const reach = a.verdict.snapTo === null ? 'in reach' : `snaps to ${a.level.toFixed(2)} (${a.verdict.kind})`;
+        console.log(`${name}, ${pot.name}, asked ${level}: ${reach}; the time ${d.solution.result.cookTime_s.toFixed(1)} s, `
+          + `the mean solve ${a.solution.result.cookTime_s.toFixed(1)} s (lean ${(d.decision.cookTime_s - a.solution.result.cookTime_s).toFixed(1)} s); `
+          + `${w.certainty}, P(${WORDS[w.asked]}) ${w.pAsked.toFixed(2)}, 90% ${WORDS[w.from]}-${WORDS[w.to]}; `
+          + `P(runny white) ${d.outcome.pWhiteRunny.toFixed(3)}; softest ${a.solution.softestLevel.toFixed(2)}`
+          + `${a.lowOdds ? '; dotted (low odds)' : ''}`);
+      }
+    }
+  }
+  const scanned = (c: Calibration, open_s: number): string => {
+    const params = calibrationParams(c);
+    const white = calibrationDoneness(c, 0.22).whiteDose_min;
+    const minCook = bisectCook(egg60, appSetup({ cooling: 'eggCup' }), params, open_s, (r) => r.white >= white);
+    const softest = sliderFromYolkDose(dosesOpenedAt(egg60, appSetup({ cooling: 'eggCup' }), params, minCook, open_s).yolk);
+    const yolkSoft = calibrationDoneness(c, 0.22).yolkDose_min;
+    const soft = softest <= 0.22
+      ? bisectCook(egg60, appSetup({ cooling: 'eggCup' }), params, open_s, (r) => r.yolk >= yolkSoft).toFixed(0) + ' s'
+      : 'out of reach';
+    return `${open_s} s: white sets at ${minCook.toFixed(0)} s, softest ${softest.toFixed(2)}, soft ${soft}`;
+  };
+  for (const name of ['prior', 'one egg']) {
+    const c = LEARNED[name];
+    const check = solveCookTime(egg60, appSetup({ cooling: 'eggCup' }), calibrationParams(c), calibrationDoneness(c, 0.22));
+    console.log(`${name}, opened after (the solver at ${EGG_CUP_OPENED_S} s: white sets at ${check.minCookTime_s.toFixed(0)} s, softest ${check.softestLevel.toFixed(2)}):`);
+    console.log('  ' + [60, 90, 120, 150, 180, 240, 300, 420, 600].map((o) => scanned(c, o)).join('\n  '));
+  }
+}
+
+/** A cook's yolk and white doses, eq. min, counted to `open_s` after the pull:
+ *  `simulate`'s loop, with the opening a number rather than the constant, so
+ *  the scan above can move it. */
+function dosesOpenedAt(
+  egg: Egg, setup: CookSetup, params: ModelParams, cook_s: number, open_s: number,
+): { yolk: number; white: number } {
+  const surface = initialSurfaceTemperature(egg, setup);
+  const sphere = createSphere(egg.radius_m, params.alpha_m2s, setup.eggStart_C, surface);
+  const yolk = createDose(Z_YOLK, TREF_YOLK_C);
+  const white = createDose(Z_WHITE, TREF_WHITE_C);
+  let waterAtPull = surface;
+  let meanAtPull = setup.eggStart_C;
+  let pulled = false;
+  for (let t = 0.0; t < cook_s + open_s;) {
+    const tNext = t + DT_SIM;
+    let next: number;
+    if (tNext < cook_s) {
+      next = bathTemperature(egg, setup, tNext);
+    } else {
+      if (!pulled) {
+        waterAtPull = sphere.surface_C;
+        meanAtPull = meanTemperature(sphere);
+        pulled = true;
+      }
+      next = coolingTemperature(sphere, egg, setup, tNext - cook_s, DT_SIM, waterAtPull, meanAtPull);
+    }
+    stepSphere(sphere, DT_SIM, next);
+    t = tNext;
+    accumulateDose(yolk, centreTemperature(sphere), DT_SIM);
+    accumulateDose(white, temperatureAt(sphere, YOLK_RADIUS_FRAC), DT_SIM);
+  }
+  return { yolk: yolk.minutes, white: white.minutes };
+}
+
+/** The shortest cook, to a second, at which `met` holds of its doses
+ *  counted to the opening; both doses rise with the cook at the boil. */
+function bisectCook(
+  egg: Egg, setup: CookSetup, params: ModelParams, open_s: number, met: (r: { yolk: number; white: number }) => boolean,
+): number {
+  let lo = 20;
+  let hi = 1800;
+  while (hi - lo > 1) {
+    const mid = 0.5 * (lo + hi);
+    if (met(dosesOpenedAt(egg, setup, params, mid, open_s))) hi = mid;
+    else lo = mid;
+  }
+  return hi;
 }
 
 /* ---------------------------------------------- versus: D against M */

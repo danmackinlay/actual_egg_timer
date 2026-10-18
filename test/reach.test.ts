@@ -268,6 +268,7 @@ test('advice: when it is looked for, and what it says for which setup', () => {
   assert.deepEqual(pricedChanges(SETUP), []);
   assert.deepEqual(pricedChanges(appSetup({ cooling: 'tap' })), []);
   assert.deepEqual(pricedChanges(COUNTER).map((c) => [c.key, c.setup.cooling]), [['advice.ice', 'ice']]);
+  assert.deepEqual(pricedChanges(appSetup({ cooling: 'eggCup' })), [], 'an egg eaten warm is not iced');
   assert.deepEqual(
     pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 2 })).map((c) => [c.key, c.setup.waterLitres]),
     [['advice.moreWater', 4]],

@@ -456,7 +456,7 @@ public func recordFor(_ f: CookFacts) -> EggRecord {
         nudgeS: f.nudgeS,
         pulledS: measured ?? f.cookS,
         pulledBy: measured == nil ? .timeout : .cook,
-        cooledS: s.cooling == .counter ? 0 : f.coolS,
+        cooledS: restsInAir(s.cooling) ? 0 : f.coolS,
         yolkWord: f.yolkWord,
         white: f.white,
         probe: f.probe,

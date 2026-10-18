@@ -84,7 +84,10 @@ export function probeFixture(): Record<string, unknown> {
   ].map((r) => ({
     cookTime_s: r.cookTime_s, peakYolkTime_s: r.peakYolkTime_s,
     coolingSeconds: coolingSecondsFor(r),
-    moment: { ice: probeMomentFor(r, 'ice'), tap: probeMomentFor(r, 'tap'), counter: probeMomentFor(r, 'counter') },
+    moment: {
+      ice: probeMomentFor(r, 'ice'), tap: probeMomentFor(r, 'tap'), counter: probeMomentFor(r, 'counter'),
+      eggCup: probeMomentFor(r, 'eggCup'),
+    },
   }));
 
   // Solved cooks, both coolings that count, a small and a large egg, a cold

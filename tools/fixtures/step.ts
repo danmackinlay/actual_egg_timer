@@ -295,6 +295,14 @@ const TRACES: TraceDef[] = [
     ],
   },
   {
+    note: 'in an egg cup, soft: Done at the out, Runny, nothing counted and nothing rung after',
+    app: 'ios', posterior: 'learned', before: 'learned',
+    steps: [
+      start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }),
+      answer(after(10), 'runny'), tick(after(900)),
+    ],
+  },
+  {
     note: 'Runny at Done, an egg folded, relaunched: Done shows the cook as it ran, and nothing is logged again',
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [

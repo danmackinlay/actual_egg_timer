@@ -29,7 +29,9 @@
  */
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
-import { type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C } from './protocol.ts';
+import {
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, restsInAir,
+} from './protocol.ts';
 import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
 import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
 import {
@@ -226,7 +228,8 @@ export interface EggRecord {
   /** When the egg came out, s from egg-in. See `pulledBy`. */
   pulled_s: number;
   pulledBy: PulledBy;
-  /** The counted cooling the app ran, s; 0 on the counter, where there is none. */
+  /** The counted cooling the app ran, s; 0 for an egg resting in the air,
+   *  on the counter or in an egg cup, where there is none. */
   cooled_s: number;
   /** The yolk the cook got, in the slider's words, or null
    *  when the question was on screen and the cook moved on without answering. */
@@ -313,8 +316,8 @@ export interface CookFacts {
   /** When the cook tapped out of PULL, or null when nobody did and the
    *  grace ran out. A tap at or before egg-in measures nothing. */
   out_s: number | null;
-  /** How long the counted cooling ran from the pull: read only off the
-   *  counter, where there is none. */
+  /** How long the counted cooling ran from the pull: read only for a
+   *  cooling that is counted (`restsInAir`). */
   cool_s: number;
   yolkWord: YolkWord | null;
   white: WhiteReport | null;
@@ -373,7 +376,7 @@ export function recordFor(f: CookFacts): EggRecord {
     nudge_s: f.nudge_s,
     pulled_s: measured ? f.out_s as number : f.cook_s,
     pulledBy: measured ? 'cook' : 'timeout',
-    cooled_s: s.cooling === 'counter' ? 0 : f.cool_s,
+    cooled_s: restsInAir(s.cooling) ? 0 : f.cool_s,
     yolkWord: f.yolkWord,
     white: f.white,
     probe: f.probe,
@@ -558,7 +561,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isObject(s)) return null;
   if (!oneOf(s['startMode'], ['cold', 'hot'] as const)) return null;
   if (!oneOf(s['eggFrom'], ['fridge', 'room', 'custom'] as const)) return null;
-  if (!oneOf(s['cooling'], ['ice', 'tap', 'bowl', 'counter'] as const)) return null;
+  if (!oneOf(s['cooling'], ['ice', 'tap', 'bowl', 'counter', 'eggCup'] as const)) return null;
   if (!oneOf(s['afterBoil'], ['hold', 'off'] as const)) return null;
   if (!isFiniteNumber(s['eggStart_C']) || !isFiniteNumber(s['ambient_C'])) return null;
   if (!isFiniteNumber(s['boiling_C']) || !(s['boiling_C'] > 0)) return null;

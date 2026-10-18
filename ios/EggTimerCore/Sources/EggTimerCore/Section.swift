@@ -120,6 +120,6 @@ public func previewSection(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
 ) -> SectionView {
     var s = EggSection(egg: egg, setup: setup, params: params)
-    s.advance(egg: egg, setup: setup, toS: cookTimeS + Constants.carryoverWindow, outAtS: cookTimeS)
+    s.advance(egg: egg, setup: setup, toS: cookTimeS + carryoverWindowS(setup.cooling), outAtS: cookTimeS)
     return s.view(whiteTargetMin: whiteTargetMin)
 }

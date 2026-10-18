@@ -6,7 +6,7 @@
 import {
   RAMP_R, H_AIR, WET_SHELL_KG_M2, LATENT_HEAT_WATER, T_ICE_BATH_C, T_COLD_TAP_C,
   TAU_DIP_RECOVERY, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
-  STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE,
+  STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE, CARRYOVER_WINDOW, EGG_CUP_OPENED_S,
 } from './constants.ts';
 import type { Egg } from './geometry.ts';
 import { type SphereState, meanTemperature, robinSurface } from './sphere.ts';
@@ -18,8 +18,26 @@ export type StartMode = 'cold' | 'hot';
 
 /** What happens after the egg comes out. This is not a detail: it changes the
  *  peak yolk temperature by ~20 C. 'bowl' is a bowl of still water the eggs
- *  are put into and left in, which they warm (`bowlTemperature`). */
-export type Cooling = 'ice' | 'tap' | 'bowl' | 'counter';
+ *  are put into and left in, which they warm (`bowlTemperature`). 'counter'
+ *  is the egg left whole in the air until it is cool; 'eggCup' is the same
+ *  egg in the air, eaten warm from an egg cup, opened EGG_CUP_OPENED_S after
+ *  the pull (`carryoverWindow_s`). */
+export type Cooling = 'ice' | 'tap' | 'bowl' | 'counter' | 'eggCup';
+
+/** Whether the egg rests in the air after the pull, on the counter or in an
+ *  egg cup: its shell cools by Newton's law (`coolingTemperature`), and
+ *  nothing is counted down, since no cooling ends on its own. */
+export function restsInAir(cooling: Cooling): boolean {
+  return cooling === 'counter' || cooling === 'eggCup';
+}
+
+/** How long after the pull the doses count, s: the whole carryover
+ *  (CARRYOVER_WINDOW), or until an egg cup is opened (EGG_CUP_OPENED_S), when
+ *  the yolk starts to be eaten and what it reaches after is not what the cook
+ *  tastes. */
+export function carryoverWindow_s(cooling: Cooling): number {
+  return cooling === 'eggCup' ? EGG_CUP_OPENED_S : CARRYOVER_WINDOW;
+}
 
 /** What happens to the burner once the water boils. 'hold' keeps the water at
  *  its boiling point, which is what every recipe silently assumes. 'off' is the
@@ -157,7 +175,7 @@ interface CoolingFacts {
 }
 
 /** What the egg cools in as it goes in, C: the ice bath, running water, the
- *  bowl's water, or on the counter the room. Running water and the bowl take
+ *  bowl's water, or in the air the room. Running water and the bowl take
  *  the cook's number when they gave one. Without it, mains water is NOT room
  *  temperature: it arrives at something closer to ground temperature, usually
  *  below the room and occasionally - a long run of pipe in a hot summer - well
@@ -166,7 +184,7 @@ interface CoolingFacts {
  *  is where it starts, and the coldest it is. */
 export function coolingMedium_C(s: CoolingFacts): number {
   if (s.cooling === 'ice') return T_ICE_BATH_C;
-  if (s.cooling === 'counter') return s.ambient_C;
+  if (restsInAir(s.cooling)) return s.ambient_C;
   if (s.coolingWater_C !== undefined) return s.coolingWater_C;
   return s.cooling === 'tap' ? T_COLD_TAP_C : s.ambient_C;
 }
@@ -228,11 +246,11 @@ export function wetShellDrop_C(egg: Egg): number {
  * learned from the cook's answers absorbs that for every water cooling alike
  * (README.md section 2.4).
  *
- * Still air is not: Bi ~ 0.6, so the shell is neither held at the room's
- * temperature nor at the egg's mean, and it loses heat by Newton's law at
- * whatever temperature it has reached - hot at first, while the heat of the
- * outer white is still arriving, then below the mean as the egg empties
- * (robinSurface). The time constant is the egg's own (airTimeConstant), about
+ * Still air, on the counter or in an egg cup, is not: Bi ~ 0.6, so the shell
+ * is neither held at the room's temperature nor at the egg's mean, and it
+ * loses heat by Newton's law at whatever temperature it has reached - hot at
+ * first, while the heat of the outer white is still arriving, then below the
+ * mean as the egg empties (robinSurface). The time constant is the egg's own (airTimeConstant), about
  * 5.5 times the slowest internal mode, so the egg evens out while it cools;
  * but by the time the yolk peaks, the counter has taken 7-9 C off what an
  * insulated egg would reach. It is cooling, slow beside water, not a lid.
@@ -245,7 +263,7 @@ export function coolingTemperature(
   sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePull_s: number, dt_s: number,
   waterAtPull_C: number, meanAtPull_C: number,
 ): number {
-  if (setup.cooling === 'counter') {
+  if (restsInAir(setup.cooling)) {
     const before = elapsedSincePull_s > dt_s ? elapsedSincePull_s - dt_s : 0.0;
     const drying = wetShellDrop_C(egg)
       * (Math.exp(-before / TAU_PLUNGE) - Math.exp(-elapsedSincePull_s / TAU_PLUNGE));

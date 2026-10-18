@@ -6,11 +6,11 @@
 import type { CopyKey } from './copyKeys.ts';
 import {
   ALPHA_DEFAULT, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C,
-  DT_SIM, CARRYOVER_WINDOW,
+  DT_SIM,
 } from './constants.ts';
 import type { Egg } from './geometry.ts';
 import {
-  type CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+  type CookSetup, bathTemperature, carryoverWindow_s, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.ts';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
@@ -101,7 +101,8 @@ export const DONENESS_ANCHORS: DonenessAnchor[] = [
 
 export interface CookResult {
   cookTime_s: number;
-  /** Highest temperature the yolk centre ever reaches, including carryover. */
+  /** Highest temperature the yolk centre reaches, including carryover: up to
+   *  the opening, in an egg cup (`carryoverWindow_s`). */
   peakYolk_C: number;
   peakYolkTime_s: number;
   /** Yolk centre temperature at the moment the egg leaves the water. */
@@ -111,7 +112,8 @@ export interface CookResult {
   peakWhite_C: number;
 }
 
-/** Run one cook and report what it does to the egg. */
+/** Run one cook and report what it does to the egg: its doses through the
+ *  carryover, or to the opening in an egg cup (`carryoverWindow_s`). */
 export function simulate(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
 ): CookResult {
@@ -134,7 +136,7 @@ export function simulate(
   let waterAtPull = initialSurface;
   let meanAtPull = setup.eggStart_C;
 
-  const endTime = cookTime_s + CARRYOVER_WINDOW;
+  const endTime = cookTime_s + carryoverWindow_s(setup.cooling);
   while (t < endTime) {
     const tNext = t + DT_SIM;
     let next: number;

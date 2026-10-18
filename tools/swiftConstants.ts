@@ -87,6 +87,7 @@ const TWINS: Twin[] = [
   C('TAU_PLUNGE', 'tauPlunge'), C('TAU_DIP_RECOVERY', 'tauDipRecovery'), C('C_WATER', 'cWater'),
   C('C_EGG', 'cEgg'), C('RHO_EGG', 'rhoEgg'), C('EGG_VOLUME_COEFF', 'eggVolumeCoeff'),
   C('EGG_LENGTH_RATIO', 'eggLengthRatio'), C('DT_SIM', 'dtSim'), C('CARRYOVER_WINDOW', 'carryoverWindow'),
+  C('EGG_CUP_OPENED_S', 'eggCupOpenedS'),
 
   { module: 'geometry.ts', name: 'SIZE_CLASSES', swift: 'sizeClasses', type: '[SizeClass]' },
   { module: 'geometry.ts', name: 'US_SIZE_CLASSES', swift: 'usSizeClasses', type: '[SizeClass]' },

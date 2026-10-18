@@ -30,6 +30,7 @@ const SCENARIOS: Scenario[] = [
   { name: 'cold start, 8 min ramp', setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 480 }), level: 0.41 },
   { name: 'cold start, 12 min ramp', setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 720 }), level: 0.41 },
   { name: 'counter rested', setup: referenceSetup({ cooling: 'counter' }), level: 0.41 },
+  { name: 'in an egg cup, soft', setup: referenceSetup({ cooling: 'eggCup' }), level: 0.22 },
   { name: 'cold tap', setup: referenceSetup({ cooling: 'tap' }), level: 0.41 },
   { name: 'running water at 24 C', setup: referenceSetup({ cooling: 'tap', coolingWater_C: 24 }), level: 0.41 },
   { name: 'two eggs, a 2 L bowl at the room', setup: referenceSetup({ eggCount: 2, cooling: 'bowl', bowlLitres: 2 }), level: 0.41 },

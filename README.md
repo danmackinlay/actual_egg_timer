@@ -477,6 +477,7 @@ on what happens afterwards:
 | cold tap | 65.6 | +17.1 | ~3 min after pull |
 | bowl of water, 2 L at 20 °C, four eggs | 65.9 | +17.4 | ~3 min after pull |
 | **counter (still air)** | **75.3** | **+26.8** | ~7 min after pull |
+| egg cup, opened 2 min after the pull | 63.3 | +14.8 | not reached: eaten from the opening |
 | insulated (the ceiling) | 83.9 | +35.4 | never quite |
 
 The last row is a perfectly insulated egg, the true adiabatic limit, where the centre
@@ -503,6 +504,29 @@ below it and snaps the slider there, rather than returning a time it cannot deli
 This is, most likely, why soft-boiled eggs are the least reproducible thing in the
 kitchen. It is not the timing. It is the step after the timing, the one no recipe
 specifies, whose effect is larger than a full minute of boiling.
+
+### In an egg cup
+
+An egg eaten warm from an egg cup (`DECISIONS.md` 140) is the counter's egg, whole in
+still air, until it is opened; from then the yolk is being eaten, and what it would
+reach later is not what the cook tastes. So its doses are counted only to the opening,
+`EGG_CUP_OPENED_S` (120 s) after the pull, and not over `CARRYOVER_WINDOW`. The cup
+itself is not modelled: it covers part of the shell and slows the cooling a little, as
+§8 says of the counter's kitchen, and the shell cools the same as on the counter.
+
+Opened at two minutes, the yolk has not peaked: the same 7.4-minute cook is eaten at
+63.3 °C, below even the ice bath's 65.0, which goes on cooking the yolk for three
+minutes. So soft is in reach in an egg cup, where on the counter it is not: for a
+60 g egg from the fridge into boiling water, soft is about 7.2 minutes against 6.5 in
+ice, and the white is set from about 5 minutes (`npm run decide -- counter`). The
+softest level the white allows stays at runny until the opening is past four minutes,
+and soft goes out of reach between five and seven.
+
+The opening time weighs: each 30 s later takes about 30 s off soft's time. It is the
+model's one guess about the cook here, and a probe reading would test it: the centre's
+temperature at the moment the egg is topped, with the seconds since the pull. The
+seconds say when this cook opens the egg; the centre, against the model's at those
+seconds, says whether the cup keeps more heat than still air.
 
 ---
 
@@ -571,6 +595,7 @@ distrust.
 | `MODE_COUNT` | 40 | — | Eigenmodes retained. Exact to machine precision at these Fourier numbers. **Numerical.** |
 | `DT_SIM` | 0.5 | s | The integrator is exact for a piecewise-linear drive, so this resolves the schedule, not stability. **Numerical.** |
 | `CARRYOVER_WINDOW` | 900 | s | How long to keep integrating after the pull. Carryover peaks 3-8 min in; 15 min captures it fully. **Numerical.** |
+| `EGG_CUP_OPENED_S` | 120 | s | When an egg eaten warm from an egg cup is opened, after the pull, and its doses stop (§5, "In an egg cup"). A cook carries the egg to the table and tops it within a minute or so, and reaches the yolk within a minute of that. **An assumption about the cook, not physics**, and it weighs: each 30 s later takes about 30 s off soft's time. |
 
 ---
 
@@ -599,6 +624,7 @@ unless a row says otherwise:
 | carryover peak yolk, 7.4 min cook, ice | 65.00 C | 65.04 C | ±0.5 C | PASS |
 | carryover peak yolk, 7.4 min cook, tap | 65.60 C | 65.56 C | ±0.5 C | PASS |
 | carryover peak yolk, 7.4 min cook, counter | 75.30 C | 75.28 C | ±0.5 C | PASS |
+| carryover peak yolk, 7.4 min cook, eggCup | 63.30 C | 63.26 C | ±0.5 C | PASS |
 | insulated ceiling, 7.4 min cook (mean temperature at the pull) | 83.90 C | 83.90 C | ±0.5 C | PASS |
 | T_b(h) vs 100 - h/300, 0-5000 m (worst case) | 0.00 C | 0.03 C | ±0.05 C | PASS |
 | room temperature is inert on a hot start into an ice bath | 0.00 min | 0.00 min | ±0.001 min | PASS |

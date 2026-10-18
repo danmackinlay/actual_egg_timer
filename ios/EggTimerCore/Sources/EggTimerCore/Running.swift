@@ -302,7 +302,7 @@ public func coolingSecondsFor(_ result: CookResult) -> Double {
 }
 
 public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
-    if cooling == .counter { return false }
+    if restsInAir(cooling) { return false }
     return result.peakYolkTimeS - result.cookTimeS >= coolingMinSeconds
 }
 
@@ -386,12 +386,12 @@ private func applyEntry(_ cook: RunningCook, _ entry: CookEntry) -> RunningCook 
     case let .correct(at, choices):
         // After the pull the yolk wanted is not corrected: it was not a
         // mistake, and the slider only previews.
-        // Done on the counter and corrected to a counted cooling: that cooling
+        // Done in the air and corrected to a counted cooling: that cooling
         // ended here at the latest.
         let e = cook.events
         c.choices = choices
         if e.pulled != nil { c.choices.level = cook.choices.level }
-        if e.pulled != nil, e.cooledAtS == nil, cook.choices.cooling == .counter, choices.cooling != .counter {
+        if e.pulled != nil, e.cooledAtS == nil, restsInAir(cook.choices.cooling), !restsInAir(choices.cooling) {
             c.events.cooledAtS = at
         }
         c.correctedAtS = at
@@ -898,7 +898,7 @@ public func replan(
 
     var cool = coolingSecondsFor(ran.result)
     var coolEnd: Double?
-    if ch.cooling != .counter {
+    if !restsInAir(ch.cooling) {
         let out = pulled?.outS ?? cookEnd + pullGraceSeconds
         if pulled != nil, let cooled = e.cooledAtS {
             // As it ran; but a cooling a correction ended, not yet written

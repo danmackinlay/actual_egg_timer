@@ -18,7 +18,7 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
     case .harderThanPanReaches: return CopyRef(.`refusal.harderThanPan`)
     case .tooSoftForWhite:
         switch cooling {
-        case .counter: return CopyRef(.`refusal.counter`)
+        case .counter, .eggCup: return CopyRef(.`refusal.counter`)
         case .tap: return CopyRef(.`refusal.tap`)
         case .bowl: return CopyRef(.`refusal.bowl`)
         case .ice: return CopyRef(.`refusal.ice`)
@@ -145,7 +145,7 @@ public func pulledKey(_ cooling: Cooling) -> CopyKey {
     case .ice: .`action.pulled.ice`
     case .tap: .`action.pulled.tap`
     case .bowl: .`action.pulled.bowl`
-    case .counter: .`action.pulled.counter`
+    case .counter, .eggCup: .`action.pulled.counter`
     }
 }
 
@@ -176,7 +176,7 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     case .pull:
         return PhaseKeys(
             label: .`readout.phase.pull`, subline: .`readout.sub.pull`, action: pulledKey(f.cooling),
-            hint: f.cooling == .counter ? nil : .`action.hint.pull`
+            hint: restsInAir(f.cooling) ? nil : .`action.hint.pull`
         )
     case .cooling:
         return PhaseKeys(
@@ -259,7 +259,7 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
             text: f.coolingWaterGiven ? .`setup.cooling.bowlAt` : .`setup.cooling.bowl`,
             label: .`controls.cooling`, value: .`controls.cooling.bowl`
         )
-    case .counter:
+    case .counter, .eggCup:
         ClauseKeys(text: .`setup.cooling.counter`, label: .`controls.cooling`, value: .`controls.cooling.counter`)
     }
     return [
