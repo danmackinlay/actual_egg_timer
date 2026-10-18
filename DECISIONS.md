@@ -956,3 +956,12 @@ October:
     the web maps its gestures in `src/ui/edit.ts`, iOS in `InHand.swift`.
     Leaving is the last word an app is sure to have before it may be
     stopped: the web's page hidden or gone, iOS's scene no longer active.
+
+Decided by the owner, 18 October 2026:
+
+140. **A fifth cooling: eaten warm, in an egg cup.** The egg rests whole on
+    the counter, as `counter` does, until it is opened a fixed time after the
+    pull, when its doses stop; `counter` stays the egg left whole until cool.
+    Soft is in reach of a cook who eats the egg warm, as it is not on the
+    counter. The opening time is a constant of the model until a probe
+    reading says otherwise.

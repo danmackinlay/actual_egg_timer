@@ -20,11 +20,15 @@ and the map of the documents are `CLAUDE.md`.
 3. **Fold iOS's `PhaseActions` into the readout.** It keeps a layout per
    phase, though its words are already the readout's; the rest of `Cook` is
    core's `CookState`, stepped.
-4. **Generate the Swift data layer only if the drift recurs** (the owner):
-   the types, the defensive readers, `Codable` and `jsonObject`, from the
-   TypeScript interfaces. The conformance fixtures catch drift meanwhile.
-   Never generate the whole core: TypeScript under JavaScriptCore loses the
-   JIT, and a surface would take seconds.
+4. **Generate the Swift data layer only if the drift recurs** (the owner).
+   Measured on 18 October: quicktype from the TypeScript's JSON Schema
+   replaces only the plain declarations, never the null and presence rules,
+   `CookEntry`'s cases or `parseRecord`'s checks, and its records are refused
+   by `parseRecord`; it would have saved about 5% of the bowl's Swift. If
+   drift recurs, a generator of the house's own beside `swiftConstants.ts`,
+   written to the house's Codable rules. Never generate the whole core:
+   TypeScript under JavaScriptCore loses the JIT, and a surface would take
+   seconds.
 5. **Read the time range against real eggs.** The range under the certainty
    word, `predictCookTime` at 5% and 95%, stays as built until then
    (`DECISIONS.md` 97; `INFERENCE.md` §8 has the alternatives).
@@ -40,14 +44,11 @@ and the map of the documents are `CLAUDE.md`.
    waiting, retries, traces and `page.clock` replace the DevTools client and
    most of the harness; the app's hooks (`__snap`, the oscillator capture)
    move across. `git log` on the two files says when.
-10. **The counter's eggs as cooks eat them.** No bug (`npm run decide --
-    counter`): on the counter nearly all of both doses come after the pull,
-    as the egg sits whole for `CARRYOVER_WINDOW`, so soft is out of reach
-    and the snap's white is a coin flip. A cook who opens the egg warm
-    would want a cooling whose window ends at the opening, "eat it warm",
-    in an egg cup. Held until the data layer is cheaper to extend (the
-    owner); then also whether the snap reads a white the loss accepts,
-    measured after the first egg.
+10. **Eat it warm, a fifth cooling** (`DECISIONS.md` 140): the counter's
+    physics until the egg is opened a fixed time after the pull, when the
+    doses stop (`npm run decide -- counter` shows why the counter alone
+    cannot give a soft yolk). Then whether the snap reads a white the loss
+    accepts, measured after the first egg.
 11. **A tap on the egg toggles how set and how hot**, in both apps
     (`DECISIONS.md` 52). Core already gives each ring's temperature
     (`SectionView.temperature_C`, twinned), so this is drawing and a
