@@ -103,14 +103,21 @@ public final class Planner {
     }
 
     /// A change of the settings: saved and solved for, or, while a cook runs,
-    /// a correction in hand. The units alone are saved, and nothing solved:
-    /// the egg does not change when its numbers change clothes.
+    /// a correction in hand. The units alone, or nothing (a control set to
+    /// the value it has), are saved, and nothing solved: the egg does not
+    /// change when its numbers change clothes. While a cook runs the
+    /// controls are its own, a level only previewed among them, so only the
+    /// settings no group makes are written (`takeNoGroup`).
     private func settingsChanged(from old: AppSettings) {
         guard !applying else { return }
         var rest = settings
         rest.unitsChosen = old.unitsChosen
         guard rest != old else {
-            SettingsStore.save(self)
+            if onEdit == nil {
+                SettingsStore.save(self)
+            } else {
+                SettingsStore.save(self, groups: [])
+            }
             return
         }
         changed()

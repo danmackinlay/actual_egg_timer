@@ -91,6 +91,12 @@ public final class InHand {
     @ObservationIgnored private var state: HandState?
     /// The controls as last seen, so a change can be put down to its group.
     @ObservationIgnored private var seen: AppSettings?
+    /// The last commit of the level was one a correction cannot make (after
+    /// the pull), so the slider only previewed it: it goes back to the
+    /// cook's level as the aimed-for egg goes. Remembered at the commit, not
+    /// asked again then: "Still in the water? Yes" in between un-pulls the
+    /// egg, and the level would read as one the cook had taken.
+    @ObservationIgnored private var previewedLevel = false
     /// A timer `handStep` set, and the moment it comes round, epoch s.
     private struct Wait {
         let task: Task<Void, Never>
@@ -159,6 +165,7 @@ public final class InHand {
         let out = handStep(state ?? nothingInHand(), .fresh(atS: AppClock.nowS))
         generation &+= 1
         for t in out.timers { setTimer(t.timer, t.atS) }
+        previewedLevel = false
         startInHand = nil
         startLimit = nil
         aim = nil
@@ -260,9 +267,11 @@ public final class InHand {
             return
         }
         guard let choices = handChoices(running, said: planner.choices, group: group) else {
+            if group == .level { previewedLevel = true }
             Screenshots.log(.editCommitted(fields: [], start: nil))
             return
         }
+        if group == .level { previewedLevel = false }
         Screenshots.log(.editCommitted(fields: [group.rawValue], start: nil))
         if choices != running.choices { model.correct(choices, startedAtS: nil) }
         SettingsStore.save(planner, groups: [group])
@@ -311,13 +320,13 @@ public final class InHand {
     }
 
     /// The slider back at the cook's level, without it counting as a
-    /// change, when the level it shows is one a correction cannot make
-    /// (after the pull, core `handChoices`). A level a correction can make
-    /// stays: a commit may not have reached the cook yet, since the step
-    /// runs off the main actor.
+    /// change, when the level it shows was refused at its commit (after the
+    /// pull, core `handChoices`). A level committed stays: its correction
+    /// may not have reached the cook yet, since the step runs off the main
+    /// actor.
     private func restoreRefusedLevel() {
-        guard let planner, let running = cook?.running,
-              handChoices(running, said: planner.choices, group: .level) == nil else { return }
+        guard previewedLevel, let planner, let running = cook?.running else { return }
+        previewedLevel = false
         planner.applying = true
         planner.settings.doneness = running.choices.level
         planner.applying = false

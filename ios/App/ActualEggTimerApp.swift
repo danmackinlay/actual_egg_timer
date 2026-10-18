@@ -13,8 +13,10 @@ struct ActualEggTimerApp: App {
         Services.card = LiveActivityCard()
         Services.announce = { UIAccessibility.post(notification: .announcement, argument: $0) }
         Screenshots.appActive = { UIApplication.shared.applicationState == .active }
-        // Before anything is written: the keys no build reads any more
-        // deleted.
+        // Before anything is written: what 0.5.1 kept of sharing in the
+        // standard domain carried into the suite, so what it sent can still
+        // be deleted; then the keys no build reads any more deleted.
+        Stores.carryOver()
         Stores.sweep()
         // The cook's language, before anything is drawn in it.
         LanguageChoice.shared.start()

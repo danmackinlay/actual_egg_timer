@@ -46,6 +46,43 @@ public enum Stores {
         }
     }
 
+    /// The keys 0.5.1 and earlier kept sharing under, in the standard
+    /// domain: whether sharing is on, the random id and every earlier one
+    /// (`share`), and the App Attest key (`shareAttest`). Under the same
+    /// names in the suite, in the same formats.
+    static let carried = [StoreRegistry.share, StoreRegistry.shareAttest]
+
+    /// What 0.5.1 and earlier kept of sharing, carried into the suite from
+    /// the standard domain (`old`), once, before the sweep: what has been
+    /// sent must stay deletable, and "Delete shared results" reaches only
+    /// the ids the suite holds. The rest of what those builds kept stays
+    /// where it is, unread. A key the suite already has is left alone, in
+    /// both; one carried is written as this build writes it, if it still
+    /// reads, and then removed from the standard domain.
+    public static func carryOver(from old: any KeyValueStore = Suite.standard) {
+        for spec in carried {
+            let key = spec.key
+            guard store.object(forKey: key) == nil, let data = old.data(forKey: key) else { continue }
+            if let value = carriedValue(spec, data) { wrote(value, forKey: key) }
+            old.removeObject(forKey: key, Pass())
+        }
+    }
+
+    /// `data` as this build writes `spec`'s value, or nil if nothing of it
+    /// reads. Sharing's state is read defensively (`readStoredShare`), so a
+    /// damaged copy still gives every id it holds.
+    private static func carriedValue(_ spec: StoreSpec, _ data: Data) -> Data? {
+        switch spec {
+        case StoreRegistry.share:
+            let state = readStoredShare(data)
+            return state == .fresh ? nil : storedShare(state)
+        case StoreRegistry.shareAttest:
+            return (try? JSONDecoder().decode(Sharing.Attest.self, from: data)).flatMap { try? JSONEncoder().encode($0) }
+        default:
+            return nil
+        }
+    }
+
     public static func set(_ value: Any?, forKey key: String) {
         wrote(value, forKey: key)
     }
@@ -81,7 +118,7 @@ public protocol KeyValueStore: AnyObject {
 /// A suite of UserDefaults as a store, its own setters out of reach. A read
 /// sees a launch argument of the same key over what is stored (the argument
 /// domain), as a debug build's `-settings` relies on; never the standard
-/// domain.
+/// domain, unless it is the standard domain (`standard`).
 public final class Suite: KeyValueStore, @unchecked Sendable {
     public let name: String
     private let defaults: UserDefaults
@@ -91,6 +128,16 @@ public final class Suite: KeyValueStore, @unchecked Sendable {
         // nil only for the app's bundle id or the global domain's name.
         defaults = UserDefaults(suiteName: name)!
     }
+
+    private init(standard name: String) {
+        self.name = name
+        defaults = .standard
+    }
+
+    /// The standard domain, the app's own: where 0.5.1 and earlier kept
+    /// everything, and what is left of it is read only to carry sharing
+    /// over (`Stores.carryOver`).
+    public static var standard: Suite { Suite(standard: Bundle.main.bundleIdentifier ?? "") }
 
     /// The suite's persistent domain alone. Never
     /// `dictionaryRepresentation()`, which reads through to the argument,

@@ -257,4 +257,79 @@ extension AppTests {
         #expect(transport.deletes.last == "api/eggs/\(second)")
         #expect(again.state.deleting.isEmpty)
     }
+
+    /// Sharing as 0.5.1 kept it in the standard domain: on, its id and an
+    /// earlier one, three eggs sent, and the id's attested key; beside it,
+    /// what else 0.5.1 kept there.
+    static let id051 = "0f8fad5b-d9cb-469f-a165-70867728950e"
+    static let earlier051 = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+    func standard051() -> MemoryStore {
+        let share = """
+        {"on": true, "uid": "\(Self.id051)", "sent": 3, "seq": 3, "uids": ["\(Self.earlier051)", "\(Self.id051)"],
+         "deleting": [], "busy": 0}
+        """
+        let attest = """
+        {"uid": "\(Self.id051)", "keyId": "key-0.5.1", "status": "attested"}
+        """
+        return MemoryStore([
+            StoreRegistry.share.key: Data(share.utf8),
+            StoreRegistry.shareAttest.key: Data(attest.utf8),
+            "calibration.v5": Data("0.5.1's log".utf8),
+            "newestVersion": "0.5.1",
+        ])
+    }
+
+    /// What 0.5.1 kept of sharing is carried into the suite at launch and
+    /// read back: sharing on under its id and key, with nothing sent again,
+    /// and "Delete shared results" reaches every id it sent under. The keys
+    /// carried go from the standard domain, and nothing else there is
+    /// touched.
+    @Test func whatTheStandardDomainKeptOfSharingIsCarriedIntoTheSuite() async throws {
+        let world = World()
+        let standard = standard051()
+        Stores.carryOver(from: standard)
+        #expect(standard.data(forKey: StoreRegistry.share.key) == nil)
+        #expect(standard.data(forKey: StoreRegistry.shareAttest.key) == nil)
+        #expect(Set(standard.keys) == ["calibration.v5", "newestVersion"])
+        #expect(standard.writes.map(\.key).sorted() == [StoreRegistry.share.key, StoreRegistry.shareAttest.key].sorted())
+
+        let transport = FakeTransport()
+        let (sharing, _) = try await launched(world, transport)
+        #expect(sharing.state.on)
+        #expect(sharing.state.uid == Self.id051)
+        #expect(sharing.state.uids == [Self.earlier051, Self.id051])
+        #expect(sharing.state.sent == 3)
+        #expect(sharing.attest?.uid == Self.id051 && sharing.attest?.keyId == "key-0.5.1")
+        #expect(sharing.attest?.status == .attested)
+        #expect(transport.posts.isEmpty, "nothing sent again")
+        await sharing.deleteSent()
+        #expect(transport.deletes == ["api/eggs/\(Self.earlier051)", "api/eggs/\(Self.id051)"])
+    }
+
+    /// A suite that already keeps sharing is left alone, and so is what the
+    /// standard domain kept of it; a key the suite lacks is carried still.
+    @Test func aSuiteThatKeepsSharingIsLeftAlone() throws {
+        let mine = try #require(storedShare(turnedOn(.fresh, fresh: Sharing.newUid())))
+        let world = World(store: MemoryStore([StoreRegistry.share.key: mine]))
+        let standard = standard051()
+        let was = standard.data(forKey: StoreRegistry.share.key)
+        Stores.carryOver(from: standard)
+        #expect(world.store.data(forKey: StoreRegistry.share.key) == mine)
+        #expect(!world.store.writes.contains { $0.key == StoreRegistry.share.key })
+        #expect(standard.data(forKey: StoreRegistry.share.key) == was)
+        #expect(world.store.data(forKey: StoreRegistry.shareAttest.key) != nil, "the key the suite lacked")
+        #expect(standard.data(forKey: StoreRegistry.shareAttest.key) == nil)
+    }
+
+    /// A second launch carries nothing: the standard domain no longer has
+    /// it, and the suite does.
+    @Test func sharingIsCarriedOnce() {
+        let world = World()
+        let standard = standard051()
+        Stores.carryOver(from: standard)
+        let writes = world.store.writes.count
+        Stores.carryOver(from: standard)
+        #expect(world.store.writes.count == writes)
+        #expect(standard.writes.count == 2)
+    }
 }

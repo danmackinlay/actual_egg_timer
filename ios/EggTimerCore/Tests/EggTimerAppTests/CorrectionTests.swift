@@ -331,6 +331,27 @@ extension AppTests {
         #expect(model.planner.settings.doneness == stored0.choices.level)
     }
 
+    /// A control set to the value it has while a cook runs (VoiceOver's swipe
+    /// at a stepper's bound, the chosen row tapped again) is no change, and
+    /// writes only the settings no group makes: a level the slider only
+    /// previewed after the pull is not written for the next cook.
+    @Test func aControlSetToItsOwnValueMidCookWritesNoPreviewedLevel() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        _ = try await answeredAtDone(model, world)
+        let level = SettingsStore.read(classes: model.planner.sizeClasses).doneness
+        world.clock.advance(5)
+        model.inHand.fingerDown(.level)
+        model.planner.settings.doneness = 0.9
+        world.clock.advance(1)
+        model.inHand.fingerUp()
+        await world.settled(model.cook)
+        #expect(model.planner.settings.doneness == 0.9, "previewed")
+        model.planner.settings.eggCount = model.planner.settings.eggCount
+        #expect(SettingsStore.read(classes: model.planner.sizeClasses).doneness == level)
+    }
+
     /// A probe reading saved at Done while a larger egg settles: the change
     /// committed and the cook corrected first, so the reading is scored on
     /// the egg the controls say, and the record logged with it is the
@@ -398,6 +419,35 @@ extension AppTests {
         #expect(model.cook.running?.events.pulled == nil)
         #expect(world.stored?.events.pulled == nil)
         #expect(model.cook.plan.map(asksIfStillIn) == false)
+    }
+
+    /// A level previewed after the pull, then "Still in the water? Yes"
+    /// while the aimed-for egg is held: the level was refused when it was
+    /// committed, so the slider goes back to the cook's level as the egg is
+    /// let go, though the cook, back in the water, could now take it.
+    @Test func aLevelPreviewedAfterThePullGoesBackOnceStillIn() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let pull = try await askedStillIn(model, world)
+        let level = try #require(model.cook.running).choices.level
+        world.clock.set(pull + 40)
+        model.inHand.fingerDown(.level)
+        model.planner.settings.doneness = 0.9
+        world.clock.set(pull + 40.5)
+        model.inHand.fingerUp()
+        await world.settled(model.cook)
+        #expect(!model.inHand.pending)
+        // Within the hold, which ends a settle after the change.
+        world.clock.set(pull + 41)
+        model.stillIn()
+        await world.quiet(model.cook)
+        #expect(model.cook.running?.events.pulled == nil)
+        world.clock.advance(handSettleS)
+        await world.until("the aim gone") { model.aimView == nil && model.inHand.aim == nil }
+        await world.settled(model.cook)
+        #expect(model.cook.running?.choices.level == level)
+        #expect(model.planner.settings.doneness == level)
     }
 
     /// "Still in the water?" answered no: the pull the clock assumed stands,
