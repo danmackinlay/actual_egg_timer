@@ -266,10 +266,11 @@ prior's width, which no setup narrows.
 **Nothing jumps.** While idle the certainty line keeps the room of the word
 and the most likely word, with the word at its top, so a drag that brings
 the second line or takes it away moves neither the word nor the slider.
-Where either wraps (iOS at the accessibility text sizes, more in 1750's
-face), the room is the tallest the line can take there, laid out hidden;
-at the largest that costs empty room under a lone word, and holds the slider
-still. While a new pot's surface is on its way, the readout keeps its last
+Where either wraps (more in 1750's face), the room is the tallest the line
+can take there, laid out hidden, and holds the slider still. On iOS at the
+accessibility text sizes each keeps to one line, set smaller where it would
+wrap, so the room there is two lines too and a lone word has one empty line
+under it, not three. While a new pot's surface is on its way, the readout keeps its last
 height. The white's line can still appear mid-drag near the soft end.
 
 **The time's two lines sit close** (`DECISIONS.md` 99). Under the digits,
@@ -292,7 +293,8 @@ under the thumb that asks for it.
   Cancel.
 - **The units' (i)** says "phone" on iOS where the web says "browser".
 - **The − and +.** The web draws its own pair; iOS uses the system's
-  `Stepper`, one adjustable element to VoiceOver.
+  `Stepper`. To VoiceOver the number and its − and + are one adjustable
+  element, named for the field, swiped up and down.
 - **The open clause** has a solid accent fill on the web and an accent wash on
   iOS, where a link's text takes the tint. VoiceOver focus does not return to
   the clause after Done on iOS; the web's focus does.
@@ -311,8 +313,11 @@ under the thumb that asks for it.
     pull, "now", with the pull's line naming the cooling, not a cooling's
     countdown that may not be running; no alarm is pending.
   - *At the accessibility text sizes* the egg is drawn smaller so the
-    sentence keeps a column, and the slider's five words stop growing at the
-    largest standard size, since each sits under its level.
+    sentence keeps a column; the slider's five words take two rows, every
+    other word in each, since each sits under its level, and stop growing
+    at the third accessibility size; a choice of two or three is a list,
+    one to a line, since the system's segments do not grow; and a number
+    with its − and + goes to a line of its own, under its label.
   - *Settings* is the navigation bar's in every phase; the pull pops it, and
     Help, back to the egg's page.
 - **The action's row** is chosen on the same words in both: the start's
