@@ -51,13 +51,6 @@ and the map of the documents are `CLAUDE.md`.
     cook accepting it, and the fit's simulated kitchens cooking it. Then
     whether the snap reads a white the loss accepts, measured after the
     first egg.
-11. **A tap on the egg toggles how set and how hot**, in both apps
-    (`DECISIONS.md` 52). Core already gives each ring's temperature
-    (`SectionView.temperature_C`, twinned), so this is drawing and a
-    gesture in each app: the lab page's heat colours move into
-    `src/ui/eggSection.ts`, which the lab then reads, and iOS's
-    `EggSectionView` draws the same. VoiceOver says which view is shown and
-    offers the other.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -92,7 +85,6 @@ shell (34).
    yet (`aLevelSetWithoutAFingerStaysOnTheSliderOnceCommitted`).
 
 
-
 Waiting on someone else: the Czech review, by the owner's friend.
 
 ## QA: what nobody has checked
@@ -125,6 +117,10 @@ Start the QA pass here.
   Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
   the bracket's words, and focus after a press. Both apps' names were read
   from the accessibility tree, not heard.
+- **The egg's two pictures**: its name, hint and activation heard with
+  VoiceOver on a device; and, for the owner's eye, the heat map at idle,
+  which shows the aimed egg as eaten, cold after ice, where the egg at the
+  pull would say more.
 - **The web on a phone, and Safari.** The web's checks run an emulated
   viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
   digits), no alarm heard, no Home Screen opening
