@@ -268,4 +268,63 @@ export const layoutScenarios: Record<string, Scenario> = {
         + `(the egg ${want_g.toFixed(2)} g); 7 typed, kept while typing, ${typedLeft.value} g once left`;
     },
   },
+
+  'touch-targets': {
+    what: 'at 390 and 320 px, every − and + in the egg\'s panel and in Settings takes a tap 44 px wide and tall, and its field still takes a tap at either edge; the sound pill keeps the page\'s 16 px gutter; a choice in Settings keeps 10 px either side of its words',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.until("__snap().chosen !== null", 'the time decided');
+      await tab.settle();
+      // Where a tap lands, read with elementFromPoint across each button's
+      // middle and down its centre, in half pixels.
+      const steppers = (): Promise<string[]> => tab.eval<string[]>(`(() => {
+        const out = [];
+        for (const b of document.querySelectorAll('button.step')) {
+          if (b.offsetParent === null) continue;
+          b.scrollIntoView({ block: 'center' });
+          const r = b.getBoundingClientRect();
+          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          const span = (from, to, on) => { let lo = null, hi = null;
+            for (let v = from; v <= to; v += 0.5) if (on(v)) { lo ??= v; hi = v; }
+            return lo === null ? 0 : hi - lo + 0.5; };
+          const w = span(r.left - 15, r.right + 15, (x) => document.elementFromPoint(x, cy) === b);
+          const tall = span(r.top - 15, r.bottom + 15, (y) => document.elementFromPoint(cx, y) === b);
+          const field = b.dataset.up === '1' ? b.previousElementSibling : b.nextElementSibling;
+          const f = field.getBoundingClientRect();
+          const whole = document.elementFromPoint(f.left + 0.5, cy) === field && document.elementFromPoint(f.right - 0.5, cy) === field;
+          const name = b.dataset.for + (b.dataset.up === '1' ? ' +' : ' −');
+          if (w < 44 || tall < 44) out.push(name + ' takes a tap ' + w + ' × ' + tall + ' px');
+          if (!whole) out.push(name + ' takes a tap from its field');
+        }
+        return out; })()`);
+      const gutter = (): Promise<number> => tab.eval<number>(`document.documentElement.clientWidth - ${byId('mute')}.getBoundingClientRect().right`);
+      const said: string[] = [];
+      for (const width of [390, 320]) {
+        await tab.viewport(width);
+        await tab.eval("location.hash = ''");
+        await tab.until(`${byId('sentence')}.offsetParent !== null`, 'the egg\'s page shown');
+        // Opened once; the clause would close it at the second width.
+        await tab.eval(`(() => { const c = document.querySelector('#sentence .clause[aria-controls="panelEgg"]');
+          if (c.getAttribute('aria-expanded') !== 'true') c.click(); })()`);
+        await tab.until(`${byId('measureMass')}.offsetParent !== null`, "the egg's panel open");
+        const egg = await steppers();
+        check(egg.length === 0, `at ${width} px in the egg's panel: ${egg.join('; ')}`);
+        const pill = await gutter();
+        check(Math.abs(pill - 16) < 0.5, `at ${width} px the sound pill is ${pill} px from the edge`);
+        await tab.eval("location.hash = '#settings'");
+        await tab.until(`${byId('altitude')}.offsetParent !== null`, 'Settings shown');
+        const settings = await steppers();
+        check(settings.length === 0, `at ${width} px in Settings: ${settings.join('; ')}`);
+        const cramped = await tab.eval<string[]>(`[...document.querySelectorAll('.setting .seg label')]
+          .filter((l) => l.offsetParent !== null).flatMap((l) => {
+            const range = document.createRange(); range.selectNodeContents(l);
+            const words = range.getBoundingClientRect(), r = l.getBoundingClientRect();
+            const room = Math.min(words.left - r.left, r.right - words.right) - 1;
+            return room < 9.5 || l.scrollWidth > l.clientWidth ? [l.textContent + ' ' + room.toFixed(1) + ' px'] : []; })`);
+        check(cramped.length === 0, `at ${width} px, words nearer their choice's edge than 10 px: ${cramped.join('; ')}`);
+        said.push(`${width} px: pill ${pill} px in`);
+      }
+      return `every − and + takes 44 px or more, its field whole; ${said.join(', ')}; Settings' choices keep 10 px`;
+    },
+  },
 };
