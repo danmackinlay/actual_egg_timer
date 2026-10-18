@@ -101,10 +101,10 @@ private func ids(_ v: Any?) -> [String] {
     return out
 }
 
-/// A stored state, parsed from its JSON, in the web's shape (`busySince_s`
-/// in epoch s), and read defensively: anything damaged reads as off, and every
-/// id that can be read is kept, so a deletion can still reach it. Without an
-/// id there is nothing sent to count.
+/// A stored state, parsed from its JSON (`busySince_s` in epoch s), and read
+/// defensively: anything damaged reads as off, and every id that can be read
+/// is kept, so a deletion can still reach it. Without an id there is nothing
+/// sent to count.
 func readShareState(_ raw: Any?) -> ShareState {
     guard let r = raw as? [String: Any] else { return .fresh }
     let uid = (r["uid"] as? String).flatMap { isUid($0) ? $0 : nil }
