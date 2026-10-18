@@ -691,6 +691,11 @@ input[data-stepper]::-webkit-outer-spin-button { -webkit-appearance: none; margi
   font-size: 0.9375rem;
   cursor: pointer;
 }
+/* In Settings a group spans the page, so its choices can spare the room:
+   their words wrap to a second line before they come nearer the edge than
+   10 px ("Wind-up timer" on a phone). A clause's panel is narrower, and
+   keeps them on as few lines as it can. */
+.setting .seg label { padding-inline: 10px; }
 .seg input[type="radio"]:checked + label {
   background: var(--accent);
   color: var(--accent-fg);
