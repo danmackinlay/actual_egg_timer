@@ -28,6 +28,15 @@
      raw white looks in the pan. */
   --white-raw: #19202b;
   --white-set: #f2efe6;
+  /* Its other picture, how hot each layer is, a colour at each of
+     HEAT_STOPS_C (src/core/section.ts): blue below the room, a grey at
+     40 C where nothing has begun to set, red toward the boil. The poles
+     brighten off the dark, darken off the light. */
+  --heat-cold: #6da7ec;
+  --heat-cool: #256abf;
+  --heat-mid: #45454a;
+  --heat-warm: #b8403c;
+  --heat-hot: #ff6b5e;
 }
 
 @media (prefers-color-scheme: light) {
@@ -50,6 +59,11 @@
     --yolk-hard: #e8c410;
     --white-raw: #e6edf6;
     --white-set: #ffffff;
+    --heat-cold: #1c5cab;
+    --heat-cool: #86b6ef;
+    --heat-mid: #ebeae6;
+    --heat-warm: #ec8a84;
+    --heat-hot: #b3261e;
   }
 }
 

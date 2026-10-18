@@ -14,14 +14,14 @@
  * is opaque - a translucent one would show the rings beneath it through - so
  * a "clear" white is a colour of its own (`--white-raw`), not an opacity.
  *
- * The app colours the rings by how set each layer is (`ringFills`). The
- * prototype's other picture, the same rings by temperature, is the lab
- * page's own (tools/egg-section.html).
+ * The rings are coloured by how set each layer is (`ringFills`), or, a tap
+ * away, by how hot it is (`heatFills`, `DECISIONS.md` 52). The lab page,
+ * tools/egg-section.html, draws both with these.
  * Nothing here touches the document when the module is imported.
  */
 
 import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../core/constants.ts';
-import type { SectionView } from '../core/section.ts';
+import { HEAT_STOPS_C, type SectionView } from '../core/section.ts';
 
 /* ------------------------------------------------------------- the outline */
 
@@ -134,6 +134,39 @@ export function ringFills(view: SectionView, p: SectionPalette): string[] {
   return fills;
 }
 
+/** A temperature on the heat map, whose colours `heat` sit at HEAT_STOPS_C,
+ *  coldest first; held at the end colours beyond them. */
+export function heatAt(temperature_C: number, heat: Rgb[]): Rgb {
+  const stops = HEAT_STOPS_C;
+  if (temperature_C <= stops[0]) return heat[0];
+  for (let i = 1; i < stops.length; i++) {
+    if (temperature_C <= stops[i]) {
+      return mix(heat[i - 1], heat[i], (temperature_C - stops[i - 1]) / (stops[i] - stops[i - 1]));
+    }
+  }
+  return heat[stops.length - 1];
+}
+
+/** Each ring's fill, in ring order (centre first), by its temperature.
+ *  `uniform_C`, when not null, stands in for every ring's: the egg at its
+ *  starting temperature in the first moment of a cook (`HEAT_SETTLED_S`). */
+export function heatFills(view: SectionView, heat: Rgb[], uniform_C: number | null): string[] {
+  const fills: string[] = [];
+  for (let i = 0; i < view.x.length; i++) fills.push(hex(heatAt(uniform_C ?? view.temperature_C[i], heat)));
+  return fills;
+}
+
+/** The heat map's colours, coldest first, one at each of HEAT_STOPS_C, as
+ *  the page's stylesheet has them now, light or dark (`--heat-cold` to
+ *  `--heat-hot`). */
+export function readHeat(from: Element): Rgb[] {
+  const style = getComputedStyle(from);
+  return HEAT_TOKENS.map((name) => parseHex(style.getPropertyValue(name)));
+}
+
+/** The heat map's tokens in styles.css, one per stop. */
+const HEAT_TOKENS = ['--heat-cold', '--heat-cool', '--heat-mid', '--heat-warm', '--heat-hot'];
+
 /* ------------------------------------------------------------- the drawing */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -168,8 +201,7 @@ export function paintEggSection(svg: SVGSVGElement, fills: string[]): void {
   }
 }
 
-/** A CSS colour `#rgb` or `#rrggbb` as 0-255 channels. Exported for the lab
- *  page, `tools/egg-section.html`, which reads its heat map's stops with it. */
+/** A CSS colour `#rgb` or `#rrggbb` as 0-255 channels. */
 export function parseHex(value: string): Rgb {
   const v = value.trim().replace('#', '');
   const full = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
