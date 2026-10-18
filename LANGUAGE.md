@@ -167,26 +167,33 @@ locale's time style and spaces with U+202F). The choices:
   and "0:05", never "09:05", in every locale, and the minutes and seconds
   keep two digits (`unpadHour`).
 
-**Where `Intl` and Foundation disagree**, measured on 27 September with Node
-26.8.1 (ICU 78.3, CLDR 48) against Foundation on macOS 26.6.2, after the
-normalisation above:
+**Where the formatters disagree**, measured on 27 September with Node
+26.8.1 (ICU 78.3, CLDR 48) against Foundation on macOS 26.6.2, and on
+17 October in Safari 27 on the iOS Simulator, after the normalisation above:
 
-| formatting locale | `Intl` | Foundation | what the apps do |
-|---|---|---|---|
-| en-US, en-AU, en, any 12-hour English | "3:05 PM" with U+0020 | "3:05 PM" with U+202F | normalised to U+202F, pinned |
-| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | no hour is zero-padded, both "9:05"; pinned |
-| en-CA | "3:05 p.m." | "3:05 PM" | not pinned |
-| en-IN, en-NZ, en-SG | "3:05 pm" | "3:05 PM" | not pinned |
-| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | never formatted in: a Czech UI's tag is `cs-CZ` in any region, "1 234,5" and "15:05" on both; pinned |
-| cs-CZ-u-hc-h12 | "3:05 odp." | "15:05" (`DateFormatter` ignores `hc` for cs) | not pinned |
+| formatting locale | Node's `Intl` | Safari's `Intl` | Foundation | what the apps do |
+|---|---|---|---|---|
+| en-US, en-AU, en, any 12-hour English | "3:05 PM" with U+0020 | as Node | "3:05 PM" with U+202F | normalised to U+202F, pinned |
+| en-CZ (an English UI in Czechia) | "09:05" | as Node | "9:05" | no hour is zero-padded, both "9:05"; pinned |
+| en-CA | "3:05 p.m." | "3:05 PM" | "3:05 PM" | not pinned |
+| en-IN, en-NZ, en-SG, en-HK, en-MY, en-PK, en-001 | "3:05 pm" | "3:05 PM" | "3:05 PM" | not pinned |
+| en-MX | "3:05 PM" | "3:05 p.m." | "3:05 p.m." | not pinned |
+| en-BR | "3:05 PM" and "1,234.5" | "15:05" and "1.234,5" | "15:05" and "1.234,5" | not pinned |
+| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | not measured | "1,234.5" (by region); cs-US also a 12-hour clock | never formatted in: a Czech UI's tag is `cs-CZ` in any region, "1 234,5" and "15:05" on both; pinned |
+| cs-CZ-u-hc-h12 | "3:05 odp." | "3:05 odp." | "15:05" (`DateFormatter` ignores `hc` for cs) | not pinned; only iOS asks for it |
 
 Pinned, and agreeing: en-US, en-GB and cs-CZ, which are the supported set,
 and en, en-AU, en-DE, en-CZ, cs, en-US-u-hc-h23 and en-GB-u-hc-h12, with the
 tag each app derives from a language, a region and an hour cycle followed
-through to the text (`derived`). Measured to
-agree but not pinned: en-150, en-CH ("1'234.5"), en-ES, en-FR ("1 234,5" with
-U+202F), en-IE, en-IT, en-JP, en-NL, en-PL, en-SE, en-ZA and cs-SK. Czech
-groups with U+00A0 on both platforms, so no choice was needed there.
+through to the text (`derived`). Safari matches every pinned case: all 1205
+cases in `fixtures/format.json`, run through the web's core in Safari, print
+what the fixture says. Measured to agree in all three but not pinned:
+en-150, en-CH ("1'234.5"), en-ES, en-FR ("1 234,5" with U+202F), en-IE,
+en-IT, en-JP, en-NL, en-PL, en-SE, en-ZA, en-AT, en-BE, en-DK, en-FI, en-NG,
+en-NO, en-PH, en-SI, en-AE, en-IL, en-AU-u-hc-h23, en-CA-u-hc-h23,
+en-IN-u-hc-h23, en-GB-u-hc-h11 and en-US-u-hc-h24; and cs-SK in Node and
+Foundation, though Safari was not given it. Czech groups with U+00A0 on both
+platforms, so no choice was needed there.
 
 en-CZ matters, because until there is a Czech catalogue it is what the
 owner's Czech friend reads. A Czech UI abroad would get a different decimal
@@ -195,8 +202,13 @@ language where Apple lets the region win; with the tag `cs-CZ` everywhere,
 neither is asked. Its clock is Czech too, 24-hour, even in the US: the
 phone's 12-hour setting still rides along on iOS as `-u-hc-h12`, which
 `DateFormatter` ignores for Czech (the last row), so both apps print "15:05".
-Safari was not measured: it runs Apple's ICU, not V8's, and the U+202F
-normalisation covers the one difference known in advance.
+
+Safari runs Apple's ICU, not V8's, and where it differs from Node it prints
+what Foundation prints. So on an iPhone the web and the iOS app print the
+same thing in every row above. The last row is the one place Safari sides
+with Node, and the web never asks for that tag, since a browser gives it no
+hour cycle. The unpinned rows are where the web, in a browser other than
+Safari, may print what Node prints instead.
 
 ## 3. Copy rules
 
