@@ -5,15 +5,16 @@ import Foundation
 /// format of what is kept there. The web keeps its own table
 /// (`src/ui/stores.ts`).
 ///
-/// The format is written inside what is stored, as `v` (`stamped`), and a
-/// reader takes a store only in its own format (`inFormat`): anything else
-/// reads as nothing stored, and the app's next write replaces it. So a
-/// change of shape is one number bumped here, and the key stays. Before wide
-/// deployment a bump is all a change of format needs;
-/// nothing is migrated. A store with no format inside it (`format` nil) is
-/// a bare value read by its own reader (the alarm's sound), or one whose key
-/// still names its format, sharing's, where a change is a new key. The log has its format inside and keeps the
-/// key it was first written under.
+/// The format is written inside what is stored, as `v` (`stamped`,
+/// `Stamped`), and a reader takes a store only in its own format
+/// (`inFormat`, `decodeStamped`): anything else reads as nothing stored, and
+/// the app's next write replaces it. So a change of shape is one number
+/// bumped here, and the key stays. Before wide deployment a bump is all a
+/// change of format needs; nothing is migrated. A store with no format inside
+/// it (`format` nil) is a bare value read by its own reader (the alarm's
+/// sound), or one whose key still names its format, sharing's, where a change
+/// is a new key. The log has its format inside and keeps the key it was first
+/// written under.
 ///
 /// The app keeps only what is listed here: at launch it deletes every key in
 /// the suite that no store here is kept under (`Stores.sweep`).
@@ -29,7 +30,7 @@ public enum StoreRegistry {
     /// The settings, one value (Settings.swift).
     public static let settings = StoreSpec(name: "settings", format: 1, key: "settings")
     /// The running cook (StoredCook.swift).
-    public static let cook = StoreSpec(name: "cook", format: 7, key: "cook")
+    public static let cook = StoreSpec(name: "cook", format: 8, key: "cook")
     /// The pans' measured times to boil, as `pans`.
     public static let boilMemory = StoreSpec(name: "boilMemory", format: 1, key: "boilMemory")
     /// The results log, the posterior and the base under it.
@@ -61,4 +62,47 @@ func inFormat(_ store: StoreSpec, _ raw: Any?) -> [String: Any]? {
     guard let format = store.format, let o = raw as? [String: Any], let v = o["v"] as? NSNumber,
           CFGetTypeID(v) != CFBooleanGetTypeID(), v.doubleValue == Double(format) else { return nil }
     return o
+}
+
+/// A Codable store's value with its format: `v` written beside the value's
+/// own fields, in one object.
+struct Stamped<Value> {
+    let v: Int?
+    let value: Value
+
+    init(_ store: StoreSpec, _ value: Value) {
+        v = store.format
+        self.value = value
+    }
+
+    private enum Keys: String, CodingKey { case v }
+}
+
+extension Stamped: Encodable where Value: Encodable {
+    func encode(to encoder: Encoder) throws {
+        try value.encode(to: encoder)
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(v, forKey: .v)
+    }
+}
+
+extension Stamped: Decodable where Value: Decodable {
+    init(from decoder: Decoder) throws {
+        v = try decoder.container(keyedBy: Keys.self).decode(Int.self, forKey: .v)
+        value = try Value(from: decoder)
+    }
+}
+
+/// `store`'s value as JSON, stamped with its format.
+func encodeStamped<Value: Encodable>(_ store: StoreSpec, _ value: Value) throws -> Data {
+    try JSONEncoder().encode(Stamped(store, value))
+}
+
+/// `store`'s value read from `data`, or nil when it is in another format or
+/// does not decode, which reads as nothing stored.
+func decodeStamped<Value: Decodable>(_ store: StoreSpec, _ type: Value.Type, from data: Data) -> Value? {
+    guard let read = try? JSONDecoder().decode(Stamped<Value>.self, from: data), read.v == store.format else {
+        return nil
+    }
+    return read.value
 }

@@ -564,15 +564,15 @@ public final class Cook {
 
     /// A stored cook's data as this app reads it, whole, or nil.
     static func readStored(_ data: Data) -> StoredCook? {
-        try? JSONDecoder().decode(StoredCook.self, from: data)
+        decodeStamped(StoreRegistry.cook, StoredCook.self, from: data)
     }
 
     private func persist(_ cook: RunningCook?, leanHintS: Double) {
         guard let cook else { return }
         let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
-        if let data = try? JSONEncoder().encode(stored) {
+        if let data = try? encodeStamped(StoreRegistry.cook, stored) {
             Stores.set(data, forKey: Self.savedKey)
-            Screenshots.log(.stored(value: Screenshots.Encoded(value: stored)))
+            Screenshots.log(.stored(value: Screenshots.Encoded(value: Stamped(StoreRegistry.cook, stored))))
         }
     }
 
