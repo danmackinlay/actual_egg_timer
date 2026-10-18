@@ -602,6 +602,7 @@ select { max-width: 60vw; }
    field, so the row is no taller; the glyphs are drawn here, so the markup
    holds no words. A press is a hold, never a selection or a menu. */
 button.step {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -622,6 +623,18 @@ button.step {
 button.step--less::before { content: "\2212"; }
 button.step--more::before { content: "+"; }
 button.step:active { background: var(--line); }
+/* Drawn 34 px wide, a − or + takes a tap 44 px wide: 3 px more on the
+   field's side, short of the 4 px gap to it, so a tap at the field's edge
+   stays the field's however its edges round to pixels, and 7 px more on the
+   other, across the gap to the label, or the 6 px to a unit and a pixel of
+   it, which is words and takes no tap of its own. */
+button.step::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+}
+button.step--less::after { left: -8px; right: -4px; }
+button.step--more::after { left: -4px; right: -8px; }
 .unit:has(button.step) { gap: 4px; }
 .unit:has(button.step) input[type="number"] { width: 4rem; padding-inline: 8px; }
 /* When the eggs went in, mid-cook: a time of day between its − and +, read
