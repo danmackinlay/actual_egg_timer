@@ -28,7 +28,7 @@ public struct StoreSpec: Sendable, Equatable {
 
 public enum StoreRegistry {
     /// The settings, one value (Settings.swift).
-    public static let settings = StoreSpec(name: "settings", format: 1, key: "settings")
+    public static let settings = StoreSpec(name: "settings", format: 2, key: "settings")
     /// The running cook (StoredCook.swift).
     public static let cook = StoreSpec(name: "cook", format: 8, key: "cook")
     /// The pans' measured times to boil, as `pans`.

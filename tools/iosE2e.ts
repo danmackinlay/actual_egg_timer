@@ -195,7 +195,7 @@ function settingsArg(over: Record<string, unknown>): string[] {
   return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
 }
 /// A hot start's settings.
-const HOT_SETTINGS = { doneness: 0.41, altitude_m: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
+const HOT_SETTINGS = { doneness: 0.41, altitudeM: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
 const HOT = settingsArg(HOT_SETTINGS);
 /// A cold cook's taps to Done: the boil at 5:00, out 3 s into the pull.
 const TO_DONE = 'boil@300,out@pull+3';

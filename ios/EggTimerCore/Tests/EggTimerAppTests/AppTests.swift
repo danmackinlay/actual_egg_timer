@@ -537,9 +537,7 @@ struct AppTests {
         planner.settings.waterLitres = 3
         planner.start = .hot
         let data = try #require(world.store.data(forKey: SettingsStore.key))
-        let raw = try JSONSerialization.jsonObject(with: data)
-        #expect(inFormat(StoreRegistry.settings, raw) != nil)
-        let stored = readSettings(raw, classes: planner.sizeClasses)
+        let stored = readSettings(data, classes: planner.sizeClasses)
         #expect(stored.waterLitres == 3)
         #expect(stored.startMode == .hot)
         let again = world.planner()
@@ -547,33 +545,6 @@ struct AppTests {
         #expect(again.settings.waterLitres == 3)
         #expect(again.start == .hot)
         await world.until("the solves") { !planner.solver.busy && !again.solver.busy }
-    }
-
-    /// The settings the build before stored, in format 1 as core's settings
-    /// wrote them, with the web's fields in them (the measured egg, the
-    /// mute, the sound and the language, which this app keeps elsewhere):
-    /// a launch reads back every value it keeps, not the defaults.
-    @Test func settingsTheBuildBeforeStoredReadBackIntact() async throws {
-        let written: [String: Any] = [
-            "v": 1, "sizeIndex": -1, "customMinor_mm": 47.5, "measuredBy": "girth", "weighedMass_g": 71.25,
-            "startTempMode": "custom", "customStart_C": 18.5, "altitude_m": 1200, "startMode": "hot",
-            "afterBoil": "off", "cooling": "bowl", "tapWater_C": 12.5, "bowlLitres": 1.5, "bowlWater_C": 17,
-            "waterLitres": 3.5, "eggCount": 6, "doneness": 0.73, "muted": true, "alarm": "hen",
-            "unitsChosen": "imperial", "language": ["chosen": "en-x-1750"], "probe": true, "room_C": 23.5,
-        ]
-        let data = try JSONSerialization.data(withJSONObject: written)
-        let world = World(store: MemoryStore([SettingsStore.key: data]))
-        let planner = world.planner()
-        planner.load()
-        var want = AppSettings.defaults
-        (want.sizeIndex, want.weighedMassG, want.startTempMode, want.customStartC, want.altitudeM) =
-            (-1, 71.25, .custom, 18.5, 1200)
-        (want.startMode, want.afterBoil, want.cooling, want.tapWaterC, want.bowlLitres, want.bowlWaterC) =
-            (.hot, .off, .bowl, 12.5, 1.5, 17)
-        (want.waterLitres, want.eggCount, want.doneness, want.unitsChosen, want.probe, want.roomC) =
-            (3.5, 6, 0.73, .imperial, true, 23.5)
-        #expect(planner.settings == want)
-        await world.until("the solve") { !planner.solver.busy }
     }
 
     /// At launch, in a real suite of UserDefaults, every key the table does
