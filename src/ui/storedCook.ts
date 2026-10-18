@@ -50,7 +50,9 @@ function readChoices(raw: unknown): CookChoices | null {
   if (room !== null && !isNumber(room)) return null;
   if (start !== 'cold' && start !== 'hot') return null;
   if (after !== 'hold' && after !== 'off') return null;
-  if (cooling !== 'ice' && cooling !== 'tap' && cooling !== 'bowl' && cooling !== 'counter') return null;
+  if (cooling !== 'ice' && cooling !== 'tap' && cooling !== 'bowl' && cooling !== 'counter' && cooling !== 'eggCup') {
+    return null;
+  }
   if (tapWater !== null && !isNumber(tapWater)) return null;
   if (!isNumber(bowlLitres) || !(bowlLitres > 0)) return null;
   if (bowlWater !== null && !isNumber(bowlWater)) return null;

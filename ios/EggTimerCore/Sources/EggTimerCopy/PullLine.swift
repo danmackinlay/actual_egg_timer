@@ -1,9 +1,9 @@
 /// The pull's line, in the alarm and on the Lock Screen card alike: into the
-/// ice bath, under the cold tap, into the bowl, or onto the counter, as the
-/// cook chose - never "the cooling", which is this app's word and not the
+/// ice bath, under the cold tap, into the bowl, onto the counter, or into the
+/// egg cups, as the cook chose - never "the cooling", which is this app's word and not the
 /// cook's.
 ///
-/// `cooling` is `Cooling`'s raw value (`ice`, `tap`, `bowl` or `counter`), as
+/// `cooling` is `Cooling`'s raw value (`ice`, `tap`, `bowl`, `counter` or `eggCup`), as
 /// a String because the widget, which draws the card, does not link the
 /// physics.
 /// Anything else is the ice bath.
@@ -16,6 +16,7 @@ public func pullLineKey(cooling: String) -> CopyKey {
     case "tap": .`alarm.pull.bodyTap`
     case "bowl": .`alarm.pull.bodyBowl`
     case "counter": .`alarm.pull.bodyCounter`
+    case "eggCup": .`alarm.pull.bodyEggCup`
     default: .`alarm.pull.bodyIce`
     }
 }

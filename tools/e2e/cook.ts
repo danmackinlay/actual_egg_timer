@@ -1,14 +1,14 @@
 /**
- * The cook's flow: a cold start, a hot one and a bowl from Start to Done;
+ * The cook's flow: a cold start, a hot one, a bowl and an egg cup from Start to Done;
  * Cancel; a reload at every phase; a tab woken past the pull; the hob slow; a
  * cook too old, and one left at Done. Run by tools/e2e.ts.
  */
 
 import type { ElementId } from '../../src/ui/dom.ts';
-import { type Osc, type Scenario, type Snap, byId, check, labelSays } from '../harness.ts';
+import { type Osc, type Rec, type Scenario, type Snap, byId, check, labelSays } from '../harness.ts';
 import {
-  BOIL_KEY, STOPPED, boil, corrected, deadlines, later, near, pansIn, pick, rings, scheduledAhead, sentenceSays, start,
-  storedCook,
+  BOIL_KEY, EN, STOPPED, boil, corrected, deadlines, later, near, pansIn, pick, rings, scheduledAhead, sentenceSays,
+  setSlider, start, storedCook,
 } from './helpers.ts';
 
 export const cookScenarios: Record<string, Scenario> = {
@@ -402,6 +402,56 @@ export const cookScenarios: Record<string, Scenario> = {
       s = await tab.snap();
       check(s.phase === 'HEATING' && s.digits === '17:05', `counting up: ${s.digits}`);
       return `${first}, then ${s.digits}; "${s.subline}"`;
+    },
+  },
+
+  'egg-cup': {
+    what: 'eaten warm from an egg cup: soft offered where the air snaps it, the sentence and the pull say the egg cup, Done at the pull with nothing counted, and the record',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.click('#startHot');
+      await tab.until("__snap().settings.startMode === 'hot'", 'a hot start chosen');
+      const soft = 0.22;
+      const decidedAt = async (cooling: string, what: string): Promise<number> => {
+        await tab.click(cooling === 'eggCup' ? '#coolEggCup' : '#coolCounter');
+        await setSlider(tab, soft);
+        await tab.until(`__snap().settings.cooling === '${cooling}' && __snap().chosen !== null`, what);
+        await tab.settle();
+        return (await tab.snap()).chosen?.level ?? NaN;
+      };
+      // In the air soft is striped out and the slider snaps past it.
+      const inAir = await decidedAt('counter', 'the air chosen');
+      check(inAir > 0.4, `in the air, soft snapped to ${inAir}`);
+      const inCup = await decidedAt('eggCup', 'the egg cup chosen');
+      check(near(inCup, soft, 1e-9), `in an egg cup, soft offered: ${inCup}`);
+      const warn = await tab.eval<{ hidden: boolean; text: string }>(
+        `(() => { const w = ${byId('warn')}; return { hidden: w.hidden, text: w.textContent }; })()`);
+      check(warn.hidden, `nothing refused: "${warn.text}"`);
+      const said = await sentenceSays(tab);
+      const clause = EN['setup.cooling.eggCup'].text;
+      check(said.sentence.includes(clause), `the sentence says "${clause}": "${said.sentence}"`);
+      await tab.click('#primary');
+      let s = await tab.phase('COOKING');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      check(s.cook?.choices.cooling === 'eggCup' && near(s.cook.choices.level, soft, 1e-9),
+        `the cook: ${s.cook?.choices.cooling} at ${s.cook?.choices.level}`);
+      check(s.deadlines?.coolEnd_s === null, `nothing counted after the pull: ${s.deadlines?.coolEnd_s}`);
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      s = await tab.phase('PULL');
+      const pull = EN['action.pulled.eggCup'].text;
+      check(s.primary === pull, `the pull says "${pull}": "${s.primary}"`);
+      await tab.click('#primary');
+      s = await tab.phase('DONE');
+      check(s.feedback, 'the questions at Done, at the pull');
+      check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
+      await tab.click('.fb[data-yolk="soft"]');
+      await tab.until('__snap().log.length === 1', 'the egg logged');
+      const rec = (await tab.snap()).log[0] as Rec & { cooled_s: number; setup: { cooling: string } };
+      check(rec.setup.cooling === 'eggCup' && rec.cooled_s === 0 && rec.yolkWord === 'soft',
+        `the record: ${rec.setup.cooling}, cooled ${rec.cooled_s}, ${rec.yolkWord}`);
+      return `soft in the air snapped to ${inAir.toFixed(2)}, in an egg cup ${inCup}; "${said.sentence}"; `
+        + `recommended ${rec.recommended_s.toFixed(1)} s`;
     },
   },
 };

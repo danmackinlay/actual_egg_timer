@@ -234,7 +234,7 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     altitude_m: storedNumber(r['altitude_m'], LIMITS.altitude_m, d.altitude_m),
     startMode: oneOf(r['startMode'], ['cold', 'hot'] as const, d.startMode),
     afterBoil: oneOf(r['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
-    cooling: oneOf(r['cooling'], ['ice', 'tap', 'bowl', 'counter'] as const, d.cooling),
+    cooling: oneOf(r['cooling'], ['ice', 'tap', 'bowl', 'counter', 'eggCup'] as const, d.cooling),
     tapWater_C: storedOptional(r['tapWater_C'], LIMITS.coolingWater_C),
     bowlLitres: storedNumber(r['bowlLitres'], LIMITS.bowlLitres, d.bowlLitres),
     bowlWater_C: storedOptional(r['bowlWater_C'], LIMITS.coolingWater_C),

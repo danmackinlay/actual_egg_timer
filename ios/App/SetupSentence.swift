@@ -165,7 +165,7 @@ struct ClausePanel: View {
         }
     }
 
-    /// Four ways to cool the eggs, one to a line, fastest first: four names
+    /// Five ways to cool the eggs, one to a line, fastest first: five names
     /// fit no phone's width as segments (`ListChoice`). Under them, with its
     /// own choice, a bowl's water, and the temperature of running water or
     /// of the bowl, which is optional and shows greyed the one assumed.
@@ -176,6 +176,7 @@ struct ClausePanel: View {
                 choices: [
                     (tr(.`controls.cooling.ice`), Cooling.ice), (tr(.`controls.cooling.tap`), Cooling.tap),
                     (tr(.`controls.cooling.bowl`), Cooling.bowl), (tr(.`controls.cooling.counter`), Cooling.counter),
+                    (tr(.`controls.cooling.eggCup`), Cooling.eggCup),
                 ],
                 selection: $planner.settings.cooling
             )
