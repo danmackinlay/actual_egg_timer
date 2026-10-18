@@ -52,11 +52,14 @@ and the map of the documents are `CLAUDE.md`.
     waiting, retries, traces and `page.clock` replace the DevTools client and
     most of the harness; the app's hooks (`__snap`, the oscillator capture)
     move across. `git log` on the two files says when.
-12. **Find why the counter's soft and jammy lean to the window's edge.**
-    Under counter cooling both snap to one level and the chosen time leans
-    far past the posterior-mean time, losing more eggs right than on any
-    other pot (`npm run decide -- versus`): a bug, a surface the loss reads
-    wrongly, or the physics of a slow cooling.
+12. **The counter's eggs as cooks eat them.** No bug (`npm run decide --
+    counter`): on the counter nearly all of both doses come after the pull,
+    as the egg sits whole for `CARRYOVER_WINDOW`, so soft is out of reach
+    and the snap's white is a coin flip. A cook who opens the egg warm
+    would want a cooling whose window ends at the opening, "eat it warm",
+    in an egg cup. Held until the data layer is cheaper to extend (the
+    owner); then also whether the snap reads a white the loss accepts,
+    measured after the first egg.
 13. **A tap on the egg toggles how set and how hot**, in both apps
     (`DECISIONS.md` 52). Core already gives each ring's temperature
     (`SectionView.temperature_C`, twinned), so this is drawing and a
