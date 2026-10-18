@@ -7,52 +7,40 @@ and the map of the documents are `CLAUDE.md`.
 
 ## Next work
 
-1. **Settle `Intl` inside `src/core/format.ts`.** Invariant 1 allows it there,
-   so the web's output depends on the browser's ICU, while
-   `fixtures/format.json` is pinned against Node's. Run the fixture's cases in
-   Safari. If Apple's ICU differs, write the formatting out in core for the
-   apps' locales, or say which cases differ and why they are harmless.
-2. **The first real population fit**, once shared eggs arrive:
+1. **The first real population fit**, once shared eggs arrive:
    `fit/README.md` has the loop, and publishing writes
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
    chains than the recovery check's: publishing refuses a fit whose R-hat is
    1.01 or more (133).
-3. **Czech (F5)**, when the owner's friend can review it. Add it to the
+2. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that
    will not move again.
-4. **Fold iOS's `PhaseActions` into the readout.** It keeps a layout per
+3. **Fold iOS's `PhaseActions` into the readout.** It keeps a layout per
    phase, though its words are already the readout's; the rest of `Cook` is
    core's `CookState`, stepped.
-5. **Generate the Swift data layer only if the drift recurs** (the owner):
+4. **Generate the Swift data layer only if the drift recurs** (the owner):
    the types, the defensive readers, `Codable` and `jsonObject`, from the
    TypeScript interfaces. The conformance fixtures catch drift meanwhile.
    Never generate the whole core: TypeScript under JavaScriptCore loses the
    JIT, and a surface would take seconds.
-6. **Read the time range against real eggs.** The range under the certainty
+5. **Read the time range against real eggs.** The range under the certainty
    word, `predictCookTime` at 5% and 95%, stays as built until then
    (`DECISIONS.md` 97; `INFERENCE.md` §8 has the alternatives).
-7. **Learn the heat-off pan's per-cook scale** once enough heat-off cooks
+6. **Learn the heat-off pan's per-cook scale** once enough heat-off cooks
    tell it from `alpha`; `TAU_STANDING_SCALE` is a global 1.0
    (`DECISIONS.md` 11).
-8. **Decide the colder coolings' surface from the owner's probe readings**:
+7. **Decide the colder coolings' surface from the owner's probe readings**:
    whether ice and running water take free convection in place of a held
    surface (`DECISIONS.md` 115).
-9. **Cook real eggs**, and take the measurements in README §11.3.
-10. **Left from the adversarial review of the drafting**, not yet decided;
-    each is a cut, one branch each:
-    - Swift doc comments repeat the TypeScript's in `Running.swift`,
-      `AsRan.swift` and `Record.swift`: keep only what is
-      about the port, and point at the TypeScript, as the rest of the twin
-      does.
-    - The web model's `sharing` repeats `share.state.on`: derive it.
-11. **Move the web e2e to Playwright Test** if `tools/chrome.ts` and
-    `tools/harness.ts` keep drawing fixes of their own: its sharding,
-    waiting, retries, traces and `page.clock` replace the DevTools client and
-    most of the harness; the app's hooks (`__snap`, the oscillator capture)
-    move across. `git log` on the two files says when.
-12. **The counter's eggs as cooks eat them.** No bug (`npm run decide --
+8. **Cook real eggs**, and take the measurements in README §11.3.
+9. **Move the web e2e to Playwright Test** if `tools/chrome.ts` and
+   `tools/harness.ts` keep drawing fixes of their own: its sharding,
+   waiting, retries, traces and `page.clock` replace the DevTools client and
+   most of the harness; the app's hooks (`__snap`, the oscillator capture)
+   move across. `git log` on the two files says when.
+10. **The counter's eggs as cooks eat them.** No bug (`npm run decide --
     counter`): on the counter nearly all of both doses come after the pull,
     as the egg sits whole for `CARRYOVER_WINDOW`, so soft is out of reach
     and the snap's white is a coin flip. A cook who opens the egg warm
@@ -60,7 +48,7 @@ and the map of the documents are `CLAUDE.md`.
     in an egg cup. Held until the data layer is cheaper to extend (the
     owner); then also whether the snap reads a white the loss accepts,
     measured after the first egg.
-13. **A tap on the egg toggles how set and how hot**, in both apps
+11. **A tap on the egg toggles how set and how hot**, in both apps
     (`DECISIONS.md` 52). Core already gives each ring's temperature
     (`SectionView.temperature_C`, twinned), so this is drawing and a
     gesture in each app: the lab page's heat colours move into
@@ -135,8 +123,8 @@ Start the QA pass here.
   and focus after a press. The web's names were read from the DOM, not heard.
 - **Dynamic Type** at large sizes on iOS.
 - **The web on a phone, and Safari.** The web's checks run an emulated
-  viewport in desktop Chromium: no real thumb, no Safari (Apple's ICU, and
-  locales with non-ASCII digits), no alarm heard, no Home Screen opening
+  viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
+  digits), no alarm heard, no Home Screen opening
   offline, no new build taken after a deploy.
 - **Real eggs.** None cooked at a chosen time (the odds are calibrated
   against the model's own idea of cooks); none probed (the 1.0 C instrument
@@ -145,6 +133,9 @@ Start the QA pass here.
   thermometer can split an egg's scatter from the cook's judging.
 - **For the owner's eye**: the light scheme's mustard end, and iOS's accent
   wash on an open clause.
-- **Locales measured but not pinned**: en-CA and en-IN/NZ/SG print a time of
-  day differently in the two apps; a Czech UI's 24-hour clock abroad on iOS
-  rests on a Foundation quirk (`LANGUAGE.md` §2).
+- **Locales measured but not pinned**: en-CA, en-IN/NZ/SG/HK/MY/PK, en-001,
+  en-MX and en-BR print a time of day (en-BR also a number) differently in
+  Node's `Intl` than in Apple's formatters. Safari and Foundation agree, so on
+  an iPhone the two apps match; only the web in another browser may differ. A
+  Czech UI's 24-hour clock abroad on iOS rests on a Foundation quirk
+  (`LANGUAGE.md` §2).
