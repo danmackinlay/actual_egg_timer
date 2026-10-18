@@ -331,6 +331,27 @@ extension AppTests {
         #expect(model.planner.settings.doneness == stored0.choices.level)
     }
 
+    /// A control set to the value it has while a cook runs (VoiceOver's swipe
+    /// at a stepper's bound, the chosen row tapped again) is no change, and
+    /// writes only the settings no group makes: a level the slider only
+    /// previewed after the pull is not written for the next cook.
+    @Test func aControlSetToItsOwnValueMidCookWritesNoPreviewedLevel() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        _ = try await answeredAtDone(model, world)
+        let level = SettingsStore.read(classes: model.planner.sizeClasses).doneness
+        world.clock.advance(5)
+        model.inHand.fingerDown(.level)
+        model.planner.settings.doneness = 0.9
+        world.clock.advance(1)
+        model.inHand.fingerUp()
+        await world.settled(model.cook)
+        #expect(model.planner.settings.doneness == 0.9, "previewed")
+        model.planner.settings.eggCount = model.planner.settings.eggCount
+        #expect(SettingsStore.read(classes: model.planner.sizeClasses).doneness == level)
+    }
+
     /// A probe reading saved at Done while a larger egg settles: the change
     /// committed and the cook corrected first, so the reading is scored on
     /// the egg the controls say, and the record logged with it is the
