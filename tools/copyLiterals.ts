@@ -33,7 +33,7 @@ const TEXT_CALLS = [ // SwiftUI, UIKit and notifications; ForEach's data is what
 ];
 const TEXT_PROPERTIES = 'text|attributedText|title|subtitle|body|placeholder|prompt|accessibilityLabel|accessibilityValue|accessibilityHint';
 const CALL = new RegExp(`\\b(?:${TEXT_CALLS.join('|')})\\s*\\(|\\.(?:${TEXT_PROPERTIES})\\s*=(?!=)`, 'g');
-const NOT_TEXT = /\b(systemImage|systemName|image|named|destination|url|string|identifier|id|forKey|tag|bundle|tableName|comment|format|specifier|in|for|locale|language)\s*:\s*$/;
+const NOT_TEXT = /\b(systemImage|systemName|image|named|destination|url|string|identifier|id|forKey|tag|bundle|tableName|comment|specifier|in|for|locale|language)\s*:\s*$/;
 /** A one-line literal: escapes, and interpolations holding literals or one level of parentheses. */
 const LITERAL = /"(?:[^"\\\n]|\\\((?:[^()"\n]|"(?:[^"\\\n]|\\.)*"|\([^()\n]*\))*\)|\\.)*"/g;
 

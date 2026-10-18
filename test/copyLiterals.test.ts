@@ -15,3 +15,9 @@ test('words in a text call fail, interpolated or not; a key passes', () => {
   assert.equal(lintSwift('V.swift', 'Text("Eggs: \\(count)")').length, 1);
   assert.deepEqual(lintSwift('V.swift', 'Text(tr(.`more.expanded`, ["mass": .string(weight)]))'), []);
 });
+
+test('words passed through format: fail; a number format alone passes', () => {
+  assert.equal(lintSwift('V.swift', 'Text(String(format: "%d eggs", n))').length, 1);
+  assert.deepEqual(lintSwift('V.swift', 'Text(String(format: "%d", n))'), []);
+  assert.deepEqual(lintSwift('V.swift', 'Text(String(format: "%.1f%%", n))'), []);
+});
