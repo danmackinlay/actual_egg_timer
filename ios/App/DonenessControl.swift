@@ -22,6 +22,7 @@ struct DonenessControl: View {
     /// Half the slider's thumb, pt, as the slider reports it: where the track,
     /// the bracket and the doneness words are inset to.
     @Binding var thumbInset: CGFloat
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var planner: Planner { model.planner }
 
@@ -105,7 +106,62 @@ struct DonenessControl: View {
     /// ticks are. The ends are held inside the track. A word is struck
     /// through, as on the web, only where the pan cannot deliver any of it:
     /// none of its positions lies outside the stripes (`anchorReachable`).
+    @ViewBuilder
     private func ticks(_ r: SliderReading) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            staggeredTicks(r)
+        } else {
+            oneRowOfTicks(r)
+        }
+    }
+
+    /// The five words at the accessibility sizes: in two rows, Runny, Jammy
+    /// and Hard over Soft and Fudgy, so each has the room between every other
+    /// level and they can grow with the text. Up to the third accessibility
+    /// size, the largest at which no two words in a row meet on a phone.
+    private func staggeredTicks(_ r: SliderReading) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            tickRow([0, 2, 4], r)
+            tickRow([1, 3], r)
+        }
+        .appFont(.caption2)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility3)
+        .foregroundStyle(.secondary)
+        .accessibilityHidden(true)
+    }
+
+    /// A row of the words at `indices`, each under its level, the ends held
+    /// inside the track; as tall as a word, which a hidden one sizes.
+    private func tickRow(_ indices: [Int], _ r: SliderReading) -> some View {
+        Text(tr(donenessAnchors[indices[0]].key))
+            .hidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay {
+                GeometryReader { geo in
+                    let inset = thumbInset
+                    let span = geo.size.width - 2 * inset
+                    ZStack(alignment: .topLeading) {
+                        ForEach(indices, id: \.self) { i in
+                            let anchor = donenessAnchors[i]
+                            let blocked = tickBlocked(i, r)
+                            let word = Text(tr(anchor.key)).strikethrough(blocked).opacity(blocked ? 0.5 : 1)
+                            if i == 0 {
+                                word.frame(maxWidth: .infinity, alignment: .leading)
+                            } else if i == donenessAnchors.count - 1 {
+                                word.frame(maxWidth: .infinity, alignment: .trailing)
+                            } else {
+                                word
+                                    .fixedSize()
+                                    .position(x: inset + CGFloat(anchor.level) * span, y: geo.size.height / 2)
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
+    /// The five words in one row, at the sizes under the accessibility ones.
+    private func oneRowOfTicks(_ r: SliderReading) -> some View {
         GeometryReader { geo in
             let inset = thumbInset
             let span = geo.size.width - 2 * inset
@@ -128,10 +184,11 @@ struct DonenessControl: View {
         }
         .frame(height: 16)
         .appFont(.caption2)
-        // Each word sits under its level, so the words cannot grow past the
-        // room between levels: at the accessibility sizes they overlapped
-        // each other and the texture under them. VoiceOver hears the level
-        // as the slider's value.
+        // Each word sits under its level, so in one row the words cannot
+        // grow past the room between levels, or they overlap each other and
+        // the texture under them; the accessibility sizes take two rows
+        // (`staggeredTicks`). VoiceOver hears the level as the slider's
+        // value.
         .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)

@@ -22,6 +22,7 @@ struct InfoRow<Label: View, Trailing: View>: View {
     /// stepper's value and its buttons.
     let trailing: () -> Trailing
     @State private var expanded = false
+    @Environment(\.dynamicTypeSize) private var size
 
     init(
         name: String, more: [String], alignment: HorizontalAlignment = .leading,
@@ -35,14 +36,25 @@ struct InfoRow<Label: View, Trailing: View>: View {
     }
 
     var body: some View {
+        // At the accessibility sizes the control goes to a line of its own,
+        // at the end: beside it the label was left a column so narrow that
+        // "Number of eggs" broke inside a word.
+        let below = Trailing.self != EmptyView.self && size.isAccessibilitySize
         VStack(alignment: alignment, spacing: 0) {
             HStack(alignment: .center, spacing: 2) {
                 label()
                 InfoButton(expanded: $expanded, name: name)
-                if Trailing.self != EmptyView.self {
+                if Trailing.self != EmptyView.self && !below {
                     Spacer(minLength: 8)
                     trailing()
                 }
+            }
+            if below {
+                HStack {
+                    Spacer(minLength: 0)
+                    trailing()
+                }
+                .padding(.top, 4)
             }
             if expanded {
                 MoreText(more)
@@ -85,7 +97,9 @@ func about(_ labelKey: CopyKey) -> String {
 
 /// The circled *i*. A thumb's hit area around a small circle; filled while
 /// what it opens is open, as the web's is. VoiceOver reads its name and
-/// whether it is expanded.
+/// whether it is expanded. The circle grows with the text, and its frame
+/// with it: a fixed frame let the large circle spill over the last letter of
+/// the label beside it.
 struct InfoButton: View {
     @Binding var expanded: Bool
     let name: String
@@ -96,7 +110,8 @@ struct InfoButton: View {
         } label: {
             Image(systemName: expanded ? "info.circle.fill" : "info.circle")
                 .font(.body)
-                .frame(width: 36, height: 32)
+                .padding(.horizontal, 4)
+                .frame(minWidth: 36, minHeight: 32)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
