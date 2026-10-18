@@ -31,9 +31,13 @@ type Templates = Record<string, string>;
 const git = (...args: string[]): string => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
 const copyIsDirty = (): boolean => git('status', '--porcelain', '--', 'copy') !== '';
 
-/** A catalogue's messages at a commit, or in the working tree with none. */
+/** A catalogue's messages at a commit, or in the working tree with none. An
+ *  overlay newer than the commit is none there, so each of its keys reads as
+ *  added. */
 function messages(tag: string, commit: string | null): Messages {
-  const text = commit === null ? readFileSync(`copy/${tag}.json`, 'utf8') : git('show', `${commit}:copy/${tag}.json`);
+  const path = `copy/${tag}.json`;
+  if (commit !== null && git('ls-tree', '--name-only', commit, '--', path) === '') return {};
+  const text = commit === null ? readFileSync(path, 'utf8') : git('show', `${commit}:${path}`);
   return (JSON.parse(text) as { messages: Messages }).messages;
 }
 
