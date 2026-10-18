@@ -46,19 +46,23 @@ public enum Stores {
         }
     }
 
-    /// The keys 0.5.1 and earlier kept sharing under, in the standard
-    /// domain: whether sharing is on, the random id and every earlier one
-    /// (`share`), and the App Attest key (`shareAttest`). Under the same
-    /// names in the suite, in the same formats.
-    static let carried = [StoreRegistry.share, StoreRegistry.shareAttest]
+    /// The keys 0.5.1 and earlier kept under, in the standard domain, that
+    /// this build reads in the suite: whether sharing is on, the random id
+    /// and every earlier one (`share`), the App Attest key (`shareAttest`),
+    /// and the cook's learning, the posterior and every egg's record
+    /// (`calibration`). Under the same names in the suite, in the same
+    /// formats.
+    static let carried = [StoreRegistry.share, StoreRegistry.shareAttest, StoreRegistry.calibration]
 
-    /// What 0.5.1 and earlier kept of sharing, carried into the suite from
-    /// the standard domain (`old`), once, before the sweep: what has been
-    /// sent must stay deletable, and "Delete shared results" reaches only
-    /// the ids the suite holds. The rest of what those builds kept stays
-    /// where it is, unread. A key the suite already has is left alone, in
-    /// both; one carried is written as this build writes it, if it still
-    /// reads, and then removed from the standard domain.
+    /// What 0.5.1 and earlier kept of sharing and of the learning, carried
+    /// into the suite from the standard domain (`old`), once, before the
+    /// sweep: what has been sent must stay deletable, and "Delete shared
+    /// results" reaches only the ids the suite holds; and the cook's own
+    /// learning survives the upgrade, rather than starting again from the
+    /// population's prior. The rest of what those builds kept stays where
+    /// it is, unread. A key the suite already has is left alone, in both;
+    /// one carried is written as this build writes it, if it still reads,
+    /// and then removed from the standard domain.
     public static func carryOver(from old: any KeyValueStore = Suite.standard) {
         for spec in carried {
             let key = spec.key
@@ -70,7 +74,10 @@ public enum Stores {
 
     /// `data` as this build writes `spec`'s value, or nil if nothing of it
     /// reads. Sharing's state is read defensively (`readStoredShare`), so a
-    /// damaged copy still gives every id it holds.
+    /// damaged copy still gives every id it holds. The learning is carried
+    /// as it was stored when this build reads it (`Calibrations.reads`): the
+    /// format is the same, and the launch's load makes of it what it makes
+    /// of any store, replaying the log if it must.
     private static func carriedValue(_ spec: StoreSpec, _ data: Data) -> Data? {
         switch spec {
         case StoreRegistry.share:
@@ -78,6 +85,8 @@ public enum Stores {
             return state == .fresh ? nil : storedShare(state)
         case StoreRegistry.shareAttest:
             return (try? JSONDecoder().decode(Sharing.Attest.self, from: data)).flatMap { try? JSONEncoder().encode($0) }
+        case StoreRegistry.calibration:
+            return Calibrations.reads(data) ? data : nil
         default:
             return nil
         }
@@ -136,7 +145,7 @@ public final class Suite: KeyValueStore, @unchecked Sendable {
 
     /// The standard domain, the app's own: where 0.5.1 and earlier kept
     /// everything, and what is left of it is read only to carry sharing
-    /// over (`Stores.carryOver`).
+    /// and the learning over (`Stores.carryOver`).
     public static var standard: Suite { Suite(standard: Bundle.main.bundleIdentifier ?? "") }
 
     /// The suite's persistent domain alone. Never

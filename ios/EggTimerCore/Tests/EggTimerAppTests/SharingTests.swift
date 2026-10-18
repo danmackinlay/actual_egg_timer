@@ -9,7 +9,8 @@ import EggTimerCore
 /// every way App Attest can fail falling back to the open tier, at once or
 /// after waiting, and an egg the server did not take sent again, so the
 /// eggs still go. What each answer does to the queue is ShareQueueTests';
-/// the web's runs are test/share.test.ts's.
+/// the web's runs are test/share.test.ts's. And what 0.5.1 kept in the
+/// standard domain, sharing and the learning, carried into the suite.
 extension AppTests {
     static let day = 24 * 60 * 60.0
 
@@ -260,10 +261,10 @@ extension AppTests {
 
     /// Sharing as 0.5.1 kept it in the standard domain: on, its id and an
     /// earlier one, three eggs sent, and the id's attested key; beside it,
-    /// what else 0.5.1 kept there.
+    /// what else 0.5.1 kept there, and its learning (`log`) if any.
     static let id051 = "0f8fad5b-d9cb-469f-a165-70867728950e"
     static let earlier051 = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-    func standard051() -> MemoryStore {
+    func standard051(log: Data? = nil) -> MemoryStore {
         let share = """
         {"on": true, "uid": "\(Self.id051)", "sent": 3, "seq": 3, "uids": ["\(Self.earlier051)", "\(Self.id051)"],
          "deleting": [], "busy": 0}
@@ -271,12 +272,38 @@ extension AppTests {
         let attest = """
         {"uid": "\(Self.id051)", "keyId": "key-0.5.1", "status": "attested"}
         """
-        return MemoryStore([
+        var kept: [String: Any] = [
             StoreRegistry.share.key: Data(share.utf8),
             StoreRegistry.shareAttest.key: Data(attest.utf8),
-            "calibration.v5": Data("0.5.1's log".utf8),
+            "calibration.v4": Data("0.3's log".utf8),
             "newestVersion": "0.5.1",
-        ])
+        ]
+        kept[StoreRegistry.calibration.key] = log
+        return MemoryStore(kept)
+    }
+
+    /// The learning as 0.5.1 kept it, made by the writer 0.5.1 had: the
+    /// first `count` iOS eggs of the replay fixture (fixtures/record.json,
+    /// core's own records, of coolings 0.5.1 had), each written down and
+    /// folded by the app's learner, and what it stored, in a store of its
+    /// own. The format and the key are 0.5.1's.
+    func learning051(_ count: Int) async throws -> (stored: Data, log: [EggRecord], calibration: Calibration) {
+        let url = World.copyFolder.deletingLastPathComponent().appendingPathComponent("fixtures/record.json")
+        let fixture = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let records = try #require((fixture["replay"] as? [String: Any])?["log"] as? [Any])
+        let log = try records
+            .map { try JSONDecoder().decode(EggRecord.self, from: JSONSerialization.data(withJSONObject: $0)) }
+            .filter { $0.app == .ios && $0.setup.cooling != .eggCup && recordTeaches($0) }
+            .prefix(count)
+        try #require(log.count == count)
+        let world = World()
+        let planner = world.planner()
+        planner.load()
+        for egg in log { planner.learner.logRecord(egg, replaces: false) }
+        await world.learned(planner)
+        let stored = try #require(world.store.data(forKey: StoreRegistry.calibration.key))
+        #expect(planner.kept.calibration.eggsLogged == count)
+        return (stored, Array(log), planner.kept.calibration)
     }
 
     /// What 0.5.1 kept of sharing is carried into the suite at launch and
@@ -290,7 +317,7 @@ extension AppTests {
         Stores.carryOver(from: standard)
         #expect(standard.data(forKey: StoreRegistry.share.key) == nil)
         #expect(standard.data(forKey: StoreRegistry.shareAttest.key) == nil)
-        #expect(Set(standard.keys) == ["calibration.v5", "newestVersion"])
+        #expect(Set(standard.keys) == ["calibration.v4", "newestVersion"])
         #expect(standard.writes.map(\.key).sorted() == [StoreRegistry.share.key, StoreRegistry.shareAttest.key].sorted())
 
         let transport = FakeTransport()
@@ -331,5 +358,64 @@ extension AppTests {
         Stores.carryOver(from: standard)
         #expect(world.store.writes.count == writes)
         #expect(standard.writes.count == 2)
+    }
+
+    /// The learning 0.5.1 kept is carried into the suite as it was stored,
+    /// and the app's learner reads it back as it was folded: the same eggs
+    /// in the log, the same posterior, nothing folded again. The key goes
+    /// from the standard domain.
+    @Test func theLearning051KeptIsCarriedIntoTheSuiteAndReadBack() async throws {
+        let was = try await learning051(3)
+        let world = World()
+        let standard = standard051(log: was.stored)
+        Stores.carryOver(from: standard)
+        let key = StoreRegistry.calibration.key
+        #expect(standard.data(forKey: key) == nil)
+        #expect(Set(standard.keys) == ["calibration.v4", "newestVersion"])
+        #expect(world.store.data(forKey: key) == was.stored)
+
+        let planner = world.planner()
+        planner.load()
+        await world.learned(planner)
+        #expect(planner.kept.log == was.log)
+        #expect(planner.kept.folded == was.log.count)
+        #expect(planner.kept.base == nil)
+        #expect(planner.kept.calibration.eggsLogged == was.calibration.eggsLogged)
+        #expect(planner.kept.calibration.posterior.weights == was.calibration.posterior.weights)
+        #expect(planner.kept.calibration.posterior.particles.map(\.alphaM2s)
+            == was.calibration.posterior.particles.map(\.alphaM2s))
+        #expect(world.store.writes.filter { $0.key == key }.count == 1, "read as stored: not replayed or written again")
+    }
+
+    /// A suite that already keeps a log is left alone, and so is the log the
+    /// standard domain kept; the app reads the suite's.
+    @Test func aSuiteThatKeepsALogIsLeftAlone() async throws {
+        let theirs = try await learning051(3)
+        let mine = try await learning051(1)
+        let key = StoreRegistry.calibration.key
+        let world = World(store: MemoryStore([key: mine.stored]))
+        let standard = standard051(log: theirs.stored)
+        Stores.carryOver(from: standard)
+        #expect(world.store.data(forKey: key) == mine.stored)
+        #expect(!world.store.writes.contains { $0.key == key })
+        #expect(standard.data(forKey: key) == theirs.stored)
+
+        let planner = world.planner()
+        planner.load()
+        await world.learned(planner)
+        #expect(planner.kept.log == mine.log)
+    }
+
+    /// A log this build cannot read is not carried, and goes from the
+    /// standard domain: the suite has none, and the app starts from the
+    /// prior, as it would on that log.
+    @Test func aLogThisBuildCannotReadIsNotCarried() {
+        let world = World()
+        let key = StoreRegistry.calibration.key
+        let standard = standard051(log: Data("0.5.1's log, damaged".utf8))
+        Stores.carryOver(from: standard)
+        #expect(world.store.data(forKey: key) == nil)
+        #expect(standard.data(forKey: key) == nil)
+        #expect(!world.store.writes.contains { $0.key == key })
     }
 }
