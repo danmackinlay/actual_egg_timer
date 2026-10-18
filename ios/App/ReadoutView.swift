@@ -198,6 +198,7 @@ struct ReadoutView: View {
                             Text(tr(certaintyKey(sure.words.certainty)))
                                 .underline(true, pattern: certaintyOpen ? .solid : .dot, color: Palette.accent)
                                 .appFont(.subheadline, weight: .semibold)
+                                .modifier(OneLineWhenLarge())
                                 .padding(.vertical, 4)
                                 .contentShape(Rectangle())
                         }
@@ -206,6 +207,7 @@ struct ReadoutView: View {
                         if mostLikelyShown(sure.words) {
                             Text(renderedWords(mostLikelyWords(sure.words)))
                                 .appFont(.footnote)
+                                .modifier(OneLineWhenLarge())
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -261,7 +263,7 @@ struct ReadoutView: View {
         VStack(spacing: 2) {
             ZStack {
                 ForEach([Certainty.veryCertain, .ballpark, .wildGuess], id: \.self) { c in
-                    Text(tr(certaintyKey(c))).appFont(.subheadline, weight: .semibold)
+                    Text(tr(certaintyKey(c))).appFont(.subheadline, weight: .semibold).modifier(OneLineWhenLarge())
                 }
             }
             .padding(.vertical, 4)
@@ -269,8 +271,26 @@ struct ReadoutView: View {
                 ForEach(donenessAnchors.indices, id: \.self) { i in
                     Text(tr(.`certainty.mostLikely`, ["word": .text(tr(donenessAnchors[i].key))]))
                         .appFont(.footnote)
+                        .modifier(OneLineWhenLarge())
                 }
             }
+        }
+    }
+}
+
+/// The certainty word and "most likely" at the accessibility sizes: each on
+/// one line, set smaller where it would wrap. The line keeps the room of its
+/// tallest words whether they show or not, so the slider never moves
+/// (`tallest`); wrapped, that was four lines, three of them empty under a
+/// word of one line. On one line each it is two, as at every other size.
+private struct OneLineWhenLarge: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var size
+
+    func body(content: Content) -> some View {
+        if size.isAccessibilitySize {
+            content.lineLimit(1).minimumScaleFactor(0.5)
+        } else {
+            content
         }
     }
 }
