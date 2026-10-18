@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import EggTimerCore
 
 /// The web's colours where iOS needs the same ones (styles.css `:root`), each
 /// with its dark and its light value. Everything else is the system's.
@@ -50,6 +51,28 @@ enum Palette {
     /// The white at how set it is, 0 raw to 1 set.
     static func white(at set: Double, in scheme: ColorScheme) -> Color {
         mix(whiteRaw, whiteSet, min(1, max(0, set)), in: scheme)
+    }
+
+    /// The egg's other picture, how hot each layer is: a colour at each of
+    /// `Section.heatStopsC`, coldest first (`--heat-cold` to `--heat-hot`).
+    /// Blue below the room, a grey at 40 C where nothing has begun to set,
+    /// red toward the boil; the poles brighten off the dark, darken off the
+    /// light.
+    static let heat = [
+        scheme(dark: 0x6DA7EC, light: 0x1C5CAB), scheme(dark: 0x256ABF, light: 0x86B6EF),
+        scheme(dark: 0x45454A, light: 0xEBEAE6), scheme(dark: 0xB8403C, light: 0xEC8A84),
+        scheme(dark: 0xFF6B5E, light: 0xB3261E),
+    ]
+
+    /// A temperature, C, on the heat map: blended between the stops it lies
+    /// between, held at the end colours beyond them, as the web's `heatAt`.
+    static func heat(at temperatureC: Double, in scheme: ColorScheme) -> Color {
+        let stops = Section.heatStopsC
+        if temperatureC <= stops[0] { return heat[0] }
+        for i in 1..<stops.count where temperatureC <= stops[i] {
+            return mix(heat[i - 1], heat[i], (temperatureC - stops[i - 1]) / (stops[i] - stops[i - 1]), in: scheme)
+        }
+        return heat[stops.count - 1]
     }
 
     /// `from` to `to` at `t`, in RGB as the web blends, in `scheme`.

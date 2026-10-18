@@ -612,4 +612,33 @@ extension AppTests {
         #expect(model.cook.running?.choices.eggCount == Double(count + 1))
         #expect(SettingsStore.read(classes: model.planner.sizeClasses).probe == model.planner.settings.probe)
     }
+
+    /// A tap on the egg turns it over to how hot and back (`DECISIONS.md` 52):
+    /// written at once, idle or mid-cook, and mid-cook a way of looking, not a
+    /// correction: nothing goes in hand, a change already in hand stays there,
+    /// and the cook's choices are not written as the settings.
+    @Test func turningTheEggIsWrittenAndPutsNothingInHand() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let classes = model.planner.sizeClasses
+        #expect(model.planner.settings.eggView == .set, "how set, fresh")
+        model.planner.turnEgg()
+        #expect(model.planner.settings.eggView == .heat)
+        #expect(SettingsStore.read(classes: classes).eggView == .heat, "written idle")
+        await started(model, world)
+        let t0 = try #require(model.cook.running).startedAtS
+        let stored = SettingsStore.read(classes: classes)
+        world.clock.set(t0 + 30)
+        model.planner.settings.eggCount = stored.eggCount + 1
+        #expect(model.inHand.pending)
+        model.planner.turnEgg()
+        #expect(model.planner.settings.eggView == .set)
+        #expect(model.inHand.pending, "the change in hand is still in hand")
+        let written = SettingsStore.read(classes: classes)
+        #expect(written.eggView == .set, "written mid-cook")
+        #expect(written.eggCount == stored.eggCount, "the count in hand not written by the turn")
+        model.planner.turnEgg()
+        #expect(SettingsStore.read(classes: classes).eggView == .heat)
+    }
 }

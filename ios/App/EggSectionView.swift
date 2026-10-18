@@ -1,6 +1,8 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerCopy
 import EggTimerApp
+import EggTimerShared
 
 /// The egg in cross-section, beside the setup sentence in every phase: how
 /// set each layer is, ring by ring. The web's is
@@ -27,8 +29,10 @@ import EggTimerApp
 /// standing on its blunt end rather than balanced on its point. Every fill is
 /// opaque, so a raw white is a colour of its own.
 ///
-/// It says nothing the sentence and the clock do not, so it has no words and
-/// VoiceOver passes over it.
+/// It colours the rings by how set each layer is, or, a tap away, by how hot
+/// (`DECISIONS.md` 52, `AppSettings.eggView`), and stays as it was left from
+/// cook to cook. To VoiceOver it is a button named for the picture it shows,
+/// whose hint offers the other.
 struct EggSectionView: View {
     let model: AppModel
     /// The phase and the instant the `TimelineView` drew for.
@@ -40,10 +44,27 @@ struct EggSectionView: View {
 
     var body: some View {
         let view = model.section(phase: phase, nowS: now.timeIntervalSince1970, cache: cache).view
+        let heat = model.planner.settings.eggView == .heat
+        let uniformC = heat ? startingTemperature : nil
         Canvas { context, size in
-            EggOutline.draw(view, in: context, size: size, scheme: scheme)
+            EggOutline.draw(view, heat: heat, uniformC: uniformC, in: context, size: size, scheme: scheme)
         }
-        .accessibilityHidden(true)
+        .contentShape(Rectangle())
+        .onTapGesture { model.planner.turnEgg() }
+        .accessibilityElement()
+        .accessibilityLabel(tr(heat ? .`egg.shows.heat` : .`egg.shows.set`))
+        .accessibilityHint(tr(heat ? .`egg.offer.set` : .`egg.offer.heat`))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.planner.turnEgg() }
+    }
+
+    /// The egg as it went in, for the heat map's every ring in the first
+    /// moment of a cook (`Section.heatSettledS`), before the series has
+    /// smoothed the step from the egg to the water; nil otherwise.
+    private var startingTemperature: Double? {
+        guard phase != .idle, let running = model.cook.running, let plan = model.cook.plan,
+              now.timeIntervalSince1970 - running.startedAtS < Section.heatSettledS else { return nil }
+        return plan.setup.eggStartC
     }
 }
 
@@ -95,8 +116,13 @@ enum EggOutline {
         )
     }()
 
-    /// Draw `view` into `size`, centred, as large as fits.
-    static func draw(_ view: SectionView?, in context: GraphicsContext, size: CGSize, scheme: ColorScheme) {
+    /// Draw `view` into `size`, centred, as large as fits: by how set each
+    /// ring is, or with `heat` by how hot, every ring at `uniformC` when it
+    /// is given.
+    static func draw(
+        _ view: SectionView?, heat: Bool, uniformC: Double?, in context: GraphicsContext, size: CGSize,
+        scheme: ColorScheme
+    ) {
         let (left, right, top, bottom) = bounds
         let scale = min(size.width / (right - left), size.height / (top - bottom))
         let midX = (left + right) / 2, midY = (top + bottom) / 2
@@ -111,7 +137,9 @@ enum EggOutline {
         }
         if let view {
             for i in view.outer.indices.reversed() {
-                let fill = view.yolk[i]
+                let fill = heat
+                    ? Palette.heat(at: uniformC ?? view.temperatureC[i], in: scheme)
+                    : view.yolk[i]
                     ? Palette.yolk(at: view.set[i], in: scheme)
                     : Palette.white(at: view.set[i], in: scheme)
                 context.fill(path(view.outer[i]), with: .color(fill))

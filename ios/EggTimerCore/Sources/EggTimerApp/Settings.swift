@@ -42,6 +42,10 @@ public struct AppSettings: Sendable, Equatable {
     public var probe: Bool
     /// The room as the cook gave it, C, or nil to assume one (`roomInUse`).
     public var roomC: Double?
+    /// What the egg in cross-section shows: how set each layer is, or how
+    /// hot (`DECISIONS.md` 52). A tap on the egg turns it over, and it stays
+    /// so from cook to cook.
+    public var eggView: EggView
 
     /// What a fresh install starts from.
     public static let defaults = AppSettings(
@@ -49,8 +53,16 @@ public struct AppSettings: Sendable, Equatable {
         customStartC: Defaults.customStartC, altitudeM: Defaults.altitudeM, startMode: .cold, afterBoil: .hold,
         cooling: .ice, tapWaterC: nil, bowlLitres: Defaults.bowlLitres, bowlWaterC: nil,
         waterLitres: Defaults.waterLitres, eggCount: Defaults.eggCount, doneness: Defaults.doneness, unitsChosen: nil,
-        probe: false, roomC: nil
+        probe: false, roomC: nil, eggView: .set
     )
+}
+
+/// The egg's two pictures.
+public enum EggView: String, Codable, Sendable {
+    case set, heat
+
+    /// The other one.
+    public var other: EggView { self == .set ? .heat : .set }
 }
 
 extension AppSettings: Codable {
@@ -84,6 +96,7 @@ extension AppSettings: Codable {
         unitsChosen = try c.decodeIfPresent(UnitSystem.self, forKey: .unitsChosen)
         probe = try c.decodeIfPresent(Bool.self, forKey: .probe) ?? d.probe
         roomC = try blankable(.roomC, Limits.roomC)
+        eggView = try c.decodeIfPresent(EggView.self, forKey: .eggView) ?? d.eggView
     }
 }
 

@@ -29,11 +29,18 @@ struct SettingsTests {
         #expect(try read(["waterLitres": 3]) == watered, "a field given, and the defaults for the rest")
     }
 
+    @Test func theEggShowsHowSetUnlessHowHotWasStored() throws {
+        #expect(try read([:]).eggView == .set, "nothing stored, from before there was a choice")
+        #expect(try read(["eggView": "heat"]).eggView == .heat)
+        #expect(try read(["eggView": "warm"]) == .defaults, "not one of the two: the defaults, as any field not of its kind")
+    }
+
     @Test func whatTheAppWritesReadsBackTheSame() throws {
         var s = AppSettings.defaults
         (s.sizeIndex, s.weighedMassG, s.startTempMode, s.customStartC, s.altitudeM) = (4, 71.25, .custom, 18.5, 1200)
         (s.startMode, s.afterBoil, s.cooling, s.waterLitres, s.eggCount, s.doneness) = (.hot, .off, .counter, 3.5, 6, 0.73)
         (s.unitsChosen, s.probe, s.roomC, s.tapWaterC, s.bowlLitres, s.bowlWaterC) = (.imperial, true, 23.5, 12.5, 1.5, 17)
+        s.eggView = .heat
         func back(_ s: AppSettings) throws -> AppSettings {
             readSettings(try encodeStamped(StoreRegistry.settings, s), classes: usSizeClasses)
         }

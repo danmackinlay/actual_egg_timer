@@ -54,10 +54,11 @@ extension AppSettings {
     }
 
     /// The settings no group makes, as `o` has them: the kitchen's, not the
-    /// egg's.
+    /// egg's, and the egg's picture.
     mutating func takeNoGroup(from o: AppSettings) {
         unitsChosen = o.unitsChosen
         probe = o.probe
+        eggView = o.eggView
     }
 }
 
