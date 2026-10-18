@@ -157,8 +157,7 @@ function apply(msg: Msg, now: number): void {
   const built = builtFor(model.calib);
   const share = stores.sharing.state();
   const [next, effects] = update(model, msg, now, {
-    surfaces: built.surfaces, profiles: built.profiles, sharing: share.on,
-    share: { state: share, final: finalEggs(stores, model) },
+    surfaces: built.surfaces, profiles: built.profiles, share: { state: share, final: finalEggs(stores, model) },
   });
   model = next;
   useUnits(model.settings.unitsChosen);

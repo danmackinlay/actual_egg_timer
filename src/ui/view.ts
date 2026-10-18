@@ -30,7 +30,7 @@ import {
   type WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
   phaseKeys, refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.ts';
-import { type IdleAnswer, adviceFor, idleSolution } from './answer.ts';
+import { type IdleAnswer, adviceFor, idleSolution, sharingOn } from './answer.ts';
 import { calibrationDoneness, calibrationParams } from './calibration.ts';
 import { activeLocale, t, tChosen, timeOfDay } from './copy.ts';
 import { formatClock } from './countdown.ts';
@@ -183,7 +183,7 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   // The Learning mark: on the time while sharing is
   // on, since the time may then be nudged - and never in sous-vide, which
   // has no time to nudge.
-  const learningOn = m.sharing && !isSousVide(m);
+  const learningOn = sharingOn(m) && !isSousVide(m);
   // The sentence, in every phase: the controls' (the settings, or the
   // running cook's own choices).
   const sentence = liveSetupFacts(shown, sizeClasses, currentEgg(m));

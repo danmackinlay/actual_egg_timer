@@ -45,7 +45,6 @@ export function emptyModel(): Model {
     cookControls: null,
     boilMemory: null!,
     calib: null!,
-    sharing: false,
     deletedHere: false,
     share: null,
     note: { rev: 0, say: 'learned' },
