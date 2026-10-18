@@ -430,3 +430,29 @@ struct ListChoice<Tag: Hashable>: View {
         .accessibilityLabel(label)
     }
 }
+
+/// A choice of two or three, as segments, named for VoiceOver by its
+/// heading. UIKit draws the segments' titles at one size at every text size,
+/// so at the accessibility sizes the choices are a list instead, one to a
+/// line, which grows with the text (`ListChoice`).
+struct SegmentedChoice<Tag: Hashable>: View {
+    let label: String
+    let choices: [(title: String, tag: Tag)]
+    @Binding var selection: Tag
+    @Environment(\.dynamicTypeSize) private var size
+
+    var body: some View {
+        if size.isAccessibilitySize {
+            ListChoice(label: label, choices: choices, selection: $selection)
+        } else {
+            Picker(label, selection: $selection) {
+                ForEach(choices.indices, id: \.self) { i in
+                    Text(choices[i].title).tag(choices[i].tag)
+                }
+            }
+            .segmented()
+            .labelsHidden()
+            .accessibilityLabel(label)
+        }
+    }
+}

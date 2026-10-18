@@ -46,15 +46,17 @@ struct SettingsView: View {
                 InfoRow(name: about(.`controls.units`), more: [tr(.`controls.units.more.ios`)]) {
                     Text(tr(.`controls.units`))
                 }
-                Picker(tr(.`controls.units`), selection: Binding(
-                    get: { planner.units },
-                    set: { gesture.used(.setting); planner.chooseUnits($0) }
-                )) {
-                    Text(tr(.`controls.units.metric`)).tag(UnitSystem.metric)
-                    Text(tr(.`controls.units.imperial`)).tag(UnitSystem.imperial)
-                }
-                .segmented()
-                .labelsHidden()
+                SegmentedChoice(
+                    label: tr(.`controls.units`),
+                    choices: [
+                        (tr(.`controls.units.metric`), UnitSystem.metric),
+                        (tr(.`controls.units.imperial`), UnitSystem.imperial),
+                    ],
+                    selection: Binding(
+                        get: { planner.units },
+                        set: { gesture.used(.setting); planner.chooseUnits($0) }
+                    )
+                )
                 // The way into 1750 for a cook who starts in Imperial and so
                 // never makes the switch (LANGUAGE.md section 6): on any
                 // English page, 1750 included, in its own twin.
@@ -71,15 +73,14 @@ struct SettingsView: View {
                 InfoRow(name: about(.`controls.language`), more: [tr(.`controls.language.more`)]) {
                     Text(tr(.`controls.language`))
                 }
-                Picker(tr(.`controls.language`), selection: Binding(
-                    get: { Copy.activeLocale },
-                    set: { gesture.used(.setting); LanguageChoice.shared.pick($0) }
-                )) {
-                    Text(tr(.`language.en`)).tag(defaultLanguage)
-                    Text(tr(.`language.en1750`)).tag(periodLanguage)
-                }
-                .segmented()
-                .labelsHidden()
+                SegmentedChoice(
+                    label: tr(.`controls.language`),
+                    choices: [(tr(.`language.en`), defaultLanguage), (tr(.`language.en1750`), periodLanguage)],
+                    selection: Binding(
+                        get: { Copy.activeLocale },
+                        set: { gesture.used(.setting); LanguageChoice.shared.pick($0) }
+                    )
+                )
             }
 
             // The alarm's sound. Choosing one plays it.
@@ -87,16 +88,18 @@ struct SettingsView: View {
                 InfoRow(name: about(.`controls.alarm`), more: [tr(.`controls.alarm.more`)]) {
                     Text(tr(.`controls.alarm`))
                 }
-                Picker(tr(.`controls.alarm`), selection: Binding(
-                    get: { AlarmSoundChoice.shared.sound },
-                    set: { gesture.used(.setting); AlarmSoundChoice.shared.pick($0) }
-                )) {
-                    Text(tr(.`controls.alarm.timer`)).tag(AlarmSound.timer)
-                    Text(tr(.`controls.alarm.cuckoo`)).tag(AlarmSound.cuckoo)
-                    Text(tr(.`controls.alarm.hen`)).tag(AlarmSound.hen)
-                }
-                .segmented()
-                .labelsHidden()
+                SegmentedChoice(
+                    label: tr(.`controls.alarm`),
+                    choices: [
+                        (tr(.`controls.alarm.timer`), AlarmSound.timer),
+                        (tr(.`controls.alarm.cuckoo`), AlarmSound.cuckoo),
+                        (tr(.`controls.alarm.hen`), AlarmSound.hen),
+                    ],
+                    selection: Binding(
+                        get: { AlarmSoundChoice.shared.sound },
+                        set: { gesture.used(.setting); AlarmSoundChoice.shared.pick($0) }
+                    )
+                )
             }
 
             if !planner.isSousVide {
@@ -126,12 +129,14 @@ struct SettingsView: View {
 
                 Section {
                     InfoRow(.`controls.afterTheBoil`, more: [tr(.`controls.afterTheBoil.more`)])
-                    Picker(tr(.`controls.afterTheBoil`), selection: $planner.heatOff) {
-                        Text(tr(.`controls.afterTheBoil.keepBoiling`)).tag(false)
-                        Text(tr(.`controls.afterTheBoil.heatOff`)).tag(true)
-                    }
-                    .segmented()
-                    .labelsHidden()
+                    SegmentedChoice(
+                        label: tr(.`controls.afterTheBoil`),
+                        choices: [
+                            (tr(.`controls.afterTheBoil.keepBoiling`), false),
+                            (tr(.`controls.afterTheBoil.heatOff`), true),
+                        ],
+                        selection: $planner.heatOff
+                    )
                 }
 
                 // The probe thermometer. Off by default, and changed here; the

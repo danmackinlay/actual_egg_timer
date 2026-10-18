@@ -150,15 +150,15 @@ struct ClausePanel: View {
         case .start:
             // Rendered from the constant, so the button cannot name a bath
             // the model is not computing.
-            Picker(tr(.`controls.start`), selection: $planner.start) {
-                Text(tr(.`controls.start.cold`)).tag(StartChoice.cold)
-                Text(tr(.`controls.start.hot`)).tag(StartChoice.hot)
-                if inHand == nil {
-                    Text(tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]))
-                        .tag(StartChoice.sousVide)
-                }
-            }
-            .segmented()
+            SegmentedChoice(
+                label: tr(.`controls.start`),
+                choices: [(tr(.`controls.start.cold`), StartChoice.cold), (tr(.`controls.start.hot`), StartChoice.hot)]
+                    + (inHand == nil ? [(
+                        tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]),
+                        StartChoice.sousVide
+                    )] : []),
+                selection: $planner.start
+            )
             if let inHand, let start = inHand.shownStart { startedAt(inHand, start) }
         case .cooling: cooling
         }
@@ -298,12 +298,15 @@ struct ClausePanel: View {
     /// there for anyone who knows better.
     private var from: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker(tr(.`controls.eggFrom`), selection: $planner.settings.startTempMode) {
-                Text(tr(.`controls.eggFrom.fridge`)).tag(EggFrom.fridge)
-                Text(tr(.`controls.eggFrom.room`)).tag(EggFrom.room)
-                Text(tr(.`controls.eggFrom.custom`)).tag(EggFrom.custom)
-            }
-            .segmented()
+            SegmentedChoice(
+                label: tr(.`controls.eggFrom`),
+                choices: [
+                    (tr(.`controls.eggFrom.fridge`), EggFrom.fridge),
+                    (tr(.`controls.eggFrom.room`), EggFrom.room),
+                    (tr(.`controls.eggFrom.custom`), EggFrom.custom),
+                ],
+                selection: $planner.settings.startTempMode
+            )
             if planner.settings.startTempMode == .custom {
                 StepperRow(
                     label: tr(.`controls.eggTemp`), measure: planner.measure(.eggTemp),
