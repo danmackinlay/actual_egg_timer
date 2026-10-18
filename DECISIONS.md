@@ -189,9 +189,10 @@ Decided by the owner, 2 October 2026:
 52. **The running cook shows the egg in cross-section, as how set each
     layer is**, in both apps ("prioritise the 'how set' view"). The
     prototype offered how hot as well, a tap away. A tap on the egg
-    toggles between how set and how hot, the heat map, and back (the
-    owner, 18 October 2026); until it is built, the heat map lives in the
-    lab page, `tools/egg-section.html`. The egg sits
+    toggles between how set and how hot, the heat map, and back, wherever
+    the egg is shown; the choice is remembered between cooks, and the heat
+    map is in the lab page's palette, light and dark (the owner, 18
+    October 2026). The egg sits
     beside the setup sentence, not on a line of its own ("it burns
     vertical space for a nicety"). Its outline is an ovoid ("go ovoid"),
     though the model's egg is a sphere. Its raw white is clearer, with a
