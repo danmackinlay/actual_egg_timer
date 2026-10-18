@@ -494,7 +494,7 @@ body:not([data-start="sous"]) #certaintyMore { margin-top: calc(8px + var(--cert
      start) moves nothing above it or beside it. */
   align-items: start;
 }
-#setup > .egg-section { grid-column: 1; grid-row: 1; }
+#setup > .egg-toggle { grid-column: 1; grid-row: 1; }
 #setup > #sentence { grid-column: 2; grid-row: 1; }
 #setup > .panel { grid-column: 1 / -1; }
 body[data-start="sous"] #setup > #sentence { grid-column: 1 / -1; }
@@ -535,7 +535,19 @@ body[data-start="sous"] #setup > #sentence { grid-column: 1 / -1; }
   text-decoration-color: transparent;
 }
 
-/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is. */
+/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is,
+   or how hot: a button, pressed to show the other, drawn as the egg alone. */
+.egg-toggle {
+  display: block;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  touch-action: manipulation;
+}
 .egg-section {
   display: block;
   height: 8.5rem;

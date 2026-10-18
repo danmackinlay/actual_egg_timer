@@ -242,6 +242,7 @@ export type Msg =
   /** A language picked in Settings. */
   | { kind: 'language'; pick: string }
   | { kind: 'mute' }
+  | { kind: 'eggView' }
   | { kind: 'alarm'; sound: AlarmSound }
   /** The pans remembered: a boil measured. */
   | { kind: 'pans'; boilMemory: BoilMemory }
@@ -749,6 +750,12 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'mute': {
       // Sound is a setting, not a phase: the toggle works mid-cook.
       return [{ ...m, settings: { ...m.settings, muted: !m.settings.muted } }, [{ kind: 'save', soon: false }]];
+    }
+    case 'eggView': {
+      // The egg's other picture: a way of looking, not a choice of the
+      // cook's, so it holds mid-cook and touches nothing in hand.
+      const eggView = m.settings.eggView === 'set' ? 'heat' : 'set';
+      return [{ ...m, settings: { ...m.settings, eggView: eggView } }, [{ kind: 'save', soon: false }]];
     }
     case 'alarm': {
       // Like the sound itself, a setting about the kitchen, not the egg, so

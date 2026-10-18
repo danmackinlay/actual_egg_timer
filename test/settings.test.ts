@@ -24,7 +24,7 @@ test('nothing stored, or not an object: the defaults, a copy each time', () => {
 test('what an app writes reads back the same', () => {
   const written = {
     ...DEFAULT_SETTINGS, sizeIndex: 4, customMinor_mm: 47.5, measuredBy: 'girth', startMode: 'hot', afterBoil: 'off', eggCount: 6,
-    unitsChosen: 'imperial', language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5,
+    unitsChosen: 'imperial', language: { chosen: 'en-x-1750' }, probe: true, room_C: 23.5, eggView: 'heat',
   };
   assert.deepEqual(readSettings(JSON.parse(JSON.stringify(written)), US_SIZE_CLASSES), written);
 });
@@ -39,6 +39,12 @@ test('every number clamped; anything not a finite number is the default', () => 
   assert.equal(text.eggCount, DEFAULTS.eggCount);
   assert.equal(text.doneness, DEFAULTS.doneness);
   assert.equal(text.room_C, null);
+});
+
+test('the egg shows how set unless how hot was stored', () => {
+  assert.equal(readSettings({}, SIZE_CLASSES).eggView, 'set');
+  assert.equal(readSettings({ eggView: 'heat' }, SIZE_CLASSES).eggView, 'heat');
+  assert.equal(readSettings({ eggView: 'warm' }, SIZE_CLASSES).eggView, 'set');
 });
 
 test('a stored sous-vide is the default pan; a Jumbo outside the US is Extra large', () => {

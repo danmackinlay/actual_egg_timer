@@ -70,7 +70,14 @@ export interface Settings {
   /** The room as the cook gave it, C, or null to assume one
    *  (`roomInUse`). */
   room_C: number | null;
+  /** What the egg in cross-section shows: how set each layer is, or how hot
+   *  (`DECISIONS.md` 52). A tap on the egg turns it over, and it stays so
+   *  from cook to cook. */
+  eggView: EggView;
 }
+
+/** The egg's two pictures. */
+export type EggView = 'set' | 'heat';
 
 /* ---------------------------------------- what only the settings read */
 
@@ -184,6 +191,7 @@ export const DEFAULT_SETTINGS: Settings = {
   language: FRESH_LANGUAGE,
   probe: false,
   room_C: null,
+  eggView: 'set',
 };
 
 /** A stored number within `limit`, or `fallback` for anything that is not a
@@ -239,5 +247,6 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     language: readLanguageState(r['language'], LANGUAGES),
     probe: r['probe'] === true,
     room_C: storedOptional(r['room_C'], LIMITS.room_C),
+    eggView: oneOf(r['eggView'], ['set', 'heat'] as const, d.eggView),
   };
 }

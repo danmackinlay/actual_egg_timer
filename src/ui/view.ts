@@ -22,7 +22,7 @@ import type { Outcome } from '../core/outcome.ts';
 import type { OddsProfile } from '../core/reach.ts';
 import { type CookPlan, type Phase, type RunningCook, asksIfStillIn } from '../core/running.ts';
 import { asRanShown, solutionAsRan } from '../core/asRan.ts';
-import { type SectionView, previewSection, sectionView } from '../core/section.ts';
+import { HEAT_SETTLED_S, type SectionView, previewSection, sectionView } from '../core/section.ts';
 import type { ModelParams, Solution } from '../core/solve.ts';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.ts';
 import { nudgeFrom } from '../core/units.ts';
@@ -102,6 +102,17 @@ export interface SectionDraw {
   view: SectionView;
   reading: 'aim' | 'live' | 'ran';
   key: string;
+  /** For the heat map, every ring's temperature while the series has not yet
+   *  settled (`HEAT_SETTLED_S`): the egg as it went in. Null otherwise. */
+  uniform_C: number | null;
+}
+
+/** The egg's button: which picture it shows, its name, and what a press
+ *  shows instead. */
+export interface EggToggleView {
+  heat: boolean;
+  label: string;
+  offer: string;
 }
 
 /** The parts of the page shared by every screen with a time on it. */
@@ -141,7 +152,7 @@ export interface Sections {
 /** What the page shows. On every screen: the mute, the controls and
  *  Settings, and the words the main button is sized on (`sizerWords`). */
 export type View = {
-  mute: { label: string; pressed: boolean }; sections: Sections; sizers: string[];
+  mute: { label: string; pressed: boolean }; egg: EggToggleView; sections: Sections; sizers: string[];
 } & (
   /** The controls changed, the idle page not yet solved for them: only what
    *  the eye is on while dragging or choosing - the reading under the
@@ -169,7 +180,11 @@ export function viewMemo(): ViewMemo {
 export function view(m: Model, now_ms: number, memo: ViewMemo): View {
   const mute = { label: t(m.settings.muted ? 'readout.mute.off' : 'readout.mute.on'), pressed: m.settings.muted };
   const shown = controlsOf(m);
-  const top = { mute: mute, sections: sectionsOf(m), sizers: sizerWords(shown) };
+  const heat = m.settings.eggView === 'heat';
+  const egg = {
+    heat: heat, label: t(heat ? 'egg.shows.heat' : 'egg.shows.set'), offer: t(heat ? 'egg.offer.set' : 'egg.offer.heat'),
+  };
+  const top = { mute: mute, egg: egg, sections: sectionsOf(m), sizers: sizerWords(shown) };
   if (m.cook === null && m.unsolved) {
     return {
       ...top, kind: 'unsolved',
@@ -277,7 +292,7 @@ function idleScreen(
     // refusal if there is one, and otherwise, before anything has been
     // learned, a welcome.
     welcome: warning === '' && m.calib.eggsLogged === 0 && !hasBoilMemory(m.boilMemory),
-    section: { view: aim.view, reading: 'aim', key: `aim|${aim.key}` },
+    section: { view: aim.view, reading: 'aim', key: `aim|${aim.key}`, uniform_C: null },
   };
 }
 
@@ -567,15 +582,19 @@ function aimedEgg(
 function runningSection(
   m: Model, now_ms: number, memo: ViewMemo, cook: RunningCook, plan: CookPlan, shown: CookShown | null,
 ): SectionDraw | null {
-  if (m.aim !== null && m.aim.section !== null) return { view: m.aim.section, reading: 'aim', key: 'held' };
+  if (m.aim !== null && m.aim.section !== null) return { view: m.aim.section, reading: 'aim', key: 'held', uniform_C: null };
   const params = shown?.params ?? calibrationParams(m.calib);
   const level = shown?.level ?? plan.answer.level;
   const pulled = cook.events.pulled;
   const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
   if (out_s !== null && phaseNow(m, now_ms) === 'DONE') {
     const ran = aimedEgg(m, memo, plan.egg, plan.setup, params, out_s, level);
-    return { view: ran.view, reading: 'ran', key: `ran|${ran.key}` };
+    return { view: ran.view, reading: 'ran', key: `ran|${ran.key}`, uniform_C: null };
   }
   if (m.live === null) return null;
-  return { view: sectionView(m.live.section, calibrationDoneness(m.calib, level).whiteDose_min), reading: 'live', key: 'live' };
+  const section = m.live.section;
+  return {
+    view: sectionView(section, calibrationDoneness(m.calib, level).whiteDose_min), reading: 'live', key: 'live',
+    uniform_C: section.t_s < HEAT_SETTLED_S ? plan.setup.eggStart_C : null,
+  };
 }
