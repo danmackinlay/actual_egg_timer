@@ -47,7 +47,7 @@ import os
 ///   included; a moment once known is kept, so a tap still comes after the
 ///   cook has ended. What the scripted checks tap with, in place of the
 ///   screen's layout.
-/// - `-settings.v1 <hex>`: the settings as stored, as JSON in hex
+/// - `-settings <hex>`: the settings as stored, as JSON in hex
 ///   (`SettingsStore`), as UserDefaults reads a launch argument's data.
 /// - `-muteAudio YES`: the ring at no volume and notifications without
 ///   sound, so a scripted run is silent.

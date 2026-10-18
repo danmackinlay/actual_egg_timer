@@ -2,8 +2,8 @@ import Foundation
 import EggTimerCore
 
 /// The settings as this app keeps them (`StoreRegistry.settings`): one
-/// value, and the one reader of a stored copy (`readSettings`), which checks
-/// every field and takes the default for anything missing or malformed.
+/// value, Codable, and the one reader of a stored copy (`readSettings`),
+/// which takes the default for a field not stored.
 /// `AppSettings`, since SwiftUI has a `Settings`. The web keeps its own
 /// (`src/ui/settings.ts`), with a measured egg and a mute this app has not;
 /// this app's weighed egg is its own. The language and the alarm's sound are
@@ -51,82 +51,50 @@ public struct AppSettings: Sendable, Equatable {
         waterLitres: Defaults.waterLitres, eggCount: Defaults.eggCount, doneness: Defaults.doneness, unitsChosen: nil,
         probe: false, roomC: nil
     )
+}
 
-    /// As it is stored, for JSONSerialization: what `readSettings` reads
-    /// back. An absent value is JSON's null.
-    var jsonObject: [String: Any] {
-        [
-            "sizeIndex": sizeIndex, "weighedMass_g": weighedMassG, "startTempMode": startTempMode.rawValue,
-            "customStart_C": customStartC, "altitude_m": altitudeM, "startMode": startMode.rawValue,
-            "afterBoil": afterBoil.rawValue, "cooling": cooling.rawValue, "tapWater_C": tapWaterC ?? NSNull(),
-            "bowlLitres": bowlLitres, "bowlWater_C": bowlWaterC ?? NSNull(), "waterLitres": waterLitres,
-            "eggCount": eggCount, "doneness": doneness, "unitsChosen": unitsChosen?.rawValue ?? NSNull(),
-            "probe": probe, "room_C": roomC ?? NSNull(),
-        ]
+extension AppSettings: Codable {
+    /// What is stored, read: the default for a field not there, and a number
+    /// clamped to its bounds. A field there but not of its kind fails the
+    /// read, which is then the defaults (`readSettings`).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = AppSettings.defaults
+        func number(_ key: CodingKeys, _ range: ClosedRange<Double>, _ fallback: Double) throws -> Double {
+            clamp(try c.decodeIfPresent(Double.self, forKey: key) ?? fallback, to: range)
+        }
+        func blankable(_ key: CodingKeys, _ range: ClosedRange<Double>) throws -> Double? {
+            try c.decodeIfPresent(Double.self, forKey: key).map { clamp($0, to: range) }
+        }
+        sizeIndex = try c.decodeIfPresent(Int.self, forKey: .sizeIndex) ?? d.sizeIndex
+        weighedMassG = try number(.weighedMassG, Limits.massG, d.weighedMassG)
+        startTempMode = try c.decodeIfPresent(EggFrom.self, forKey: .startTempMode) ?? d.startTempMode
+        customStartC = try number(.customStartC, Limits.eggTempC, d.customStartC)
+        altitudeM = try number(.altitudeM, Limits.altitudeM, d.altitudeM)
+        startMode = try c.decodeIfPresent(StartMode.self, forKey: .startMode) ?? d.startMode
+        afterBoil = try c.decodeIfPresent(HeatAfterBoil.self, forKey: .afterBoil) ?? d.afterBoil
+        cooling = try c.decodeIfPresent(Cooling.self, forKey: .cooling) ?? d.cooling
+        tapWaterC = try blankable(.tapWaterC, Limits.coolingWaterC)
+        bowlLitres = try number(.bowlLitres, Limits.bowlLitres, d.bowlLitres)
+        bowlWaterC = try blankable(.bowlWaterC, Limits.coolingWaterC)
+        waterLitres = try number(.waterLitres, Limits.waterLitres, d.waterLitres)
+        let eggs = try c.decodeIfPresent(Int.self, forKey: .eggCount) ?? d.eggCount
+        eggCount = Int(clamp(Double(eggs), to: Limits.eggCount))
+        doneness = try number(.doneness, Limits.doneness, d.doneness)
+        unitsChosen = try c.decodeIfPresent(UnitSystem.self, forKey: .unitsChosen)
+        probe = try c.decodeIfPresent(Bool.self, forKey: .probe) ?? d.probe
+        roomC = try blankable(.roomC, Limits.roomC)
     }
 }
 
-private func isBool(_ v: Any?) -> Bool {
-    guard let n = v as? NSNumber else { return false }
-    return CFGetTypeID(n) == CFBooleanGetTypeID()
-}
-
-/// A stored number within `range`, or `fallback` for anything that is not a
-/// finite number.
-private func storedNumber(_ v: Any?, _ range: ClosedRange<Double>, _ fallback: Double) -> Double {
-    guard !isBool(v), let n = v as? NSNumber, n.doubleValue.isFinite else { return fallback }
-    return clamp(n.doubleValue, to: range)
-}
-
-private func storedFlag(_ v: Any?) -> Bool {
-    isBool(v) && (v as? NSNumber)?.boolValue == true
-}
-
-/// A stored number within `range`, or nil for anything that is not a finite
-/// number: an optional number left blank.
-private func storedOptional(_ v: Any?, _ range: ClosedRange<Double>) -> Double? {
-    guard !isBool(v), let n = v as? NSNumber, n.doubleValue.isFinite else { return nil }
-    return clamp(n.doubleValue, to: range)
-}
-
-/// A stored value that is one of `T`'s, or `fallback`.
-private func oneOf<T: RawRepresentable>(_ v: Any?, _ fallback: T) -> T where T.RawValue == String {
-    (v as? String).flatMap(T.init(rawValue:)) ?? fallback
-}
-
 /// The settings as stored, read against `classes`, the size table in use
-/// now (which need not be the one they were saved against): each field
-/// checked, a number clamped to its bounds, and the default for anything
-/// missing or not what it should be. A stored `"sous"`, from before a
-/// sous-vide stopped being saved, is the default pan.
-func readSettings(_ raw: Any?, classes: [SizeClass]) -> AppSettings {
-    let d = AppSettings.defaults
-    guard let r = raw as? [String: Any] else { return d }
-    return AppSettings(
-        sizeIndex: carrySizeIndex(storedNumber(r["sizeIndex"], Limits.sizeIndex, Double(d.sizeIndex)), classes: classes),
-        weighedMassG: storedNumber(r["weighedMass_g"], Limits.massG, d.weighedMassG),
-        startTempMode: oneOf(r["startTempMode"], d.startTempMode),
-        customStartC: storedNumber(r["customStart_C"], Limits.eggTempC, d.customStartC),
-        altitudeM: storedNumber(r["altitude_m"], Limits.altitudeM, d.altitudeM),
-        startMode: oneOf(r["startMode"], d.startMode),
-        afterBoil: oneOf(r["afterBoil"], d.afterBoil),
-        cooling: oneOf(r["cooling"], d.cooling),
-        tapWaterC: storedOptional(r["tapWater_C"], Limits.coolingWaterC),
-        bowlLitres: storedNumber(r["bowlLitres"], Limits.bowlLitres, d.bowlLitres),
-        bowlWaterC: storedOptional(r["bowlWater_C"], Limits.coolingWaterC),
-        waterLitres: storedNumber(r["waterLitres"], Limits.waterLitres, d.waterLitres),
-        eggCount: Int(storedNumber(r["eggCount"], Limits.eggCount, Double(d.eggCount)).rounded()),
-        doneness: storedNumber(r["doneness"], Limits.doneness, d.doneness),
-        unitsChosen: readChosenUnits(r["unitsChosen"]),
-        probe: storedFlag(r["probe"]),
-        roomC: storedOptional(r["room_C"], Limits.roomC)
-    )
-}
-
-/// A stored choice of units, or nil for none: anything else is not one.
-func readChosenUnits(_ raw: Any?) -> UnitSystem? {
-    guard let string = raw as? String else { return nil }
-    return UnitSystem(rawValue: string)
+/// now (which need not be the one they were saved against): the defaults
+/// for nothing stored, a store in another format, or one that does not
+/// decode.
+func readSettings(_ data: Data?, classes: [SizeClass]) -> AppSettings {
+    var s = data.flatMap { decodeStamped(StoreRegistry.settings, AppSettings.self, from: $0) } ?? .defaults
+    s.sizeIndex = carrySizeIndex(s.sizeIndex, classes: classes)
+    return s
 }
 
 /// A stored size index, read against the table in use now.
@@ -142,10 +110,6 @@ func readChosenUnits(_ raw: Any?) -> UnitSystem? {
 /// Both tables hold the same names at the same indices as far as the shorter
 /// goes, so keeping the name is keeping the index. A Jumbo read outside the US
 /// becomes Extra large. A weighed egg (-1) is weighed in any region.
-func carrySizeIndex(_ stored: Double, classes: [SizeClass]) -> Int {
-    guard stored.isFinite else { return Defaults.sizeIndex }
-    // Negatives first: any is a weighed egg, and -0.5 never reaches
-    // `rounded()`, which takes that tie away from zero.
-    if stored < 0 { return -1 }
-    return min(Int(stored.rounded()), classes.count - 1)
+func carrySizeIndex(_ stored: Int, classes: [SizeClass]) -> Int {
+    stored < 0 ? -1 : min(stored, classes.count - 1)
 }

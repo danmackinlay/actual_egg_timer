@@ -3,8 +3,7 @@
  * (`storedCook`), and read back defensively (`readStoredCook`), whole or not
  * at all. What was fixed at the press, the start and the log are kept, and
  * the log is folded again by core's `foldCook`; nothing derived is stored as
- * truth. The iPhone stores its cook in the same shape, read by its own
- * reader (`StoredCook.swift`).
+ * truth. The iPhone keeps its own, in its own shape (`StoredCook.swift`).
  */
 
 import type { SizeTable } from '../core/geometry.ts';

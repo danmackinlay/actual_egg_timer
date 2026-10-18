@@ -143,8 +143,7 @@ enum SettingsStore {
     /// What is stored, read against the size table in use.
     @MainActor
     public static func read(classes: [SizeClass]) -> AppSettings {
-        let raw = Stores.store.data(forKey: key).flatMap { try? JSONSerialization.jsonObject(with: $0) }
-        saved = readSettings(inFormat(StoreRegistry.settings, raw), classes: classes)
+        saved = readSettings(Stores.store.data(forKey: key), classes: classes)
         return saved
     }
 
@@ -173,8 +172,7 @@ enum SettingsStore {
     @MainActor
     private static func write(_ s: AppSettings) {
         saved = s
-        let stored = stamped(StoreRegistry.settings, s.jsonObject)
-        guard let data = try? JSONSerialization.data(withJSONObject: stored, options: [.sortedKeys]) else { return }
+        guard let data = try? encodeStamped(StoreRegistry.settings, s) else { return }
         Stores.set(data, forKey: key)
     }
 }

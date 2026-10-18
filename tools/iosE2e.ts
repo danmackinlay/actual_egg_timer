@@ -70,17 +70,18 @@ let udid = given ?? '';
 /// The format the app stores its cook in (StoreRegistry.swift).
 const COOK_FORMAT = iosStore('cook').format;
 
-/// The cook as the app stores it (StoredCook.swift): what was fixed at the
-/// press, the start and the log, folded again by core's `foldCook`, and
-/// beside it whether the egg was answered and the lean last decided.
-interface Stored { cook: RunningCook; answers: string; leanHint_s: number }
+/// The cook as the app stores it (StoredCook.swift): the cook as core codes
+/// it, what was fixed at the press, the start and the log, folded again by
+/// core's `foldCook`; beside it whether the egg was answered and the lean
+/// last decided, and the format, `v`.
+interface Stored { cook: RunningCook; answers: string; leanHintS: number }
 
 /// A stored cook as the log or the plist has it, read as the app wrote it,
 /// in its format; null if it is not one. Trusted, not checked field by
 /// field: what the app takes back is EggTimerAppTests'.
 function storedOf(raw: unknown): Stored | null {
   if (raw === null || typeof raw !== 'object') return null;
-  const o = raw as { v?: unknown; cook?: unknown; answers?: unknown; leanHint_s?: unknown };
+  const o = raw as { v?: unknown; cook?: unknown; answers?: unknown; leanHintS?: unknown };
   if (o.v !== COOK_FORMAT || o.cook === null || typeof o.cook !== 'object') return null;
   const c = o.cook as {
     id_ms: number; nudge_s: number; boilMemory: BoilMemory; units: Units; lang: string; start: CookStart;
@@ -88,7 +89,7 @@ function storedOf(raw: unknown): Stored | null {
   };
   return {
     cook: foldCook(c.id_ms, c.start, c.nudge_s, c.boilMemory, c.units, c.lang, c.log),
-    answers: String(o.answers), leanHint_s: Number(o.leanHint_s),
+    answers: String(o.answers), leanHintS: Number(o.leanHintS),
   };
 }
 
@@ -194,7 +195,7 @@ function settingsArg(over: Record<string, unknown>): string[] {
   return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
 }
 /// A hot start's settings.
-const HOT_SETTINGS = { doneness: 0.41, altitude_m: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
+const HOT_SETTINGS = { doneness: 0.41, altitudeM: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
 const HOT = settingsArg(HOT_SETTINGS);
 /// A cold cook's taps to Done: the boil at 5:00, out 3 s into the pull.
 const TO_DONE = 'boil@300,out@pull+3';
