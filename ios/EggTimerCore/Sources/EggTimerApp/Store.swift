@@ -62,12 +62,16 @@ public enum Stores {
     /// population's prior. The rest of what those builds kept stays where
     /// it is, unread. A key the suite already has is left alone, in both;
     /// one carried is written as this build writes it, if it still reads,
-    /// and then removed from the standard domain.
+    /// and then removed from the standard domain. A learning log this build
+    /// cannot read stays there, uncarried: it is the cook's data, and an
+    /// unread copy costs nothing.
     public static func carryOver(from old: any KeyValueStore = Suite.standard) {
         for spec in carried {
             let key = spec.key
             guard store.object(forKey: key) == nil, let data = old.data(forKey: key) else { continue }
-            if let value = carriedValue(spec, data) { wrote(value, forKey: key) }
+            let value = carriedValue(spec, data)
+            if value == nil, spec == StoreRegistry.calibration { continue }
+            if let value { wrote(value, forKey: key) }
             old.removeObject(forKey: key, Pass())
         }
     }

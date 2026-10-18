@@ -406,16 +406,19 @@ extension AppTests {
         #expect(planner.kept.log == mine.log)
     }
 
-    /// A log this build cannot read is not carried, and goes from the
-    /// standard domain: the suite has none, and the app starts from the
-    /// prior, as it would on that log.
+    /// A log this build cannot read is not carried, and stays in the
+    /// standard domain as it was: the suite has none, and the app starts
+    /// from the prior, as it would on that log. Sharing is carried still.
     @Test func aLogThisBuildCannotReadIsNotCarried() {
         let world = World()
         let key = StoreRegistry.calibration.key
-        let standard = standard051(log: Data("0.5.1's log, damaged".utf8))
+        let damaged = Data("0.5.1's log, damaged".utf8)
+        let standard = standard051(log: damaged)
         Stores.carryOver(from: standard)
         #expect(world.store.data(forKey: key) == nil)
-        #expect(standard.data(forKey: key) == nil)
+        #expect(standard.data(forKey: key) == damaged)
         #expect(!world.store.writes.contains { $0.key == key })
+        #expect(!standard.writes.contains { $0.key == key })
+        #expect(standard.data(forKey: StoreRegistry.share.key) == nil, "sharing carried as before")
     }
 }
