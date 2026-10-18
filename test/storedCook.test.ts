@@ -84,6 +84,7 @@ test('a cook at each stage is read back as it was written', () => {
     startCook(S, { ...CHOICES, startMode: 'hot' }, -7, MEMORY, 'imperial', 'en-x-1750'),
     startCook(S, { ...CHOICES, mass_kg: 0.0612, massFrom: 'girth', sizeTable: null, room_C: 23.5, eggFrom: 'room' }, 3, {}, 'metric', 'cs'),
     corrected(tapped, { ...CHOICES, cooling: 'bowl', bowlLitres: 1.5, bowlWater_C: null, tapWater_C: 12.5 }, S + 600),
+    startCook(S, { ...CHOICES, startMode: 'hot', cooling: 'eggCup' }, 0, MEMORY, 'metric', 'en'),
   ];
   for (const [i, cook] of stages.entries()) {
     assert.deepEqual(readRunningCook(JSON.parse(JSON.stringify(cook))), cook, `stage ${i}`);

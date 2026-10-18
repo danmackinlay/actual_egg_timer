@@ -133,6 +133,7 @@ struct HelpView: View {
     private var unsure: some View {
         section(.unsure) {
             para(tr(.`help.unsure.counter`))
+            para(tr(.`help.unsure.eggCup`))
             para(tr(.`help.unsure.bowl`))
             para(tr(.`help.unsure.heatOff`))
             para(tr(.`help.unsure.white`))

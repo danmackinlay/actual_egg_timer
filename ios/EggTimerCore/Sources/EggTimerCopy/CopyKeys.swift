@@ -86,6 +86,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `refusal.tap` = "refusal.tap"
     case `refusal.bowl` = "refusal.bowl"
     case `refusal.ice` = "refusal.ice"
+    case `refusal.eggCup` = "refusal.eggCup"
     case `warn.wildGuess` = "warn.wildGuess"
     case `action.startHeating` = "action.startHeating"
     case `action.eggsIn` = "action.eggsIn"
@@ -96,6 +97,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `action.pulled.tap` = "action.pulled.tap"
     case `action.pulled.bowl` = "action.pulled.bowl"
     case `action.pulled.counter` = "action.pulled.counter"
+    case `action.pulled.eggCup` = "action.pulled.eggCup"
     case `action.hint.cold` = "action.hint.cold"
     case `action.hint.hotStanding` = "action.hint.hotStanding"
     case `action.hint.hotBoiling` = "action.hint.hotBoiling"
@@ -163,6 +165,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `controls.cooling.tap` = "controls.cooling.tap"
     case `controls.cooling.bowl` = "controls.cooling.bowl"
     case `controls.cooling.counter` = "controls.cooling.counter"
+    case `controls.cooling.eggCup` = "controls.cooling.eggCup"
     case `controls.cooling` = "controls.cooling"
     case `controls.cooling.more` = "controls.cooling.more"
     case `controls.bowl` = "controls.bowl"
@@ -206,6 +209,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `help.odds.aside` = "help.odds.aside"
     case `help.unsure.title` = "help.unsure.title"
     case `help.unsure.counter` = "help.unsure.counter"
+    case `help.unsure.eggCup` = "help.unsure.eggCup"
     case `help.unsure.bowl` = "help.unsure.bowl"
     case `help.unsure.heatOff` = "help.unsure.heatOff"
     case `help.unsure.white` = "help.unsure.white"
@@ -238,6 +242,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `setup.cooling.bowl` = "setup.cooling.bowl"
     case `setup.cooling.bowlAt` = "setup.cooling.bowlAt"
     case `setup.cooling.counter` = "setup.cooling.counter"
+    case `setup.cooling.eggCup` = "setup.cooling.eggCup"
     case `setup.clause` = "setup.clause"
     case `setup.close` = "setup.close"
     case `egg.shows.set` = "egg.shows.set"
@@ -358,6 +363,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `alarm.pull.bodyTap` = "alarm.pull.bodyTap"
     case `alarm.pull.bodyBowl` = "alarm.pull.bodyBowl"
     case `alarm.pull.bodyCounter` = "alarm.pull.bodyCounter"
+    case `alarm.pull.bodyEggCup` = "alarm.pull.bodyEggCup"
     case `alarm.cooled.title` = "alarm.cooled.title"
     case `alarm.cooled.body` = "alarm.cooled.body"
     case `alarm.probe.title` = "alarm.probe.title"
@@ -416,6 +422,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
         .`refusal.tap`: ["limit"],
         .`refusal.bowl`: ["limit"],
         .`refusal.ice`: ["limit"],
+        .`refusal.eggCup`: ["limit"],
         .`warn.wildGuess`: ["doneness"],
         .`action.hint.hotBoiling`: ["time"],
         .`action.hint.cookingBoiling`: ["boiling"],

@@ -46,7 +46,8 @@ export const ELEMENTS = {
 
   settingsForm: 'form', panelEgg: 'div', panelFrom: 'div', panelStart: 'div', panelCooling: 'div', settingsLink: 'a',
   actions: 'div', learned: 'section', tempRoom: 'input', startCold: 'input', startHot: 'input', startSous: 'input',
-  coolIce: 'input', coolTap: 'input', coolBowl: 'input', coolCounter: 'input', heatOff: 'input',
+  coolIce: 'input', coolTap: 'input', coolBowl: 'input', coolCounter: 'input', coolEggCup: 'input',
+  heatOff: 'input',
 } as const satisfies Record<string, keyof HTMLElementTagNameMap | 'svg'>;
 
 /** An element of the page, by its id. */

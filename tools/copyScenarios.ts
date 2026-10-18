@@ -297,6 +297,14 @@ const SCENARIOS: CopyScenario[] = [
       click('button.fb[data-yolk="jammy"]'), learned, click('#primary')],
   },
   {
+    // The egg cup's words in place: the sentence, the pull's button, soft
+    // offered, and Done at the pull.
+    name: 'hot egg cup, soft',
+    settings: { muted: true, startMode: 'hot', cooling: 'eggCup', doneness: 0.22 },
+    steps: [click('#primary'), advance(30), toPull, click('#primary'),
+      click('button.fb[data-yolk="soft"]'), learned, click('#primary')],
+  },
+  {
     // The bowl's words in place: the sentence with its water, the pull's
     // button, the cooling's label.
     name: 'hot bowl, four eggs in a litre at 12 C',

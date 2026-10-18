@@ -41,6 +41,11 @@ test('every number clamped; anything not a finite number is the default', () => 
   assert.equal(text.room_C, null);
 });
 
+test('an egg cup reads back', () => {
+  assert.equal(readSettings({ cooling: 'eggCup' }, SIZE_CLASSES).cooling, 'eggCup');
+  assert.equal(readSettings({ cooling: 'cup' }, SIZE_CLASSES).cooling, DEFAULT_SETTINGS.cooling, 'not a cooling: the default');
+});
+
 test('the egg shows how set unless how hot was stored', () => {
   assert.equal(readSettings({}, SIZE_CLASSES).eggView, 'set');
   assert.equal(readSettings({ eggView: 'heat' }, SIZE_CLASSES).eggView, 'heat');

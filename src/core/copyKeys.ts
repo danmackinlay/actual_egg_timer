@@ -87,6 +87,7 @@ export interface CopyKeyArgs {
   'refusal.tap': 'limit';
   'refusal.bowl': 'limit';
   'refusal.ice': 'limit';
+  'refusal.eggCup': 'limit';
   'warn.wildGuess': 'doneness';
   'action.startHeating': never;
   'action.eggsIn': never;
@@ -97,6 +98,7 @@ export interface CopyKeyArgs {
   'action.pulled.tap': never;
   'action.pulled.bowl': never;
   'action.pulled.counter': never;
+  'action.pulled.eggCup': never;
   'action.hint.cold': never;
   'action.hint.hotStanding': never;
   'action.hint.hotBoiling': 'time';
@@ -164,6 +166,7 @@ export interface CopyKeyArgs {
   'controls.cooling.tap': never;
   'controls.cooling.bowl': never;
   'controls.cooling.counter': never;
+  'controls.cooling.eggCup': never;
   'controls.cooling': never;
   'controls.cooling.more': never;
   'controls.bowl': never;
@@ -207,6 +210,7 @@ export interface CopyKeyArgs {
   'help.odds.aside': never;
   'help.unsure.title': never;
   'help.unsure.counter': never;
+  'help.unsure.eggCup': never;
   'help.unsure.bowl': never;
   'help.unsure.heatOff': never;
   'help.unsure.white': never;
@@ -239,6 +243,7 @@ export interface CopyKeyArgs {
   'setup.cooling.bowl': 'water';
   'setup.cooling.bowlAt': 'temp' | 'water';
   'setup.cooling.counter': never;
+  'setup.cooling.eggCup': never;
   'setup.clause': 'label' | 'value';
   'setup.close': never;
   'egg.shows.set': never;
@@ -359,6 +364,7 @@ export interface CopyKeyArgs {
   'alarm.pull.bodyTap': never;
   'alarm.pull.bodyBowl': never;
   'alarm.pull.bodyCounter': never;
+  'alarm.pull.bodyEggCup': never;
   'alarm.cooled.title': never;
   'alarm.cooled.body': never;
   'alarm.probe.title': never;

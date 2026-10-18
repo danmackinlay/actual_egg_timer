@@ -134,8 +134,8 @@ and sharing are too.
 
 **Help** is the whole story (§7), reachable in every phase.
 
-**The phases.** A counter rest has no cooling phase: the pull runs out into
-Done. The cooling counts down to the yolk's peak. While the slow hob has
+**The phases.** A counter rest, and an egg eaten warm from an egg cup, have
+no cooling phase: the pull runs out into Done. The cooling counts down to the yolk's peak. While the slow hob has
 lengthened the guess the clock counts the time heated up, still Heating.
 
 **The questions after an egg** (`DECISIONS.md` 92), on one panel at Done,
@@ -174,13 +174,19 @@ cools change nothing, so the sentence leaves them out.
 - **A clause opens its choice in a panel** under the sentence, one at a time,
   with its title, its (i) and Done. The sentence rewrites itself as the
   answer changes.
-- **The cooling's four choices are a list**, one to a line, fastest first
-  (`DECISIONS.md` 115). Four names of up to 13 letters fit no 390 px phone
+- **The cooling's five choices are a list**, one to a line, fastest first
+  (`DECISIONS.md` 115): an ice bath, running water, a bowl of water, the air
+  and an egg cup. Five names of up to 13 letters fit no 390 px phone
   as segments, least of all at the accessibility text sizes, where a row of
   the list wraps its name instead. A bowl's water, and the water's
   temperature for running water or a bowl, are under the list; the
   temperature is optional, greyed at the one assumed. The sentence names
   the water's temperature only when the cook gave it.
+- **The egg cup is the air's egg, eaten warm** (`DECISIONS.md` 140): the
+  sentence says "then eaten warm from an egg cup", soft is offered where in
+  the air it is striped out, and the pull's button and alarm ask for the egg
+  cups. Nothing counts down to the opening: Done comes at the pull, as on
+  the counter, and the times assume it is opened two minutes after the pull.
 - **To a screen reader** each clause is a button named for its label and
   value, expanded or collapsed.
 - **While a cook runs** the sentence is the cook's own choices, and stays

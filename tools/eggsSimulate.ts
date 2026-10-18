@@ -22,7 +22,7 @@ import {
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
 } from '../src/core/infer.ts';
-import type { CookSetup } from '../src/core/protocol.ts';
+import { type CookSetup, restsInAir } from '../src/core/protocol.ts';
 import {
   type EggRecord, LIKELIHOOD_ID, MODEL_ID, RECORD_VERSION, gridRequestFor, freshCalibration, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches,
@@ -94,19 +94,21 @@ interface Kitchen {
  *  now and then a different level. */
 function kitchenOf(u: () => number): Kitchen {
   const pick = <T>(xs: T[]): T => xs[Math.floor(u() * xs.length)];
-  const cooling = pick(['ice', 'ice', 'tap', 'counter'] as const);
+  const drawn = pick(['ice', 'ice', 'tap', 'counter'] as const);
   const start = pick(['hot', 'hot', 'cold'] as const);
   const mass_g = pick([55, 62, 62, 68, 68, 75]);
-  return {
-    setup: appSetup({
-      startMode: start, cooling: cooling, eggStart_C: u() < 0.8 ? 4 : 20,
-      timeToBoil_s: start === 'cold' ? 420 + 120 * u() : 480,
-      waterLitres: pick([1.5, 2, 2, 3]), eggCount: pick([1, 2, 2, 4]),
-    }),
-    mass_g: mass_g,
-    massFrom: u() < 0.4 ? 'scale' : 'class',
-    level: pick([0.22, 0.41, 0.41, 0.62, 0.8]),
+  const setup = {
+    startMode: start, eggStart_C: u() < 0.8 ? 4 : 20,
+    timeToBoil_s: start === 'cold' ? 420 + 120 * u() : 480,
+    waterLitres: pick([1.5, 2, 2, 3]), eggCount: pick([1, 2, 2, 4]),
   };
+  const massFrom = u() < 0.4 ? 'scale' : 'class';
+  const level = pick([0.22, 0.41, 0.41, 0.62, 0.8]);
+  // A kitchen that rests its eggs in the air for a soft or jammy yolk eats
+  // them warm from an egg cup, where that yolk is in reach. Read off the
+  // draws already made, so every other kitchen is drawn as before.
+  const cooling = drawn === 'counter' && level <= 0.41 ? 'eggCup' : drawn;
+  return { setup: appSetup({ ...setup, cooling: cooling }), mass_g: mass_g, massFrom: massFrom, level: level };
 }
 
 export interface CookTruth {
@@ -146,7 +148,7 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
     };
     truths.push(c);
     const kitchen = kitchenOf(u);
-    const probes = kitchen.setup.cooling !== 'counter' && u() < 0.15;
+    const probes = !restsInAir(kitchen.setup.cooling) && u() < 0.15;
     const alpha = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * c.z);
     const eggs = 3 + Math.floor(u() * 8);
     // A quarter of the cooks answered their first two eggs on a build from
@@ -210,7 +212,7 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
           waterLitres: kitchen.setup.waterLitres, eggCount: kitchen.setup.eggCount,
         },
         level: level, recommended_s: solved.result.cookTime_s, nudge_s: nudge, pulled_s: time, pulledBy: 'cook',
-        cooled_s: kitchen.setup.cooling === 'counter' ? 0 : coolingSecondsFor(solved.result),
+        cooled_s: restsInAir(kitchen.setup.cooling) ? 0 : coolingSecondsFor(solved.result),
         yolk: yolk, yolkWord: yolkWord, white: white,
         probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
         forecast: null, lang: 'en', register: 'modern', units: 'metric',

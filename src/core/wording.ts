@@ -23,10 +23,9 @@ import { DONENESS_ANCHORS } from './solve.ts';
 
 /* ----------------------------------------------------------- the refusal */
 
-/** A yolk too soft for the white, blamed on each cooling. An egg cup has
- *  no words of its own and says the counter's: the egg rests in the air. */
+/** A yolk too soft for the white, blamed on each cooling. */
 const REFUSAL_KEYS: Record<Cooling, CopyKey> = {
-  ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter', eggCup: 'refusal.counter',
+  ice: 'refusal.ice', tap: 'refusal.tap', bowl: 'refusal.bowl', counter: 'refusal.counter', eggCup: 'refusal.eggCup',
 };
 
 /**
@@ -247,11 +246,10 @@ interface PhaseKeys {
   hint: CopyKey | null;
 }
 
-/** Where the eggs go at the pull, as the button says it: an egg cup as the
- *  counter, in the air. */
+/** Where the eggs go at the pull, as the button says it. */
 const PULLED_KEYS: Record<Cooling, CopyKey> = {
   ice: 'action.pulled.ice', tap: 'action.pulled.tap', bowl: 'action.pulled.bowl', counter: 'action.pulled.counter',
-  eggCup: 'action.pulled.counter',
+  eggCup: 'action.pulled.eggCup',
 };
 
 function pulledKey(cooling: Cooling): CopyKey {
@@ -374,8 +372,7 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
       ? { text: standing ? 'setup.start.coldStanding' : 'setup.start.cold', label: 'controls.start', value: 'controls.start.cold' }
       : { text: standing ? 'setup.start.hotStanding' : 'setup.start.hot', label: 'controls.start', value: 'controls.start.hot' };
   // Running water and a bowl name the water's temperature only when the cook
-  // gave it: one assumed is the (i)'s to say, not the sentence's. An egg cup
-  // says the counter's clause: the egg rests in the air.
+  // gave it: one assumed is the (i)'s to say, not the sentence's.
   const at = f.coolingWaterGiven;
   const cooling: ClauseKeys = f.cooling === 'ice'
     ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.cooling.ice' }
@@ -383,7 +380,9 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
       ? { text: at ? 'setup.cooling.tapAt' : 'setup.cooling.tap', label: 'controls.cooling', value: 'controls.cooling.tap' }
       : f.cooling === 'bowl'
         ? { text: at ? 'setup.cooling.bowlAt' : 'setup.cooling.bowl', label: 'controls.cooling', value: 'controls.cooling.bowl' }
-        : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.cooling.counter' };
+        : f.cooling === 'eggCup'
+          ? { text: 'setup.cooling.eggCup', label: 'controls.cooling', value: 'controls.cooling.eggCup' }
+          : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.cooling.counter' };
   return {
     egg: { text: 'setup.egg', label: 'controls.egg', value: null },
     from: from,

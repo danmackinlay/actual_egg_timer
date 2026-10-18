@@ -51,6 +51,13 @@ struct SettingsTests {
         #expect(try back(blank) == blank, "a bowl's temperature left blank")
     }
 
+    @Test func anEggCupReadsBack() throws {
+        #expect(try read(["cooling": "eggCup"]).cooling == .eggCup, "stored as the web stores it")
+        var s = AppSettings.defaults
+        s.cooling = .eggCup
+        #expect(readSettings(try encodeStamped(StoreRegistry.settings, s), classes: sizeClasses) == s)
+    }
+
     @Test func everyNumberIsClampedAndAFieldNotOfItsKindIsTheDefaults() throws {
         let low = try read([
             "sizeIndex": -7, "weighedMassG": 3, "customStartC": -40, "altitudeM": -9000, "waterLitres": 0,

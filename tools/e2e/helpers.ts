@@ -155,6 +155,7 @@ export const COOLINGS = [
   { cooling: 'tap', radio: '#coolTap', pull: EN['action.pulled.tap'].text },
   { cooling: 'bowl', radio: '#coolBowl', pull: EN['action.pulled.bowl'].text },
   { cooling: 'counter', radio: '#coolCounter', pull: EN['action.pulled.counter'].text },
+  { cooling: 'eggCup', radio: '#coolEggCup', pull: EN['action.pulled.eggCup'].text },
 ] as const;
 
 /** The widths of the row with the main button and Cancel side by side. */
