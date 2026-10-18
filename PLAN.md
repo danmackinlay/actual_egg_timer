@@ -57,6 +57,13 @@ and the map of the documents are `CLAUDE.md`.
     far past the posterior-mean time, losing more eggs right than on any
     other pot (`npm run decide -- versus`): a bug, a surface the loss reads
     wrongly, or the physics of a slow cooling.
+13. **A tap on the egg toggles how set and how hot**, in both apps
+    (`DECISIONS.md` 52). Core already gives each ring's temperature
+    (`SectionView.temperature_C`, twinned), so this is drawing and a
+    gesture in each app: the lab page's heat colours move into
+    `src/ui/eggSection.ts`, which the lab then reads, and iOS's
+    `EggSectionView` draws the same. VoiceOver says which view is shown and
+    offers the other.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -133,9 +140,8 @@ Start the QA pass here.
   sd and 0.4 C handling mean are the model's); no hot-start heat-off cook,
   which would say whether `TAU_STANDING_SCALE` 1.0 is pessimistic. Only a
   thermometer can split an egg's scatter from the cook's judging.
-- **For the owner's eye**: the 1750 face (IM FELL English, the long s;
-  `LANGUAGE.md` §6) on a phone, the light scheme's mustard end, and iOS's
-  accent wash on an open clause.
+- **For the owner's eye**: the light scheme's mustard end, and iOS's accent
+  wash on an open clause.
 - **Locales measured but not pinned**: en-CA and en-IN/NZ/SG print a time of
   day differently in the two apps; a Czech UI's 24-hour clock abroad on iOS
   rests on a Foundation quirk (`LANGUAGE.md` §2).
