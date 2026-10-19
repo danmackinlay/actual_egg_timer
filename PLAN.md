@@ -92,6 +92,12 @@ shell (34).
    weight can come later, screened per id.
 
 
+6. **The App Store's captions** (`ios/appstore/captions.en-AU.json`); then,
+   with the words approved and the texture line read from the doses (next
+   work 10), `npm run ios:shots` again and both sizes uploaded in App Store
+   Connect. A Lock Screen shot of the Live Activity can only be taken by
+   hand (Simulator, Device > Lock).
+
 Waiting on someone else: the Czech review, by the owner's friend.
 
 ## QA: what nobody has checked
