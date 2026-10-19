@@ -112,6 +112,7 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
+            .defaultScrollAnchor(scrollAnchor)
             .barTitle(tr(.`app.name`))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -189,6 +190,17 @@ struct ContentView: View {
         _ = Screenshots.probe.drawn
         #endif
         return AppClock.app(date)
+    }
+
+    /// Where the page holds its scroll, as it opens and as it grows: at its
+    /// foot for a debug build launched `-uiScreen end` (Screenshots.swift), so
+    /// the questions Done adds are in the picture; the system's otherwise.
+    private var scrollAnchor: UnitPoint? {
+        #if DEBUG
+        Screenshots.scene == "end" ? .bottom : nil
+        #else
+        nil
+        #endif
     }
 
     #if DEBUG

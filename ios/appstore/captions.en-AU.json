@@ -1,0 +1,30 @@
+{
+  "about": "The App Store screenshots’ captions, English (Australia): App Store metadata, not the app’s words, so not keys in copy/. One a shot, by its file (tools/iosShots.ts). The owner approves them as he approves the app’s words.",
+  "captions": [
+    {
+      "shot": "01-time",
+      "text": "Timed from the physics of the egg",
+      "note": "Idle: the time for a soft yolk, the slider, the egg in cross-section. The time is worked out from how heat moves into an egg of this size and temperature and how its yolk and white set (README.md), not looked up in a table. ‘The egg’, not ‘your egg’: a fresh install times a typical egg, as the screen says under the sentence."
+    },
+    {
+      "shot": "02-setting",
+      "text": "See it set from the outside in",
+      "note": "Three minutes and twenty seconds into the boil: the white’s outer rings set, the yolk not yet. The picture is the model’s egg, the one the time comes from; ‘see it set’ claims no more than that."
+    },
+    {
+      "shot": "03-heat",
+      "text": "Tap the egg to see how hot it is inside",
+      "note": "The same moment, dark: the egg turned over to how hot each layer is (DECISIONS.md 52). It says the gesture, since nothing on the screen does."
+    },
+    {
+      "shot": "04-done",
+      "text": "Tell me how it came out, and I’ll adjust",
+      "note": "Done, scrolled to the questions after the cook. The app says it under them: your answers help me fit the times to your taste and your eggs. ‘I’ll adjust’ rather than ‘it learns your kitchen’: what changes is the times, to the cook’s eggs and taste."
+    },
+    {
+      "shot": "05-eggcup",
+      "text": "In an egg cup, I’ll tell you when to open it",
+      "note": "A soft egg out of the water and into an egg cup, counting down to its opening. Help says it the same way: in an egg cup, I tell you when to open the egg."
+    }
+  ]
+}

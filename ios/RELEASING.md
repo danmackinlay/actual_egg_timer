@@ -211,6 +211,28 @@ says what it checks. With automatic distribution on, the family's phones get
 the build once Apple has processed it, minutes to an hour later, and there is
 nothing else to do.
 
+### Screenshots
+
+A version for the App Store needs its screenshots, in English (Australia):
+
+```sh
+npm run ios:shots
+```
+
+It builds the app for the simulator, makes an iPhone 17 Pro and an iPhone 17
+Pro Max of its own, takes each shot, deletes both, and sets each under its
+caption: a few minutes, two and a half of them past the build. The images land in `ios/appstore/shots/`,
+gitignored and kept by every build: `6.3in-1206x2622/` for the required
+6.3-inch display and `6.9in-1320x2868/` for the 6.9-inch one, each
+`NN-what.png`, the device's own screens under `raw/`. The captions are
+`ios/appstore/captions.en-AU.json`, each with its note; after a change to
+them, `npm run ios:shots -- --no-capture` sets them again in seconds. The
+tool's header (`tools/iosShots.ts`) says how each shot is reached, and why the
+Lock Screen's Live Activity is not one of them.
+
+Uploading is the owner's step: in App Store Connect, the version's iPhone
+screenshots, the 6.9-inch and 6.3-inch displays, in their numbered order.
+
 ### When it fails
 
 A failed archive puts the build number back, so fix the cause and run it

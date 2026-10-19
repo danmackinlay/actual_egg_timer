@@ -1,7 +1,8 @@
 // The simulator `npm run ios:e2e` drives (tools/iosE2e.ts, its scenarios):
 // a Debug build of the app, a device of the script's own, and one run of the
 // app a scenario (`Run`): its launches, its clock stepped from outside, its
-// debug log and its stores' plist. The web's is tools/harness.ts.
+// debug log and its stores' plist. `npm run ios:shots` (tools/iosShots.ts)
+// drives it the same way. The web's is tools/harness.ts.
 import { execFileSync, type ExecFileSyncOptions } from 'node:child_process';
 import {
   closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync,
@@ -59,8 +60,8 @@ export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeou
 
 // ---------------------------------------------------------------- the device
 
-export function build(): void {
-  console.log('ios:e2e: building (Debug, simulator)');
+export function build(tool = 'e2e'): void {
+  console.log(`ios:${tool}: building (Debug, simulator)`);
   out('xcodegen', ['--quiet'], { cwd: 'ios' });
   out('xcodebuild', [
     '-project', 'ActualEggTimer.xcodeproj', '-scheme', 'ActualEggTimer', '-configuration', 'Debug',
@@ -78,7 +79,10 @@ interface SimList {
   devicetypes: { identifier: string; name: string; productFamily: string }[];
 }
 
-export function createDevice(): string {
+/// A device of the script's own, booted, named `AET <tool> <pid>`: an iPhone
+/// 17 Pro if the newest runtime runs one, else its last iPhone; or, given
+/// `model`, that iPhone and no other.
+export function createDevice(model: string | null = null, tool = 'e2e'): string {
   const list = JSON.parse(simctl('list', '-j', 'runtimes', 'devicetypes')) as SimList;
   const runtime = list.runtimes
     .filter((r) => r.isAvailable && r.platform === 'iOS')
@@ -92,12 +96,38 @@ export function createDevice(): string {
     (t) => t.productFamily === 'iPhone' && (!supported || supported.includes(t.identifier)),
   );
   if (types.length === 0) throw new Error(`no iPhone for iOS ${runtime.version}`);
-  const type = types.find((t) => t.name === 'iPhone 17 Pro') ?? types[types.length - 1]!;
-  const id = simctl('create', `AET e2e ${process.pid}`, type.identifier, runtime.identifier);
-  console.log(`ios:e2e: device ${id} (${type.name}, iOS ${runtime.version}), the app in ${LOCALE}`);
+  const type = model === null
+    ? types.find((t) => t.name === 'iPhone 17 Pro') ?? types[types.length - 1]!
+    : types.find((t) => t.name === model);
+  if (!type) throw new Error(`no ${model} for iOS ${runtime.version}`);
+  const id = simctl('create', `AET ${tool} ${process.pid}`, type.identifier, runtime.identifier);
+  console.log(`ios:${tool}: device ${id} (${type.name}, iOS ${runtime.version}), the app in ${LOCALE}`);
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
+}
+
+/// A new device's first launches are many seconds slow while the system
+/// settles, and its notifications refused ("Source is not authorized"), or,
+/// on a loaded machine, the request for them never answered: cooks started
+/// until one has its alarms pending, each given two minutes, nothing
+/// checked.
+export async function warmUp(udid: string, tool = 'e2e'): Promise<void> {
+  for (let attempt = 1; ; attempt += 1) {
+    const warm = new Run('warm-up', udid);
+    warm.install();
+    warm.launch(['-uiScreen', 'heating']);
+    const hit = await warm
+      .until((e) => (e.ev === 'pending' && e.alarms.some((a) => a.id.startsWith('cook'))) || e.ev === 'notScheduled', { timeoutS: 120, what: 'the alarms' })
+      .catch(() => null);
+    warm.terminate();
+    if (hit?.ev === 'pending') return;
+    // What the launch got to, for a device that will not warm up.
+    const seen = warm.lines().map((e) => e.ev);
+    console.log(`ios:${tool}: warm-up ${attempt}: ${hit ? JSON.stringify(hit) : 'no alarms read back'}; `
+      + `${seen.length} events, the last ${seen.slice(-8).join(', ') || 'none'}`);
+    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
+  }
 }
 
 // ------------------------------------------------------------- the app's run
@@ -356,6 +386,14 @@ export const COOK = 'cook';
 export const SETTINGS = 'settings';
 for (const [name, key] of [['cook', COOK], ['settings', SETTINGS]]) {
   if (iosStore(name).key !== key) throw new Error(`the app keeps its ${name} under ${iosStore(name).key}`);
+}
+
+/// The settings as stored, in the app's format, given at launch: what is not
+/// given is the default. A launch argument whose value is `<hex>` is data to
+/// UserDefaults, as the app stores the value.
+export function settingsArg(over: Record<string, unknown>): string[] {
+  const text = JSON.stringify({ v: iosStore('settings').format, ...over });
+  return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
 }
 
 /// One event of the debug log, as `Screenshots.Event` declares it: `t`, cook
