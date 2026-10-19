@@ -131,7 +131,7 @@
     "controls.bowl": { "text": "Water in the basin" },
     "controls.bowl.more": { "text": "The quantity of water in the basin before the eggs go in; let it be enough to cover them. The eggs warm the water, and the more water there is, the sooner they may be handled and peeled." },
     "controls.coolingWater": { "text": "Warmth of the water" },
-    "controls.coolingWater.tap.more": { "text": "At your pleasure. Leave it empty, and I shall suppose {water}, which is common for water from the pump; colder in winter and warmer in summer it may be, and the time alters by a few seconds." },
+    "controls.coolingWater.tap.more": { "text": "At your pleasure. Leave it empty, and I shall suppose {water}, which is common for water from the pump; colder in winter and warmer in summer it may be, and the time alters by a few seconds. The same I suppose of the water you set them in cold." },
     "controls.coolingWater.bowl.more": { "text": "At your pleasure. Leave it empty, and I shall suppose the water as warm as the room, {room}. Water fresh from the pump may be some degrees colder, and the time alters by a few seconds." },
     "controls.panWater": { "text": "Warmth of the water" },
     "controls.panWater.more": { "text": "At your pleasure. Leave it empty, and I shall suppose {water}, which is common for water from the pump; colder in winter and warmer in summer it may be, and the time alters by as much as half a minute. The same I suppose of the pump’s water you cool them in." },
