@@ -92,6 +92,29 @@ struct SetupSentence: View {
 
 // MARK: - The choices
 
+/// The room, one setting, in each panel where it changes the answer: where
+/// the egg comes from when it is Room, the start with the heat off, and the
+/// cooling in the air. Not under a bowl, whose water's temperature is asked
+/// there itself and assumed at the room; not under an egg cup, opened too
+/// soon for the room to move the yolk. Its label is too long to share a line
+/// with the field and its stepper, so the control has a line of its own.
+/// Optional, greyed at the room assumed until set (`RoomField`).
+private struct RoomRow: View {
+    let planner: Planner
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
+                "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
+            ])])
+            HStack {
+                Spacer(minLength: 0)
+                RoomField(planner: planner)
+            }
+        }
+    }
+}
+
 /// A clause's choice, opened in place under the sentence: its heading and
 /// (i), a Done that closes it, and the control. One at a time.
 struct ClausePanel: View {
@@ -187,6 +210,8 @@ struct ClausePanel: View {
                     value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .waterLitres
                 )
             }
+            // With the heat off the pan cools toward the room.
+            if planner.heatOff { RoomRow(planner: planner) }
         }
         .appFont(.subheadline)
     }
@@ -223,6 +248,8 @@ struct ClausePanel: View {
                     CoolingWaterField(planner: planner)
                 }
             }
+            // In the air the egg cools toward the room.
+            if planner.settings.cooling == .counter { RoomRow(planner: planner) }
         }
         .appFont(.subheadline)
     }
@@ -352,20 +379,10 @@ struct ClausePanel: View {
                 )
                 .appFont(.subheadline)
             }
-            // An egg left out is at the room's temperature: the room setting,
-            // here where it counts most, as in Settings. Optional, greyed at
-            // the room assumed until set.
+            // An egg left out is at the room's temperature.
             if planner.settings.startTempMode == .room {
-                VStack(alignment: .leading, spacing: 6) {
-                    InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
-                        "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
-                    ])])
-                    HStack {
-                        Spacer(minLength: 0)
-                        RoomField(planner: planner)
-                    }
-                }
-                .appFont(.subheadline)
+                RoomRow(planner: planner)
+                    .appFont(.subheadline)
             }
             Text(tr(.`controls.eggFrom.hint`, [
                 "fridge": .text(planner.show(.temperature, startTempPresetC(.fridge, roomC: planner.roomInUseC))),

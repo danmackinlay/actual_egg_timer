@@ -25,16 +25,24 @@ import { measure, show, unitSystem } from './units.ts';
 /** The fields with a unit, by the id of their input. */
 const FIELDS = {
   measureMass: 'mass', measureGirth: 'girth', measureMinor: 'width', customTemp: 'eggTemp', altitude: 'altitude',
-  litres: 'water', probeReading: 'probeTemp', roomTemp: 'roomTemp', roomTempFrom: 'roomTemp', bowlLitres: 'bowl',
-  coolingWater: 'coolingWater',
+  litres: 'water', probeReading: 'probeTemp', roomTempFrom: 'roomTemp', roomTempStart: 'roomTemp',
+  roomTempCool: 'roomTemp', bowlLitres: 'bowl', coolingWater: 'coolingWater',
 } as const;
 type Field = keyof typeof FIELDS;
+
+/** The room's fields, one setting in each panel where it changes the
+ *  answer: beside "at room temperature", under the heat off, lid on, and
+ *  under the air. Not under a bowl, whose water's temperature is asked
+ *  there itself and assumed at the room; not under an egg cup, opened too
+ *  soon for the room to move the yolk. */
+export const ROOM_INPUTS = ['roomTempFrom', 'roomTempStart', 'roomTempCool'] as const;
 
 /** The labels of each field's unit, by the id of its input. */
 const UNIT_LABELS: Record<Field, string> = {
   measureMass: 'unitMass', measureGirth: 'unitGirth', measureMinor: 'unitMinor', customTemp: 'unitTemp',
-  altitude: 'unitAltitude', litres: 'unitLitres', probeReading: 'unitProbe', roomTemp: 'unitRoom',
-  roomTempFrom: 'unitRoomFrom', bowlLitres: 'unitBowl', coolingWater: 'unitCoolingWater',
+  altitude: 'unitAltitude', litres: 'unitLitres', probeReading: 'unitProbe', roomTempFrom: 'unitRoomFrom',
+  roomTempStart: 'unitRoomStart', roomTempCool: 'unitRoomCool', bowlLitres: 'unitBowl',
+  coolingWater: 'unitCoolingWater',
 };
 
 /** The form as it should read: the controls (`controls`: the settings while
@@ -179,8 +187,8 @@ function setAttr(e: Element, name: string, value: string): void {
  *  every control, each field with a unit in the units on screen (its step,
  *  bounds, unit and contents, from the stored SI values, so switching back
  *  and forth never moves the egg), the labels that carry a temperature or a
- *  mass, and the fields a choice opens. The room is one setting in two
- *  fields, in Settings and beside "at room temperature". */
+ *  mass, and the fields a choice opens. The room is one setting in three
+ *  fields (`ROOM_INPUTS`), each opened by the choice it counts for. */
 export function drawForm(f: FormView): void {
   const c = f.controls;
   for (const id of Object.keys(FIELDS) as Field[]) {
@@ -199,7 +207,8 @@ export function drawForm(f: FormView): void {
   for (const id of ['measureMass', 'measureGirth', 'measureMinor', 'customTemp', 'litres', 'altitude', 'bowlLitres'] as const) {
     setValue(page()[id], f.values[id]);
   }
-  for (const input of [page().roomTemp, page().roomTempFrom]) {
+  for (const id of ROOM_INPUTS) {
+    const input = page()[id];
     setValue(input, f.values.roomTemp);
     setAttr(input, 'placeholder', f.roomPlaceholder);
   }
@@ -217,11 +226,12 @@ export function drawForm(f: FormView): void {
   page().probeSetting.checked = c.probe;
   page().customTempField.hidden = c.startTempMode !== 'custom';
   page().roomFromField.hidden = c.startTempMode !== 'room';
+  page().roomStartField.hidden = c.afterBoil !== 'off';
+  page().roomCoolField.hidden = c.cooling !== 'counter';
   page().bowlFields.hidden = c.cooling !== 'bowl';
   page().coolingWaterField.hidden = c.cooling !== 'tap' && c.cooling !== 'bowl';
   setText(page().startTempHint, f.startTempHint);
-  setText(page().moreRoom, f.moreRoom);
-  setText(page().moreRoomFrom, f.moreRoom);
+  for (const more of [page().moreRoomFrom, page().moreRoomStart, page().moreRoomCool]) setText(more, f.moreRoom);
   setText(page().moreCoolingWater, f.moreCoolingWater);
   setText(page().startSousLabel, f.sousLabel);
   setText(page().helpSousVide, f.helpSous);

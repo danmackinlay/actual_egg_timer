@@ -26,7 +26,7 @@
 import { nudgeSeconds } from '../core/decide.ts';
 import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
-import { applyConstantsToDom, applyLanguageToDom, buildSizeOptions, noteFocusOut } from './controls.ts';
+import { ROOM_INPUTS, applyConstantsToDom, applyLanguageToDom, buildSizeOptions, noteFocusOut } from './controls.ts';
 import {
   type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, redraw, reset,
   restoreCook, startRunner, stopRunner,
@@ -190,8 +190,7 @@ function wire(): void {
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireSteppers();
-  setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
-  setStepRule(page().roomTempFrom, (value, up) => stepPast(measure('roomTemp'), value, up));
+  for (const id of ROOM_INPUTS) setStepRule(page()[id], (value, up) => stepPast(measure('roomTemp'), value, up));
   setStepRule(page().coolingWater, (value, up) => stepPast(measure('coolingWater'), value, up));
   wireViews();
   renderVersion();

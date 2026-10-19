@@ -3,6 +3,7 @@
  * and at Done, how each is committed, and what rings. Run by tools/e2e.ts.
  */
 
+import type { ElementId } from '../../src/ui/dom.ts';
 import { sleep } from '../chrome.ts';
 import { type Rec, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
@@ -265,6 +266,67 @@ export const correctionScenarios: Record<string, Scenario> = {
       const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { waterLitres?: number; afterBoil?: string };
       check(saved.waterLitres === 3 && saved.afterBoil === 'off', `the next cook's: ${JSON.stringify(saved)}`);
       return `the readout ${time0} → water 3 L ${time1} → heat off ${time2}`;
+    },
+  },
+
+  'room-in-the-panels': {
+    what: 'the room is one setting, in the panels where it changes the answer: under the heat off, the air and "at room temperature"; each corrects a running cook, and none is in Settings',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      const shown = (id: ElementId): Promise<boolean> => tab.eval<boolean>(`${byId(id)}.offsetParent !== null`);
+      const value = (id: ElementId): Promise<string> => tab.eval<string>(`${byId(id)}.value`);
+      check(await tab.eval<boolean>("document.querySelector('#settings input[id^=\"roomTemp\"]') === null"),
+        'a room field in Settings');
+      // Idle, kept boiling, an ice bath, fridge eggs: the room changes nothing, and shows nowhere.
+      await openPanel(tab, 'panelStart');
+      check(!await shown('roomStartField'), 'the room shown with the heat kept on');
+      let s = await start(tab, 'hot');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      const times = [s.digits];
+      // The heat off: the room shows under it, and corrects the cook.
+      await openPanel(tab, 'panelStart');
+      await later(tab);
+      await tab.click('#heatOff');
+      s = await corrected(tab, null);
+      times.push(s.digits);
+      check(await shown('roomStartField'), 'no room under the heat off');
+      await later(tab);
+      await tab.eval(`(() => { const e = ${byId('roomTempStart')}; e.value = '28';
+        e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+      s = await corrected(tab, s);
+      times.push(s.digits);
+      check(storedCook(s)?.choices.room_C === 28, `the cook's room: ${storedCook(s)?.choices.room_C}`);
+      // In the air: the same room, and its + corrects the cook.
+      await openPanel(tab, 'panelCooling');
+      check(!await shown('roomCoolField'), 'the room shown under an ice bath');
+      await later(tab);
+      await tab.click('#coolCounter');
+      s = await corrected(tab, s);
+      times.push(s.digits);
+      check(await shown('roomCoolField') && await value('roomTempCool') === '28', `the air's room: ${await value('roomTempCool')}`);
+      await later(tab);
+      await press(tab, 'button.step[data-for="roomTempCool"][data-up="1"]');
+      s = await corrected(tab, s);
+      times.push(s.digits);
+      check(storedCook(s)?.choices.room_C === 29, `the cook's room: ${storedCook(s)?.choices.room_C}`);
+      // Under an egg cup and a bowl, none: the bowl asks for its water's own temperature.
+      for (const cooling of ['coolEggCup', 'coolBowl'] as const) {
+        await later(tab);
+        await tab.click(`#${cooling}`);
+        s = await corrected(tab, s);
+        check(!await shown('roomCoolField'), `the room shown under ${cooling}`);
+      }
+      // At room temperature: the same room again.
+      await openPanel(tab, 'panelFrom');
+      await later(tab);
+      await tab.click('#tempRoom');
+      s = await corrected(tab, s);
+      check(await shown('roomFromField') && await value('roomTempFrom') === '29', `the egg's room: ${await value('roomTempFrom')}`);
+      check(await value('roomTempStart') === '29', `the start's room: ${await value('roomTempStart')}`);
+      const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { room_C?: number };
+      check(saved.room_C === 29, `the next cook's room: ${saved.room_C}`);
+      return `the readout ${times.join(' → ')} (heat off, room 28 °C, the air, room 29 °C); one room in three panels`;
     },
   },
 

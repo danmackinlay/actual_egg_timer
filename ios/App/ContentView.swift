@@ -116,7 +116,7 @@ struct ContentView: View {
             .barTitle(tr(.`app.name`))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // In every phase: Settings' pot rows correct a running cook.
+                // In every phase: Settings' altitude corrects a running cook.
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(value: Route.settings) { Text(tr(.`controls.settings`)).barItem() }
                 }

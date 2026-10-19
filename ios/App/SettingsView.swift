@@ -11,13 +11,12 @@ import EggTimerShared
 ///
 /// In sous-vide the settings that change nothing there are put away, as on
 /// the web: `sousVideEstimate` takes the egg's size, the doneness and a bath,
-/// so the altitude, the probe and the room are pan arithmetic. A new input
-/// to `sousVideEstimate` is the signal to bring one back.
+/// so the altitude and the probe are pan arithmetic. A new input to
+/// `sousVideEstimate` is the signal to bring one back.
 struct SettingsView: View {
     @Bindable var planner: Planner
-    /// While a cook runs, the altitude and the room are its controls, and
-    /// correct it as the sentence does; what I have learned and sharing wait
-    /// for it to end.
+    /// While a cook runs, the altitude is its control, and corrects it as the
+    /// sentence does; what I have learned and sharing wait for it to end.
     var cooking = false
     /// Whether the egg on screen is in the log and still open to correction
     /// (`Cook.eggOpen`): sharing holds it back.
@@ -125,20 +124,6 @@ struct SettingsView: View {
                         get: { planner.settings.probe },
                         set: { planner.setProbe($0) }
                     ))
-                }
-
-                // The room: optional, with or without the probe
-                // (`roomInUse`). Its label is too long to share a line with
-                // the field and its stepper, so the control has a line of
-                // its own.
-                Section {
-                    InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
-                        "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
-                    ])])
-                    HStack {
-                        Spacer(minLength: 0)
-                        RoomField(planner: planner)
-                    }
                 }
             }
 

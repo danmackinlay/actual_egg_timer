@@ -11,7 +11,7 @@ import type { Cooling } from '../core/protocol.ts';
 import { type Quantity, parse } from '../core/units.ts';
 import { DEFAULTS } from '../core/inputs.ts';
 import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.ts';
-import { noteInput } from './controls.ts';
+import { ROOM_INPUTS, noteInput } from './controls.ts';
 import { page, radioValue } from './dom.ts';
 import { gestureNow_s, groupOf } from './edit.ts';
 import { send } from './send.ts';
@@ -110,8 +110,9 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
   read.probe = page().probeSetting.checked;
   // The room, measured: an emptied field is "not measured", and the room is
   // assumed again. Read only when it is the one being edited (`readField`).
-  // In Settings, or beside "at room temperature".
-  for (const input of [page().roomTemp, page().roomTempFrom]) {
+  // In whichever panel it was edited (`ROOM_INPUTS`).
+  for (const id of ROOM_INPUTS) {
+    const input = page()[id];
     if (source !== input) continue;
     if (input.value.trim() === '') read.room_C = null;
     else {

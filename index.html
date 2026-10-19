@@ -262,9 +262,11 @@
           <label for="customTemp" data-copy="controls.eggTemp"></label>
           <span class="unit"><input type="number" id="customTemp" data-stepper inputmode="decimal"><span id="unitTemp"></span></span>
         </div>
-        <!-- An egg left out is at the room's temperature: the room setting,
-             here where it counts most, as in Settings. Optional, and empty
-             until set, when it shows the room assumed, greyed. -->
+        <!-- An egg left out is at the room's temperature. The room is one
+             setting, in each panel where it changes the answer (here, under
+             the heat off, and under the air; src/ui/controls.ts,
+             ROOM_INPUTS). Optional, and empty until set, when it shows the
+             room assumed, greyed (src/core/inputs.ts, roomInUse). -->
         <div id="roomFromField" hidden>
           <div class="prow">
             <span class="prow__head">
@@ -323,6 +325,17 @@
           </div>
           <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
         </div>
+        <!-- With the heat off the pan cools toward the room. -->
+        <div id="roomStartField" class="pan-only" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="roomTempStart" data-copy="controls.room"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreRoomStart" data-label="controls.room"></button>
+            </span>
+            <span class="unit"><input type="number" id="roomTempStart" data-stepper inputmode="decimal"><span id="unitRoomStart"></span></span>
+          </div>
+          <p id="moreRoomStart" class="disclosed" hidden></p>
+        </div>
         <!-- While a cook runs, when the eggs went in, as the start clause says
              it: corrected a minute at a time, no earlier and no later than the cook allows (core
              earliestStart_s, latestStart_s), and the line under it says why
@@ -380,6 +393,17 @@
             <span class="unit"><input type="number" id="coolingWater" data-stepper inputmode="decimal"><span id="unitCoolingWater"></span></span>
           </div>
           <p id="moreCoolingWater" class="disclosed" hidden></p>
+        </div>
+        <!-- In the air the egg cools toward the room. -->
+        <div id="roomCoolField" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="roomTempCool" data-copy="controls.room"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="moreRoomCool" data-label="controls.room"></button>
+            </span>
+            <span class="unit"><input type="number" id="roomTempCool" data-stepper inputmode="decimal"><span id="unitRoomCool"></span></span>
+          </div>
+          <p id="moreRoomCool" class="disclosed" hidden></p>
         </div>
       </div>
     </div>
@@ -441,7 +465,9 @@
   </div>
 
   <!-- ---------------------------------------------------------- settings -->
-  <!-- Set once, cook many: what belongs to the kitchen rather than the egg. -->
+  <!-- Set once, cook many: what changes rarely, the kitchen and the cook.
+       What changes from one cook to the next is set in the sentence's
+       panels; while a cook runs, the altitude here corrects it. -->
   <section id="settings" class="page" aria-labelledby="settingsTitle">
     <h1 id="settingsTitle" tabindex="-1" data-copy="controls.settings"></h1>
     <form id="settingsForm" autocomplete="off">
@@ -521,19 +547,6 @@
         <p id="moreProbe" class="disclosed" hidden data-copy="controls.thermometer.more"></p>
         <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.thermometer.ask"></span></label>
       </fieldset>
-
-      <!-- The room: optional, and empty until set, when it shows the room
-           assumed, greyed (src/core/inputs.ts, roomInUse). -->
-      <div class="setting pan-only" id="roomField">
-        <div class="setting__line">
-          <span class="setting__head">
-            <label for="roomTemp" data-copy="controls.room"></label>
-            <button type="button" class="info" aria-expanded="false" aria-controls="moreRoom" data-label="controls.room"></button>
-          </span>
-          <span class="unit"><input type="number" id="roomTemp" data-stepper inputmode="decimal"><span id="unitRoom"></span></span>
-        </div>
-        <p id="moreRoom" class="disclosed" hidden></p>
-      </div>
     </form>
 
     <!-- What the app has learned from this kitchen, and the way to take it

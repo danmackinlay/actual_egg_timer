@@ -168,7 +168,7 @@ public final class Planner {
         }
     }
 
-    /// The room, from Settings or beside "at room temperature"; nil is "not
+    /// The room, from any panel that shows it (`RoomRow`); nil is "not
     /// given", and the room is assumed. Clamped like anything typed.
     public func setRoom(_ c: Double?) {
         settings.roomC = c.map { clamp($0, to: Limits.roomC) }

@@ -2,7 +2,7 @@
  * A running cook: its start, its choices and what it observed.
  *
  * A cook is its START (when the egg went in, and the choices then: what the
- * sentence, the slider and Settings' pot rows say) and a LOG of everything
+ * sentence, the slider and Settings' altitude say) and a LOG of everything
  * since, in order, never rewritten: each correction ("it was always like
  * this"), the boil tapped, the pull ringing, the pull, the end of the counted
  * cooling, the answers. The cook as it stands - the start and choices in
@@ -57,7 +57,7 @@ import type { CookAsRan } from './asRan.ts';
 
 /* ------------------------------------------------------------- the types */
 
-/** The cook as chosen: what the sentence, the slider and Settings' pot rows
+/** The cook as chosen: what the sentence, the slider and Settings' altitude
  *  say, in SI. The idle screen edits one (from the settings); a running cook
  *  holds its own, and a correction replaces it. */
 export interface CookChoices {
