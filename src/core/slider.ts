@@ -104,8 +104,9 @@ export interface Verdict {
   /** The anchor the user asked for. */
   wanted: DonenessAnchor;
   /** The nearest anchor this pan can actually deliver - the softest for
-   *  `tooSoftForWhite`, the hardest for `harderThanPanReaches`. Equal to
-   *  `wanted` when there is nothing to say. */
+   *  `tooSoftForWhite`, the hardest for `harderThanPanReaches` - read at the
+   *  position the slider snaps to, so it is the word the slider shows there.
+   *  Equal to `wanted` when there is nothing to say. */
   limit: DonenessAnchor;
   /** Where the slider must move to, or null to leave it alone. */
   snapTo: number | null;
@@ -132,9 +133,13 @@ export function verdictFor(sol: Solution, level: number): Verdict {
     return { kind: 'whiteNeverSets', wanted: wanted, limit: wanted, snapTo: null, worthSaying: true };
   }
 
+  // The word named is the one at the position the slider lands on, not the
+  // one nearest the limit: a limit less than a step past a word's edge snaps
+  // into the next word, and the refusal, the thumb and the struck-out ticks
+  // must all say the same word.
   if (level > sol.hardestLevel) {
-    const limit = anchorNear(sol.hardestLevel);
     const capped = snapDown(sol.hardestLevel);
+    const limit = anchorNear(capped);
     return {
       kind: 'harderThanPanReaches',
       wanted: wanted,
@@ -144,8 +149,8 @@ export function verdictFor(sol: Solution, level: number): Verdict {
     };
   }
 
-  const limit = anchorNear(sol.softestLevel);
   const snapped = snapUp(sol.softestLevel);
+  const limit = anchorNear(snapped);
   return {
     kind: 'tooSoftForWhite',
     wanted: wanted,

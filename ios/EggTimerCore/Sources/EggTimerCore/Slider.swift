@@ -84,8 +84,8 @@ public func verdictFor(_ sol: Solution, level: Double) -> Verdict {
     }
 
     if level > sol.hardestLevel {
-        let limit = anchorNear(sol.hardestLevel)
         let capped = snapDown(sol.hardestLevel)
+        let limit = anchorNear(capped)
         return Verdict(
             kind: .harderThanPanReaches,
             wanted: wanted,
@@ -95,8 +95,8 @@ public func verdictFor(_ sol: Solution, level: Double) -> Verdict {
         )
     }
 
-    let limit = anchorNear(sol.softestLevel)
     let snapped = snapUp(sol.softestLevel)
+    let limit = anchorNear(snapped)
     return Verdict(
         kind: .tooSoftForWhite,
         wanted: wanted,

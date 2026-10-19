@@ -192,6 +192,68 @@ test('a tick word is struck through only when none of its positions can be reach
   }
 });
 
+test('a refusal names the word the slider lands on, and that word is the end of what is not struck out', () => {
+  // A fine sweep of the pan's limit, with every word's edge and a step to
+  // either side of it: past an edge by less than a grid step, the snap
+  // carries the slider into the next word, and the refusal must name that
+  // one, not the word nearest the limit itself.
+  const limits: number[] = [];
+  for (let i = 0; i <= 2000; i++) limits.push(i / 2000);
+  for (let i = 0; i + 1 < DONENESS_ANCHORS.length; i++) {
+    const edge = (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level) / 2;
+    for (const d of [-0.005, -0.001, -1e-6, 0, 1e-6, 0.001, 0.0025, 0.004, 0.005]) {
+      limits.push(Math.min(1, Math.max(0, edge + d)));
+    }
+  }
+  const struck = (softest: number, hardest: number): boolean[] =>
+    DONENESS_ANCHORS.map((_, i) => !anchorReachable(i, softest, hardest));
+  let refusals = 0;
+  for (const limit of limits) {
+    for (const asked of DONENESS_ANCHORS.map((a) => a.level)) {
+      if (asked < limit) {
+        const v = verdictFor(solutionOf({ reachable: false, softestLevel: limit, hardestLevel: 1 }), asked);
+        assert.equal(v.kind, 'tooSoftForWhite');
+        assert.notEqual(v.snapTo, null, `softest ${limit}, asked ${asked}: the slider moves`);
+        const at = v.snapTo as number;
+        const what = `softest ${limit}, asked ${asked}, lands ${at}`;
+        assert.equal(v.limit.key, anchorNear(at).key, `${what}: the refusal names the word the slider shows`);
+        const s = struck(limit, 1);
+        const named = DONENESS_ANCHORS.indexOf(v.limit);
+        assert.equal(s[named], false, `${what}: the word named is struck out`);
+        assert.equal(s.indexOf(false), named, `${what}: a softer word than the one named is not struck out`);
+        assert.equal(v.worthSaying, v.limit.key !== v.wanted.key, what);
+        refusals++;
+      }
+      if (asked > limit) {
+        const v = verdictFor(solutionOf({ reachable: false, softestLevel: 0, hardestLevel: limit }), asked);
+        assert.equal(v.kind, 'harderThanPanReaches');
+        assert.notEqual(v.snapTo, null, `hardest ${limit}, asked ${asked}: the slider moves`);
+        const at = v.snapTo as number;
+        const what = `hardest ${limit}, asked ${asked}, lands ${at}`;
+        assert.equal(v.limit.key, anchorNear(at).key, `${what}: the refusal names the word the slider shows`);
+        const s = struck(0, limit);
+        const named = DONENESS_ANCHORS.indexOf(v.limit);
+        assert.equal(s[named], false, `${what}: the word named is struck out`);
+        assert.equal(s.lastIndexOf(false), named, `${what}: a firmer word than the one named is not struck out`);
+        assert.equal(v.worthSaying, v.limit.key !== v.wanted.key, what);
+        refusals++;
+      }
+    }
+  }
+  assert.ok(refusals > 8000, `${refusals} refusals swept`);
+});
+
+test('a limit just past a word\'s edge is named as the word past it', () => {
+  // Softest 0.512 is nearer Jammy, but the slider can only rest at 0.52, Fudgy.
+  const soft = verdictFor(solutionOf({ reachable: false, softestLevel: 0.512, hardestLevel: 1 }), 0.22);
+  assert.equal(soft.snapTo, 0.52);
+  assert.equal(soft.limit.key, 'doneness.fudgy');
+  // Hardest 0.318 is nearer Jammy, but the slider can only rest at 0.31, Soft.
+  const hard = verdictFor(solutionOf({ reachable: false, softestLevel: 0, hardestLevel: 0.318 }), 1);
+  assert.equal(hard.snapTo, 0.31);
+  assert.equal(hard.limit.key, 'doneness.soft');
+});
+
 function close(actual: number, expected: number, tol: number, what: string): void {
   assert.ok(
     Math.abs(actual - expected) <= tol,
