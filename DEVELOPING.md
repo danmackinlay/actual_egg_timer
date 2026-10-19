@@ -95,7 +95,8 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    `_dev/copy-review.html` (`npm run build:site` clears `_dev/`), one file
    with no script and no network: every key changed, added or retired
    since the approved commit, with the approved English against today's
-   word by word, the US English, and the key's note. Send it to the phone
+   word by word, the US English, and the key's note, and at its foot these
+   steps 3 and 4. Send it to the phone
    (AirDrop, or open it from a synced folder).
 2. **Read it in place.** A string is judged where it appears, in the apps,
    not only on the page (`UI.md` §6). `npm run copy:snapshot -- capture
