@@ -65,6 +65,10 @@ and the map of the documents are `CLAUDE.md`.
     workaround kept for older iOS. With it: the Live Activity's countdown
     beside AlarmKit's own, the authorisation asked once, and the in-app
     ring (`Ringer.swift`) kept for the app on screen.
+13. **INFERENCE.md §8's certainty table as `npm run decide -- certainty`
+    prints it today**: its fresh-install rows and simulated-cook figures
+    have drifted from the study (Fudgy is now a wild guess, its
+    neighbours 0.89).
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
