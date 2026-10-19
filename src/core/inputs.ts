@@ -103,7 +103,8 @@ export function roomInUse(room_C: number | null): number | null {
  *
  * A measured room is the room. Without one: on the default path - eggs into
  * boiling water, straight into an ice bath - the room is worth nothing at
- * all, and on a cold start about two seconds per degree. It earns its keep
+ * all, nor on a cold start kept boiling, whose pan starts at the tap's
+ * temperature (`CookSetup.panStart_C`), not the room's. It earns its keep
  * resting on the counter and standing with the heat off, and in both the user
  * has usually already said: an egg that has been sitting out IS at room
  * temperature. A fridge egg says nothing about the room, so that case keeps

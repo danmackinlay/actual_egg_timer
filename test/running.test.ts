@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.ts';
 import { START_TEMP_PRESETS_C } from '../src/core/inputs.ts';
-import { T_ROOM_C } from '../src/core/constants.ts';
+import { T_COLD_TAP_C, T_ROOM_C } from '../src/core/constants.ts';
 import { decisionInputs } from '../src/core/decide.ts';
 import { recordFor } from '../src/core/record.ts';
 import {
@@ -41,7 +41,21 @@ test('the egg and the pot: the presets, a measured room, and the room an egg sit
   assert.equal(cookSetupOf(CHOICES, 480).egg.mass_kg, SIZE_CLASSES[2].mass_kg);
   assert.deepEqual(Object.keys(fridge), [
     'startMode', 'afterBoil', 'eggStart_C', 'ambient_C', 'boiling_C', 'timeToBoil_s', 'cooling', 'waterLitres', 'eggCount',
+    'panStart_C',
   ], 'in the order the web keys its decision surfaces by');
+});
+
+test("a cold pan starts at the cold tap's temperature, the one running water takes, and a hot one says none", () => {
+  assert.equal(cookSetupOf(CHOICES, 480).setup.panStart_C, T_COLD_TAP_C, 'mains water, assumed, and written');
+  assert.equal(cookSetupOf({ ...CHOICES, room_C: 27 }, 480).setup.panStart_C, T_COLD_TAP_C, 'not the room');
+  assert.equal(cookSetupOf({ ...CHOICES, eggFrom: 'custom', customStart_C: 26 }, 480).setup.panStart_C, T_COLD_TAP_C,
+    'nor an egg left out');
+  const given = cookSetupOf({ ...CHOICES, tapWater_C: 8 }, 480).setup;
+  assert.equal(given.panStart_C, 8, "the cook's tap");
+  assert.equal('coolingWater_C' in given, false, 'an ice bath still says nothing of running water');
+  const both = cookSetupOf({ ...CHOICES, tapWater_C: 8, cooling: 'tap' }, 480).setup;
+  assert.deepEqual([both.panStart_C, both.coolingWater_C], [8, 8], 'one tap, one number');
+  assert.equal('panStart_C' in cookSetupOf({ ...CHOICES, startMode: 'hot', tapWater_C: 8 }, 480).setup, false);
 });
 
 test('the boil is tapped once, on a cold start still heating, and not before the start', () => {

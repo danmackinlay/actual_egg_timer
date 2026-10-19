@@ -61,7 +61,9 @@ export const RECORD_VERSION = 1;
  *  under uncertainty, with the forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
  *  sharing; '2026-10-e9' asks the cook which yolk they got, in five words,
  *  and forecasts those five; '2026-10-e10' holds the counter's carryover at
- *  1.0 instead of carrying it in the particle, which draws another prior from the same seed.
+ *  1.0 instead of carrying it in the particle, which draws another prior from the same seed;
+ *  '2026-10-e11' starts a cold pan at the cold tap's temperature, 15 C
+ *  unless the cook gives theirs, not the room's.
  *  Records from before sharing carry none.
  *
  *  It is the record's provenance (`model`, sent with each record, read by the
@@ -69,7 +71,7 @@ export const RECORD_VERSION = 1;
  *  is a new model too, since the forecast is the posterior's, so this moves
  *  whenever that does; a change to the decision or the nudge alone moves
  *  only this. */
-export const MODEL_ID = '2026-10-e10';
+export const MODEL_ID = '2026-10-e11';
 
 /** What THIS code makes of a log: the prior's draw from a population, the
  *  physics and the likelihood, which together are the fold. Both apps keep it
