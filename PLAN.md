@@ -44,17 +44,13 @@ and the map of the documents are `CLAUDE.md`.
    waiting, retries, traces and `page.clock` replace the DevTools client and
    most of the harness; the app's hooks (`__snap`, the oscillator capture)
    move across. `git log` on the two files says when.
-10. **The texture line from the doses, not the peak.** At the egg cup's
-    soft the line says the yolk is jammy: it reads the yolk's peak
-    temperature, which an egg opened warm reaches before the yolk has been
-    hot for long, where the doses, and the slider, say soft. Core's texture
-    and its twin.
-11. **The fit's recovery check is sensitive to its sample.** Adding the
+
+10. **The fit's recovery check is sensitive to its sample.** Adding the
     egg cup's kitchens took three draws of the simulated sample before
     `test_recovery` mixed under its R-hat limit; the check should pass on
     any honest sample, so it wants longer chains or a sample it was not
     tuned on.
-12. **A probe reading at the egg cup's opening**, the one measurement that
+11. **A probe reading at the egg cup's opening**, the one measurement that
     would settle `EGG_CUP_OPENED_S`. Not asked for yet: at the opening the
     yolk's centre is still climbing and the coldest point, so a reading off
     centre or late reads hot, where `probeLikelihood` and the fit's
@@ -62,7 +58,7 @@ and the map of the documents are `CLAUDE.md`.
     only at the peak. It needs a likelihood whose handling errors can read
     hot (`infer.ts`, its twin, the fit), and then `probeMomentFor` true for
     the egg cup.
-13. **iOS 26 the floor, and the alarms by AlarmKit** (`DECISIONS.md` 142).
+12. **iOS 26 the floor, and the alarms by AlarmKit** (`DECISIONS.md` 142).
     Alarms the Clock app's way, through silent mode and any Focus, for the
     pull and the cooling's end; the time-sensitive notifications, their
     entitlement and what schedules them go, with every `#available` or
@@ -100,8 +96,7 @@ shell (34).
 
 
 6. **The App Store's captions** (`ios/appstore/captions.en-AU.json`); then,
-   with the words approved and the texture line read from the doses (next
-   work 10), `npm run ios:shots` again and both sizes uploaded in App Store
+   with the words approved, `npm run ios:shots` again and both sizes uploaded in App Store
    Connect. A Lock Screen shot of the Live Activity can only be taken by
    hand (Simulator, Device > Lock).
 
