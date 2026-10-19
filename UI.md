@@ -205,16 +205,20 @@ cools change nothing, so the sentence leaves them out.
   at 390 px, and the start clause's words already carry it ("into boiling
   water, heat off and lid on"). Under the three starts, Once it's boiling
   (Keep boiling / Heat off, lid on), and under it the water in the pan,
-  shown for every pan start; neither in sous-vide. The readout's line says
-  "lid on" when it is set.
+  shown for every pan start; neither in sous-vide. Under the water, for
+  Cold water only, its temperature (`DECISIONS.md` NNN): the cold tap's,
+  which a cold pan starts at, one number with running water's in the
+  cooling's panel, each row editing it; optional, greyed at the 15 °C
+  assumed. The sentence does not name it. The readout's line says "lid on"
+  when it is set.
 - **The room is one value, in the panels where it changes the answer**
   (`DECISIONS.md` 143): where the egg comes from, when it is Room; the
   start's, when the heat is off; the cooling's, when it is the air.
   Optional, greyed at the room assumed until set; each row edits the one
   setting. Not under a bowl, whose water's temperature is asked there and
   assumed at the room; nor under an egg cup, where it changes nothing; nor
-  under a cold start kept boiling, where what it stands for is the water
-  the pan was filled with.
+  under a cold start kept boiling, whose pan starts at the cold tap's
+  temperature, not the room's.
 
 ## 6. How wording is reviewed
 
