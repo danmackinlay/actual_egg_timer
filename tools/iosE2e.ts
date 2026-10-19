@@ -36,7 +36,7 @@ import type { BoilMemory } from '../src/core/boil.ts';
 import type { Units } from '../src/core/record.ts';
 import {
   APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
-  createDevice, is, lastOf, quietly, simctl, sleep,
+  createDevice, is, lastOf, quietly, settingsArg, simctl, sleep, warmUp,
 } from './iosHarness.ts';
 
 /// How long the system is given to deliver the one notification a scenario
@@ -187,13 +187,6 @@ const before = (lines: Event[], test: (e: Event) => boolean): Event[] => {
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 const sorted = (a: string[] | null): string[] | null => (a ? [...a].sort() : a);
 
-/// The settings as stored, in the app's format, given at launch: what is not
-/// given is the default. A launch argument whose value is `<hex>` is data to
-/// UserDefaults, as the app stores the value.
-function settingsArg(over: Record<string, unknown>): string[] {
-  const text = JSON.stringify({ v: iosStore('settings').format, ...over });
-  return [`-${SETTINGS}`, `<${Buffer.from(text, 'utf8').toString('hex')}>`];
-}
 /// A hot start's settings.
 const HOT_SETTINGS = { doneness: 0.41, altitudeM: 0, waterLitres: 2, eggCount: 2, startMode: 'hot' };
 const HOT = settingsArg(HOT_SETTINGS);
@@ -734,29 +727,6 @@ scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen
 
 // ------------------------------------------------------------------- main
 
-/// A new device's first launches are many seconds slow while the system
-/// settles, and its notifications refused ("Source is not authorized"), or,
-/// on a loaded machine, the request for them never answered: cooks started
-/// until one has its alarms pending, each given two minutes, nothing
-/// checked.
-async function warmUp(): Promise<void> {
-  for (let attempt = 1; ; attempt += 1) {
-    const warm = new Run('warm-up', udid);
-    warm.install();
-    warm.launch(['-uiScreen', 'heating']);
-    const hit = await warm
-      .until((e) => (e.ev === 'pending' && e.alarms.some((a) => a.id.startsWith('cook'))) || e.ev === 'notScheduled', { timeoutS: 120, what: 'the alarms' })
-      .catch(() => null);
-    warm.terminate();
-    if (hit?.ev === 'pending') return;
-    // What the launch got to, for a device that will not warm up.
-    const seen = warm.lines().map((e) => e.ev);
-    console.log(`ios:e2e: warm-up ${attempt}: ${hit ? say(hit) : 'no alarms read back'}; `
-      + `${seen.length} events, the last ${seen.slice(-8).join(', ') || 'none'}`);
-    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
-  }
-}
-
 async function main(): Promise<void> {
   if (listOnly) {
     for (const s of scenarios) console.log(`${s.name.padEnd(24)} ${s.about}`);
@@ -773,7 +743,7 @@ async function main(): Promise<void> {
   if (!udid) udid = createDevice();
   let failed = 0;
   try {
-    await warmUp();
+    await warmUp(udid);
     for (const s of chosen) {
       const run = new Run(s.name, udid);
       const t0 = Date.now();
