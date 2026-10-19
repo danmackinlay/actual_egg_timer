@@ -40,7 +40,6 @@
     "readout.mute.off": { "text": "Bell off" },
     "readout.restored": { "text": "I have taken up this one again after the page was reloaded. The times are true, but I cannot sound the alarm, so watch the clock." },
 
-    "texture.white.justSet": { "text": "white newly set" },
     "texture.white.runny": { "text": "the white continues unset" },
     "texture.yolk.liquid": { "text": "yolk yet liquid" },
     "texture.yolk.soft": { "text": "yolk soft, scarce thickened" },

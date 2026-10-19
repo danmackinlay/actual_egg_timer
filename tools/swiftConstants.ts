@@ -67,8 +67,6 @@ const NAMESPACES: Record<string, string | [string, string]> = {
   Defaults: ['inputs.ts', 'DEFAULTS'],
   UnitFactors: ['units.ts', 'OUNCE_G'],
   Section: 'How finely the egg in cross-section is sampled, how far short of its target a white still reads as raw, and where its heat map\'s colours sit.',
-  WhiteBandBelowC: ['texture.ts', 'WHITE_BAND_BELOW_C'],
-  YolkBandBelowC: ['texture.ts', 'YOLK_BAND_BELOW_C'],
   AlarmPeriodS: ['sounds.ts', 'ALARM_PERIOD_S'],
 };
 
@@ -215,10 +213,6 @@ const TWINS: Twin[] = [
   { module: 'sousvide.ts', name: 'SOUS_VIDE_MODEL_FLOOR_C', swift: 'sousVideModelFloorC' },
   { module: 'sousvide.ts', name: 'EQUILIBRATION_GAP', swift: 'equilibrationGap', internal: true },
 
-  { module: 'texture.ts', name: 'WHITE_BAND_BELOW_C.justSet', swift: 'WhiteBandBelowC.justSet' },
-  { module: 'texture.ts', name: 'WHITE_BAND_BELOW_C.set', swift: 'WhiteBandBelowC.set' },
-  ...['liquid', 'soft', 'jammy', 'fudgy']
-    .map((f): Twin => ({ module: 'texture.ts', name: `YOLK_BAND_BELOW_C.${f}`, swift: `YolkBandBelowC.${f}` })),
 
   { module: 'units.ts', name: 'OUNCE_G', swift: 'UnitFactors.ounceG' },
   { module: 'units.ts', name: 'INCH_MM', swift: 'UnitFactors.inchMM' },

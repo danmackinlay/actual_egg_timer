@@ -73,7 +73,6 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `readout.mute.off` = "readout.mute.off"
     case `readout.restored` = "readout.restored"
     case `texture.note` = "texture.note"
-    case `texture.white.justSet` = "texture.white.justSet"
     case `texture.white.set` = "texture.white.set"
     case `texture.white.firm` = "texture.white.firm"
     case `texture.white.runny` = "texture.white.runny"
