@@ -19,6 +19,8 @@ import os
 /// - `-uiScreen certainty-open`: open what the certainty line under the time
 ///   says when pressed.
 /// - `-uiScreen heating`: start a cook, as a tap on Start would.
+/// - `-uiScreen end`: hold the page scrolled to its foot as it grows, so the
+///   questions at Done are in the picture (`npm run ios:shots`).
 /// - `-noAlarmPrompt YES`: answer the notification question with no, without
 ///   asking, so the system's alert is not in the picture.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
