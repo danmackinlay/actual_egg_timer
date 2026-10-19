@@ -224,8 +224,9 @@ The owner's steer (`DECISIONS.md` 26):
 **How sure I am** (`DECISIONS.md` 93 and 97). Below the time, one of three
 words for the time on screen (`INFERENCE.md` §8, "How sure, in words"):
 very certain (9 times in 10 the word asked), a ballpark (9 times in 10 that
-word or a neighbour), or a wild guess. The words are a button that opens in
-place under it, as an (i) does: the 90% interval in the slider's words, the
+word or a neighbour, with the word asked inside the 90% interval), or a wild
+guess. The words are a button that opens in place under it, as an (i) does:
+the 90% interval in the slider's words, the
 most likely word, the likely time range, and a link to Help. The most likely
 word also shows under the line, unpressed, whenever it is not the word
 asked. While a cook runs the line is the plan's, held while a new pot's

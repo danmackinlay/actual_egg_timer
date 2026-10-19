@@ -925,12 +925,17 @@ share included). As built:
   two gaps differ in the last bit.
 - **The class.** *Very certain* when P(the word asked) is at least 0.9;
   *a ballpark* when it and its neighbours hold at least 0.9 (one neighbour
-  at Runny and at Hard); *a wild guess* otherwise. The unrelated share caps
-  a word at 0.96.
+  at Runny and at Hard) and the word asked is inside the 90% interval
+  below; *a wild guess* otherwise. Without the interval a neighbour alone
+  could make a ballpark: on a counter after three eggs, Jammy asked at
+  0.51 read "A ballpark figure" over "9 times in 10: Fudgy", P(Jammy)
+  0.02 (the owner, 19 October 2026). The unrelated share caps a word at
+  0.96.
 - **The 90% interval in words**: the narrowest run of adjacent words
   holding at least 0.9; among runs equally narrow, the one holding more; on
-  an exact tie, the softer. It need not contain the word asked. **The most
-  likely word**: the largest, the softer on a tie.
+  an exact tie, the softer. It need not contain the word asked, and when
+  it does not the class is a wild guess. **The most likely word**: the
+  largest, the softer on a tie.
 - **The bracket under the slider** is that interval, drawn (`wordBracket`;
   `DECISIONS.md` 97): from the outer edge of its first word's
   band on the slider (the anchors' midpoints, the same cuts as above) to

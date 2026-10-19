@@ -270,7 +270,7 @@
     "controls.thermometer.more": { "surface": "more", "note": "A paragraph opened in place by the (i) beside Probe thermometer (UI.md section 4). Says what controls.probe.hint says, and why." },
 
     "certainty.veryCertain": { "surface": "label", "note": "Below the time display, in place of the direction: how sure I am of the time on screen, when 9 times in 10 the yolk is the word asked (certainty.ts, certaintyAt). The cook presses it to open the interval and the time range in place under it." },
-    "certainty.ballpark": { "surface": "label", "note": "As certainty.veryCertain, when 9 times in 10 the yolk is the word asked or the one either side of it on the slider." },
+    "certainty.ballpark": { "surface": "label", "note": "As certainty.veryCertain, when 9 times in 10 the yolk is the word asked or the one either side of it on the slider, and the word asked is inside the range certainty.interval states." },
     "certainty.wildGuess": { "surface": "label", "note": "As certainty.veryCertain, when the yolk is less sure than a ballpark figure: a fresh install at runny to jammy." },
     "certainty.interval": { "surface": "body", "note": "First in what pressing the certainty line opens: the fewest neighbouring doneness words that hold 9 eggs in 10 at the time on screen. {hits} in {of} is 9 in 10; {from} and {to} are the softest and firmest doneness words, standing alone after the colon.", "example": {"hits": 9, "of": 10, "from": "Soft", "to": "Fudgy"} },
     "certainty.interval.one": { "surface": "body", "note": "As certainty.interval, when one doneness word holds 9 eggs in 10.", "example": {"hits": 9, "of": 10, "word": "Jammy"} },
