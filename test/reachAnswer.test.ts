@@ -1,7 +1,9 @@
 /**
  * The answer at a level (src/core/reach.ts): at the far left, for the owner's
- * egg, the envelope's bounds, and the one decided answer both apps show. That
- * the time never falls as the level rises is test/reachMonotone.test.ts.
+ * egg, the envelope's bounds, the one decided answer both apps show, and a
+ * counter rest whose 9 in 10 is a neighbouring word's alone, which is a wild
+ * guess. That the time never falls as the level rises is
+ * test/reachMonotone.test.ts.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -14,12 +16,15 @@ import { createPrior, updatePosterior } from '../src/core/infer.ts';
 import { eggFromMass } from '../src/core/geometry.ts';
 import { logYolkTarget, solveCookTime } from '../src/core/solve.ts';
 import { snapUp } from '../src/core/slider.ts';
-import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
+import {
+  CALIBRATION_SEED, type Calibration, type EggRecord, calibrationDoneness, calibrationParams, replay,
+} from '../src/core/record.ts';
 import { type OddsProfile, adviceWanted, envelopeBounds, answerAt, decideAnswer, oddsProfile } from '../src/core/reach.ts';
 import { askedWord, certaintyAt } from '../src/core/certainty.ts';
 import { predictOutcome } from '../src/core/outcome.ts';
 import { mostLikelyShown, warningKey, whiteAtRisk } from '../src/core/wording.ts';
-import { appSetup, gridFor, knowing } from '../tools/common.ts';
+import { appSetup, gridFor, knowing, recordAt } from '../tools/common.ts';
+import { COARSE, PRIOR } from './decisions.ts';
 import { EGG, FRESH, PARTICLES, SETUP, point } from './profiles.ts';
 
 test('the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
@@ -181,4 +186,33 @@ test('one decided answer for both apps: the soft yolk chosen again and held unde
   assert.equal(dn.nudge_s, 0);
   assert.equal(dn.solution, a.solution);
   assert.equal(dn.adviceWanted, false);
+});
+
+test('a counter rest after three eggs: nine times in ten Fudgy, where the slider can only rest at Jammy\'s edge, is a wild guess, not a ballpark', () => {
+  // A 60 g egg from the fridge into boiling water, the heat on, rested on
+  // the counter. Three eggs cooked at a fresh install's jammy, each yolk
+  // called soft and the white not answered, folded as the apps fold them.
+  // Every level up to 0.51 snaps to 0.51, the last of Jammy, and there
+  // Fudgy alone holds 9 in 10: a neighbour of the word asked carries the
+  // mass, and the word asked is outside the interval the tap shows.
+  const egg = eggFromMass(0.060);
+  const counter = appSetup({ cooling: 'counter' });
+  const fresh = answerAt(PRIOR, egg, counter, 0.41, null);
+  const r: EggRecord = {
+    ...recordAt(fresh.level, fresh.solution.result.cookTime_s, 'soft', null, counter),
+    egg: { mass_g: 60, massFrom: 'scale', sizeTable: 'eu' },
+  };
+  const c = replay(PRIOR, [r, r, r], COARSE);
+  const grid = gridFor(c, egg, counter);
+  const p = oddsProfile(c, egg, counter, grid);
+  for (const level of [0, 0.11, 0.22, 0.3, 0.41, 0.5, 0.51]) {
+    const a = answerAt(c, egg, counter, level, p);
+    assert.equal(a.level, 0.51, `asked ${level}`);
+    const w = decideAnswer(c, egg, counter, grid, a.solution, a.level, p, 0).certainty.words;
+    const what = `asked ${level}: P(Jammy) ${w.pAsked.toFixed(3)}, with neighbours ${w.pNear.toFixed(3)}, 90% ${w.from}-${w.to}`;
+    assert.equal(w.asked, 2, what);
+    assert.deepEqual([w.from, w.to, w.mostLikely], [3, 3, 3], `${what}: 9 times in 10, Fudgy`);
+    assert.ok(w.pNear >= 0.9 && w.pAsked < 0.05, `${what}: the neighbour carries it`);
+    assert.equal(w.certainty, 'wildGuess', what);
+  }
 });

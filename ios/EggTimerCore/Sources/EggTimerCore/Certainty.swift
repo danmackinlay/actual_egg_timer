@@ -61,9 +61,6 @@ public func wordCertainty(_ p: [Double], asked: Int) -> WordCertainty {
     let n = p.count
     let pAsked = p[asked]
     let pNear = massOf(p, asked > 0 ? asked - 1 : 0, asked < n - 1 ? asked + 1 : n - 1)
-    let certainty: Certainty = pAsked >= certaintyMass
-        ? .veryCertain
-        : pNear >= certaintyMass ? .ballpark : .wildGuess
 
     var from = 0
     var to = n - 1
@@ -86,6 +83,11 @@ public func wordCertainty(_ p: [Double], asked: Int) -> WordCertainty {
         }
         width += 1
     }
+
+    let askedInside = from <= asked && asked <= to
+    let certainty: Certainty = pAsked >= certaintyMass
+        ? .veryCertain
+        : pNear >= certaintyMass && askedInside ? .ballpark : .wildGuess
 
     var mostLikely = 0
     for k in 1..<n where p[k] > p[mostLikely] {

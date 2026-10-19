@@ -518,7 +518,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     line under the time is a certainty word read from the predicted spread
     of the five yolk words at the chosen time: very certain when 9 times in
     10 it is the word asked for; a ballpark when 9 times in 10 it is that
-    word or a neighbour; a wild guess when wider. A tap shows the interval
+    word or a neighbour, with the word asked inside that interval (the
+    owner, 19 October 2026); a wild guess otherwise. A tap shows the interval
     in the cook's words ("9 times in 10: between Soft and Fudgy. Most likely
     Jammy."), and a likely time range. The bracket under the slider shows
     the same interval (97). No screen shows the odds as a number, the Lock

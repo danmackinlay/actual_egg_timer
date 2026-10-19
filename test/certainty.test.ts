@@ -3,8 +3,8 @@
  *
  * What is checked here is the definition: the word asked is the slider's
  * word and the band its nominal dose falls in; the classes are what they say
- * at their edges; the interval is the narrowest run holding 0.9, with its
- * tie-breaks; the bracket under the slider is that interval, from the outer
+ * at their edges, and a ballpark has the word asked inside its interval; the
+ * interval is the narrowest run holding 0.9, with its tie-breaks; the bracket under the slider is that interval, from the outer
  * edge of its first word's band to the outer edge of its last's, marked at
  * the most likely word; the reading is read off the model's own predictive and
  * `predictCookTime`, not computed again. `fixtures/certainty.json` pins the
@@ -61,7 +61,11 @@ test('the classes, at their edges', () => {
   assert.equal(wordCertainty([0.0501, 0.25, 0.4, 0.2499, 0.05], 2).certainty, 'wildGuess');
   // The same spread, asked a word further off: a wild guess.
   assert.equal(wordCertainty([0.025, 0.025, 0.9, 0.025, 0.025], 0).certainty, 'wildGuess');
-  assert.equal(wordCertainty([0.025, 0.025, 0.9, 0.025, 0.025], 1).certainty, 'ballpark');
+  // Asked the neighbour, it holds 0.95 with Jammy, but the interval is Jammy
+  // alone and the word asked is outside it: a wild guess too.
+  assert.equal(wordCertainty([0.025, 0.025, 0.9, 0.025, 0.025], 1).certainty, 'wildGuess');
+  // With the word asked inside a wider interval, a ballpark.
+  assert.equal(wordCertainty([0.025, 0.1, 0.85, 0.0125, 0.0125], 1).certainty, 'ballpark');
 });
 
 test('at the ends there is one neighbour', () => {
@@ -112,12 +116,52 @@ test('the interval: the narrowest run holding 0.9, then the most mass, then the 
     const lo = Math.max(0, asked - 1);
     const hi = Math.min(4, asked + 1);
     const near = p.slice(lo, hi + 1).reduce((a, b) => a + b, 0);
-    const expected = p[asked] >= CERTAINTY_MASS ? 'veryCertain' : near >= CERTAINTY_MASS ? 'ballpark' : 'wildGuess';
+    const inside = from <= asked && asked <= from + width - 1;
+    const expected = p[asked] >= CERTAINTY_MASS ? 'veryCertain' : near >= CERTAINTY_MASS && inside ? 'ballpark' : 'wildGuess';
     assert.equal(w.certainty, expected);
     // Very certain is a one-word interval on the word asked.
     if (w.certainty === 'veryCertain') assert.deepEqual([w.from, w.to], [asked, asked]);
     assert.ok(p.every((x) => x <= p[w.mostLikely]));
   }
+});
+
+test('a ballpark always has the word asked inside the interval it reports', () => {
+  // The spreads a neighbour alone carries to 0.9 are the ones the rule is
+  // for: nine times in ten Fudgy is no ballpark for a cook who asked Jammy.
+  const spreads: number[][] = [];
+  for (let asked = 0; asked < 5; asked++) {
+    for (const side of [-1, 1]) {
+      const b = asked + side;
+      if (b < 0 || b > 4) continue;
+      for (const pb of [0.9, 0.91, 0.93, 0.95, 0.96]) {
+        for (const pa of [0, 0.001, 0.01, 0.02, 0.04, 0.045, 0.05, 0.1 - 1e-9]) {
+          if (pa + pb > 1) continue;
+          const p = [0, 1, 2, 3, 4].map((k) => (k === asked || k === b ? 0 : (1 - pa - pb) / 3));
+          p[asked] = pa;
+          p[b] = pb;
+          spreads.push(p);
+        }
+      }
+    }
+  }
+  const random = rng(20261019);
+  for (let n = 0; n < 20000; n++) {
+    const raw = [0, 1, 2, 3, 4].map(() => random() ** (1 + 6 * random()));
+    const sum = raw.reduce((a, b) => a + b, 0);
+    spreads.push(raw.map((x) => x / sum));
+  }
+  let ballparks = 0;
+  for (const p of spreads) {
+    for (let asked = 0; asked < 5; asked++) {
+      const w = wordCertainty(p, asked);
+      if (w.certainty !== 'ballpark') continue;
+      ballparks++;
+      assert.ok(w.from <= asked && asked <= w.to,
+        `[${p.map((x) => x.toFixed(3))}] asked ${asked}: a ballpark, but the interval is ${w.from}-${w.to}`);
+      assert.ok(w.pNear >= CERTAINTY_MASS, 'and the word or a neighbour still holds 9 in 10');
+    }
+  }
+  assert.ok(ballparks > 1000, `${ballparks} ballparks`);
 });
 
 test('the bracket is the interval: its words\' outer edges on the slider, marked at the most likely', () => {

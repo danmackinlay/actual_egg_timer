@@ -17,7 +17,8 @@ import { outcomePosteriors } from './outcome.ts';
  * is drawn to. The class, the interval, the most likely word and the
  * bracket from
  * spreads written by hand, so that every edge is hit exactly: each class's
- * boundary from both sides, the ends (Runny and Hard have one neighbour),
+ * boundary from both sides, a neighbour alone holding 0.9 with the word
+ * asked outside the interval, the ends (Runny and Hard have one neighbour),
  * the interval's tie-breaks, and a spread no run short of all five holds.
  * And the whole reading from real posteriors - decide.json's surface and its
  * three, and outcome.json's fourth, none written out again - at the time
@@ -41,6 +42,8 @@ const SPREADS: { note: string; p: number[]; asked: number }[] = [
   { note: 'two runs of three both over 0.9: the one holding more, here the firmer', p: [0.02, 0.43, 0.45, 0.06, 0.04], asked: 1 },
   { note: 'two words equally likely: the softer is the most likely', p: [0.3, 0.3, 0.2, 0.1, 0.1], asked: 2 },
   { note: 'the interval need not hold the word asked', p: [0.01, 0.02, 0.45, 0.5, 0.02], asked: 1 },
+  { note: 'a neighbour alone holds 0.9, the word asked outside the interval: a wild guess', p: [0.0, 0.02, 0.95, 0.02, 0.01], asked: 1 },
+  { note: 'the word and a neighbour hold 0.9, the word inside the interval: a ballpark', p: [0.025, 0.1, 0.85, 0.0125, 0.0125], asked: 1 },
   { note: 'even: all five', p: [0.2, 0.2, 0.2, 0.2, 0.2], asked: 2 },
   { note: 'a spread short of 0.9 in all, which rounding alone could make: all five', p: [0.1, 0.1, 0.1, 0.1, 0.1], asked: 3 },
 ];
