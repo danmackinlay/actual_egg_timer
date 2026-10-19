@@ -153,13 +153,6 @@ public enum Section {
     public static let heatSettledS: Double = 1.0
 }
 
-/// The peak white temperature, C, below which the white is in each band; at or above the last it is
-/// firm.
-public enum WhiteBandBelowC {
-    public static let justSet: Double = 71.0
-    public static let set: Double = 82.0
-}
-
 /// Exact by definition, all of them: the international avoirdupois ounce, inch and foot of 1959,
 /// the US liquid quart, and the imperial pint of the 1985 Weights and Measures Act.
 public enum UnitFactors {

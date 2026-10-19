@@ -7,7 +7,6 @@ import EggTimerCopy
 
 public enum WhiteBand: String, Sendable, Codable {
     case runny
-    case justSet
     case set
     case firm
 }
@@ -17,9 +16,9 @@ public struct Texture: Sendable, Equatable, Codable {
     public let yolk: YolkWord
 }
 
-public func textureFor(yolkDoseMin: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
+public func textureFor(yolkDoseMin: Double, whiteDoseMin: Double, whiteSets: Bool) -> Texture {
     let white: WhiteBand = !whiteSets ? .runny
-        : (peakWhiteC < WhiteBandBelowC.justSet ? .justSet : (peakWhiteC < WhiteBandBelowC.set ? .set : .firm))
+        : (log10(whiteDoseMin / whiteDoseTarget) > whiteFirmGapMedian ? .firm : .set)
     let level = (sliderFromYolkDose(yolkDoseMin) * sliderSteps).rounded() / sliderSteps
     return Texture(white: white, yolk: YolkWord.allCases[askedWord(level)])
 }
@@ -35,7 +34,6 @@ public func textureNoteKeys(_ t: Texture) -> TextureNote {
     let white: CopyKey
     switch t.white {
     case .runny: return TextureNote(key: .`texture.white.runny`, parts: [:])
-    case .justSet: white = .`texture.white.justSet`
     case .set: white = .`texture.white.set`
     case .firm: white = .`texture.white.firm`
     }

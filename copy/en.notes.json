@@ -79,7 +79,6 @@
     "readout.restored": { "surface": "body" },
 
     "texture.note": { "surface": "body", "example": {"white": "white set", "yolk": "yolk jammy"} },
-    "texture.white.justSet": { "surface": "fragment" },
     "texture.white.set": { "surface": "fragment" },
     "texture.white.firm": { "surface": "fragment" },
     "texture.white.runny": { "surface": "body" },

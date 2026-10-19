@@ -74,7 +74,6 @@ export interface CopyKeyArgs {
   'readout.mute.off': never;
   'readout.restored': never;
   'texture.note': 'white' | 'yolk';
-  'texture.white.justSet': never;
   'texture.white.set': never;
   'texture.white.firm': never;
   'texture.white.runny': never;

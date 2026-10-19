@@ -80,7 +80,6 @@
     "readout.restored": { "text": "After the reload the times are still right, but I can’t sound the alarm, so watch the clock." },
 
     "texture.note": { "text": "{white}, {yolk}" },
-    "texture.white.justSet": { "text": "white just set" },
     "texture.white.set": { "text": "white set" },
     "texture.white.firm": { "text": "white firm" },
     "texture.white.runny": { "text": "white stays runny" },

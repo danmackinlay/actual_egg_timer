@@ -46,7 +46,7 @@ function setupFor(cooling: Cooling, start: StartMode): CookSetup {
 
 /** The texture note's yolk, as a place among the slider's words. */
 function lineWord(sol: Solution): number {
-  return YOLK_WORDS.indexOf(textureFor(sol.result.yolkDose_min, sol.result.peakWhite_C, sol.whiteSets).yolk);
+  return YOLK_WORDS.indexOf(textureFor(sol.result.yolkDose_min, sol.result.whiteDose_min, sol.whiteSets).yolk);
 }
 
 interface Case { what: string; asked: number; sol: Solution; level: number; snapped: Solution }
