@@ -699,6 +699,26 @@ scenario('one-moment', 'each frame of the readout reads one moment, the Timeline
 });
 
 
+scenario('tap-water-mid-cook', "the cold tap's temperature while a cold cook heats: one commit of the tap's group, a later pull, and the record's pan at it", async (run) => {
+  await started(run, ['-uiDo', `set:tapWater=8@60,${TO_DONE},answer:jammy@cooled+5`]);
+  const pull0 = planIn(run.lines()).pull;
+  const t = await tapAt(run, run.t0 + 60, 'set');
+  // The change settles on the cook's clock, which stands until it is stepped.
+  await run.step(run.t0 + 62);
+  const c = await run.until(is('editCommitted'), { from: t.i, what: 'the tap committed' });
+  run.check(c.fields.join(',') === 'tapWater', `one commit, of the tap: ${say(c)}`);
+  await run.until(storedAs((x) => x.cook.choices.tapWater_C === 8), { from: c.i, what: 'the cook stored with the tap' });
+  await run.settled(c.i);
+  const pull1 = planIn(run.lines()).pull;
+  run.check(pull1 > pull0, `a colder pan, a later pull: ${(pull1 - pull0).toFixed(1)} s`);
+  const done = await toDone(run);
+  const i = await run.step(cooledAt(done) + 5);
+  const logged = await run.until(is('log', (e) => e.count >= 1), { from: i, what: 'the egg logged' });
+  const setup = (logged.last as { setup?: { panStart_C?: number } } | undefined)?.setup;
+  run.check(setup?.panStart_C === 8, `the record's pan: ${JSON.stringify(setup)}`);
+  run.note(`tap 15 assumed → 8 at +60 s: the pull ${(pull1 - pull0).toFixed(1)} s later; recorded panStart_C ${setup?.panStart_C}`);
+});
+
 scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
   await started(run, [...HOT, '-uiDo', 'drag:0.3@30']);
   let t = await tapAt(run, run.t0 + 30, 'drag');

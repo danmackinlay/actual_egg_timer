@@ -412,19 +412,27 @@ struct RoomField: View {
     }
 }
 
-/// The temperature of the water the eggs cool in, running or in a bowl,
-/// whichever the cooling is: empty until set, when it shows greyed the one
-/// the model assumes (mains water running, the room in a bowl); emptied
+/// Which water a temperature row is of: the cooling's, running or in a bowl,
+/// whichever the cooling is; or the cold tap a cold pan is filled with,
+/// which is running water's too, one number.
+enum WaterRow {
+    case cooling, pan
+}
+
+/// The temperature of a water: empty until set, when it shows greyed the one
+/// the model assumes (mains water from the tap, the room in a bowl); emptied
 /// again, it is assumed again. As `RoomField`.
-struct CoolingWaterField: View {
+struct WaterTemperatureField: View {
     let planner: Planner
+    let water: WaterRow
     @State private var text = ""
 
     var body: some View {
         let m = planner.measure(.coolingWater)
         NudgeField(
-            label: tr(.`controls.coolingWater`), measure: m, text: $text, startSI: planner.coolingWaterAssumedC,
-            endEditing: { text = shown }, field: planner.settings.cooling == .tap ? .tapWater : .bowlWater
+            label: tr(water == .pan ? .`controls.panWater` : .`controls.coolingWater`), measure: m, text: $text,
+            startSI: assumed, endEditing: { text = shown },
+            field: water == .pan || planner.settings.cooling == .tap ? .tapWater : .bowlWater
         )
             .onAppear { text = shown }
             .onChange(of: text) {
@@ -433,19 +441,27 @@ struct CoolingWaterField: View {
                 // number: a rounded display is never parsed back over it.
                 if typed == shown { return }
                 if typed.isEmpty {
-                    if planner.coolingWaterC != nil { planner.setCoolingWater(nil) }
-                } else if let value = parseTyped(typed), let si = parse(m, value), si != planner.coolingWaterC {
-                    planner.setCoolingWater(si)
+                    if given != nil { set(nil) }
+                } else if let value = parseTyped(typed), let si = parse(m, value), si != given {
+                    set(si)
                 }
             }
             .onChange(of: m) { text = shown }
             .onChange(of: planner.settings.cooling) { text = shown }
+            .onChange(of: planner.settings.tapWaterC) { text = shown }
+    }
+
+    private var given: Double? { water == .pan ? planner.settings.tapWaterC : planner.coolingWaterC }
+    private var assumed: Double { water == .pan ? Constants.tColdTapC : planner.coolingWaterAssumedC }
+
+    private func set(_ c: Double?) {
+        if water == .pan { planner.setTapWater(c) } else { planner.setCoolingWater(c) }
     }
 
     private var shown: String {
-        guard let water = planner.coolingWaterC else { return "" }
+        guard let given else { return "" }
         let m = planner.measure(.coolingWater)
-        return fieldText(m, display(m, water))
+        return fieldText(m, display(m, given))
     }
 }
 
