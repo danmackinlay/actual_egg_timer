@@ -119,6 +119,18 @@ article { background: var(--card); border: 1px solid var(--line); border-radius:
 del { background: var(--del); } ins { background: var(--ins); text-decoration: none; } del + ins { margin-left: 0.2em; }
 .ph { background: var(--ph); border-radius: 4px; padding: 0 2px; }`;
 
+/** How the owner changes what he has read, at the foot of the page: the
+ *  workflow of DEVELOPING.md's "Reviewing the words", steps 3 and 4. */
+const CHANGING = `<h2>Changing them</h2><ol>
+<li>Say what to put back, by its key, to whoever is working in the repository; or edit <code>copy/en.json</code>
+yourself, and <code>copy/en-US.json</code> where the key has a US line (its <code>base</code> is the English it
+was made from). The 1750 words may lag.</li>
+<li>Run <code>npm test</code> and <code>npm run fixtures:check</code>, then commit <code>copy/</code> with any
+fixture they wrote.</li>
+<li>Run <code>npm run copy:review</code> again and read the new page here, and the words in place in the apps.</li>
+<li>When nothing is left to put back, approve, below, and commit <code>test/data/copy-approved.txt</code>.</li>
+</ol>`;
+
 function review(out: string): void {
   const approved = readFileSync(APPROVED_PATH, 'utf8').trim();
   if (!/^[0-9a-f]{40}$/.test(approved)) throw new Error(`${APPROVED_PATH} is not one commit's full hash`);
@@ -157,6 +169,7 @@ say what to put back, and once that is committed, <code>npm run copy:approve</co
 through is what you approved, highlighted what replaced it; a slot like <span class="ph">{time}</span> is filled in
 by the app.</p>
 ${sections.join('\n')}
+${CHANGING}
 <h2>Approving</h2><p style="overflow-wrap: anywhere">${approving}</p>
 </main></body></html>
 `;
