@@ -27,9 +27,9 @@
  *
  * THE GROUPS. A change belongs to the group of the cook's choices it makes
  * (`HandGroup`), never to the element it came from: the size menu and the
- * weight typed are both the egg's mass; the room in the panels of where the
- * egg came from, the start and the cooling is the room in each. Each group makes these of `CookChoices`
- * (`takeGroup`):
+ * weight typed are both the egg's mass; the room's rows, under where the
+ * egg came from, the start and the cooling, are all the room. Each group
+ * makes these of `CookChoices` (`takeGroup`):
  *
  *   mass         mass_kg, massFrom, sizeTable
  *   eggFrom      eggFrom
