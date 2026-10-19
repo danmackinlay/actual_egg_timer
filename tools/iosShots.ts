@@ -85,6 +85,19 @@ const SHOTS: Shot[] = [
   { file: '05-eggcup', go: (run) => cook(run, (p) => p.cooled - 75, { out: true, over: { cooling: 'eggCup' } }) },
 ];
 
+/// The status bar's clock as Apple's own screenshots draw it, "9:41" and
+/// never "09:41". `--time 9:41` is drawn in the device's own clock, which
+/// `simctl create` copies from the host's, 24-hour on a Mac set so; the
+/// app's launch arguments (`localeArgs`) reach the app and not the status
+/// bar. So the device is told its clock is not forced to 24 hours, and
+/// booted again, since the status bar reads it only at boot.
+function twelveHourClock(udid: string): void {
+  simctl('spawn', udid, 'defaults', 'write', '-g', 'AppleICUForce24HourTime', '-bool', 'NO');
+  simctl('shutdown', udid);
+  simctl('boot', udid);
+  simctl('bootstatus', udid, '-b');
+}
+
 /// Today at 9:38, local, epoch s: where each shot's clock starts, so a time
 /// on screen agrees with the status bar's 9:41.
 const START = new Date().setHours(9, 38, 0, 0) / 1000;
@@ -201,6 +214,7 @@ async function main(): Promise<void> {
     for (const d of DISPLAYS) {
       const udid = createDevice(d.model, 'shots');
       try {
+        twelveHourClock(udid);
         simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi', '--wifiBars', '3',
           '--cellularBars', '4', '--batteryState', 'charged', '--batteryLevel', '100');
         await warmUp(udid, 'shots');
