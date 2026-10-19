@@ -86,6 +86,13 @@ and the map of the documents are `CLAUDE.md`.
     (13 s with the heat off). A new optional `panStart_C` in the record,
     so an egg already kept replays as it was cooked; the web deploys with
     or before the iOS build that writes it.
+16. **A web app for the owner to edit the words** (`npm run copy:edit`,
+    planned in `.claude/HANDOFF-13-copy-editor.md`): the review queue on
+    his phone, served from the Mac over the local network behind a token,
+    each key editable in place and checked as he types by the tests' own
+    rules; saving runs `npm test` and `fixtures:check` and commits the
+    catalogue by name; approving is his button. Never deployed, never
+    pushes.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
