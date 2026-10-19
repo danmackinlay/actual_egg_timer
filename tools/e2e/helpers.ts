@@ -333,6 +333,14 @@ export async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Pro
   return tab.snap();
 }
 
+/** A clause's panel opened, by its id, if it is not open already: its
+ *  clause pressed. */
+export async function openPanel(tab: Tab, panel: 'panelEgg' | 'panelFrom' | 'panelStart' | 'panelCooling'): Promise<void> {
+  await tab.eval(`(() => { const c = document.querySelector('#sentence .clause[aria-controls="${panel}"]');
+    if (c.getAttribute('aria-expanded') !== 'true') c.click(); })()`);
+  await tab.until(`document.getElementById('${panel}').offsetParent !== null`, `${panel} open`);
+}
+
 /** What the start's panel says the eggs went in at. */
 export async function panelStart(tab: Tab): Promise<string> {
   return tab.eval<string>(`(() => { const f = ${byId('startedAtField')};

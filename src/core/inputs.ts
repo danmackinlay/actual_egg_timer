@@ -87,12 +87,12 @@ export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | nu
 }
 
 /** The room the model is told about, C, or null to assume one: the cook's
- *  own, as they gave it beside "at room temperature" or in Settings, with or
- *  without a probe thermometer. It once counted only with the probe on; it
- *  moves the right time by about 5 s a degree for eggs left out, as much as
- *  a size class across a kitchen's 15-30 C, so it is offered where it is
- *  used. Clamped, like everything typed or
- *  stored. */
+ *  own, as they gave it in a panel where it changes the answer (beside "at
+ *  room temperature", with the heat off, in the air), with or without a
+ *  probe thermometer. It once counted only with the probe on; it moves the
+ *  right time by about 5 s a degree for eggs left out, as much as a size
+ *  class across a kitchen's 15-30 C, so it is offered where it is used.
+ *  Clamped, like everything typed or stored. */
 export function roomInUse(room_C: number | null): number | null {
   if (room_C === null || !Number.isFinite(room_C)) return null;
   return clamp(room_C, LIMITS.room_C);

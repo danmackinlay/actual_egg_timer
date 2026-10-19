@@ -16,8 +16,9 @@ import { pressAndHold } from './stepper.ts';
  *  name. The cooling water's is the cooling's: running water or the bowl. */
 export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup)>> = {
   size: 'mass', measureMass: 'mass', measureGirth: 'mass', measureMinor: 'mass', startTemp: 'eggFrom',
-  customTemp: 'customStart', roomTemp: 'room', roomTempFrom: 'room', startMode: 'startMode', afterBoil: 'afterBoil',
-  cooling: 'cooling', bowlLitres: 'bowlLitres', litres: 'waterLitres', eggCount: 'eggCount', altitude: 'altitude',
+  customTemp: 'customStart', roomTempFrom: 'room', roomTempStart: 'room', roomTempCool: 'room', startMode: 'startMode',
+  afterBoil: 'afterBoil', cooling: 'cooling', bowlLitres: 'bowlLitres', litres: 'waterLitres', eggCount: 'eggCount',
+  altitude: 'altitude',
   doneness: 'level', startedAt: 'startedAt',
   coolingWater: () => (radioValue('cooling', 'ice') === 'tap' ? 'tapWater' : 'bowlWater'),
 };

@@ -601,7 +601,7 @@ distrust.
 |---|---|---|---|
 | `T_ICE_BATH_C` | 2 | °C | Ice water. **High.** |
 | `T_COLD_TAP_C` | 15 | °C | Running water's temperature when the cook gives none (`CookSetup.coolingWater_C`). Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. 5-25 °C is -8.5 to +6.5 s at jammy. **Low, and it matters little** (§5). |
-| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. The cook may give the room, beside "at room temperature" or in Settings — see §9. |
+| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. The cook may give the room in the setup sentence's panels where it counts — see §9. |
 | `TAU_PLUNGE` | 4 | s | Surface equilibration on changing medium. Physical (finite Bi, finite handling time) *and* a required numerical regulariser (§2.3). **Low as physics, mandatory as numerics.** |
 | `TAU_DIP_RECOVERY` | 60 | s | Burner recovery after cold eggs enter. **Low.** |
 | `MODE_COUNT` | 40 | — | Eigenmodes retained. Exact to machine precision at these Fourier numbers. **Numerical.** |
@@ -915,16 +915,26 @@ eggs) as the room goes from 15 to 30 °C against 20:
 | where the room reaches the egg | jammy cook, per °C | across 15-30 °C | peak yolk at a fixed cook, per °C |
 |---|---|---|---|
 | eggs left out (it is the egg's start) | -4.8 s | +22 to -50 s | +0.4 °C |
+| heat off, lid on, a cold start, fridge eggs (the pan cools toward it) | -3.1 s | +16 to -31 s | +0.20 °C |
 | a cold start's pan, fridge eggs | -2.1 s | +10.5 to -21 s | +0.18 °C |
 | in the air, fudgy | -1.4 s | +6 to -14 s | +0.08 °C |
 | a bowl at the room, fridge eggs | -0.9 s | +4.4 to -9.6 s | +0.06 °C |
+| an egg cup, opened two minutes out | under 0.01 s | under 0.1 s | +0.0003 °C |
 | ice bath or running water | 0 | 0 | 0 |
+
+With the heat off on a boiling start, fridge eggs in 2 L never set the white, and the time
+given is as far as the pan goes (§2.4); the room moves that by +12 s a degree, +128 s at
+30 °C, more than anywhere else, since the pan's water is all the heat there is.
 
 Beside the inputs the app asks: a size class (58 against 68 g) is 45 s, 1500 m of altitude
 39 s, one egg against six 8 s. So the room is worth asking where it counts, and it is: an
-optional Room temperature beside "at room temperature", and in Settings, greyed at the 20 °C
-assumed until set. Once given, it is the room for every path above, and the advice to use
-fridge eggs is not shown.
+optional Room temperature in the setup sentence's panels, where the choice it counts for is
+made — beside "at room temperature", under the heat off, lid on, and under the air — greyed
+at the 20 °C assumed until set. It is one value, so given in one panel it is the room for
+every path above, and the advice to use fridge eggs is not shown. It is not asked under a
+bowl, whose water's own temperature is asked there and defaults to the room; nor under an
+egg cup; nor under a cold start kept boiling, where what the model starts the pan at stands
+for the tap water it was filled with, which the room does not measure.
 
 **Running water's temperature.** Tempting to tie to the room, and wrong: mains water arrives
 at something closer to ground temperature. It keeps its own default (§6), 15 °C, and the

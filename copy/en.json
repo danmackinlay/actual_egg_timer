@@ -335,7 +335,7 @@
 
     "controls.thermometer.ask": { "text": "Ask for a reading after each egg" },
     "controls.room": { "text": "Room temperature" },
-    "controls.room.more": { "text": "Optional. Read a thermometer in the air of your kitchen and set what it says. It matters most for eggs left out at room temperature and eggs cooled in the air. Leave it blank and I’ll assume {room}." },
+    "controls.room.more": { "text": "Optional. Read a thermometer in the air of your kitchen and set what it says. It matters most with the heat off, and for eggs left out or cooled in the air. Leave it blank and I’ll assume {room}." },
     "probe.ask": { "text": "Do you have a probe thermometer?" },
     "probe.how": { "text": "Push it into the middle of the yolk now and tell me the highest number you see." },
     "probe.entry": { "text": "Highest reading" },

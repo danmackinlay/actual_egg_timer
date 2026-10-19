@@ -40,9 +40,10 @@ export const ELEMENTS = {
   shareUid: 'span', appVersion: 'p', tabNote: 'section', useHere: 'button', shareDelete: 'button',
   shareConfirm: 'div', shareDeleteYes: 'button', shareDeleteNo: 'button', probeSetting: 'input', probeEntry: 'div',
   probeReading: 'input', unitProbe: 'span', probeSave: 'button', probeNote: 'p', feedbackTarget: 'p',
-  roomTemp: 'input', unitRoom: 'span', roomFromField: 'div', roomTempFrom: 'input', unitRoomFrom: 'span',
-  moreRoomFrom: 'p', bowlFields: 'div', bowlLitres: 'input', unitBowl: 'span', coolingWaterField: 'div',
-  coolingWater: 'input', unitCoolingWater: 'span', moreCoolingWater: 'p', moreRoom: 'p', unitsPeriod: 'p',
+  roomFromField: 'div', roomTempFrom: 'input', unitRoomFrom: 'span', moreRoomFrom: 'p', roomStartField: 'div',
+  roomTempStart: 'input', unitRoomStart: 'span', moreRoomStart: 'p', roomCoolField: 'div', roomTempCool: 'input',
+  unitRoomCool: 'span', moreRoomCool: 'p', bowlFields: 'div', bowlLitres: 'input', unitBowl: 'span',
+  coolingWaterField: 'div', coolingWater: 'input', unitCoolingWater: 'span', moreCoolingWater: 'p', unitsPeriod: 'p',
 
   settingsForm: 'form', panelEgg: 'div', panelFrom: 'div', panelStart: 'div', panelCooling: 'div', settingsLink: 'a',
   actions: 'div', learned: 'section', tempRoom: 'input', startCold: 'input', startHot: 'input', startSous: 'input',

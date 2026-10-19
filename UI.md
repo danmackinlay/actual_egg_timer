@@ -19,11 +19,14 @@ The owner's steer (`DECISIONS.md` 25):
 
 - **One decision per screen.** Each phase shows what the cook must act on now,
   and no more.
-- **Set once, cook many.** Most inputs belong to the kitchen, not the egg:
-  units, altitude, water, heat after the boil, the probe, the room and the
-  language. They live on a Settings page, visited rarely. How many eggs go
-  in is decided at each cook, so it is in the sentence and the egg's panel
-  (`DECISIONS.md` 115).
+- **Set once, cook many.** What changes rarely, the kitchen and the cook,
+  lives on a Settings page, visited rarely: the units, the language, the
+  alarm's sound, the altitude, the probe, what I've learned and sharing.
+  Anything that can change from one cook to the next is set by tapping its
+  clause in the sentence, in that clause's panel (`DECISIONS.md` NNN): how
+  many eggs go in, in the egg's (115); the heat after the boil and the
+  water in the pan, in the start's; and the room, in each panel where it
+  changes the answer (§5).
 - **The setup is a sentence, not a form.** What varies from egg to egg is one
   line of prose, and each clause of it is tappable (§5).
 - **Every number has a − and a +** beside it, which steps it on its grid
@@ -45,7 +48,7 @@ goes, and only the readout's words, its colours and the buttons change. Top
 to bottom, in every phase:
 
 - Settings and Help at the top, in every phase. While a cook runs,
-  Settings' pot rows correct it as the sentence does; what I have learned
+  Settings' altitude corrects it as the sentence does; what I have learned
   and sharing wait for it to end.
 - **The readout**: the phase label (idle, the total time; while a cook runs,
   the instruction), the time, and one line under it (while idle, the method;
@@ -103,7 +106,8 @@ end of the cooling; otherwise the egg in the water now, through the
 cooling; at Done, the egg as it ran.
 
 **Corrections** (`DECISIONS.md` 96 to 98). After Start every clause of the
-sentence, the slider and Settings' pot rows stay open, showing the cook's
+sentence and every row of its panels, the slider and Settings' altitude
+stay open, showing the cook's
 own choices, never the settings. A change is a correction, "it was always
 like this": the cook is planned again from its start. It is committed once
 the cook has let go of the control, or touched another; until then the
@@ -127,10 +131,10 @@ cook again as corrected, and a pull already past rings now; "No, they’re
 out" keeps the pull and sends the correction to the record. Nothing past
 the question is shown or rung until it is answered.
 
-**Settings** holds the kitchen (§2), each row with its (i); the consent for
-sharing is always on screen, never behind the (i). In sous-vide the settings
-that change nothing there are put away; while a cook runs, what I've learned
-and sharing are too.
+**Settings** holds what changes rarely (§2), each row with its (i); the
+consent for sharing is always on screen, never behind the (i). In sous-vide
+the settings that change nothing there (the altitude and the probe) are put
+away; while a cook runs, what I've learned and sharing are too.
 
 **Help** is the whole story (§7), reachable in every phase.
 
@@ -196,9 +200,21 @@ cools change nothing, so the sentence leaves them out.
   tappable: a choice corrects the cook (§3). The start clause says what it
   said at idle, never the time; its panel says when the eggs went in, and
   corrects it.
-- **Heat after the boil is not a clause.** It is a habit of a kitchen, tied
-  to the water, and a fifth clause pushes the sentence onto a third line at
-  390 px. The readout's line says "lid on" when it is set.
+- **Heat after the boil is in the start's panel**, not a clause of its own
+  (`DECISIONS.md` NNN): a fifth clause pushes the sentence onto a third line
+  at 390 px, and the start clause's words already carry it ("into boiling
+  water, heat off and lid on"). Under the three starts, Once it's boiling
+  (Keep boiling / Heat off, lid on), and under it the water in the pan,
+  shown for every pan start; neither in sous-vide. The readout's line says
+  "lid on" when it is set.
+- **The room is one value, in the panels where it changes the answer**
+  (`DECISIONS.md` NNN): where the egg comes from, when it is Room; the
+  start's, when the heat is off; the cooling's, when it is the air.
+  Optional, greyed at the room assumed until set; each row edits the one
+  setting. Not under a bowl, whose water's temperature is asked there and
+  assumed at the room; nor under an egg cup, where it changes nothing; nor
+  under a cold start kept boiling, where what it stands for is the water
+  the pan was filled with.
 
 ## 6. How wording is reviewed
 

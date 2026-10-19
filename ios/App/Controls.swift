@@ -297,7 +297,7 @@ func fieldText(_ m: Measure, _ value: Double) -> String {
 }
 
 /// A number that may be left empty, typed or stepped (the `feedback2` draft):
-/// the probe's reading after a cook, and the room in Settings. The empty
+/// the probe's reading after a cook, and the room in the panels. The empty
 /// field shows, greyed, where the − and + start: the peak the cook was
 /// started at, or the room assumed. A press steps on the measure's own grid
 /// for the − and + (`stepPast`: whole degrees for a probe that is typed to a
@@ -375,10 +375,11 @@ struct NudgeField: View {
     }
 }
 
-/// The room, in Settings and beside "at room temperature": empty until set,
-/// when the room is assumed; emptied again, it is assumed again. The planner holds it
-/// in SI (`roomC`); the field holds what the cook typed or stepped to, and
-/// shows the stored room again whenever it is not being typed in.
+/// The room, in each panel where it changes the answer (`RoomRow`): empty
+/// until set, when the room is assumed; emptied again, it is assumed again.
+/// The planner holds it in SI (`roomC`); the field holds what the cook typed
+/// or stepped to, and shows the stored room again whenever it is not being
+/// typed in.
 struct RoomField: View {
     let planner: Planner
     @State private var text = ""

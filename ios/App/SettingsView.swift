@@ -4,21 +4,19 @@ import EggTimerCopy
 import EggTimerApp
 import EggTimerShared
 
-/// Settings: what belongs to the kitchen rather than the egg (UI.md sections
-/// 2 and 3, the web's `#settings`). Set once, cook many, so it is a page of its
-/// own, pushed, and visited rarely. Each item has its (i).
+/// Settings: what changes rarely, the kitchen and the cook (UI.md sections
+/// 2 and 3, the web's `#settings`); what can change from one cook to the next
+/// is set in the sentence's panels. Set once, cook many, so it is a page of
+/// its own, pushed, and visited rarely. Each item has its (i).
 ///
 /// In sous-vide the settings that change nothing there are put away, as on
 /// the web: `sousVideEstimate` takes the egg's size, the doneness and a bath,
-/// so the altitude, the water, the eggs in the pan, the heat after the boil
-/// and the probe are all pan arithmetic. A new input to `sousVideEstimate` is
-/// the signal to bring one back.
+/// so the altitude and the probe are pan arithmetic. A new input to
+/// `sousVideEstimate` is the signal to bring one back.
 struct SettingsView: View {
     @Bindable var planner: Planner
-    /// While a cook runs, the pot's rows - the altitude, the water, the eggs
-    /// in the pan, the heat after the boil, the probe and the room - are its
-    /// controls, and correct it as the sentence does; what I have learned
-    /// and sharing wait for it to end.
+    /// While a cook runs, the altitude is its control, and corrects it as the
+    /// sentence does; what I have learned and sharing wait for it to end.
     var cooking = false
     /// Whether the egg on screen is in the log and still open to correction
     /// (`Cook.eggOpen`): sharing holds it back.
@@ -118,27 +116,6 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 }
 
-                Section {
-                    InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
-                        StepperValue(
-                            label: tr(.`controls.water`), measure: planner.measure(.water),
-                            value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .waterLitres
-                        )
-                    }
-                }
-
-                Section {
-                    InfoRow(.`controls.afterTheBoil`, more: [tr(.`controls.afterTheBoil.more`)])
-                    SegmentedChoice(
-                        label: tr(.`controls.afterTheBoil`),
-                        choices: [
-                            (tr(.`controls.afterTheBoil.keepBoiling`), false),
-                            (tr(.`controls.afterTheBoil.heatOff`), true),
-                        ],
-                        selection: $planner.heatOff
-                    )
-                }
-
                 // The probe thermometer. Off by default, and changed here; the
                 // reading's field after a cook is there either way.
                 Section {
@@ -147,20 +124,6 @@ struct SettingsView: View {
                         get: { planner.settings.probe },
                         set: { planner.setProbe($0) }
                     ))
-                }
-
-                // The room: optional, with or without the probe
-                // (`roomInUse`). Its label is too long to share a line with
-                // the field and its stepper, so the control has a line of
-                // its own.
-                Section {
-                    InfoRow(.`controls.room`, more: [tr(.`controls.room.more`, [
-                        "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
-                    ])])
-                    HStack {
-                        Spacer(minLength: 0)
-                        RoomField(planner: planner)
-                    }
                 }
             }
 
