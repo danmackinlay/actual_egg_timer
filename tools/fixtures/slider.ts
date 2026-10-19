@@ -43,10 +43,13 @@ const VERDICT_CASES: { reachable: boolean; whiteSets: boolean; softest: number; 
 for (const level of [0.0, 0.22, 0.41, 0.5, 0.62, 0.9, 1.0]) {
   VERDICT_CASES.push({ reachable: true, whiteSets: true, softest: 0, hardest: 1, level: level });
   VERDICT_CASES.push({ reachable: false, whiteSets: false, softest: 1, hardest: 0, level: level });
-  for (const softest of [0.0, 0.415, 0.608, 0.73]) {
+  // 0.312 and 0.512 are nearer Soft and Jammy but snap up into Jammy and
+  // Fudgy; 0.115 and 0.318 are nearer Soft and Jammy but snap down into
+  // Runny and Soft. The word named is the one the slider lands in.
+  for (const softest of [0.0, 0.415, 0.608, 0.73, 0.312, 0.512]) {
     VERDICT_CASES.push({ reachable: false, whiteSets: true, softest: softest, hardest: 1, level: level });
   }
-  for (const hardest of [0.735, 0.42, 0.405]) {
+  for (const hardest of [0.735, 0.42, 0.405, 0.115, 0.318]) {
     VERDICT_CASES.push({ reachable: false, whiteSets: true, softest: 0, hardest: hardest, level: level });
   }
 }

@@ -9,7 +9,8 @@
  * and a level outside it stays where it was asked and is warned of; when
  * every level is a wild guess nothing is warned of; a counter rest asked for
  * soft is refused for the physical reason and lands on the physical edge,
- * warned of if it is a wild guess there; at the far left
+ * warned of if it is a wild guess there, and a softest cook just past a
+ * word's edge is named as the word the slider lands in; at the far left
  * the slider rests on the level the time and the bracket are for, whose
  * middle leaves the thumb only by the lean the white asks for once a time is
  * chosen; the owner's own egg goes to soft and says so; and the time never
@@ -35,9 +36,11 @@ import type { DoseGrid } from '../src/core/doseGrid.ts';
 import { createPrior, updatePosterior, yolkWordProbabilities } from '../src/core/infer.ts';
 import { type Egg, eggFromMass } from '../src/core/geometry.ts';
 import type { CookSetup } from '../src/core/protocol.ts';
-import { type Solution, solveCookTime } from '../src/core/solve.ts';
-import { anchorNear, snapUp, verdictFor } from '../src/core/slider.ts';
-import { CALIBRATION_SEED, type Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.ts';
+import { DONENESS_ANCHORS, type Solution, solveCookTime } from '../src/core/solve.ts';
+import { anchorNear, anchorReachable, snapUp, verdictFor } from '../src/core/slider.ts';
+import {
+  CALIBRATION_SEED, type Calibration, PARTICLE_COUNT, calibrationDoneness, calibrationParams, freshCalibration,
+} from '../src/core/record.ts';
 import {
   ADVICE_GAIN, type AdviceFacts, type OddsProfile, adviceWanted, askedNear, lowOddsAt, answerAt, decideAnswer,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
@@ -166,6 +169,45 @@ test('when every level is a wild guess, nothing is warned of', () => {
     const sol = solveCookTime(EGG, SETUP, calibrationParams(scattered), calibrationDoneness(scattered, level));
     assert.deepEqual(a.verdict, verdictFor(sol, level));
     assert.equal(a.lowOdds, false);
+  }
+});
+
+test('a refusal whose limit is just past a word\'s edge names the word the slider lands in, which is not struck out', () => {
+  // Fresh installs whose softest cook falls less than a grid step past a
+  // word's edge: the slider can only rest in the next word, and the refusal
+  // must say that one.
+  const fresh = freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED);
+  const cases = [
+    {
+      what: 'a 77 g egg from the fridge, boiled with the heat on, rested on the counter',
+      egg: eggFromMass(0.077), setup: appSetup({ cooling: 'counter' }), band: [0.51, 0.515],
+      asked: 0.22, word: 'doneness.fudgy', key: 'refusal.counter',
+    },
+    {
+      what: 'a 43 g egg from the room, boiled with the heat off, opened in an egg cup',
+      egg: eggFromMass(0.043), setup: appSetup({ cooling: 'eggCup', eggStart_C: 20, afterBoil: 'off' }),
+      band: [0.31, 0.315], asked: 0, word: 'doneness.jammy', key: 'refusal.eggCup',
+    },
+    {
+      what: 'the same egg cup, asked for soft',
+      egg: eggFromMass(0.043), setup: appSetup({ cooling: 'eggCup', eggStart_C: 20, afterBoil: 'off' }),
+      band: [0.31, 0.315], asked: 0.22, word: 'doneness.jammy', key: 'refusal.eggCup',
+    },
+  ] as const;
+  for (const c of cases) {
+    const asked = solveCookTime(c.egg, c.setup, calibrationParams(fresh), calibrationDoneness(fresh, c.asked));
+    assert.ok(
+      asked.softestLevel > c.band[0] && asked.softestLevel <= c.band[1],
+      `${c.what}: softest ${asked.softestLevel} has left (${c.band[0]}, ${c.band[1]}], so this case no longer sits on the edge`,
+    );
+    const a = answerAt(fresh, c.egg, c.setup, c.asked, null);
+    assert.equal(a.verdict.kind, 'tooSoftForWhite', c.what);
+    assert.equal(a.level, snapUp(asked.softestLevel), c.what);
+    assert.equal(anchorNear(a.level).key, c.word, `${c.what}: the slider's word`);
+    assert.equal(a.verdict.limit.key, c.word, `${c.what}: the refusal's word`);
+    assert.equal(anchorReachable(DONENESS_ANCHORS.findIndex((w) => w.key === c.word), asked.softestLevel, asked.hardestLevel), true,
+      `${c.what}: the word named is not struck out`);
+    assert.equal(warningKey(a.verdict, a.lowOdds, c.setup.cooling)?.key, c.key, `${c.what}: the refusal is said`);
   }
 });
 
