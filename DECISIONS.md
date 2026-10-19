@@ -369,7 +369,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     assumed, feeds the model wherever the room was assumed: the air the eggs
     cool in, the water left to stand and a cold pan's start, and an egg left
     out at room temperature. The room is shown with or without the probe, in
-    the panel of "at room temperature" and in Settings (115). Without a
+    the setup sentence's panels where it changes the answer (NNN). Without a
     measured room, the old rule stands that the room needs no input of its
     own. The record's `ambient_C` already holds the room, so no record
     format changed.
@@ -750,8 +750,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     default ("optional with default"). No warning for a crowded bowl ("low
     leverage"). The cooling choices are a list, fastest first. The egg
     count moves into the setup sentence and the egg's panel. The room is
-    shown without the probe (79 says so now), in the panel of "at room
-    temperature" and in Settings, on the two tests the owner set: its
+    shown without the probe (79 says so now), in the panels where it changes
+    the answer (NNN), on the two tests the owner set: its
     leverage (-4.8 s a degree for eggs left out, about a size class across
     a kitchen's range) and a natural place. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
@@ -987,3 +987,35 @@ Decided by the owner, 19 October 2026:
     keeps them go. Until 0.6 the alarms stay time-sensitive notifications,
     which reach the cook through a Focus only where its Time Sensitive
     Notifications are allowed.
+
+Decided by the owner, 20 October 2026:
+
+NNN. **What changes from one cook to the next is set in the sentence;
+    Settings holds what changes rarely.** The owner's words: "things that
+    are likely to change rarely (language, measurement system, altitude)
+    should be in settings, but things that should change per cook should be
+    accessed by tapping the relevant parameter in the sentence describing
+    the cooking process", and of the heat after the boil, "That feels like
+    a cooking method to me not a setting." Settings keeps the units, the
+    language, the alarm's sound, the altitude, the probe, what I've learned
+    and sharing; while a cook runs only the altitude there corrects it, as
+    the sentence's rows do. The heat after the boil goes into the start's
+    panel, under the three starts, whose clause already says "heat off and
+    lid on", so there is still no fifth clause. The water in the pan goes
+    under it, shown for every pan start: with the heat kept on it is a few
+    seconds (a litre against two, 3.5 s at two eggs and 7 s at six), and
+    it is the volume the time to boil is remembered under. The room leaves
+    Settings and is shown only in the panels where it changes the answer,
+    one value in one store, each row editing it: beside "at room
+    temperature" (an egg left out, 4.8 s a degree), under the heat off,
+    lid on (the pan cools toward it, 3.1 s a degree on a cold start, more on
+    a boiling one), and under the air (the egg cools toward it). Not under
+    a bowl, whose water's temperature is asked there itself and assumed at
+    the room, so a room row beside it would ask the same thing less
+    directly and do nothing once the water's is given; not under an egg
+    cup, opened too soon for the room to move the yolk by a tenth of a
+    second; not under a cold start kept boiling, where what the room stands
+    for is the water the pan was filled with. The model is unchanged: the
+    room still feeds every path the room's input feeds (79, its third
+    request). No store, key or correction group changes: a correction's
+    group is the choice it makes, wherever its control sits (139).

@@ -129,7 +129,8 @@ cannot read dropped, the old keys swept at boot, and sharing sending only
 final eggs; and the one screen's: its layout in
 every phase, the egg's readings, corrections mid-cook (the owner's boiling
 to cold, overdue and back, a drag that rings only on release, the start's
-time and its limits, Settings' water), a correction at Done and the slider
+time and its limits, the start's panel's heat and water, the room in its
+panels, Settings' altitude), a correction at Done and the slider
 there, and "still in the water?". `npm run e2e -- reload one-tab-takeover` runs
 those named; `node tools/e2e.ts --list` lists them; `E2E_DEBUG=1` prints
 the page's text when one fails.
