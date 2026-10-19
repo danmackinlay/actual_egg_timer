@@ -11,8 +11,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { askedWord } from '../src/core/certainty.ts';
+import { YOLK_WORDS } from '../src/core/infer.ts';
 import { DEFAULTS } from '../src/core/inputs.ts';
-import { anchorNear, targetPeakYolk_C, verdictFor } from '../src/core/slider.ts';
+import { SLIDER_STEPS, anchorNear, verdictFor } from '../src/core/slider.ts';
 import { textureFor, textureNoteKeys } from '../src/core/texture.ts';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.ts';
 import type { CookSetup } from '../src/core/protocol.ts';
@@ -21,23 +23,44 @@ import { parseCatalogue, render } from '../src/core/copy.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
-test('texture bands are ordered and half-open at the stated thresholds', () => {
-  assert.deepEqual(textureFor(57.9, 70.9, true), { white: 'justSet', yolk: 'liquid' });
-  assert.deepEqual(textureFor(58.0, 71.0, true), { white: 'set', yolk: 'soft' });
-  assert.deepEqual(textureFor(65.0, 81.9, true), { white: 'set', yolk: 'jammy' });
-  assert.deepEqual(textureFor(68.0, 82.0, true), { white: 'firm', yolk: 'fudgy' });
-  assert.deepEqual(textureFor(73.0, 90.0, true), { white: 'firm', yolk: 'set' });
+/** The yolk dose the slider asks for at `level`, equivalent minutes. */
+function doseAt(level: number): number {
+  return donenessFromSlider(level).yolkDose_min;
+}
+
+test('the white\'s bands are ordered and half-open at the stated thresholds', () => {
+  assert.equal(textureFor(doseAt(0.41), 70.9, true).white, 'justSet');
+  assert.equal(textureFor(doseAt(0.41), 71.0, true).white, 'set');
+  assert.equal(textureFor(doseAt(0.41), 81.9, true).white, 'set');
+  assert.equal(textureFor(doseAt(0.41), 82.0, true).white, 'firm');
+});
+
+test('the yolk is the slider\'s word for its dose, at every position the slider can rest on', () => {
+  for (let p = 0; p <= SLIDER_STEPS; p++) {
+    const level = p / SLIDER_STEPS;
+    assert.equal(textureFor(doseAt(level), 75, true).yolk, YOLK_WORDS[askedWord(level)], `level ${level}`);
+  }
+  // 0.11 is the edge between Runny and Soft, and the slider calls it Runny:
+  // a solve that lands a hair above its dose is still the egg at 0.11.
+  assert.equal(askedWord(0.11), 0);
+  assert.equal(textureFor(doseAt(0.11) * (1 + 1e-9), 75, true).yolk, 'runny');
+  // Between two positions, the nearer one's word.
+  assert.equal(textureFor(doseAt(0.114), 75, true).yolk, 'runny');
+  assert.equal(textureFor(doseAt(0.116), 75, true).yolk, 'soft');
+  // Past either end of the track, the word at that end.
+  assert.equal(textureFor(1e-6, 75, true).yolk, 'runny');
+  assert.equal(textureFor(1e6, 75, true).yolk, 'hard');
 });
 
 test('the jammy band contains the default slider position', () => {
   // DEFAULTS.doneness is meant to be Jammy; if the anchors or the bands move,
   // this is what notices.
   assert.equal(anchorNear(DEFAULTS.doneness).key, 'doneness.jammy');
-  assert.equal(textureFor(targetPeakYolk_C(DEFAULTS.doneness), 85, true).yolk, 'jammy');
+  assert.equal(textureFor(doseAt(DEFAULTS.doneness), 75, true).yolk, 'jammy');
 });
 
-function noteText(peakYolk_C: number, peakWhite_C: number, whiteSets: boolean): string {
-  const note = textureNoteKeys(textureFor(peakYolk_C, peakWhite_C, whiteSets));
+function noteText(yolkDose_min: number, peakWhite_C: number, whiteSets: boolean): string {
+  const note = textureNoteKeys(textureFor(yolkDose_min, peakWhite_C, whiteSets));
   const parts: Record<string, string> = {};
   for (const [name, key] of Object.entries(note.parts)) parts[name] = render(EN, key);
   return render(EN, note.key, parts);
@@ -48,13 +71,15 @@ test('a white the pan never sets is runny whatever its peak, and is the whole no
   // the peak alone said that of a white that stays runny. iOS did, until the
   // decision moved here.
   for (const peakWhite of [40, 60, 70.9, 75, 95]) {
-    assert.equal(textureFor(65, peakWhite, false).white, 'runny', `peak white ${peakWhite} C`);
-    assert.deepEqual(textureNoteKeys(textureFor(65, peakWhite, false)),
+    assert.equal(textureFor(doseAt(0.41), peakWhite, false).white, 'runny', `peak white ${peakWhite} C`);
+    assert.deepEqual(textureNoteKeys(textureFor(doseAt(0.41), peakWhite, false)),
       { key: 'texture.white.runny', parts: {} });
-    assert.equal(noteText(65, peakWhite, false), 'white stays runny');
+    assert.equal(noteText(doseAt(0.41), peakWhite, false), 'white stays runny');
   }
-  assert.equal(noteText(65, 60, true), 'white just set, yolk jammy');
-  assert.equal(noteText(50, 90, true), 'white firm, yolk liquid');
+  assert.equal(noteText(doseAt(0.41), 60, true), 'white just set, yolk jammy');
+  assert.equal(noteText(doseAt(0), 90, true), 'white firm, yolk liquid');
+  assert.equal(noteText(doseAt(0.22), 75, true), 'white set, yolk soft, barely thickened');
+  assert.equal(noteText(doseAt(1), 90, true), 'white firm, yolk fully set');
 });
 
 test('heat off, too little water: the solver\'s white never sets, and the note does not say "just set"', () => {
@@ -66,5 +91,5 @@ test('heat off, too little water: the solver\'s white never sets, and the note d
   assert.equal(sol.whiteSets, false);
   assert.equal(verdictFor(sol, DEFAULTS.doneness).kind, 'whiteNeverSets');
   assert.ok(sol.result.peakWhite_C < 71, 'its peak alone would read "white just set"');
-  assert.equal(noteText(sol.result.peakYolk_C, sol.result.peakWhite_C, sol.whiteSets), 'white stays runny');
+  assert.equal(noteText(sol.result.yolkDose_min, sol.result.peakWhite_C, sol.whiteSets), 'white stays runny');
 });

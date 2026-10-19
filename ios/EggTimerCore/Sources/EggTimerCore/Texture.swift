@@ -12,31 +12,16 @@ public enum WhiteBand: String, Sendable, Codable {
     case firm
 }
 
-public enum YolkBand: String, Sendable, Codable {
-    case liquid
-    case soft
-    case jammy
-    case fudgy
-    case set
-}
-
 public struct Texture: Sendable, Equatable, Codable {
     public let white: WhiteBand
-    public let yolk: YolkBand
+    public let yolk: YolkWord
 }
 
-public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
+public func textureFor(yolkDoseMin: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
     let white: WhiteBand = !whiteSets ? .runny
         : (peakWhiteC < WhiteBandBelowC.justSet ? .justSet : (peakWhiteC < WhiteBandBelowC.set ? .set : .firm))
-    let yolk: YolkBand
-    switch peakYolkC {
-    case ..<YolkBandBelowC.liquid: yolk = .liquid
-    case ..<YolkBandBelowC.soft: yolk = .soft
-    case ..<YolkBandBelowC.jammy: yolk = .jammy
-    case ..<YolkBandBelowC.fudgy: yolk = .fudgy
-    default: yolk = .set
-    }
-    return Texture(white: white, yolk: yolk)
+    let level = (sliderFromYolkDose(yolkDoseMin) * sliderSteps).rounded() / sliderSteps
+    return Texture(white: white, yolk: YolkWord.allCases[askedWord(level)])
 }
 
 /// The texture note as the catalogue's keys: the line's own, and one for each
@@ -56,11 +41,11 @@ public func textureNoteKeys(_ t: Texture) -> TextureNote {
     }
     let yolk: CopyKey
     switch t.yolk {
-    case .liquid: yolk = .`texture.yolk.liquid`
+    case .runny: yolk = .`texture.yolk.liquid`
     case .soft: yolk = .`texture.yolk.soft`
     case .jammy: yolk = .`texture.yolk.jammy`
     case .fudgy: yolk = .`texture.yolk.fudgy`
-    case .set: yolk = .`texture.yolk.set`
+    case .hard: yolk = .`texture.yolk.set`
     }
     return TextureNote(key: .`texture.note`, parts: ["white": white, "yolk": yolk])
 }

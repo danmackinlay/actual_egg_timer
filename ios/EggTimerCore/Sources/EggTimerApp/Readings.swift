@@ -194,7 +194,7 @@ public struct SliderReading {
             return sousVideCopy(planner.sousVide, now: AppClock.now, units: planner.units).note
         }
         guard let s = noteSolution else { return "" }
-        return textureNote(peakYolkC: s.result.peakYolkC, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)
+        return textureNote(yolkDoseMin: s.result.yolkDoseMin, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)
     }
 }
 

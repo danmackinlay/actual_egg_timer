@@ -4,22 +4,40 @@
  * the texture note is said in.
  */
 
+import { wordBandHigh } from '../../src/core/certainty.ts';
+import { SLIDER_STEPS } from '../../src/core/slider.ts';
+import { donenessFromSlider } from '../../src/core/solve.ts';
 import { textureFor, textureNoteKeys } from '../../src/core/texture.ts';
 
-/* Every boundary with the white setting, and a few without: a white the pan
- * never sets is runny whatever its peak, even one hot enough to read "firm". */
-const TEXTURE_CASES: [number, number, boolean][] = [];
-for (const yolk of [50, 57.9, 58, 62.9, 63, 67.9, 68, 72.9, 73, 85]) {
-  for (const white of [60, 70.9, 71, 81.9, 82, 95]) TEXTURE_CASES.push([yolk, white, true]);
+function doseAt(level: number): number {
+  return donenessFromSlider(level).yolkDose_min;
 }
-for (const [yolk, white] of [[50, 60], [57.9, 70.9], [65, 71], [73, 95]]) {
+
+/* The yolk's doses: every position the slider can rest on, the doses
+ * between two positions either side of every edge between two words, and
+ * doses past each end of the track. Never half a step, where the rounding
+ * onto the grid turns on the last bit. */
+const YOLK_DOSES_MIN: number[] = [1e-4];
+for (let p = 0; p <= SLIDER_STEPS; p++) YOLK_DOSES_MIN.push(doseAt(p / SLIDER_STEPS));
+for (let k = 0; k < 4; k++) {
+  for (const side of [-0.004, 0.004]) YOLK_DOSES_MIN.push(doseAt(wordBandHigh(k) + side));
+}
+YOLK_DOSES_MIN.push(1e5);
+
+/* The white at every boundary of its peak, with a jammy yolk; and a few that
+ * never set: a white the pan never sets is runny whatever its peak, even one
+ * hot enough to read "firm". */
+const TEXTURE_CASES: [number, number, boolean][] = [];
+for (const yolk of YOLK_DOSES_MIN) TEXTURE_CASES.push([yolk, 75, true]);
+for (const white of [60, 70.9, 71, 81.9, 82, 95]) TEXTURE_CASES.push([doseAt(0.41), white, true]);
+for (const [yolk, white] of [[1e-4, 60], [doseAt(0.22), 70.9], [doseAt(0.41), 71], [doseAt(1), 95]]) {
   TEXTURE_CASES.push([yolk, white, false]);
 }
 
 export const textureFixture = {
-  about: 'The texture bands: every boundary from both sides, a white that never sets, and the note\'s keys. src/core/texture.ts.',
+  about: 'The texture bands: the yolk at every position of the slider, between two positions either side of every edge between its words, and past its ends; the white\'s peak at every boundary; a white that never sets; and the note\'s keys. src/core/texture.ts.',
   cases: TEXTURE_CASES.map(([yolk, white, whiteSets]) => {
     const t = textureFor(yolk, white, whiteSets);
-    return { peakYolk_C: yolk, peakWhite_C: white, whiteSets: whiteSets, texture: t, note: textureNoteKeys(t) };
+    return { yolkDose_min: yolk, peakWhite_C: white, whiteSets: whiteSets, texture: t, note: textureNoteKeys(t) };
   }),
 };

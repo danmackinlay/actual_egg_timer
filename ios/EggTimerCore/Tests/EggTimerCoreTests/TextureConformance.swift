@@ -12,12 +12,12 @@ struct TextureConformance {
     func cases() throws {
         var runny = 0
         for c in try Fixtures.list("texture.json", "cases") {
-            let yolk = try c.num("peakYolk_C")
+            let yolk = try c.num("yolkDose_min")
             let white = try c.num("peakWhite_C")
             let sets = try c.flag("whiteSets")
-            let t = textureFor(peakYolkC: yolk, peakWhiteC: white, whiteSets: sets)
-            expectJSON(t, c["texture"], "\(yolk) / \(white) C, sets \(sets)")
-            expectJSON(textureNoteKeys(t), c["note"], "the note at \(yolk) / \(white) C, sets \(sets)")
+            let t = textureFor(yolkDoseMin: yolk, peakWhiteC: white, whiteSets: sets)
+            expectJSON(t, c["texture"], "\(yolk) min / \(white) C, sets \(sets)")
+            expectJSON(textureNoteKeys(t), c["note"], "the note at \(yolk) min / \(white) C, sets \(sets)")
             if !sets { runny += 1 }
         }
         // The case the fixture exists for: without it, this suite would pass
@@ -29,7 +29,7 @@ struct TextureConformance {
     /// scale, but the dose never gets there.
     @Test("a white the pan never sets is runny, not just set")
     func runnyWhite() {
-        let t = textureFor(peakYolkC: 48, peakWhiteC: 51, whiteSets: false)
+        let t = textureFor(yolkDoseMin: 1e-4, peakWhiteC: 51, whiteSets: false)
         #expect(t.white == .runny)
         #expect(textureNoteKeys(t) == TextureNote(key: .`texture.white.runny`, parts: [:]))
     }

@@ -160,15 +160,6 @@ public enum WhiteBandBelowC {
     public static let set: Double = 82.0
 }
 
-/// The peak yolk temperature, C, below which the yolk is in each band; at or above the last it is
-/// set.
-public enum YolkBandBelowC {
-    public static let liquid: Double = 58.0
-    public static let soft: Double = 63.0
-    public static let jammy: Double = 68.0
-    public static let fudgy: Double = 73.0
-}
-
 /// Exact by definition, all of them: the international avoirdupois ounce, inch and foot of 1959,
 /// the US liquid quart, and the imperial pint of the 1985 Weights and Measures Act.
 public enum UnitFactors {

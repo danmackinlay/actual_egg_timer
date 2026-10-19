@@ -462,7 +462,7 @@ function probeView(phase: Phase, shown: CookShown | null): { shown: boolean; pla
 /** The texture note. Which band the egg falls in, and which keys say it,
  *  are core policy - including that a white the pan never sets is runny. */
 function textureNote(sol: Solution): string {
-  const note = textureNoteKeys(textureFor(sol.result.peakYolk_C, sol.result.peakWhite_C, sol.whiteSets));
+  const note = textureNoteKeys(textureFor(sol.result.yolkDose_min, sol.result.peakWhite_C, sol.whiteSets));
   const parts: Record<string, string> = {};
   for (const [name, key] of Object.entries(note.parts)) parts[name] = t(key);
   return tChosen(note.key, parts);

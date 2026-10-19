@@ -65,8 +65,8 @@ extension Notification.Name {
 /// One line on what the model expects of this cook. Which band the egg falls
 /// in, and which keys say it, are core policy - including that a white the pan
 /// never sets is runny, not named from its peak as "white just set".
-public func textureNote(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> String {
-    let note = textureNoteKeys(textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC, whiteSets: whiteSets))
+public func textureNote(yolkDoseMin: Double, peakWhiteC: Double, whiteSets: Bool) -> String {
+    let note = textureNoteKeys(textureFor(yolkDoseMin: yolkDoseMin, peakWhiteC: peakWhiteC, whiteSets: whiteSets))
     return trChosen(note.key, note.parts.mapValues { .text(tr($0)) })
 }
 
