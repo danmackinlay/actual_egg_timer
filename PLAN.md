@@ -69,6 +69,15 @@ and the map of the documents are `CLAUDE.md`.
     prints it today**: its fresh-install rows and simulated-cook figures
     have drifted from the study (Fudgy is now a wild guess, its
     neighbours 0.89).
+14. **The altitude from where the cook is**, offered in Settings beside the
+    number, so a new install at height needn't know its altitude (unset,
+    a cook at 1500 m starting at once is 39 s out). The phone's or
+    browser's position may carry an altitude (iOS's `CLLocation.altitude`;
+    the web's `coords.altitude`, often null off a phone); failing that, an
+    elevation lookup sends the position to a service. Asked once, on a
+    tap, never at launch; the number stays the cook's to change. The
+    privacy page says neither app asks for your location, so it changes
+    with this, and any lookup's service is named there.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
