@@ -79,10 +79,13 @@ public struct RecordSetup: Sendable, Codable, Equatable {
     public var afterBoil: HeatAfterBoil
     public var waterLitres: Double
     public var eggCount: Double
-    /// The two water fields are omitted, not null, when absent, as the
+    /// The water fields are omitted, not null, when absent, as the
     /// TypeScript writes them.
     public var coolingWaterC: Double?
     public var bowlLitres: Double?
+    /// The water a cold pan started at, given or assumed: on every cold
+    /// start, never on a hot one, and omitted when absent.
+    public var panStartC: Double?
 
     public init(setup: CookSetup, eggFrom: EggFrom, timeToBoilFrom: TimeToBoilFrom) {
         startMode = setup.startMode
@@ -100,6 +103,7 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         let watered = setup.cooling == .tap || setup.cooling == .bowl
         coolingWaterC = watered ? setup.coolingWaterC : nil
         bowlLitres = setup.cooling == .bowl ? setup.bowlLitres : nil
+        panStartC = setup.startMode == .cold ? setup.panStartC : nil
     }
 
     enum CodingKeys: String, CodingKey {
@@ -112,10 +116,11 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         case timeToBoilFrom, cooling, afterBoil, waterLitres, eggCount
         case coolingWaterC = "coolingWater_C"
         case bowlLitres
+        case panStartC = "panStart_C"
     }
 
-    /// Every field today's records write; the two water fields only when
-    /// there, and refused as null, as `parseRecord` refuses them.
+    /// Every field today's records write; the water fields only when there,
+    /// and refused as null, as `parseRecord` refuses them.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         startMode = try c.decode(StartMode.self, forKey: .startMode)
@@ -131,6 +136,7 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         eggCount = try c.decode(Double.self, forKey: .eggCount)
         coolingWaterC = c.contains(.coolingWaterC) ? try c.decode(Double.self, forKey: .coolingWaterC) : nil
         bowlLitres = c.contains(.bowlLitres) ? try c.decode(Double.self, forKey: .bowlLitres) : nil
+        panStartC = c.contains(.panStartC) ? try c.decode(Double.self, forKey: .panStartC) : nil
     }
 }
 
@@ -477,7 +483,7 @@ public func probeReadingFor(_ r: EggRecord, centreC: Double, coolEndS: Double?) 
 private func coldestOf(_ s: RecordSetup) -> Double {
     coldestTouchedC(
         startMode: s.startMode, eggStartC: s.eggStartC, ambientC: s.ambientC, cooling: s.cooling,
-        waterC: s.coolingWaterC, panStartC: nil
+        waterC: s.coolingWaterC, panStartC: s.panStartC
     )
 }
 
@@ -526,6 +532,8 @@ public func validRecord(_ r: EggRecord) -> Bool {
     } else if s.bowlLitres != nil {
         return false
     }
+    // A cold pan's water: only on a cold start, the only start that reads it.
+    if let pan = s.panStartC, !(s.startMode == .cold && pan.isFinite) { return false }
     guard r.level.isFinite, r.level >= 0, r.level <= 1 else { return false }
     guard r.recommendedS.isFinite, r.recommendedS > 0 else { return false }
     guard r.nudgeS.isFinite, r.recommendedS + r.nudgeS > 0 else { return false }
@@ -608,7 +616,8 @@ func recordSetupOf(_ r: EggRecord) -> CookSetup {
         ambientC: r.setup.ambientC, boilingC: r.setup.boilingC,
         timeToBoilS: r.setup.timeToBoilS, cooling: r.setup.cooling,
         waterLitres: r.setup.waterLitres, afterBoil: r.setup.afterBoil,
-        eggCount: r.setup.eggCount, coolingWaterC: r.setup.coolingWaterC, bowlLitres: r.setup.bowlLitres
+        eggCount: r.setup.eggCount, coolingWaterC: r.setup.coolingWaterC, bowlLitres: r.setup.bowlLitres,
+        panStartC: r.setup.panStartC
     )
 }
 

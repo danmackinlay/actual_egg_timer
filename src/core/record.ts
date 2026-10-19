@@ -194,6 +194,10 @@ interface RecordSetup {
    *  bowl's water, litres, for a bowl and only there. */
   coolingWater_C?: number;
   bowlLitres?: number;
+  /** The water a cold pan started at, C, given or assumed: on every cold
+   *  start, and never on a hot one. Absent on a cold start, from before the
+   *  field, the pan started at `ambient_C`, and replays so. */
+  panStart_C?: number;
 }
 
 export interface EggRecord {
@@ -370,6 +374,7 @@ export function recordFor(f: CookFacts): EggRecord {
       waterLitres: s.waterLitres,
       eggCount: s.eggCount,
       ...coolingWaterRecorded(s),
+      ...(s.startMode === 'cold' && s.panStart_C !== undefined ? { panStart_C: s.panStart_C } : {}),
     },
     level: f.level,
     recommended_s: f.cook_s - f.nudge_s,
@@ -570,6 +575,9 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const watered = s['cooling'] === 'tap' || s['cooling'] === 'bowl';
   if (water !== undefined && !(watered && isFiniteNumber(water))) return null;
   if (s['cooling'] === 'bowl' ? !(isFiniteNumber(bowl) && bowl > 0) : bowl !== undefined) return null;
+  // A cold pan's water: only on a cold start, the only start that reads it.
+  const pan = has(s, 'panStart_C') ? s['panStart_C'] : undefined;
+  if (pan !== undefined && !(s['startMode'] === 'cold' && isFiniteNumber(pan))) return null;
 
   const level = raw['level'];
   if (!isFiniteNumber(level) || level < 0 || level > 1) return null;
@@ -603,6 +611,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     eggCount: s['eggCount'],
     ...(water === undefined ? {} : { coolingWater_C: water as number }),
     ...(bowl === undefined ? {} : { bowlLitres: bowl as number }),
+    ...(pan === undefined ? {} : { panStart_C: pan as number }),
   };
 
   // A reading at the centre: a number the egg could have been, and when
@@ -813,6 +822,7 @@ function recordSetupOf(r: EggRecord): CookSetup {
     eggCount: r.setup.eggCount,
     ...(r.setup.coolingWater_C === undefined ? {} : { coolingWater_C: r.setup.coolingWater_C }),
     ...(r.setup.bowlLitres === undefined ? {} : { bowlLitres: r.setup.bowlLitres }),
+    ...(r.setup.panStart_C === undefined ? {} : { panStart_C: r.setup.panStart_C }),
   };
 }
 

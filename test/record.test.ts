@@ -25,9 +25,9 @@ import { readFileSync } from 'node:fs';
 
 import { buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
-  CALIBRATION_SEED, type Calibration, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
+  CALIBRATION_SEED, type Calibration, type EggRecord, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseLog, parseRecord, recordCookTime_s,
-  replay, resultsFile, resultsFileName,
+  replay, resultsFile, resultsFileName, sharedRecord,
 } from '../src/core/record.ts';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.ts';
 import { DEFAULT_PARAMS } from '../src/core/solve.ts';
@@ -233,6 +233,30 @@ test('an egg is scored at the pull when the cook said when, and at the schedule 
   const a = replay(freshCalibration(64, 7), [measured], COARSE);
   const b = replay(freshCalibration(64, 7), [assumed], COARSE);
   assert.notEqual(posteriorParams(a.posterior).alpha_m2s, posteriorParams(b.posterior).alpha_m2s);
+});
+
+test("a cold pan's water: a record without it replays as it was cooked, with the pan at the room", () => {
+  const cold = { startMode: 'cold' as const, timeToBoil_s: 480 };
+  const old = solvedRecord(0.41, 'soft', 62, cold);
+  old.setup.timeToBoilFrom = 'measured';
+  assert.equal('panStart_C' in old.setup, false);
+  const read = parseRecord(JSON.parse(JSON.stringify(old)));
+  assert.ok(read !== null, 'a record from before the field still reads');
+  assert.equal('panStart_C' in (read as EggRecord).setup, false, 'and gains nothing');
+  // Its pan said to be at the room it recorded is the same egg, to the bit.
+  const atRoom: EggRecord = { ...old, setup: { ...old.setup, panStart_C: old.setup.ambient_C } };
+  assert.equal(parseRecord(JSON.parse(JSON.stringify(atRoom)))?.setup.panStart_C, old.setup.ambient_C);
+  assertIdentical(replay(freshCalibration(64, 7), [atRoom], COARSE), replay(freshCalibration(64, 7), [old], COARSE), 'at the room');
+  // A colder pan is another egg: the same cook reads as more heat needed.
+  const tap: EggRecord = { ...old, setup: { ...old.setup, panStart_C: 8 } };
+  const a = replay(freshCalibration(64, 7), [tap], COARSE);
+  const b = replay(freshCalibration(64, 7), [old], COARSE);
+  assert.notEqual(posteriorParams(a.posterior).alpha_m2s, posteriorParams(b.posterior).alpha_m2s);
+  // Sent, it is kept.
+  assert.equal(sharedRecord(tap, 'abc').setup.panStart_C, 8);
+  // On a hot start it is refused: nothing there reads it.
+  const hot = solvedRecord(0.41, 'soft');
+  assert.equal(parseRecord(JSON.parse(JSON.stringify({ ...hot, setup: { ...hot.setup, panStart_C: 8 } }))), null);
 });
 
 /* What the fold makes of a fixed log - the apps' prior, particle count and
