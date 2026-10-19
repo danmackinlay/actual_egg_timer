@@ -103,6 +103,13 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
       else if (read.cooling === 'bowl') read.bowlWater_C = water;
     }
   }
+  // A cold pan's water: the cold tap's, whatever the cooling, so running
+  // water's row and this one are one number.
+  if (source === page().panWater) {
+    const blank = page().panWater.value.trim() === '';
+    const water = readField(page().panWater, 'coolingWater');
+    if (blank || water !== null) read.tapWater_C = water;
+  }
   const eggCount = clampNumber(page().eggCount.value, LIMITS.eggCount, NaN);
   if (!Number.isNaN(eggCount)) read.eggCount = Math.round(eggCount);
   const doneness = clampNumber(page().doneness.value, LIMITS.doneness, NaN);

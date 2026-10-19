@@ -185,6 +185,8 @@
     "controls.coolingWater": { "text": "Water temperature" },
     "controls.coolingWater.tap.more": { "text": "Optional. Leave it blank and I’ll assume {water}, which is usual for cold tap water. Yours can be colder in winter or warmer in summer, which changes the time by a few seconds." },
     "controls.coolingWater.bowl.more": { "text": "Optional. Leave it blank and I’ll assume the water is at room temperature, {room}. Water straight from a cold tap can be a few degrees colder, which changes the time by a few seconds." },
+    "controls.panWater": { "text": "Water temperature" },
+    "controls.panWater.more": { "text": "Optional. Leave it blank and I’ll assume {water}, which is usual for cold tap water. Yours can be colder in winter or warmer in summer, which changes the time by up to half a minute. I use the same number for cooling the eggs in running water." },
     "controls.water": { "text": "Water" },
     "controls.water.more": { "text": "How much water is in the pan, not counting the eggs. Mostly matters if you turn off the heat after boiling, and a little bit to estimate boiling time." },
     "controls.eggsInPan": { "text": "Number of eggs" },

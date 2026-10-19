@@ -41,7 +41,8 @@ export const ELEMENTS = {
   shareConfirm: 'div', shareDeleteYes: 'button', shareDeleteNo: 'button', probeSetting: 'input', probeEntry: 'div',
   probeReading: 'input', unitProbe: 'span', probeSave: 'button', probeNote: 'p', feedbackTarget: 'p',
   roomFromField: 'div', roomTempFrom: 'input', unitRoomFrom: 'span', moreRoomFrom: 'p', roomStartField: 'div',
-  roomTempStart: 'input', unitRoomStart: 'span', moreRoomStart: 'p', roomCoolField: 'div', roomTempCool: 'input',
+  roomTempStart: 'input', unitRoomStart: 'span', moreRoomStart: 'p', panWaterField: 'div', panWater: 'input',
+  unitPanWater: 'span', morePanWater: 'p', roomCoolField: 'div', roomTempCool: 'input',
   unitRoomCool: 'span', moreRoomCool: 'p', bowlFields: 'div', bowlLitres: 'input', unitBowl: 'span',
   coolingWaterField: 'div', coolingWater: 'input', unitCoolingWater: 'span', moreCoolingWater: 'p', unitsPeriod: 'p',
 

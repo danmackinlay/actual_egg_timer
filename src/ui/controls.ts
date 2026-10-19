@@ -26,7 +26,7 @@ import { measure, show, unitSystem } from './units.ts';
 const FIELDS = {
   measureMass: 'mass', measureGirth: 'girth', measureMinor: 'width', customTemp: 'eggTemp', altitude: 'altitude',
   litres: 'water', probeReading: 'probeTemp', roomTempFrom: 'roomTemp', roomTempStart: 'roomTemp',
-  roomTempCool: 'roomTemp', bowlLitres: 'bowl', coolingWater: 'coolingWater',
+  roomTempCool: 'roomTemp', bowlLitres: 'bowl', coolingWater: 'coolingWater', panWater: 'coolingWater',
 } as const;
 type Field = keyof typeof FIELDS;
 
@@ -42,7 +42,7 @@ const UNIT_LABELS: Record<Field, string> = {
   measureMass: 'unitMass', measureGirth: 'unitGirth', measureMinor: 'unitMinor', customTemp: 'unitTemp',
   altitude: 'unitAltitude', litres: 'unitLitres', probeReading: 'unitProbe', roomTempFrom: 'unitRoomFrom',
   roomTempStart: 'unitRoomStart', roomTempCool: 'unitRoomCool', bowlLitres: 'unitBowl',
-  coolingWater: 'unitCoolingWater',
+  coolingWater: 'unitCoolingWater', panWater: 'unitPanWater',
 };
 
 /** The form as it should read: the controls (`controls`: the settings while
@@ -57,7 +57,7 @@ export interface FormView {
   /** Each field's contents, from the stored SI value. */
   values: {
     measureMass: string; measureGirth: string; measureMinor: string; customTemp: string; litres: string; altitude: string;
-    roomTemp: string; bowlLitres: string; coolingWater: string;
+    roomTemp: string; bowlLitres: string; coolingWater: string; panWater: string;
   };
   roomPlaceholder: string;
   moreRoom: string;
@@ -65,6 +65,10 @@ export interface FormView {
    *  assumed, for the empty field, and its (i). */
   coolingWaterPlaceholder: string;
   moreCoolingWater: string;
+  /** The cold tap a cold pan is filled from, the one running water's
+   *  row also sets: its temperature as assumed, and its (i). */
+  panWaterPlaceholder: string;
+  morePanWater: string;
   sizeLabels: string[];
   measuredLabel: string;
   startTempHint: string;
@@ -115,6 +119,7 @@ export function formView(m: Model): FormView {
       roomTemp: c.room_C === null ? '' : inputText('roomTemp', c.room_C),
       bowlLitres: inputText('bowl', c.bowlLitres),
       coolingWater: givenWater_C === null ? '' : inputText('coolingWater', givenWater_C),
+      panWater: c.tapWater_C === null ? '' : inputText('coolingWater', c.tapWater_C),
     },
     roomPlaceholder: String(nudgeFrom(measure('roomTemp'), START_TEMP_PRESETS_C.room)),
     moreRoom: t('controls.room.more', { room: show('temperature', START_TEMP_PRESETS_C.room) }),
@@ -122,6 +127,8 @@ export function formView(m: Model): FormView {
     moreCoolingWater: c.cooling === 'tap'
       ? t('controls.coolingWater.tap.more', { water: show('temperature', assumedWater_C) })
       : t('controls.coolingWater.bowl.more', { room: show('temperature', assumedWater_C) }),
+    panWaterPlaceholder: String(nudgeFrom(measure('coolingWater'), T_COLD_TAP_C)),
+    morePanWater: t('controls.panWater.more', { water: show('temperature', T_COLD_TAP_C) }),
     sizeLabels: sizeClasses.map((sc) => {
       const label = sizeClassLabel(sc, system);
       return t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
@@ -214,6 +221,8 @@ export function drawForm(f: FormView): void {
   }
   setValue(page().coolingWater, f.values.coolingWater);
   setAttr(page().coolingWater, 'placeholder', f.coolingWaterPlaceholder);
+  setValue(page().panWater, f.values.panWater);
+  setAttr(page().panWater, 'placeholder', f.panWaterPlaceholder);
   setValue(page().eggCount, String(c.eggCount));
   // The slider is never typed in: a snap moves it out from under the cook.
   if (Number(page().doneness.value) !== c.doneness) page().doneness.value = String(c.doneness);
@@ -226,6 +235,7 @@ export function drawForm(f: FormView): void {
   page().probeSetting.checked = c.probe;
   page().customTempField.hidden = c.startTempMode !== 'custom';
   page().roomFromField.hidden = c.startTempMode !== 'room';
+  page().panWaterField.hidden = c.startMode !== 'cold';
   page().roomStartField.hidden = c.afterBoil !== 'off';
   page().roomCoolField.hidden = c.cooling !== 'counter';
   page().bowlFields.hidden = c.cooling !== 'bowl';
@@ -233,6 +243,7 @@ export function drawForm(f: FormView): void {
   setText(page().startTempHint, f.startTempHint);
   for (const more of [page().moreRoomFrom, page().moreRoomStart, page().moreRoomCool]) setText(more, f.moreRoom);
   setText(page().moreCoolingWater, f.moreCoolingWater);
+  setText(page().morePanWater, f.morePanWater);
   setText(page().startSousLabel, f.sousLabel);
   setText(page().helpSousVide, f.helpSous);
 }

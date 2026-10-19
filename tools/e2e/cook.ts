@@ -75,6 +75,7 @@ export const cookScenarios: Record<string, Scenario> = {
       check(rec.id === cook?.id_ms, 'the record is the cook');
       check(rec.yolkWord === 'jammy' && rec.pulledBy === 'cook', `the record: ${rec.yolkWord}, ${rec.pulledBy}`);
       check(rec.forecast !== null && typeof rec.forecast === 'object', 'the record has its forecast');
+      check(rec.setup.panStart_C === 15, `the pan started at the cold tap assumed: ${rec.setup.panStart_C}`);
       await tab.click('#primary');
       s = await tab.phase('IDLE');
       check(s.stored === null, 'Start again forgets the cook');
@@ -163,6 +164,7 @@ export const cookScenarios: Record<string, Scenario> = {
       const rec = s.log[0];
       check(rec.id === cook?.id_ms && rec.yolkWord === null && rec.forecast !== null,
         `unanswered, with its forecast: ${JSON.stringify({ id: rec.id, yolk: rec.yolkWord, f: rec.forecast !== null })}`);
+      check(!('panStart_C' in rec.setup), "a hot start says nothing of a cold pan's water");
       check(s.stored === null, 'the cook forgotten');
       return `pull at +${(d.cookEnd_s - (cook?.startedAt_s ?? 0)).toFixed(1)} s, logged unanswered with its forecast`;
     },

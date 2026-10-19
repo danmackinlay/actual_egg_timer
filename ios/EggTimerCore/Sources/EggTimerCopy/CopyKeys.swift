@@ -174,6 +174,8 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `controls.coolingWater` = "controls.coolingWater"
     case `controls.coolingWater.tap.more` = "controls.coolingWater.tap.more"
     case `controls.coolingWater.bowl.more` = "controls.coolingWater.bowl.more"
+    case `controls.panWater` = "controls.panWater"
+    case `controls.panWater.more` = "controls.panWater.more"
     case `controls.water` = "controls.water"
     case `controls.water.more` = "controls.water.more"
     case `controls.eggsInPan` = "controls.eggsInPan"
@@ -453,6 +455,7 @@ public enum CopyKey: String, Sendable, CaseIterable {
         .`controls.startedAt.earliest`: ["time"],
         .`controls.coolingWater.tap.more`: ["water"],
         .`controls.coolingWater.bowl.more`: ["room"],
+        .`controls.panWater.more`: ["water"],
         .`help.unsure.sousVide`: ["floor"],
         .`more.about`: ["label"],
         .`controls.less`: ["label"],

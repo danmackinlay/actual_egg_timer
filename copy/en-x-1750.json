@@ -133,6 +133,8 @@
     "controls.coolingWater": { "text": "Warmth of the water" },
     "controls.coolingWater.tap.more": { "text": "At your pleasure. Leave it empty, and I shall suppose {water}, which is common for water from the pump; colder in winter and warmer in summer it may be, and the time alters by a few seconds." },
     "controls.coolingWater.bowl.more": { "text": "At your pleasure. Leave it empty, and I shall suppose the water as warm as the room, {room}. Water fresh from the pump may be some degrees colder, and the time alters by a few seconds." },
+    "controls.panWater": { "text": "Warmth of the water" },
+    "controls.panWater.more": { "text": "At your pleasure. Leave it empty, and I shall suppose {water}, which is common for water from the pump; colder in winter and warmer in summer it may be, and the time alters by as much as half a minute. The same I suppose of the pump’s water you cool them in." },
     "controls.water.more": { "text": "The quantity of water in the pan, the eggs not reckoned. It signifies chiefly if you put out the fire once it boils, and a little in reckoning how long the water is in boiling." },
     "controls.eggsInPan.more": { "text": "The more cold eggs you put in, the more they cool the water, and the longer they are in cooking; in a basin, the more they warm it. For eggs begun in cold water I have no need of it in the cooking, for your signal when the water boils already reckons them." },
     "controls.altitude": { "text": "Height above the sea" },

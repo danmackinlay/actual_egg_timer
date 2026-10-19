@@ -192,6 +192,7 @@ function wire(): void {
   wireSteppers();
   for (const id of ROOM_INPUTS) setStepRule(page()[id], (value, up) => stepPast(measure('roomTemp'), value, up));
   setStepRule(page().coolingWater, (value, up) => stepPast(measure('coolingWater'), value, up));
+  setStepRule(page().panWater, (value, up) => stepPast(measure('coolingWater'), value, up));
   wireViews();
   renderVersion();
   wireFeedback();

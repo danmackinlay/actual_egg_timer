@@ -330,6 +330,78 @@ export const correctionScenarios: Record<string, Scenario> = {
     },
   },
 
+  'tap-water-mid-cook': {
+    what: "the cold tap is one number: under Cold water and under running water, each corrects a running cook, and the record says what the pan started at",
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      const shown = (id: ElementId): Promise<boolean> => tab.eval<boolean>(`${byId(id)}.offsetParent !== null`);
+      const field = (id: ElementId): Promise<{ value: string; placeholder: string }> =>
+        tab.eval<{ value: string; placeholder: string }>(`(() => ({ value: ${byId(id)}.value, placeholder: ${byId(id)}.placeholder }))()`);
+      // Idle: the row is the cold start's alone.
+      await openPanel(tab, 'panelStart');
+      await tab.click('#startHot');
+      await tab.until("__snap().settings.startMode === 'hot'", 'a hot start chosen');
+      check(!await shown('panWaterField'), "the pan's water shown for boiling water");
+      await tab.click('#startCold');
+      await tab.until("__snap().settings.startMode === 'cold'", 'a cold start chosen');
+      check(await shown('panWaterField'), "no pan's water under Cold water");
+      const blank = await field('panWater');
+      check(blank.value === '' && blank.placeholder === '15', `greyed at the tap assumed: ${JSON.stringify(blank)}`);
+      let s = await start(tab, 'cold');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      const times = [s.digits];
+      const pull0 = deadlines(s).cookEnd_s;
+      // Under Cold water: three − from the 15 assumed, a colder pan, a later pull.
+      await openPanel(tab, 'panelStart');
+      await later(tab);
+      for (let i = 0; i < 3; i++) await press(tab, 'button.step[data-for="panWater"][data-up="0"]');
+      s = await corrected(tab, null);
+      times.push(s.digits);
+      const tap1 = storedCook(s)?.choices.tapWater_C;
+      check(tap1 === 12, `the cook's tap: ${tap1}`);
+      const pull1 = deadlines(s).cookEnd_s;
+      check(pull1 > pull0, `a colder pan, a later pull: ${(pull1 - pull0).toFixed(1)} s`);
+      // Running water: the same number, and its + corrects the cook.
+      await openPanel(tab, 'panelCooling');
+      await later(tab);
+      await tab.click('#coolTap');
+      s = await corrected(tab, s);
+      times.push(s.digits);
+      const running = await field('coolingWater');
+      check(running.value === '12', `running water's row: ${JSON.stringify(running)}`);
+      await later(tab);
+      for (let i = 0; i < 8; i++) await press(tab, 'button.step[data-for="coolingWater"][data-up="1"]');
+      s = await corrected(tab, s);
+      times.push(s.digits);
+      const tap2 = storedCook(s)?.choices.tapWater_C;
+      check(tap2 === 20, `the cook's tap from running water's row: ${tap2}`);
+      const pull2 = deadlines(s).cookEnd_s;
+      check(pull2 < pull1, `a warmer tap, a sooner pull: ${(pull2 - pull1).toFixed(1)} s`);
+      await openPanel(tab, 'panelStart');
+      const pan = await field('panWater');
+      check(pan.value === '20', `the pan's row, after running water's: ${JSON.stringify(pan)}`);
+      const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { tapWater_C?: number };
+      check(saved.tapWater_C === 20, `the next cook's tap: ${saved.tapWater_C}`);
+      // Through to Done: the record says the pan's water and running water's, one number.
+      await tab.shift(300);
+      s = await boil(tab);
+      await tab.shiftTo(deadlines(s).cookEnd_s + 1);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 1);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('__snap().log.length === 1', 'the egg logged');
+      s = await tab.snap();
+      const setup = s.log[0].setup;
+      check(setup.panStart_C === 20 && setup.coolingWater_C === 20, `the record's water: ${JSON.stringify(setup)}`);
+      return `the readout ${times.join(' → ')}; tap 15 assumed → 12 (pan's row, +${(pull1 - pull0).toFixed(1)} s)`
+        + ` → 20 (running water's row, ${(pull2 - pull1).toFixed(1)} s); recorded panStart_C 20, coolingWater_C 20`;
+    },
+  },
+
   'record-corrected-at-done': {
     what: 'a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
     run: async (h) => {
