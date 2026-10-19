@@ -190,6 +190,14 @@
       {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "bowl", "afterBoil": "hold", "waterLitres": 2, "eggCount": 1, "bowlLitres": 4, "coolingWater_C": 31}, "value": 31},
       {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "bowl", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2}, "value": 20}
     ],
+    "coldestTouched": [
+      {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2}, "value": 2},
+      {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2, "panStart_C": 1}, "value": 2},
+      {"setup": {"startMode": "cold", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2}, "value": 2},
+      {"setup": {"startMode": "cold", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2, "panStart_C": 2}, "value": 2},
+      {"setup": {"startMode": "cold", "eggStart_C": 21, "ambient_C": 21, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "counter", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2, "panStart_C": 12}, "value": 12},
+      {"setup": {"startMode": "cold", "eggStart_C": 21, "ambient_C": 21, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "tap", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2, "coolingWater_C": 9, "panStart_C": 12}, "value": 9}
+    ],
     "bowlTemperature": [
       {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2}, "mass_g": 68, "meanAtPull_C": 83.1, "mean_C": 83.1, "value": 2},
       {"setup": {"startMode": "hot", "eggStart_C": 4, "ambient_C": 20, "boiling_C": 100, "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold", "waterLitres": 2, "eggCount": 2}, "mass_g": 68, "meanAtPull_C": 83.1, "mean_C": 61.4, "value": 2},

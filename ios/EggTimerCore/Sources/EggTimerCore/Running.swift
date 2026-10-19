@@ -324,8 +324,7 @@ public func plausibleProbeRangeC(
         params: ModelParams(alphaM2s: params.alphaM2s * spread),
         cookTimeS: cookTimeS
     )
-    let bath = coolingMediumC(setup)
-    let floor = min(setup.eggStartC, setup.ambientC, bath)
+    let floor = coldestTouchedC(setup)
     let lo = min(slow.peakYolkC, fast.peakYolkC) - probeMarginC
     let hi = max(slow.peakYolkC, fast.peakYolkC) + probeMarginC
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)

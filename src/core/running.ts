@@ -34,7 +34,7 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown, restsInAir,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coldestTouched_C, countsDown, restsInAir,
 } from './protocol.ts';
 import { boilingPointAtAltitude } from './thermo.ts';
 import { ALPHA_REL_SD, EGG_CUP_OPENED_S } from './constants.ts';
@@ -294,7 +294,7 @@ export function plausibleProbeRange_C(
   const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
   const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread }, cookTime_s);
   const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread }, cookTime_s);
-  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup));
+  const floor = coldestTouched_C(setup);
   const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
   const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
   return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];

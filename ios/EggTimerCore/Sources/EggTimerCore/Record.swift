@@ -475,8 +475,10 @@ public func probeReadingFor(_ r: EggRecord, centreC: Double, coolEndS: Double?) 
 // MARK: - Validation
 
 private func coldestOf(_ s: RecordSetup) -> Double {
-    let bath = coolingMediumC(s.cooling, ambientC: s.ambientC, waterC: s.coolingWaterC)
-    return min(s.eggStartC, s.ambientC, bath)
+    coldestTouchedC(
+        startMode: s.startMode, eggStartC: s.eggStartC, ambientC: s.ambientC, cooling: s.cooling,
+        waterC: s.coolingWaterC, panStartC: nil
+    )
 }
 
 func probePossible(_ s: RecordSetup, centreC: Double) -> Bool {

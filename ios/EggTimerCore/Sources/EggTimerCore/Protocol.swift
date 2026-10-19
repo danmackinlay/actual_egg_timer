@@ -42,12 +42,14 @@ public struct CookSetup: Sendable, Codable, Equatable {
     public var eggCount: Double
     public var coolingWaterC: Double?
     public var bowlLitres: Double?
+    /// The water a cold pan starts at; nil is the room (`panStartC(_:)`).
+    public var panStartC: Double?
 
     public init(
         startMode: StartMode, eggStartC: Double, ambientC: Double, boilingC: Double,
         timeToBoilS: Double, cooling: Cooling, waterLitres: Double,
         afterBoil: HeatAfterBoil = .hold, eggCount: Double,
-        coolingWaterC: Double? = nil, bowlLitres: Double? = nil
+        coolingWaterC: Double? = nil, bowlLitres: Double? = nil, panStartC: Double? = nil
     ) {
         self.startMode = startMode
         self.eggStartC = eggStartC
@@ -60,12 +62,13 @@ public struct CookSetup: Sendable, Codable, Equatable {
         self.eggCount = eggCount
         self.coolingWaterC = coolingWaterC
         self.bowlLitres = bowlLitres
+        self.panStartC = panStartC
     }
 
     enum CodingKeys: String, CodingKey {
         case startMode, eggStartC = "eggStart_C", ambientC = "ambient_C", boilingC = "boiling_C"
         case timeToBoilS = "timeToBoil_s", cooling, waterLitres, afterBoil, eggCount
-        case coolingWaterC = "coolingWater_C", bowlLitres
+        case coolingWaterC = "coolingWater_C", bowlLitres, panStartC = "panStart_C"
     }
 
     /// As the TypeScript reads one: no `afterBoil` is `hold`.
@@ -79,18 +82,19 @@ public struct CookSetup: Sendable, Codable, Equatable {
             afterBoil: try c.decodeIfPresent(HeatAfterBoil.self, forKey: .afterBoil) ?? .hold,
             eggCount: try c.decode(Double.self, forKey: .eggCount),
             coolingWaterC: try c.decodeIfPresent(Double.self, forKey: .coolingWaterC),
-            bowlLitres: try c.decodeIfPresent(Double.self, forKey: .bowlLitres)
+            bowlLitres: try c.decodeIfPresent(Double.self, forKey: .bowlLitres),
+            panStartC: try c.decodeIfPresent(Double.self, forKey: .panStartC)
         )
     }
 }
 
 public enum Protocols {
     static func rampTemperature(
-        tS: Double, timeToBoilS: Double, ambientC: Double, boilingC: Double
+        tS: Double, timeToBoilS: Double, startC: Double, boilingC: Double
     ) -> Double {
         if tS >= timeToBoilS { return boilingC }
         let tau = timeToBoilS / log(Constants.rampR / (Constants.rampR - 1.0))
-        let t = ambientC + Constants.rampR * (boilingC - ambientC) * (1.0 - exp(-tS / tau))
+        let t = startC + Constants.rampR * (boilingC - startC) * (1.0 - exp(-tS / tau))
         return t > boilingC ? boilingC : t
     }
 
@@ -161,7 +165,7 @@ public enum Protocols {
             if tS < setup.timeToBoilS {
                 return rampTemperature(
                     tS: tS, timeToBoilS: setup.timeToBoilS,
-                    ambientC: setup.ambientC, boilingC: setup.boilingC
+                    startC: panStartC(setup), boilingC: setup.boilingC
                 )
             }
             if !standing { return setup.boilingC }
@@ -199,4 +203,26 @@ public func coolingMediumC(_ cooling: Cooling, ambientC: Double, waterC: Double?
 
 public func coolingMediumC(_ setup: CookSetup) -> Double {
     coolingMediumC(setup.cooling, ambientC: setup.ambientC, waterC: setup.coolingWaterC)
+}
+
+/// The water a cold pan starts at: the setup's, or the room.
+public func panStartC(_ setup: CookSetup) -> Double {
+    setup.panStartC ?? setup.ambientC
+}
+
+/// The TypeScript's `coldestTouched_C`, over the fields, and the overload
+/// below a `CookSetup`: the egg's start, the room, the cooling, and a cold
+/// pan's water.
+public func coldestTouchedC(
+    startMode: StartMode, eggStartC: Double, ambientC: Double, cooling: Cooling, waterC: Double?, panStartC: Double?
+) -> Double {
+    let floor = min(eggStartC, ambientC, coolingMediumC(cooling, ambientC: ambientC, waterC: waterC))
+    return startMode == .cold ? min(floor, panStartC ?? ambientC) : floor
+}
+
+public func coldestTouchedC(_ setup: CookSetup) -> Double {
+    coldestTouchedC(
+        startMode: setup.startMode, eggStartC: setup.eggStartC, ambientC: setup.ambientC, cooling: setup.cooling,
+        waterC: setup.coolingWaterC, panStartC: setup.panStartC
+    )
 }

@@ -58,9 +58,9 @@ export interface CookSetup {
   startMode: StartMode;
   /** Egg temperature when it goes in, C (fridge ~4, room ~20). */
   eggStart_C: number;
-  /** Room air temperature, C. The pan starts here on a cold start, the water
-   *  decays toward it with the heat off, and an egg resting on the counter
-   *  cools toward it. One room, one number. */
+  /** Room air temperature, C. The water decays toward it with the heat off,
+   *  and an egg resting on the counter cools toward it. One room, one number.
+   *  A cold pan starts here only when `panStart_C` is absent. */
   ambient_C: number;
   /** Boiling point at the user's altitude, C. */
   boiling_C: number;
@@ -87,6 +87,11 @@ export interface CookSetup {
   coolingWater_C?: number;
   /** The water in the bowl, litres. Present for a bowl, and read only there. */
   bowlLitres?: number;
+  /** The water a cold pan starts at, C: what it was filled with, from the
+   *  cold tap. Read only on a cold start, where the ramp starts at it.
+   *  Absent, the pan starts at `ambient_C`, as every setup did before the
+   *  field, so a record without it replays as it was cooked. */
+  panStart_C?: number;
 }
 
 /* The egg's MASS is not here. It was, and it duplicated `Egg.mass_kg` - so
@@ -98,9 +103,17 @@ export interface CookSetup {
 /**
  * Pan heating ramp. Constant power into a lumped water mass with Newtonian
  * losses gives an exponential approach to a steady state the pan never
- * reaches, because boiling clamps it:
+ * reaches, because boiling clamps it. From the water's start T0:
  *
- *   T(t) = Tamb + r*(Tboil - Tamb)*(1 - exp(-t/tau))
+ *   T(t) = T0 + r*(Tboil - T0)*(1 - exp(-t/tau))
+ *
+ * T0 is the water the pan was filled with (`CookSetup.panStart_C`), or the
+ * room. The losses are taken toward T0 rather than toward the room, so r
+ * is the overshoot over the start's own gap to the boil. Losses toward the
+ * room are as closed a form, and move the cook by under 2 s for a tap 5 C
+ * below the room and by 4.4 s at most for one 15 C below (8.4 s with the
+ * heat off near fudgy on a four-minute ramp): inside what r itself is
+ * uncertain by, which is worth about 30 s on a ten-minute ramp.
  *
  * The overshoot ratio r = P/(U*dT) has a directly observable meaning: 1/r is
  * the fraction of full burner power needed to HOLD a boil, which measured
@@ -113,11 +126,11 @@ export interface CookSetup {
  * 4 C at the midpoint, worth ~30 s of cook time on a 10-minute ramp.
  */
 function rampTemperature(
-  t_s: number, timeToBoil_s: number, ambient_C: number, boiling_C: number,
+  t_s: number, timeToBoil_s: number, start_C: number, boiling_C: number,
 ): number {
   if (t_s >= timeToBoil_s) return boiling_C;
   const tau = timeToBoil_s / Math.log(RAMP_R / (RAMP_R - 1.0));
-  const t = ambient_C + RAMP_R * (boiling_C - ambient_C) * (1.0 - Math.exp(-t_s / tau));
+  const t = start_C + RAMP_R * (boiling_C - start_C) * (1.0 - Math.exp(-t_s / tau));
   return t > boiling_C ? boiling_C : t;
 }
 
@@ -196,6 +209,29 @@ export function coolingMedium_C(s: CoolingFacts): number {
   if (restsInAir(s.cooling)) return s.ambient_C;
   if (s.coolingWater_C !== undefined) return s.coolingWater_C;
   return s.cooling === 'tap' ? T_COLD_TAP_C : s.ambient_C;
+}
+
+/** What a pot says of everything the egg touched: its start, the pan's
+ *  water, the room and the cooling. A `CookSetup` is one, and so is a
+ *  record's setup. */
+interface TouchedFacts extends CoolingFacts {
+  startMode: StartMode;
+  eggStart_C: number;
+  panStart_C?: number;
+}
+
+/** The water a cold pan starts at, C: the cook's or the tap's when the
+ *  setup says (`panStart_C`), and the room otherwise. */
+export function panStartOf(s: TouchedFacts): number {
+  return s.panStart_C !== undefined ? s.panStart_C : s.ambient_C;
+}
+
+/** The coldest thing the egg touched, C: the fridge or wherever it came
+ *  from, a cold pan's water, the room and what it cooled in. No centre
+ *  reading can be colder. */
+export function coldestTouched_C(s: TouchedFacts): number {
+  const floor = Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s));
+  return s.startMode === 'cold' ? Math.min(floor, panStartOf(s)) : floor;
 }
 
 /**
@@ -306,7 +342,7 @@ export function bathTemperature(egg: Egg, setup: CookSetup, t_s: number): number
   const standing = setup.afterBoil === 'off';
   if (setup.startMode === 'cold') {
     if (t_s < setup.timeToBoil_s) {
-      return rampTemperature(t_s, setup.timeToBoil_s, setup.ambient_C, setup.boiling_C);
+      return rampTemperature(t_s, setup.timeToBoil_s, panStartOf(setup), setup.boiling_C);
     }
     if (!standing) return setup.boiling_C;
     return standingTemperature(

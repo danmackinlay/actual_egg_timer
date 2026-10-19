@@ -30,7 +30,7 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coldestTouched_C, countsDown,
 } from './protocol.ts';
 import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
 import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
@@ -493,12 +493,6 @@ export function parseForecast(raw: unknown): Forecast | null {
   };
 }
 
-/** The coolest thing this cook's egg ever touched, C: the fridge, the room or
- *  the cooling water, whichever is lowest. */
-function coldestOf(s: RecordSetup): number {
-  return Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s));
-}
-
 /**
  * Whether a centre reading is physically possible at all for this cook: no
  * colder than the coldest thing the egg touched and no hotter than the water
@@ -506,7 +500,7 @@ function coldestOf(s: RecordSetup): number {
  * more at entry, against the physics of the cook (`plausibleProbeRange_C`).
  */
 function probePossible(s: RecordSetup, centre_C: number): boolean {
-  return Number.isFinite(centre_C) && centre_C >= coldestOf(s) && centre_C <= s.boiling_C;
+  return Number.isFinite(centre_C) && centre_C >= coldestTouched_C(s) && centre_C <= s.boiling_C;
 }
 
 /** The nullable fields a record always carries, null or not. */

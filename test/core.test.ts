@@ -24,7 +24,7 @@ import {
 } from '../src/core/kinetics.ts';
 import {
   type CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C, bowlTemperature,
-  coolingMedium_C, coolingTemperature, initialSurfaceTemperature,
+  coldestTouched_C, coolingMedium_C, coolingTemperature, initialSurfaceTemperature,
 } from '../src/core/protocol.ts';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose, DEFAULT_PARAMS,
@@ -437,6 +437,34 @@ test('with the heat off the water falls, and the dose saturates', () => {
     held.yolkDose_min > forty.yolkDose_min * 100,
     'holding the boil must cook far harder than standing, for the same clock time',
   );
+});
+
+test("a cold pan's ramp starts at its water, and only a cold pan's", () => {
+  const room = referenceSetup({ startMode: 'cold', timeToBoil_s: 480 });
+  const tap = { ...room, panStart_C: 12 };
+  close(bathTemperature(REFERENCE_EGG, tap, 0), 12, 0, 'it starts at the tap');
+  close(bathTemperature(REFERENCE_EGG, room, 0), room.ambient_C, 0, 'absent, at the room');
+  close(bathTemperature(REFERENCE_EGG, { ...room, panStart_C: room.ambient_C }, 240),
+    bathTemperature(REFERENCE_EGG, room, 240), 0, 'the room given is the room assumed, to the bit');
+  close(bathTemperature(REFERENCE_EGG, tap, 480), room.boiling_C, 0, 'both boil at the tap');
+  assert.ok(bathTemperature(REFERENCE_EGG, tap, 240) < bathTemperature(REFERENCE_EGG, room, 240), 'colder on the way');
+  // A colder start cooks longer, about two seconds a degree on eight minutes.
+  const level = donenessFromSlider(0.41);
+  const longer = solveCookTime(REFERENCE_EGG, { ...room, panStart_C: 15 }, DEFAULT_PARAMS, level).result.cookTime_s
+    - solveCookTime(REFERENCE_EGG, room, DEFAULT_PARAMS, level).result.cookTime_s;
+  assert.ok(longer > 5 && longer < 15, `5 C colder: ${longer.toFixed(1)} s longer`);
+  // With the heat off, the pan still cools toward the room, wherever it started.
+  const standing = { ...room, afterBoil: 'off' as const };
+  close(bathTemperature(REFERENCE_EGG, { ...standing, panStart_C: 6 }, 480 + 600),
+    bathTemperature(REFERENCE_EGG, standing, 480 + 600), 0, 'the standing water forgets the tap');
+  // A hot start never reads it.
+  const hot = referenceSetup({});
+  for (const t of [0, 30, 300]) {
+    close(bathTemperature(REFERENCE_EGG, { ...hot, panStart_C: 6 }, t), bathTemperature(REFERENCE_EGG, hot, t), 0, 'hot');
+  }
+  // Nothing the egg touched was colder than the pan's water.
+  assert.equal(coldestTouched_C({ ...tap, eggStart_C: 20, ambient_C: 20, cooling: 'counter' }), 12);
+  assert.equal(coldestTouched_C({ ...hot, eggStart_C: 20, ambient_C: 20, cooling: 'counter', panStart_C: 12 }), 20);
 });
 
 test('a small pan cannot stand its way to hard', () => {

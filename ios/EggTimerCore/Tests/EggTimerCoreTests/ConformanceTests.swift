@@ -117,6 +117,16 @@ struct CoolingConformance {
         }
     }
 
+    @Test("the coldest thing the egg touched takes a cold pan's water, and only a cold one's")
+    func coldest() throws {
+        let rows = try Fixtures.list("core.json", "protocol.coldestTouched")
+        #expect(rows.count >= 6)
+        for c in rows {
+            let setup = try decoded(CookSetup.self, c["setup"])
+            try expectClose(coldestTouchedC(setup), c.num("value"), "\(setup.startMode) from \(setup.panStartC ?? .nan)")
+        }
+    }
+
     @Test("a bowl warms by what the eggs give up")
     func bowl() throws {
         let rows = try Fixtures.list("core.json", "protocol.bowlTemperature")
