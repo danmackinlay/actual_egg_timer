@@ -25,8 +25,12 @@
  * THE CLASS. With p the five words' probabilities and a the word asked:
  *   veryCertain  p[a] >= 0.9: nine times in ten it is the word asked for;
  *   ballpark     p[a-1] + p[a] + p[a+1] >= 0.9: that word or a neighbour (at
- *                Runny and Hard only the one neighbour there is);
+ *                Runny and Hard only the one neighbour there is), with the
+ *                word asked inside the 90% interval below;
  *   wildGuess    otherwise.
+ * Without the second condition a neighbour alone could make a ballpark:
+ * asked Jammy, with Fudgy at 0.95 and Jammy at 0.02, the tap would say
+ * "9 times in 10: Fudgy" under "a ballpark figure" (`DECISIONS.md` 93).
  * The unrelated share caps any one word at 0.96, so very certain is
  * reachable, and only by a cook the model knows: a fresh install is never
  * very certain (INFERENCE.md section 8 has the table, `npm run decide --
@@ -40,7 +44,7 @@
  * do that, since the five sum to one - the interval is all five. The most
  * likely word is the largest p, the softer on a tie. Neither need contain
  * the word asked: a cook asking for Soft on a pan that runs firm can be told
- * "between Jammy and Fudgy".
+ * "between Jammy and Fudgy", and is then told it is a wild guess.
  *
  * THE BRACKET. Under the slider the same interval is drawn
  * (`wordBracket`), so the bracket and the words agree. Each word has a band on the slider:
@@ -147,9 +151,6 @@ export function wordCertainty(p: number[], asked: number): WordCertainty {
   const n = p.length;
   const pAsked = p[asked];
   const pNear = massOf(p, asked > 0 ? asked - 1 : 0, asked < n - 1 ? asked + 1 : n - 1);
-  const certainty: Certainty = pAsked >= CERTAINTY_MASS
-    ? 'veryCertain'
-    : pNear >= CERTAINTY_MASS ? 'ballpark' : 'wildGuess';
 
   let from = 0;
   let to = n - 1;
@@ -168,6 +169,13 @@ export function wordCertainty(p: number[], asked: number): WordCertainty {
       }
     }
   }
+
+  // A neighbour alone can carry pNear to 0.9; then the interval is that
+  // neighbour, and a ballpark would promise a word the tap does not name.
+  const askedInside = from <= asked && asked <= to;
+  const certainty: Certainty = pAsked >= CERTAINTY_MASS
+    ? 'veryCertain'
+    : pNear >= CERTAINTY_MASS && askedInside ? 'ballpark' : 'wildGuess';
 
   let mostLikely = 0;
   for (let k = 1; k < n; k++) {
