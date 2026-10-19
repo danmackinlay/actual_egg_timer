@@ -62,12 +62,13 @@ and the map of the documents are `CLAUDE.md`.
     only at the peak. It needs a likelihood whose handling errors can read
     hot (`infer.ts`, its twin, the fit), and then `probeMomentFor` true for
     the egg cup.
-13. **The alarms by AlarmKit, when the app drops iOS 17** (`DECISIONS.md`
-    142). Alarms the Clock app's way, through silent mode and any Focus,
-    for the pull and the cooling's end; the time-sensitive notifications
-    stay beneath it on any phone without AlarmKit. With it: the Live
-    Activity's countdown beside AlarmKit's own, the authorisation asked
-    once, and the in-app ring (`Ringer.swift`) kept for the app on screen.
+13. **iOS 26 the floor, and the alarms by AlarmKit** (`DECISIONS.md` 142).
+    Alarms the Clock app's way, through silent mode and any Focus, for the
+    pull and the cooling's end; the time-sensitive notifications, their
+    entitlement and what schedules them go, with every `#available` or
+    workaround kept for older iOS. With it: the Live Activity's countdown
+    beside AlarmKit's own, the authorisation asked once, and the in-app
+    ring (`Ringer.swift`) kept for the app on screen.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab

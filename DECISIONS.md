@@ -978,10 +978,11 @@ Decided by the owner, 19 October 2026:
     counted. The counter stays as it is: Done at the pull, nothing counted.
     The physics' question, whether the egg rests in the air, is
     `restsInAir`; whether the cook waits for an end is `countsDown`.
-142. **The iOS alarms move to AlarmKit when the app drops iOS 17**, planned
-    for 0.6. AlarmKit (iOS 26 and later) schedules an alarm as the Clock app
-    does, through silent mode and any Focus, with a full-screen alert; until
-    then the alarms are time-sensitive notifications, which reach the cook
-    through a Focus only where its Time Sensitive Notifications are allowed.
-    If the floor stays below iOS 26, AlarmKit where the phone has it and
-    the notifications beneath it.
+142. **0.6 requires iOS 26, and its alarms are AlarmKit's** (the owner, 19
+    October 2026: "this is a toy app and we prioritise low maintenance
+    burden"). AlarmKit schedules an alarm as the Clock app does, through
+    silent mode and any Focus, with a full-screen alert. With iOS 26 the
+    floor there is no fallback: the time-sensitive notifications and what
+    keeps them go. Until 0.6 the alarms stay time-sensitive notifications,
+    which reach the cook through a Focus only where its Time Sensitive
+    Notifications are allowed.
