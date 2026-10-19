@@ -7,8 +7,8 @@
 import type { ElementId } from '../../src/ui/dom.ts';
 import { type Osc, type Rec, type Scenario, type Snap, byId, check, labelSays } from '../harness.ts';
 import {
-  BOIL_KEY, EN, STOPPED, boil, corrected, deadlines, later, near, pansIn, pick, rings, scheduledAhead, sentenceSays,
-  setSlider, start, storedCook,
+  BOIL_KEY, EN, STOPPED, boil, corrected, deadlines, later, near, openPanel, pansIn, pick, rings, scheduledAhead,
+  sentenceSays, setSlider, start, storedCook,
 } from './helpers.ts';
 
 export const cookScenarios: Record<string, Scenario> = {
@@ -114,6 +114,9 @@ export const cookScenarios: Record<string, Scenario> = {
       await tab.click('#startHot');
       s = await start(tab, 'hot');
       await later(tab);
+      // The heat and the water are the start's panel's.
+      await openPanel(tab, 'panelStart');
+      await tab.until(`${byId('heatOff')}.offsetParent !== null`, "the start's panel open");
       await tab.click('#heatOff');
       s = await corrected(tab, null);
       await later(tab);

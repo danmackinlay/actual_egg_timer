@@ -6,8 +6,8 @@
 import { sleep } from '../chrome.ts';
 import { type Rec, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
-  COOK_KEY, SETTINGS_KEY, STOPPED, boil, clockAt, cookIn, corrected, deadlines, drag, later, near, panelStart, pick,
-  press, rings, start, storedCook,
+  COOK_KEY, SETTINGS_KEY, STOPPED, boil, clockAt, cookIn, corrected, deadlines, drag, later, near, openPanel, panelStart,
+  pick, press, rings, start, storedCook,
 } from './helpers.ts';
 
 export const correctionScenarios: Record<string, Scenario> = {
@@ -204,28 +204,67 @@ export const correctionScenarios: Record<string, Scenario> = {
   },
 
   'settings-mid-cook': {
-    what: 'Settings is open while a cook runs; its water corrects the cook; the pull brings the egg back',
+    what: 'Settings is open while a cook runs; its altitude corrects the cook; the pull brings the egg back',
     run: async (h) => {
       const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('__snap().decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.click('#settingsLink');
-      await tab.until(`document.body.dataset.view === 'settings' && ${byId('litres')}.offsetParent !== null`, 'Settings open');
+      await tab.until(`document.body.dataset.view === 'settings' && ${byId('altitude')}.offsetParent !== null`, 'Settings open');
       const learned = await tab.eval<boolean>(`${byId('learned')}.offsetParent === null`);
       check(learned, 'what I have learned waits for the cook to end');
-      for (let i = 0; i < 4; i++) await press(tab, 'button.step[data-for="litres"][data-up="0"]');
+      // What changes from one cook to the next is the sentence's, not here.
+      const pan = await tab.eval<string[]>(`['litres', 'heatOff', 'heatHold']
+        .filter((id) => document.querySelector('#settings #' + id) !== null)`);
+      check(pan.length === 0, `Settings holds the pan's rows: ${pan.join(', ')}`);
+      for (let i = 0; i < 10; i++) await press(tab, 'button.step[data-for="altitude"][data-up="1"]');
       s = await corrected(tab, null);
-      const water = storedCook(s)?.choices.waterLitres;
-      check(water === 1, `the cook's water: ${water}`);
+      const altitude = storedCook(s)?.choices.altitude_m;
+      check(altitude === 500, `the cook's altitude: ${altitude}`);
       const pull1 = deadlines(s).cookEnd_s;
-      check(pull1 !== pull0, `the pull moved: ${(pull1 - pull0).toFixed(1)} s`);
-      const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { waterLitres?: number };
-      check(saved.waterLitres === 1, `the next cook's water: ${saved.waterLitres}`);
+      check(pull1 > pull0, `the pull moved later: ${(pull1 - pull0).toFixed(1)} s`);
+      const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { altitude_m?: number };
+      check(saved.altitude_m === 500, `the next cook's altitude: ${saved.altitude_m}`);
       await tab.shiftTo(pull1 + 1);
       await tab.phase('PULL');
       await tab.until("document.body.dataset.view === 'egg'", 'the egg\'s page at the pull');
-      return `water 2 → 1 L: the pull ${(pull1 - pull0).toFixed(1)} s; the egg's page at the pull`;
+      return `altitude 0 → 500 m: the pull ${(pull1 - pull0).toFixed(1)} s; the egg's page at the pull`;
+    },
+  },
+
+  'start-panel-mid-cook': {
+    what: "the start's panel has the heat after the boil and the water, and while a cook runs each corrects it and is kept for the next cook",
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('__snap().decided', 'the pot planned');
+      s = await tab.snap();
+      const time0 = s.digits;
+      const pull0 = deadlines(s).cookEnd_s;
+      await openPanel(tab, 'panelStart');
+      await tab.until(`${byId('heatOff')}.offsetParent !== null && ${byId('litres')}.offsetParent !== null`, "the start's panel open, its pan rows shown");
+      // The water: four + from 2 L.
+      await later(tab);
+      for (let i = 0; i < 4; i++) await press(tab, 'button.step[data-for="litres"][data-up="1"]');
+      s = await corrected(tab, null);
+      const water = storedCook(s)?.choices.waterLitres;
+      check(water === 3, `the cook's water: ${water}`);
+      const pull1 = deadlines(s).cookEnd_s;
+      const time1 = s.digits;
+      check(pull1 < pull0, `more water dips less, the pull sooner: ${(pull1 - pull0).toFixed(1)} s`);
+      // The heat off, lid on.
+      await later(tab);
+      await tab.click('#heatOff');
+      s = await corrected(tab, s);
+      const after = storedCook(s)?.choices.afterBoil;
+      check(after === 'off', `the cook's heat after the boil: ${after}`);
+      const pull2 = deadlines(s).cookEnd_s;
+      const time2 = s.digits;
+      check(pull2 !== pull1, `the pull moved: ${(pull2 - pull1).toFixed(1)} s`);
+      const saved = JSON.parse((await tab.storage(SETTINGS_KEY)) ?? '{}') as { waterLitres?: number; afterBoil?: string };
+      check(saved.waterLitres === 3 && saved.afterBoil === 'off', `the next cook's: ${JSON.stringify(saved)}`);
+      return `the readout ${time0} → water 3 L ${time1} → heat off ${time2}`;
     },
   },
 

@@ -154,7 +154,10 @@ export interface Snap {
 export interface Cook {
   id_ms: number;
   startedAt_s: number;
-  choices: { level: number; startMode: string; mass_kg: number; massFrom: string; waterLitres: number; cooling: string };
+  choices: {
+    level: number; startMode: string; afterBoil: string; mass_kg: number; massFrom: string; waterLitres: number;
+    cooling: string; altitude_m: number; room_C: number | null;
+  };
   firstHotAt_s: number | null;
   coldSince_s: number | null;
   correctedAt_s: number | null;

@@ -736,6 +736,9 @@ input[data-stepper]::-webkit-outer-spin-button { -webkit-appearance: none; margi
    read from the left like a list. */
 .seg--list { flex-direction: column; }
 .seg--list label { justify-content: flex-start; padding: 6px 14px; }
+/* A second choice in a clause's panel, under its own label and (i): the
+   heat after the boil, under the start. */
+.seg--under { margin-top: 8px; }
 
 /* A number's label and its (i), on the left of a row in a clause's panel.
    Where the row is too narrow for both (large text, a narrow phone), the

@@ -160,9 +160,35 @@ struct ClausePanel: View {
                     )] : []),
                 selection: $planner.start
             )
+            if !planner.isSousVide { pan }
             if let inHand, let start = inHand.shownStart { startedAt(inHand, start) }
         case .cooling: cooling
         }
+    }
+
+    /// The pan's rows under the start, changed from one cook to the next:
+    /// the heat after the boil, which the start clause's words already say
+    /// ("heat off and lid on"), and the water in the pan, which a pan always
+    /// shows: it is the volume the time to boil is remembered under.
+    private var pan: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            InfoRow(.`controls.afterTheBoil`, more: [tr(.`controls.afterTheBoil.more`)])
+            SegmentedChoice(
+                label: tr(.`controls.afterTheBoil`),
+                choices: [
+                    (tr(.`controls.afterTheBoil.keepBoiling`), false),
+                    (tr(.`controls.afterTheBoil.heatOff`), true),
+                ],
+                selection: $planner.heatOff
+            )
+            InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
+                StepperValue(
+                    label: tr(.`controls.water`), measure: planner.measure(.water),
+                    value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .waterLitres
+                )
+            }
+        }
+        .appFont(.subheadline)
     }
 
     /// Five ways to cool the eggs, one to a line, fastest first: five names
