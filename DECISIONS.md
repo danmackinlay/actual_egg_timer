@@ -369,7 +369,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     assumed, feeds the model wherever the room was assumed: the air the eggs
     cool in, the water left to stand and a cold pan's start, and an egg left
     out at room temperature. The room is shown with or without the probe, in
-    the setup sentence's panels where it changes the answer (NNN). Without a
+    the setup sentence's panels where it changes the answer (143). Without a
     measured room, the old rule stands that the room needs no input of its
     own. The record's `ambient_C` already holds the room, so no record
     format changed.
@@ -751,7 +751,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     leverage"). The cooling choices are a list, fastest first. The egg
     count moves into the setup sentence and the egg's panel. The room is
     shown without the probe (79 says so now), in the panels where it changes
-    the answer (NNN), on the two tests the owner set: its
+    the answer (143), on the two tests the owner set: its
     leverage (-4.8 s a degree for eggs left out, about a size class across
     a kitchen's range) and a natural place. Whether ice and running water should take free convection
     in place of a held surface waits on the owner's probe readings.
@@ -990,8 +990,8 @@ Decided by the owner, 19 October 2026:
 
 Decided by the owner, 20 October 2026:
 
-NNN. **What changes from one cook to the next is set in the sentence;
-    Settings holds what changes rarely.** The owner's words: "things that
+143. **What changes from one cook to the next is set in the sentence;
+    Settings holds what changes rarely.** The owner, 20 October 2026: "things that
     are likely to change rarely (language, measurement system, altitude)
     should be in settings, but things that should change per cook should be
     accessed by tapping the relevant parameter in the sentence describing

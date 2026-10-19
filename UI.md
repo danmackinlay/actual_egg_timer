@@ -23,7 +23,7 @@ The owner's steer (`DECISIONS.md` 25):
   lives on a Settings page, visited rarely: the units, the language, the
   alarm's sound, the altitude, the probe, what I've learned and sharing.
   Anything that can change from one cook to the next is set by tapping its
-  clause in the sentence, in that clause's panel (`DECISIONS.md` NNN): how
+  clause in the sentence, in that clause's panel (`DECISIONS.md` 143): how
   many eggs go in, in the egg's (115); the heat after the boil and the
   water in the pan, in the start's; and the room, in each panel where it
   changes the answer (§5).
@@ -201,14 +201,14 @@ cools change nothing, so the sentence leaves them out.
   said at idle, never the time; its panel says when the eggs went in, and
   corrects it.
 - **Heat after the boil is in the start's panel**, not a clause of its own
-  (`DECISIONS.md` NNN): a fifth clause pushes the sentence onto a third line
+  (`DECISIONS.md` 143): a fifth clause pushes the sentence onto a third line
   at 390 px, and the start clause's words already carry it ("into boiling
   water, heat off and lid on"). Under the three starts, Once it's boiling
   (Keep boiling / Heat off, lid on), and under it the water in the pan,
   shown for every pan start; neither in sous-vide. The readout's line says
   "lid on" when it is set.
 - **The room is one value, in the panels where it changes the answer**
-  (`DECISIONS.md` NNN): where the egg comes from, when it is Room; the
+  (`DECISIONS.md` 143): where the egg comes from, when it is Room; the
   start's, when the heat is off; the cooling's, when it is the air.
   Optional, greyed at the room assumed until set; each row edits the one
   setting. Not under a bowl, whose water's temperature is asked there and

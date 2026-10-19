@@ -78,6 +78,14 @@ and the map of the documents are `CLAUDE.md`.
     tap, never at launch; the number stays the cook's to change. The
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
+15. **A cold pan starts at the tap's temperature** (approved; planned in
+    `.claude/reports/PLAN-12-cold-pan.md`). One tap value, the one
+    running water already keeps, shown in the start's panel for a cold
+    start as in the cooling's for running water; blank means
+    `T_COLD_TAP_C`, so every untouched cold start lengthens by about 10 s
+    (13 s with the heat off). A new optional `panStart_C` in the record,
+    so an egg already kept replays as it was cooked; the web deploys with
+    or before the iOS build that writes it.
 
 Not until the owner asks: dimming the time slightly while a newer answer is on
 its way, never delaying the number instead; the egg lab
@@ -129,7 +137,9 @@ Start the QA pass here.
   and its range (93, 97); the one screen from setup to Done (96-99, 108); the
   alarm sounds (101); the
   action's row (125), the bracket's band (114), the bowl (115); the web's
-  setup sentence while a cook runs.
+  setup sentence while a cook runs; on iOS, the start's, the cooling's and
+  the egg's-origin panels with their moved rows (143) scrolled to and
+  corrected by hand mid-cook, which the simulator's tools never did.
 - **Sharing, live.** A record posted and deleted through the deployed
   endpoint; App Attest's attested path on a phone (only the simulator's open
   tier has run); the web in Safari; an iPhone on a flaky network; Netlify's
