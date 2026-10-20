@@ -22,7 +22,7 @@ npm run probe      # is a probe thermometer worth an egg? (README §11.3)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no literal written into a Swift text call is words
-npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html, to read on a phone
+npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html
 npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved (LANGUAGE.md §3)
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
@@ -91,13 +91,12 @@ has approved is one commit (`test/data/copy-approved.txt`), so the words
 not yet read are a diff the tools make, not a list anybody keeps. The rules
 the words are held to, and the machinery, are `LANGUAGE.md` §3.
 
-1. **Read what is waiting, on a phone.** `npm run copy:review` writes
+1. **Read what is waiting.** `npm run copy:review` writes
    `_dev/copy-review.html` (`npm run build:site` clears `_dev/`), one file
    with no script and no network: every key changed, added or retired
    since the approved commit, with the approved English against today's
    word by word, the US English, and the key's note, and at its foot these
-   steps 3 and 4. Send it to the phone
-   (AirDrop, or open it from a synced folder).
+   steps 3 and 4.
 2. **Read it in place.** A string is judged where it appears, in the apps,
    not only on the page (`UI.md` §6). `npm run copy:snapshot -- capture
    <out.json>` renders every web screen the copy scenarios reach, for a

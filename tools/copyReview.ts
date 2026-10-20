@@ -1,6 +1,6 @@
 /**
- * The words changed since the owner last approved them, as one page to read
- * on a phone, and the record of his approval. LANGUAGE.md section 3.
+ * The words changed since the owner last approved them, as one page to read,
+ * and the record of his approval. LANGUAGE.md section 3.
  *
  *   npm run copy:review [-- out.html]   default _dev/copy-review.html
  *   npm run copy:approve [-- <commit>]  record HEAD (or <commit>) as approved

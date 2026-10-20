@@ -640,10 +640,12 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
 105. **Comments say what the code does and why** (confirmed). A decision number appears in a comment only where the code
     would otherwise look wrong (z ≈ 4.65 K), never as a changelog.
 106. **The copy drafts give way to a review page** (confirmed: "Yes,
-    including CLAUDE.md"; amended 16 October 2026). What the owner approved
+    including CLAUDE.md"; amended 16 and 20 October 2026: of reading it on a
+    phone, "I never said that"). What the owner approved
     is recorded as one commit (135); every key changed, added or retired
-    since it is generated, never typed, and laid out as one page to read on
-    a phone (`copy:review`); `copy:approve` records the new commit.
+    since it is generated, never typed, and laid out as one page (`copy:review`), read
+    wherever the owner likes, while the words are still judged in place in
+    the apps (25); `copy:approve` records the new commit.
     `tools/drafts/` and the draft proofs go; the no-literals lint and the
     small surfaces' budgets stay. 9 October 2026.
 107. **No back-compat until the app is widely deployed, the results log

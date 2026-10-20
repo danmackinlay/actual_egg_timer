@@ -120,7 +120,8 @@ next is `PLAN.md`; the last section here says which document holds what.
   copy/en-x-1750.json` shows its age; a twin rewritten never transforms the
   English.
 - **Approving English is the owner's word, never an agent's call.** He reads
-  `npm run copy:review` on a phone and says what to put back; once that is
+  `npm run copy:review`, and the words in place in the apps, and says what
+  to put back; once that is
   committed, `npm run copy:approve` records the commit. What he approved was
   good enough for now (`DECISIONS.md` 54), and changes like anything else.
 - The boil button says **"Rolling boil"** (`action.fullBoil`), under the

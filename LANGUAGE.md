@@ -273,7 +273,7 @@ read), so what a change does to the words is the catalogue's diff.
   read is `copy/` at that commit against the working tree, key by key:
   changed (the English or an overlay), added or retired. It is generated,
   never typed, and never fails a build.
-- **Read** on a phone: `npm run copy:review` writes
+- **Read**: `npm run copy:review` writes
   `_dev/copy-review.html`, one file with no script and no network, light
   or dark. For each key: the approved English against today's, word by
   word; the en-US words; and its note. The words are still judged in
