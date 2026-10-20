@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { join, resolve } from 'node:path';
 
 import { Cdp, launchChrome, sleep } from './chrome.ts';
-import { APP, UI_ENV, build, createDevice, quietly, simctl, uiTest, uiWarmUp } from './iosHarness.ts';
+import { APP, build, createDevice, quietly, simctl, uiEnv, uiTest, uiWarmUp } from './iosHarness.ts';
 
 const OUT = 'ios/appstore/shots';
 const CAPTIONS = 'ios/appstore/captions.en-AU.json';
@@ -63,11 +63,12 @@ function twelveHourClock(udid: string): void {
 /// The device's screen in the shot, at `<dir>/<file>.png`: the shot's test
 /// run on a fresh install, in the shot's scheme, which brings the app to it
 /// from 9:38 and takes the screen once it is still.
-function capture(udid: string, shot: Shot, dir: string): void {
+async function capture(udid: string, shot: Shot, dir: string): Promise<void> {
   simctl('ui', udid, 'appearance', shot.dark ? 'dark' : 'light');
   const path = join(dir, `${shot.file}.png`);
   rmSync(path, { force: true });
-  const r = uiTest(udid, `Shots/test_shot_${shot.file.replace(/-/g, '_')}`, { ...UI_ENV, AET_SHOTS_DIR: resolve(dir) });
+  const test = `Shots/test_shot_${shot.file.replace(/-/g, '_')}`;
+  const r = await uiTest(udid, test, { ...uiEnv('shots'), AET_SHOTS_DIR: resolve(dir) });
   if (!r.passed || !existsSync(path)) throw new Error(`${shot.file}: ${r.failures.join('; ') || 'no capture'}`);
 }
 
@@ -163,9 +164,9 @@ async function main(): Promise<void> {
         twelveHourClock(udid);
         simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi', '--wifiBars', '3',
           '--cellularBars', '4', '--batteryState', 'charged', '--batteryLevel', '100');
-        uiWarmUp(udid, 'shots');
+        await uiWarmUp(udid, 'shots', 'shots');
         for (const s of shots) {
-          capture(udid, s, join(OUT, 'raw', d.dir));
+          await capture(udid, s, join(OUT, 'raw', d.dir));
           console.log(`ios:shots: captured ${d.dir}/${s.file}`);
         }
       } finally {
