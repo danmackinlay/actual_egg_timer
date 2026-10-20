@@ -211,14 +211,14 @@ test('the parity check catches a dropped, an invented and a miscounted placehold
     locale: 'cs',
     messages: {
       'refusal.counter': { text: 'Na lince se žloutek vaří dál — {wanted}.' },
-      'readout.alarm.set': { text: 'budík na {time} {when}' },
+      'controls.startedAt.latestPull': { text: 'nejpozději v {time} {when}' },
       'learned.tuned': { text: 'naladěno na {eggs} vajec · ±{spread} %' },
       'learned.pan': { text: 'hrnec {water}: {time}' },
     },
   };
   const failures = parityProblems(broken, EN);
   assert.ok(failures.some((f) => f.key === 'refusal.counter' && f.detail.includes('{limit}')), 'dropped');
-  assert.ok(failures.some((f) => f.key === 'readout.alarm.set' && f.detail.includes('{when}')), 'invented');
+  assert.ok(failures.some((f) => f.key === 'controls.startedAt.latestPull' && f.detail.includes('{when}')), 'invented');
   assert.ok(failures.some((f) => f.key === 'learned.tuned' && f.detail.includes('counts')), 'miscounted');
   assert.ok(!failures.some((f) => f.key === 'learned.pan'), 'a faithful one passes');
 });

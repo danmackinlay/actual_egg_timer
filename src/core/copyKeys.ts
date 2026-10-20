@@ -65,10 +65,8 @@ export interface CopyKeyArgs {
   'readout.sub.coolingEggCup': never;
   'readout.sub.doneCold': 'boil' | 'cooking';
   'readout.sub.doneHot': never;
-  'readout.alarm.setting': never;
   'readout.alarm.denied': never;
   'readout.alarm.failed': never;
-  'readout.alarm.set': 'time';
   'readout.stat.waterBoilsAt': never;
   'readout.mute.on': never;
   'readout.mute.off': never;

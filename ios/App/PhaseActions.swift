@@ -122,7 +122,8 @@ struct PhaseActions: View {
     // MARK: - The hint
 
     /// The hint's room, as tall as the tallest it is: idle's, with the
-    /// widest time; Heating's, with its (i); Cooking's, with the alarm's line.
+    /// widest time; Heating's, with its (i); Cooking's, with the alarm's
+    /// warning when this cook has one.
     private var hintRoom: some View {
         let widest = clockString(59 * 60 + 59)
         let boiling = planner.show(.temperature, planner.boilingC)
@@ -133,7 +134,7 @@ struct PhaseActions: View {
             }
             VStack(spacing: 4) {
                 Text(model.keys(.cooking).hint.map { trChosen($0, ["boiling": .text(boiling)]) } ?? " ")
-                Text(alarmLine)
+                if let warning = alarmWarning { Text(warning) }
             }
         }
         .appFont(.footnote)
@@ -174,9 +175,9 @@ struct PhaseActions: View {
             VStack(spacing: 4) {
                 // The web's hint: what the hob must do until the pull.
                 Text(readout?.hint.map(hintText) ?? "")
-                // Whether the alarm is really set: iOS's own line, since the
+                // When the alarm could not be set: iOS's own line, since the
                 // web's alarm is the open tab.
-                Text(alarmLine)
+                if let warning = alarmWarning { Text(warning) }
             }
             .appFont(.footnote)
             .foregroundStyle(.secondary)
@@ -356,24 +357,22 @@ struct PhaseActions: View {
         return model.keys(.idle).hint.map { trChosen($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
     }
 
-    /// What the alarm actually is, not what permission was granted.
+    /// What to do when there is no alarm, or nil when there is one (or the
+    /// answer has yet to come): a set alarm says nothing, since the time
+    /// counting down already is it.
     ///
-    /// The authorization result alone would say "alarm set" whether or not the
-    /// request had been accepted, so the pending count is read back rather than
-    /// assumed. An egg timer that claims an alarm it has
-    /// not got is worse than one with no alarm at all.
-    private var alarmLine: String {
+    /// The authorization result alone would say permission was granted
+    /// whether or not the request had been accepted, so the pending count is
+    /// read back rather than assumed. An egg timer that has not got the alarm
+    /// it seems to is worse than one that says so.
+    private var alarmWarning: String? {
         switch cook.alarms.authorized {
         case .none:
-            return tr(.`readout.alarm.setting`)
+            return nil
         case .some(false):
             return tr(.`readout.alarm.denied`)
         case .some(true):
-            guard cook.alarms.pending > 0 else {
-                return tr(.`readout.alarm.failed`)
-            }
-            let pull = cook.plan.map { Date(timeIntervalSince1970: $0.deadlines.cookEndS) } ?? now
-            return tr(.`readout.alarm.set`, ["time": .text(timeOfDay(pull, withSeconds: true))])
+            return cook.alarms.pending > 0 ? nil : tr(.`readout.alarm.failed`)
         }
     }
 }

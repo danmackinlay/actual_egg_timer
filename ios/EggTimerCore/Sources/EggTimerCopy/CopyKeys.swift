@@ -64,10 +64,8 @@ public enum CopyKey: String, Sendable, CaseIterable {
     case `readout.sub.coolingEggCup` = "readout.sub.coolingEggCup"
     case `readout.sub.doneCold` = "readout.sub.doneCold"
     case `readout.sub.doneHot` = "readout.sub.doneHot"
-    case `readout.alarm.setting` = "readout.alarm.setting"
     case `readout.alarm.denied` = "readout.alarm.denied"
     case `readout.alarm.failed` = "readout.alarm.failed"
-    case `readout.alarm.set` = "readout.alarm.set"
     case `readout.stat.waterBoilsAt` = "readout.stat.waterBoilsAt"
     case `readout.mute.on` = "readout.mute.on"
     case `readout.mute.off` = "readout.mute.off"
@@ -421,7 +419,6 @@ public enum CopyKey: String, Sendable, CaseIterable {
         .`readout.sub.heating`: ["boil", "elapsed"],
         .`readout.sub.cookingCold`: ["after", "boil"],
         .`readout.sub.doneCold`: ["boil", "cooking"],
-        .`readout.alarm.set`: ["time"],
         .`texture.note`: ["white", "yolk"],
         .`refusal.harderThanPan`: ["limit", "water"],
         .`refusal.counter`: ["limit"],

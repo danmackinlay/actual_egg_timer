@@ -69,10 +69,8 @@
     "readout.sub.coolingEggCup": { "text": "then eat them" },
     "readout.sub.doneCold": { "text": "{boil} to boil + {cooking} cooking" },
     "readout.sub.doneHot": { "text": "total in the water" },
-    "readout.alarm.setting": { "text": "setting the alarm…" },
     "readout.alarm.denied": { "text": "notifications are off, so keep the app open" },
     "readout.alarm.failed": { "text": "I couldn’t set the alarm, so keep the app open" },
-    "readout.alarm.set": { "text": "alarm set for {time}" },
 
     "readout.stat.waterBoilsAt": { "text": "water boils at" },
     "readout.mute.on": { "text": "Sound on" },
