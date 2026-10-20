@@ -135,9 +135,8 @@ function hex8(n: number): string {
 
 /**
  * A number as a key: its 64 bits, as sixteen hex digits, so two numbers have
- * the same key exactly when they are equal (0 and -0 alike). Written out bit
- * by bit rather than as decimal, which each language prints its own way
- * (480 and 480.0, 1e-7 and 1e-07), so both apps make the same text.
+ * the same key exactly when they are equal (0 and -0 alike), and no number
+ * shares one with null, as NaN and the infinities do in JSON.
  */
 export function numberKey(x: number): string {
   const view = new DataView(new ArrayBuffer(8));
@@ -146,36 +145,50 @@ export function numberKey(x: number): string {
 }
 
 /**
- * The key of a decision surface's inputs: the pot, the egg and where the
- * posterior stands, every number to the bit (`numberKey`), in a fixed order.
- * Two inputs read the same surface exactly when their keys are equal, so the
- * plan (`replan`) and both apps' caches of surfaces and odds use it, and a
- * surface stored or sent between threads keeps its key.
+ * Plain data as a key's text: an object's fields in sorted order, a field
+ * that is absent (or undefined) left out and a null one written, so the two
+ * differ as the types make them; every number to the bit (`numberKey`); a
+ * string quoted, so no string reads as a number.
+ */
+function canonicalKey(v: unknown): string {
+  if (typeof v === 'number') return numberKey(v);
+  if (typeof v === 'string') return JSON.stringify(v);
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (v === null) return 'null';
+  if (Array.isArray(v)) {
+    let out = '[';
+    for (let i = 0; i < v.length; i++) out += (i === 0 ? '' : ',') + canonicalKey(v[i]);
+    return out + ']';
+  }
+  if (typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    const keys = Object.keys(o).sort();
+    let out = '{';
+    let first = true;
+    for (let i = 0; i < keys.length; i++) {
+      const x = o[keys[i]];
+      if (x === undefined) continue;
+      out += (first ? '' : ',') + JSON.stringify(keys[i]) + ':' + canonicalKey(x);
+      first = false;
+    }
+    return out + '}';
+  }
+  throw new Error(`a decision's inputs are plain data, not ${typeof v}`);
+}
+
+/**
+ * The key of a decision surface's inputs: the whole of them, written out
+ * canonically (`canonicalKey`), so a field added to `DecisionInputs` or to
+ * anything in it is in the key with nothing here to edit. Equal keys are
+ * equal inputs, to the bit, so a surface is never read for inputs it was not
+ * built from; the plan (`replan`) and both apps' caches of surfaces and odds
+ * key by it, and a surface stored or sent between threads keeps its key. A
+ * field this pot's physics does not read (a hot start's pan) moves the key
+ * too, which costs a surface built twice and never one read wrongly; the
+ * setups `cookSetupOf` makes carry none.
  */
 export function inputsKey(inputs: DecisionInputs): string {
-  const e = inputs.egg;
-  const s = inputs.setup;
-  const p = inputs.params;
-  const numbers = [
-    e.radius_m, e.minorDiameter_m, e.mass_kg, e.volume_m3,
-    s.eggStart_C, s.ambient_C, s.boiling_C, s.timeToBoil_s, s.waterLitres, s.eggCount,
-    p.alpha_m2s, inputs.whiteDose_min,
-  ];
-  let key = `${s.startMode}|${s.afterBoil ?? 'hold'}|${s.cooling}`;
-  for (let i = 0; i < numbers.length; i++) key += `|${numberKey(numbers[i])}`;
-  // The water the eggs cool in, after the rest and only where the cooling
-  // reads it, so every pot that had a key keeps it: running water's
-  // temperature when the cook gave one, and a bowl's always, '-' when it is
-  // assumed (`coolingMedium_C`), then its litres.
-  if (s.cooling === 'tap' && s.coolingWater_C !== undefined) key += `|${numberKey(s.coolingWater_C)}`;
-  if (s.cooling === 'bowl') {
-    key += `|${s.coolingWater_C === undefined ? '-' : numberKey(s.coolingWater_C)}`;
-    key += `|${s.bowlLitres === undefined ? '-' : numberKey(s.bowlLitres)}`;
-  }
-  // The water a cold pan starts at, last and only on a cold start, which is
-  // the only start that reads it; marked, so it is never read as a cooling's.
-  if (s.startMode === 'cold' && s.panStart_C !== undefined) key += `|p${numberKey(s.panStart_C)}`;
-  return key;
+  return canonicalKey(inputs);
 }
 
 /**

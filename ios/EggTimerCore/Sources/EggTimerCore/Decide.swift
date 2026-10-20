@@ -31,35 +31,24 @@ public func decisionInputs(_ c: Calibration, egg: Egg, setup: CookSetup) -> Deci
     )
 }
 
-/// The TypeScript's text to the character, from `bitPattern` where it reads a
-/// `DataView`.
-public func numberKey(_ x: Double) -> String {
-    let bits = (x == 0 ? 0.0 : x).bitPattern
-    let hex = String(bits, radix: 16)
-    return String(repeating: "0", count: 16 - hex.count) + hex
-}
-
-/// The web makes its own the same way; neither reads the other's, so no
-/// fixture holds its bits, and `InputsKeyTests` holds this
-/// one.
+/// The key of a decision surface's inputs: the whole of them, as their JSON
+/// with its keys sorted, so a field added to `DecisionInputs` or to anything
+/// in it is in the key with nothing here to edit; an optional field is absent
+/// when nil. Equal keys are equal inputs, to the bit, since Foundation writes
+/// each double so that it reads back exactly. The web makes its own the same
+/// way; neither reads the other's, so no fixture holds its text, and
+/// `InputsKeyTests` holds this one.
 public func inputsKey(_ inputs: DecisionInputs) -> String {
-    let e = inputs.egg
-    let s = inputs.setup
-    let p = inputs.params
-    let numbers = [
-        e.radiusM, e.minorDiameterM, e.massKg, e.volumeM3,
-        s.eggStartC, s.ambientC, s.boilingC, s.timeToBoilS, s.waterLitres, s.eggCount,
-        p.alphaM2s, inputs.whiteDoseMin,
-    ]
-    var key = "\(s.startMode.rawValue)|\(s.afterBoil.rawValue)|\(s.cooling.rawValue)"
-    for n in numbers { key += "|" + numberKey(n) }
-    if s.cooling == .tap, let water = s.coolingWaterC { key += "|" + numberKey(water) }
-    if s.cooling == .bowl {
-        key += "|" + (s.coolingWaterC.map(numberKey) ?? "-")
-        key += "|" + (s.bowlLitres.map(numberKey) ?? "-")
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    encoder.nonConformingFloatEncodingStrategy = .convertToString(
+        positiveInfinity: "+inf", negativeInfinity: "-inf", nan: "nan"
+    )
+    guard let data = try? encoder.encode(inputs) else {
+        // Doubles, strings and enums, every double written: nothing to refuse.
+        preconditionFailure("a decision's inputs did not encode")
     }
-    if s.startMode == .cold, let pan = s.panStartC { key += "|p" + numberKey(pan) }
-    return key
+    return String(decoding: data, as: UTF8.self)
 }
 
 public func decisionGridSpec(_ inputs: DecisionInputs) -> GridSpec {
