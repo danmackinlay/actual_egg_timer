@@ -26,6 +26,7 @@
     "copy:snapshot": "npm run build:site && node tools/copySnapshot.ts",
     "copy:approve": "node tools/copyReview.ts approve",
     "copy:review": "node tools/copyReview.ts",
+    "copy:edit": "node tools/copyEdit/server.ts",
     "fixtures:check": "node tools/fixturesCheck.ts",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "node tools/verify.ts",
