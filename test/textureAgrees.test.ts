@@ -22,18 +22,16 @@ import { askedWord } from '../src/core/certainty.ts';
 import { SIZE_CLASSES, eggFromMass } from '../src/core/geometry.ts';
 import { DEFAULTS, START_TEMP_PRESETS_C } from '../src/core/inputs.ts';
 import { YOLK_WORDS } from '../src/core/infer.ts';
-import type { CookSetup, Cooling, StartMode } from '../src/core/protocol.ts';
+import { COOLINGS, type CookSetup, type Cooling, START_MODES, type StartMode } from '../src/core/protocol.ts';
 import { verdictFor } from '../src/core/slider.ts';
 import {
   DEFAULT_PARAMS, DONENESS_ANCHORS, type Solution, donenessFromSlider, solveCookTime,
 } from '../src/core/solve.ts';
 import { textureFor } from '../src/core/texture.ts';
 
-const COOLINGS: Cooling[] = ['ice', 'tap', 'bowl', 'counter', 'eggCup'];
 const MASSES_KG = [
   SIZE_CLASSES[0].mass_kg, SIZE_CLASSES[DEFAULTS.sizeIndex].mass_kg, SIZE_CLASSES[SIZE_CLASSES.length - 1].mass_kg,
 ];
-const STARTS: StartMode[] = ['cold', 'hot'];
 
 function setupFor(cooling: Cooling, start: StartMode): CookSetup {
   const setup: CookSetup = {
@@ -54,7 +52,7 @@ interface Case { what: string; asked: number; sol: Solution; level: number; snap
 const CASES: Case[] = [];
 for (const cooling of COOLINGS) {
   for (const mass of MASSES_KG) {
-    for (const start of STARTS) {
+    for (const start of START_MODES) {
       for (const anchor of DONENESS_ANCHORS) {
         const egg = eggFromMass(mass);
         const setup = setupFor(cooling, start);
@@ -72,7 +70,7 @@ for (const cooling of COOLINGS) {
 }
 
 test('the grid covers every cooling and refuses some levels', () => {
-  assert.equal(CASES.length, COOLINGS.length * MASSES_KG.length * STARTS.length * DONENESS_ANCHORS.length);
+  assert.equal(CASES.length, COOLINGS.length * MASSES_KG.length * START_MODES.length * DONENESS_ANCHORS.length);
   assert.ok(CASES.some((c) => c.level !== c.asked), 'no level was snapped: the refused case is untested');
 });
 

@@ -20,7 +20,7 @@ import {
   buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose, lookupLogYolkDose,
 } from '../src/core/doseGrid.ts';
 import {
-  FEEDBACK_BAND, type Particle, type Posterior, UNRELATED, type WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS, type YolkWord,
+  FEEDBACK_BAND, type Particle, type Posterior, UNRELATED, WHITE_REPORTS, YOLK_WORDS, YOLK_WORD_CUTS, type YolkWord,
   createPrior, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated, yolkAnswerProbabilities,
 } from '../src/core/infer.ts';
 import { LEVEL_HIGH_Q, LEVEL_LOW_Q, type Outcome, leanOf, predictOutcome } from '../src/core/outcome.ts';
@@ -193,7 +193,7 @@ test('on simulated cooks the level range holds the egg about nine times in ten, 
       tally(1, o.pJustRight, e.yolk === 1);
       tally(2, o.pTooFirm, e.yolk === 2);
       tally(3, o.pWhiteRunny, w === 0);
-      updatePosterior(cal.posterior, GRID, t, e.word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(cal.posterior, GRID, t, e.word, WHITE_REPORTS[w]);
       cal.eggsLogged += 1;
     }
   }

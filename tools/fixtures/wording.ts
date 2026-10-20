@@ -11,8 +11,8 @@ import type { Outcome } from '../../src/core/outcome.ts';
 import { type Certainty, type CertaintyReading, wordCertainty } from '../../src/core/certainty.ts';
 import type { Phase } from '../../src/core/running.ts';
 import { type RefusalKind, type Verdict, anchorNear } from '../../src/core/slider.ts';
-import type { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.ts';
-import { type EggFrom, forecastOf } from '../../src/core/record.ts';
+import { COOLINGS, HEATS_AFTER_BOIL, START_MODES } from '../../src/core/protocol.ts';
+import { EGG_FROMS, forecastOf } from '../../src/core/record.ts';
 import {
   certaintyKey, clauseKeys, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, phaseKeys,
   forecastWhiteAtRisk, rangeWords, timeRangeWords, warningKey, whiteAtRisk,
@@ -20,10 +20,6 @@ import {
 import { WHITE_RISK } from '../../src/core/outcome.ts';
 
 const PHASES: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
-const STARTS: StartMode[] = ['hot', 'cold'];
-const AFTER: HeatAfterBoil[] = ['hold', 'off'];
-const COOLINGS: Cooling[] = ['ice', 'tap', 'bowl', 'counter', 'eggCup'];
-const FROMS: EggFrom[] = ['fridge', 'room', 'custom'];
 const KINDS: RefusalKind[] = ['none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets'];
 
 const CLASSES: Certainty[] = ['veryCertain', 'ballpark', 'wildGuess'];
@@ -126,7 +122,7 @@ export function wordingFixture(): Record<string, unknown> {
   // whole.
   const flags: [boolean, boolean, boolean][] = [[false, true, true], [true, false, true], [true, true, false]];
   let turn = 0;
-  const phase = PHASES.flatMap((ph) => STARTS.flatMap((startMode) => AFTER.flatMap((afterBoil) => COOLINGS.map(
+  const phase = PHASES.flatMap((ph) => START_MODES.flatMap((startMode) => HEATS_AFTER_BOIL.flatMap((afterBoil) => COOLINGS.map(
     (cooling) => {
       const [whiteSets, boilKnown, probeWanted] = flags[turn++ % flags.length];
       const facts = {
@@ -147,9 +143,9 @@ export function wordingFixture(): Record<string, unknown> {
   // source turning through them: each clause reads only its own facts, so a
   // clause reading another's shows.
   let from = 0;
-  const clauses = STARTS.flatMap((startMode) => [false, true].flatMap(
-    (sousVide) => AFTER.flatMap((afterBoil) => COOLINGS.flatMap((cooling) => [false, true].map((given) => {
-      const eggFrom = FROMS[from++ % FROMS.length];
+  const clauses = START_MODES.flatMap((startMode) => [false, true].flatMap(
+    (sousVide) => HEATS_AFTER_BOIL.flatMap((afterBoil) => COOLINGS.flatMap((cooling) => [false, true].map((given) => {
+      const eggFrom = EGG_FROMS[from++ % EGG_FROMS.length];
       const facts = {
         eggFrom: eggFrom, startMode: startMode, sousVide: sousVide, afterBoil: afterBoil, cooling: cooling,
         coolingWaterGiven: given,

@@ -227,6 +227,10 @@ const TWINS: Twin[] = [
   { module: 'format.ts', name: 'TIME_SPACE', swift: 'timeSpace', type: 'Unicode.Scalar', internal: true, target: 'copy' },
 ];
 
+/** An enumeration the record carries: its Swift twin is an enum whose cases
+ *  are its members, and the record's fixture holds the two to the same list. */
+const RECORD_ENUM = 'a Swift enum, CaseIterable; record.json holds its members';
+
 /** The SCREAMING_CASE constants the Swift does not take from here, and why. */
 const NOT_TWINNED: Record<string, string> = {
   'copy.ts PLURAL_CATEGORIES': 'a Swift enum, CaseIterable; copy.json holds its order',
@@ -234,13 +238,23 @@ const NOT_TWINNED: Record<string, string> = {
   'format.ts NUMBER_FORMATS': 'the web\'s cache of Intl formatters',
   'format.ts TIME_FORMATS': 'the web\'s cache of Intl formatters',
   'format.ts OWN_CONVENTION': 'Intl\'s locales; Foundation\'s are held by format.json',
-  'infer.ts YOLK_WORDS': 'a Swift enum, CaseIterable',
   'record.ts ALWAYS_WRITTEN': 'the record\'s Codable, held by record.json',
+  'geometry.ts SIZE_TABLES': RECORD_ENUM,
+  'infer.ts YOLK_WORDS': RECORD_ENUM,
+  'infer.ts WHITE_REPORTS': RECORD_ENUM,
+  'protocol.ts START_MODES': RECORD_ENUM,
+  'protocol.ts COOLINGS': RECORD_ENUM,
+  'protocol.ts HEATS_AFTER_BOIL': RECORD_ENUM,
+  'record.ts APP_NAMES': RECORD_ENUM,
+  'record.ts MASS_FROMS': RECORD_ENUM,
+  'record.ts EGG_FROMS': RECORD_ENUM,
+  'record.ts TIME_TO_BOIL_FROMS': RECORD_ENUM,
+  'record.ts PULLED_BYS': RECORD_ENUM,
+  'units.ts UNIT_SYSTEMS': RECORD_ENUM,
   'running.ts NO_EVENTS': 'CookEvents.none',
   'step.ts NO_NEED': 'CookNeed.none',
   'share.ts UID': 'a pattern, held by share.json',
   'solve.ts DEFAULT_PARAMS': 'ModelParams.default, from Constants.alphaDefault',
-  'units.ts UNIT_SYSTEMS': 'a Swift enum, CaseIterable',
   'units.ts UNIT_KEYS': 'a switch over the units, held by units.json',
   'units.ts QUANTITIES': 'a Swift enum, CaseIterable',
   'units.ts SPECS': 'a switch over the quantities, held by units.json',

@@ -17,7 +17,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, type Particle, type Posterior, type WhiteReport, YOLK_WORDS,
+  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, type Particle, type Posterior, WHITE_REPORTS, type WhiteReport, YOLK_WORDS,
   YOLK_WORD_CUTS, type YolkWord, answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
   posteriorMeanWhiteOffset, posteriorParams, updatePosterior, whiteAnswerProbabilities, whiteProbit, withUnrelated,
   withUnrelatedWord, yolkAnswerProbabilities, yolkProbit, yolkWordProbabilities, yolkWordProbit,
@@ -87,7 +87,7 @@ function yolkProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
 }
 
 function whiteProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
-  return (['runny', 'tender', 'firm'] as WhiteReport[]).map(
+  return WHITE_REPORTS.map(
     (w) => answerLikelihood(c.grid, p, c.cookTime_s, null, w),
   );
 }
@@ -422,7 +422,7 @@ test('P(answer) is calibrated: simulated cooks answer as often as the model says
         note(py[j], j === y);
         note(pw[j], j === w);
       }
-      updatePosterior(post, grid, t, word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(post, grid, t, word, WHITE_REPORTS[w]);
     }
   }
   let ece = 0;

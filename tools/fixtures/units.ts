@@ -186,7 +186,7 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
       temperature: p.temperature ?? null,
       units: regionalUnits(p),
     })),
-    choose: [null, 'metric', 'imperial'].flatMap((chosen) => UNIT_SYSTEMS.flatMap((regional) => UNIT_SYSTEMS.map(
+    choose: [null, ...UNIT_SYSTEMS].flatMap((chosen) => UNIT_SYSTEMS.flatMap((regional) => UNIT_SYSTEMS.map(
       (next) => {
         const c = chooseUnits(chosen as UnitSystem | null, regional, next);
         return { chosen: chosen, regional: regional, next: next, stored: c.chosen, flip: c.flip };

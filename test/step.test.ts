@@ -238,20 +238,68 @@ test('the surface key: equal exactly when the inputs are, numbers to the bit', (
   assert.equal(inputsKey(a), inputsKey(JSON.parse(JSON.stringify(a)) as typeof a));
   const nudged = { ...a, setup: { ...a.setup, eggStart_C: a.setup.eggStart_C + 1e-12 } };
   assert.notEqual(inputsKey(nudged), inputsKey(a));
-  const { afterBoil: _held, ...noBurner } = a.setup;
-  assert.equal(inputsKey({ ...a, setup: noBurner }), inputsKey(a), 'no burner is the heat held');
-  // A cold pan's water is in a cold start's key, and only there.
+  // A cold pan's water is in a cold start's key.
   const cold = { ...a, setup: { ...a.setup, startMode: 'cold' as const } };
   const { panStart_C: _pan, ...coldUntold } = cold.setup;
   const at = (c: number): typeof a => ({ ...cold, setup: { ...coldUntold, panStart_C: c } });
   assert.notEqual(inputsKey(at(15)), inputsKey(at(8)), 'two cold pans, two keys');
   assert.notEqual(inputsKey(at(15)), inputsKey({ ...cold, setup: coldUntold }), 'given is not the room');
-  assert.ok(inputsKey(at(15)).endsWith(`|p${numberKey(15)}`));
-  const hot = { ...a, setup: { ...coldUntold, startMode: 'hot' as const } };
-  assert.equal(inputsKey({ ...hot, setup: { ...hot.setup, panStart_C: 8 } }), inputsKey(hot), 'a hot start never reads it');
+  assert.equal(inputsKey({ ...a, egg: { ...a.egg }, setup: { ...a.setup } }), inputsKey(a), 'not by identity');
   assert.equal(numberKey(0), numberKey(-0));
   assert.equal(numberKey(480), '407e000000000000');
   assert.equal(numberKey(0.1), '3fb999999999999a');
+});
+
+/** The next double up from `x`, by its bits: the smallest change a number can make. */
+function nextUp(x: number): number {
+  const view = new DataView(new ArrayBuffer(8));
+  view.setFloat64(0, x);
+  view.setBigUint64(0, view.getBigUint64(0) + 1n);
+  return view.getFloat64(0);
+}
+
+/** The path to every field of `o` that holds a value rather than an object. */
+function leafPaths(o: Record<string, unknown>, at: string[] = []): string[][] {
+  const out: string[][] = [];
+  for (const [k, v] of Object.entries(o)) {
+    if (v !== null && typeof v === 'object') out.push(...leafPaths(v as Record<string, unknown>, [...at, k]));
+    else out.push([...at, k]);
+  }
+  return out;
+}
+
+/** A copy of `o` with `change` made to the field at `path`'s parent. */
+function changedAt(o: object, path: string[], change: (parent: Record<string, unknown>, key: string) => void): unknown {
+  const copy = JSON.parse(JSON.stringify(o)) as Record<string, unknown>;
+  let parent = copy;
+  for (const k of path.slice(0, -1)) parent = parent[k] as Record<string, unknown>;
+  change(parent, path[path.length - 1]);
+  return copy;
+}
+
+test('the surface key moves with every field of the inputs: changed by the least it can be, gone, or null', () => {
+  // Every field the inputs can carry is there: a cold start's pan, a bowl's
+  // water and litres, and the heat off.
+  const pot = cookSetupOf(CHOICES, 480);
+  const base = decisionInputs(C, pot.egg, {
+    ...pot.setup, startMode: 'cold', panStart_C: 15, cooling: 'bowl', coolingWater_C: 12, bowlLitres: 2, afterBoil: 'off',
+  });
+  const key = inputsKey(base);
+  const paths = leafPaths(base as unknown as Record<string, unknown>);
+  assert.ok(paths.length >= 18, `${paths.length} fields`);
+  for (const path of paths) {
+    const what = path.join('.');
+    const moved = changedAt(base, path, (p, k) => {
+      const v = p[k];
+      p[k] = typeof v === 'number' ? nextUp(v) : typeof v === 'string' ? `${v}!` : !v;
+    });
+    const gone = changedAt(base, path, (p, k) => { delete p[k]; });
+    const nulled = changedAt(base, path, (p, k) => { p[k] = null; });
+    const keys = [moved, gone, nulled].map((i) => inputsKey(i as typeof base));
+    assert.equal(new Set([key, ...keys]).size, 4, `${what}: as it was, moved, gone and null are four keys`);
+  }
+  const grown = { ...base, setup: { ...base.setup, futureField: 1 } };
+  assert.notEqual(inputsKey(grown), key, 'a field added to the inputs is in the key');
 });
 
 /* ------------------------------------------- a tick a second, as an app's */

@@ -17,7 +17,7 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
 import { COOLING_SECONDS, coolingSecondsFor, countedCooling_s } from '../../src/core/running.ts';
 
-import { referenceSetup } from '../common.ts';
+import { RECORD_ENUMS, referenceSetup, withMember } from '../common.ts';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
  *
@@ -484,6 +484,16 @@ recordCases.push({
   parsed: parseRecord([CANONICAL]),
 });
 
+/* Every member of every list a field of the record takes, each in the
+ * canonical record: a port whose enumeration lacks one refuses its case, and
+ * one with a member the TypeScript lacks disagrees with `fields`. */
+const memberCases = RECORD_ENUMS.flatMap((e) => e.members.map((m) => {
+  const record = withMember(CANONICAL, e.path, m);
+  const parsed = parseRecord(record);
+  if (parsed === null) throw new Error(`record.json: a record with ${e.path} ${m} is refused`);
+  return { path: e.path, member: m, record: record, parsed: parsed };
+}));
+
 /* The results file: the same store makes the same file in both apps, as
  * data. A store read in, a missing store, damaged and bare stores kept as
  * strings, and every character JSON escapes. */
@@ -666,6 +676,12 @@ const loadCases = LOAD_CASES.map((c) => {
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   cases: recordCases,
+  // Each field that takes one of a list, its members in the TypeScript's
+  // order, and the canonical record carrying each.
+  members: {
+    fields: Object.fromEntries(RECORD_ENUMS.map((e) => [e.path, e.members])),
+    cases: memberCases,
+  },
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
   })),

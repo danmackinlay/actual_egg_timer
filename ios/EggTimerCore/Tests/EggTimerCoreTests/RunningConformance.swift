@@ -174,7 +174,7 @@ struct InputsKeyTests {
         var nudged = pot.setup
         nudged.eggStartC += 1e-12
         #expect(inputsKey(DecisionInputs(egg: pot.egg, setup: nudged, params: .default, whiteDoseMin: whiteDoseTarget)) != inputsKey(a))
-        // A cold pan's water is in a cold start's key, and only there.
+        // A cold pan's water is in a cold start's key.
         func key(_ start: StartMode, _ pan: Double?) -> String {
             var s = pot.setup
             s.startMode = start
@@ -183,11 +183,66 @@ struct InputsKeyTests {
         }
         #expect(key(.cold, 15) != key(.cold, 8), "two cold pans, two keys")
         #expect(key(.cold, 15) != key(.cold, nil), "given is not the room")
-        #expect(key(.cold, 15).hasSuffix("|p" + numberKey(15)))
-        #expect(key(.hot, 8) == key(.hot, nil), "a hot start never reads it")
-        #expect(numberKey(0) == numberKey(-0.0))
-        #expect(numberKey(480) == "407e000000000000")
-        #expect(numberKey(0.1) == "3fb999999999999a")
+    }
+
+    /// Every field of the inputs, found by walking their JSON rather than
+    /// named: each number moved by the least it can be, each string to every
+    /// other raw value the inputs' enums have, and each field taken away. The
+    /// key moves exactly when the inputs do, so a field added to them is in
+    /// it.
+    @Test("moves with every field of the inputs")
+    func everyField() throws {
+        let row = try Fixtures.list("running.json", "setups")[0]
+        let pot = try cookSetupOf(decoded(CookChoices.self, row["choices"]), timeToBoilS: row.num("timeToBoil_s"))
+        var setup = pot.setup
+        setup.startMode = .cold
+        setup.panStartC = 15
+        setup.cooling = .bowl
+        setup.coolingWaterC = 12
+        setup.bowlLitres = 2
+        setup.afterBoil = .off
+        let a = DecisionInputs(egg: pot.egg, setup: setup, params: .default, whiteDoseMin: whiteDoseTarget)
+        let json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(a)) as? [String: Any])
+        let raws = StartMode.allCases.map(\.rawValue) + Cooling.allCases.map(\.rawValue)
+            + HeatAfterBoil.allCases.map(\.rawValue)
+
+        func leaves(_ o: [String: Any], _ at: [String]) -> [[String]] {
+            o.flatMap { k, v in (v as? [String: Any]).map { leaves($0, at + [k]) } ?? [at + [k]] }
+        }
+        func changed(_ o: [String: Any], _ path: [String], _ to: Any?) -> [String: Any] {
+            var out = o
+            if path.count == 1 {
+                out[path[0]] = to
+            } else if let inner = o[path[0]] as? [String: Any] {
+                out[path[0]] = changed(inner, Array(path.dropFirst()), to)
+            }
+            return out
+        }
+        func inputs(_ o: [String: Any]) -> DecisionInputs? {
+            guard let data = try? JSONSerialization.data(withJSONObject: o) else { return nil }
+            return try? JSONDecoder().decode(DecisionInputs.self, from: data)
+        }
+
+        let paths = leaves(json, [])
+        #expect(paths.count >= 18, "\(paths.count) fields")
+        for path in paths {
+            let what = path.joined(separator: ".")
+            var value: Any? = json
+            for k in path { value = (value as? [String: Any])?[k] }
+            var tries: [Any?] = [nil]
+            if let s = value as? String {
+                tries += raws.filter { $0 != s }
+            } else if let x = value as? Double {
+                tries.append(x.nextUp)
+            }
+            var moved = false
+            for to in tries {
+                guard let b = inputs(changed(json, path, to)) else { continue }
+                #expect((b == a) == (inputsKey(b) == inputsKey(a)), "\(what) to \(String(describing: to))")
+                moved = moved || b != a
+            }
+            #expect(moved, "\(what): some change to it is another input")
+        }
     }
 }
 

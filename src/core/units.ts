@@ -48,9 +48,9 @@ import { type SizeClass, isUS } from './geometry.ts';
 import { type Fixed, roundTo } from './format.ts';
 
 /** The one setting. The record's `Units` is the same pair. */
-export type UnitSystem = 'metric' | 'imperial';
+export type UnitSystem = typeof UNIT_SYSTEMS[number];
 
-export const UNIT_SYSTEMS: readonly UnitSystem[] = ['metric', 'imperial'];
+export const UNIT_SYSTEMS = ['metric', 'imperial'] as const;
 
 /* ------------------------------------------------------------ the units */
 

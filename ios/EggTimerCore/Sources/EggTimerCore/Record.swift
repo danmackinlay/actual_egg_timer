@@ -9,28 +9,28 @@ import EggTimerCopy
 /// fixtures and the server read what this app writes; the JSON coder itself
 /// is the caller's, since this package does no I/O.
 
-public enum MassFrom: String, Sendable, Codable {
+public enum MassFrom: String, Sendable, Codable, CaseIterable {
     case scale, girth, width
     case sizeClass = "class"
 }
 
-public enum EggFrom: String, Sendable, Codable {
+public enum EggFrom: String, Sendable, Codable, CaseIterable {
     case fridge, room, custom
 }
 
-public enum TimeToBoilFrom: String, Sendable, Codable {
+public enum TimeToBoilFrom: String, Sendable, Codable, CaseIterable {
     case measured, remembered, `default`
 }
 
-public enum PulledBy: String, Sendable, Codable {
+public enum PulledBy: String, Sendable, Codable, CaseIterable {
     case cook, timeout
 }
 
-public enum AppName: String, Sendable, Codable {
+public enum AppName: String, Sendable, Codable, CaseIterable {
     case web, ios
 }
 
-public enum Units: String, Sendable, Codable {
+public enum Units: String, Sendable, Codable, CaseIterable {
     case metric, imperial
 }
 

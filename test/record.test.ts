@@ -29,10 +29,10 @@ import {
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseLog, parseRecord, recordCookTime_s,
   replay, resultsFile, resultsFileName, sharedRecord,
 } from '../src/core/record.ts';
-import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.ts';
+import { WHITE_REPORTS, YOLK_WORDS, createPrior, posteriorParams, updatePosterior } from '../src/core/infer.ts';
 import { DEFAULT_PARAMS } from '../src/core/solve.ts';
 import { APP_VERSION } from '../src/ui/version.ts';
-import { appSetup, recordAt } from '../tools/common.ts';
+import { RECORD_ENUMS, appSetup, fieldAt, recordAt, withMember } from '../tools/common.ts';
 import {
   type PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, type Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, seedOf,
   spread, summarise, wordLog,
@@ -63,9 +63,29 @@ test('unknown fields are ignored and dropped; a field today\'s records write is 
   assert.equal('id' in (parsed as object), false);
 });
 
+test('every member of every list a field takes loads, and a member added to a list is all a record needs', () => {
+  const base = solvedRecord(0.3, 'soft');
+  for (const e of RECORD_ENUMS) {
+    for (const m of e.members) {
+      assert.equal(fieldAt(parseRecord(withMember(base, e.path, m)), e.path), m, `${e.path}: ${m}`);
+    }
+    // A cooling, a carton or an answer core has never heard of is refused,
+    // and read the moment its list has it.
+    const planted = withMember(base, e.path, 'planted');
+    assert.equal(parseRecord(planted), null, `${e.path}: not on the list`);
+    const grown = e.members as string[];
+    grown.push('planted');
+    try {
+      assert.equal(fieldAt(parseRecord(planted), e.path), 'planted', `${e.path}: added to the list`);
+    } finally {
+      grown.pop();
+    }
+  }
+});
+
 test('the white\'s three answers load, a skip loads, and nothing else does', () => {
   const base = solvedRecord(0.3, null);
-  for (const white of ['runny', 'tender', 'firm']) {
+  for (const white of WHITE_REPORTS) {
     assert.equal(parseRecord({ ...base, white: white })?.white, white, white);
   }
   assert.equal(parseRecord({ ...base, white: null })?.white, null, 'skipped');
@@ -75,7 +95,7 @@ test('the white\'s three answers load, a skip loads, and nothing else does', () 
 
 test('the five yolk words load, a skip loads, and nothing else does', () => {
   const base = solvedRecord(0.3, null);
-  for (const word of ['runny', 'soft', 'jammy', 'fudgy', 'hard']) {
+  for (const word of YOLK_WORDS) {
     assert.equal(parseRecord({ ...base, yolkWord: word })?.yolkWord, word, word);
   }
   assert.equal(parseRecord({ ...base, yolkWord: null })?.yolkWord, null, 'skipped');

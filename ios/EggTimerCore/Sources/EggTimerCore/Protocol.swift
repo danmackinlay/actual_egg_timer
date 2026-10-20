@@ -4,7 +4,7 @@ import Foundation
 /// TypeScript's comments say what each part is for, and give the physics. Its
 /// schedule functions are `Protocols`' statics.
 
-public enum StartMode: String, Sendable, Codable {
+public enum StartMode: String, Sendable, Codable, CaseIterable {
     case cold, hot
 }
 
@@ -24,7 +24,7 @@ public func carryoverWindowS(_ cooling: Cooling) -> Double {
     cooling == .eggCup ? Constants.eggCupOpenedS : Constants.carryoverWindow
 }
 
-public enum HeatAfterBoil: String, Sendable, Codable {
+public enum HeatAfterBoil: String, Sendable, Codable, CaseIterable {
     case hold, off
 }
 

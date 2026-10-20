@@ -14,8 +14,10 @@ import type { SizeClass } from '../core/geometry.ts';
 import { DEFAULTS, LIMITS, type Limit, clamp } from '../core/inputs.ts';
 import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod } from '../core/copy.ts';
 import { languageOf } from '../core/format.ts';
-import type { Cooling, HeatAfterBoil, StartMode } from '../core/protocol.ts';
-import type { EggFrom } from '../core/record.ts';
+import {
+  COOLINGS, type Cooling, HEATS_AFTER_BOIL, type HeatAfterBoil, START_MODES, type StartMode,
+} from '../core/protocol.ts';
+import { EGG_FROMS, type EggFrom } from '../core/record.ts';
 import type { AlarmSound } from '../core/sounds.ts';
 import type { UnitSystem, UnitsFlip } from '../core/units.ts';
 
@@ -229,12 +231,12 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     sizeIndex: carrySizeIndex(storedNumber(r['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex), classes),
     customMinor_mm: storedNumber(r['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
     measuredBy: oneOf(r['measuredBy'], ['scale', 'girth', 'width'] as const, d.measuredBy),
-    startTempMode: oneOf(r['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
+    startTempMode: oneOf(r['startTempMode'], EGG_FROMS, d.startTempMode),
     customStart_C: storedNumber(r['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
     altitude_m: storedNumber(r['altitude_m'], LIMITS.altitude_m, d.altitude_m),
-    startMode: oneOf(r['startMode'], ['cold', 'hot'] as const, d.startMode),
-    afterBoil: oneOf(r['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
-    cooling: oneOf(r['cooling'], ['ice', 'tap', 'bowl', 'counter', 'eggCup'] as const, d.cooling),
+    startMode: oneOf(r['startMode'], START_MODES, d.startMode),
+    afterBoil: oneOf(r['afterBoil'], HEATS_AFTER_BOIL, d.afterBoil),
+    cooling: oneOf(r['cooling'], COOLINGS, d.cooling),
     tapWater_C: storedOptional(r['tapWater_C'], LIMITS.coolingWater_C),
     bowlLitres: storedNumber(r['bowlLitres'], LIMITS.bowlLitres, d.bowlLitres),
     bowlWater_C: storedOptional(r['bowlWater_C'], LIMITS.coolingWater_C),

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { decideAt } from '../src/core/decide.ts';
 import { buildDoseGrid, cookTimeForLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.ts';
 import {
-  type Particle, type WhiteReport, YOLK_WORDS, createPrior, updatePosterior, whiteProbit, withUnrelated, withUnrelatedWord,
+  type Particle, WHITE_REPORTS, YOLK_WORDS, createPrior, updatePosterior, whiteProbit, withUnrelated, withUnrelatedWord,
   yolkProbit, yolkWordProbit,
 } from '../src/core/infer.ts';
 import { ALPHA_DEFAULT } from '../src/core/constants.ts';
@@ -71,7 +71,7 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
       predicted[b] += d.odds;
       observed[b] += y === 1 && w !== 0 ? 1 : 0;
       counts[b] += 1;
-      updatePosterior(cal.posterior, grid, t, word, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      updatePosterior(cal.posterior, grid, t, word, WHITE_REPORTS[w]);
       cal.eggsLogged += 1;
     }
   }

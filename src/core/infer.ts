@@ -76,10 +76,10 @@ import {
  * (`doneness.runny` ... `doneness.hard`), and covers the levels that
  * anchor's word names.
  */
-export type YolkWord = 'runny' | 'soft' | 'jammy' | 'fudgy' | 'hard';
+export type YolkWord = typeof YOLK_WORDS[number];
 
 /** The five, softest first: the order of `DONENESS_ANCHORS`. */
-export const YOLK_WORDS: YolkWord[] = ['runny', 'soft', 'jammy', 'fudgy', 'hard'];
+export const YOLK_WORDS = ['runny', 'soft', 'jammy', 'fudgy', 'hard'] as const;
 
 /** A yolk word's place, 0 (runny) to 4 (hard). */
 export function yolkWordIndex(w: YolkWord): number {
@@ -92,7 +92,10 @@ export function yolkWordIndex(w: YolkWord): number {
  * Three answers: runny, tender, firm. The third needs a ceiling, and that is a
  * learned cutpoint like any other (`whiteFirmGap`).
  */
-export type WhiteReport = 'runny' | 'tender' | 'firm';
+export type WhiteReport = typeof WHITE_REPORTS[number];
+
+/** The three, runniest first. */
+export const WHITE_REPORTS = ['runny', 'tender', 'firm'] as const;
 
 export interface Particle {
   alpha_m2s: number;

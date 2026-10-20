@@ -25,7 +25,7 @@ public enum YolkWord: String, Sendable, Codable, CaseIterable {
     }
 }
 
-public enum WhiteReport: String, Sendable, Codable {
+public enum WhiteReport: String, Sendable, Codable, CaseIterable {
     case runny
     case tender
     case firm

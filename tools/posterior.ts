@@ -34,7 +34,7 @@ import {
 import { eggFromMass } from '../src/core/geometry.ts';
 import {
   PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle,
-  type Posterior, type WhiteReport, YOLK_WORDS, type YolkWord, answerLikelihood, createPrior, whiteProbit,
+  type Posterior, WHITE_REPORTS, type WhiteReport, YOLK_WORDS, type YolkWord, answerLikelihood, createPrior, whiteProbit,
   withUnrelated, withUnrelatedWord, yolkWordProbit,
 } from '../src/core/infer.ts';
 import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.ts';
@@ -468,8 +468,6 @@ function probeReading(peak_C: number, u: () => number): number {
   return peak_C - h + PROBE_INSTRUMENT_SD_C * normalOf(u);
 }
 
-const WHITES: WhiteReport[] = ['runny', 'tender', 'firm'];
-
 /** The records a cook `truth` would make, answering through the model. */
 function simulateAnswers(scenario: SbcScenario, base: EggRecord[], surfaces: DoseGrid[], truth: Particle, u: () => number): EggRecord[] {
   return base.map((r, k) => {
@@ -479,7 +477,7 @@ function simulateAnswers(scenario: SbcScenario, base: EggRecord[], surfaces: Dos
     if (kind === 'probe') {
       return { ...r, white: null, probe: { centre_C: probeReading(lookupPeakYolk_C(g, truth.alpha_m2s, t), u), after_s: 180 } };
     }
-    const white = WHITES[draw(whiteProbit(g, truth, t).map(withUnrelated), u())];
+    const white = WHITE_REPORTS[draw(whiteProbit(g, truth, t).map(withUnrelated), u())];
     const word = YOLK_WORDS[draw(yolkWordProbit(g, truth, t).map(withUnrelatedWord), u())];
     return { ...r, yolkWord: word, white: white };
   });

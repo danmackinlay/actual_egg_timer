@@ -9,7 +9,7 @@
  */
 
 import type { SizeClass } from '../core/geometry.ts';
-import type { StartMode } from '../core/protocol.ts';
+import { START_MODES, type StartMode } from '../core/protocol.ts';
 import { type BoilMemory, rememberBoil } from '../core/boil.ts';
 import { LIMITS, type Limit, clamp, isWithin } from '../core/inputs.ts';
 import {
@@ -216,7 +216,7 @@ export function loadLanguage(): LanguageState {
 /** The pan method in a stored record: cold or hot, and cold for anything else,
  *  including a 'sous' and no record at all. */
 function storedPanStart(raw: Record<string, unknown> | null): StartMode {
-  return oneOf(raw === null ? undefined : raw['startMode'], ['cold', 'hot'] as const, 'cold');
+  return oneOf(raw === null ? undefined : raw['startMode'], START_MODES, 'cold');
 }
 
 /* ----------------------------------------------------------- boil memory */

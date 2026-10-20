@@ -14,7 +14,10 @@ import { type SphereState, meanTemperature, robinSurface } from './sphere.ts';
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
  *  eggs are lowered into water already boiling - peels far better, and the
  *  ramp becomes irrelevant. */
-export type StartMode = 'cold' | 'hot';
+export type StartMode = typeof START_MODES[number];
+
+/** Every start, as a record may carry one. */
+export const START_MODES = ['cold', 'hot'] as const;
 
 /** What happens after the egg comes out. This is not a detail: it changes the
  *  peak yolk temperature by ~20 C. 'bowl' is a bowl of still water the eggs
@@ -22,7 +25,10 @@ export type StartMode = 'cold' | 'hot';
  *  is the egg left whole in the air until it is cool; 'eggCup' is the same
  *  egg in the air, eaten warm from an egg cup, opened EGG_CUP_OPENED_S after
  *  the pull (`carryoverWindow_s`). */
-export type Cooling = 'ice' | 'tap' | 'bowl' | 'counter' | 'eggCup';
+export type Cooling = typeof COOLINGS[number];
+
+/** Every cooling, as a record may carry one. */
+export const COOLINGS = ['ice', 'tap', 'bowl', 'counter', 'eggCup'] as const;
 
 /** Whether the egg rests in the air after the pull, on the counter or in an
  *  egg cup: its shell cools by Newton's law (`coolingTemperature`). The
@@ -52,7 +58,10 @@ export function carryoverWindow_s(cooling: Cooling): number {
  *  its boiling point, which is what every recipe silently assumes. 'off' is the
  *  standing method - cover the pan, kill the heat, and let a falling water
  *  temperature finish the egg. */
-export type HeatAfterBoil = 'hold' | 'off';
+export type HeatAfterBoil = typeof HEATS_AFTER_BOIL[number];
+
+/** Every burner after the boil, as a record may carry one. */
+export const HEATS_AFTER_BOIL = ['hold', 'off'] as const;
 
 export interface CookSetup {
   startMode: StartMode;

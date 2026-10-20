@@ -117,7 +117,10 @@ export function sizeClassesFor(region: string | null | undefined): SizeClass[] {
  *  class carries it, because the same class is 68 g in one table and 60.2 g in
  *  the other, and the width of the class - the egg-level noise the fit reads -
  *  differs with it. */
-export type SizeTable = 'eu' | 'us';
+export type SizeTable = typeof SIZE_TABLES[number];
+
+/** Both tables, as a record may name one. */
+export const SIZE_TABLES = ['eu', 'us'] as const;
 
 /** Whether a platform's region is the United States, the one region whose
  *  eggs, water and default units differ. */
