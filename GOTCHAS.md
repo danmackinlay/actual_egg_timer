@@ -69,10 +69,12 @@ releasing has its own in `ios/RELEASING.md`.
 
 ## The web
 
-- **`npm run build:site` empties `_dev/`** in the checkout it runs in, and
-  `npm run e2e` and `verify` run it. A preview configuration or an e2e run
-  aimed at the main checkout from an agent's worktree wiped its
-  `copy-review.html`; build and test in the worktree.
+- **`npm run build:site` rebuilds the checkout it runs in**: its `_site/`
+  and `_dev/bundle/` (the rest of `_dev/`, `copy-review.html` with it, it
+  leaves), and `npm run e2e` and `verify` run it. A preview configuration
+  or an e2e run aimed at the main checkout from an agent's worktree builds,
+  serves and tests the main checkout's code, not the worktree's; build and
+  test in the worktree.
 
 - **A service worker outlives the server it came from.** A browser that
   opened one build on `localhost:8080` keeps it for that address, and

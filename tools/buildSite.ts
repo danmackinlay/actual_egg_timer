@@ -1,5 +1,6 @@
 // `npm run build:site`: the deployable tree, in _site/, from nothing, and
-// beside it the development tools, in _dev/.
+// beside it the development tools, in _dev/bundle/, which it rebuilds; the
+// rest of _dev/ it leaves.
 //
 //   _site/index.html, styles.css, site.webmanifest   from the repo root
 //   _site/bundle/              the scripts, bundled by esbuild (below)
@@ -77,8 +78,10 @@ function outputOf(result: { metafile: Metafile }, entry: string): string {
   return found[0];
 }
 
+// _dev/ holds what other tools write too (copy:review's page), so only the
+// bundle this build writes there goes.
 rmSync(SITE, { recursive: true, force: true });
-rmSync(DEV, { recursive: true, force: true });
+rmSync(join(DEV, BUNDLE), { recursive: true, force: true });
 mkdirSync(SITE);
 
 const workers = await build({ ...OPTIONS, entryPoints: ['src/ui/gridWorker.ts', 'src/ui/serviceWorker.ts'] });
