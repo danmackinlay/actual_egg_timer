@@ -7,6 +7,7 @@
 
 import { wordBandHigh, wordBandLow } from '../../src/core/certainty.ts';
 import { eggFromMinorDiameter } from '../../src/core/geometry.ts';
+import type { ElementId } from '../../src/ui/dom.ts';
 import { Failure, type Scenario, type Snap, byId, check } from '../harness.ts';
 import {
   COOLINGS, STOPPED, boil, clockAt, corrected, deadlines, later, near, oneLayout, panelStart, pick, press,
@@ -24,6 +25,79 @@ export const layoutScenarios: Record<string, Scenario> = {
     // The bowl: its pull stacks at 320 px in every font, by 54 px in
     // Apple's; the ice bath fits there in Apple's by 2 px.
     run: oneLayout(320, 'stacked', COOLINGS[2]),
+  },
+
+  'panel-in-view': {
+    what: 'UI.md 5: at 390 px, a clause opened by a tap scrolls just far enough to show its panel: the start\'s at idle, under the fold, comes up to its foot at the screen\'s, and the egg\'s opened from it to its own; the start\'s opened again from that, already on screen, does not move the page; on a screen shorter than the panel its head comes to the top, at once when less motion is asked; nothing on the page moves but the page',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      // About what an iPhone 17e shows of a page under a browser's bars.
+      await tab.viewport(390, 664);
+      await tab.until("__snap().chosen !== null", 'the time decided');
+      await tab.settle();
+      // A panel's top and foot on the screen, the screen's height, the
+      // page's scroll and the most it can scroll, and the sentence's place
+      // on the page.
+      type Seen = { top: number; foot: number; screen: number; y: number; most: number; sentence: number };
+      const seen = (panel: ElementId): string => `(() => { const r = ${byId(panel)}.getBoundingClientRect();
+        return { top: r.top, foot: r.bottom, screen: innerHeight, y: scrollY,
+          most: document.scrollingElement.scrollHeight - innerHeight,
+          sentence: ${byId('sentence')}.getBoundingClientRect().top + scrollY }; })()`;
+      // The clause tapped, and its panel as it opened, before any scroll: a
+      // smooth one moves the page only from the next frame.
+      const open = (panel: ElementId): Promise<Seen> => tab.eval<Seen>(`(() => {
+        document.querySelector('#sentence .clause[aria-controls="${panel}"]').click();
+        return ${seen(panel)}; })()`);
+      // A smooth scroll run out: the page's scroll the same ten frames.
+      const still = async (panel: ElementId): Promise<Seen> => {
+        await tab.eval(`new Promise((done) => {
+          let last = NaN, same = 0;
+          const look = () => { if (scrollY === last) same += 1; else { same = 0; last = scrollY; }
+            if (same >= 10) done(); else requestAnimationFrame(look); };
+          requestAnimationFrame(look); })`);
+        return tab.eval<Seen>(seen(panel));
+      };
+      const px = (s: Seen): string => `${s.top.toFixed(1)}-${s.foot.toFixed(1)} on a screen of ${s.screen}, scrolled ${s.y}`;
+      check((await tab.eval<number>('scrollY')) === 0, 'the page not at its top at idle');
+
+      // The start's, under the fold: up just far enough, its foot at the
+      // screen's.
+      const opened = await open('panelStart');
+      check(opened.foot > opened.screen + 1, `the start's panel opened on screen (${px(opened)}): nothing to scroll`);
+      check(opened.foot - opened.top <= opened.screen, `the start's panel taller than the screen: ${px(opened)}`);
+      const shown = await still('panelStart');
+      check(near(shown.foot, shown.screen, 1) && shown.top >= 0, `the start's panel not just in view: ${px(shown)}`);
+      check(near(shown.sentence, opened.sentence, 0.5), `the sentence moved on the page: ${opened.sentence} -> ${shown.sentence}`);
+
+      // The egg's from it, where the start's was and taller: another clause
+      // opened is opened, and comes up to its foot.
+      const egg = await open('panelEgg');
+      check(egg.foot > egg.screen + 1, `the egg's panel opened on screen (${px(egg)}): nothing to scroll`);
+      const eggShown = await still('panelEgg');
+      check(near(eggShown.foot, eggShown.screen, 1) && eggShown.top >= 0, `the egg's panel not just in view: ${px(eggShown)}`);
+
+      // The start's again from it, shorter, where the egg's was: on screen,
+      // so the page stays put, unless the page, grown shorter, takes the
+      // scroll back.
+      const again = await open('panelStart');
+      check(again.top >= 0 && again.foot <= again.screen + 0.5, `the start's panel opened again off the screen: ${px(again)}`);
+      const againShown = await still('panelStart');
+      const kept = again.most >= eggShown.y;
+      if (kept) check(againShown.y === eggShown.y, `the start's panel on screen, and the page moved: ${eggShown.y} -> ${againShown.y}`);
+      check(againShown.top >= 0 && againShown.foot <= againShown.screen + 0.5, `the start's panel not on screen: ${px(againShown)}`);
+
+      // Taller than the screen: its head at the top, at once with less
+      // motion.
+      await tab.click('#panelStart button.panel__close');
+      await tab.eval('window.scrollTo(0, 0)');
+      await tab.viewport(390, 240);
+      await tab.reducedMotion(true);
+      const tall = await open('panelStart');
+      check(tall.foot - tall.top > tall.screen, `the start's panel fits a screen of ${tall.screen}: ${px(tall)}`);
+      check(near(tall.top, 0, 1), `taller than the screen, with less motion, its head not at the top at once: ${px(tall)}`);
+      await tab.reducedMotion(false);
+      return `the start's ${px(opened)} -> ${px(shown)}; the egg's -> ${px(eggShown)}; the start's again ${px(againShown)}${kept ? '' : ' (the page grew shorter)'}; on a short screen ${px(tall)}`;
+    },
   },
 
   'egg-heat-toggle': {

@@ -277,10 +277,20 @@ export class Tab {
     return tab;
   }
 
-  /** The tab's screen `width` px wide (844 tall), as a narrower phone's. */
-  async viewport(width: number): Promise<void> {
+  /** The tab's screen `width` px wide and `height` tall (844, a phone's
+   *  whole screen), as a narrower phone's, or as much of one as a browser's
+   *  bars leave. */
+  async viewport(width: number, height = 844): Promise<void> {
     await this.cdp.send('Emulation.setDeviceMetricsOverride', {
-      width: width, height: 844, deviceScaleFactor: 1, mobile: false,
+      width: width, height: height, deviceScaleFactor: 1, mobile: false,
+    }, this.session);
+  }
+
+  /** The page told the cook asks for less motion, or not
+   *  (`prefers-reduced-motion`). */
+  async reducedMotion(on: boolean): Promise<void> {
+    await this.cdp.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: on ? 'reduce' : '' }],
     }, this.session);
   }
 
