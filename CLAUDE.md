@@ -155,6 +155,10 @@ next is `PLAN.md`; the last section here says which document holds what.
 - **A debug build takes launch arguments** (`-uiScreen`,
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
   `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them.
+- **`npm run ios:e2e` taps the app as a finger would** (XCUITest,
+  `ios/UITests`), finding each control by its accessibility identifier:
+  a control a scenario presses needs one, on the control itself, not on a
+  container (`ios/README.md`).
 - **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools:
   write the value into the plist of the app's stores, its suite
   (`Library/Preferences/<bundle id>.stores.plist`, `Stores.suite`), in the

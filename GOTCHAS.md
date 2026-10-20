@@ -20,12 +20,39 @@ releasing has its own in `ios/RELEASING.md`.
   `pendingNotificationRequests` never return, relaunch or not; half the
   cores busy is fine. Unloaded, a new device's first request comes back
   "not authorized" after about 20 s. Warm a new device up with a cook until
-  its alarms are pending (`tools/iosE2e.ts` does).
+  its alarms are pending (`WarmUp`, ios/UITests/Bundle.swift, which
+  `npm run ios:e2e` runs on each of its devices).
 - **A quick synthetic tap does not flip a SwiftUI `Toggle`; a held one
   (0.15 s) does.** Screenshots lag a tap by a frame or two, so look again
   before tapping twice.
 - **A simulated tap while a scroll is still coasting stops the scroll and
-  taps nothing.** Wait after a swipe.
+  taps nothing.** Wait after a swipe. The UI tests drag the page instead,
+  and hold at the end, so it never coasts (`Run.reveal`).
+
+## XCUITest
+
+- **A failed UI test spends minutes on a sysdiagnose of the simulator**
+  before `xcodebuild` returns, unless it is given
+  `-collect-test-diagnostics never`; the result bundle and the app's log say
+  what failed.
+- **XCUITest cannot uninstall the app**, so a test cannot start from a fresh
+  install: `tools/iosE2e.ts` runs each scenario as its own
+  `xcodebuild test-without-building`, the app uninstalled before it, about
+  4.5 s a scenario.
+- **A simulator's app and its UI tests share the Mac's files**: neither is
+  held to its container, so a directory on the Mac (`-debugDir`) carries the
+  clock's steps one way and the debug log the other, and the tests read and
+  edit the stores' plist in the app's container (whose path the app logs).
+- **An accessibility identifier on a container replaces its children's**,
+  and an `accessibilityRepresentation`'s elements are laid out where the
+  representation puts them, not where the view draws: a clause button sat
+  under the sentence, so a tap on it hit something else. The sentence's
+  representation leads with the sentence as drawn, whose links sit on the
+  clauses. A group made with `.accessibilityElement(children: .contain)`
+  keeps its children's identifiers, and its frame is that of what it shows,
+  not its own.
+- **`waitForExistence` costs a second even when the element is there**;
+  `exists` first.
 - **A `UISlider` sends `.valueChanged` again while the finger rests, and
   once more as it lifts**, with the finger's value, not one the code set
   meanwhile.
@@ -117,7 +144,7 @@ releasing has its own in `ios/RELEASING.md`.
   default to Imperial units, US egg sizes and a 12-hour clock: a scenario
   written on a metric machine fails only in CI. Each tab is given a locale
   (`DEFAULT_LOCALE` in `tools/harness.ts`), and each iOS launch one
-  (`localeArgs` in `tools/iosHarness.ts`); `AET_LOCALE=en-US npm run e2e --
+  (`localeArgs` in `ios/UITests/Harness.swift`); `AET_LOCALE=en-US npm run e2e --
   <names>`, or `ios:e2e`, reproduces a runner's. `--lang` does not reach the
   page on macOS. On iOS, `simctl create` copies the host's locale and its
   unit and clock preferences into the device, and those preferences win
