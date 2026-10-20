@@ -43,7 +43,7 @@ import {
 } from './effects.ts';
 import { showEgg } from './views.ts';
 import { type Builds, type Needs, openNeeds, workerBuilds } from './needs.ts';
-import { clockSpeed, nowMs, onClockChange, random } from './now.ts';
+import { clockSpeed, nowMs, onClockChange } from './now.ts';
 import { ownsApp } from './owner.ts';
 
 /** The page's model: what `update` last made of it. Kept here only. */
@@ -293,7 +293,7 @@ function perform(effects: Effect[]): void {
         // A new page or a new cook, a new nudge: a whole number of seconds
         // from -10 to +10, drawn when the page boots and again after each
         // cook, so the time on screen holds still while the cook looks at it.
-        send({ kind: 'nudge', draw: nudgeSeconds(random()) });
+        send({ kind: 'nudge', draw: nudgeSeconds(Math.random()) });
         break;
       case 'forgetAll':
         forgetAll(stores);

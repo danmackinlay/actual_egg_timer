@@ -23,7 +23,6 @@
     "copy:literals": "node tools/copyLiterals.ts",
     "copy:keys": "node tools/copyKeys.ts",
     "swift:constants": "node tools/swiftConstants.ts",
-    "copy:snapshot": "npm run build:site && node tools/copySnapshot.ts",
     "copy:approve": "node tools/copyReview.ts approve",
     "copy:review": "node tools/copyReview.ts",
     "copy:edit": "node tools/copyEdit/server.ts",

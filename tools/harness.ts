@@ -3,8 +3,7 @@
  * store in memory (tools/devServer.ts), headless Chrome on a profile of its
  * own (tools/chrome.ts; CHROME names the binary), and each scenario in a
  * fresh browser context, so no scenario sees another's storage. `npm run
- * e2e` (tools/e2e.ts) and the copy capture (tools/copySnapshot.ts,
- * tools/copyScenarios.ts) are its two sets of scenarios.
+ * e2e` (tools/e2e.ts) runs its scenarios.
  *
  * A scenario talks to the app through what it shows, what it stores, and
  * the page's test API (`window.aetTest`, src/ui/dev/test.ts): `snapshot()`
@@ -198,11 +197,10 @@ export function check(cond: boolean, what: string): void {
   if (!cond) throw new Failure(what);
 }
 
-/** How a tab is opened: the locale and time zone it reports (DevTools'
- *  emulation), and whether to wait for the app to boot. */
+/** How a tab is opened: the locale it reports (DevTools' emulation), and
+ *  whether to wait for the app to boot. */
 export interface TabOptions {
   locale?: string;
-  timezone?: string;
   boot?: boolean;
 }
 
@@ -269,9 +267,6 @@ export class Tab {
     await cdp.send('Emulation.setUserAgentOverride', {
       userAgent: String(await tab.eval('navigator.userAgent')), acceptLanguage: locale,
     }, sessionId);
-    if (options.timezone !== undefined) {
-      await cdp.send('Emulation.setTimezoneOverride', { timezoneId: options.timezone }, sessionId);
-    }
     if (THROTTLE > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE }, sessionId);
     await tab.goto(url, options.boot ?? true);
     return tab;
@@ -584,15 +579,9 @@ export async function runScenarios(scenarios: Record<string, Scenario>, names: s
     if (chrome !== null) await chrome.close();
   }
   // Passed means asserted and held: a scenario that ran but checked nothing
-  // is said apart, never counted. The count by kind: `copy/...` and the rest.
+  // is said apart, never counted.
   const counted = names.filter((n) => !unchecked.includes(n));
-  const kinds = new Map<string, number>();
-  for (const n of counted) {
-    const kind = n.includes('/') ? `${n.slice(0, n.indexOf('/'))}/` : 'behaviour';
-    kinds.set(kind, (kinds.get(kind) ?? 0) + 1);
-  }
-  const byKind = [...kinds].map(([k, n]) => `${n} ${k}`).join(', ');
-  console.log(`${counted.length - failed} of ${counted.length} passed (${byKind}) in ${((Date.now() - t0) / 1000).toFixed(1)} s`
+  console.log(`${counted.length - failed} of ${counted.length} passed in ${((Date.now() - t0) / 1000).toFixed(1)} s`
     + (unchecked.length > 0 ? `; ${unchecked.length} ran asserting nothing, not counted: ${unchecked.join(', ')}` : ''));
   return failed;
 }

@@ -110,7 +110,8 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 - **Every word either app shows is a key in `copy/en.json`**; no literal
   written into a Swift call that puts text on screen is words (`npm run
-  copy:literals`; one passed through a name is not read). Read
+  copy:literals`), nor into the web's (`test/uiLiterals.test.ts`, run by
+  `npm test`); one passed through a name is not read. Read
   `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which
   `npm test` makes from the catalogue and both compilers check
   (`DECISIONS.md` 127); a Swift `tr` is given exactly its key's arguments,

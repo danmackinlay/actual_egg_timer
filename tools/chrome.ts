@@ -1,9 +1,10 @@
 /**
  * Headless Chrome over the DevTools protocol, with nothing but Node: a
  * process started on a profile of its own, and one socket to talk to it.
- * For tools/copySnapshot.ts (one page, driven by the page itself) and
- * tools/e2e.ts (pages driven from here). Chrome is found where macOS and
- * Linux (GitHub's runners among them) put it; CHROME names another binary.
+ * For the web e2e (tools/harness.ts) and the tools that drive a page of
+ * their own (tools/copyEditE2e.ts, tools/iosShots.ts). Chrome is found
+ * where macOS and Linux (GitHub's runners among them) put it; CHROME names
+ * another binary.
  * Under CI (the CI environment variable, which GitHub sets) Chrome runs
  * without its sandbox, which a runner's container may not allow: the pages
  * it opens are this repository's, served from this machine.

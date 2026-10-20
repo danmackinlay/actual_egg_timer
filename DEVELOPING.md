@@ -26,8 +26,6 @@ npm run copy:review      # the words changed since the approved commit, as _dev/
 npm run copy:edit        # the owner's editor for the words, in his browser on 127.0.0.1 (below)
 npm run copy:edit:e2e    # that editor driven in headless Chrome against a scratch clone
 npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved (LANGUAGE.md §3)
-npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
-npm run copy:snapshot -- compare <before.json> <after.json>
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
@@ -100,9 +98,7 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    word by word, the US English, and the key's note, and at its foot these
    steps 3 and 4.
 2. **Read it in place.** A string is judged where it appears, in the apps,
-   not only on the page (`UI.md` §6). `npm run copy:snapshot -- capture
-   <out.json>` renders every web screen the copy scenarios reach, for a
-   read of every string rather than only the changed ones.
+   not only on the page (`UI.md` §6).
 3. **Change them.** The owner does it himself in `npm run copy:edit`
    (below), which checks and commits each save. By hand, or for whoever
    he names it to: put it back in `copy/en.json`, and any
@@ -193,18 +189,13 @@ says how). Beyond it the harness watches the platform: the sounds scheduled
 on the audio clock, the writes to localStorage, and the requests, read off
 DevTools' network events.
 
-The copy capture runs on the same harness. Its scenarios
-(`tools/copyScenarios.ts`) are e2e scenarios named `copy/…`: settings
-planted, the app opened on the development clock stopped at 7:30 on a
-Saturday in London (the time zone pinned), its one random draw seeded
-(`?seed=`), and every word on screen, visible or not, captured after the
-boot and after each step, once the page is idle. `npm run copy:snapshot --
-capture <out.json>` writes those words, and `compare` proves two builds
-render the same ones; `npm run e2e` runs them too, so a step that no longer
-reaches its state fails there. The whole suite takes about
-six minutes, so it is not in `npm run verify`; CI runs it as a job of its
-own on Linux (`.github/workflows/verify.yml`, `e2e`), and a failing scenario
-fails the run.
+The words on screen are not captured: which key each state shows is
+core's and fixtured (`fixtures/wording.json`, `copy.json`, `format.json`),
+and `npm test` fails a word written into `src/ui` rather than taken from
+the catalogue (`test/uiLiterals.test.ts`). The whole suite takes about
+three and a half minutes, so it is not in `npm run verify`; CI runs it as a
+job of its own on Linux (`.github/workflows/verify.yml`, `e2e`), and a
+failing scenario fails the run.
 
 What makes it take seconds is the development clock (`src/ui/dev/clock.ts`).
 Every read of the time in `src/ui/` goes through `src/ui/now.ts`, which is
