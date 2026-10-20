@@ -64,7 +64,10 @@ struct ContentView: View {
 
         return NavigationStack(path: $path) {
             ScrollView {
-                VStack(spacing: 22) {
+                // The web's spacing at a phone's width (styles.css: `main`,
+                // `#actions`, `#controls`), so what is under the sentence
+                // is as near the top as there.
+                VStack(spacing: 18) {
                     // In every phase, so nothing moves at the start.
                     if period { titlePage }
                     // The readout and the action are functions of the CLOCK,
@@ -81,7 +84,7 @@ struct ContentView: View {
                         let now = moment(context.date)
                         let phase = cook.phase(atS: now.timeIntervalSince1970)
                         let said = sousVideAt(now, sousVide, phase: phase)
-                        VStack(spacing: 22) {
+                        VStack(spacing: 14) {
                             ReadoutView(
                                 model: model, phase: phase, now: now,
                                 sousVide: said,
@@ -110,7 +113,9 @@ struct ContentView: View {
                     }
                     .id(tick)
                 }
-                .padding(20)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
             .defaultScrollAnchor(scrollAnchor)
             .barTitle(tr(.`app.name`))
