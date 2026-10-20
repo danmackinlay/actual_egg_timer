@@ -12,10 +12,14 @@
  * debug build compiles (Screenshots.swift, an `#if DEBUG` branch). A `"""`
  * literal fails where it opens on a line with a text call; elsewhere it is
  * skipped.
+ *
+ * It also runs tools/copyArgs.ts, which reads each `tr`'s arguments.
  */
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+
+import { checkTree, summary } from './copyArgs.ts';
 
 const DIRS = ['ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared'];
 const DEBUG_FILES = new Set(['ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift']);
@@ -101,5 +105,8 @@ if (process.argv[1]?.endsWith('copyLiterals.ts')) {
   const failures = read.flatMap((f) => lintSwift(f, readFileSync(f, 'utf8')));
   console.log(failures.length > 0 ? `${failures.length} failures:\n${failures.join('\n')}`
     : `copy:literals: ${read.length} files, ${TEXT_CALLS.length} text calls; no literal in one is words.`);
-  if (failures.length > 0) process.exit(1);
+  // And each tr's arguments, which npm test checks too (tools/copyArgs.ts).
+  const args = checkTree();
+  console.log(args.failures.length > 0 ? `${args.failures.length} failures:\n${args.failures.join('\n')}` : summary(args.calls));
+  if (failures.length > 0 || args.failures.length > 0) process.exit(1);
 }

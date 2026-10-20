@@ -267,7 +267,10 @@ read), so what a change does to the words is the catalogue's diff.
   `npm test` and `npm run fixtures:check` (`CLAUDE.md` has the gate).
   What holds it: placeholder parity, curly quotes, the small surfaces'
   budgets, the overlays' `base`, keys and arguments checked by both
-  compilers, and no raw key on screen (`copy.test.ts`, `copy:literals`).
+  compilers, each Swift `tr` given exactly its key's arguments, which a
+  debug build stops on (`tools/copyArgs.ts`, and for the keys the core
+  computes `WordsSweepTests.swift`), and no raw key on screen
+  (`copy.test.ts`, `copy:literals`).
   The owner makes it himself in `npm run copy:edit` (`DEVELOPING.md`,
   "Reviewing the words"), which holds a draft to the same rules as he
   types, from the same code (`tools/copyRules.ts`), changes no key and no
