@@ -9,6 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import { HEADERS, judge, newToken, tokenMatches } from '../tools/copyEdit/guard.ts';
@@ -130,7 +131,7 @@ test('approving is refused with the approval\'s file changed, and is off in an a
   assert.equal(approvingOff(repo.dir, {}, false), null);
   assert.match(approvingOff(repo.dir, { CLAUDECODE: '1' }, false) as string, /Approving is off/);
   assert.equal(approvingOff(repo.dir, { CLAUDECODE: '1' }, true), null, 'a scratch clone under the temporary directory');
-  assert.match(approvingOff(process.cwd(), { CLAUDECODE: '1' }, true) as string, /Approving is off/, 'this checkout is no scratch clone');
+  assert.match(approvingOff(homedir(), { CLAUDECODE: '1' }, true) as string, /Approving is off/, 'a checkout outside the temporary directory');
 });
 
 /* ------------------------------------------------------------ the plan */

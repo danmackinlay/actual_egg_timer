@@ -37,16 +37,16 @@ test('every catalogue the editor writes is in the writer\'s layout: each line wr
 });
 
 test('an edit to one key changes its line and no other', () => {
-  const edited = withEntries(EN, new Map([['action.startAgain', { text: 'Start over' }]]), ORDER);
-  assert.deepEqual(changed(EN, edited).map(([, b]) => b), ['    "action.startAgain": { "text": "Start over" },']);
+  const edited = withEntries(EN, new Map([['action.startAgain', { text: 'Words from a test' }]]), ORDER);
+  assert.deepEqual(changed(EN, edited).map(([, b]) => b), ['    "action.startAgain": { "text": "Words from a test" },']);
   // The last key keeps its line without a comma.
   const last = ORDER.at(-1) as string;
-  const end = withEntries(EN, new Map([[last, { text: 'The end' }]]), ORDER);
-  assert.deepEqual(changed(EN, end).map(([, b]) => b), [`    ${jsonString(last)}: { "text": "The end" }`]);
+  const end = withEntries(EN, new Map([[last, { text: 'The last words from a test' }]]), ORDER);
+  assert.deepEqual(changed(EN, end).map(([, b]) => b), [`    ${jsonString(last)}: { "text": "The last words from a test" }`]);
   // A plural keeps its fields in their order.
-  const plural = withEntries(EN, new Map([['learned.tuned', { count: 'eggs', one: 'From {eggs} result', other: 'From {eggs} results' }]]), ORDER);
+  const plural = withEntries(EN, new Map([['learned.tuned', { count: 'eggs', one: 'From {eggs} test result', other: 'From {eggs} test results' }]]), ORDER);
   assert.deepEqual(changed(EN, plural).map(([, b]) => b),
-    ['    "learned.tuned": { "count": "eggs", "one": "From {eggs} result", "other": "From {eggs} results" },']);
+    ['    "learned.tuned": { "count": "eggs", "one": "From {eggs} test result", "other": "From {eggs} test results" },']);
 });
 
 test('the space no reader sees is written as the escape the files have', () => {
