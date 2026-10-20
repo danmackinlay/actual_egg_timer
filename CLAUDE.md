@@ -35,7 +35,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   branch; a later commit to documents alone needs no rerun.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
-  by `test/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
+  by `test/tools/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
   first two. A release is a tagged commit on `main`, pushed by the owner: it
   bumps the version in its own commit, tags it `git tag -a v<version> -m
   "<one line>"` and pushes `--follow-tags`. Never move or reuse a tag.

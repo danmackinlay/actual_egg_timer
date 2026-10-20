@@ -8,8 +8,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { entryLine, entryLines, jsonString, withEntries } from '../tools/copyFile.ts';
-import { OVERLAYS } from '../src/core/copy.ts';
+import { entryLine, entryLines, jsonString, withEntries } from '../../tools/copyFile.ts';
+import { OVERLAYS } from '../../src/core/copy.ts';
 
 const text = (tag: string): string => readFileSync(`copy/${tag}.json`, 'utf8');
 const EN = text('en');

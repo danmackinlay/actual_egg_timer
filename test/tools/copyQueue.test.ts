@@ -1,7 +1,7 @@
 /**
  * The words waiting to be read (tools/copyQueue.ts): the queue the review
  * page and the words' editor share, and approving, on a repository of the
- * test's own (test/repo.ts).
+ * test's own (test/tools/repo.ts).
  */
 
 import test from 'node:test';
@@ -10,10 +10,10 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { APPROVED_PATH, approve, reviewQueue } from '../tools/copyQueue.ts';
+import { APPROVED_PATH, approve, reviewQueue } from '../../tools/copyQueue.ts';
 import { catalogue, scratchRepo } from './repo.ts';
 
-const REVIEW = join(import.meta.dirname, '..', 'tools', 'copyReview.ts');
+const REVIEW = join(import.meta.dirname, '..', '..', 'tools', 'copyReview.ts');
 
 /** A repository whose approved words are `a`, `b`, `c`, with a US line for
  *  `a`, and whose words now change `b`, add `d`, retire `c` and change `a`'s

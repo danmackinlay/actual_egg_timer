@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { type Call, callsIn, checkTree, helperKeys, literalKeys, mask, problem } from '../tools/copyArgs.ts';
+import { type Call, callsIn, checkTree, helperKeys, literalKeys, mask, problem } from '../../tools/copyArgs.ts';
 
 const names = new Map<string, Set<string>>([
   ['a.none', new Set()],

@@ -12,7 +12,7 @@
 //                    (tools/swiftConstants.ts --check)
 //   then, once both have ended:
 //   typecheck        tsc over core, the app and the rest (npm run typecheck)
-//   npm test         node --test over test/*.test.ts
+//   npm test         node --test over test/*.test.ts and test/tools/*.test.ts
 //   copy:literals    no Swift literal in a text call is words (tools/copyLiterals.ts)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
@@ -104,7 +104,7 @@ function job(name: string, steps: Step[]): Promise<Result> {
 
 const node = process.execPath;
 const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc');
-const tests = readdirSync('test').filter((f) => f.endsWith('.test.ts')).sort().map((f) => join('test', f));
+const tests = ['test', 'test/tools'].flatMap((dir) => readdirSync(dir).filter((f) => f.endsWith('.test.ts')).sort().map((f) => join(dir, f)));
 // What copy:keys, swift:constants and fixtures:check write (TS_KEYS and
 // SWIFT_KEYS, CORE_SWIFT and COPY_SWIFT, WRITTEN in their tools).
 const GENERATED = [
