@@ -88,6 +88,18 @@ extension AppTests {
         #expect(off.contains(tr(.`setup.start.coldStanding`)))
     }
 
+    /// In sous-vide the sentence is the egg and the start alone, its template
+    /// given only those two (a debug build stops on any other argument).
+    @Test func theSousVideSentenceIsTheEggAndTheStart() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        model.planner.start = .sousVide
+        #expect(SentenceWords(model.planner).clauses == [.egg, .start])
+        model.planner.start = .cold
+        #expect(SentenceWords(model.planner).clauses == [.egg, .from, .start, .cooling])
+    }
+
     /// A bowl of water, its water, four eggs and its temperature: in the
     /// sentence, the cook's choices, the cooling counted in the bowl, the
     /// card's cooling and the record.
