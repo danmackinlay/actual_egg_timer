@@ -59,7 +59,7 @@ const WORD_FIELDS = ['text', ...PLURAL_CATEGORIES, 'base'];
 const TEMPLATE_FIELDS = ['text', ...PLURAL_CATEGORIES];
 
 /** U+00A0. A measure's value and unit are joined by it (tools/text.ts). */
-export const NBSP = ' ';
+export const NBSP = '\u00a0';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 export function countOf(m: Message): string | null {
