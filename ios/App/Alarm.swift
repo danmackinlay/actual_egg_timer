@@ -43,12 +43,25 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler(Screenshots.muteAudio ? [.banner, .list] : [.banner, .sound, .list])
+        let options: UNNotificationPresentationOptions = Screenshots.muteAudio ? [.banner, .list] : [.banner, .sound, .list]
+        Screenshots.log(.presented(
+            id: notification.request.identifier,
+            sound: notification.request.content.sound != nil,
+            options: [(UNNotificationPresentationOptions.banner, "banner"), (.sound, "sound"), (.list, "list")]
+                .filter { options.contains($0.0) }.map(\.1)
+        ))
+        completionHandler(options)
     }
 
     /// Ask once. Returns false if the user has said no, in which case the cook
     /// still runs - it just cannot shout.
     func authorize() async -> Bool {
+        let ok = await ask()
+        if Screenshots.logging { await logSettings() }
+        return ok
+    }
+
+    private func ask() async -> Bool {
         // Screenshots of a phase (Screenshots.swift) run on a fresh simulator,
         // where the system would ask, and its alert would be in the picture.
         if Screenshots.noAlarmPrompt { return false }
@@ -66,6 +79,34 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         default:
             return (try? await centre.requestAuthorization(options: [.alert, .sound])) ?? false
         }
+    }
+
+    /// What the system allows the alarms, to the debug log: a sound turned
+    /// off for the app in Settings, or a quiet (provisional) permission,
+    /// delivers every alarm without one.
+    private func logSettings() async {
+        let s = await centre.notificationSettings()
+        let status = switch s.authorizationStatus {
+        case .notDetermined: "notDetermined"
+        case .denied: "denied"
+        case .authorized: "authorized"
+        case .provisional: "provisional"
+        case .ephemeral: "ephemeral"
+        @unknown default: "unknown"
+        }
+        func word(_ setting: UNNotificationSetting) -> String {
+            switch setting {
+            case .enabled: "enabled"
+            case .disabled: "disabled"
+            case .notSupported: "notSupported"
+            @unknown default: "unknown"
+            }
+        }
+        Screenshots.log(.notificationSettings(
+            status: status, sound: word(s.soundSetting), alert: word(s.alertSetting),
+            lockScreen: word(s.lockScreenSetting), timeSensitive: word(s.timeSensitiveSetting),
+            muted: Screenshots.muteAudio
+        ))
     }
 
     /// Schedule the two moments that matter. Both are absolute: the system owns
@@ -135,17 +176,19 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // clock, the cook's interval scaled (`AppClock`).
         let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
-        Screenshots.log(.scheduled(id: id, at: date.timeIntervalSince1970, inS: seconds))
 
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         // The cook's sound: whole periods of it, under the
         // 30 s past which iOS plays its default instead (tools/sounds.ts).
-        content.sound = UNNotificationSound(
-            named: UNNotificationSoundName(AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment))
-        )
+        let file = AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment)
+        content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
         if Screenshots.muteAudio { content.sound = nil }
+        Screenshots.log(.scheduled(
+            id: id, at: date.timeIntervalSince1970, inS: seconds, sound: Screenshots.muteAudio ? nil : file,
+            bundled: Bundle.main.url(forResource: file, withExtension: nil) != nil
+        ))
         // An egg is time-sensitive in the literal sense the name was coined
         // for: thirty seconds late is a different egg. This level is what lets
         // the alarm through a Focus mode, and it is why the app carries the

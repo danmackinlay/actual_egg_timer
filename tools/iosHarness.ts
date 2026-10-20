@@ -417,11 +417,22 @@ export type Event = { t: number } & (
   | { ev: 'ring'; deadline: string }
   | { ev: 'activity'; what: string; stage: string; ends: number; up: boolean; cook: (string | null)[] }
   | { ev: 'activitySeen'; when: string; state: string; stage: string; ends: number }
-  | { ev: 'scheduled'; id: string; at: number; inS: number }
+  | { ev: 'scheduled'; id: string; at: number; inS: number; sound?: string; bundled: boolean }
   | { ev: 'notScheduled'; id: string; error: string }
   | { ev: 'alarmsCancelled' }
   | { ev: 'pending'; alarms: { id: string; at?: number }[] }
   | { ev: 'delivered'; ids: string[] }
+  | {
+    ev: 'notificationSettings'; status: string; sound: string; alert: string; lockScreen: string;
+    timeSensitive: string; muted: boolean;
+  }
+  | { ev: 'presented'; id: string; sound: boolean; options: string[] }
+  | { ev: 'soundFile'; name: string; bundled: boolean; seconds?: number; format?: string }
+  | {
+    ev: 'ringing'; file: string; frames?: number; category: string; active: boolean; engine: boolean;
+    playing: boolean; volume: number; route: string[]; error?: string;
+  }
+  | { ev: 'ringSkipped'; deadline: string; reason: string }
   | { ev: 'log'; count: number; folded: number; last?: unknown }
   | { ev: 'swept'; key: string }
   | { ev: 'wrote'; key: string; number?: number; text?: string }

@@ -63,11 +63,13 @@ final class Ringer {
         stop()
         // It cannot sound from the background anyway: the app has no
         // background audio mode, and the screen said "keep the app open".
-        guard onScreenSinceS != nil else { return }
+        guard onScreenSinceS != nil else {
+            return Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen"))
+        }
         log.notice("ringing for \(deadline.rawValue, privacy: .public): no notification holds it")
 
         let sound = AlarmSoundChoice.shared.sound
-        play(Self.buffer(sound, deadline), loops: true)
+        play(Self.buffer(sound, deadline), loops: true, file: AlarmSoundChoice.file(sound, deadline))
 
         // Each period vibrates; the last one ends the ring.
         let period = alarmPeriodS(sound, deadline)
@@ -89,7 +91,7 @@ final class Ringer {
     /// not stop it, since the touch is what chose it.
     func preview(_ sound: AlarmSound) {
         stop()
-        play(Self.buffer(sound, .cooled, periods: 1), loops: false)
+        play(Self.buffer(sound, .cooled, periods: 1), loops: false, file: AlarmSoundChoice.file(sound, .cooled))
         let period = alarmPeriodS(sound, .cooled)
         buzzing = Task { [weak self] in
             try? await Task.sleep(for: .seconds(period))
@@ -99,7 +101,7 @@ final class Ringer {
     }
 
     /// Play a buffer on an engine of its own.
-    private func play(_ buffer: AVAudioPCMBuffer?, loops: Bool) {
+    private func play(_ buffer: AVAudioPCMBuffer?, loops: Bool, file: String) {
         // .playback, so the alarm sounds with the silent switch on. The switch
         // is for sounds nobody asked for - ringtones, other apps' alerts - and
         // this is a timer the cook set and was told to keep the app open for;
@@ -110,15 +112,22 @@ final class Ringer {
         // stopping, so a podcast playing while the cook stands at the hob comes
         // back at full volume when the ring ends.
         let session = AVAudioSession.sharedInstance()
+        var failed: String?
+        var active = false
         do {
             try session.setCategory(.playback, mode: .default, options: [.duckOthers])
             try session.setActive(true)
+            active = true
         } catch {
+            failed = "audio session: \(error.localizedDescription)"
             log.error("audio session: \(error.localizedDescription, privacy: .public)")
         }
         let engine = AVAudioEngine()
         let player = AVAudioPlayerNode()
-        if buffer == nil { log.error("no sound to play: its file is missing or unreadable") }
+        if buffer == nil {
+            failed = failed ?? "no sound to play: its file is missing or unreadable"
+            log.error("no sound to play: its file is missing or unreadable")
+        }
         if let buffer {
             log.notice("playing \(buffer.frameLength) frames at \(buffer.format.sampleRate) Hz\(loops ? ", looped" : "", privacy: .public)")
             engine.attach(player)
@@ -129,10 +138,20 @@ final class Ringer {
                 player.scheduleBuffer(buffer, at: nil, options: loops ? .loops : [])
                 player.play()
             } catch {
+                failed = failed ?? "audio engine: \(error.localizedDescription)"
                 log.error("audio engine: \(error.localizedDescription, privacy: .public)")
             }
         }
         self.engine = engine
+        // What was asked of the speaker and what it took: a ring that plays
+        // at no media volume, or to a route nobody is near, is as silent as
+        // one that never started.
+        Screenshots.log(.ringing(
+            file: file, frames: buffer.map { Int($0.frameLength) }, category: session.category.rawValue,
+            active: active, engine: engine.isRunning, playing: player.isPlaying,
+            volume: Double(session.outputVolume), route: session.currentRoute.outputs.map(\.portType.rawValue),
+            error: failed
+        ))
     }
 
     func stop() {
@@ -158,6 +177,30 @@ final class Ringer {
         let recogniser = AnyTouch { Ringer.shared.stop() }
         window.addGestureRecognizer(recogniser)
         touch = recogniser
+    }
+
+    /// Every file an alarm can name (`AlarmSoundChoice.file`), to the debug
+    /// log as the bundle has it: there, its length and its format. The
+    /// system plays a notification's sound only from a file it can find,
+    /// under 30 s, in linear PCM, IMA4, µ-law or a-law (`npm run ios:e2e`
+    /// holds each to that).
+    static func logFiles() {
+        guard Screenshots.logging else { return }
+        for sound in AlarmSound.allCases {
+            for moment in RingDeadline.allCases {
+                let name = AlarmSoundChoice.file(sound, moment)
+                let file = Bundle.main.url(forResource: name, withExtension: nil)
+                    .flatMap { try? AVAudioFile(forReading: $0) }
+                let format = file.map { f in
+                    let id = f.fileFormat.streamDescription.pointee.mFormatID.bigEndian
+                    return withUnsafeBytes(of: id) { String(decoding: $0, as: UTF8.self) }
+                }
+                Screenshots.log(.soundFile(
+                    name: name, bundled: Bundle.main.url(forResource: name, withExtension: nil) != nil,
+                    seconds: file.map { Double($0.length) / $0.fileFormat.sampleRate }, format: format
+                ))
+            }
+        }
     }
 
     /// A sound's file for a moment, or its first `periods` periods, read
