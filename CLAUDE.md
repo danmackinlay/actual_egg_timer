@@ -109,9 +109,13 @@ next is `PLAN.md`; the last section here says which document holds what.
 ## Words
 
 - **Every word either app shows is a key in `copy/en.json`**; no literal
-  written into a Swift call that puts text on screen is words (`npm run
-  copy:literals`), nor into the web's (`test/uiLiterals.test.ts`, run by
-  `npm test`); one passed through a name is not read. Read
+  written into a call that puts text on screen is words. In Swift the
+  app's helpers take `Words`, which only `tr` makes, so the compiler
+  refuses one; one in SwiftUI's own calls is a `LocalizedStringKey`,
+  which `npm run ios:build` refuses; and `npm run copy:literals` reads one
+  made a `String` there or in UIKit's, but not one passed through a name.
+  The web's is `test/uiLiterals.test.ts`, run by `npm test`. What is not
+  words is `Text(verbatim:)`. Read
   `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which
   `npm test` makes from the catalogue and both compilers check
   (`DECISIONS.md` 127); a Swift `tr` is given exactly its key's arguments,

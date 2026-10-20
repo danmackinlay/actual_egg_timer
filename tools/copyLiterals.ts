@@ -1,17 +1,27 @@
 /**
  * `npm run copy:literals`: no word reaches an iOS screen except through
- * copy/, so a wording change is the catalogue's diff. A Swift string literal
- * with a letter in it (less interpolations, escapes and number formats) fails
- * where it is written among the arguments of a call that puts text on screen
- * or says it (TEXT_CALLS), or assigned to a text property, on the same line;
- * not an argument labelled for something else (`systemImage:`) or a
- * dictionary key (a catalogue argument's name). A word routed through a name
- * or a helper not on the list is not read.
+ * copy/, so a wording change is the catalogue's diff. Most of that the
+ * compilers hold: the app's own helpers that put text on screen take `Words`,
+ * which only `tr` makes, so a literal there does not compile; and a literal
+ * in SwiftUI's own text calls is a `LocalizedStringKey`, which `npm run
+ * ios:build` refuses (tools/iosBuild.ts). This reads what is left, the
+ * `String` the system's calls also take: a literal made a `String` among a
+ * text call's arguments (`Text(verbatim: "…")`, `Text("…" + n)`,
+ * `Text(String(format: "%d eggs", n))`, `Text(c ? "…" : s)`), and the text
+ * that UIKit and notifications take only as a `String` (`content.title =
+ * "…"`, `UIAlertAction(title: "…")`, `AttributedString("…")`).
  *
- * Read: ios/App, ios/Widget, EggTimerApp and EggTimerShared, less what only a
- * debug build compiles (DebugLog.swift, an `#if DEBUG` branch). A `"""`
- * literal fails where it opens on a line with a text call; elsewhere it is
- * skipped.
+ * A Swift string literal with a letter in it (less interpolations, escapes
+ * and number formats) fails where it is written among the arguments of a
+ * call that puts text on screen or says it (TEXT_CALLS), or assigned to a
+ * text property, on the same line; not an argument labelled for something
+ * else (`systemImage:`) or a dictionary key (a catalogue argument's name). A
+ * word routed through a name is not read.
+ *
+ * Read: ios/App, ios/Widget, ios/Words, EggTimerApp and EggTimerShared, less
+ * what only a debug build compiles (DebugLog.swift, an `#if DEBUG` branch). A
+ * `"""` literal fails where it opens on a line with a text call; elsewhere it
+ * is skipped.
  *
  * It also runs tools/copyArgs.ts, which reads each `tr`'s arguments.
  */
@@ -21,7 +31,7 @@ import { join } from 'node:path';
 
 import { checkTree, summary } from './copyArgs.ts';
 
-const DIRS = ['ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared'];
+const DIRS = ['ios/App', 'ios/Widget', 'ios/Words', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared'];
 const DEBUG_FILES = new Set(['ios/EggTimerCore/Sources/EggTimerApp/DebugLog.swift']);
 
 const TEXT_CALLS = [ // SwiftUI, UIKit and notifications; ForEach's data is what its rows show
@@ -30,10 +40,7 @@ const TEXT_CALLS = [ // SwiftUI, UIKit and notifications; ForEach's data is what
   'AttributedString', 'NSAttributedString', 'ForEach', 'navigationTitle', 'navigationBarTitle', 'accessibilityLabel',
   'accessibilityHint', 'accessibilityValue', 'accessibilityInputLabels', 'accessibilityAction', 'alert',
   'confirmationDialog', 'help', 'badge', 'setTitle', 'UIAlertController', 'UIAlertAction', 'UIAction', 'UIMenu',
-  'UNNotificationAction', 'announce', // and the app's own that take text:
-  'barTitle', 'MenuChoice', 'ListChoice', 'InfoRow', 'InfoButton', 'MoreText', 'linked', 'subhead', 'para', 'aside',
-  'footnote', 'StepperRow', 'StepperValue', 'CountValue', 'MeasureField', 'NudgeField', 'RoomField',
-  'CoolingWaterField', 'whiteButton', 'answerButton', 'answerRow', 'YolkBracket',
+  'UNNotificationAction',
 ];
 const TEXT_PROPERTIES = 'text|attributedText|title|subtitle|body|placeholder|prompt|accessibilityLabel|accessibilityValue|accessibilityHint';
 const CALL = new RegExp(`\\b(?:${TEXT_CALLS.join('|')})\\s*\\(|\\.(?:${TEXT_PROPERTIES})\\s*=(?!=)`, 'g');
