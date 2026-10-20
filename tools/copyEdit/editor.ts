@@ -578,7 +578,7 @@ async function saveNow(): Promise<void> {
   const keys = [...new Set(edits.map((e) => e.key))];
   const stage = el('p', {}, 'Checking the words');
   sheet(el('h3', {}, `Saving ${keys.join(', ')}`), stage,
-    el('p', { class: 'meta' }, `I run ${CHECKED} on your words, which takes seconds; ${LEFT}.`));
+    el('p', { class: 'meta' }, `With your words, I run ${CHECKED}, which takes seconds; ${LEFT}.`));
   let result: SaveResult | null = null;
   try {
     const started = await api<{ job?: number; error?: string }>('save', { base: s.head, edits: edits });
