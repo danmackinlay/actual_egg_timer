@@ -69,7 +69,6 @@ export function emptyModel(): Model {
     pull_s: null,
     written: null,
     works: true,
-    closed: false,
     questions: 'open',
     reloaded: false,
     probeHeld: false,

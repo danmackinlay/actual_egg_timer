@@ -18,18 +18,16 @@
  * describe the next cook: a change to them is a correction, held in hand
  * until it is committed (core hand.ts; the gestures are edit.ts's).
  *
- * The cook is core's `CookState` (src/core/step.ts): `update` hands it to
- * `step` with each thing that happened. What is the web's own, around it:
- *
- * - The primary button reads the phase: the boil at Heating, the egg out at
- *   Pull, "still in" while the plan asks, Start again at Done.
- * - Which egg is open (`stillOpen`): at Done, one too old to pick back up
- *   (core `cookTooOld`) is final. Its questions go, and nothing more is
- *   written or logged for it (`closed`).
- * - A cook that ends before its egg's record can be made - the surface or
- *   the calibration before this egg still to build - leaves the screen at
- *   once and waits in `ending`, stepped as each lands, until it is logged
- *   and forgotten.
+ * The cooks are core's (src/core/cooks.ts): the one on screen, a
+ * `CookState`, and those ended waiting on their records (`ending`), held flat
+ * in the model and handed to core as `Cooks` (`cooksOf`, `withCooks`) with
+ * each thing that happened. A cook that ends before its egg's record can be
+ * made leaves the screen at once and waits there, stepped as each build
+ * lands, until it is logged and forgotten; an event after the cook on screen
+ * is too old comes after the tick that ends it. What is the web's own,
+ * around it: the primary button reads the phase - the boil at Heating, the
+ * egg out at Pull, "still in" while the plan asks, Start again at Done - and
+ * the effects become the page's (`effectsOf`).
  */
 
 import type { AlarmMoment, AlarmSound } from '../core/sounds.ts';
@@ -46,16 +44,20 @@ import type { WhiteReport, YolkWord } from '../core/infer.ts';
 import type { Calibration, EggRecord, ProbeReading, Units } from '../core/record.ts';
 import type { BoilToRemember, CookChoices, CookSurface, RunningCook } from '../core/running.ts';
 import {
-  answered, answersOf, asksIfStillIn, cookTooOld, endedAt_s, phaseAt, plausibleProbeRange_C, replan, sameValue,
+  answered, answersOf, asksIfStillIn, phaseAt, plausibleProbeRange_C, replan, sameValue,
 } from '../core/running.ts';
-import { asRanCurrent, asRanShown, cookFactsFor } from '../core/asRan.ts';
+import { asRanShown, cookFactsFor } from '../core/asRan.ts';
+import {
+  type CookAt, type Cooks, type CooksEffect, type CooksEnv, type CooksStep, type EndingCook, beforeWanted, cooksLanded,
+  cooksRestore, cooksStep,
+} from '../core/cooks.ts';
 import {
   type HandEvent, type HandGroup, type HandState, type HandTimer, type StartLimit, handChoices, handStep, nothingInHand,
   previewCook, startStepped,
 } from '../core/hand.ts';
 import { calibrationDoneness, calibrationParams, probeReadingFor, recordCookTime_s, recordFor } from '../core/record.ts';
-import type { CookBefore, CookEnv, CookEvent, CookNeed, CookState, CookStep } from '../core/step.ts';
-import { step, surfaceFor } from '../core/step.ts';
+import type { CookBefore, CookEvent, CookNeed, CookState } from '../core/step.ts';
+import { surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
 import { effectiveLanguage, languageAfterFlip } from './settings.ts';
@@ -100,12 +102,6 @@ export interface Held {
   outcome: Outcome | null;
   certainty: CertaintyReading | null;
   profile: OddsProfile | null;
-}
-
-/** A cook ended before its egg's record could be made, and what it waits
- *  for. */
-interface Ending extends CookState {
-  need: CookNeed;
 }
 
 /** What the page holds. The running cook is core's `CookState`: `cook`, its
@@ -164,8 +160,8 @@ export interface Model extends CookState {
 
   /** What the running cook waits for (`step`'s `need`). */
   need: CookNeed;
-  /** Cooks ended whose egg's record is still to be made. */
-  ending: Ending[];
+  /** Cooks ended whose egg's record is still to be made (core cooks.ts). */
+  ending: EndingCook[];
   /** The calibration before a cook's egg, and surfaces on it, once built:
    *  what a record corrected after the pull is planned on. Kept while the
    *  cook's plan as it ran is stale. */
@@ -181,14 +177,12 @@ export interface Model extends CookState {
 
   /** The cook as this page last wrote it down (JSON), so it is written
    *  only when it changed (`update` sets it with
-   *  each write it asks for); whether the last write read back, as the
-   *  runner says (`persisted`); and whether the egg is final here
-   *  (`closed`): nothing more is written or logged for it. */
+   *  each write it asks for); and whether the last write read back, as the
+   *  runner says (`persisted`). */
   written: string | null;
   works: boolean;
-  closed: boolean;
   /** The questions at Done: open, or put away - answered before a reload,
-   *  or the egg final - when no more can be taken. */
+   *  or the egg not kept - when no more can be taken. */
   questions: 'open' | 'away';
   /** Whether the cook on screen was picked back up after a reload: its
    *  alarm died with the old page. Not in a tab the app was moved to by a
@@ -336,14 +330,32 @@ export function localDay(ms: number): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-/** What the page holds for a step of `cook`. */
-function envFor(m: Model, cook: RunningCook | null, now_s: number): CookEnv {
-  const id = cook === null ? null : cook.id_ms;
-  const b = m.before.find((x) => x.id_ms === id);
+/** The cooks the model holds, as core's `Cooks`. */
+export function cooksOf(m: Model): Cooks {
+  return { screen: { cook: m.cook, plan: m.plan, leanHint_s: m.leanHint_s }, need: m.need, ending: m.ending };
+}
+
+/** The model holding the cooks `q`, the pull's alarm as `pull_s`; with this
+ *  page's bookkeeping for the cook on screen cleared once it has left. */
+function withCooks(m: Model, q: Cooks, pull_s: number | null): Model {
+  const s = q.screen;
+  if (s.cook === null) return m.cook === null ? { ...m, ending: q.ending } : idle({ ...m, ending: q.ending });
+  return { ...m, cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: q.need, ending: q.ending, pull_s: pull_s };
+}
+
+/** What the page holds for a step of its cooks, and of `stored` if one is
+ *  picked back up: each cook's calibration before its egg, and the local
+ *  day it started. */
+function envFor(m: Model, now_s: number, stored: RunningCook | null = null): CooksEnv {
+  const at: CookAt[] = [];
+  for (const cook of [m.cook, ...m.ending.map((e) => e.cook), stored]) {
+    if (cook === null) continue;
+    const b = m.before.find((x) => x.id_ms === cook.id_ms);
+    at.push({ id_ms: cook.id_ms, before: b === undefined ? null : b.before, day: localDay(cook.startedAt_s * 1000) });
+  }
   return {
-    calibration: m.calib, surfaces: m.surfaces, before: b === undefined ? null : b.before,
-    app: 'web', appVersion: m.appVersion, prior: m.prior,
-    day: localDay((cook === null ? now_s : cook.startedAt_s) * 1000),
+    calibration: m.calib, surfaces: m.surfaces, app: 'web', appVersion: m.appVersion, prior: m.prior,
+    day: localDay(now_s * 1000), at: at,
   };
 }
 
@@ -353,45 +365,48 @@ function phaseOf(m: CookState, now_s: number): string {
   return asksIfStillIn(m.plan) ? 'ASKING' : phaseAt(m.plan.deadlines, now_s);
 }
 
-/** Whether a cook's plan as it ran waits to be made again for a correction
- *  after the pull. */
-function asRanStale(cook: RunningCook): boolean {
-  return cook.events.pulled !== null && cook.asRan !== null && !asRanCurrent(cook);
-}
-
 /** The model with the running cook gone: idle, and this page's bookkeeping
  *  for it cleared. */
 function idle(m: Model): Model {
   return {
     ...m, cook: null, plan: null, leanHint_s: 0, need: NO_NEED, pull_s: null, written: null, works: true,
-    closed: false, questions: 'open', reloaded: false, probeHeld: false,
+    questions: 'open', reloaded: false, probeHeld: false,
   };
 }
 
-/** Core's effects for a step of `was`, the cook it was for: a write only
- *  while the egg is not final here (`closed`), nor a record; `forget` with
- *  its id. `questions`: the page's, for whether the egg is kept as
- *  answered. */
-function effectsOf(was: RunningCook, s: CookStep, closed: boolean, questions: Model['questions']): Effect[] {
+/** The cook `id_ms` as `q` holds it, on screen or ended, or null. */
+function heldIn(q: Cooks, id_ms: number): CookState | null {
+  if (q.screen.cook?.id_ms === id_ms) return q.screen;
+  return q.ending.find((e) => e.cook?.id_ms === id_ms) ?? null;
+}
+
+/** Core's effects as the page's, each for the cook it is for (`q`, as the
+ *  step left them): a write of one ended over its own copy only
+ *  (`persistEnded`); `forget` with its id. `questions`: the page's, for
+ *  whether the egg on screen is kept as answered. */
+function effectsOf(q: Cooks, tagged: CooksEffect[], questions: Model['questions']): Effect[] {
   const out: Effect[] = [];
-  for (const e of s.effects) {
+  for (const t of tagged) {
+    const e = t.effect;
     switch (e.kind) {
-      case 'persist':
-        if (closed || s.cook === null) break;
-        if (endedAt_s(s.cook) !== null) {
-          out.push({ kind: 'persistEnded', cook: s.cook, leanHint_s: s.leanHint_s });
+      case 'persist': {
+        const held = heldIn(q, t.id_ms);
+        if (held === null || held.cook === null) break;
+        if (t.ended) {
+          out.push({ kind: 'persistEnded', cook: held.cook, leanHint_s: held.leanHint_s });
         } else {
           // In the log as an answer would put it: answered, or its questions
           // put away.
-          const answers = questions === 'away' || answered(s.cook) ? 'beforeReload' : 'none';
-          out.push({ kind: 'persist', cook: s.cook, leanHint_s: s.leanHint_s, answers: answers });
+          const answers = questions === 'away' || answered(held.cook) ? 'beforeReload' : 'none';
+          out.push({ kind: 'persist', cook: held.cook, leanHint_s: held.leanHint_s, answers: answers });
         }
         break;
+      }
       case 'log':
-        if (!closed) out.push({ kind: 'log', record: e.record });
+        out.push({ kind: 'log', record: e.record });
         break;
       case 'forget':
-        out.push({ kind: 'forget', id_ms: was.id_ms });
+        out.push({ kind: 'forget', id_ms: t.id_ms });
         break;
       case 'alarms':
         break;
@@ -402,42 +417,26 @@ function effectsOf(was: RunningCook, s: CookStep, closed: boolean, questions: Mo
   return out;
 }
 
-/** The pull's alarm a step set, or `held` if it set none. */
-function pullOf(s: CookStep, held: number | null): number | null {
+/** The pull's alarm a step set for the cook on screen, or `held` if it set
+ *  none. */
+function pullOf(out: CooksStep, held: number | null): number | null {
+  const id = out.cooks.screen.cook?.id_ms ?? null;
   let pull = held;
-  for (const e of s.effects) if (e.kind === 'alarms') pull = e.pull_s;
+  for (const t of out.effects) if (t.effect.kind === 'alarms' && t.id_ms === id) pull = t.effect.pull_s;
   return pull;
 }
 
-/** The running cook stepped with `event`, from `state` (the model's own cook
- *  unless given), and the model as that leaves it: still running, waiting in
- *  `ending` for its record, or gone. A cook final here (`closed`) is not
- *  kept waiting: nothing more is logged for it. */
-function stepCook(m: Model, event: CookEvent, now_s: number, state: CookState = m): [Model, Effect[]] {
-  const was = state.cook;
-  if (was === null) return [m, []];
-  const s = step(state, event, envFor(m, was, now_s));
-  const effects = effectsOf(was, s, m.closed, m.questions);
-  if (s.cook === null) return [idle(m), effects];
-  if (endedAt_s(s.cook) !== null) {
-    const waiting: Ending[] = m.closed ? [] : [{ cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need }];
-    return [idle({ ...m, ending: [...m.ending, ...waiting] }), effects];
-  }
-  return [{ ...m, cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need, pull_s: pullOf(s, m.pull_s) }, effects];
+/** The model as a step of its cooks leaves it, and what the page must do. */
+function took(m: Model, out: CooksStep): [Model, Effect[]] {
+  return [withCooks(m, out.cooks, pullOf(out, m.pull_s)), effectsOf(out.cooks, out.effects, m.questions)];
 }
 
-/** Each ended cook stepped as something it waited for landed; those logged
- *  and forgotten gone. */
-function stepEnding(m: Model, now_s: number): [Model, Effect[]] {
-  const effects: Effect[] = [];
-  const left: Ending[] = [];
-  for (const e of m.ending) {
-    if (e.cook === null) continue;
-    const s = step(e, { kind: 'surfaceLanded', now_s: now_s }, envFor(m, e.cook, now_s));
-    effects.push(...effectsOf(e.cook, s, false, 'open'));
-    if (s.cook !== null) left.push({ cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need });
-  }
-  return [{ ...m, ending: left }, effects];
+/** The cook on screen stepped with `event` (core `cooksStep`), and the model
+ *  as that leaves it: still running, waiting in `ending` for its record, or
+ *  gone. */
+function stepCook(m: Model, event: CookEvent, now_s: number): [Model, Effect[]] {
+  if (m.cook === null) return [m, []];
+  return took(m, cooksStep(cooksOf(m), event, envFor(m, now_s)));
 }
 
 /** A calibration before an egg, or a surface on it, taken in: the
@@ -455,19 +454,11 @@ function withBefore(m: Model, b: Extract<Msg, { kind: 'before' }>): Model {
   return { ...m, before: m.before.map((x) => (x !== held ? x : { id_ms: id, before: { calibration: b.calibration, surfaces: surfaces } })) };
 }
 
-/** The calibrations before an egg still wanted: a cook's whose plan as it
- *  ran is stale. */
+/** The calibrations before an egg still wanted (core `beforeWanted`). */
 function beforeKept(m: Model): Model {
-  const stale = new Set<number>();
-  for (const s of [m as CookState, ...m.ending]) if (s.cook !== null && asRanStale(s.cook)) stale.add(s.cook.id_ms);
-  const kept = m.before.filter((b) => stale.has(b.id_ms));
+  const wanted = beforeWanted(cooksOf(m));
+  const kept = m.before.filter((b) => wanted.includes(b.id_ms));
   return kept.length === m.before.length ? m : { ...m, before: kept };
-}
-
-/** Whether the egg on screen is still the one open to answers and
- *  corrections; if not, it is final here. */
-function stillOpen(m: Model, now_s: number): boolean {
-  return m.cook !== null && m.plan !== null && !m.closed && !cookTooOld(m.plan, now_s);
 }
 
 /**
@@ -486,9 +477,8 @@ function probeRead(m: Model, reading_C: number | null, now_s: number): [Model, E
   if (cook === null || plan === null) return [m, []];
   const free: Model = { ...m, probeHeld: false };
   if (answersOf(cook).probe !== null) return [free, []];
-  const env = envFor(m, cook, now_s);
   const made = cookFactsFor(cook, plan, {
-    app: env.app, appVersion: env.appVersion, prior: env.prior, day: env.day, id: cook.id_ms,
+    app: 'web', appVersion: m.appVersion, prior: m.prior, day: localDay(cook.startedAt_s * 1000), id: cook.id_ms,
   }, null, null, null);
   if (made.facts === null) return [say({ ...m, probeHeld: true }, 'learning'), []];
   const record = recordFor(made.facts);
@@ -502,7 +492,7 @@ function probeRead(m: Model, reading_C: number | null, now_s: number): [Model, E
   const coolEnd = plan.deadlines.coolEnd_s;
   const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cook.startedAt_s : null);
   const [next, effects] = updateCook(free, { kind: 'answered', yolkWord: null, white: null, probe: probe }, now_s);
-  const taken = next.cook !== null && !next.closed && answersOf(next.cook).probe !== null;
+  const taken = next.cook !== null && answersOf(next.cook).probe !== null;
   return [next, taken ? [...effects, { kind: 'probeTaken', reading_C: reading_C }] : effects];
 }
 
@@ -522,12 +512,6 @@ function pressed(m: Model, now_s: number): [Model, Effect[]] {
 /** How many answers a cook's log holds. */
 function answersGiven(cook: RunningCook): number {
   return cook.log.filter((e) => e.kind === 'answered').length;
-}
-
-/** The egg final here: its questions go, and nothing more is written or
- *  logged for it. */
-function close(m: Model): Model {
-  return { ...m, closed: true, questions: 'away' };
 }
 
 /** The runner's view of its caches and its stores (cook.ts), taken before
@@ -569,12 +553,7 @@ function updateAny(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     const next = withBefore(m, msg);
     return next === m ? [m, []] : updateAny(next, { kind: 'landed' }, now_s);
   }
-  let [next, effects] = updateCook(m, msg, now_s);
-  if (msg.kind === 'landed') {
-    const [after, more] = stepEnding(next, now_s);
-    next = after;
-    effects = [...effects, ...more];
-  }
+  const [next, effects] = updateCook(m, msg, now_s);
   return around(m, beforeKept(next), effects);
 }
 
@@ -811,13 +790,12 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     case 'start': {
       if (m.cook !== null) return [m, []];
       const fresh: Model = { ...idle(m), leanHint_s: msg.leanHint_s };
-      const s = step(fresh, {
+      const out = cooksStep(cooksOf(fresh), {
         kind: 'start', now_s: now_s, choices: msg.choices, nudge_s: msg.nudge_s, boilMemory: { ...m.boilMemory },
         units: msg.units, lang: msg.lang, leanHint_s: msg.leanHint_s,
-      }, envFor(m, null, now_s));
-      if (s.cook === null) return [m, []];
-      const next: Model = { ...fresh, cook: s.cook, plan: s.plan, leanHint_s: s.leanHint_s, need: s.need, pull_s: pullOf(s, null) };
-      return [next, [...effectsOf(s.cook, s, false, fresh.questions), { kind: 'blip' }]];
+      }, envFor(fresh, now_s));
+      const [next, effects] = took(fresh, out);
+      return [next, [...effects, { kind: 'blip' }]];
     }
     case 'restore': {
       const stored = msg.stored;
@@ -825,8 +803,9 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
         ...idle(m), written: JSON.stringify(stored.cook), reloaded: msg.reloaded,
         questions: stored.answers === 'beforeReload' || answered(stored.cook) ? 'away' : 'open',
       };
-      const state: CookState = { cook: stored.cook, plan: null, leanHint_s: stored.leanHint_s };
-      const [next, effects] = stepCook(fresh, { kind: 'tick', now_s: now_s }, now_s, state);
+      const picked = { cook: stored.cook, leanHint_s: stored.leanHint_s };
+      const out = cooksRestore(cooksOf(fresh), picked, now_s, envFor(fresh, now_s, stored.cook));
+      const [next, effects] = took(fresh, out);
       // After a reload the alarm died with the old page, and cannot sound
       // before a gesture; a tab the app was moved to was pressed.
       return [next, msg.reloaded ? effects.filter((e) => e.kind !== 'ring') : effects];
@@ -856,7 +835,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
       return [next, [...first, ...effects]];
     }
     case 'correct': {
-      if (m.closed || m.cook === null) return [m, []];
+      if (m.cook === null) return [m, []];
       let next = m;
       let effects: Effect[] = [];
       if (msg.startedAt_s !== null) {
@@ -868,18 +847,17 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
     case 'tick':
       return stepCook(m, { kind: 'tick', now_s: now_s }, now_s);
     case 'landed':
-      return m.cook === null ? [m, []] : stepCook(m, { kind: 'surfaceLanded', now_s: now_s }, now_s);
+      return took(m, cooksLanded(cooksOf(m), now_s, envFor(m, now_s)));
     case 'answered': {
       // A question answered once stays answered.
       const cook = m.cook;
       if (cook === null) return [m, []];
       const said = answersOf(cook);
       if ((msg.yolkWord !== null && said.yolkWord !== null) || (msg.white !== null && said.white !== null)) return [m, []];
-      if (!stillOpen(m, now_s)) return [close(m), []];
       const [next, effects] = stepCook(m, {
         kind: 'answered', now_s: now_s, yolkWord: msg.yolkWord, white: msg.white, probe: msg.probe,
       }, now_s);
-      const taken = next.cook !== null && !next.closed && answersGiven(next.cook) > answersGiven(cook);
+      const taken = next.cook !== null && answersGiven(next.cook) > answersGiven(cook);
       if (!taken || (msg.yolkWord === null && msg.white === null)) return [next, effects];
       return [say(next, 'learning'), [...effects, { kind: 'answerTaken', yolkWord: msg.yolkWord, white: msg.white }]];
     }

@@ -1,6 +1,6 @@
 /**
  * The page's effects that are not the cook's (src/ui/effects.ts), against a
- * page's own stores over storage in memory: which egg is still open, so not
+ * page's own stores over storage in memory: which eggs are still open, so not
  * yet final for sharing.
  *
  * Zero dependencies: node:test + node:assert/strict only.
@@ -10,11 +10,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.ts';
-import { startCook } from '../src/core/running.ts';
+import { appendEntry, replan, startCook } from '../src/core/running.ts';
 import type { Stores } from '../src/ui/cook.ts';
 import { finalEggs } from '../src/ui/effects.ts';
 import { useClock } from '../src/ui/now.ts';
-import { choicesOf, emptyModel } from '../src/ui/state.ts';
+import { NO_NEED, choicesOf, emptyModel } from '../src/ui/state.ts';
 import { DEFAULT_SETTINGS, openCooks, openPans, openSettings } from '../src/ui/store.ts';
 import { knowing } from '../tools/common.ts';
 
@@ -46,22 +46,31 @@ function stores(): Stores {
   } as unknown as Stores;
 }
 
-test('the egg still open is the stored running cook\'s, on screen or not, until it is too old', () => {
+test('the eggs still open are the cooks the page holds: the one on screen, logged, until it is too old, and one ended to be logged again', () => {
   storage.clear();
   now_ms = S * 1000 + 60_000;
   const s = stores();
-  const m = { ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, calib: C };
-  assert.equal(finalEggs(s, m), 3, 'no cook stored: every egg final');
-  // The log's last egg, its cook stored and not on screen: a page reloaded
-  // and not yet picked it back up, or one ended and waiting on its record.
-  const cook = startCook(S, choicesOf({ ...DEFAULT_SETTINGS, startMode: 'hot' }, 'GB'), 0, { '2.0': 480 }, 'metric', 'en');
-  s.cooks.save(cook, 'none', 0);
-  assert.equal(finalEggs(s, m), 2, 'the stored cook\'s egg is open, though the page is idle');
-  // An earlier egg stored is open, and every egg after it with it.
-  s.cooks.save({ ...cook, id_ms: IDS[1] }, 'none', 0);
-  assert.equal(finalEggs(s, m), 1);
+  const idle = { ...emptyModel(), settings: { ...DEFAULT_SETTINGS }, calib: C };
+  assert.equal(finalEggs(s, idle), 3, 'no cook: every egg final');
+  const choices = choicesOf({ ...DEFAULT_SETTINGS, startMode: 'hot' }, 'GB');
+  const cook = startCook(S, choices, 0, { '2.0': 480 }, 'metric', 'en');
+  const plan = replan(cook, C, null, 0, S);
+  assert.equal(finalEggs(s, { ...idle, cook: cook, plan: plan }), 3, 'on screen, not yet logged: none of it in the log');
+  const logged = appendEntry(cook, { kind: 'logged', at_s: S + 30 });
+  assert.equal(finalEggs(s, { ...idle, cook: logged, plan: plan }), 2, 'logged and on screen: open');
+  // An earlier egg open, and every egg after it with it.
+  assert.equal(finalEggs(s, { ...idle, cook: { ...logged, id_ms: IDS[1] }, plan: plan }), 1);
+  // Ended, waiting to be logged again, beside the next cook, whatever is
+  // stored: open.
+  const next = startCook(S + 60, choices, 0, { '2.0': 480 }, 'metric', 'en');
+  s.cooks.save(next, 'none', 0);
+  const ended = appendEntry(logged, { kind: 'ended', at_s: S + 40 });
+  const beside = {
+    ...idle, cook: next, plan: replan(next, C, null, 0, S + 60),
+    ending: [{ cook: ended, plan: plan, leanHint_s: 0, need: NO_NEED }],
+  };
+  assert.equal(finalEggs(s, beside), 2, 'the ended one\'s egg is open, the next cook stored');
   // Too old to pick back up: final.
   now_ms = S * 1000 + 12 * 3_600_000;
-  s.cooks.save(cook, 'none', 0);
-  assert.equal(finalEggs(s, m), 3);
+  assert.equal(finalEggs(s, { ...idle, cook: logged, plan: plan }), 3);
 });

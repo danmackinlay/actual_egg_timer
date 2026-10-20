@@ -100,19 +100,31 @@ test('the primary button by phase: the boil, the egg out, Start again; the pull 
   assert.equal(controlsOf(p.m), p.m.settings, 'the controls show the settings again');
 });
 
-test('an answer to an egg too old to pick back up closes it here: nothing stepped, nothing written or logged', () => {
+test('an answer after the egg is too old comes after the tick that ends it: the egg logged unanswered, the answer not taken', () => {
   const p = started();
   p.go({ kind: 'tick' }, p.pull + 25);
   p.go({ kind: 'tick' }, p.coolEnd + 1);
   const tooOld = (p.m.plan as NonNullable<Model['plan']>).tooOldAt_s;
-  const refused = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, tooOld + 5);
-  assert.deepEqual(refused, []);
-  assert.equal(p.m.closed, true);
-  assert.equal(p.m.questions, 'away');
-  const end = p.go({ kind: 'cancel' }, tooOld + 9);
-  assert.deepEqual(kinds(end).filter((k) => k === 'log' || k === 'persist'), [], 'final here: nothing logged');
-  assert.equal(p.m.cook, null);
+  const late = p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, tooOld + 5);
+  const logs = late.filter((e) => e.kind === 'log');
+  assert.equal(logs.length, 1, 'the finished egg logged');
+  assert.equal(logs[0].kind === 'log' ? logs[0].record.yolkWord : 'none', null, 'unanswered');
+  assert.ok(!kinds(late).includes('answerTaken'));
+  assert.equal(p.m.cook, null, 'ended, as the tick ends it');
   assert.equal(p.m.ending.length, 0);
+});
+
+test('a correction after an answered egg is too old comes after the tick that ends it: nothing logged again', () => {
+  const p = started();
+  p.go({ kind: 'tick' }, p.pull + 25);
+  p.go({ kind: 'tick' }, p.coolEnd + 1);
+  p.go({ kind: 'answered', yolkWord: 'jammy', white: null, probe: null }, p.coolEnd + 5);
+  const tooOld = (p.m.plan as NonNullable<Model['plan']>).tooOldAt_s;
+  const choices = { ...(p.m.cook as NonNullable<Model['cook']>).choices, mass_kg: 0.076 };
+  const late = p.go({ kind: 'correct', choices: choices, startedAt_s: null }, tooOld + 5);
+  assert.deepEqual(kinds(late).filter((k) => k === 'log'), []);
+  assert.equal(p.m.cook, null);
+  assert.equal(p.m.ending.length, 0, 'nothing waits to be logged again');
 });
 
 test('a reload rings nothing, and an answer given before it puts the questions away', () => {
