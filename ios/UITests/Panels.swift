@@ -27,7 +27,8 @@ extension Run {
         let scroll = try lines().dropFirst(from).compactMap { l -> String? in
             if case let .reveal(_, scroll) = l.event { scroll } else { nil }
         }.last ?? "no reveal"
-        guard let panel = frame("panel.\(clause)") else { throw Stop("\(when): the panel never opened") }
+        // Where the page's scroll to the panel, animated, has left it.
+        guard let panel = stillFrame("panel.\(clause)") else { throw Stop("\(when): the panel never opened") }
         return Pressed(
             scroll: scroll, panel: panel, sentenceMoved: (frame("sentence")?.minY ?? .nan) - sentence,
             eggMoved: (frame("egg")?.minY ?? .nan) - egg

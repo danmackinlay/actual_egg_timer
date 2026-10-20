@@ -347,6 +347,20 @@ final class Run {
         return e.exists ? e.frame : nil
     }
 
+    /// Where the element is once it has stopped moving: read until two reads
+    /// a tenth of a second apart agree. A scroll the app animates is not
+    /// waited for by a step's `idle`, nor by XCUITest before it reads a frame.
+    func stillFrame(_ id: String) -> CGRect? {
+        var last = frame(id)
+        for _ in 0..<50 {
+            pause(0.1)
+            let now = frame(id)
+            if now == last { return now }
+            last = now
+        }
+        return last
+    }
+
     // MARK: - Checks
 
     func check(
