@@ -28,12 +28,20 @@ struct ContentView: View {
     /// The clause whose choice is open under the sentence, if any. One at a
     /// time.
     @State private var openClause: Clause?
+    /// The clause the cook has just opened, whose panel is scrolled into view
+    /// once it is laid out (`reveal`). Never one opened otherwise, by a
+    /// launch argument.
+    @State private var revealing: Clause?
+    /// Where the screen shows the page, in the window: the scroll view's
+    /// frame, between the bars.
+    @State private var screen: CGRect = .zero
     /// Half the slider's thumb, pt, as the slider reports it.
     @State private var thumbInset: CGFloat = 14
     /// Whether the certainty line under the time is open.
     @State private var certaintyOpen = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -97,7 +105,10 @@ struct ContentView: View {
                     .id(tick)
                     DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
                         .logTop("slider")
-                    setup(phase: outerPhase, every: every, tick: tick)
+                    // The reader scrolls the page to an opened panel.
+                    ScrollViewReader { proxy in
+                        setup(phase: outerPhase, every: every, tick: tick, proxy: proxy)
+                    }
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                         let now = moment(context.date)
                         let phase = cook.phase(atS: now.timeIntervalSince1970)
@@ -118,6 +129,17 @@ struct ContentView: View {
                 .padding(.bottom, 20)
             }
             .defaultScrollAnchor(scrollAnchor)
+            // What the screen shows of the page, for `reveal`; and to the
+            // debug log, for the scripted checks.
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { screen = $0 }
+            .logTop("screen")
+            .logBottom("screenFoot")
+            #if DEBUG
+            // A clause tapped by `-uiDo` (Screenshots.swift), as a finger's.
+            .onChange(of: Screenshots.probe.clauseTap) { _, tap in
+                if let tap, let clause = Clause(rawValue: tap.clause) { tapped(clause) }
+            }
+            #endif
             .barTitle(tr(.`app.name`))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -256,7 +278,7 @@ struct ContentView: View {
     /// the column no height of its own. Under both, the choice of the clause
     /// that is open. A clause the sentence no longer has - sous-vide drops
     /// two - closes with it. Sous-vide draws no egg: it starts no cook.
-    private func setup(phase: Phase, every: TimeInterval, tick: TimeInterval) -> some View {
+    private func setup(phase: Phase, every: TimeInterval, tick: TimeInterval, proxy: ScrollViewProxy) -> some View {
         let running = phase == .idle ? nil : cook.running
         let size = eggSize
         return VStack(alignment: .leading, spacing: 10) {
@@ -270,18 +292,69 @@ struct ContentView: View {
                     .frame(width: size.width, height: size.height)
                     .logTop("egg")
                 }
-                SetupSentence(
-                    planner: planner, open: $openClause,
-                    onTap: { model.inHand.moveOn(.clause) }
-                )
-                .logTop("sentence")
+                SetupSentence(planner: planner, open: openClause, onTap: tapped)
+                    .logTop("sentence")
             }
             if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
                 ClausePanel(planner: planner, clause: clause, inHand: running == nil ? nil : model.inHand) {
                     withAnimation(.snappy) { openClause = nil }
                 }
-                .id(clause)
-                .transition(.opacity)
+                .id(OpenPanel(clause: clause))
+                // The panel fades in on its own, and the page grows at once:
+                // under an animation the scroll view would take in its new
+                // height only once the animation ended, and the scroll to a
+                // panel just opened (`reveal`) would stop at the old foot.
+                .transition(.opacity.animation(.snappy))
+                // Laid out: the panel the cook has just opened scrolled into
+                // view, once.
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                    guard revealing == clause else { return }
+                    revealing = nil
+                    reveal(clause, at: frame, proxy)
+                }
+                .logTop("panel")
+                .logBottom("panelFoot")
+            }
+        }
+    }
+
+    /// A clause pressed: another control than one with a change in hand,
+    /// which commits it (`InHand.moveOn`); then its choice opened, or closed
+    /// if it was the one open. A choice opened so, from none or from another
+    /// clause, is scrolled into view once laid out (`reveal`); none is with
+    /// a change still in hand.
+    private func tapped(_ clause: Clause) {
+        model.inHand.moveOn(.clause)
+        let next: Clause? = openClause == clause ? nil : clause
+        openClause = next
+        revealing = model.inHand.pending ? nil : next
+    }
+
+    /// The panel just opened, at `frame` in the window, scrolled just far
+    /// enough to be seen whole: its foot to the screen's. One already on
+    /// screen does not move the page. One taller than the screen comes up
+    /// with its head at the top, as much of it as fits. Only the page
+    /// scrolls; nothing on it moves. In one step when the cook asks for less
+    /// motion.
+    private func reveal(_ clause: Clause, at frame: CGRect, _ proxy: ScrollViewProxy) {
+        let anchor: UnitPoint
+        if frame.height > screen.height || frame.minY < screen.minY {
+            anchor = .top
+        } else if frame.maxY > screen.maxY {
+            anchor = .bottom
+        } else {
+            return Screenshots.log(.reveal(clause: clause.rawValue, scroll: "none"))
+        }
+        Screenshots.log(.reveal(clause: clause.rawValue, scroll: anchor == .top ? "top" : "bottom"))
+        #if DEBUG
+        Screenshots.scrolling()
+        #endif
+        // On the next turn, once the scroll view has taken in the page grown
+        // by the panel: in this pass it would stop the scroll at the old
+        // page's foot.
+        DispatchQueue.main.async {
+            withAnimation(reduceMotion ? nil : .snappy) {
+                proxy.scrollTo(OpenPanel(clause: clause), anchor: anchor)
             }
         }
     }
@@ -292,6 +365,12 @@ struct ContentView: View {
     private var eggSize: CGSize {
         dynamicTypeSize.isAccessibilitySize ? CGSize(width: 84, height: 109) : CGSize(width: 120, height: 156)
     }
+}
+
+/// The open panel's identity, which the page scrolls to (`reveal`): one for
+/// each clause, so another clause's choice is drawn afresh.
+private struct OpenPanel: Hashable {
+    let clause: Clause
 }
 
 /// What the screen says, to the debug log, for the scripted checks
@@ -315,7 +394,7 @@ extension View {
         onGeometryChange(for: Double.self) { proxy in
             (proxy.frame(in: .global).minY * 2).rounded() / 2
         } action: { y in
-            Screenshots.log(.layout(part: name, y: y))
+            Screenshots.layout(name, y: y)
         }
         #else
         self
@@ -330,7 +409,7 @@ extension View {
         onGeometryChange(for: Double.self) { proxy in
             (proxy.frame(in: .global).maxY * 2).rounded() / 2
         } action: { y in
-            Screenshots.log(.layout(part: name, y: y))
+            Screenshots.layout(name, y: y)
         }
         #else
         self

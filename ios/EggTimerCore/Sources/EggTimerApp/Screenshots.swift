@@ -42,8 +42,10 @@ import os
 ///   pull), `cancel`, `again` (Start again), `answer:jammy/tender` (the
 ///   yolk, the white or both, as the buttons would: `AppModel.answer`),
 ///   `set:<control>=<value>` (`level`, `size`, `water` or `tapWater`, the
-///   cold tap's temperature, changed as a tap would) and `drag:<levels>`
-///   (the slider held and moved through them; it stays held). The moment
+///   cold tap's temperature, changed as a tap would), `drag:<levels>`
+///   (the slider held and moved through them; it stays held) and
+///   `clause:<egg/from/start/cooling>` (that clause of the sentence
+///   pressed, as a finger would: its choice opened, or closed). The moment
 ///   is seconds after the start, after `launch` (the clock at this launch,
 ///   before any cook), or after `boil` (the boil tapped), `pull` or
 ///   `cooled` (the plan's deadlines), the cook as restored
@@ -248,6 +250,10 @@ extension Screenshots {
         // The screen.
         /// Where a part of the screen sits, pt from the window's top.
         case layout(part: String, y: Double)
+        /// A clause's panel the cook opened, and how the page scrolled to it:
+        /// to its foot (`bottom`), to its head (`top`), or not at all, on
+        /// screen already (`none`).
+        case reveal(clause: String, scroll: String)
         /// One frame of the readout: the moment it was drawn for, and what
         /// it drew, the certainty's time range none with no certainty.
         case frame(at: Double, phase: String, big: String, sub: String, range: String?)
@@ -374,6 +380,32 @@ extension Screenshots {
     @MainActor private static var tappedAtTick = 0
     /// Drags of `-uiDo` still moving the slider.
     @MainActor private static var dragging = 0
+    /// The clauses `-uiDo` has pressed.
+    @MainActor private static var clauseTaps = 0
+    /// Scrolls of the page to an opened panel still under way (ContentView).
+    @MainActor private static var scrolls = 0
+    /// When a part of the screen last moved, on the system's clock.
+    @MainActor private static var movedAt = Date.distantPast
+
+    /// Where a part of the screen sits, to the log, as `logTop` and
+    /// `logBottom` find it each time it moves.
+    @MainActor public static func layout(_ part: String, y: Double) {
+        movedAt = Date()
+        log(.layout(part: part, y: y))
+    }
+
+    /// The page has begun scrolling to an opened panel: a step's `idle`
+    /// waits until nothing on the screen has moved for a tenth of a second.
+    /// The scroll is the system's, and says nothing when it ends.
+    @MainActor public static func scrolling() {
+        scrolls += 1
+        Task { @MainActor in
+            repeat {
+                try? await Task.sleep(for: .milliseconds(20))
+            } while Date().timeIntervalSince(movedAt) < 0.1
+            scrolls -= 1
+        }
+    }
 
     /// The clock at this launch, cook time: what `launch` counts from.
     static let launchedAtS = AppClock.nowS
@@ -405,6 +437,10 @@ extension Screenshots {
                 }
                 dragging -= 1
             }
+        case "clause":
+            // The page presses it (ContentView), where the open clause is kept.
+            clauseTaps &+= 1
+            probe.clauseTap = Probe.ClauseTap(clause: action.arg ?? "", n: clauseTaps)
         default: log(.actionUnknown(raw: action.raw))
         }
     }
@@ -436,6 +472,15 @@ extension Screenshots {
     @Observable @MainActor
     public final class Probe {
         public var drawn = 0
+        /// The clause `-uiDo` last pressed, which the page presses as a
+        /// finger would (ContentView); `n` counts the presses, so pressing
+        /// one again is a change.
+        public var clauseTap: ClauseTap?
+
+        public struct ClauseTap: Equatable {
+            public let clause: String
+            let n: Int
+        }
     }
 
     @MainActor public static let probe = Probe()
@@ -476,7 +521,7 @@ extension Screenshots {
     @MainActor private static func underWay(_ model: AppModel, ticks: Int, looks: Int) -> Bool {
         let planner = model.planner
         return (model.cook.ticking && model.cook.ticks <= max(ticks, tappedAtTick))
-            || (driving && nothingDue <= looks) || dragging > 0
+            || (driving && nothingDue <= looks) || dragging > 0 || scrolls > 0
             || !model.cook.isSettled
             || model.inHand.underWay
             || planner.solver.busy || planner.learner.draining
