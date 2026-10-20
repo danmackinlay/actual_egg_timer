@@ -78,6 +78,14 @@ and the map of the documents are `CLAUDE.md`.
     tap, never at launch; the number stays the cook's to change. The
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
+15. **Forget this cook**, for one set up wrong (a wrong water volume, egg
+    temperature or start): offered at Done, or on Start again, it drops the
+    egg from the log and from what is sent, and keeps its time to boil out
+    of the pan's memory. Today an unanswered egg teaches the posterior
+    nothing (`updatePosterior` returns on no answer), but it is still
+    logged and sent, and a cold start's tapped boil is remembered on any
+    end, Cancel included (`boilToRemember`), so a wrong volume files a
+    wrong time to boil under it.
 
 Not until the owner asks: the words in place from `copy:edit`, each key linked
 to the web screens that show it and a draft previewed there (a dev-only hook
