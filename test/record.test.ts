@@ -25,14 +25,14 @@ import { readFileSync } from 'node:fs';
 
 import { buildRequestedGrid } from '../src/core/doseGrid.ts';
 import {
-  CALIBRATION_SEED, type Calibration, type EggRecord, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
+  type EggRecord, LIKELIHOOD_ID, MODEL_ID, PARTICLE_COUNT, RESULTS_FILE_VERSION, calibrationGrid,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseLog, parseRecord, recordCookTime_s,
   replay, resultsFile, resultsFileName, sharedRecord,
 } from '../src/core/record.ts';
 import { WHITE_REPORTS, YOLK_WORDS, createPrior, posteriorParams, updatePosterior } from '../src/core/infer.ts';
 import { DEFAULT_PARAMS } from '../src/core/solve.ts';
 import { APP_VERSION } from '../src/ui/version.ts';
-import { RECORD_ENUMS, appSetup, fieldAt, recordAt, withMember } from '../tools/common.ts';
+import { RECORD_ENUMS, fieldAt, withMember } from '../tools/common.ts';
 import {
   type PosteriorReference, REFERENCE_FILE, SUMMARY_KEYS, type Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, seedOf,
   spread, summarise, wordLog,
@@ -279,63 +279,16 @@ test("a cold pan's water: a record without it replays as it was cooked, with the
   assert.equal(parseRecord(JSON.parse(JSON.stringify({ ...hot, setup: { ...hot.setup, panStart_C: 8 } }))), null);
 });
 
-/* What the fold makes of a fixed log - the apps' prior, particle count and
- * grid, five eggs from five pots with every kind of answer - pinned to the
- * LIKELIHOOD_ID it was made under. A change to the prior's draw, the physics
- * or the likelihood moves these numbers and fails here, until the id moves
- * (and with it MODEL_ID, in both apps) so that every stored posterior is
- * replayed; then pin what the test prints. A change to the decision alone
- * moves nothing here and needs no replay. Each posterior dimension's weighted
- * mean and sd, the effective sample size, and the generator's state after
- * the last resample, held to 1e-9: a last-bit difference between machines is
- * far below that, and a change to the fold far above it. */
-const LIKELIHOOD_PIN = {
-  id: '2026-10-e10',
-  fold: [
-    1.733475504969895e-7, 9.459606411996515e-9, -0.10266916794051935, 0.23986487262527864, 0.43535072327788293,
-    0.16273697926501188, 0.1905431350941683, 0.4135274983436036, 0.9715919290968168, 0.36025047224995055,
-    609.4639698430659, -2016908570, 6,
-  ],
-};
-
-function foldDigest(c: Calibration): number[] {
-  const post = c.posterior;
-  const out: number[] = [];
-  const dims: ((p: typeof post.particles[number]) => number)[] = [
-    (p) => p.alpha_m2s, (p) => p.logDoseOffset, (p) => p.noise, (p) => p.whiteOffset, (p) => p.whiteFirmGap,
-  ];
-  for (const dim of dims) {
-    let mean = 0;
-    for (let i = 0; i < post.particles.length; i++) mean += post.weights[i] * dim(post.particles[i]);
-    let variance = 0;
-    for (let i = 0; i < post.particles.length; i++) variance += post.weights[i] * (dim(post.particles[i]) - mean) ** 2;
-    out.push(mean, Math.sqrt(variance));
-  }
-  let squares = 0;
-  for (const w of post.weights) squares += w * w;
-  out.push(1 / squares, post.rng, c.eggsLogged);
-  return out;
-}
-
-test('the likelihood id is pinned to what its fold makes of a fixed log', () => {
-  const probed = recordAt(0.45, 430, 'fudgy', null, appSetup({ cooling: 'tap', afterBoil: 'off' }));
-  probed.probe = { centre_C: 66.4, after_s: 120 };
-  const log = [
-    recordAt(0.3, 400, 'soft', 'runny'),
-    recordAt(0.5, 455, 'jammy', 'tender', appSetup({ startMode: 'cold', cooling: 'counter' })),
-    probed,
-    recordAt(0.6, 480, 'hard', 'firm', appSetup({ waterLitres: 1, eggCount: 4, boiling_C: 95 })),
-    recordAt(0.2, 380, 'runny', null),
-    recordAt(0.4, 420, null, 'tender'),
-  ];
-  const got = foldDigest(replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log));
-  const pin = `pin: { id: '${LIKELIHOOD_ID}', fold: [${got.join(', ')}] }`;
-  assert.equal(LIKELIHOOD_ID, LIKELIHOOD_PIN.id, `LIKELIHOOD_ID moved: ${pin}`);
-  assert.equal(got.length, LIKELIHOOD_PIN.fold.length, pin);
-  for (let i = 0; i < got.length; i++) {
-    const error = Math.abs(got[i] - LIKELIHOOD_PIN.fold[i]) / Math.max(Math.abs(LIKELIHOOD_PIN.fold[i]), 1e-300);
-    assert.ok(error <= 1e-9, `the fold moved (number ${i}, ${error.toExponential(1)}): move LIKELIHOOD_ID; ${pin}`);
-  }
+/* What the fold makes of a fixed log is written in fixtures/record.json
+ * beside the LIKELIHOOD_ID it was made under, and tools/fixtures/record.ts
+ * refuses to write a fold that moved under the same id: a change to the
+ * prior's draw, the physics, the likelihood or the apps' grid moves
+ * LIKELIHOOD_ID (and with it MODEL_ID, in both apps), so that every stored
+ * posterior is replayed. Here, that the fixture was made under the code's
+ * id. */
+test('the likelihood id is the one the fixture\'s fold was made under', () => {
+  const f = JSON.parse(readFileSync('fixtures/record.json', 'utf8')) as { likelihood: { id: string } };
+  assert.equal(f.likelihood.id, LIKELIHOOD_ID, 'LIKELIHOOD_ID moved: npm run fixtures');
 });
 
 // --------------------------------------------------------------------------

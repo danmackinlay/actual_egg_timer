@@ -407,8 +407,9 @@ it. Beside it is the `LIKELIHOOD_ID` it was folded under (the store's `m`):
 the prior's draw, the physics and the likelihood, which is what a replay
 reads. A store under another one is replayed. It moves only when the fold
 does, so a change to the decision alone (a new `MODEL_ID` and nothing else)
-replays nothing; `test/record.test.ts` pins what the fold makes of a fixed
-log to it, so a change to the fold fails until it moves. A new likelihood
+replays nothing; `fixtures/record.json` keeps what the fold makes of a fixed
+log beside it, and `npm run fixtures` refuses a fold that moved under the
+same id, so a change to the fold fails until it moves. A new likelihood
 is a new model, so `MODEL_ID` moves with it.
 
 **The frozen base.** The owner's v2 posterior was learned from real eggs with no

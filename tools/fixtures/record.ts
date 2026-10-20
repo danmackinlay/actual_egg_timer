@@ -1,14 +1,18 @@
 /**
  * fixtures/record.json: the record (INFERENCE.md section 4): which records a
- * loader trusts, and a replayed log; and the calibration grid's geometry.
+ * loader trusts, and a replayed log; the calibration grid's geometry; and
+ * what the fold makes of a fixed log under the LIKELIHOOD_ID it was made
+ * under.
  */
+
+import { existsSync, readFileSync } from 'node:fs';
 
 import { eggFromMass } from '../../src/core/geometry.ts';
 import { type CookSetup, countsDown } from '../../src/core/protocol.ts';
 import { type GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.ts';
 import {
-  type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
-  MODEL_ID, type ResultsMeta, type StoreRead, calibrationDoneness,
+  CALIBRATION_SEED, type Calibration, type CookFacts, type EggRecord, LIKELIHOOD_ID,
+  MODEL_ID, PARTICLE_COUNT, type ResultsMeta, type StoreRead, calibrationDoneness,
   calibrationGrid, copyCalibration, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord,
   probeReadingFor, recordCookTime_s, recordFor, recordMass_g, recordProbe_C, recordTeaches, replay, resultsFile,
   resultsFileName,
@@ -17,7 +21,8 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.ts';
 import { COOLING_SECONDS, coolingSecondsFor, countedCooling_s } from '../../src/core/running.ts';
 
-import { RECORD_ENUMS, referenceSetup, withMember } from '../common.ts';
+import { RECORD_ENUMS, appSetup, recordAt, referenceSetup, withMember } from '../common.ts';
+import { compareFixtures } from '../fixtureCompare.ts';
 import { patchOf, posteriorSummary } from './shared.ts';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
@@ -682,8 +687,73 @@ const loadCases = LOAD_CASES.map((c) => {
   return { why: c.why, read: read, decision: loadDecision(read, LOAD_POPULATION, LOAD_LIKELIHOOD) };
 });
 
+const calibrationGridCases = [
+  { alphaCentre: 1.4e-7, cookTime_s: 441 },
+  { alphaCentre: 1.4e-7, cookTime_s: 60 },
+  { alphaCentre: 1.4e-7, cookTime_s: 120 },
+  { alphaCentre: 2.0e-7, cookTime_s: 800 },
+].map((c) => ({ ...c, grid: calibrationGrid(c.alphaCentre, c.cookTime_s) }));
+
+/* What the fold makes of a fixed log - the apps' prior, particle count and
+ * grid, four eggs from four pots with every kind of answer - beside the
+ * LIKELIHOOD_ID it was made under. A change to the prior's draw, the physics,
+ * the likelihood or the apps' grid moves these numbers, and every stored
+ * posterior must then be replayed: LIKELIHOOD_ID moves (and with it MODEL_ID,
+ * in both apps). So a fold, or the apps' grid, that moved under the id it was
+ * written under is refused here, and the fixtures are not written until the
+ * id moves; record.test.ts holds the id written here to the code's. A change
+ * to the decision alone moves nothing here and needs no replay. Each
+ * posterior dimension's weighted mean and sd, the effective sample size, the
+ * generator's state after the last resample, and the eggs logged. */
+function foldDigest(c: Calibration): number[] {
+  const post = c.posterior;
+  const out: number[] = [];
+  const dims: ((p: typeof post.particles[number]) => number)[] = [
+    (p) => p.alpha_m2s, (p) => p.logDoseOffset, (p) => p.noise, (p) => p.whiteOffset, (p) => p.whiteFirmGap,
+  ];
+  for (const dim of dims) {
+    let mean = 0;
+    for (let i = 0; i < post.particles.length; i++) mean += post.weights[i] * dim(post.particles[i]);
+    let variance = 0;
+    for (let i = 0; i < post.particles.length; i++) variance += post.weights[i] * (dim(post.particles[i]) - mean) ** 2;
+    out.push(mean, Math.sqrt(variance));
+  }
+  let squares = 0;
+  for (const w of post.weights) squares += w * w;
+  out.push(1 / squares, post.rng, c.eggsLogged);
+  return out;
+}
+
+const probed = recordAt(0.45, 430, 'fudgy', null, appSetup({ cooling: 'tap', afterBoil: 'off' }));
+probed.probe = { centre_C: 66.4, after_s: 120 };
+const LIKELIHOOD_LOG = [
+  recordAt(0.3, 400, 'soft', 'runny'),
+  recordAt(0.5, 455, 'jammy', 'tender', appSetup({ startMode: 'cold', cooling: 'counter' })),
+  probed,
+  recordAt(0.4, 420, null, 'tender'),
+];
+const likelihood = {
+  id: LIKELIHOOD_ID,
+  fold: foldDigest(replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), LIKELIHOOD_LOG)),
+};
+
+const WRITTEN = 'fixtures/record.json';
+const written = existsSync(WRITTEN)
+  ? JSON.parse(readFileSync(WRITTEN, 'utf8')) as { likelihood?: typeof likelihood; calibrationGrid?: unknown }
+  : null;
+if (written?.likelihood?.id === LIKELIHOOD_ID) {
+  const moved = compareFixtures(
+    { fold: written.likelihood.fold, calibrationGrid: written.calibrationGrid },
+    { fold: likelihood.fold, calibrationGrid: { cases: calibrationGridCases } },
+  ).differences;
+  if (moved.length > 0) {
+    throw new Error(`${WRITTEN}: the fold moved under LIKELIHOOD_ID '${LIKELIHOOD_ID}' (${moved.length} numbers, the first ${moved[0].path}); `
+      + 'move LIKELIHOOD_ID, and with it MODEL_ID, so that every stored posterior is replayed');
+  }
+}
+
 export const recordFixture = {
-  about: 'The record (INFERENCE.md section 4): which records a loader trusts, each a change to the canonical record, and a replayed log, the calibration after each egg in summary. src/core/record.ts.',
+  about: 'The record (INFERENCE.md section 4): which records a loader trusts, each a change to the canonical record, and a replayed log, the calibration after each egg in summary; and the likelihood id beside what the fold makes of a fixed log under it. src/core/record.ts.',
   canonical: CANONICAL,
   cases: recordCases,
   // Each field that takes one of a list, its members in the TypeScript's
@@ -712,14 +782,10 @@ export const recordFixture = {
   },
   // The grid one logged outcome is learned on in the apps: both apps must
   // agree, or two identical kitchens learn two things from the same egg.
-  calibrationGrid: {
-    cases: [
-      { alphaCentre: 1.4e-7, cookTime_s: 441 },
-      { alphaCentre: 1.4e-7, cookTime_s: 60 },
-      { alphaCentre: 1.4e-7, cookTime_s: 120 },
-      { alphaCentre: 2.0e-7, cookTime_s: 800 },
-    ].map((c) => ({ ...c, grid: calibrationGrid(c.alphaCentre, c.cookTime_s) })),
-  },
+  calibrationGrid: { cases: calibrationGridCases },
+  // The likelihood's id, and what the fold makes of a fixed log under it,
+  // which no port reads: a fold that moves needs the id to move.
+  likelihood: likelihood,
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },

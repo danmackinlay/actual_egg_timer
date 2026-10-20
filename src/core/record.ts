@@ -80,8 +80,10 @@ export const MODEL_ID = '2026-10-e11';
  *  beside the posterior (the store's `m`) and replay the log when it differs
  *  (`loadDecision`), so the posterior is always this code's. Moved only when
  *  the fold moves: a change to the decision alone leaves every posterior as
- *  it was. test/record.test.ts pins a digest of a fixed log's replay to it,
- *  so a change to the fold fails there until this moves. */
+ *  it was. fixtures/record.json keeps a digest of a fixed log's replay
+ *  beside it, and its generator (tools/fixtures/record.ts) refuses a digest
+ *  that moved under the same id, so a change to the fold fails there until
+ *  this moves. */
 export const LIKELIHOOD_ID = '2026-10-e10';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
