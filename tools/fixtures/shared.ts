@@ -1,6 +1,6 @@
 /**
  * What more than one fixture module uses: the particle rows every
- * posterior is written out as, and the cook the running and step fixtures
+ * posterior is written out as, the summary of one that is not, and the cook the running and step fixtures
  * start from. The pot they start from, `referenceSetup`, is
  * tools/common.ts's, which the tests share. The English catalogue is
  * english.ts's, apart, so that a fixture that shows no words does not reach
@@ -9,7 +9,7 @@
  */
 
 import { SIZE_CLASSES } from '../../src/core/geometry.ts';
-import { createPrior } from '../../src/core/infer.ts';
+import { type Particle, type Posterior, createPrior, effectiveSampleSize } from '../../src/core/infer.ts';
 import type { CookChoices } from '../../src/core/running.ts';
 
 export function particleRows(post: ReturnType<typeof createPrior>) {
@@ -20,6 +20,41 @@ export function particleRows(post: ReturnType<typeof createPrior>) {
     whiteOffset: p.whiteOffset,
     whiteFirmGap: p.whiteFirmGap,
   }));
+}
+
+/**
+ * A posterior as a fixture writes one that is not an input: its RNG's
+ * state, its effective sample size, where the weight sits among the
+ * particles (the weighted mean index, from 0), the first particle whole,
+ * and the weighted mean and sd of each dimension, the time-scale's as its
+ * log. Held to 1e-12, a particle drawn differently moves a mean, and one
+ * reordered moves where the weight sits: what writing every particle
+ * pinned, in a row. Fixtures.swift's `summary` makes the same.
+ */
+export function posteriorSummary(post: Posterior) {
+  let total = 0;
+  for (const w of post.weights) total += w;
+  const dims: [string, (p: Particle) => number][] = [
+    ['logAlpha', (p) => Math.log(p.alpha_m2s)], ['logDoseOffset', (p) => p.logDoseOffset], ['noise', (p) => p.noise],
+    ['whiteOffset', (p) => p.whiteOffset], ['whiteFirmGap', (p) => p.whiteFirmGap],
+  ];
+  const mean: Record<string, number> = {};
+  const sd: Record<string, number> = {};
+  for (const [name, of] of dims) {
+    let m = 0;
+    for (let i = 0; i < post.particles.length; i++) m += post.weights[i] * of(post.particles[i]);
+    m /= total;
+    let v = 0;
+    for (let i = 0; i < post.particles.length; i++) v += post.weights[i] * (of(post.particles[i]) - m) ** 2;
+    mean[name] = m;
+    sd[name] = Math.sqrt(v / total);
+  }
+  let centre = 0;
+  for (let i = 0; i < post.weights.length; i++) centre += post.weights[i] * i;
+  return {
+    count: post.particles.length, rng: post.rng, ess: effectiveSampleSize(post), weightCentre: centre / total,
+    first: particleRows(post)[0], mean: mean, sd: sd,
+  };
 }
 
 /** The cook of the running and step fixtures: a 68 g EU Large from the

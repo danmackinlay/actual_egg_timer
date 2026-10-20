@@ -7,7 +7,7 @@ import Foundation
 /// The peak on the dose grid and its interpolation; the error model's density
 /// across both tails, where a careless exp(big) * erfc(tiny) would be NaN; one
 /// particle's likelihood; a fold sequence of readings alone, with answers, and
-/// wildly off, through the resample, particle by particle; and the rules -
+/// wildly off, through the resample, each posterior in summary; and the rules -
 /// how long the cooling counts, whether a probe is asked for, and which
 /// readings are taken at entry.
 
@@ -29,7 +29,7 @@ private struct Fold: Encodable {
     let after: After
 
     struct After: Encodable {
-        let posterior: Posterior
+        let posterior: PosteriorSummary
         let ess: Double
         let alphaM2s: Double
         enum CodingKeys: String, CodingKey { case posterior, ess, alphaM2s = "alpha_m2s" }
@@ -91,7 +91,7 @@ struct ProbeConformance {
         }
     }
 
-    @Test("a fold sequence with readings, particle by particle")
+    @Test("a fold sequence with readings, each posterior in summary")
     func updates() throws {
         let grid = try fixtureGrid()
         let prior = try Fixtures.object("probe.json", "prior")
@@ -104,7 +104,7 @@ struct ProbeConformance {
             updatePosterior(&post, grid: grid, cookTimeS: t, yolkWord: word, white: white, probeC: probeC)
             let fold = Fold(
                 cookTimeS: t, yolkWord: word, white: white, probeC: probeC, firstLikelihood: firstLikelihood,
-                after: .init(posterior: post, ess: effectiveSampleSize(post), alphaM2s: posteriorParams(post).alphaM2s)
+                after: .init(posterior: PosteriorSummary(post), ess: effectiveSampleSize(post), alphaM2s: posteriorParams(post).alphaM2s)
             )
             expectJSON(fold, step, "update \(i)")
         }

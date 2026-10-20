@@ -1,5 +1,5 @@
 /**
- * fixtures/calibration.json: the particle filter, particle by particle.
+ * fixtures/calibration.json: the particle filter.
  */
 
 import { eggFromMass } from '../../src/core/geometry.ts';
@@ -12,12 +12,14 @@ import {
 import type { CookSetup } from '../../src/core/protocol.ts';
 
 import { referenceSetup } from '../common.ts';
+import { posteriorSummary } from './shared.ts';
 
 /* The calibration is the one part of the core with STATE and a random number
  * generator, so conformance needs more than a few scalars: a divergence in the
- * RNG produces a different but entirely plausible posterior, which no summary
- * statistic would flag. Every particle is therefore written out, before and
- * after every update.
+ * RNG produces a different but entirely plausible posterior. The prior is
+ * written out particle by particle; after every update, the posterior's
+ * summary (`posteriorSummary`), which a particle drawn otherwise moves at
+ * 1e-12, where the eye would see a sensible mean and spread.
  *
  * The grid here is deliberately smaller than the app's 21 x 32 - it costs one
  * simulation per cell in both implementations, and 9 x 12 exercises every path
@@ -59,11 +61,11 @@ export const PARTICLE_COUNT = 64;
 export const PRIOR_SEED = 20260917;
 export const NOMINAL_TARGET = Math.log10(6.0);
 
-/** A posterior as it stands, every particle, weight and the RNG's state, and
- *  what is read off it. */
-function readout(post: Posterior) {
+/** A posterior as it stands, in summary or, for the prior, every particle,
+ *  weight and the RNG's state; and what is read off it. */
+function readout(post: Posterior, whole = false) {
   return {
-    posterior: structuredClone(post),
+    posterior: whole ? structuredClone(post) : posteriorSummary(post),
     ess: effectiveSampleSize(post),
     alpha_m2s: posteriorParams(post).alpha_m2s,
     meanWhiteOffset: posteriorMeanWhiteOffset(post),
@@ -71,7 +73,7 @@ function readout(post: Posterior) {
   };
 }
 
-const prior = readout(createPrior(PARTICLE_COUNT, PRIOR_SEED));
+const prior = readout(createPrior(PARTICLE_COUNT, PRIOR_SEED), true);
 
 /* The filter, from the prior, told the yolk the cook got in five words and
  * the white: every word, both ends, a word with no
@@ -149,7 +151,7 @@ const WHITE_RESAMPLE_CASE = (() => {
 })();
 
 export const calibrationFixture = {
-  about: 'The particle filter, particle by particle: the surface, its lookups, the likelihood and a sequence of folds. src/core/infer.ts, doseGrid.ts.',
+  about: 'The particle filter: the surface, its lookups, the likelihood, the prior particle by particle and a sequence of folds, each posterior after one in summary. src/core/infer.ts, doseGrid.ts.',
   egg: CALIB_EGG,
   setup: CALIB_SETUP,
   grid: { spec: CALIB_GRID_SPEC, surface: CALIB_GRID },
