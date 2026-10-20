@@ -92,8 +92,7 @@ and the map of the documents are `CLAUDE.md`.
     wrong time to boil under it.
 
 Not until the owner asks: the words in place from `copy:edit`, each key linked
-to the web screens that show it and a draft previewed there (a dev-only hook
-recording which keys each `copy:snapshot` state renders, and a preview build
+to the web screens that show it and a draft previewed there (a preview build
 the editor serves); dimming the time slightly while a newer answer is on its
 way, never delaying the number instead; the egg lab (`tools/egg-section.html`)
 as an About page; an iPad layout (`DECISIONS.md` 50); other birds' eggs, emu
