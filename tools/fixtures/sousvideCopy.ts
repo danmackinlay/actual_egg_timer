@@ -5,7 +5,7 @@
 import { render, renderRef } from '../../src/core/copy.ts';
 import { longDuration, startPhrase, weekdayKey } from '../../src/core/wording.ts';
 
-import { english } from './shared.ts';
+import { english } from './english.ts';
 
 /* The two unit choices, which at a 58 C bath reach only two of their six
  * branches in normal use. Every boundary, from both sides, because four of

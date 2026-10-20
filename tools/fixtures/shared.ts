@@ -1,23 +1,16 @@
 /**
  * What more than one fixture module uses: the particle rows every
- * posterior is written out as, the English catalogue, and the cook the running
- * and step fixtures start from. The pot they start from, `referenceSetup`, is
- * tools/common.ts's, which the tests share. Importing this module computes
- * nothing, so each fixture can be made in a worker of its own
- * (tools/fixtures.ts).
+ * posterior is written out as, and the cook the running and step fixtures
+ * start from. The pot they start from, `referenceSetup`, is
+ * tools/common.ts's, which the tests share. The English catalogue is
+ * english.ts's, apart, so that a fixture that shows no words does not reach
+ * them (tools/wordsOnly.ts). Importing this module computes nothing, so each
+ * fixture can be made in a worker of its own (tools/fixtures.ts).
  */
 
-import { readFileSync } from 'node:fs';
-
-import { parseCatalogue } from '../../src/core/copy.ts';
 import { SIZE_CLASSES } from '../../src/core/geometry.ts';
 import { createPrior } from '../../src/core/infer.ts';
 import type { CookChoices } from '../../src/core/running.ts';
-
-export type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
-
-export const englishJson = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
-export const english = parseCatalogue(englishJson);
 
 export function particleRows(post: ReturnType<typeof createPrior>) {
   return post.particles.map((p) => ({

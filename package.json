@@ -10,6 +10,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.app.json && tsc -p tsconfig.json",
     "test": "node tools/copyKeys.ts && node tools/swiftConstants.ts && npm run typecheck && node --test test/*.test.ts",
+    "test:words": "node tools/wordsOnly.ts test",
     "fixtures": "node tools/fixtures.ts",
     "population": "node tools/population.ts",
     "eggs": "node tools/eggs.ts",
