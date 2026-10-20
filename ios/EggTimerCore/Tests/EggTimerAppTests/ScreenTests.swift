@@ -106,7 +106,17 @@ extension AppTests {
         #expect(choices.cooling == .bowl && choices.bowlLitres == 1 && choices.bowlWaterC == 12)
         #expect(choices.eggCount == 4)
         let said = asRead(SentenceWords(model.planner).plain)
-        #expect(said.hasPrefix("4 × ") && said.hasSuffix("then into a bowl with 1 L of water at 12 °C."), "\(said)")
+        // The words are the catalogue's, so a change of wording moves no test:
+        // the egg's count before its mass, and the bowl's clause at the end.
+        let mark = "\u{1}"
+        let eggs = tr(.`setup.egg`, ["count": .int(4), "mass": .text(mark)])
+        let massAt = try #require(eggs.range(of: mark)).lowerBound
+        let count = asRead(String(eggs[..<massAt]))
+        let bowl = asRead(tr(.`setup.cooling.bowlAt`, [
+            "water": .text(tr(.`format.litres`, ["value": .text("1")])),
+            "temp": .text(tr(.`format.celsius`, ["value": .text("12")])),
+        ]))
+        #expect(said.hasPrefix(count) && said.contains(bowl), "\(said)")
         let pull = try pullS(model.cook)
         await tick(at: pull + 1, model, world)
         world.clock.set(pull + 2)

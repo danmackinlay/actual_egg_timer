@@ -19,7 +19,7 @@ import { textureFor, textureNoteKeys } from '../src/core/texture.ts';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../src/core/solve.ts';
 import type { CookSetup } from '../src/core/protocol.ts';
 import { eggFromMass } from '../src/core/geometry.ts';
-import { parseCatalogue, render } from '../src/core/copy.ts';
+import { parseCatalogue } from '../src/core/copy.ts';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
@@ -81,24 +81,28 @@ test('the jammy band contains the default slider position', () => {
   assert.equal(textureFor(doseAt(DEFAULTS.doneness), whiteAt(0.5), true).yolk, 'jammy');
 });
 
-function noteText(yolkDose_min: number, whiteDose_min: number, whiteSets: boolean): string {
-  const note = textureNoteKeys(textureFor(yolkDose_min, whiteDose_min, whiteSets));
-  const parts: Record<string, string> = {};
-  for (const [name, key] of Object.entries(note.parts)) parts[name] = render(EN, key);
-  return render(EN, note.key, parts);
+type TextureNote = ReturnType<typeof textureNoteKeys>;
+/** The note's keys, not its words: the words are copy/en.json's, so a change
+ *  of wording moves no test. */
+function noteOf(yolkDose_min: number, whiteDose_min: number, whiteSets: boolean): TextureNote {
+  return textureNoteKeys(textureFor(yolkDose_min, whiteDose_min, whiteSets));
 }
+const note = (white: TextureNote["key"], yolk: TextureNote["key"]): TextureNote => ({ key: 'texture.note', parts: { white: white, yolk: yolk } });
+const WHITE_RUNNY: TextureNote = { key: 'texture.white.runny', parts: {} };
 
 test('a white the pan never sets is runny whatever its dose, and is the whole note', () => {
   for (const decades of [-2, -0.01, 0.5, 4]) {
     assert.equal(textureFor(doseAt(0.41), whiteAt(decades), false).white, 'runny', `${decades} decades`);
-    assert.deepEqual(textureNoteKeys(textureFor(doseAt(0.41), whiteAt(decades), false)),
-      { key: 'texture.white.runny', parts: {} });
-    assert.equal(noteText(doseAt(0.41), whiteAt(decades), false), 'white stays runny');
+    assert.deepEqual(noteOf(doseAt(0.41), whiteAt(decades), false), WHITE_RUNNY);
   }
-  assert.equal(noteText(doseAt(0.41), whiteAt(0.5), true), 'white set, yolk jammy');
-  assert.equal(noteText(doseAt(0), whiteAt(2), true), 'white firm, yolk liquid');
-  assert.equal(noteText(doseAt(0.22), whiteAt(0.5), true), 'white set, yolk soft, barely thickened');
-  assert.equal(noteText(doseAt(1), whiteAt(3), true), 'white firm, yolk fully set');
+  assert.deepEqual(noteOf(doseAt(0.41), whiteAt(0.5), true), note('texture.white.set', 'texture.yolk.jammy'));
+  assert.deepEqual(noteOf(doseAt(0), whiteAt(2), true), note('texture.white.firm', 'texture.yolk.liquid'));
+  assert.deepEqual(noteOf(doseAt(0.22), whiteAt(0.5), true), note('texture.white.set', 'texture.yolk.soft'));
+  assert.deepEqual(noteOf(doseAt(1), whiteAt(3), true), note('texture.white.firm', 'texture.yolk.set'));
+  // Every key a note names renders.
+  for (const n of [WHITE_RUNNY, note('texture.white.firm', 'texture.yolk.set')]) {
+    assert.ok(EN.messages.has(n.key) && Object.values(n.parts).every((k) => EN.messages.has(k)));
+  }
 });
 
 test('heat off, too little water: the solver\'s white never sets, and the note says so', () => {
@@ -109,5 +113,5 @@ test('heat off, too little water: the solver\'s white never sets, and the note s
   const sol = solveCookTime(eggFromMass(0.068), setup, DEFAULT_PARAMS, donenessFromSlider(DEFAULTS.doneness));
   assert.equal(sol.whiteSets, false);
   assert.equal(verdictFor(sol, DEFAULTS.doneness).kind, 'whiteNeverSets');
-  assert.equal(noteText(sol.result.yolkDose_min, sol.result.whiteDose_min, sol.whiteSets), 'white stays runny');
+  assert.deepEqual(noteOf(sol.result.yolkDose_min, sol.result.whiteDose_min, sol.whiteSets), WHITE_RUNNY);
 });

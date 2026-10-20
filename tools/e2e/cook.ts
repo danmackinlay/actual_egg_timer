@@ -10,6 +10,8 @@ import {
   BOIL_KEY, EN, STOPPED, boil, corrected, deadlines, later, near, openPanel, pansIn, pick, rings, scheduledAhead,
   sentenceSays, setSlider, start, storedCook,
 } from './helpers.ts';
+import { english } from '../copyNotes.ts';
+import { asRead } from '../text.ts';
 
 export const cookScenarios: Record<string, Scenario> = {
   'cold-cook': {
@@ -202,8 +204,11 @@ export const cookScenarios: Record<string, Scenario> = {
       await tab.until('__snap().chosen !== null', 'the bowl decided');
       let s = await tab.snap();
       const { sentence } = await sentenceSays(tab);
-      check(sentence.startsWith('4 × 68 g eggs') && sentence.includes('then into a bowl with 1 L of water at 12 °C.'),
-        `the sentence: ${sentence}`);
+      const eggs = asRead(english('setup.egg', { count: 4, mass: english('format.grams', { value: '68' }) }, 'other'));
+      const clause = asRead(english('setup.cooling.bowlAt', {
+        water: english('format.litres', { value: '1' }), temp: english('format.celsius', { value: '12' }),
+      }));
+      check(sentence.startsWith(eggs) && sentence.includes(clause), `the sentence: ${sentence}`);
       const bowl = minutes(s.digits);
       check(bowl < ice && ice - bowl < 60, `the bowl cooks shorter than ice, by seconds: ${bowl} s against ${ice} s`);
       // In, out at the pull, into the bowl.
@@ -217,10 +222,10 @@ export const cookScenarios: Record<string, Scenario> = {
       const d = deadlines(s);
       await tab.shiftTo(d.cookEnd_s + 2);
       s = await tab.phase('PULL');
-      check(s.primary === 'In the bowl of water', `the pull: ${s.primary}`);
+      check(s.primary === EN['action.pulled.bowl'].text, `the pull: ${s.primary}`);
       await tab.click('#primary');
       s = await tab.phase('COOLING');
-      check(s.label === 'Leave them in the bowl', `the cooling: ${s.label}`);
+      check(s.label === EN['readout.phase.coolingBowl'].text, `the cooling: ${s.label}`);
       const d2 = deadlines(s);
       const counted = d2.coolEnd_s - (storedCook(s)?.events.pulled?.out_s ?? NaN);
       check(counted > 120 && counted < 600, `the cooling counted to the yolk's peak in the bowl: ${counted.toFixed(0)} s`);

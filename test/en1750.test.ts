@@ -23,7 +23,7 @@ import {
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
-import { NOTES_PATH, catalogueTags, isCatalogueFile, translationTags } from '../tools/copyNotes.ts';
+import { NOTES_PATH, catalogueTags, english, isCatalogueFile, translationTags } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
 
 type Entry = Record<string, unknown>;
@@ -63,7 +63,7 @@ test('every twin is an English key; a key without one is not refused', () => {
 test('a key 1750 lacks falls back to English, with English\'s plural rule', () => {
   // app.name is iOS's, and 1750 leaves it to English.
   assert.ok(!PERIOD.messages.has('app.name'));
-  assert.equal(render(PERIOD, 'app.name'), 'Actual Egg Timer');
+  assert.equal(render(PERIOD, 'app.name'), render(EN, 'app.name'));
   assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 result');
   assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 results');
 });
@@ -106,7 +106,7 @@ test('Help\'s links are the English links: the same URLs, in the same markdown',
 test('formats come from the region: the register is not a format', () => {
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'US', null), 'en-US');
   assert.equal(formattingLocale(PERIOD_LANGUAGE, 'GB', null), 'en-GB');
-  assert.equal(asRead(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US')), '1,234.5 °F');
+  assert.equal(asRead(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US')), asRead(english('format.fahrenheit', { value: '1,234.5' })));
 });
 
 // --------------------------------------------------------------------------

@@ -26,6 +26,7 @@ import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy
 import { show, useUnits } from '../src/ui/units.ts';
 import { spokenClock } from '../src/ui/countdown.ts';
 import { sousVideCopy } from '../src/ui/sousvide.ts';
+import { english } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
 
 const NBSP = ' ';
@@ -178,11 +179,14 @@ test('the screen reader hears "1 second", never "1 seconds"', () => {
   useCatalogue(EN);
   forceFormatLocale('en-GB');
   try {
-    assert.equal(spokenClock(1), '1 second');
-    assert.equal(spokenClock(45), '45 seconds');
-    assert.equal(spokenClock(61), '1 minute 1 second');
-    assert.equal(spokenClock(677), '11 minutes 17 seconds');
-    assert.equal(spokenClock(120), '2 minutes 0 seconds', 'as before: the seconds are always said');
+    const seconds = (n: number, form: string): string => english('spoken.seconds', { seconds: n }, form);
+    const clock = (m: number, mForm: string, s: number, sForm: string): string =>
+      english('spoken.minutesSeconds', { minutes: english('spoken.minutes', { minutes: m }, mForm), seconds: seconds(s, sForm) });
+    assert.equal(spokenClock(1), seconds(1, 'one'));
+    assert.equal(spokenClock(45), seconds(45, 'other'));
+    assert.equal(spokenClock(61), clock(1, 'one', 1, 'one'));
+    assert.equal(spokenClock(677), clock(11, 'other', 17, 'other'));
+    assert.equal(spokenClock(120), clock(2, 'other', 0, 'other'), 'as before: the seconds are always said');
   } finally {
     forceFormatLocale(null);
   }
@@ -192,9 +196,9 @@ test('English numbers and clocks by region', () => {
   useCatalogue(EN);
   try {
     forceFormatLocale('en-US');
-    assert.equal(asRead(show('altitude', 1500)), '1,500 m');
+    assert.equal(asRead(show('altitude', 1500)), asRead(english('format.metres', { value: '1,500' })));
     forceFormatLocale('en-GB');
-    assert.equal(asRead(show('water', 2)), '2.00 L', 'unchanged');
+    assert.equal(asRead(show('water', 2)), asRead(english('format.litres', { value: '2.00' })), 'unchanged');
   } finally {
     forceFormatLocale(null);
   }
@@ -211,7 +215,7 @@ test('forced to cs-CZ, the web renders the pseudo catalogue with Czech numbers a
     assert.equal(formatLocale(), 'cs-CZ');
     assert.equal(show('water', 1.5), '1,50 [l:many]', 'fractional litres are many');
     assert.equal(show('altitude', 1250), `1${NBSP}250 [m]`);
-    assert.equal(asRead(show('boilingPoint', 99.74)), '99,7 °C', 'a key the pseudo lacks falls back, numbers stay Czech');
+    assert.equal(asRead(show('boilingPoint', 99.74)), asRead(english('format.celsius', { value: '99,7' })), 'a key the pseudo lacks falls back, numbers stay Czech');
     assert.equal(spokenClock(1), '1 [s:one]');
     assert.equal(spokenClock(3 * 60 + 2), '3 [min:few] + 2 [s:few]');
     assert.equal(spokenClock(5 * 60 + 21), '5 [min:other] + 21 [s:other]');
@@ -220,8 +224,10 @@ test('forced to cs-CZ, the web renders the pseudo catalogue with Czech numbers a
     // Wednesday 1 October 2025, 15:05 UTC, and 81,760 s earlier is 16:22:20
     // the day before.
     const copy = sousVideCopy(BATH, Date.UTC(2025, 9, 1, 15, 5));
-    assert.equal(asRead(copy.subline), '[subline] 16:22 · 22 h 43 min · 58 °C');
-    assert.equal(copy.headline, 'Yesterday', 'a key the pseudo lacks is English');
+    // The duration and the bath's temperature are keys the pseudo lacks: English words, Czech numbers.
+    const duration = english('duration.hoursMinutes', { hours: 22, minutes: 43 });
+    assert.equal(asRead(copy.subline), asRead(`[subline] 16:22 · ${duration} · ${english('format.celsius', { value: '58' })}`));
+    assert.equal(copy.headline, english('sousvide.start.yesterday'), 'a key the pseudo lacks is English');
   } finally {
     forceFormatLocale(null);
     useCatalogue(EN);

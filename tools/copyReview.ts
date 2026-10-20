@@ -7,108 +7,25 @@
  *
  * APPROVED_PATH holds the last commit whose words the owner approved. The
  * page is copy/en.json and its regional overlays at that commit against the
- * working tree, key by key (changed, added, retired): the English word by
- * word, the overlay's words, and the key's note (copy/en.notes.json). One
- * file with no script and no network, to send to a phone as it is. It
+ * working tree, key by key (changed, added, retired; tools/copyQueue.ts,
+ * the words' editor's queue too): the English word by word, the overlay's
+ * words, and the key's note (copy/en.notes.json). One file with no script
+ * and no network. Its foot says how to change the words: the editor,
+ * `npm run copy:edit` (tools/copyEdit/). It
  * prints the commit it was made from, which approving names to approve
  * exactly what the owner read. Approving HEAD refuses while copy/ has
  * uncommitted changes, which no commit could name. Approval is the owner's
  * word; no agent gives it.
  */
 
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { OVERLAYS, PLURAL_CATEGORIES } from '../src/core/copy.ts';
+import { COLOURS, MARKS, changeHtml, esc, templatesOf } from './copyDiff.ts';
 import { readNotes } from './copyNotes.ts';
+import { APPROVED_PATH, STATES, approve, copyIsDirty, git, reviewQueue } from './copyQueue.ts';
 
-const APPROVED_PATH = 'test/data/copy-approved.txt';
-const CATEGORIES = ['text', ...PLURAL_CATEGORIES];
-type Messages = Record<string, Record<string, unknown>>;
-type Templates = Record<string, string>;
-
-const git = (...args: string[]): string => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
-const copyIsDirty = (): boolean => git('status', '--porcelain', '--', 'copy') !== '';
-
-/** A catalogue's messages at a commit, or in the working tree with none. An
- *  overlay newer than the commit is none there, so each of its keys reads as
- *  added. */
-function messages(tag: string, commit: string | null): Messages {
-  const path = `copy/${tag}.json`;
-  if (commit !== null && git('ls-tree', '--name-only', commit, '--', path) === '') return {};
-  const text = commit === null ? readFileSync(path, 'utf8') : git('show', `${commit}:${path}`);
-  return (JSON.parse(text) as { messages: Messages }).messages;
-}
-
-/** An entry's templates, by category; `base` and `count` are not words. */
-function templatesOf(entry: Record<string, unknown> | undefined): Templates | null {
-  if (entry === undefined) return null;
-  return Object.fromEntries(CATEGORIES.filter((c) => typeof entry[c] === 'string').map((c) => [c, entry[c] as string]));
-}
-
-const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const words = (s: string): string => esc(s).replace(/\{[A-Za-z]\w*\}/g, (p) => `<span class="ph">${p}</span>`);
-
-/** The two strings' word-by-word difference: the longest common run of
- *  words kept, each stretch of change shown once as it was and once as it is. */
-function diffHtml(a: string, b: string): string {
-  const split = (s: string): string[] => s.match(/\{\w+\}|[\p{L}\p{N}’'-]+|\s+|[^\s\p{L}\p{N}]/gu) ?? [];
-  const x = split(a);
-  const y = split(b);
-  const lcs = Array.from({ length: x.length + 1 }, () => new Array<number>(y.length + 1).fill(0));
-  for (let i = x.length - 1; i >= 0; i--) {
-    for (let j = y.length - 1; j >= 0; j--) {
-      lcs[i][j] = x[i] === y[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
-    }
-  }
-  const runs: { op: 'same' | 'del' | 'ins'; text: string }[] = [];
-  const push = (op: 'same' | 'del' | 'ins', text: string): void => {
-    if (runs.at(-1)?.op === op) runs[runs.length - 1].text += text;
-    else runs.push({ op: op, text: text });
-  };
-  for (let i = 0, j = 0; i < x.length || j < y.length;) {
-    if (i < x.length && j < y.length && x[i] === y[j]) { push('same', x[i++]); j++; }
-    else if (j < y.length && (i === x.length || lcs[i][j + 1] >= lcs[i + 1][j])) push('ins', y[j++]);
-    else push('del', x[i++]);
-  }
-  let out = '';
-  let del = '';
-  let ins = '';
-  const flush = (): void => {
-    out += (del === '' ? '' : `<del>${words(del)}</del>`) + (ins === '' ? '' : `<ins>${words(ins)}</ins>`);
-    del = ins = '';
-  };
-  runs.forEach((r, k) => {
-    if (r.op === 'del') del += r.text;
-    else if (r.op === 'ins') ins += r.text;
-    // A space or a short word between two changes is folded into both, so a rewritten clause reads whole.
-    else if ((del !== '' || ins !== '') && k + 1 < runs.length && r.text.trim().length <= 3 && !r.text.includes('{')) {
-      del += r.text;
-      ins += r.text;
-    } else {
-      flush();
-      out += words(r.text);
-    }
-  });
-  flush();
-  return out;
-}
-
-/** Words as approved against words now: a diff, all new, or all gone. */
-function changeHtml(before: Templates | null, after: Templates | null): string {
-  return CATEGORIES.filter((c) => before?.[c] !== undefined || after?.[c] !== undefined).map((c) => {
-    const a = before?.[c];
-    const b = after?.[c];
-    const body = a === undefined ? `<ins>${words(b!)}</ins>` : b === undefined ? `<del>${words(a)}</del>` : diffHtml(a, b);
-    return `<p class="words">${c === 'text' ? '' : `<span class="cat">${c}</span> `}${body}</p>`;
-  }).join('');
-}
-
-const STYLE = `:root { color-scheme: light dark; --bg: #faf8f4; --fg: #1d1b18; --muted: #6a655c; --card: #fff;
-  --line: #e2ddd3; --del: #fbe0de; --ins: #d9f1df; --ph: #ebe6f8; }
-@media (prefers-color-scheme: dark) { :root { --bg: #151412; --fg: #ece8e1; --muted: #a29d93; --card: #201e1b;
-  --line: #37332d; --del: #4b1f1c; --ins: #173822; --ph: #312c48; } }
+const STYLE = `${COLOURS}
 body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 -apple-system, system-ui, sans-serif; }
 main { max-width: 40rem; margin: 0 auto; padding: 16px 16px 48px; }
 h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
@@ -116,33 +33,22 @@ h3 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
 article { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
 .meta, dt, .cat { color: var(--muted); font-size: 0.85rem; } dt { margin-top: 0.5rem; font-weight: 600; } dd { margin: 0; }
 .words { margin: 0.25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-del { background: var(--del); } ins { background: var(--ins); text-decoration: none; } del + ins { margin-left: 0.2em; }
-.ph { background: var(--ph); border-radius: 4px; padding: 0 2px; }`;
+${MARKS}`;
 
 /** How the owner changes what he has read, at the foot of the page: the
  *  workflow of DEVELOPING.md's "Reviewing the words", steps 3 and 4. */
 const CHANGING = `<h2>Changing them</h2><ol>
-<li>Say what to put back, by its key, to whoever is working in the repository; or edit <code>copy/en.json</code>
-yourself, and <code>copy/en-US.json</code> where the key has a US line (its <code>base</code> is the English it
-was made from). The 1750 words may lag.</li>
-<li>Run <code>npm test</code> and <code>npm run fixtures:check</code>, then commit <code>copy/</code> with any
-fixture they wrote.</li>
+<li>Run <code>npm run copy:edit</code> in the repository: it opens a page in your browser where you change each key in
+place, its US line beside it, and it checks and commits what you save. Or say what to put back, by its key, to
+whoever is working in the repository. The 1750 words may lag.</li>
 <li>Run <code>npm run copy:review</code> again and read the new page here, and the words in place in the apps.</li>
-<li>When nothing is left to put back, approve, below, and commit <code>test/data/copy-approved.txt</code>.</li>
+<li>When nothing is left to put back, approve: the editor’s Approve, or as below, then commit
+<code>test/data/copy-approved.txt</code>.</li>
 </ol>`;
 
 function review(out: string): void {
-  const approved = readFileSync(APPROVED_PATH, 'utf8').trim();
-  if (!/^[0-9a-f]{40}$/.test(approved)) throw new Error(`${APPROVED_PATH} is not one commit's full hash`);
-  const tags = ['en', ...OVERLAYS];
-  const then = tags.map((tag) => messages(tag, approved));
-  const now = tags.map((tag) => messages(tag, null));
+  const { approved, tags, then, now, keys } = reviewQueue('.', null);
   const notes = readNotes();
-  const same = (i: number, key: string): boolean =>
-    JSON.stringify(templatesOf(then[i][key])) === JSON.stringify(templatesOf(now[i][key]));
-  const queue = [...new Set([...Object.keys(now[0]), ...Object.keys(then[0])])]
-    .filter((key) => tags.some((_t, i) => !same(i, key)));
-  const state = (key: string): string => (!(key in then[0]) ? 'Added' : !(key in now[0]) ? 'Retired' : 'Changed');
   const card = (key: string): string => {
     const rows = tags.map((tag, i) => [tag, then[i][key], now[i][key]] as const).slice(1)
       .filter(([, a, b]) => a !== undefined || b !== undefined)
@@ -152,10 +58,10 @@ function review(out: string): void {
     const english = changeHtml(templatesOf(then[0][key]), templatesOf(now[0][key]));
     return `<article><h3><code>${esc(key)}</code></h3>${english}${rows.length > 0 ? `<dl>${rows.join('')}</dl>` : ''}</article>`;
   };
-  const sections = ['Changed', 'Added', 'Retired'].map((s) => [s, queue.filter((k) => state(k) === s)] as const)
+  const sections = STATES.map((s) => [s, keys.filter((k) => k.state === s).map((k) => k.key)] as const)
     .filter(([, ks]) => ks.length > 0).map(([s, ks]) => `<h2>${s} (${ks.length})</h2>${ks.map(card).join('')}`);
-  const count = `${queue.length} key${queue.length === 1 ? '' : 's'}`;
-  const head = git('rev-parse', 'HEAD');
+  const count = `${keys.length} key${keys.length === 1 ? '' : 's'}`;
+  const head = git('.', 'rev-parse', 'HEAD');
   const approving = copyIsDirty()
     ? `Made from ${head} with changes to the words not yet committed, so no commit holds them: commit, and make the
 page again.`
@@ -178,25 +84,13 @@ ${CHANGING}
   console.log(`${out}: ${count} to read.`);
 }
 
-/** Record `commit`, or HEAD, as approved: the commit the page was made from,
- *  so that words committed after the owner read them are not approved too. */
-function approve(commit: string | undefined): void {
-  if (commit === undefined && copyIsDirty()) {
-    throw new Error('copy/ has changes git has not committed, which no commit can record: commit them');
-  }
-  let hash: string;
-  try {
-    hash = git('rev-parse', '--verify', '--quiet', `${commit ?? 'HEAD'}^{commit}`);
-  } catch {
-    throw new Error(`not a commit: ${commit}`);
-  }
-  writeFileSync(APPROVED_PATH, `${hash}\n`);
-  console.log(`approved the words at ${hash.slice(0, 10)}; commit ${APPROVED_PATH}.`);
-}
-
 try {
-  if (process.argv[2] === 'approve') approve(process.argv[3]);
-  else review(process.argv[2] ?? '_dev/copy-review.html');
+  if (process.argv[2] === 'approve') {
+    const hash = approve(process.argv[3]);
+    console.log(`approved the words at ${hash.slice(0, 10)}; commit ${APPROVED_PATH}.`);
+  } else {
+    review(process.argv[2] ?? '_dev/copy-review.html');
+  }
 } catch (e) {
   console.error((e as Error).message);
   process.exit(1);

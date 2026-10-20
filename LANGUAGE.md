@@ -268,6 +268,10 @@ read), so what a change does to the words is the catalogue's diff.
   What holds it: placeholder parity, curly quotes, the small surfaces'
   budgets, the overlays' `base`, keys and arguments checked by both
   compilers, and no raw key on screen (`copy.test.ts`, `copy:literals`).
+  The owner makes it himself in `npm run copy:edit` (`DEVELOPING.md`,
+  "Reviewing the words"), which holds a draft to the same rules as he
+  types, from the same code (`tools/copyRules.ts`), changes no key and no
+  argument, and runs that gate before it commits.
 - **Approval is one commit.** `test/data/copy-approved.txt` holds the hash
   of the last commit whose words the owner approved. What he has yet to
   read is `copy/` at that commit against the working tree, key by key:
@@ -279,10 +283,12 @@ read), so what a change does to the words is the catalogue's diff.
   word; the en-US words; and its note. The words are still judged in
   place, in the apps (`UI.md` §6).
 - **Approved** on the owner's word, never on an agent's judgement, and of
-  the whole catalogue: he says what to put back, and once that is
-  committed, `npm run copy:approve` records HEAD (it refuses while `copy/`
-  has uncommitted changes), or `-- <commit>` the commit the page was made
-  from, which the page prints. Nothing is approved key by key.
+  the whole catalogue: he puts back what he wants, and once that is
+  committed, the editor's Approve records the commit its page shows (it is
+  off in an agent's shell), or `npm run copy:approve` records HEAD (it
+  refuses while `copy/` has uncommitted changes), or `-- <commit>` the
+  commit the review page was made from, which the page prints. Nothing is
+  approved key by key.
 
 A string the owner has approved (the `alarm.pull.*` bodies,
 `alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved

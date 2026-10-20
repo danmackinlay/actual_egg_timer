@@ -4,7 +4,8 @@
  * English, and the length budget of each small surface a string is drawn on.
  *
  * Run from the repo root (npm test does), because the catalogue is read from
- * copy/ as the apps read it, not copied into the test.
+ * copy/ as the apps read it, not copied into the test. The rules themselves
+ * are tools/copyRules.ts, which the words' editor holds a draft to as well.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -14,18 +15,17 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
+  type Catalogue, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.ts';
-import { appsUsing, catalogueTags, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
+import { appsUsing, catalogueTags, english, readNotes, readSurfaces } from '../tools/copyNotes.ts';
+import {
+  type CatalogueJson, type Problem, budgetProblems, braceProblems, catalogueProblems, describe, emptyProblems, exampleOf, fieldProblems,
+  longest, measureProblems, overlayProblems, parityProblems, quoteProblems, shapeProblems,
+} from '../tools/copyRules.ts';
 
-/** The argument that picks a message's plural form, or null for plain text. */
-function countOf(m: Message): string | null {
-  return m.kind === 'plural' ? m.count : null;
-}
+const listed = (ps: Problem[]): string[] => ps.map(describe);
 
-type Entry = Record<string, unknown>;
-interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 const SURFACES = readSurfaces();
 /** Every catalogue: `copy/<tag>.json` (`tools/copyNotes.ts`). The same
  *  rule as `tools/fixtures/copy.ts`. */
@@ -69,8 +69,10 @@ test('the plural form is chosen by the count argument, in the catalogue\'s langu
 });
 
 test('a key the language lacks falls back to English, with the English plural rule', () => {
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), 'Learned from 1 result');
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), 'Learned from 2 results');
+  // Two is Czech's few and English's other: the English form, from the English.
+  const tuned = EN_JSON.messages['learned.tuned'] as Record<string, string>;
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), tuned['one'].replace('{eggs}', '1'));
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), tuned['other'].replace('{eggs}', '2'));
 });
 
 test('a key nobody has renders as itself, so it is seen rather than blank', () => {
@@ -87,9 +89,9 @@ test('a word set mid-sentence loses its first capital and keeps the rest', () =>
 
 test('a CopyRef from core renders with the app\'s extra arguments', () => {
   assert.equal(renderRef(EN, { key: 'sousvide.start.lastWeekday', args: {} }, { weekday: 'Tuesday' }),
-    'Last Tuesday');
+    english('sousvide.start.lastWeekday', { weekday: 'Tuesday' }));
   assert.equal(renderRef(EN, { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } }),
-    '22 h 43 min');
+    english('duration.hoursMinutes', { hours: 22, minutes: 43 }));
 });
 
 test('a malformed catalogue is refused, naming the key', () => {
@@ -150,66 +152,25 @@ test('every English key has notes beside it: its surface, and an example for eac
 });
 
 test('a catalogue holds only what the renderers read: templates, `count`, and an overlay\'s `base`', () => {
-  for (const [locale, json] of JSONS) {
-    const allowed = new Set(['text', 'count', ...PLURAL_CATEGORIES, ...(OVERLAYS.includes(locale) ? ['base'] : [])]);
-    for (const [key, entry] of Object.entries(json.messages)) {
-      for (const field of Object.keys(entry)) assert.ok(allowed.has(field), `${locale} ${key}: ${field} belongs in the notes`);
-    }
+  for (const json of JSONS.values()) {
+    assert.deepEqual(listed([...shapeProblems(json), ...fieldProblems(json)]), []);
   }
 });
 
 test('no template has a brace that is not a placeholder', () => {
-  for (const [key, message] of EN.messages) {
-    for (const template of templatesOf(message)) {
-      const stripped = placeholders(template).reduce((t, name) => t.split(`{${name}}`).join(''), template);
-      assert.ok(!/[{}]/.test(stripped), `${key}: stray brace in "${template}"`);
-    }
-  }
+  assert.deepEqual(listed(braceProblems(EN)), []);
+});
+
+test('no template is empty', () => {
+  for (const json of JSONS.values()) assert.deepEqual(listed(emptyProblems(json)), []);
 });
 
 // --------------------------------------------------------------------------
 // placeholder parity
 // --------------------------------------------------------------------------
 
-/** Why each key of `locale` fails parity with English, if it does. A dropped
- *  `{limit}` is a sentence that lies about the egg (LANGUAGE.md §2). */
-function parityFailures(json: CatalogueJson): string[] {
-  const failures: string[] = [];
-  const catalogue = parseCatalogue(json, EN);
-  for (const [key, message] of catalogue.messages) {
-    const english = EN.messages.get(key);
-    if (english === undefined) {
-      failures.push(`${key}: not an English key`);
-      continue;
-    }
-    const want = [...new Set(templatesOf(english).flatMap(placeholders))].sort();
-    for (const template of templatesOf(message)) {
-      // Each form may leave out the count (Czech "jedno vejce"), never anything else.
-      const got = new Set(placeholders(template));
-      for (const name of want) {
-        if (!got.has(name) && name !== countOf(english)) failures.push(`${key}: "${template}" drops {${name}}`);
-      }
-      for (const name of got) {
-        if (!want.includes(name)) failures.push(`${key}: "${template}" invents {${name}}`);
-      }
-    }
-    if (countOf(english) !== countOf(message)) {
-      failures.push(`${key}: counts ${String(countOf(message))}, not ${String(countOf(english))}`);
-    }
-  }
-  return failures;
-}
-
 test('every string a reader sees has curly apostrophes and quotes, never straight ones', () => {
-  const failures: string[] = [];
-  for (const [locale, json] of JSONS) {
-    for (const [key, entry] of Object.entries(json.messages)) {
-      for (const field of ['text', 'one', 'few', 'many', 'other', 'base']) {
-        const t = entry[field];
-        if (typeof t === 'string' && /['"]/.test(t)) failures.push(`${locale} ${key}.${field}: ${t}`);
-      }
-    }
-  }
+  const failures = [...JSONS.values()].flatMap((json) => listed(quoteProblems(json)));
   // Outside the catalogue: the web page's descriptions, which link previews
   // show, and the privacy page's text, less its comment.
   const index = readFileSync('index.html', 'utf8');
@@ -227,30 +188,21 @@ test('every string a reader sees has curly apostrophes and quotes, never straigh
 const NBSP = ' ';
 
 test('a measure never breaks across a line: format.* joins value and unit with a no-break space', () => {
-  const failures: string[] = [];
-  let checked = 0;
-  for (const [locale, json] of JSONS) {
-    for (const [key, entry] of Object.entries(json.messages)) {
-      if (!key.startsWith('format.')) continue;
-      for (const field of ['text', ...PLURAL_CATEGORIES]) {
-        const t = entry[field];
-        if (typeof t !== 'string') continue;
-        checked += 1;
-        if (!t.includes(`{value}${NBSP}`) || t.includes(' ')) failures.push(`${locale} ${key}.${field}: ${JSON.stringify(t)}`);
-      }
-    }
-  }
-  assert.deepEqual(failures, []);
+  const measured = [...JSONS.values()].map(measureProblems);
+  assert.deepEqual(measured.flatMap((m) => listed(m.problems)), []);
+  const checked = measured.reduce((n, m) => n + m.checked, 0);
   // The English's at least; a twin that only repeated it is left to English.
   const english = Object.keys(EN_JSON.messages).filter((k) => k.startsWith('format.')).length;
   assert.ok(english >= 11 && checked >= english, `${checked} templates, ${english} of them English`);
-  assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
+  assert.ok(render(EN, 'format.litres', { value: '1.5' }).startsWith(`1.5${NBSP}`), 'the renderer keeps the no-break space');
+  assert.equal(measureProblems({ locale: 'x', messages: { 'format.x': { text: '{value} L' } } }).problems.length, 1,
+    'a plain space is caught');
 });
 
 test('every language uses exactly the English placeholders', () => {
   for (const [locale, json] of JSONS) {
     if (locale === 'en') continue;
-    assert.deepEqual(parityFailures(json), [], locale);
+    assert.deepEqual(listed(parityProblems(json, EN)), [], locale);
   }
 });
 
@@ -264,11 +216,11 @@ test('the parity check catches a dropped, an invented and a miscounted placehold
       'learned.pan': { text: 'hrnec {water}: {time}' },
     },
   };
-  const failures = parityFailures(broken);
-  assert.ok(failures.some((f) => f.startsWith('refusal.counter') && f.includes('{limit}')), 'dropped');
-  assert.ok(failures.some((f) => f.startsWith('readout.alarm.set') && f.includes('{when}')), 'invented');
-  assert.ok(failures.some((f) => f.startsWith('learned.tuned') && f.includes('counts')), 'miscounted');
-  assert.ok(!failures.some((f) => f.startsWith('learned.pan')), 'a faithful one passes');
+  const failures = parityProblems(broken, EN);
+  assert.ok(failures.some((f) => f.key === 'refusal.counter' && f.detail.includes('{limit}')), 'dropped');
+  assert.ok(failures.some((f) => f.key === 'readout.alarm.set' && f.detail.includes('{when}')), 'invented');
+  assert.ok(failures.some((f) => f.key === 'learned.tuned' && f.detail.includes('counts')), 'miscounted');
+  assert.ok(!failures.some((f) => f.key === 'learned.pan'), 'a faithful one passes');
 });
 
 // --------------------------------------------------------------------------
@@ -281,15 +233,20 @@ test('the parity check catches a dropped, an invented and a miscounted placehold
 
 test('every string in every language fits its surface\'s budget', () => {
   for (const locale of LOCALES) {
-    const catalogue = catalogueFor(locale);
-    for (const key of Object.keys(EN_JSON.messages)) {
-      const surface = SURFACES[NOTES[key].surface];
-      if (surface.budget === undefined) continue;
-      const w = longest(catalogue, key, NOTES);
-      assert.ok(w <= surface.budget,
-        `${locale} ${key}: ${w} characters on "${NOTES[key].surface}", budget ${surface.budget}`);
-    }
+    assert.deepEqual(listed(budgetProblems(catalogueFor(locale), Object.keys(EN_JSON.messages), NOTES, SURFACES)), []);
   }
+});
+
+test('every rule at once, as the words\' editor checks a draft, finds nothing in the catalogues as they are', () => {
+  assert.deepEqual(listed(catalogueProblems(JSONS, NOTES, SURFACES)), []);
+  // And a draft that breaks two of them is told so, by the key: over budget
+  // in English and in each catalogue that falls back to it.
+  const draft = new Map(JSONS);
+  const en = structuredClone(EN_JSON);
+  en.messages['action.startAgain'] = { text: 'Start again, it\'s a very long button label now' };
+  draft.set('en', en);
+  const rules = [...new Set(catalogueProblems(draft, NOTES, SURFACES, new Set(['action.startAgain'])).map((p) => p.rule))].sort();
+  assert.deepEqual(rules, ['budget', 'quote']);
 });
 
 test('English fits every budget, and every surface is drawn on', () => {
@@ -363,25 +320,11 @@ test('Help\'s sources are data both apps read: an https address and a citation e
 test('an overlay says only what its region says differently, against today\'s English', () => {
   const regional = LOCALES.filter((l) => l !== 'en' && !l.includes('-x-'));
   assert.deepEqual([...regional].sort(), [...OVERLAYS].sort(), 'every regional catalogue is an overlay, and every overlay ships');
-  const failures: string[] = [];
   for (const tag of OVERLAYS) {
     const json = JSONS.get(tag) as CatalogueJson;
     assert.equal(json.locale, tag);
-    for (const [key, entry] of Object.entries(json.messages)) {
-      const english = EN_JSON.messages[key];
-      if (english === undefined) {
-        failures.push(`${tag} ${key}: not an English key`);
-        continue;
-      }
-      const fields = Object.keys(entry).sort().join(',');
-      if (fields !== 'base,text') failures.push(`${tag} ${key}: has ${fields}, not just base and text`);
-      // Written against the English as it is: a wording change to the English
-      // and not this would leave the region reading the old meaning.
-      if (entry['base'] !== english['text']) failures.push(`${tag} ${key}: written against "${String(entry['base'])}", but English now says "${String(english['text'])}"`);
-      if (entry['text'] === english['text']) failures.push(`${tag} ${key}: says what English says`);
-    }
+    assert.deepEqual(listed(overlayProblems(json, EN_JSON)), []);
   }
-  assert.deepEqual(failures, []);
 });
 
 test('the region of a tag, and the catalogues that render a language', () => {
@@ -406,8 +349,13 @@ test('the region of a tag, and the catalogues that render a language', () => {
   assert.deepEqual(catalogueChain('en-x-1750', ['en-US'], 'US'), ['en-x-1750', 'en']);
   assert.deepEqual(catalogueChain('cs', ['en-US'], 'US'), ['cs', 'en']);
 
-  const american = parseCatalogue(JSONS.get('en-US'), EN);
-  assert.equal(render(american, 'action.hint.cold'), 'eggs in the pot, lid on, then press Start heating');
-  assert.equal(render(EN, 'action.hint.cold'), 'eggs in the pan, lid on, then press Start heating');
-  assert.equal(render(american, 'controls.cooling.ice'), render(EN, 'controls.cooling.ice'), 'a key the overlay leaves is English\'s');
+  // A key the overlay has reads the overlay's words; one it leaves, the
+  // English. Both read from the catalogues, so a change of wording moves no test.
+  const US_JSON = JSONS.get('en-US') as CatalogueJson;
+  const american = parseCatalogue(US_JSON, EN);
+  const [overlaid, entry] = Object.entries(US_JSON.messages)[0];
+  assert.equal(render(american, overlaid), entry['text']);
+  assert.equal(render(EN, overlaid), EN_JSON.messages[overlaid]['text']);
+  const left = Object.keys(EN_JSON.messages).find((k) => !(k in US_JSON.messages) && EN.messages.get(k)?.kind === 'text') as string;
+  assert.equal(render(american, left), render(EN, left), 'a key the overlay leaves is English\'s');
 });

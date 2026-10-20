@@ -9,12 +9,16 @@
  * `example` (the arguments the budget and the review render it with) live in
  * the sidecar,
  * which neither app loads. Which apps show a key is not typed anywhere: a
- * key an app's sources name is that app's.
+ * key an app's sources name is that app's. The rules the words are held to,
+ * and the budget's measure, are tools/copyRules.ts, which reads no file.
  */
 
 import { readFileSync, readdirSync } from 'node:fs';
 
-import { type Catalogue, OVERLAYS, render } from '../src/core/copy.ts';
+import { OVERLAYS } from '../src/core/copy.ts';
+import type { Notes, Surface } from './copyRules.ts';
+
+export type { Notes, Surface } from './copyRules.ts';
 
 export const NOTES_PATH = 'copy/en.notes.json';
 
@@ -35,26 +39,10 @@ export function translationTags(): string[] {
   return catalogueTags().filter((tag) => tag !== 'en' && !OVERLAYS.includes(tag));
 }
 
-/** One key's notes. */
-export interface Notes {
-  surface: string;
-  note?: string;
-  example?: Record<string, string | number>;
-}
-
 /** Every key's notes, as copy/en.notes.json has them. */
 export function readNotes(path: string = NOTES_PATH): Record<string, Notes> {
   return (JSON.parse(readFileSync(path, 'utf8')) as { notes: Record<string, Notes> }).notes;
 }
-
-/** A key's example arguments, or none. */
-export function exampleOf(notes: Record<string, Notes>, key: string): Record<string, string | number> {
-  return notes[key]?.example ?? {};
-}
-
-/** A surface a key is drawn on: what it is, and its length budget in code
- *  points if it is a small one. A surface that wraps freely has none. */
-export interface Surface { budget?: number; about: string }
 
 export const SURFACES_PATH = 'test/data/surfaces.json';
 
@@ -62,20 +50,17 @@ export function readSurfaces(path: string = SURFACES_PATH): Record<string, Surfa
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, Surface>;
 }
 
-/** The counts every plural message is measured at. */
-export const PLURAL_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5];
-
-/** A key's longest rendering in a catalogue, in code points ("ž" is one
- *  character on a screen): at its example arguments and, for a plural, at
- *  every one of PLURAL_COUNTS. The measure a budget holds (copy.test.ts)
- *  and the review page shows. */
-export function longest(catalogue: Catalogue, key: string, notes: Record<string, Notes>): number {
-  let found: Catalogue | null = catalogue;
-  while (found !== null && !found.messages.has(key)) found = found.fallback;
-  const m = found?.messages.get(key);
-  const example = exampleOf(notes, key);
-  const argSets = m?.kind === 'plural' ? [example, ...PLURAL_COUNTS.map((n) => ({ ...example, [m.count]: n }))] : [example];
-  return Math.max(...argSets.map((args) => [...render(catalogue, key, args)].length));
+/** A key's English as copy/en.json has it, each placeholder replaced by its
+ *  argument as given, in one form (`text`, or a plural's `one`, `other`...).
+ *  For a test or a harness that checks which key, which form or which number
+ *  a screen shows: it reads the words from the catalogue, so a change of
+ *  wording moves no test, and fills them by hand, not through the renderer
+ *  under test. */
+export function english(key: string, args: Record<string, string | number> = {}, form: string = 'text'): string {
+  const messages = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, Record<string, string>> }).messages;
+  const template = messages[key]?.[form];
+  if (template === undefined) throw new Error(`copy/en.json has no ${key}.${form}`);
+  return Object.entries(args).reduce((s, [name, value]) => s.split(`{${name}}`).join(String(value)), template);
 }
 
 export type App = 'web' | 'ios';

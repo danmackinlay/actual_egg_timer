@@ -65,8 +65,8 @@ test('the default size is Large in both tables, and a shared index is a shared n
     for (let i = 0; i < table.length; i++) {
       assert.ok(isWithin(table[i].mass_kg * 1000, LIMITS.mass_g), table[i].key);
       if (i > 0) assert.ok(table[i].mass_kg > table[i - 1].mass_kg, 'classes ascend');
-      const grams = Number(labelOf(table[i]).match(/(\d+) g$/)?.[1]);
-      assert.equal(grams, Math.round(table[i].mass_kg * 1000), `${labelOf(table[i])} says its mass`);
+      const mass = asRead(render(EN, 'format.grams', { value: String(Math.round(table[i].mass_kg * 1000)) }));
+      assert.ok(labelOf(table[i]).endsWith(mass), `${labelOf(table[i])} says its mass`);
     }
   }
 });
