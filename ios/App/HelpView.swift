@@ -230,6 +230,7 @@ struct HelpView: View {
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityIdentifier("help.source")
     }
 }
 

@@ -19,7 +19,9 @@ import EggTimerShared
 ///
 /// One Text, so it wraps as prose does: each clause is a link to a scheme of
 /// the app's own, caught by `openURL` before the system sees it. To VoiceOver
-/// it is the sentence and then one button per clause, "Egg: 68 g, change".
+/// it is the sentence, drawn as it is, so each clause is a link where it is
+/// drawn, which is where a test's tap lands (ios/UITests); and then one
+/// button per clause, "Egg: 68 g, change", open or not.
 struct SetupSentence: View {
     let planner: Planner
     /// The clause whose choice is open, drawn so.
@@ -54,7 +56,12 @@ struct SetupSentence: View {
             })
             .accessibilityRepresentation {
                 VStack(alignment: .leading) {
-                    Text(words.plain)
+                    Text(attributed(words))
+                        .appFont(.title3)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("sentence")
                     ForEach(shown) { clause in
                         Button(tr(.`setup.clause`, [
                             "label": .text(texts[clause]?.label ?? ""),
@@ -180,7 +187,7 @@ struct ClausePanel: View {
                         tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]),
                         StartChoice.sousVide
                     )] : []),
-                selection: $planner.start
+                selection: $planner.start, field: .startMode
             )
             if !planner.isSousVide { pan }
             if let inHand, let start = inHand.shownStart { startedAt(inHand, start) }
@@ -201,7 +208,7 @@ struct ClausePanel: View {
                     (tr(.`controls.afterTheBoil.keepBoiling`), false),
                     (tr(.`controls.afterTheBoil.heatOff`), true),
                 ],
-                selection: $planner.heatOff
+                selection: $planner.heatOff, field: .afterBoil
             )
             InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
                 StepperValue(
@@ -305,6 +312,7 @@ struct ClausePanel: View {
                     tr(.`controls.startedAt`), value: timeOfDay(Date(timeIntervalSince1970: start)),
                     field: .startedAt, gesture: gesture
                 ) { inHand.stepStart(up: $0) }
+                .accessibilityIdentifier("startedAt.stepper")
             }
             .appFont(.subheadline)
             if let limit = inHand.startLimit {
@@ -369,6 +377,7 @@ struct ClausePanel: View {
             )],
             selection: Binding(get: { planner.settings.sizeIndex }, set: { planner.chooseSize($0) })
         )
+        .testID(.mass, "size")
     }
 
     /// Fridge, room, or the cook's own number. The presets' temperatures are

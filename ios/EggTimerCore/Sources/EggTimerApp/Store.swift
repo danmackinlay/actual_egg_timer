@@ -42,7 +42,7 @@ public enum Stores {
         let kept = Set(StoreRegistry.all.map(\.key))
         for key in defaults.keys.sorted() where !kept.contains(key) {
             defaults.removeObject(forKey: key, Pass())
-            Screenshots.log(.swept(key: key))
+            DebugLog.log(.swept(key: key))
         }
     }
 
@@ -104,7 +104,7 @@ public enum Stores {
     /// checks hold the store to what the log says was written.
     private static func wrote(_ value: Any?, forKey key: String) {
         store.set(value, forKey: key, Pass())
-        Screenshots.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
+        DebugLog.log(.wrote(key: key, number: (value as? NSNumber)?.doubleValue, text: value as? String))
     }
 
     public static func remove(_ key: String) {

@@ -33,6 +33,7 @@ struct YolkSlider: UIViewRepresentable {
         slider.minimumValue = Float(range.lowerBound)
         slider.maximumValue = Float(range.upperBound)
         slider.step = Float(step)
+        slider.accessibilityIdentifier = "doneness"
         slider.value = Float(value)
         slider.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .valueChanged)
         slider.addTarget(context.coordinator, action: #selector(Coordinator.pressed(_:)), for: .touchDown)

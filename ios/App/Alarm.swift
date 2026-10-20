@@ -49,7 +49,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let options: UNNotificationPresentationOptions = [.banner, .list]
-        Screenshots.log(.presented(
+        DebugLog.log(.presented(
             id: notification.request.identifier,
             sound: notification.request.content.sound != nil,
             options: [(UNNotificationPresentationOptions.banner, "banner"), (.sound, "sound"), (.list, "list")]
@@ -62,17 +62,17 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// still runs - it just cannot shout.
     func authorize() async -> Bool {
         let ok = await ask()
-        if Screenshots.logging { await logSettings() }
+        if DebugLog.logging { await logSettings() }
         return ok
     }
 
     private func ask() async -> Bool {
-        // Screenshots of a phase (Screenshots.swift) run on a fresh simulator,
+        // Screenshots of a phase (DebugLog.swift) run on a fresh simulator,
         // where the system would ask, and its alert would be in the picture.
-        if Screenshots.noAlarmPrompt { return false }
+        if DebugLog.noAlarmPrompt { return false }
         // Quiet notifications, granted with no prompt, so a simulator nobody
         // taps still holds the alarms to read back.
-        if Screenshots.provisionalAlarms {
+        if DebugLog.provisionalAlarms {
             return (try? await centre.requestAuthorization(options: [.alert, .sound, .provisional])) ?? false
         }
         let settings = await centre.notificationSettings()
@@ -107,10 +107,10 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
             @unknown default: "unknown"
             }
         }
-        Screenshots.log(.notificationSettings(
+        DebugLog.log(.notificationSettings(
             status: status, sound: word(s.soundSetting), alert: word(s.alertSetting),
             lockScreen: word(s.lockScreenSetting), timeSensitive: word(s.timeSensitiveSetting),
-            muted: Screenshots.muteAudio
+            muted: DebugLog.muteAudio
         ))
     }
 
@@ -146,7 +146,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func cancel() {
-        Screenshots.log(.alarmsCancelled)
+        DebugLog.log(.alarmsCancelled)
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
 
@@ -160,18 +160,18 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     func pendingDeadlines() async -> Set<RingDeadline> {
         let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
         let pending = await centre.pendingNotificationRequests()
-        if Screenshots.logging {
+        if DebugLog.logging {
         // Its moment in cook time, though a pending interval trigger's
         // `nextTriggerDate()` is now plus the interval, so it drifts by the
         // time since it was scheduled: `scheduled` says when it fires.
-        Screenshots.log(.pending(alarms: pending.map { r in
+        DebugLog.log(.pending(alarms: pending.map { r in
             let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate().map(AppClock.app)
-            return Screenshots.PendingAlarm(id: r.identifier, at: at.map { Int($0.timeIntervalSince1970) })
+            return DebugLog.PendingAlarm(id: r.identifier, at: at.map { Int($0.timeIntervalSince1970) })
         }))
         // And those the system has delivered and still shows, which the
         // scripted checks read to see one fire.
         let delivered = await centre.deliveredNotifications().map(\.request.identifier).filter { ours[$0] != nil }
-        Screenshots.log(.delivered(ids: delivered.sorted()))
+        DebugLog.log(.delivered(ids: delivered.sorted()))
         }
         return Set(pending.compactMap { ours[$0.identifier] })
     }
@@ -189,9 +189,9 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // 30 s past which iOS plays its default instead (tools/sounds.ts).
         let file = AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment)
         content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
-        if Screenshots.muteAudio { content.sound = nil }
-        Screenshots.log(.scheduled(
-            id: id, at: date.timeIntervalSince1970, inS: seconds, sound: Screenshots.muteAudio ? nil : file,
+        if DebugLog.muteAudio { content.sound = nil }
+        DebugLog.log(.scheduled(
+            id: id, at: date.timeIntervalSince1970, inS: seconds, sound: DebugLog.muteAudio ? nil : file,
             bundled: Bundle.main.url(forResource: file, withExtension: nil) != nil
         ))
         // An egg is time-sensitive in the literal sense the name was coined
@@ -209,7 +209,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // leap second, the user editing the time - must not move the egg.
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
         centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
-            if let error { Screenshots.log(.notScheduled(id: id, error: error.localizedDescription)) }
+            if let error { DebugLog.log(.notScheduled(id: id, error: error.localizedDescription)) }
         }
     }
 }

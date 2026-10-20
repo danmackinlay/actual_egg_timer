@@ -578,9 +578,9 @@ struct AppTests {
         let name = "\(Stores.suite).test"
         let standard = UserDefaults.standard
         let raw = try #require(UserDefaults(suiteName: name))
-        let (was, output) = (Stores.store, Screenshots.output)
+        let (was, output) = (Stores.store, DebugLog.output)
         defer {
-            (Stores.store, Screenshots.output) = (was, output)
+            (Stores.store, DebugLog.output) = (was, output)
             standard.removePersistentDomain(forName: name)
             standard.removeObject(forKey: "aet.standard")
         }
@@ -594,7 +594,7 @@ struct AppTests {
         #expect(Set(suite.keys) == kept.union(["cookInProgress", "calibration.v4"]))
 
         let log = EventLog()
-        Screenshots.output = { event, _ in log.add(event) }
+        DebugLog.output = { event, _ in log.add(event) }
         Stores.store = suite
         Stores.sweep()
         let swept = log.events.compactMap { e -> String? in

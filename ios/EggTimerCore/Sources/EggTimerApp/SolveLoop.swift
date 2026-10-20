@@ -349,7 +349,7 @@ final class SolveLoop {
     private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
         // What the idle screen shows, for the scripted checks: the time, and
         // whether it is decided on this pot's surface.
-        Screenshots.log(.answer(
+        DebugLog.log(.answer(
             cookS: answer.solution.result.cookTimeS, decided: answer.decision != nil, odds: answer.profile != nil
         ))
         planner.solution = answer.solution

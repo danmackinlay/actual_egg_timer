@@ -3,7 +3,7 @@ import EggTimerApp
 import EggTimerCore
 import Foundation
 
-/// `-alarmTest <s>` (Screenshots.swift), debug builds only: the two alarms a
+/// `-alarmTest <s>` (DebugLog.swift), debug builds only: the two alarms a
 /// cook sets, `s` and twice `s` from now, without a cook to wait through, so
 /// each way the app sounds can be heard in seconds.
 ///
@@ -18,7 +18,7 @@ import Foundation
 @MainActor
 enum AlarmTest {
     static func start() {
-        guard let lead = Screenshots.alarmTestS, lead > 0 else { return }
+        guard let lead = DebugLog.alarmTestS, lead > 0 else { return }
         Task { @MainActor in
             // The question over the screen, once there is one.
             try? await Task.sleep(for: .seconds(1))
@@ -31,10 +31,10 @@ enum AlarmTest {
             for (deadline, at) in [(RingDeadline.pull, pull), (.cooled, cooled)] {
                 try? await AppClock.wait(until: at)
                 guard let since = Ringer.shared.onScreenSinceS, since <= at else {
-                    Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
+                    DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
                     continue
                 }
-                Screenshots.log(.ring(deadline: deadline.rawValue))
+                DebugLog.log(.ring(deadline: deadline.rawValue))
                 Ringer.shared.ring(deadline)
             }
         }

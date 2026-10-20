@@ -15,7 +15,7 @@ struct DebugLogTests {
             "{\"i\":\(i),\"pad\":\"\(String(repeating: "x", count: (i * 37) % 300))\"}\n"
         }
         DispatchQueue.concurrentPerform(iterations: lines.count) { i in
-            Screenshots.append(Data(lines[i].utf8), to: url)
+            DebugLog.append(Data(lines[i].utf8), to: url)
         }
         let read = try String(contentsOf: url, encoding: .utf8).split(separator: "\n").map { "\($0)\n" }
         #expect(read.count == lines.count)

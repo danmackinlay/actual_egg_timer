@@ -90,6 +90,7 @@ struct DonenessControl: View {
     private var heading: some View {
         Text(tr(.`controls.doneness`))
             .foregroundStyle(.secondary)
+            .accessibilityIdentifier("doneness.heading")
     }
 
     /// The peak yolk the level asks for, across from the heading.

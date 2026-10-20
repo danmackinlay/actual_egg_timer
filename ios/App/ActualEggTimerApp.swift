@@ -5,6 +5,9 @@ import EggTimerApp
 @main
 struct ActualEggTimerApp: App {
     init() {
+        // Where this install's stores are, for the UI tests, which cannot see
+        // the container otherwise.
+        DebugLog.log(.launched(home: NSHomeDirectory()))
         // First: what the app's logic (EggTimerApp) reaches of the phone,
         // before any of it runs (`Services`). The tests put fakes here.
         Services.alarm = Alarm.shared
@@ -12,7 +15,7 @@ struct ActualEggTimerApp: App {
         Services.sharing = Sharing.shared
         Services.card = LiveActivityCard()
         Services.announce = { UIAccessibility.post(notification: .announcement, argument: $0) }
-        Screenshots.appActive = { UIApplication.shared.applicationState == .active }
+        DebugLog.appActive = { UIApplication.shared.applicationState == .active }
         // Before anything is written: what 0.5.1 kept of sharing and the
         // learning in the standard domain carried into the suite, so what it
         // sent can still be deleted and what it learned is kept; then the
@@ -23,10 +26,8 @@ struct ActualEggTimerApp: App {
         LanguageChoice.shared.start()
         // A clock a script steps from outside (`AppClock`).
         AppClock.listen()
-        // Help's sources come from a bundled file; a debug build says how
-        // many it found, which a missing file would make none.
-        Screenshots.log(.helpSources(count: HelpSource.all.count))
-        // And the alarms' sound files: each there, under 30 s, playable.
+        // A debug build says what it found of the alarms' sound files: each
+        // there, under 30 s, playable.
         Ringer.logFiles()
         #if DEBUG
         // `-alarmTest`: the alarms without a cook, to hear them.

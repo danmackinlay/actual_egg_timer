@@ -249,15 +249,32 @@ app's — are in `GOTCHAS.md`.
 
 ## The fast clock and the scripted checks
 
-`npm run ios:e2e` (about four minutes) checks on a simulator what only a
-device can: the layout, relaunches over the system's notifications and Live
-Activity, a notification delivered while the app is gone, the app leaving the
-screen, the keys an earlier build left. What the app's logic decides is `swift test`'s
-(`EggTimerAppTests`). The headers say the rest: `tools/iosE2e.ts` (the
-scenarios, how to run some), `tools/iosHarness.ts` (the simulator driver), and
-in `ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it
-steps) and `Screenshots.swift` (the launch arguments and the debug log). Not
-in `npm run verify`; CI runs it after the iOS build.
+`npm run ios:e2e` (about five minutes, on two simulators side by side)
+checks on a simulator what only a device can: the layout, the sentence's
+panels and corrections made in them mid-cook, relaunches over the system's
+notifications and Live Activity, a notification delivered while the app is
+gone, the app leaving the screen, the keys an earlier build left. What the
+app's logic decides is `swift test`'s (`EggTimerAppTests`).
+
+The scenarios are UI tests (`ios/UITests`, the `EggTimerUITests` target):
+XCUITest taps the app's buttons, the sentence's clauses and the steppers as a
+finger would, finding each by its accessibility identifier, while the test
+freezes the app's clock at each moment it checks and steps it from one to the
+next, and reads what happened from the app's debug log. The clock's steps and
+the log go through a directory on the Mac (`-debugDir`), which a simulator's
+app and its tests both reach. A control a scenario presses needs an
+identifier: on the control itself, since one on a container replaces its
+children's, or on a group made with `.accessibilityElement(children:
+.contain)`, whose frame is that of what it shows; a stepper of a group of the
+cook's choices has `<group>.stepper` (`testID`, `Controls.swift`).
+
+The headers say the rest: `tools/iosE2e.ts` (the lanes, how to run some),
+`tools/iosHarness.ts` (the devices and a test's run on a fresh install),
+`ios/UITests/Harness.swift` (a scenario's run of the app), and in
+`ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it steps)
+and `DebugLog.swift` (the launch arguments and the debug log). `npm run
+ios:shots` reaches its screens by UI tests too (`ios/UITests/Shots.swift`).
+Not in `npm run verify`; CI runs it beside the iOS build.
 
 ## Signing
 

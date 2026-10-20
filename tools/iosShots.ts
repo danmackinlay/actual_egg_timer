@@ -3,9 +3,10 @@
 // iPhone 17 Pro's 1206 x 2622 (required) and the 17 Pro Max's 1320 x 2868.
 //
 // Each shot is a Debug build on a simulator of the tool's own, driven as
-// `npm run ios:e2e` drives it (tools/iosHarness.ts): the clock frozen and
-// stepped to the moment shown, the taps by launch argument, the status bar
-// at 9:41 and the cook started at 9:38. The device's screen is then set
+// `npm run ios:e2e` drives it, by a UI test of its own (`Shots`,
+// ios/UITests/Shots.swift): the clock frozen and stepped to the moment
+// shown, the buttons tapped, the status bar at 9:41 and the cook started at
+// 9:38, and the screen captured by the test. The device's screen is then set
 // under its caption (ios/appstore/captions.en-AU.json), in the web's palette
 // (styles.css) and the system's face, light or dark as the shot is, and
 // rendered at the display's exact pixels by headless Chrome (tools/chrome.ts).
@@ -21,11 +22,11 @@
 // tool's. The Lock Screen's Live Activity is not among them: simctl cannot
 // lock a simulator (`io … screenConfig power off` only blanks it), and
 // Device > Lock is the Simulator app's menu, driven by hand.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { Cdp, launchChrome, sleep } from './chrome.ts';
-import { APP, Run, build, createDevice, is, quietly, settingsArg, simctl, warmUp } from './iosHarness.ts';
+import { APP, build, createDevice, quietly, simctl, uiEnv, uiTest, uiWarmUp } from './iosHarness.ts';
 
 const OUT = 'ios/appstore/shots';
 const CAPTIONS = 'ios/appstore/captions.en-AU.json';
@@ -36,53 +37,14 @@ const DISPLAYS = [
   { model: 'iPhone 17 Pro Max', dir: '6.9in-1320x2868', width: 1320, height: 2868 },
 ];
 
-/// The egg every shot cooks unless it says otherwise: a 60 g egg weighed,
-/// from the fridge, into boiling water, cooled in ice, asked soft.
-const EGG = { sizeIndex: -1, weighedMassG: 60, startTempMode: 'fridge', startMode: 'hot', cooling: 'ice', doneness: 0.22 };
-
-/// The settings a shot changes from the egg's, and its launch arguments.
-interface Given { over?: Record<string, unknown>; args?: string[] }
-/// A cook's deadlines, epoch s, cook time.
-interface Plan { start: number; pull: number; cooled: number }
-/// One shot: its file's name, its scheme, and how the app is brought to it.
-interface Shot { file: string; dark?: boolean; go: (run: Run) => Promise<void> }
-
-/// Launch with the egg, and wait until the time is worked out and drawn;
-/// then step to the launch's moment, which waits for the app to be idle (a
-/// clock reads a step only once it listens, so never one written at launch).
-async function launched(run: Run, { over = {}, args = [] }: Given = {}): Promise<void> {
-  run.launch([...settingsArg({ ...EGG, ...over }), ...args]);
-  await run.until(is('frame', (e) => e.big !== '--:--'), { from: run.launched, what: 'the time worked out' });
-  await run.tick();
-}
-
-/// Wait for the cook to reach `phase` after line `from`, and to settle there.
-async function reached(run: Run, phase: string, from: number): Promise<void> {
-  const at = await run.until(is('phase', (e) => e.phase === phase), { from, what: `phase ${phase}` });
-  await run.settled(at.i);
-}
-
-/// A cook: Eggs in a second after the launch; with `out`, the eggs out two
-/// seconds into the pull; then the clock stepped to `at(plan)`.
-async function cook(run: Run, at: (p: Plan) => number, { over = {}, args = [], out = false }: Given & { out?: boolean } = {}): Promise<void> {
-  await launched(run, { over, args: [...args, '-uiDo', out ? 'eggsIn@launch+1,out@pull+2' : 'eggsIn@launch+1'] });
-  const start = run.t0 + 1;
-  await reached(run, 'COOKING', await run.step(start));
-  const last = (): Plan => {
-    const p = run.lines().filter(is('plan')).at(-1);
-    if (!p?.cooled) throw new Error('no plan with a cooling end');
-    return { start, pull: p.pull, cooled: p.cooled };
-  };
-  if (out) await reached(run, 'COOLING', await run.step(last().pull + 2));
-  await run.step(at(last()));
-}
+/// One shot: its file's name, which names its test (`test_shot_01_time` for
+/// `01-time`, ios/UITests/Shots.swift), where how the app is brought to it
+/// is; and its scheme.
+interface Shot { file: string; dark?: boolean }
 
 const SHOTS: Shot[] = [
-  { file: '01-time', go: (run) => launched(run) },
-  { file: '02-setting', go: (run) => cook(run, (p) => p.start + 200) },
-  { file: '03-heat', dark: true, go: (run) => cook(run, (p) => p.start + 200, { over: { eggView: 'heat' } }) },
-  { file: '04-done', go: (run) => cook(run, (p) => p.cooled + 1, { out: true, args: ['-uiScreen', 'end'] }) },
-  { file: '05-eggcup', go: (run) => cook(run, (p) => p.cooled - 75, { out: true, over: { cooling: 'eggCup' } }) },
+  { file: '01-time' }, { file: '02-setting' }, { file: '03-heat', dark: true }, { file: '04-done' },
+  { file: '05-eggcup' },
 ];
 
 /// The status bar's clock as Apple's own screenshots draw it, "9:41" and
@@ -98,31 +60,16 @@ function twelveHourClock(udid: string): void {
   simctl('bootstatus', udid, '-b');
 }
 
-/// Today at 9:38, local, epoch s: where each shot's clock starts, so a time
-/// on screen agrees with the status bar's 9:41.
-const START = new Date().setHours(9, 38, 0, 0) / 1000;
-
-/// The device's screen, as the simulator draws it, at `path`: taken again
-/// until two in a row are the same, so no system animation is caught midway.
-async function capture(udid: string, shot: Shot, path: string): Promise<void> {
+/// The device's screen in the shot, at `<dir>/<file>.png`: the shot's test
+/// run on a fresh install, in the shot's scheme, which brings the app to it
+/// from 9:38 and takes the screen once it is still.
+async function capture(udid: string, shot: Shot, dir: string): Promise<void> {
   simctl('ui', udid, 'appearance', shot.dark ? 'dark' : 'light');
-  const run = new Run(shot.file, udid);
-  run.t0 = run.at = START;
-  run.install();
-  try {
-    await shot.go(run);
-    let last = '';
-    for (let n = 0; n < 20; n += 1) {
-      await sleep(500);
-      simctl('io', udid, 'screenshot', '--mask', 'ignored', path);
-      const now = readFileSync(path).toString('base64');
-      if (now === last) return;
-      last = now;
-    }
-    throw new Error(`${shot.file}: the screen never still`);
-  } finally {
-    run.terminate();
-  }
+  const path = join(dir, `${shot.file}.png`);
+  rmSync(path, { force: true });
+  const test = `Shots/test_shot_${shot.file.replace(/-/g, '_')}`;
+  const r = await uiTest(udid, test, { ...uiEnv('shots'), AET_SHOTS_DIR: resolve(dir) });
+  if (!r.passed || !existsSync(path)) throw new Error(`${shot.file}: ${r.failures.join('; ') || 'no capture'}`);
 }
 
 /// A colour of styles.css, `--name`, in its dark (first) or light block.
@@ -217,9 +164,9 @@ async function main(): Promise<void> {
         twelveHourClock(udid);
         simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi', '--wifiBars', '3',
           '--cellularBars', '4', '--batteryState', 'charged', '--batteryLevel', '100');
-        await warmUp(udid, 'shots');
+        await uiWarmUp(udid, 'shots', 'shots');
         for (const s of shots) {
-          await capture(udid, s, join(OUT, 'raw', d.dir, `${s.file}.png`));
+          await capture(udid, s, join(OUT, 'raw', d.dir));
           console.log(`ios:shots: captured ${d.dir}/${s.file}`);
         }
       } finally {

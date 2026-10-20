@@ -77,9 +77,11 @@ jobs:
           cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer
           -configuration Release -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build
 
-  # Builds the app for Debug and drives it on a simulator, beside apple
-  # rather than after it: an artifact between jobs is a zip, which drops the
-  # bundle's file modes, so it builds its own either way.
+  # Builds the app and its UI tests for Debug and drives it on a simulator,
+  # beside apple rather than after it: an artifact between jobs is a zip,
+  # which drops the bundle's file modes, so it builds its own either way.
+  # One lane: the runner's three cores would keep two simulators' busy, and a
+  # simulator's notifications stop answering when every core is (GOTCHAS.md).
   ios-e2e:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: macos-latest
@@ -96,13 +98,23 @@ jobs:
       # What the runner offers, for the log: the script takes the newest
       # iOS runtime and an iPhone it runs.
       - run: xcodebuild -version && xcrun simctl list runtimes
-      - run: npm run ios:e2e
+      - run: npm run ios:e2e -- --lanes 1
         env:
           # A wait for the app gives up after this many seconds; a slow
           # runner's first launches take tens.
           AET_E2E_WAIT: "180"
           # A failing scenario's debug log, in the job's log.
           AET_E2E_LOG: "1"
+      # A failing run's result bundles (each test's steps and the screen at a
+      # failure) and the app's debug logs, to download from the run's page.
+      - if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ios-e2e
+          path: |
+            ios/build/e2e/results
+            ios/build/e2e/runs
+          retention-days: 7
 
   fit:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}

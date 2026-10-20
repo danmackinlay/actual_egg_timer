@@ -88,7 +88,8 @@ targets:
     # A shared scheme, so xcodebuild (and anything driving it) can find the
     # target without Xcode having opened the project first and invented one.
     scheme:
-      testTargets: []
+      # `npm run ios:e2e` and `npm run ios:shots` run them (tools/iosE2e.ts).
+      testTargets: [EggTimerUITests]
       # Unticked in Edit Scheme > Run > Arguments, for a run from Xcode to
       # tick: the alarms without a cook, to hear them (ios/README.md,
       # "Hearing the alarms in seconds"). Only a run passes them, never an
@@ -198,3 +199,29 @@ targets:
         PRODUCT_NAME: EggTimerWidget
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SKIP_INSTALL: YES
+
+  # The app driven on a simulator as a finger would: its buttons tapped by
+  # their accessibility identifiers, its clock stepped and its debug log read
+  # through a directory on the Mac (`-debugDir`, DebugLog.swift), which a
+  # simulator's app and its tests both reach. A Debug build only: the clock's
+  # and the log's launch arguments are a debug build's. It links the app's
+  # logic to read the log by its own types (`DebugLog.Event`, the stored
+  # cook). `npm run ios:e2e` and `npm run ios:shots` run it, a scenario to a
+  # fresh install (tools/iosE2e.ts).
+  EggTimerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: ActualEggTimer
+      - package: EggTimerCore
+        product: EggTimerCore
+      - package: EggTimerCore
+        product: EggTimerApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer.uitests
+        TEST_TARGET_NAME: ActualEggTimer
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"

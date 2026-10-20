@@ -220,8 +220,9 @@ npm run ios:shots
 ```
 
 It builds the app for the simulator, makes an iPhone 17 Pro and an iPhone 17
-Pro Max of its own, takes each shot, deletes both, and sets each under its
-caption: a few minutes, two and a half of them past the build. The images land in `ios/appstore/shots/`,
+Pro Max of its own, takes each shot by a UI test of its own
+(`ios/UITests/Shots.swift`), deletes both, and sets each under its caption:
+about five minutes with the build. The images land in `ios/appstore/shots/`,
 gitignored and kept by every build: `6.3in-1206x2622/` for the required
 6.3-inch display and `6.9in-1320x2868/` for the 6.9-inch one, each
 `NN-what.png`, the device's own screens under `raw/`. The captions are
