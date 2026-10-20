@@ -34,6 +34,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// Screen. For most apps that is the right default and for this one it is a
     /// silent failure - watching the countdown is the case where the egg timer
     /// must be loudest, not quietest.
+    ///
+    /// Its banner and its place in the list, but not its sound: with the app
+    /// on screen the app rings itself (`Ringer`, `deadlineToRing`), through
+    /// silent mode, which mutes a notification's sound, time-sensitive or not.
+    /// Its sound as well would ring the deadline twice.
     /// Declared `nonisolated`, and the completion-handler form rather than the
     /// async one, because both parameters are non-Sendable: the async version
     /// cannot be satisfied by a main-actor method without sending them across
@@ -43,7 +48,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        let options: UNNotificationPresentationOptions = Screenshots.muteAudio ? [.banner, .list] : [.banner, .sound, .list]
+        let options: UNNotificationPresentationOptions = [.banner, .list]
         Screenshots.log(.presented(
             id: notification.request.identifier,
             sound: notification.request.content.sound != nil,

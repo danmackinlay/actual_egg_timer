@@ -6,12 +6,14 @@ import UIKit
 import UIKit.UIGestureRecognizerSubclass
 import EggTimerApp
 
-/// The alarm the app sounds itself, when no notification will.
+/// The alarm the app sounds itself, while it is on screen.
 ///
-/// With notifications refused, unanswered or not taken, the screen says "keep
-/// the app open". This is what makes that true: while the app is on screen it
-/// rings at each deadline itself. `Cook` decides WHEN, through the tested rule
-/// in EggTimerApp (`deadlineToRing`); this only makes the noise.
+/// While the app is on screen it rings at each deadline itself, whether or
+/// not a notification holds it: silent mode mutes a notification's sound,
+/// and not this. With notifications refused, unanswered or not taken, the
+/// screen says "keep the app open", and this is what makes that true. `Cook`
+/// decides WHEN, through the tested rule in EggTimerApp (`deadlineToRing`);
+/// this only makes the noise.
 ///
 /// The sound is the one the cook chose (`AlarmSoundChoice`), the web's
 /// (`src/ui/alarmSounds.ts`), from the file the notification plays: whole
@@ -49,6 +51,17 @@ final class Ringer {
         ) { _ in
             MainActor.assumeIsolated { Ringer.shared.onScreenSinceS = AppClock.nowS }
         }
+        // And active, if it is not on screen yet: a launch the system began
+        // in the background (prewarming) and then brought on screen may say
+        // nothing of entering the foreground, and on screen the app's ring is
+        // the only one that sounds (`deadlineToRing`).
+        centre.addObserver(
+            forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated {
+                if Ringer.shared.onScreenSinceS == nil { Ringer.shared.onScreenSinceS = AppClock.nowS }
+            }
+        }
         centre.addObserver(
             forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
         ) { _ in
@@ -66,7 +79,7 @@ final class Ringer {
         guard onScreenSinceS != nil else {
             return Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen"))
         }
-        log.notice("ringing for \(deadline.rawValue, privacy: .public): no notification holds it")
+        log.notice("ringing for \(deadline.rawValue, privacy: .public): the app is on screen")
 
         let sound = AlarmSoundChoice.shared.sound
         play(Self.buffer(sound, deadline), loops: true, file: AlarmSoundChoice.file(sound, deadline))
@@ -104,11 +117,10 @@ final class Ringer {
     private func play(_ buffer: AVAudioPCMBuffer?, loops: Bool, file: String) {
         // .playback, so the alarm sounds with the silent switch on. The switch
         // is for sounds nobody asked for - ringtones, other apps' alerts - and
-        // this is a timer the cook set and was told to keep the app open for;
-        // the system Clock's timer rings through it for the same reason. The
-        // cost is an asymmetry: a notification, when there is one, is silenced
-        // by the switch and only vibrates. That path also puts a banner on the
-        // Lock Screen; this one has only the noise. Ducking rather than
+        // this is a timer the cook set; the system Clock's timer rings through
+        // it for the same reason. The cost is an asymmetry: with the app in the
+        // background or the phone locked, the notification is all there is, and
+        // silent mode mutes it to a vibration. Ducking rather than
         // stopping, so a podcast playing while the cook stands at the hob comes
         // back at full volume when the ring ends.
         let session = AVAudioSession.sharedInstance()

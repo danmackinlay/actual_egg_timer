@@ -449,7 +449,7 @@ scenario('relaunch-heating-cooking', 'relaunched while heating, then while cooki
   run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
 });
 
-scenario('relaunch-pull', 'into the pull, killed 4 s in, relaunched 14 s in: out after', async (run) => {
+scenario('relaunch-pull', 'into the pull on screen, its notification pending: rung by the app; killed 4 s in, relaunched 14 s in: not rung again, out after', async (run) => {
   await started(run, ['-uiDo', 'boil@300']);
   const was = await boiled(run);
   run.terminate();
@@ -459,7 +459,10 @@ scenario('relaunch-pull', 'into the pull, killed 4 s in, relaunched 14 s in: out
   let i = await run.step(was.pull + 1);
   await run.until(phaseIs('PULL'), { from: i, what: 'phase PULL' });
   await run.step(was.pull + 4);
-  run.check(!has(run.sinceLaunch(), is('ring')), 'no ring in the pull: the notification holds it');
+  // On screen the app rings, though a notification holds the pull: silent
+  // mode mutes a notification's sound, not the app's ring.
+  const rung = run.sinceLaunch().filter(is('ring')).map((e) => e.deadline);
+  run.check(same(rung, ['pull']), `rung ${rung}, not the pull once`);
   run.terminate();
   const again = await relaunched(run, was.pull + 14, ['-uiDo', 'out@pull+15']);
   run.check(restoredIn(again.restore, 'PULL'), say(again.restore));
@@ -549,7 +552,7 @@ scenario('alarms', "the notifications as the system holds them: a cold cook's tw
   run.check(same(pending(run.sinceLaunch()), []), `pending at the next launch ${pending(run.sinceLaunch())}`);
 });
 
-scenario('asleep', 'killed before the pull, its notification delivered; relaunched past it', async (run) => {
+scenario('asleep', 'killed before the pull, its notification delivered; relaunched past it: the pull not rung, the cooling’s end rung on screen', async (run) => {
   await started(run, ['-uiDo', 'boil@300']);
   const was = await boiled(run);
   run.terminate();
@@ -576,7 +579,10 @@ scenario('asleep', 'killed before the pull, its notification delivered; relaunch
   const i = await run.step(cooledAt(plan) + 1);
   const done = await run.until(phaseIs('DONE'), { from: i, what: 'phase DONE' });
   await run.settled(done.i);
-  run.check(!has(run.sinceLaunch(), is('ring')), 'nothing rung by the app: the notifications rang');
+  // The pull came while the app was away, and its notification rang; the
+  // cooling's end comes on screen, and the app rings it too.
+  const rung = run.sinceLaunch().filter(is('ring')).map((e) => e.deadline);
+  run.check(same(rung, ['cooled']), `rung ${rung}, not the cooling's end alone`);
 });
 
 scenario('help-sources', "Help's sources bundled: the app finds some at launch, not none", async (run) => {

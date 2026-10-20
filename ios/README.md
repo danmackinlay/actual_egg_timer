@@ -171,8 +171,12 @@ version can only ring while you are looking at it. A native app hands the
 system **absolute fire dates** up front and lets it do the waiting. The app
 reads the pending count back from the system rather than assuming: an egg
 timer that claims an alarm it has not got is worse than one with no alarm at
-all. Where no notification holds a deadline, `Ringer.swift` rings in the app
-while it is on screen.
+all. While the app is on screen, `Ringer.swift` rings at each deadline itself,
+whether or not a notification holds it, and a notification come in the
+foreground is shown without its sound: silent mode mutes a notification's
+sound, time-sensitive or not, and not the app's ring (`.playback`). With the
+app in the background or the phone locked, the notification is all there is,
+and on silent it only vibrates.
 
 Both fire at **`.timeSensitive`** interruption level, which is what gets them
 through a Focus mode. That level needs the
