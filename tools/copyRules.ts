@@ -206,8 +206,8 @@ export function parityProblems(json: CatalogueJson, english: Catalogue): Problem
   return out;
 }
 
-/** The numbers core's plural rule is checked at against CLDR's: each
- *  category's edges in the languages there are, fractions among them. */
+/** The numbers core's plural rule is checked at against CLDR's: the edges
+ *  of the categories in the common languages, fractions among them. */
 const RULE_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 12, 21, 22, 25, 100, 101, 102, 0.5, 1.5, 2.5, 4.25, 5.5];
 
 /** Where a problem with a language as a whole, not one key, is filed. */
