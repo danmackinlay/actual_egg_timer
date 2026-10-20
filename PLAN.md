@@ -64,7 +64,11 @@ and the map of the documents are `CLAUDE.md`.
     entitlement and what schedules them go, with every `#available` or
     workaround kept for older iOS. With it: the Live Activity's countdown
     beside AlarmKit's own, the authorisation asked once, and the in-app
-    ring (`Ringer.swift`) kept for the app on screen.
+    ring (`Ringer.swift`) kept for the app on screen. With the app on
+    screen it now rings every deadline itself, and the foreground
+    notification is silent; if AlarmKit's alert also sounds in the
+    foreground, the app must not ring a deadline AlarmKit holds (the rule
+    `deadlineToRing` had before, in history at 868c7182).
 13. **INFERENCE.md §8's certainty table as `npm run decide -- certainty`
     prints it today**: its fresh-install rows and simulated-cook figures
     have drifted from the study (Fudgy is now a wild guess, its
@@ -149,10 +153,15 @@ Start the QA pass here.
 - **The Lock Screen and the Dynamic Island**: the card ending as the cooling
   does, the 1750 alarms on a real notification, the Live Activity in 1750,
   and "my guess until Rolling boil" against the island's width.
-- **Sound and touch, on a device**: the in-app ring (`Ringer.swift`,
-  `.playback`) through the silent switch and at zero media volume, touch to
-  stop, no ring on the authorised path, the refused and failed notification
-  states, and the slider's haptic tick, and whether the owner wants it.
+- **Sound and touch, on a device** (a debug build's `-alarmTest` and
+  `-alarmSound` bring an alarm in seconds; `ios/README.md`): on screen, the
+  app's ring at the pull and the cooling's end through silent mode and at
+  zero media volume, and only one sound with silent mode off (the banner
+  silent); in the background, the chosen sound from the notification with
+  silent mode off, and vibration alone with it on, until AlarmKit (item
+  12, which must not ring twice with the app on screen); touch to stop;
+  the refused and failed notification states; and the slider's haptic
+  tick, and whether the owner wants it.
 - **Screen readers.** VoiceOver: the sentence and its clauses, the (i)'s
   Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
   the bracket's words, and focus after a press. Both apps' names were read
