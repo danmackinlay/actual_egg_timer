@@ -1,8 +1,9 @@
 /**
  * The rules every catalogue's words are held to, one function each, over the
- * catalogues as JSON: the shape of an entry, the same placeholders as the
- * English, curly quotes, a measure's no-break space, an overlay's `base`, and
- * the length budget of each small surface. LANGUAGE.md section 3.
+ * catalogues as JSON: the shape of an entry, the English's keys, placeholders
+ * and links, its own language's plural forms, no number written in a format
+ * of its own, curly quotes, a measure's no-break space, an overlay's `base`,
+ * and the length budget of each small surface. LANGUAGE.md section 3.
  *
  * test/copy.test.ts holds every catalogue in copy/ to them, and the words'
  * editor (tools/copyEdit/) holds a draft to them as it is typed and again
@@ -16,8 +17,9 @@
  */
 
 import {
-  type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, parseCatalogue, placeholders, render, templatesOf,
+  type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, parseCatalogue, placeholders, pluralCategory, render, templatesOf,
 } from '../src/core/copy.ts';
+import { languageOf } from '../src/core/format.ts';
 
 /** One key's notes, as copy/en.notes.json has them. */
 export interface Notes {
@@ -34,7 +36,8 @@ export interface Surface { budget?: number; about: string }
 export type Entry = Record<string, unknown>;
 export interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 
-export type Rule = 'shape' | 'quote' | 'brace' | 'measure' | 'parity' | 'overlay' | 'budget' | 'empty' | 'arguments';
+export type Rule = 'shape' | 'quote' | 'brace' | 'measure' | 'parity' | 'plural' | 'link' | 'number' | 'overlay' | 'budget'
+  | 'empty' | 'arguments';
 
 /** What is wrong with one key of one catalogue. `field` is the template's
  *  (`text`, a plural form, `base`), where the rule reads one. */
@@ -192,8 +195,102 @@ export function parityProblems(json: CatalogueJson, english: Catalogue): Problem
         if (!want.includes(name)) out.push(problem('parity', tag, key, null, `"${template}" invents {${name}}`));
       }
     }
-    if (countOf(en) !== countOf(message)) {
+    // A unit's symbol does not inflect, but a translator who writes a word
+    // may make a `format.*` key a plural on `{value}`, which is always a
+    // number (LANGUAGE.md §2); any other count is the English's.
+    const wordedUnit = countOf(en) === null && key.startsWith('format.') && countOf(message) === 'value';
+    if (countOf(en) !== countOf(message) && !wordedUnit) {
       out.push(problem('parity', tag, key, null, `counts ${String(countOf(message))}, not ${String(countOf(en))}`));
+    }
+  }
+  return out;
+}
+
+/** The numbers core's plural rule is checked at against CLDR's: each
+ *  category's edges in the languages there are, fractions among them. */
+const RULE_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 12, 21, 22, 25, 100, 101, 102, 0.5, 1.5, 2.5, 4.25, 5.5];
+
+/** Where a problem with a language as a whole, not one key, is filed. */
+export const WHOLE_LANGUAGE = '(the language)';
+
+/**
+ * A catalogue's plural forms that are not its own language's. Core's rule
+ * for the language (`pluralCategory`, hand-written because Swift has no
+ * public CLDR) must agree with CLDR's, as the platform has it, or a form
+ * would be picked for the wrong count. A message has no form for a category
+ * its language lacks, which would never be picked; and one whose English
+ * varies with the count has a form for every category a whole count reaches
+ * in its language. A form a whole count never reaches (Czech `many`, for
+ * fractions) is written where a count can be fractional, as English writes
+ * `one` only where it can be reached (LANGUAGE.md §2), and a message the
+ * English writes in `other` alone, a count that is never one, may take any
+ * of its language's forms.
+ */
+export function pluralProblems(json: CatalogueJson, english: CatalogueJson): Problem[] {
+  const out: Problem[] = [];
+  const tag = json.locale;
+  const cldr = new Intl.PluralRules(tag);
+  const wrong = RULE_NUMBERS.filter((n) => pluralCategory(tag, n) !== cldr.select(n));
+  if (wrong.length > 0) {
+    out.push(problem('plural', tag, WHOLE_LANGUAGE, null,
+      `core's plural rule for ${languageOf(tag)} (src/core/copy.ts) is not CLDR's at ${wrong.join(', ')}`));
+  }
+  const own = new Set<string>(cldr.resolvedOptions().pluralCategories);
+  const whole = new Set<string>();
+  for (let n = 0; n <= 200; n++) whole.add(cldr.select(n));
+  for (const [key, entry] of Object.entries(json.messages)) {
+    if (typeof entry['count'] !== 'string') continue;
+    for (const c of PLURAL_CATEGORIES) {
+      if (entry[c] !== undefined && !own.has(c)) out.push(problem('plural', tag, key, c, `${languageOf(tag)} has no "${c}" form`));
+    }
+    const en = english.messages[key];
+    const varies = en !== undefined && PLURAL_CATEGORIES.some((c) => c !== 'other' && en[c] !== undefined);
+    if (!varies) continue;
+    const missing = PLURAL_CATEGORIES.filter((c) => whole.has(c) && entry[c] === undefined);
+    if (missing.length > 0) out.push(problem('plural', tag, key, null, `no ${missing.map((c) => `"${c}"`).join(', ')} form`));
+  }
+  return out;
+}
+
+/** Every https link a template makes, `[label](https://…)`, in order. */
+function linksOf(template: string): string[] {
+  return [...template.matchAll(/\]\((https:\/\/[^\s)]+)\)/g)].map((m) => m[1]);
+}
+
+/** Each template whose links are not the English's, the same addresses in
+ *  the same order: Help cites its sources alike in every language. */
+export function linkProblems(json: CatalogueJson, english: CatalogueJson): Problem[] {
+  const out: Problem[] = [];
+  for (const [key, entry] of Object.entries(json.messages)) {
+    const en = english.messages[key];
+    if (en === undefined) continue;
+    for (const field of TEMPLATE_FIELDS) {
+      const t = entry[field];
+      if (typeof t !== 'string') continue;
+      const theirs = en[field] ?? en['text'] ?? en['other'];
+      const want = typeof theirs === 'string' ? linksOf(theirs) : [];
+      const got = linksOf(t);
+      if (got.join(' ') !== want.join(' ')) {
+        out.push(problem('link', json.locale, key, field,
+          `links to ${got.join(' ') || 'nothing'}, where the English links to ${want.join(' ') || 'nothing'}`));
+      }
+    }
+  }
+  return out;
+}
+
+/** A number written in a format of its own: digits either side of a point,
+ *  a comma, a space or a clock's colon. A number reaches a sentence through
+ *  a placeholder, written in the formatting locale (`formattingLocale`): the
+ *  language and the device's region, never the catalogue's register. */
+export function numberProblems(json: CatalogueJson): Problem[] {
+  const out: Problem[] = [];
+  for (const [key, entry] of Object.entries(json.messages)) {
+    for (const field of WORD_FIELDS) {
+      const t = entry[field];
+      if (typeof t !== 'string') continue;
+      const m = /\d[.,:   ]\d/.exec(t.replace(/\]\([^)]*\)/g, ']'));
+      if (m !== null) out.push(problem('number', json.locale, key, field, `writes "${m[0]}" itself`));
     }
   }
   return out;
@@ -294,8 +391,9 @@ export function catalogueProblems(jsons: ReadonlyMap<string, CatalogueJson>, not
   for (const [tag, json] of jsons) {
     const catalogue = tag === 'en' ? english : parseCatalogue(json, english);
     out.push(...quoteProblems(json), ...emptyProblems(json), ...measureProblems(json).problems);
+    out.push(...pluralProblems(json, enJson), ...numberProblems(json));
     if (tag === 'en') out.push(...braceProblems(english));
-    else out.push(...parityProblems(json, english));
+    else out.push(...parityProblems(json, english), ...linkProblems(json, enJson));
     if (OVERLAYS.includes(tag)) out.push(...overlayProblems(json, enJson));
     out.push(...budgetProblems(catalogue, [...measured].filter((k) => k in enJson.messages), notes, surfaces));
   }

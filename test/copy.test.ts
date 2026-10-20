@@ -1,7 +1,11 @@
 /**
- * The catalogue: the renderer, the plural rules, and the three things every
- * language is held to - the shape of its entries, the same placeholders as the
- * English, and the length budget of each small surface a string is drawn on.
+ * The catalogue: the renderer, the plural rules, and what every catalogue in
+ * copy/ is held to - the shape of its entries, the English's keys,
+ * placeholders and links, its own language's plural forms, its numbers left
+ * to the region, and the length budget of each small surface a string is
+ * drawn on. A third
+ * catalogue, test/pseudo-cs.json, proves the checks that hold a language to
+ * the English, each failing on a plant.
  *
  * Run from the repo root (npm test does), because the catalogue is read from
  * copy/ as the apps read it, not copied into the test. The rules themselves
@@ -18,10 +22,12 @@ import {
   type Catalogue, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.ts';
+import { formatNumber, formattingLocale, languageOf } from '../src/core/format.ts';
 import { appsUsing, catalogueTags, english, readNotes, readSurfaces } from '../tools/copyNotes.ts';
 import {
-  type CatalogueJson, type Problem, budgetProblems, braceProblems, catalogueProblems, describe, emptyProblems, exampleOf, fieldProblems,
-  longest, measureProblems, overlayProblems, parityProblems, quoteProblems, shapeProblems,
+  type CatalogueJson, type Problem, type Rule, WHOLE_LANGUAGE, budgetProblems, braceProblems, catalogueProblems, describe,
+  emptyProblems, exampleOf, fieldProblems, linkProblems, longest, measureProblems, numberProblems, overlayProblems,
+  parityProblems, pluralProblems, quoteProblems, shapeProblems,
 } from '../tools/copyRules.ts';
 
 const listed = (ps: Problem[]): string[] => ps.map(describe);
@@ -48,12 +54,14 @@ function catalogueFor(locale: string): Catalogue {
 // the renderer
 // --------------------------------------------------------------------------
 
+/** A pseudo-locale: Czech's plural rule and Czech formatting, and no Czech
+ *  words. Each form says which it is, `[eggs:few]`. */
+const PSEUDO_JSON = JSON.parse(readFileSync('test/pseudo-cs.json', 'utf8')) as CatalogueJson;
+const PSEUDO = parseCatalogue(PSEUDO_JSON, EN);
+
 const TINY = parseCatalogue({
-  locale: 'cs',
-  messages: {
-    eggs: { count: 'n', one: '{n} vejce', few: '{n} vejce', many: '{n} vejce', other: '{n} vajec' },
-    greeting: { text: 'Hello, {name}. {name} again, and {missing}.' },
-  },
+  locale: 'en',
+  messages: { greeting: { text: 'Hello, {name}. {name} again, and {missing}.' } },
 }, EN);
 
 test('placeholders are substituted, repeated ones every time, missing ones left showing', () => {
@@ -61,18 +69,20 @@ test('placeholders are substituted, repeated ones every time, missing ones left 
 });
 
 test('the plural form is chosen by the count argument, in the catalogue\'s language', () => {
-  assert.equal(render(TINY, 'eggs', { n: 1 }), '1 vejce');
-  assert.equal(render(TINY, 'eggs', { n: 5 }), '5 vajec');
-  // Written in the catalogue's own locale when no other is given: Czech,
-  // with its decimal comma.
-  assert.equal(render(TINY, 'eggs', { n: 1.5 }), '1,5 vejce');
+  assert.equal(render(PSEUDO, 'learned.tuned', { eggs: 1 }), '[tuned] 1 [eggs:one]');
+  assert.equal(render(PSEUDO, 'learned.tuned', { eggs: 2 }), '[tuned] 2 [eggs:few]');
+  assert.equal(render(PSEUDO, 'learned.tuned', { eggs: 5 }), '[tuned] 5 [eggs:other]');
+  // Written in the catalogue's own locale when no other is given: the
+  // pseudo's, with its decimal comma.
+  assert.equal(render(PSEUDO, 'learned.tuned', { eggs: 1.5 }), '[tuned] 1,5 [eggs:many]');
 });
 
 test('a key the language lacks falls back to English, with the English plural rule', () => {
-  // Two is Czech's few and English's other: the English form, from the English.
-  const tuned = EN_JSON.messages['learned.tuned'] as Record<string, string>;
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), tuned['one'].replace('{eggs}', '1'));
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), tuned['other'].replace('{eggs}', '2'));
+  // Two is the pseudo's few and English's other: the English form, from the English.
+  const sent = EN_JSON.messages['share.sent'] as Record<string, string>;
+  assert.ok(!PSEUDO.messages.has('share.sent'));
+  assert.equal(render(PSEUDO, 'share.sent', { eggs: 1 }), sent['one'].replace('{eggs}', '1'));
+  assert.equal(render(PSEUDO, 'share.sent', { eggs: 2 }), sent['other'].replace('{eggs}', '2'));
 });
 
 test('a key nobody has renders as itself, so it is seen rather than blank', () => {
@@ -105,25 +115,19 @@ test('a malformed catalogue is refused, naming the key', () => {
 // the plural rules
 // --------------------------------------------------------------------------
 
-/** Every rule this file has, checked against the platform's own CLDR data.
- *  Node carries full ICU; Swift does not expose it, which is why the rules are
- *  hand-written and fixtured at all. */
-test('the hand-written rules agree with Intl.PluralRules', () => {
-  const numbers = [0, 1, 2, 3, 4, 5, 10, 11, 12, 21, 22, 25, 100, 101, 102, 0.5, 1.5, 2.5, 4.25, 5.5];
-  for (const locale of ['en', 'en-US', 'en-GB-x-1750', 'cs', 'cs-CZ']) {
-    const intl = new Intl.PluralRules(locale);
-    for (const n of numbers) {
-      assert.equal(pluralCategory(locale, n), intl.select(n), `${locale} ${n}`);
-    }
-  }
-});
+// That the hand-written rule of every catalogue's language agrees with the
+// platform's CLDR data is a catalogue check (`pluralProblems`, below). Node
+// carries full ICU; Swift does not expose it, which is why the rules are
+// hand-written and fixtured at all.
 
-test('Czech, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
+test('the pseudo\'s forms, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
   const expected: [number, string][] = [
     [0, 'other'], [1, 'one'], [2, 'few'], [4, 'few'], [5, 'other'], [1.5, 'many'],
     [21, 'other'], [22, 'other'],
   ];
-  for (const [n, category] of expected) assert.equal(pluralCategory('cs', n), category, `cs ${n}`);
+  for (const [n, category] of expected) {
+    assert.ok(render(PSEUDO, 'learned.tuned', { eggs: n }).endsWith(`[eggs:${category}]`), `${n}`);
+  }
 });
 
 test('a language with no rule gets other, the one form every message has', () => {
@@ -199,28 +203,67 @@ test('a measure never breaks across a line: format.* joins value and unit with a
     'a plain space is caught');
 });
 
-test('every language uses exactly the English placeholders', () => {
-  for (const [locale, json] of JSONS) {
-    if (locale === 'en') continue;
-    assert.deepEqual(listed(parityProblems(json, EN)), [], locale);
+// --------------------------------------------------------------------------
+// every language, against the English
+// --------------------------------------------------------------------------
+
+/** What a catalogue is held to against the English: only the English's
+ *  keys, each with its placeholders (`parity`) and its links; its own
+ *  language's plural forms, by a rule core has; and no number written in a
+ *  format of its own, since numbers come from the region. The English is
+ *  held to the last two. */
+function againstEnglish(json: CatalogueJson): Problem[] {
+  const own = [...pluralProblems(json, EN_JSON), ...numberProblems(json)];
+  return json.locale === 'en' ? own : [...parityProblems(json, EN), ...linkProblems(json, EN_JSON), ...own];
+}
+
+test('every catalogue keeps the English\'s keys, placeholders and links, in its own language\'s plural forms', () => {
+  for (const json of [...JSONS.values(), PSEUDO_JSON]) {
+    assert.deepEqual(listed(againstEnglish(json)), [], json.locale);
   }
 });
 
-test('the parity check catches a dropped, an invented and a miscounted placeholder', () => {
-  const broken: CatalogueJson = {
-    locale: 'cs',
-    messages: {
-      'refusal.counter': { text: 'Na lince se žloutek vaří dál — {wanted}.' },
-      'controls.startedAt.latestPull': { text: 'nejpozději v {time} {when}' },
-      'learned.tuned': { text: 'naladěno na {eggs} vajec · ±{spread} %' },
-      'learned.pan': { text: 'hrnec {water}: {time}' },
-    },
-  };
-  const failures = parityProblems(broken, EN);
-  assert.ok(failures.some((f) => f.key === 'refusal.counter' && f.detail.includes('{limit}')), 'dropped');
-  assert.ok(failures.some((f) => f.key === 'controls.startedAt.latestPull' && f.detail.includes('{when}')), 'invented');
-  assert.ok(failures.some((f) => f.key === 'learned.tuned' && f.detail.includes('counts')), 'miscounted');
-  assert.ok(!failures.some((f) => f.key === 'learned.pan'), 'a faithful one passes');
+test('each check fails a third catalogue planted with what it catches', () => {
+  const plants: [string, Rule, string, (m: CatalogueJson['messages']) => void][] = [
+    ['a key the English lacks', 'parity', 'no.such.key', (m) => { m['no.such.key'] = { text: '[none]' }; }],
+    ['a placeholder dropped', 'parity', 'spoken.minutesSeconds', (m) => { m['spoken.minutesSeconds'] = { text: '{minutes} +' }; }],
+    ['a placeholder invented', 'parity', 'format.metres', (m) => { m['format.metres'] = { text: '{value} [m] {unit}' }; }],
+    ['a count lost', 'parity', 'learned.tuned', (m) => { m['learned.tuned'] = { text: '[tuned] {eggs}' }; }],
+    // A measure's `{value}` may pick a form (the pseudo's format.litres); no other new count may.
+    ['a count of its own', 'parity', 'sousvide.start.lastWeekday', (m) => {
+      m['sousvide.start.lastWeekday'] = { count: 'weekday', one: '[last] {weekday}', other: '[last] {weekday}' };
+    }],
+    ['a plural form missing', 'plural', 'spoken.seconds', (m) => { delete m['spoken.seconds']['few']; }],
+    ['a plural form the language lacks', 'plural', 'spoken.minutes', (m) => { m['spoken.minutes']['two'] = '{minutes} [min:two]'; }],
+    ['a link changed', 'link', 'help.how.aside', (m) => {
+      m['help.how.aside'] = { text: String(EN_JSON.messages['help.how.aside']['text']).replace(/\(https:\/\/[^)]+\)/, '(https://example.com/)') };
+    }],
+    ['a number written in a format of its own', 'number', 'format.metres', (m) => { m['format.metres'] = { text: '{value} [m] (1.5)' }; }],
+  ];
+  assert.deepEqual(listed(againstEnglish(PSEUDO_JSON)), []);
+  for (const [what, rule, key, plant] of plants) {
+    const json = structuredClone(PSEUDO_JSON);
+    plant(json.messages);
+    const found = againstEnglish(json);
+    assert.ok(found.some((p) => p.rule === rule && p.key === key), `${what}: ${listed(found).join('; ') || 'nothing found'}`);
+  }
+  // And a language core has no plural rule for: Welsh, whose six forms it
+  // would all read as "other".
+  const welsh = { ...PSEUDO_JSON, locale: 'cy' };
+  assert.ok(againstEnglish(welsh).some((p) => p.rule === 'plural' && p.key === WHOLE_LANGUAGE), 'a language with no rule');
+});
+
+test('numbers and times come from the region, never the catalogue: a register is not a format', () => {
+  for (const json of [...JSONS.values(), PSEUDO_JSON]) {
+    const tag = json.locale;
+    const catalogue = tag === 'en' ? EN : parseCatalogue(json, EN);
+    for (const region of ['US', 'GB', 'DE', 'CZ', null]) {
+      const locale = formattingLocale(tag, region, null);
+      assert.equal(locale, formattingLocale(languageOf(tag), region, null), `${tag} in ${String(region)}`);
+      const written = render(catalogue, 'format.celsius', { value: { value: 1234.5, decimals: 1 } }, locale);
+      assert.ok(written.startsWith(formatNumber(locale, 1234.5, 1)), `${tag} in ${String(region)}: ${written}`);
+    }
+  }
 });
 
 // --------------------------------------------------------------------------
@@ -347,7 +390,7 @@ test('the region of a tag, and the catalogues that render a language', () => {
   assert.deepEqual(catalogueChain('en', ['en-GB'], 'GB'), ['en']);
   // The English of 1750 and any other language have no overlay.
   assert.deepEqual(catalogueChain('en-x-1750', ['en-US'], 'US'), ['en-x-1750', 'en']);
-  assert.deepEqual(catalogueChain('cs', ['en-US'], 'US'), ['cs', 'en']);
+  assert.deepEqual(catalogueChain(PSEUDO.locale, ['en-US'], 'US'), [PSEUDO.locale, 'en']);
 
   // A key the overlay has reads the overlay's words; one it leaves, the
   // English. Both read from the catalogues, so a change of wording moves no test.
