@@ -6,6 +6,15 @@ releasing has its own in `ios/RELEASING.md`.
 
 ## The simulator and the iOS tools
 
+- **Silent mode mutes every notification's sound, time-sensitive or
+  not.** Only Critical Alerts (an entitlement Apple rarely grants) and
+  AlarmKit's alarms sound through it; an audio session in `.playback`
+  plays through it while the app runs. An app on screen that leaves its
+  alarm to the foreground notification's `.sound` is silent on a phone
+  set to silent, and a simulator, which has no silent switch, never shows
+  it. A debug build's `-alarmTest <s>` rings both paths in seconds
+  (`ios/README.md`).
+
 - **A new simulator's notification centre stops answering when every core
   is busy.** With a CPU hog per core, `requestAuthorization` and
   `pendingNotificationRequests` never return, relaunch or not; half the
@@ -59,6 +68,11 @@ releasing has its own in `ios/RELEASING.md`.
   `ViewThatFits` wraps sooner than the text suggests.
 
 ## The web
+
+- **`npm run build:site` empties `_dev/`** in the checkout it runs in, and
+  `npm run e2e` and `verify` run it. A preview configuration or an e2e run
+  aimed at the main checkout from an agent's worktree wiped its
+  `copy-review.html`; build and test in the worktree.
 
 - **A service worker outlives the server it came from.** A browser that
   opened one build on `localhost:8080` keeps it for that address, and

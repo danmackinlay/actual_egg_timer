@@ -111,7 +111,8 @@ next is `PLAN.md`; the last section here says which document holds what.
   copy:literals`; one passed through a name is not read). Read
   `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which
   `npm test` makes from the catalogue and both compilers check
-  (`DECISIONS.md` 127). A key's note and surface are in
+  (`DECISIONS.md` 127); a Swift `tr` is given exactly its key's arguments,
+  which `npm test` reads (`tools/copyArgs.ts`) and a debug build asserts. A key's note and surface are in
   `copy/en.notes.json`.
 - **To change wording**: edit `copy/en.json`, and any `copy/en-US.json`
   override with its `base`; run `npm test` and `npm run fixtures:check`;

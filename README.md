@@ -528,7 +528,7 @@ softest level the white allows stays at runny until the opening is past four min
 and soft goes out of reach between five and seven.
 
 The cook is told when: from the pull the app counts down to the opening, as it counts a
-cooling down to the yolk's peak, rings there, and says to open the eggs; Done comes at
+cooling down to the yolk's peak, rings there, and says to eat them; Done comes at
 the opening, and the record's `cooled_s` is the 120 s counted.
 
 The opening time weighs: each 30 s later takes about 30 s off soft's time. It is the

@@ -198,7 +198,7 @@ cools change nothing, so the sentence leaves them out.
   sentence says "then eaten warm from an egg cup", soft is offered where in
   the air it is striped out, and the pull's button and alarm ask for the egg
   cups. From the pull the clock counts down to the opening, two minutes on,
-  which the times assume; its alarm says to open them, and Done comes
+  which the times assume; its alarm says to eat them, and Done comes
   there; iOS's Lock Screen card counts down to it as it does to a cooling's
   end. No probe reading is asked for at the opening (`probeMomentFor`).
 - **To a screen reader** each clause is a button named for its label and
@@ -332,8 +332,9 @@ under the thumb that asks for it.
   only, so its record never says the mass came from a tape.
 - **Mute, and the reloaded cook.** The web plays its own sound, so it has
   mute; it can lose a cook to a reload, so it says so when it does. iOS has
-  neither: its alarm is the system's, with iOS's own status line above
-  Cancel.
+  neither: its alarm is the system's notification, and the app's own ring
+  while it is on screen, through silent mode; above Cancel a line says only
+  when there is no alarm (notifications off, or one not set).
 - **The units' (i)** says "phone" on iOS where the web says "browser".
 - **The − and +.** The web draws its own pair; iOS uses the system's
   `Stepper`. To VoiceOver the number and its − and + are one adjustable

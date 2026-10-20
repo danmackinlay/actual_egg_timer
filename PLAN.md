@@ -181,7 +181,7 @@ Start the QA pass here.
   offline, no new build taken after a deploy.
 - **The egg cup's countdown on a device**: the notification at the
   opening, and the Lock Screen and Dynamic Island card counting down under
-  "Open them in".
+  "Eat them in".
 - **The egg cup's opening** (`EGG_CUP_OPENED_S`, 120 s) is the model's
   guess: a probe in the yolk's centre as the egg is topped, with the
   seconds since the pull, says when cooks open it and whether a cup keeps

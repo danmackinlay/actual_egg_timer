@@ -1055,3 +1055,25 @@ Decided by the owner, 20 October 2026:
     before the iOS build that writes the field: a server from before it
     keeps a record without it, and that egg would replay with its pan at the
     room.
+145. **iOS says nothing of a set alarm** (the owner: "alarm set for
+    18:55:33" — "we should drop this. no timer tells us the clock time
+    too"). The time counting down is the alarm. "setting the alarm…",
+    which only flashed before the answer, goes with it. A line shows above
+    Cancel only when there is no alarm: notifications off, or one not set,
+    with what to do. The hint holds room for that line only on a cook that
+    shows it.
+146. **On a phone, the panels under the sentence come into view.** iOS
+    keeps the web's spacing around the time at a phone's width, so what is
+    under the sentence sits as high as there; opening a clause by a tap
+    scrolls just far enough to show its panel, in both apps (the owner's
+    choice, "Scroll into view"). The room the hint and the certainty line
+    hold stays, so nothing jumps (the owner: "Keep both").
+147. **A developer tool may take a dependency, and the owner's tools are
+    desktop tools.** "We can use external libraries under limited
+    circumstances, e.g. when it is a net maintenance burden reduction, and
+    especially for developer backend tools." Core keeps its zero
+    dependencies (`CLAUDE.md`, core's invariant 1). A tool the owner works
+    in, such as `npm run copy:edit`, is laid out for his desk, a large
+    screen and a keyboard, and served on this machine only: "Why would I
+    want to edit strings on an iPhone UI when I have a great 30″ monitor
+    and keyboard on my desk".
