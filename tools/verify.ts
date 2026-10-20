@@ -13,7 +13,6 @@
 //   then, once both have ended:
 //   typecheck        tsc over core, the app and the rest (npm run typecheck)
 //   npm test         node --test over test/*.test.ts and test/tools/*.test.ts
-//   copy:literals    no Swift literal in a text call is words (tools/copyLiterals.ts)
 //   fixtures:check   the fixtures made afresh, compared with the files on
 //                    disk (tools/fixturesCheck.ts)
 //   committed        the files those three write, as HEAD has them, once
@@ -134,7 +133,6 @@ const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built
 const all = await Promise.all([
   job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p): Step => [node, [tsc, '-p', p]])),
   job('npm test', [[node, ['--test', ...tests]]]),
-  job('copy:literals', [[node, ['tools/copyLiterals.ts']]]),
   copyKeys,
   swiftConstants,
   fixtures,

@@ -1,8 +1,7 @@
 /**
  * The arguments each Swift `tr` call gives its key are exactly the key's, so
  * a debug build's assertion in `tr` (EggTimerShared/Copy.swift) cannot stop
- * the app at a cook's tap. Run by `npm test` (test/tools/copyArgs.test.ts) and by
- * `npm run copy:literals`.
+ * the app at a cook's tap. Run by `npm test` (test/tools/copyArgs.test.ts).
  *
  * Read: ios/App, ios/Widget, EggTimerApp and EggTimerShared, what only a
  * debug build compiles included, since the assertion is a debug build's;

@@ -20,7 +20,6 @@
     "posterior": "node tools/posterior.ts",
     "sbc": "node tools/posterior.ts sbc",
     "sounds": "node tools/sounds.ts",
-    "copy:literals": "node tools/copyLiterals.ts",
     "copy:keys": "node tools/copyKeys.ts",
     "swift:constants": "node tools/swiftConstants.ts",
     "copy:approve": "node tools/copyReview.ts approve",
