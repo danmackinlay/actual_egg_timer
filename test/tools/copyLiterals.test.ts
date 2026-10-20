@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { lintSwift } from '../tools/copyLiterals.ts';
+import { lintSwift } from '../../tools/copyLiterals.ts';
 
 test('words in a text call fail, interpolated or not; a key passes', () => {
   assert.equal(lintSwift('V.swift', 'Text("Hello")').length, 1);

@@ -39,6 +39,11 @@ Nothing is compiled to run: Node runs the tests, tools and studies from their
 studies); `npm test` runs it first. `npm run build:site` bundles the app with
 esbuild from the same sources.
 
+The tests of the apps, their core and the server are `test/*.test.ts`; the
+tests of the developer tools (the words' editor and queue, the lints, the
+fixtures' comparison, the fit's import, the one version) are
+`test/tools/*.test.ts`. `npm test` runs both.
+
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
 so a Netlify build runs on the same Node the tests ran on. `engines.node` is a
 range rather than a pin, a statement about the APIs this uses (`node:test`,

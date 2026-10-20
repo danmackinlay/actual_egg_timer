@@ -1,7 +1,7 @@
 /**
  * The words' editor's own logic (tools/copyEdit/): who may reach it, what
  * stops a save, how edits are laid on the words the page loaded and
- * checked, what is committed, and approving. On repositories of the test's own (test/repo.ts), with the
+ * checked, what is committed, and approving. On repositories of the test's own (test/tools/repo.ts), with the
  * checks' npm runs stood in for, so no test here runs npm test inside npm
  * test; tools/copyEditE2e.ts runs the real ones, through the page.
  */
@@ -12,12 +12,12 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { HEADERS, judge, newToken, tokenMatches } from '../tools/copyEdit/guard.ts';
+import { HEADERS, judge, newToken, tokenMatches } from '../../tools/copyEdit/guard.ts';
 import {
   type Edit, type Runner, approveShown, approvingOff, commitMessage, failedTests, plan, preflight, save,
-} from '../tools/copyEdit/save.ts';
-import { problemWords } from '../tools/copyEdit/words.ts';
-import { APPROVED_PATH } from '../tools/copyQueue.ts';
+} from '../../tools/copyEdit/save.ts';
+import { problemWords } from '../../tools/copyEdit/words.ts';
+import { APPROVED_PATH } from '../../tools/copyQueue.ts';
 import { catalogue, type Repo, scratchRepo } from './repo.ts';
 
 /* ------------------------------------------------------------ the guard */

@@ -2,7 +2,7 @@
  * The fit's records from outside the live store: a results file read back
  * ("Export my results"), and the owner's list of the random IDs they vouch
  * for. `tools/eggs.ts` is the command line;
- * this is what it does, apart, so test/eggs.test.ts can run it.
+ * this is what it does, apart, so test/tools/eggs.test.ts can run it.
  *
  * OLDER RECORDS. The apps read only today's record (core's `parseRecord`),
  * but the owner's results files from before 0.5 hold older ones: fields a

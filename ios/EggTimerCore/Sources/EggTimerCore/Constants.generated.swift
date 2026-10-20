@@ -428,7 +428,7 @@ public let slowHobMaxSteps: Int = 100
 /// has been eaten or thrown out.
 public let restoreWindowS: Double = 3600.0
 
-// MARK: - src/core/record.ts
+// MARK: - src/core/recordSchema.ts
 
 /// The schema version.
 public let recordVersion: Int = 1
@@ -441,9 +441,13 @@ public let modelID: String = "2026-10-e11"
 /// likelihood, which together are the fold.
 public let likelihoodID: String = "2026-10-e10"
 
+// MARK: - src/core/recordCheck.ts
+
 /// How far a forecast's three answers may sum from one: far above what three doubles add up to, far
 /// below any probability that means something.
 let forecastSumTolerance: Double = 0.000001
+
+// MARK: - src/core/recordFold.ts
 
 /// Particles in the filter, and the seed they start from.
 public let particleCount: Int = 1000
@@ -454,6 +458,8 @@ public let calibrationSeed: Int32 = 6221086
 public let calibrationAlphaLow: Double = 0.55
 
 public let calibrationAlphaHigh: Double = 1.8
+
+// MARK: - src/core/recordResults.ts
 
 /// The results file's own version.
 public let resultsFileVersion: Int = 1
