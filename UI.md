@@ -177,8 +177,15 @@ cools change nothing, so the sentence leaves them out.
   ("2 × 68 g eggs", "One 68 g egg"), so English never picks "a" or "an"
   before a number by its sound.
 - **A clause opens its choice in a panel** under the sentence, one at a time,
-  with its title, its (i) and Done. The sentence rewrites itself as the
-  answer changes.
+  with its title, its (i) and Done, and scrolls it into view: on a phone the
+  panel opens below the fold, where its rows go unseen. The page scrolls
+  just far enough to show the whole panel, or, if it is taller than the
+  screen, as much as fits with its head at the top; one already on screen
+  does not move it, and nothing on the page moves but the page. Only the
+  cook's tap scrolls, opening from none or from another clause: never a
+  panel that opens itself (a launch argument, a restore), never a close, and
+  never with a correction in hand. With less motion asked for, it scrolls in
+  one step. The sentence rewrites itself as the answer changes.
 - **The cooling's five choices are a list**, one to a line, fastest first
   (`DECISIONS.md` 115): an ice bath, running water, a bowl of water, the air
   and an egg cup. Five names of up to 13 letters fit no 390 px phone
@@ -334,6 +341,15 @@ under the thumb that asks for it.
 - **The open clause** has a solid accent fill on the web and an accent wash on
   iOS, where a link's text takes the tint. VoiceOver focus does not return to
   the clause after Done on iOS; the web's focus does.
+- **The panel scrolled into view.** The web asks the browser for the
+  nearest place (`scrollIntoView`, smooth unless `prefers-reduced-motion`);
+  iOS works out from where the panel and the screen are whether to bring up
+  its foot or its head, and scrolls there (snappy unless Reduce Motion),
+  the panel fading in as the page grows at once. On iOS every press on a
+  clause commits a correction in hand first, so a tap always scrolls; on the
+  web a key on a clause does not commit one, and then nothing scrolls. On
+  both, a shorter panel opened from a taller one at the page's foot lets the
+  page, grown shorter, take back some of its scroll.
 - **The slider on iOS** keeps VoiceOver's adjustable behaviour and ticks a
   selection haptic each time a drag crosses into another doneness word. A
   snap that lands while the finger is down moves the thumb when the finger
