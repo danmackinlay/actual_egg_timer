@@ -11,7 +11,9 @@ next is `PLAN.md`; the last section here says which document holds what.
 - **Never push what deploys** (`DECISIONS.md` 124): pushing `main` or a
   release tag deploys the web app, and is the owner's call. An agent may
   push its own branch for CI. An agent in a worktree commits on its branch;
-  the session that sent it verifies and merges.
+  the session that sent it verifies and merges. It cannot write the main
+  checkout, so it returns its report as text, and the session that sent it
+  keeps it in `.claude/reports/`.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
