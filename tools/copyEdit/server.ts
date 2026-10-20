@@ -20,8 +20,10 @@
  * Words are committed to main, by name, and never pushed. `--scratch` is
  * for the editor's own end-to-end check (tools/copyEditE2e.ts), in a clone
  * under the temporary directory: it lets approving run from an agent's
- * shell there, and is refused anywhere else. PORT or --port sets the port
- * (8765; 0 for any free one).
+ * shell there, and is refused anywhere else. PORT or --port sets the port;
+ * without one it takes any free port, since the address is new each run
+ * anyway (the token) and is opened for the owner. A fixed default collided
+ * with Anki's AnkiConnect, on 8765.
  */
 
 import { spawn } from 'node:child_process';
@@ -48,7 +50,7 @@ if (SCRATCH && !isUnderTmp(CWD)) {
   console.error('--scratch is for a clone under the temporary directory, and this is not one.');
   process.exit(1);
 }
-const PORT = Number(option('--port') ?? process.env['PORT'] ?? 8765);
+const PORT = Number(option('--port') ?? process.env['PORT'] ?? 0);
 const TOKEN = newToken();
 /** The port listened on: PORT, or the one given for 0. */
 let port = PORT;
@@ -160,7 +162,7 @@ const server = createServer((req, res) => {
   });
 });
 server.on('error', (e: NodeJS.ErrnoException) => {
-  console.error(e.code === 'EADDRINUSE' ? `Port ${PORT} is taken: is the editor running already? --port picks another.` : e.message);
+  console.error(e.code === 'EADDRINUSE' ? `Port ${PORT} is taken: is the editor running already? Leave out --port and I’ll take a free one.` : e.message);
   process.exit(1);
 });
 server.listen(PORT, '127.0.0.1', () => {
