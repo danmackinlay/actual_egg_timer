@@ -89,6 +89,16 @@ targets:
     # target without Xcode having opened the project first and invented one.
     scheme:
       testTargets: []
+      # Unticked in Edit Scheme > Run > Arguments, for a run from Xcode to
+      # tick: the alarms without a cook, to hear them (ios/README.md,
+      # "Hearing the alarms in seconds"). Only a run passes them, never an
+      # archive, and only a debug build has `-alarmTest`.
+      commandLineArguments:
+        "-alarmTest 10": false
+        "-alarmTest 30": false
+        "-alarmSound timer": false
+        "-alarmSound cuckoo": false
+        "-alarmSound hen": false
     # The languages the App Store lists. An array, which the INFOPLIST_KEY_*
     # settings below cannot express, so xcodegen writes this much of the plist
     # (App/Info.plist, generated and gitignored like the widget's) and the build

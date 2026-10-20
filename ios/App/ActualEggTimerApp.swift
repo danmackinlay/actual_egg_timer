@@ -28,6 +28,10 @@ struct ActualEggTimerApp: App {
         Screenshots.log(.helpSources(count: HelpSource.all.count))
         // And the alarms' sound files: each there, under 30 s, playable.
         Ringer.logFiles()
+        #if DEBUG
+        // `-alarmTest`: the alarms without a cook, to hear them.
+        AlarmTest.start()
+        #endif
     }
 
     var body: some Scene {

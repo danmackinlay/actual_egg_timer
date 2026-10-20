@@ -61,6 +61,20 @@ import os
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
 /// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
 ///
+/// To hear the alarms without waiting for a cook (ios/README.md says how,
+/// on a phone and on a simulator):
+///
+/// - `-alarmTest 10`: once the app is on screen and the notification
+///   question answered (the real question, never `-provisionalAlarms`,
+///   whose notifications come without a sound), the pull's and the cooling's
+///   notifications set through the cook's own `Alarm.schedule`, 10 s and
+///   20 s from now; and at each moment, if the app has been on screen since
+///   before it, the app's own ring, as a cook's would (`deadlineToRing`).
+///   From the idle screen: they replace a running cook's alarms.
+/// - `-alarmSound hen` (`timer`, `cuckoo`): ring with that sound this launch,
+///   as `-settings` gives the settings: the argument read over the stored
+///   choice (`Suite`), nothing stored.
+///
 /// `log` writes one event as a line of JSON, to standard error and to
 /// `Library/Caches/aet.log` in the app's container: the phases, each plan,
 /// the stored cook and the log as written, the alarms scheduled, cancelled
@@ -165,6 +179,10 @@ public enum Screenshots {
 extension Screenshots {
     /// The screenshot kit's screen (above).
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
+    /// `-alarmTest <s>`: the alarms' lead, s (above; `AlarmTest`, in the app).
+    public static var alarmTestS: Double? {
+        arguments?.object(forKey: "alarmTest") == nil ? nil : arguments?.double(forKey: "alarmTest")
+    }
 }
 #endif
 
