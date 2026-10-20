@@ -4,7 +4,7 @@
  * start from. The pot they start from, `referenceSetup`, is
  * tools/common.ts's, which the tests share. The English catalogue is
  * english.ts's, apart, so that a fixture that shows no words does not reach
- * them (tools/wordsOnly.ts). Importing this module computes nothing, so each
+ * them. Importing this module computes nothing, so each
  * fixture can be made in a worker of its own (tools/fixtures.ts).
  */
 

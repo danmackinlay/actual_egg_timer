@@ -3,9 +3,6 @@
  * fixtures/, and the fit's beside its tests in fit/tests/.
  *
  *   npm run fixtures:check
- *   npm run fixtures:check -- --words   only the fixtures that can read the
- *                                       words (tools/wordsOnly.ts), for a
- *                                       save from the words' editor
  *
  * Reads every fixture as it is in the working tree, makes them all afresh
  * (tools/fixtures.ts, in a process of its own), and compares each with what
@@ -27,21 +24,17 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
 import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from './fixtureCompare.ts';
-import { FIXTURES, pathOf } from './fixtures.ts';
-import { wordsFixtures } from './wordsOnly.ts';
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 
-const WORDS = process.argv.includes('--words');
-// fixtures/, and the fit's fixtures beside its tests (tools/fixtures.ts);
-// with --words, only those that can read the words.
-const WRITTEN = WORDS ? [...(await wordsFixtures(FIXTURES)).keys()].map(pathOf) : ['fixtures/', 'fit/tests/*.json'];
-const tracked = WRITTEN.length === 0 ? [] : git('ls-files', '--', ...WRITTEN).split('\n').filter((f) => f.endsWith('.json'));
+// fixtures/, and the fit's fixtures beside its tests (tools/fixtures.ts).
+const WRITTEN = ['fixtures/', 'fit/tests/*.json'];
+const tracked = git('ls-files', '--', ...WRITTEN).split('\n').filter((f) => f.endsWith('.json'));
 const before = new Map(tracked.filter((f) => existsSync(f)).map((f) => [f, readFileSync(f, 'utf8')]));
 
-execFileSync(process.execPath, ['tools/fixtures.ts', ...(WORDS ? ['--words'] : [])], { stdio: 'inherit' });
+execFileSync(process.execPath, ['tools/fixtures.ts'], { stdio: 'inherit' });
 
-const untracked = WRITTEN.length === 0 ? [] : git('ls-files', '--others', '--exclude-standard', '--', ...WRITTEN).split('\n').filter(Boolean);
+const untracked = git('ls-files', '--others', '--exclude-standard', '--', ...WRITTEN).split('\n').filter(Boolean);
 
 let failed = false;
 for (const file of untracked) {
@@ -86,4 +79,4 @@ if (failed) {
   console.error('fixtures:check: the fixtures were not what the TypeScript makes now, and are written afresh. If the change is meant, commit them (`git diff -- fixtures/ fit/tests/`); never edit them by hand.');
   process.exit(1);
 }
-console.log(`fixtures:check: ${tracked.length} fixtures${WORDS ? ', those that can read the words,' : ''} agree with the TypeScript`);
+console.log(`fixtures:check: ${tracked.length} fixtures agree with the TypeScript`);

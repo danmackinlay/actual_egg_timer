@@ -8,8 +8,6 @@
  * in `src/core/` first, and `npm test` should be what catches it.
  *
  * Run: npm run fixtures
- *      npm run fixtures -- --words   only those that can read the words
- *                                    (tools/wordsOnly.ts)
  *
  * One file per part of the core, each held by a Swift suite of the same name
  * and built by the module of the same name in tools/fixtures/ (what more than
@@ -360,17 +358,10 @@ if (!isMainThread) {
     ? laidOut(job.name, await FIXTURES[job.name]())
     : await PARTS[job.name].part(job.part));
 } else if (import.meta.main) {
-  // --words: only the fixtures that can read the words (tools/wordsOnly.ts),
-  // for the words' editor's save; each is made as a full run makes it.
-  const words = process.argv.includes('--words');
-  const names = words ? [...(await (await import('./wordsOnly.ts')).wordsFixtures(FIXTURES)).keys()] : Object.keys(FIXTURES);
+  const names = Object.keys(FIXTURES);
   const made = await makeAll(names, availableParallelism());
   mkdirSync('fixtures', { recursive: true });
   for (const name of names) replaceFile(pathOf(name), (made.get(name) as Made).text);
-  if (words) {
-    console.log(`the fixtures that read the words written: ${names.map(pathOf).join(', ')}`);
-  } else {
-    const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
-    console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
-  }
+  const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
+  console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
 }
