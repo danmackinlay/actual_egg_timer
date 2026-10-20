@@ -79,9 +79,9 @@ and the map of the documents are `CLAUDE.md`.
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
 15. **A web app for the owner to edit the words** (`npm run copy:edit`,
-    planned in `.claude/HANDOFF-13-copy-editor.md`): the review queue on
-    his phone, served from the Mac over the local network behind a token,
-    each key editable in place and checked as he types by the tests' own
+    planned in `.claude/HANDOFF-13-copy-editor.md`): the review queue at
+    his desk, served on localhost behind a token and laid out for a wide
+    screen and a keyboard, each key editable in place and checked as he types by the tests' own
     rules; saving runs `npm test` and `fixtures:check` and commits the
     catalogue by name; approving is his button. Never deployed, never
     pushes.
