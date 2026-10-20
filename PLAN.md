@@ -78,15 +78,7 @@ and the map of the documents are `CLAUDE.md`.
     tap, never at launch; the number stays the cook's to change. The
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
-15. **A cold pan starts at the tap's temperature** (approved; planned in
-    `.claude/reports/PLAN-12-cold-pan.md`). One tap value, the one
-    running water already keeps, shown in the start's panel for a cold
-    start as in the cooling's for running water; blank means
-    `T_COLD_TAP_C`, so every untouched cold start lengthens by about 10 s
-    (13 s with the heat off). A new optional `panStart_C` in the record,
-    so an egg already kept replays as it was cooked; the web deploys with
-    or before the iOS build that writes it.
-16. **A web app for the owner to edit the words** (`npm run copy:edit`,
+15. **A web app for the owner to edit the words** (`npm run copy:edit`,
     planned in `.claude/HANDOFF-13-copy-editor.md`): the review queue on
     his phone, served from the Mac over the local network behind a token,
     each key editable in place and checked as he types by the tests' own

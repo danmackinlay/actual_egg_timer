@@ -369,7 +369,7 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     assumed, feeds the model wherever the room was assumed: the air the eggs
     cool in, the water left to stand, and an egg left out at room
     temperature. A cold pan starts at the cold tap's temperature, not the
-    room's (NNN). The room is shown with or without the probe, in
+    room's (144). The room is shown with or without the probe, in
     the setup sentence's panels where it changes the answer (143). Without a
     measured room, the old rule stands that the room needs no input of its
     own. The record's `ambient_C` already holds the room, so no record
@@ -1010,17 +1010,17 @@ Decided by the owner, 20 October 2026:
     one value in one store, each row editing it: beside "at room
     temperature" (an egg left out, 4.8 s a degree), under the heat off,
     lid on (the pan cools toward it: half a second a degree on a cold
-    start, whose pan starts at the tap (NNN), 12 s on a boiling one), and under the air (the egg cools toward it). Not under
+    start, whose pan starts at the tap (144), 12 s on a boiling one), and under the air (the egg cools toward it). Not under
     a bowl, whose water's temperature is asked there itself and assumed at
     the room, so a room row beside it would ask the same thing less
     directly and do nothing once the water's is given; not under an egg
     cup, opened too soon for the room to move the yolk by a tenth of a
     second; not under a cold start kept boiling, where the room changes
-    nothing, since the pan starts at the cold tap's temperature (NNN). The
+    nothing, since the pan starts at the cold tap's temperature (144). The
     room feeds every path 79 lists. No store, key or correction group
     changes: a correction's group is the choice it makes, wherever its
     control sits (139).
-NNN. **A cold pan starts at the cold tap's temperature, one number with
+144. **A cold pan starts at the cold tap's temperature, one number with
     running water's.** The owner, 20 October 2026: "so we could add a row
     for this near the room temperature? approved". A cold pan is filled
     from the cold tap, which is usually colder than the room, so its ramp

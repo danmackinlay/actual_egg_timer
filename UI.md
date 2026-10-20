@@ -206,7 +206,7 @@ cools change nothing, so the sentence leaves them out.
   water, heat off and lid on"). Under the three starts, Once it's boiling
   (Keep boiling / Heat off, lid on), and under it the water in the pan,
   shown for every pan start; neither in sous-vide. Under the water, for
-  Cold water only, its temperature (`DECISIONS.md` NNN): the cold tap's,
+  Cold water only, its temperature (`DECISIONS.md` 144): the cold tap's,
   which a cold pan starts at, one number with running water's in the
   cooling's panel, each row editing it; optional, greyed at the 15 °C
   assumed. The sentence does not name it. The readout's line says "lid on"

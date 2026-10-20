@@ -344,7 +344,7 @@ fit's training data cannot drift between the two.
 - `ambient_C` is recorded rather than re-derived from the egg's start
   temperature, so a change to that rule cannot quietly change a replay.
 - `panStart_C` is the water a cold pan started at (20 October 2026,
-  `DECISIONS.md` NNN): the cold tap's, the cook's own or 15 °C assumed,
+  `DECISIONS.md` 144): the cold tap's, the cook's own or 15 °C assumed,
   written on every cold start whether given or not, so a replay never leans
   on the default, and never on a hot start, which refuses it. Absent on a
   cold start, the record is from before it, when the pan started at the
