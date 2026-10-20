@@ -9,9 +9,8 @@ import Foundation
 /// it needs, the effects and the readout. Each trace is a test of its own,
 /// so the traces run side by side.
 ///
-/// The plan is held whole in running.json; here the fixture writes what the
-/// machine moves of it (`planRow` in tools/fixtures/shared.ts), and so does
-/// this. Every clock time is compared as seconds from the cook's start.
+/// The fixture writes what the machine moves of the plan (`planRow` in
+/// tools/fixtures/shared.ts), as running.json does, and so does this. Every clock time is compared as seconds from the cook's start.
 
 /// A step as the fixture writes what it made.
 private struct StepRow: Encodable {
