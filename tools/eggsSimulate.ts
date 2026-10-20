@@ -14,7 +14,7 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/constants.ts';
-import { buildDoseGrid } from '../src/core/doseGrid.ts';
+import { type GridRequest, LOG_FLOOR, buildDoseGrid } from '../src/core/doseGrid.ts';
 import { eggFromMass } from '../src/core/geometry.ts';
 import {
   FEEDBACK_BAND, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
@@ -148,6 +148,7 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
     };
     truths.push(c);
     const kitchen = kitchenOf(u);
+    const solves = new Map<number, ReturnType<typeof solveCookTime>>();
     const probes = !restsInAir(kitchen.setup.cooling) && u() < 0.15;
     const alpha = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * c.z);
     const eggs = 3 + Math.floor(u() * 8);
@@ -160,7 +161,13 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
       const egg = eggFromMass(kitchen.mass_g / 1000);
       // Cooked at the literature's time for the level, nudged as a sharing
       // cook's is: the fit sees eggs either side of the surface.
-      const solved = solveCookTime(egg, kitchen.setup, DEFAULT_PARAMS, donenessFromSlider(level));
+      // A kitchen cooks most of its eggs at one level, so each level's solve
+      // is made once.
+      let solved = solves.get(level);
+      if (solved === undefined) {
+        solved = solveCookTime(egg, kitchen.setup, DEFAULT_PARAMS, donenessFromSlider(level));
+        solves.set(level, solved);
+      }
       const nudge = nudgeSeconds(u());
       const time = solved.result.cookTime_s + nudge;
       const truly = simulate(egg, kitchen.setup, { alpha_m2s: alpha }, time);
@@ -254,6 +261,24 @@ export interface Emulated {
   eggs: unknown[];
 }
 
+/** The first column of the surface `q` asks for, the egg's own cook time,
+ *  cell for cell as buildDoseGrid makes it: the second column, a second on,
+ *  is there only for the likelihood checks' lookups, so an egg not checked
+ *  is spared its simulations. */
+function columnAt(q: GridRequest): { logYolk: number[]; logWhite: number[]; peak: number[] } {
+  const logAlphaMin = Math.log(q.spec.alphaMin);
+  const logAlphaStep = (Math.log(q.spec.alphaMax) - logAlphaMin) / (q.spec.alphaCount - 1);
+  const log = (v: number): number => (v <= 1e-12 ? LOG_FLOOR : Math.log10(v));
+  const out = { logYolk: [] as number[], logWhite: [] as number[], peak: [] as number[] };
+  for (let ai = 0; ai < q.spec.alphaCount; ai++) {
+    const r = simulate(q.egg, q.setup, { alpha_m2s: Math.exp(logAlphaMin + logAlphaStep * ai) }, q.spec.timeMin_s);
+    out.logYolk.push(log(r.yolkDose_min));
+    out.logWhite.push(log(r.whiteDose_min));
+    out.peak.push(r.peakYolk_C);
+  }
+  return out;
+}
+
 /** Every line's egg that teaches, emulated; `checked` of them carry the
  *  app's own likelihood beside, for fit/tests/test_likelihood.py. */
 export function emulate(lines: Line[], checked = CHECKED_EGGS): Emulated {
@@ -291,9 +316,11 @@ export function emulate(lines: Line[], checked = CHECKED_EGGS): Emulated {
     const q = gridRequestFor(start, r, () => ({
       alphaMin: alphaMin, alphaMax: alphaMax, alphaCount: Z_GRID.length, timeMin_s: t, timeMax_s: t + 1, timeCount: 2,
     }));
-    const g = buildDoseGrid(q.egg, q.setup, q.spec);
+    const g = checks.length < checked ? buildDoseGrid(q.egg, q.setup, q.spec) : null;
     const column = (table: number[]): number[] => Z_GRID.map((_, i) => table[i * 2]);
-    if (checks.length < checked) {
+    const at = g === null ? columnAt(q)
+      : { logYolk: column(g.logYolk), logWhite: column(g.logWhite), peak: column(g.peakYolk_C) };
+    if (g !== null) {
       const target = logYolkTarget(r.level);
       const reading = r.probe === null ? null : r.probe.centre_C;
       checks.push({
@@ -318,7 +345,7 @@ export function emulate(lines: Line[], checked = CHECKED_EGGS): Emulated {
       yolk: read.yolk, yolkWord: r.yolkWord === null ? null : yolkWordIndex(r.yolkWord),
       white: r.white === null ? null : WHITE_REPORTS.indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,
-      logYolk: column(g.logYolk), logWhite: column(g.logWhite), peak: column(g.peakYolk_C),
+      logYolk: at.logYolk, logWhite: at.logWhite, peak: at.peak,
       forecast: r.forecast,
     });
   }

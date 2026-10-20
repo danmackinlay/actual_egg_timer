@@ -9,8 +9,7 @@ import {
 import { decideAt, decisionApplies } from '../../src/core/decide.ts';
 import { logYolkTarget } from '../../src/core/solve.ts';
 
-import { DECIDE_GRID, meanSolve } from './decide.ts';
-import { outcomePosteriors } from './outcome.ts';
+import { DECIDE_GRID, meanSolve, outcomePosteriors } from './posteriors.ts';
 
 /* Four parts. The word asked at every slider position, and at each place
  * the word changes. Each word's band on the slider, whose edges the bracket

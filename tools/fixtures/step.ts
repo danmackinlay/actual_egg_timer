@@ -29,7 +29,7 @@ import {
 import { type Readout, type ReadoutProbe, readoutAt } from '../../src/core/readout.ts';
 import { type CookEnv, type CookEvent, type CookState, type CookStep, step } from '../../src/core/step.ts';
 
-import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
+import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './posteriors.ts';
 import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
 
 const S = START_S;

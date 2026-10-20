@@ -20,7 +20,7 @@ import {
 
 import {
   DECIDE_EGG, DECIDE_PARTICLES, DECIDE_SEED, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors,
-} from './decide.ts';
+} from './posteriors.ts';
 import { particleRows } from './shared.ts';
 import { referenceSetup } from '../common.ts';
 

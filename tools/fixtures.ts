@@ -13,8 +13,9 @@
  *
  * One file per part of the core, each held by a Swift suite of the same name
  * and built by the module of the same name in tools/fixtures/ (what more than
- * one of them uses is in tools/fixtures/shared.ts, and the English catalogue
- * in tools/fixtures/english.ts):
+ * one of them uses is in tools/fixtures/shared.ts, the decisions' pot,
+ * surface and posteriors in tools/fixtures/posteriors.ts, and the English
+ * catalogue in tools/fixtures/english.ts):
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
@@ -83,7 +84,8 @@
  * Each fixture is made in a worker thread of its own, as many at once as the
  * machine has cores, the slowest first: a fixture module computes its
  * fixture when it is imported, and a module another imports for its
- * constants is one that computes nothing (tools/fixtures/shared.ts). Nothing
+ * constants computes nothing more than they need (tools/fixtures/shared.ts,
+ * posteriors.ts). Nothing
  * is written until every fixture is made, and then in the order below.
  */
 

@@ -21,7 +21,7 @@ import {
   type RecordContext, asRanCorrected, asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan,
 } from '../../src/core/asRan.ts';
 
-import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
+import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './posteriors.ts';
 import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
 
 /* The egg and the pot (`cookSetupOf`) for choices across every branch: a
