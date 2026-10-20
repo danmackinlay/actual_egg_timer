@@ -78,19 +78,14 @@ and the map of the documents are `CLAUDE.md`.
     tap, never at launch; the number stays the cook's to change. The
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
-15. **A web app for the owner to edit the words** (`npm run copy:edit`,
-    planned in `.claude/HANDOFF-13-copy-editor.md`): the review queue at
-    his desk, served on localhost behind a token and laid out for a wide
-    screen and a keyboard, each key editable in place and checked as he types by the tests' own
-    rules; saving runs `npm test` and `fixtures:check` and commits the
-    catalogue by name; approving is his button. Never deployed, never
-    pushes.
 
-Not until the owner asks: dimming the time slightly while a newer answer is on
-its way, never delaying the number instead; the egg lab
-(`tools/egg-section.html`) as an About page; an iPad layout (`DECISIONS.md`
-50); other birds' eggs, emu first, with their own shape, composition and
-shell (34).
+Not until the owner asks: the words in place from `copy:edit`, each key linked
+to the web screens that show it and a draft previewed there (a dev-only hook
+recording which keys each `copy:snapshot` state renders, and a preview build
+the editor serves); dimming the time slightly while a newer answer is on its
+way, never delaying the number instead; the egg lab (`tools/egg-section.html`)
+as an About page; an iPad layout (`DECISIONS.md` 50); other birds' eggs, emu
+first, with their own shape, composition and shell (34).
 
 ## The owner's open decisions
 
