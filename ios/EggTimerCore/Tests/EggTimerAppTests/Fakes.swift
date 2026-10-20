@@ -300,9 +300,9 @@ final class HeldBefore: LearnedBefore {
 /// What was said to VoiceOver, in order.
 final class Announced: @unchecked Sendable {
     private let lock = NSLock()
-    private var said: [String] = []
-    var all: [String] { lock.withLock { said } }
-    func add(_ s: String) { lock.withLock { said.append(s) } }
+    private var said: [Words] = []
+    var all: [Words] { lock.withLock { said } }
+    func add(_ s: Words) { lock.withLock { said.append(s) } }
 }
 
 /// The planners a test made, held weakly. The app's globals - the store,

@@ -117,9 +117,9 @@ final class CookCard {
     private static func description(_ cook: RunningCook, _ plan: CookPlan) -> CookActivity.Description {
         let ran = asRanShown(cook, plan: plan)
         return CookActivity.Description(
-            doneness: tr(anchorNear(ran?.level ?? plan.answer.level).key, in: cook.lang),
-            peakYolk: showIn(cook.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC),
-            eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000),
+            doneness: tr(anchorNear(ran?.level ?? plan.answer.level).key, in: cook.lang).string,
+            peakYolk: showIn(cook.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC).string,
+            eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000).string,
             cooling: cook.choices.cooling.rawValue
         )
     }

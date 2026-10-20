@@ -14,7 +14,7 @@ struct ActualEggTimerApp: App {
         Services.ringer = Ringer.shared
         Services.sharing = Sharing.shared
         Services.card = LiveActivityCard()
-        Services.announce = { UIAccessibility.post(notification: .announcement, argument: $0) }
+        Services.announce = { UIAccessibility.post(notification: .announcement, argument: $0.string) }
         DebugLog.appActive = { UIApplication.shared.applicationState == .active }
         // Before anything is written: what 0.5.1 kept of sharing and the
         // learning in the standard domain carried into the suite, so what it

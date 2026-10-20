@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import EggTimerCore
 import EggTimerCopy
+import EggTimerShared
 
 /// The doneness slider, whose track is the yolk (UI.md section 8, "the track
 /// is a yolk"): the system's thumb, its drag and its VoiceOver adjusting, on
@@ -20,8 +21,8 @@ struct YolkSlider: UIViewRepresentable {
     /// The slider's grid: the web's `step="0.01"`.
     let step: Double
     /// What VoiceOver calls it, and what it reads as its value.
-    let label: String
-    let valueText: String
+    let label: Words
+    let valueText: Words
     /// Where the thumb's centre stops short of each end, pt: half a thumb.
     @Binding var inset: CGFloat
     /// The finger comes down on the slider (true) and lifts (false): while a
@@ -54,8 +55,8 @@ struct YolkSlider: UIViewRepresentable {
             slider.value = Float(value)
             context.coordinator.sent = nil
         }
-        slider.accessibilityLabel = label
-        slider.accessibilityValue = valueText
+        slider.accessibilityLabel = label.string
+        slider.accessibilityValue = valueText.string
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }

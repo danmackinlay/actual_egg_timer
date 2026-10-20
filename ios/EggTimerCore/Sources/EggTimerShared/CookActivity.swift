@@ -91,7 +91,7 @@ public struct CookActivity: Codable, Hashable, Sendable {
         case opening
 
         /// The stage's name, in the activity's language.
-        public func title(in lang: String) -> String {
+        public func title(in lang: String) -> Words {
             switch self {
             case .heating: tr(.`activity.stage.heating`, in: lang)
             case .cooking: tr(.`activity.stage.cooking`, in: lang)

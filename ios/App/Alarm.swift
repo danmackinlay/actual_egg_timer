@@ -176,15 +176,15 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         return Set(pending.compactMap { ours[$0.identifier] })
     }
 
-    private func request(id: String, moment: RingDeadline, at date: Date, title: String, body: String) {
+    private func request(id: String, moment: RingDeadline, at date: Date, title: Words, body: Words) {
         // The system's seconds to the moment: under a debug build's fast
         // clock, the cook's interval scaled (`AppClock`).
         let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
+        content.title = title.string
+        content.body = body.string
         // The cook's sound: whole periods of it, under the
         // 30 s past which iOS plays its default instead (tools/sounds.ts).
         let file = AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment)

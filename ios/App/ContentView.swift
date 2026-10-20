@@ -258,7 +258,7 @@ struct ContentView: View {
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 8)
-            .accessibilityLabel(withoutLongS(title))
+            .accessibilityLabel(withoutLongS(title.string))
             .accessibilityAddTraits(.isHeader)
     }
 

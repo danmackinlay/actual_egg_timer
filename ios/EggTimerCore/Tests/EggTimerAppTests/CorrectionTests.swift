@@ -622,11 +622,11 @@ extension AppTests {
         await started(model, world)
         let t0 = try #require(model.cook.running).startedAtS
         let lead = { (key: CopyKey) in
-            tr(key, ["low": .text("\u{1}"), "high": .text("\u{1}")]).components(separatedBy: "\u{1}")[0]
+            tr(key, ["low": .text("\u{1}"), "high": .text("\u{1}")]).string.components(separatedBy: "\u{1}")[0]
         }
         let out = lead(.`certainty.timeOut`)
         #expect(out != lead(.`certainty.time`))
-        let range = { ReadoutWords(model, phase: model.cook.phase, nowS: world.clock.seconds).range ?? "" }
+        let range = { ReadoutWords(model, phase: model.cook.phase, nowS: world.clock.seconds).range?.string ?? "" }
         await tick(at: t0 + 299, model, world)
         #expect(range().hasPrefix(out))
         await correct(at: t0 + 300, model, world) { model.planner.start = .cold }

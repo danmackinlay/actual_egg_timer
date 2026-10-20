@@ -161,7 +161,7 @@ struct YolkBracket: View {
 
 /// The bracket in words, for VoiceOver: "Likely yolk: Soft to Fudgy", or one
 /// word when the interval is one (core's `rangeWords`).
-private func rangeText(_ w: WordCertainty) -> String {
+private func rangeText(_ w: WordCertainty) -> Words {
     let r = rangeWords(w)
     return trChosen(r.key, r.args.mapValues { .text(tr($0)) })
 }

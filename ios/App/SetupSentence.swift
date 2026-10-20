@@ -64,8 +64,8 @@ struct SetupSentence: View {
                         .accessibilityIdentifier("sentence")
                     ForEach(shown) { clause in
                         Button(tr(.`setup.clause`, [
-                            "label": .text(texts[clause]?.label ?? ""),
-                            "value": .text(texts[clause]?.value ?? ""),
+                            "label": .text(texts[clause]?.label ?? .none),
+                            "value": .text(texts[clause]?.value ?? .none),
                         ])) {
                             guard editable else { return }
                             onTap(clause)
@@ -83,7 +83,7 @@ struct SetupSentence: View {
                 out += AttributedString(String(part))
                 continue
             }
-            var run = AttributedString(text.text)
+            var run = AttributedString(text.text.string)
             run.link = URL(string: "\(Self.scheme)://\(clause.rawValue)")
             run.font = .app(.title3, weight: .semibold, size: dynamicTypeSize)
             run.underlineStyle = Text.LineStyle(pattern: .solid, color: Palette.accent)
@@ -163,7 +163,7 @@ struct ClausePanel: View {
         }
     }
 
-    private var moreText: String {
+    private var moreText: Words {
         switch clause {
         case .egg: tr(.`controls.egg.more`)
         case .from: tr(.`controls.eggFrom.more`)
@@ -271,13 +271,13 @@ struct ClausePanel: View {
 
     /// What the (i) beside a cold pan's water says: the tap assumed when it
     /// is left blank, and that running water's is the same number.
-    private var panWaterMore: String {
+    private var panWaterMore: Words {
         tr(.`controls.panWater.more`, ["water": .text(planner.show(.temperature, Constants.tColdTapC))])
     }
 
     /// What the (i) beside the water's temperature says: the temperature
     /// assumed when it is left blank, and why it may be otherwise.
-    private var coolingWaterMore: String {
+    private var coolingWaterMore: Words {
         let assumed = planner.show(.temperature, planner.coolingWaterAssumedC)
         return planner.settings.cooling == .tap
             ? tr(.`controls.coolingWater.tap.more`, ["water": .text(assumed)])
@@ -300,7 +300,7 @@ struct ClausePanel: View {
                     .fixedSize()
                     // The stepper says it, as its value.
                     .accessibilityHidden(true)
-                Stepper(tr(.`controls.startedAt`)) {
+                Stepper(tr(.`controls.startedAt`).string) {
                     inHand.stepStart(up: true)
                 } onDecrement: {
                     inHand.stepStart(up: false)
@@ -417,7 +417,7 @@ struct ClausePanel: View {
     }
 
     /// A size class's name and its mass, in the cook's units.
-    private func sizeLabel(_ c: SizeClass) -> String {
+    private func sizeLabel(_ c: SizeClass) -> Words {
         let label = sizeClassLabel(c, system: planner.units)
         return tr(label.key, ["mass": .text(tr(label.mass.key, ["value": .fixed(label.mass.value)]))])
     }

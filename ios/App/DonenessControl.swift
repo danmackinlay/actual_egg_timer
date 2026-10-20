@@ -207,7 +207,7 @@ struct DonenessControl: View {
 
     /// At the end of the slider's heading: the peak yolk the level asks for,
     /// or in sous-vide the water's temperature.
-    private func donenessPeak(_ r: SliderReading) -> String {
+    private func donenessPeak(_ r: SliderReading) -> Words {
         if r.sousVide {
             return tr(.`controls.doneness.bath`, ["bath": .text(planner.show(.temperature, sousVideBathC))])
         }
@@ -215,7 +215,7 @@ struct DonenessControl: View {
     }
 
     /// The slider's value to VoiceOver: the doneness word and the temperature.
-    private func donenessValue(_ r: SliderReading) -> String {
+    private func donenessValue(_ r: SliderReading) -> Words {
         if r.sousVide {
             return tr(.`controls.doneness.valueBath`, [
                 "doneness": .text(planner.label), "bath": .text(planner.show(.temperature, sousVideBathC)),
