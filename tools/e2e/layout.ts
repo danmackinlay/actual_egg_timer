@@ -1,18 +1,47 @@
 /**
  * The one screen's layout and what it reads: the screen at two widths from
- * idle to Done, the egg's readings, the likely band, the sentence and the
- * likely time range; and the egg's weight box, focused while the girth is
+ * idle to Done, the egg's readings, the likely band, the sentence, the
+ * likely time range and where the certainty line shows, and the sound
+ * button's words; and the egg's weight box, focused while the girth is
  * stepped, and typed in. Run by tools/e2e.ts.
  */
 
 import { wordBandHigh, wordBandLow } from '../../src/core/certainty.ts';
 import { eggFromMinorDiameter } from '../../src/core/geometry.ts';
 import type { ElementId } from '../../src/ui/dom.ts';
-import { Failure, type Scenario, type Snap, byId, check } from '../harness.ts';
+import { STORES, stamped } from '../../src/ui/stores.ts';
+import { Failure, type Scenario, type Snap, type Tab, byId, check } from '../harness.ts';
 import {
   COOLINGS, STOPPED, boil, clockAt, corrected, deadlines, later, near, oneLayout, panelStart, pick, press,
   sentenceSays, setSlider, start,
 } from './helpers.ts';
+
+/** Whether the certainty line belongs on screen, from the page's state
+ *  alone: a pan time to be sure of, which is idle's once it is decided and
+ *  a running cook's until the pull, and only where the white sets in that
+ *  time; never in sous-vide, which answers in hours with no pan to be
+ *  unsure of. */
+function certaintyWanted(s: Snap): boolean {
+  if (s.settings.startMode === 'sous' || s.whiteSets !== true) return false;
+  if (s.phase === 'IDLE') return s.chosen !== null;
+  return (s.phase === 'HEATING' || s.phase === 'COOKING') && s.certainty !== null;
+}
+
+/** Once the page is idle, the certainty line shown exactly where the state
+ *  says (`certaintyWanted`), which is `shown` for the state named; and
+ *  idle, but in sous-vide, with a time decided. */
+async function certaintyAsState(tab: Tab, name: string, shown: boolean): Promise<string> {
+  await tab.settle();
+  const s = await tab.snap();
+  check(s.settings.startMode === 'sous' || s.phase !== 'IDLE' || s.chosen !== null, `${name}: idle with no time decided`);
+  const wanted = certaintyWanted(s);
+  check(wanted === shown, `${name} (${s.phase}, ${s.settings.startMode}, the white ${s.whiteSets === true ? 'sets' : 'does not set'}): `
+    + `the state says the line is ${wanted ? '' : 'not '}wanted`);
+  const drawn = await tab.eval<boolean>(`(() => { const line = ${byId('certaintyWord')}; const box = line.getBoundingClientRect();
+    return !line.hidden && box.width > 0 && box.height > 0 && line.textContent.trim() !== ''; })()`);
+  check(drawn === wanted, `${name}: the certainty line ${wanted ? 'missing' : 'shown'}`);
+  return `${name} ${drawn ? 'shown' : 'hidden'}`;
+}
 
 export const layoutScenarios: Record<string, Scenario> = {
   'one-layout': {
@@ -331,6 +360,70 @@ export const layoutScenarios: Record<string, Scenario> = {
       const at20 = await tab.eval<string>(line);
       check(at20 !== at16, `the range moved with the guess: still "${at16}"`);
       return `cooking: "${cooking}"; heating 16:00: "${at16}"; 20:00: "${at20}"`;
+    },
+  },
+
+  'certainty-line': {
+    what: 'the certainty line is on screen exactly where there is a pan time to be sure of: at idle once decided, and in a running cook until the pull; never where the white does not set, in sous-vide, or from the pull on; idle always has a time decided',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      const seen: string[] = [];
+      seen.push(await certaintyAsState(tab, 'idle, cold', true));
+      await tab.click('#startHot');
+      await tab.until("__snap().settings.startMode === 'hot'", 'a hot start chosen');
+      seen.push(await certaintyAsState(tab, 'idle, hot', true));
+      await tab.click('#startSous');
+      await tab.until("__snap().settings.startMode === 'sous'", 'sous-vide chosen');
+      seen.push(await certaintyAsState(tab, 'sous-vide', false));
+      await tab.click('#startCold');
+      await tab.until("__snap().settings.startMode === 'cold'", 'a cold start chosen');
+      await start(tab, 'cold');
+      seen.push(await certaintyAsState(tab, 'heating', true));
+      const s = await boil(tab);
+      seen.push(await certaintyAsState(tab, 'cooking', true));
+      await tab.shiftTo(deadlines(s).cookEnd_s + 3);
+      await tab.phase('PULL');
+      seen.push(await certaintyAsState(tab, 'the pull', false));
+      await tab.click('#primary');
+      await tab.phase('COOLING');
+      seen.push(await certaintyAsState(tab, 'cooling', false));
+      await tab.shiftTo(deadlines(await tab.snap()).coolEnd_s + 1);
+      await tab.phase('DONE');
+      seen.push(await certaintyAsState(tab, 'Done', false));
+      // A pot too small to set the white of the softest egg: everything
+      // cleared and the settings planted from a page of the site with no app
+      // on it, so the app boots on them.
+      const never = { sizeIndex: 0, startMode: 'hot', afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 0 };
+      await tab.goto(`${h.origin}/privacy/`, false);
+      await tab.eval(`(() => { localStorage.clear(); localStorage.setItem('${STORES.settings.key}',
+        ${JSON.stringify(JSON.stringify(stamped(STORES.settings, never)))}); })()`);
+      await tab.goto(`${h.origin}${STOPPED}`);
+      seen.push(await certaintyAsState(tab, 'the white never sets', false));
+      return seen.join('; ');
+    },
+  },
+
+  'mute-words': {
+    what: 'the sound button says what the setting is, and is pressed when muted: at boot, after a tap, and after another',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.settle();
+      const said: string[] = [];
+      for (let taps = 0; taps < 3; taps++) {
+        if (taps > 0) {
+          await tab.click('#mute');
+          await tab.settle();
+        }
+        const m = await tab.eval<{ muted: boolean; words: string; pressed: string | null }>(`(() => ({
+          muted: __snap().settings.muted, words: ${byId('mute')}.textContent,
+          pressed: ${byId('mute')}.getAttribute('aria-pressed') }))()`);
+        check(m.muted === (taps % 2 === 1), `${taps} taps: muted ${m.muted}`);
+        const want = await tab.words(m.muted ? 'readout.mute.off' : 'readout.mute.on');
+        check(m.words === want && m.pressed === String(m.muted), `${taps} taps, muted ${m.muted}: "${m.words}", `
+          + `aria-pressed ${m.pressed}; want "${want}"`);
+        said.push(`"${m.words}"`);
+      }
+      return said.join(', then ');
     },
   },
 
