@@ -31,6 +31,26 @@ export function git(cwd: string, ...args: string[]): string {
   return execFileSync('git', args, { cwd: cwd, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
 
+/** A file as a commit has it, to the byte. */
+export function showFile(cwd: string, commit: string, path: string): string {
+  return execFileSync('git', ['show', `${commit}:${path}`], { cwd: cwd, encoding: 'utf8', maxBuffer: 1 << 28 });
+}
+
+/** The paths with changes git has not committed, under `paths` (every path
+ *  when none), untracked files among them. */
+export function changedPaths(cwd: string, ...paths: string[]): string[] {
+  const out = execFileSync('git', ['status', '--porcelain', '-z', '--untracked-files=all', '--', ...paths],
+    { cwd: cwd, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // Each entry is "XY path", and a rename's is followed by its old path.
+  const fields = out.split('\0').filter(Boolean);
+  const changed: string[] = [];
+  for (let i = 0; i < fields.length; i++) {
+    changed.push(fields[i].slice(3));
+    if (/^[RC]/.test(fields[i])) i += 1;
+  }
+  return changed;
+}
+
 /** Whether copy/ has changes git has not committed. */
 export function copyIsDirty(cwd: string = '.'): boolean {
   return git(cwd, 'status', '--porcelain', '--', 'copy') !== '';
