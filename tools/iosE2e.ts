@@ -304,11 +304,11 @@ function actionAbove(run: Run, l: Layout, when: string): void {
 }
 
 /// Under the action's row, at the default text size where it is one row,
-/// nothing empty: the slider the stack's spacing (22 pt) under the main
+/// nothing empty: the slider the stack's spacing (18 pt) under the main
 /// button's foot.
 function nothingEmpty(run: Run, l: Layout, when: string): void {
-  run.check(l.main != null && l.slider != null && near(l.slider - l.main, 22, 1),
-    `${when}: ${num(l.slider) - num(l.main) - 22} pt empty under the row (main button's foot ${l.main}, slider ${l.slider})`);
+  run.check(l.main != null && l.slider != null && near(l.slider - l.main, 18, 1),
+    `${when}: ${num(l.slider) - num(l.main) - 18} pt empty under the row (main button's foot ${l.main}, slider ${l.slider})`);
 }
 
 scenario('one-layout', 'one layout from idle to Done; the action under the time in one row, nothing empty under it, nothing below it moving in any phase', async (run) => {
