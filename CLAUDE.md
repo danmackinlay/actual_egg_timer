@@ -24,7 +24,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   | documents, comments | nothing |
   | tests, tools | `npm test` |
   | core, fixture generators | `npm test`, `fixtures:check`; `swift test` if the Swift twin moves |
-  | Swift outside the twin | `copy:literals`, `swift test`, `ios:build` |
+  | Swift outside the twin | `swift test`, `ios:build` |
   | words in `copy/` that add no key and change no arguments | `npm test`, `fixtures:check`, which a save from `copy:edit` runs itself |
   | the web's screens (`src/ui`, `index.html`, `styles.css`), or a key or its arguments in `copy/` | the rows above that apply, and `npm run e2e` |
   | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e` |
@@ -114,8 +114,9 @@ next is `PLAN.md`; the last section here says which document holds what.
   written into a call that puts text on screen is words. In Swift the
   app's helpers take `Words`, which only `tr` makes, so the compiler
   refuses one; one in SwiftUI's own calls is a `LocalizedStringKey`,
-  which `npm run ios:build` refuses; and `npm run copy:literals` reads one
-  made a `String` there or in UIKit's, but not one passed through a name.
+  which `npm run ios:build` refuses. A literal made a `String` around
+  the type (`Text(verbatim:)`, `String(format:)`, UIKit's) is read by no
+  tool: no word goes that way, and one would be plain in a diff.
   The web's is `test/uiLiterals.test.ts`, run by `npm test`. What is not
   words is `Text(verbatim:)`. Read
   `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which

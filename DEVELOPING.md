@@ -10,7 +10,7 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 npm install
 npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
 npm test           # the type check, then node --test
-npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
+npm run verify     # the gate: typecheck, test, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run swift:constants  # the Swift core's constants, written from the TypeScript's; the app's colours, from styles.css
 npm run conformance      # fixtures unchanged, then the Swift core against them
@@ -21,7 +21,6 @@ npm run probe      # is a probe thermometer worth an egg? (README §11.3)
                    # (these four are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
-npm run copy:literals    # no literal made a String in a Swift text call is words, and each tr given its key's arguments
 npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html
 npm run copy:edit        # the owner's editor for the words, in his browser on 127.0.0.1 (below)
 npm run copy:edit:e2e    # that editor driven in headless Chrome against a scratch clone
