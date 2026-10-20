@@ -130,10 +130,19 @@ in running water or in the air, not under a cold tap or on a bench
 its own, every kind of placeholder, plural form, fallback and malformed
 brace, so a wording change never rewrites it; both apps must render it
 byte for byte. The shipped catalogues are held by each app's tests
-(`copy.test.ts`, `CopyConformance`):
+(`copy.test.ts`, `CopyConformance`), every catalogue in `copy/` by the same
+checks, which a third, `test/pseudo-cs.json`, proves with a plant each:
 
-- **Placeholder parity.** Every translation uses exactly the same placeholders
-  as the English. A dropped `{limit}` is a sentence that lies about the egg.
+- **Placeholder parity.** Every translation has only the English's keys, and
+  uses exactly the same placeholders as the English. A dropped `{limit}` is a
+  sentence that lies about the egg.
+- **Its own language's plural forms**, by a rule core has that agrees with
+  CLDR's: none its language lacks, and every one a whole count reaches
+  where the English's message varies.
+- **The English's links.** Help cites the same sources in every language.
+- **Numbers from the region.** No template writes a number itself: it comes
+  through a placeholder, in the formatting locale, which a register such as
+  1750 never changes.
 - **Length budget, on the small surfaces.** A tick, a segment, a button, a
   label, a title, the alarm, the Lock Screen and the Dynamic Island each
   have a maximum rendered width, one per surface in `test/data/surfaces.json`,
@@ -390,6 +399,22 @@ The table is the spec for Imperial; the metric steps, and why, are in
   rounding at input shows up in the residuals.
 
 ## 5. Languages
+
+**Adding a language takes a row and a catalogue.** The row is in
+`LANGUAGES` (`src/core/copy.ts`): its tag, and the key of its name in the
+picker. Both pickers, each app's reading of a stored choice and the words'
+editor read the table, and `npm test` writes iOS's copy of it
+(`npm run swift:constants`). The catalogue is `copy/<tag>.json`, which both
+apps ship whole, and which the checks in §2 hold as they hold every other.
+The tests then ask for what the row names:
+
+- the name's key in `copy/en.json`, with its note;
+- the language's subtag in `CFBundleLocalizations` (`ios/project.yml`, then
+  `cd ios && xcodegen`), which `test/languages.test.ts` holds to the table;
+- a language core has no plural rule for needs one, in `pluralCategory`
+  and its Swift twin with rows in `fixtures/copy.json` (§2), and one that
+  writes numbers one way wherever it is read, its region in
+  `OWN_CONVENTION` (`src/core/format.ts`). Czech has both.
 
 **The first one is Czech** (`DECISIONS.md` 15). A friend of the owner will
 review it. Czech is a harder test of the machinery than German would have been,
