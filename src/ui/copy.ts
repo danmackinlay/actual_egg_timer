@@ -131,7 +131,7 @@ export function t<K extends CopyKey>(key: K, ...args: CopyArgsOf<K>): string {
 
 /** A message whose key core chose from several, rendered with every argument
  *  any of them takes: the compiler cannot know which key comes, so which of
- *  the arguments it uses is held by the tests and the copy capture. */
+ *  the arguments it uses is held by the tests. */
 export function tChosen(key: CopyKey, args: CopyArgs): string {
   return render(catalogue(), key, args, formatLocale());
 }

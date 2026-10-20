@@ -1,7 +1,7 @@
 /**
- * What a script driving the page may ask of it (`npm run e2e`, tools/e2e.ts,
- * and the copy capture, tools/copySnapshot.ts): `window.aetTest`, on a page
- * served from this machine only, and not shipped (main.ts, src/ui/dev/).
+ * What a script driving the page may ask of it (`npm run e2e`,
+ * tools/e2e.ts): `window.aetTest`, on a page served from this machine only,
+ * and not shipped (main.ts, src/ui/dev/).
  *
  * The scripts read the page through this and the page itself (what is on
  * screen, what is stored), never by importing the app's modules: a module
@@ -15,10 +15,6 @@
  *                request, for three looks running
  *   t(key, args) the words of a key, as the page renders them
  *   timeOfDay(ms)  a moment, as the page says a time of day
- *
- * `?seed=<n>` on the address seeds the page's one random draw (the nudge,
- * answer.ts), so a capture is the same on every run; it is kept for the tab
- * across a reload, and starts again from the seed at each load.
  */
 
 import type { CertaintyReading } from '../../core/certainty.ts';
@@ -32,7 +28,7 @@ import type { EggRecord } from '../../core/record.ts';
 import { flushDraw, pageModel, pageStores } from '../cook.ts';
 import { t, timeOfDay } from '../copy.ts';
 import { inHand } from '../idle.ts';
-import { isDevHost, nowMs, useRandom } from '../now.ts';
+import { isDevHost, nowMs } from '../now.ts';
 import { jobsAnswered } from '../offThread.ts';
 import { phaseNow } from '../state.ts';
 import { idleSolution } from '../answer.ts';
@@ -171,45 +167,9 @@ function whenIdle(timeout_ms = 60_000): Promise<void> {
   });
 }
 
-/** sessionStorage: this tab's seed, kept across a reload. */
-const SEED_KEY = 'aet.devSeed';
-
-/** A draw from [0, 1) seeded by `seed` (mulberry32). */
-function seeded(seed: number): () => number {
-  let s = seed | 0;
-  return () => {
-    s = (s + 0x6d2b79f5) | 0;
-    let x = Math.imul(s ^ (s >>> 15), 1 | s);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** The seed the address asks for, or the tab kept; taken out of the address. */
-function seedAsked(): number | null {
-  const url = new URL(location.href);
-  const asked = url.searchParams.get('seed');
-  if (asked !== null) {
-    url.searchParams.delete('seed');
-    history.replaceState(history.state, '', url.href);
-  }
-  let kept: string | null = null;
-  try {
-    if (asked !== null) sessionStorage.setItem(SEED_KEY, asked);
-    kept = sessionStorage.getItem(SEED_KEY);
-  } catch {
-    kept = asked;
-  }
-  const seed = kept === null ? NaN : Number(kept);
-  return Number.isInteger(seed) ? seed : null;
-}
-
-/** `window.aetTest`, and the seed asked for; nothing on any host but this
- *  machine. */
+/** `window.aetTest`; nothing on any host but this machine. */
 export function installTestApi(): void {
   if (typeof window === 'undefined' || !isDevHost(location.hostname)) return;
-  const seed = seedAsked();
-  if (seed !== null) useRandom(seeded(seed));
   const api: TestApi = { snapshot: snapshot, whenIdle: whenIdle, t: t, timeOfDay: timeOfDay };
   (window as unknown as { aetTest: TestApi }).aetTest = api;
 }

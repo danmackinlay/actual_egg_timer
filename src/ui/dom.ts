@@ -12,10 +12,10 @@
 /**
  * The page's elements by their ids in index.html, each with its tag: every
  * one the code writes to or reads, and those a script drives (the e2e,
- * tools/e2e/, and the copy capture name them as an `ElementId`), each named
- * once. An id renamed in the markup fails `npm test` (test/dom.test.ts)
- * and boot, where `bindDom` finds each and checks its tag; one renamed here
- * fails the typecheck wherever it is named.
+ * tools/e2e/, names them as an `ElementId`), each named once. An id renamed
+ * in the markup fails `npm test` (test/dom.test.ts) and boot, where
+ * `bindDom` finds each and checks its tag; one renamed here fails the
+ * typecheck wherever it is named.
  */
 export const ELEMENTS = {
   readout: 'section', phaseLabel: 'p', digits: 'span', announce: 'span', sublineText: 'span', sublineInfo: 'button',

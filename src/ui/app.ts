@@ -55,7 +55,6 @@ import { learnBehind } from './effects.ts';
 import type { Model } from './model.ts';
 import { wireViews } from './views.ts';
 import { wireEdits, wireStartTime } from './edit.ts';
-import { random } from './now.ts';
 
 /**
  * Boot: the page's elements found, then whether this tab runs the app or
@@ -121,12 +120,11 @@ function own(reloaded: boolean): void {
   };
   const settings = stores.settings.load();
   useUnits(settings.unitsChosen);
-  // This page's nudge, drawn at boot rather than as a module loads, so
-  // a script's seed (now.ts) is in place for it.
+  // This page's nudge, drawn at boot.
   // For the egg's record: this build, and the population of the prior.
   const initial: Model = {
     ...emptyModel(), settings: settings, boilMemory: stores.pans.load(),
-    calib: learner.calibration(), nudgeDraw: nudgeSeconds(random()), appVersion: APP_VERSION,
+    calib: learner.calibration(), nudgeDraw: nudgeSeconds(Math.random()), appVersion: APP_VERSION,
     prior: activePopulation().id,
   };
   if (!wired) wire();

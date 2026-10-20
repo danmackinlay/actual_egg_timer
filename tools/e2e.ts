@@ -1,9 +1,7 @@
 /**
  * The web app driven end to end, in seconds: the checks that were done by
  * hand, each a named scenario with assertions on the page and on what
- * it stored, and the copy capture's states (tools/copyScenarios.ts), each a
- * scenario too, every state checked for raw keys, straight quotes and the
- * certainty line. The scenarios are in tools/e2e/, a file for each area -
+ * it stored. The scenarios are in tools/e2e/, a file for each area -
  * layout, the cook's flow, corrections, the record and sharing, the stores
  * and versions, tabs - over what they share (tools/e2e/helpers.ts); this
  * file runs them. CI runs them in shards, a job each (tools/e2e/shards.ts):
@@ -11,7 +9,6 @@
  *
  *   npm run e2e                              # build the site, then every scenario
  *   npm run e2e -- reload one-tab-takeover   # only those named (after a build)
- *   npm run e2e -- copy/                     # those whose names start so
  *   npm run e2e -- --tree <dir>              # another checkout's build (harness.ts)
  *   npm run e2e -- --shard 2/4               # the second of four shards (e2e/shards.ts)
  *   node tools/e2e.ts --list
@@ -58,9 +55,8 @@ async function main(): Promise<void> {
   if (at >= 0) args.splice(at, 2);
   const names: string[] = [];
   for (const a of args.length > 0 ? args : Object.keys(all)) {
-    const matched = a.endsWith('/') ? Object.keys(all).filter((n) => n.startsWith(a)) : a in all ? [a] : [];
-    if (matched.length === 0) throw new Error(`no scenario ${a}; --list lists them`);
-    names.push(...matched);
+    if (!(a in all)) throw new Error(`no scenario ${a}; --list lists them`);
+    names.push(a);
   }
   const run = split === null ? names : shard(names, split.i, split.n);
   if (split !== null) console.log(`shard ${split.i} of ${split.n}: ${run.length} of ${names.length} scenarios`);

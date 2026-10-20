@@ -1,15 +1,13 @@
 /**
- * The page's clock and its one random draw: every read of the current time
- * in src/ui/ is `nowMs()`, or `realMs()` for what is not a span of the cook,
- * and the nudge's draw (answer.ts) is `random()`. On the live site, and
- * anywhere but a page served from this machine, they are `Date.now()` and
- * `Math.random()` and nothing else.
+ * The page's clock: every read of the current time in src/ui/ is `nowMs()`,
+ * or `realMs()` for what is not a span of the cook. On the live site, and
+ * anywhere but a page served from this machine, it is `Date.now()` and
+ * nothing else.
  *
  * A page served from localhost or 127.0.0.1 by the development server loads
  * the development tools before the app boots (main.ts, src/ui/dev/), which
  * `npm run build:site` leaves out of the site: the development clock (dev/clock.ts) puts its time
- * here with `useClock`, and a script's seed (dev/test.ts) its draw with
- * `useRandom`. Neither can be reached from anywhere else.
+ * here with `useClock`, which cannot be reached from anywhere else.
  *
  * What follows the clock: every countdown, deadline and record (they read
  * `nowMs()`), the tick (every 0.2 s of the cook's time, `tickMs`), and the
@@ -30,7 +28,6 @@ interface PageClock {
 }
 
 let clock: PageClock | null = null;
-let draw: () => number = Math.random;
 let moved: () => void = () => {};
 
 /** Only these: never the live site, whatever its address says. */
@@ -63,11 +60,6 @@ export function onClockChange(f: () => void): void {
   moved = f;
 }
 
-/** A number from [0, 1): `Math.random()`, or a script's seeded draw. */
-export function random(): number {
-  return draw();
-}
-
 /** The development clock in place of the real one (dev/clock.ts). */
 export function useClock(c: PageClock): void {
   clock = c;
@@ -76,9 +68,4 @@ export function useClock(c: PageClock): void {
 /** The development clock was set: the tick and the beeps take it up. */
 export function clockChanged(): void {
   moved();
-}
-
-/** A seeded draw in place of `Math.random` (dev/test.ts). */
-export function useRandom(f: () => number): void {
-  draw = f;
 }
