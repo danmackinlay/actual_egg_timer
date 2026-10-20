@@ -9,7 +9,8 @@ import EggTimerCopy
 /// same egg reads as 2.4 oz on one and 2.39 on the other. This holds the port
 /// to every conversion, every measure's step and inward-rounded bounds, every
 /// display (including the halves, the limits and not-a-number), and the round
-/// trip of every value every control can hold - about a thousand of them.
+/// trip of every value every control can hold - about a thousand of them,
+/// walked here, the stored values of some held to the fixture's.
 ///
 /// Numbers are compared at 1e-12 relative, like the rest of the port; the TEXT
 /// a cook reads is compared exactly.
@@ -97,8 +98,22 @@ struct UnitsConformance {
                 }
                 try expectClose(si, r.num("si"), "\(q.rawValue) in \(m.unit.rawValue): \(value) stored")
                 #expect(try displayText(m, si) == r.str("text"), "\(q.rawValue) \(value): shown \(displayText(m, si))")
-                #expect(displayText(m, si) == String(format: "%.\(shownDecimals(m, value))f", value), "\(q.rawValue) \(value)")
-                checked += 1
+            }
+            // Every value on the grid, as the generator walks it: typed,
+            // stored and shown again as it was typed.
+            if let bounds = m.bounds {
+                #expect(rows.count >= 2, "\(q.rawValue): the round trip's ends")
+                let round = { (x: Double) in Int((x + 0.5).rounded(.down)) }
+                let (lo, hi) = (round(bounds.lowerBound / m.step), round(bounds.upperBound / m.step))
+                for n in lo...hi {
+                    let value = Double(n) * m.stepNum / m.stepDen
+                    guard let si = parse(m, value) else {
+                        Issue.record("\(q.rawValue) \(value): no reading")
+                        continue
+                    }
+                    #expect(displayText(m, si) == String(format: "%.\(shownDecimals(m, value))f", value), "\(q.rawValue) \(value)")
+                    checked += 1
+                }
             }
             for r in typed {
                 let value = try r.optionalNum("typed") ?? .nan
