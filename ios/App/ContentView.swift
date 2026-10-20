@@ -146,9 +146,11 @@ struct ContentView: View {
                 // In every phase: Settings' altitude corrects a running cook.
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(value: Route.settings) { Text(tr(.`controls.settings`)).barItem() }
+                        .accessibilityIdentifier("bar.settings")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(value: Route.help(nil)) { Text(tr(.`help.link`)).barItem() }
+                        .accessibilityIdentifier("bar.help")
                 }
             }
             .navigationDestination(for: Route.self) { route in

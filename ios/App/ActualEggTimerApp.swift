@@ -5,6 +5,9 @@ import EggTimerApp
 @main
 struct ActualEggTimerApp: App {
     init() {
+        // Where this install's stores are, for the UI tests, which cannot see
+        // the container otherwise.
+        Screenshots.log(.launched(home: NSHomeDirectory()))
         // First: what the app's logic (EggTimerApp) reaches of the phone,
         // before any of it runs (`Services`). The tests put fakes here.
         Services.alarm = Alarm.shared

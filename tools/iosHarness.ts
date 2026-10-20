@@ -3,9 +3,10 @@
 // app a scenario (`Run`): its launches, its clock stepped from outside, its
 // debug log and its stores' plist. `npm run ios:shots` (tools/iosShots.ts)
 // drives it the same way. The web's is tools/harness.ts.
-import { execFileSync, type ExecFileSyncOptions } from 'node:child_process';
+import { execFileSync, type ExecFileSyncOptions, spawnSync } from 'node:child_process';
 import {
-  closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync,
+  closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, rmSync,
+  writeFileSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -60,14 +61,62 @@ export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeou
 
 // ---------------------------------------------------------------- the device
 
+/// The app and its UI tests (ios/UITests), built for a simulator in Debug,
+/// into ios/build/e2e: the app at `APP`, the tests' run at `xctestrun()`.
 export function build(tool = 'e2e'): void {
   console.log(`ios:${tool}: building (Debug, simulator)`);
   out('xcodegen', ['--quiet'], { cwd: 'ios' });
   out('xcodebuild', [
     '-project', 'ActualEggTimer.xcodeproj', '-scheme', 'ActualEggTimer', '-configuration', 'Debug',
     '-destination', 'generic/platform=iOS Simulator', '-derivedDataPath', DERIVED,
-    'CODE_SIGNING_ALLOWED=NO', '-quiet', 'build',
+    'CODE_SIGNING_ALLOWED=NO', '-quiet', 'build-for-testing',
   ], { cwd: 'ios', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 1 << 26 });
+}
+
+/// The UI tests' run as the last build left it: the file `xcodebuild
+/// test-without-building` takes.
+export function xctestrun(): string {
+  const dir = `ios/${DERIVED}/Build/Products`;
+  const found = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.xctestrun')) : [];
+  if (found.length === 0) throw new Error(`no .xctestrun in ${dir}: build first`);
+  return `${dir}/${found[0]}`;
+}
+
+/// What one UI test came to: passed, its failures as XCTest reports them,
+/// the lines it noted (`Run.note`), and how long it took, s.
+export interface UiResult { passed: boolean; failures: string[]; notes: string[]; secs: number; output: string }
+
+/// One UI test, `<Class>/<test>`, on `udid`, on a fresh install: the app
+/// uninstalled first, so that nothing a test before it stored is left, and
+/// installed again by xcodebuild. `env` reaches the tests (`TEST_RUNNER_`,
+/// ios/UITests/Harness.swift `Env`). Its result bundle lands in
+/// ios/build/e2e/results.
+export function uiTest(udid: string, test: string, env: Record<string, string>): UiResult {
+  quietly(() => simctl('terminate', udid, BUNDLE));
+  quietly(() => simctl('uninstall', udid, BUNDLE));
+  const bundle = `ios/${DERIVED}/results/${test.replace(/\//g, '.')}.xcresult`;
+  rmSync(bundle, { recursive: true, force: true });
+  mkdirSync(dirname(bundle), { recursive: true });
+  const runnerEnv: Record<string, string> = {};
+  for (const [k, v] of Object.entries(env)) runnerEnv[`TEST_RUNNER_${k}`] = v;
+  const began = Date.now();
+  const r = spawnSync('xcodebuild', [
+    'test-without-building', '-xctestrun', xctestrun(), '-destination', `id=${udid}`,
+    `-only-testing:EggTimerUITests/${test}`, '-resultBundlePath', bundle,
+    // A failure's sysdiagnose of the simulator takes minutes, and says
+    // nothing the result bundle and the app's log do not.
+    '-collect-test-diagnostics', 'never',
+  ], { encoding: 'utf8', env: { ...process.env, ...runnerEnv }, maxBuffer: 1 << 28 });
+  const output = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+  const secs = (Date.now() - began) / 1000;
+  const name = test.split('/').at(-1)!;
+  const failures = output.split('\n')
+    .filter((l) => l.includes(` error: -[EggTimerUITests.`) && l.includes(`${name}]`))
+    .map((l) => l.replace(/^.*?error: -\[[^\]]*\] : /, '').replace(/^failed: caught error: /, 'threw: '));
+  const notes = output.split('\n').filter((l) => l.startsWith('NOTE: ')).map((l) => l.slice(6));
+  const passed = r.status === 0 && new RegExp(`Test Case '-\\[EggTimerUITests\\.\\w+ ${name}\\]' passed`).test(output);
+  if (!passed && failures.length === 0) failures.push(`xcodebuild exited ${r.status}: ${output.split('\n').filter((l) => /error/i.test(l)).slice(0, 5).join('; ') || 'no test ran'}`);
+  return { passed, failures, notes, secs, output };
 }
 
 /// What `simctl list -j runtimes devicetypes` says, as far as it is read.
@@ -400,6 +449,7 @@ export function settingsArg(over: Record<string, unknown>): string[] {
 /// time, epoch s, to the millisecond; `ev`, the case; its fields, a field
 /// with no value left out. test/iosEvents.test.ts holds it to the Swift.
 export type Event = { t: number } & (
+  | { ev: 'launched'; home: string }
   | { ev: 'clock'; n: number; at: number; speed: number }
   | { ev: 'idle'; step: number }
   | { ev: 'action'; name: string; raw: string }

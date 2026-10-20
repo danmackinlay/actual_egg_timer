@@ -47,8 +47,8 @@ function splitTop(text: string, sep: string): string[] {
 /** `Screenshots.Event`'s cases, each with its labelled values. */
 function swiftEvents(source: string): Cases {
   const text = uncommented(source);
-  const start = text.indexOf('public enum Event: Encodable, Equatable {');
-  assert.ok(start >= 0, 'Screenshots.swift declares `public enum Event: Encodable, Equatable`');
+  const start = text.indexOf('public enum Event: Codable, Equatable {');
+  assert.ok(start >= 0, 'Screenshots.swift declares `public enum Event: Codable, Equatable`');
   const body = text.slice(start, text.indexOf('\n    }\n', start));
   const cases: Cases = new Map();
   for (const m of body.matchAll(/\bcase\s+(\w+)\s*(?:\(([^)]*)\))?/g)) {
@@ -90,7 +90,7 @@ function harnessEvents(source: string): Cases {
 }
 
 test('the readers read a case, its fields, what may be none, and its scalars', () => {
-  const swift = swiftEvents(`public enum Event: Encodable, Equatable {
+  const swift = swiftEvents(`public enum Event: Codable, Equatable {
         /// A plan taken.
         case plan(
             pull: Double, cooled: Double?, cook: [String?]

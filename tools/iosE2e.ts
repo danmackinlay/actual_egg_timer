@@ -30,15 +30,15 @@
 // the app in that locale rather than en-AU (`localeArgs`).
 //
 // Needs Xcode, xcodegen and python3; not in `npm run verify`.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
 import type { BoilMemory } from '../src/core/boil.ts';
 import type { Units } from '../src/core/record.ts';
-import { ALARM_PERIOD_S, type AlarmSound } from '../src/core/sounds.ts';
 import {
-  APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
-  createDevice, is, lastOf, quietly, settingsArg, simctl, sleep, warmUp,
+  APP, COOK, type Event, type EventOf, type Found, LOCALE, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
+  createDevice, is, lastOf, quietly, settingsArg, simctl, sleep, uiTest,
 } from './iosHarness.ts';
 
 /// How long the system is given to deliver the one notification a scenario
@@ -145,7 +145,6 @@ const delivered = (lines: Event[]): string[] | null => lastOf(lines, 'delivered'
 /// moment, before its surface is built again). Neither depends on the
 /// machine: the clock does not move while the app works.
 const EXACT = 1e-3;
-const REPLAN = 1;
 const near = (a: number | null | undefined, b: number | null | undefined, tol: number): boolean =>
   a != null && b != null && Math.abs(a - b) <= tol;
 const has = (lines: Event[], test: (e: Event) => boolean): boolean => lines.some(test);
@@ -163,8 +162,6 @@ const tapped = (name: string): ((e: Event) => e is EventOf<'action'>) => is('act
 const restoring = (e: Event): e is EventOf<'restore' | 'restoreTooOld'> => e.ev === 'restore' || e.ev === 'restoreTooOld';
 /// Whether a restore picked the cook up, in this phase.
 const restoredIn = (e: Event, phase: string): boolean => e.ev === 'restore' && e.phase === phase;
-/// The cook cleared from the store.
-const storedNone = is('stored', (e) => e.value === undefined);
 /// The cook stored, as `test` holds of it as the store holds it.
 const storedAs = (test: (s: Stored) => boolean): ((e: Event) => e is EventOf<'stored'>) =>
   is('stored', (e) => { const s = e.value === undefined ? null : storedOf(e.value); return s !== null && test(s); });
@@ -508,92 +505,6 @@ async function tapAt(run: Run, at: number, what: string, opts: { idle?: boolean 
   return run.until(tapped(what), { from: i, what: `the tap ${what}` });
 }
 
-scenario('relaunch-heating-cooking', 'relaunched while heating, then while cooking: the same deadlines, alarms and card, the boil kept to the bit', async (run) => {
-  const start = startOf(await started(run));
-  await run.step(start + 120);
-  let was = planIn(run.lines());
-  run.terminate();
-  let r = await relaunched(run, start + 120, ['-uiDo', 'boil@300']);
-  run.check(restoredIn(r.restore, 'HEATING'), say(r.restore));
-  const deadlines = (): void => run.check(
-    near(r.plan.pull, was.pull, REPLAN) && near(r.plan.cooled, was.cooled, REPLAN),
-    `deadlines ${r.plan.pull}, ${r.plan.cooled} for ${was.pull}, ${was.cooled}`,
-  );
-  deadlines();
-  run.check(near(scheduled(r.lines)['cook.pull'], planIn(r.lines).pull, EXACT), 'the pull scheduled again, at the plan’s time');
-  run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
-  run.check(has(r.lines, is('activity', (e) => e.what === 'start' && e.stage === 'heating')), 'the card again');
-  was = await boiled(run);
-  const boil = storedIn(run.lines()).cook.events.boilAt_s;
-  run.check(boil === start + 300, `boiled at +${num(boil) - start} s`);
-  await run.step(start + 360);
-  run.terminate();
-  r = await relaunched(run, start + 360);
-  run.check(restoredIn(r.restore, 'COOKING'), say(r.restore));
-  deadlines();
-  run.check(lastStored(r.lines)?.cook.events.boilAt_s === boil, 'the boil kept to the bit');
-  run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
-});
-
-scenario('relaunch-pull', 'into the pull on screen, its notification pending: rung by the app; killed 4 s in, relaunched 14 s in: not rung again, out after', async (run) => {
-  await started(run, ['-uiDo', 'boil@300']);
-  const was = await boiled(run);
-  run.terminate();
-  // Again half a minute before the pull, and on into it.
-  const r = await relaunched(run, was.pull - 30);
-  run.check(restoredIn(r.restore, 'COOKING'), say(r.restore));
-  let i = await run.step(was.pull + 1);
-  await run.until(phaseIs('PULL'), { from: i, what: 'phase PULL' });
-  await run.step(was.pull + 4);
-  // On screen the app rings, though a notification holds the pull: silent
-  // mode mutes a notification's sound, not the app's ring.
-  const rung = run.sinceLaunch().filter(is('ring')).map((e) => e.deadline);
-  run.check(same(rung, ['pull']), `rung ${rung}, not the pull once`);
-  run.terminate();
-  const again = await relaunched(run, was.pull + 14, ['-uiDo', 'out@pull+15']);
-  run.check(restoredIn(again.restore, 'PULL'), say(again.restore));
-  const plan = planIn(again.lines);
-  run.check(near(plan.pull, was.pull, REPLAN), `the pull ${plan.pull} for ${was.pull}`);
-  i = await run.step(plan.pull + 15);
-  const tap = await run.until(tapped('out'), { from: i, what: 'the tap out' });
-  await run.until(phaseIs('COOLING'), { from: tap.i, what: 'phase COOLING' });
-  const after = run.sinceLaunch();
-  const out = storedIn(after).cook.events.pulled;
-  run.check(out?.by === 'cook', `pulled by ${out?.by}`);
-  const into = num(out?.out_s) - num(out?.due_s);
-  run.check(near(into, 15, EXACT), `out ${into} s into the pull`);
-  run.check(!has(after, is('ring', (e) => e.deadline === 'pull')), 'the pull not rung again');
-  run.note(`relaunched ${(was.pull + 14 - plan.pull).toFixed(3)} s into the pull`);
-});
-
-scenario('relaunch-cooling-done', 'relaunched while cooling: the same end, one alarm left, the card again; at Done: Done again, nothing pending, no card, nothing rung', async (run) => {
-  await started(run, ['-uiDo', TO_DONE]);
-  await boiled(run);
-  const was = await toCooling(run, 3);
-  const at = storedIn(run.lines()).cook.events.pulled!.out_s + 60;
-  await run.step(at);
-  run.terminate();
-  let r = await relaunched(run, at);
-  run.check(restoredIn(r.restore, 'COOLING'), say(r.restore));
-  run.check(near(r.plan.cooled, was.cooled, REPLAN), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
-  run.check(same(pending(r.lines), ['cook.cool']), `pending ${pending(r.lines)}`);
-  run.check(has(r.lines, is('activity', (e) => e.what === 'start' && e.stage === 'cooling')), 'the card again');
-  const i = await run.step(cooledAt(was) + 1);
-  await run.settled((await run.until(phaseIs('DONE'), { from: i, what: 'phase DONE' })).i);
-  await run.step(cooledAt(was) + 30);
-  run.terminate();
-  r = await relaunched(run, cooledAt(was) + 30);
-  run.check(restoredIn(r.restore, 'DONE'), say(r.restore));
-  run.check(near(r.plan.cooled, was.cooled, REPLAN), `the cooling's end ${r.plan.cooled} for ${was.cooled}`);
-  run.check(same(pending(r.lines), []), `pending ${pending(r.lines)}`);
-  run.check(!has(r.lines, is('activity', (e) => e.what === 'start')), 'no card started');
-  // A minute on at Done, and four ticks there, each caught up with: nothing
-  // rings.
-  await run.step(cooledAt(was) + 90);
-  for (let k = 1; k < 4; k += 1) await run.tick();
-  run.check(!has(run.sinceLaunch(), is('ring')), 'nothing rung again');
-});
-
 scenario('eggcup-opening', 'an egg cup counted down from the out to its opening: the alarm and the card at the opening, the readout counting to it, Done there', async (run) => {
   await started(run, [...settingsArg({ ...HOT_SETTINGS, cooling: 'eggCup', doneness: 0.22 }), '-uiDo', 'out@pull+3']);
   const was = await toCooling(run, 3);
@@ -613,29 +524,6 @@ scenario('eggcup-opening', 'an egg cup counted down from the out to its opening:
   run.check(f.phase === 'COOLING' && f.big === '1:00' && f.sub === sub, `a minute before the opening: ${say(f)}`);
   const j = await run.step(opening + 1);
   await run.settled((await run.until(phaseIs('DONE'), { from: j, what: 'phase DONE at the opening' })).i);
-});
-
-scenario('alarms', "the notifications as the system holds them: a cold cook's two pending at its plan's moments; relaunched past the guess, the pending pull moved to it; cancelled, none at the next launch", async (run) => {
-  const start = startOf(await started(run));
-  const plan = planIn(run.lines());
-  const at = scheduled(run.lines());
-  run.check(near(at['cook.pull'], plan.pull, EXACT) && near(at['cook.cool'], plan.cooled, EXACT),
-    `alarms ${JSON.stringify(at)} for the plan ${plan.pull}, ${plan.cooled}`);
-  run.check(same(sorted(pending(run.lines())), ['cook.cool', 'cook.pull']), `pending ${pending(run.lines())}`);
-  run.terminate();
-  const r = await relaunched(run, start + 652, ['-uiDo', 'cancel@660']);
-  run.check(restoredIn(r.restore, 'HEATING') && r.plan.lengthened && r.plan.pull > num(at['cook.pull']) + 30,
-    `${say(r.restore)}: the pull at +${(r.plan.pull - start).toFixed(0)} s for +${(num(at['cook.pull']) - start).toFixed(0)}`);
-  run.check(near(scheduled(r.lines)['cook.pull'], planIn(r.lines).pull, EXACT), "the pending pull is the restored plan's");
-  run.check(same(sorted(pending(r.lines)), ['cook.cool', 'cook.pull']), `pending ${pending(r.lines)}`);
-  const i = await run.step(start + 660);
-  await run.until(is('alarmsCancelled'), { from: i, what: 'the alarms cancelled' });
-  await run.until(storedNone, { from: i, what: 'the cook cleared' });
-  run.terminate();
-  run.launch();
-  // The launch's own read-back, three seconds on (AppModel.appear).
-  await run.until(is('delivered'), { from: run.launched, what: 'the alarms read back' });
-  run.check(same(pending(run.sinceLaunch()), []), `pending at the next launch ${pending(run.sinceLaunch())}`);
 });
 
 scenario('asleep', 'killed before the pull, its notification delivered; relaunched past it: the pull not rung, the cooling’s end rung on screen', async (run) => {
@@ -669,36 +557,6 @@ scenario('asleep', 'killed before the pull, its notification delivered; relaunch
   // cooling's end comes on screen, and the app rings it too.
   const rung = run.sinceLaunch().filter(is('ring')).map((e) => e.deadline);
   run.check(same(rung, ['cooled']), `rung ${rung}, not the cooling's end alone`);
-});
-
-scenario('help-sources', "Help's sources bundled: the app finds some at launch, not none", async (run) => {
-  run.launch();
-  const found = await run.until(is('helpSources'), { from: run.launched, what: 'Help’s sources read' });
-  run.check(found.count > 0, `${found.count} sources: help-sources.json is not in the bundle (ios/project.yml)`);
-  run.note(`${found.count} sources`);
-});
-
-// The formats the system plays a notification's sound in, as afinfo and
-// AVAudioFile name them (UNNotificationSound's documentation: linear PCM,
-// IMA4, µ-law, a-law); a file it cannot find, cannot play, or of 30 s or more
-// it replaces with its default sound.
-const NOTIFICATION_FORMATS = ['lpcm', 'ima4', 'ulaw', 'alaw'];
-const SOUNDS = Object.keys(ALARM_PERIOD_S) as AlarmSound[];
-
-scenario('sound-files', 'every file an alarm can name is in the bundle, under 30 s, in a format a notification plays', async (run) => {
-  run.launch();
-  const want = SOUNDS.flatMap((s) => (['pull', 'cooled'] as const).map((m) => `alarm-${s}-${m}.caf`));
-  await run.until(() => run.sinceLaunch().filter((e) => e.ev === 'soundFile').length >= want.length, {
-    from: run.launched, what: `${want.length} sound files read`,
-  });
-  const files = run.sinceLaunch().filter(is('soundFile'));
-  run.check(same(files.map((f) => f.name).sort(), [...want].sort()), `files ${files.map((f) => f.name)}`);
-  for (const f of files) {
-    run.check(f.bundled, `${f.name} not in the bundle (ios/project.yml, ios/App/Sounds)`);
-    run.check(f.seconds !== undefined && f.seconds > 0 && f.seconds < 30, `${f.name}: ${f.seconds} s, not under 30`);
-    run.check(NOTIFICATION_FORMATS.includes(f.format ?? ''), `${f.name}: format ${f.format}, not one a notification plays`);
-  }
-  run.note(files.map((f) => `${f.name} ${f.seconds?.toFixed(1)} s ${f.format}`).join(', '));
 });
 
 scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
@@ -862,17 +720,53 @@ scenario('change-kept-on-hide', 'a change in hand when the app leaves the screen
   run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
 });
 
+// ------------------------------------------------------------ the UI tests
+
+/// What the UI tests are given (ios/UITests/Harness.swift `Env`): where
+/// each scenario's directory is made, how long a wait gives up after, and
+/// the locale.
+const UI_ENV: Record<string, string> = {
+  AET_E2E_DIR: resolve('ios/build/e2e/runs'), AET_E2E_WAIT: String(WAIT_S), AET_LOCALE: LOCALE,
+};
+
+/// The scenarios ios/UITests holds: each `test_<name>` of `Scenarios`, its
+/// name with hyphens for the underscores, and the comment above it.
+function uiScenarios(): { name: string; about: string }[] {
+  const out: { name: string; about: string }[] = [];
+  for (const file of readdirSync('ios/UITests').filter((f) => f.endsWith('.swift')).sort()) {
+    const source = readFileSync(`ios/UITests/${file}`, 'utf8');
+    if (!source.includes('extension Scenarios')) continue;
+    for (const m of source.matchAll(/\/\/\/ (.+)\n\s*func test_(\w+)\(\)/g)) {
+      out.push({ name: m[2]!.replace(/_/g, '-'), about: m[1]! });
+    }
+  }
+  return out;
+}
+
+/// The device warmed up for the UI tests (`WarmUp`, ios/UITests/Bundle.swift):
+/// run until a cook has its alarms pending, at most five times.
+function uiWarmUp(udid: string): void {
+  for (let attempt = 1; ; attempt += 1) {
+    const r = uiTest(udid, 'WarmUp/test_warm_up', UI_ENV);
+    if (r.passed) return;
+    console.log(`ios:e2e: warm-up ${attempt}: ${r.failures.join('; ')}`);
+    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
+  }
+}
+
 // ------------------------------------------------------------------- main
 
 async function main(): Promise<void> {
+  const ui = uiScenarios();
   if (listOnly) {
-    for (const s of scenarios) console.log(`${s.name.padEnd(24)} ${s.about}`);
+    for (const s of [...scenarios, ...ui]) console.log(`${s.name.padEnd(24)} ${s.about}`);
     return;
   }
   const matches = (name: string): boolean =>
     wanted.length === 0 || wanted.some((w) => (w.endsWith('*') ? name.startsWith(w.slice(0, -1)) : name === w));
   const chosen = scenarios.filter((s) => matches(s.name));
-  if (chosen.length === 0) throw new Error(`no scenario named ${wanted.join(', ')} (--list)`);
+  const chosenUi = ui.filter((s) => matches(s.name));
+  if (chosen.length + chosenUi.length === 0) throw new Error(`no scenario named ${wanted.join(', ')} (--list)`);
 
   const began = Date.now();
   if (!noBuild || !existsSync(APP)) build();
@@ -880,7 +774,24 @@ async function main(): Promise<void> {
   if (!udid) udid = createDevice();
   let failed = 0;
   try {
-    await warmUp(udid);
+    uiWarmUp(udid);
+    for (const s of chosenUi) {
+      const r = uiTest(udid, `Scenarios/test_${s.name.replace(/-/g, '_')}`, UI_ENV);
+      const secs = r.secs.toFixed(0);
+      if (r.passed) {
+        console.log(`  pass  ${s.name} (${secs} s)${r.notes.length ? ` - ${r.notes.join('; ')}` : ''}`);
+      } else {
+        failed += 1;
+        console.log(`  FAIL  ${s.name} (${secs} s)`);
+        for (const f of r.failures) console.log(`        ${f}`);
+        for (const n of r.notes) console.log(`        note: ${n}`);
+        const log = `${UI_ENV['AET_E2E_DIR']}/${s.name}/aet.log`;
+        if (process.env['AET_E2E_LOG'] && existsSync(log)) {
+          const lines = readFileSync(log, 'utf8').split('\n').filter((l) => l !== '');
+          console.log(lines.map((l) => `        | ${l.slice(0, 240)}`).join('\n'));
+        }
+      }
+    }
     for (const s of chosen) {
       const run = new Run(s.name, udid);
       const t0 = Date.now();
@@ -913,9 +824,8 @@ async function main(): Promise<void> {
   }
   const total = ((Date.now() - began) / 1000).toFixed(0);
   const building = ((built - began) / 1000).toFixed(0);
-  console.log(
-    `ios:e2e: ${chosen.length - failed} of ${chosen.length} passed in ${total} s (the build ${building} s)`
-  );
+  const count = chosen.length + chosenUi.length;
+  console.log(`ios:e2e: ${count - failed} of ${count} passed in ${total} s (the build ${building} s)`);
   if (failed > 0) process.exitCode = 1;
 }
 

@@ -204,9 +204,11 @@ struct PhaseActions: View {
     // MARK: - The row
 
     /// The phase's main button: its words, what it does, and whether it is
-    /// the accent's (Start again is not) or dead.
+    /// the accent's (Start again is not) or dead; and what the UI tests
+    /// find it by (ios/UITests).
     private struct Main {
         let title: String
+        let id: String
         var prominent = true
         var disabled = false
         let action: () -> Void
@@ -219,24 +221,26 @@ struct PhaseActions: View {
             // Dead rather than absent. There is nothing to start, and a
             // button that has gone missing looks like a layout accident
             // where one that will not press is the answer.
-            return Main(title: tr(.`action.eggsIn`), disabled: true) {}
+            return Main(title: tr(.`action.eggsIn`), id: "action.eggsIn", disabled: true) {}
         case .idle:
             return Main(
-                title: tr(model.keys(.idle).action ?? .`action.eggsIn`),
+                title: tr(model.keys(.idle).action ?? .`action.eggsIn`), id: "action.eggsIn",
                 disabled: model.starting || planner.solution == nil || planner.solution?.whiteSets == false
             ) { model.eggsIn() }
         case .heating:
             // Tapping at first bubbles under-measures the boil
             // by 15-25%, so the button names the thing to wait for.
-            return Main(title: tr(readout?.primary ?? .`action.fullBoil`)) { model.boil() }
+            return Main(title: tr(readout?.primary ?? .`action.fullBoil`), id: "action.boil") { model.boil() }
         case .pull:
             // The cook's tap is the nearest thing to when the egg left the
             // water that the app will ever know, and the record calls it a
             // measured pull. Without it the grace runs out and the pull is
             // only assumed.
-            return Main(title: tr(readout?.primary ?? pulledKey(.ice))) { model.pulledOut() }
+            return Main(title: tr(readout?.primary ?? pulledKey(.ice)), id: "action.out") { model.pulledOut() }
         case .done:
-            return Main(title: tr(readout?.primary ?? .`action.startAgain`), prominent: false) { model.startAgain() }
+            return Main(
+                title: tr(readout?.primary ?? .`action.startAgain`), id: "action.startAgain", prominent: false
+            ) { model.startAgain() }
         default:
             return nil
         }
@@ -284,6 +288,7 @@ struct PhaseActions: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(main.disabled)
+            .accessibilityIdentifier(main.id)
             .logBottom("main")
         } else {
             Button(action: main.action) {
@@ -292,6 +297,7 @@ struct PhaseActions: View {
             .buttonStyle(.bordered)
             .controlSize(.large)
             .disabled(main.disabled)
+            .accessibilityIdentifier(main.id)
             .logBottom("main")
         }
     }
@@ -320,6 +326,7 @@ struct PhaseActions: View {
         }
         .buttonStyle(.bordered)
         .controlSize(.large)
+        .accessibilityIdentifier("action.cancel")
     }
 
     /// "Are the eggs still in the water?" (`ReadoutView`): the two answers as
@@ -334,6 +341,7 @@ struct PhaseActions: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .accessibilityIdentifier("ask.stillIn")
             Button {
                 model.stillOut()
             } label: {
@@ -341,6 +349,7 @@ struct PhaseActions: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
+            .accessibilityIdentifier("ask.stillOut")
             cancelButton
         }
     }

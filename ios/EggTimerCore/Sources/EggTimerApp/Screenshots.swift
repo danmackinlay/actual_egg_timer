@@ -59,6 +59,11 @@ import os
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
+/// - `-debugDir <path>`: write the debug log there and read the clock's
+///   steps from there, in place of `Library/Caches` in the container: a
+///   directory on the Mac, which a simulator's app and its UI tests
+///   (ios/UITests) both read and write, where the tests cannot see the
+///   app's container.
 ///
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
 /// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
@@ -78,7 +83,8 @@ import os
 ///   choice (`Suite`), nothing stored.
 ///
 /// `log` writes one event as a line of JSON, to standard error and to
-/// `Library/Caches/aet.log` in the app's container: the phases, each plan,
+/// `aet.log` in `-debugDir`, or in `Library/Caches` in the app's container:
+/// the phases, each plan,
 /// the stored cook and the log as written, the alarms scheduled, cancelled
 /// and read back, the rings, the Live Activities pushed and seen, the taps
 /// of `-uiDo`, the corrections, and where the screen's parts sit and what
@@ -124,9 +130,9 @@ public enum Screenshots {
     }
 
     #if DEBUG
-    /// Where a line goes: standard error, and appended to
-    /// Library/Caches/aet.log in the app's container, which a simulator's
-    /// host reads (`simctl get_app_container … data`). The tests take the
+    /// Where a line goes: standard error, and appended to aet.log in
+    /// `-debugDir`, or in Library/Caches in the app's container, which a
+    /// simulator's host reads (`simctl get_app_container … data`). The tests take the
     /// events instead, and write nothing to the Mac's own Caches. The
     /// closure is swapped behind a lock; a line is written from any thread
     /// (the clock's steps), so each is appended whole (`append`).
@@ -136,9 +142,16 @@ public enum Screenshots {
     }
     private static let outputSet = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
         FileHandle.standardError.write(text)
-        guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+        guard let dir = debugDir else { return }
         append(text, to: dir.appendingPathComponent("aet.log"))
     })
+
+    /// Where the debug log is written and the clock's steps read (`AppClock`):
+    /// `-debugDir`, or Library/Caches in the app's container.
+    static var debugDir: URL? {
+        if let path = arguments?.string(forKey: "debugDir") { return URL(fileURLWithPath: path, isDirectory: true) }
+        return FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+    }
 
     /// `text` added at the file's end in one `write` to a descriptor opened
     /// `O_APPEND`, so the system moves to the end and writes as one step.
@@ -191,8 +204,13 @@ extension Screenshots {
 extension Screenshots {
     /// What the debug log says, one case an event, its values the line's
     /// fields (`log`). Times are epoch s in cook time unless said; a value
-    /// that is none is left out of the line.
-    public enum Event: Encodable, Equatable {
+    /// that is none is left out of the line. Decodable too, for the UI tests
+    /// (ios/UITests), which read the log back by these cases.
+    public enum Event: Codable, Equatable {
+        /// The app launched: its home, the data container, where its stores'
+        /// plist is.
+        case launched(home: String)
+
         // The clock and the taps.
         /// The clock stepped from outside (`AppClock.takeStep`): step `n`,
         /// to `at`, running on at `speed` (0 frozen).
@@ -311,25 +329,77 @@ extension Screenshots {
         case helpSources(count: Int)
     }
 
-    /// A value the app stores as JSON, written into a line as it encodes.
-    public struct Encoded: Encodable, Equatable {
+    /// A value the app stores as JSON, written into a line as it encodes;
+    /// read back from a line as the JSON it was (`JSONValue`).
+    public struct Encoded: Codable, Equatable {
         public let value: any Encodable
 
+        public init(value: any Encodable) {
+            self.value = value
+        }
+
+        public init(from decoder: Decoder) throws { value = try JSONValue(from: decoder) }
+
         public func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+
+        /// The value as `type`, decoded from its JSON; nil if it is not one.
+        public func decoded<T: Decodable>(as type: T.Type) -> T? {
+            guard let data = try? JSONEncoder().encode(self) else { return nil }
+            return try? JSONDecoder().decode(type, from: data)
+        }
 
         public static func == (a: Encoded, b: Encoded) -> Bool {
             (try? JSONEncoder().encode(a)) == (try? JSONEncoder().encode(b))
         }
     }
 
-    public struct PendingAlarm: Encodable, Equatable {
+    public struct PendingAlarm: Codable, Equatable {
         public let id: String
         /// When it fires, cook time, whole s; none without an interval trigger.
-        let at: Int?
+        public let at: Int?
 
         public init(id: String, at: Int?) {
             self.id = id
             self.at = at
+        }
+    }
+}
+
+/// Any JSON, as a line's stored value is read back (`Screenshots.Encoded`).
+public enum JSONValue: Codable, Equatable, Sendable {
+    case null
+    case bool(Bool)
+    case number(Double)
+    case string(String)
+    case array([JSONValue])
+    case object([String: JSONValue])
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() {
+            self = .null
+        } else if let b = try? c.decode(Bool.self) {
+            self = .bool(b)
+        } else if let n = try? c.decode(Double.self) {
+            self = .number(n)
+        } else if let s = try? c.decode(String.self) {
+            self = .string(s)
+        } else if let a = try? c.decode([JSONValue].self) {
+            self = .array(a)
+        } else {
+            self = .object(try c.decode([String: JSONValue].self))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .null: try c.encodeNil()
+        case .bool(let b): try c.encode(b)
+        case .number(let n): try c.encode(n)
+        case .string(let s): try c.encode(s)
+        case .array(let a): try c.encode(a)
+        case .object(let o): try c.encode(o)
         }
     }
 }

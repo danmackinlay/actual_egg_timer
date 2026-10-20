@@ -22,8 +22,9 @@ import os
 /// Launch arguments last one launch; a relaunch without them is back on the
 /// system's clock, with a stored cook in what is then the future.
 ///
-/// A clock so launched is steppable: the app reads `Library/Caches/aet.clock`
-/// in its container twenty times a second, and a line `<n> <at> <speed>`
+/// A clock so launched is steppable: the app reads `aet.clock` in
+/// `-debugDir`, or in `Library/Caches` in its container, twenty times a
+/// second, and a line `<n> <at> <speed>`
 /// with a larger `n` than the last sets cook time to `at` and runs it on at
 /// `speed` (0 frozen), as if the phone had slept or been set (`step`; the
 /// debug log says `clock`, with `n`, `at` and `speed`, when it has). A script
@@ -223,10 +224,10 @@ enum LaunchClock {
     static let steppable: Bool = ["clockAt", "clockSpeed"]
         .contains { UserDefaults.standard.object(forKey: $0) != nil }
 
-    /// The file a step is read from, in the app's container.
+    /// The file a step is read from: in `-debugDir`, or in the app's
+    /// container (`Screenshots.debugDir`).
     private static var stepFile: URL? {
-        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("aet.clock")
+        Screenshots.debugDir?.appendingPathComponent("aet.clock")
     }
 
     /// The last step taken; one already in the file at launch is not taken.
