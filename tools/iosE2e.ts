@@ -1,7 +1,8 @@
 // `npm run ios:e2e`: what only a device can check, scripted: the screen's
 // layout, a relaunch over the system's notifications and Live Activity, a
 // notification delivered while the app is gone, the app leaving the screen,
-// the keys an earlier build left, Help's sources in the bundle. What the
+// the keys an earlier build left, Help's sources and the alarms' sound
+// files in the bundle. What the
 // app's logic decides is `swift test`'s
 // (ios/EggTimerCore/Tests/EggTimerAppTests).
 //
@@ -34,6 +35,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
 import type { BoilMemory } from '../src/core/boil.ts';
 import type { Units } from '../src/core/record.ts';
+import { ALARM_PERIOD_S, type AlarmSound } from '../src/core/sounds.ts';
 import {
   APP, COOK, type Event, type EventOf, type Found, type LaunchOptions, Run, SETTINGS, WAIT_S, build, iosStore,
   createDevice, is, lastOf, quietly, settingsArg, simctl, sleep, warmUp,
@@ -582,6 +584,29 @@ scenario('help-sources', "Help's sources bundled: the app finds some at launch, 
   const found = await run.until(is('helpSources'), { from: run.launched, what: 'Help’s sources read' });
   run.check(found.count > 0, `${found.count} sources: help-sources.json is not in the bundle (ios/project.yml)`);
   run.note(`${found.count} sources`);
+});
+
+// The formats the system plays a notification's sound in, as afinfo and
+// AVAudioFile name them (UNNotificationSound's documentation: linear PCM,
+// IMA4, µ-law, a-law); a file it cannot find, cannot play, or of 30 s or more
+// it replaces with its default sound.
+const NOTIFICATION_FORMATS = ['lpcm', 'ima4', 'ulaw', 'alaw'];
+const SOUNDS = Object.keys(ALARM_PERIOD_S) as AlarmSound[];
+
+scenario('sound-files', 'every file an alarm can name is in the bundle, under 30 s, in a format a notification plays', async (run) => {
+  run.launch();
+  const want = SOUNDS.flatMap((s) => (['pull', 'cooled'] as const).map((m) => `alarm-${s}-${m}.caf`));
+  await run.until(() => run.sinceLaunch().filter((e) => e.ev === 'soundFile').length >= want.length, {
+    from: run.launched, what: `${want.length} sound files read`,
+  });
+  const files = run.sinceLaunch().filter(is('soundFile'));
+  run.check(same(files.map((f) => f.name).sort(), [...want].sort()), `files ${files.map((f) => f.name)}`);
+  for (const f of files) {
+    run.check(f.bundled, `${f.name} not in the bundle (ios/project.yml, ios/App/Sounds)`);
+    run.check(f.seconds !== undefined && f.seconds > 0 && f.seconds < 30, `${f.name}: ${f.seconds} s, not under 30`);
+    run.check(NOTIFICATION_FORMATS.includes(f.format ?? ''), `${f.name}: format ${f.format}, not one a notification plays`);
+  }
+  run.note(files.map((f) => `${f.name} ${f.seconds?.toFixed(1)} s ${f.format}`).join(', '));
 });
 
 scenario('too-old', 'relaunched three hours on: ended, its alarms and card gone (2.2)', async (run) => {
