@@ -12,10 +12,15 @@
  *      was made refused as a conflict, and held to the catalogue's rules
  *      (tools/copyRules.ts), with no key and no argument changed;
  *   3. written into a scratch worktree of HEAD in the system's temporary
- *      directory, where `npm run fixtures:check` (twice, when the first run
- *      only wrote the fixtures the words moved) and `npm test` run: so no
- *      one's uncommitted work is tested with them, a failure leaves this
- *      checkout as it was, and only the words can have moved a fixture;
+ *      directory, where the words-only check runs (tools/wordsOnly.ts):
+ *      `npm run fixtures:check -- --words` (twice, when the first run only
+ *      wrote the fixtures the words moved), then `npm run test:words`, the
+ *      key types and the type checks and the tests that can read the words.
+ *      So no one's uncommitted work is tested with them, a failure leaves
+ *      this checkout as it was, and only the words can have moved a
+ *      fixture. It takes seconds: the physics, which no word can move, is
+ *      left to `npm run verify` and CI, which run everything before a
+ *      release (DECISIONS.md 123);
  *   4. on a pass, committed here on main with `git commit --only` and the
  *      paths by name (the catalogues and any fixture the words moved), so
  *      nothing anyone else staged goes with them. If HEAD moved meanwhile,
@@ -62,14 +67,21 @@ export interface Edit { tag: string; key: string; from: Entry | null; to: Entry 
 export interface SaveRequest { base: string; edits: Edit[] }
 
 export type SaveResult =
-  | { ok: true; commit: string; subject: string; fixtures: string[] }
+  | { ok: true; commit: string; subject: string; fixtures: string[]; seconds?: number }
   | { ok: false; reasons: string[]; conflicts?: { tag: string; key: string; theirs: Entry | null }[]; log?: string };
 
-/** `npm run <script>` in `dir`: its exit code and what it printed. */
-export type Runner = (dir: string, script: 'test' | 'fixtures:check') => Promise<{ code: number; out: string }>;
+/** One of the words-only check's two runs in `dir`: its exit code and what
+ *  it printed. */
+export type Runner = (dir: string, check: 'fixtures' | 'tests') => Promise<{ code: number; out: string }>;
 
-export const npmRunner: Runner = (dir, script) => new Promise((resolve) => {
-  const child = spawn('npm', ['run', '--silent', script], { cwd: dir, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' } });
+/** The npm scripts of each. */
+const SCRIPTS: Record<'fixtures' | 'tests', string[]> = {
+  fixtures: ['fixtures:check', '--', '--words'],
+  tests: ['test:words'],
+};
+
+export const npmRunner: Runner = (dir, check) => new Promise((resolve) => {
+  const child = spawn('npm', ['run', '--silent', ...SCRIPTS[check]], { cwd: dir, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' } });
   let out = '';
   child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
   child.stderr.on('data', (d: Buffer) => { out += d.toString(); });
@@ -220,7 +232,7 @@ function changedIn(dir: string): string[] {
   return changedPaths(dir).filter((p) => p !== 'node_modules' && !p.startsWith('node_modules/'));
 }
 
-/** The tests that failed, as npm test's report names them, and the first
+/** The tests that failed, as node --test's report names them, and the first
  *  line each says. */
 export function failedTests(out: string): string[] {
   const at = out.indexOf('✖ failing tests:');
@@ -238,13 +250,13 @@ export function failedTests(out: string): string[] {
 }
 
 /** What failed in a check run, in the owner's words. */
-function whyFailed(script: 'test' | 'fixtures:check', out: string): string[] {
+function whyFailed(check: 'fixtures' | 'tests', out: string): string[] {
   if (/error TS\d+/.test(out)) {
     return ['The code no longer compiles with these words, which only a change to a key or its arguments does.'];
   }
-  if (script === 'fixtures:check') return ['The fixtures did not settle when made afresh twice; see the log.'];
+  if (check === 'fixtures') return ['The fixtures did not settle when made afresh twice; see the log.'];
   const tests = failedTests(out);
-  return tests.length === 0 ? ['npm test failed; see the log.'] : tests.map((t) => `A test failed: ${t}`);
+  return tests.length === 0 ? ['The tests failed; see the log.'] : tests.map((t) => `A test failed: ${t}`);
 }
 
 type Check = { ok: true; dir: string; changed: string[] } | { ok: false; dir: string; reasons: string[]; log: string; tests: boolean };
@@ -255,18 +267,18 @@ async function check(cwd: string, head: string, files: Map<string, string>, runn
   stage: (s: string) => void): Promise<Check> {
   const dir = scratchTree(cwd, head);
   for (const [path, text] of files) writeFileSync(join(dir, path), text);
-  stage('Making the fixtures afresh');
-  let run = await runner(dir, 'fixtures:check');
+  stage('Making the fixtures that read the words afresh');
+  let run = await runner(dir, 'fixtures');
   if (run.code !== 0) {
     // The first run writes any fixture the words moved, and fails; a run
     // after it passes if that was all.
-    stage('Making the fixtures afresh again, as the words moved some');
-    run = await runner(dir, 'fixtures:check');
-    if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('fixtures:check', run.out), log: run.out, tests: false };
+    stage('Making them afresh again, as the words moved some');
+    run = await runner(dir, 'fixtures');
+    if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('fixtures', run.out), log: run.out, tests: false };
   }
-  stage('Running the tests');
-  run = await runner(dir, 'test');
-  if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('test', run.out), log: run.out, tests: true };
+  stage('Running the tests that read the words');
+  run = await runner(dir, 'tests');
+  if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('tests', run.out), log: run.out, tests: true };
   const changed = changedIn(dir);
   const unexpected = changed.filter((p) => !MAY_CHANGE(p));
   if (unexpected.length > 0) {
@@ -286,7 +298,7 @@ export function commitMessage(edits: Edit[], order: readonly string[], fixtures:
   const body = [
     ...(keys.length > 3 || edits.some((e) => e.tag !== 'en') ? [lines.join('\n'), ''] : []),
     ...(fixtures.length > 0 ? [`The fixtures the words moved: ${fixtures.join(', ')}.`, ''] : []),
-    `Made with npm run copy:edit: npm test and fixtures:check passed on ${shortHash(head)} with these words.`,
+    `Made with npm run copy:edit: the words-only check, npm run test:words and fixtures:check -- --words, passed on ${shortHash(head)} with these words.`,
   ];
   return `${listed} in the owner's words\n\n${body.join('\n')}\n`;
 }
@@ -295,6 +307,7 @@ export function commitMessage(edits: Edit[], order: readonly string[], fixtures:
 export async function save(cwd: string, request: SaveRequest, runner: Runner = npmRunner,
   stage: (s: string) => void = () => {}): Promise<SaveResult> {
   if (request.edits.length === 0) return { ok: false, reasons: ['There is nothing to save.'] };
+  const started = Date.now();
   for (let attempt = 0; attempt < 2; attempt++) {
     stage('Checking the words');
     const before = preflight(cwd);
@@ -341,7 +354,10 @@ export async function save(cwd: string, request: SaveRequest, runner: Runner = n
         git(cwd, 'checkout', head, '--', ...checked.changed);
         return { ok: false, reasons: [`git would not commit: ${(e as Error).message.split('\n')[0]}`] };
       }
-      return { ok: true, commit: git(cwd, 'rev-parse', 'HEAD'), subject: message.split('\n')[0], fixtures: fixtures };
+      return {
+        ok: true, commit: git(cwd, 'rev-parse', 'HEAD'), subject: message.split('\n')[0], fixtures: fixtures,
+        seconds: (Date.now() - started) / 1000,
+      };
     } finally {
       dropScratch(cwd, checked.dir);
     }

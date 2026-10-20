@@ -41,7 +41,13 @@ interface SaveResult {
   reasons?: string[];
   conflicts?: { tag: string; key: string; theirs: Entry | null }[];
   log?: string;
+  /** How long the save took, for one that passed. */
+  seconds?: number;
 }
+
+/** What a save checks, and what it leaves to the full suite. */
+const CHECKED = 'the tests and fixtures that read the words';
+const LEFT = 'the full suite runs before a release';
 
 const US = 'en-US';
 const PERIOD = 'en-x-1750';
@@ -572,7 +578,7 @@ async function saveNow(): Promise<void> {
   const keys = [...new Set(edits.map((e) => e.key))];
   const stage = el('p', {}, 'Checking the words');
   sheet(el('h3', {}, `Saving ${keys.join(', ')}`), stage,
-    el('p', { class: 'meta' }, 'I run the fixtures and the tests on your words, which takes about a minute.'));
+    el('p', { class: 'meta' }, `With your words, I run ${CHECKED}, which takes seconds; ${LEFT}.`));
   let result: SaveResult | null = null;
   try {
     const started = await api<{ job?: number; error?: string }>('save', { base: s.head, edits: edits });
@@ -592,8 +598,10 @@ async function saveNow(): Promise<void> {
     for (const e of edits) drafts.delete(id(e.tag, e.key));
     storeDrafts();
     notice = null;
+    const took = result.seconds === undefined ? '' : ` in ${Math.max(1, Math.round(result.seconds))} s`;
     sheet(el('h3', {}, 'Saved'), el('p', {}, `Committed ${String(result.commit).slice(0, 8)}: ${String(result.subject)}`),
-      el('p', { class: 'meta' }, 'On main, not pushed.'), button('Close', closeSheet, { id: 'sheetClose' }));
+      el('p', { class: 'meta', id: 'checked' }, `I checked ${CHECKED}${took}; ${LEFT}. On main, not pushed.`),
+      button('Close', closeSheet, { id: 'sheetClose' }));
   } else {
     for (const c of result.conflicts ?? []) conflicts.set(id(c.tag, c.key), c.theirs);
     sheet(el('h3', {}, 'Not saved'), el('ul', {}, ...(result.reasons ?? []).map((r) => el('li', {}, r))),

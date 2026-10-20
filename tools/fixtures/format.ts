@@ -13,7 +13,7 @@ import {
 } from '../../src/core/format.ts';
 import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../../src/core/units.ts';
 
-import { type CatalogueJson, english } from './shared.ts';
+import { type CatalogueJson, english } from './english.ts';
 
 /* Numbers and times of day as each supported formatting locale writes them,
  * through `Intl` here and Foundation in Swift. SUPPORTED are the locales the

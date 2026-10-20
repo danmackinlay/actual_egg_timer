@@ -8,10 +8,13 @@
  * in `src/core/` first, and `npm test` should be what catches it.
  *
  * Run: npm run fixtures
+ *      npm run fixtures -- --words   only those that can read the words
+ *                                    (tools/wordsOnly.ts)
  *
  * One file per part of the core, each held by a Swift suite of the same name
  * and built by the module of the same name in tools/fixtures/ (what more than
- * one of them uses is in tools/fixtures/shared.ts):
+ * one of them uses is in tools/fixtures/shared.ts, and the English catalogue
+ * in tools/fixtures/english.ts):
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
@@ -96,7 +99,7 @@ interface Made { text: string; counts: string[] }
 
 /** Each fixture by name, made by its module, and what the summary line counts
  *  of it, in the order the fixtures are written. */
-const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[] }>> = {
+export const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[] }>> = {
   core: async () => {
     const { coreFixture: f } = await import('./fixtures/core.ts');
     return {
@@ -184,7 +187,7 @@ const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: string[
     };
   },
   units: async () => {
-    const { english } = await import('./fixtures/shared.ts');
+    const { english } = await import('./fixtures/english.ts');
     const f = (await import('./fixtures/units.ts')).unitsFixture(english);
     const trips = (f['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0);
     return { fixture: f, counts: [`${trips} unit round trips`] };
@@ -236,7 +239,7 @@ const ELSEWHERE: Record<string, string> = {
   fitRecovery: 'fit/tests/recovery-sample.json',
 };
 
-const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.json`;
+export const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${name}.json`;
 
 /** The order the summary line counts them in. */
 const COUNTED = [
@@ -304,10 +307,9 @@ function inWorker(name: string): Promise<Made> {
   });
 }
 
-/** Every fixture, at most `width` at once, the slowest started first. */
-async function makeAll(width: number): Promise<Map<string, Made>> {
-  const names = Object.keys(FIXTURES);
-  const queue = [...SLOWEST, ...names.filter((n) => !SLOWEST.includes(n))];
+/** The fixtures `names`, at most `width` at once, the slowest started first. */
+async function makeAll(names: string[], width: number): Promise<Map<string, Made>> {
+  const queue = [...SLOWEST.filter((n) => names.includes(n)), ...names.filter((n) => !SLOWEST.includes(n))];
   const made = new Map<string, Made>();
   const lane = async (): Promise<void> => {
     for (let name = queue.shift(); name !== undefined; name = queue.shift()) made.set(name, await inWorker(name));
@@ -316,12 +318,20 @@ async function makeAll(width: number): Promise<Map<string, Made>> {
   return made;
 }
 
-if (isMainThread) {
-  const made = await makeAll(availableParallelism());
-  mkdirSync('fixtures', { recursive: true });
-  for (const name of Object.keys(FIXTURES)) replaceFile(pathOf(name), (made.get(name) as Made).text);
-  const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
-  console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
-} else {
+if (!isMainThread) {
   parentPort?.postMessage(await make(workerData as string));
+} else if (import.meta.main) {
+  // --words: only the fixtures that can read the words (tools/wordsOnly.ts),
+  // for the words' editor's save; each is made as a full run makes it.
+  const words = process.argv.includes('--words');
+  const names = words ? [...(await (await import('./wordsOnly.ts')).wordsFixtures(FIXTURES)).keys()] : Object.keys(FIXTURES);
+  const made = await makeAll(names, availableParallelism());
+  mkdirSync('fixtures', { recursive: true });
+  for (const name of names) replaceFile(pathOf(name), (made.get(name) as Made).text);
+  if (words) {
+    console.log(`the fixtures that read the words written: ${names.map(pathOf).join(', ')}`);
+  } else {
+    const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
+    console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
+  }
 }

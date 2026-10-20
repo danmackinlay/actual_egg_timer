@@ -189,7 +189,8 @@ test('a save that passes commits the catalogues alone, by name, on main, and lea
   const r = passing();
   const result = await save(repo.dir, { base: before, edits: [edit('b', EN.b, { text: 'Lid on tight' })] }, r.run);
   assert.ok(result.ok, JSON.stringify(result));
-  assert.deepEqual(r.calls, ['fixtures:check', 'test']);
+  assert.ok(typeof result.seconds === 'number' && result.seconds >= 0, 'how long it took, for the page');
+  assert.deepEqual(r.calls, ['fixtures', 'tests']);
   assert.equal(repo.git('rev-parse', 'HEAD^'), before);
   assert.deepEqual(repo.git('show', '--name-only', '--format=', 'HEAD').split('\n'), ['copy/en.json']);
   assert.equal(repo.git('log', '-1', '--format=%s'), 'b in the owner\'s words');
@@ -203,9 +204,9 @@ test('a save that passes commits the catalogues alone, by name, on main, and lea
 test('the fixtures the words move are made afresh, checked again and committed with them', async () => {
   const repo = wordsRepo();
   const r = runner((dir, script, n) => {
-    if (script !== 'fixtures:check') return 0;
+    if (script !== 'fixtures') return 0;
     if (n === 1) {
-      // As fixtures:check does: write the fixture afresh and fail.
+      // As fixtures:check -- --words does: write the fixture afresh and fail.
       writeFileSync(join(dir, 'fixtures/words.json'), '{ "a": "Saucepan" }\n');
       return 1;
     }
@@ -213,7 +214,7 @@ test('the fixtures the words move are made afresh, checked again and committed w
   });
   const result = await save(repo.dir, { base: '', edits: [edit('a', EN.a, { text: 'Saucepan' }), edit('a', US.a, { base: 'Saucepan', text: 'Pot' }, 'en-US')] }, r.run);
   assert.ok(result.ok, JSON.stringify(result));
-  assert.deepEqual(r.calls, ['fixtures:check', 'fixtures:check', 'test']);
+  assert.deepEqual(r.calls, ['fixtures', 'fixtures', 'tests']);
   assert.deepEqual(result.fixtures, ['fixtures/words.json']);
   assert.deepEqual(repo.git('show', '--name-only', '--format=', 'HEAD').split('\n').sort(),
     ['copy/en-US.json', 'copy/en.json', 'fixtures/words.json']);
@@ -225,20 +226,20 @@ test('a save that fails commits nothing, leaves the tree as it was, and says whe
   const head = repo.git('rev-parse', 'HEAD');
   const words = (dir: string): string => readFileSync(join(dir, 'copy/en.json'), 'utf8');
   // The tests fail with the edit, and pass without it.
-  const mine = runner((dir, script) => (script === 'test' && words(dir).includes('Lid off') ? 1 : 0));
+  const mine = runner((dir, script) => (script === 'tests' && words(dir).includes('Lid off') ? 1 : 0));
   const result = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, mine.run);
   assert.ok(!result.ok);
   assert.match(result.reasons.join(' '), /Without your words the tests pass, so your edit is what they catch/);
   assert.equal(repo.git('rev-parse', 'HEAD'), head);
   assert.equal(repo.git('status', '--porcelain', '--', 'copy', 'fixtures'), '');
   // The tests fail anyway.
-  const broken = runner((_dir, script) => (script === 'test' ? 1 : 0));
+  const broken = runner((_dir, script) => (script === 'tests' ? 1 : 0));
   const anyway = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, broken.run);
   assert.ok(!anyway.ok);
   assert.match(anyway.reasons.join(' '), /fail on main as it is, without your words too, so it isn’t your edit/);
   // A check that changes code: a key or its arguments moved.
   const code = runner((dir, script) => {
-    if (script === 'test') writeFileSync(join(dir, 'src/code.ts'), 'export const key = 1;\n');
+    if (script === 'tests') writeFileSync(join(dir, 'src/code.ts'), 'export const key = 1;\n');
     return 0;
   });
   const keyed = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, code.run);
@@ -268,7 +269,7 @@ test('when main moves while the words are checked, they are checked again on the
   const repo = wordsRepo();
   let moved = false;
   const r = runner((_dir, script) => {
-    if (script === 'test' && !moved) {
+    if (script === 'tests' && !moved) {
       moved = true;
       repo.commit('someone else commits', { 'src/code.ts': 'export const later = 1;\n' });
     }
@@ -276,7 +277,7 @@ test('when main moves while the words are checked, they are checked again on the
   });
   const result = await save(repo.dir, { base: '', edits: [edit('b', EN.b, { text: 'Lid on tight' })] }, r.run);
   assert.ok(result.ok, JSON.stringify(result));
-  assert.deepEqual(r.calls, ['fixtures:check', 'test', 'fixtures:check', 'test']);
+  assert.deepEqual(r.calls, ['fixtures', 'tests', 'fixtures', 'tests']);
   assert.equal(repo.git('log', '-1', '--format=%s', 'HEAD^'), 'someone else commits');
 });
 
@@ -289,7 +290,7 @@ test('the commit\'s message names the keys as the repository does', () => {
   assert.equal(commitMessage(order.map((k) => edit(k, null, null)), order, [], 'h').split('\n')[0], '4 keys in the owner\'s words');
 });
 
-test('the failing tests are named from npm test\'s report', () => {
+test('the failing tests are named from node --test\'s report', () => {
   const out = '✔ fine (1ms)\n✖ failing tests:\n\ntest at test/copy.test.ts:71:1\n✖ the words fit (0.5ms)\n'
     + '  AssertionError [ERR_ASSERTION]: en a: 18 characters on "button", budget 12\n      at x\n';
   assert.deepEqual(failedTests(out), ['“the words fit”: en a: 18 characters on "button", budget 12']);

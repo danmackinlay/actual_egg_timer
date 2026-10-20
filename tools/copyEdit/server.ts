@@ -13,7 +13,7 @@
  *                     notes and surfaces, and what stops a save or approval
  *   GET  api/head     HEAD and what stops a save, polled to see main move
  *   POST api/save     the owner's edits, checked and committed (save.ts);
- *                     it runs about a minute, so it answers at once
+ *                     it runs some seconds, so it answers at once
  *   GET  api/job      that save's stage, and its result when it ends
  *   POST api/approve  approve the commit the page showed (save.ts)
  *
