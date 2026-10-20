@@ -16,11 +16,14 @@ public struct SentenceWords {
 
     public init(_ planner: Planner) {
         texts = clauseTexts(SetupFacts(planner))
-        let args: CopyArgs = [
-            "egg": .text(Self.mark(.egg)), "from": .text(Self.mark(.from)),
-            "start": .text(Self.mark(.start)), "cooling": .text(Self.mark(.cooling)),
-        ]
-        template = planner.isSousVide ? tr(.`setup.sentenceSousVide`, args) : tr(.`setup.sentence`, args)
+        // Each template is given exactly its own clauses: sous-vide's names no
+        // origin and no cooling, and `tr` refuses arguments a key does not take.
+        let egg = CopyArg.text(Self.mark(.egg)), start = CopyArg.text(Self.mark(.start))
+        template = planner.isSousVide
+            ? tr(.`setup.sentenceSousVide`, ["egg": egg, "start": start])
+            : tr(.`setup.sentence`, [
+                "egg": egg, "from": .text(Self.mark(.from)), "start": start, "cooling": .text(Self.mark(.cooling)),
+            ])
     }
 
     /// A clause's place in the template: its name between characters no
