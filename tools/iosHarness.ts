@@ -66,7 +66,20 @@ export interface UiResult { passed: boolean; failures: string[]; notes: string[]
 /// ios/UITests/Harness.swift `Env`; `uiEnv`). Its result bundle lands in
 /// ios/build/e2e/results, named for the test and `tag`. Run beside others
 /// on other devices, each its own xcodebuild.
+///
+/// A simulator now and then refuses to launch the tests' runner at all
+/// ("Launch prevented due to "prevent launch" assertion"), just after a
+/// launch before it: a test that never started is run once more, a few
+/// seconds on, and says so.
 export async function uiTest(udid: string, test: string, env: Record<string, string>, tag = ''): Promise<UiResult> {
+  const first = await uiTestOnce(udid, test, env, tag);
+  if (first.passed || /Test Case '-\[EggTimerUITests\.\w+ \w+\]' started/.test(first.output)) return first;
+  await new Promise((done) => setTimeout(done, 5000));
+  const again = await uiTestOnce(udid, test, env, tag);
+  return { ...again, notes: [`run again: the first never started (${first.failures.join('; ').slice(0, 160)})`, ...again.notes] };
+}
+
+async function uiTestOnce(udid: string, test: string, env: Record<string, string>, tag: string): Promise<UiResult> {
   quietly(() => simctl('terminate', udid, BUNDLE));
   quietly(() => simctl('uninstall', udid, BUNDLE));
   const bundle = `ios/${DERIVED}/results/${tag}${test.replace(/\//g, '.')}.xcresult`;
