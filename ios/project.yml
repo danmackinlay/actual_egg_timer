@@ -202,10 +202,10 @@ targets:
 
   # The app driven on a simulator as a finger would: its buttons tapped by
   # their accessibility identifiers, its clock stepped and its debug log read
-  # through a directory on the Mac (`-debugDir`, Screenshots.swift), which a
+  # through a directory on the Mac (`-debugDir`, DebugLog.swift), which a
   # simulator's app and its tests both reach. A Debug build only: the clock's
   # and the log's launch arguments are a debug build's. It links the app's
-  # logic to read the log by its own types (`Screenshots.Event`, the stored
+  # logic to read the log by its own types (`DebugLog.Event`, the stored
   # cook). `npm run ios:e2e` and `npm run ios:shots` run it, a scenario to a
   # fresh install (tools/iosE2e.ts).
   EggTimerUITests:

@@ -10,7 +10,7 @@ final class ShareNetwork: ShareTransport {
     /// The site the web app is served from, which hosts the endpoint. A
     /// debug build can point elsewhere with
     /// `-shareServer <url>`, for a local `netlify dev`.
-    static var server: URL { Screenshots.shareServer ?? URL(string: "https://actualeggtimer.netlify.app")! }
+    static var server: URL { DebugLog.shareServer ?? URL(string: "https://actualeggtimer.netlify.app")! }
 
     private static let assertionHeader = "x-egg-assertion"
 

@@ -80,7 +80,7 @@ public final class Cook {
     @ObservationIgnored private var busy = 0
     #if DEBUG
     /// Ticks taken: a step's `idle` waits for a tick at its moment
-    /// (`Screenshots.idle(after:)`), and a test for a tick at its clock's.
+    /// (`DebugLog.idle(after:)`), and a test for a tick at its clock's.
     @ObservationIgnored private(set) var ticks = 0
     #endif
     @ObservationIgnored private var log = CookLog()
@@ -491,7 +491,7 @@ public final class Cook {
             // take a prompt's seconds.
             if let now = running, let plan { await card.start(now, plan, atS: AppClock.nowS) }
             guard running?.idMs == cook.idMs else { return }
-            if restored { Screenshots.log(.restored) }
+            if restored { DebugLog.log(.restored) }
         }
     }
 
@@ -549,7 +549,7 @@ public final class Cook {
     private func logIfSettled() {
         #if DEBUG
         guard isSettled else { return }
-        Screenshots.log(.settled)
+        DebugLog.log(.settled)
         #endif
     }
 
@@ -572,7 +572,7 @@ public final class Cook {
         let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
         if let data = try? encodeStamped(StoreRegistry.cook, stored) {
             Stores.set(data, forKey: Self.savedKey)
-            Screenshots.log(.stored(value: Screenshots.Encoded(value: Stamped(StoreRegistry.cook, stored))))
+            DebugLog.log(.stored(value: DebugLog.Encoded(value: Stamped(StoreRegistry.cook, stored))))
         }
     }
 
@@ -581,7 +581,7 @@ public final class Cook {
         if let data = Stores.store.data(forKey: savedKey), let stored = readStored(data),
            stored.cook.idMs != idMs { return }
         Stores.remove(savedKey)
-        Screenshots.log(.stored(value: nil))
+        DebugLog.log(.stored(value: nil))
     }
 
     /// Pick up the cook stored when the app was last closed: a tick of it
@@ -605,7 +605,7 @@ public final class Cook {
         let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
         let s = made.step
         guard let after = s.cook, endedAtS(after) == nil else {
-            Screenshots.log(.restoreTooOld)
+            DebugLog.log(.restoreTooOld)
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
@@ -614,7 +614,7 @@ public final class Cook {
             follow()
             return
         }
-        Screenshots.log(.restore(
+        DebugLog.log(.restore(
             phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))

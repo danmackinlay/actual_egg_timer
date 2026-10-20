@@ -265,9 +265,9 @@ final class FakeCard: LockScreenCard, @unchecked Sendable {
 /// The debug log's events, as the app wrote them.
 final class EventLog: @unchecked Sendable {
     private let lock = NSLock()
-    private var seen: [Screenshots.Event] = []
-    var events: [Screenshots.Event] { lock.withLock { seen } }
-    func add(_ e: Screenshots.Event) { lock.withLock { seen.append(e) } }
+    private var seen: [DebugLog.Event] = []
+    var events: [DebugLog.Event] { lock.withLock { seen } }
+    func add(_ e: DebugLog.Event) { lock.withLock { seen.append(e) } }
 }
 
 /// The calibration before an egg, held back until released: a record made
@@ -379,7 +379,7 @@ struct World {
         let announced = announced
         Services.announce = { announced.add($0) }
         let log = log
-        Screenshots.output = { event, _ in log.add(event) }
+        DebugLog.output = { event, _ in log.add(event) }
         Stores.sweep()
     }
 

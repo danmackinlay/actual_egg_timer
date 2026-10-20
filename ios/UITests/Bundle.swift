@@ -28,7 +28,7 @@ extension Scenarios {
         scenario { run in
             try run.launch()
             let want = AlarmSound.allCases.flatMap { s in ["pull", "cooled"].map { "alarm-\(s.rawValue)-\($0).caf" } }
-            let soundFile = { (e: Screenshots.Event) -> (name: String, bundled: Bool, seconds: Double?, format: String?)? in
+            let soundFile = { (e: DebugLog.Event) -> (name: String, bundled: Bool, seconds: Double?, format: String?)? in
                 guard case let .soundFile(name, bundled, seconds, format) = e else { return nil }
                 return (name, bundled, seconds, format)
             }

@@ -77,7 +77,7 @@ final class Ringer {
         // It cannot sound from the background anyway: the app has no
         // background audio mode, and the screen said "keep the app open".
         guard onScreenSinceS != nil else {
-            return Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen"))
+            return DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen"))
         }
         log.notice("ringing for \(deadline.rawValue, privacy: .public): the app is on screen")
 
@@ -144,7 +144,7 @@ final class Ringer {
             log.notice("playing \(buffer.frameLength) frames at \(buffer.format.sampleRate) Hz\(loops ? ", looped" : "", privacy: .public)")
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
-            if Screenshots.muteAudio { engine.mainMixerNode.outputVolume = 0 }
+            if DebugLog.muteAudio { engine.mainMixerNode.outputVolume = 0 }
             do {
                 try engine.start()
                 player.scheduleBuffer(buffer, at: nil, options: loops ? .loops : [])
@@ -158,7 +158,7 @@ final class Ringer {
         // What was asked of the speaker and what it took: a ring that plays
         // at no media volume, or to a route nobody is near, is as silent as
         // one that never started.
-        Screenshots.log(.ringing(
+        DebugLog.log(.ringing(
             file: file, frames: buffer.map { Int($0.frameLength) }, category: session.category.rawValue,
             active: active, engine: engine.isRunning, playing: player.isPlaying,
             volume: Double(session.outputVolume), route: session.currentRoute.outputs.map(\.portType.rawValue),
@@ -197,7 +197,7 @@ final class Ringer {
     /// under 30 s, in linear PCM, IMA4, µ-law or a-law (`npm run ios:e2e`
     /// holds each to that).
     static func logFiles() {
-        guard Screenshots.logging else { return }
+        guard DebugLog.logging else { return }
         for sound in AlarmSound.allCases {
             for moment in RingDeadline.allCases {
                 let name = AlarmSoundChoice.file(sound, moment)
@@ -207,7 +207,7 @@ final class Ringer {
                     let id = f.fileFormat.streamDescription.pointee.mFormatID.bigEndian
                     return withUnsafeBytes(of: id) { String(decoding: $0, as: UTF8.self) }
                 }
-                Screenshots.log(.soundFile(
+                DebugLog.log(.soundFile(
                     name: name, bundled: Bundle.main.url(forResource: name, withExtension: nil) != nil,
                     seconds: file.map { Double($0.length) / $0.fileFormat.sampleRate }, format: format
                 ))

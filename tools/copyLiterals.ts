@@ -9,7 +9,7 @@
  * or a helper not on the list is not read.
  *
  * Read: ios/App, ios/Widget, EggTimerApp and EggTimerShared, less what only a
- * debug build compiles (Screenshots.swift, an `#if DEBUG` branch). A `"""`
+ * debug build compiles (DebugLog.swift, an `#if DEBUG` branch). A `"""`
  * literal fails where it opens on a line with a text call; elsewhere it is
  * skipped.
  *
@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import { checkTree, summary } from './copyArgs.ts';
 
 const DIRS = ['ios/App', 'ios/Widget', 'ios/EggTimerCore/Sources/EggTimerApp', 'ios/EggTimerCore/Sources/EggTimerShared'];
-const DEBUG_FILES = new Set(['ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift']);
+const DEBUG_FILES = new Set(['ios/EggTimerCore/Sources/EggTimerApp/DebugLog.swift']);
 
 const TEXT_CALLS = [ // SwiftUI, UIKit and notifications; ForEach's data is what its rows show
   'Text', 'Button', 'Label', 'Toggle', 'Picker', 'TextField', 'SecureField', 'Link', 'ShareLink', 'Menu', 'Section',

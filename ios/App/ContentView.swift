@@ -166,8 +166,8 @@ struct ContentView: View {
             if back { path = [] }
         }
         #if DEBUG
-        // A step's `idle` waits for the page drawn again (Screenshots.swift).
-        .onChange(of: Screenshots.probe.drawn) { Screenshots.drawn() }
+        // A step's `idle` waits for the page drawn again (DebugLog.swift).
+        .onChange(of: DebugLog.probe.drawn) { DebugLog.drawn() }
         #endif
         // 1750 is set in its period face, as on the web (`PeriodFace`):
         // here for whatever sets no style of its own, and through
@@ -202,31 +202,31 @@ struct ContentView: View {
 
     /// A timeline's date in cook time. A debug build reads the probe a
     /// step's `idle` draws the page again with, so that the timelines draw a
-    /// frozen clock's new moment at once (`Screenshots.idle(after:)`).
+    /// frozen clock's new moment at once (`DebugLog.idle(after:)`).
     private func moment(_ date: Date) -> Date {
         #if DEBUG
-        _ = Screenshots.probe.drawn
+        _ = DebugLog.probe.drawn
         #endif
         return AppClock.app(date)
     }
 
     /// Where the page holds its scroll, as it opens and as it grows: at its
-    /// foot for a debug build launched `-uiScreen end` (Screenshots.swift), so
+    /// foot for a debug build launched `-uiScreen end` (DebugLog.swift), so
     /// the questions Done adds are in the picture; the system's otherwise.
     private var scrollAnchor: UnitPoint? {
         #if DEBUG
-        Screenshots.scene == "end" ? .bottom : nil
+        DebugLog.scene == "end" ? .bottom : nil
         #else
         nil
         #endif
     }
 
     #if DEBUG
-    /// The screen a debug build was launched onto (Screenshots.swift).
+    /// The screen a debug build was launched onto (DebugLog.swift).
     private func showScreenshotScene() {
         // What a step's `idle` waits on.
-        Screenshots.watch(model)
-        guard let scene = Screenshots.scene else { return }
+        DebugLog.watch(model)
+        guard let scene = DebugLog.scene else { return }
         switch scene {
         case "settings": path = [.settings]
         case "help": path = [.help(nil)]
@@ -334,9 +334,9 @@ struct ContentView: View {
         } else if frame.maxY > screen.maxY {
             anchor = .bottom
         } else {
-            return Screenshots.log(.reveal(clause: clause.rawValue, scroll: "none"))
+            return DebugLog.log(.reveal(clause: clause.rawValue, scroll: "none"))
         }
-        Screenshots.log(.reveal(clause: clause.rawValue, scroll: anchor == .top ? "top" : "bottom"))
+        DebugLog.log(.reveal(clause: clause.rawValue, scroll: anchor == .top ? "top" : "bottom"))
         // On the next turn, once the scroll view has taken in the page grown
         // by the panel: in this pass it would stop the scroll at the old
         // page's foot.
@@ -362,13 +362,13 @@ private struct OpenPanel: Hashable {
 }
 
 /// What the screen says, to the debug log, for the scripted checks
-/// (`Screenshots.log`). A release build works none of it out and watches
+/// (`DebugLog.log`). A release build works none of it out and watches
 /// nothing.
 extension View {
     /// `event` to the debug log whenever it changes.
-    func logged(_ event: @autoclosure () -> Screenshots.Event) -> some View {
+    func logged(_ event: @autoclosure () -> DebugLog.Event) -> some View {
         #if DEBUG
-        onChange(of: event(), initial: true) { _, said in Screenshots.log(said) }
+        onChange(of: event(), initial: true) { _, said in DebugLog.log(said) }
         #else
         self
         #endif

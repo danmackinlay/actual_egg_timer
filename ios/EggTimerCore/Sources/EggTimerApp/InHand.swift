@@ -111,7 +111,7 @@ public final class InHand {
     #if DEBUG
     /// Whether a preview is being planned, or a timer has reached its moment
     /// and not yet done what it waits for: a step's `idle` waits for it
-    /// (`Screenshots.idle(after:)`). A timer whose moment is still to come is
+    /// (`DebugLog.idle(after:)`). A timer whose moment is still to come is
     /// not under way: a frozen clock reaches it only when it is stepped.
     var underWay: Bool {
         let now = AppClock.nowS
@@ -223,7 +223,7 @@ public final class InHand {
             return
         }
         handle(.change(atS: AppClock.nowS, group: group))
-        Screenshots.log(.edit(group: group.rawValue))
+        DebugLog.log(.edit(group: group.rawValue))
         // At once, the slider's own reading; the plan's follows.
         aim = (planner.settings.doneness, targetPeakYolkC(planner.settings.doneness), nil)
     }
@@ -261,18 +261,18 @@ public final class InHand {
         guard let model, let planner, let running = model.cook.running else { return }
         if group == .startedAt {
             let start = startInHand.flatMap { $0 != running.startedAtS ? $0 : nil }
-            Screenshots.log(.editCommitted(fields: [], start: start))
+            DebugLog.log(.editCommitted(fields: [], start: start))
             if let start { model.correct(running.choices, startedAtS: start) }
             startInHand = nil
             return
         }
         guard let choices = handChoices(running, said: planner.choices, group: group) else {
             if group == .level { previewedLevel = true }
-            Screenshots.log(.editCommitted(fields: [], start: nil))
+            DebugLog.log(.editCommitted(fields: [], start: nil))
             return
         }
         if group == .level { previewedLevel = false }
-        Screenshots.log(.editCommitted(fields: [group.rawValue], start: nil))
+        DebugLog.log(.editCommitted(fields: [group.rawValue], start: nil))
         if choices != running.choices { model.correct(choices, startedAtS: nil) }
         SettingsStore.save(planner, groups: [group])
         if group == .room { model.cook.probeSettingChanged() }

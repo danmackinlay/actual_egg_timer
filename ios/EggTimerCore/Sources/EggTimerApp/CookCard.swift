@@ -126,7 +126,7 @@ final class CookCard {
 
     /// A card pushed, to the debug log.
     private static func log(_ what: String, _ s: CookActivity.ContentState) {
-        Screenshots.log(.activity(
+        DebugLog.log(.activity(
             what: what, stage: s.stage.rawValue, ends: Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()),
             up: s.countsUp, cook: [s.cook.doneness, s.cook.peakYolk, s.cook.eggMass, s.cook.cooling]
         ))

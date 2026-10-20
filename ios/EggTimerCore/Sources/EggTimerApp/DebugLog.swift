@@ -76,7 +76,7 @@ import os
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
 /// `Codable` writes them, in the order of their names, a field with no value
 /// left out.
-public enum Screenshots {
+public enum DebugLog {
     /// Where launch arguments are read: UserDefaults, whose argument domain
     /// holds them, in a debug build; none in a release build.
     static var arguments: UserDefaults? {
@@ -175,7 +175,7 @@ public enum Screenshots {
 }
 
 #if DEBUG
-extension Screenshots {
+extension DebugLog {
     /// The screenshot kit's screen (above).
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
     /// `-alarmTest <s>`: the alarms' lead, s (above; `AlarmTest`, in the app).
@@ -185,7 +185,7 @@ extension Screenshots {
 }
 #endif
 
-extension Screenshots {
+extension DebugLog {
     /// What the debug log says, one case an event, its values the line's
     /// fields (`log`). Times are epoch s in cook time unless said; a value
     /// that is none is left out of the line. Decodable too, for the UI tests
@@ -338,7 +338,7 @@ extension Screenshots {
     }
 }
 
-/// Any JSON, as a line's stored value is read back (`Screenshots.Encoded`).
+/// Any JSON, as a line's stored value is read back (`DebugLog.Encoded`).
 public enum JSONValue: Codable, Equatable, Sendable {
     case null
     case bool(Bool)
@@ -378,7 +378,7 @@ public enum JSONValue: Codable, Equatable, Sendable {
 }
 
 #if DEBUG
-extension Screenshots {
+extension DebugLog {
     /// What the screen draws again for after a step: read by the page and
     /// by its timelines (ContentView), so that a change of it draws them at
     /// the clock's new moment, a frozen clock's timelines otherwise waiting

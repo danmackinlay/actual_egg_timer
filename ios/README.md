@@ -272,7 +272,7 @@ The headers say the rest: `tools/iosE2e.ts` (the lanes, how to run some),
 `tools/iosHarness.ts` (the devices and a test's run on a fresh install),
 `ios/UITests/Harness.swift` (a scenario's run of the app), and in
 `ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it steps)
-and `Screenshots.swift` (the launch arguments and the debug log). `npm run
+and `DebugLog.swift` (the launch arguments and the debug log). `npm run
 ios:shots` reaches its screens by UI tests too (`ios/UITests/Shots.swift`).
 Not in `npm run verify`; CI runs it beside the iOS build.
 

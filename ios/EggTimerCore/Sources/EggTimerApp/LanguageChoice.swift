@@ -18,7 +18,7 @@ public final class LanguageChoice {
 
     /// Under its own key, not "language": a launch argument of that name
     /// would shadow it (UserDefaults' argument domain), and the debug builds
-    /// take one (`-uiLanguage`, Screenshots.swift).
+    /// take one (`-uiLanguage`, DebugLog.swift).
     private static let key = StoreRegistry.languageState.key
 
     public private(set) var state = LanguageState.fresh
@@ -31,7 +31,7 @@ public final class LanguageChoice {
     /// first frame is already in the cook's language.
     public func start() {
         state = Self.read()
-        if let tag = Screenshots.language, languageTags.contains(tag) {
+        if let tag = DebugLog.language, languageTags.contains(tag) {
             state = LanguageState(chosen: tag)
         }
         Copy.use(effectiveLanguage(state))

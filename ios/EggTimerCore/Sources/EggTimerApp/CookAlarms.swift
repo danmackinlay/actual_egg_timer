@@ -89,9 +89,9 @@ public final class CookAlarms {
             phase: deadline == .pull ? .pull : .done, nowS: AppClock.nowS, pullS: d.cookEndS, cooledS: d.coolEndS,
             rung: [], onScreenSinceS: Services.ringer.onScreenSinceS
         ) == deadline else {
-            return Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
+            return DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
         }
-        Screenshots.log(.ring(deadline: deadline.rawValue))
+        DebugLog.log(.ring(deadline: deadline.rawValue))
         Services.ringer.ring(deadline)
     }
 

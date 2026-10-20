@@ -154,7 +154,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   `project.yml`. The project is generated and gitignored.
 - **A debug build takes launch arguments** (`-uiScreen`,
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
-  `ios/EggTimerCore/Sources/EggTimerApp/Screenshots.swift` lists them.
+  `ios/EggTimerCore/Sources/EggTimerApp/DebugLog.swift` lists them.
 - **`npm run ios:e2e` taps the app as a finger would** (XCUITest,
   `ios/UITests`), finding each control by its accessibility identifier:
   a control a scenario presses needs one, on the control itself, not on a

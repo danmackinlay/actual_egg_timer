@@ -8,7 +8,7 @@ import EggTimerCore
 // accessibility identifiers and tapped as a finger would.
 //
 // The clock and the log go through a directory on the Mac (`-debugDir`,
-// Screenshots.swift), which a simulator's app and its tests both read and
+// DebugLog.swift), which a simulator's app and its tests both read and
 // write: the tests cannot see the app's container. `npm run ios:e2e`
 // (tools/iosE2e.ts) gives each scenario a fresh install and its own
 // directory.
@@ -79,7 +79,7 @@ struct LaunchOptions {
 struct Line {
     let t: Double
     let ev: String
-    let event: Screenshots.Event
+    let event: DebugLog.Event
     let i: Int
 }
 
@@ -142,7 +142,7 @@ final class Run {
 
     /// Move the running app's clock to `at`, frozen there, as a phone asleep
     /// or set would be, and wait until the app has caught up with it (`idle`,
-    /// Screenshots.swift): the cook ticked at the moment, nothing under way,
+    /// DebugLog.swift): the cook ticked at the moment, nothing under way,
     /// the screen drawn; with `idle: false`, only until the clock has moved.
     /// The index of the line that says the clock moved, from which what the
     /// step set going follows.
@@ -189,7 +189,7 @@ final class Run {
     /// or stop after `timeoutS` of the host's seconds.
     @discardableResult
     func until(
-        _ what: String, from: Int = 0, timeoutS: Double = Env.waitS, _ test: (Screenshots.Event) -> Bool
+        _ what: String, from: Int = 0, timeoutS: Double = Env.waitS, _ test: (DebugLog.Event) -> Bool
     ) throws -> Line {
         let end = Date().addingTimeInterval(timeoutS)
         repeat {
@@ -384,7 +384,7 @@ func pause(_ s: Double) {
 }
 
 extension Line {
-    /// A line as the app writes it (`Screenshots.log`): `{"t":…,"ev":"<case>"`
+    /// A line as the app writes it (`DebugLog.log`): `{"t":…,"ev":"<case>"`
     /// and the case's fields, made the `{"<case>":{<fields>}}` that `Codable`
     /// reads.
     init(_ text: String, i: Int) throws {
@@ -403,7 +403,7 @@ extension Line {
             positiveInfinity: "inf", negativeInfinity: "-inf", nan: "nan"
         )
         do {
-            event = try decoder.decode(Screenshots.Event.self, from: Data(json.utf8))
+            event = try decoder.decode(DebugLog.Event.self, from: Data(json.utf8))
         } catch {
             throw Stop("the debug log's line \(i + 1) does not read as an event (\(error)): \(text.prefix(200))")
         }

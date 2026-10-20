@@ -225,9 +225,9 @@ enum LaunchClock {
         .contains { UserDefaults.standard.object(forKey: $0) != nil }
 
     /// The file a step is read from: in `-debugDir`, or in the app's
-    /// container (`Screenshots.debugDir`).
+    /// container (`DebugLog.debugDir`).
     private static var stepFile: URL? {
-        Screenshots.debugDir?.appendingPathComponent("aet.clock")
+        DebugLog.debugDir?.appendingPathComponent("aet.clock")
     }
 
     /// The last step taken; one already in the file at launch is not taken.
@@ -263,8 +263,8 @@ enum LaunchClock {
         guard let step = readStep(), step.n > lastStep else { return }
         lastStep = step.n
         anchor.withLock { $0 = Anchor(system: Date().timeIntervalSince1970, app: step.at, speed: step.speed, altered: true) }
-        Screenshots.log(.clock(n: step.n, at: step.at, speed: step.speed))
-        Screenshots.stepped(step.n)
+        DebugLog.log(.clock(n: step.n, at: step.at, speed: step.speed))
+        DebugLog.stepped(step.n)
     }
     #else
     static let altered = false

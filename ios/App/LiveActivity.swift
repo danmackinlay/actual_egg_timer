@@ -57,12 +57,12 @@ enum LiveActivity {
     }
 
     /// Every card the system holds for the app, its state, stage and end
-    /// (in cook time), to the debug log (`Screenshots.log`).
+    /// (in cook time), to the debug log (`DebugLog.log`).
     static func logAll(_ when: String) {
-        guard Screenshots.logging else { return }
+        guard DebugLog.logging else { return }
         for activity in Activity<CookActivity>.activities {
             let s = activity.content.state
-            Screenshots.log(.activitySeen(
+            DebugLog.log(.activitySeen(
                 when: when, state: "\(activity.activityState)", stage: s.stage.rawValue,
                 ends: Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded())
             ))

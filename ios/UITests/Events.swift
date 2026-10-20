@@ -2,7 +2,7 @@ import Foundation
 import EggTimerApp
 import EggTimerCore
 
-// The debug log's events as the scenarios read them (`Screenshots.Event`):
+// The debug log's events as the scenarios read them (`DebugLog.Event`):
 // a field of a case, or nil for another case.
 
 /// A plan as the checks read it: the deadlines, epoch s, exact; when the slow
@@ -24,7 +24,7 @@ struct Plan {
     }
 }
 
-extension Screenshots.Event {
+extension DebugLog.Event {
     var phase: String? {
         guard case .phase(let p) = self else { return nil }
         return p
@@ -69,7 +69,7 @@ extension Screenshots.Event {
 }
 
 /// Whether this event is the phase, one of these.
-func phaseIs(_ names: String...) -> (Screenshots.Event) -> Bool {
+func phaseIs(_ names: String...) -> (DebugLog.Event) -> Bool {
     { e in e.phase.map { names.contains($0) } ?? false }
 }
 
@@ -119,7 +119,7 @@ func delivered(_ lines: [Line]) -> [String]? {
 }
 
 /// The lines before the first that `test` holds of, or all of them.
-func before(_ lines: [Line], _ test: (Screenshots.Event) -> Bool) -> [Line] {
+func before(_ lines: [Line], _ test: (DebugLog.Event) -> Bool) -> [Line] {
     guard let i = lines.firstIndex(where: { test($0.event) }) else { return lines }
     return Array(lines[..<i])
 }
