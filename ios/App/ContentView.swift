@@ -302,6 +302,10 @@ struct ContentView: View {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(OpenPanel(clause: clause))
+                // Its frame, for the UI tests: a group, so its controls keep
+                // their own identifiers.
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("panel.\(clause.rawValue)")
                 // The panel fades in on its own, and the page grows at once:
                 // under an animation the scroll view would take in its new
                 // height only once the animation ended, and the scroll to a

@@ -143,7 +143,8 @@ struct FeedbackPanel: View {
         let value = YolkWord.allCases[index]
         let given = said?.yolkWord
         return answerButton(
-            tr(donenessAnchors[index].key), chosen: given == value, answered: given != nil, tight: true
+            tr(donenessAnchors[index].key), id: "answer.yolk.\(value.rawValue)", chosen: given == value,
+            answered: given != nil, tight: true
         ) {
             model.answer(yolk: value, white: nil)
         }
@@ -151,7 +152,7 @@ struct FeedbackPanel: View {
 
     private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
         let given = said?.white
-        return answerButton(label, chosen: given == value, answered: given != nil) {
+        return answerButton(label, id: "answer.white.\(value.rawValue)", chosen: given == value, answered: given != nil) {
             model.answer(yolk: nil, white: value)
         }
     }
@@ -160,7 +161,8 @@ struct FeedbackPanel: View {
     /// One line each: `AnswerRows` never gives a button less than its word.
     @ViewBuilder
     private func answerButton(
-        _ label: String, chosen: Bool, answered: Bool, tight: Bool = false, action: @escaping () -> Void
+        _ label: String, id: String, chosen: Bool, answered: Bool, tight: Bool = false,
+        action: @escaping () -> Void
     ) -> some View {
         // A bordered button pads its label by about 12 pt a side, which leaves
         // five words a phone's width only at the smallest text; the yolk
@@ -173,9 +175,11 @@ struct FeedbackPanel: View {
         if chosen {
             Button(action: action) { text.onAccent() }
                 .buttonStyle(.borderedProminent).allowsHitTesting(false)
+                .accessibilityIdentifier(id)
         } else {
             Button(action: action) { text }
                 .buttonStyle(.bordered).disabled(answered)
+                .accessibilityIdentifier(id)
         }
     }
 

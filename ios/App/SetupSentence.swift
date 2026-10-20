@@ -187,7 +187,7 @@ struct ClausePanel: View {
                         tr(.`controls.start.sousVide`, ["bath": .text(planner.show(.temperature, sousVideBathC))]),
                         StartChoice.sousVide
                     )] : []),
-                selection: $planner.start
+                selection: $planner.start, field: .startMode
             )
             if !planner.isSousVide { pan }
             if let inHand, let start = inHand.shownStart { startedAt(inHand, start) }
@@ -208,7 +208,7 @@ struct ClausePanel: View {
                     (tr(.`controls.afterTheBoil.keepBoiling`), false),
                     (tr(.`controls.afterTheBoil.heatOff`), true),
                 ],
-                selection: $planner.heatOff
+                selection: $planner.heatOff, field: .afterBoil
             )
             InfoRow(.`controls.water`, more: [tr(.`controls.water.more`)]) {
                 StepperValue(
@@ -377,6 +377,7 @@ struct ClausePanel: View {
             )],
             selection: Binding(get: { planner.settings.sizeIndex }, set: { planner.chooseSize($0) })
         )
+        .testID(.mass, "size")
     }
 
     /// Fridge, room, or the cook's own number. The presets' temperatures are

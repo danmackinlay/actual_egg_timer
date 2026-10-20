@@ -256,14 +256,20 @@ extension Scenarios {
             let doneness = { (p: [String: Any]) in (p[settings] as? [String: Any])?["doneness"] as? Double }
             let prefs = try run.prefs { doneness($0) == level }
             run.check(doneness(prefs) == level, "the setting in the file: \(String(describing: doneness(prefs))) for \(level)")
-            // Again with the egg's choice open (the screenshot kit's), and in
-            // it the weight's + then the count's: two commits, the first as
-            // the second control is touched, the second at its settle.
-            let r = try run.relaunched(at: run.t0 + 40, ["-uiScreen", "clause-egg"])
+            let r = try run.relaunched(at: run.t0 + 40)
             run.check(lastStored(r.lines)??.cook.choices.level == level, "relaunched with the change")
+            // The egg's size chosen in its clause's choice, then the start's
+            // clause pressed, which commits it, and the water's − there: two
+            // commits, the second at its settle.
             i = try run.step(run.t0 + 50)
-            try run.press("mass.stepper")
-            try run.press("eggCount.stepper")
+            try run.tapClause("egg")
+            try run.tap("mass.size")
+            // The menu's choices, a list over the page: the fourth size.
+            let size = run.app.collectionViews.firstMatch.buttons.element(boundBy: 3)
+            guard size.waitForExistence(timeout: Env.waitS) else { throw Stop("the size's menu never opened") }
+            size.tap()
+            try run.tapClause("start")
+            try run.press("waterLitres.stepper", up: false)
             let first = try run.until("the first change committed", from: i) {
                 if case .editCommitted = $0 { true } else { false }
             }
@@ -274,9 +280,9 @@ extension Scenarios {
                 if case .editCommitted = $0 { true } else { false }
             }
             run.check(first.event == .editCommitted(fields: ["mass"], start: nil)
-                && second.event == .editCommitted(fields: ["eggCount"], start: nil),
+                && second.event == .editCommitted(fields: ["waterLitres"], start: nil),
                       "two commits: \(first.event), \(second.event)")
-            run.note("the slider let go and the app left: committed, stored and written; the weight then the count: two commits")
+            run.note("the slider let go and the app left: committed, stored and written; size then water: two commits")
         }
     }
 }

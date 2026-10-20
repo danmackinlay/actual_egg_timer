@@ -276,22 +276,56 @@ final class Run {
         let end = Date().addingTimeInterval(Env.waitS)
         while !e.isEnabled, Date() < end { pause(0.1) }
         guard e.isEnabled else { throw Stop("\(id) never enabled") }
+        if !e.isHittable { try reveal(e) }
         e.tap()
+    }
+
+    /// Where the screen shows the page, top and foot, in the window: under
+    /// the bar and over the home indicator's 34 pt.
+    func screen() -> (top: Double, foot: Double) {
+        (app.navigationBars.firstMatch.frame.maxY, app.windows.firstMatch.frame.maxY - 34)
+    }
+
+    /// A clause of the sentence pressed, as a finger would: its link, where
+    /// it is drawn (SetupSentence's accessibility), brought on screen and
+    /// pressed near the start of its last line, which a clause that wraps
+    /// begins at the line's start, so the press is on its words.
+    func tapClause(_ clause: String) throws {
+        let link = app.links.matching(identifier: "eggtimer-clause://\(clause)").firstMatch
+        guard link.exists || link.waitForExistence(timeout: Env.waitS) else { throw Stop("no clause \(clause)") }
+        try reveal(link)
+        link.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 1)).withOffset(CGVector(dx: 8, dy: -8)).tap()
     }
 
     /// The page scrolled, a swipe at a time, until the element is on the
     /// screen whole, where a finger can reach it: under the bar, and over
     /// the home indicator's 34 pt.
     func reveal(_ e: XCUIElement) throws {
-        let top = app.navigationBars.firstMatch.frame.maxY
-        let foot = app.windows.firstMatch.frame.maxY - 34
-        let whole = { e.isHittable && e.frame.minY >= top && e.frame.maxY <= foot }
-        for _ in 0..<8 where !whole() {
-            if e.frame.maxY > foot {
-                app.scrollViews.firstMatch.swipeUp(velocity: .slow)
-            } else {
-                app.scrollViews.firstMatch.swipeDown(velocity: .slow)
-            }
+        let (top, screenFoot) = screen()
+        // Over the keyboard, when one is up.
+        let keyboard = app.keyboards.firstMatch
+        let foot = keyboard.exists ? min(screenFoot, keyboard.frame.minY) : screenFoot
+        let whole = { () -> Bool in
+            guard e.isHittable else { return false }
+            let f = e.frame
+            return f.minY >= top && f.maxY <= foot
+        }
+        // A finger drags the page by what is left to show, at most two
+        // thirds of the screen at a time, and holds at the end so the page
+        // does not run on.
+        let window = app.windows.firstMatch
+        // On the right, in the page's margin: no control there, and no edge
+        // gesture of the system's.
+        let x = window.frame.width - 12
+        for _ in 0..<12 {
+            if whole() { return }
+            let f = e.frame
+            let room = (foot - top) * 2 / 3
+            let by = f.maxY > foot ? -min(f.maxY - foot + 20, room) : min(top - f.minY + 20, room)
+            let y = by < 0 ? foot - 20 : top + 20
+            let from = window.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: y))
+            let to = window.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: y + by))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.1)
         }
         guard whole() else { throw Stop("\(e.identifier) never on the screen whole: \(e.frame)") }
     }

@@ -536,6 +536,9 @@ struct SegmentedChoice<Tag: Hashable>: View {
     let label: String
     let choices: [(title: String, tag: Tag)]
     @Binding var selection: Tag
+    /// The group of the cook's choices it makes, while a cook runs: what
+    /// the UI tests find it by (`testID`).
+    var field: HandGroup? = nil
     @Environment(\.dynamicTypeSize) private var size
 
     var body: some View {
@@ -550,6 +553,7 @@ struct SegmentedChoice<Tag: Hashable>: View {
             .segmented()
             .labelsHidden()
             .accessibilityLabel(label)
+            .testID(field, "choice")
         }
     }
 }
