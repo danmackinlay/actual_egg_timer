@@ -10,7 +10,7 @@
 
 import { SIZE_CLASSES } from '../../src/core/geometry.ts';
 import { type Particle, type Posterior, createPrior, effectiveSampleSize } from '../../src/core/infer.ts';
-import type { CookChoices } from '../../src/core/running.ts';
+import { type CookChoices, type CookPlan, phaseAt } from '../../src/core/running.ts';
 
 export function particleRows(post: ReturnType<typeof createPrior>) {
   return post.particles.map((p) => ({
@@ -54,6 +54,21 @@ export function posteriorSummary(post: Posterior) {
   return {
     count: post.particles.length, rng: post.rng, ess: effectiveSampleSize(post), weightCentre: centre / total,
     first: particleRows(post)[0], mean: mean, sd: sd,
+  };
+}
+
+/** A plan as the running and step fixtures write it: what the cook is shown
+ *  and timed by, at `now_s`. Swift's PlanRow makes the same. */
+export function planRow(p: CookPlan, now_s: number) {
+  return {
+    phase: phaseAt(p.deadlines, now_s), cookTime_s: p.cookTime_s, timeToBoil_s: p.setup.timeToBoil_s,
+    deadlines: p.deadlines, decided: p.decided !== null, lengthened: p.inputs === null, lean_s: p.lean_s,
+    level: p.answer.level, verdict: p.answer.verdict.kind, overdue: p.overdue,
+    slowHobAt_s: p.slowHobAt_s, tooOldAt_s: p.tooOldAt_s,
+    certainty: p.certainty === null ? null : {
+      certainty: p.certainty.words.certainty, from: p.certainty.words.from, to: p.certainty.words.to,
+      low_s: p.certainty.time.low_s, high_s: p.certainty.time.high_s,
+    },
   };
 }
 

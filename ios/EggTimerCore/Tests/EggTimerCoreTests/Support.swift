@@ -189,6 +189,57 @@ func posterior(_ json: [String: Any], rng: Int32? = nil) throws -> Posterior {
     return try decoded(Posterior.self, json)
 }
 
+/// A plan as the running and step fixtures write it (`planRow` in
+/// tools/fixtures/shared.ts): what the cook is shown and timed by, at a
+/// moment.
+struct PlanRow: Encodable {
+    let phase: Phase
+    let cookTimeS: Double
+    let timeToBoilS: Double
+    let deadlines: Deadlines
+    let decided: Bool
+    let lengthened: Bool
+    let leanS: Double
+    let level: Double
+    let verdict: RefusalKind
+    let overdue: Bool
+    let slowHobAtS: Double?
+    let tooOldAtS: Double
+    let certainty: Sure?
+
+    struct Sure: Encodable {
+        let certainty: Certainty
+        let from: Int
+        let to: Int
+        let lowS: Double
+        let highS: Double
+        enum CodingKeys: String, CodingKey { case certainty, from, to, lowS = "low_s", highS = "high_s" }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case phase, cookTimeS = "cookTime_s", timeToBoilS = "timeToBoil_s", deadlines, decided, lengthened
+        case leanS = "lean_s", level, verdict, overdue, slowHobAtS = "slowHobAt_s", tooOldAtS = "tooOldAt_s", certainty
+    }
+
+    init(_ p: CookPlan, nowS: Double) {
+        phase = phaseAt(p.deadlines, nowS: nowS)
+        cookTimeS = p.cookTimeS
+        timeToBoilS = p.setup.timeToBoilS
+        deadlines = p.deadlines
+        decided = p.decided != nil
+        lengthened = guessLengthened(p)
+        leanS = p.leanS
+        level = p.answer.level
+        verdict = p.answer.verdict.kind
+        overdue = p.overdue
+        slowHobAtS = p.slowHobAtS
+        tooOldAtS = p.tooOldAtS
+        certainty = p.certainty.map {
+            Sure(certainty: $0.words.certainty, from: $0.words.from, to: $0.words.to, lowS: $0.time.lowS, highS: $0.time.highS)
+        }
+    }
+}
+
 /// A posterior as the fixtures write one that is not an input
 /// (`posteriorSummary` in tools/fixtures/shared.ts): its RNG's state, its
 /// effective sample size, where the weight sits among the particles, the
