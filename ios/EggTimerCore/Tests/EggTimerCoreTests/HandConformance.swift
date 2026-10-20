@@ -4,8 +4,10 @@ import Foundation
 
 /// The correction in hand against `fixtures/hand.json`, generated from
 /// `src/core/hand.ts`: each sequence replayed event by event, timers and all,
-/// and what each event made held whole; the choices a commit of each group
-/// makes, the cook the aimed-for egg is planned on, and the start's steps.
+/// and what each event made held: the commit, the egg aimed for, the timers,
+/// and when the hand last changed; the choices a commit of each group makes,
+/// the cook the aimed-for egg is planned on, and the start's steps. The
+/// cooks are made as the fixture says, by core's own moves.
 
 /// A cook previewed as the fixture writes it: what the plan reads of it.
 private struct PreviewRow: Encodable {
@@ -39,12 +41,24 @@ private struct StartRow: Encodable {
 @Suite("Hand")
 struct HandConformance {
     private func cooks() throws -> [String: RunningCook] {
+        let start = try Fixtures.object("hand.json", "start")
         var byName = [String: RunningCook]()
-        for c in try Fixtures.list("hand.json", "cooks") { byName[try c.str("name")] = try decoded(RunningCook.self, c["cook"]) }
+        for c in try Fixtures.list("hand.json", "cooks") {
+            var cook = try startCook(
+                nowS: start.num("at_s"), choices: decoded(CookChoices.self, start["choices"]), nudgeS: 0,
+                boilMemory: decoded(BoilMemory.self, start["memory"]), units: start.value(Units.self, "units"),
+                lang: start.str("lang")
+            )
+            for m in try c.rows("moves", mayBeEmpty: true) {
+                cook = m["boil"] != nil
+                    ? withBoil(cook, nowS: try m.num("boil")) : writeEvents(cook, try decoded(CookEvents.self, m["events"]))
+            }
+            byName[try c.str("name")] = cook
+        }
         return byName
     }
 
-    @Test("every sequence, event by event: the state, the commit, the aimed-for egg and the timers")
+    @Test("every sequence, event by event: the commit, the aimed-for egg, the timers and when the hand changed")
     func sequences() throws {
         let sequences = try Fixtures.list("hand.json", "sequences")
         #expect(sequences.count >= 15)
@@ -53,9 +67,12 @@ struct HandConformance {
             var state = nothingInHand()
             for (i, s) in try q.rows("steps").enumerated() {
                 let out = handStep(state, try decoded(HandEvent.self, s["event"]))
+                var made = try #require(try jsonOf(out) as? [String: Any])
+                made["changed_s"] = (made["state"] as? [String: Any])?["changed_s"] ?? NSNull()
+                made["state"] = nil
                 var expected = s
                 expected["event"] = nil
-                expectJSON(out, expected, "\(note), step \(i)")
+                expectJSON(made, expected, "\(note), step \(i)")
                 state = out.state
             }
         }
