@@ -20,10 +20,10 @@
  * Words are committed to main, by name, and never pushed. `--scratch` is
  * for the editor's own end-to-end check (tools/copyEditE2e.ts), in a clone
  * under the temporary directory: it lets approving run from an agent's
- * shell there, and is refused anywhere else. PORT or --port sets the port;
- * without one it takes any free port, since the address is new each run
- * anyway (the token) and is opened for the owner. A fixed default collided
- * with Anki's AnkiConnect, on 8765.
+ * shell there, and is refused anywhere else. PORT or --port sets the port.
+ * Without one it is 7457, or any free port when that is taken: the address
+ * is new each run anyway (the token) and is opened for the owner. 8765, the
+ * first default, is Anki's AnkiConnect.
  */
 
 import { spawn } from 'node:child_process';
@@ -44,13 +44,17 @@ const option = (name: string): string | undefined => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
+/** The port when none is given; any free one when it is taken. */
+const DEFAULT_PORT = 7457;
+
 const CWD = process.cwd();
 const SCRATCH = flag('--scratch');
 if (SCRATCH && !isUnderTmp(CWD)) {
   console.error('--scratch is for a clone under the temporary directory, and this is not one.');
   process.exit(1);
 }
-const PORT = Number(option('--port') ?? process.env['PORT'] ?? 0);
+const GIVEN = option('--port') ?? process.env['PORT'];
+const PORT = Number(GIVEN ?? DEFAULT_PORT);
 const TOKEN = newToken();
 /** The port listened on: PORT, or the one given for 0. */
 let port = PORT;
@@ -162,13 +166,19 @@ const server = createServer((req, res) => {
   });
 });
 server.on('error', (e: NodeJS.ErrnoException) => {
+  if (e.code === 'EADDRINUSE' && GIVEN === undefined && !server.listening) {
+    console.log(`Port ${PORT} is taken, so I’m using a free one.`);
+    server.listen(0, '127.0.0.1');
+    return;
+  }
   console.error(e.code === 'EADDRINUSE' ? `Port ${PORT} is taken: is the editor running already? Leave out --port and I’ll take a free one.` : e.message);
   process.exit(1);
 });
-server.listen(PORT, '127.0.0.1', () => {
+server.on('listening', () => {
   port = (server.address() as { port: number }).port;
   const url = `http://127.0.0.1:${port}/${TOKEN}/`;
   console.log(`The words' editor: ${url}`);
   console.log(APPROVE_OFF ?? 'It commits to main and never pushes. Ctrl-C stops it.');
   if (!flag('--no-open')) spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
 });
+server.listen(PORT, '127.0.0.1');
