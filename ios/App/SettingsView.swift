@@ -73,7 +73,7 @@ struct SettingsView: View {
                 }
                 SegmentedChoice(
                     label: tr(.`controls.language`),
-                    choices: [(tr(.`language.en`), defaultLanguage), (tr(.`language.en1750`), periodLanguage)],
+                    choices: languages.map { (title: tr($0.name), tag: $0.tag) },
                     selection: Binding(
                         get: { Copy.activeLocale },
                         set: { gesture.used(.setting); LanguageChoice.shared.pick($0) }

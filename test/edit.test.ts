@@ -32,6 +32,9 @@ function pageFields(): string[] {
     assert.ok(key !== null, `a field with no id or name: ${m[0]}`);
     out.add(key);
   }
+  // The language picker's radios, `language`, are made at boot from core's
+  // table into #languages (`fillLanguages`, src/ui/controls.ts).
+  if (/<div\b[^>]*\sid="languages"/.test(HTML)) out.add('language');
   return [...out];
 }
 

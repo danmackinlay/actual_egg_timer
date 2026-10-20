@@ -59,6 +59,30 @@ export function isPeriod(tag: string): boolean {
   return languageOf(lower) === 'en' && (lower.endsWith(`-${PERIOD_SUBTAG}`) || lower.includes(`-${PERIOD_SUBTAG}-`));
 }
 
+/** A language the apps offer: what each needs to list it in its picker and
+ *  to read a stored choice of it back. */
+export interface Language {
+  /** Its catalogue's tag, `copy/<tag>.json`: what a choice of it stores, and
+   *  what `<html lang>` and the record's `lang` say. */
+  tag: string;
+  /** Its name in the picker: a key of the catalogue. */
+  name: CopyKey;
+}
+
+/**
+ * Every language the pickers offer, in their order (LANGUAGE.md section 5).
+ * Both apps build their picker from it and keep a stored choice only if it
+ * is one of these; iOS's copy is written by `npm run swift:constants`, and
+ * `CFBundleLocalizations` in ios/project.yml lists their language subtags
+ * (test/languages.test.ts). A language is a row here and its catalogue in
+ * copy/; a regional overlay (`OVERLAYS`) is neither, since it only changes
+ * a few of English's words.
+ */
+export const LANGUAGES: readonly Language[] = [
+  { tag: DEFAULT_LANGUAGE, name: 'language.en' },
+  { tag: PERIOD_LANGUAGE, name: 'language.en1750' },
+];
+
 /** An argument to a message. A string goes in as it is: a name, or text the
  *  app has already rendered. A number is a count, and is written in the
  *  formatting locale with the decimals it has. A `Fixed` is a measurement,

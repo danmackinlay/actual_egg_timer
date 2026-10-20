@@ -10,7 +10,7 @@ import { eggFromMass } from '../core/geometry.ts';
 import type { Cooling } from '../core/protocol.ts';
 import { type Quantity, parse } from '../core/units.ts';
 import { DEFAULTS } from '../core/inputs.ts';
-import { ALARM_SOUNDS, LANGUAGES, readAlarmSound } from './settings.ts';
+import { ALARM_SOUNDS, LANGUAGE_TAGS, readAlarmSound } from './settings.ts';
 import { ROOM_INPUTS, noteInput } from './controls.ts';
 import { page, radioValue } from './dom.ts';
 import { gestureNow_s, groupOf } from './edit.ts';
@@ -145,7 +145,7 @@ export function onInput(event: Event): void {
   }
   // So is the language, which changes every word and no number.
   if (target instanceof HTMLInputElement && target.name === 'language') {
-    if (event.type === 'change' && LANGUAGES.includes(target.value)) {
+    if (event.type === 'change' && LANGUAGE_TAGS.includes(target.value)) {
       send({ kind: 'language', pick: target.value });
     }
     return;

@@ -42,7 +42,7 @@ import { existsSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 
-import { OVERLAYS } from '../../src/core/copy.ts';
+import { LANGUAGES, OVERLAYS } from '../../src/core/copy.ts';
 import { type Entry, withEntries } from '../copyFile.ts';
 import { APPROVED_PATH, approve, changedPaths, git, showFile } from '../copyQueue.ts';
 import { type CatalogueJson, type Notes, type Problem, type Surface, argumentProblems, catalogueProblems } from '../copyRules.ts';
@@ -50,8 +50,11 @@ import { problemWords } from './words.ts';
 
 /** The catalogues the editor may write: the English and its overlays. */
 export const EDITABLE: readonly string[] = ['en', ...OVERLAYS];
-/** The catalogues it reads, the 1750 twin among them, which may lag. */
-export const CATALOGUES: readonly string[] = ['en', ...OVERLAYS, 'en-x-1750'];
+/** The catalogues it reads: these, and every other language's (core's
+ *  `LANGUAGES`), the 1750 twin among them, which may lag. */
+export const CATALOGUES: readonly string[] = [
+  ...EDITABLE, ...LANGUAGES.map((l) => l.tag).filter((tag) => !EDITABLE.includes(tag)),
+];
 /** What a save may write: the catalogues, and the fixtures the words move. */
 const WRITTEN = ['copy', 'fixtures', 'fit/tests'];
 const MAY_CHANGE = (path: string): boolean =>

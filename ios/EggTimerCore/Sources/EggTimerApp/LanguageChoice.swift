@@ -31,7 +31,7 @@ public final class LanguageChoice {
     /// first frame is already in the cook's language.
     public func start() {
         state = Self.read()
-        if let tag = Screenshots.language, languages.contains(tag) {
+        if let tag = Screenshots.language, languageTags.contains(tag) {
             state = LanguageState(chosen: tag)
         }
         Copy.use(effectiveLanguage(state))
@@ -63,7 +63,7 @@ public final class LanguageChoice {
               let raw = inFormat(StoreRegistry.languageState, try? JSONSerialization.jsonObject(with: data)) else {
             return .fresh
         }
-        return readLanguageState(raw, known: languages)
+        return readLanguageState(raw, known: languageTags)
     }
 
     private static func write(_ state: LanguageState) {
@@ -73,8 +73,8 @@ public final class LanguageChoice {
     }
 }
 
-/// Every catalogue the picker offers, in its order.
-public let languages: [String] = [defaultLanguage, periodLanguage]
+/// Every catalogue the picker offers, in its order: core's `languages`.
+public let languageTags: [String] = languages.map(\.tag)
 
 /// Which catalogue the cook reads: the cook's pick, or 1750 put there by the
 /// units switch, or nil for the default, kept apart from it as the units are.

@@ -14,6 +14,7 @@ import { type Measure, type Quantity, type UnitSystem, displayText, nudgeFrom, s
 import { SLIDER_STEPS } from '../core/slider.ts';
 import { startTempPreset_C } from '../core/inputs.ts';
 import { languageOf } from '../core/format.ts';
+import { LANGUAGES } from '../core/copy.ts';
 import { activeLocale, t } from './copy.ts';
 import { page, selectRadio, setText } from './dom.ts';
 import type { Model } from './model.ts';
@@ -253,6 +254,25 @@ export function drawForm(f: FormView): void {
 export function applyLanguageToDom(): void {
   selectRadio('language', activeLocale());
   page().unitsPeriod.hidden = languageOf(activeLocale()) !== 'en';
+}
+
+/** The language picker: a choice per language core offers, in its order
+ *  (`LANGUAGES`), each named by its key. Filled once, before the words are
+ *  first drawn, so `applyCopy` names them with the rest of the page. */
+export function fillLanguages(doc: Document): void {
+  const seg = doc.getElementById('languages');
+  if (seg === null || seg.childElementCount > 0) return;
+  for (const language of LANGUAGES) {
+    const input = doc.createElement('input');
+    input.type = 'radio';
+    input.name = 'language';
+    input.id = `language-${language.tag}`;
+    input.value = language.tag;
+    const label = doc.createElement('label');
+    label.htmlFor = input.id;
+    label.dataset['copy'] = language.name;
+    seg.append(input, label);
+  }
 }
 
 export function buildSizeOptions(): void {

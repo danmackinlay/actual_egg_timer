@@ -13,7 +13,7 @@ import { START_MODES, type StartMode } from '../core/protocol.ts';
 import { type BoilMemory, rememberBoil } from '../core/boil.ts';
 import { LIMITS, type Limit, clamp, isWithin } from '../core/inputs.ts';
 import {
-  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGES, type LanguageState, type Settings as StoredSettings,
+  DEFAULT_SETTINGS as STORED_DEFAULT_SETTINGS, FRESH_LANGUAGE, LANGUAGE_TAGS, type LanguageState, type Settings as StoredSettings,
   readLanguageState, readSettings,
 } from './settings.ts';
 import type { RunningCook } from '../core/running.ts';
@@ -210,7 +210,7 @@ export function openSettings(classes: SizeClass[]) {
  *  the page paints nothing until its words are in. */
 export function loadLanguage(): LanguageState {
   const raw = inFormat(STORES.settings, parseObject(readStorage(SETTINGS_KEY)));
-  return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
+  return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGE_TAGS);
 }
 
 /** The pan method in a stored record: cold or hot, and cold for anything else,
