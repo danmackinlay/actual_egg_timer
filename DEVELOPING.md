@@ -96,7 +96,7 @@ not yet read are a diff the tools make, not a list anybody keeps. The rules
 the words are held to, and the machinery, are `LANGUAGE.md` §3.
 
 1. **Read what is waiting.** `npm run copy:review` writes
-   `_dev/copy-review.html` (`npm run build:site` clears `_dev/`), one file
+   `_dev/copy-review.html`, one file
    with no script and no network: every key changed, added or retired
    since the approved commit, with the approved English against today's
    word by word, the US English, and the key's note, and at its foot these
