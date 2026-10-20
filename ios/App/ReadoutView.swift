@@ -246,12 +246,6 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
-        // What the line says, and what a press would open last (the time
-        // range), whether open or not; and whether the white's line shows:
-        // for the scripted checks.
-        // Whether "Most likely" shows under the word, unpressed, for the
-        // scripted checks.
-        .logged(.likely(shown: words.likelyShown))
     }
 
     /// Whether the line can say how sure I am in this phase, and so "most

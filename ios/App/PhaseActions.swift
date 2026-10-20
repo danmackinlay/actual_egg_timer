@@ -289,7 +289,6 @@ struct PhaseActions: View {
             .controlSize(.large)
             .disabled(main.disabled)
             .accessibilityIdentifier(main.id)
-            .logBottom("main")
         } else {
             Button(action: main.action) {
                 Text(main.title).frame(maxWidth: .infinity)
@@ -298,7 +297,6 @@ struct PhaseActions: View {
             .controlSize(.large)
             .disabled(main.disabled)
             .accessibilityIdentifier(main.id)
-            .logBottom("main")
         }
     }
 

@@ -99,12 +99,10 @@ struct ContentView: View {
                                 certaintyOpen: $certaintyOpen
                             )
                             PhaseActions(model: model, phase: phase, now: now, sousVide: said)
-                                .logTop("action")
                         }
                     }
                     .id(tick)
                     DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
-                        .logTop("slider")
                     // The reader scrolls the page to an opened panel.
                     ScrollViewReader { proxy in
                         setup(phase: outerPhase, every: every, tick: tick, proxy: proxy)
@@ -129,17 +127,8 @@ struct ContentView: View {
                 .padding(.bottom, 20)
             }
             .defaultScrollAnchor(scrollAnchor)
-            // What the screen shows of the page, for `reveal`; and to the
-            // debug log, for the scripted checks.
+            // What the screen shows of the page, for `reveal`.
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { screen = $0 }
-            .logTop("screen")
-            .logBottom("screenFoot")
-            #if DEBUG
-            // A clause tapped by `-uiDo` (Screenshots.swift), as a finger's.
-            .onChange(of: Screenshots.probe.clauseTap) { _, tap in
-                if let tap, let clause = Clause(rawValue: tap.clause) { tapped(clause) }
-            }
-            #endif
             .barTitle(tr(.`app.name`))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -235,8 +224,8 @@ struct ContentView: View {
     #if DEBUG
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
-        // The taps a script asked for, as each comes due.
-        Screenshots.drive(model)
+        // What a step's `idle` waits on.
+        Screenshots.watch(model)
         guard let scene = Screenshots.scene else { return }
         switch scene {
         case "settings": path = [.settings]
@@ -292,10 +281,8 @@ struct ContentView: View {
                     }
                     .id(tick)
                     .frame(width: size.width, height: size.height)
-                    .logTop("egg")
                 }
                 SetupSentence(planner: planner, open: openClause, onTap: tapped)
-                    .logTop("sentence")
             }
             if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
                 ClausePanel(planner: planner, clause: clause, inHand: running == nil ? nil : model.inHand) {
@@ -318,8 +305,6 @@ struct ContentView: View {
                     revealing = nil
                     reveal(clause, at: frame, proxy)
                 }
-                .logTop("panel")
-                .logBottom("panelFoot")
             }
         }
     }
@@ -352,9 +337,6 @@ struct ContentView: View {
             return Screenshots.log(.reveal(clause: clause.rawValue, scroll: "none"))
         }
         Screenshots.log(.reveal(clause: clause.rawValue, scroll: anchor == .top ? "top" : "bottom"))
-        #if DEBUG
-        Screenshots.scrolling()
-        #endif
         // On the next turn, once the scroll view has taken in the page grown
         // by the panel: in this pass it would stop the scroll at the old
         // page's foot.
@@ -387,36 +369,6 @@ extension View {
     func logged(_ event: @autoclosure () -> Screenshots.Event) -> some View {
         #if DEBUG
         onChange(of: event(), initial: true) { _, said in Screenshots.log(said) }
-        #else
-        self
-        #endif
-    }
-
-    /// The view's top in the window, pt, to the debug log whenever it moves
-    /// (`layout`, `"part":"slider","y":312`): what the scripted checks read
-    /// to see that nothing moves at the start.
-    func logTop(_ name: String) -> some View {
-        #if DEBUG
-        onGeometryChange(for: Double.self) { proxy in
-            (proxy.frame(in: .global).minY * 2).rounded() / 2
-        } action: { y in
-            Screenshots.layout(name, y: y)
-        }
-        #else
-        self
-        #endif
-    }
-
-    /// The view's foot in the window, pt, to the debug log whenever it moves,
-    /// as `logTop` logs a top: what the scripted checks read to see that no
-    /// empty room is left under the action's row.
-    func logBottom(_ name: String) -> some View {
-        #if DEBUG
-        onGeometryChange(for: Double.self) { proxy in
-            (proxy.frame(in: .global).maxY * 2).rounded() / 2
-        } action: { y in
-            Screenshots.layout(name, y: y)
-        }
         #else
         self
         #endif
