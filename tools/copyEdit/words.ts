@@ -24,6 +24,12 @@ export function problemWords(p: Problem): string {
       return `${where} must join {value} to its unit with a no-break space, and have no other space.`;
     case 'parity':
       return `${where} must use the same placeholders as the English: ${p.detail}.`;
+    case 'plural':
+      return `${where} has the wrong plural forms for its language: ${p.detail}.`;
+    case 'link':
+      return `${where} must link to the same sources as the English: it ${p.detail}.`;
+    case 'number':
+      return `${where} ${p.detail}. Write a number through a placeholder, so it comes out as the reader’s region writes it.`;
     case 'arguments':
       return `${where} must keep the placeholders it has (${p.detail}). Changing them needs a change to the code, so I can’t save it.`;
     case 'budget': {

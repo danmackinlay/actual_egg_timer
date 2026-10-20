@@ -514,12 +514,8 @@
           <button type="button" class="info" aria-expanded="false" aria-controls="moreLanguage" data-label="controls.language"></button>
         </div>
         <p id="moreLanguage" class="disclosed" hidden data-copy="controls.language.more"></p>
-        <div class="seg">
-          <input type="radio" name="language" id="languageEn" value="en">
-          <label for="languageEn" data-copy="language.en"></label>
-          <input type="radio" name="language" id="language1750" value="en-x-1750">
-          <label for="language1750" data-copy="language.en1750"></label>
-        </div>
+        <!-- A choice per language core offers (`fillLanguages`, src/ui/controls.ts). -->
+        <div class="seg" id="languages"></div>
       </fieldset>
 
       <!-- The alarm's sound. Choosing one plays it. -->

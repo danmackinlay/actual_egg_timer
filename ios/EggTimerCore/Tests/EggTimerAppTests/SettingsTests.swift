@@ -104,29 +104,33 @@ struct SettingsTests {
             #expect(readAlarmSound(raw) == want, "\(raw ?? "nil")")
         }
         #expect(defaultAlarmSound == .timer && AlarmSound.allCases == [.timer, .cuckoo, .hen])
-        #expect(languages == [defaultLanguage, periodLanguage])
+        #expect(languageTags == languages.map(\.tag) && languageTags.contains(defaultLanguage))
         for (raw, want): (Any?, String?) in [
             (nil, nil), ("en", nil), (42, nil), ([Any](), nil), ([String: Any](), nil), (["chosen": "xx"], nil),
-            (["chosen": 5], nil), (["chosen": "en"], "en"), (["chosen": "cs"], nil), (["chosen": periodLanguage], periodLanguage),
+            (["chosen": 5], nil), (["chosen": "en"], "en"), (["chosen": periodLanguage], periodLanguage),
             (["chosen": periodLanguage, "flippedFrom": ["chosen": "en"]], periodLanguage),
             (["chosen": NSNull(), "flippedFrom": ["chosen": "en"]], nil),
         ] {
-            #expect(readLanguageState(raw, known: languages) == LanguageState(chosen: want), "\(raw ?? "nil")")
+            #expect(readLanguageState(raw, known: languageTags) == LanguageState(chosen: want), "\(raw ?? "nil")")
+        }
+        // Every language the picker offers is kept; a tag it does not is not.
+        for tag in languageTags {
+            #expect(readLanguageState(["chosen": tag], known: languageTags) == LanguageState(chosen: tag), "\(tag)")
         }
         let stored = try JSONSerialization.data(withJSONObject: LanguageState(chosen: periodLanguage).jsonObject)
-        #expect(readLanguageState(try JSONSerialization.jsonObject(with: stored), known: languages).chosen == periodLanguage)
+        #expect(readLanguageState(try JSONSerialization.jsonObject(with: stored), known: languageTags).chosen == periodLanguage)
         #expect(LanguageState.fresh.jsonObject["chosen"] is NSNull)
     }
 
     @Test func theUnitsSwitchToImperialMovesOnlyModernEnglishInto1750() {
         let english = LanguageState(chosen: "en"), period = LanguageState(chosen: periodLanguage)
-        let czech = LanguageState(chosen: "cs")
+        let other = LanguageState(chosen: "xx")
         #expect(effectiveLanguage(.fresh) == defaultLanguage)
         for state in [LanguageState.fresh, english] {
             #expect(languageAfterFlip(state, .metricToImperial) == period)
         }
-        for state in [period, czech] { #expect(languageAfterFlip(state, .metricToImperial) == state) }
-        for state in [LanguageState.fresh, english, period, czech] {
+        for state in [period, other] { #expect(languageAfterFlip(state, .metricToImperial) == state) }
+        for state in [LanguageState.fresh, english, period, other] {
             #expect(languageAfterFlip(state, .imperialToMetric) == state, "back to metric leaves it")
         }
     }

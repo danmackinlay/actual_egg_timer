@@ -12,6 +12,12 @@ let periodSubtag: String = "x-1750"
 /// The English of 1750's catalogue tag.
 public let periodLanguage: String = "en-x-1750"
 
+/// Every language the pickers offer, in their order (LANGUAGE.md section 5).
+public let languages: [Language] = [
+    Language(tag: "en", name: .`language.en`),
+    Language(tag: "en-x-1750", name: .`language.en1750`),
+]
+
 // MARK: - src/core/format.ts
 
 /// The most decimals a count is shown with.

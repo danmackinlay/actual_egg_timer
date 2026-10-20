@@ -1,30 +1,29 @@
 /**
- * The English of 1750 (LANGUAGE.md section 6): what its catalogue must keep
- * of the English's meaning, the switch that goes into it and out, and the
- * record that says it was read. Its style is guidance (LANGUAGE.md), not a
- * check.
+ * The English of 1750 (LANGUAGE.md section 6), as only it is: the words of
+ * its own its catalogue must keep, the tags that are it, the switch that
+ * goes into it and out, and the record that says it was read. Its style is
+ * guidance (LANGUAGE.md), not a check.
  *
- * Placeholder parity and the length budgets are copy.test.ts's, which reads
- * every catalogue in copy/ and so this one too; a test here checks that it
- * does. A key without a twin falls back to English (below).
+ * What every catalogue is held to - the English's keys, placeholders and
+ * links, its plural forms, the region's formats, the length budgets - is
+ * copy.test.ts's, and which languages are offered languages.test.ts's; both
+ * read this catalogue with the rest. A key without a twin falls back to
+ * English.
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod, parseCatalogue, render } from '../src/core/copy.ts';
-import { formattingLocale } from '../src/core/format.ts';
 import {
-  FRESH_LANGUAGE, type LanguageState, effectiveLanguage, languageAfterFlip, readLanguageState,
+  FRESH_LANGUAGE, type LanguageState, effectiveLanguage, languageAfterFlip,
 } from '../src/ui/settings.ts';
 import { parseRecord } from '../src/core/record.ts';
 import { type CookChoices, replan, startCook } from '../src/core/running.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
-import { NOTES_PATH, catalogueTags, english, isCatalogueFile, translationTags } from '../tools/copyNotes.ts';
-import { asRead } from '../tools/text.ts';
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
@@ -38,34 +37,11 @@ const PERIOD = parseCatalogue(P_JSON, EN);
 // the catalogue
 // --------------------------------------------------------------------------
 
-test('the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
-  // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
-  assert.ok(catalogueTags().includes(PERIOD_LANGUAGE));
-  assert.ok(translationTags().includes(PERIOD_LANGUAGE));
-  // copy/ holds the catalogues, `<tag>.json`, and beside them the notes,
-  // which neither app ships (tools/buildSite.ts and ios/project.yml leave
-  // them out). Anything else would ship, so the approved record is kept in
-  // test/data/.
-  for (const f of readdirSync('copy')) {
-    assert.ok(isCatalogueFile(f) || `copy/${f}` === NOTES_PATH, `${f}: not a catalogue, and the apps would ship it`);
-  }
-  assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
-});
-
-test('every twin is an English key; a key without one is not refused', () => {
-  // The twins may lag the English: a key with no twin renders in English
-  // (below), and `git log -- copy/en-x-1750.json` shows how old a twin is.
-  for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
-  // The app's name is a name, and stays English.
-  assert.ok(!PERIOD.messages.has('app.name'));
-});
-
-test('a key 1750 lacks falls back to English, with English\'s plural rule', () => {
-  // app.name is iOS's, and 1750 leaves it to English.
+test('the app\'s name is a name, and 1750 leaves it to English', () => {
+  // The twins may lag the English, and `git log -- copy/en-x-1750.json`
+  // shows how old a twin is; app.name is iOS's, and has none on purpose.
   assert.ok(!PERIOD.messages.has('app.name'));
   assert.equal(render(PERIOD, 'app.name'), render(EN, 'app.name'));
-  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 result');
-  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 results');
 });
 
 test('the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {
@@ -94,21 +70,6 @@ test('the owner\'s alarm: their clause, after the cooling the cook chose', () =>
   assert.equal(new Set(parts.map((p) => p[1])).size, 1, 'the owner\'s clause, the same in all three');
 });
 
-test('Help\'s links are the English links: the same URLs, in the same markdown', () => {
-  const links = (s: string): string[] => [...s.matchAll(/\]\((https:\/\/[^\s)]+)\)/g)].map((m) => m[1]);
-  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    const english = typeof entry['text'] === 'string' ? entry['text'] : '';
-    if (!english.includes('](https://')) continue;
-    assert.deepEqual(links(render(PERIOD, key)), links(english), key);
-  }
-});
-
-test('formats come from the region: the register is not a format', () => {
-  assert.equal(formattingLocale(PERIOD_LANGUAGE, 'US', null), 'en-US');
-  assert.equal(formattingLocale(PERIOD_LANGUAGE, 'GB', null), 'en-GB');
-  assert.equal(asRead(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US')), asRead(english('format.fahrenheit', { value: '1,234.5' })));
-});
-
 // --------------------------------------------------------------------------
 // the switch
 // --------------------------------------------------------------------------
@@ -119,7 +80,7 @@ function flip(state: LanguageState, ...flips: ('metricToImperial' | 'imperialToM
 
 test('tags: 1750 in any region, and nothing else', () => {
   for (const tag of ['en-x-1750', 'en-US-x-1750', 'EN-GB-X-1750', 'en-x-1750-a']) assert.ok(isPeriod(tag), tag);
-  for (const tag of ['en', 'en-US', 'cs', 'cs-x-1750', 'en-x-17500', 'en-x-175', 'x-1750', '', 'enx-1750']) {
+  for (const tag of ['en', 'en-US', 'xx', 'xx-x-1750', 'en-x-17500', 'en-x-175', 'x-1750', '', 'enx-1750']) {
     assert.ok(!isPeriod(tag), tag);
   }
   assert.equal(effectiveLanguage(FRESH_LANGUAGE), DEFAULT_LANGUAGE);
@@ -134,7 +95,7 @@ test('metric to Imperial in English goes into 1750, and back to metric stays the
 });
 
 test('Imperial to metric never moves the language', () => {
-  for (const state of [FRESH_LANGUAGE, { chosen: 'en' }, { chosen: PERIOD_LANGUAGE }, { chosen: 'cs' }]) {
+  for (const state of [FRESH_LANGUAGE, { chosen: 'en' }, { chosen: PERIOD_LANGUAGE }, { chosen: 'xx' }]) {
     assert.deepEqual(flip(state, 'imperialToMetric'), state);
   }
 });
@@ -152,21 +113,9 @@ test('1750 chosen in the picker is not left by the units', () => {
 });
 
 test('a language that is not English is never moved', () => {
-  const czech: LanguageState = { chosen: 'cs' };
-  assert.deepEqual(flip(czech, 'metricToImperial'), czech);
-  assert.deepEqual(flip(czech, 'imperialToMetric'), czech);
-});
-
-test('a stored state is read defensively, and an old one still reads', () => {
-  const known = ['en', PERIOD_LANGUAGE];
-  assert.deepEqual(readLanguageState(null, known), FRESH_LANGUAGE);
-  assert.deepEqual(readLanguageState('en', known), FRESH_LANGUAGE);
-  assert.deepEqual(readLanguageState({ chosen: 'xx' }, known), FRESH_LANGUAGE);
-  const stored = flip(FRESH_LANGUAGE, 'metricToImperial');
-  assert.deepEqual(readLanguageState(JSON.parse(JSON.stringify(stored)), known), stored);
-  // A stored `flippedFrom`, what the switch replaced, is ignored.
-  assert.deepEqual(readLanguageState({ chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: null } }, known),
-    { chosen: PERIOD_LANGUAGE });
+  const other: LanguageState = { chosen: 'xx' };
+  assert.deepEqual(flip(other, 'metricToImperial'), other);
+  assert.deepEqual(flip(other, 'imperialToMetric'), other);
 });
 
 // --------------------------------------------------------------------------

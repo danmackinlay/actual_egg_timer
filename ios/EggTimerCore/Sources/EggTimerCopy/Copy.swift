@@ -275,6 +275,14 @@ public func isPeriod(_ tag: String) -> Bool {
     return languageOf(lower) == "en" && (lower.hasSuffix("-" + periodSubtag) || lower.contains("-" + periodSubtag + "-"))
 }
 
+/// A language the app offers, a row of `languages`: the web's `Language`.
+public struct Language: Sendable, Equatable {
+    /// Its catalogue's tag, `copy/<tag>.json`: what a choice of it stores.
+    public let tag: String
+    /// Its name in the picker: a key of the catalogue.
+    public let name: CopyKey
+}
+
 // MARK: - Substitution
 
 /// An argument as text. A string as it is; a count in the locale, with its

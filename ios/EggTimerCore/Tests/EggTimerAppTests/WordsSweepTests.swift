@@ -85,7 +85,7 @@ extension AppTests {
         }
         let planner = model.planner
         var drawnCount = 0
-        for lang in ["en", "en-x-1750"] {
+        for lang in languages.map(\.tag) {
             Copy.use(lang)
             for units in UnitSystem.allCases {
                 for count in [1, 4] {
@@ -209,7 +209,7 @@ extension AppTests {
         let totals = [600, 2 * hour, 30 * hour, 3 * day, 10 * day, 30 * day, 120 * day]
         let anchor = { (key: CopyKey) in #"{"key":"\#(key.rawValue)","level":0.5,"approxPeakYolk_C":65}"# }
         let decoder = JSONDecoder()
-        for lang in ["en", "en-x-1750"] {
+        for lang in languages.map(\.tag) {
             Copy.use(lang)
             for units in UnitSystem.allCases {
                 for total in totals {

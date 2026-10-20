@@ -12,7 +12,7 @@
 
 import type { SizeClass } from '../core/geometry.ts';
 import { DEFAULTS, LIMITS, type Limit, clamp } from '../core/inputs.ts';
-import { DEFAULT_LANGUAGE, PERIOD_LANGUAGE, isPeriod } from '../core/copy.ts';
+import { DEFAULT_LANGUAGE, LANGUAGES, PERIOD_LANGUAGE, isPeriod } from '../core/copy.ts';
 import { languageOf } from '../core/format.ts';
 import {
   COOLINGS, type Cooling, HEATS_AFTER_BOIL, type HeatAfterBoil, START_MODES, type StartMode,
@@ -106,9 +106,9 @@ export interface LanguageState {
   chosen: string | null;
 }
 
-/** Every catalogue the picker offers, in its order, and the state of a
- *  cook who never chose one. */
-export const LANGUAGES: readonly string[] = [DEFAULT_LANGUAGE, PERIOD_LANGUAGE];
+/** Every catalogue the picker offers, in its order (core's `LANGUAGES`),
+ *  and the state of a cook who never chose one. */
+export const LANGUAGE_TAGS: readonly string[] = LANGUAGES.map((l) => l.tag);
 
 export const FRESH_LANGUAGE: LanguageState = { chosen: null };
 
@@ -246,7 +246,7 @@ export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
     muted: r['muted'] === true,
     alarm: readAlarmSound(r['alarm']),
     unitsChosen: readChosenUnits(r['unitsChosen']),
-    language: readLanguageState(r['language'], LANGUAGES),
+    language: readLanguageState(r['language'], LANGUAGE_TAGS),
     probe: r['probe'] === true,
     room_C: storedOptional(r['room_C'], LIMITS.room_C),
     eggView: oneOf(r['eggView'], ['set', 'heat'] as const, d.eggView),
