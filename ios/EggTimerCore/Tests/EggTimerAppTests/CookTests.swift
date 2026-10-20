@@ -19,7 +19,9 @@ extension AppTests {
 
     /// A cold cook to Done: the boil at 5:00, out 3 s into the pull, each
     /// phase in turn, the alarms the plan's and pending until their moments,
-    /// no ring of the app's, the card ended at Done; Jammy, then Start again:
+    /// the app's own ring at each deadline as well, since it is on screen and
+    /// silent mode mutes a notification's sound, the card ended at Done;
+    /// Jammy, then Start again:
     /// one egg logged with its forecast, marked as made under a debug clock,
     /// and no cook stored.
     @Test func aColdCookToDoneAnsweredAndStartedAgain() async throws {
@@ -60,7 +62,7 @@ extension AppTests {
         await world.settled(model.cook)
         let heating = Phase.heating.rawValue, cooking = Phase.cooking.rawValue, pulling = Phase.pull.rawValue
         #expect(world.phases == [heating, cooking, pulling, Phase.cooling.rawValue, Phase.done.rawValue])
-        #expect(world.ringer.rung.isEmpty)
+        #expect(world.ringer.rung == [.pull, .cooled])
         #expect(world.stored == nil)
         #expect(model.planner.kept.log.count == 1)
         let egg = try #require(model.planner.kept.log.first)

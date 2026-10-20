@@ -1,14 +1,15 @@
 import EggTimerCore
 
-// When the iOS app sounds an alarm itself, because the system will not.
+// When the iOS app sounds an alarm itself: at each deadline that comes while
+// it is on screen, whether or not a notification holds it.
 //
-// The alarm is a pair of local notifications (`App/Alarm.swift`). When
-// permission is refused, not yet given, or the request did not take, the app
-// says "keep the app open" - and this is what makes that advice true: while
-// the app is on screen it rings at each deadline itself. When a notification
-// IS holding the deadline it rings nothing, because the notification's own
-// sound is already presented in the foreground and a second one would double
-// it.
+// The alarm is a pair of local notifications (`App/Alarm.swift`), and a
+// notification's sound, time-sensitive or not, is muted by silent mode. So on
+// screen the app rings itself (`Ringer.swift`, through silent mode), and the
+// notification come in the foreground is presented without its sound, so
+// that one deadline never rings twice. With notifications refused, unanswered
+// or not taken, the screen says "keep the app open", and this is what makes
+// that advice true. In the background the notification is all there is.
 //
 // The app's own, not core's: the web app has no notifications, so it rings at
 // every deadline and has nothing to decide, and there is nothing for the two
@@ -26,12 +27,6 @@ import EggTimerCore
 ///   - pullS: the pull deadline, s.
 ///   - cooledS: the end of the counted cooling, s; nil when the egg rests on
 ///     the counter and there is no cooling to count.
-///   - authorized: whether notifications are allowed; nil while that is not
-///     known - the question is on screen, or was never answered.
-///   - scheduled: the deadlines whose notification the system said it was
-///     holding, read back rather than assumed. A notification that has been
-///     delivered is no longer pending, so the caller keeps a past deadline in
-///     here once it has been seen.
 ///   - rung: the deadlines already rung for this cook.
 ///   - onScreenSinceS: when the app last came on screen, s; nil while it is in
 ///     the background. A deadline that passed before that is not rung: the
@@ -42,8 +37,6 @@ func deadlineToRing(
     nowS: Double,
     pullS: Double,
     cooledS: Double?,
-    authorized: Bool?,
-    scheduled: Set<RingDeadline>,
     rung: Set<RingDeadline>,
     onScreenSinceS: Double?
 ) -> RingDeadline? {
@@ -65,7 +58,5 @@ func deadlineToRing(
     }
 
     guard nowS >= atS, atS >= onScreenSinceS, !rung.contains(deadline) else { return nil }
-    // The notification has it, and presents its own sound in the foreground.
-    if authorized == true && scheduled.contains(deadline) { return nil }
     return deadline
 }

@@ -63,6 +63,20 @@ import os
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
 /// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
 ///
+/// To hear the alarms without waiting for a cook (ios/README.md says how,
+/// on a phone and on a simulator):
+///
+/// - `-alarmTest 10`: once the app is on screen and the notification
+///   question answered (the real question, never `-provisionalAlarms`,
+///   whose notifications come without a sound), the pull's and the cooling's
+///   notifications set through the cook's own `Alarm.schedule`, 10 s and
+///   20 s from now; and at each moment, if the app has been on screen since
+///   before it, the app's own ring, as a cook's would (`deadlineToRing`).
+///   From the idle screen: they replace a running cook's alarms.
+/// - `-alarmSound hen` (`timer`, `cuckoo`): ring with that sound this launch,
+///   as `-settings` gives the settings: the argument read over the stored
+///   choice (`Suite`), nothing stored.
+///
 /// `log` writes one event as a line of JSON, to standard error and to
 /// `Library/Caches/aet.log` in the app's container: the phases, each plan,
 /// the stored cook and the log as written, the alarms scheduled, cancelled
@@ -167,6 +181,10 @@ public enum Screenshots {
 extension Screenshots {
     /// The screenshot kit's screen (above).
     public static var scene: String? { arguments?.string(forKey: "uiScreen") }
+    /// `-alarmTest <s>`: the alarms' lead, s (above; `AlarmTest`, in the app).
+    public static var alarmTestS: Double? {
+        arguments?.object(forKey: "alarmTest") == nil ? nil : arguments?.double(forKey: "alarmTest")
+    }
 }
 #endif
 
@@ -216,14 +234,42 @@ extension Screenshots {
         case activitySeen(when: String, state: String, stage: String, ends: Int)
 
         // The alarms.
-        /// An alarm asked for, for `at`, `inS` of the system's seconds on.
-        case scheduled(id: String, at: Double, inS: Double)
+        /// An alarm asked for, for `at`, `inS` of the system's seconds on,
+        /// with the sound file it names (none under `-muteAudio`), and
+        /// whether the app's bundle has that file, where the system looks.
+        case scheduled(id: String, at: Double, inS: Double, sound: String?, bundled: Bool)
         case notScheduled(id: String, error: String)
         case alarmsCancelled
         /// The alarms a read-back found pending, each with its moment.
         case pending(alarms: [PendingAlarm])
         /// Those it found delivered and still shown.
         case delivered(ids: [String])
+        /// What the system allows this app's notifications, read as the
+        /// alarms are asked for: the permission (`status`), and whether its
+        /// sound, its banner, the Lock Screen and the time-sensitive level
+        /// are on (`enabled`, `disabled`, `notSupported`); and whether this
+        /// launch is muted (`-muteAudio`).
+        case notificationSettings(
+            status: String, sound: String, alert: String, lockScreen: String, timeSensitive: String, muted: Bool
+        )
+        /// A notification come while the app is on screen: whether it
+        /// carries a sound, and what the app has the system present of it.
+        case presented(id: String, sound: Bool, options: [String])
+
+        // The sounds.
+        /// One of the files an alarm can name, read at launch: whether the
+        /// bundle has it, and its length, s, and its audio format's code.
+        case soundFile(name: String, bundled: Bool, seconds: Double?, format: String?)
+        /// The ring in the app begun: its file, how many frames it read
+        /// (none if it read none), the audio session's category and whether
+        /// it took, the engine running and the player playing, the media
+        /// volume (0-1) and where the sound goes; and the error, if any.
+        case ringing(
+            file: String, frames: Int?, category: String, active: Bool, engine: Bool, playing: Bool,
+            volume: Double, route: [String], error: String?
+        )
+        /// A ring asked for and not sounded, and why.
+        case ringSkipped(deadline: String, reason: String)
 
         // The results log and the record.
         /// The log as written: how many eggs, how many folded, and the last.

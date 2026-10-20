@@ -59,7 +59,8 @@ struct AppTests {
         #expect(cook.phase == .cooking)
         #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
 
-        // The pull, which the system's alarm covers: no ring from the app.
+        // The pull, with the app not on screen: the notification's alone,
+        // no ring from the app.
         world.clock.set(try pullS(cook) + 1)
         await world.ticked(cook)
         #expect(cook.phase == .pull)
@@ -111,6 +112,26 @@ struct AppTests {
         #expect(world.alarm.scheduled.isEmpty)
         world.clock.set(try pullS(cook) + 1)
         await world.ticked(cook)
+        #expect(world.ringer.rung == [.pull])
+        world.clock.advance(2)
+        await world.ticked(cook)
+        #expect(world.ringer.rung == [.pull])
+    }
+
+    /// With the pull's notification pending and the app on screen, the app
+    /// rings the pull itself as well, once: silent mode mutes the
+    /// notification's sound, which is presented on screen without it.
+    @Test func onScreenTheAppRingsThePullItsNotificationHolds() async throws {
+        let world = World()
+        world.ringer.onScreenSinceS = world.clock.seconds
+        let planner = world.planner()
+        let cook = Cook(planner: planner)
+        defer { cook.killed() }
+        await start(cook, planner, world, .hot)
+        #expect(world.alarm.pending["cook.pull"] == (try pullS(cook)))
+        world.clock.set(try pullS(cook) + 1)
+        await world.ticked(cook)
+        #expect(world.alarm.delivered == ["cook.pull"])
         #expect(world.ringer.rung == [.pull])
         world.clock.advance(2)
         await world.ticked(cook)

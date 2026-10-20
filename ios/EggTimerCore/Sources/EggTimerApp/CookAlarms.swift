@@ -6,8 +6,8 @@ import EggTimerCore
 /// plan sets (core's `alarms` effect), set with the system
 /// (`Services.alarm`) once the cook may have them and read back rather than
 /// assumed; and the ring in the app (`Services.ringer`, core's `ring` and
-/// `silence`) for a deadline no notification holds, while someone could
-/// hear it (`deadlineToRing`).
+/// `silence`) for each deadline that comes while the app is on screen,
+/// where someone could hear it (`deadlineToRing`).
 @Observable
 @MainActor
 public final class CookAlarms {
@@ -28,12 +28,6 @@ public final class CookAlarms {
 
     /// The alarms the plan sets, epoch s.
     @ObservationIgnored private var at: (pullS: Double?, cooledS: Double?) = (nil, nil)
-    /// The moment each deadline's notification was asked for, and the
-    /// deadlines a notification holds, from the read-back: one delivered
-    /// is no longer pending but did its job, so a past one stays. A ring
-    /// for a deadline held here is the notification's, not the app's.
-    @ObservationIgnored private var notifiedAt: [RingDeadline: Double] = [:]
-    @ObservationIgnored private var covers: Set<RingDeadline> = []
 
     /// The cook `id` begun on screen: the alarms asked for, set if they may
     /// be, and read back.
@@ -63,22 +57,11 @@ public final class CookAlarms {
     /// passed, and nothing while the plan asks whether the egg is still in.
     private func schedule() {
         let (pullS, cooledS) = at
-        let now = AppClock.nowS
-        // A deadline past and not moved keeps what covered it: its
-        // notification has been delivered.
-        covers = covers.filter { d in
-            guard let at = d == .pull ? pullS : cooledS, let asked = notifiedAt[d] else { return false }
-            return at <= now && abs(asked - at) < 1e-3
-        }
         let (cook, probe) = onScreen()
         guard pullS != nil || cooledS != nil, let cook else {
-            notifiedAt = [:]
             Services.alarm.cancel()
             return
         }
-        notifiedAt = notifiedAt.filter { covers.contains($0.key) }
-        if let p = pullS, p > now { notifiedAt[.pull] = p }
-        if let c = cooledS, c > now { notifiedAt[.cooled] = c }
         Services.alarm.schedule(pullS: pullS, cooledS: cooledS, probe: probe, cooling: cook.choices.cooling)
         Task { await readBack() }
     }
@@ -94,26 +77,20 @@ public final class CookAlarms {
         let held = await Services.alarm.pendingDeadlines()
         guard onScreen().cook?.idMs == id else { return }
         pending = held.count
-        let now = AppClock.nowS
-        // One delivered is no longer pending, and stays.
-        covers = held.union(covers.filter { d in notifiedAt[d].map { $0 <= now } ?? false })
     }
 
     /// A deadline the step says rings (core's `ring`), of a plan with these
-    /// deadlines: rung in the app unless its notification holds it, and only
-    /// for one that came while the app was on screen, where someone could
-    /// hear it in time (`deadlineToRing`).
+    /// deadlines: rung in the app if it came while the app was on screen,
+    /// where someone could hear it in time (`deadlineToRing`), whether or
+    /// not a notification holds it: silent mode mutes the notification's
+    /// sound, and the app's ring sounds through it.
     func ring(_ deadline: RingDeadline, _ d: Deadlines) {
-        let now = AppClock.nowS
-        // Held by a notification only if it was asked for this moment: a
-        // correction that moved the deadline is not covered by the old one.
-        let held = covers.filter { c in
-            notifiedAt[c].map { abs($0 - (c == .pull ? d.cookEndS : d.coolEndS ?? .nan)) < 1e-3 } ?? false
-        }
         guard deadlineToRing(
-            phase: deadline == .pull ? .pull : .done, nowS: now, pullS: d.cookEndS, cooledS: d.coolEndS,
-            authorized: authorized, scheduled: held, rung: [], onScreenSinceS: Services.ringer.onScreenSinceS
-        ) == deadline else { return }
+            phase: deadline == .pull ? .pull : .done, nowS: AppClock.nowS, pullS: d.cookEndS, cooledS: d.coolEndS,
+            rung: [], onScreenSinceS: Services.ringer.onScreenSinceS
+        ) == deadline else {
+            return Screenshots.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
+        }
         Screenshots.log(.ring(deadline: deadline.rawValue))
         Services.ringer.ring(deadline)
     }
@@ -126,8 +103,6 @@ public final class CookAlarms {
     func reset() {
         authorized = nil
         pending = 0
-        notifiedAt = [:]
-        covers = []
         Services.ringer.stop()
     }
 }

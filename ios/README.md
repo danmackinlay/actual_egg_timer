@@ -171,8 +171,12 @@ version can only ring while you are looking at it. A native app hands the
 system **absolute fire dates** up front and lets it do the waiting. The app
 reads the pending count back from the system rather than assuming: an egg
 timer that claims an alarm it has not got is worse than one with no alarm at
-all. Where no notification holds a deadline, `Ringer.swift` rings in the app
-while it is on screen.
+all. While the app is on screen, `Ringer.swift` rings at each deadline itself,
+whether or not a notification holds it, and a notification come in the
+foreground is shown without its sound: silent mode mutes a notification's
+sound, time-sensitive or not, and not the app's ring (`.playback`). With the
+app in the background or the phone locked, the notification is all there is,
+and on silent it only vibrates.
 
 Both fire at **`.timeSensitive`** interruption level, which is what gets them
 through a Focus mode. That level needs the
@@ -185,7 +189,43 @@ build carries the entitlement, signed and verified, and the alarm fires at
 
 The alarm sounds, `App/Sounds/alarm-<sound>-<moment>.caf`, are rendered from
 the web's sounds by `npm run sounds` (macOS; `tools/sounds.ts` says how), never
-edited by hand.
+edited by hand. `npm run ios:e2e -- sound-files` holds each file an alarm can
+name to being in the bundle, under 30 s, in a format a notification plays.
+
+### Hearing the alarms in seconds
+
+A debug build takes `-alarmTest <s>`: once the app is on screen and the
+notification question answered, the cook's two notifications are set through
+`Alarm.schedule`, the pull's `s` from now and the cooling's end `2s` from now,
+and at each moment, if the app is on screen, the app rings itself, as a cook's
+deadline does. `-alarmSound timer|cuckoo|hen` rings with that sound for the
+launch, nothing stored. Start from the idle screen: the test's alarms replace a
+running cook's. A ring lasts up to 40 s; a touch stops it, and the second
+replaces the first.
+
+- **On the phone**: in Xcode, Product > Scheme > Edit Scheme > Run >
+  Arguments. `-alarmTest 10`, `-alarmTest 30` and the three `-alarmSound`
+  are listed under Arguments Passed On Launch, unticked (`project.yml`); tick
+  one `-alarmTest` and one `-alarmSound`, and run on the phone. Only a run from
+  Xcode passes them, and `xcodegen` unticks them again. `-alarmTest 30` leaves
+  time to lock the phone or leave the app before the pull.
+- **On a simulator** (a Debug build installed, from Xcode or `npm run ios:e2e`):
+  `xcrun simctl launch booted name.danmackinlay.actualeggtimer -alarmTest 10 -alarmSound hen`.
+  The simulator plays through the Mac's speakers; its build is unsigned, so the
+  time-sensitive level is not supported there.
+
+What each way should do, and what the debug log (`Library/Caches/aet.log`)
+says of it:
+
+| the app | silent mode | the pull and the cooling's end | the log |
+|---|---|---|---|
+| on screen | off or on | the app's ring, looped up to 40 s, vibrating; a banner without a sound | `presented` with no `sound` among its options, `ring`, `ringing` with `playing` true and the media `volume` |
+| in the background, or the phone locked | off | the notification's sound, the chosen one, up to 30 s | `scheduled` with the `sound` it names and `bundled` true; `delivered` at the next read-back |
+| in the background, or the phone locked | on | a vibration and the banner, no sound: a notification's sound is muted by silent mode, time-sensitive or not, until the alarms are AlarmKit's (`DECISIONS.md` 142) | the same |
+
+The app's ring plays at the media volume, the notification's at the ringer's.
+`notificationSettings` says whether the notifications' sound is allowed for the
+app (Settings > Notifications), and whether they are time-sensitive.
 
 `Cook.swift` runs the cook as core's state machine, and derives every phase
 from the plan's deadlines and the clock rather than counting down, so a ticker

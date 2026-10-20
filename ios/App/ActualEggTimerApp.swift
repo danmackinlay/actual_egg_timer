@@ -26,6 +26,12 @@ struct ActualEggTimerApp: App {
         // Help's sources come from a bundled file; a debug build says how
         // many it found, which a missing file would make none.
         Screenshots.log(.helpSources(count: HelpSource.all.count))
+        // And the alarms' sound files: each there, under 30 s, playable.
+        Ringer.logFiles()
+        #if DEBUG
+        // `-alarmTest`: the alarms without a cook, to hear them.
+        AlarmTest.start()
+        #endif
     }
 
     var body: some Scene {

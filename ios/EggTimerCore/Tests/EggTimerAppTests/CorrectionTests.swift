@@ -425,10 +425,12 @@ extension AppTests {
         let words = ReadoutWords(model, phase: model.cook.phase, nowS: world.clock.seconds)
         #expect(words.asking)
         #expect(!words.whiteRunny)
+        // The pull rang, on screen; nothing past it while the plan asks.
+        #expect(world.ringer.rung == [.pull])
         let seen = world.log.events.count
         await tick(at: pull + 640, model, world)
         #expect(!world.log.events.dropFirst(seen).contains(.phase(phase: Phase.done.rawValue)))
-        #expect(world.ringer.rung.isEmpty)
+        #expect(world.ringer.rung == [.pull])
         #expect(world.stored?.events.cooledAtS == nil)
         world.clock.set(pull + 700)
         model.stillIn()
@@ -523,7 +525,7 @@ extension AppTests {
     }
 
     /// On the counter, Done at the out, Jammy, then the cooling corrected to
-    /// ice: still Done, nothing rung, no cooling alarm or card brought back,
+    /// ice: still Done, nothing rung but the pull, no cooling alarm or card brought back,
     /// and the record an ice bath until the correction.
     @Test func aCoolingChangeAtDoneStaysDone() async throws {
         let world = World()
@@ -549,7 +551,7 @@ extension AppTests {
         for s in [71.0, 100, 200, 400] { #expect(model.cook.phase(atS: pull0 + s) == .done) }
         await tick(at: pull0 + 400, model, world)
         #expect(!world.log.events.dropFirst(seen).contains(.phase(phase: Phase.cooling.rawValue)))
-        #expect(world.ringer.rung.isEmpty)
+        #expect(world.ringer.rung == [.pull])
         #expect(!world.alarm.scheduled.dropFirst(scheduled).contains { $0.cooledS != nil })
         #expect(!world.card.calls.dropFirst(calls).contains { $0.shown != nil })
         await world.until("the record made again") {
