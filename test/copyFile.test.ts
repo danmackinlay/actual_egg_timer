@@ -52,7 +52,11 @@ test('an edit to one key changes its line and no other', () => {
 test('the space no reader sees is written as the escape the files have', () => {
   assert.equal(jsonString('{value}\u00a0L'), '"{value}\\u00a0L"');
   assert.equal(jsonString('I’m — 4 °C × 2'), '"I’m — 4 °C × 2"', 'what a reader sees is written as it is');
-  const again = withEntries(EN, new Map([['format.litres', { text: '{value}\u00a0L' }]]), ORDER);
+  // An entry with a no-break space (a measure's), written again as the file
+  // has it: read, not quoted, so a change of wording moves no test.
+  const spaced = entryLines(EN).entries.find((e) => Object.values(e.entry).some((v) => v.includes('\u00a0')));
+  assert.ok(spaced !== undefined, 'a measure parts its number and unit with a no-break space');
+  const again = withEntries(EN, new Map([[spaced.key, { ...spaced.entry }]]), ORDER);
   assert.equal(again, EN, 'the same words, the same file');
 });
 
