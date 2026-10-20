@@ -18,7 +18,7 @@ import { buildDoseGrid } from '../src/core/doseGrid.ts';
 import { eggFromMass } from '../src/core/geometry.ts';
 import {
   FEEDBACK_BAND, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
-  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle, UNRELATED, type WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
+  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, type Particle, UNRELATED, WHITE_REPORTS, YOLK_WORDS, YOLK_WORD_CUTS,
   probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
   yolkWordProbit,
 } from '../src/core/infer.ts';
@@ -189,7 +189,7 @@ export function simulateCooks(cooks: number, seed: number, t: Truth): Simulated 
       const old = e < before;
       const yolk = asked && old ? (answer(yp) - 1) as OldYolk : null;
       const yolkWord = asked && !old ? YOLK_WORDS[answer(wordP)] : null;
-      const white = u() < 0.8 ? (['runny', 'tender', 'firm'] as WhiteReport[])[answer(wp)] : null;
+      const white = u() < 0.8 ? WHITE_REPORTS[answer(wp)] : null;
       let probe: EggRecord['probe'] = null;
       if (probes && e === 0) {
         const h = -PROBE_HANDLING_MEAN_C * Math.log(Math.max(u(), 1e-12));
@@ -316,7 +316,7 @@ export function emulate(lines: Line[], checked = CHECKED_EGGS): Emulated {
       seq: line.seq, day: r.day, app: r.app, model: read.model,
       cook_s: t, level: r.level, logYolkTarget: logYolkTarget(r.level),
       yolk: read.yolk, yolkWord: r.yolkWord === null ? null : yolkWordIndex(r.yolkWord),
-      white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
+      white: r.white === null ? null : WHITE_REPORTS.indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,
       logYolk: column(g.logYolk), logWhite: column(g.logWhite), peak: column(g.peakYolk_C),
       forecast: r.forecast,

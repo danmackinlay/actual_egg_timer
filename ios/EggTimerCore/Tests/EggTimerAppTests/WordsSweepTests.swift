@@ -87,13 +87,13 @@ extension AppTests {
         var drawnCount = 0
         for lang in ["en", "en-x-1750"] {
             Copy.use(lang)
-            for units in [UnitSystem.metric, .imperial] {
+            for units in UnitSystem.allCases {
                 for count in [1, 4] {
                     for start in StartChoice.allCases {
                         for heatOff in [false, true] {
                             for cooling in Cooling.allCases {
                                 for waterGiven in [false, true] {
-                                    for from in [EggFrom.fridge, .room, .custom] {
+                                    for from in EggFrom.allCases {
                                         var s = planner.settings
                                         s.unitsChosen = units
                                         s.eggCount = count
@@ -211,7 +211,7 @@ extension AppTests {
         let decoder = JSONDecoder()
         for lang in ["en", "en-x-1750"] {
             Copy.use(lang)
-            for units in [UnitSystem.metric, .imperial] {
+            for units in UnitSystem.allCases {
                 for total in totals {
                     for whiteBound in [false, true] {
                         let est = try decoder.decode(SousVideEstimate.self, from: Data(#"""
@@ -271,8 +271,8 @@ extension AppTests {
         // none), and the clauses' labels; the idle hint is given the time,
         // the cooking hint the boil.
         for phase in [Phase.idle, .heating, .cooking, .pull, .cooling, .done] {
-            for start in [StartMode.cold, .hot] {
-                for after in [HeatAfterBoil.hold, .off] {
+            for start in StartMode.allCases {
+                for after in HeatAfterBoil.allCases {
                     for cooling in Cooling.allCases {
                         for flags in 0..<8 {
                             let k = phaseKeys(PhaseFacts(
@@ -290,7 +290,7 @@ extension AppTests {
                                 }
                             }
                         }
-                        for from in [EggFrom.fridge, .room, .custom] {
+                        for from in EggFrom.allCases {
                             for sous in [false, true] {
                                 for given in [false, true] {
                                     let keys = clauseKeys(ClauseFacts(
@@ -308,7 +308,7 @@ extension AppTests {
         for key in none { #expect(takes(key).isEmpty, "\(key) takes \(takes(key).sorted()), and is given none") }
         // A measure's unit alone, and its value in its format.
         for q in Quantity.allCases {
-            for system in [UnitSystem.metric, .imperial] {
+            for system in UnitSystem.allCases {
                 for region in [nil, "US", "GB", "AU"] as [String?] {
                     let m = measureFor(q, system: system, region: region)
                     #expect(takes(m.unitKey).isEmpty, "\(m.unitKey)")
@@ -319,7 +319,7 @@ extension AppTests {
         // A size's name, with its mass.
         for region in [nil, "US"] as [String?] {
             for c in sizeClassesFor(region: region) {
-                for system in [UnitSystem.metric, .imperial] {
+                for system in UnitSystem.allCases {
                     let label = sizeClassLabel(c, system: system)
                     #expect(takes(label.key) == ["mass"], "\(label.key)")
                     #expect(takes(label.mass.key) == ["value"], "\(label.mass.key)")

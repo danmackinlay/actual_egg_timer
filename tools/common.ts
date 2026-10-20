@@ -11,12 +11,16 @@
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.ts';
 import { decisionGridRequest, decisionInputs } from '../src/core/decide.ts';
 import { type DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.ts';
-import type { Egg } from '../src/core/geometry.ts';
-import { type WhiteReport, type YolkWord, createPrior } from '../src/core/infer.ts';
-import type { CookSetup } from '../src/core/protocol.ts';
-import { CALIBRATION_SEED, type Calibration, type EggRecord, MODEL_ID, type ProbeReading, recordFor } from '../src/core/record.ts';
+import { type Egg, SIZE_TABLES } from '../src/core/geometry.ts';
+import { WHITE_REPORTS, type WhiteReport, YOLK_WORDS, type YolkWord, createPrior } from '../src/core/infer.ts';
+import { COOLINGS, type CookSetup, HEATS_AFTER_BOIL, START_MODES } from '../src/core/protocol.ts';
+import {
+  APP_NAMES, CALIBRATION_SEED, type Calibration, EGG_FROMS, type EggRecord, MASS_FROMS, MODEL_ID, PULLED_BYS, type ProbeReading,
+  TIME_TO_BOIL_FROMS, recordFor,
+} from '../src/core/record.ts';
 import type { CookPlan, RunningCook } from '../src/core/running.ts';
 import { cookFactsFor } from '../src/core/asRan.ts';
+import { UNIT_SYSTEMS } from '../src/core/units.ts';
 import { APP_VERSION } from '../src/ui/version.ts';
 import { LITERATURE_POPULATION } from '../src/core/infer.ts';
 
@@ -95,6 +99,58 @@ export function recordAt(
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
     yolkWord: yolkWord, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
+}
+
+/* ------------------------------------------------ the record's lists */
+
+/** Each field of the record that takes one of a list, by its path, and the
+ *  list `parseRecord` reads it against: what a test or a fixture sweeps, so
+ *  that a member added to a list is shown to be all a record needs. */
+export const RECORD_ENUMS: { path: string; members: readonly string[] }[] = [
+  { path: 'app', members: APP_NAMES },
+  { path: 'egg.massFrom', members: MASS_FROMS },
+  { path: 'egg.sizeTable', members: SIZE_TABLES },
+  { path: 'setup.startMode', members: START_MODES },
+  { path: 'setup.eggFrom', members: EGG_FROMS },
+  { path: 'setup.timeToBoilFrom', members: TIME_TO_BOIL_FROMS },
+  { path: 'setup.cooling', members: COOLINGS },
+  { path: 'setup.afterBoil', members: HEATS_AFTER_BOIL },
+  { path: 'pulledBy', members: PULLED_BYS },
+  { path: 'yolkWord', members: YOLK_WORDS },
+  { path: 'white', members: WHITE_REPORTS },
+  { path: 'units', members: UNIT_SYSTEMS },
+];
+
+/** The field at `path` (`setup.cooling`) of a record, or of anything shaped
+ *  like one; undefined where there is none. */
+export function fieldAt(o: unknown, path: string): unknown {
+  let at = o;
+  for (const part of path.split('.')) {
+    if (at === null || typeof at !== 'object') return undefined;
+    at = (at as Record<string, unknown>)[part];
+  }
+  return at;
+}
+
+/** A copy of `r` with `value` at `path`, and the rest made to agree with it
+ *  as `parseRecord` asks: a carton for a class and only there, a bowl's
+ *  litres for a bowl and only there, the cooling water's temperature only for
+ *  running water or a bowl, and a cold pan's only on a cold start. */
+export function withMember(r: EggRecord, path: string, value: string): Record<string, unknown> {
+  const out = JSON.parse(JSON.stringify(r)) as Record<string, unknown>;
+  const parts = path.split('.');
+  const parent = (parts.length === 1 ? out : fieldAt(out, parts.slice(0, -1).join('.'))) as Record<string, unknown>;
+  parent[parts[parts.length - 1]] = value;
+  const egg = out['egg'] as Record<string, unknown>;
+  const setup = out['setup'] as Record<string, unknown>;
+  if (path === 'egg.sizeTable') egg['massFrom'] = 'class';
+  if (egg['massFrom'] !== 'class') egg['sizeTable'] = null;
+  else if (egg['sizeTable'] === null) egg['sizeTable'] = SIZE_TABLES[0];
+  if (setup['cooling'] !== 'bowl') delete setup['bowlLitres'];
+  else if (setup['bowlLitres'] === undefined) setup['bowlLitres'] = 2;
+  if (setup['cooling'] !== 'tap' && setup['cooling'] !== 'bowl') delete setup['coolingWater_C'];
+  if (setup['startMode'] !== 'cold') delete setup['panStart_C'];
+  return out;
 }
 
 /** What a posterior that KNOWS its cook is built from. */

@@ -28,19 +28,21 @@
  * handed in; nothing here reads a clock.
  */
 
-import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
+import { type Egg, SIZE_TABLES, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coldestTouched_C, countsDown,
+  COOLINGS, type CookSetup, type Cooling, HEATS_AFTER_BOIL, type HeatAfterBoil, START_MODES, type StartMode,
+  coldestTouched_C, countsDown,
 } from './protocol.ts';
 import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
 import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
 import {
-  LITERATURE_POPULATION, type Particle, type Population, type Posterior, type WhiteReport, YOLK_WORDS, type YolkWord,
-  createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
+  LITERATURE_POPULATION, type Particle, type Population, type Posterior, WHITE_REPORTS, type WhiteReport, YOLK_WORDS,
+  type YolkWord, createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.ts';
 import { type PriorStart, priorStart } from './population.ts';
 import type { Outcome } from './outcome.ts';
 import { isPeriod } from './copy.ts';
+import { UNIT_SYSTEMS, type UnitSystem } from './units.ts';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -84,10 +86,16 @@ export const LIKELIHOOD_ID = '2026-10-e10';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
-export type MassFrom = 'scale' | 'girth' | 'width' | 'class';
+export type MassFrom = typeof MASS_FROMS[number];
+
+/** Every source of a mass, as a record may carry one. */
+export const MASS_FROMS = ['scale', 'girth', 'width', 'class'] as const;
 
 /** Where the egg's starting temperature came from: a preset or a typed value. */
-export type EggFrom = 'fridge' | 'room' | 'custom';
+export type EggFrom = typeof EGG_FROMS[number];
+
+/** Every source of the egg's temperature, as a record may carry one. */
+export const EGG_FROMS = ['fridge', 'room', 'custom'] as const;
 
 /** Where the solve's time to boil came from. `measured` is this cook's own boil
  *  tap, and every finished cold start has one, because neither app leaves
@@ -98,13 +106,19 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
  *  pan's whole cooling curve from this number (the standing method's pan
  *  constant now comes from the water volume, `panTimeConstant`), so this also
  *  says how hard those cooks leaned on it. */
-type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
+type TimeToBoilFrom = typeof TIME_TO_BOIL_FROMS[number];
+
+/** Every source of the time to boil, as a record may carry one. */
+export const TIME_TO_BOIL_FROMS = ['measured', 'remembered', 'default'] as const;
 
 
 /** How the egg came out. `cook` when the cook said so - the tap out of PULL -
  *  and `timeout` when nobody did and the grace ran out, in which case
  *  `pulled_s` is the scheduled time, an assumption and not a measurement. */
-export type PulledBy = 'cook' | 'timeout';
+export type PulledBy = typeof PULLED_BYS[number];
+
+/** Both ways out, as a record may carry one. */
+export const PULLED_BYS = ['cook', 'timeout'] as const;
 
 /**
  * A probe thermometer reading at the centre of the egg (INFERENCE.md
@@ -156,8 +170,11 @@ export function forecastOf(o: Outcome, cook_s: number): Forecast {
   };
 }
 
-export type AppName = 'web' | 'ios';
-export type Units = 'metric' | 'imperial';
+export type AppName = typeof APP_NAMES[number];
+export type Units = UnitSystem;
+
+/** Both apps, as a record names the one that wrote it. */
+export const APP_NAMES = ['web', 'ios'] as const;
 
 interface RecordEgg {
   /** Whole-egg mass, grams, rounded to 0.01 g by `recordMass_g`. */
@@ -545,7 +562,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   // A moment, in whole milliseconds: what both apps' integers hold exactly.
   const id = has(raw, 'id') ? raw['id'] : null;
   if (id !== null && !(typeof id === 'number' && Number.isSafeInteger(id) && id > 0)) return null;
-  if (!oneOf(raw['app'], ['web', 'ios'] as const)) return null;
+  if (!oneOf(raw['app'], APP_NAMES)) return null;
   if (!nonEmptyString(raw['appVersion']) || !nonEmptyString(raw['prior'])) return null;
   const model = raw['model'];
   if (!nonEmptyString(model)) return null;
@@ -553,21 +570,21 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const egg = raw['egg'];
   if (!isObject(egg) || !has(egg, 'sizeTable')) return null;
   if (!isFiniteNumber(egg['mass_g']) || !(egg['mass_g'] > 0)) return null;
-  if (!oneOf(egg['massFrom'], ['scale', 'girth', 'width', 'class'] as const)) return null;
+  if (!oneOf(egg['massFrom'], MASS_FROMS)) return null;
   // A class names its carton; nothing else has one.
   const table = egg['sizeTable'];
-  if (egg['massFrom'] === 'class' ? !oneOf(table, ['eu', 'us'] as const) : table !== null) return null;
+  if (egg['massFrom'] === 'class' ? !oneOf(table, SIZE_TABLES) : table !== null) return null;
 
   const s = raw['setup'];
   if (!isObject(s)) return null;
-  if (!oneOf(s['startMode'], ['cold', 'hot'] as const)) return null;
-  if (!oneOf(s['eggFrom'], ['fridge', 'room', 'custom'] as const)) return null;
-  if (!oneOf(s['cooling'], ['ice', 'tap', 'bowl', 'counter', 'eggCup'] as const)) return null;
-  if (!oneOf(s['afterBoil'], ['hold', 'off'] as const)) return null;
+  if (!oneOf(s['startMode'], START_MODES)) return null;
+  if (!oneOf(s['eggFrom'], EGG_FROMS)) return null;
+  if (!oneOf(s['cooling'], COOLINGS)) return null;
+  if (!oneOf(s['afterBoil'], HEATS_AFTER_BOIL)) return null;
   if (!isFiniteNumber(s['eggStart_C']) || !isFiniteNumber(s['ambient_C'])) return null;
   if (!isFiniteNumber(s['boiling_C']) || !(s['boiling_C'] > 0)) return null;
   if (!isFiniteNumber(s['timeToBoil_s']) || !(s['timeToBoil_s'] >= 0)) return null;
-  if (!oneOf(s['timeToBoilFrom'], ['measured', 'remembered', 'default'] as const)) return null;
+  if (!oneOf(s['timeToBoilFrom'], TIME_TO_BOIL_FROMS)) return null;
   if (!isFiniteNumber(s['waterLitres']) || !(s['waterLitres'] > 0)) return null;
   if (!isFiniteNumber(s['eggCount']) || !(s['eggCount'] >= 1)) return null;
   // The water the eggs cooled in: a temperature only for running water or a
@@ -588,16 +605,16 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isFiniteNumber(recommended) || !(recommended > 0)) return null;
   if (!isFiniteNumber(nudge) || !(recommended + nudge > 0)) return null;
   if (!isFiniteNumber(raw['pulled_s']) || !(raw['pulled_s'] > 0)) return null;
-  if (!oneOf(raw['pulledBy'], ['cook', 'timeout'] as const)) return null;
+  if (!oneOf(raw['pulledBy'], PULLED_BYS)) return null;
   if (!isFiniteNumber(raw['cooled_s']) || !(raw['cooled_s'] >= 0)) return null;
 
   const yolkWord = raw['yolkWord'];
   if (yolkWord !== null && !oneOf(yolkWord, YOLK_WORDS)) return null;
   const white = raw['white'];
-  if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
+  if (white !== null && !oneOf(white, WHITE_REPORTS)) return null;
 
   if (!nonEmptyString(raw['lang']) || !nonEmptyString(raw['register'])) return null;
-  if (!oneOf(raw['units'], ['metric', 'imperial'] as const)) return null;
+  if (!oneOf(raw['units'], UNIT_SYSTEMS)) return null;
 
   const setup: RecordSetup = {
     startMode: s['startMode'],
@@ -651,7 +668,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     pulledBy: raw['pulledBy'],
     cooled_s: raw['cooled_s'],
     yolkWord: yolkWord,
-    white: white as WhiteReport | null,
+    white: white,
     probe: probe,
     forecast: forecast,
     lang: raw['lang'],

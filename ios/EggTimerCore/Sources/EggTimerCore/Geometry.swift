@@ -49,7 +49,7 @@ public func sizeClassesFor(region: String?) -> [SizeClass] {
     sizeTableFor(region: region) == .us ? usSizeClasses : sizeClasses
 }
 
-public enum SizeTable: String, Sendable, Codable {
+public enum SizeTable: String, Sendable, Codable, CaseIterable {
     case eu, us
 }
 

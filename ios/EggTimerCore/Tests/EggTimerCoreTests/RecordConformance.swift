@@ -118,6 +118,45 @@ struct RecordConformance {
         }
     }
 
+    /// Each field that takes one of a list: this port's enumeration is the
+    /// TypeScript's, member for member and in order, and the canonical record
+    /// carrying each of its cases loads as it does there. The decoder takes a
+    /// member only through `init(rawValue:)`, so a case added to an enum is all
+    /// a record needs; one added to the TypeScript's list fails here until it
+    /// is a case.
+    @Test("every member of every list a field takes, against the TypeScript's")
+    func members() throws {
+        let swift: [String: [String]] = [
+            "app": AppName.allCases.map(\.rawValue),
+            "egg.massFrom": MassFrom.allCases.map(\.rawValue),
+            "egg.sizeTable": SizeTable.allCases.map(\.rawValue),
+            "setup.startMode": StartMode.allCases.map(\.rawValue),
+            "setup.eggFrom": EggFrom.allCases.map(\.rawValue),
+            "setup.timeToBoilFrom": TimeToBoilFrom.allCases.map(\.rawValue),
+            "setup.cooling": Cooling.allCases.map(\.rawValue),
+            "setup.afterBoil": HeatAfterBoil.allCases.map(\.rawValue),
+            "pulledBy": PulledBy.allCases.map(\.rawValue),
+            "yolkWord": YolkWord.allCases.map(\.rawValue),
+            "white": WhiteReport.allCases.map(\.rawValue),
+            "units": Units.allCases.map(\.rawValue),
+        ]
+        let fields = try #require(Fixtures.node("record.json", "members.fields") as? [String: [String]])
+        #expect(Set(swift.keys) == Set(fields.keys), "the same fields")
+        for (path, members) in fields {
+            #expect(swift[path] == members, "\(path): the same members")
+        }
+        let cases = try Fixtures.list("record.json", "members.cases")
+        for (path, members) in swift {
+            for member in members {
+                let c = try #require(
+                    cases.first { $0["path"] as? String == path && $0["member"] as? String == member },
+                    "no case for \(path) \(member)"
+                )
+                expectJSON(decodeRecord(c["record"] as Any), c["parsed"], "\(path) \(member)", strict: true)
+            }
+        }
+    }
+
     /// What both apps write down for a cook: the same record from the same
     /// facts, with its nulls written and `id` only when there is one.
     @Test("the record made from a cook's facts, case by case")
