@@ -1098,3 +1098,9 @@ Decided by the owner, 20 October 2026:
     captured from the screen strings the catalogue already holds, and
     which key each state shows is core's and fixtured. A few states whose
     check is their own stay as ordinary e2e scenarios.
+152. **On iOS, VoiceOver reads the sentence's clauses as links where they
+    are drawn, and again as buttons.** The owner, 21 October 2026, choosing
+    "Links and buttons": the sentence's accessibility leads with the
+    styled text, so each clause is a link at its own place, which is where
+    XCUITest taps it; the clause buttons keep their "Egg: 68 g, change"
+    labels and their open or closed value. Nothing drawn changes.

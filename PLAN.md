@@ -142,9 +142,9 @@ Start the QA pass here.
   and its range (93, 97); the one screen from setup to Done (96-99, 108); the
   alarm sounds (101); the
   action's row (125), the bracket's band (114), the bowl (115); the web's
-  setup sentence while a cook runs; on iOS, the start's, the cooling's and
-  the egg's-origin panels with their moved rows (143) scrolled to and
-  corrected by hand mid-cook, which the simulator's tools never did.
+  setup sentence while a cook runs; on iOS, the cooling's and the
+  egg's-origin panels with their moved rows (143) scrolled to and corrected
+  by hand mid-cook (the start's is `ios:e2e`'s, by real taps).
 - **Sharing, live.** A record posted and deleted through the deployed
   endpoint; App Attest's attested path on a phone (only the simulator's open
   tier has run); the web in Safari; an iPhone on a flaky network; Netlify's
@@ -161,7 +161,7 @@ Start the QA pass here.
   12, which must not ring twice with the app on screen); touch to stop;
   the refused and failed notification states; and the slider's haptic
   tick, and whether the owner wants it.
-- **Screen readers.** VoiceOver: the sentence and its clauses, the (i)'s
+- **Screen readers.** VoiceOver: the sentence and its clauses, read on iOS as links where they are drawn and again as buttons (152), the (i)'s
   Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
   the bracket's words, and focus after a press. Both apps' names were read
   from the accessibility tree, not heard.
