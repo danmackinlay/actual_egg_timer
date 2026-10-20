@@ -39,7 +39,7 @@ struct ReadoutView: View {
     /// 8 pt, the web's 0.5rem), so the folded word has no more empty room
     /// under it than it needs. What opens under it and the white's line take
     /// it back, so they sit where they did. Fixed at every text size, as the
-    /// panel's 22 pt padding is, so "most likely" never reaches its edge.
+    /// panel's 14 pt padding is, so "most likely" never reaches its edge.
     private static let hang = UIFont.preferredFont(
         forTextStyle: .subheadline, compatibleWith: UITraitCollection(preferredContentSizeCategory: .large)
     ).xHeight.rounded()
@@ -99,7 +99,8 @@ struct ReadoutView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
+        // The web's 14 px at a phone's width (styles.css `#readout`).
+        .padding(.vertical, 14)
         .padding(.horizontal, 12)
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
         .overlay(alignment: .topTrailing) {

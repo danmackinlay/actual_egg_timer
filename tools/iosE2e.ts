@@ -304,11 +304,11 @@ function actionAbove(run: Run, l: Layout, when: string): void {
 }
 
 /// Under the action's row, at the default text size where it is one row,
-/// nothing empty: the slider the stack's spacing (22 pt) under the main
+/// nothing empty: the slider the stack's spacing (18 pt) under the main
 /// button's foot.
 function nothingEmpty(run: Run, l: Layout, when: string): void {
-  run.check(l.main != null && l.slider != null && near(l.slider - l.main, 22, 1),
-    `${when}: ${num(l.slider) - num(l.main) - 22} pt empty under the row (main button's foot ${l.main}, slider ${l.slider})`);
+  run.check(l.main != null && l.slider != null && near(l.slider - l.main, 18, 1),
+    `${when}: ${num(l.slider) - num(l.main) - 18} pt empty under the row (main button's foot ${l.main}, slider ${l.slider})`);
 }
 
 scenario('one-layout', 'one layout from idle to Done; the action under the time in one row, nothing empty under it, nothing below it moving in any phase', async (run) => {
@@ -376,6 +376,92 @@ async function oneLayout(run: Run, args: string[], stacked: boolean): Promise<vo
   run.check(same(phasesSeen, ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phasesSeen}`);
   run.note(`action ${before.action}, main button's foot ${before.main}, slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle to Done`);
 }
+
+/// Where the screen shows the page, and the open panel, top and foot, and
+/// the sentence, pt from the window's top (ContentView.logTop, logBottom).
+interface Shown { screen: number; screenFoot: number; panel: number; panelFoot: number; sentence: number }
+
+/// The last of each in these lines, which there must be.
+function shownIn(lines: Event[], when: string): Shown {
+  const l: Record<string, number> = {};
+  for (const e of lines) if (e.ev === 'layout') l[e.part] = e.y;
+  for (const part of ['screen', 'screenFoot', 'panel', 'panelFoot', 'sentence']) {
+    if (l[part] === undefined) throw new Error(`${when}: no ${part} logged`);
+  }
+  return l as unknown as Shown;
+}
+
+scenario('panel-in-view', "UI.md 5: a clause pressed scrolls just far enough to show its panel: the egg's at idle, under the fold, up to its foot at the screen's, and the start's pressed from it; the egg's again from that, on screen, scrolls nothing; the sentence moves only with the page; a panel a launch argument opens scrolls nothing; at the largest text size the start's, taller than the screen, comes up with its head at the top", async (run) => {
+  // Each press of `-uiDo`, due at `at`: how the page scrolled to its panel
+  // (`reveal`), where the panel opened, from the first line after the press,
+  // and where the page left it; null for a panel closed.
+  const press = async (at: number, when: string): Promise<{ scroll: string; opened: Shown; shown: Shown } | null> => {
+    const tap = await tapAt(run, at, 'clause');
+    const lines = await screen(run);
+    const after = lines.slice(tap.i);
+    const opened = after.find((e) => e.ev === 'layout' && e.part === 'panel');
+    if (opened === undefined) return null;
+    const first = shownIn([...lines.slice(0, tap.i), ...after.slice(0, after.indexOf(opened) + 2)], when);
+    const scroll = after.find(is('reveal'))?.scroll ?? 'no reveal';
+    return { scroll: scroll, opened: first, shown: shownIn(lines, when) };
+  };
+  const px = (s: Shown): string => `${s.panel}-${s.panelFoot} on a screen ${s.screen}-${s.screenFoot}`;
+  const opened = async (at: number, when: string): Promise<{ scroll: string; opened: Shown; shown: Shown }> => {
+    const p = await press(at, when);
+    if (p === null) throw new Error(`${when}: the panel never opened`);
+    return p;
+  };
+  // Below the fold, a panel that fits comes up just far enough: its foot at
+  // the screen's.
+  const upToFoot = (p: { scroll: string; opened: Shown; shown: Shown }, when: string): void => {
+    run.check(p.scroll === 'bottom', `${when}: scrolled ${p.scroll}, not to its foot`);
+    run.check(near(p.shown.panelFoot, p.shown.screenFoot, 2) && p.shown.panel >= p.shown.screen,
+      `${when}: not scrolled just far enough: ${px(p.shown)}`);
+  };
+
+  let base = run.at;
+  await idle(run, ['-uiDo', 'clause:egg@launch+1,clause:start@launch+2,clause:egg@launch+3']);
+  const egg = await opened(base + 1, "the egg's");
+  run.check(egg.opened.panelFoot > egg.opened.screenFoot + 0.5, `the egg's opened on screen, nothing to scroll: ${px(egg.opened)}`);
+  upToFoot(egg, "the egg's");
+  // Only the page moved: the sentence with the panel. (From another
+  // clause, the one going logs its place too as it fades.)
+  const moved = egg.shown.panel - egg.opened.panel;
+  run.check(near(egg.shown.sentence - egg.opened.sentence, moved, 0.5),
+    `the sentence moved ${egg.shown.sentence - egg.opened.sentence} pt, the panel ${moved}: something moved on the page`);
+  // Another clause pressed from it is opened too.
+  const start = await opened(base + 2, "the start's from the egg's");
+  upToFoot(start, "the start's from the egg's");
+  // The egg's again, shorter, where the start's was: on screen, so no
+  // scroll of its own (the page grown shorter may still take some back).
+  const again = await opened(base + 3, "the egg's again");
+  run.check(again.opened.panel >= again.opened.screen && again.opened.panelFoot <= again.opened.screenFoot + 0.5,
+    `the egg's again opened off the screen: ${px(again.opened)}`);
+  run.check(again.scroll === 'none', `the egg's again, on screen, scrolled ${again.scroll}`);
+  run.check(again.shown.panel >= again.shown.screen && again.shown.panelFoot <= again.shown.screenFoot + 0.5,
+    `the egg's again not on screen: ${px(again.shown)}`);
+  run.terminate();
+
+  // Opened by a launch argument: no scroll.
+  await idle(run, ['-uiScreen', 'clause-start']);
+  const itself = run.sinceLaunch();
+  const own = shownIn(itself, 'opened by a launch argument');
+  run.check(!itself.some(is('reveal')), 'a panel a launch argument opened was scrolled to');
+  run.check(own.panelFoot > own.screenFoot + 0.5, `opened by a launch argument, the panel on screen: ${px(own)}`);
+  run.terminate();
+
+  // Taller than the screen: its head at the top.
+  base = run.at;
+  await idle(run, [
+    '-UIPreferredContentSizeCategoryName', 'UICTContentSizeCategoryAccessibilityXXXL', '-uiDo', 'clause:start@launch+1',
+  ]);
+  const tall = await opened(base + 1, "the start's at the largest text size");
+  run.check(tall.opened.panelFoot - tall.opened.panel > tall.opened.screenFoot - tall.opened.screen,
+    `at the largest text size the start's panel fits the screen: ${px(tall.opened)}`);
+  run.check(tall.scroll === 'top' && near(tall.shown.panel, tall.shown.screen, 2),
+    `taller than the screen, scrolled ${tall.scroll}: ${px(tall.shown)}`);
+  run.note(`the egg's ${px(egg.opened)} -> ${px(egg.shown)}; the start's -> ${px(start.shown)}; the egg's again ${px(again.shown)}; a launch argument's ${px(own)}; the largest text's ${px(tall.opened)} -> ${px(tall.shown)}`);
+});
 
 /// The level moved, idle, from one where "Most likely" shows under the
 /// certainty word to one where it does not and back, a word asked very

@@ -172,8 +172,21 @@ function setOpenClause(next: Clause | null): void {
   }
 }
 
-/** The four clauses, and each panel's Done. Once, at boot. */
-export function buildClauses(): void {
+/** A panel the cook has just opened, scrolled just far enough to be seen
+ *  whole, or, taller than the screen, with its head at the top: on a phone
+ *  it opens under the sentence, below the fold, where its rows go unseen.
+ *  One already on screen does not move the page. In one step when the
+ *  cook asks for less motion. */
+function scrollIntoSight(panel: HTMLElement): void {
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  panel.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: still ? 'instant' : 'smooth' });
+}
+
+/** The four clauses, and each panel's Done. Once, at boot. `inHand` says
+ *  whether a correction is in hand: a clause opened then does not scroll
+ *  the page. A finger's press on a clause commits it first (edit.ts), so
+ *  that is a clause opened by a key. */
+export function buildClauses(inHand: () => boolean): void {
   for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
     const button = document.createElement('span');
     button.className = 'clause';
@@ -181,7 +194,13 @@ export function buildClauses(): void {
     button.tabIndex = 0;
     button.setAttribute('aria-controls', CLAUSE_PANELS[clause]);
     button.setAttribute('aria-expanded', 'false');
-    button.addEventListener('click', () => setOpenClause(openClause === clause ? null : clause));
+    // Only the cook's opening scrolls, from another clause as well as from
+    // none; a close never does.
+    button.addEventListener('click', () => {
+      const next = openClause === clause ? null : clause;
+      setOpenClause(next);
+      if (next !== null && !inHand()) scrollIntoSight(panelFor(next));
+    });
     button.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();

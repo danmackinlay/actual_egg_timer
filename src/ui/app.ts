@@ -28,8 +28,8 @@ import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
 import { ROOM_INPUTS, applyConstantsToDom, applyLanguageToDom, buildSizeOptions, noteFocusOut } from './controls.ts';
 import {
-  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageStores, redraw, reset,
-  restoreCook, startRunner, stopRunner,
+  type Stores, betweenCooks, dispatch, finalNow, lookAgain, onPrimary, onStillOut, pageModel, pageStores, redraw,
+  reset, restoreCook, startRunner, stopRunner,
 } from './cook.ts';
 import { closeAudio, primeAudio } from './clock.ts';
 import { bindDom, page } from './dom.ts';
@@ -159,7 +159,7 @@ function resend(): void {
 function wire(): void {
   buildSizeOptions();
   buildTicks();
-  buildClauses();
+  buildClauses(() => pageModel().hand?.hand != null);
   applyConstantsToDom();
 
   // The egg's two controls and its sentence, and the Settings page's, are

@@ -429,6 +429,7 @@ export type Event = { t: number } & (
   | { ev: 'edit'; group?: string }
   | { ev: 'editCommitted'; fields: string[]; start?: number }
   | { ev: 'layout'; part: string; y: number }
+  | { ev: 'reveal'; clause: string; scroll: string }
   | { ev: 'frame'; at: number; phase: string; big: string; sub: string; range?: string }
   | { ev: 'likely'; shown: boolean }
   | { ev: 'helpSources'; count: number }

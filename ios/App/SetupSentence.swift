@@ -22,12 +22,13 @@ import EggTimerShared
 /// it is the sentence and then one button per clause, "Egg: 68 g, change".
 struct SetupSentence: View {
     let planner: Planner
-    @Binding var open: Clause?
+    /// The clause whose choice is open, drawn so.
+    let open: Clause?
     /// Whether a clause opens its choice.
     var editable = true
-    /// A clause pressed: another control than one with a change in hand,
-    /// which commits it (`InHand.moveOn`).
-    var onTap: () -> Void = {}
+    /// A clause pressed, which opens its choice or closes it
+    /// (`ContentView.tapped`).
+    var onTap: (Clause) -> Void = { _ in }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The scheme a clause's link uses. Never leaves the app.
@@ -48,8 +49,7 @@ struct SetupSentence: View {
                     return .systemAction
                 }
                 guard editable else { return .handled }
-                onTap()
-                withAnimation(.snappy) { open = open == clause ? nil : clause }
+                onTap(clause)
                 return .handled
             })
             .accessibilityRepresentation {
@@ -61,8 +61,7 @@ struct SetupSentence: View {
                             "value": .text(texts[clause]?.value ?? ""),
                         ])) {
                             guard editable else { return }
-                            onTap()
-                            open = open == clause ? nil : clause
+                            onTap(clause)
                         }
                         .accessibilityValue(tr(open == clause ? .`more.expanded` : .`more.collapsed`))
                     }
