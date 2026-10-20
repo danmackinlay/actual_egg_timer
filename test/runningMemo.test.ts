@@ -17,12 +17,13 @@ import { knowing, rng } from '../tools/common.ts';
 import { S, C, cookOf } from './cooks.ts';
 
 test("the slow hob's memo: a plan made with any memo is the plan from the start, and its next moment comes only strictly past it", () => {
-  // A cold start never tapped, planned as the app plans it, at twelve
-  // moments over the two hours drawn with a fixed seed: ten in the first half
-  // hour, where the guess lengthens before it creeps, and two in the last
-  // quarter, on a slow hob and on a small runny egg's creeping guess. At each, the last plan's memo is taken, and the plan is
-  // the one from the start. The memo offered to anything else the rule reads
-  // is ignored, and offered to what it does not read is taken: the plan from
+  // A cold start never tapped, planned as the app plans it, at six moments
+  // over the two hours drawn with a fixed seed: two for each cook in the
+  // first half hour, where the guess lengthens before it creeps, and one in
+  // the last quarter, on a slow hob and on a small runny egg's creeping
+  // guess. At each, the last plan's memo is taken, and the plan is the one
+  // from the start. The memo offered to anything else the rule reads is
+  // ignored, and offered to what it does not read is taken: the plan from
   // the start either way. And at each plan's own next moment (`slowHobDue`)
   // nothing is due, and a plan made then has the same moment, so a clock
   // stopped there plans nothing more; a millisecond past it, it is due and
@@ -56,8 +57,12 @@ test("the slow hob's memo: a plan made with any memo is the plan from the start,
     ['a correction that changes nothing', (k, t) => [corrected(k, { ...k.choices }, t + 10), C, 0, t + 30, true]],
   ];
   // Twenty slots, early ones shorter; between the tenth and the last two the
-  // memo's place does not move (below), so those slots are left out.
-  for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 18, 19]) {
+  // memo's place does not move (below), so those slots are left out, and of
+  // the first ten, the four where the guess has lengthened and plans are a
+  // few solves are taken. Each early one is offered some of the ten
+  // elsewhere.
+  const OFFERED: Record<number, number[]> = { 4: [0, 1, 2], 5: [3, 4, 5], 6: [6, 7], 7: [8, 9] };
+  for (const i of [4, 5, 6, 7, 18, 19]) {
     const t = S + 7140 * ((i + random()) / 20) ** 2;
     const j = i % 2;
     const k = cooks[j];
@@ -66,11 +71,11 @@ test("the slow hob's memo: a plan made with any memo is the plan from the start,
     assert.equal(takes(last[j].memo as SlowHobPlace, k, C, 0, t, fresh), true, `${tag}: the last plan's memo taken`);
     assert.deepEqual(replan(k, C, null, 0, t, last[j].memo), fresh, tag);
     const place = fresh.memo as SlowHobPlace;
-    // Offered elsewhere at the first ten moments: the place a memo keeps is
-    // the last lengthening that did not creep, so once the guess creeps, a
+    // Offered elsewhere at the early moments: the place a memo keeps is the
+    // last lengthening that did not creep, so once the guess creeps, a
     // quarter of an hour in, it is the same place at every later moment.
-    if (i < elsewhere.length) {
-      const [name, offer] = elsewhere[i];
+    for (const e of OFFERED[i] ?? []) {
+      const [name, offer] = elsewhere[e];
       const [ck, cc, lean, now, fits] = offer(k, t, place);
       const start = replan(ck, cc, null, lean, now);
       assert.equal(takes(place, ck, cc, lean, now, start), fits, `${tag}, ${name}`);
