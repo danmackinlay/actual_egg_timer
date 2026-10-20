@@ -17,7 +17,7 @@ import { LIMITS } from '../src/core/inputs.ts';
 import {
   SIZE_CLASSES, US_SIZE_CLASSES, eggFromMass, eggFromMinorDiameter,
 } from '../src/core/geometry.ts';
-import { parseCatalogue, render } from '../src/core/copy.ts';
+import { formatArg, parseCatalogue, render } from '../src/core/copy.ts';
 import {
   type Measure, QUANTITIES, type Quantity, UNIT_SYSTEMS,
   type UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
@@ -26,6 +26,7 @@ import {
 import { parseRecord } from '../src/core/record.ts';
 import { replan, startCook } from '../src/core/running.ts';
 import { gridFor, knowing, webRecordFor } from '../tools/common.ts';
+import { english } from '../tools/copyNotes.ts';
 import { asRead } from '../tools/text.ts';
 
 /** The units' definitions, written out here rather than imported, so the
@@ -151,7 +152,7 @@ test('a cook who types 2.4 oz sees 2.4 oz again', () => {
   const stored = parse(oz, 2.4) as number;
   assert.ok(Math.abs(stored - 2.4 * OUNCE_G) < 1e-9);
   assert.equal(displayText(oz, stored), '2.4');
-  assert.equal(rendered(oz, stored), '2.4 oz');
+  assert.equal(rendered(oz, stored), asRead(english('format.ounces', { value: '2.4' })));
 });
 
 test('every value every input can hold comes back as typed', () => {
@@ -196,8 +197,8 @@ test('grams and the bowl show only the decimals they need; every other measure k
   assert.equal(displayText(g, 58.5), '58.5');
   assert.equal(displayText(g, 58.2), '58');
   assert.equal(displayText(g, 58.3), '58.5');
-  assert.equal(rendered(g, 58), '58 g');
-  assert.equal(rendered(g, 58.5), '58.5 g');
+  assert.equal(rendered(g, 58), asRead(english('format.grams', { value: '58' })));
+  assert.equal(rendered(g, 58.5), asRead(english('format.grams', { value: '58.5' })));
   for (const m of everyMeasure()) {
     if ((m.quantity === 'mass' && m.unit === 'g') || m.quantity === 'bowl') continue;
     assert.equal(m.trim, false, `${m.quantity} in ${m.unit}`);
@@ -246,12 +247,12 @@ test('switching systems moves nothing: the value is stored, not the text', () =>
 test('readouts: every temperature carries its unit', () => {
   const c = measureFor('temperature', 'metric', null);
   const f = measureFor('temperature', 'imperial', null);
-  assert.equal(rendered(c, 4), '4 °C');
-  assert.equal(rendered(f, 4), '39 °F');
-  assert.equal(rendered(f, 20), '68 °F');
-  assert.equal(rendered(f, 58), '136 °F');
-  assert.equal(rendered(measureFor('boilingPoint', 'metric', null), 100), '100.0 °C');
-  assert.equal(rendered(measureFor('boilingPoint', 'imperial', null), 94.9), '202.8 °F');
+  assert.equal(rendered(c, 4), asRead(english('format.celsius', { value: '4' })));
+  assert.equal(rendered(f, 4), asRead(english('format.fahrenheit', { value: '39' })));
+  assert.equal(rendered(f, 20), asRead(english('format.fahrenheit', { value: '68' })));
+  assert.equal(rendered(f, 58), asRead(english('format.fahrenheit', { value: '136' })));
+  assert.equal(rendered(measureFor('boilingPoint', 'metric', null), 100), asRead(english('format.celsius', { value: '100.0' })));
+  assert.equal(rendered(measureFor('boilingPoint', 'imperial', null), 94.9), asRead(english('format.fahrenheit', { value: '202.8' })));
   // Halves go up on both platforms, negative ones too.
   assert.equal(displayText(c, -0.5), '0');
   assert.equal(displayText(c, -1.5), '-1');
@@ -292,17 +293,23 @@ test('a choice is stored as a choice, and only a change of system is a flip', ()
 // 5. Size labels and the record
 // --------------------------------------------------------------------------
 
-function labelOf(table: typeof SIZE_CLASSES, i: number, system: UnitSystem): string {
+/** A size class's label as its keys and its number, not its words, which are
+ *  copy/en.json's: the class's name, the mass's unit, and the mass as written. */
+function labelOf(table: typeof SIZE_CLASSES, i: number, system: UnitSystem): [string, string, string] {
   const label = sizeClassLabel(table[i], system);
-  return asRead(render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) }));
+  return [label.key, label.mass.key, formatArg(label.mass.value)];
 }
 
 test('a size class shows its own mass in either system, and keeps its region\'s name', () => {
-  assert.equal(labelOf(SIZE_CLASSES, 2, 'metric'), 'Large — 68 g');
-  assert.equal(labelOf(SIZE_CLASSES, 2, 'imperial'), 'Large — 2.4 oz');
-  assert.equal(labelOf(US_SIZE_CLASSES, 2, 'metric'), 'Large — 60 g');
-  assert.equal(labelOf(US_SIZE_CLASSES, 2, 'imperial'), 'Large — 2.1 oz');
-  assert.equal(labelOf(SIZE_CLASSES, 1, 'imperial'), 'Medium — 2.0 oz', 'the tenth is kept');
+  assert.deepEqual(labelOf(SIZE_CLASSES, 2, 'metric'), ['size.eu.large', 'format.grams', '68']);
+  assert.deepEqual(labelOf(SIZE_CLASSES, 2, 'imperial'), ['size.eu.large', 'format.ounces', '2.4']);
+  assert.deepEqual(labelOf(US_SIZE_CLASSES, 2, 'metric'), ['size.us.large', 'format.grams', '60']);
+  assert.deepEqual(labelOf(US_SIZE_CLASSES, 2, 'imperial'), ['size.us.large', 'format.ounces', '2.1']);
+  assert.deepEqual(labelOf(SIZE_CLASSES, 1, 'imperial'), ['size.eu.medium', 'format.ounces', '2.0'], 'the tenth is kept');
+  // And the label renders whole: the class's words with its mass in them.
+  const label = sizeClassLabel(SIZE_CLASSES[2], 'metric');
+  const said = render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) });
+  assert.ok(said.includes(render(EN, 'format.grams', { value: '68' })), said);
 });
 
 test('the record says which system the cook was reading, and stays SI', () => {

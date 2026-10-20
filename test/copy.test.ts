@@ -17,7 +17,7 @@ import {
   type Catalogue, type Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
   pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.ts';
-import { appsUsing, catalogueTags, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
+import { appsUsing, catalogueTags, english, exampleOf, longest, readNotes, readSurfaces } from '../tools/copyNotes.ts';
 
 /** The argument that picks a message's plural form, or null for plain text. */
 function countOf(m: Message): string | null {
@@ -69,8 +69,10 @@ test('the plural form is chosen by the count argument, in the catalogue\'s langu
 });
 
 test('a key the language lacks falls back to English, with the English plural rule', () => {
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), 'Learned from 1 result');
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), 'Learned from 2 results');
+  // Two is Czech's few and English's other: the English form, from the English.
+  const tuned = EN_JSON.messages['learned.tuned'] as Record<string, string>;
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), tuned['one'].replace('{eggs}', '1'));
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), tuned['other'].replace('{eggs}', '2'));
 });
 
 test('a key nobody has renders as itself, so it is seen rather than blank', () => {
@@ -87,9 +89,9 @@ test('a word set mid-sentence loses its first capital and keeps the rest', () =>
 
 test('a CopyRef from core renders with the app\'s extra arguments', () => {
   assert.equal(renderRef(EN, { key: 'sousvide.start.lastWeekday', args: {} }, { weekday: 'Tuesday' }),
-    'Last Tuesday');
+    english('sousvide.start.lastWeekday', { weekday: 'Tuesday' }));
   assert.equal(renderRef(EN, { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } }),
-    '22 h 43 min');
+    english('duration.hoursMinutes', { hours: 22, minutes: 43 }));
 });
 
 test('a malformed catalogue is refused, naming the key', () => {
@@ -244,7 +246,7 @@ test('a measure never breaks across a line: format.* joins value and unit with a
   // The English's at least; a twin that only repeated it is left to English.
   const english = Object.keys(EN_JSON.messages).filter((k) => k.startsWith('format.')).length;
   assert.ok(english >= 11 && checked >= english, `${checked} templates, ${english} of them English`);
-  assert.equal(render(EN, 'format.litres', { value: '1.5' }), `1.5${NBSP}L`);
+  assert.ok(render(EN, 'format.litres', { value: '1.5' }).startsWith(`1.5${NBSP}`), 'the renderer keeps the no-break space');
 });
 
 test('every language uses exactly the English placeholders', () => {
@@ -406,8 +408,13 @@ test('the region of a tag, and the catalogues that render a language', () => {
   assert.deepEqual(catalogueChain('en-x-1750', ['en-US'], 'US'), ['en-x-1750', 'en']);
   assert.deepEqual(catalogueChain('cs', ['en-US'], 'US'), ['cs', 'en']);
 
-  const american = parseCatalogue(JSONS.get('en-US'), EN);
-  assert.equal(render(american, 'action.hint.cold'), 'eggs in the pot, lid on, then press Start heating');
-  assert.equal(render(EN, 'action.hint.cold'), 'eggs in the pan, lid on, then press Start heating');
-  assert.equal(render(american, 'controls.cooling.ice'), render(EN, 'controls.cooling.ice'), 'a key the overlay leaves is English\'s');
+  // A key the overlay has reads the overlay's words; one it leaves, the
+  // English. Both read from the catalogues, so a change of wording moves no test.
+  const US_JSON = JSONS.get('en-US') as CatalogueJson;
+  const american = parseCatalogue(US_JSON, EN);
+  const [overlaid, entry] = Object.entries(US_JSON.messages)[0];
+  assert.equal(render(american, overlaid), entry['text']);
+  assert.equal(render(EN, overlaid), EN_JSON.messages[overlaid]['text']);
+  const left = Object.keys(EN_JSON.messages).find((k) => !(k in US_JSON.messages) && EN.messages.get(k)?.kind === 'text') as string;
+  assert.equal(render(american, left), render(EN, left), 'a key the overlay leaves is English\'s');
 });

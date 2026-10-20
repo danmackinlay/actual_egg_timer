@@ -78,6 +78,19 @@ export function longest(catalogue: Catalogue, key: string, notes: Record<string,
   return Math.max(...argSets.map((args) => [...render(catalogue, key, args)].length));
 }
 
+/** A key's English as copy/en.json has it, each placeholder replaced by its
+ *  argument as given, in one form (`text`, or a plural's `one`, `other`...).
+ *  For a test or a harness that checks which key, which form or which number
+ *  a screen shows: it reads the words from the catalogue, so a change of
+ *  wording moves no test, and fills them by hand, not through the renderer
+ *  under test. */
+export function english(key: string, args: Record<string, string | number> = {}, form: string = 'text'): string {
+  const messages = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, Record<string, string>> }).messages;
+  const template = messages[key]?.[form];
+  if (template === undefined) throw new Error(`copy/en.json has no ${key}.${form}`);
+  return Object.entries(args).reduce((s, [name, value]) => s.split(`{${name}}`).join(String(value)), template);
+}
+
 export type App = 'web' | 'ios';
 
 function sourceFiles(dir: string, ext: string): string[] {
