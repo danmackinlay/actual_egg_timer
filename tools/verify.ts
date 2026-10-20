@@ -23,8 +23,7 @@
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
 //                    have both ended
 //   words-only proof the words-only check misses nothing the words move
-//                    (tools/wordsOnlyProof.ts), once fixtures:check has
-//                    ended
+//                    (tools/wordsOnlyProof.ts)
 //
 // copy:keys and swift:constants write what they make, to the Swift package
 // and src/core/copyKeys.ts, which swift build, the type check and the tests
@@ -43,8 +42,9 @@
 // --ignore-lock. `npm test` runs alongside; the one fixture it reads,
 // population.json, is the fit's, which fixtures:check never writes. The
 // words-only proof copies this checkout's changes into a scratch worktree of
-// its own, so it waits for fixtures:check too, and copies no fixture half
-// written; then it writes nothing here.
+// its own as it starts, and writes nothing here; a fixture fixtures:check
+// writes is renamed into place whole (replaceFile), so it copies the old
+// file or the new, either of which its comparison holds.
 //
 // The three checks compare with the working tree, where an npm test has
 // already written the key types and the Swift's constants afresh, so a file
@@ -133,7 +133,6 @@ const appTests = swiftBuild.then((built) => (built.code === 0 ? swiftTests('swif
 const coreTests = Promise.all([fixtures, swiftBuild]).then(([, built]) => (built.code === 0
   ? swiftTests('swift core tests', 'EggTimerCoreTests')
   : null));
-const proof = fixtures.then(() => job('words-only proof', [[node, ['tools/wordsOnlyProof.ts']]]));
 const all = await Promise.all([
   job('typecheck', ['tsconfig.core.json', 'tsconfig.app.json', 'tsconfig.json'].map((p): Step => [node, [tsc, '-p', p]])),
   job('npm test', [[node, ['--test', ...tests]]]),
@@ -145,7 +144,7 @@ const all = await Promise.all([
   swiftBuild,
   appTests,
   coreTests,
-  proof,
+  job('words-only proof', [[node, ['tools/wordsOnlyProof.ts']]]),
 ]);
 const results = all.filter((r): r is Result => r !== null);
 

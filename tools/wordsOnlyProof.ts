@@ -96,7 +96,9 @@ try {
   git(ROOT, 'worktree', 'add', '--detach', '--quiet', dir, 'HEAD');
   const changed = git(ROOT, 'ls-files', '--modified', '--others', '--exclude-standard').split('\n').filter((p) => p !== '');
   for (const path of changed) {
-    if (path === 'node_modules' || !existsSync(join(ROOT, path))) continue;
+    // A file being written whole (replaceFile's .part, which verify's
+    // fixtures:check may be writing beside this) is not one of them.
+    if (path === 'node_modules' || path.endsWith('.part') || !existsSync(join(ROOT, path))) continue;
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     copyFileSync(join(ROOT, path), join(dir, path));
   }
