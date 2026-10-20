@@ -41,11 +41,12 @@ import os
 ///   (Start, from idle), `boil` (Rolling boil), `out` (the egg out at the
 ///   pull), `cancel`, `again` (Start again), `answer:jammy/tender` (the
 ///   yolk, the white or both, as the buttons would: `AppModel.answer`),
-///   `set:<control>=<value>` (`level`, `size` or `water`, changed as a tap
-///   would) and `drag:<levels>` (the slider held and moved through them; it
-///   stays held). The moment is seconds after the start, after `launch`
-///   (the clock at this launch, before any cook), or after `boil` (the boil
-///   tapped), `pull` or `cooled` (the plan's deadlines), the cook as restored
+///   `set:<control>=<value>` (`level`, `size`, `water` or `tapWater`, the
+///   cold tap's temperature, changed as a tap would) and `drag:<levels>`
+///   (the slider held and moved through them; it stays held). The moment
+///   is seconds after the start, after `launch` (the clock at this launch,
+///   before any cook), or after `boil` (the boil tapped), `pull` or
+///   `cooled` (the plan's deadlines), the cook as restored
 ///   included; a moment once known is kept, so a tap still comes after the
 ///   cook has ended. What the scripted checks tap with, in place of the
 ///   screen's layout.
@@ -421,6 +422,7 @@ extension Screenshots {
         case "level": planner.settings.doneness = number
         case "size": planner.chooseSize(Int(number))
         case "water": planner.settings.waterLitres = number
+        case "tapWater": planner.setTapWater(number)
         default: log(.actionUnknown(raw: "set:\(arg)"))
         }
     }

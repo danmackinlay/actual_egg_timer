@@ -175,6 +175,8 @@ export interface CopyKeyArgs {
   'controls.coolingWater': never;
   'controls.coolingWater.tap.more': 'water';
   'controls.coolingWater.bowl.more': 'room';
+  'controls.panWater': never;
+  'controls.panWater.more': 'water';
   'controls.water': never;
   'controls.water.more': never;
   'controls.eggsInPan': never;

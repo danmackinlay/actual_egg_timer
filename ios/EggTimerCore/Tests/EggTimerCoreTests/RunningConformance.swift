@@ -174,6 +174,17 @@ struct InputsKeyTests {
         var nudged = pot.setup
         nudged.eggStartC += 1e-12
         #expect(inputsKey(DecisionInputs(egg: pot.egg, setup: nudged, params: .default, whiteDoseMin: whiteDoseTarget)) != inputsKey(a))
+        // A cold pan's water is in a cold start's key, and only there.
+        func key(_ start: StartMode, _ pan: Double?) -> String {
+            var s = pot.setup
+            s.startMode = start
+            s.panStartC = pan
+            return inputsKey(DecisionInputs(egg: pot.egg, setup: s, params: .default, whiteDoseMin: whiteDoseTarget))
+        }
+        #expect(key(.cold, 15) != key(.cold, 8), "two cold pans, two keys")
+        #expect(key(.cold, 15) != key(.cold, nil), "given is not the room")
+        #expect(key(.cold, 15).hasSuffix("|p" + numberKey(15)))
+        #expect(key(.hot, 8) == key(.hot, nil), "a hot start never reads it")
         #expect(numberKey(0) == numberKey(-0.0))
         #expect(numberKey(480) == "407e000000000000")
         #expect(numberKey(0.1) == "3fb999999999999a")

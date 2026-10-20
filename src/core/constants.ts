@@ -187,11 +187,13 @@ export const WET_SHELL_KG_M2 = 0.015;
  *  shell evaporates, J/kg (2.257e6 at 100 C, 2.283e6 at 90 C). */
 export const LATENT_HEAT_WATER = 2.27e6;
 
-/** Surface temperatures of the cooling media, C. T_COLD_TAP_C is running
- *  water's when the cook gives none: mains water near ground temperature,
- *  5-25 C across places and seasons, which moves a jammy cook by -8.5 to
- *  +6.5 s against this (README.md section 2.4), so the cook may give
- *  their own (`CookSetup.coolingWater_C`). */
+/** Surface temperatures of the cooling media, C. T_COLD_TAP_C is the cold
+ *  tap's when the cook gives none: mains water near ground temperature,
+ *  5-25 C across places and seasons. It is running water's, which moves a
+ *  jammy cook by -8.5 to +6.5 s across that range (README.md section 2.4),
+ *  and a cold pan's start, which moves it by +20 to -21 s kept boiling on an
+ *  eight-minute ramp; so the cook may give their own, one number for both
+ *  (`CookChoices.tapWater_C`). */
 export const T_ICE_BATH_C = 2.0;
 export const T_COLD_TAP_C = 15.0;
 export const T_ROOM_C = 20.0;

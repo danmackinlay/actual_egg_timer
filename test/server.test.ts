@@ -257,6 +257,18 @@ test('an egg cooled in a bowl, or under running water at its own temperature, is
   assert.equal((await send(store, post('/api/eggs', { seq: 2, record: unsaid }))).status, 400);
 });
 
+test("a cold start is kept with its pan's water, and a hot start that claims one is refused", async () => {
+  const store = new MemoryStore();
+  const base = egg();
+  const cold = { ...base, setup: { ...base.setup, startMode: 'cold' as const, timeToBoilFrom: 'measured' as const, panStart_C: 9 } };
+  assert.equal((await send(store, post('/api/eggs', { seq: 0, record: cold }))).status, 201);
+  const kept = JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null') as unknown;
+  assert.equal(parseRecord(kept)?.setup.panStart_C, 9, 'the loader reads it back');
+  assert.equal(readFitRecord(kept)?.record.setup.panStart_C, 9, 'and so does the fit');
+  const hot = { ...base, setup: { ...base.setup, startMode: 'hot' as const, panStart_C: 9 } };
+  assert.equal((await send(store, post('/api/eggs', { seq: 1, record: hot }))).status, 400);
+});
+
 test('the model a record names is its provenance: any is kept as sent, and the fit reads it back', async () => {
   // The store's likelihood id stays on the device and is never sent, so a
   // new one changes nothing here; a new MODEL_ID is a new name on new

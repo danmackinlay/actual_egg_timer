@@ -325,6 +325,19 @@
           </div>
           <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
         </div>
+        <!-- A cold pan starts at the cold tap's temperature: one value with
+             running water's, the cooling's row. Optional, and empty until
+             set, when it shows the one assumed, greyed (core cookSetupOf). -->
+        <div id="panWaterField" class="pan-only" hidden>
+          <div class="prow">
+            <span class="prow__head">
+              <label for="panWater" data-copy="controls.panWater"></label>
+              <button type="button" class="info" aria-expanded="false" aria-controls="morePanWater" data-label="controls.panWater"></button>
+            </span>
+            <span class="unit"><input type="number" id="panWater" data-stepper inputmode="decimal"><span id="unitPanWater"></span></span>
+          </div>
+          <p id="morePanWater" class="disclosed" hidden></p>
+        </div>
         <!-- With the heat off the pan cools toward the room. -->
         <div id="roomStartField" class="pan-only" hidden>
           <div class="prow">

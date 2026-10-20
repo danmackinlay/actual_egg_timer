@@ -188,6 +188,13 @@ public final class Planner {
         if settings.cooling == .bowl { settings.bowlWaterC = clamped }
     }
 
+    /// The cold tap's temperature, as the cook gave it, whatever the cooling:
+    /// what a cold pan is filled with, and running water's. nil is "not
+    /// given", and mains water's is assumed. Clamped like anything typed.
+    public func setTapWater(_ c: Double?) {
+        settings.tapWaterC = c.map { clamp($0, to: Limits.coolingWaterC) }
+    }
+
     /// What the water the eggs cool in is taken to be when the cook gives
     /// none, C: mains water running, the room in a bowl.
     public var coolingWaterAssumedC: Double {

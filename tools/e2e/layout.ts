@@ -369,7 +369,7 @@ export const layoutScenarios: Record<string, Scenario> = {
       // Each clause's panel open in turn, with each choice that shows a
       // number of its own; then Settings.
       const panels: [string, string[]][] = [
-        ['panelEgg', []], ['panelFrom', ['tempCustom', 'tempRoom']], ['panelStart', ['heatOff']],
+        ['panelEgg', []], ['panelFrom', ['tempCustom', 'tempRoom']], ['panelStart', ['startCold', 'heatOff']],
         ['panelCooling', ['coolTap', 'coolBowl', 'coolCounter']],
       ];
       const lost: string[] = [];

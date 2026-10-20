@@ -163,15 +163,20 @@ regulariser. **Never step the surface discontinuously.**
 gives an exponential approach to a steady state that boiling clamps before it arrives:
 
 ```
-T(t) = Tamb + r*(Tboil - Tamb)*(1 - exp(-t/tau)),   tau = t_boil / ln(r/(r-1))
+T(t) = T0 + r*(Tboil - T0)*(1 - exp(-t/tau)),   tau = t_boil / ln(r/(r-1))
 ```
 
-`r = P/(U*dT_boil)` is the hob overshoot ratio, and `1/r` has a directly observable
+`T0` is the water the pan was filled with: the cold tap's, 15 °C (`T_COLD_TAP_C`) unless the
+cook gives their own, which is also running water's (§9). A record from before that was
+cooked with the pan at the room, and replays so. `r = P/(U*dT_boil)` is the hob overshoot
+ratio over the start's gap to the boil, and `1/r` has a directly observable
 meaning: the fraction of full burner power needed to *hold* a rolling boil, which
 measured cooktop studies put near 1/3. So `r = 3`. One user measurement (time to boil)
 plus that one shape constant fixes the whole curve. A linear ramp is the `r -> inf`
 limit; at `r = 3` the two differ by ~4 °C at the midpoint, worth about 30 s of cook time
-on a 10-minute ramp.
+on a 10-minute ramp. The losses are taken toward `T0`, not the room; toward the room is as
+closed a form and moves the cook by under 2 s for a tap 5 °C below the room, at most 8.4 s
+for one 15 °C below, well inside what `r` is uncertain by.
 
 **Dip (hot start).** Cold eggs into boiling water drop the water temperature by a plain
 energy balance: four 62 g fridge eggs into 2 L drops it 8.3 °C; into 1 L, 15.4 °C. This
@@ -600,8 +605,8 @@ distrust.
 | constant | value | units | source / confidence |
 |---|---|---|---|
 | `T_ICE_BATH_C` | 2 | °C | Ice water. **High.** |
-| `T_COLD_TAP_C` | 15 | °C | Running water's temperature when the cook gives none (`CookSetup.coolingWater_C`). Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. 5-25 °C is -8.5 to +6.5 s at jammy. **Low, and it matters little** (§5). |
-| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. The cook may give the room in the setup sentence's panels where it counts — see §9. |
+| `T_COLD_TAP_C` | 15 | °C | The cold tap's temperature when the cook gives none: running water's (`CookSetup.coolingWater_C`) and a cold pan's start (`CookSetup.panStart_C`), one number. Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. 5-25 °C is -8.5 to +6.5 s at jammy cooling under it, and +20 to -21 s on a cold start kept boiling (±27 s with the heat off). **Low**; it matters little for the cooling and a few seconds a degree for a cold start (§9). |
+| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. A cold pan no longer starts at it (`T_COLD_TAP_C`). The cook may give the room in the setup sentence's panels where it counts — see §9. |
 | `TAU_PLUNGE` | 4 | s | Surface equilibration on changing medium. Physical (finite Bi, finite handling time) *and* a required numerical regulariser (§2.3). **Low as physics, mandatory as numerics.** |
 | `TAU_DIP_RECOVERY` | 60 | s | Burner recovery after cold eggs enter. **Low.** |
 | `MODE_COUNT` | 40 | — | Eigenmodes retained. Exact to machine precision at these Fourier numbers. **Numerical.** |
@@ -907,20 +912,18 @@ one matters:
 ### What the app deliberately does not ask
 
 **Room temperature, asked lightly.** The model has an `ambient_C` and uses it wherever the
-room reaches the egg: an egg left out is at it, a cold pan starts at it, standing water
-decays toward it, a counter-rested egg cools toward it, and a bowl of water whose
+room reaches the egg: an egg left out is at it, standing water decays toward it, a counter-rested egg cools toward it, and a bowl of water whose
 temperature is not given is taken to be at it. Measured on the default pot (68 g, 2 L, two
 eggs) as the room goes from 15 to 30 °C against 20:
 
 | where the room reaches the egg | jammy cook, per °C | across 15-30 °C | peak yolk at a fixed cook, per °C |
 |---|---|---|---|
 | eggs left out (it is the egg's start) | -4.8 s | +22 to -50 s | +0.4 °C |
-| heat off, lid on, a cold start, fridge eggs (the pan cools toward it) | -3.1 s | +16 to -31 s | +0.20 °C |
-| a cold start's pan, fridge eggs | -2.1 s | +10.5 to -21 s | +0.18 °C |
+| heat off, lid on, a cold start, fridge eggs (the pan cools toward it) | -0.44 s | +2.8 to -3.8 s | +0.03 °C |
 | in the air, fudgy | -1.4 s | +6 to -14 s | +0.08 °C |
 | a bowl at the room, fridge eggs | -0.9 s | +4.4 to -9.6 s | +0.06 °C |
 | an egg cup, opened two minutes out | under 0.01 s | under 0.1 s | +0.0003 °C |
-| ice bath or running water | 0 | 0 | 0 |
+| ice bath, running water, a cold start kept boiling | 0 | 0 | 0 |
 
 With the heat off on a boiling start, fridge eggs in 2 L never set the white, and the time
 given is as far as the pan goes (§2.4); the room moves that by +12 s a degree, +128 s at
@@ -933,13 +936,27 @@ made — beside "at room temperature", under the heat off, lid on, and under the
 at the 20 °C assumed until set. It is one value, so given in one panel it is the room for
 every path above, and the advice to use fridge eggs is not shown. It is not asked under a
 bowl, whose water's own temperature is asked there and defaults to the room; nor under an
-egg cup; nor under a cold start kept boiling, where what the model starts the pan at stands
-for the tap water it was filled with, which the room does not measure.
+egg cup; nor under a cold start kept boiling, whose pan starts at the cold tap's temperature,
+not the room's (below).
 
-**Running water's temperature.** Tempting to tie to the room, and wrong: mains water arrives
-at something closer to ground temperature. It keeps its own default (§6), 15 °C, and the
-cook may give their own beside the cooling; 5 to 25 °C is worth -8.5 to +6.5 s at jammy.
-A bowl's water is asked the same way, defaulting to the room.
+**The cold tap's temperature.** Tempting to tie to the room, and wrong: mains water arrives
+at something closer to ground temperature. It keeps its own default (§6), 15 °C, and it is
+one number for the two places the tap reaches the egg: the water a cold pan is filled with,
+and running water to cool the eggs. The cook may give their own under Cold water, in the
+start's panel, or under running water, in the cooling's; either row edits the one number.
+Measured on the default pot (68 g, 2 L, two fridge eggs, an eight-minute boil, jammy) as the
+tap goes from 5 to 25 °C against 15:
+
+| where the tap reaches the egg | jammy cook, per °C | across 5-25 °C | peak yolk at a fixed cook, per °C |
+|---|---|---|---|
+| a cold start, heat off, lid on | -2.7 s | +27 to -27 s | +0.17 °C |
+| a cold start kept boiling | -2.1 s | +20 to -21 s | +0.18 °C |
+| running water, cooling (§2.4) | — | -8.5 to +6.5 s | — |
+
+Before the tap was asked for a cold start, the pan started at the room, 20 °C assumed; at the
+15 °C assumed now, the default pot's cold start is 9.6 s longer kept boiling (677 to 687 s)
+and 13 s longer with the heat off (703 to 716 s). A bowl's water is asked as running water's
+is, defaulting to the room.
 
 Keep those fixed and the same setting will give you the same egg. Change one and the
 app will tell you what it costs.

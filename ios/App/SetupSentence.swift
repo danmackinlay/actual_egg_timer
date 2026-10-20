@@ -210,6 +210,15 @@ struct ClausePanel: View {
                     value: $planner.settings.waterLitres, show: { planner.show(.water, $0) }, field: .waterLitres
                 )
             }
+            // A cold pan starts at the cold tap's temperature: one number with
+            // running water's, the cooling's row.
+            if planner.start == .cold {
+                InfoRow(.`controls.panWater`, more: [panWaterMore])
+                HStack {
+                    Spacer(minLength: 0)
+                    WaterTemperatureField(planner: planner, water: .pan)
+                }
+            }
             // With the heat off the pan cools toward the room.
             if planner.heatOff { RoomRow(planner: planner) }
         }
@@ -245,13 +254,19 @@ struct ClausePanel: View {
                 InfoRow(.`controls.coolingWater`, more: [coolingWaterMore])
                 HStack {
                     Spacer(minLength: 0)
-                    CoolingWaterField(planner: planner)
+                    WaterTemperatureField(planner: planner, water: .cooling)
                 }
             }
             // In the air the egg cools toward the room.
             if planner.settings.cooling == .counter { RoomRow(planner: planner) }
         }
         .appFont(.subheadline)
+    }
+
+    /// What the (i) beside a cold pan's water says: the tap assumed when it
+    /// is left blank, and that running water's is the same number.
+    private var panWaterMore: String {
+        tr(.`controls.panWater.more`, ["water": .text(planner.show(.temperature, Constants.tColdTapC))])
     }
 
     /// What the (i) beside the water's temperature says: the temperature

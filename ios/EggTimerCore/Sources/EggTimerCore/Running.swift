@@ -18,6 +18,8 @@ public struct CookChoices: Sendable, Equatable, Codable {
     public var startMode: StartMode
     public var afterBoil: HeatAfterBoil
     public var cooling: Cooling
+    /// The cold tap's temperature, or nil for mains water's: running
+    /// water's, and a cold pan's start. One tap, one number.
     public var tapWaterC: Double?
     public var bowlLitres: Double
     public var bowlWaterC: Double?
@@ -324,8 +326,7 @@ public func plausibleProbeRangeC(
         params: ModelParams(alphaM2s: params.alphaM2s * spread),
         cookTimeS: cookTimeS
     )
-    let bath = coolingMediumC(setup)
-    let floor = min(setup.eggStartC, setup.ambientC, bath)
+    let floor = coldestTouchedC(setup)
     let lo = min(slow.peakYolkC, fast.peakYolkC) - probeMarginC
     let hi = max(slow.peakYolkC, fast.peakYolkC) + probeMarginC
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
@@ -525,7 +526,10 @@ public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
             // given; a bowl's volume, and its temperature if given. An
             // absent temperature is assumed where it is read (`coolingMediumC`).
             coolingWaterC: ch.cooling == .tap ? ch.tapWaterC : ch.cooling == .bowl ? ch.bowlWaterC : nil,
-            bowlLitres: ch.cooling == .bowl ? ch.bowlLitres : nil
+            bowlLitres: ch.cooling == .bowl ? ch.bowlLitres : nil,
+            // A cold pan's water, the cold tap's, given or assumed: written
+            // either way, so a record never leans on the default.
+            panStartC: ch.startMode == .cold ? ch.tapWaterC ?? Constants.tColdTapC : nil
         )
     )
 }

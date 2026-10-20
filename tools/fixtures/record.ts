@@ -104,6 +104,7 @@ function recordOf(e: EggSpec): EggRecord {
       eggCount: setup.eggCount,
       ...(setup.coolingWater_C === undefined ? {} : { coolingWater_C: setup.coolingWater_C }),
       ...(setup.bowlLitres === undefined ? {} : { bowlLitres: setup.bowlLitres }),
+      ...(setup.startMode === 'cold' && setup.panStart_C !== undefined ? { panStart_C: setup.panStart_C } : {}),
     },
     level: e.level,
     recommended_s: recommended,
@@ -214,6 +215,11 @@ const REPLAY_LOG: EggRecord[] = [
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
     level: 0.41, pulledBy: 'cook', late_s: 20, yolkWord: 'fudgy', white: 'tender',
+  }),
+  // A cold pan from a winter tap, its water said.
+  recordOf({
+    app: 'ios', mass_g: 66, massFrom: 'scale', eggFrom: 'fridge', over: { startMode: 'cold', timeToBoil_s: 510, panStart_C: 8 },
+    level: 0.41, pulledBy: 'cook', late_s: 3, yolkWord: 'soft', white: 'firm',
   }),
 ];
 
@@ -378,6 +384,29 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a water temperature for an ice bath', mutate: (r) => { setupPart(r)['coolingWater_C'] = 9; } },
   { why: 'a bowl for an ice bath', mutate: (r) => { setupPart(r)['bowlLitres'] = 2; } },
   {
+    why: 'a cold pan from the tap',
+    mutate: (r) => { setupPart(r)['startMode'] = 'cold'; setupPart(r)['timeToBoilFrom'] = 'measured'; setupPart(r)['panStart_C'] = 12.5; },
+  },
+  { why: "a cold pan's water on a hot start", mutate: (r) => { setupPart(r)['panStart_C'] = 12.5; } },
+  { why: "a cold pan's water of null", mutate: (r) => { setupPart(r)['startMode'] = 'cold'; setupPart(r)['panStart_C'] = null; } },
+  { why: "a cold pan's water as text", mutate: (r) => { setupPart(r)['startMode'] = 'cold'; setupPart(r)['panStart_C'] = '12'; } },
+  {
+    why: 'a probe reading as cold as the cold pan it started in',
+    mutate: (r) => {
+      const s = setupPart(r);
+      s['startMode'] = 'cold'; s['eggStart_C'] = 21; s['ambient_C'] = 21; s['cooling'] = 'counter'; s['panStart_C'] = 6;
+      r['cooled_s'] = 0; r['probe'] = { centre_C: 6, after_s: null };
+    },
+  },
+  {
+    why: 'a probe reading colder than anything a hot start touched',
+    mutate: (r) => {
+      const s = setupPart(r);
+      s['eggStart_C'] = 21; s['ambient_C'] = 21; s['cooling'] = 'counter';
+      r['cooled_s'] = 0; r['probe'] = { centre_C: 6, after_s: null };
+    },
+  },
+  {
     why: 'a probe reading as cold as the bowl it cooled in',
     mutate: (r) => {
       setupPart(r)['cooling'] = 'bowl'; setupPart(r)['bowlLitres'] = 2; setupPart(r)['coolingWater_C'] = 3;
@@ -539,6 +568,11 @@ const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
     why: 'an ice bath says nothing of a bowl it was not',
     over: { setup: referenceSetup({ cooling: 'ice', bowlLitres: 2, coolingWater_C: 14 }) },
   },
+  {
+    why: 'a cold pan from the tap, its water said',
+    over: { setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 480, panStart_C: 12 }), cook_s: 664, out_s: 665 },
+  },
+  { why: 'a hot start says nothing of a cold pan', over: { setup: referenceSetup({ panStart_C: 12 }) } },
   { why: 'rested on the counter: no counted cooling', over: { setup: referenceSetup({ cooling: 'counter' }), out_s: null } },
   { why: 'rested on the counter, tapped out', over: { setup: referenceSetup({ cooling: 'counter' }) } },
   { why: 'eaten warm from an egg cup: counted to the opening', over: { setup: referenceSetup({ cooling: 'eggCup' }), cool_s: 120 } },

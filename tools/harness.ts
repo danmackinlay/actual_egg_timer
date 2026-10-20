@@ -156,7 +156,7 @@ export interface Cook {
   startedAt_s: number;
   choices: {
     level: number; startMode: string; afterBoil: string; mass_kg: number; massFrom: string; waterLitres: number;
-    cooling: string; altitude_m: number; room_C: number | null;
+    cooling: string; altitude_m: number; room_C: number | null; tapWater_C: number | null;
   };
   firstHotAt_s: number | null;
   coldSince_s: number | null;
@@ -179,6 +179,8 @@ export interface Rec {
   yolkWord: string | null;
   white: string | null;
   forecast: unknown;
+  /** The pot as recorded: the fields the checks read. */
+  setup: { panStart_C?: number; coolingWater_C?: number };
 }
 
 /** A sound made, a ring or a blip: when on the audio clock and on the
@@ -434,7 +436,8 @@ export class Tab {
 const LABEL_SAYS = `(s) => {
   const cooling = s.cook === null ? null : s.cook.choices.cooling;
   const want = { HEATING: s.labels.heating, PULL: s.labels.pull, DONE: s.labels.done,
-    COOLING: cooling === 'bowl' ? s.labels.coolingBowl : cooling === 'eggCup' ? s.labels.coolingEggCup : s.labels.coolingIce,
+    COOLING: cooling === 'bowl' ? s.labels.coolingBowl : cooling === 'eggCup' ? s.labels.coolingEggCup
+      : cooling === 'tap' ? s.labels.coolingTap : s.labels.coolingIce,
     COOKING: s.labels.cookingBoiling };
   return want[s.phase] === undefined || want[s.phase] === s.label;
 }`;

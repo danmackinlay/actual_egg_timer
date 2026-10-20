@@ -367,8 +367,9 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     show the target from what was started ("You asked for: jammy, peak yolk
     65 °C"); and an optional room temperature, defaulting to the 20 °C
     assumed, feeds the model wherever the room was assumed: the air the eggs
-    cool in, the water left to stand and a cold pan's start, and an egg left
-    out at room temperature. The room is shown with or without the probe, in
+    cool in, the water left to stand, and an egg left out at room
+    temperature. A cold pan starts at the cold tap's temperature, not the
+    room's (NNN). The room is shown with or without the probe, in
     the setup sentence's panels where it changes the answer (143). Without a
     measured room, the old rule stands that the room needs no input of its
     own. The record's `ambient_C` already holds the room, so no record
@@ -1008,14 +1009,40 @@ Decided by the owner, 20 October 2026:
     Settings and is shown only in the panels where it changes the answer,
     one value in one store, each row editing it: beside "at room
     temperature" (an egg left out, 4.8 s a degree), under the heat off,
-    lid on (the pan cools toward it, 3.1 s a degree on a cold start, more on
-    a boiling one), and under the air (the egg cools toward it). Not under
+    lid on (the pan cools toward it: half a second a degree on a cold
+    start, whose pan starts at the tap (NNN), 12 s on a boiling one), and under the air (the egg cools toward it). Not under
     a bowl, whose water's temperature is asked there itself and assumed at
     the room, so a room row beside it would ask the same thing less
     directly and do nothing once the water's is given; not under an egg
     cup, opened too soon for the room to move the yolk by a tenth of a
-    second; not under a cold start kept boiling, where what the room stands
-    for is the water the pan was filled with. The model is unchanged: the
-    room still feeds every path the room's input feeds (79, its third
-    request). No store, key or correction group changes: a correction's
-    group is the choice it makes, wherever its control sits (139).
+    second; not under a cold start kept boiling, where the room changes
+    nothing, since the pan starts at the cold tap's temperature (NNN). The
+    room feeds every path 79 lists. No store, key or correction group
+    changes: a correction's group is the choice it makes, wherever its
+    control sits (139).
+NNN. **A cold pan starts at the cold tap's temperature, one number with
+    running water's.** The owner, 20 October 2026: "so we could add a row
+    for this near the room temperature? approved". A cold pan is filled
+    from the cold tap, which is usually colder than the room, so its ramp
+    starts at the tap's temperature, not the room's, and a kitchen at 25 °C
+    no longer makes a cold start's answer worse. It is the one number
+    running water's temperature already was (`tapWater_C`): its row is in
+    the start's panel under Cold water, after the water, and under running
+    water in the cooling's, each editing it and each correcting a running
+    cook through its group (139). Left blank, it is 15 °C, mains water's
+    (`T_COLD_TAP_C`), as for running water; so every untouched cold start
+    lengthens, by about 10 s kept boiling and 13 s with the heat off on the
+    default pot (68 g, 2 L, an eight-minute boil, jammy), 6 to 17 s across
+    four- to twelve-minute boils. With the heat off the pan still cools
+    toward the room. The record carries it as `setup.panStart_C`, written
+    on every cold start whether given or assumed and refused on a hot one,
+    so no record leans on the default; a record without it replays as it
+    was cooked, with the pan at its own `ambient_C`, and `v: 1` stands.
+    `MODEL_ID` moves to `2026-10-e11`; `LIKELIHOOD_ID` does not, since no
+    stored log replays differently. The learned time to boil is untouched:
+    what a kitchen's tap usually is is already in its seconds, and the
+    boil's press replaces the forecast. The sentence's start clause does not
+    name the temperature. The web, and with it the server, deploys with or
+    before the iOS build that writes the field: a server from before it
+    keeps a record without it, and that egg would replay with its pan at the
+    room.

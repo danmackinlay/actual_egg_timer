@@ -13,7 +13,8 @@ import { pageModel } from './cook.ts';
 import { pressAndHold } from './stepper.ts';
 
 /** The group each field's change makes, by its id, or a radio's by its
- *  name. The cooling water's is the cooling's: running water or the bowl. */
+ *  name. The cooling water's is the cooling's: running water or the bowl.
+ *  A cold pan's water is the cold tap's, running water's. */
 export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup)>> = {
   size: 'mass', measureMass: 'mass', measureGirth: 'mass', measureMinor: 'mass', startTemp: 'eggFrom',
   customTemp: 'customStart', roomTempFrom: 'room', roomTempStart: 'room', roomTempCool: 'room', startMode: 'startMode',
@@ -21,6 +22,7 @@ export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup)
   altitude: 'altitude',
   doneness: 'level', startedAt: 'startedAt',
   coolingWater: () => (radioValue('cooling', 'ice') === 'tap' ? 'tapWater' : 'bowlWater'),
+  panWater: 'tapWater',
 };
 
 /** The fields that make no choice of the cook's, by id or a radio's name,

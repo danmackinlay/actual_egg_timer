@@ -343,6 +343,13 @@ fit's training data cannot drift between the two.
   (27 September), this is what says which cooks leaned on the old derivation.
 - `ambient_C` is recorded rather than re-derived from the egg's start
   temperature, so a change to that rule cannot quietly change a replay.
+- `panStart_C` is the water a cold pan started at (20 October 2026,
+  `DECISIONS.md` NNN): the cold tap's, the cook's own or 15 °C assumed,
+  written on every cold start whether given or not, so a replay never leans
+  on the default, and never on a hot start, which refuses it. Absent on a
+  cold start, the record is from before it, when the pan started at the
+  room, and replays so, at its own `ambient_C`. The schema stays `v: 1`;
+  a build from before it reads the record and puts that pan at the room.
 - `cooling` is `ice`, `tap`, `bowl` (12 October 2026: a bowl of still water
   the eggs warm), `counter` or `eggCup` (18 October 2026: eaten warm from an
   egg cup, its doses stopped at the opening, README.md section 5; `cooled_s`
@@ -381,8 +388,9 @@ fit's training data cannot drift between the two.
   whatever they typed it in, and when the app asked for it - the end of the
   counted cooling - in seconds after the moment the record scores as the pull
   (`null` if not known). The loader refuses a reading colder than the coldest
-  thing the egg touched (the fridge, the room or the cooling water) or hotter
-  than `boiling_C`. A record with only a reading still teaches. `cooled_s` is
+  thing the egg touched (the fridge, the room, a cold pan's water or the
+  cooling water) or hotter than `boiling_C`. A record with only a reading
+  still teaches. `cooled_s` is
   now the cook's own countdown to its peak, not a flat 180.
 
 **The posterior is a function of the log.** Both apps fold an egg FROM ITS

@@ -435,7 +435,7 @@ public let recordVersion: Int = 1
 
 /// The code that made the record's forecast and chose its time: the likelihood, the decision and
 /// the nudge.
-public let modelID: String = "2026-10-e10"
+public let modelID: String = "2026-10-e11"
 
 /// What THIS code makes of a log: the prior's draw from a population, the physics and the
 /// likelihood, which together are the fold.

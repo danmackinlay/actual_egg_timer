@@ -30,7 +30,7 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coldestTouched_C, countsDown,
 } from './protocol.ts';
 import { DEFAULT_PARAMS, type Doneness, type ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.ts';
 import { type DoseGrid, type GridPolicy, type GridRequest, type GridSpec, buildRequestedGrid } from './doseGrid.ts';
@@ -61,7 +61,9 @@ export const RECORD_VERSION = 1;
  *  under uncertainty, with the forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
  *  sharing; '2026-10-e9' asks the cook which yolk they got, in five words,
  *  and forecasts those five; '2026-10-e10' holds the counter's carryover at
- *  1.0 instead of carrying it in the particle, which draws another prior from the same seed.
+ *  1.0 instead of carrying it in the particle, which draws another prior from the same seed;
+ *  '2026-10-e11' starts a cold pan at the cold tap's temperature, 15 C
+ *  unless the cook gives theirs, not the room's.
  *  Records from before sharing carry none.
  *
  *  It is the record's provenance (`model`, sent with each record, read by the
@@ -69,7 +71,7 @@ export const RECORD_VERSION = 1;
  *  is a new model too, since the forecast is the posterior's, so this moves
  *  whenever that does; a change to the decision or the nudge alone moves
  *  only this. */
-export const MODEL_ID = '2026-10-e10';
+export const MODEL_ID = '2026-10-e11';
 
 /** What THIS code makes of a log: the prior's draw from a population, the
  *  physics and the likelihood, which together are the fold. Both apps keep it
@@ -194,6 +196,10 @@ interface RecordSetup {
    *  bowl's water, litres, for a bowl and only there. */
   coolingWater_C?: number;
   bowlLitres?: number;
+  /** The water a cold pan started at, C, given or assumed: on every cold
+   *  start, and never on a hot one. Absent on a cold start, from before the
+   *  field, the pan started at `ambient_C`, and replays so. */
+  panStart_C?: number;
 }
 
 export interface EggRecord {
@@ -370,6 +376,7 @@ export function recordFor(f: CookFacts): EggRecord {
       waterLitres: s.waterLitres,
       eggCount: s.eggCount,
       ...coolingWaterRecorded(s),
+      ...(s.startMode === 'cold' && s.panStart_C !== undefined ? { panStart_C: s.panStart_C } : {}),
     },
     level: f.level,
     recommended_s: f.cook_s - f.nudge_s,
@@ -493,12 +500,6 @@ export function parseForecast(raw: unknown): Forecast | null {
   };
 }
 
-/** The coolest thing this cook's egg ever touched, C: the fridge, the room or
- *  the cooling water, whichever is lowest. */
-function coldestOf(s: RecordSetup): number {
-  return Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s));
-}
-
 /**
  * Whether a centre reading is physically possible at all for this cook: no
  * colder than the coldest thing the egg touched and no hotter than the water
@@ -506,7 +507,7 @@ function coldestOf(s: RecordSetup): number {
  * more at entry, against the physics of the cook (`plausibleProbeRange_C`).
  */
 function probePossible(s: RecordSetup, centre_C: number): boolean {
-  return Number.isFinite(centre_C) && centre_C >= coldestOf(s) && centre_C <= s.boiling_C;
+  return Number.isFinite(centre_C) && centre_C >= coldestTouched_C(s) && centre_C <= s.boiling_C;
 }
 
 /** The nullable fields a record always carries, null or not. */
@@ -576,6 +577,9 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const watered = s['cooling'] === 'tap' || s['cooling'] === 'bowl';
   if (water !== undefined && !(watered && isFiniteNumber(water))) return null;
   if (s['cooling'] === 'bowl' ? !(isFiniteNumber(bowl) && bowl > 0) : bowl !== undefined) return null;
+  // A cold pan's water: only on a cold start, the only start that reads it.
+  const pan = has(s, 'panStart_C') ? s['panStart_C'] : undefined;
+  if (pan !== undefined && !(s['startMode'] === 'cold' && isFiniteNumber(pan))) return null;
 
   const level = raw['level'];
   if (!isFiniteNumber(level) || level < 0 || level > 1) return null;
@@ -609,6 +613,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     eggCount: s['eggCount'],
     ...(water === undefined ? {} : { coolingWater_C: water as number }),
     ...(bowl === undefined ? {} : { bowlLitres: bowl as number }),
+    ...(pan === undefined ? {} : { panStart_C: pan as number }),
   };
 
   // A reading at the centre: a number the egg could have been, and when
@@ -819,6 +824,7 @@ function recordSetupOf(r: EggRecord): CookSetup {
     eggCount: r.setup.eggCount,
     ...(r.setup.coolingWater_C === undefined ? {} : { coolingWater_C: r.setup.coolingWater_C }),
     ...(r.setup.bowlLitres === undefined ? {} : { bowlLitres: r.setup.bowlLitres }),
+    ...(r.setup.panStart_C === undefined ? {} : { panStart_C: r.setup.panStart_C }),
   };
 }
 

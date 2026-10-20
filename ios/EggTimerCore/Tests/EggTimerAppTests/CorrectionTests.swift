@@ -272,6 +272,24 @@ extension AppTests {
         #expect(bringsEggBack(model.cook.phase))
     }
 
+    /// The cold tap's temperature while a cold cook heats is one commit of
+    /// the tap's group: a colder pan pulls later, and the cook's choices and
+    /// the next cook's settings say it; running water's row reads it back.
+    @Test func theColdTapCorrectsAColdCookAndIsRunningWatersToo() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world, .cold)
+        let t0 = try #require(model.cook.running).startedAtS
+        let pull0 = try pullS(model.cook)
+        await correct(at: t0 + 30, model, world) { model.planner.setTapWater(8) }
+        #expect(model.cook.running?.choices.tapWaterC == 8)
+        #expect(try pullS(model.cook) > pull0, "a colder pan, a later pull")
+        #expect(SettingsStore.read(classes: model.planner.sizeClasses).tapWaterC == 8)
+        model.planner.settings.cooling = .tap
+        #expect(model.planner.coolingWaterC == 8, "running water's is the same number")
+    }
+
     /// A larger egg at Done makes the record again on the calibration before
     /// this egg: the answer and the time that ran kept, a new forecast; back
     /// to the first size, the first record to the bit, and Done showing the

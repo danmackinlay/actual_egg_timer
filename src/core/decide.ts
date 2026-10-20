@@ -172,6 +172,9 @@ export function inputsKey(inputs: DecisionInputs): string {
     key += `|${s.coolingWater_C === undefined ? '-' : numberKey(s.coolingWater_C)}`;
     key += `|${s.bowlLitres === undefined ? '-' : numberKey(s.bowlLitres)}`;
   }
+  // The water a cold pan starts at, last and only on a cold start, which is
+  // the only start that reads it; marked, so it is never read as a cooling's.
+  if (s.startMode === 'cold' && s.panStart_C !== undefined) key += `|p${numberKey(s.panStart_C)}`;
   return key;
 }
 

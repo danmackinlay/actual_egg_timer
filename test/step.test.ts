@@ -240,6 +240,15 @@ test('the surface key: equal exactly when the inputs are, numbers to the bit', (
   assert.notEqual(inputsKey(nudged), inputsKey(a));
   const { afterBoil: _held, ...noBurner } = a.setup;
   assert.equal(inputsKey({ ...a, setup: noBurner }), inputsKey(a), 'no burner is the heat held');
+  // A cold pan's water is in a cold start's key, and only there.
+  const cold = { ...a, setup: { ...a.setup, startMode: 'cold' as const } };
+  const { panStart_C: _pan, ...coldUntold } = cold.setup;
+  const at = (c: number): typeof a => ({ ...cold, setup: { ...coldUntold, panStart_C: c } });
+  assert.notEqual(inputsKey(at(15)), inputsKey(at(8)), 'two cold pans, two keys');
+  assert.notEqual(inputsKey(at(15)), inputsKey({ ...cold, setup: coldUntold }), 'given is not the room');
+  assert.ok(inputsKey(at(15)).endsWith(`|p${numberKey(15)}`));
+  const hot = { ...a, setup: { ...coldUntold, startMode: 'hot' as const } };
+  assert.equal(inputsKey({ ...hot, setup: { ...hot.setup, panStart_C: 8 } }), inputsKey(hot), 'a hot start never reads it');
   assert.equal(numberKey(0), numberKey(-0));
   assert.equal(numberKey(480), '407e000000000000');
   assert.equal(numberKey(0.1), '3fb999999999999a');

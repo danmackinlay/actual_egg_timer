@@ -11,7 +11,7 @@ import { createDose, accumulateDose, holdTimeForDose } from '../../src/core/kine
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature, seriesTheta, erfc,
 } from '../../src/core/sphere.ts';
-import { type CookSetup, bowlTemperature, coolingMedium_C } from '../../src/core/protocol.ts';
+import { type CookSetup, bowlTemperature, coldestTouched_C, coolingMedium_C } from '../../src/core/protocol.ts';
 import { appSetup } from '../common.ts';
 
 /** Sample points chosen to sit where the model actually lives, plus the edges
@@ -79,6 +79,13 @@ const COOLING_SETUPS: CookSetup[] = [
   appSetup({ cooling: 'bowl', bowlLitres: 2, ambient_C: 27 }), appSetup({ cooling: 'bowl', bowlLitres: 0.5, coolingWater_C: 9, eggCount: 6 }),
   appSetup({ cooling: 'bowl', bowlLitres: 4, coolingWater_C: 31, eggCount: 1 }), appSetup({ cooling: 'bowl' }),
 ];
+/** The coldest thing the egg touched: a cold pan's water counts on a cold
+ *  start, given or the room's, and never on a hot one. */
+const TOUCHED_SETUPS: CookSetup[] = [
+  appSetup(), appSetup({ panStart_C: 1 }), appSetup({ startMode: 'cold' }), appSetup({ startMode: 'cold', panStart_C: 2 }),
+  appSetup({ startMode: 'cold', eggStart_C: 21, ambient_C: 21, cooling: 'counter', panStart_C: 12 }),
+  appSetup({ startMode: 'cold', eggStart_C: 21, ambient_C: 21, cooling: 'tap', coolingWater_C: 9, panStart_C: 12 }),
+];
 const BOWL_MEANS: Array<[number, number, number]> = [[68, 83.1, 83.1], [68, 83.1, 61.4], [53, 79.6, 40.2], [76, 85, 20]];
 
 export const coreFixture = {
@@ -99,6 +106,7 @@ export const coreFixture = {
   },
   protocol: {
     coolingMedium: COOLING_SETUPS.map((setup) => ({ setup: setup, value: coolingMedium_C(setup) })),
+    coldestTouched: TOUCHED_SETUPS.map((setup) => ({ setup: setup, value: coldestTouched_C(setup) })),
     bowlTemperature: COOLING_SETUPS.flatMap((setup) => BOWL_MEANS.map(([g, atPull, now]) => ({
       setup: setup, mass_g: g, meanAtPull_C: atPull, mean_C: now,
       value: bowlTemperature(eggFromMass(g / 1000), setup, atPull, now),

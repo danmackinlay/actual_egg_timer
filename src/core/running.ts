@@ -34,10 +34,10 @@
 
 import { type Egg, type SizeTable, eggFromMass } from './geometry.ts';
 import {
-  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coolingMedium_C, countsDown, restsInAir,
+  type CookSetup, type Cooling, type HeatAfterBoil, type StartMode, coldestTouched_C, countsDown, restsInAir,
 } from './protocol.ts';
 import { boilingPointAtAltitude } from './thermo.ts';
-import { ALPHA_REL_SD, EGG_CUP_OPENED_S } from './constants.ts';
+import { ALPHA_REL_SD, EGG_CUP_OPENED_S, T_COLD_TAP_C } from './constants.ts';
 import { LIMITS, ambientFor, startTempPreset_C } from './inputs.ts';
 import { type BoilMemory, estimateTimeToBoil, hasBoilMemory } from './boil.ts';
 import { type CookResult, type ModelParams, type Solution, logYolkTarget, simulate } from './solve.ts';
@@ -76,8 +76,9 @@ export interface CookChoices {
   startMode: StartMode;
   afterBoil: HeatAfterBoil;
   cooling: Cooling;
-  /** Running water's temperature, C, or null to assume mains water. Read
-   *  only for 'tap'. */
+  /** The cold tap's temperature, C, or null to assume mains water
+   *  (T_COLD_TAP_C): what running water cools the eggs in, and what a cold
+   *  pan is filled with. One tap, one number. */
   tapWater_C: number | null;
   /** The bowl's water, litres, and its temperature, C, or null to assume the
    *  room. Read only for 'bowl'. */
@@ -294,7 +295,7 @@ export function plausibleProbeRange_C(
   const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
   const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread }, cookTime_s);
   const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread }, cookTime_s);
-  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup));
+  const floor = coldestTouched_C(setup);
   const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
   const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
   return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];
@@ -562,8 +563,17 @@ export function cookSetupOf(ch: CookChoices, timeToBoil_s: number): CookPot {
       waterLitres: ch.waterLitres,
       eggCount: ch.eggCount,
       ...coolingWaterOf(ch),
+      ...(ch.startMode === 'cold' ? { panStart_C: panStartFrom(ch) } : {}),
     },
   };
+}
+
+/** The water a cold pan starts at, C: filled from the cold tap, at the
+ *  cook's temperature or mains water's. Written whether given or assumed,
+ *  so a record says what its pan started at, and never leans on a default
+ *  that may move; an absent one means the room, as every pot before it. */
+function panStartFrom(ch: CookChoices): number {
+  return ch.tapWater_C === null ? T_COLD_TAP_C : ch.tapWater_C;
 }
 
 /** What the setup says of the water the eggs cool in: for running water its

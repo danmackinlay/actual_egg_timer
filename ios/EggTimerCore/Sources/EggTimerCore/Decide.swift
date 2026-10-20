@@ -58,6 +58,7 @@ public func inputsKey(_ inputs: DecisionInputs) -> String {
         key += "|" + (s.coolingWaterC.map(numberKey) ?? "-")
         key += "|" + (s.bowlLitres.map(numberKey) ?? "-")
     }
+    if s.startMode == .cold, let pan = s.panStartC { key += "|p" + numberKey(pan) }
     return key
 }
 
