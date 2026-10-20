@@ -311,10 +311,8 @@
     "alarm.probe.title": { "text": "Now the probe" },
     "alarm.probe.body": { "text": "Thrust it to the middle of the egg, and tell me the highest number." },
 
-    "readout.alarm.setting": { "text": "preparing the alarm…" },
     "readout.alarm.denied": { "text": "notices are forbidden; keep the app open" },
     "readout.alarm.failed": { "text": "I could not set the alarm; keep the app open" },
-    "readout.alarm.set": { "text": "the alarm is set for {time}" },
     "more.expanded": { "text": "Opened" },
     "more.collapsed": { "text": "Closed" },
     "controls.units.more.ios": { "text": "I begin with what is customary where your phone says you are." },

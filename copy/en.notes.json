@@ -68,10 +68,8 @@
     "readout.sub.coolingEggCup": { "surface": "body", "note": "Under the egg cup’s countdown, after readout.phase.coolingEggCup above it: when it runs out, the cook eats the eggs. No probe is asked for in an egg cup." },
     "readout.sub.doneCold": { "surface": "body", "example": {"boil": "6:40", "cooking": "4:36"} },
     "readout.sub.doneHot": { "surface": "body" },
-    "readout.alarm.setting": { "surface": "body" },
     "readout.alarm.denied": { "surface": "body" },
     "readout.alarm.failed": { "surface": "body" },
-    "readout.alarm.set": { "surface": "body", "note": "{time} is a time of day with seconds, in the locale’s own clock.", "example": {"time": "7:41:12\u202fAM"} },
 
     "readout.stat.waterBoilsAt": { "surface": "label" },
     "readout.mute.on": { "surface": "button" },
