@@ -18,7 +18,7 @@ struct FeedbackPanel: View {
     /// back about it. The panel is only on screen at Done, so both go
     /// with the egg.
     @State private var probeText = ""
-    @State private var probeNote = ""
+    @State private var probeNote = Words.none
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -150,7 +150,7 @@ struct FeedbackPanel: View {
         }
     }
 
-    private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
+    private func whiteButton(_ label: Words, _ value: WhiteReport) -> some View {
         let given = said?.white
         return answerButton(label, id: "answer.white.\(value.rawValue)", chosen: given == value, answered: given != nil) {
             model.answer(yolk: nil, white: value)
@@ -161,7 +161,7 @@ struct FeedbackPanel: View {
     /// One line each: `AnswerRows` never gives a button less than its word.
     @ViewBuilder
     private func answerButton(
-        _ label: String, id: String, chosen: Bool, answered: Bool, tight: Bool = false,
+        _ label: Words, id: String, chosen: Bool, answered: Bool, tight: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         // A bordered button pads its label by about 12 pt a side, which leaves
@@ -183,7 +183,7 @@ struct FeedbackPanel: View {
         }
     }
 
-    private var calibrationNote: String {
+    private var calibrationNote: Words {
         if planner.learning { return tr(.`feedback.learning`) }
         if said.map({ $0.yolkWord != nil || $0.white != nil || $0.probe != nil }) == true { return tr(.`feedback.thanks`) }
         if planner.eggsLogged == 0 {
@@ -198,7 +198,7 @@ struct FeedbackPanel: View {
     /// now nor a plan made since on a posterior that has learned from this
     /// egg, in the language and units on screen now, as the web's
     /// `renderTarget` says it.
-    private var targetLine: String? {
+    private var targetLine: Words? {
         guard let level = cook.shownLevel, let peak = cook.shownPeakYolkC else { return nil }
         return tr(.`feedback.target`, [
             "doneness": .text(midSentence(tr(anchorNear(level).key), locale: Copy.activeLocale)),
@@ -206,7 +206,7 @@ struct FeedbackPanel: View {
         ])
     }
 
-    private var tunedLine: String {
+    private var tunedLine: Words {
         tr(.`learned.tuned`, ["eggs": .int(planner.eggsLogged)])
     }
 }
@@ -282,7 +282,7 @@ private extension View {
     /// A row of answers as one group named by its question, as the web's
     /// `role="group"` with `aria-labelledby`: both rows have a Runny, and
     /// VoiceOver says which question it is in as it enters the row.
-    func answerRow(_ question: String) -> some View {
+    func answerRow(_ question: Words) -> some View {
         accessibilityElement(children: .contain)
             .accessibilityLabel(question)
     }

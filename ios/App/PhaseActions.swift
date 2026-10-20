@@ -128,12 +128,12 @@ struct PhaseActions: View {
         let widest = clockString(59 * 60 + 59)
         let boiling = planner.show(.temperature, planner.boilingC)
         return ZStack {
-            Text(model.keys(.idle).hint.map { trChosen($0, ["time": .text(widest)]) } ?? " ")
+            Text(model.keys(.idle).hint.map { trChosen($0, ["time": .text(widest)]) } ?? .blank)
             InfoRow(name: tr(.`action.hint.heating.info`), more: [], alignment: .center) {
-                Text(model.keys(.heating).hint.map { tr($0) } ?? " ")
+                Text(model.keys(.heating).hint.map { tr($0) } ?? .blank)
             }
             VStack(spacing: 4) {
-                Text(model.keys(.cooking).hint.map { trChosen($0, ["boiling": .text(boiling)]) } ?? " ")
+                Text(model.keys(.cooking).hint.map { trChosen($0, ["boiling": .text(boiling)]) } ?? .blank)
                 if let warning = alarmWarning { Text(warning) }
             }
         }
@@ -147,7 +147,7 @@ struct PhaseActions: View {
     /// (`readoutAt`): `boiling` a temperature, `seconds` as it is. A view
     /// drawn for one phase may hold the readout of the next for a frame, so
     /// every hint is rendered with its own arguments, whichever phase drew it.
-    private func hintText(_ line: ReadoutLine) -> String {
+    private func hintText(_ line: ReadoutLine) -> Words {
         var args: CopyArgs = [:]
         for (name, value) in line.args {
             args[name] = name == "boiling" ? .text(planner.show(.temperature, value)) : .int(Int(value))
@@ -169,12 +169,12 @@ struct PhaseActions: View {
                 more: [tr(.`action.hint.heating.more`)],
                 alignment: .center
             ) {
-                footnote(readout?.hint.map(hintText) ?? "")
+                footnote(readout?.hint.map(hintText) ?? .none)
             }
         case .cooking:
             VStack(spacing: 4) {
                 // The web's hint: what the hob must do until the pull.
-                Text(readout?.hint.map(hintText) ?? "")
+                Text(readout?.hint.map(hintText) ?? .none)
                 // When the alarm could not be set: iOS's own line, since the
                 // web's alarm is the open tab.
                 if let warning = alarmWarning { Text(warning) }
@@ -194,7 +194,7 @@ struct PhaseActions: View {
         }
     }
 
-    private func footnote(_ text: String) -> some View {
+    private func footnote(_ text: Words) -> some View {
         Text(text)
             .appFont(.footnote)
             .foregroundStyle(.secondary)
@@ -207,7 +207,7 @@ struct PhaseActions: View {
     /// the accent's (Start again is not) or dead; and what the UI tests
     /// find it by (ios/UITests).
     private struct Main {
-        let title: String
+        let title: Words
         let id: String
         var prominent = true
         var disabled = false
@@ -359,9 +359,9 @@ struct PhaseActions: View {
     }
 
     /// What Start is about to ask of the cook, above the button.
-    private var idleHint: String {
-        guard let solution = planner.solution else { return " " }
-        return model.keys(.idle).hint.map { trChosen($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
+    private var idleHint: Words {
+        guard let solution = planner.solution else { return .blank }
+        return model.keys(.idle).hint.map { trChosen($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? .blank
     }
 
     /// What to do when there is no alarm, or nil when there is one (or the
@@ -372,7 +372,7 @@ struct PhaseActions: View {
     /// whether or not the request had been accepted, so the pending count is
     /// read back rather than assumed. An egg timer that has not got the alarm
     /// it seems to is worse than one that says so.
-    private var alarmWarning: String? {
+    private var alarmWarning: Words? {
         switch cook.alarms.authorized {
         case .none:
             return nil

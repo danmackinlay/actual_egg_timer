@@ -12,9 +12,9 @@ import EggTimerShared
 /// setup panels, where the title row also holds Done).
 struct InfoRow<Label: View, Trailing: View>: View {
     /// What VoiceOver calls the (i): "About {label}", or a name of its own.
-    let name: String
+    let name: Words
     /// What it opens, one paragraph per entry.
-    let more: [String]
+    let more: [Words]
     /// Where the line sits: leading in a list, centred under the time.
     var alignment: HorizontalAlignment = .leading
     let label: () -> Label
@@ -25,7 +25,7 @@ struct InfoRow<Label: View, Trailing: View>: View {
     @Environment(\.dynamicTypeSize) private var size
 
     init(
-        name: String, more: [String], alignment: HorizontalAlignment = .leading,
+        name: Words, more: [Words], alignment: HorizontalAlignment = .leading,
         @ViewBuilder label: @escaping () -> Label, @ViewBuilder trailing: @escaping () -> Trailing
     ) {
         self.name = name
@@ -67,7 +67,7 @@ struct InfoRow<Label: View, Trailing: View>: View {
 
 extension InfoRow where Trailing == EmptyView {
     init(
-        name: String, more: [String], alignment: HorizontalAlignment = .leading,
+        name: Words, more: [Words], alignment: HorizontalAlignment = .leading,
         @ViewBuilder label: @escaping () -> Label
     ) {
         self.init(name: name, more: more, alignment: alignment, label: label, trailing: { EmptyView() })
@@ -76,7 +76,7 @@ extension InfoRow where Trailing == EmptyView {
 
 extension InfoRow where Label == Text, Trailing == EmptyView {
     /// The common case: a label from the catalogue, named "About {label}".
-    init(_ labelKey: CopyKey, more: [String]) {
+    init(_ labelKey: CopyKey, more: [Words]) {
         self.init(name: about(labelKey), more: more) {
             Text(tr(labelKey))
         }
@@ -85,13 +85,13 @@ extension InfoRow where Label == Text, Trailing == EmptyView {
 
 extension InfoRow where Label == Text {
     /// A catalogue label with its control at the end of the line.
-    init(_ labelKey: CopyKey, more: [String], @ViewBuilder trailing: @escaping () -> Trailing) {
+    init(_ labelKey: CopyKey, more: [Words], @ViewBuilder trailing: @escaping () -> Trailing) {
         self.init(name: about(labelKey), more: more, label: { Text(tr(labelKey)) }, trailing: trailing)
     }
 }
 
 /// "About {label}": the (i)'s name when its control's label reads inside it.
-func about(_ labelKey: CopyKey) -> String {
+func about(_ labelKey: CopyKey) -> Words {
     tr(.`more.about`, ["label": .text(tr(labelKey))])
 }
 
@@ -102,7 +102,7 @@ func about(_ labelKey: CopyKey) -> String {
 /// the label beside it.
 struct InfoButton: View {
     @Binding var expanded: Bool
-    let name: String
+    let name: Words
 
     var body: some View {
         Button {
@@ -124,9 +124,9 @@ struct InfoButton: View {
 /// What an (i) opens: the web's `.disclosed`, a paragraph set off by a rule
 /// down its left edge. Catalogue links (`[label](https://…)`) are tappable.
 struct MoreText: View {
-    let paragraphs: [String]
+    let paragraphs: [Words]
 
-    init(_ paragraphs: [String]) { self.paragraphs = paragraphs }
+    init(_ paragraphs: [Words]) { self.paragraphs = paragraphs }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -155,10 +155,10 @@ struct MoreText: View {
 /// (src/ui/copy.ts). Nothing else is parsed, so a `*` or an `_` in the copy
 /// stays a character, and only https is linked; anything else stays as
 /// written.
-func linked(_ text: String) -> AttributedString {
+func linked(_ words: Words) -> AttributedString {
     let link = /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/
     var out = AttributedString()
-    var rest = Substring(text)
+    var rest = Substring(words.string)
     while let m = rest.firstMatch(of: link) {
         out += AttributedString(String(rest[..<m.range.lowerBound]))
         var piece = AttributedString(String(m.1))

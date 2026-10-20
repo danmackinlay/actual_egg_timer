@@ -20,10 +20,10 @@ public struct SentenceWords {
         // origin and no cooling, and `tr` refuses arguments a key does not take.
         let egg = CopyArg.text(Self.mark(.egg)), start = CopyArg.text(Self.mark(.start))
         template = planner.isSousVide
-            ? tr(.`setup.sentenceSousVide`, ["egg": egg, "start": start])
+            ? tr(.`setup.sentenceSousVide`, ["egg": egg, "start": start]).string
             : tr(.`setup.sentence`, [
                 "egg": egg, "from": .text(Self.mark(.from)), "start": start, "cooling": .text(Self.mark(.cooling)),
-            ])
+            ]).string
     }
 
     /// A clause's place in the template: its name between characters no
@@ -47,7 +47,7 @@ public struct SentenceWords {
         var out = ""
         for (i, part) in parts.enumerated() {
             if i % 2 == 1, let clause = Clause(rawValue: String(part)) {
-                out += texts[clause]?.text ?? ""
+                out += texts[clause]?.text.string ?? ""
             } else {
                 out += part
             }
@@ -59,16 +59,16 @@ public struct SentenceWords {
 /// What a clause says, and what a screen reader hears for it: its heading and
 /// the option chosen, as the choice itself shows them ("Egg: 68 g").
 public struct ClauseText {
-    public let text: String
-    public let label: String
-    public let value: String
+    public let text: Words
+    public let label: Words
+    public let value: Words
 }
 
 /// What the sentence says, whichever cook it is about: the one on the
 /// controls, or the one in the pan (`RunningCook`). The web's `SetupFacts`.
 struct SetupFacts {
     /// The egg's mass as the size menu or the scale says it, with its unit.
-    var mass: String
+    var mass: Words
     /// How many eggs go in.
     var count: Int
     var from: EggFrom
@@ -78,7 +78,7 @@ struct SetupFacts {
     var heatOff: Bool
     var cooling: Cooling
     /// The bowl's water, with its unit.
-    var water: String
+    var water: Words
     /// The temperature of the water the eggs cool in as the cook gave it, C,
     /// for running water or a bowl; nil when assumed, or for another cooling.
     var coolingWaterC: Double?
@@ -103,7 +103,7 @@ struct SetupFacts {
 }
 
 /// A size class's mass as the size menu shows it.
-private func classMass(_ c: SizeClass, units: UnitSystem) -> String {
+private func classMass(_ c: SizeClass, units: UnitSystem) -> Words {
     let label = sizeClassLabel(c, system: units)
     return tr(label.mass.key, ["value": .fixed(label.mass.value)])
 }
@@ -120,7 +120,7 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
     // The cooling clause's temperature is the water's, not the egg's.
     let coolingArgs: CopyArgs = [
         "water": .text(f.water),
-        "temp": .text(f.coolingWaterC.map { showIn(f.units, .coolingWater, $0) } ?? ""),
+        "temp": .text(f.coolingWaterC.map { showIn(f.units, .coolingWater, $0) } ?? .none),
     ]
     let keys = clauseKeys(ClauseFacts(
         eggFrom: f.from, startMode: f.start == .cold ? .cold : .hot, sousVide: f.start == .sousVide,
@@ -128,13 +128,13 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
     ))
     /// A nil value is the argument itself: the mass, or the cook's own
     /// temperature.
-    let own: [Clause: String] = [.egg: f.mass, .from: showIn(f.units, .eggTemp, f.customC)]
+    let own: [Clause: Words] = [.egg: f.mass, .from: showIn(f.units, .eggTemp, f.customC)]
     return keys.reduce(into: [:]) { out, entry in
         let (clause, k) = entry
         let with = clause == .cooling ? coolingArgs : args
         out[clause] = ClauseText(
             text: trChosen(k.text, with), label: tr(k.label),
-            value: k.value.map { trChosen($0, with) } ?? own[clause] ?? ""
+            value: k.value.map { trChosen($0, with) } ?? own[clause] ?? .none
         )
     }
 }

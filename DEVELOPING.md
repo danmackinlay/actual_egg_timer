@@ -21,7 +21,7 @@ npm run probe      # is a probe thermometer worth an egg? (README §11.3)
                    # (these four are in studies/, run only by hand)
 npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.md)
 npm run population -- literature        # writes the literature's fixtures/population.json
-npm run copy:literals    # no literal written into a Swift text call is words, and each tr given its key's arguments
+npm run copy:literals    # no literal made a String in a Swift text call is words, and each tr given its key's arguments
 npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html
 npm run copy:edit        # the owner's editor for the words, in his browser on 127.0.0.1 (below)
 npm run copy:edit:e2e    # that editor driven in headless Chrome against a scratch clone
@@ -30,6 +30,7 @@ npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
 npm run e2e        # the web app driven end to end in headless Chrome (below)
+npm run ios:build  # the iOS app built, Debug and Release, and no literal in SwiftUI's text calls (tools/iosBuild.ts)
 npm run ios:e2e    # the iOS app tapped by its UI tests on two simulators (ios/README.md)
 ```
 

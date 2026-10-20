@@ -161,7 +161,7 @@ struct CookLiveActivity: Widget {
     }
 
     /// The line under the stage.
-    private func note(_ state: CookActivity.ContentState, _ attributes: CookActivity) -> String {
+    private func note(_ state: CookActivity.ContentState, _ attributes: CookActivity) -> Words {
         let key: CopyKey = switch state.stage {
         case .heating: state.provisional ? .`activity.note.estimate` : .`activity.note.heating`
         case .cooking: state.provisional ? .`activity.note.estimate` : .`activity.note.cooking`

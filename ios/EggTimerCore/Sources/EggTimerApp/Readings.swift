@@ -26,13 +26,13 @@ public struct ReadoutWords {
     public let big: String
     /// The line under the clock: core's key, with this phase's arguments.
     /// While a cook runs every number it takes is a time, as a clock.
-    public let sub: String
+    public let sub: Words
     /// How sure I am, in this phase: while idle, the choice on screen's;
     /// while the egg is in, its plan's, where the white sets; after the
     /// pull, nothing.
     public let certainty: CertaintyReading?
     /// What pressing the certainty line opens (`opened`); empty with none.
-    public let opened: [String]
+    public let opened: [Words]
     /// Whether to say the white might still be runny (`whiteRunny`).
     public let whiteRunny: Bool
 
@@ -83,7 +83,7 @@ public struct ReadoutWords {
 
     /// The likely time range pressing the line opens, its last line; nil
     /// with no certainty.
-    public var range: String? { certainty.map { _ in opened.last ?? "" } }
+    public var range: Words? { certainty.map { _ in opened.last ?? .none } }
 
     /// What pressing the certainty line opens: the interval, "most likely"
     /// when it is not already said, and the likely time range in the clock's
@@ -92,7 +92,7 @@ public struct ReadoutWords {
     /// take the eggs out, not whole times under a clock counting down, and
     /// for a reading held over a plan that has moved since (a slow hob's
     /// lengthening guess) about the plan's time now.
-    private static func opened(_ sure: CertaintyReading, cook: Cook?) -> [String] {
+    private static func opened(_ sure: CertaintyReading, cook: Cook?) -> [Words] {
         var lines = [renderedWords(intervalWords(sure.words))]
         if mostLikelyOpened(sure.words) { lines.append(renderedWords(mostLikelyWords(sure.words))) }
         let range = timeRangeWords(
@@ -107,7 +107,7 @@ public struct ReadoutWords {
 }
 
 /// A key with its counts and its doneness words, rendered.
-public func renderedWords(_ ref: WordsRef) -> String {
+public func renderedWords(_ ref: WordsRef) -> Words {
     var args: CopyArgs = [:]
     for (name, value) in ref.args { args[name] = .number(value) }
     for (name, key) in ref.words { args[name] = .text(tr(key)) }
@@ -121,7 +121,7 @@ extension AppModel {
     /// refusal, or a wild guess at the level, in its own pot's words. A
     /// correction that leaves the white unset gets the longest time this pan
     /// can give, and this says so.
-    public var runningWarning: String? {
+    public var runningWarning: Words? {
         guard let plan = cook.plan else { return nil }
         let a = plan.answer
         return warningText(
@@ -189,11 +189,11 @@ public struct SliderReading {
 
     /// What the yolk and white will be like, or, in a bath, the bath's own
     /// note; empty before the first answer.
-    public func note(_ planner: Planner) -> String {
+    public func note(_ planner: Planner) -> Words {
         if sousVide {
             return sousVideCopy(planner.sousVide, now: AppClock.now, units: planner.units).note
         }
-        guard let s = noteSolution else { return "" }
+        guard let s = noteSolution else { return .none }
         return textureNote(yolkDoseMin: s.result.yolkDoseMin, whiteDoseMin: s.result.whiteDoseMin, whiteSets: s.whiteSets)
     }
 }

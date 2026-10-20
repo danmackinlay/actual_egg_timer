@@ -267,10 +267,13 @@ cost in Czech (§5).
   (`UI.md` §6).
 
 **How a wording change is made, read and approved.** Every word is in
-`copy/*.json`, and `npm run copy:literals` keeps literal words out of the
-Swift calls that put text on a screen, and `npm test` out of the web's
-(`test/uiLiterals.test.ts`; one passed through a name is not read), so
-what a change does to the words is the catalogue's diff.
+`copy/*.json`. Literal words are kept out of the Swift calls that put text
+on a screen by the compiler (the app's helpers take `Words`, which only
+`tr` makes), by `npm run ios:build` (a literal in SwiftUI's own calls) and
+by `npm run copy:literals` (one made a `String` there or in UIKit's), and
+out of the web's by `npm test` (`test/uiLiterals.test.ts`; one passed
+through a name is not read), so what a change does to the words is the
+catalogue's diff.
 
 - **Made**: an edit to `copy/en.json`, in both apps, with each
   `copy/en-US.json` entry it reaches and that entry's `base` (§2), then

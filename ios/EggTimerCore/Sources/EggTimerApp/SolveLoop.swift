@@ -108,7 +108,7 @@ final class SolveLoop {
             task?.cancel()
             task = nil
             planner.solution = nil
-            planner.warning = ""
+            planner.warning = .none
             planner.decision = nil
             planner.outcome = nil
             planner.certainty = nil

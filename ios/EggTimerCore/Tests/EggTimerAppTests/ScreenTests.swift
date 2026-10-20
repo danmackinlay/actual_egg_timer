@@ -67,7 +67,7 @@ extension AppTests {
         await decided(model, world)
         let said = { SentenceWords(model.planner).plain }
         let idle = said()
-        #expect(idle.contains(tr(.`setup.start.cold`)))
+        #expect(idle.contains(tr(.`setup.start.cold`).string))
         model.eggsIn()
         await world.until("the cook to start") { model.cook.running != nil && !model.starting }
         await world.settled(model.cook)
@@ -85,7 +85,7 @@ extension AppTests {
             #expect(line.range(of: #"\d:\d\d"#, options: .regularExpression) == nil, "\(line)")
         }
         #expect(heating == idle && cooking == idle)
-        #expect(off.contains(tr(.`setup.start.coldStanding`)))
+        #expect(off.contains(tr(.`setup.start.coldStanding`).string))
     }
 
     /// In sous-vide the sentence is the egg and the start alone, its template
@@ -121,13 +121,13 @@ extension AppTests {
         // The words are the catalogue's, so a change of wording moves no test:
         // the egg's count before its mass, and the bowl's clause at the end.
         let mark = "\u{1}"
-        let eggs = tr(.`setup.egg`, ["count": .int(4), "mass": .text(mark)])
+        let eggs = tr(.`setup.egg`, ["count": .int(4), "mass": .text(mark)]).string
         let massAt = try #require(eggs.range(of: mark)).lowerBound
         let count = asRead(String(eggs[..<massAt]))
         let bowl = asRead(tr(.`setup.cooling.bowlAt`, [
             "water": .text(tr(.`format.litres`, ["value": .text("1")])),
             "temp": .text(tr(.`format.celsius`, ["value": .text("12")])),
-        ]))
+        ]).string)
         #expect(said.hasPrefix(count) && said.contains(bowl), "\(said)")
         let pull = try pullS(model.cook)
         await tick(at: pull + 1, model, world)

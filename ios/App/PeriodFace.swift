@@ -149,7 +149,7 @@ extension View {
 
     /// The navigation bar's title, in the face of the language on screen, in
     /// place of `.navigationTitle`.
-    func barTitle(_ title: String) -> some View {
+    func barTitle(_ title: Words) -> some View {
         modifier(BarTitle(title: title))
     }
 
@@ -184,12 +184,12 @@ private struct BarItem: ViewModifier {
 /// English, as before. At the bar's own size, which Dynamic Type does not
 /// change.
 private struct BarTitle: ViewModifier {
-    let title: String
+    let title: Words
 
     func body(content: Content) -> some View {
         let period = isPeriod(Copy.activeLocale)
         return content
-            .navigationTitle(title)
+            .navigationTitle(title.string)
             .toolbar {
                 if period {
                     ToolbarItem(placement: .principal) {
@@ -214,8 +214,8 @@ private struct BarTitle: ViewModifier {
 /// choice and cuts off the second line. So there the button is the app's
 /// own, which wraps, over the system's list.
 struct MenuChoice<Tag: Hashable>: View {
-    let label: String
-    let choices: [(title: String, tag: Tag)]
+    let label: Words
+    let choices: [(title: Words, tag: Tag)]
     @Binding var selection: Tag
     @State private var open = false
     @Environment(\.dynamicTypeSize) private var size
@@ -225,7 +225,7 @@ struct MenuChoice<Tag: Hashable>: View {
             period
         } else if size.isAccessibilitySize {
             Menu {
-                Picker(label, selection: $selection) { options }
+                Picker(label.string, selection: $selection) { options }
                     .pickerStyle(.inline)
                     .labelsHidden()
             } label: {
@@ -234,7 +234,7 @@ struct MenuChoice<Tag: Hashable>: View {
             .accessibilityLabel(label)
             .accessibilityValue(chosen)
         } else {
-            Picker(label, selection: $selection) { options }
+            Picker(label.string, selection: $selection) { options }
                 .pickerStyle(.menu)
                 .labelsHidden()
         }
@@ -246,8 +246,8 @@ struct MenuChoice<Tag: Hashable>: View {
         }
     }
 
-    private var chosen: String {
-        choices.first { $0.tag == selection }?.title ?? ""
+    private var chosen: Words {
+        choices.first { $0.tag == selection }?.title ?? .none
     }
 
     /// The choice and the menu's chevron, the choice wrapping onto as many

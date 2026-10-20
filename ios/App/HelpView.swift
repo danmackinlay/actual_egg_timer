@@ -201,7 +201,7 @@ struct HelpView: View {
 
     /// In 1750, whose face has no bold, in italic, as a printer of the day
     /// told a head from its paragraph; the web does the same.
-    private func subhead(_ text: String) -> some View {
+    private func subhead(_ text: Words) -> some View {
         Text(text)
             .appFont(.subheadline, weight: .semibold, italic: isPeriod(Copy.activeLocale))
             .padding(.top, 4)
@@ -209,13 +209,13 @@ struct HelpView: View {
     }
 
     /// A paragraph, its links tappable.
-    private func para(_ text: String) -> some View {
+    private func para(_ text: Words) -> some View {
         Text(linked(text))
             .fixedSize(horizontal: false, vertical: true)
     }
 
     /// The technical aside: smaller and secondary, as the web's `p.aside`.
-    private func aside(_ text: String) -> some View {
+    private func aside(_ text: Words) -> some View {
         Text(linked(text))
             .appFont(.footnote)
             .foregroundStyle(.secondary)

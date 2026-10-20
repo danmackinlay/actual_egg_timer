@@ -43,34 +43,38 @@ extension AppTests {
         }
     }
 
+    func expectDrawn(_ words: [Words], _ at: String, sourceLocation: SourceLocation = #_sourceLocation) {
+        expectDrawn(words.map(\.string), at, sourceLocation: sourceLocation)
+    }
+
     /// What the egg screen says at the moment, in words: the sentence and its
     /// clauses' panels, the readout and what its certainty opens, the phase's
     /// hint as the view renders it, the slot, the level's name, the card.
     func drawn(_ model: AppModel, _ world: World) -> [String] {
         let planner = model.planner
         let sentence = SentenceWords(planner)
-        var out = [sentence.plain, planner.label, planner.warning]
-        for t in sentence.texts.values { out += [t.text, t.label, t.value] }
+        var out = [sentence.plain, planner.label.string, planner.warning.string]
+        for t in sentence.texts.values { out += [t.text, t.label, t.value].map(\.string) }
         let phase = model.cook.phase
         let readout = ReadoutWords(model, phase: phase, nowS: world.clock.seconds)
-        out += [readout.big, readout.sub] + readout.opened
-        if let range = readout.range { out.append(range) }
+        out += [readout.big, readout.sub.string] + readout.opened.map(\.string)
+        if let range = readout.range { out.append(range.string) }
         // The hint as PhaseActions renders it: idle, the core's key with the
         // time; running, the readout's line with its numbers.
         if phase == .idle {
-            if let hint = model.keys(.idle).hint { out.append(trChosen(hint, ["time": .text("0:00")])) }
+            if let hint = model.keys(.idle).hint { out.append(trChosen(hint, ["time": .text("0:00")]).string) }
         } else if let line = readout.readout?.hint {
-            out.append(trChosen(line.key, line.args.mapValues { .number($0) }))
+            out.append(trChosen(line.key, line.args.mapValues { .number($0) }).string)
         }
-        if let warning = model.runningWarning { out.append(warning) }
+        if let warning = model.runningWarning { out.append(warning.string) }
         if let solution = model.cook.plan?.solution ?? planner.solution {
             out.append(textureNote(
                 yolkDoseMin: solution.result.yolkDoseMin, whiteDoseMin: solution.result.whiteDoseMin,
                 whiteSets: solution.whiteSets
-            ))
+            ).string)
         }
         if let card = world.card.last, let lang = model.cook.running?.lang {
-            out += [card.stage.title(in: lang)] + card.cook
+            out += [card.stage.title(in: lang).string] + card.cook
         }
         return out
     }

@@ -10,8 +10,8 @@ import EggTimerShared
 /// arguments are this app's, and they quote the pan the answer was computed
 /// for. The warning names the level the slider rests on, a word standing
 /// alone before the colon.
-public func warningText(_ v: Verdict, lowOdds: Bool, level: Double, setup: CookSetup, water: String) -> String {
-    guard let ref = warningKey(v, lowOdds: lowOdds, cooling: setup.cooling) else { return "" }
+public func warningText(_ v: Verdict, lowOdds: Bool, level: Double, setup: CookSetup, water: Words) -> Words {
+    guard let ref = warningKey(v, lowOdds: lowOdds, cooling: setup.cooling) else { return .none }
     return tr(ref, [
         "limit": .text(midSentence(tr(v.limit.key), locale: Copy.activeLocale)), "water": .text(water),
         "doneness": .text(tr(anchorNear(level).key)),
@@ -47,7 +47,7 @@ func platformUnits() -> UnitSystem {
 /// A value stored in SI, as the cook reads it in a given system. Outside the
 /// Planner for the cook, which renders the Live Activity's numbers in the
 /// system the egg was set up in.
-public func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
+public func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> Words {
     let text = quantityText(measureFor(q, system: units, region: deviceRegion), si)
     return tr(text.key, ["value": .fixed(text.value)])
 }
@@ -64,7 +64,7 @@ extension Notification.Name {
 
 /// One line on what the model expects of this cook. Which band the egg falls
 /// in, and which keys say it, are core policy, read from its doses.
-public func textureNote(yolkDoseMin: Double, whiteDoseMin: Double, whiteSets: Bool) -> String {
+public func textureNote(yolkDoseMin: Double, whiteDoseMin: Double, whiteSets: Bool) -> Words {
     let note = textureNoteKeys(textureFor(yolkDoseMin: yolkDoseMin, whiteDoseMin: whiteDoseMin, whiteSets: whiteSets))
     return trChosen(note.key, note.parts.mapValues { .text(tr($0)) })
 }

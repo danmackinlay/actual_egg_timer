@@ -283,7 +283,7 @@ struct SettingsView: View {
 
     /// The web's `renderShare`: deleting, deleted, nothing yet, or how many
     /// have gone and how many wait.
-    private func shareNote(_ s: ShareState) -> String? {
+    private func shareNote(_ s: ShareState) -> Words? {
         if !s.deleting.isEmpty { return tr(.`share.deleting`) }
         if deletedHere && !s.on { return tr(.`share.deleted`) }
         guard s.on else { return nil }
@@ -291,36 +291,36 @@ struct SettingsView: View {
         let final = planner.kept.log.count - (eggOpen ? 1 : 0)
         let waiting = max(0, final - s.sent)
         let sent = tr(.`share.sent`, ["eggs": .int(s.sent)])
-        return waiting > 0 ? sent + " " + tr(.`share.waiting`, ["eggs": .int(waiting)]) : sent
+        return waiting > 0 ? sent.then(tr(.`share.waiting`, ["eggs": .int(waiting)])) : sent
     }
 
     /// The web's `renderLearned`: nothing yet, the eggs, the pan, or both.
-    private var learnedNote: String {
+    private var learnedNote: Words {
         let eggs = planner.eggsLogged
         let pan = planner.hasBoilMemory
         if eggs == 0 && !pan { return tr(.`learned.literature`) }
-        let tuned = eggs > 0 ? tr(.`learned.tuned`, ["eggs": .int(eggs)]) : ""
+        let tuned = eggs > 0 ? tr(.`learned.tuned`, ["eggs": .int(eggs)]) : nil
         let measured = pan
             ? tr(.`learned.pan`, [
                 "water": .text(planner.show(.water, planner.settings.waterLitres)),
                 "time": .text(clockString(planner.timeToBoilS)),
             ])
-            : ""
-        if !tuned.isEmpty && !measured.isEmpty {
+            : nil
+        if let tuned, let measured {
             return tr(.`learned.both`, ["tuned": .text(tuned), "pan": .text(measured)])
         }
-        return tuned + measured
+        return tuned ?? measured ?? .none
     }
 
     /// The web's colophon, with its link to the source.
     private var colophon: AttributedString {
-        var name = AttributedString(tr(.`colophon.name`))
+        var name = AttributedString(tr(.`colophon.name`).string)
         name.font = .app(.footnote, weight: .semibold, size: dynamicTypeSize)
-        var link = AttributedString(tr(.`colophon.link`))
+        var link = AttributedString(tr(.`colophon.link`).string)
         link.link = URL(string: "https://github.com/danmackinlay/actual_egg_timer")
         link.underlineStyle = .single
-        return name + AttributedString(" " + tr(.`colophon.lede`) + " ") + link
-            + AttributedString(" " + tr(.`colophon.tail`))
+        return name + AttributedString(" " + tr(.`colophon.lede`).string + " ") + link
+            + AttributedString(" " + tr(.`colophon.tail`).string)
     }
 
     /// The web's last line, "Version 0.4.0 (2)": the App Store version, which
@@ -332,7 +332,7 @@ struct SettingsView: View {
         let short = info?["CFBundleShortVersionString"] as? String ?? ""
         let build = info?["CFBundleVersion"] as? String ?? ""
         let mark = "\u{1}"
-        let parts = tr(.`colophon.version`, ["version": .text(mark)]).components(separatedBy: mark)
+        let parts = tr(.`colophon.version`, ["version": .text(mark)]).string.components(separatedBy: mark)
         var number = AttributedString(build.isEmpty ? short : "\(short) (\(build))")
         number.font = .footnote.monospaced()
         number.foregroundColor = .primary

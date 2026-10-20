@@ -34,7 +34,7 @@ extension View {
     /// and up on the field's group while a cook runs (`EditGesture`), as a
     /// tap is.
     func adjustable(
-        _ label: String, value: String, field: HandGroup? = nil, gesture: EditGesture,
+        _ label: Words, value: String, field: HandGroup? = nil, gesture: EditGesture,
         step: @escaping (_ up: Bool) -> Void
     ) -> some View {
         accessibilityRepresentation {
@@ -83,10 +83,10 @@ func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
 /// and writes back only when tapped - the round trip in `Units.swift`, so a
 /// quart stays a quart and never becomes 1.99.
 struct StepperValue: View {
-    let label: String
+    let label: Words
     let measure: Measure
     @Binding var value: Double
-    let show: (Double) -> String
+    let show: (Double) -> Words
     /// The group of the cook's choices a change of it makes, while a cook
     /// runs.
     var field: HandGroup? = nil
@@ -102,13 +102,13 @@ struct StepperValue: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .fixedSize()
-            Stepper(label, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step) { on in
+            Stepper(label.string, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step) { on in
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
         }
         // The value and its stepper, one element to VoiceOver.
-        .adjustable(label, value: show(value), field: field, gesture: gesture) { up in
+        .adjustable(label, value: show(value).string, field: field, gesture: gesture) { up in
             // As the stepper steps: the displayed value by a step, inside
             // its bounds.
             let shown = measured(measure, $value)
@@ -122,10 +122,10 @@ struct StepperValue: View {
 
 /// `StepperValue` with its label, for a line of its own.
 struct StepperRow: View {
-    let label: String
+    let label: Words
     let measure: Measure
     @Binding var value: Double
-    let show: (Double) -> String
+    let show: (Double) -> Words
     var field: HandGroup? = nil
     @Environment(\.dynamicTypeSize) private var size
 
@@ -157,7 +157,7 @@ struct StepperRow: View {
 /// Double because it mirrors a TypeScript `number`; that stops here rather
 /// than reaching the control.
 struct CountValue: View {
-    let label: String
+    let label: Words
     @Binding var value: Int
     let range: ClosedRange<Double>
     var field: HandGroup? = nil
@@ -169,7 +169,7 @@ struct CountValue: View {
                 .systemFigures()
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-            Stepper(label, value: $value, in: Int(range.lowerBound)...Int(range.upperBound)) { on in
+            Stepper(label.string, value: $value, in: Int(range.lowerBound)...Int(range.upperBound)) { on in
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
@@ -200,7 +200,7 @@ struct CountValue: View {
 /// showed as "…". There the label goes above, as the egg size's does over
 /// its menu, and the field takes the width the unit and the stepper leave.
 struct MeasureField: View {
-    let label: String
+    let label: Words
     let measure: Measure
     let value: Double
     let set: (Double) -> Void
@@ -239,7 +239,7 @@ struct MeasureField: View {
     /// sizes, with the field as wide as the row leaves and the unit whole.
     private func controls(large: Bool) -> some View {
         HStack(spacing: 6) {
-            TextField(label, text: $text)
+            TextField(label.string, text: $text)
                 .systemFigures()
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
@@ -257,7 +257,7 @@ struct MeasureField: View {
                 .fixedSize(horizontal: large, vertical: large)
                 // The stepper says the value with its unit.
                 .accessibilityHidden(true)
-            Stepper(label) {
+            Stepper(label.string) {
                 step(up: true)
             } onDecrement: {
                 step(up: false)
@@ -265,7 +265,7 @@ struct MeasureField: View {
                 if let field { gesture.touch(field, on) }
             }
                 .labelsHidden()
-                .adjustable(label, value: spoken, field: field, gesture: gesture) { step(up: $0) }
+                .adjustable(label, value: spoken.string, field: field, gesture: gesture) { step(up: $0) }
                 .testID(field, "stepper")
         }
     }
@@ -282,7 +282,7 @@ struct MeasureField: View {
     }
 
     /// The stored value as VoiceOver says it, with its unit: "58.5 g".
-    private var spoken: String {
+    private var spoken: Words {
         let q = quantityText(measure, value)
         return tr(q.key, ["value": .fixed(q.value)])
     }
@@ -320,7 +320,7 @@ func fieldText(_ m: Measure, _ value: Double) -> String {
 /// the typing, so the field shows the number stepped to.
 struct NudgeField: View {
     /// What VoiceOver calls the field and its stepper.
-    let label: String
+    let label: Words
     let measure: Measure
     @Binding var text: String
     /// Where an empty field starts, stored in SI.
@@ -338,7 +338,7 @@ struct NudgeField: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            TextField(label, text: $text, prompt: Text(fieldText(measure, start)))
+            TextField(label.string, text: $text, prompt: Text(fieldText(measure, start)))
                 .systemFigures()
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
@@ -353,7 +353,7 @@ struct NudgeField: View {
                 .fixedSize()
                 // The stepper says the value with its unit.
                 .accessibilityHidden(true)
-            Stepper(label) {
+            Stepper(label.string) {
                 step(up: true)
             } onDecrement: {
                 step(up: false)
@@ -381,7 +381,7 @@ struct NudgeField: View {
     /// "20 °C".
     private var spokenValue: String {
         let shown = text.isEmpty ? fieldText(measure, start) : text
-        return "\(shown) \(tr(measure.unitKey))"
+        return "\(shown) \(tr(measure.unitKey).string)"
     }
 
     private func step(up: Bool) {
@@ -486,8 +486,8 @@ struct WaterTemperatureField: View {
 /// width as segments, least of all at the accessibility sizes, where a row
 /// instead wraps its name onto as many lines as it needs.
 struct ListChoice<Tag: Hashable>: View {
-    let label: String
-    let choices: [(title: String, tag: Tag)]
+    let label: Words
+    let choices: [(title: Words, tag: Tag)]
     @Binding var selection: Tag
 
     var body: some View {
@@ -533,8 +533,8 @@ struct ListChoice<Tag: Hashable>: View {
 /// so at the accessibility sizes the choices are a list instead, one to a
 /// line, which grows with the text (`ListChoice`).
 struct SegmentedChoice<Tag: Hashable>: View {
-    let label: String
-    let choices: [(title: String, tag: Tag)]
+    let label: Words
+    let choices: [(title: Words, tag: Tag)]
     @Binding var selection: Tag
     /// The group of the cook's choices it makes, while a cook runs: what
     /// the UI tests find it by (`testID`).
@@ -545,7 +545,7 @@ struct SegmentedChoice<Tag: Hashable>: View {
         if size.isAccessibilitySize {
             ListChoice(label: label, choices: choices, selection: $selection)
         } else {
-            Picker(label, selection: $selection) {
+            Picker(label.string, selection: $selection) {
                 ForEach(choices.indices, id: \.self) { i in
                     Text(choices[i].title).tag(choices[i].tag)
                 }

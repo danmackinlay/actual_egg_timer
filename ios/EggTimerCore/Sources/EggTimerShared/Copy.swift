@@ -4,7 +4,7 @@ import os
 import EggTimerCopy
 
 /// The app's words: which catalogue is active, and `tr`, which everything that
-/// puts a string on screen goes through.
+/// puts a string on screen goes through, as `Words`.
 ///
 /// The catalogue is `copy/<locale>.json` at the root of the repository, the
 /// same file the web app fetches, bundled into the app AND the widget
@@ -152,7 +152,7 @@ public enum Copy {
 /// language on screen, or in `locale` when one is given: the widget renders
 /// in the language the cook was started in. A debug build stops on arguments
 /// that are not exactly the key's (`CopyKey.argumentNames`).
-public func tr(_ key: CopyKey, _ args: CopyArgs = [:], in locale: String? = nil) -> String {
+public func tr(_ key: CopyKey, _ args: CopyArgs = [:], in locale: String? = nil) -> Words {
     assert(
         Set(args.keys) == CopyKey.argumentNames[key] ?? [],
         "tr(\(key.rawValue)): given \(args.keys.sorted()), takes \((CopyKey.argumentNames[key] ?? []).sorted())"
@@ -162,14 +162,14 @@ public func tr(_ key: CopyKey, _ args: CopyArgs = [:], in locale: String? = nil)
 
 /// A message whose key the core chose from several, rendered with every
 /// argument any of them takes: which of them it uses is not checked.
-public func trChosen(_ key: CopyKey, _ args: CopyArgs, in locale: String? = nil) -> String {
+public func trChosen(_ key: CopyKey, _ args: CopyArgs, in locale: String? = nil) -> Words {
     let tag = locale ?? Copy.activeLocale
-    return Copy.catalogue(for: tag).render(key.rawValue, args, formatLocale: Copy.formatLocale(for: tag))
+    return Words(rendered: Copy.catalogue(for: tag).render(key.rawValue, args, formatLocale: Copy.formatLocale(for: tag)))
 }
 
 /// What the core returned, rendered, with any arguments only the app can supply.
-public func tr(_ ref: CopyRef, _ extra: CopyArgs = [:]) -> String {
-    Copy.catalogue.render(ref, extra, formatLocale: Copy.formatLocale)
+public func tr(_ ref: CopyRef, _ extra: CopyArgs = [:]) -> Words {
+    Words(rendered: Copy.catalogue.render(ref, extra, formatLocale: Copy.formatLocale))
 }
 
 /// A wall-clock time in the phone's time zone and the formatting locale's

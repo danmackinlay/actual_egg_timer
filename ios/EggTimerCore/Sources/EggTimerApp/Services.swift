@@ -26,7 +26,7 @@ public enum Services {
     /// calls (`CookCard`).
     @MainActor public static var card: any LockScreenCard = NoCard()
     /// Said to VoiceOver, at once: the start's limit reached (`InHand`).
-    @MainActor public static var announce: (String) -> Void = { _ in }
+    @MainActor public static var announce: (Words) -> Void = { _ in }
     @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
 }
 

@@ -92,8 +92,8 @@ struct ReadoutView: View {
                         // and the certainty's time range it drew, so a check
                         // can see that all of them are of that one moment.
                         .logged(.frame(
-                            at: now.timeIntervalSince1970, phase: phase.rawValue, big: words.big, sub: words.sub,
-                            range: words.range
+                            at: now.timeIntervalSince1970, phase: phase.rawValue, big: words.big, sub: words.sub.string,
+                            range: words.range?.string
                         ))
                     certaintyLine(words)
                 }

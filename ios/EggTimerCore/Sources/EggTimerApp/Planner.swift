@@ -218,7 +218,7 @@ public final class Planner {
     public func measure(_ q: Quantity) -> Measure { measureFor(q, system: units, region: deviceRegion) }
 
     /// A value stored in SI, as the cook reads it: "4 °C", "39 °F", "2.4 oz".
-    public func show(_ q: Quantity, _ si: Double) -> String { showIn(units, q, si) }
+    public func show(_ q: Quantity, _ si: Double) -> Words { showIn(units, q, si) }
 
     // MARK: - Outputs
     //
@@ -248,7 +248,7 @@ public final class Planner {
     /// doneness was refused, the point being to teach the constraint rather
     /// than merely to block the control; or else that the level on screen is
     /// a wild guess so far, a dotted one (`warningKey`).
-    public var warning = ""
+    public var warning = Words.none
     /// The choice behind the time on screen: the odds, and how far it leaned
     /// from the mean solve. Nil until this pot's decision surface has been
     /// built, and on the sous-vide screen.
@@ -480,7 +480,7 @@ public final class Planner {
     public var setup: CookSetup { pot.setup }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
-    public var label: String { tr(anchorNear(settings.doneness).key) }
+    public var label: Words { tr(anchorNear(settings.doneness).key) }
 
     public var eggsLogged: Int { calibration.eggsLogged }
 

@@ -30,11 +30,11 @@ public enum StartChoice: String, CaseIterable, Sendable {
 
 public struct SousVideCopy {
     /// Big text, in place of the clock.
-    public let headline: String
-    public let subline: String
-    public let note: String
-    public let warn: String
-    public let hint: String
+    public let headline: Words
+    public let subline: Words
+    public let note: Words
+    public let warn: Words
+    public let hint: Words
 }
 
 /// Whole days between two instants, by local midnight rather than by elapsed
