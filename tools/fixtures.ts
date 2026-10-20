@@ -57,6 +57,9 @@
  *                              plan, and the phase at every boundary
  *   fixtures/step.json         the running cook as one state machine: traces
  *                              of events, effects and the readout
+ *   fixtures/cooks.json        the cooks an app holds: on screen, and ended
+ *                              waiting on their records; the effects tagged
+ *                              with whose cook, and the eggs still open
  *   fixtures/hand.json         the correction in hand: event sequences, the
  *                              choices a commit makes, the preview, the start
  *
@@ -218,6 +221,10 @@ export const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: 
     };
   },
   step: async () => stepCounted(await (await import('./fixtures/step.ts')).stepFixture()),
+  cooks: async () => {
+    const f = await (await import('./fixtures/cooks.ts')).cooksFixture();
+    return { fixture: f, counts: [`${f.traces.length} traces of the cooks held`] };
+  },
   fitSample: async () => {
     const { fitSampleFixture: f } = await import('./fixtures/fitSample.ts');
     return { fixture: f, counts: [`${f.checks.length} likelihood checks`] };
@@ -260,7 +267,7 @@ export const pathOf = (name: string): string => ELSEWHERE[name] ?? `fixtures/${n
 /** The order the summary line counts them in. */
 const COUNTED = [
   'core', 'scenarios', 'calibration', 'slider', 'texture', 'sousvide', 'sousvideCopy', 'copy', 'format', 'units',
-  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'share', 'running', 'step', 'hand',
+  'record', 'decide', 'outcome', 'certainty', 'reach', 'probe', 'share', 'running', 'step', 'cooks', 'hand',
   'fitSample', 'fitRecovery',
 ];
 

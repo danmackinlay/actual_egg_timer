@@ -254,6 +254,8 @@ const NOT_TWINNED: Record<string, string> = {
   'units.ts UNIT_SYSTEMS': RECORD_ENUM,
   'running.ts NO_EVENTS': 'CookEvents.none',
   'step.ts NO_NEED': 'CookNeed.none',
+  'cooks.ts NO_NEED': 'CookNeed.none',
+  'cooks.ts IDLE': 'the screen of Cooks.none',
   'share.ts UID': 'a pattern, held by share.json',
   'solve.ts DEFAULT_PARAMS': 'ModelParams.default, from Constants.alphaDefault',
   'units.ts UNIT_KEYS': 'a switch over the units, held by units.json',
