@@ -18,6 +18,7 @@ import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../
 import { COOLING_SECONDS, coolingSecondsFor, countedCooling_s } from '../../src/core/running.ts';
 
 import { RECORD_ENUMS, referenceSetup, withMember } from '../common.ts';
+import { patchOf, posteriorSummary } from './shared.ts';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
  *
@@ -26,10 +27,10 @@ import { RECORD_ENUMS, referenceSetup, withMember } from '../common.ts';
  * port that forgets a check - or adds one - disagrees on a named case. Second,
  * the replay: a log of fifteen eggs from both apps - answered or not, pulled by
  * the cook or by the clock, some with a probe reading, the yolk in the five
- * words - folded from a fresh prior with every particle and
- * weight written out after each egg, and the tail of the same log folded again
- * from the state after the second egg, which is what a phone whose damaged log
- * was dropped starts from.
+ * words - folded from a fresh prior with the calibration written out after
+ * each egg, its posterior in summary (`posteriorSummary`), and the tail of the
+ * same log folded again from the state after the second egg, which is what a
+ * phone whose damaged log was dropped starts from, and whole from there.
  *
  * The grid is coarser than the app's: `calibrationGrid`'s BOUNDS, which are what
  * decide what the filter sees, at 7 x 9 instead of 21 x 32. The counts are
@@ -246,7 +247,7 @@ const replaySteps = REPLAY_LOG.map((r) => {
     spec: spec,
     cookTime_s: recordCookTime_s(r),
     whiteDoseAtSoft: calibrationDoneness(replayState, 0.22).whiteDose_min,
-    after: calibrationRows(replayState),
+    after: { ...calibrationRows(replayState), posterior: posteriorSummary(replayState.posterior) },
   };
 });
 const REPLAY_BASE_AFTER = 2;
@@ -472,10 +473,18 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'an unknown unit system', mutate: (r) => { r['units'] = 'kelvin'; } },
 ];
 
-const recordCases = RECORD_CASES.map((c) => {
-  const record = mutated(c.mutate);
+/** What a loader made of `record`: null where it refused it, or the record
+ *  as parsed, written as what changed from the record given (nothing, as a
+ *  rule). */
+function parsedOf(record: Record<string, unknown>) {
   const parsed = parseRecord(record);
-  return { why: c.why, record: record, parsed: parsed };
+  return parsed === null ? null : patchOf(record, JSON.parse(JSON.stringify(parsed)));
+}
+
+/* Each case is written as its change to the canonical record (`patchOf`). */
+const recordCases: unknown[] = RECORD_CASES.map((c) => {
+  const record = mutated(c.mutate);
+  return { why: c.why, patch: patchOf(CANONICAL, record), parsed: parsedOf(record) };
 });
 // A log is all or nothing: one bad record refuses the lot.
 recordCases.push({
@@ -489,9 +498,9 @@ recordCases.push({
  * one with a member the TypeScript lacks disagrees with `fields`. */
 const memberCases = RECORD_ENUMS.flatMap((e) => e.members.map((m) => {
   const record = withMember(CANONICAL, e.path, m);
-  const parsed = parseRecord(record);
+  const parsed = parsedOf(record);
   if (parsed === null) throw new Error(`record.json: a record with ${e.path} ${m} is refused`);
-  return { path: e.path, member: m, record: record, parsed: parsed };
+  return { path: e.path, member: m, patch: patchOf(CANONICAL, record), parsed: parsed };
 }));
 
 /* The results file: the same store makes the same file in both apps, as
@@ -618,7 +627,7 @@ const factsCases = FACTS_CASES.map((c) => {
   if (parseRecord(JSON.parse(JSON.stringify(record))) === null) {
     throw new Error(`recordFor made a record no loader reads: ${c.why}`);
   }
-  return { why: c.why, facts: facts, record: record };
+  return { why: c.why, over: c.over, record: record };
 });
 
 /* A probe reading's "when" (`probeReadingFor`), against a measured pull and
@@ -674,10 +683,11 @@ const loadCases = LOAD_CASES.map((c) => {
 });
 
 export const recordFixture = {
-  about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
+  about: 'The record (INFERENCE.md section 4): which records a loader trusts, each a change to the canonical record, and a replayed log, the calibration after each egg in summary. src/core/record.ts.',
+  canonical: CANONICAL,
   cases: recordCases,
   // Each field that takes one of a list, its members in the TypeScript's
-  // order, and the canonical record carrying each.
+  // order, and the canonical record carrying each, and as parsed.
   members: {
     fields: Object.fromEntries(RECORD_ENUMS.map((e) => [e.path, e.members])),
     cases: memberCases,
@@ -688,8 +698,9 @@ export const recordFixture = {
   // A probe reading, typed in F and carried in C.
   probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
     .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
-  // What both apps write down for a cook (`recordFor`), and a probe
-  // reading's when (`probeReadingFor`).
+  // What both apps write down for a cook (`recordFor`), each cook a change
+  // to one base, and a probe reading's when (`probeReadingFor`).
+  factsBase: FACTS_BASE,
   made: factsCases,
   probeWhen: probeWhen,
   // What a launch makes of the store it read (`loadDecision`), for a build

@@ -57,6 +57,26 @@ export function posteriorSummary(post: Posterior) {
   };
 }
 
+/** A JSON value `to` as what changed from `from`: `set`, each field given
+ *  or changed, by its dotted path, and `delete`, each one taken away. An
+ *  object in both is gone into; anything else, an array among them, is set
+ *  whole. Fixtures.swift's `applying` makes `to` again. */
+export function patchOf(from: unknown, to: unknown): { set?: Record<string, unknown>; delete?: string[] } {
+  const set: Record<string, unknown> = {};
+  const gone: string[] = [];
+  const plain = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const walk = (a: Record<string, unknown>, b: Record<string, unknown>, at: string): void => {
+    for (const k of Object.keys(a)) if (!(k in b)) gone.push(at + k);
+    for (const [k, v] of Object.entries(b)) {
+      if (plain(a[k]) && plain(v)) walk(a[k] as Record<string, unknown>, v, `${at}${k}.`);
+      else if (!(k in a) || JSON.stringify(a[k]) !== JSON.stringify(v)) set[at + k] = v;
+    }
+  };
+  if (!plain(from) || !plain(to)) throw new Error('patchOf: not two objects');
+  walk(from, to, '');
+  return { ...(Object.keys(set).length > 0 ? { set: set } : {}), ...(gone.length > 0 ? { delete: gone } : {}) };
+}
+
 /** The cook of the running and step fixtures: a 68 g EU Large from the
  *  fridge into 2 L of cold water at sea level, the heat held, then ice,
  *  jammy. */
