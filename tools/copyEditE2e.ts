@@ -11,9 +11,8 @@
  * and nowhere else. Then, through the page: a wrong token and a wrong Host
  * are refused; a key is found by search and edited; a straight quote stops
  * Save and is made curly; the edit is saved with ⌘S, which runs the real
- * words-only check (fixtures:check -- --words and test:words) in a scratch
- * worktree of the clone, in seconds, and the page says what it checked and
- * how long it took; the commit is the key's, on the clone's main; and the
+ * checks (npm test and fixtures:check) in a scratch worktree of the clone,
+ * and the page says what it checked and how long it took; the commit is the key's, on the clone's main; and the
  * words are approved. Last, this checkout is as it was. Needs Chrome
  * (tools/chrome.ts); not part of npm test, since it runs tests itself.
  */
@@ -151,7 +150,7 @@ try {
   await until('/^(Saved|Not saved)/.test(document.querySelector("#sheet h3")?.textContent ?? "")', 'the save to end', 600_000);
   const sheet = await text('#sheet');
   check(await page.evaluate('document.querySelector("#sheet h3").textContent') === 'Saved', `saved: ${sheet.replace(/\s+/g, ' ')}`);
-  check(/I checked the tests and fixtures that read the words in \d+ s; the full suite runs before a release\./.test(await text('#checked')),
+  check(/I checked the tests and the fixtures in \d+ s; the full suite runs before a release\./.test(await text('#checked')),
     `the page says what it checked, and how long it took (${((Date.now() - pressed) / 1000).toFixed(1)} s from ⌘S)`);
   const saved = inClone('rev-parse', 'HEAD');
   check(inClone('rev-parse', 'HEAD^') === start, 'one commit on the clone\'s main');

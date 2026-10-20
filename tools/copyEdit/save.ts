@@ -7,24 +7,23 @@
  *
  *   1. refused where this checkout is not on main, is mid-merge, or has
  *      changes in copy/, fixtures/ or fit/tests/ (someone else's: this
- *      tool leaves none of its own);
- *   2. laid on HEAD key by key, an edit whose key HEAD has changed since it
- *      was made refused as a conflict, and held to the catalogue's rules
+ *      tool leaves none of its own), or where main has moved since the page
+ *      loaded the words it edits (`base`): the page lays its drafts on the
+ *      words it loads afresh, and the owner saves again;
+ *   2. laid on that commit key by key, an edit whose key it holds otherwise
+ *      refused as a conflict, and held to the catalogue's rules
  *      (tools/copyRules.ts), with no key and no argument changed;
- *   3. written into a scratch worktree of HEAD in the system's temporary
- *      directory, where the words-only check runs (tools/wordsOnly.ts):
- *      `npm run fixtures:check -- --words` (twice, when the first run only
- *      wrote the fixtures the words moved), then `npm run test:words`, the
- *      key types and the type checks and the tests that can read the words.
- *      So no one's uncommitted work is tested with them, a failure leaves
- *      this checkout as it was, and only the words can have moved a
- *      fixture. It takes seconds: the physics, which no word can move, is
- *      left to `npm run verify` and CI, which run everything before a
- *      release (DECISIONS.md 123);
- *   4. on a pass, committed here on main with `git commit --only` and the
- *      paths by name (the catalogues and any fixture the words moved), so
- *      nothing anyone else staged goes with them. If HEAD moved meanwhile,
- *      the checks run again on the new HEAD, once.
+ *   3. written into a scratch worktree of the commit in the system's
+ *      temporary directory, where `npm run fixtures:check` and `npm test`
+ *      run side by side (fixtures:check again, when the first run only
+ *      wrote the fixtures the words moved). So no one's uncommitted work is
+ *      tested with them, a failure leaves this checkout as it was, and only
+ *      the words can have moved a fixture;
+ *   4. on a pass, committed there, the catalogues and any fixture the words
+ *      moved, and main moved on to that commit with `git merge --ff-only`:
+ *      the tree committed is the tree tested, and nothing anyone else
+ *      staged goes with it. If main moved while the checks ran, nothing is
+ *      committed, and the owner saves again.
  *
  * A failure says why in the owner's words. When the tests fail, they run
  * once more on HEAD without the edits, to say whether it is the edit.
@@ -39,9 +38,9 @@
  */
 
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, sep } from 'node:path';
+import { join, sep } from 'node:path';
 
 import { OVERLAYS } from '../../src/core/copy.ts';
 import { type Entry, withEntries } from '../copyFile.ts';
@@ -70,18 +69,11 @@ export type SaveResult =
   | { ok: true; commit: string; subject: string; fixtures: string[]; seconds?: number }
   | { ok: false; reasons: string[]; conflicts?: { tag: string; key: string; theirs: Entry | null }[]; log?: string };
 
-/** One of the words-only check's two runs in `dir`: its exit code and what
- *  it printed. */
-export type Runner = (dir: string, check: 'fixtures' | 'tests') => Promise<{ code: number; out: string }>;
+/** `npm run <script>` in `dir`: its exit code and what it printed. */
+export type Runner = (dir: string, script: 'test' | 'fixtures:check') => Promise<{ code: number; out: string }>;
 
-/** The npm scripts of each. */
-const SCRIPTS: Record<'fixtures' | 'tests', string[]> = {
-  fixtures: ['fixtures:check', '--', '--words'],
-  tests: ['test:words'],
-};
-
-export const npmRunner: Runner = (dir, check) => new Promise((resolve) => {
-  const child = spawn('npm', ['run', '--silent', ...SCRIPTS[check]], { cwd: dir, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' } });
+export const npmRunner: Runner = (dir, script) => new Promise((resolve) => {
+  const child = spawn('npm', ['run', '--silent', script], { cwd: dir, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' } });
   let out = '';
   child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
   child.stderr.on('data', (d: Buffer) => { out += d.toString(); });
@@ -250,11 +242,11 @@ export function failedTests(out: string): string[] {
 }
 
 /** What failed in a check run, in the owner's words. */
-function whyFailed(check: 'fixtures' | 'tests', out: string): string[] {
+function whyFailed(script: 'test' | 'fixtures:check', out: string): string[] {
   if (/error TS\d+/.test(out)) {
     return ['The code no longer compiles with these words, which only a change to a key or its arguments does.'];
   }
-  if (check === 'fixtures') return ['The fixtures did not settle when made afresh twice; see the log.'];
+  if (script === 'fixtures:check') return ['The fixtures did not settle when made afresh twice; see the log.'];
   const tests = failedTests(out);
   return tests.length === 0 ? ['The tests failed; see the log.'] : tests.map((t) => `A test failed: ${t}`);
 }
@@ -262,23 +254,26 @@ function whyFailed(check: 'fixtures' | 'tests', out: string): string[] {
 type Check = { ok: true; dir: string; changed: string[] } | { ok: false; dir: string; reasons: string[]; log: string; tests: boolean };
 
 /** The edits' files written into a scratch worktree of `head`, and the
- *  checks run there. The worktree is the caller's to drop. */
+ *  checks run there: the fixtures made afresh and the tests, side by side,
+ *  for neither reads what the other writes. The worktree is the caller's to
+ *  drop. */
 async function check(cwd: string, head: string, files: Map<string, string>, runner: Runner,
   stage: (s: string) => void): Promise<Check> {
   const dir = scratchTree(cwd, head);
   for (const [path, text] of files) writeFileSync(join(dir, path), text);
-  stage('Making the fixtures that read the words afresh');
-  let run = await runner(dir, 'fixtures');
-  if (run.code !== 0) {
+  stage('Running the tests and making the fixtures afresh');
+  const [first, tests] = await Promise.all([runner(dir, 'fixtures:check'), runner(dir, 'test')]);
+  let fixtures = first;
+  if (fixtures.code !== 0 && !/error TS\d+/.test(fixtures.out)) {
     // The first run writes any fixture the words moved, and fails; a run
     // after it passes if that was all.
-    stage('Making them afresh again, as the words moved some');
-    run = await runner(dir, 'fixtures');
-    if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('fixtures', run.out), log: run.out, tests: false };
+    stage('Making the fixtures afresh again, as the words moved some');
+    fixtures = await runner(dir, 'fixtures:check');
   }
-  stage('Running the tests that read the words');
-  run = await runner(dir, 'tests');
-  if (run.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('tests', run.out), log: run.out, tests: true };
+  if (tests.code !== 0) return { ok: false, dir: dir, reasons: whyFailed('test', tests.out), log: tests.out, tests: true };
+  if (fixtures.code !== 0) {
+    return { ok: false, dir: dir, reasons: whyFailed('fixtures:check', fixtures.out), log: fixtures.out, tests: false };
+  }
   const changed = changedIn(dir);
   const unexpected = changed.filter((p) => !MAY_CHANGE(p));
   if (unexpected.length > 0) {
@@ -298,7 +293,7 @@ export function commitMessage(edits: Edit[], order: readonly string[], fixtures:
   const body = [
     ...(keys.length > 3 || edits.some((e) => e.tag !== 'en') ? [lines.join('\n'), ''] : []),
     ...(fixtures.length > 0 ? [`The fixtures the words moved: ${fixtures.join(', ')}.`, ''] : []),
-    `Made with npm run copy:edit: the words-only check, npm run test:words and fixtures:check -- --words, passed on ${shortHash(head)} with these words.`,
+    `Made with npm run copy:edit: npm test and fixtures:check passed on ${shortHash(head)} with these words.`,
   ];
   return `${listed} in the owner's words\n\n${body.join('\n')}\n`;
 }
@@ -308,61 +303,67 @@ export async function save(cwd: string, request: SaveRequest, runner: Runner = n
   stage: (s: string) => void = () => {}): Promise<SaveResult> {
   if (request.edits.length === 0) return { ok: false, reasons: ['There is nothing to save.'] };
   const started = Date.now();
-  for (let attempt = 0; attempt < 2; attempt++) {
-    stage('Checking the words');
-    const before = preflight(cwd);
-    if (before.length > 0) return { ok: false, reasons: before };
-    const head = git(cwd, 'rev-parse', 'HEAD');
-    const p = plan(cwd, head, request.edits);
-    if (p.refused.length > 0) return { ok: false, reasons: p.refused };
-    if (p.conflicts.length > 0) {
-      return {
-        ok: false, conflicts: p.conflicts,
-        reasons: p.conflicts.map((c) => `Someone changed ${c.key}${c.tag === 'en' ? '' : ` (${c.tag})`} in the repository since you started editing it.`),
-      };
-    }
-    if (p.problems.length > 0) return { ok: false, reasons: p.problems.map(problemWords) };
-    const checked = await check(cwd, head, p.files, runner, stage);
-    try {
-      if (!checked.ok) {
-        const reasons = [...checked.reasons];
-        if (checked.tests) {
-          stage('Running the tests without your words, to see whether it’s your edit');
-          const bare = await check(cwd, head, new Map(), runner, () => {});
-          dropScratch(cwd, bare.dir);
-          reasons.push(bare.ok
-            ? 'Without your words the tests pass, so your edit is what they catch. If a test quotes the old words, whoever works in the repository has to change it.'
-            : 'The tests fail on main as it is, without your words too, so it isn’t your edit: ask whoever works in the repository.');
-        }
-        return { ok: false, reasons: reasons, log: checked.log };
-      }
-      stage('Committing');
-      const after = preflight(cwd);
-      if (after.length > 0) return { ok: false, reasons: after };
-      if (git(cwd, 'rev-parse', 'HEAD') !== head) continue;
-      for (const path of checked.changed) {
-        mkdirSync(dirname(join(cwd, path)), { recursive: true });
-        copyFileSync(join(checked.dir, path), join(cwd, path));
-      }
-      const order = Object.keys((cataloguesAt(cwd, head).get('en') as CatalogueJson).messages);
-      const fixtures = checked.changed.filter((f) => !f.startsWith('copy/'));
-      const message = commitMessage(request.edits, order, fixtures, head);
-      try {
-        git(cwd, 'commit', '--only', '--quiet', '-m', message, '--', ...checked.changed);
-      } catch (e) {
-        // Put back only what this wrote, which was clean a moment ago.
-        git(cwd, 'checkout', head, '--', ...checked.changed);
-        return { ok: false, reasons: [`git would not commit: ${(e as Error).message.split('\n')[0]}`] };
-      }
-      return {
-        ok: true, commit: git(cwd, 'rev-parse', 'HEAD'), subject: message.split('\n')[0], fixtures: fixtures,
-        seconds: (Date.now() - started) / 1000,
-      };
-    } finally {
-      dropScratch(cwd, checked.dir);
-    }
+  stage('Checking the words');
+  const before = preflight(cwd);
+  if (before.length > 0) return { ok: false, reasons: before };
+  const head = git(cwd, 'rev-parse', 'HEAD');
+  if (head !== request.base) return { ok: false, reasons: [moved(cwd, request.base, head, 'since the page loaded the words')] };
+  const p = plan(cwd, head, request.edits);
+  if (p.refused.length > 0) return { ok: false, reasons: p.refused };
+  if (p.conflicts.length > 0) {
+    return {
+      ok: false, conflicts: p.conflicts,
+      reasons: p.conflicts.map((c) => `Someone changed ${c.key}${c.tag === 'en' ? '' : ` (${c.tag})`} in the repository since you started editing it.`),
+    };
   }
-  return { ok: false, reasons: ['Main kept moving while I checked your words; press Save again.'] };
+  if (p.problems.length > 0) return { ok: false, reasons: p.problems.map(problemWords) };
+  const checked = await check(cwd, head, p.files, runner, stage);
+  try {
+    if (!checked.ok) {
+      const reasons = [...checked.reasons];
+      if (checked.tests) {
+        stage('Running the tests without your words, to see whether it’s your edit');
+        const bare = await check(cwd, head, new Map(), runner, () => {});
+        dropScratch(cwd, bare.dir);
+        reasons.push(bare.ok
+          ? 'Without your words the tests pass, so your edit is what they catch. If a test quotes the old words, whoever works in the repository has to change it.'
+          : 'The tests fail on main as it is, without your words too, so it isn’t your edit: ask whoever works in the repository.');
+      }
+      return { ok: false, reasons: reasons, log: checked.log };
+    }
+    stage('Committing');
+    // The commit is made where it was tested, of the files the checks left
+    // there, and main moved on to it: the tree committed is the tree tested.
+    const order = Object.keys((cataloguesAt(cwd, head).get('en') as CatalogueJson).messages);
+    const fixtures = checked.changed.filter((f) => !f.startsWith('copy/'));
+    const message = commitMessage(request.edits, order, fixtures, head);
+    git(checked.dir, 'add', '--', ...checked.changed);
+    git(checked.dir, 'commit', '--quiet', '-m', message);
+    const commit = git(checked.dir, 'rev-parse', 'HEAD');
+    const after = preflight(cwd);
+    if (after.length > 0) return { ok: false, reasons: after };
+    const now = git(cwd, 'rev-parse', 'HEAD');
+    if (now !== head) return { ok: false, reasons: [moved(cwd, head, now, 'while I checked your words')] };
+    try {
+      git(cwd, 'merge', '--ff-only', '--quiet', commit);
+    } catch (e) {
+      return { ok: false, reasons: [`git would not commit: ${(e as Error).message.split('\n')[0]}`] };
+    }
+    return {
+      ok: true, commit: commit, subject: message.split('\n')[0], fixtures: fixtures,
+      seconds: (Date.now() - started) / 1000,
+    };
+  } finally {
+    dropScratch(cwd, checked.dir);
+  }
+}
+
+/** Main moved from `from` to `to`, in the owner's words: nothing committed,
+ *  and save again. */
+function moved(cwd: string, from: string, to: string, when: string): string {
+  const subject = git(cwd, 'log', '-1', '--format=%s', to);
+  return `Main moved ${when}: someone committed ${shortHash(to)}, “${subject}”, after ${shortHash(from)}. `
+    + 'I’ve committed nothing; I load the words again, and you can save once you’ve looked.';
 }
 
 /* ------------------------------------------------------------ approving */

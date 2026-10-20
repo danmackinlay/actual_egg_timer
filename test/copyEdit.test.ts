@@ -1,7 +1,7 @@
 /**
  * The words' editor's own logic (tools/copyEdit/): who may reach it, what
- * stops a save, how edits are laid on HEAD and checked, what is committed,
- * and approving. On repositories of the test's own (test/repo.ts), with the
+ * stops a save, how edits are laid on the words the page loaded and
+ * checked, what is committed, and approving. On repositories of the test's own (test/repo.ts), with the
  * checks' npm runs stood in for, so no test here runs npm test inside npm
  * test; tools/copyEditE2e.ts runs the real ones, through the page.
  */
@@ -190,7 +190,7 @@ test('a save that passes commits the catalogues alone, by name, on main, and lea
   const result = await save(repo.dir, { base: before, edits: [edit('b', EN.b, { text: 'Lid on tight' })] }, r.run);
   assert.ok(result.ok, JSON.stringify(result));
   assert.ok(typeof result.seconds === 'number' && result.seconds >= 0, 'how long it took, for the page');
-  assert.deepEqual(r.calls, ['fixtures', 'tests']);
+  assert.deepEqual(r.calls, ['fixtures:check', 'test']);
   assert.equal(repo.git('rev-parse', 'HEAD^'), before);
   assert.deepEqual(repo.git('show', '--name-only', '--format=', 'HEAD').split('\n'), ['copy/en.json']);
   assert.equal(repo.git('log', '-1', '--format=%s'), 'b in the owner\'s words');
@@ -204,17 +204,17 @@ test('a save that passes commits the catalogues alone, by name, on main, and lea
 test('the fixtures the words move are made afresh, checked again and committed with them', async () => {
   const repo = wordsRepo();
   const r = runner((dir, script, n) => {
-    if (script !== 'fixtures') return 0;
+    if (script !== 'fixtures:check') return 0;
     if (n === 1) {
-      // As fixtures:check -- --words does: write the fixture afresh and fail.
+      // As fixtures:check does: write the fixture afresh and fail.
       writeFileSync(join(dir, 'fixtures/words.json'), '{ "a": "Saucepan" }\n');
       return 1;
     }
     return 0;
   });
-  const result = await save(repo.dir, { base: '', edits: [edit('a', EN.a, { text: 'Saucepan' }), edit('a', US.a, { base: 'Saucepan', text: 'Pot' }, 'en-US')] }, r.run);
+  const result = await save(repo.dir, { base: repo.git('rev-parse', 'HEAD'), edits: [edit('a', EN.a, { text: 'Saucepan' }), edit('a', US.a, { base: 'Saucepan', text: 'Pot' }, 'en-US')] }, r.run);
   assert.ok(result.ok, JSON.stringify(result));
-  assert.deepEqual(r.calls, ['fixtures', 'fixtures', 'tests']);
+  assert.deepEqual(r.calls, ['fixtures:check', 'test', 'fixtures:check']);
   assert.deepEqual(result.fixtures, ['fixtures/words.json']);
   assert.deepEqual(repo.git('show', '--name-only', '--format=', 'HEAD').split('\n').sort(),
     ['copy/en-US.json', 'copy/en.json', 'fixtures/words.json']);
@@ -226,20 +226,20 @@ test('a save that fails commits nothing, leaves the tree as it was, and says whe
   const head = repo.git('rev-parse', 'HEAD');
   const words = (dir: string): string => readFileSync(join(dir, 'copy/en.json'), 'utf8');
   // The tests fail with the edit, and pass without it.
-  const mine = runner((dir, script) => (script === 'tests' && words(dir).includes('Lid off') ? 1 : 0));
+  const mine = runner((dir, script) => (script === 'test' && words(dir).includes('Lid off') ? 1 : 0));
   const result = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, mine.run);
   assert.ok(!result.ok);
   assert.match(result.reasons.join(' '), /Without your words the tests pass, so your edit is what they catch/);
   assert.equal(repo.git('rev-parse', 'HEAD'), head);
   assert.equal(repo.git('status', '--porcelain', '--', 'copy', 'fixtures'), '');
   // The tests fail anyway.
-  const broken = runner((_dir, script) => (script === 'tests' ? 1 : 0));
+  const broken = runner((_dir, script) => (script === 'test' ? 1 : 0));
   const anyway = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, broken.run);
   assert.ok(!anyway.ok);
   assert.match(anyway.reasons.join(' '), /fail on main as it is, without your words too, so it isn’t your edit/);
   // A check that changes code: a key or its arguments moved.
   const code = runner((dir, script) => {
-    if (script === 'tests') writeFileSync(join(dir, 'src/code.ts'), 'export const key = 1;\n');
+    if (script === 'test') writeFileSync(join(dir, 'src/code.ts'), 'export const key = 1;\n');
     return 0;
   });
   const keyed = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid off' })] }, code.run);
@@ -249,36 +249,42 @@ test('a save that fails commits nothing, leaves the tree as it was, and says whe
   assert.ok(!repo.git('worktree', 'list').includes('aet-copy-edit-'), 'no scratch worktree is left');
 });
 
-test('a save refused before the checks runs none: a conflict, a broken rule, someone else\'s change', async () => {
+test('a save refused before the checks runs none: main moved, a conflict, a broken rule, someone else\'s change', async () => {
   const repo = wordsRepo();
   const r = passing();
-  const conflict = await save(repo.dir, { base: '', edits: [edit('b', { text: 'Lid off' }, { text: 'Lid' })] }, r.run);
+  const loaded = repo.git('rev-parse', 'HEAD');
+  repo.commit('someone else commits', { 'src/code.ts': 'export const later = 1;\n' });
+  const stale = await save(repo.dir, { base: loaded, edits: [edit('b', EN.b, { text: 'Lid' })] }, r.run);
+  assert.ok(!stale.ok);
+  assert.match(stale.reasons[0], /Main moved since the page loaded the words: someone committed [0-9a-f]{8}, “someone else commits”/);
+  const base = repo.git('rev-parse', 'HEAD');
+  const conflict = await save(repo.dir, { base: base, edits: [edit('b', { text: 'Lid off' }, { text: 'Lid' })] }, r.run);
   assert.ok(!conflict.ok);
   assert.deepEqual(conflict.conflicts, [{ tag: 'en', key: 'b', theirs: EN.b }]);
-  const rule = await save(repo.dir, { base: '', edits: [edit('b', EN.b, { text: 'Lid\'s on' })] }, r.run);
+  const rule = await save(repo.dir, { base: base, edits: [edit('b', EN.b, { text: 'Lid\'s on' })] }, r.run);
   assert.ok(!rule.ok);
   assert.match(rule.reasons[0], /straight quote/);
   repo.write({ 'copy/en-US.json': catalogue('en-US', { a: { base: 'Pan', text: 'Pot!' } }) });
-  const dirty = await save(repo.dir, { base: '', edits: [edit('b', EN.b, { text: 'Lid' })] }, r.run);
+  const dirty = await save(repo.dir, { base: base, edits: [edit('b', EN.b, { text: 'Lid' })] }, r.run);
   assert.ok(!dirty.ok);
   assert.match(dirty.reasons[0], /copy\/en-US\.json has changes I didn’t make/);
   assert.deepEqual(r.calls, []);
 });
 
-test('when main moves while the words are checked, they are checked again on the new HEAD', async () => {
+test('when main moves while the words are checked, nothing is committed, and the owner saves again', async () => {
   const repo = wordsRepo();
-  let moved = false;
+  const head = repo.git('rev-parse', 'HEAD');
   const r = runner((_dir, script) => {
-    if (script === 'tests' && !moved) {
-      moved = true;
-      repo.commit('someone else commits', { 'src/code.ts': 'export const later = 1;\n' });
-    }
+    if (script === 'test') repo.commit('someone else commits', { 'src/code.ts': 'export const later = 1;\n' });
     return 0;
   });
-  const result = await save(repo.dir, { base: '', edits: [edit('b', EN.b, { text: 'Lid on tight' })] }, r.run);
-  assert.ok(result.ok, JSON.stringify(result));
-  assert.deepEqual(r.calls, ['fixtures', 'tests', 'fixtures', 'tests']);
-  assert.equal(repo.git('log', '-1', '--format=%s', 'HEAD^'), 'someone else commits');
+  const result = await save(repo.dir, { base: head, edits: [edit('b', EN.b, { text: 'Lid on tight' })] }, r.run);
+  assert.ok(!result.ok);
+  assert.match(result.reasons[0], /Main moved while I checked your words: someone committed [0-9a-f]{8}, “someone else commits”/);
+  assert.deepEqual(r.calls, ['fixtures:check', 'test']);
+  assert.equal(repo.git('log', '-1', '--format=%s'), 'someone else commits');
+  assert.equal(repo.git('status', '--porcelain', '--', 'copy', 'fixtures'), '');
+  assert.ok(!repo.git('worktree', 'list').includes('aet-copy-edit-'), 'no scratch worktree is left');
 });
 
 test('the commit\'s message names the keys as the repository does', () => {
