@@ -939,10 +939,13 @@ October:
     (amended 16 October 2026). The owner's approval is one recorded commit
     (`test/data/copy-approved.txt`), and the review page is the catalogue's
     diff since it. The 1750 twin's hash sidecar goes, and no tool tracks a
-    stale twin (116). `copy:literals` reads where Swift's text reaches a
-    screen, with no allow-list of literals. `npm test` makes the key types.
-    Only small surfaces keep a length budget. Help's sources are a data file
-    both apps read, not words. A wording change that adds no key and
+    stale twin (116). No literal in Swift's text calls is words, held with
+    no allow-list of literals by the `Words` type, which only `tr` makes,
+    and `npm run ios:build`, which refuses one in SwiftUI's own calls; no
+    tool reads a literal made a `String` around them. Amended 21 October
+    2026 (the owner: "yes, delete copy:literals"). `npm test` makes the key
+    types. Only small surfaces keep a length budget. Help's sources are a
+    data file both apps read, not words. A wording change that adds no key and
     changes no arguments needs `npm test` and `fixtures:check`, not the web
     e2e (123).
 136. **No newer-build guard, in either app**; supersedes 100. With one tab
