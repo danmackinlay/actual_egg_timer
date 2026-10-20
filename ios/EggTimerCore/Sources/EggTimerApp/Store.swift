@@ -25,7 +25,21 @@ public enum Stores {
 
     /// Where everything is kept: the suite in the app; a test's own.
     /// Unsafe, but set only at launch, or by a test before it runs anything.
-    nonisolated(unsafe) public static var store: any KeyValueStore = Suite(suite)
+    public static var store: any KeyValueStore {
+        get {
+            #if DEBUG
+            if let test = TestGlobals.current { return test.store }
+            #endif
+            return launchStore
+        }
+        set {
+            #if DEBUG
+            if let test = TestGlobals.current { return test.store = newValue }
+            #endif
+            launchStore = newValue
+        }
+    }
+    nonisolated(unsafe) static var launchStore: any KeyValueStore = Suite(suite)
 
     /// What a write to the store needs, and only `Stores` can make: so no
     /// write reaches the store except through `set` and `remove`.
@@ -198,7 +212,21 @@ enum SettingsStore {
 
     /// The settings as last read or written: what a save of some fields is
     /// laid over, so the rest stay as they were.
-    @MainActor private static var saved = AppSettings.defaults
+    @MainActor private static var saved: AppSettings {
+        get {
+            #if DEBUG
+            if let test = TestGlobals.current { return test.savedSettings }
+            #endif
+            return launchSaved
+        }
+        set {
+            #if DEBUG
+            if let test = TestGlobals.current { return test.savedSettings = newValue }
+            #endif
+            launchSaved = newValue
+        }
+    }
+    @MainActor static var launchSaved = AppSettings.defaults
 
     /// What is stored, read against the size table in use.
     @MainActor

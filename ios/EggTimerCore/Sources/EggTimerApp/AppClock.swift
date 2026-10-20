@@ -47,7 +47,13 @@ public enum AppClock {
         get { sourceSet.withLock { $0 } }
         set { sourceSet.withLock { $0 = newValue } }
     }
-    private static let sourceSet = OSAllocatedUnfairLock<any CookClock>(initialState: LaunchClock.Source())
+    private static var sourceSet: OSAllocatedUnfairLock<any CookClock> {
+        #if DEBUG
+        if let test = TestGlobals.current { return test.clock }
+        #endif
+        return launchSource
+    }
+    static let launchSource = OSAllocatedUnfairLock<any CookClock>(initialState: LaunchClock.Source())
 
     /// Now, in cook time.
     public static var now: Date { source.now }

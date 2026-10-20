@@ -25,14 +25,25 @@ public enum Copy {
     /// Reading it is observed: a view whose body calls `tr` depends on it, so
     /// a change of language redraws every word on screen in place, with no
     /// relaunch and nothing thrown away.
-    public static var activeLocale: String { Active.shared.locale }
+    public static var activeLocale: String { Active.current.locale }
 
     /// Speak another catalogue from now on. A tag with no catalogue in the
     /// bundle is refused, and English stays.
     public static func use(_ locale: String) {
-        guard locale != Active.shared.locale, bundled(locale) else { return }
-        Active.shared.locale = locale
+        guard locale != Active.current.locale, bundled(locale) else { return }
+        Active.current.locale = locale
     }
+
+    #if DEBUG
+    /// Run `body` speaking a language of its own, English until it says
+    /// otherwise, apart from the app's: so tests side by side each choose
+    /// their own. A task made inside it inherits it.
+    public nonisolated(nonsending) static func withOwnLanguage<R>(
+        _ body: nonisolated(nonsending) () async throws -> R
+    ) async rethrows -> R {
+        try await Active.$own.withValue(Active(), operation: body)
+    }
+    #endif
 
     /// The active catalogue, with English beneath it for any key it lacks.
     public static var catalogue: Catalogue { catalogue(for: activeLocale) }
@@ -133,6 +144,13 @@ public enum Copy {
     /// the macro's storage is not safe to read from all of them; a lock is.
     private final class Active: Observable, @unchecked Sendable {
         static let shared = Active()
+        #if DEBUG
+        /// A language of a test's own (`withOwnLanguage`).
+        @TaskLocal static var own: Active?
+        static var current: Active { own ?? shared }
+        #else
+        static var current: Active { shared }
+        #endif
         private let registrar = ObservationRegistrar()
         private let tag = OSAllocatedUnfairLock(initialState: "en")
 
