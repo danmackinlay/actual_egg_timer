@@ -854,7 +854,11 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     another tab's copy of a cook - is each app's own: the web's in
     `src/ui`, tested by `test/*.test.ts`; iOS's in
     `EggTimerApp`, tested by `EggTimerAppTests`. It is no longer ported to
-    Swift or fixtured.
+    Swift or fixtured. The cooks an app holds are core's (`cooks.ts`,
+    `Cooks.swift`, held by `fixtures/cooks.json`): the one on screen and
+    those ended waiting on their records, whose cook each effect is, and
+    which eggs are still open; storing them, stepping them and carrying out
+    their effects stay each app's. Amended 21 October 2026 (153).
 127. **The compilers check the catalogue's keys** (the owner, 14 October
     2026, on the adversarial review: generate the key type from the
     catalogue). `npm run copy:keys` writes, from `copy/en.json`, the
@@ -1104,3 +1108,12 @@ Decided by the owner, 20 October 2026:
     styled text, so each clause is a link at its own place, which is where
     XCUITest taps it; the clause buttons keep their "Egg: 68 g, change"
     labels and their open or closed value. Nothing drawn changes.
+153. **The cooks an app holds go to core; the share queue stays each
+    app's.** The owner, 21 October 2026, choosing "the ending-cook queue
+    into core and the share queue staying put": each app's own queue of
+    cooks ending and still open had drifted three ways (iOS could write an
+    ending cook over a newer cook's stored copy and lose it on relaunch; an
+    answer or correction to an egg already too old was taken; the web's
+    sharing missed an ending cook's egg), so it is core's, fixtured, and
+    126 says so. The share queue's moves agreed in both apps and stay each
+    app's, with their stored forms.
