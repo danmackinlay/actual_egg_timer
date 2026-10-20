@@ -1077,3 +1077,24 @@ Decided by the owner, 20 October 2026:
     screen and a keyboard, and served on this machine only: "Why would I
     want to edit strings on an iPhone UI when I have a great 30″ monitor
     and keyboard on my desk".
+148. **The core stays twinned in Swift, by hand.** Running part of it from
+    the TypeScript under JavaScriptCore was weighed and declined (the
+    owner, 20 October 2026: "I tend to 'no' because it works fine now").
+    What can be derived is derived (the enums, the decision cache's key,
+    the constants), so less of the twin is written by hand.
+149. **App Attest stays.** The owner, 20 October 2026: "yes, this is how we
+    scale big". The attested tier is what lets shared eggs from strangers
+    count in the fit (85).
+150. **The 1750 English stays, and the languages become generic before a
+    third.** The owner, 20 October 2026: "it is hilarious and great";
+    "we will add other langauges"; "we shoudl make the tranlsation infra
+    generic". One table of languages drives both apps' pickers and what
+    they store; every catalogue in `copy/` is checked by the same tests;
+    only what is 1750's own (Imperial into 1750, a cook recorded in it,
+    77) is tested as 1750's.
+151. **The copy capture goes, and a lint that the web's code writes no
+    words of its own replaces it.** The owner, 20 October 2026:
+    "approved", to deleting `copy:snapshot` and its scenarios: they
+    captured from the screen strings the catalogue already holds, and
+    which key each state shows is core's and fixtured. A few states whose
+    check is their own stay as ordinary e2e scenarios.
