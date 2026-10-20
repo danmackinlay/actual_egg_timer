@@ -131,6 +131,7 @@ targets:
         # The web's --accent (styles.css), light and dark, as the app's tint:
         # Start, links, the clause underlines. App/Assets.xcassets/AccentColor;
         # the widget has its own copy, since an extension has its own bundle.
+        # Both written from styles.css by tools/swiftConstants.ts.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_CFBundleDisplayName: Actual Egg Timer
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

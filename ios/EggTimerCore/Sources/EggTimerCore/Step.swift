@@ -292,8 +292,9 @@ private func recordDue(_ cook: RunningCook, unanswered: Bool) -> Bool {
     return lastIndex(cook, "answered") > logged || lastIndex(cook, "ran") > logged
 }
 
-/// Whether the plan as it ran is kept but stale.
-private func asRanStale(_ cook: RunningCook) -> Bool {
+/// Whether the plan as it ran is kept but stale: until it is made again, the
+/// calibration before this egg is wanted for it (`beforeWanted`).
+public func asRanStale(_ cook: RunningCook) -> Bool {
     cook.events.pulled != nil && cook.asRan != nil && !asRanCurrent(cook)
 }
 

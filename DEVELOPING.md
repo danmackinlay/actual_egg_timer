@@ -12,7 +12,7 @@ npm run typecheck  # tsc, checking only: core without DOM or Node, the app witho
 npm test           # the type check, then node --test
 npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
-npm run swift:constants  # the Swift core's constants, written from the TypeScript's
+npm run swift:constants  # the Swift core's constants, written from the TypeScript's; the app's colours, from styles.css
 npm run conformance      # fixtures unchanged, then the Swift core against them
 npm run decide     # measures the choice of cook time (studies/decide.ts)
 npm run identifiability  # is h separable from alpha? (README §11.2)

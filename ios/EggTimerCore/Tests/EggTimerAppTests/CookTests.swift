@@ -270,4 +270,104 @@ extension AppTests {
         #expect(again.planner.kept.log.count == 1)
         #expect(again.planner.kept.log.last?.yolkWord == .jammy)
     }
+
+    /// The plans of the cooks ended and waiting on their records.
+    func endingPlans(_ cook: Cook) -> [CookPlan?] { cook.cooks.ending.map(\.plan) }
+
+    /// The egg answered about at Done, corrected, and Start again pressed
+    /// at once: the cook ended, waiting on its corrected pot's surface and
+    /// the calibration before its egg, both held back.
+    func endedWaiting(_ model: AppModel, _ world: World) async throws -> (EggRecord, HeldGrids, HeldBefore) {
+        let first = try await answeredAtDone(model, world)
+        let corrected = try heavier(model)
+        let grids = HeldGrids(World.grids) { $0.egg.massKg == corrected.massKg }
+        Services.grids = grids
+        let held = HeldBefore(model.planner.learner)
+        model.cook.learned = held
+        model.correct(corrected, startedAtS: nil)
+        await world.until("the correction taken, its record held") {
+            held.asked > 0 && model.cook.running?.correctedAtS != nil
+        }
+        model.startAgain()
+        await world.until("the cook ended, waiting") { model.cook.running == nil && endingPlans(model.cook).count == 1 }
+        return (first, grids, held)
+    }
+
+    /// The next cook in, while one ended waits off the screen.
+    func nextCook(_ model: AppModel, _ world: World) async throws -> Double {
+        await world.until("the planner's answer") { model.planner.solution != nil && !model.planner.solver.busy }
+        model.eggsIn()
+        await world.until("the next cook") { model.cook.running != nil && !model.starting }
+        return try #require(model.cook.running).idMs
+    }
+
+    /// An ended cook stepped while another is stored writes only over its
+    /// own copy: its pot's surface landing after the next cook is in leaves
+    /// the next cook stored, and so does its egg logged again and the ended
+    /// cook forgotten; a relaunch picks the next cook back up.
+    @Test func anEndedCookWritesOnlyOverItsOwnStoredCopy() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let (first, grids, held) = try await endedWaiting(model, world)
+        let next = try await nextCook(model, world)
+        await world.until("the next cook stored") { world.stored?.idMs == next }
+        grids.release()
+        await world.until("the ended cook's surface landed") { endingPlans(model.cook).first??.decided != nil }
+        #expect(world.stored?.idMs == next, "the ended cook written over the next one's copy")
+        held.release()
+        await world.until("the ended cook logged and forgotten") { endingPlans(model.cook).isEmpty }
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        #expect(model.planner.kept.log.first?.egg.massG != first.egg.massG, "logged again, corrected")
+        #expect(world.stored?.idMs == next, "the next cook's copy forgotten with the ended one")
+        await kill(model, world)
+
+        let again = await relaunched(world)
+        defer { again.cook.killed() }
+        #expect(again.cook.running?.idMs == next)
+    }
+
+    /// Jammy at Done, then a correction a second past the egg's hour: the
+    /// clock ends the cook first, its egg final as it was logged; the
+    /// correction is not taken, and nothing is logged again.
+    @Test func aCorrectionPastTheHourIsNotTaken() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let first = try await answeredAtDone(model, world)
+        let tooOld = try #require(model.cook.plan).tooOldAtS
+        let corrected = try heavier(model)
+        world.clock.set(tooOld + 1)
+        model.correct(corrected, startedAtS: nil)
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        #expect(model.cook.running == nil)
+        #expect(world.stored == nil)
+        #expect(model.planner.kept.log.count == 1)
+        #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
+    }
+
+    /// An ended cook waiting to log its egg again, and the next cook's egg
+    /// answered at Done: both open, and sharing holds both back; once the
+    /// first is logged again, only the next.
+    @Test func twoEggsOpenAreBothHeldBack() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let (_, grids, held) = try await endedWaiting(model, world)
+        grids.release()
+        _ = try await nextCook(model, world)
+        world.clock.set(try cooledS(model.cook) + 5)
+        await world.until("Done") { model.cook.phase == .done }
+        model.answer(yolk: .runny, white: nil)
+        await world.until("the next egg logged") { model.planner.kept.log.count == 2 }
+        let host = try #require(world.sharing.host)
+        #expect(host.finalCount() == 0)
+        held.release()
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        #expect(endingPlans(model.cook).isEmpty)
+        #expect(host.finalCount() == 1)
+    }
 }

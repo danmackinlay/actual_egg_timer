@@ -3,33 +3,35 @@ import UIKit
 import EggTimerCore
 
 /// The web's colours where iOS needs the same ones (styles.css `:root`), each
-/// with its dark and its light value. Everything else is the system's.
+/// with its dark and its light value, as `StyleColours` has them
+/// (Palette.generated.swift, written from styles.css by
+/// tools/swiftConstants.ts). Everything else is the system's.
 enum Palette {
     /// A colour that follows the scheme, as the web's `prefers-color-scheme`
     /// override does.
-    private static func scheme(dark: UInt32, light: UInt32) -> Color {
+    private static func scheme(_ pair: StyleColours.Pair) -> Color {
         Color(UIColor { traits in
-            UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
+            UIColor(hex: traits.userInterfaceStyle == .dark ? pair.dark : pair.light)
         })
     }
 
     /// The accent: a clause's underline, and an open clause's fill. The same
     /// two values are the app's tint, the asset catalog's AccentColor, which
     /// is what Start, the links and the controls are drawn in.
-    static let accent = scheme(dark: 0xFFB020, light: 0x8A4B00)
+    static let accent = scheme(StyleColours.accent)
     /// Text on the accent.
-    static let accentText = scheme(dark: 0x1A1200, light: 0xFFFFFF)
+    static let accentText = scheme(StyleColours.accentFg)
 
     /// The doneness track's hue, a yolk's: deep orange runny, golden jammy,
     /// pale yellow hard (`--yolk-runny`, `--yolk-jammy`, `--yolk-hard`).
     /// Deeper in the light scheme, since a pale yellow vanishes on a light
     /// track.
-    static let yolkRunny = scheme(dark: 0xFF7417, light: 0xD9530A)
-    static let yolkJammy = scheme(dark: 0xFFB31F, light: 0xE89400)
-    static let yolkHard = scheme(dark: 0xFFE680, light: 0xE8C410)
+    static let yolkRunny = scheme(StyleColours.yolkRunny)
+    static let yolkJammy = scheme(StyleColours.yolkJammy)
+    static let yolkHard = scheme(StyleColours.yolkHard)
     /// Where jammy sits on the slider, and so where the golden stop goes:
     /// the default level, as the web's gradient has it at 41%.
-    static let yolkJammyAt = 0.41
+    static let yolkJammyAt = StyleColours.yolkJammyAt
 
     /// The yolk's colour at a level, 0 runny to 1 hard, between the three
     /// stops as the web's linear gradient blends them.
@@ -43,10 +45,10 @@ enum Palette {
     /// The egg in cross-section's white (`--white-raw`, `--white-set`), from
     /// raw to set. Both opaque, since its rings are stacked, so the raw one is
     /// a colour of its own: the page's, a touch lighter and a touch blue.
-    static let whiteRaw = scheme(dark: 0x19202B, light: 0xE6EDF6)
-    static let whiteSet = scheme(dark: 0xF2EFE6, light: 0xFFFFFF)
+    static let whiteRaw = scheme(StyleColours.whiteRaw)
+    static let whiteSet = scheme(StyleColours.whiteSet)
     /// Its shell's line (`--line`).
-    static let eggLine = scheme(dark: 0x2A2C31, light: 0xD8D9DD)
+    static let eggLine = scheme(StyleColours.line)
 
     /// The white at how set it is, 0 raw to 1 set.
     static func white(at set: Double, in scheme: ColorScheme) -> Color {
@@ -59,9 +61,8 @@ enum Palette {
     /// red toward the boil; the poles brighten off the dark, darken off the
     /// light.
     static let heat = [
-        scheme(dark: 0x6DA7EC, light: 0x1C5CAB), scheme(dark: 0x256ABF, light: 0x86B6EF),
-        scheme(dark: 0x45454A, light: 0xEBEAE6), scheme(dark: 0xB8403C, light: 0xEC8A84),
-        scheme(dark: 0xFF6B5E, light: 0xB3261E),
+        scheme(StyleColours.heatCold), scheme(StyleColours.heatCool), scheme(StyleColours.heatMid),
+        scheme(StyleColours.heatWarm), scheme(StyleColours.heatHot),
     ]
 
     /// A temperature, C, on the heat map: blended between the stops it lies

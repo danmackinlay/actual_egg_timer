@@ -17,7 +17,8 @@ import { currentInputs, wantedProfiles } from './answer.ts';
 import { cachedDecisionGrid, cachedOddsProfile, decisionGrid, oddsProfileFor, profileKey } from './decisionGrids.ts';
 import type { Learner } from './calibration.ts';
 import { cancelSoon, soon } from './idle.ts';
-import type { Model, Msg } from './model.ts';
+import { type Model, type Msg, cooksOf } from './model.ts';
+import { cooksWaiting } from '../core/cooks.ts';
 import { isSousVide } from './state.ts';
 
 /** What builds what the page waits for. */
@@ -145,8 +146,7 @@ export function openNeeds(builds: Builds, model: () => Model, send: (msg: Msg) =
   /** What each cook waits for, asked for. */
   function follow(): void {
     const m = model();
-    for (const w of [{ cook: m.cook, need: m.need }, ...m.ending]) {
-      if (w.cook === null) continue;
+    for (const w of cooksWaiting(cooksOf(m))) {
       const id = w.cook.id_ms;
       if (w.need.surface !== null) cookSurface(w.need.surface);
       if (w.need.before) {

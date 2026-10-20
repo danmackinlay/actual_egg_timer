@@ -146,7 +146,7 @@ struct ContentView: View {
                 switch route {
                 case .settings:
                     SettingsView(
-                        planner: planner, cooking: cook.running != nil, eggOpen: cook.eggOpen(atS: AppClock.nowS)
+                        planner: planner, cooking: cook.running != nil, openEggs: cook.openEggs(atS: AppClock.nowS).count
                     )
                 case .help(let section): HelpView(planner: planner, start: section)
                 }

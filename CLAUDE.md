@@ -72,7 +72,9 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 - What both apps must agree on lives in `src/core/`: the physics, the
   inference and the decisions; the record's wire schema (`parseRecord`);
-  the cook's `step` machine; when a correction in hand is committed
+  the cook's `step` machine, and the cooks an app holds (`cooks.ts`: the
+  one on screen, those ended waiting on their records, which eggs are
+  still open); when a correction in hand is committed
   (`hand.ts`: its groups, which touches are another control, which moments
   are leaving; each app maps its own gestures onto it, `DECISIONS.md` 139);
   which words say what (`wording.ts`); the alarms' timing; the server's

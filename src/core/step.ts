@@ -257,8 +257,9 @@ function recordDue(cook: RunningCook, unanswered: boolean): boolean {
 }
 
 /** Whether the plan as it ran is kept but stale: corrected after the pull,
- *  and not yet made again (`asRanCorrected`). */
-function asRanStale(cook: RunningCook): boolean {
+ *  and not yet made again (`asRanCorrected`). Until it is, the calibration
+ *  before this egg is wanted for it (cooks.ts, `beforeWanted`). */
+export function asRanStale(cook: RunningCook): boolean {
   return cook.events.pulled !== null && cook.asRan !== null && !asRanCurrent(cook);
 }
 

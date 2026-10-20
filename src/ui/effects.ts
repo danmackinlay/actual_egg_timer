@@ -7,10 +7,10 @@
  */
 
 import { type LanguageState, effectiveLanguage } from './settings.ts';
-import { type CookPlan, openEggId, replan } from '../core/running.ts';
+import { openEggs } from '../core/cooks.ts';
 import type { Learner } from './calibration.ts';
 import type { Stores } from './cook.ts';
-import type { Model } from './model.ts';
+import { type Model, cooksOf } from './model.ts';
 import { applyLanguageToDom } from './controls.ts';
 import { activeLocale, applyCopy, loadCopy } from './copy.ts';
 import { cancelSoon, soon } from './idle.ts';
@@ -125,38 +125,14 @@ export function learnBehind(learner: Learner): void {
 
 /* ---------------------------------------------------------------- sharing */
 
-/** The stored cook's plan, for whether it is too old: the one on screen's,
- *  or, for a cook stored and not on screen (one ended and waiting on its
- *  record), one made for it, kept for as long as the stored text is the same
- *  (how old a cook may get does not move with the clock). */
-const storedPlan = { text: null as string | null, plan: null as CookPlan | null };
-
-/** The egg still open to correction (core `openEggId`): the stored running
- *  cook's, until it is too old to pick back up; null when there is none. */
-function openEgg(s: Stores, m: Model, now_s: number): number | null {
-  const cook = s.cooks.load()?.cook ?? null;
-  if (cook === null) return null;
-  let plan: CookPlan;
-  if (m.cook !== null && m.plan !== null && m.cook.id_ms === cook.id_ms) {
-    plan = m.plan;
-  } else {
-    const text = s.cooks.text();
-    if (storedPlan.text !== text || storedPlan.plan === null) {
-      storedPlan.text = text;
-      storedPlan.plan = replan(cook, m.calib, null, 0, now_s);
-    }
-    plan = storedPlan.plan;
-  }
-  return openEggId(cook, plan, now_s);
-}
-
 /** How many of the log's eggs are final, from its start (share.ts): all of
- *  them but the stored running cook's, which can still be answered and
- *  corrected until Start again or until it is too old (`openEggId`). */
+ *  them up to the first still open (core `openEggs`): the egg on screen,
+ *  which can still be answered and corrected until Start again or until it
+ *  is too old, and one ended whose record is to be made again. The cooks are
+ *  this page's: a page picks the stored cook back up before it first sends. */
 export function finalEggs(s: Stores, m: Model): number {
   const log = s.learner.keptState().log;
-  const open = openEgg(s, m, nowMs() / 1000);
-  if (open === null) return log.length;
-  const at = log.findIndex((r) => (r.id ?? null) === open);
+  const open = openEggs(cooksOf(m), nowMs() / 1000);
+  const at = log.findIndex((r) => r.id !== null && r.id !== undefined && open.includes(r.id));
   return at < 0 ? log.length : at;
 }

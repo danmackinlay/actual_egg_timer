@@ -106,12 +106,16 @@ const node = process.execPath;
 const tsc = createRequire(import.meta.url).resolve('typescript/bin/tsc');
 const tests = ['test', 'test/tools'].flatMap((dir) => readdirSync(dir).filter((f) => f.endsWith('.test.ts')).sort().map((f) => join(dir, f)));
 // What copy:keys, swift:constants and fixtures:check write (TS_KEYS and
-// SWIFT_KEYS, CORE_SWIFT and COPY_SWIFT, WRITTEN in their tools).
+// SWIFT_KEYS, CORE_SWIFT, COPY_SWIFT, PALETTE_SWIFT and ACCENT_COLOURS,
+// WRITTEN in their tools).
 const GENERATED = [
   'src/core/copyKeys.ts',
   'ios/EggTimerCore/Sources/EggTimerCopy/CopyKeys.swift',
   'ios/EggTimerCore/Sources/EggTimerCore/Constants.generated.swift',
   'ios/EggTimerCore/Sources/EggTimerCopy/Constants.generated.swift',
+  'ios/App/Palette.generated.swift',
+  'ios/App/Assets.xcassets/AccentColor.colorset/Contents.json',
+  'ios/Widget/Assets.xcassets/AccentColor.colorset/Contents.json',
   'fixtures/',
   'fit/tests/*.json',
 ];
