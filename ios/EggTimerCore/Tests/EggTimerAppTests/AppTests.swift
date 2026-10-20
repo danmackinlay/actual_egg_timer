@@ -355,7 +355,7 @@ struct AppTests {
         #expect(model.planner.kept.log.count == 1)
         #expect(model.planner.kept.log.first?.yolkWord == .jammy)
         #expect(model.cook.answers?.yolkWord == .jammy)
-        #expect(model.cook.eggOpen(atS: world.clock.seconds))
+        #expect(!model.cook.openEggs(atS: world.clock.seconds).isEmpty)
         // Answered again about the yolk: the first word stands.
         model.answer(yolk: .hard, white: .firm)
         await world.settled(model.cook)
@@ -367,7 +367,7 @@ struct AppTests {
         model.startAgain()
         await world.settled(model.cook)
         #expect(model.planner.kept.log.count == 1)
-        #expect(!model.cook.eggOpen(atS: world.clock.seconds))
+        #expect(model.cook.openEggs(atS: world.clock.seconds).isEmpty)
     }
 
     /// A tap's change is committed once it has settled on the cook's clock,
@@ -502,7 +502,7 @@ struct AppTests {
         }
         #expect(model.planner.kept.log.last?.egg.massG == first.egg.massG)
         #expect(world.sharing.finals == finals)
-        #expect(model.cook.eggOpen(atS: world.clock.seconds))
+        #expect(!model.cook.openEggs(atS: world.clock.seconds).isEmpty)
         await kill(model, world)
 
         world.clock.advance(60)

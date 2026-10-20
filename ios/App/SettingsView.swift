@@ -18,9 +18,9 @@ struct SettingsView: View {
     /// While a cook runs, the altitude is its control, and corrects it as the
     /// sentence does; what I have learned and sharing wait for it to end.
     var cooking = false
-    /// Whether the egg on screen is in the log and still open to correction
-    /// (`Cook.eggOpen`): sharing holds it back.
-    var eggOpen = false
+    /// How many eggs are in the log and still open to correction
+    /// (`Cook.openEggs`): sharing holds them back.
+    var openEggs = 0
     /// A switch here of no group of the cook's choices is another control
     /// used, while a cook runs (`InHand`).
     @Environment(\.editGesture) private var gesture
@@ -288,7 +288,7 @@ struct SettingsView: View {
         if deletedHere && !s.on { return tr(.`share.deleted`) }
         guard s.on else { return nil }
         if s.sent == 0 { return tr(.`share.none`) }
-        let final = planner.kept.log.count - (eggOpen ? 1 : 0)
+        let final = planner.kept.log.count - openEggs
         let waiting = max(0, final - s.sent)
         let sent = tr(.`share.sent`, ["eggs": .int(s.sent)])
         return waiting > 0 ? sent.then(tr(.`share.waiting`, ["eggs": .int(waiting)])) : sent

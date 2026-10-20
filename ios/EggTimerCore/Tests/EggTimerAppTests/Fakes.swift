@@ -297,6 +297,64 @@ final class HeldBefore: LearnedBefore {
     }
 }
 
+/// The decision surfaces, with those for the pots `holds` picks held back
+/// until released, as though still being built: none of them is cached, and
+/// a build of one, or of its odds, waits.
+final class HeldGrids: DecisionSurfaces, @unchecked Sendable {
+    private let base: any DecisionSurfaces
+    private let holds: @Sendable (DecisionInputs) -> Bool
+    private let lock = NSLock()
+    private var held = true
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+
+    init(_ base: any DecisionSurfaces, holding holds: @escaping @Sendable (DecisionInputs) -> Bool) {
+        self.base = base
+        self.holds = holds
+    }
+
+    private func holding(_ inputs: DecisionInputs) -> Bool {
+        lock.withLock { held } && holds(inputs)
+    }
+
+    private func wait(_ inputs: DecisionInputs) async {
+        guard holds(inputs) else { return }
+        await withCheckedContinuation { c in
+            let now = lock.withLock {
+                if held { waiting.append(c) }
+                return !held
+            }
+            if now { c.resume() }
+        }
+    }
+
+    func cached(_ inputs: DecisionInputs) async -> DoseGrid? {
+        holding(inputs) ? nil : await base.cached(inputs)
+    }
+
+    func grid(_ inputs: DecisionInputs) async -> DoseGrid {
+        await wait(inputs)
+        return await base.grid(inputs)
+    }
+
+    func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile? {
+        holding(inputs) ? nil : await base.cachedProfile(inputs, c)
+    }
+
+    func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile {
+        await wait(inputs)
+        return await base.profile(inputs, c)
+    }
+
+    func release() {
+        let resumed = lock.withLock {
+            held = false
+            defer { waiting = [] }
+            return waiting
+        }
+        for c in resumed { c.resume() }
+    }
+}
+
 /// What was said to VoiceOver, in order.
 final class Announced: @unchecked Sendable {
     private let lock = NSLock()

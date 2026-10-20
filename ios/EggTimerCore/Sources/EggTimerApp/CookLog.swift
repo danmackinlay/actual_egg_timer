@@ -14,20 +14,15 @@ struct CookLog {
         return true
     }
 
-    /// A plan taken (`s`, after `event` stepped `was`): any step but a tick
-    /// that decided nothing, which keeps the plan it had.
-    static func plan(_ s: CookStep, was: CookState, event: CookEvent) {
-        guard DebugLog.logging, let next = s.plan else { return }
-        if case .tick = event, was.plan != nil, s.effects.isEmpty, s.cook == was.cook { return }
+    /// A plan taken (`now`, the cook on screen after `event` stepped `was`,
+    /// with `effects`): any step but a tick that decided nothing, which keeps
+    /// the plan it had.
+    static func plan(_ now: CookState, effects: [CooksEffect], was: CookState, event: CookEvent) {
+        guard DebugLog.logging, now.cook != nil, let next = now.plan else { return }
+        if case .tick = event, was.plan != nil, effects.isEmpty, now.cook == was.cook { return }
         DebugLog.log(.plan(
             pull: next.deadlines.cookEndS, cooled: next.deadlines.coolEndS, lengthened: guessLengthened(next),
             surface: next.decided != nil, next: next.slowHobAtS, asking: asksIfStillIn(next), overdue: next.overdue
         ))
     }
-}
-
-/// Whether a cook's plan as it ran waits to be made again for a correction
-/// after the pull.
-func asRanStale(_ cook: RunningCook) -> Bool {
-    cook.events.pulled != nil && cook.asRan != nil && !asRanCurrent(cook)
 }

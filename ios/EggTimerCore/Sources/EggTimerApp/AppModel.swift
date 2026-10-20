@@ -48,12 +48,13 @@ public final class AppModel {
         // reads.
         cook.restore()
         // Sharing, if the cook turned it on (Sharing.swift): every egg in the
-        // log is final but one still open to correction (`Cook.eggOpen`), so
-        // the server never has an egg that can still change.
+        // log is final but those still open to correction (`Cook.openEggs`),
+        // so the server never has an egg that can still change. Its records
+        // carry no id: the open eggs are the log's last.
         Services.sharing.start(host: ShareHost(
             log: { [planner] in planner.kept.log },
             finalCount: { [planner, cook] in
-                planner.kept.log.count - (cook.eggOpen(atS: AppClock.nowS) ? 1 : 0)
+                planner.kept.log.count - cook.openEggs(atS: AppClock.nowS).count
             }
         ))
         // The planner solved before sharing was read, so without the nudge;

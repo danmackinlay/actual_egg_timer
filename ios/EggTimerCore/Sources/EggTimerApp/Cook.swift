@@ -3,11 +3,13 @@ import Observation
 import EggTimerCore
 import EggTimerShared
 
-/// A cook in progress, as an effect runner over core's `step` (Step.swift):
-/// each thing that happens to the cook is an event, `step` returns the cook
-/// as it now stands, its plan, what it waits for (`need`) and what the app
-/// must do (`effects`), and this holds the state, steps it and hands each
-/// effect on: the cook written down here, the alarms and the ring to
+/// A cook in progress, as an effect runner over core's cooks (Cooks.swift,
+/// over `step`): each thing that happens to the cook is an event, core
+/// returns the cooks as they now stand - the one on screen, its plan and
+/// what it waits for, and those ended waiting on their records - and what
+/// the app must do, each effect tagged with whose cook it is; this holds the
+/// cooks, steps them and hands each effect on: the cook written down here,
+/// the alarms and the ring to
 /// `CookAlarms`, the card on the Lock Screen to `CookCard`, the boil and the
 /// egg's record to the planner, what is final to sharing. What a step waits
 /// for (its pot's surface, the calibration before this egg and a surface on
@@ -28,23 +30,18 @@ import EggTimerShared
 ///
 /// A cook that ends before its egg's record can be made - the calibration
 /// before this egg, or a surface on it, still to build - leaves the screen
-/// at once and waits in `ending`, stored, stepped as each lands, until it is
-/// logged and forgotten.
+/// at once and waits in core's `ending`, stored, stepped as each lands, until
+/// it is logged and forgotten; a new cook may start beside it, and an ended
+/// cook is written only over its own stored copy, never over the new one's.
 @Observable
 @MainActor
 public final class Cook {
-    /// The cook on screen, its plan and the lean: core's `CookState`, the cook
-    /// nil while idle. A cook ended is never on screen.
-    private(set) var state = CookState(cook: nil, plan: nil, leanHintS: 0)
-    /// What it waits for; nil for nothing.
-    private var need: CookNeed?
-
-    /// Cooks ended whose egg's record is still to be made.
-    private struct Ending {
-        var state: CookState
-        var need: CookNeed?
-    }
-    private var ending: [Ending] = []
+    /// The cooks, core's `Cooks`: the one on screen, its plan and the lean,
+    /// the cook nil while idle; what it waits for; and those ended whose egg's
+    /// record is still to be made. A cook ended is never on screen.
+    private(set) var cooks = Cooks.none
+    /// The cook on screen, its plan and the lean: core's `CookState`.
+    var state: CookState { cooks.screen }
 
     /// What the plan shows beside the cook, on its pot's surface: what the
     /// egg at the plan's time will be like; how sure I am of it and the odds
@@ -72,6 +69,28 @@ public final class Cook {
         case event(CookEvent)
         /// Something a cook waited for has been built.
         case landed
+    }
+
+    /// A job as the cooks take it: the event, or what was built landing, at
+    /// its moment.
+    private enum Move: Sendable {
+        case event(CookEvent)
+        case landed(nowS: Double)
+
+        var nowS: Double {
+            switch self {
+            case let .event(e): e.nowS
+            case let .landed(now): now
+            }
+        }
+
+        /// The event the cook on screen was stepped with.
+        var event: CookEvent {
+            switch self {
+            case let .event(e): e
+            case let .landed(now): .surfaceLanded(nowS: now)
+            }
+        }
     }
     @ObservationIgnored private var jobs: [Job] = []
     private var stepping: Task<Void, Never>?
@@ -144,12 +163,12 @@ public final class Cook {
     public var shownPeakYolkC: Double? { asRan?.peakYolkC ?? plan?.solution.result.peakYolkC }
     public var shownProbeMoment: Bool { asRan?.probeMoment ?? plan?.probeMoment ?? false }
 
-    /// Whether this cook's egg is in the log and not yet final: the egg on
-    /// screen, answered and not too old, or an ended one whose record is
-    /// being made again. Sharing holds it back; every other egg is final.
-    public func eggOpen(atS nowS: Double) -> Bool {
-        if logged, openEggId(running, plan: plan, nowS: nowS) != nil { return true }
-        return ending.contains { $0.state.cook.map { answersLogged($0) != nil } ?? false }
+    /// The eggs in the log and not yet final, by their cooks' ids (core's
+    /// `openEggs`): the egg on screen, answered and not too old, and each
+    /// ended one whose record is being made again. Sharing holds them back;
+    /// every other egg is final.
+    public func openEggs(atS nowS: Double) -> [Double] {
+        EggTimerCore.openEggs(cooks, nowS: nowS)
     }
 
     /// This egg's record as core makes it now, with what has been said, or
@@ -236,13 +255,10 @@ public final class Cook {
         }
     }
 
-    /// An answer at Done.
+    /// An answer at Done. An egg too old takes none: core ends it first.
     func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?) {
         guard running != nil else { return }
-        // An egg too old takes no answer: the clock ends it first.
-        let now = AppClock.nowS
-        send(.event(.tick(nowS: now)))
-        send(.event(.answered(nowS: now, yolkWord: yolk, white: white, probe: probe)))
+        send(.event(.answered(nowS: AppClock.nowS, yolkWord: yolk, white: white, probe: probe)))
     }
 
     /// Looked at again (back in the foreground): the clock decides what is
@@ -295,11 +311,9 @@ public final class Cook {
             let job = jobs.removeFirst()
             switch job {
             case let .event(event):
-                if running != nil || isStart(event) { await stepOnScreen(event) }
+                if running != nil || isStart(event) { await stepCooks(.event(event)) }
             case .landed:
-                let now = AppClock.nowS
-                if running != nil { await stepOnScreen(.surfaceLanded(nowS: now)) }
-                await stepEnding(nowS: now)
+                if running != nil || !cooks.ending.isEmpty { await stepCooks(.landed(nowS: AppClock.nowS)) }
             }
         }
         stepping = nil
@@ -310,16 +324,26 @@ public final class Cook {
         if case .start = e { true } else { false }
     }
 
-    /// The step, with what it shows beside the cook, made off the main actor.
+    /// The step of the cooks, with what it shows beside the cook on screen,
+    /// made off the main actor.
     private struct Made: Sendable {
-        let step: CookStep
+        let step: CooksStep
         let outcome: Outcome?
         let ran: Solution?
     }
 
-    private nonisolated static func made(_ state: CookState, _ event: CookEvent, _ env: CookEnv) -> Made {
-        let s = step(state, event, env)
-        guard let cook = s.cook, let p = s.plan else { return Made(step: s, outcome: nil, ran: nil) }
+    private nonisolated static func made(_ q: Cooks, _ move: Move, _ env: CooksEnv) -> Made {
+        switch move {
+        case let .event(event): shown(cooksStep(q, event, env), env)
+        case let .landed(nowS): shown(cooksLanded(q, nowS: nowS, env), env)
+        }
+    }
+
+    /// What the cook on screen shows beside it, as `s` leaves it.
+    private nonisolated static func shown(_ s: CooksStep, _ env: CooksEnv) -> Made {
+        guard let cook = s.cooks.screen.cook, let p = s.cooks.screen.plan else {
+            return Made(step: s, outcome: nil, ran: nil)
+        }
         var outcome: Outcome?
         if let d = p.decided, let surface = surfaceFor(env.surfaces, p.inputs) {
             outcome = p.cookTimeS == d.solution.result.cookTimeS
@@ -330,13 +354,16 @@ public final class Cook {
         return Made(step: s, outcome: outcome, ran: ran)
     }
 
-    /// What the app holds for a step of `cook`.
-    private func env(for cook: RunningCook?, nowS: Double) -> CookEnv {
+    /// What the app holds for a step of its cooks, and of `stored` if one is
+    /// picked back up: each cook's calibration before its egg, and the local
+    /// day it started.
+    private func env(nowS: Double, also stored: RunningCook? = nil) -> CooksEnv {
         let c = planner.calibration
-        return CookEnv(
-            calibration: c, surfaces: surfaces.all(c), before: cook.flatMap { surfaces.before[$0.idMs] }, app: .ios,
-            appVersion: AppClock.mark(Calibrations.appVersion), prior: Calibrations.population.id,
-            day: localDay(cook?.startedAtS ?? nowS)
+        let held = cooksWaiting(cooks).map(\.cook) + (stored.map { [$0] } ?? [])
+        return CooksEnv(
+            calibration: c, surfaces: surfaces.all(c), app: .ios, appVersion: AppClock.mark(Calibrations.appVersion),
+            prior: Calibrations.population.id, day: localDay(nowS),
+            at: held.map { CookAt(idMs: $0.idMs, before: surfaces.before[$0.idMs], day: localDay($0.startedAtS)) }
         )
     }
 
@@ -348,97 +375,67 @@ public final class Cook {
         )
     }
 
-    /// The cook on screen stepped with `event`.
-    private func stepOnScreen(_ event: CookEvent) async {
-        let was = state
-        let env = env(for: was.cook, nowS: event.nowS)
-        let made = await Task.detached(priority: .userInitiated) { Self.made(was, event, env) }.value
-        take(made, was: was, event: event)
+    /// The cooks stepped with `move`, off the main actor, and the step taken.
+    private func stepCooks(_ move: Move) async {
+        let was = cooks
+        let env = env(nowS: move.nowS)
+        let made = await Task.detached(priority: .userInitiated) { Self.made(was, move, env) }.value
+        take(made, was: was, move: move)
     }
 
-    /// Each ended cook stepped as something it waited for has landed; those
-    /// logged and forgotten go.
-    private func stepEnding(nowS: Double) async {
-        for e in ending {
-            guard let cook = e.state.cook else { continue }
-            let env = env(for: cook, nowS: nowS)
-            let state = e.state
-            let s = await Task.detached(priority: .userInitiated) {
-                step(state, .surfaceLanded(nowS: nowS), env)
-            }.value
-            guard let i = ending.firstIndex(where: { $0.state.cook?.idMs == cook.idMs }) else { continue }
-            perform(s.effects, for: cook, after: s.cook, leanHintS: s.leanHintS, onScreen: running == nil)
-            if s.cook == nil {
-                ending.remove(at: i)
-            } else {
-                ending[i] = Ending(state: s.state, need: s.need)
-            }
-        }
-        keepBefore()
-        follow()
-    }
-
-    /// A step of the cook on screen taken: the state, what it shows, the
-    /// effects, and what it waits for.
-    private func take(_ made: Made, was: CookState, event: CookEvent) {
+    /// A step of the cooks taken: the cooks, what the one on screen shows,
+    /// the effects, and what each waits for. A cook that has left the screen
+    /// (logged and forgotten, or ended with its record still to make,
+    /// waiting) takes its ticker, ring and card with it.
+    private func take(_ made: Made, was: Cooks, move: Move) {
         let s = made.step
-        guard let cook = s.cook, endedAtS(cook) == nil else {
-            // Off the screen: logged and forgotten, or ended with its record
-            // still to make, waiting.
-            if was.cook != nil { leave() }
-            if s.cook != nil { ending.append(Ending(state: s.state, need: s.need)) }
-            perform(s.effects, for: s.cook ?? was.cook, after: s.cook, leanHintS: s.leanHintS, onScreen: true)
-            if was.cook != nil {
-                // The idle screen solved again: a new nudge, and a pan the
-                // cook timed remembered.
-                planner.redrawNudge()
-                planner.refresh()
+        let left = was.screen.cook != nil && s.cooks.screen.cook == nil
+        let started = was.screen.cook == nil && s.cooks.screen.cook != nil
+        if left { leave() }
+        cooks = s.cooks
+        if running != nil {
+            if let o = made.outcome { outcome = o }
+            ranSolution = made.ran
+            if let p = plan, p.decided != nil {
+                heldCertainty = p.certainty
+                heldProfile = surfaceFor(surfaces.all(planner.calibration), p.inputs)?.profile
             }
-            keepBefore()
-            follow()
-            return
         }
-        let started = was.cook == nil
-        state = s.state
-        need = s.need
-        if let o = made.outcome { outcome = o }
-        ranSolution = made.ran
-        if let p = s.plan, p.decided != nil {
-            heldCertainty = p.certainty
-            heldProfile = surfaceFor(surfaces.all(planner.calibration), p.inputs)?.profile
+        perform(s.effects)
+        if running != nil { CookLog.plan(state, effects: s.effects, was: was.screen, event: move.event) }
+        if left {
+            // The idle screen solved again: a new nudge, and a pan the cook
+            // timed remembered.
+            planner.redrawNudge()
+            planner.refresh()
         }
-        perform(s.effects, for: cook, after: cook, leanHintS: s.leanHintS, onScreen: true)
-        CookLog.plan(s, was: was, event: event)
         keepBefore()
         follow()
-        if started { begin(cook) }
-        card.push(running, plan, atS: AppClock.nowS)
+        if started, let cook = running { begin(cook) }
+        if running != nil { card.push(running, plan, atS: AppClock.nowS) }
     }
 
-    /// What core asks of the app, for `cook` (`after`, the cook as the step
-    /// left it, nil when it is gone), handed on.
+    /// What core asks of the app, each for the cook it names, handed on.
     ///
-    /// The alarms and the ring are the screen's: an ended cook stepped while
-    /// another is on screen leaves them alone.
-    private func perform(
-        _ effects: [CookEffect], for cook: RunningCook?, after: RunningCook?, leanHintS: Double, onScreen: Bool
-    ) {
-        for e in effects {
-            switch e {
+    /// The alarms and the ring are the screen's: core tags them so, and
+    /// drops those of a cook off it.
+    private func perform(_ effects: [CooksEffect]) {
+        for t in effects {
+            switch t.effect {
             case .persist:
-                persist(after, leanHintS: leanHintS)
+                persist(t.idMs, ended: t.ended)
             case let .alarms(pullS, cooledS):
-                if onScreen { alarms.plan(pullS: pullS, cooledS: cooledS) }
+                if t.onScreen { alarms.plan(pullS: pullS, cooledS: cooledS) }
             case let .ring(deadline):
-                if onScreen, let plan { alarms.ring(deadline, plan.deadlines) }
+                if t.onScreen, let plan { alarms.ring(deadline, plan.deadlines) }
             case .silence:
-                if onScreen { alarms.silence() }
+                if t.onScreen { alarms.silence() }
             case let .rememberBoil(boil):
                 planner.rememberBoil(boil)
             case let .log(record, replaces):
                 planner.learner.logRecord(record, replaces: replaces)
             case .forget:
-                if let cook { Self.forgetStored(idMs: cook.idMs) }
+                Self.forgetStored(idMs: t.idMs)
             case .sendFinal:
                 Services.sharing.sendFinal()
             }
@@ -447,10 +444,7 @@ public final class Cook {
 
     /// What each cook waits for, asked for.
     private func follow() {
-        if let cook = running, let need { ask(need, for: cook) }
-        for e in ending {
-            if let cook = e.state.cook, let need = e.need { ask(need, for: cook) }
-        }
+        for w in cooksWaiting(cooks) { ask(w.need, for: w.cook) }
     }
 
     private func ask(_ need: CookNeed, for cook: RunningCook) {
@@ -464,10 +458,9 @@ public final class Cook {
         surfaces.buildBefore(cook.idMs, surface: inputs)
     }
 
-    /// The calibrations before an egg still wanted: a cook's whose plan as it
-    /// ran is stale.
+    /// The calibrations before an egg still wanted (core's `beforeWanted`).
     private func keepBefore() {
-        surfaces.keep(Set(([state] + ending.map(\.state)).compactMap { $0.cook }.filter(asRanStale).map(\.idMs)))
+        surfaces.keep(Set(beforeWanted(cooks)))
     }
 
     // MARK: - On and off the screen
@@ -501,8 +494,6 @@ public final class Cook {
         // While the cook is still here, so a level only previewed after the
         // pull goes back to its own.
         inHand?.end()
-        state = CookState(cook: nil, plan: nil, leanHintS: 0)
-        need = nil
         outcome = nil
         heldCertainty = nil
         heldProfile = nil
@@ -567,8 +558,21 @@ public final class Cook {
         decodeStamped(StoreRegistry.cook, StoredCook.self, from: data)
     }
 
-    private func persist(_ cook: RunningCook?, leanHintS: Double) {
-        guard let cook else { return }
+    /// The cook `idMs` written down as the cooks now hold it, with the lean
+    /// beside it; one ended only over its own stored copy, so that it never
+    /// takes the place of a newer cook's, which a relaunch would then lose.
+    private func persist(_ idMs: Double, ended: Bool) {
+        let held = cooks.screen.cook?.idMs == idMs ? cooks.screen : cooks.ending.first { $0.cook?.idMs == idMs }?.state
+        guard let held, let cook = held.cook else { return }
+        if ended {
+            guard let data = Stores.store.data(forKey: Self.savedKey), Self.readStored(data)?.cook.idMs == idMs else {
+                return
+            }
+        }
+        write(cook, leanHintS: held.leanHintS)
+    }
+
+    private func write(_ cook: RunningCook, leanHintS: Double) {
         let stored = StoredCook(cook: cook, answers: answered(cook) ? .beforeReload : .unanswered, leanHintS: leanHintS)
         if let data = try? encodeStamped(StoreRegistry.cook, stored) {
             Stores.set(data, forKey: Self.savedKey)
@@ -590,7 +594,7 @@ public final class Cook {
     /// clock writes what it decided while the app was away; one too old ends
     /// as Start again ends it. Called by the view, not from `init`.
     func restore() {
-        guard running == nil, ending.isEmpty else { return }
+        guard running == nil, cooks.ending.isEmpty else { return }
         guard let data = Stores.store.data(forKey: Self.savedKey) else { return }
         // A cook this build cannot read whole is dropped, with what timed it.
         guard let stored = Self.readStored(data) else {
@@ -601,35 +605,35 @@ public final class Cook {
         }
         let cook = stored.cook
         let now = AppClock.nowS
-        let was = CookState(cook: cook, plan: nil, leanHintS: stored.leanHintS)
-        let made = Self.made(was, .tick(nowS: now), env(for: cook, nowS: now))
+        let was = cooks
+        let env = env(nowS: now, also: cook)
+        let made = Self.shown(cooksRestore(was, CookStored(cook: cook, leanHintS: stored.leanHintS), nowS: now, env), env)
         let s = made.step
-        guard let after = s.cook, endedAtS(after) == nil else {
+        cooks = s.cooks
+        guard let after = running else {
             DebugLog.log(.restoreTooOld)
             // Its alarms and its card are this cook's, and there is nothing
             // left for them to time; an ended cook waits for its record.
             card.endAll()
-            if s.cook != nil { ending.append(Ending(state: s.state, need: s.need)) }
-            perform(s.effects, for: cook, after: s.cook, leanHintS: s.leanHintS, onScreen: true)
+            perform(s.effects)
             follow()
             return
         }
         DebugLog.log(.restore(
-            phase: s.plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
+            phase: plan.map { phaseAt($0.deadlines, nowS: now).rawValue } ?? Phase.idle.rawValue,
             eventsWritten: after.events != cook.events
         ))
-        state = s.state
-        need = s.need
         if let o = made.outcome { outcome = o }
         ranSolution = made.ran
-        if let plan = s.plan, plan.decided != nil { heldCertainty = plan.certainty }
+        if let plan, plan.decided != nil { heldCertainty = plan.certainty }
         // Written down whatever the clock decided, so the store holds what
         // this launch picked up.
-        persist(after, leanHintS: s.leanHintS)
-        perform(
-            s.effects.filter { $0 != .persist }, for: cook, after: after, leanHintS: s.leanHintS, onScreen: true
+        write(after, leanHintS: state.leanHintS)
+        perform(s.effects.filter { $0.effect != .persist })
+        CookLog.plan(
+            state, effects: s.effects, was: CookState(cook: cook, plan: nil, leanHintS: stored.leanHintS),
+            event: .tick(nowS: now)
         )
-        CookLog.plan(s, was: was, event: .tick(nowS: now))
         follow()
         begin(after, restored: true)
     }
