@@ -59,7 +59,8 @@ final class WarmUp: XCTestCase {
         let run = Run("warm-up")
         defer { run.terminate() }
         try run.launch(["-uiScreen", "heating"])
-        let hit = try run.until("the alarms") {
+        // A new device's first launches may never hear back: another, soon.
+        let hit = try run.until("the alarms", timeoutS: max(30, Env.waitS / 2)) {
             switch $0 {
             case .pending(let alarms): alarms.contains { $0.id.hasPrefix("cook") }
             case .notScheduled: true
