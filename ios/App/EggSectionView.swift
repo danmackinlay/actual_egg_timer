@@ -56,6 +56,7 @@ struct EggSectionView: View {
         .accessibilityHint(tr(heat ? .`egg.offer.set` : .`egg.offer.heat`))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { model.planner.turnEgg() }
+        .accessibilityIdentifier("egg")
     }
 
     /// The egg as it went in, for the heat map's every ring in the first

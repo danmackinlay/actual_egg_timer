@@ -279,6 +279,40 @@ final class Run {
         e.tap()
     }
 
+    /// The page scrolled, a swipe at a time, until the element is on the
+    /// screen whole, where a finger can reach it: under the bar, and over
+    /// the home indicator's 34 pt.
+    func reveal(_ e: XCUIElement) throws {
+        let top = app.navigationBars.firstMatch.frame.maxY
+        let foot = app.windows.firstMatch.frame.maxY - 34
+        let whole = { e.isHittable && e.frame.minY >= top && e.frame.maxY <= foot }
+        for _ in 0..<8 where !whole() {
+            if e.frame.maxY > foot {
+                app.scrollViews.firstMatch.swipeUp(velocity: .slow)
+            } else {
+                app.scrollViews.firstMatch.swipeDown(velocity: .slow)
+            }
+        }
+        guard whole() else { throw Stop("\(e.identifier) never on the screen whole: \(e.frame)") }
+    }
+
+    /// Press the + of a stepper (`<group>.stepper`, `testID`), or its −, as a
+    /// finger would: the stepper ends its element, its + the last 47 pt and
+    /// its − the 47 before them.
+    func press(_ id: String, up: Bool = true) throws {
+        let e = try find(id)
+        try reveal(e)
+        e.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5)).withOffset(CGVector(dx: up ? -20 : -70, dy: 0))
+            .tap()
+    }
+
+    /// Where the element with this identifier is, in the window; nil if it
+    /// is not there.
+    func frame(_ id: String) -> CGRect? {
+        let e = element(id)
+        return e.exists ? e.frame : nil
+    }
+
     // MARK: - Checks
 
     func check(

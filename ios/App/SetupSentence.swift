@@ -55,6 +55,7 @@ struct SetupSentence: View {
             .accessibilityRepresentation {
                 VStack(alignment: .leading) {
                     Text(words.plain)
+                        .accessibilityIdentifier("sentence")
                     ForEach(shown) { clause in
                         Button(tr(.`setup.clause`, [
                             "label": .text(texts[clause]?.label ?? ""),
@@ -305,6 +306,7 @@ struct ClausePanel: View {
                     tr(.`controls.startedAt`), value: timeOfDay(Date(timeIntervalSince1970: start)),
                     field: .startedAt, gesture: gesture
                 ) { inHand.stepStart(up: $0) }
+                .accessibilityIdentifier("startedAt.stepper")
             }
             .appFont(.subheadline)
             if let limit = inHand.startLimit {

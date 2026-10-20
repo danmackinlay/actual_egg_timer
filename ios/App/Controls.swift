@@ -58,6 +58,16 @@ extension View {
     }
 }
 
+extension View {
+    /// What the UI tests find a control of a group of the cook's choices by
+    /// (ios/UITests): `<group>.<part>`, as `waterLitres.stepper`. Nothing
+    /// for a control of no group.
+    @ViewBuilder
+    func testID(_ field: HandGroup?, _ part: String) -> some View {
+        if let field { accessibilityIdentifier("\(field.rawValue).\(part)") } else { self }
+    }
+}
+
 /// An SI binding seen through a measure: it reads the stored value as
 /// displayed, and a control's value as SI, clamped by the limit.
 func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
@@ -106,6 +116,7 @@ struct StepperValue: View {
             if let b = measure.bounds { next = min(b.upperBound, max(b.lowerBound, next)) }
             shown.wrappedValue = next
         }
+        .testID(field, "stepper")
     }
 }
 
@@ -167,6 +178,7 @@ struct CountValue: View {
         .adjustable(label, value: countText(Double(value)), field: field, gesture: gesture) { up in
             value = min(Int(range.upperBound), max(Int(range.lowerBound), value + (up ? 1 : -1)))
         }
+        .testID(field, "stepper")
     }
 }
 
@@ -235,6 +247,7 @@ struct MeasureField: View {
                 .frame(maxWidth: large ? .infinity : 72)
                 .focused($focused)
                 .accessibilityLabel(label)
+                .testID(field, "field")
                 .onChange(of: text) {
                     guard focused else { return }
                     if let typed = parseTyped(text), let si = parse(measure, typed) { set(si) }
@@ -253,6 +266,7 @@ struct MeasureField: View {
             }
                 .labelsHidden()
                 .adjustable(label, value: spoken, field: field, gesture: gesture) { step(up: $0) }
+                .testID(field, "stepper")
         }
     }
 
@@ -333,6 +347,7 @@ struct NudgeField: View {
                 .focused($focused)
                 .disabled(disabled)
                 .accessibilityLabel(label)
+                .testID(field, "field")
             Text(tr(measure.unitKey))
                 .foregroundStyle(.secondary)
                 .fixedSize()
@@ -352,6 +367,7 @@ struct NudgeField: View {
                 if field == nil, let control { gesture.used(control) }
                 step(up: up)
             }
+            .testID(field, "stepper")
         }
         .onChange(of: focused) {
             if focused, field == nil, let control { gesture.used(control) }

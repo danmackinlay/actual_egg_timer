@@ -80,6 +80,7 @@ struct ReadoutView: View {
                 VStack(spacing: 0) {
                     Text(words.big)
                         .font(.system(size: Self.digits, weight: .semibold, design: .rounded))
+                        .accessibilityIdentifier("readout.time")
                         .monospacedDigit()
                         .contentTransition(.numericText())
                         .animation(.snappy, value: words.big)
@@ -145,12 +146,14 @@ struct ReadoutView: View {
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("readout.sub")
             }
         } else {
             Text(words.sub)
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .accessibilityIdentifier("readout.sub")
         }
     }
 
@@ -210,6 +213,7 @@ struct ReadoutView: View {
                                 .appFont(.footnote)
                                 .modifier(OneLineWhenLarge())
                                 .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("readout.likely")
                         }
                     }
                 }
