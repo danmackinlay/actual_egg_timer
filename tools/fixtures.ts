@@ -29,7 +29,8 @@
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
- *   fixtures/calibration.json  the particle filter, particle by particle
+ *   fixtures/calibration.json  the particle filter: the prior particle by
+ *                              particle, each fold's posterior in summary
  *   fixtures/record.json       the record (INFERENCE.md section 4): which records
  *                              a loader trusts, and a replayed log; and the
  *                              calibration grid
@@ -267,11 +268,11 @@ const COUNTED = [
 const SLOWEST = ['step', 'fitRecovery', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
 
 /**
- * A particle set that repeats one earlier in the same file - an update that
- * reweighted without resampling keeps its particles - is written once: the
- * repeat is `{ "sameAs": "<dotted path>" }`, the path of the first, with array
- * indices as numbers (`updates.2.after.particles`). Fixtures.swift resolves it
- * on load, so no reader sees it.
+ * A particle set that repeats one earlier in the same file - two populations
+ * that draw the same prior - is written once: the repeat is
+ * `{ "sameAs": "<dotted path>" }`, the path of the first, with array indices
+ * as numbers (`populations.0.particles`). Fixtures.swift resolves it on load,
+ * so no reader sees it.
  */
 function shareRepeatedParticles(root: unknown): unknown {
   const seen = new Map<string, string>();

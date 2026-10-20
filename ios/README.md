@@ -61,9 +61,10 @@ as it is. The integrator is tested against a moving surface as well as a held
 one, since a step-only test cannot catch a sign error in the Duhamel term
 (`ConformanceTests.swift`). `Sphere.complementaryError` is the Numerical
 Recipes form, not Foundation's more accurate `erfc`, because the port's job is
-to agree (`Sphere.swift`). The calibration's fixtures carry every particle and
-every weight, since a wrong random number generator draws a different but
-entirely plausible prior (`CalibrationTests.swift`); xorshift32 in `UInt32`
+to agree (`Sphere.swift`). The calibration's fixtures carry the prior's every
+particle and weight, and each posterior after a fold in a summary a particle
+drawn otherwise moves, since a wrong random number generator draws a
+different but entirely plausible prior (`CalibrationTests.swift`); xorshift32 in `UInt32`
 reproduces JavaScript's signed shifts, and a sort by predicted time takes the
 original index as its tie-break, because Swift's sort is not stable
 (`Infer.swift`).
