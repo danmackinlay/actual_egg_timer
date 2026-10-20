@@ -3,10 +3,44 @@ import Foundation
 @testable import EggTimerCore
 
 /// The egg in cross-section, against `fixtures/section.json`: a cook carried
-/// forward tick by tick - the section whole at every tick, the sphere's modes,
-/// the moment out, what the egg was as it left and every ring's dose, and the
-/// view of it against two white targets - in the water, out of it, and in
-/// each thing it cools in; and the egg the settings aim for.
+/// forward tick by tick, and at every tick what is drawn of each ring - its
+/// temperature, and how set against two white targets - in the water, out
+/// of it, and in each thing it cools in; and the egg the settings aim for.
+/// Where each ring is and which is yolk are the egg's, written once.
+
+/// What a view draws of each ring, as the fixture writes it.
+private struct Drawn: Encodable {
+    let temperatureC: [Double]
+    let set: [Double]
+
+    enum CodingKeys: String, CodingKey {
+        case temperatureC = "temperature_C", set
+    }
+
+    init(_ v: SectionView) {
+        temperatureC = v.temperatureC
+        set = v.set
+    }
+}
+
+/// A tick's views, as the fixture writes them: the temperature once, and how
+/// set against each white target.
+private struct Tick: Encodable {
+    let temperatureC: [Double]
+    let set: [[Double]]
+
+    enum CodingKeys: String, CodingKey {
+        case temperatureC = "temperature_C", set
+    }
+}
+
+/// The rings, as the fixture writes them.
+private struct Rings: Encodable {
+    let x: [Double]
+    let yolk: [Bool]
+    let outer: [Double]
+}
+
 @Suite("Section")
 struct SectionConformance {
     @Test("a cook, tick by tick, from the rings it starts with")
@@ -19,12 +53,12 @@ struct SectionConformance {
             let name = try c.str("name")
             let setup = try decoded(CookSetup.self, c["setup"])
             var section = EggSection(egg: egg, setup: setup, params: params)
-            expectJSON(section, c["start"], "\(name) at the start")
             for tick in try c.rows("ticks") {
                 let at = "\(name) at \(try tick.num("to_s")) s"
                 section.advance(egg: egg, setup: setup, toS: try tick.num("to_s"), outAtS: try tick.optionalNum("givenOut_s"))
-                expectJSON(section, tick["section"], at)
-                expectJSON(targets.map { section.view(whiteTargetMin: $0) }, tick["views"], "\(at): the views")
+                let views = targets.map { section.view(whiteTargetMin: $0) }
+                expectJSON(Rings(x: views[0].x, yolk: views[0].yolk, outer: views[0].outer), file["rings"], "\(at): the rings")
+                expectJSON(Tick(temperatureC: views[0].temperatureC, set: views.map(\.set)), ["temperature_C": tick["temperature_C"] as Any, "set": tick["set"] as Any], at)
             }
         }
     }
@@ -41,7 +75,8 @@ struct SectionConformance {
                 egg: egg, setup: decoded(CookSetup.self, p["setup"]), params: params, cookTimeS: p.num("cookTime_s"),
                 whiteTargetMin: p.num("whiteTarget_min")
             )
-            try expectJSON(view, p["view"], p.str("name"))
+            expectJSON(Rings(x: view.x, yolk: view.yolk, outer: view.outer), file["rings"], "\(try p.str("name")): the rings")
+            try expectJSON(Drawn(view), p["view"], p.str("name"))
         }
     }
 }
