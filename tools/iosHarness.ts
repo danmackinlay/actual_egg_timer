@@ -8,7 +8,7 @@ import {
   closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, rmSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import { asRead } from './text.ts';
 
@@ -154,6 +154,24 @@ export function createDevice(model: string | null = null, tool = 'e2e'): string 
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
+}
+
+/// What the UI tests are given (ios/UITests/Harness.swift `Env`): where
+/// each run's directory is made, how long a wait gives up after, and the
+/// locale.
+export const UI_ENV: Record<string, string> = {
+  AET_E2E_DIR: resolve(`ios/${DERIVED}/runs`), AET_E2E_WAIT: String(WAIT_S), AET_LOCALE: LOCALE,
+};
+
+/// The device warmed up for the UI tests (`WarmUp`, ios/UITests/Bundle.swift):
+/// run until a cook has its alarms pending, at most five times.
+export function uiWarmUp(udid: string, tool = 'e2e'): void {
+  for (let attempt = 1; ; attempt += 1) {
+    const r = uiTest(udid, 'WarmUp/test_warm_up', UI_ENV);
+    if (r.passed) return;
+    console.log(`ios:${tool}: warm-up ${attempt}: ${r.failures.join('; ')}`);
+    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
+  }
 }
 
 /// A new device's first launches are many seconds slow while the system

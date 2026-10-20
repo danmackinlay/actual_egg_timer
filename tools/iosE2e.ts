@@ -31,14 +31,13 @@
 //
 // Needs Xcode, xcodegen and python3; not in `npm run verify`.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 import { type CookEntry, type CookStart, type RunningCook, foldCook } from '../src/core/running.ts';
 import type { BoilMemory } from '../src/core/boil.ts';
 import type { Units } from '../src/core/record.ts';
 import {
-  APP, type Event, type EventOf, type Found, LOCALE, type LaunchOptions, Run, WAIT_S, build, iosStore,
-  createDevice, is, lastOf, quietly, simctl, uiTest,
+  APP, type Event, type EventOf, type Found, type LaunchOptions, Run, UI_ENV, build, iosStore,
+  createDevice, is, lastOf, quietly, simctl, uiTest, uiWarmUp,
 } from './iosHarness.ts';
 
 const argv = process.argv.slice(2);
@@ -341,13 +340,6 @@ scenario('tap-water-mid-cook', "the cold tap's temperature while a cold cook hea
 
 // ------------------------------------------------------------ the UI tests
 
-/// What the UI tests are given (ios/UITests/Harness.swift `Env`): where
-/// each scenario's directory is made, how long a wait gives up after, and
-/// the locale.
-const UI_ENV: Record<string, string> = {
-  AET_E2E_DIR: resolve('ios/build/e2e/runs'), AET_E2E_WAIT: String(WAIT_S), AET_LOCALE: LOCALE,
-};
-
 /// The scenarios ios/UITests holds: each `test_<name>` of `Scenarios`, its
 /// name with hyphens for the underscores, and the comment above it.
 function uiScenarios(): { name: string; about: string }[] {
@@ -360,17 +352,6 @@ function uiScenarios(): { name: string; about: string }[] {
     }
   }
   return out;
-}
-
-/// The device warmed up for the UI tests (`WarmUp`, ios/UITests/Bundle.swift):
-/// run until a cook has its alarms pending, at most five times.
-function uiWarmUp(udid: string): void {
-  for (let attempt = 1; ; attempt += 1) {
-    const r = uiTest(udid, 'WarmUp/test_warm_up', UI_ENV);
-    if (r.passed) return;
-    console.log(`ios:e2e: warm-up ${attempt}: ${r.failures.join('; ')}`);
-    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
-  }
 }
 
 // ------------------------------------------------------------------- main
