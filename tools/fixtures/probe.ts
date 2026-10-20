@@ -30,11 +30,12 @@ import {
 import {
   CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, PARTICLE_COUNT, PRIOR_SEED,
 } from './calibration.ts';
+import { posteriorSummary } from './shared.ts';
 
-/** A posterior as it stands, and what is read off it. */
+/** A posterior as it stands, in summary, and what is read off it. */
 function readout(post: Posterior) {
   return {
-    posterior: structuredClone(post),
+    posterior: posteriorSummary(post),
     ess: effectiveSampleSize(post),
     alpha_m2s: posteriorParams(post).alpha_m2s,
   };

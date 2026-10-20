@@ -2,8 +2,12 @@
  * fixtures/step.json: the running cook as one state machine (src/core/step.ts),
  * as traces. Each trace is a cook from Start to wherever it ends: a list of
  * events, each with what the app had built for it by then, and what `step`
- * made of it - the cook's log as it grew, the plan's deadlines, what it still
- * needs, the effects, and the readout at that moment (src/core/readout.ts).
+ * made of it - the cook's log folded (how long the log is, not its entries,
+ * whose layout is each app's own store's), the plan's deadlines, what it
+ * still needs, the effects, and the readout at that moment
+ * (src/core/readout.ts). Each trace is made on its own (`stepTrace`), in a
+ * worker of its own (tools/fixtures.ts), so the slowest trace, not all of
+ * them, is what the fixture takes.
  *
  * The traces cover what the two apps' end-to-end suites drive that the cook
  * decides, and each of the cook's behaviours no scenario drives on its own;
@@ -24,20 +28,23 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { oddsProfile } from '../../src/core/reach.ts';
 import type { Calibration } from '../../src/core/record.ts';
 import {
-  type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, endedAt_s, phaseAt,
+  type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS, type RunningCook, endedAt_s,
 } from '../../src/core/running.ts';
 import { type Readout, type ReadoutProbe, readoutAt } from '../../src/core/readout.ts';
 import { type CookEnv, type CookEvent, type CookState, type CookStep, step } from '../../src/core/step.ts';
 
-import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.ts';
-import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
+import { BASE_CHOICES, MEMORY, START_S, planRow } from './shared.ts';
+
+/** The posteriors, imported when a trace is made, so that importing this
+ *  module for its traces computes nothing. */
+type Posteriors = typeof import('./posteriors.ts');
 
 const S = START_S;
 
-function posterior(name: string): Calibration {
-  const pz = decidePosteriors.find((x) => x.name === name);
+function posterior(p: Posteriors, name: string): Calibration {
+  const pz = p.decidePosteriors.find((x) => x.name === name);
   if (pz === undefined) throw new Error(name);
-  return calibrationOf(pz);
+  return p.calibrationOf(pz);
 }
 
 /** What one step of a trace does: the event, and before it what the app
@@ -119,13 +126,13 @@ const HOT_TO_DONE: StepDef[] = [
   tick(cooled(1)),
 ];
 
-const TRACES: TraceDef[] = [
+export const TRACES: TraceDef[] = [
   {
     note: 'a cold cook to Done: boil, the surface for the measured pot, the pull rung, out, cooled, Jammy, a firm white, Start again',
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
-      start({}), land(clock(2), true), tick(clock(60)), () => ({ event: at('boil', S + 480) }), land(clock(482)),
-      tick(pull(-30)), tick(pull(2)), (t) => ({ event: at('out', pull(6)(t)) }), tick(cooled(-10), { wanted: true, pending: false }),
+      start({}), land(clock(2), true), () => ({ event: at('boil', S + 480) }), land(clock(482)),
+      tick(pull(2)), (t) => ({ event: at('out', pull(6)(t)) }), tick(cooled(-10), { wanted: true, pending: false }),
       tick(cooled(1), { wanted: true, pending: true }), answer(cooled(20), 'jammy'), answer(cooled(30), null, 'firm'),
       (t) => ({ event: at('startAgain', cooled(60)(t)) }),
     ],
@@ -156,7 +163,7 @@ const TRACES: TraceDef[] = [
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(clock(240), { startMode: 'cold' }), land(clock(242)),
-      tick(clock(400)), () => ({ event: at('boil', S + 560) }), land(clock(562)), tick(pull(2)),
+      () => ({ event: at('boil', S + 560) }), land(clock(562)), tick(pull(2)),
     ],
   },
   {
@@ -172,7 +179,7 @@ const TRACES: TraceDef[] = [
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({}), land(clock(1)), () => ({ event: at('boil', S + 480) }), land(clock(482)),
-      correct(clock(600), { startMode: 'hot' }), tick(clock(605)), tick(clock(625)),
+      correct(clock(600), { startMode: 'hot' }), tick(clock(625)),
     ],
   },
   {
@@ -188,7 +195,7 @@ const TRACES: TraceDef[] = [
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot' }), land(clock(1)), correct(pull(-20), { mass_kg: 0.048 }), land(after(1)),
-      correct(after(9), { mass_kg: BASE_CHOICES.mass_kg }), tick(after(1)), tick(pull(1)),
+      correct(after(9), { mass_kg: BASE_CHOICES.mass_kg }), tick(pull(1)),
     ],
   },
   {
@@ -206,7 +213,7 @@ const TRACES: TraceDef[] = [
   {
     note: "Settings' water mid-cook corrects the cook",
     app: 'ios', posterior: 'learned', before: 'learned',
-    steps: [start({}), land(clock(1)), correct(clock(100), { waterLitres: 1 }), land(clock(102)), tick(clock(200))],
+    steps: [start({}), land(clock(1)), correct(clock(100), { waterLitres: 1 }), land(clock(102))],
   },
   {
     note: 'a correction at Done after an answer: the record planned on the calibration before this egg, logged in place of the first; back, and the first again',
@@ -299,7 +306,7 @@ const TRACES: TraceDef[] = [
     app: 'ios', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(1)), (t) => ({ event: at('out', pull(3)(t)) }),
-      answer(after(10), 'runny'), tick(cooled(-60)), tick(cooled(1)), answer(after(10), 'runny'), tick(after(900)),
+      answer(after(10), 'runny'), tick(cooled(1)), answer(after(10), 'runny'), tick(after(900)),
     ],
   },
   {
@@ -307,7 +314,7 @@ const TRACES: TraceDef[] = [
     app: 'web', posterior: 'learned', before: 'learned',
     steps: [
       start({ startMode: 'hot', cooling: 'eggCup', level: 0.22 }), land(clock(1)), tick(pull(PULL_GRACE_SECONDS + 1)),
-      tick(cooled(-30)), (t) => ({ event: at('startAgain', cooled(5)(t)) }),
+      (t) => ({ event: at('startAgain', cooled(5)(t)) }),
     ],
   },
   {
@@ -337,7 +344,7 @@ const TRACES: TraceDef[] = [
   {
     note: 'a page woken 25 s past the pull rings the pull; one woken past the cooling rings the pull, not Done',
     app: 'web', posterior: 'learned', before: 'learned',
-    steps: [start({ startMode: 'hot' }), land(clock(1)), tick(clock(60)), tick(cooled(5))],
+    steps: [start({ startMode: 'hot' }), land(clock(1)), tick(cooled(5))],
   },
   {
     note: 'relaunched at each phase: the same deadlines and alarms, the pull rung once',
@@ -393,33 +400,19 @@ const TRACES: TraceDef[] = [
 /* ------------------------------------------------------------- the run */
 
 /** A surface as an app builds one, coarse, and how the fixture writes it. */
-function build(c: Calibration, inputs: DecisionInputs, profile: boolean): { surface: CookSurface; json: unknown } {
-  const g = coarseDecisionGrid(inputs);
-  const p = profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null;
+function build(p: Posteriors, c: Calibration, inputs: DecisionInputs, profile: boolean): { surface: CookSurface; json: unknown } {
+  const g = p.coarseDecisionGrid(inputs);
+  const odds = profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null;
   return {
-    surface: { inputs: inputs, grid: g.grid, profile: p },
-    json: { grid: g.spec, profile: p },
+    surface: { inputs: inputs, grid: g.grid, profile: odds },
+    json: { grid: g.spec, profile: odds },
   };
 }
 
-function planJson(p: CookPlan, now_s: number) {
-  return {
-    phase: phaseAt(p.deadlines, now_s), cookTime_s: p.cookTime_s, timeToBoil_s: p.setup.timeToBoil_s,
-    deadlines: p.deadlines, decided: p.decided !== null, lengthened: p.inputs === null, lean_s: p.lean_s,
-    level: p.answer.level, verdict: p.answer.verdict.kind, overdue: p.overdue,
-    slowHobAt_s: p.slowHobAt_s, tooOldAt_s: p.tooOldAt_s,
-    certainty: p.certainty === null ? null : {
-      certainty: p.certainty.words.certainty, from: p.certainty.words.from, to: p.certainty.words.to,
-      low_s: p.certainty.time.low_s, high_s: p.certainty.time.high_s,
-    },
-  };
-}
-
-function cookJson(cook: RunningCook | null, was: RunningCook | null) {
+function cookJson(cook: RunningCook | null) {
   if (cook === null) return null;
-  const from = was !== null && was.id_ms === cook.id_ms && cook.log.length >= was.log.length ? was.log.length : 0;
   return {
-    id_ms: cook.id_ms, logLength: cook.log.length, added: cook.log.slice(from), startedAt_s: cook.startedAt_s,
+    id_ms: cook.id_ms, logLength: cook.log.length, startedAt_s: cook.startedAt_s,
     events: cook.events, correctedAt_s: cook.correctedAt_s, endedAt_s: endedAt_s(cook),
   };
 }
@@ -428,10 +421,10 @@ function readoutJson(r: Readout) {
   return r;
 }
 
-function run(def: TraceDef) {
+function run(p: Posteriors, def: TraceDef) {
   let state: CookState = { cook: null, plan: null, leanHint_s: 0 };
   const env: CookEnv = {
-    calibration: posterior(def.posterior), surfaces: [], before: null, app: def.app, appVersion: '0.5.0-alpha.1',
+    calibration: posterior(p, def.posterior), surfaces: [], before: null, app: def.app, appVersion: '0.5.0-alpha.1',
     prior: LITERATURE_POPULATION.id, day: '2026-10-07',
   };
   let last: CookStep | null = null;
@@ -440,7 +433,7 @@ function run(def: TraceDef) {
   for (const d of def.steps) {
     const seen: Seen = { last: last, plan: state.plan as CookPlan, cook: state.cook as RunningCook };
     const s = d(seen);
-    if (s.posterior !== undefined) env.calibration = posterior(s.posterior);
+    if (s.posterior !== undefined) env.calibration = posterior(p, s.posterior);
     if (s.reload === true) {
       state = { cook: state.cook, plan: null, leanHint_s: state.leanHint_s };
       env.surfaces = [];
@@ -450,21 +443,20 @@ function run(def: TraceDef) {
     if (s.land === true && last !== null) {
       const need = last.need;
       if (need.surface !== null) {
-        const b = build(env.calibration, need.surface, s.profile === true);
+        const b = build(p, env.calibration, need.surface, s.profile === true);
         env.surfaces = [...env.surfaces, b.surface];
         landed.push({ on: 'now', ...(b.json as object) });
       }
       if (need.before && env.before === null) {
-        env.before = { calibration: posterior(def.before), surfaces: [] };
+        env.before = { calibration: posterior(p, def.before), surfaces: [] };
         landed.push({ on: 'calibrationBefore' });
       }
       if (need.beforeSurface !== null && env.before !== null) {
-        const b = build(env.before.calibration, need.beforeSurface, false);
+        const b = build(p, env.before.calibration, need.beforeSurface, false);
         env.before = { ...env.before, surfaces: [...env.before.surfaces, b.surface] };
         landed.push({ on: 'before', ...(b.json as object) });
       }
     }
-    const was = state.cook;
     const out = step(state, s.event, env);
     const now = s.event.now_s;
     steps.push({
@@ -473,8 +465,8 @@ function run(def: TraceDef) {
       ...(s.posterior !== undefined ? { posterior: s.posterior } : {}),
       ...(landed.length > 0 ? { landed: landed } : {}),
       ...(s.probe !== undefined ? { probe: s.probe } : {}),
-      cook: cookJson(out.cook, was),
-      plan: out.plan === null ? null : planJson(out.plan, now),
+      cook: cookJson(out.cook),
+      plan: out.plan === null ? null : planRow(out.plan, now),
       leanHint_s: out.leanHint_s,
       need: {
         surface: out.need.surface !== null, before: out.need.before, beforeSurface: out.need.beforeSurface !== null,
@@ -490,7 +482,21 @@ function run(def: TraceDef) {
   return { note: def.note, app: def.app, posterior: def.posterior, before: def.before, steps: steps };
 }
 
-export const stepFixture = {
-  about: 'The running cook as one state machine (src/core/step.ts): traces of events, each with what the app had built and what step made of it, and the readout at each (src/core/readout.ts).',
-  traces: TRACES.map(run),
-};
+/** The trace `i`, made. */
+export async function stepTrace(i: number) {
+  return run(await import('./posteriors.ts'), TRACES[i]);
+}
+
+/** The fixture, from its traces made. */
+export function stepFixtureOf(traces: unknown[]) {
+  return {
+    about: 'The running cook as one state machine (src/core/step.ts): traces of events, each with what the app had built and what step made of it, and the readout at each (src/core/readout.ts).',
+    traces: traces as ReturnType<typeof run>[],
+  };
+}
+
+/** The fixture, its traces made one after another. */
+export async function stepFixture() {
+  const p = await import('./posteriors.ts');
+  return stepFixtureOf(TRACES.map((def) => run(p, def)));
+}

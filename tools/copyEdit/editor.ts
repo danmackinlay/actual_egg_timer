@@ -46,7 +46,7 @@ interface SaveResult {
 }
 
 /** What a save checks, and what it leaves to the full suite. */
-const CHECKED = 'the tests and fixtures that read the words';
+const CHECKED = 'the tests and the fixtures';
 const LEFT = 'the full suite runs before a release';
 
 const US = 'en-US';
@@ -578,7 +578,7 @@ async function saveNow(): Promise<void> {
   const keys = [...new Set(edits.map((e) => e.key))];
   const stage = el('p', {}, 'Checking the words');
   sheet(el('h3', {}, `Saving ${keys.join(', ')}`), stage,
-    el('p', { class: 'meta' }, `With your words, I run ${CHECKED}, which takes seconds; ${LEFT}.`));
+    el('p', { class: 'meta' }, `With your words, I run ${CHECKED}, which takes about half a minute; ${LEFT}.`));
   let result: SaveResult | null = null;
   try {
     const started = await api<{ job?: number; error?: string }>('save', { base: s.head, edits: edits });

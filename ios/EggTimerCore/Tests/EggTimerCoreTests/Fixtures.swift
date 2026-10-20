@@ -78,6 +78,31 @@ enum Fixtures {
         return try dictionary.mapValues { try resolveShared($0, root: root, file: file) }
     }
 
+    /// `base` with a fixture's patch laid on it (`patchOf` in
+    /// tools/fixtures/shared.ts): each of `set`'s dotted paths given its
+    /// value, each of `delete`'s taken away.
+    static func applying(_ patch: Any?, to base: [String: Any]) throws -> [String: Any] {
+        guard let patch = patch as? [String: Any] else { throw FixtureError("a patch that is not an object") }
+        func put(_ o: [String: Any], _ path: ArraySlice<Substring>, _ value: Any?) -> [String: Any] {
+            var out = o
+            let key = String(path[path.startIndex])
+            if path.count == 1 {
+                out[key] = value
+            } else {
+                out[key] = put(o[key] as? [String: Any] ?? [:], path.dropFirst(), value)
+            }
+            return out
+        }
+        var out = base
+        for (path, value) in patch["set"] as? [String: Any] ?? [:] {
+            out = put(out, path.split(separator: ".")[...], value)
+        }
+        for path in patch["delete"] as? [String] ?? [] {
+            out = put(out, path.split(separator: ".")[...], nil)
+        }
+        return out
+    }
+
     /// A shipped catalogue, read from `copy/` in the repository as the fixtures
     /// are, so the one the app bundles is the one tested.
     static func catalogue(_ locale: String, fallback: Catalogue? = nil) throws -> Catalogue {

@@ -20,7 +20,7 @@ import {
 
 import {
   DECIDE_EGG, DECIDE_PARTICLES, DECIDE_SEED, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors,
-} from './decide.ts';
+} from './posteriors.ts';
 import { particleRows } from './shared.ts';
 import { referenceSetup } from '../common.ts';
 
@@ -76,6 +76,26 @@ const DECIDED_VARIANTS = [
   { withOdds: false, nudge_s: 0 }, { withOdds: true, nudge_s: 0 }, { withOdds: true, nudge_s: -7 },
 ];
 
+/** The variants asked at `level`: without the profile and with it, and
+ *  nudged with it at the levels between the ends. */
+function variantsAt(level: number) {
+  return DECIDED_VARIANTS.filter((v) => v.nudge_s === 0 || (level > 0.05 && level < 1));
+}
+
+/** An answer as the fixture writes it: the level, the verdict, whether the
+ *  odds are low, and the time solved for; the solve's own peaks and doses
+ *  are scenarios.json's. */
+function answerRow(a: ReturnType<typeof answerAt>) {
+  return { level: a.level, verdict: a.verdict, lowOdds: a.lowOdds, cook_s: a.solution.result.cookTime_s };
+}
+
+/** A decided answer as the fixture writes it: what the apps show, without
+ *  the solve moved to the time decided. */
+function decidedOf(d: ReturnType<typeof decideAnswer>) {
+  const { solution: _solution, ...shown } = d;
+  return shown;
+}
+
 function decidedRow(
   c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, profile: OddsProfile, level: number,
   withOdds: boolean, nudge_s: number,
@@ -85,11 +105,11 @@ function decidedRow(
   const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, odds, nudge_s);
   return {
     withOdds: withOdds, asked: level, drawn_s: nudge_s,
-    answer: a,
+    answer: answerRow(a),
     // The level's own choice, held by nothing: where the envelope binds, the
     // time decided differs from it.
     own_s: decide(c, grid, a.solution, logYolkTarget(a.level)).cookTime_s,
-    decided: d,
+    decided: decidedOf(d),
   };
 }
 
@@ -99,14 +119,14 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
   const g = coarseDecisionGrid(decisionInputs(c, DECIDE_EGG, rc.setup));
   const profile = oddsProfile(c, DECIDE_EGG, rc.setup, g.grid);
-  const decided = DECIDED_LEVELS.flatMap((level) => DECIDED_VARIANTS.map((v) => decidedRow(
+  const decided = DECIDED_LEVELS.flatMap((level) => variantsAt(level).map((v) => decidedRow(
     c, DECIDE_EGG, rc.setup, g.grid, profile, level, v.withOdds, v.nudge_s,
   )));
   for (const withOdds of [false, true]) {
     for (const level of [0, 0.05, 0.41, 0.95, 1]) {
       reachAnswers.push({
         profile: index, withOdds: withOdds, level: level,
-        answer: answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null),
+        answer: answerRow(answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null)),
       });
     }
   }
@@ -187,7 +207,7 @@ const neverSets = (() => {
     setup: NEVER_SETS_SETUP,
     grid: g.spec,
     profile: profile,
-    decided: [0, 0.41, 1].flatMap((level) => DECIDED_VARIANTS.map((v) => decidedRow(
+    decided: [0, 0.41, 1].flatMap((level) => variantsAt(level).map((v) => decidedRow(
       c, DECIDE_EGG, NEVER_SETS_SETUP, g.grid, profile, level, v.withOdds, v.nudge_s,
     ))),
   };

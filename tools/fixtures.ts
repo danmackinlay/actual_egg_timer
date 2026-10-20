@@ -8,13 +8,12 @@
  * in `src/core/` first, and `npm test` should be what catches it.
  *
  * Run: npm run fixtures
- *      npm run fixtures -- --words   only those that can read the words
- *                                    (tools/wordsOnly.ts)
  *
  * One file per part of the core, each held by a Swift suite of the same name
  * and built by the module of the same name in tools/fixtures/ (what more than
- * one of them uses is in tools/fixtures/shared.ts, and the English catalogue
- * in tools/fixtures/english.ts):
+ * one of them uses is in tools/fixtures/shared.ts, the decisions' pot,
+ * surface and posteriors in tools/fixtures/posteriors.ts, and the English
+ * catalogue in tools/fixtures/english.ts):
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
@@ -30,7 +29,8 @@
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer
- *   fixtures/calibration.json  the particle filter, particle by particle
+ *   fixtures/calibration.json  the particle filter: the prior particle by
+ *                              particle, each fold's posterior in summary
  *   fixtures/record.json       the record (INFERENCE.md section 4): which records
  *                              a loader trusts, and a replayed log; and the
  *                              calibration grid
@@ -81,9 +81,11 @@
  * that a diff names the rows that changed.
  *
  * Each fixture is made in a worker thread of its own, as many at once as the
- * machine has cores, the slowest first: a fixture module computes its
+ * machine has cores, the slowest first, and step.json's traces each in one
+ * of their own (`PARTS`): a fixture module computes its
  * fixture when it is imported, and a module another imports for its
- * constants is one that computes nothing (tools/fixtures/shared.ts). Nothing
+ * constants computes nothing more than they need (tools/fixtures/shared.ts,
+ * posteriors.ts). Nothing
  * is written until every fixture is made, and then in the order below.
  */
 
@@ -215,13 +217,7 @@ export const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: 
       counts: [`${f.sequences.length} sequences of the correction in hand`, `${f.starts.length} steps of the start`],
     };
   },
-  step: async () => {
-    const { stepFixture: f } = await import('./fixtures/step.ts');
-    return {
-      fixture: f,
-      counts: [`${f.traces.length} cook traces of ${f.traces.reduce((n, t) => n + t.steps.length, 0)} steps`],
-    };
-  },
+  step: async () => stepCounted(await (await import('./fixtures/step.ts')).stepFixture()),
   fitSample: async () => {
     const { fitSampleFixture: f } = await import('./fixtures/fitSample.ts');
     return { fixture: f, counts: [`${f.checks.length} likelihood checks`] };
@@ -229,6 +225,26 @@ export const FIXTURES: Record<string, () => Promise<{ fixture: unknown; counts: 
   fitRecovery: async () => {
     const { fitRecoveryFixture: f } = await import('./fixtures/fitRecovery.ts');
     return { fixture: f, counts: [`${f.eggs.length} eggs to recover a population from`] };
+  },
+};
+
+/** step.json and what the summary line counts of it. */
+function stepCounted(f: Awaited<ReturnType<typeof import('./fixtures/step.ts')['stepFixture']>>) {
+  return { fixture: f, counts: [`${f.traces.length} cook traces of ${f.traces.reduce((n, t) => n + t.steps.length, 0)} steps`] };
+}
+
+/** The fixtures made in parts, each part in a worker of its own and the
+ *  parts joined in order: one whose cases are independent and each slow, so
+ *  that no one worker makes them all. Each is in FIXTURES too, made whole. */
+const PARTS: Record<string, {
+  count: () => Promise<number>;
+  part: (i: number) => Promise<unknown>;
+  join: (parts: unknown[]) => Promise<{ fixture: unknown; counts: string[] }>;
+}> = {
+  step: {
+    count: async () => (await import('./fixtures/step.ts')).TRACES.length,
+    part: async (i) => (await import('./fixtures/step.ts')).stepTrace(i),
+    join: async (traces) => stepCounted((await import('./fixtures/step.ts')).stepFixtureOf(traces)),
   },
 };
 
@@ -249,14 +265,14 @@ const COUNTED = [
 ];
 
 /** The slowest first, so that none is started last; the rest take moments. */
-const SLOWEST = ['fitRecovery', 'step', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
+const SLOWEST = ['step', 'fitRecovery', 'running', 'reach', 'record', 'certainty', 'outcome', 'decide', 'scenarios'];
 
 /**
- * A particle set that repeats one earlier in the same file - an update that
- * reweighted without resampling keeps its particles - is written once: the
- * repeat is `{ "sameAs": "<dotted path>" }`, the path of the first, with array
- * indices as numbers (`updates.2.after.particles`). Fixtures.swift resolves it
- * on load, so no reader sees it.
+ * A particle set that repeats one earlier in the same file - two populations
+ * that draw the same prior - is written once: the repeat is
+ * `{ "sameAs": "<dotted path>" }`, the path of the first, with array indices
+ * as numbers (`populations.0.particles`). Fixtures.swift resolves it on load,
+ * so no reader sees it.
  */
 function shareRepeatedParticles(root: unknown): unknown {
   const seen = new Map<string, string>();
@@ -282,56 +298,71 @@ function shareRepeatedParticles(root: unknown): unknown {
   return walk(root, []);
 }
 
-/** The fixture `name`, made and laid out as its file. Every fixture's first
- *  key is `about`: what it pins and the core module that answers. The line
- *  saying where it came from is added here, the same for all. */
-async function make(name: string): Promise<Made> {
-  const { fixture, counts } = await FIXTURES[name]();
+/** The fixture `name` laid out as its file. Every fixture's first key is
+ *  `about`: what it pins and the core module that answers. The line saying
+ *  where it came from is added here, the same for all. */
+function laidOut(name: string, { fixture, counts }: { fixture: unknown; counts: string[] }): Made {
   const about = (fixture as { about?: unknown }).about;
   if (typeof about !== 'string') throw new Error(`${pathOf(name)} has no about`);
   const stamped = { ...(fixture as object), about: `${about} Generated by tools/fixtures/${name}.ts (npm run fixtures): do not hand-edit.` };
   return { text: fixtureLayout(shareRepeatedParticles(stamped)), counts: counts };
 }
 
-/** `name` made in a worker of its own. */
-function inWorker(name: string): Promise<Made> {
+/** One worker's work: a fixture whole, or a part of one made in parts. */
+interface Job { name: string; part?: number }
+
+/** `job` done in a worker of its own: the fixture laid out, or the part. */
+function inWorker<T>(job: Job): Promise<T> {
+  const what = `${pathOf(job.name)}${job.part === undefined ? '' : `, part ${job.part}`}`;
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL(import.meta.url), { workerData: name });
-    let made: Made | null = null;
-    worker.on('message', (m: Made) => { made = m; });
-    worker.on('error', (e: Error) => reject(new Error(`${pathOf(name)}: ${e.stack ?? e.message}`)));
+    const worker = new Worker(new URL(import.meta.url), { workerData: job });
+    let made: { value: T } | null = null;
+    worker.on('message', (m: T) => { made = { value: m }; });
+    worker.on('error', (e: Error) => reject(new Error(`${what}: ${e.stack ?? e.message}`)));
     worker.on('exit', (code) => {
-      if (made !== null) resolve(made);
-      else reject(new Error(`${pathOf(name)}: its worker exited ${code} with nothing made`));
+      if (made !== null) resolve(made.value);
+      else reject(new Error(`${what}: its worker exited ${code} with nothing made`));
     });
   });
 }
 
-/** The fixtures `names`, at most `width` at once, the slowest started first. */
+/** The fixtures `names`, at most `width` jobs at once, the slowest started
+ *  first, and the parts of one made in parts each a job. */
 async function makeAll(names: string[], width: number): Promise<Map<string, Made>> {
-  const queue = [...SLOWEST.filter((n) => names.includes(n)), ...names.filter((n) => !SLOWEST.includes(n))];
+  const order = [...SLOWEST.filter((n) => names.includes(n)), ...names.filter((n) => !SLOWEST.includes(n))];
+  const queue: Job[] = [];
+  for (const name of order) {
+    if (PARTS[name] === undefined) queue.push({ name: name });
+    else for (let i = 0; i < await PARTS[name].count(); i++) queue.push({ name: name, part: i });
+  }
   const made = new Map<string, Made>();
+  const parts = new Map<string, unknown[]>();
   const lane = async (): Promise<void> => {
-    for (let name = queue.shift(); name !== undefined; name = queue.shift()) made.set(name, await inWorker(name));
+    for (let job = queue.shift(); job !== undefined; job = queue.shift()) {
+      if (job.part === undefined) {
+        made.set(job.name, await inWorker<Made>(job));
+      } else {
+        const done = parts.get(job.name) ?? [];
+        parts.set(job.name, done);
+        done[job.part] = await inWorker<unknown>(job);
+      }
+    }
   };
   await Promise.all(Array.from({ length: Math.min(width, queue.length) }, lane));
+  for (const [name, done] of parts) made.set(name, laidOut(name, await PARTS[name].join(done)));
   return made;
 }
 
 if (!isMainThread) {
-  parentPort?.postMessage(await make(workerData as string));
+  const job = workerData as Job;
+  parentPort?.postMessage(job.part === undefined
+    ? laidOut(job.name, await FIXTURES[job.name]())
+    : await PARTS[job.name].part(job.part));
 } else if (import.meta.main) {
-  // --words: only the fixtures that can read the words (tools/wordsOnly.ts),
-  // for the words' editor's save; each is made as a full run makes it.
-  const words = process.argv.includes('--words');
-  const names = words ? [...(await (await import('./wordsOnly.ts')).wordsFixtures(FIXTURES)).keys()] : Object.keys(FIXTURES);
+  const names = Object.keys(FIXTURES);
   const made = await makeAll(names, availableParallelism());
   mkdirSync('fixtures', { recursive: true });
   for (const name of names) replaceFile(pathOf(name), (made.get(name) as Made).text);
-  if (words) {
-    console.log(`the fixtures that read the words written: ${names.map(pathOf).join(', ')}`);
-  } else {
-    const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
-    console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
-  }
+  const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
+  console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
 }

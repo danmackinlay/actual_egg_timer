@@ -22,8 +22,6 @@
 //   swift app tests  EggTimerAppTests, once swift build has ended
 //   swift core tests EggTimerCoreTests, once fixtures:check and swift build
 //                    have both ended
-//   words-only proof the words-only check misses nothing the words move
-//                    (tools/wordsOnlyProof.ts)
 //
 // copy:keys and swift:constants write what they make, to the Swift package
 // and src/core/copyKeys.ts, which swift build, the type check and the tests
@@ -40,11 +38,7 @@
 // Swift test runs share the package's .build, which `swift test` locks even
 // when it builds nothing; with --skip-build neither writes it, so each passes
 // --ignore-lock. `npm test` runs alongside; the one fixture it reads,
-// population.json, is the fit's, which fixtures:check never writes. The
-// words-only proof copies this checkout's changes into a scratch worktree of
-// its own as it starts, and writes nothing here; a fixture fixtures:check
-// writes is renamed into place whole (replaceFile), so it copies the old
-// file or the new, either of which its comparison holds.
+// population.json, is the fit's, which fixtures:check never writes.
 //
 // The three checks compare with the working tree, where an npm test has
 // already written the key types and the Swift's constants afresh, so a file
@@ -144,7 +138,6 @@ const all = await Promise.all([
   swiftBuild,
   appTests,
   coreTests,
-  job('words-only proof', [[node, ['tools/wordsOnlyProof.ts']]]),
 ]);
 const results = all.filter((r): r is Result => r !== null);
 

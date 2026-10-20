@@ -5,12 +5,12 @@ import Foundation
 /// The running cook as one state machine against `fixtures/step.json`,
 /// generated from `src/core/step.ts`: each trace replayed event by event, with
 /// what the app had built landed as the fixture says, and what the step made
-/// held to the web's at every step, whole: the cook, the plan, the lean, what
-/// it needs, the effects and the readout.
+/// held to the web's at every step: the cook folded, the plan, the lean, what
+/// it needs, the effects and the readout. Each trace is a test of its own,
+/// so the traces run side by side.
 ///
-/// The plan is held whole in running.json; here the fixture writes what the
-/// machine moves of it (`planJson` in tools/fixtures/step.ts), and so does
-/// this. Every clock time is compared as seconds from the cook's start.
+/// The fixture writes what the machine moves of the plan (`planRow` in
+/// tools/fixtures/shared.ts), as running.json does, and so does this. Every clock time is compared as seconds from the cook's start.
 
 /// A step as the fixture writes what it made.
 private struct StepRow: Encodable {
@@ -36,79 +36,28 @@ private struct StepRow: Encodable {
     }
 }
 
-/// The cook: its log, the entries this step added to it, and the log folded.
+/// The cook: how long its log is, and the log folded. Its entries are each
+/// app's own to store.
 private struct CookRow: Encodable {
     let idMs: Double
     let logLength: Int
-    let added: [CookEntry]
     let startedAtS: Double
     let events: CookEvents
     let correctedAtS: Double?
     let endedAtS: Double?
 
     enum CodingKeys: String, CodingKey {
-        case idMs = "id_ms", logLength, added, startedAtS = "startedAt_s", events, correctedAtS = "correctedAt_s"
+        case idMs = "id_ms", logLength, startedAtS = "startedAt_s", events, correctedAtS = "correctedAt_s"
         case endedAtS = "endedAt_s"
     }
 
-    init(_ c: RunningCook, was: RunningCook?) {
-        let from = was.map { $0.idMs == c.idMs && c.log.count >= $0.log.count ? $0.log.count : 0 } ?? 0
+    init(_ c: RunningCook) {
         idMs = c.idMs
         logLength = c.log.count
-        added = Array(c.log[from...])
         startedAtS = c.startedAtS
         events = c.events
         correctedAtS = c.correctedAtS
         endedAtS = EggTimerCore.endedAtS(c)
-    }
-}
-
-/// The plan, as far as the machine moves it.
-private struct PlanRow: Encodable {
-    let phase: Phase
-    let cookTimeS: Double
-    let timeToBoilS: Double
-    let deadlines: Deadlines
-    let decided: Bool
-    let lengthened: Bool
-    let leanS: Double
-    let level: Double
-    let verdict: RefusalKind
-    let overdue: Bool
-    let slowHobAtS: Double?
-    let tooOldAtS: Double
-    let certainty: Sure?
-
-    struct Sure: Encodable {
-        let certainty: Certainty
-        let from: Int
-        let to: Int
-        let lowS: Double
-        let highS: Double
-        enum CodingKeys: String, CodingKey { case certainty, from, to, lowS = "low_s", highS = "high_s" }
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case phase, cookTimeS = "cookTime_s", timeToBoilS = "timeToBoil_s", deadlines, decided, lengthened
-        case leanS = "lean_s", level, verdict, overdue, slowHobAtS = "slowHobAt_s", tooOldAtS = "tooOldAt_s", certainty
-    }
-
-    init(_ p: CookPlan, nowS: Double) {
-        phase = phaseAt(p.deadlines, nowS: nowS)
-        cookTimeS = p.cookTimeS
-        timeToBoilS = p.setup.timeToBoilS
-        deadlines = p.deadlines
-        decided = p.decided != nil
-        lengthened = guessLengthened(p)
-        leanS = p.leanS
-        level = p.answer.level
-        verdict = p.answer.verdict.kind
-        overdue = p.overdue
-        slowHobAtS = p.slowHobAtS
-        tooOldAtS = p.tooOldAtS
-        certainty = p.certainty.map {
-            Sure(certainty: $0.words.certainty, from: $0.words.from, to: $0.words.to, lowS: $0.time.lowS, highS: $0.time.highS)
-        }
     }
 }
 
@@ -129,10 +78,22 @@ private struct NeedRow: Encodable {
     }
 }
 
+/// The traces' places in the fixture, for the test to be run over, each
+/// trace on its own.
+private let traceIndices: [Int] = (try? Fixtures.list("step.json", "traces").count).map { Array(0..<$0) } ?? []
+
 @Suite("Step")
 struct StepConformance {
-    @Test("every trace, event by event: the cook, its plan, what it needs, the effects and the readout")
-    func traces() throws {
+    @Test("the traces are all there: some thirty, and two hundred steps")
+    func counted() throws {
+        let traces = try Fixtures.list("step.json", "traces")
+        #expect(traces.count >= 30)
+        #expect(try traces.reduce(0) { $0 + (try $1.rows("steps")).count } >= 200)
+        #expect(traceIndices.count == traces.count)
+    }
+
+    @Test("every trace, event by event: the cook, its plan, what it needs, the effects and the readout", arguments: traceIndices)
+    func traces(_ index: Int) throws {
         var posteriors = [String: Calibration]()
         for p in try Fixtures.list("decide.json", "posteriors") {
             let name = try p.str("name")
@@ -141,9 +102,8 @@ struct StepConformance {
             )
         }
         let traces = try Fixtures.list("step.json", "traces")
-        #expect(traces.count >= 30)
-        var steps = 0
-        for trace in traces {
+        do {
+            let trace = traces[index]
             let note = try trace.str("note")
             var env = try CookEnv(
                 calibration: #require(posteriors[trace.str("posterior")]), surfaces: [], before: nil,
@@ -189,21 +149,16 @@ struct StepConformance {
                     out.plan.map { readoutAt(c, plan: $0, nowS: now, probe: probe ?? ReadoutProbe(wanted: false, pending: false)) }
                 }
                 let made = StepRow(
-                    cook: out.cook.map { CookRow($0, was: was) }, plan: out.plan.map { PlanRow($0, nowS: now) },
+                    cook: out.cook.map { CookRow($0) }, plan: out.plan.map { PlanRow($0, nowS: now) },
                     leanHintS: out.leanHintS, need: NeedRow(out.need), effects: out.effects, readout: readout
                 )
                 var expected = s
                 for input in ["event", "reload", "posterior", "landed", "probe"] { expected[input] = nil }
                 let clock = out.cook?.start.atS ?? was?.start.atS ?? now
                 expectJSON(made, expected, what, clockFrom: clock)
-                // The entries as the log stores them, nulls and all.
-                let added = (expected["cook"] as? [String: Any])?["added"]
-                expectJSON(made.cook?.added, added, "\(what): the entries added", clockFrom: clock, strict: true)
                 state = out.state
                 last = out
-                steps += 1
             }
         }
-        #expect(steps >= 200)
     }
 }

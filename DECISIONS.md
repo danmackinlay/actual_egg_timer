@@ -804,19 +804,19 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `swift test` where the Swift twin moves, for core and the fixture
     generators; `npm run e2e` for the web's screens and for a key or its
     arguments in `copy/`; `ios:build` and `ios:e2e` for the iOS app. Other
-    wording (135): a save from `npm run copy:edit` runs the words-only
-    check, the tests and fixtures that can read the words
-    (`tools/wordsOnly.ts`), in seconds; a wording change made any other
-    way keeps `npm test` and `fixtures:check`. Any push runs the full gate
+    wording (135) needs `npm test` and `fixtures:check`, which a save from
+    `npm run copy:edit` runs itself in a scratch worktree of the commit it
+    makes, in about half a minute. Any push runs the full gate
     in CI, and `npm run verify` runs before a release. The full `verify`
     runs before any merge that touched code. Each slow suite runs once, on
     the branch's final code; a later commit to documents alone needs no
     rerun. The reviewer reruns `verify` and its own checks, and takes the
     e2e suites from the agent's run or CI's. In effect from the commit that
     records it. Amended 20 October 2026, the owner choosing "Words-only
-    check" for the editor's save: a save runs only what can read the words,
-    in seconds, and the full gate still runs in `verify` and CI before
-    anything deploys.
+    check" for the editor's save, and amended again on 21 October, with the
+    fixtures made small: a save runs `npm test` and `fixtures:check` whole,
+    the words-only check goes, and the full gate still runs in `verify` and
+    CI before anything deploys.
 124. **Never push what deploys without the owner** (the owner, 14 October
     2026: "my intent was 'never push to the main public-facing deploy site
     without my approval'", which had become "never push"). Pushing `main`,

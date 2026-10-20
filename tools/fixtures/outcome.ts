@@ -2,14 +2,12 @@
  * fixtures/outcome.json: the predicted outcome at the chosen time.
  */
 
-import { UNRELATED, createPrior, updatePosterior } from '../../src/core/infer.ts';
+import { UNRELATED } from '../../src/core/infer.ts';
 import { decideAt, decisionApplies } from '../../src/core/decide.ts';
 import { leanOf, predictOutcome } from '../../src/core/outcome.ts';
 
 import { particleRows } from './shared.ts';
-import {
-  DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, meanSolve,
-} from './decide.ts';
+import { DECIDE_GRID, meanSolve, outcomeConsistent, outcomePosteriors } from './posteriors.ts';
 import { logYolkTarget } from '../../src/core/solve.ts';
 
 /* What the egg at the chosen time will be like (src/core/outcome.ts): the
@@ -19,10 +17,6 @@ import { logYolkTarget } from '../../src/core/solve.ts';
  * out jammy with a firm white. Each case is read at the time decided,
  * and 40 s either side of the mean solve, so that both leans and a balance
  * are pinned. */
-
-const outcomeConsistent = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
-for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, 'jammy', 'firm');
-export const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
 
 const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [
   { posterior: 'prior', level: 0.41, note: 'fresh install, jammy' },

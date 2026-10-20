@@ -8,11 +8,12 @@ import Foundation
 /// and it is the part where a transliteration slip is least likely to announce
 /// itself. A wrong shift in the RNG does not crash or produce a NaN: it draws a
 /// different but entirely plausible prior, and the two implementations quietly
-/// stop being the same model. Summary statistics would not catch it either -
-/// any seed gives a sensible-looking mean and spread.
+/// stop being the same model. Any seed gives a sensible-looking mean and
+/// spread, to the eye.
 ///
-/// So the fixtures carry every particle and every weight, before the first
-/// observation and after each one, and this compares all of them.
+/// So the fixtures carry the prior's every particle and weight, and after
+/// each observation the posterior's summary (`PosteriorSummary`), which a
+/// particle drawn otherwise moves at the fixtures' tolerance.
 
 /// The fixture's egg, pot and surface, built here from its spec.
 private struct Filter {
@@ -30,21 +31,35 @@ private struct Filter {
         target = try file.num("logNominalTarget")
     }
 
-    /// A posterior and what is read off it, as the fixture writes one: every
-    /// particle and weight, the RNG's state (which goes negative partway
-    /// through the sequence, the case a port that reaches for UInt32 would get
-    /// wrong), the effective sample size, the mean time-scale and white
-    /// offset, and the predicted cook time.
-    func readout(_ post: Posterior) -> Readout {
+    /// A posterior and what is read off it, as the fixture writes one: its
+    /// summary, or for the prior every particle and weight; the RNG's state
+    /// (which goes negative partway through the sequence, the case a port
+    /// that reaches for UInt32 would get wrong), the effective sample size,
+    /// the mean time-scale and white offset, and the predicted cook time.
+    func readout(_ post: Posterior, whole: Bool = false) -> Readout {
         Readout(
-            posterior: post, ess: effectiveSampleSize(post), alphaM2s: posteriorParams(post).alphaM2s,
+            posterior: whole ? .whole(post) : .summary(PosteriorSummary(post)), ess: effectiveSampleSize(post),
+            alphaM2s: posteriorParams(post).alphaM2s,
             meanWhiteOffset: posteriorMeanWhiteOffset(post), predict: predictCookTime(post, grid, target)
         )
     }
 }
 
+/// A posterior written whole, or in summary.
+private enum Written: Encodable {
+    case whole(Posterior)
+    case summary(PosteriorSummary)
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .whole(let p): try p.encode(to: encoder)
+        case .summary(let s): try s.encode(to: encoder)
+        }
+    }
+}
+
 private struct Readout: Encodable {
-    let posterior: Posterior
+    let posterior: Written
     let ess: Double
     let alphaM2s: Double
     let meanWhiteOffset: Double
@@ -118,14 +133,14 @@ struct InferenceConformance {
         var expected = prior
         expected["count"] = nil
         expected["seed"] = nil
-        expectJSON(f.readout(post), expected, "the prior")
+        expectJSON(f.readout(post, whole: true), expected, "the prior")
     }
 
     /// The filter told the yolk the cook got, in five words, and the white,
     /// from the prior. Folds that drive the effective sample size below n/2
     /// resample, which is the only part of the filter that touches the RNG
     /// after the prior.
-    @Test("every five-word update: one particle's five, the predictive, and the whole set")
+    @Test("every five-word update: one particle's five, the predictive, and the set in summary")
     func wordUpdates() throws {
         let f = try Filter()
         let prior = try f.file.object("prior")

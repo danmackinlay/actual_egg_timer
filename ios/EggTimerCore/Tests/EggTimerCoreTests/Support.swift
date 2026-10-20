@@ -189,6 +189,101 @@ func posterior(_ json: [String: Any], rng: Int32? = nil) throws -> Posterior {
     return try decoded(Posterior.self, json)
 }
 
+/// A plan as the running and step fixtures write it (`planRow` in
+/// tools/fixtures/shared.ts): what the cook is shown and timed by, at a
+/// moment.
+struct PlanRow: Encodable {
+    let phase: Phase
+    let cookTimeS: Double
+    let timeToBoilS: Double
+    let deadlines: Deadlines
+    let decided: Bool
+    let lengthened: Bool
+    let leanS: Double
+    let level: Double
+    let verdict: RefusalKind
+    let overdue: Bool
+    let slowHobAtS: Double?
+    let tooOldAtS: Double
+    let certainty: Sure?
+
+    struct Sure: Encodable {
+        let certainty: Certainty
+        let from: Int
+        let to: Int
+        let lowS: Double
+        let highS: Double
+        enum CodingKeys: String, CodingKey { case certainty, from, to, lowS = "low_s", highS = "high_s" }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case phase, cookTimeS = "cookTime_s", timeToBoilS = "timeToBoil_s", deadlines, decided, lengthened
+        case leanS = "lean_s", level, verdict, overdue, slowHobAtS = "slowHobAt_s", tooOldAtS = "tooOldAt_s", certainty
+    }
+
+    init(_ p: CookPlan, nowS: Double) {
+        phase = phaseAt(p.deadlines, nowS: nowS)
+        cookTimeS = p.cookTimeS
+        timeToBoilS = p.setup.timeToBoilS
+        deadlines = p.deadlines
+        decided = p.decided != nil
+        lengthened = guessLengthened(p)
+        leanS = p.leanS
+        level = p.answer.level
+        verdict = p.answer.verdict.kind
+        overdue = p.overdue
+        slowHobAtS = p.slowHobAtS
+        tooOldAtS = p.tooOldAtS
+        certainty = p.certainty.map {
+            Sure(certainty: $0.words.certainty, from: $0.words.from, to: $0.words.to, lowS: $0.time.lowS, highS: $0.time.highS)
+        }
+    }
+}
+
+/// A posterior as the fixtures write one that is not an input
+/// (`posteriorSummary` in tools/fixtures/shared.ts): its RNG's state, its
+/// effective sample size, where the weight sits among the particles, the
+/// first particle whole, and the weighted mean and sd of each dimension,
+/// the time-scale's as its log. At the fixtures' tolerance a particle drawn
+/// otherwise moves a mean, and one reordered moves where the weight sits.
+struct PosteriorSummary: Encodable {
+    let count: Int
+    let rng: Int32
+    let ess: Double
+    let weightCentre: Double
+    let first: Particle
+    let mean: [String: Double]
+    let sd: [String: Double]
+
+    init(_ post: Posterior) {
+        let total = post.weights.reduce(0, +)
+        let dims: [(String, (Particle) -> Double)] = [
+            ("logAlpha", { Foundation.log($0.alphaM2s) }), ("logDoseOffset", \.logDoseOffset), ("noise", \.noise),
+            ("whiteOffset", \.whiteOffset), ("whiteFirmGap", \.whiteFirmGap),
+        ]
+        var mean = [String: Double]()
+        var sd = [String: Double]()
+        for (name, of) in dims {
+            var m = 0.0
+            for i in post.particles.indices { m += post.weights[i] * of(post.particles[i]) }
+            m /= total
+            var v = 0.0
+            for i in post.particles.indices { v += post.weights[i] * (of(post.particles[i]) - m) * (of(post.particles[i]) - m) }
+            mean[name] = m
+            sd[name] = (v / total).squareRoot()
+        }
+        var centre = 0.0
+        for i in post.weights.indices { centre += post.weights[i] * Double(i) }
+        count = post.particles.count
+        rng = post.rng
+        ess = effectiveSampleSize(post)
+        weightCentre = centre / total
+        first = post.particles[0]
+        self.mean = mean
+        self.sd = sd
+    }
+}
+
 /// decide.json's named posteriors (outcome.json has one more), which carry no
 /// RNG state because nothing draws from them. The prior is written as its
 /// count and seed, and drawn here as the app draws it.

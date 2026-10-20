@@ -6,9 +6,9 @@ import Foundation
 ///
 /// Two separate claims. Which records a loader trusts is pinned case by case,
 /// so a port that forgets a rule - or invents one - disagrees on a named case.
-/// The replay is pinned particle by particle after every egg, for the same
-/// reason as the filter's own fixture: a wrong fold does not crash, it learns
-/// something else.
+/// The replay is pinned after every egg, its posterior in summary, for the
+/// same reason as the filter's own fixture: a wrong fold does not crash, it
+/// learns something else.
 ///
 /// And one claim the fixture cannot make, because it is about THIS
 /// implementation agreeing with itself: a posterior built egg by egg, with a
@@ -22,6 +22,21 @@ private func decodeRecord(_ json: Any) -> EggRecord? {
           let record = try? JSONDecoder().decode(EggRecord.self, from: data),
           validRecord(record) else { return nil }
     return record
+}
+
+/// A case's record: the canonical record with the case's change laid on it,
+/// or the case's own where it is not a change to one.
+private func caseRecord(_ c: [String: Any]) throws -> Any {
+    if let record = c["record"] { return record }
+    return try Fixtures.applying(c["patch"], to: Fixtures.object("record.json", "canonical"))
+}
+
+/// What a loader should make of `record`: null for a refusal, or the record
+/// with the case's `parsed` change laid on it.
+private func parsedFor(_ c: [String: Any], _ record: Any) throws -> Any {
+    guard let parsed = c["parsed"], !(parsed is NSNull) else { return NSNull() }
+    guard let object = record as? [String: Any] else { throw FixtureError("a parse of what is not an object") }
+    return try Fixtures.applying(parsed, to: object)
 }
 
 private func fixtureLog() throws -> [EggRecord] {
@@ -114,7 +129,8 @@ struct RecordConformance {
     @Test("which records a loader trusts, case by case")
     func validation() throws {
         for c in try Fixtures.list("record.json", "cases") {
-            try expectJSON(decodeRecord(c["record"] as Any), c["parsed"], c.str("why"), strict: true)
+            let record = try caseRecord(c)
+            try expectJSON(decodeRecord(record), parsedFor(c, record), c.str("why"), strict: true)
         }
     }
 
@@ -152,7 +168,8 @@ struct RecordConformance {
                     cases.first { $0["path"] as? String == path && $0["member"] as? String == member },
                     "no case for \(path) \(member)"
                 )
-                expectJSON(decodeRecord(c["record"] as Any), c["parsed"], "\(path) \(member)", strict: true)
+                let record = try caseRecord(c)
+                try expectJSON(decodeRecord(record), parsedFor(c, record), "\(path) \(member)", strict: true)
             }
         }
     }
@@ -161,9 +178,11 @@ struct RecordConformance {
     /// facts, with its nulls written and `id` only when there is one.
     @Test("the record made from a cook's facts, case by case")
     func made() throws {
+        let base = try Fixtures.object("record.json", "factsBase")
         for c in try Fixtures.list("record.json", "made") {
             let why = try c.str("why")
-            let made = try recordFor(decoded(CookFacts.self, c["facts"]))
+            let facts = base.merging(try c.object("over")) { _, over in over }
+            let made = try recordFor(decoded(CookFacts.self, facts))
             expectJSON(made, c["record"], why, strict: true)
             #expect(validRecord(made), "\(why): a record the loader reads")
         }
@@ -238,12 +257,26 @@ struct RecordConformance {
 
 /// One egg of the replay as the fixture writes it: the surface it was learned
 /// on (none for an egg with no answer), the time it was scored at, the white
-/// target the next soft egg is solved for, and the calibration after it.
+/// target the next soft egg is solved for, and the calibration after it, its
+/// posterior in summary.
 private struct ReplayStep: Encodable {
     let spec: GridSpec?
     let cookTimeS: Double
     let whiteDoseAtSoft: Double
-    let after: Calibration
+    let after: Summarised
+
+    /// A calibration with its posterior in summary.
+    struct Summarised: Encodable {
+        let c: Calibration
+
+        enum CodingKeys: String, CodingKey { case posterior }
+
+        func encode(to encoder: Encoder) throws {
+            try c.encode(to: encoder)
+            var k = encoder.container(keyedBy: CodingKeys.self)
+            try k.encode(PosteriorSummary(c.posterior), forKey: .posterior)
+        }
+    }
 
     enum CodingKeys: String, CodingKey {
         case spec, cookTimeS = "cookTime_s", whiteDoseAtSoft, after
@@ -260,7 +293,7 @@ private struct ReplayStep: Encodable {
 
 @Suite("Replay")
 struct ReplayConformance {
-    @Test("a fifteen-egg log in the five yolk words, egg by egg, every particle")
+    @Test("a fifteen-egg log in the five yolk words, egg by egg, each posterior in summary")
     func stepByStep() throws {
         let steps = try Fixtures.list("record.json", "replay.steps")
         let log = try fixtureLog()
@@ -276,7 +309,7 @@ struct ReplayConformance {
             }
             let made = ReplayStep(
                 spec: spec, cookTimeS: recordCookTimeS(r),
-                whiteDoseAtSoft: calibrationDoneness(c, level: 0.22).whiteDoseMin, after: c
+                whiteDoseAtSoft: calibrationDoneness(c, level: 0.22).whiteDoseMin, after: .init(c: c)
             )
             expectJSON(made, steps[i], "step \(i)")
         }

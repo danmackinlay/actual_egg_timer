@@ -274,8 +274,8 @@ read), so what a change does to the words is the catalogue's diff.
   The owner makes it himself in `npm run copy:edit` (`DEVELOPING.md`,
   "Reviewing the words"), which holds a draft to the same rules as he
   types, from the same code (`tools/copyRules.ts`), changes no key and no
-  argument, and runs the words-only check, the tests and fixtures that can
-  read the words, in seconds, before it commits (`DECISIONS.md` 123).
+  argument, and runs `npm test` and `fixtures:check`, in about half a
+  minute, before it commits (`DECISIONS.md` 123).
 - **Approval is one commit.** `test/data/copy-approved.txt` holds the hash
   of the last commit whose words the owner approved. What he has yet to
   read is `copy/` at that commit against the working tree, key by key:

@@ -10,9 +10,7 @@ end to end. The rules for working here are `CLAUDE.md`; the model is
 npm install
 npm run typecheck  # tsc, checking only: core without DOM or Node, the app without Node, the rest
 npm test           # the type check, then node --test
-npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed), swift test and words:proof
-npm run test:words # the words-only check's tests: copy:keys, swift:constants, the type checks and the tests that can read the words (below)
-npm run words:proof      # that the words-only check misses nothing the words move (below)
+npm run verify     # the gate: typecheck, test, copy:literals, copy:keys, swift:constants, fixtures:check (each generated file committed) and swift test
 npm run fixtures   # regenerates fixtures/ from the TypeScript core
 npm run swift:constants  # the Swift core's constants, written from the TypeScript's
 npm run conformance      # fixtures unchanged, then the Swift core against them
@@ -133,21 +131,26 @@ holds, and kept in the browser until it is saved. Saving (⌘S):
 
 - refuses off `main`, mid-merge, or with anyone else's changes in
   `copy/`, `fixtures/` or `fit/tests/`;
-- lays each edit on HEAD by its key, and asks which to keep where HEAD
-  changed that key since; adds, retires and re-argues no key, so a save
-  needs only the gate for words (`DECISIONS.md` 135);
-- runs the words-only check, `fixtures:check -- --words` (again, if the
-  first run only wrote the fixtures the words moved) and `npm run
-  test:words`, in a scratch worktree of HEAD under the system's temporary
-  directory, so no one's uncommitted work is tested with the words and a
-  failure leaves the checkout as it was; failed tests run again without
-  the edit, to say whether it is the edit. It takes seconds, and the page
-  says what it checked and how long it took; the full suite runs in
-  `verify` and CI before a release (`DECISIONS.md` 123);
-- commits the catalogues and the fixtures the words moved on `main` with
-  `git commit --only` and their paths by name, so nothing anyone else
-  staged goes with them, as "<key> in the owner's words"; and checks
-  again once if HEAD moved meanwhile. It never pushes.
+- refuses, too, where main has moved since the page loaded the words:
+  the page lays the drafts on the words it loads again, and asks which to
+  keep where someone changed an edited key;
+- lays each edit on that commit by its key; adds, retires and re-argues
+  no key, so a save needs only the gate for words (`DECISIONS.md` 135);
+- runs `fixtures:check` and `npm test` side by side (`fixtures:check`
+  again, if the first run only wrote the fixtures the words moved), in a
+  scratch worktree of that commit under the system's temporary directory,
+  so no one's uncommitted work is tested with the words and a failure
+  leaves the checkout as it was; failed tests run again without the edit,
+  to say whether it is the edit. It takes about half a minute, and the
+  page says what it checked and how long it took; the Swift tests and the
+  end-to-end suites run in `verify` and CI before a release
+  (`DECISIONS.md` 123);
+- commits the catalogues and the fixtures the words moved in that
+  worktree, as "<key> in the owner's words", and moves `main` on to the
+  commit with `git merge --ff-only`: the tree committed is the tree
+  tested, and nothing anyone else staged goes with it. If main moved while
+  the checks ran, it commits nothing, and he saves again. It never
+  pushes.
 
 Approve is off when the editor was started from an agent's shell
 (`CLAUDECODE` in its environment), and the page says so. `npm run
@@ -156,26 +159,6 @@ under the temporary directory, the one place `--scratch` lets it approve:
 an edit, a straight quote held and curled, a real save and an approval,
 and this checkout left as it was. It runs the tests inside, so it is not
 part of `npm test`; run it when `tools/copyEdit/` changes.
-
-**The words-only check** (`tools/wordsOnly.ts`) is the tests and fixtures
-that can read the words; `node tools/wordsOnly.ts` lists them, and what in
-each reads the catalogue. Nothing lists them by hand: each `test/*.test.ts`
-is bundled by esbuild on its own, tree-shaken and without comments, with
-every script of the repository it names by a path to run (`tools/eggs.ts`),
-and is picked when that code holds a file of `copy/` or a string naming the
-folder (`'copy'`, `'copy/en.json'`, `` `copy/${tag}.json` ``). A fixture is
-picked the same way from the modules its maker in `tools/fixtures.ts`
-imports, and `npm run fixtures -- --words` makes only those, byte for byte
-as a full run does. The catalogue is read with fs, never imported, so the
-strings are what find it: a test that renders with a catalogue of its own
-reaches `src/core/copy.ts` and is not picked. So a fixture that renders no
-words keeps away from `tools/fixtures/english.ts`. `npm run words:proof`,
-which `verify` runs, is the check on the choice: in a scratch worktree it
-swaps every letter of the English and en-US for its fullwidth twin, makes
-every fixture and runs every test, and fails if a fixture moves or a test
-fails that the check does not pick; then, the two catalogues gone, it runs
-the tests the check leaves out, each of which must pass. It takes about a
-minute.
 
 ## Checking the web app end to end
 

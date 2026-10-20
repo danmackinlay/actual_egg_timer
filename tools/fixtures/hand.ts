@@ -3,7 +3,10 @@
  *
  *  - `sequences`: what the cook does to the controls, as each app sends it
  *    where they differ, and every timer `handStep` sets come round at its
- *    time (`replay`): each step the event and what it made. Among them the
+ *    time (`replay`): each step the event and what it made - the commit,
+ *    the egg aimed for, the timers, and of the state, the moment the hand
+ *    last changed, which the web reads; the rest of it is the machine's
+ *    own, and shows in what it makes next. Among them the
  *    four ways the two apps once committed differently: a long press on a
  *    radio, a size then a weight, leaving inside a settle, and which touches
  *    are another control.
@@ -12,6 +15,9 @@
  *  - `previews`: the cook the aimed-for egg is planned on (`previewCook`).
  *  - `starts`: the start's − and + to each of the cook's limits
  *    (`startStepped`).
+ *
+ * The cooks are written as the moves that made them, from `start`, as
+ * running.json writes its own.
  */
 
 import {
@@ -213,12 +219,29 @@ export const SEQUENCES: HandSequence[] = [
   },
 ];
 
-const cold: RunningCook = startCook(START_S, BASE_CHOICES, 0, MEMORY, 'metric', 'en');
-const tapped = withBoil(cold, START_S + 532.5);
-const pulled = writeEvents(tapped, {
-  ...tapped.events, pulled: { due_s: START_S + 851.2, out_s: START_S + 858.9, by: 'cook', confirmed: true },
-});
-const cooled = writeEvents(pulled, { ...pulled.events, cooledAt_s: START_S + 1031.9 });
+/** The cooks, each as the moves that made it: the boil tapped, and events
+ *  written. */
+const PULLED_EVENTS: RunningCook['events'] = {
+  boilAt_s: START_S + 532.5, pulled: { due_s: START_S + 851.2, out_s: START_S + 858.9, by: 'cook', confirmed: true },
+  cooledAt_s: null, rangAt_s: null,
+};
+const RECIPES: Record<string, ({ boil: number } | { events: RunningCook['events'] })[]> = {
+  cold: [],
+  heating: [{ boil: START_S + 532.5 }],
+  pulled: [{ boil: START_S + 532.5 }, { events: PULLED_EVENTS }],
+  cooled: [{ boil: START_S + 532.5 }, { events: PULLED_EVENTS }, { events: { ...PULLED_EVENTS, cooledAt_s: START_S + 1031.9 } }],
+};
+
+function cookOf(name: string): RunningCook {
+  let cook = startCook(START_S, BASE_CHOICES, 0, MEMORY, 'metric', 'en');
+  for (const m of RECIPES[name]) cook = 'boil' in m ? withBoil(cook, m.boil) : writeEvents(cook, m.events);
+  return cook;
+}
+
+const cold = cookOf('cold');
+const tapped = cookOf('heating');
+const pulled = cookOf('pulled');
+const cooled = cookOf('cooled');
 
 /** The controls saying something else of every choice. */
 const SAID: CookChoices = {
@@ -249,7 +272,12 @@ export function handFixture() {
     if (JSON.stringify(made) !== JSON.stringify(q.commits)) {
       throw new Error(`${q.note}: commits ${JSON.stringify(made)}, not ${JSON.stringify(q.commits)}`);
     }
-    return { note: q.note, app: q.app, steps: steps.map((s) => ({ event: s.event, ...s.out })) };
+    return {
+      note: q.note, app: q.app,
+      steps: steps.map((s) => ({
+        event: s.event, commit: s.out.commit, aim: s.out.aim, timers: s.out.timers, changed_s: s.out.state.changed_s,
+      })),
+    };
   });
   const cooks: { name: string; cook: RunningCook }[] = [{ name: 'heating', cook: tapped }, { name: 'pulled', cook: pulled }];
   const choices = [];
@@ -278,7 +306,8 @@ export function handFixture() {
   }
   return {
     about: 'The correction in hand (src/core/hand.ts): event sequences with every timer come round, what a commit of each group makes of a cook before and after the pull, the cook the aimed-for egg is planned on, and the start\'s − and + to each limit.',
-    cooks: [...cooks, { name: 'cold', cook: cold }, { name: 'cooled', cook: cooled }],
+    start: { at_s: START_S, choices: BASE_CHOICES, memory: MEMORY, units: 'metric', lang: 'en' },
+    cooks: Object.entries(RECIPES).map(([name, moves]) => ({ name: name, moves: moves })),
     said: SAID,
     sequences: sequences,
     choices: choices,

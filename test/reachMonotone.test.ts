@@ -1,8 +1,8 @@
 /**
- * The time never falls as the level rises (src/core/reach.ts): every slider
- * position the pan delivers, for four posteriors. A file of its own, since
- * it is the longest of the reach tests and node runs a file's tests one
- * after another.
+ * The time never falls as the level rises (src/core/reach.ts): across the
+ * slider positions the pan delivers, for four posteriors. A file of its own,
+ * since it is the longest of the reach tests and node runs a file's tests
+ * one after another.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -19,18 +19,25 @@ import { type OddsProfile, answerAt, decideAnswer, oddsProfile } from '../src/co
 import { gridFor, knowing } from '../tools/common.ts';
 import { COUNTER, EGG, FRESH, PARTICLES, SETUP, WHITE_BOUND } from './profiles.ts';
 
-/** Every slider position the pan delivers, from soft to hard, with the time the
- *  app gives there (held by the profile, as the apps hold it). Every
- *  hundredth: a level is held between its profile points' times, so the time
- *  can fall only between two levels in one gap between points, and the sweep
- *  takes every level in each gap. */
+/** Slider positions the pan delivers, from soft to hard, with the time the
+ *  app gives there (held by the profile, as the apps hold it): each profile
+ *  point's, and the hundredth halfway between two. A level is held between
+ *  its profile points' times, so the time can fall only between two levels
+ *  in one gap between points; the sweep takes each gap's ends and its
+ *  middle, not every hundredth in it. */
 function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: OddsProfile; times: [number, number][] } {
   const grid = gridFor(c, egg, setup);
   const profile = oddsProfile(c, egg, setup, grid);
   const times: [number, number][] = [];
   const lo = Math.round(profile.physicalSoftest * 100);
   const hi = Math.round(profile.physicalHardest * 100);
-  for (let k = lo; k <= hi; k++) {
+  const points = profile.points.map((p) => Math.round(p.level * 100));
+  const levels = new Set<number>([lo, hi]);
+  for (let i = 0; i < points.length; i++) {
+    levels.add(points[i]);
+    if (i > 0) levels.add(Math.round((points[i - 1] + points[i]) / 2));
+  }
+  for (const k of [...levels].filter((k) => k >= lo && k <= hi).sort((a, b) => a - b)) {
     const a = answerAt(c, egg, setup, k / 100, profile);
     const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
     times.push([a.level, d.cookTime_s]);

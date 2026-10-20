@@ -7,9 +7,118 @@ import Foundation
 /// plan derived from it, and the record it makes.
 ///
 /// The two apps must plan the same cook alike: the alarm, the cooling and
-/// the record are all read off the plan. A cook is read as both apps store
-/// it, its own Codable, and folded; every clock time is compared as seconds
+/// the record are all read off the plan. A cook is made as the fixture says,
+/// by core's own moves from its start, never read from a stored one: how
+/// each app stores a cook is its own. Every clock time is compared as seconds
 /// from the cook's start, as a cook time is.
+
+/// The choices the fixture's cooks start from, with a cook's change laid on.
+private func cookChoices(_ over: Any?) throws -> CookChoices {
+    let base = try Fixtures.object("running.json", "start.choices")
+    return try decoded(CookChoices.self, base.merging(over as? [String: Any] ?? [:]) { _, change in change })
+}
+
+/// decide.json's posteriors as calibrations, by name.
+private func calibrations() throws -> [String: Calibration] {
+    var out = [String: Calibration]()
+    for p in try Fixtures.list("decide.json", "posteriors") {
+        let name = try p.str("name")
+        guard let post = try posteriorsByName([p])[name] else { throw FixtureError("no posterior \(name)") }
+        out[name] = try Calibration(posterior: post, eggsLogged: Int(p.num("eggsLogged")))
+    }
+    return out
+}
+
+/// The fixture's cooks, each made as it says: started, then each move, by
+/// core's own calls.
+private func fixtureCooks(_ calibrations: [String: Calibration]) throws -> [RunningCook] {
+    let start = try Fixtures.object("running.json", "start")
+    let units = try start.value(Units.self, "units")
+    let lang = try start.str("lang")
+    return try Fixtures.list("running.json", "cooks").map { r in
+        var cook = try startCook(
+            nowS: r.optionalNum("at_s") ?? start.num("at_s"), choices: cookChoices(r["over"]),
+            nudgeS: r.optionalNum("nudge_s") ?? 0, boilMemory: decoded(BoilMemory.self, r["memory"] ?? start["memory"]),
+            units: units, lang: lang
+        )
+        for m in try r.rows("moves", mayBeEmpty: true) {
+            if m["boil"] != nil {
+                cook = withBoil(cook, nowS: try m.num("boil"))
+            } else if m["correct"] != nil {
+                cook = try corrected(cook, choices: cookChoices(m["correct"]), nowS: m.num("now"))
+            } else if m["start"] != nil {
+                guard let moved = try startCorrected(cook, startedAtS: m.num("start"), nowS: m.num("now")) else {
+                    throw FixtureError("a start the cook's recipe corrects is refused")
+                }
+                cook = moved
+            } else if m["stillIn"] != nil {
+                cook = stillIn(cook, nowS: try m.num("stillIn"))
+            } else if m["stands"] != nil {
+                cook = pullStands(cook)
+            } else if m["events"] != nil {
+                cook = writeEvents(cook, try decoded(CookEvents.self, m["events"]))
+            } else {
+                let k = try m.object("keep")
+                guard let c = calibrations[try k.str("posterior")] else { throw FixtureError("keep: no posterior") }
+                let now = try k.num("now_s")
+                guard let inputs = replan(cook, c, surface: nil, leanHintS: 0, nowS: now).inputs else {
+                    throw FixtureError("keep: no surface wanted")
+                }
+                let grid = try doseGrid(k["grid"], egg: inputs.egg, setup: inputs.setup)
+                let surface = CookSurface(inputs: inputs, grid: grid, profile: nil)
+                cook = keepAsRan(cook, plan: replan(cook, c, surface: surface, leanHintS: 0, nowS: now))
+            }
+        }
+        return cook
+    }
+}
+
+/// A cook as a move leaves it, as the fixture writes it: the entries the
+/// move added to its log, and the log folded. The choices are whole here;
+/// the fixture writes them as a change to its start's.
+private struct Folded: Encodable {
+    let added: Int
+    let startedAtS: Double
+    let choices: CookChoices
+    let events: CookEvents
+    let correctedAtS: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case added, startedAtS = "startedAt_s", choices, events, correctedAtS = "correctedAt_s"
+    }
+
+    init(_ after: RunningCook, from cook: RunningCook) {
+        added = after.log.count - cook.log.count
+        startedAtS = after.startedAtS
+        choices = after.choices
+        events = after.events
+        correctedAtS = after.correctedAtS
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(added, forKey: .added)
+        try c.encode(startedAtS, forKey: .startedAtS)
+        try c.encode(choices, forKey: .choices)
+        try c.encode(events, forKey: .events)
+        try c.encode(correctedAtS, forKey: .correctedAtS)
+    }
+}
+
+/// A plan as running.json writes it: its row, and where the slow hob's rule
+/// got to.
+private struct RunningPlanRow: Encodable {
+    let row: PlanRow
+    let memo: SlowHobMemo?
+
+    enum CodingKeys: String, CodingKey { case memo }
+
+    func encode(to encoder: Encoder) throws {
+        try row.encode(to: encoder)
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(memo, forKey: .memo)
+    }
+}
 
 /// The plan as it ran, planned again, as the fixture writes it.
 private struct PlannedAgain: Encodable {
@@ -29,21 +138,23 @@ struct RunningConformance {
         }
     }
 
-    /// Exactly, and as stored, nulls and all: a cook's fields are stored
-    /// values, and a move does no arithmetic on them.
+    /// Exactly: a cook's fields are the values given, and a move does no
+    /// arithmetic on them.
     @Test("the boil tap, a correction and a corrected start, taken and refused")
     func moves() throws {
+        let cooks = try fixtureCooks(calibrations())
+        let base = try Fixtures.object("running.json", "start.choices")
         let rows = try Fixtures.list("running.json", "moves")
         #expect(rows.count >= 15)
         for row in rows {
             let note = try row.str("note")
-            let cook = try decoded(RunningCook.self, row["cook"])
+            let cook = cooks[Int(try row.num("cook"))]
             let move = try row.object("move")
             let after: RunningCook?
             if move["boil"] != nil {
                 after = withBoil(cook, nowS: try move.num("boil"))
             } else if move["correct"] != nil {
-                after = try corrected(cook, choices: decoded(CookChoices.self, move["correct"]), nowS: move.num("now"))
+                after = try corrected(cook, choices: cookChoices(move["correct"]), nowS: move.num("now"))
             } else if move["stillIn"] != nil {
                 after = stillIn(cook, nowS: try move.num("stillIn"))
             } else if move["stands"] != nil {
@@ -54,7 +165,11 @@ struct RunningConformance {
                 try expectClose(earliestStartS(cook), row.num("earliest_s"), "\(note): earliest start")
                 after = startCorrected(cook, startedAtS: try move.optionalNum("start") ?? .nan, nowS: now)
             }
-            expectJSON(after, row["after"], note, tolerance: 0, strict: true)
+            var expected = row["after"] as? [String: Any]
+            if let change = expected?["choices"] as? [String: Any] {
+                expected?["choices"] = base.merging(change) { _, c in c }
+            }
+            expectJSON(after.map { Folded($0, from: cook) }, expected ?? NSNull(), note, tolerance: 0)
         }
     }
 
@@ -64,6 +179,7 @@ struct RunningConformance {
     @Test("the plan across a cook's phases and every kind of correction, and the moves that need one")
     func plans() throws {
         let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
+        let cooks = try fixtureCooks(calibrations())
         let rows = try Fixtures.list("running.json", "plans")
         #expect(rows.count >= 30)
         var hobsAsked = 0
@@ -72,14 +188,14 @@ struct RunningConformance {
             let note = try row.str("note")
             let post = try #require(byName[row.str("posterior")], "\(note): no posterior")
             let c = try Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
-            let cook = try decoded(RunningCook.self, row["cook"])
+            let cook = cooks[Int(try row.num("cook"))]
             let start = cook.startedAtS
             let (hint, now) = try (row.num("leanHint_s"), row.num("now_s"))
             var surface: CookSurface?
             if let s = row["surface"] as? [String: Any] {
                 var (of, ofNow) = (cook, now)
                 if let other = s["of"] as? [String: Any] {
-                    of = try decoded(RunningCook.self, other["cook"])
+                    of = cooks[Int(try other.num("cook"))]
                     ofNow = try other.num("now_s")
                 }
                 let inputs = try #require(
@@ -90,7 +206,7 @@ struct RunningConformance {
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
             let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now)
-            expectJSON(plan, row["plan"], note, clockFrom: start)
+            expectJSON(RunningPlanRow(row: PlanRow(plan, nowS: now), memo: plan.memo), row["plan"], note, clockFrom: start)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
             for out in try row.rows("outs", mayBeEmpty: true) {
                 let t = try out.num("now_s")
@@ -137,11 +253,15 @@ struct RunningConformance {
             let ran = try row.object("asRan")
             #expect(try asRanCurrent(cook) == ran.flag("current"), "\(note): as it ran, current")
             expectJSON(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept", strict: true)
+            // What Done shows and what is planned again, written "kept" where
+            // they are what is kept.
+            let kept = { (v: Any?) -> Any? in (v as? String) == "kept" ? ran["kept"] : v }
             let shown = asRanShown(cook, plan: plan)
-            expectJSON(shown, ran["shown"], "\(note): as it ran, shown")
+            expectJSON(shown, kept(ran["shown"]), "\(note): as it ran, shown")
             expectJSON(shown.map { solutionAsRan(plan, ran: $0) }, ran["solution"], "\(note): as it ran, solved")
             let again = asRanCorrected(cook, before: c, surface: surface, nowS: now).map { PlannedAgain(asRan: $0.asRan) }
-            expectJSON(again, ran["corrected"], "\(note): as it ran, planned again")
+            let correctedRow = (ran["corrected"] as? [String: Any]).map { r in ["asRan": kept(r["asRan"]) as Any] }
+            expectJSON(again, correctedRow ?? NSNull(), "\(note): as it ran, planned again")
             expectJSON(boilToRemember(cook), row["boil"], "\(note): the boil remembered")
             expectJSON(cookEnding(cook, plan: plan, nowS: now), row["ending"], "\(note): the ending")
         }
@@ -151,10 +271,11 @@ struct RunningConformance {
 
     @Test("what the boil memory learns from a cook, and what it does not")
     func remembers() throws {
+        let cooks = try fixtureCooks(calibrations())
         let rows = try Fixtures.list("running.json", "remembers")
         #expect(rows.count >= 8)
         for row in rows {
-            try expectJSON(boilToRemember(decoded(RunningCook.self, row["cook"])), row["boil"], row.str("note"))
+            try expectJSON(boilToRemember(cooks[Int(row.num("cook"))]), row["boil"], row.str("note"))
         }
     }
 }

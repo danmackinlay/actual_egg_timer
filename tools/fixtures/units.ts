@@ -12,7 +12,9 @@
  *    number at all;
  *  - THE ROUND TRIP, for every grid value of every input: typed, stored in
  *    SI, displayed again, and the display must be what was typed. The
- *    generator refuses to write a fixture in which it is not;
+ *    generator refuses to write a fixture in which it is not, and writes the
+ *    ends and every eighth of the grid between: Swift walks the whole grid
+ *    itself;
  *  - the regional default and the explicit choice, including the flip the
  *    switch into 1750 listens for, and the size labels in both systems, rendered in English.
  */
@@ -102,6 +104,12 @@ function roundTrip(m: Measure): { typed: number; si: number; text: string }[] {
   return rows;
 }
 
+/** The first and last of `rows`, and about every eighth between. */
+function sampled<T>(rows: T[]): T[] {
+  const every = Math.max(1, Math.ceil(rows.length / 8));
+  return rows.filter((_r, i) => i % every === 0 || i === rows.length - 1);
+}
+
 /** Typed values that are NOT on the grid or inside the bounds: below, above,
  *  a third of a step off, and a number the field could never hold. */
 function typedEdges(m: Measure): { typed: number | null; si: number | null; text: string | null }[] {
@@ -176,7 +184,7 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
         };
       }),
       notANumber: { value: display(m, Number.NaN), text: displayText(m, Number.NaN) },
-      roundTrip: roundTrip(m),
+      roundTrip: sampled(roundTrip(m)),
       typed: typedEdges(m),
       nudge: nudgeCases(m),
     })),
