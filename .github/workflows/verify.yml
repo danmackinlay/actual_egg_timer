@@ -60,8 +60,9 @@ jobs:
       # Nothing above changed a committed file.
       - run: git diff --exit-code
 
-  # The Swift package's tests, and the app built for Release. Its Debug
-  # build, the other half of `npm run ios:build`, is ios-e2e's.
+  # The Swift package's tests, and the app built for Release with no literal
+  # in SwiftUI's text calls (tools/iosBuild.ts). Its Debug build, the other
+  # half of `npm run ios:build`, is ios-e2e's.
   apple:
     if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
     runs-on: macos-latest
@@ -73,9 +74,7 @@ jobs:
       - run: npm ci
       - run: cd ios/EggTimerCore && swift test
       - run: brew install xcodegen
-      - run: >-
-          cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer
-          -configuration Release -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build
+      - run: npm run ios:build -- --release
 
   # Builds the app and its UI tests for Debug and drives it on a simulator,
   # beside apple rather than after it: an artifact between jobs is a zip,
