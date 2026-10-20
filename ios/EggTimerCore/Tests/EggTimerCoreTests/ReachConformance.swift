@@ -27,6 +27,24 @@ private struct Pot {
     }
 }
 
+/// An answer as the fixture writes it: the level, the verdict, whether the
+/// odds are low, and the time solved for, without the rest of the solve.
+private func answerRow<T: Encodable>(_ a: T) throws -> [String: Any] {
+    var row = try #require(try jsonOf(a) as? [String: Any])
+    let solution = row["solution"] as? [String: Any]
+    row["cook_s"] = (solution?["result"] as? [String: Any])?["cookTime_s"] ?? NSNull()
+    row["solution"] = nil
+    return row
+}
+
+/// A decided answer as the fixture writes it: what the apps show, without
+/// the solve moved to the time decided.
+private func decidedRow<T: Encodable>(_ d: T) throws -> [String: Any] {
+    var row = try #require(try jsonOf(d) as? [String: Any])
+    row["solution"] = nil
+    return row
+}
+
 @Suite("Reach")
 struct ReachConformance {
     @Test("no shading when the best chance is under a twentieth")
@@ -79,7 +97,7 @@ struct ReachConformance {
             let pot = try Pot(profiles[index], #require(byName[profiles[index].str("posterior")], "no posterior"))
             let (level, withOdds) = try (row.num("level"), row.flag("withOdds"))
             let a = answerAt(pot.c, egg: pot.egg, setup: pot.setup, level: level, profile: withOdds ? pot.profile : nil)
-            expectJSON(a, row["answer"], "profile \(index) at \(level), odds \(withOdds)")
+            expectJSON(try answerRow(a), row["answer"], "profile \(index) at \(level), odds \(withOdds)")
         }
     }
 
@@ -106,14 +124,14 @@ struct ReachConformance {
                 let label = "\(entry.label) at \(asked), odds \(withOdds), nudge \(drawn)"
                 let odds = withOdds ? pot.profile : nil
                 let a = answerAt(pot.c, egg: pot.egg, setup: pot.setup, level: asked, profile: odds)
-                expectJSON(a, row["answer"], "\(label): the answer")
+                expectJSON(try answerRow(a), row["answer"], "\(label): the answer")
                 let own = decide(pot.c, grid: pot.grid, solution: a.solution, logNominalTarget: logYolkTarget(a.level))
                 try expectClose(own.cookTimeS, row.num("own_s"), "\(label) own choice")
                 let d = decideAnswer(
                     pot.c, egg: pot.egg, setup: pot.setup, grid: pot.grid, solution: a.solution, level: a.level,
                     profile: odds, nudgeS: drawn
                 )
-                expectJSON(d, row["decided"], label)
+                expectJSON(try decidedRow(d), row["decided"], label)
             }
         }
     }
