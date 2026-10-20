@@ -114,15 +114,19 @@ next is `PLAN.md`; the last section here says which document holds what.
   `copy/en.notes.json`.
 - **To change wording**: edit `copy/en.json`, and any `copy/en-US.json`
   override with its `base`; run `npm test` and `npm run fixtures:check`;
-  commit. A small surface has a length budget (`test/data/surfaces.json`;
+  commit. The owner does it himself in `npm run copy:edit`, which checks
+  and commits; its Approve is his button alone. A test reads the words
+  from the catalogue, never quotes them (`english()` in
+  `tools/copyNotes.ts`), so a change of wording moves none. A small surface has a length budget (`test/data/surfaces.json`;
   raising one is the owner's call). The 1750 twin may lag (`DECISIONS.md`
   116): a key without one falls back to English, and `git log --
   copy/en-x-1750.json` shows its age; a twin rewritten never transforms the
   English.
 - **Approving English is the owner's word, never an agent's call.** He reads
   `npm run copy:review`, and the words in place in the apps, and says what
-  to put back; once that is
-  committed, `npm run copy:approve` records the commit. What he approved was
+  to put back, or puts it back in `npm run copy:edit`; once that is
+  committed, the editor's Approve or `npm run copy:approve` records the
+  commit. What he approved was
   good enough for now (`DECISIONS.md` 54), and changes like anything else.
 - The boil button says **"Rolling boil"** (`action.fullBoil`), under the
   hint "wait for the whole surface to roll": tapping at first bubbles

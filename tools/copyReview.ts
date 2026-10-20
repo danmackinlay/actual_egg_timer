@@ -10,7 +10,8 @@
  * working tree, key by key (changed, added, retired; tools/copyQueue.ts,
  * the words' editor's queue too): the English word by word, the overlay's
  * words, and the key's note (copy/en.notes.json). One file with no script
- * and no network, to send to a phone as it is. It
+ * and no network. Its foot says how to change the words: the editor,
+ * `npm run copy:edit` (tools/copyEdit/). It
  * prints the commit it was made from, which approving names to approve
  * exactly what the owner read. Approving HEAD refuses while copy/ has
  * uncommitted changes, which no commit could name. Approval is the owner's
@@ -37,13 +38,12 @@ ${MARKS}`;
 /** How the owner changes what he has read, at the foot of the page: the
  *  workflow of DEVELOPING.md's "Reviewing the words", steps 3 and 4. */
 const CHANGING = `<h2>Changing them</h2><ol>
-<li>Say what to put back, by its key, to whoever is working in the repository; or edit <code>copy/en.json</code>
-yourself, and <code>copy/en-US.json</code> where the key has a US line (its <code>base</code> is the English it
-was made from). The 1750 words may lag.</li>
-<li>Run <code>npm test</code> and <code>npm run fixtures:check</code>, then commit <code>copy/</code> with any
-fixture they wrote.</li>
+<li>Run <code>npm run copy:edit</code> in the repository: it opens a page in your browser where you change each key in
+place, its US line beside it, and it checks and commits what you save. Or say what to put back, by its key, to
+whoever is working in the repository. The 1750 words may lag.</li>
 <li>Run <code>npm run copy:review</code> again and read the new page here, and the words in place in the apps.</li>
-<li>When nothing is left to put back, approve, below, and commit <code>test/data/copy-approved.txt</code>.</li>
+<li>When nothing is left to put back, approve: the editor’s Approve, or as below, then commit
+<code>test/data/copy-approved.txt</code>.</li>
 </ol>`;
 
 function review(out: string): void {

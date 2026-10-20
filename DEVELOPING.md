@@ -23,6 +23,8 @@ npm run eggs -- pull|simulate|emulate   # the population fit's data (fit/README.
 npm run population -- literature        # writes the literature's fixtures/population.json
 npm run copy:literals    # no literal written into a Swift text call is words
 npm run copy:review      # the words changed since the approved commit, as _dev/copy-review.html
+npm run copy:edit        # the owner's editor for the words, in his browser on 127.0.0.1 (below)
+npm run copy:edit:e2e    # that editor driven in headless Chrome against a scratch clone
 npm run copy:approve [-- <commit>]   # record HEAD's words (or <commit>'s) as approved (LANGUAGE.md §3)
 npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
 npm run copy:snapshot -- compare <before.json> <after.json>
@@ -101,16 +103,54 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    not only on the page (`UI.md` §6). `npm run copy:snapshot -- capture
    <out.json>` renders every web screen the copy scenarios reach, for a
    read of every string rather than only the changed ones.
-3. **Put back what the owner names** in `copy/en.json`, and any
+3. **Change them.** The owner does it himself in `npm run copy:edit`
+   (below), which checks and commits each save. By hand, or for whoever
+   he names it to: put it back in `copy/en.json`, and any
    `copy/en-US.json` override with its `base` (the 1750 twin may lag); run
    `npm test` and `npm run fixtures:check`, which writes any fixture the
    words moved; commit the catalogue with them (CLAUDE.md, "Words").
-4. **Approve the rest**: `npm run copy:approve -- <commit>` records the
-   commit the page was made from, which it prints, so words committed
-   since he read it are not approved with it; `npm run copy:approve`
-   records HEAD, and refuses while `copy/` has uncommitted changes. Commit
-   `test/data/copy-approved.txt`. Approval is the owner's word; no script
-   or agent gives it.
+4. **Approve the rest**: the editor's Approve, which approves the commit
+   its page shows and commits the record; or `npm run copy:approve --
+   <commit>`, which records the commit the review page was made from, which
+   it prints, so words committed since he read it are not approved with
+   it; `npm run copy:approve` records HEAD, and refuses while `copy/` has
+   uncommitted changes. Commit `test/data/copy-approved.txt`. Approval is
+   the owner's word; no script or agent gives it.
+
+**The editor**, `npm run copy:edit` (`tools/copyEdit/`), is the owner's
+page for the words, at his desk. It serves on 127.0.0.1 only, behind a
+token new each run, and opens the page in his browser; the Host must be
+the address it printed, and a write is a JSON POST from the page itself.
+On the left, the queue `copy:review` shows, in its order, or any key found
+by search; on the right, the chosen key: its English against what he
+approved, a field per form with its placeholders, the app's rendering,
+the length budget, its US line (edited, added, removed, or marked right
+after the English moved), the 1750 line read only, and the note. A draft
+is checked as he types by `tools/copyRules.ts`, the rules `copy.test.ts`
+holds, and kept in the browser until it is saved. Saving (⌘S):
+
+- refuses off `main`, mid-merge, or with anyone else's changes in
+  `copy/`, `fixtures/` or `fit/tests/`;
+- lays each edit on HEAD by its key, and asks which to keep where HEAD
+  changed that key since; adds, retires and re-argues no key, so a save
+  needs only the gate for words (`DECISIONS.md` 135);
+- runs `fixtures:check` (again, if the first run only wrote the fixtures
+  the words moved) and `npm test` in a scratch worktree of HEAD under the
+  system's temporary directory, so no one's uncommitted work is tested with
+  the words and a failure leaves the checkout as it was; a failed `npm
+  test` runs again without the edit, to say whether it is the edit;
+- commits the catalogues and the fixtures the words moved on `main` with
+  `git commit --only` and their paths by name, so nothing anyone else
+  staged goes with them, as "<key> in the owner's words"; and checks
+  again once if HEAD moved meanwhile. It never pushes.
+
+Approve is off when the editor was started from an agent's shell
+(`CLAUDECODE` in its environment), and the page says so. `npm run
+copy:edit:e2e` drives the page in headless Chrome against a scratch clone
+under the temporary directory, the one place `--scratch` lets it approve:
+an edit, a straight quote held and curled, a real save and an approval,
+and this checkout left as it was. It runs `npm test` inside, so it is not
+part of it; run it when `tools/copyEdit/` changes.
 
 ## Checking the web app end to end
 
