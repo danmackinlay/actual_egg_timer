@@ -49,6 +49,11 @@ import os
 ///   directory on the Mac, which a simulator's app and its UI tests
 ///   (ios/UITests) both read and write, where the tests cannot see the
 ///   app's container.
+/// - `-resetState YES`: start from what a fresh install has, before anything
+///   is read: the stores and the standard domain emptied, every notification
+///   pending or shown removed, and any Live Activity ended
+///   (ActualEggTimerApp.swift). A test's first launch, since XCUITest cannot
+///   uninstall the app between tests.
 ///
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
 /// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
@@ -186,6 +191,8 @@ extension DebugLog {
     public static var alarmTestS: Double? {
         arguments?.object(forKey: "alarmTest") == nil ? nil : arguments?.double(forKey: "alarmTest")
     }
+    /// `-resetState YES`: start from what a fresh install has (above).
+    public static var resetState: Bool { arguments?.bool(forKey: "resetState") ?? false }
 }
 #endif
 

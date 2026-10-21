@@ -2,20 +2,23 @@ import XCTest
 import EggTimerApp
 import EggTimerCore
 
-/// `npm run ios:e2e`'s scenarios: the app on a simulator, its buttons
-/// tapped as a finger would, its clock frozen at each moment a scenario
-/// checks and stepped from one to the next (`Run`). Each test is a scenario,
-/// `test_<name>` for `<name>` with its hyphens as underscores; the comment
-/// above it is what `npm run ios:e2e -- --list` says of it. The npm script
-/// runs each on a fresh install (tools/iosE2e.ts). What the app's logic
-/// decides is `swift test`'s (ios/EggTimerCore/Tests/EggTimerAppTests).
+/// `npm run ios:e2e`'s scenarios, what only a device shows: the app on a
+/// simulator, its buttons tapped as a finger would, its clock frozen at each
+/// moment a scenario checks and stepped from one to the next (`Run`). Each
+/// test is a scenario, `test_<name>` for `<name>` with its hyphens as
+/// underscores, which tools/iosE2e.ts lists. The npm script runs them all in
+/// one `xcodebuild`, each from what a fresh install has (`-resetState`, at
+/// its first launch), the device warmed up before the first (`warmUp`). What
+/// the app's logic decides is `swift test`'s
+/// (ios/EggTimerCore/Tests/EggTimerAppTests).
 @MainActor
 final class Scenarios: XCTestCase {
-    /// One scenario's run: its body, a stop recorded as a failure, and the
-    /// app terminated after.
+    /// One scenario's run: its body once the device is warm, a stop recorded
+    /// as a failure, and the app terminated after.
     func scenario(_ body: (Run) throws -> Void, file: StaticString = #filePath, line: UInt = #line) {
         let run = Run(scenarioName)
         do {
+            try warmUp()
             try body(run)
         } catch {
             XCTFail("threw: \(error)", file: file, line: line)
@@ -66,32 +69,6 @@ extension Run {
         try tap("action.boil")
         let cooking = try until("phase COOKING", from: i, phaseIs("COOKING"))
         try settled(cooking.i)
-        return try planIn(try lines())
-    }
-
-    /// Step a second into the pull, then to `after` s into it, and tap the egg
-    /// out there: the plan once cooling.
-    @discardableResult
-    func toCooling(after: Double) throws -> Plan {
-        let plan = try planIn(try lines())
-        var i = try step(plan.pull + 1)
-        try until("phase PULL", from: i, phaseIs("PULL"))
-        i = try step(plan.pull + after)
-        try tap("action.out")
-        let cooling = try until("phase COOLING", from: i, phaseIs("COOLING"))
-        try settled(cooling.i)
-        return try planIn(try lines())
-    }
-
-    /// A cold cook started, boiled at 5:00, out 3 s into the pull, stepped to
-    /// a second past the cooling's end: the plan at Done.
-    @discardableResult
-    func toDone() throws -> Plan {
-        try boiled()
-        let cooling = try toCooling(after: 3)
-        let i = try step(try cooling.cooledAt() + 1)
-        let done = try until("phase DONE", from: i, phaseIs("DONE"))
-        try settled(done.i)
         return try planIn(try lines())
     }
 

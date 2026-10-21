@@ -1,14 +1,15 @@
 // The simulator `npm run ios:e2e` and `npm run ios:shots` drive
 // (tools/iosE2e.ts, tools/iosShots.ts): a Debug build of the app and its UI
-// tests, devices of the script's own, and each UI test run on a fresh
-// install. What a test does with the app, its launches, its clock and its
-// debug log, is the tests' own (ios/UITests/Harness.swift). The web's is
-// tools/harness.ts.
-import { execFileSync, type ExecFileSyncOptions, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+// tests, a device of the script's own, its notifications made to work, and
+// the UI tests run on it in one `xcodebuild`. What a test does with the app, its launches, its clock, its
+// debug log and the reset that starts it from a fresh install's state, is
+// the tests' own (ios/UITests/Harness.swift). The web's is tools/harness.ts.
+import { spawn, execFileSync, type ExecFileSyncOptions } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { createInterface } from 'node:readline';
 
-export const BUNDLE = 'name.danmackinlay.actualeggtimer';
+const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';
 export const APP = `ios/${DERIVED}/Build/Products/Debug-iphonesimulator/Actual Egg Timer.app`;
 /// How long a wait for the app gives up after, the host's s: only how long
@@ -56,62 +57,70 @@ export function xctestrun(): string {
   return `${dir}/${found[0]}`;
 }
 
-/// What one UI test came to: passed, its failures as XCTest reports them,
-/// the lines it noted (`Run.note`), and how long it took, s.
-export interface UiResult { passed: boolean; failures: string[]; notes: string[]; secs: number; output: string }
+/// What one UI test came to: its name (`<Class>/<test>`), whether it passed,
+/// its failures as XCTest reports them, the lines it noted (`Run.note`),
+/// and how long it took, s, by XCTest's count.
+export interface UiResult { test: string; passed: boolean; failures: string[]; notes: string[]; secs: number }
 
-/// One UI test, `<Class>/<test>`, on `udid`, on a fresh install: the app
-/// uninstalled first, so that nothing a test before it stored is left, and
-/// installed again by xcodebuild. `env` reaches the tests (`TEST_RUNNER_`,
-/// ios/UITests/Harness.swift `Env`; `uiEnv`). Its result bundle lands in
-/// ios/build/e2e/results, named for the test and `tag`. Run beside others
-/// on other devices, each its own xcodebuild.
-///
-/// A simulator now and then refuses to launch the tests' runner at all
-/// ("Launch prevented due to "prevent launch" assertion"), just after a
-/// launch before it: a test that never started is run once more, a few
-/// seconds on, and says so.
-export async function uiTest(udid: string, test: string, env: Record<string, string>, tag = ''): Promise<UiResult> {
-  const first = await uiTestOnce(udid, test, env, tag);
-  if (first.passed || /Test Case '-\[EggTimerUITests\.\w+ \w+\]' started/.test(first.output)) return first;
-  await new Promise((done) => setTimeout(done, 5000));
-  const again = await uiTestOnce(udid, test, env, tag);
-  return { ...again, notes: [`run again: the first never started (${first.failures.join('; ').slice(0, 160)})`, ...again.notes] };
-}
-
-async function uiTestOnce(udid: string, test: string, env: Record<string, string>, tag: string): Promise<UiResult> {
-  quietly(() => simctl('terminate', udid, BUNDLE));
-  quietly(() => simctl('uninstall', udid, BUNDLE));
-  const bundle = `ios/${DERIVED}/results/${tag}${test.replace(/\//g, '.')}.xcresult`;
+/// The UI tests `tests` (`<Class>/<test>`) on `udid`, in one `xcodebuild
+/// test-without-building`, each told to `each` as it ends; a test asked for
+/// that never ran, a failure, after them. The app is not uninstalled between
+/// them: each test's first launch resets it (ios/UITests/Harness.swift).
+/// `env` reaches the tests (`TEST_RUNNER_`, ios/UITests/Harness.swift
+/// `Env`; `uiEnv`). The run's result bundle lands in
+/// ios/build/e2e/results/<name>.xcresult.
+export async function uiTests(
+  udid: string, tests: string[], env: Record<string, string>, name: string, each: (r: UiResult) => void = () => {},
+): Promise<UiResult[]> {
+  const bundle = `ios/${DERIVED}/results/${name}.xcresult`;
   rmSync(bundle, { recursive: true, force: true });
   mkdirSync(dirname(bundle), { recursive: true });
   const runnerEnv: Record<string, string> = {};
   for (const [k, v] of Object.entries(env)) runnerEnv[`TEST_RUNNER_${k}`] = v;
-  const began = Date.now();
   const child = spawn('xcodebuild', [
     'test-without-building', '-xctestrun', xctestrun(), '-destination', `id=${udid}`,
-    `-only-testing:EggTimerUITests/${test}`, '-resultBundlePath', bundle,
+    ...tests.map((t) => `-only-testing:EggTimerUITests/${t}`), '-resultBundlePath', bundle,
     // A failure's sysdiagnose of the simulator takes minutes, and says
     // nothing the result bundle and the app's log do not.
     '-collect-test-diagnostics', 'never',
   ], { env: { ...process.env, ...runnerEnv }, stdio: ['ignore', 'pipe', 'pipe'] });
-  const chunks: Buffer[] = [];
-  child.stdout.on('data', (d: Buffer) => chunks.push(d));
-  child.stderr.on('data', (d: Buffer) => chunks.push(d));
+
+  const results: UiResult[] = [];
+  const errors: string[] = [];
+  let running: { failures: string[]; notes: string[] } | null = null;
+  const caseLine = /Test Case '-\[EggTimerUITests\.(\w+) (\w+)\]' (started|passed|failed)(?: \(([\d.]+) seconds\))?/;
+  const read = (l: string): void => {
+    const c = caseLine.exec(l);
+    if (c?.[3] === 'started') {
+      running = { failures: [], notes: [] };
+    } else if (c) {
+      const r = {
+        test: `${c[1]}/${c[2]}`, passed: c[3] === 'passed', failures: running?.failures ?? [],
+        notes: running?.notes ?? [], secs: Number(c[4] ?? 0),
+      };
+      running = null;
+      results.push(r);
+      each(r);
+    } else if (running && l.includes(' error: -[EggTimerUITests.')) {
+      running.failures.push(l.replace(/^.*?error: -\[[^\]]*\] : /, '').replace(/^failed: caught error: /, 'threw: '));
+    } else if (running && l.startsWith('NOTE: ')) {
+      running.notes.push(l.slice(6));
+    } else if (/error/i.test(l)) {
+      errors.push(l);
+    }
+  };
+  createInterface({ input: child.stdout }).on('line', read);
+  createInterface({ input: child.stderr }).on('line', read);
   const status = await new Promise<number | null>((done) => child.on('close', done));
-  const output = Buffer.concat(chunks).toString('utf8');
-  const secs = (Date.now() - began) / 1000;
-  const name = test.split('/').at(-1)!;
-  const failures = output.split('\n')
-    .filter((l) => l.includes(` error: -[EggTimerUITests.`) && l.includes(`${name}]`))
-    .map((l) => l.replace(/^.*?error: -\[[^\]]*\] : /, '').replace(/^failed: caught error: /, 'threw: '));
-  const notes = output.split('\n').filter((l) => l.startsWith('NOTE: ')).map((l) => l.slice(6));
-  const passed = status === 0 && new RegExp(`Test Case '-\\[EggTimerUITests\\.\\w+ ${name}\\]' passed`).test(output);
-  if (!passed && failures.length === 0) {
-    const errors = output.split('\n').filter((l) => /error/i.test(l)).slice(0, 5).join('; ');
-    failures.push(`xcodebuild exited ${status}: ${errors || 'no test ran'}`);
+  for (const test of tests.filter((t) => !results.some((r) => r.test === t))) {
+    const r = {
+      test, passed: false, notes: [], secs: 0,
+      failures: [`never ran: xcodebuild exited ${status}: ${errors.slice(0, 5).join('; ') || 'no test ran'}`],
+    };
+    results.push(r);
+    each(r);
   }
-  return { passed, failures, notes, secs, output };
+  return results;
 }
 
 /// What `simctl list -j runtimes devicetypes` says, as far as it is read.
@@ -123,10 +132,10 @@ interface SimList {
   devicetypes: { identifier: string; name: string; productFamily: string }[];
 }
 
-/// A device of the script's own, booted, named `AET <tool> <pid>` and its
-/// `lane`, if any: an iPhone 17 Pro if the newest runtime runs one, else its
-/// last iPhone; or, given `model`, that iPhone and no other.
-export function createDevice(model: string | null = null, tool = 'e2e', lane = ''): string {
+/// A device of the script's own, booted, named `AET <tool> <pid>`: an
+/// iPhone 17 Pro if the newest runtime runs one, else its last iPhone; or,
+/// given `model`, that iPhone and no other.
+export function createDevice(model: string | null = null, tool = 'e2e'): string {
   const list = JSON.parse(simctl('list', '-j', 'runtimes', 'devicetypes')) as SimList;
   const runtime = list.runtimes
     .filter((r) => r.isAvailable && r.platform === 'iOS')
@@ -144,29 +153,40 @@ export function createDevice(model: string | null = null, tool = 'e2e', lane = '
     ? types.find((t) => t.name === 'iPhone 17 Pro') ?? types[types.length - 1]!
     : types.find((t) => t.name === model);
   if (!type) throw new Error(`no ${model} for iOS ${runtime.version}`);
-  const id = simctl('create', `AET ${tool} ${process.pid}${lane ? ` ${lane}` : ''}`, type.identifier, runtime.identifier);
+  const id = simctl('create', `AET ${tool} ${process.pid}`, type.identifier, runtime.identifier);
   console.log(`ios:${tool}: device ${id} (${type.name}, iOS ${runtime.version}), the app in ${LOCALE}`);
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
 }
 
-/// What the UI tests are given (ios/UITests/Harness.swift `Env`): where
-/// each run's directory is made, ios/build/e2e/runs/<lane>, so that a test on
-/// one device never shares one with a test on another; how long a wait gives
-/// up after; and the locale.
-export function uiEnv(lane: string): Record<string, string> {
-  return { AET_E2E_DIR: resolve(`ios/${DERIVED}/runs/${lane}`), AET_E2E_WAIT: String(WAIT_S), AET_LOCALE: LOCALE };
-}
-
-/// The device warmed up for the UI tests (`WarmUp`, ios/UITests/Bundle.swift):
-/// run until a cook has its alarms pending, at most five times.
-export async function uiWarmUp(udid: string, lane: string, tool = 'e2e'): Promise<void> {
-  for (let attempt = 1; ; attempt += 1) {
-    const r = await uiTest(udid, 'WarmUp/test_warm_up', uiEnv(lane), `${lane}.`);
-    if (r.passed) return;
-    console.log(`ios:${tool}: ${lane}: warm-up ${attempt}: ${r.failures.join('; ')}`);
-    if (attempt === 5) throw new Error(`the device's alarms not working after ${attempt} launches`);
+/// The device's notifications made to work for the app (GOTCHAS.md): an
+/// app's first install on a new simulator never has them authorized ("Source
+/// is not authorized"), however long it waits or relaunches, but once it has
+/// asked for them the next install has. So the app is installed, launched
+/// once asking for quiet notifications with a cook started, given until it
+/// hears back, and uninstalled; the tests' `xcodebuild` installs it again.
+export async function primeNotifications(udid: string): Promise<void> {
+  const dir = resolve(`ios/${DERIVED}/runs/prime`);
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const log = `${dir}/aet.log`;
+  const answered = (): boolean => existsSync(log) && /"ev":"(notScheduled|pending)"/.test(readFileSync(log, 'utf8'));
+  simctl('install', udid, APP);
+  // A new device's first launch now and then says it failed, and runs.
+  quietly(() => simctl(
+    'launch', udid, BUNDLE, '-debugDir', dir, '-muteAudio', 'YES', '-provisionalAlarms', 'YES', '-uiScreen', 'heating',
+  ));
+  for (const end = Date.now() + WAIT_S * 1000; !answered() && Date.now() < end;) {
+    await new Promise((done) => setTimeout(done, 500));
   }
+  quietly(() => simctl('terminate', udid, BUNDLE));
+  quietly(() => simctl('uninstall', udid, BUNDLE));
 }
 
+/// What the UI tests are given (ios/UITests/Harness.swift `Env`): where
+/// each test's directory is made, ios/build/e2e/runs/<test>; how long a wait
+/// gives up after; and the locale.
+export function uiEnv(): Record<string, string> {
+  return { AET_E2E_DIR: resolve(`ios/${DERIVED}/runs`), AET_E2E_WAIT: String(WAIT_S), AET_LOCALE: LOCALE };
+}

@@ -19,9 +19,15 @@ releasing has its own in `ios/RELEASING.md`.
   is busy.** With a CPU hog per core, `requestAuthorization` and
   `pendingNotificationRequests` never return, relaunch or not; half the
   cores busy is fine. Unloaded, a new device's first request comes back
-  "not authorized" after about 20 s. Warm a new device up with a cook until
-  its alarms are pending (`WarmUp`, ios/UITests/Bundle.swift, which
-  `npm run ios:e2e` runs on each of its devices).
+  "not authorized" after about 20 s.
+- **An app's first install on a new simulator never has its notifications
+  authorized**: every request fails "Source is not authorized", though the
+  settings say provisional, however long it waits or relaunches. Once that
+  install has asked, the next install's work at once. `npm run ios:e2e`
+  installs the app, launches it asking, and uninstalls it, before the tests
+  install it again (`primeNotifications`, tools/iosHarness.ts); the tests
+  check the alarms once, before the first (`warmUp`,
+  ios/UITests/Harness.swift).
 - **A quick synthetic tap does not flip a SwiftUI `Toggle`; a held one
   (0.15 s) does.** Screenshots lag a tap by a frame or two, so look again
   before tapping twice.
@@ -36,9 +42,10 @@ releasing has its own in `ios/RELEASING.md`.
   `-collect-test-diagnostics never`; the result bundle and the app's log say
   what failed.
 - **XCUITest cannot uninstall the app**, so a test cannot start from a fresh
-  install: `tools/iosE2e.ts` runs each scenario as its own
-  `xcodebuild test-without-building`, the app uninstalled before it, about
-  4.5 s a scenario.
+  install, and an uninstall and an `xcodebuild` a test cost 50-70 s each on
+  CI's runner. A debug build's `-resetState` empties the stores, removes the
+  notifications and ends the card instead, at each test's first launch, and
+  the suite is one `xcodebuild` (tools/iosE2e.ts).
 - **A simulator's app and its UI tests share the Mac's files**: neither is
   held to its container, so a directory on the Mac (`-debugDir`) carries the
   clock's steps one way and the debug log the other, and the tests read and
