@@ -7,7 +7,8 @@
  * regenerates them to make itself pass - if a number here is wrong, it is wrong
  * in `src/core/` first, and `npm test` should be what catches it.
  *
- * Run: npm run fixtures
+ * Run: npm run fixtures         fixtures/, below
+ *      npm run fixtures -- fit  the fit's two, below, alone
  *
  * One file per part of the core, each held by a Swift suite of the same name
  * and built by the module of the same name in tools/fixtures/ (what more than
@@ -63,8 +64,9 @@
  *   fixtures/hand.json         the correction in hand: event sequences, the
  *                              choices a commit makes, the preview, the start
  *
- * And two for the fit (fit/, Python), held by its pytest suite, which CI runs
- * without node:
+ * And two for the fit (fit/, Python), held by its pytest suite, written only
+ * when asked for (`npm run fixtures -- fit`), since nothing runs that suite
+ * until shared eggs arrive to fit (PLAN.md), and nothing checks them:
  *
  *   fit/tests/emulated-sample.json   six simulated cooks emulated, with the
  *                              core's own likelihood for a dozen eggs: the
@@ -256,7 +258,8 @@ const PARTS: Record<string, {
 };
 
 /** Where a fixture is written that is not fixtures/<name>.json: the fit's,
- *  beside the tests that read them. tools/fixturesCheck.ts checks these too. */
+ *  beside the tests that read them, written only by `npm run fixtures --
+ *  fit`. tools/fixturesCheck.ts checks fixtures/ alone. */
 const ELSEWHERE: Record<string, string> = {
   fitSample: 'fit/tests/emulated-sample.json',
   fitRecovery: 'fit/tests/recovery-sample.json',
@@ -366,10 +369,12 @@ if (!isMainThread) {
     ? laidOut(job.name, await FIXTURES[job.name]())
     : await PARTS[job.name].part(job.part));
 } else if (import.meta.main) {
-  const names = Object.keys(FIXTURES);
+  const fit = process.argv[2] === 'fit';
+  if (process.argv.length > 2 && !fit) throw new Error(`npm run fixtures takes nothing, or fit; not ${process.argv.slice(2).join(' ')}`);
+  const names = Object.keys(FIXTURES).filter((name) => (name in ELSEWHERE) === fit);
   const made = await makeAll(names, availableParallelism());
   mkdirSync('fixtures', { recursive: true });
   for (const name of names) replaceFile(pathOf(name), (made.get(name) as Made).text);
-  const counts = COUNTED.flatMap((name) => (made.get(name) as Made).counts);
-  console.log(`fixtures/*.json and the fit's ${Object.values(ELSEWHERE).join(', ')} written: ${counts.join(', ')}`);
+  const counts = COUNTED.filter((name) => names.includes(name)).flatMap((name) => (made.get(name) as Made).counts);
+  console.log(`${fit ? `the fit's ${Object.values(ELSEWHERE).join(', ')}` : 'fixtures/*.json'} written: ${counts.join(', ')}`);
 }

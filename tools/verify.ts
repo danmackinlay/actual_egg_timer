@@ -116,7 +116,6 @@ const GENERATED = [
   'ios/App/Assets.xcassets/AccentColor.colorset/Contents.json',
   'ios/Widget/Assets.xcassets/AccentColor.colorset/Contents.json',
   'fixtures/',
-  'fit/tests/*.json',
 ];
 const copyKeys = job('copy:keys', [[node, ['tools/copyKeys.ts', '--check']]]);
 const swiftConstants = job('swift:constants', [[node, ['tools/swiftConstants.ts', '--check']]]);

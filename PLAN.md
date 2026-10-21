@@ -12,7 +12,8 @@ and the map of the documents are `CLAUDE.md`.
    `fixtures/population.json` in a release. The owner's trusted ids count in
    full and lift the open tier's cap (`DECISIONS.md` 82). Expect to run longer
    chains than the recovery check's: publishing refuses a fit whose R-hat is
-   1.01 or more (133).
+   1.01 or more (133). CI's `fit` job is off until then (`if: false` in
+   `.github/workflows/verify.yml`): turn it back on with the first fit.
 2. **Czech (F5)**, when the owner's friend can review it. Add it to the
    picker in both apps, which becomes a menu, and `cs` to
    `CFBundleLocalizations` (`LANGUAGE.md` §5). Hand the reviewer wording that

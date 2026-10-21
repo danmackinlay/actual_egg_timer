@@ -59,8 +59,13 @@ from `netlify.toml` on every push and serves `origin/main`. The `og:` tags in
 commit. There is no second host: the Vercel config was deleted (the owner: "we
 can add vercel later if needed"), and git has it. CI
 (`.github/workflows/verify.yml`) runs `verify`'s steps and `swift test`
-and `ios:build`, `ios:e2e`, the fit's tests and `e2e`,
-each a job of its own.
+and `ios:build`, `ios:e2e` and `e2e`, each a job of its own; the fit's
+tests are off until shared eggs arrive. A push that changes only documents
+(`*.md`, `.claude/`, `LICENSE`) runs nothing; otherwise `verify`'s steps
+always run, the macOS jobs only when the branch changed what they build,
+and `e2e` only when it changed what the web serves or tests (the `changes`
+job lists both). A push to `main` runs them all; a tag's push always runs,
+its own check alone.
 
 There is nothing else to configure. `netlify.toml` carries the settings the host
 needs, and the build is esbuild plus a few copies (`tools/buildSite.ts`), with
@@ -125,7 +130,7 @@ is checked as he types by `tools/copyRules.ts`, the rules `copy.test.ts`
 holds, and kept in the browser until it is saved. Saving (⌘S):
 
 - refuses off `main`, mid-merge, or with anyone else's changes in
-  `copy/`, `fixtures/` or `fit/tests/`;
+  `copy/` or `fixtures/`;
 - refuses, too, where main has moved since the page loaded the words:
   the page lays the drafts on the words it loads again, and asks which to
   keep where someone changed an edited key;

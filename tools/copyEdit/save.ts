@@ -6,7 +6,7 @@
  * with the entry it was made from, are
  *
  *   1. refused where this checkout is not on main, is mid-merge, or has
- *      changes in copy/, fixtures/ or fit/tests/ (someone else's: this
+ *      changes in copy/ or fixtures/ (someone else's: this
  *      tool leaves none of its own), or where main has moved since the page
  *      loaded the words it edits (`base`): the page lays its drafts on the
  *      words it loads afresh, and the owner saves again;
@@ -56,9 +56,9 @@ export const CATALOGUES: readonly string[] = [
   ...EDITABLE, ...LANGUAGES.map((l) => l.tag).filter((tag) => !EDITABLE.includes(tag)),
 ];
 /** What a save may write: the catalogues, and the fixtures the words move. */
-const WRITTEN = ['copy', 'fixtures', 'fit/tests'];
+const WRITTEN = ['copy', 'fixtures'];
 const MAY_CHANGE = (path: string): boolean =>
-  EDITABLE.some((t) => path === `copy/${t}.json`) || /^fixtures\/[^/]+\.json$/.test(path) || /^fit\/tests\/[^/]+\.json$/.test(path);
+  EDITABLE.some((t) => path === `copy/${t}.json`) || /^fixtures\/[^/]+\.json$/.test(path);
 const SCRATCH_PREFIX = 'aet-copy-edit-';
 
 /** One change the owner made: a key of one catalogue, from the entry it had
