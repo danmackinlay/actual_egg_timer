@@ -8,11 +8,9 @@ import { longDuration, startPhrase, weekdayKey } from '../../src/core/wording.ts
 import { english } from './english.ts';
 
 /* The two unit choices, which at a 58 C bath reach only two of their six
- * branches in normal use. Every boundary, from both sides, because four of
- * these were ported by hand and never once executed in either language. Each
- * row is the bucket core picks - a key and its numbers - and the English it
- * renders to, which is what this file held before core stopped speaking
- * English, and is unchanged. */
+ * branches in normal use: every boundary, from both sides. Each row is the
+ * bucket core picks - a key and its numbers - and the English it renders
+ * to. */
 
 export const sousvideCopyFixture = {
   about: 'Which words say the sous-vide answer: the duration\'s bucket, the start phrase and the weekday, rendered in English. src/core/wording.ts.',

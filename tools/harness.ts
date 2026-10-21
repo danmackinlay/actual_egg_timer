@@ -24,8 +24,7 @@
  *
  * `--tree <dir>` (E2E_TREE) serves another checkout's build - its `_site/`
  * and its `_dev/` - to this harness: a commit's build, driven by today's
- * scenarios. The commit must have the test API and build `_dev/` (this one
- * and later):
+ * scenarios. The commit must have the test API and build `_dev/`:
  *
  *   git worktree add /tmp/aet-old <commit>
  *   (cd /tmp/aet-old && npm ci && npm run build:site)
@@ -204,10 +203,10 @@ export interface TabOptions {
   boot?: boolean;
 }
 
-/** One page, attached on the browser's socket. */
 /** The locale a tab is given when its scenario names none. */
 export const DEFAULT_LOCALE = process.env['AET_LOCALE'] ?? 'en-AU';
 
+/** One page, attached on the browser's socket. */
 export class Tab {
   readonly errors: string[] = [];
   /** What the page said with console.warn, in order. */
@@ -369,8 +368,7 @@ export class Tab {
   }
 
   /** Wait for the page to have done what it will (`aetTest.whenIdle`): no
-   *  timer of a person's span pending, no worker job, no request. What a
-   *  fixed sleep did, whatever the machine's speed. */
+   *  timer of a person's span pending, no worker job, no request. */
   async settle(): Promise<void> {
     try {
       await this.eval(`window.aetTest.whenIdle(${WAIT_MS})`);

@@ -414,7 +414,7 @@ test('a plan the cook did not cause never moves a pull already due', () => {
 });
 
 test('a boil tapped after a late correction to cold runs on the remembered time', () => {
-  // As the review ran it: a cold start tapped late runs on the tap, as ever.
+  // A cold start tapped late runs on the tap, as ever.
   const plain = [480, 540, 600, 720].map((tap) => replan(withBoil(cookOf(), S + tap), C, null, 0, S + tap).cookTime_s);
   assert.ok(plain[0] < plain[1] && plain[1] < plain[2] && plain[2] < plain[3], `${plain.join(', ')}: later each time`);
   // The owner's case: boiling corrected to cold at 500 s, past the 480 s this
@@ -457,7 +457,7 @@ test('a tap made before a stray cold -> hot -> cold is still remembered', () => 
 test('a cook left heating stops lengthening, and is abandoned; the one rule for too old', () => {
   const most = LIMITS.timeToBoil_s.hi;
   const cold = cookOf();
-  // The review's call: a cold start never tapped, twelve hours on.
+  // A cold start never tapped, twelve hours on.
   const q = replan(cold, C, null, 0, S + 12 * 3600);
   assert.equal(phaseAt(q.deadlines, S + 12 * 3600), 'HEATING', 'a plan is still a plan');
   assert.equal(q.setup.timeToBoil_s, most, 'not 43,252 s');

@@ -30,7 +30,7 @@ import { patchOf, posteriorSummary } from './shared.ts';
  * Two things are pinned. First, which records a loader TRUSTS: a canonical
  * record, the variations today's shape allows, and one breakage per rule, so a
  * port that forgets a check - or adds one - disagrees on a named case. Second,
- * the replay: a log of fifteen eggs from both apps - answered or not, pulled by
+ * the replay: a log of eggs from both apps - answered or not, pulled by
  * the cook or by the clock, some with a probe reading, the yolk in the five
  * words - folded from a fresh prior with the calibration written out after
  * each egg, its posterior in summary (`posteriorSummary`), and the tail of the
@@ -491,7 +491,7 @@ const recordCases: unknown[] = RECORD_CASES.map((c) => {
   const record = mutated(c.mutate);
   return { why: c.why, patch: patchOf(CANONICAL, record), parsed: parsedOf(record) };
 });
-// A log is all or nothing: one bad record refuses the lot.
+// A log handed in where a record goes: not an object.
 recordCases.push({
   why: 'not an object',
   record: [CANONICAL] as unknown as Record<string, unknown>,
@@ -792,7 +792,7 @@ export const recordFixture = {
     log: REPLAY_LOG,
     steps: replaySteps,
     // The tail of the log folded again from the state after egg 2, standing in
-    // for a migrated phone's frozen base.
+    // for a phone's base.
     fromBase: {
       after: REPLAY_BASE_AFTER,
       base: calibrationRows(replayBase),

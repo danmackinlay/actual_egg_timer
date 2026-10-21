@@ -16,8 +16,7 @@
  *       PARTICLE_COUNT particles),
  *       then decided exactly as the web app decides: the decision surface,
  *       the odds profile, its envelope, the jammy time for a 58 g egg from
- *       the fridge into boiling water and then ice. 50 seeds by default;
- *       about 7 s a seed, nearly all of it building the dose surfaces.
+ *       the fridge into boiling water and then ice. 50 seeds by default.
  *   npm run posterior -- reference
  *       rewrites test/data/word-answers-posterior.json, which test/record.test.ts checks
  *       the filter against. See `writeReference`.
@@ -49,8 +48,7 @@ import { appSetup, draw, gridFor, rng } from './common.ts';
 
 export const REFERENCE_FILE = 'test/data/word-answers-posterior.json';
 
-/** The surfaces the distributional checks score on: 7 x 9, as the old test
- *  had them. Coarse is fine: the filter and the reference score on the SAME
+/** The surfaces the distributional checks score on: 7 x 9. Coarse is fine: the filter and the reference score on the SAME
  *  surfaces, so what is compared is the sampler, not the physics. */
 const COARSE_GRID: GridPolicy = (alphaCentre, cookTime_s) => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 7, timeCount: 9,
@@ -354,7 +352,7 @@ export function wordLog(): EggRecord[] {
 
 /** What the web app shows at jammy for CHECK_EGG after this calibration: the
  *  decision surface, the odds profile and its envelope (src/ui/answer.ts,
- *  `decided`). */
+ *  `solveIdle`). */
 function appDecision(c: Calibration): { time_s: number; meanTime_s: number; odds: number; tenths: number } {
   const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, CHECK_EGG, CHECK_SETUP)));
   const profile = oddsProfile(c, CHECK_EGG, CHECK_SETUP, grid);

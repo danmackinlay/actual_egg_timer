@@ -5,7 +5,7 @@
  * The claims: the choice is right on posteriors built to
  * know something - a cook who likes a firmer yolk gets a later time at every
  * level, which the mean solve never gave them; before any egg the time is the
- * literature's, and after one it leans by seconds, not by the 43 s the prior
+ * literature's, and after one it leans by seconds, not as far as the prior
  * alone would have it lean; the odds are calibrated on simulated cooks, as the
  * answers' probabilities are; and the interval narrows where the "still
  * learning" rule says. Also: the refusals hold, a cook under way keeps its
@@ -174,8 +174,8 @@ test('before any egg the time is the literature\'s, exactly, on every pot', () =
 
 test('...because under the prior alone the choice would run far from it (measured, not shipped)', () => {
   // The prior's time-scale sd is about +-70 s of cook time, so the yolk's part
-  // of the loss is nearly flat and the white's tail steers. Measured on 28
-  // September: jammy +42 s, soft +86 s, hard +2 s (`npm run decide -- lean`).
+  // of the loss is nearly flat and the white's tail steers. Measured:
+  // jammy +42 s, soft +86 s, hard +2 s (`npm run decide -- lean`).
   const lean = (level: number): number => {
     const m = meanSolve(PRIOR, level);
     return chooseCookTime(PRIOR.posterior, PRIOR_GRID, logYolkTarget(m.level), m.sol.result.cookTime_s) - m.sol.result.cookTime_s;
@@ -245,7 +245,7 @@ test('a cold start re-solved for its measured boil keeps its lean, to within a f
     const again = decide(c, gridFor(c, EGG, measured), m.sol, logYolkTarget(m.level)).cookTime_s;
     rows.push(`L${level}: lean ${lean.toFixed(1)} s, carried ${carried.toFixed(1)}, chosen again ${again.toFixed(1)}`);
     assert.ok(Math.abs(lean) > 3, `L${level}: a lean worth carrying (${lean.toFixed(1)} s)`);
-    // Measured 28 September: 3.1 s at soft, where the white binds and the lean
+    // Measured: 3.1 s at soft, where the white binds and the lean
     // depends on the ramp most; under a second at jammy and fudgy.
     assert.ok(Math.abs(carried - again) < 4, rows.join('; '));
   }

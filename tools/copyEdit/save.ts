@@ -1,32 +1,11 @@
 /**
  * Saving and approving the words from the editor (tools/copyEdit/server.ts):
- * what is checked, where, and what is committed.
- *
- * Saving: the owner's edits, each a key of copy/en.json or of an overlay
- * with the entry it was made from, are
- *
- *   1. refused where this checkout is not on main, is mid-merge, or has
- *      changes in copy/ or fixtures/ (someone else's: this
- *      tool leaves none of its own), or where main has moved since the page
- *      loaded the words it edits (`base`): the page lays its drafts on the
- *      words it loads afresh, and the owner saves again;
- *   2. laid on that commit key by key, an edit whose key it holds otherwise
- *      refused as a conflict, and held to the catalogue's rules
- *      (tools/copyRules.ts), with no key and no argument changed;
- *   3. written into a scratch worktree of the commit in the system's
- *      temporary directory, where `npm run fixtures:check` and `npm test`
- *      run side by side (fixtures:check again, when the first run only
- *      wrote the fixtures the words moved). So no one's uncommitted work is
- *      tested with them, a failure leaves this checkout as it was, and only
- *      the words can have moved a fixture;
- *   4. on a pass, committed there, the catalogues and any fixture the words
- *      moved, and main moved on to that commit with `git merge --ff-only`:
- *      the tree committed is the tree tested, and nothing anyone else
- *      staged goes with it. If main moved while the checks ran, nothing is
- *      committed, and the owner saves again.
- *
- * A failure says why in the owner's words. When the tests fail, they run
- * once more on HEAD without the edits, to say whether it is the edit.
+ * what is checked, where, and what is committed. DEVELOPING.md, "Reviewing
+ * the words", has a save's steps; here they are `preflight` (changes in
+ * copy/ or fixtures/ are someone else's: this tool leaves none of its own),
+ * `plan`, `check` (in a scratch worktree of the commit, so only the words
+ * can have moved a fixture) and `save`. A failure says why in the owner's
+ * words.
  *
  * Approving records the commit the page showed (tools/copyQueue.ts) and
  * commits test/data/copy-approved.txt alone. It is the owner's button: it

@@ -21,7 +21,6 @@ export const cookScenarios: Record<string, Scenario> = {
       const real0 = Date.now();
       let s = await start(tab, 'cold');
       labelSays(s);
-      // Four minutes of heating.
       await tab.shift(240);
       s = await boil(tab);
       labelSays(s);

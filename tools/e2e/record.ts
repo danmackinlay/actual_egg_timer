@@ -157,8 +157,7 @@ export const recordScenarios: Record<string, Scenario> = {
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       s = await tab.phase('DONE');
       await tab.until('__snap().target !== ""', 'what was asked for');
-      // The slider's heading, the cook's peak yolk (the one screen keeps the
-      // slider where the summary under the sentence was).
+      // The slider's heading, the cook's peak yolk.
       const summary = `${byId('donenessPeak')}.textContent`;
       const before = await tab.eval<string>(summary);
       const asked = (await tab.snap()).target;

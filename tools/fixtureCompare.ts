@@ -15,12 +15,10 @@
  *
  * Rounding the numbers when they are written would not have done instead.
  * Wherever two platforms' values straddle a rounding boundary they still
- * differ, in the last digit written: at twelve digits one number in
- * reach.json did. And the fixtures carry inputs as well as answers, which
+ * differ, in the last digit written. And the fixtures carry inputs as well as answers, which
  * must reach Swift exactly as the TypeScript used them: 4.722222222222222 C
  * is 40.5 F, a half-way case that rounds to 41; 1759700000123.5 is an id in
- * fractions of a millisecond, which a loader refuses. Rounded to thirteen
- * digits, the first read 40 and the second became a whole number.
+ * fractions of a millisecond, which a loader refuses.
  */
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -102,7 +100,7 @@ export function compareFixtures(committed: unknown, fresh: unknown): FixtureComp
 /**
  * How a fixture is laid out: one row per line, so that a diff names the rows
  * that changed and two branches that change different rows merge, and still
- * JSON, so every reader reads it as it read the old layout.
+ * JSON, so every reader reads it.
  *
  * A row is an element of a list that holds objects or lists: a case, a step
  * of a trace, a particle. Each row starts a line, and is written whole on it
@@ -115,7 +113,7 @@ export function compareFixtures(committed: unknown, fresh: unknown): FixtureComp
  */
 
 /** The longest row written on one line, in characters: room for the largest
- *  case (a running cook's plan, 6.6k), not for a posterior's particles. */
+ *  case (a running cook's plan), not for a posterior's particles. */
 export const ROW_LIMIT = 8000;
 
 function isContainer(v: unknown): v is object {

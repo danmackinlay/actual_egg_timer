@@ -23,10 +23,10 @@ import { referenceSetup } from '../common.ts';
  * each pot's decision surface goes (`decisionGridSpec`, which runs a solve), a
  * surface itself, and the choice made on it from three posteriors - the prior,
  * one that has learned from some eggs, and one that knows its cook likes a
- * firmer yolk. Every particle is written out, as calibration.json does.
+ * firmer yolk.
  *
- * The surface is coarser than the app's (7 rows, 20 s columns, where the app
- * has 13 and 10 s) so that `swift test` rebuilds it in a moment; the spec is
+ * The surface is coarser than the app's (7 rows, 20 s columns) so that
+ * `swift test` rebuilds it in a moment; the spec is
  * the production one, and the surface is only the arithmetic's input. */
 
 const DECIDE_SPEC_INPUTS: DecisionInputs[] = [

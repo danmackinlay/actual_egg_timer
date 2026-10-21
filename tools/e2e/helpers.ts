@@ -72,15 +72,15 @@ export function deadlines(s: Snap): { cookEnd_s: number; coolEnd_s: number } {
 /** A box on the page, px from its top and left. */
 export interface Box { top: number; bottom: number; left: number }
 
-/** What the one screen shows: whether each of its parts is on screen, where
- *  the action, the slider, the sentence and the egg are, where the readout
- *  and the action end, the action's two buttons (null when not shown), and
- *  the slider's value. */
 /** The parts of the one screen whose layout is read: those that must be
  *  shown, and those whose tops are compared. */
 const SHOWN: ElementId[] = ['readout', 'digits', 'doneness', 'donenessPeak', 'sentence', 'eggSection', 'actions'];
 const TOPS = ['actions', 'doneness', 'sentence', 'eggSection'] as const satisfies readonly ElementId[];
 
+/** What the one screen shows: whether each of its parts is on screen, where
+ *  the action, the slider, the sentence and the egg are, where the readout
+ *  and the action end, the action's two buttons (null when not shown), the
+ *  slider's value, and how the row of buttons was laid out. */
 export interface Layout {
   shown: { id: ElementId; visible: boolean }[];
   top: Record<(typeof TOPS)[number], number>;

@@ -1,7 +1,7 @@
 /**
  * The pot, the surface and the posteriors the decision fixtures share:
- * decide.json writes them, and outcome, certainty, reach, running and step
- * read them. Importing this module computes them and nothing else, so a
+ * decide.json writes them, and outcome, certainty, cooks, reach, running and
+ * step read them. Importing this module computes them and nothing else, so a
  * fixture that reads them does not make decide.json's or outcome.json's
  * cases too.
  */
@@ -24,8 +24,8 @@ export const DECIDE_SETUP: CookSetup = referenceSetup({ timeToBoil_s: 480, eggCo
 export const DECIDE_INPUTS: DecisionInputs = { egg: DECIDE_EGG, setup: DECIDE_SETUP, params: DEFAULT_PARAMS, whiteDose_min: 0.05 };
 
 /** The surfaces built so far, and their specs, by the inputs they were
- *  built for: the fixtures ask for a few dozen pots some two hundred times,
- *  and a surface, and the solve its spec runs, are the slow part. */
+ *  built for: the fixtures ask for the same pots again and again, and a
+ *  surface, and the solve its spec runs, are the slow part. */
 const coarseGrids = new Map<string, { spec: GridSpec; grid: DoseGrid }>();
 
 /** A pot's decision surface as the fixtures build it: where the production

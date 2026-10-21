@@ -1,8 +1,7 @@
 /**
  * What more than one fixture module uses: the particle rows every
  * posterior is written out as, the summary of one that is not, and the cook the running and step fixtures
- * start from. The pot they start from, `referenceSetup`, is
- * tools/common.ts's, which the tests share. The English catalogue is
+ * start from. The English catalogue is
  * english.ts's, apart, so that a fixture that shows no words does not reach
  * them. Importing this module computes nothing, so each
  * fixture can be made in a worker of its own (tools/fixtures.ts).
@@ -29,7 +28,7 @@ export function particleRows(post: ReturnType<typeof createPrior>) {
  * and the weighted mean and sd of each dimension, the time-scale's as its
  * log. Held to 1e-12, a particle drawn differently moves a mean, and one
  * reordered moves where the weight sits: what writing every particle
- * pinned, in a row. Fixtures.swift's `summary` makes the same.
+ * pinned, in a row. Swift's PosteriorSummary makes the same.
  */
 export function posteriorSummary(post: Posterior) {
   let total = 0;

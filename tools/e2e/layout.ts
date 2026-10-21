@@ -51,8 +51,8 @@ export const layoutScenarios: Record<string, Scenario> = {
 
   'one-layout-narrow': {
     what: 'at 320 px, cooled in a bowl of water, the main button and Cancel stack, and the action keeps its height from idle to Done, so nothing below it moves; the row sized on the chosen cooling\'s pull alone',
-    // The bowl: its pull stacks at 320 px in every font, by 54 px in
-    // Apple's; the ice bath fits there in Apple's by 2 px.
+    // The bowl: its pull stacks at 320 px in every font; the ice bath's
+    // fits there in Apple's.
     run: oneLayout(320, 'stacked', COOLINGS[2]),
   },
 
@@ -348,10 +348,9 @@ export const layoutScenarios: Record<string, Scenario> = {
         'the range shown');
       const at16 = await tab.eval<string>(line);
       const pull16 = deadlines(s).cookEnd_s;
-      // Four minutes on, as the iOS scenario steps. The times are said to
-      // the minute and the cook started at the real clock's second, so the
-      // line is sure to change only if the guess moved a whole minute: 65 s
-      // on it moved about 38 s, and the line stayed put one start in five.
+      // Four minutes on. The times are said to the minute and the cook
+      // started at the real clock's second, so the line is sure to change
+      // only if the guess moved a whole minute.
       await tab.shiftTo(start_s + 20 * 60);
       await tab.settle();
       s = await tab.phase('HEATING');

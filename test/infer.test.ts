@@ -5,7 +5,7 @@
  * sections 2 and 3 make about the likelihood: that the probit keeps a hard
  * band's meaning and its confidence, that no answer can kill a particle, that
  * the white and the yolk are two observables, that an injected cook is
- * recovered no worse than under a hard band, that the predictive is calibrated
+ * recovered, that the predictive is calibrated
  * on simulated cooks, and what two runny whites at soft do to the next cook.
  * The conformance fixtures pin the arithmetic particle by particle; what is
  * checked here is the reasoning the arithmetic rests on.
@@ -325,15 +325,10 @@ test('an injected alpha and taste are recovered in a few eggs, to a band\'s erro
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,
   // aimed at the nominal target moved by the posterior mean taste - and the
-  // yolk the truth names, in the five words, is the answer. Measured 27
-  // September on the same egg (68 g, fridge, boiling water, ice, jammy), when
-  // the answer was too soft, just right or too firm: a hard 0.8 / 0.1 band
-  // within 15 s of the true optimum from egg 3, settled 14.0 s long, alpha sd
-  // 2.9%; the probit within 15 s from egg 2, settled 12.2 s short, sd 3.0%.
-  // With the yolk in the five words, measured 9 October: within 20 s from
-  // egg 2, settled 17.5 s short, sd 3.3%. A word is a wider band than "just
-  // right" was, so a noiseless cook who keeps naming the same word pins the
-  // time less finely.
+  // yolk the truth names, in the five words, is the answer. Measured on this
+  // egg (68 g, fridge, boiling water, ice, jammy): within 20 s from egg 2,
+  // settled 17.5 s short, sd 3.3%. A word is a wide band, so a noiseless cook
+  // who keeps naming the same word pins the time only so finely.
   const truth: ModelParams = { alpha_m2s: 1.535e-7 };
   const TASTE = 0.2;
   const setup = appSetup();
@@ -373,9 +368,7 @@ test('P(answer) is calibrated: simulated cooks answer as often as the model says
   // draw the answers from the truth - the probit, the unrelated share and all -
   // and fold the white and the yolk in the five words. If the filter is doing
   // its job, answers predicted at 30%
-  // happen 30% of the time, at every stage of learning. Measured on 27
-  // September: 200 cooks, 5 eggs each, 6000 predictions; expected calibration
-  // error 1.4% on the yolk and 1.8% on the white, and 0.8% / 1.0% at 400 cooks.
+  // happen 30% of the time, at every stage of learning.
   //
   // Each cook's truth is a draw from ONE long prior, not the first particle of
   // prior after prior from consecutive seeds: xorshift's first outputs from

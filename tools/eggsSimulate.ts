@@ -105,8 +105,7 @@ function kitchenOf(u: () => number): Kitchen {
   const massFrom = u() < 0.4 ? 'scale' : 'class';
   const level = pick([0.22, 0.41, 0.41, 0.62, 0.8]);
   // A kitchen that rests its eggs in the air for a soft or jammy yolk eats
-  // them warm from an egg cup, where that yolk is in reach. Read off the
-  // draws already made, so every other kitchen is drawn as before.
+  // them warm from an egg cup, where that yolk is in reach.
   const cooling = drawn === 'counter' && level <= 0.41 ? 'eggCup' : drawn;
   return { setup: appSetup({ ...setup, cooling: cooling }), mass_g: mass_g, massFrom: massFrom, level: level };
 }

@@ -31,7 +31,8 @@ export function decideFor(c: Calibration, grid: DoseGrid, level: number, setup =
   return decide(c, grid, m.sol, logYolkTarget(m.level));
 }
 
-/** The folds' surfaces, coarser than the app's for the same reason. */
+/** The folds' surfaces, coarser than the app's for speed: what the tests
+ *  check does not turn on a second either way. */
 export const COARSE = (alphaCentre: number, cookTime_s: number): GridSpec => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 9, timeCount: 12,
 });

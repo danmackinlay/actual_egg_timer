@@ -11,7 +11,7 @@
  * What the app builds is built as step.json's is (tools/fixtures/step.ts):
  * the surface each waiting cook needs, coarse, its extent written so Swift
  * builds the same; the calibration before a cook's egg; a surface on it.
- * Small: four traces, on the posterior step.json's traces start from.
+ * Small, on the posterior step.json's traces start from.
  */
 
 import type { DecisionInputs } from '../../src/core/decide.ts';

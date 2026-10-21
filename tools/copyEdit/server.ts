@@ -22,8 +22,7 @@
  * under the temporary directory: it lets approving run from an agent's
  * shell there, and is refused anywhere else. PORT or --port sets the port.
  * Without one it is 7457, or any free port when that is taken: the address
- * is new each run anyway (the token) and is opened for the owner. 8765, the
- * first default, is Anki's AnkiConnect.
+ * is new each run anyway (the token) and is opened for the owner.
  */
 
 import { spawn } from 'node:child_process';

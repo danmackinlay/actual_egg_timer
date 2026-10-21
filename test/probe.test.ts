@@ -195,7 +195,7 @@ test('one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%', (t
     // little of it.
     assert.ok(r.weighted < 0.030, `weights: ${(100 * r.weighted).toFixed(2)}%`);
     // What the filter keeps. Liu and West's kernel keeps the posterior's
-    // spread through the resample: 2.60 / 2.61 / 2.81% on 28 September, within
+    // spread through the resample: 2.60 / 2.61 / 2.81%, within
     // resampling noise of the weights. A fixed 2% jitter on alpha would sit
     // above the weights' by about that in quadrature (3.28 / 3.33 / 3.52%).
     assert.ok(r.kept < 0.031, `kept: ${(100 * r.kept).toFixed(2)}%`);

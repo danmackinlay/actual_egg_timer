@@ -2,67 +2,19 @@
  * Golden fixtures: the TypeScript core's answers, written out so another
  * implementation can be held to them.
  *
- * This is the contract for the Swift port (`ios/`). The rule is that the
+ * This is the contract for the Swift port (`ios/README.md` "The loop"): the
  * fixtures are generated ONLY from this implementation, and the port never
- * regenerates them to make itself pass - if a number here is wrong, it is wrong
- * in `src/core/` first, and `npm test` should be what catches it.
+ * regenerates them to make itself pass.
  *
  * Run: npm run fixtures         fixtures/, below
  *      npm run fixtures -- fit  the fit's two, below, alone
  *
- * One file per part of the core, each held by a Swift suite of the same name
- * and built by the module of the same name in tools/fixtures/ (what more than
- * one of them uses is in tools/fixtures/shared.ts, the decisions' pot,
+ * One file per part of the core, fixtures/<name>.json, each held by a Swift
+ * suite of the same name and built by the module of the same name in
+ * tools/fixtures/ (what more than one of them uses is in tools/fixtures/shared.ts, the decisions' pot,
  * surface and posteriors in tools/fixtures/posteriors.ts, and the English
- * catalogue in tools/fixtures/english.ts):
- *
- *   fixtures/core.json         pure functions: the sphere, geometry, boiling
- *   fixtures/scenarios.json    whole cooks, solved end to end
- *   fixtures/section.json      the egg in cross-section, a tick at a time, and
- *                              the egg the settings aim for
- *   fixtures/inputs.json       what a cook enters and a fresh install starts
- *                              from: which size-class table, the room, the
- *                              egg-temperature buttons
- *   fixtures/slider.json       the doneness slider: snapping, the nearest
- *                              label, which words can be reached, the verdict
- *   fixtures/texture.json      the texture bands and the note's keys
- *   fixtures/boil.json         boil memory: a boil remembered, and estimated
- *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
- *                              cooling, and an answer in hours
- *   fixtures/sousvideCopy.json which words say the sous-vide answer
- *   fixtures/calibration.json  the particle filter: the prior particle by
- *                              particle, each fold's posterior in summary
- *   fixtures/record.json       the record (INFERENCE.md section 4): which records
- *                              a loader trusts, and a replayed log; and the
- *                              calibration grid
- *   fixtures/decide.json       decision surfaces and the time chosen on one
- *   fixtures/outcome.json      the predicted outcome at the chosen time
- *   fixtures/certainty.json    how sure, in words: the word asked, the class,
- *                              the 90% interval and the time range
- *   fixtures/reach.json        the odds at every level, the verdict with them,
- *                              the answer at a level and with its time
- *                              decided, the shading, the advice
- *   fixtures/wording.json      which key each part of the screen says
- *   fixtures/copy.json         the catalogues rendered, and the plural rule of
- *                              every language at its edges
- *   fixtures/units.json        Metric and Imperial
- *   fixtures/format.json       numbers and times of day in every formatting
- *                              locale, and a pseudo-Czech catalogue in cs-CZ
- *   fixtures/probe.json        the probe reading
- *   fixtures/share.json        sharing's contract with the server: ids, the
- *                              number each egg is filed under, and what a
- *                              sender makes of the endpoint's answers
- *   fixtures/prior.json        a prior drawn from a population, and the
- *                              population files a reader refuses
- *   fixtures/running.json      a running cook: its egg and pot, its moves, its
- *                              plan, and the phase at every boundary
- *   fixtures/step.json         the running cook as one state machine: traces
- *                              of events, effects and the readout
- *   fixtures/cooks.json        the cooks an app holds: on screen, and ended
- *                              waiting on their records; the effects tagged
- *                              with whose cook, and the eggs still open
- *   fixtures/hand.json         the correction in hand: event sequences, the
- *                              choices a commit makes, the preview, the start
+ * catalogue in tools/fixtures/english.ts). Each file's `about` says what it
+ * pins.
  *
  * And two for the fit (fit/, Python), held by its pytest suite, written only
  * when asked for (`npm run fixtures -- fit`), since nothing runs that suite
