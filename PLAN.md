@@ -120,7 +120,7 @@ first, with their own shape, composition and shell (34).
    for now (`DECISIONS.md` 85), and with no attested eggs 2's cap is zero
    anyway (`--open-cap`, `INFERENCE.md` §9). Every open result is kept, so a
    weight can come later, screened per id; giving it one turns the web's
-   nudge back on (`DECISIONS.md` NNN).
+   nudge back on (`DECISIONS.md` 157).
 
 
 6. **The App Store's captions** (`ios/appstore/captions.en-AU.json`); then,
