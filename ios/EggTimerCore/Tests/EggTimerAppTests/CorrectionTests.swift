@@ -290,6 +290,59 @@ extension AppTests {
         #expect(model.planner.coolingWaterC == 8, "running water's is the same number")
     }
 
+    /// The cold tap corrected while a cold cook heats is the pan's start in
+    /// the egg's record.
+    @Test func theColdTapCorrectedMidCookIsTheRecordsPan() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world, .cold)
+        let t0 = try #require(model.cook.running).startedAtS
+        await correct(at: t0 + 60, model, world) { model.planner.setTapWater(8) }
+        await tick(at: t0 + 300, model, world)
+        model.boil()
+        await world.settled(model.cook)
+        await tick(at: try pullS(model.cook) + 1, model, world)
+        model.pulledOut()
+        await world.settled(model.cook)
+        await tick(at: try cooledS(model.cook) + 5, model, world)
+        #expect(model.cook.phase == .done)
+        model.answer(yolk: .jammy, white: nil)
+        await world.settled(model.cook)
+        await world.learned(model.planner)
+        #expect(model.planner.kept.log.last?.setup.panStartC == 8)
+    }
+
+    /// The start's choices while a cold cook heats, the water in the pan, the
+    /// heat off after the boil and the room it cools toward: each its own
+    /// group, one commit each, and the cook stored with all three.
+    @Test func theStartsChoicesMidCookAreACommitEach() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world, .cold)
+        let cook = try #require(model.cook.running)
+        let t0 = cook.startedAtS, water0 = cook.choices.waterLitres
+        let committed = { (from: Int) in
+            world.log.events.dropFirst(from).compactMap { e -> [String]? in
+                if case let .editCommitted(fields, _) = e { fields } else { nil }
+            }
+        }
+        var from = world.log.events.count
+        await correct(at: t0 + 60, model, world) { model.planner.settings.waterLitres = water0 + 0.5 }
+        #expect(committed(from) == [["waterLitres"]])
+        from = world.log.events.count
+        await correct(at: t0 + 70, model, world) { model.planner.heatOff = true }
+        #expect(committed(from) == [["afterBoil"]])
+        from = world.log.events.count
+        await correct(at: t0 + 80, model, world) { model.planner.setRoom(25) }
+        #expect(committed(from) == [["room"]])
+        let choices = try #require(world.stored).choices
+        #expect(choices.waterLitres == water0 + 0.5)
+        #expect(choices.afterBoil == .off)
+        #expect(choices.roomC == 25)
+    }
+
     /// A larger egg at Done makes the record again on the calibration before
     /// this egg: the answer and the time that ran kept, a new forecast; back
     /// to the first size, the first record to the bit, and Done showing the

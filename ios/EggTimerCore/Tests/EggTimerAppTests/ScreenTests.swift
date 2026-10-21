@@ -146,6 +146,32 @@ extension AppTests {
         #expect(setup.cooling == .bowl && setup.bowlLitres == 1 && setup.coolingWaterC == 12 && setup.eggCount == 4)
     }
 
+    /// The readout is of one moment: its time and the line under it both
+    /// read the moment it is drawn for, either side of where each one's
+    /// second turns.
+    @Test func theReadoutReadsOneMoment() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world, .cold)
+        let start = try #require(model.cook.running).startedAtS
+        await tick(at: start + 100, model, world)
+        #expect(model.cook.phase == .heating)
+        let pull = try pullS(model.cook)
+        let at = { (s: Double) in ReadoutWords(model, phase: .heating, nowS: s) }
+        // The time heated turns at 100.5 s.
+        for (s, heated) in [(100.499, "1:40"), (100.501, "1:41")] {
+            let words = at(start + s)
+            #expect(asRead(words.sub.string).hasPrefix("\(heated) "), "at +\(s) s: \(words.sub.string)")
+            #expect(words.big == clockString(pull - start - s), "at +\(s) s: \(words.big)")
+        }
+        // The countdown turns where the pull is a half second off.
+        let n = (pull - start - 200).rounded(.down)
+        let turn = pull - n - 0.5
+        #expect(at(turn - 0.001).big == clockString(n + 1))
+        #expect(at(turn + 0.001).big == clockString(n))
+    }
+
     /// The bracket under the slider, idle at levels where "Most likely"
     /// shows under the certainty word and where it does not: its heavy
     /// stretch a word's whole band, inside the bracket, the word asked's
