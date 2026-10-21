@@ -1133,7 +1133,7 @@ Decided by the owner, 20 October 2026:
     whose e2e caught a product bug says so in its message ("e2e caught:
     …"), since no record said whether the suites had ever caught one. The
     rest of 123's gate is unchanged.
-NNN. **CI runs only what a push could have broken, and the fit waits for
+156. **CI runs only what a push could have broken, and the fit waits for
     eggs.** The owner, 21 October 2026, approving handoff 19: a push that
     changes only documents runs nothing; the macOS jobs and the web e2e run
     only when the branch changed what they build or serve, and a push to
