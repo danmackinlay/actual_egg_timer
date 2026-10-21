@@ -100,7 +100,7 @@ first, with their own shape, composition and shell (34).
 
 ## The owner's open decisions
 
-1. **The words not yet approved**: `npm run copy:review` lays them out to read on a phone.
+1. **The words not yet approved**: `npm run copy:review` lays them out, and `npm run copy:edit` edits them.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The

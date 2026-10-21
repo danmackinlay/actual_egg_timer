@@ -17,7 +17,7 @@ next is `PLAN.md`; the last section here says which document holds what.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
-- **No style passes** (`DECISIONS.md` NNN): an agent rewrites no comment,
+- **No style passes** (`DECISIONS.md` 154): an agent rewrites no comment,
   test name or assertion message it has no other reason to touch.
 - **The gate is what the change touched** (`DECISIONS.md` 123):
 
