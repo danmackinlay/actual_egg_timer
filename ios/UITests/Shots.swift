@@ -37,6 +37,7 @@ final class Shots: XCTestCase {
     private func shot(_ go: (Run) throws -> Void) throws {
         let file = name.split(separator: " ").last.map { String($0.dropLast()) }?
             .replacingOccurrences(of: "test_shot_", with: "").replacingOccurrences(of: "_", with: "-") ?? name
+        try warmUp()
         let run = Run("shot-\(file)")
         defer { run.terminate() }
         let start = Calendar.current.date(bySettingHour: 9, minute: 38, second: 0, of: Date())!.timeIntervalSince1970

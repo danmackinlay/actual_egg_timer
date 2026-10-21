@@ -198,8 +198,9 @@ build carries the entitlement, signed and verified, and the alarm fires at
 
 The alarm sounds, `App/Sounds/alarm-<sound>-<moment>.caf`, are rendered from
 the web's sounds by `npm run sounds` (macOS; `tools/sounds.ts` says how), never
-edited by hand. `npm run ios:e2e -- sound-files` holds each file an alarm can
-name to being in the bundle, under 30 s, in a format a notification plays.
+edited by hand. `npm run ios:build` holds each file an alarm can name to
+being in the built app's bundle, under 30 s, in a format a notification
+plays, as `afinfo` reads it.
 
 ### Hearing the alarms in seconds
 
@@ -257,12 +258,14 @@ app's — are in `GOTCHAS.md`.
 
 ## The fast clock and the scripted checks
 
-`npm run ios:e2e` (about five minutes, on two simulators side by side)
-checks on a simulator what only a device can: the layout, the sentence's
-panels and corrections made in them mid-cook, relaunches over the system's
-notifications and Live Activity, a notification delivered while the app is
-gone, the app leaving the screen, the keys an earlier build left. What the
-app's logic decides is `swift test`'s (`EggTimerAppTests`).
+`npm run ios:e2e` checks on a simulator what only a device can, in six
+scenarios: a cook relaunched in each phase over the system's notifications
+and Live Activity (`relaunch`), the alarms as the system holds them
+(`alarms`), a notification delivered while the app is gone (`asleep`), the
+app leaving the screen with a change in hand (`change-kept-on-hide`), and the
+layout at the largest text size (`one-layout-largest`, `idle-largest`). What
+the app's logic decides is `swift test`'s (`EggTimerAppTests`); what its
+bundle holds, `npm run ios:build`'s.
 
 The scenarios are UI tests (`ios/UITests`, the `EggTimerUITests` target):
 XCUITest taps the app's buttons, the sentence's clauses and the steppers as a
@@ -275,13 +278,19 @@ identifier, on the control itself or on a group that keeps its children's
 (`GOTCHAS.md`, "XCUITest"); a stepper of a group of the cook's choices has
 `<group>.stepper` (`testID`, `Controls.swift`).
 
-The headers say the rest: `tools/iosE2e.ts` (the lanes, how to run some),
-`tools/iosHarness.ts` (the devices and a test's run on a fresh install),
+All of them run in one `xcodebuild` on one simulator: XCUITest cannot
+uninstall the app, so each scenario's first launch resets it to what a fresh
+install has (`-resetState`), and the device is warmed up once, before the
+first (`GOTCHAS.md`).
+
+The headers say the rest: `tools/iosE2e.ts` (the scenarios, how to run some),
+`tools/iosHarness.ts` (the device and the run of the tests),
 `ios/UITests/Harness.swift` (a scenario's run of the app), and in
 `ios/EggTimerCore/Sources/EggTimerApp`, `AppClock.swift` (the clock it steps)
 and `DebugLog.swift` (the launch arguments and the debug log). `npm run
 ios:shots` reaches its screens by UI tests too (`ios/UITests/Shots.swift`).
-Not in `npm run verify`; CI runs it beside the iOS build.
+Not in `npm run verify`; CI runs it beside the iOS build, on `main` and on
+demand (`DECISIONS.md` 158).
 
 ## Signing
 

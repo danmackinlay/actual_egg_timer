@@ -56,19 +56,6 @@ enum LiveActivity {
         }
     }
 
-    /// Every card the system holds for the app, its state, stage and end
-    /// (in cook time), to the debug log (`DebugLog.log`).
-    static func logAll(_ when: String) {
-        guard DebugLog.logging else { return }
-        for activity in Activity<CookActivity>.activities {
-            let s = activity.content.state
-            DebugLog.log(.activitySeen(
-                when: when, state: "\(activity.activityState)", stage: s.stage.rawValue,
-                ends: Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded())
-            ))
-        }
-    }
-
     private static func content(
         _ state: CookActivity.ContentState
     ) -> ActivityContent<CookActivity.ContentState> {
@@ -85,5 +72,4 @@ struct LiveActivityCard: LockScreenCard {
     }
     func update(_ state: CookActivity.ContentState) async { await LiveActivity.update(state) }
     func endAll() async { await LiveActivity.endAll() }
-    @MainActor func logAll(_ when: String) { LiveActivity.logAll(when) }
 }

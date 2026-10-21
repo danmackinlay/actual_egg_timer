@@ -1,10 +1,16 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 import EggTimerApp
 
 @main
 struct ActualEggTimerApp: App {
     init() {
+        #if DEBUG
+        // `-resetState`: a UI test's first launch, from what a fresh install
+        // has, before anything is read.
+        if DebugLog.resetState { Self.resetState() }
+        #endif
         // Where this install's stores are, for the UI tests, which cannot see
         // the container otherwise.
         DebugLog.log(.launched(home: NSHomeDirectory()))
@@ -26,9 +32,6 @@ struct ActualEggTimerApp: App {
         LanguageChoice.shared.start()
         // A clock a script steps from outside (`AppClock`).
         AppClock.listen()
-        // A debug build says what it found of the alarms' sound files: each
-        // there, under 30 s, playable.
-        Ringer.logFiles()
         #if DEBUG
         // `-alarmTest`: the alarms without a cook, to hear them.
         AlarmTest.start()
@@ -40,4 +43,20 @@ struct ActualEggTimerApp: App {
             ContentView()
         }
     }
+
+    #if DEBUG
+    /// What a fresh install has, without one (`-resetState`, DebugLog.swift):
+    /// the stores' suite and the standard domain emptied, every notification
+    /// pending or shown removed, and any Live Activity ended. Notification
+    /// permission is the system's, and stays as it was.
+    private static func resetState() {
+        let defaults = UserDefaults.standard
+        defaults.removePersistentDomain(forName: Stores.suite)
+        if let id = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: id) }
+        let centre = UNUserNotificationCenter.current()
+        centre.removeAllPendingNotificationRequests()
+        centre.removeAllDeliveredNotifications()
+        Task { await LiveActivity.endAll() }
+    }
+    #endif
 }

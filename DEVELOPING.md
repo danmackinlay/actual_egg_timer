@@ -29,8 +29,8 @@ npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
 npm run e2e        # the web app driven end to end in headless Chrome (below)
-npm run ios:build  # the iOS app built, Debug and Release, and no literal in SwiftUI's text calls (tools/iosBuild.ts)
-npm run ios:e2e    # the iOS app tapped by its UI tests on two simulators (ios/README.md)
+npm run ios:build  # the iOS app built, Debug and Release, no literal in SwiftUI's text calls, its sounds and sources bundled (tools/iosBuild.ts)
+npm run ios:e2e    # the iOS app tapped by its UI tests on a simulator, what only a device shows (ios/README.md)
 ```
 
 Nothing is compiled to run: Node runs the tests, tools and studies from their

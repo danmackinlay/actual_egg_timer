@@ -49,6 +49,11 @@ import os
 ///   directory on the Mac, which a simulator's app and its UI tests
 ///   (ios/UITests) both read and write, where the tests cannot see the
 ///   app's container.
+/// - `-resetState YES`: start from what a fresh install has, before anything
+///   is read: the stores and the standard domain emptied, every notification
+///   pending or shown removed, and any Live Activity ended
+///   (ActualEggTimerApp.swift). A test's first launch, since XCUITest cannot
+///   uninstall the app between tests.
 ///
 /// And `-shareServer http://localhost:8888`: send what sharing sends there
 /// rather than to the live site (`ShareNetwork.server`), for `npm run serve:dev`.
@@ -70,9 +75,9 @@ import os
 /// `log` writes one event as a line of JSON, to standard error and to
 /// `aet.log` in `-debugDir`, or in `Library/Caches` in the app's container:
 /// the phases, each plan,
-/// the stored cook and the log as written, the alarms scheduled, cancelled
-/// and read back, the rings, the Live Activities pushed and seen, the
-/// corrections, and what the readout drew. A line is `{"t":<cook time, epoch s>,"ev":"<the
+/// the stored cook, the alarms scheduled, cancelled
+/// and read back, the rings, the Live Activities pushed, the
+/// corrections, and how the page scrolled to a panel. A line is `{"t":<cook time, epoch s>,"ev":"<the
 /// event>",<its fields>}`: `Event`'s case and its labelled values, as
 /// `Codable` writes them, in the order of their names, a field with no value
 /// left out.
@@ -186,6 +191,8 @@ extension DebugLog {
     public static var alarmTestS: Double? {
         arguments?.object(forKey: "alarmTest") == nil ? nil : arguments?.double(forKey: "alarmTest")
     }
+    /// `-resetState YES`: start from what a fresh install has (above).
+    public static var resetState: Bool { arguments?.bool(forKey: "resetState") ?? false }
 }
 #endif
 
@@ -232,9 +239,6 @@ extension DebugLog {
         /// A card pushed (`what`: `start`, `update`): its stage, its end,
         /// whether it counts up, and what it says of the cook.
         case activity(what: String, stage: String, ends: Int, up: Bool, cook: [String?])
-        /// A card the system holds, read at launch (`when`: `launch`,
-        /// `launch+3s`).
-        case activitySeen(when: String, state: String, stage: String, ends: Int)
 
         // The alarms.
         /// An alarm asked for, for `at`, `inS` of the system's seconds on,
@@ -260,9 +264,6 @@ extension DebugLog {
         case presented(id: String, sound: Bool, options: [String])
 
         // The sounds.
-        /// One of the files an alarm can name, read at launch: whether the
-        /// bundle has it, and its length, s, and its audio format's code.
-        case soundFile(name: String, bundled: Bool, seconds: Double?, format: String?)
         /// The ring in the app begun: its file, how many frames it read
         /// (none if it read none), the audio session's category and whether
         /// it took, the engine running and the player playing, the media
@@ -273,10 +274,6 @@ extension DebugLog {
         )
         /// A ring asked for and not sounded, and why.
         case ringSkipped(deadline: String, reason: String)
-
-        // The results log and the record.
-        /// The log as written: how many eggs, how many folded, and the last.
-        case log(count: Int, folded: Int, last: Encoded?)
 
         // The stores (`Stores.sweep`).
         case swept(key: String)
@@ -301,9 +298,6 @@ extension DebugLog {
         /// to its foot (`bottom`), to its head (`top`), or not at all, on
         /// screen already (`none`).
         case reveal(clause: String, scroll: String)
-        /// One frame of the readout: the moment it was drawn for, and what
-        /// it drew, the certainty's time range none with no certainty.
-        case frame(at: Double, phase: String, big: String, sub: String, range: String?)
     }
 
     /// A value the app stores as JSON, written into a line as it encodes;

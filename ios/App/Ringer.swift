@@ -191,30 +191,6 @@ final class Ringer {
         touch = recogniser
     }
 
-    /// Every file an alarm can name (`AlarmSoundChoice.file`), to the debug
-    /// log as the bundle has it: there, its length and its format. The
-    /// system plays a notification's sound only from a file it can find,
-    /// under 30 s, in linear PCM, IMA4, µ-law or a-law (`npm run ios:e2e`
-    /// holds each to that).
-    static func logFiles() {
-        guard DebugLog.logging else { return }
-        for sound in AlarmSound.allCases {
-            for moment in RingDeadline.allCases {
-                let name = AlarmSoundChoice.file(sound, moment)
-                let file = Bundle.main.url(forResource: name, withExtension: nil)
-                    .flatMap { try? AVAudioFile(forReading: $0) }
-                let format = file.map { f in
-                    let id = f.fileFormat.streamDescription.pointee.mFormatID.bigEndian
-                    return withUnsafeBytes(of: id) { String(decoding: $0, as: UTF8.self) }
-                }
-                DebugLog.log(.soundFile(
-                    name: name, bundled: Bundle.main.url(forResource: name, withExtension: nil) != nil,
-                    seconds: file.map { Double($0.length) / $0.fileFormat.sampleRate }, format: format
-                ))
-            }
-        }
-    }
-
     /// A sound's file for a moment, or its first `periods` periods, read
     /// whole: whole periods, so it loops without a seam. Nil if the file is
     /// missing or unreadable, and the ring is then only the vibration.

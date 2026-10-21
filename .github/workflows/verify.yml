@@ -133,12 +133,10 @@ jobs:
       - run: npm run ios:build -- --release
 
   # Builds the app and its UI tests for Debug and drives it on a simulator,
-  # beside apple rather than after it: an artifact between jobs is a zip,
-  # which drops the bundle's file modes, so it builds its own either way.
-  # One lane: the runner's three cores would keep two simulators' busy, and a
-  # simulator's notifications stop answering when every core is (GOTCHAS.md).
-  # Only on main and on demand: half an hour on a hosted runner, for what
-  # only a device shows.
+  # every scenario in one xcodebuild, beside apple rather than after it: an
+  # artifact between jobs is a zip, which drops the bundle's file modes, so
+  # it builds its own either way. Only on main and on demand: what only a
+  # device shows.
   ios-e2e:
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
@@ -155,14 +153,14 @@ jobs:
       # What the runner offers, for the log: the script takes the newest
       # iOS runtime and an iPhone it runs.
       - run: xcodebuild -version && xcrun simctl list runtimes
-      - run: npm run ios:e2e -- --lanes 1
+      - run: npm run ios:e2e
         env:
           # A wait for the app gives up after this many seconds; a slow
           # runner's first launches take tens.
           AET_E2E_WAIT: "180"
           # A failing scenario's debug log, in the job's log.
           AET_E2E_LOG: "1"
-      # A failing run's result bundles (each test's steps and the screen at a
+      # A failing run's result bundle (each test's steps and the screen at a
       # failure) and the app's debug logs, to download from the run's page.
       - if: failure()
         uses: actions/upload-artifact@v5

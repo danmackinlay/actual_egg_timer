@@ -210,8 +210,8 @@ targets:
   # simulator's app and its tests both reach. A Debug build only: the clock's
   # and the log's launch arguments are a debug build's. It links the app's
   # logic to read the log by its own types (`DebugLog.Event`, the stored
-  # cook). `npm run ios:e2e` and `npm run ios:shots` run it, a scenario to a
-  # fresh install (tools/iosE2e.ts).
+  # cook). `npm run ios:e2e` and `npm run ios:shots` run it, in one
+  # xcodebuild, each test reset to a fresh install's state (tools/iosE2e.ts).
   EggTimerUITests:
     type: bundle.ui-testing
     platform: iOS

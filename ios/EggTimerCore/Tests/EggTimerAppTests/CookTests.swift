@@ -244,6 +244,59 @@ extension AppTests {
         await world.until("the solves") { !model.planner.solver.busy }
     }
 
+    /// Keys no build reads, an earlier build's cook among them, with its
+    /// alarms pending: swept at launch, the app idle, its alarms not
+    /// cancelled.
+    @Test func anEarlierBuildsCookIsSweptAndItsAlarmsLeft() async throws {
+        let old = ["cookInProgress", "cookInProgress.v2", "calibration.v4", "share.v1", "probeAsked"]
+        let world = World(store: MemoryStore(Dictionary(uniqueKeysWithValues: old.map { ($0, Data("{}".utf8)) })))
+        let swept = world.log.events.compactMap { e -> String? in
+            if case .swept(let key) = e { key } else { nil }
+        }
+        #expect(Set(swept) == Set(old))
+        #expect(world.store.keys.isEmpty)
+        let now = world.clock.seconds
+        world.alarm.schedule(pullS: now + 600, cooledS: now + 900, probe: false, cooling: .ice)
+        let model = world.model()
+        defer { model.cook.killed() }
+        model.appear()
+        await world.quiet(model.cook)
+        #expect(model.cook.running == nil)
+        #expect(model.cook.phase == .idle)
+        #expect(world.alarm.cancels == 0)
+        #expect(Set(world.alarm.pending.keys) == ["cook.pull", "cook.cool"])
+        await world.until("the solves") { !model.planner.solver.busy }
+    }
+
+    /// An egg cup counted down from the out to its opening, two minutes on:
+    /// the cooling's alarm and the card at the opening, the readout counting
+    /// to it under the egg cup's line, and Done there.
+    @Test func anEggCupCountsDownToItsOpening() async throws {
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        await started(model, world) { $0.settings.cooling = .eggCup }
+        let pull = try pullS(model.cook)
+        await tick(at: pull + 1, model, world)
+        world.clock.set(pull + 3)
+        model.pulledOut()
+        await world.settled(model.cook)
+        await world.ticked(model.cook)
+        let out = try #require(model.cook.running?.events.pulled?.outS)
+        let opening = try cooledS(model.cook)
+        #expect(abs(opening - (out + Constants.eggCupOpenedS)) <= 1e-6)
+        #expect(world.alarm.pending["cook.cool"] == opening)
+        await world.until("the card counting to the opening") { world.card.last?.stage == .opening }
+        #expect(world.card.last.map { abs($0.ends - opening) <= 1 } == true)
+        await tick(at: opening - 60, model, world)
+        #expect(model.cook.phase == .cooling)
+        let words = ReadoutWords(model, phase: model.cook.phase, nowS: opening - 60)
+        #expect(words.big == "1:00")
+        #expect(words.sub.string == tr(.`readout.sub.coolingEggCup`).string)
+        await tick(at: opening + 1, model, world)
+        #expect(model.cook.phase == .done)
+    }
+
     /// An answered egg corrected at Done, killed before its record was made
     /// again, relaunched past its hour: the corrected egg logged, Jammy
     /// kept, and the cook forgotten.

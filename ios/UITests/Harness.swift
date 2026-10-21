@@ -9,9 +9,9 @@ import EggTimerCore
 //
 // The clock and the log go through a directory on the Mac (`-debugDir`,
 // DebugLog.swift), which a simulator's app and its tests both read and
-// write: the tests cannot see the app's container. `npm run ios:e2e`
-// (tools/iosE2e.ts) gives each scenario a fresh install and its own
-// directory.
+// write: the tests cannot see the app's container. Each scenario has its own
+// directory, and its first launch resets what a test before it left
+// (`-resetState`, DebugLog.swift): XCUITest cannot uninstall the app.
 
 /// What the npm script passes the tests (`TEST_RUNNER_<name>`, which
 /// xcodebuild hands the tests as `<name>`).
@@ -108,6 +108,9 @@ final class Run {
     let dir: URL
     private var log: [Line] = []
     private var logBytes = 0
+    /// Whether the app is yet to be launched by this run, whose first launch
+    /// is from what a fresh install has.
+    private var fresh = true
 
     init(_ name: String) {
         self.name = name
@@ -124,15 +127,18 @@ final class Run {
     /// Launch with the clock at `at`, cook time, frozen there unless `speed`
     /// says otherwise; quiet notifications granted with no prompt unless asked
     /// otherwise. Silent: the ring and the notifications' sound would
-    /// otherwise play on the Mac's speakers.
+    /// otherwise play on the Mac's speakers. The run's first launch resets
+    /// the app's stores, its notifications and its card (`-resetState`).
     func launch(_ args: [String] = [], _ opts: LaunchOptions = LaunchOptions()) throws {
         at = opts.at ?? at
         try? FileManager.default.removeItem(at: clockURL)
         launched = try lines().count
         let prompt = opts.alarms ? ["-provisionalAlarms", "YES"] : ["-noAlarmPrompt", "YES"]
+        let reset = fresh ? ["-resetState", "YES"] : []
+        fresh = false
         app.launchArguments = [
             "-clockAt", "\(at)", "-clockSpeed", "\(opts.speed)", "-debugDir", dir.path, "-muteAudio", "YES",
-        ] + localeArgs(Env.locale) + prompt + args
+        ] + reset + localeArgs(Env.locale) + prompt + args
         app.launch()
     }
 
@@ -238,20 +244,6 @@ final class Run {
             pause(0.25)
         } while Date() < end
         return last
-    }
-
-    /// Edit the stores' plist, with the app terminated: a key renamed, then
-    /// keys set, each value a text stored as data, as the app stores its stores.
-    func editPlist(rename: (String, String)?, _ values: [String: String] = [:]) throws {
-        let url = try plistURL()
-        let data = try Data(contentsOf: url)
-        var format = PropertyListSerialization.PropertyListFormat.binary
-        guard var p = try PropertyListSerialization.propertyList(from: data, format: &format) as? [String: Any] else {
-            throw Stop("the stores' plist is not a dictionary")
-        }
-        if let (from, to) = rename { p[to] = p.removeValue(forKey: from) }
-        for (k, v) in values { p[k] = Data(v.utf8) }
-        try PropertyListSerialization.data(fromPropertyList: p, format: .binary, options: 0).write(to: url)
     }
 
     // MARK: - The screen
@@ -377,6 +369,40 @@ final class Run {
 
 /// The app's bundle identifier.
 let bundleID = "name.danmackinlay.actualeggtimer"
+
+/// What the warm-up came to, once a run of the tests (`warmUp`).
+@MainActor private var warmed: Result<Void, Stop>?
+
+/// A new device's first launches are many seconds slow while the system
+/// settles, and an app's first install there never has its notifications
+/// authorized ("Source is not authorized"), which the npm script sees to
+/// before the tests install the app (`primeNotifications`, tools/
+/// iosHarness.ts; GOTCHAS.md). Before the first test of a run of them, the
+/// app launched once with a cook, until its alarms are pending, nothing else
+/// checked: a test that fails on the alarms says so, not something later.
+/// What it came to holds for every test after.
+@MainActor
+func warmUp() throws {
+    if let warmed { return try warmed.get() }
+    let run = Run("warm-up")
+    defer { run.terminate() }
+    do {
+        try run.launch(["-uiScreen", "heating"])
+        let hit = try run.until("the alarms") {
+            switch $0 {
+            case .pending(let alarms): alarms.contains { $0.id.hasPrefix("cook") }
+            case .notScheduled: true
+            default: false
+            }
+        }
+        guard case .pending = hit.event else { throw Stop("\(hit.event)") }
+        warmed = .success(())
+    } catch {
+        let stop = Stop("the device's alarms not working: \(error) (GOTCHAS.md)")
+        warmed = .failure(stop)
+        throw stop
+    }
+}
 
 /// Wait `s` of the host's seconds, the run loop turning.
 func pause(_ s: Double) {

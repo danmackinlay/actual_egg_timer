@@ -361,20 +361,6 @@ private struct OpenPanel: Hashable {
     let clause: Clause
 }
 
-/// What the screen says, to the debug log, for the scripted checks
-/// (`DebugLog.log`). A release build works none of it out and watches
-/// nothing.
-extension View {
-    /// `event` to the debug log whenever it changes.
-    func logged(_ event: @autoclosure () -> DebugLog.Event) -> some View {
-        #if DEBUG
-        onChange(of: event(), initial: true) { _, said in DebugLog.log(said) }
-        #else
-        self
-        #endif
-    }
-}
-
 #Preview {
     ContentView()
 }
