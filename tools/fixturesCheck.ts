@@ -1,6 +1,7 @@
 /**
  * That the fixtures on disk are what the TypeScript makes of them now:
- * fixtures/, and the fit's beside its tests in fit/tests/.
+ * fixtures/. The fit's, in fit/tests/, are written only on demand
+ * (`npm run fixtures -- fit`) and not checked.
  *
  *   npm run fixtures:check
  *
@@ -27,8 +28,8 @@ import { compareFixtures, FIXTURE_TOLERANCE, fixtureLayout, replaceFile } from '
 
 const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
 
-// fixtures/, and the fit's fixtures beside its tests (tools/fixtures.ts).
-const WRITTEN = ['fixtures/', 'fit/tests/*.json'];
+// What tools/fixtures.ts writes when run with nothing.
+const WRITTEN = ['fixtures/'];
 const tracked = git('ls-files', '--', ...WRITTEN).split('\n').filter((f) => f.endsWith('.json'));
 const before = new Map(tracked.filter((f) => existsSync(f)).map((f) => [f, readFileSync(f, 'utf8')]));
 
@@ -76,7 +77,7 @@ for (const file of tracked) {
 }
 
 if (failed) {
-  console.error('fixtures:check: the fixtures were not what the TypeScript makes now, and are written afresh. If the change is meant, commit them (`git diff -- fixtures/ fit/tests/`); never edit them by hand.');
+  console.error('fixtures:check: the fixtures were not what the TypeScript makes now, and are written afresh. If the change is meant, commit them (`git diff -- fixtures/`); never edit them by hand.');
   process.exit(1);
 }
 console.log(`fixtures:check: ${tracked.length} fixtures agree with the TypeScript`);

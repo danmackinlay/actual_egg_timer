@@ -8,11 +8,18 @@ Nothing here runs in the apps or in `npm run verify`.
 ## The loop
 
 ```
+npm run fixtures -- fit                              # the tests' samples, from the core as it is now
+uv run --project fit pytest -q fit/tests
 npm run eggs -- pull fit/data/records.jsonl          # needs NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
 npm run eggs -- emulate fit/data/records.jsonl fit/data/emulated.json
 uv run --project fit python -m eggfit fit fit/data/emulated.json \
     --out fit/data/population.json --report fit/data/report.md
 ```
+
+The tests' samples are written only when asked for: neither `npm run
+fixtures` nor `fixtures:check` writes them, and CI's `fit` job is off until
+shared eggs arrive, so they may lag the core. Write them first, commit any
+that moved, and fit only once the tests pass (below).
 
 `pull` overwrites its file with a fresh copy of the store, so a result a cook
 has deleted leaves this machine at the next pull, and it deletes
@@ -80,16 +87,15 @@ Three checks, each guarding a different way the fit could be wrong.
 **The likelihood is the app's.** `tests/test_likelihood.py` holds the fit's
 likelihood (the JAX model's and the NumPy scorer's) to `src/core/infer.ts`'s
 own numbers, to the digit, on `tests/emulated-sample.json`. `npm run
-fixtures` writes that sample (`tools/fixtures/fitSample.ts`) with the core's
-`LIKELIHOOD_ID` in it, so a change to the core's likelihood changes the
-sample, `npm run fixtures:check` fails until it is committed, and pytest then
-fails until the fit follows. A constant the emulated file carries (the
+fixtures -- fit` writes that sample (`tools/fixtures/fitSample.ts`) with the
+core's `LIKELIHOOD_ID` in it, so a change to the core's likelihood changes
+the sample when it is written, and pytest then fails until the fit follows. A constant the emulated file carries (the
 unrelated share, the cuts, the probe's) the fit reads from the file, and
 follows by itself.
 
 **The sampler recovers a known population, and mixes.**
 `tests/test_recovery.py` fits `tests/recovery-sample.json`, sixty cooks from
-a known truth, also written by `npm run fixtures`, with four chains side by
+a known truth, also written by `npm run fixtures -- fit`, with four chains side by
 side (under a minute). The truth's time-scale is in the prior's tail, at its
 2.3rd percentile. The test fails on a divergent transition, an R-hat of
 1.01 or more, a bulk ESS under 100 a chain, a truth further from the
@@ -103,7 +109,7 @@ further from the prior than most of the prior's draws, so a fit that lost
 its likelihood and returned the prior passes the distance (82% of its draws
 further out) and fails on the narrowing (sd 0.995 and 1.005 of the prior's).
 It prints every truth's posterior quantile and the distance, pass or fail.
-CI's `fit` job runs it with the rest of `fit/tests`, without node. The same
+CI's `fit` job, off for now, runs it with the rest of `fit/tests`, without node. The same
 R-hat, ESS and divergence checks are in every `report.md`
 (`eggfit/diagnostics.py`), and `fit` writes no population when they fail,
 unless forced.
@@ -196,7 +202,7 @@ score of the truth's own population beside the fit's and the literature's.
   thresholds the fit publishes by.
 - `eggfit/sbc.py` — simulation-based calibration.
 - `tests/` — the likelihood held to the app's, the diagnostics, and the
-  recovery check, on the samples `npm run fixtures` wrote:
+  recovery check, on the samples `npm run fixtures -- fit` wrote:
 
   ```
   uv run --project fit python -m pytest fit/tests

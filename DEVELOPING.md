@@ -125,7 +125,7 @@ is checked as he types by `tools/copyRules.ts`, the rules `copy.test.ts`
 holds, and kept in the browser until it is saved. Saving (⌘S):
 
 - refuses off `main`, mid-merge, or with anyone else's changes in
-  `copy/`, `fixtures/` or `fit/tests/`;
+  `copy/` or `fixtures/`;
 - refuses, too, where main has moved since the page loaded the words:
   the page lays the drafts on the words it loads again, and asks which to
   keep where someone changed an edited key;
