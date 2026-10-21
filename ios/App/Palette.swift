@@ -30,7 +30,7 @@ enum Palette {
     static let yolkJammy = scheme(StyleColours.yolkJammy)
     static let yolkHard = scheme(StyleColours.yolkHard)
     /// Where jammy sits on the slider, and so where the golden stop goes:
-    /// the default level, as the web's gradient has it at 41%.
+    /// the default level, as the web's gradient has it.
     static let yolkJammyAt = StyleColours.yolkJammyAt
 
     /// The yolk's colour at a level, 0 runny to 1 hard, between the three

@@ -18,8 +18,8 @@ import EggTimerCore
 
 /// Which deadline the app should ring for at this instant, or nil.
 ///
-/// Pure, and takes the clock, like `phaseAt`. The caller asks on every tick and
-/// rings for what comes back, then adds it to `rung`: a deadline rings once.
+/// The caller (`CookAlarms.ring`) asks when core's step says a deadline
+/// rings, which it says once, so it passes no `rung`.
 ///
 /// - Parameters:
 ///   - phase: the cook's phase now, with the cook's tap out of PULL applied.

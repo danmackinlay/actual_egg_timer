@@ -15,8 +15,7 @@ import EggTimerShared
 ///  - dots over the levels the pan can deliver but that are a wild guess so
 ///    far, softer or firmer than every level that is not (once an egg has
 ///    taught something), which the slider rests on and the warning line names;
-///  - diagonal stripes over the levels the pan cannot deliver at all, as the
-///    web app has always drawn them.
+///  - diagonal stripes over the levels the pan cannot deliver at all.
 ///
 /// It is the slider's only track (`YolkSlider` draws none of its own), so it
 /// is drawn bare before there is a solution and in sous-vide, where there are

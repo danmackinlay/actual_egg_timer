@@ -9,18 +9,7 @@ import EggTimerShared
 /// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
 /// same outline, the same rings and the same colours (`Palette`).
 ///
-/// It has two readings, as the web's drawing has (`EggReading`,
-/// `AppModel.section`):
-///
-/// - `aim`, the egg the settings on screen aim for, as eaten at the end of
-///   the cooling (`previewSection`), so the yolk reads the level asked: idle,
-///   the controls' egg at the time on screen; during a cook, while a control
-///   is held and for a moment after (`AppModel`'s `inHand`), the egg the
-///   correction in hand would cook.
-/// - `live`, the egg in the water now, carried forward a tick at a time and
-///   replayed from raw when the cook's pot or start changes, on through the
-///   cooling; and at Done `ran`, the egg as it ran, eaten: the time that ran,
-///   to the egg out, with the model's parameters it ran under.
+/// Which egg it draws is `AppModel.section`'s (`EggReading`).
 ///
 /// The model's egg is a sphere (`EggSection`, in core); this one is drawn as
 /// an egg. Each ring is a closed outline, filled outermost first, so the one
@@ -30,7 +19,7 @@ import EggTimerShared
 /// opaque, so a raw white is a colour of its own.
 ///
 /// It colours the rings by how set each layer is, or, a tap away, by how hot
-/// (`DECISIONS.md` 52, `AppSettings.eggView`), and stays as it was left from
+/// (`AppSettings.eggView`), and stays as it was left from
 /// cook to cook. To VoiceOver it is a button named for the picture it shows,
 /// whose hint offers the other.
 struct EggSectionView: View {

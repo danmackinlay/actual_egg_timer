@@ -149,8 +149,8 @@ public protocol ResultSharing: AnyObject {
 /// What sharing reads of the app: the log, and how much of it is final.
 public struct ShareHost {
     public var log: @MainActor () -> [EggRecord]
-    /// How many eggs at the head of the log are final: all but the stored
-    /// cook's, while it can still be corrected (`openEggId`).
+    /// How many eggs at the head of the log are final: all but those still
+    /// open to correction (`Cook.openEggs`).
     public var finalCount: @MainActor () -> Int
 
     public init(log: @escaping @MainActor () -> [EggRecord], finalCount: @escaping @MainActor () -> Int) {

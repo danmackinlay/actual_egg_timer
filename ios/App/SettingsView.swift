@@ -281,7 +281,7 @@ struct SettingsView: View {
         }
     }
 
-    /// The web's `renderShare`: deleting, deleted, nothing yet, or how many
+    /// The web's `shareView`: deleting, deleted, nothing yet, or how many
     /// have gone and how many wait.
     private func shareNote(_ s: ShareState) -> Words? {
         if !s.deleting.isEmpty { return tr(.`share.deleting`) }
@@ -294,7 +294,7 @@ struct SettingsView: View {
         return waiting > 0 ? sent.then(tr(.`share.waiting`, ["eggs": .int(waiting)])) : sent
     }
 
-    /// The web's `renderLearned`: nothing yet, the eggs, the pan, or both.
+    /// The web's `learnedView`: nothing yet, the eggs, the pan, or both.
     private var learnedNote: Words {
         let eggs = planner.eggsLogged
         let pan = planner.hasBoilMemory

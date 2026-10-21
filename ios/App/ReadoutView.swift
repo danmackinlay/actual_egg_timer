@@ -74,8 +74,8 @@ struct ReadoutView: View {
 
                 // The time's two lines sit close under the digits
                 // (UI.md section 8, as the web): the boil
-                // line about 10 pt under the digits' baseline, which digits
-                // never reach below, and the certainty word's press target
+                // line just under the digits' baseline, which digits never
+                // reach below, and the certainty word's press target
                 // directly under the boil line.
                 VStack(spacing: 0) {
                     Text(words.big)
@@ -150,7 +150,7 @@ struct ReadoutView: View {
     }
 
     /// How sure I am of the time on screen, beneath it (UI.md section 8, the
-    /// web's `renderOdds`): the class as a line the
+    /// web's `certaintyView`): the class as a line the
     /// cook presses, which opens in place the 90% interval in the slider's
     /// words, "most likely" when it is not already said (`mostLikelyOpened`),
     /// the likely time range and, while idle, the way to Help's "How sure I
@@ -272,8 +272,8 @@ struct ReadoutView: View {
 /// The certainty word and "most likely" at the accessibility sizes: each on
 /// one line, set smaller where it would wrap. The line keeps the room of its
 /// tallest words whether they show or not, so the slider never moves
-/// (`tallest`); wrapped, that was four lines, three of them empty under a
-/// word of one line. On one line each it is two, as at every other size.
+/// (`tallest`); wrapped, that would be four lines, three of them empty under
+/// a word of one line. On one line each it is two, as at every other size.
 private struct OneLineWhenLarge: ViewModifier {
     @Environment(\.dynamicTypeSize) private var size
 

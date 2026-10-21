@@ -134,7 +134,7 @@ extension AppModel {
 // MARK: - The slider
 
 /// What the slider shows: the controls' answer while idle, the running
-/// cook's plan while one runs (the web's `renderIdle` and `renderRunning`).
+/// cook's plan while one runs (the web's `idleScreen` and `runningScreen`).
 @MainActor
 public struct SliderReading {
     /// The pan's limits, for the stripes and the struck words; nil in

@@ -6,8 +6,7 @@ import EggTimerShared
 
 /// The Lock Screen and Dynamic Island countdown.
 ///
-/// This is the feature that makes a native egg timer worth having rather than a
-/// bookmark. The notification says *when*; a Live Activity says *how long left*
+/// The notification says *when*; a Live Activity says *how long left*
 /// without unlocking anything, which is the question you actually have while
 /// standing at the hob with wet hands.
 ///
@@ -111,9 +110,9 @@ struct CookLiveActivity: Widget {
             //
             // But not by `.fixedSize()` on the timer itself: a timer's ideal
             // width is not its digits', and on a phone (not in the simulator)
-            // it claimed more than the card, pushed the words off the leading
-            // edge and itself off the trailing one, and left an empty card with
-            // half a flame. So the width is a plain text's, as wide as the
+            // it claims more than the card, pushes the words off the leading
+            // edge and itself off the trailing one, and leaves an empty card
+            // with half a flame. So the width is a plain text's, as wide as the
             // longest this countdown will show, and the timer is drawn in it.
             if context.state.stage.countsDown {
                 Text(verbatim: widest(context.state))

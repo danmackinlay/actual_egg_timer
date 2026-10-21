@@ -25,7 +25,7 @@ import EggTimerShared
 /// Steps run one at a time, off the main actor (a plan is a dozen solves),
 /// in the order the events came; each event carries its own moment. The
 /// ticker sends a tick only when the clock has something to decide
-/// (`dueAt`): the events it writes, the slow hob's next lengthening, the cook
+/// (`tickDue`): the events it writes, the slow hob's next lengthening, the cook
 /// too old.
 ///
 /// A cook that ends before its egg's record can be made - the calibration

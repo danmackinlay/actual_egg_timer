@@ -197,7 +197,7 @@ struct FeedbackPanel: View {
     /// the cook as it ran, its level and peak (`Cook.asRan`), never the slider
     /// now nor a plan made since on a posterior that has learned from this
     /// egg, in the language and units on screen now, as the web's
-    /// `renderTarget` says it.
+    /// `targetText` says it.
     private var targetLine: Words? {
         guard let level = cook.shownLevel, let peak = cook.shownPeakYolkC else { return nil }
         return tr(.`feedback.target`, [
@@ -215,7 +215,7 @@ struct FeedbackPanel: View {
 /// button at least as wide as its word, as the web's grid does: all on one
 /// row while they fit, then three over two, and so on to one a row. The
 /// buttons on a row share its width, equally while that leaves each its
-/// word. Without it, a row of words that cannot shrink pushed the whole
+/// word. Without it, a row of words that cannot shrink would push the whole
 /// panel past the screen's edge at the largest text sizes.
 struct AnswerRows: Layout {
     var spacing: CGFloat

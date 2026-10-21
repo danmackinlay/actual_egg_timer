@@ -238,7 +238,7 @@ public func deletionConfirmed(_ s: ShareState, uid: String) -> ShareState {
 
 // MARK: - Kept
 
-/// What is kept, as `sharing.v1` has always held it: the web's JSON, but
+/// What is kept, as `sharing.v1` holds it: the web's JSON, but
 /// with `busySince` a `Date` as JSONEncoder wrote one (seconds since 2001),
 /// where the state counts epoch s, and with no key for an absent value.
 public func storedShare(_ s: ShareState) -> Data? {

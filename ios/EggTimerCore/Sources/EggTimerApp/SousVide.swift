@@ -43,7 +43,7 @@ public struct SousVideCopy {
 /// `Calendar` answers this directly, so there is no 86 400 000 constant here to
 /// be wrong about across a clock change. The bucketing of that count into words
 /// is `startPhrase` in EggTimerCore; this is the part only a platform can
-/// answer, which is why it stays.
+/// answer.
 private func daysBefore(_ then: Date, _ now: Date) -> Int {
     let calendar = Calendar.current
     let from = calendar.startOfDay(for: then)
