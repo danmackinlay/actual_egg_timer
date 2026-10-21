@@ -111,8 +111,8 @@ public final class Learning {
     /// Fold every egg not yet folded, one surface at a time.
     ///
     /// The grid build is a second or two of arithmetic, so it goes to a
-    /// detached task, as it always has; a catch-up after a relaunch is several
-    /// of them, and takes the same path. The fold itself is milliseconds, and
+    /// detached task; a catch-up after a relaunch is several of them, and
+    /// takes the same path. The fold itself is milliseconds, and
     /// happens back here, reading the record AFTER the surface lands: an answer
     /// that arrived while it was being built is folded with the first, as a
     /// replay folds them.

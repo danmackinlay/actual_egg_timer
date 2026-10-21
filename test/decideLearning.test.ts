@@ -34,7 +34,7 @@ function stillLearning(interval: CookTimePrediction): boolean {
 test('the interval narrows below +-15 s after a few consistent eggs, stays there, and a forget widens it', () => {
   // A kitchen that is exactly the literature's, cooked at jammy at the times
   // the app chooses, answering as the truth would without noise. Measured on
-  // 28 September on the app's surfaces: the interval is +-72 s before any
+  // the app's surfaces: the interval is +-72 s before any
   // egg, +-22 after one, +-13 after two, and narrows egg by egg from there;
   // under a fixed resample jitter it would rise again at every resample. An
   // egg nobody answered about teaches nothing and moves nothing.

@@ -17,8 +17,7 @@
  * CI's clean checkout the working tree is the commit, so there it fails a
  * change committed without its fixtures. A fixture git does not know fails,
  * as one the check cannot compare, and so does one in another layout than
- * one row per line (`fixtureLayout`), say from a branch from before it: it
- * is written in this one, its values unchanged, to be committed.
+ * one row per line (`fixtureLayout`): it is written in this one, its values unchanged, to be committed.
  */
 
 import { execFileSync } from 'node:child_process';

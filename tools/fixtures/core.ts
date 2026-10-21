@@ -118,7 +118,7 @@ export const coreFixture = {
       value: holdTimeForDose(createDose(Z_YOLK, TREF_YOLK_C), 10.0, held),
     })),
     accumulateDose: (() => {
-      // A ten-minute ramp from 50 to 80 C, integrated at the model's own step.
+      // A ten-minute ramp from 50 to 80 C.
       const d = createDose(Z_YOLK, TREF_YOLK_C);
       const out: Array<Record<string, number>> = [];
       for (let i = 1; i <= 20; i++) {

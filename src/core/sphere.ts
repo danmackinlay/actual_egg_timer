@@ -132,9 +132,7 @@ export function meanTemperature(s: SphereState): number {
  * the sphere's mean falls by precisely what the surface sends out plus
  * `loss_C`. The shell starts where the water left it and cools only as fast
  * as heat reaches it, so the drive is continuous by construction. Checked
- * against the closed-form Robin series (test/core.test.ts) and an
- * independent finite-volume solution, to 0.22 C of peak yolk over 48-76 g
- * and 4.9-12 min.
+ * against the closed-form Robin series (test/core.test.ts).
  *
  * With 40 modes and DT_SIM, g ~ 0.97: Tn is solved through 1/(1 - g) ~ 34,
  * which double precision carries without trouble.

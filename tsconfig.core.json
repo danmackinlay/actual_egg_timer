@@ -1,5 +1,4 @@
 // Core: pure numerics, checked without the DOM or Node's types (CLAUDE.md).
-// One of the three type-checks `npm run typecheck` runs.
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {

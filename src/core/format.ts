@@ -217,10 +217,7 @@ const OWN_CONVENTION: Readonly<Record<string, string>> = { cs: 'CZ' };
  * device is in.
  *
  * The language comes from the UI, not the device, so that a Czech UI writes
- * "2,4" even on a phone set to English. Czech has one convention, so a Czech
- * UI formats as `cs-CZ` in any region (`OWN_CONVENTION`); English has many,
- * so an English UI in Germany reads "2,4" because the region says so: `en-DE`
- * is a real CLDR locale, with English words and German numbers. A private-use
+ * "2,4" even on a phone set to English (`OWN_CONVENTION`). A private-use
  * subtag (the `x-1750` of LANGUAGE.md §6) is a register, not a format, and is
  * dropped. A region that is not two letters or three digits is ignored.
  *

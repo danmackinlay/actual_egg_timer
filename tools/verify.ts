@@ -24,7 +24,7 @@
 //
 // copy:keys and swift:constants write what they make, to the Swift package
 // and src/core/copyKeys.ts, which swift build, the type check and the tests
-// read; so they run alone, a fraction of a second, and nothing reads those
+// read; so they run alone, and nothing reads those
 // files while they are written.
 //
 // The jobs call node and tsc directly, not npm test, which type-checks first:

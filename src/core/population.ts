@@ -9,17 +9,12 @@
  * this needs is checked here, and anything else in the file - the fit's
  * summary, its covariance, when and from what it was made - is the fit's
  * own record and ignored, so the fit can say more without a change here.
- * A file written before 0.5 has a spread for the carryover too
- * (`tauAirScale`), which is ignored like the rest.
  *
  * BEFORE ANY EGG the app solves at the population's own centre: its median
- * time-scale and its mean white offset (`PriorStart`).
- * For the literature that is exactly the literature's values, as it always
- * was; for a fitted population it is where everyone's eggs put a new cook,
- * which is the point of pooling them. A calibration carries it from the
- * prior it was drawn from (record.ts).
- *
- * Pure, like the rest of `src/core/`.
+ * time-scale and its mean white offset (`PriorStart`). For the literature
+ * that is exactly the literature's values; for a fitted population it is
+ * where everyone's eggs put a new cook, which is the point of pooling them. A
+ * calibration carries it from the prior it was drawn from (recordFold.ts).
  */
 
 import { LITERATURE_POPULATION, type LogNormal, type Normal, type Population } from './infer.ts';

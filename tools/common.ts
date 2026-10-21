@@ -1,8 +1,7 @@
 /**
  * Helpers the tools and the tests share: the pots they cook in, the seeded
  * draws of their simulated cooks, a record, a posterior that knows its cook,
- * and a cheap decision surface. Each was copied between files before; a
- * change to one now reaches every user of it.
+ * and a cheap decision surface.
  *
  * Nothing here is the app's: the apps' own logic is in src/core/, and these
  * only build inputs for it.

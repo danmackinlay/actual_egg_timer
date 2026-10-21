@@ -5,7 +5,7 @@
  *
  * What a sound sounds like is the owner's to judge, by ear. What is pinned
  * here is what an ear cannot check: that a render is the same every time,
- * that every period is as loud as the beeps it replaced and never clips, and
+ * that every period is as loud as the beeps and never clips, and
  * that the files the iOS app ships are whole periods of the right length,
  * under the 30 s past which a notification plays iOS's default instead.
  *

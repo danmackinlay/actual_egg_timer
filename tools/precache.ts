@@ -25,8 +25,8 @@ import { join } from 'node:path';
 const site = process.argv[2] ?? '_site';
 
 // Asked for by the operating system when the app is installed, or by a link
-// preview, never by the page: leaving them out more than halves what a first
-// visit fetches a second time.
+// preview, never by the page, so the worker does not fetch them on a first
+// visit.
 const LEFT_OUT = new Set([
   'sw.js',
   'assets/icon-512.png',

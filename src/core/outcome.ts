@@ -1,71 +1,46 @@
 /**
  * What the egg will be like: the predicted outcome at the chosen time
- * (INFERENCE.md section 8, "The outcome").
+ * (INFERENCE.md section 8, "The outcome"). The odds (`hitOdds`) say how
+ * often the cook will call the egg right, not which way the misses go; this
+ * reads the same posterior, on the same surface, at the same time.
  *
- * The odds (`hitOdds`) say how often the cook will call the egg right. They
- * do not say which way the misses go, and a cook cannot act on a miss without
- * a direction. This reads the same posterior, on the same surface, at the same
- * time, and says two more things.
- *
- * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and
- * P(runny), P(tender), P(firm) for the white: the posterior predictive of what
- * the cook will say, and, since the cook names the yolk they got, the five
- * yolk words' too. The decision, the odds and the
- * lean still read the miss around the level asked for, which is what the
- * first three are,
- * through the probit the filter learns with, unrelated share included - the
- * same numbers `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give,
- * and the same parts `hitOdds` is made of. They are calibrated against what
- * cooks SAY, as the odds are.
+ * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk,
+ * P(runny), P(tender), P(firm) for the white, and the five yolk words: the
+ * posterior predictive of what the cook will say, through the probit the
+ * filter learns with, unrelated share included - the same numbers
+ * `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give, and the same
+ * parts `hitOdds` is made of.
  *
  * THE LEVEL. How firm the yolk will actually be, as a range on the slider:
  * the 5%, 50% and 95% points of the delivered log yolk dose, mapped through
- * `sliderFromYolkDose`. Each particle delivers its own time-scale's dose,
- * read off the surface, and around it a Gaussian of its own `noise` - the
- * learned egg-to-egg scatter the likelihood sees every answer through. So the
- * range is a mixture of Gaussians, one per particle, weighted, and it carries
- * both what is not yet known about this kitchen and what no number of eggs
- * narrows. Its points are found by inverting the mixture's CDF, not by
- * `weightedQuantile` over the particles: that would give the spread of the
- * particles' MEANS only, and leave out the part no number of eggs narrows.
- * After three consistent eggs the noise makes the range about 1.3 times as
- * wide as the particles alone (test/outcome.test.ts), and it is all that is
- * left once the time-scale is pinned.
+ * `sliderFromYolkDose`. Each particle delivers its own time-scale's dose, and
+ * around it a Gaussian of its own `noise`, so the range is a weighted mixture
+ * of Gaussians, and its points are found by inverting the mixture's CDF. A
+ * `weightedQuantile` over the particles would give the spread of their MEANS
+ * only, and leave out the scatter no number of eggs narrows, which is all
+ * that is left once the time-scale is pinned. On one phone the egg's scatter
+ * and the cook's judging are the same number, so the range is as wide as the
+ * answers make the egg look.
  *
- * NOT THE TASTE OFFSET. The taste offset says where this cook's "just right"
- * sits, not how hard the egg is. A cook who likes a firmer yolk is served a
- * firmer egg - the choice leans late for them - and the level says so: its
- * median lands above the slider's own position. Put the offset in and the
- * level would be the egg as this cook's taste reads it, which is what the
- * three answers already are.
- *
- * The noise is the one caveat. On one phone the egg's scatter and the cook's
- * judging are the same number, so the range is as wide as the answers make
- * the egg look; a cook who judges sharply and a kitchen that varies little
- * look the same to it.
+ * NOT THE TASTE OFFSET. The offset says where this cook's "just right" sits,
+ * not how hard the egg is. A cook who likes a firmer yolk is served a firmer
+ * egg, and the level says so: its median lands above the slider's own
+ * position. With the offset in, the level would be the egg as this cook's
+ * taste reads it, which is what the three answers already are.
  *
  * CLAMPED to [0, 1], the slider's ends. `levelLow` at 0 means at least one
  * egg in twenty comes out softer than the runniest level the slider offers - a
  * raw yolk. `levelHigh` at 1 means at least one in twenty comes out at or past
- * the hardest one; at hard itself that is half the eggs, and the range says
- * nothing about how far past.
+ * the hardest one, and the range says nothing about how far past.
  *
  * THE LEAN. Which way a miss is more likely: 'soft' when P(too soft) is more
  * than LEAN_RATIO times P(too firm), 'firm' the other way round, 'balanced'
  * between. 1.5 is a miss that goes one way three times in five: the least
  * that makes "if not, more likely a little firm" right clearly more often
- * than it is wrong. Nearer 1 the sentence is a coin toss dressed as advice,
- * and flips from egg to egg for no reason the cook can see. Measured (`npm
- * run decide -- outcome`, 400 simulated cooks): the two probabilities are
- * calibrated at every ratio tried, 1 to 3, so the ratio is a choice of when
- * to speak, not a correction. At 1.5 a lean is given for 85% of misses and
- * the miss goes that way 83% of the time (predicted 84%). At the time the app
- * chooses, 73% of eggs are balanced, 24% lean firm - the choice leans late,
- * because a runny white costs three - and 3% soft.
- *
- * Pure, like the rest of `src/core/`, and cheap: one pass over the particles
- * for the answers, and one per bisection step for the level, on a surface and
- * a posterior the decision already has.
+ * than it is wrong. Nearer 1 the sentence is a coin toss dressed as advice.
+ * The two probabilities are calibrated at every ratio `npm run decide --
+ * outcome` tries, so the ratio is a choice of when to speak, not a
+ * correction.
  */
 
 import { type DoseGrid, lookupLogYolkDose } from './doseGrid.ts';

@@ -36,7 +36,7 @@ settings:
     MARKETING_VERSION: "0.5.1"
     CURRENT_PROJECT_VERSION: "4"
     # The simulator needs no identity and must not wait on one: keeping it
-    # unsigned is what makes the build-run-screenshot loop two seconds. Device
+    # unsigned is what keeps the build-run-screenshot loop fast. Device
     # builds sign normally, which is what the entitlement requires.
     CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
     CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
@@ -90,7 +90,8 @@ targets:
     # A shared scheme, so xcodebuild (and anything driving it) can find the
     # target without Xcode having opened the project first and invented one.
     scheme:
-      # `npm run ios:e2e` and `npm run ios:shots` run them (tools/iosE2e.ts).
+      # `npm run ios:e2e` and `npm run ios:shots` run them (tools/iosE2e.ts,
+      # tools/iosShots.ts).
       testTargets: [EggTimerUITests]
       # Unticked in Edit Scheme > Run > Arguments, for a run from Xcode to
       # tick: the alarms without a cook, to hear them (ios/README.md,
@@ -144,8 +145,7 @@ targets:
         # URLSession to its own site, and hashes with SHA-256 for App Attest
         # (ShareNetwork.swift, Sharing.swift). Both are the operating system's
         # encryption and exempt, so NO - "no non-exempt encryption" - is the honest answer
-        # (Apple's "Complying with encryption export regulations", checked
-        # 3 October 2026). Without the key every upload arrives as "Missing
+        # (Apple's "Complying with encryption export regulations"). Without the key every upload arrives as "Missing
         # Compliance" and has to be answered by hand before testers can install
         # it. Revisit if the app ever encrypts anything itself.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
@@ -211,7 +211,8 @@ targets:
   # and the log's launch arguments are a debug build's. It links the app's
   # logic to read the log by its own types (`DebugLog.Event`, the stored
   # cook). `npm run ios:e2e` and `npm run ios:shots` run it, in one
-  # xcodebuild, each test reset to a fresh install's state (tools/iosE2e.ts).
+  # xcodebuild, each test reset to a fresh install's state (tools/iosE2e.ts,
+  # tools/iosShots.ts).
   EggTimerUITests:
     type: bundle.ui-testing
     platform: iOS

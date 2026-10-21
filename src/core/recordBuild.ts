@@ -16,9 +16,7 @@ import { recordCookTime_s } from './recordFold.ts';
 /* ------------------------------------------------------------- the making */
 
 /* WHO MAKES A RECORD. Both apps, from the same facts, through `recordFor`:
- * the record is the fit's training data, and two hand copies of how it is
- * assembled had begun to drift in how they read the same cook. Each app
- * gathers its facts - off the web's ticket and machine, off iOS's ticket and
+ * the record is the fit's training data. Each app gathers its facts - off the web's ticket and machine, off iOS's ticket and
  * dates - and says nothing else; fixtures/record.json holds the two to one
  * answer for every branch. The facts carry no clock: the day and the start
  * are read by the app, which knows the time zone. */
@@ -53,8 +51,8 @@ export interface CookFacts {
    *  start, which never times its own pan; a finished cold start has. */
   boilRemembered: boolean;
   /** On a cold start, whether this cook's own boil tap set its time to boil.
-   *  Absent is true, as on every cold start before 0.5; false when the tap
-   *  came after a late correction to cold and the remembered pan was used.
+   *  Absent is true, as on a cold start from before the field; false when the
+   *  tap came after a late correction to cold and the remembered pan was used.
    *  Not read on a hot start. */
   boilTapped?: boolean;
   /** The doneness the cook was RUN at, [0, 1]. */

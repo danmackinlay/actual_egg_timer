@@ -8,7 +8,7 @@
  * tab's held request is then aborted, and it stands down to wait in turn.
  *
  * Where the browser has no Web Locks (an insecure context: an http:// host
- * other than this machine) every tab owns the app, as before the lock. A
+ * other than this machine) every tab owns the app. A
  * page holding a lock is never put in the back-forward cache, so going back
  * to the app loads it again.
  */
@@ -16,7 +16,7 @@
 const OWNER_LOCK = 'aet.owner';
 
 /** Whether this page runs the app: true until a lock says otherwise, so the
- *  tests and tools, which take none, write as they always have. */
+ *  tests and tools, which take none, write. */
 let owned = true;
 
 /** Lets go of the lock this page holds; nothing while it holds none. */

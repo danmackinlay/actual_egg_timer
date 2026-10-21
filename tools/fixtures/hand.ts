@@ -7,7 +7,7 @@
  *    the egg aimed for, the timers, and of the state, the moment the hand
  *    last changed, which the web reads; the rest of it is the machine's
  *    own, and shows in what it makes next. Among them the
- *    four ways the two apps once committed differently: a long press on a
+ *    four ways the two apps could commit differently: a long press on a
  *    radio, a size then a weight, leaving inside a settle, and which touches
  *    are another control.
  *  - `choices`: what a commit of each group makes of a cook before and after

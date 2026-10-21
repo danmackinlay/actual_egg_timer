@@ -1,73 +1,43 @@
 /**
  * Deciding, not just estimating (INFERENCE.md section 8).
  *
- * Why not solve at the posterior MEAN of the time-scale,
- * with the white's cutpoint moved by the mean white offset? Three things are
- * wrong with that. The learned yolk taste offset never reaches the
- * recommendation - only the part of a "too soft" answer the posterior happens
- * to blame on the time-scale moves the time. The noise and the spread of the
- * posterior play no part, so a cook the model knows nothing about gets the
- * same time as one it knows well. And the two ways of getting an egg wrong are
- * treated alike, when a runny white is worse than a yolk a step too firm.
- *
- * So the time is CHOSEN. Every particle is a whole hypothesis about this
- * cook - time-scale, taste, noise, white offset, tender | firm gap - and for a
- * candidate pull time each one says how likely each answer is, through the
- * same probit the filter learns with. The expected loss of the candidate is
+ * The time is CHOSEN, not solved at the posterior mean: the mean leaves out
+ * the taste offset, the noise and the posterior's spread, and treats a runny
+ * white like a yolk a step off. Every particle is a whole hypothesis about
+ * this cook, and for a candidate pull time says how likely each answer is,
+ * through the probit the filter learns with. The recommendation is the
+ * candidate that minimises, over the posterior,
  *
  *     P(too soft) + P(too firm) + RUNNY_WHITE_LOSS * P(runny)
  *
- * over the posterior, and the recommendation is the candidate that minimises
- * it. RUNNY_WHITE_LOSS is 3: the owner's number, a
- * constant, and a per-cook slider only if someone asks.
+ * NOT BEFORE THE FIRST EGG. Under the prior alone the choice runs far later
+ * than the literature, and the first egg comes out a step too firm (`npm run
+ * decide -- lean`): across the prior's width the yolk's part of the loss is
+ * nearly flat, and the white's tail is what is left to steer by. The prior is
+ * wide so that the filter can learn, not because anyone believes one kitchen
+ * in twenty turns a jammy egg's white runny. So until an egg has taught
+ * something, the time is the literature's, exactly as `calibrationParams`
+ * gives it, and only the odds are read from the prior.
  *
- * NOT BEFORE THE FIRST EGG. Under the prior alone the choice runs far from the
- * literature: 42 s later at jammy and 86 s at soft, on the reference egg, and
- * the first egg comes out a step too firm. The reason is the prior's width,
- * not the loss. A time-scale sd of 11.9% is about +-70 s of cook time, so the
- * yolk's part of the loss is nearly flat - no time gets the yolk right more
- * than one egg in five - and the white's tail is what is left to steer by. The
- * prior is wide so that the filter can learn, not because anyone believes one
- * kitchen in twenty turns a jammy egg's white runny. One answer of any kind
- * pins the time-scale to about 6%, and from then on the choice leans by a few
- * seconds (test/decide.test.ts). So until an egg has taught something, the
- * time is the literature's, exactly as `calibrationParams` gives it,
- * and only the odds are read from the prior.
+ * THE SURFACE. The offsets and the noise are additive in log dose, so only
+ * the time-scale needs the physics: a dose grid over (alpha, time) for the
+ * current egg and pot. It spans every level this pot can deliver, so a cook
+ * dragging the slider is answered from one grid, with no rebuild and no jump
+ * (`decisionGridSpec`). It costs several hundred simulations, which is why
+ * the apps build it off the main thread and keep one per setup.
  *
- * THE SURFACE. The loss needs the delivered log doses at every particle's
- * time-scale for every candidate time, for the setup on screen. The offsets
- * and the noise are additive in log dose, so only the time-scale needs the
- * physics: a dose grid over (alpha, time) for the current egg and pot.
- * The grid does not depend on the slider. It spans every level this pot can
- * deliver, from a little before the white sets to a little past the hardest
- * yolk, so a cook dragging the slider is answered from one grid, with no
- * rebuild and no jump (`decisionGridSpec`). It costs several hundred
- * simulations, which is why the apps build it off the main thread and keep one
- * per setup.
+ * THE REFUSALS. The mean solve runs first, and `verdictFor` reads it to
+ * decide what the slider may ask for. The choice is then made at the level
+ * the verdict leaves, within DECISION_WINDOW_S of the mean solve's time: it
+ * never overrides a refusal; it only leans. Where there is no cook to choose
+ * (`decisionApplies`) the solver's own answer stands, because it is already
+ * the furthest the pan goes.
  *
- * THE REFUSALS. The mean solve still runs first, and still decides what the
- * slider may ask for: `verdictFor` reads it, snaps a doneness
- * the white forbids up to the softest one it allows, and says why. The choice
- * is then made at the level the verdict leaves, within DECISION_WINDOW_S of the
- * mean solve's time. It never overrides a refusal; it only leans. Where there is
- * no cook to choose - the white never sets, or the doneness was out of reach and
- * could not be snapped into it - the solver's own answer stands
- * (`decisionApplies`), because that answer is already the furthest the pan goes.
- *
- * THE ODDS. P(hit the mark): the posterior predictive probability
- * that the cook answers "not runny" about the white AND "just right" about the
- * yolk, at the time recommended. Within one particle the two answers are
- * independent - two readings of two latents - and across particles they are
- * correlated, because a slow time-scale makes both late. The probabilities are
- * the answers', unrelated share included, so they are calibrated against what
- * cooks SAY, which is all anyone can check them against. The odds decide
- * which levels the slider offers (reach.ts) and when the app says how to make
- * a cook more reliable.
- *
- * How much is still being learned is not decided here: that is the width of
- * `predictCookTime` (infer.ts), read on demand.
- *
- * Pure, like the rest of `src/core/`.
+ * THE ODDS. P(hit the mark): the posterior predictive probability that the
+ * cook answers "not runny" about the white AND "just right" about the yolk,
+ * at the time recommended - independent within a particle, correlated across
+ * particles, because a slow time-scale makes both late. Unrelated share
+ * included, so they are calibrated against what cooks SAY.
  */
 
 import type { Egg } from './geometry.ts';
@@ -280,11 +250,11 @@ export function hitOdds(
  * at the softest level, or once whites have come out runny twice, every time
  * past a point loses the same whole egg - the yolk certainly too firm, the
  * white certainly set - and the minimum is wherever the arithmetic's last
- * digits put it: 17 s apart on two surfaces that agree everywhere else, and
- * usually at the edge of the window. With it, the choice stops where waiting
- * longer buys less than this, which is the earliest time that is as good as
- * any. Where the loss has a real minimum it moves the choice by about a
- * quarter of a second (test/decide.test.ts).
+ * digits put it, which differs between surfaces that agree everywhere else,
+ * and is usually at the edge of the window. With it, the choice stops where
+ * waiting longer buys less than this, which is the earliest time that is as
+ * good as any. Where the loss has a real minimum it barely moves the choice
+ * (test/decide.test.ts).
  */
 export const LEAN_COST_PER_S = 1e-4;
 
@@ -368,8 +338,8 @@ export interface Decision {
   meanCookTime_s: number;
   /** Whether the time was chosen, or is the mean solve's: see `decideAt`. */
   chosen: boolean;
-  /** P(hit the mark) at `cookTime_s`, and the same in tenths, which is how
-   *  the reach and the advice thresholds are written. Not on screen. */
+  /** P(hit the mark) at `cookTime_s`, and the same in tenths. Not on
+   *  screen. */
   odds: number;
   oddsTenths: number;
 }
@@ -382,8 +352,8 @@ export function decisionApplies(sol: Solution): boolean {
   return sol.whiteSets && sol.reachable;
 }
 
-/** Tenths, which is how the reach and advice thresholds are written. Half away from zero, which is what
- *  both languages' plain rounding does for a probability. */
+/** Tenths, half away from zero, which is what both languages' plain
+ *  rounding does for a probability. */
 export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);
 }
@@ -473,11 +443,9 @@ export function decidedSolution(
  * taste, and the movement is independent of everything about the cook, so it
  * is an estimate free of selection.
  *
- * WHY TEN. "Just right" is about +-12 s wide on the reference egg (a 10 g size
- * class is +-24 s, twice the band; INFERENCE.md section 4), so +-10 s stays
- * inside it. What it costs is measured, not assumed (`npm run decide --
- * nudge`): on 300 simulated cooks x 6 eggs the share of eggs right falls
- * from 52.1% to 49.3%, and by a cook's sixth egg from 66.9% to 62.6%.
+ * WHY TEN. "Just right" is about +-12 s wide on the reference egg, so +-10 s
+ * stays inside it. What it costs is measured, not assumed (`npm run decide --
+ * nudge`).
  */
 export const NUDGE_MAX_S = 10;
 

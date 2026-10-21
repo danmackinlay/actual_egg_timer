@@ -1,11 +1,8 @@
 /**
  * The page's runner, over `update` (model.ts): each thing that happens is a
  * message (`dispatch`, or `send` from below), the model takes what `update`
- * returns, and this module does what it asks - writes the cook down,
- * schedules and rings the alarm, remembers the boil, logs the egg's record,
- * forgets the cook and sends what is final; writes the settings, solves the
- * idle page again once the controls settle, follows a new language, writes
- * the controls - builds what the page waits for (the idle pot's surface and
+ * returns, and this module does what it asks (`perform`), builds what the
+ * page waits for (the idle pot's surface and
  * odds, a cook's pot's surface, the calibration before its egg and a surface
  * on it) off the main thread, and draws the page.
  *

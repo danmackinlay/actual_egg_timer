@@ -1,11 +1,9 @@
 /**
  * Every tunable in the model, with its provenance.
  *
- * Values were first re-derived rather than transcribed, because the primary
- * literature was not retrieved during the initial build. It has since been
- * read at first hand: see references.bib, and README.md section 10 for what
- * each source actually says. Constants that were confirmed or corrected as a
- * result are marked CHECKED AT SOURCE; those resting on an inference or a
+ * The sources are in references.bib, and README.md section 10 says what each
+ * one says. Constants confirmed or corrected against a source are marked
+ * CHECKED AT SOURCE; those resting on an inference or a
  * judgement (H_EFF, the standing pan, WET_SHELL_KG_M2) say so in their own
  * comments. Some need no egg-specific source at all: how an egg cools on the
  * counter (H_AIR) is textbook convection and radiation.
@@ -24,10 +22,10 @@ export const MODE_COUNT = 40;
  *
  *  CHECKED AT SOURCE. Abbasnezhad et al. (2016) give albumen k = 0.0013*T +
  *  0.5125 with rho(T) and c_p = 3800, i.e. alpha rising 1.36e-7 (20 C) ->
- *  1.69e-7 (100 C). The temperature argument for preferring the higher value
- *  is therefore a measurement, not an inference. Independently, Buay et al.
- *  (2006) fitted a WHOLE EGG in boiling water and obtained alpha = 1.6e-7,
- *  bounded 1.5e-7 to 1.8e-7. 1.70e-7 sits inside that band, at the fast end -
+ *  1.69e-7 (100 C), so preferring the higher value rests on a measurement.
+ *  Independently, Buay et al. (2006) fitted a WHOLE EGG in boiling water and
+ *  obtained alpha = 1.6e-7, bounded 1.5e-7 to 1.8e-7. 1.70e-7 sits inside
+ *  that band, at the fast end -
  *  which is expected, since it also absorbs the Dirichlet and shape errors.
  *  Beware the spread on the yolk: Romanoff & Romanoff (1949), via Denys et al.
  *  (2004), imply alpha_yolk = 9.1e-8, against 1.22e-7 to 1.52e-7 elsewhere. */
@@ -64,10 +62,8 @@ export const Z_YOLK = 4.65;
 export const TREF_YOLK_C = 63.0;
 
 /** Same for egg white (ovalbumin) at T = 353 K.
- *  CHECKED AT SOURCE, AND CORRECTED. Weijers et al. (2003) report Ea ~ 480
- *  kJ/mol (430-490 across techniques), not the 460 assumed while building
- *  this, so z falls from 5.2 to 4.97 K. No validation target moves: the white
- *  dose only binds at the reachability edge. */
+ *  CHECKED AT SOURCE. Weijers et al. (2003) report Ea ~ 480 kJ/mol (430-490
+ *  across techniques). The white dose only binds at the reachability edge. */
 export const Z_WHITE = 4.97;
 export const TREF_WHITE_C = 80.0;
 
@@ -84,7 +80,7 @@ export const TREF_WHITE_C = 80.0;
  *  Their bath was 40-60 C with 0.01 m/s forced circulation, so a rolling boil
  *  should be higher - but 850 is roughly twice the only published measurement
  *  and the Dirichlet error is correspondingly larger than ~5%. Changing it
- *  would simply be re-absorbed by ALPHA_DEFAULT, which is why it still stands;
+ *  would simply be re-absorbed by ALPHA_DEFAULT, which is why it stands;
  *  see README section 11. */
 export const H_EFF = 850.0;
 
@@ -106,8 +102,7 @@ export const RAMP_R = 3.0;
  *  Williams' folk method - bring to the boil, cover, off the heat, seventeen
  *  minutes, and it is hard-boiled - with an 8-minute boil in 2 L:
  *  480 / ln(r/(r-1)) at r = 3, i.e. 480 / ln(1.5) = 1183.8 s. So that one
- *  validation case is the same under either rule, by construction, and the
- *  Williams check in test/validation.test.ts reads 75.6 C.
+ *  validation case is the same under either rule, by construction.
  *
  *  Why not derive it from the time to boil, since the ramp's tau = m*c/(U*A)
  *  is the same quantity? Because the boil time identifies it only through
@@ -143,9 +138,8 @@ export const STANDING_VOLUME_EXPONENT = 1.0 / 3.0;
  *  volume rule cannot see: the lid (a loose one, or none, cuts the constant),
  *  the pan's material and shape, and evaporation, which is not Newtonian at
  *  all near the boil. A per-cook scale learned from that cook's own standing
- *  eggs is the planned replacement (PLAN.md), and is deliberately not built
- *  yet. It is the least-verified number in the standing path; see README
- *  section 11.3. */
+ *  eggs is the planned replacement (PLAN.md). It is the least-verified
+ *  number in the standing path; see README section 11.3. */
 export const TAU_STANDING_SCALE = 1.0;
 
 /** Heat transfer coefficient at the shell of an egg resting in still room
@@ -156,9 +150,8 @@ export const TAU_STANDING_SCALE = 1.0;
  *  a 20 C room, gives 7.3 W/m^2K with the shell at 60 C and 8.4 at 100 C;
  *  radiation from a shell of emissivity 0.93, eps*sigma*(Ts^2 + Ta^2)(Ts + Ta),
  *  adds 6.5 and 7.9. The sum runs 13.8 to 16.3, and while the yolk heads for
- *  its peak the shell is at 65-95 C: a constant 15 reproduces the
- *  temperature-dependent sum to 0.25 C of peak yolk for 48-76 g eggs cooked
- *  4.9-12 min. The counter shelters the underside
+ *  its peak the shell is at 65-95 C: a constant 15 stands in for the
+ *  temperature-dependent sum. The counter shelters the underside
  *  from convection and conducts a little across the air gap at the contact;
  *  on wood or stone, together they move h by less than 10% either way.
  *  Bi = h*R/k ~ 0.6, so the shell is neither clamped nor at the egg's mean,
@@ -178,9 +171,9 @@ export const H_AIR = 15.0;
  *  analogy, with Spalding's correction for a vapour pressure near the
  *  atmosphere's, it takes heat 13-26 times faster than convection and
  *  radiation together, with the shell at 85-95 C - so all of it comes out of
- *  the egg. Every 0.1 g costs a 62 g egg 1.1 C of mean temperature and 0.7 C
- *  of peak yolk. A scale reading to 0.01 g would check it: weigh an egg
- *  straight from the pan, and again a minute later. */
+ *  the egg. Every 0.1 g costs a 62 g egg 1.1 C of mean temperature. A scale
+ *  reading to 0.01 g would check it: weigh an egg straight from the pan, and
+ *  again a minute later. */
 export const WET_SHELL_KG_M2 = 0.015;
 
 /** Latent heat of vaporisation of water at 90-100 C, where the film on the
@@ -189,11 +182,9 @@ export const LATENT_HEAT_WATER = 2.27e6;
 
 /** Surface temperatures of the cooling media, C. T_COLD_TAP_C is the cold
  *  tap's when the cook gives none: mains water near ground temperature,
- *  5-25 C across places and seasons. It is running water's, which moves a
- *  jammy cook by -8.5 to +6.5 s across that range (README.md section 2.4),
- *  and a cold pan's start, which moves it by +20 to -21 s kept boiling on an
- *  eight-minute ramp; so the cook may give their own, one number for both
- *  (`CookChoices.tapWater_C`). */
+ *  5-25 C across places and seasons. It is running water's and a cold pan's
+ *  start, and moves the time in both (README.md section 2.4); so the cook may
+ *  give their own, one number for both (`CookChoices.tapWater_C`). */
 export const T_ICE_BATH_C = 2.0;
 export const T_COLD_TAP_C = 15.0;
 export const T_ROOM_C = 20.0;
@@ -233,7 +224,8 @@ export const EGG_LENGTH_RATIO = 1.35;
 export const DT_SIM = 0.5;
 
 /** How long to keep integrating after the egg leaves the water, s.
- *  Carryover peaks 4-5 minutes in; 15 minutes captures it fully. */
+ *  Carryover peaks well inside it, latest on the counter (README.md
+ *  section 5); 15 minutes captures it fully. */
 export const CARRYOVER_WINDOW = 900.0;
 
 /** How long after the pull an egg eaten warm from an egg cup is opened, s:
@@ -242,9 +234,8 @@ export const CARRYOVER_WINDOW = 900.0;
  *  topped within a minute or so of leaving the pan, and the first spoonfuls
  *  of yolk come within a minute of the top coming off; from then the yolk is
  *  being eaten, so what it would reach later is not what the cook tastes.
- *  Two minutes is the middle of that, well before the yolk's centre peaks,
- *  six to eight minutes after the pull on the counter. It weighs: each 30 s
- *  later takes about 30 s off soft's time (`npm run decide -- counter`).
+ *  Two minutes is the middle of that, well before the yolk's centre peaks
+ *  on the counter. It weighs on soft's time (`npm run decide -- counter`).
  *  README.md section 5, "In an egg cup", says what a probe reading at the
  *  opening would test. */
 export const EGG_CUP_OPENED_S = 120.0;

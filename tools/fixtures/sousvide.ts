@@ -50,8 +50,8 @@ for (const level of SOUS_VIDE_LEVELS) {
   });
 }
 
-/* Either side of 60 C, which is the temperature this module's own caveat is
- * about: below it the white never sets and the conduction model is out of its
+/* Either side of 60 C, which is the temperature src/core/sousvide.ts's caveat
+ * is about: below it the white never sets and the conduction model is out of its
  * depth. 50 C is the absurd end - the white's target takes over a month - and
  * 85 C is the other, where both holds fall to seconds and the equilibration is
  * the whole answer. */

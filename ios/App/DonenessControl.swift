@@ -86,7 +86,6 @@ struct DonenessControl: View {
         }
     }
 
-    /// The slider's heading.
     private var heading: some View {
         Text(tr(.`controls.doneness`))
             .foregroundStyle(.secondary)

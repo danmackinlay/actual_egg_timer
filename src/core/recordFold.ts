@@ -32,8 +32,7 @@ export const CALIBRATION_ALPHA_HIGH = 1.8;
  * The most consequential choice in the calibration. The grid is handed
  * to `buildDoseGrid` by the CALLER, so its bounds decide what the particle
  * filter can see and therefore what the posterior becomes: two apps with
- * different grids learn different things from the same egg. It was duplicated
- * by hand in both apps, agreeing only by luck of maintenance.
+ * different grids learn different things from the same egg.
  *
  * The bounds bracket the plausible answer rather than the whole domain: alpha
  * within a factor of ~2 of where the posterior currently sits, and cook times
@@ -61,7 +60,7 @@ export interface Calibration {
   eggsLogged: number;
   /** Where to solve while no egg has taught anything: the centre of the
    *  population the prior was drawn from (population.ts). The literature's
-   *  values when absent, as they always were. */
+   *  values when absent. */
   start?: PriorStart;
 }
 

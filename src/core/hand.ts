@@ -28,24 +28,9 @@
  * THE GROUPS. A change belongs to the group of the cook's choices it makes
  * (`HandGroup`), never to the element it came from: the size menu and the
  * weight typed are both the egg's mass; the room's rows, under where the
- * egg came from, the start and the cooling, are all the room. Each group
- * makes these of `CookChoices` (`takeGroup`):
- *
- *   mass         mass_kg, massFrom, sizeTable
- *   eggFrom      eggFrom
- *   customStart  customStart_C
- *   room         room_C
- *   startMode    startMode
- *   afterBoil    afterBoil
- *   cooling      cooling
- *   tapWater     tapWater_C
- *   bowlLitres   bowlLitres
- *   bowlWater    bowlWater_C
- *   waterLitres  waterLitres
- *   eggCount     eggCount
- *   altitude     altitude_m
- *   level        level: the slider
- *   startedAt    no choice: when the eggs went in, the start's − and +
+ * egg came from, the start and the cooling, are all the room. Which fields
+ * of `CookChoices` each group makes is `takeGroup`'s; `startedAt` makes no
+ * choice: it is when the eggs went in, the start's − and +.
  *
  * They partition the choices, so each app maps every setting it keeps onto
  * one group, or none (the units, the language, the sound and the alarm,
@@ -88,9 +73,8 @@
  *   the language, the sound and the alarm, sharing. A finger down on one is
  *   using it; so is a button pressed by the keyboard or VoiceOver. A touch
  *   on no control (the page, the egg drawn, the clock, a scroll) is none of
- *   these, and the app sends nothing. The control is a label, for the
- *   fixtures and a reader: `handStep` commits alike whichever it is, and
- *   never reads it. Which of an app's controls is which is that app's
+ *   these, and the app sends nothing. `handStep` commits alike whichever
+ *   control it is; which of an app's controls is which is that app's
  *   mapping (the web's edit.ts, iOS's views), not core's.
  * - `timer`, `timer`: a timer this set come round. `settle`: the change in
  *   hand committed. `preview`: the aimed-for egg planned, if a change is in
@@ -105,17 +89,9 @@
  * then the live egg comes back. At most one group is in hand, since a change
  * from another commits it, so an event commits at most one.
  *
- * THE STATE (`HandState`): the group in hand; the press, with when it came
- * down, on which group, and whether a change of that group came during it;
- * when the last change came; whether an aimed-for egg is shown; and whether
- * the preview is set and not yet come round. The settle and the hold are
- * not kept: cancelling a timer not set does nothing.
- *
- * THE OUTPUT (`HandStep`): the state; the group to commit, or null; `plan`
- * (plan the aimed-for egg for the change in hand now) or `letGo` (drop the
- * aimed-for egg and, while a cook runs, show its own level on the slider),
- * or null; and the timers, each at most once, set for `at_s` or cancelled
- * with null.
+ * THE STATE (`HandState`) does not keep the settle and the hold: cancelling
+ * a timer not set does nothing. THE OUTPUT (`HandStep`) names each timer at
+ * most once, set for `at_s` or cancelled with null.
  *
  * WHAT THE APP DOES with a commit of `startedAt`: `correctStart` stepped with
  * the start it holds in hand, then the start shown as the cook has it, so a
@@ -140,9 +116,8 @@
  * slider goes back to the cook's level when the aimed-for egg is let go.
  * `handStep` knows nothing of the cook.
  *
- * Pure, like the rest of `src/core/`. `Hand.swift` is held to it by
- * `fixtures/hand.json`: event sequences, the choices committed, the cook
- * previewed and the start's steps.
+ * `Hand.swift` is held to it by `fixtures/hand.json`: event sequences, the
+ * choices committed, the cook previewed and the start's steps.
  */
 
 import {
@@ -159,7 +134,7 @@ export const SETTLE_S = 1.5;
  *  iOS's Stepper): a hold, committed on the lift, s. */
 export const HELD_S = 0.4;
 /** How long a burst of changes waits before the aimed-for egg is planned, s:
- *  a plan is tens of milliseconds, too long for every pixel of a drag. */
+ *  a plan is too slow for every pixel of a drag. */
 export const PREVIEW_S = 0.09;
 
 /** A group of the cook's choices a control makes, or the start's time. */

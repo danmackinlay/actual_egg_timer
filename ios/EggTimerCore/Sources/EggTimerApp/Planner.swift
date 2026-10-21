@@ -230,8 +230,9 @@ public final class Planner {
     /// the posterior, the base it started from, and the log it was folded from.
     public var kept = Calibrations.freshKept()
     /// What this kitchen has learned from its own eggs. Before any feedback it
-    /// is the prior, whose mean IS the literature value - so calibration is
-    /// purely additive and the app is fully useful on day one.
+    /// is the prior, centred on the population it is drawn from
+    /// (`Calibrations.population`) - so calibration is purely additive and the
+    /// app is fully useful on day one.
     public var calibration: Calibration { kept.calibration }
 
     /// A new cook, a new nudge.
@@ -358,8 +359,6 @@ public final class Planner {
     /// a correction in hand (`InHand`), neither saved nor solved for here.
     public func changed() {
         guard !applying else { return }
-        // While a cook runs the controls are its own: a change is a
-        // correction in hand (`InHand`), neither saved nor solved for here.
         if let onEdit {
             onEdit()
             return
@@ -378,9 +377,9 @@ public final class Planner {
     @ObservationIgnored var onEdit: (() -> Void)?
 
     /// The controls set to a running cook's own choices, as they stood when
-    /// it was stored (a relaunch): what the controls show while it runs
-    /// Neither saved nor
-    /// solved for: a correction writes the settings it changes.
+    /// it was stored (a relaunch): what the controls show while it runs.
+    /// Neither saved nor solved for: a correction writes the settings it
+    /// changes.
     func adopt(_ c: CookChoices) {
         applying = true
         defer { applying = false }
@@ -413,10 +412,8 @@ public final class Planner {
     /// NOT `init`. `@State private var model = AppModel()`, which makes the
     /// Planner, evaluates its initial value on every construction of the view
     /// struct, and SwiftUI keeps only the first instance - so I/O and a solve
-    /// in `init` ran for every discarded Planner as well, and those solves ran
-    /// to completion. `Cook` already avoids exactly this by doing its restore
-    /// from `onAppear`; this does the same, and is idempotent so a second
-    /// `onAppear` costs nothing.
+    /// in `init` would run, to completion, for every discarded Planner. Called
+    /// from `onAppear`, and idempotent so a second `onAppear` costs nothing.
     func load() {
         guard !loaded else { return }
         loaded = true

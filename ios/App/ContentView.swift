@@ -14,14 +14,9 @@ enum Route: Hashable {
 /// The egg: the web's one screen (UI.md section 3), the same in every phase,
 /// and the phase machine that runs it.
 ///
-/// One layout from idle to Done, top to bottom: the time, with the line
-/// under it and how sure I am; the hint and the action, with Cancel while a
-/// cook runs; the doneness slider; the egg in cross-section beside the setup
-/// sentence, whose clauses open their choices in place under both; one slot
-/// for the longer line; and at Done the questions after an egg. At the start
-/// nothing moves and nothing goes: only the readout's words and the buttons
-/// change. Settings and Help are rare visits, so they sit in the bar at the
-/// top, out of the thumb's way.
+/// At the start nothing moves and nothing goes: only the readout's words and
+/// the buttons change. Settings and Help are rare visits, so they sit in the
+/// bar at the top, out of the thumb's way.
 struct ContentView: View {
     @State private var model = AppModel()
     @State private var path: [Route] = []
@@ -347,9 +342,8 @@ struct ContentView: View {
         }
     }
 
-    /// The egg's drawing: 120 by 156 pt, a little smaller at the
-    /// accessibility text sizes, so the sentence beside it keeps a column
-    /// wide enough for its words.
+    /// The egg's drawing, a little smaller at the accessibility text sizes,
+    /// so the sentence beside it keeps a column wide enough for its words.
     private var eggSize: CGSize {
         dynamicTypeSize.isAccessibilitySize ? CGSize(width: 84, height: 109) : CGSize(width: 120, height: 156)
     }

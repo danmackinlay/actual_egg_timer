@@ -274,7 +274,7 @@ public enum MeasurementSystemName: String, Sendable {
     case metric, us, uk
 }
 
-/// The temperature unit the cook picked in Settings (iOS 16 and later).
+/// The temperature unit the cook picked in Settings.
 public enum TemperaturePreference: String, Sendable {
     case celsius, fahrenheit
 }

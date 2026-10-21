@@ -47,8 +47,9 @@ export function workerBuilds(learner: Learner): Builds {
 }
 
 /** How long the inputs must sit still before a decision surface is asked for,
- *  ms, on top of the solve's own coalescing. A surface is a second of the
- *  worker's time; a pot typed digit by digit should not queue one per digit. */
+ *  ms, on top of the solve's own coalescing. A surface is slow to build
+ *  (`npm run decide -- cost` times one); a
+ *  pot typed digit by digit should not queue one per digit. */
 const DECISION_SETTLE_MS = 300;
 
 /** A page's asks (`openNeeds`). */

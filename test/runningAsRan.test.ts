@@ -22,7 +22,7 @@ import { gridFor } from '../tools/common.ts';
 import { S, CHOICES, C, CTX, asRanAgain, cookOf, factsOf, planned } from './cooks.ts';
 
 test('nothing passes an open question about the pull', () => {
-  // The review's call: a hot cook whose grace ran out while the phone
+  // A hot cook whose grace ran out while the phone
   // slept, corrected to cold on waking, the question left unanswered past
   // the counted cooling.
   let hot = cookOf({ startMode: 'hot' });
@@ -80,7 +80,7 @@ test('a record is never made from a plan with no surface; the cook as it ran is 
   );
   assert.equal(keepAsRan(kept, planned(kept, due + 40)), kept, 'once');
   assert.deepEqual(readRunningCook(JSON.parse(JSON.stringify(kept))), kept, 'stored and read back');
-  // The review's call: relaunched three hours on, the cook too old, planned
+  // Relaunched three hours on, the cook too old, planned
   // with no surface as both apps do. The egg logged keeps its forecast.
   const now = S + 3 * 3600;
   const relaunched = replan(kept, C, null, 0, now);

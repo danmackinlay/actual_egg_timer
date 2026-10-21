@@ -15,7 +15,7 @@
  * a "clear" white is a colour of its own (`--white-raw`), not an opacity.
  *
  * The rings are coloured by how set each layer is (`ringFills`), or, a tap
- * away, by how hot it is (`heatFills`, `DECISIONS.md` 52). The lab page,
+ * away, by how hot it is (`heatFills`). The lab page,
  * tools/egg-section.html, draws both with these.
  * Nothing here touches the document when the module is imported.
  */

@@ -4,8 +4,8 @@
  * it ends. A running cook and its plan are running.ts's; this reads them, and
  * changes the cook only by an entry in its log (`appendEntry`).
  *
- * Pure, like the rest of `src/core/`, and `AsRan.swift` is held to it by
- * `fixtures/running.json` and `fixtures/step.json`.
+ * `AsRan.swift` is held to it by `fixtures/running.json` and
+ * `fixtures/step.json`.
  */
 
 import { type ModelParams, type Solution, simulate } from './solve.ts';
@@ -66,11 +66,10 @@ function asRanOf(cook: RunningCook, plan: CookPlan): CookAsRan | null {
 /**
  * The cook with the plan as it ran kept: taken from `plan` the first time
  * the cook is pulled and `plan`, a plan of the cook as pulled, is on the
- * pot's surface. The app passes every plan it takes up through this (the
- * plan after `eventsDue` or the cook's tap writes the pull, after a surface
- * lands, at a reload) and writes the cook down when it comes back changed (a
- * new object). Otherwise - not pulled, no surface yet, or already kept - the
- * cook as it was: a kept one is replaced only by `asRanCorrected`.
+ * pot's surface. `step` passes every plan it settles on through this, and
+ * has the cook written down when it comes back changed. Otherwise - not
+ * pulled, no surface yet, or already kept - the cook as it was: a kept one
+ * is replaced only by `asRanCorrected`.
  *
  * Kept before any answer is folded, it is planned on the calibration before
  * this egg; an app must not keep one, or make a record, from a plan made
@@ -127,8 +126,9 @@ export function solutionAsRan(plan: CookPlan, ran: CookAsRan): Solution {
  * once the egg is answered, the calibration as it stands while it is not -
  * on `surface`, that calibration's surface for the corrected pot, and its
  * plan as it ran kept in place of the stale one. Null while `surface` is not
- * that pot's: the app plans `replan(cook, before, null, 0, now_s)`, builds
- * the surface its `inputs` ask for on `before`, and asks again. Before the
+ * that pot's: `step` plans `replan(cook, before, null, 0, now_s)`, wants
+ * the surface its `inputs` ask for on `before` (`need.beforeSurface`), and
+ * asks again. Before the
  * pull, the cook as it was: nothing has run yet.
  */
 export function asRanCorrected(
@@ -155,13 +155,14 @@ export interface RecordContext {
 
 /** Why `cookFactsFor` made no facts:
  *  - 'noSurface': no plan as it ran is kept and `plan` is not on its pot's
- *    surface, so nothing says what the app said for this egg. The app plans
- *    on the surface `plan.inputs` asks for - building it if it must, as at a
- *    reload, or for a cook dropped too old before its pull ever planned on
- *    one - passes that plan through `keepAsRan`, and asks again; an answer
- *    is held meanwhile. `plan.inputs` is null only for a guess the slow hob
- *    lengthened, a cook still heating, which is never logged.
- *  - 'stale': the plan as it ran was kept before a correction since: the app
+ *    surface, so nothing says what the app said for this egg. `step` wants
+ *    the surface `plan.inputs` asks for (`need.surface`) - as at a reload,
+ *    or for a cook dropped too old before its pull ever planned on one -
+ *    passes the plan on it through `keepAsRan` once it lands, and asks
+ *    again; an answer is held meanwhile. `plan.inputs` is null only for a
+ *    guess the slow hob lengthened, a cook still heating, which is never
+ *    logged.
+ *  - 'stale': the plan as it ran was kept before a correction since: `step`
  *    plans the corrected cook on the calibration before this egg
  *    (`asRanCorrected`) and asks again. */
 type FactsRefused = 'noSurface' | 'stale';
@@ -245,7 +246,7 @@ export function cookFactsFor(
  *  an egg to log if no answer has logged it; and whether its record must be
  *  made again first: corrected after the pull, its plan as it ran not yet
  *  planned again (`asRanCurrent`), so the egg logged, or the one about to be,
- *  is the uncorrected one. The app makes it (`asRanCorrected` on the
+ *  is the uncorrected one. `step` makes it (`asRanCorrected` on the
  *  calibration before this egg), logs it in place of any logged under its
  *  id, and only then forgets the cook: the egg is final, and may be sent,
  *  once the cook is forgotten. */

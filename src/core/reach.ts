@@ -1,103 +1,52 @@
 /**
  * The odds at every level the slider offers, and what follows from them:
  * which levels the app warns of, how the track is shaded, and when the app
- * says how to make an egg more reliable. The warning, the shading and the
- * advice read how sure the app is in words (certainty.ts) at each level's
- * time: the odds of "just right" are left to the time chosen.
+ * says how to make an egg more reliable (INFERENCE.md section 8). The
+ * warning, the shading and the advice read how sure the app is in words
+ * (certainty.ts) at each level's time: the odds of "just right" are left to
+ * the time chosen.
  *
- * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
- * same number for every level the pot can deliver, computed exactly as the app
- * computes it when the slider sits there: the mean solve at that level
- * (`solveCookTime`, with the white's target where the eggs have put it), then
- * the decision on this pot's decision surface (`decide`), held by the
- * envelope below, and its odds. So a profile point and the decision at that
- * level can never disagree - they are one computation.
+ * THE PROFILE is the decision at every level the pot can deliver, computed
+ * exactly as the app computes it when the slider sits there - the mean solve
+ * at that level, then `decide` on this pot's decision surface, held by the
+ * envelope below - so a profile point and the decision at that level can
+ * never disagree. Its levels are the two physical edges on the slider's grid,
+ * every PROFILE_STEP positions between them, and - once an egg has taught
+ * something and some level is not a wild guess - a bisection on the slider's
+ * own grid at each end of that range, so the level where the warning starts
+ * is one whose certainty was computed, not interpolated. Each point also
+ * reads the chance of the word asked there, which shades the track, and
+ * `certaintyAt`'s class, which dots it; both jump where the slider's word
+ * changes. `npm run decide -- reach` measures what a profile costs; the apps
+ * build it off the main thread and keep one per pot and posterior.
  *
- * Which levels. The two physical edges on the slider's grid (the softest the
- * white allows, rounded up; the firmest the pan reaches, rounded down), every
- * PROFILE_STEP positions between them, and - once an egg has taught something
- * and some level is not a wild guess - a bisection on the slider's own grid
- * (1/SLIDER_STEPS) at each end of the range that is not, so the level where
- * the warning starts is one whose certainty was computed, not interpolated.
- * Between points the track's shading is interpolated linearly; the step is
- * under a degree of peak yolk.
+ * THE ENVELOPE. Each level's time is chosen against that level's own target,
+ * so the choices need not keep their order: after a runny white the time
+ * chosen at soft can pass the one chosen at jammy (test/reachAnswer.test.ts).
+ * The owner wants the time monotone in the level, so a level is given the
+ * smallest of its own choice and every firmer level's: a running minimum from
+ * the hard end, decided in the profile, where the other levels' choices are
+ * already made. A level between two points, as the slider is on a drag, is
+ * held between those two points' times (`envelopeBounds`), so a drag costs
+ * only its own decision and a look-up, and the time is monotone at the points
+ * and nearly so between them. A bisection point is held between its
+ * neighbours, so it changes no time the profile already gave. Until the
+ * profile is built a level has its own choice, and the time can move once
+ * when the profile lands. Before the first egg nothing is held: the
+ * literature's time rises with the level already.
  *
- * Each point also reads the five yolk words' spread at its time
- * (`yolkWordProbabilities`, one pass over the particles) against the word
- * asked there (`askedWord`): the chance of that word, which shades the
- * track, and `certaintyAt`'s class, which dots it. The word asked is a step
- * function of the level, so both jump where the slider's word changes; the
- * shading is interpolated across the jump like any other change.
+ * THE DECIDED ANSWER. What the screen shows for the slider's level is one
+ * function, `decideAnswer`, which both apps call, so a rule about the time
+ * lands in both apps at once.
  *
- * What it costs. One point is a mean solve (tens of milliseconds, several
- * times that with the heat off) and a decision (a few ms before the first egg,
- * about 18 ms after it, when the time is chosen). A profile is 21-30 points.
- * `npm run decide -- reach` measures it; the apps build it off the main
- * thread, after the pot's decision surface, and keep one per pot and
- * posterior, like the surface.
- *
- * THE ENVELOPE. Each level's time is chosen against that level's own
- * target, so the choices need not keep their order: after a runny white the
- * white's weight pushes the time chosen at soft past the one chosen at jammy
- * (500 s against 428 s, test/reachAnswer.test.ts), and asking for a softer egg
- * would give a firmer one. The owner wants the time monotone in the level
- * So the time a level is given is the smallest of its own
- * choice and every firmer level's: a running minimum from the hard end. That
- * is the projection of the per-level choices onto the time schedules that
- * never fall as the level rises - each level is capped at the next firmer
- * level's time, and nothing else moves. Where the cap binds, the level takes
- * the firmer level's time, and its odds, the bracket and the sentence are
- * read at that time.
- *
- * The profile is where the choices at other levels are already made, so the
- * envelope is built there and nowhere else: the points are decided from the
- * hard end to the soft, each held under the time of the point above it, and
- * each point keeps the time it was given (`cookTime_s`). A level between two
- * points, as the slider is on a drag, is held between those two points'
- * times (`envelopeBounds`). So the time is monotone at the points, and
- * within about a second of it between them: the choice can dip inside the
- * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does. In exchange a drag
- * costs no more than without the envelope: its own decision, and a look-up. What
- * the sampling misses is a dip in the choices narrower than the step between
- * points; the time it gives there is within one step's change of the
- * choice, a few seconds. A bisection point is held between its neighbours,
- * so it changes no time the profile already gave.
- *
- * Until the profile is built - the first moments with a new pot - a level
- * has its own choice, and the time can move
- * once when the profile lands. Before the first egg nothing is held: the time
- * is the literature's, which rises with the level already.
- *
- * The deeper fix is a loss that knows the levels are ordered - a miss by one
- * band cheaper than a miss by two - so that the choices come out monotone by
- * themselves. It is left for later (INFERENCE.md section 8).
- *
- * THE DECIDED ANSWER. What the screen shows for the slider's level, once
- * the pot's decision surface is built, is one function, `decideAnswer`, which
- * both apps call: the time decided at the level answered (`answerAt`), held
- * by the envelope where the profile is in, moved by the nudge where a time is
- * chosen, the solve re-read there, the outcome and the certainty there, and
- * whether the word asked is a wild guess there, so advice is looked for. One
- * function, so a rule about the time lands in both apps at once.
- *
- * THE WARNING. A level that is a wild guess at its time (`certaintyAt`'s
- * class: the word asked and its neighbours together under 9 times in 10) is
- * not refused: the slider rests there, and the app says it is a wild guess
- * so far (`lowOddsAt`, which reads the certainty, not the odds its name
- * says). The levels it
- * warns of are those softer than the softest level that is not a wild guess,
- * and firmer than the firmest - the dots on the track. Only what the pan
- * cannot deliver at all is refused (`verdictFor`, the stripes), and the
- * slider moves out of it. A wild guess inside the range is not warned of;
- * only the ends are, as only the ends are dotted.
- *
- * WHEN EVERY LEVEL IS A WILD GUESS there is no warning at all, and no dots:
- * there is no surer level to point to. And there is none before the first
- * egg that taught something, whatever the classes say: a fresh install is a
- * ballpark at fudgy and hard and a wild guess softer (INFERENCE.md section 8),
- * and dotting the soft half would warn a cook for being new.
- *
- * Pure, like the rest of `src/core/`.
+ * THE WARNING. A level that is a wild guess at its time is not refused: the
+ * slider rests there, and the app says it is a wild guess so far
+ * (`lowOddsAt`, which reads the certainty, not the odds its name says). Only
+ * the ends of the range are warned of and dotted; only what the pan cannot
+ * deliver at all is refused (`verdictFor`). When every level is a wild guess
+ * there is no warning, as there is no surer level to point to, and there is
+ * none before the first egg that taught something: a fresh install is a wild
+ * guess at the soft end, and dotting it would warn a cook for being new.
  */
 
 import type { CopyKey } from './copyKeys.ts';
@@ -347,9 +296,8 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
  * Whether the app warns that `level` is a wild guess so far - a dotted level:
  * true when the profile has a range that is not a wild guess and the level is
  * softer than its softest or firmer than its firmest. False with no profile,
- * or one that warns of nothing (the header, "when every level is a wild
- * guess"). It moves nothing: what the pan cannot deliver is `verdictFor`'s.
- * It reads the certainty's class, not the odds its name says.
+ * or one that warns of nothing (the header, "the warning"). It moves
+ * nothing: what the pan cannot deliver is `verdictFor`'s.
  */
 export function lowOddsAt(profile: OddsProfile | null, level: number): boolean {
   if (profile === null || profile.softest === null || profile.hardest === null) return false;
@@ -431,9 +379,6 @@ export function shadingOf(profile: OddsProfile): Shade[] {
  * that ask the same word (`askedNear`), as the shading is. A change that
  * lifts the chance by a twentieth at a wild guess is one the cook can feel.
  *
- * Until then the link showed when the odds of "just right" at the level
- * were under 5/10 or 3/10 short of the best level's, and a change was
- * offered when it raised those odds: nothing on screen shows them any more.
  * The advice the model cannot price (the fridge, the scale) is listed with
  * the changes that help, but does not bring the link on its own: the model
  * cannot say it makes the egg surer.
@@ -478,9 +423,9 @@ interface PricedChange {
  * warm from an egg cup: the cook chose to eat it warm, and an ice bath makes
  * another dish.
  *
- * A cold tap is not here. On the model it does what ice does, to the tenth,
- * at every level and after any number of eggs (`npm run decide -- advice`):
- * advising ice over the tap would be advice that does not help.
+ * A cold tap is not here. On the model it does what ice does (`npm run
+ * decide -- advice`): advising ice over the tap would be advice that does not
+ * help.
  */
 export function pricedChanges(setup: CookSetup): PricedChange[] {
   const out: PricedChange[] = [];
@@ -499,10 +444,10 @@ export function pricedChanges(setup: CookSetup): PricedChange[] {
  * as exact:
  *
  *  - `advice.fridge`  the egg is assumed to be at room temperature. A room is
- *    not 20 C: an egg at 17 C instead of 23 C needs 28 s longer at jammy,
- *    about the whole width of "just right". A fridge is 3-5 C, 7 s.
+ *    not 20 C: a few degrees either way move the time by about the whole
+ *    width of "just right", where a fridge's spread moves it far less.
  *  - `advice.weigh`   the egg is a size class. A class spans eggs about 10 g
- *    apart, and 63 g against 73 g is 39-49 s at soft to fudgy.
+ *    apart, which moves the time by more than the width of "just right".
  *
  * Both are true of every level, and the model shows neither in its odds: it
  * sees them only as a noisier cook, egg by egg.

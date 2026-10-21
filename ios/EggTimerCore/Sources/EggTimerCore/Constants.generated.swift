@@ -102,7 +102,7 @@ public enum StartTempPresets {
     public static let roomC: Double = 20.0
 }
 
-/// The inputs a fresh install starts from.
+/// The inputs a fresh install starts from, in both apps.
 public enum Defaults {
     /// Index into the region's size classes - 'Large' in both tables, 68 g in the EU one and 60.2 g
     /// on an American carton.
@@ -111,7 +111,7 @@ public enum Defaults {
     public static let customStartC: Double = 12.0
     public static let altitudeM: Double = 0.0
     public static let waterLitres: Double = 2.0
-    /// A mixing bowl: within 3 s of any other volume for one to six eggs (README.md section 2.4).
+    /// A mixing bowl: for one to six eggs the volume hardly matters (README.md section 2.4).
     public static let bowlLitres: Double = 2.0
     public static let eggCount: Int = 2
     public static let doneness: Double = 0.41
@@ -278,9 +278,7 @@ let whiteNoisePerYolk: Double = 0.9356136820925555
 
 let priorOffsetSd: Double = 0.22
 
-/// The literature's population: the prior every cook drew from before the population fit, number
-/// for number, less the carryover, which is not a particle (a prior drawn from it is not the one
-/// drawn with it, and `LIKELIHOOD_ID` says so).
+/// The literature's population.
 public let literaturePopulation: Population = Population(
     id: "2026-09",
     alphaM2s: LogNormal(median: 1.7e-7, logSd: 0.119),
@@ -398,7 +396,8 @@ let fridgeMarginC: Double = 1.0
 /// Counted-down cooling.
 public let coolingSeconds: Double = 180.0
 
-/// The shortest counted cooling, s.
+/// The shortest counted cooling, s: a floor under a rounding, not a rule anyone should meet, since
+/// the model's peak comes later than this after the pull for any egg the app will time.
 public let coolingMinSeconds: Double = 60.0
 
 /// How far past the peaks of the fastest and slowest kitchens believed in a reading may land and
@@ -477,8 +476,8 @@ public let handSettleS: Double = 1.5
 /// committed on the lift, s.
 public let handHeldS: Double = 0.4
 
-/// How long a burst of changes waits before the aimed-for egg is planned, s: a plan is tens of
-/// milliseconds, too long for every pixel of a drag.
+/// How long a burst of changes waits before the aimed-for egg is planned, s: a plan is too slow for
+/// every pixel of a drag.
 public let handPreviewS: Double = 0.09
 
 // MARK: - src/core/boil.ts

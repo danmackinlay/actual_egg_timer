@@ -11,9 +11,7 @@
  *
  * The idle page: a change to the controls is taken into the settings, saved
  * once the cook stops changing them, and answered once they settle (a solve
- * is tens of milliseconds, too long for every pixel of a drag); the units,
- * the language, the sound, a pan measured, an egg learned, everything
- * forgotten: each a message, the page solved again after it (`solve`). While
+ * is too slow for every pixel of a drag). While
  * a cook runs the controls are its own choices, never the settings, which
  * describe the next cook: a change to them is a correction, held in hand
  * until it is committed (core hand.ts; the gestures are edit.ts's).
@@ -21,13 +19,7 @@
  * The cooks are core's (src/core/cooks.ts): the one on screen, a
  * `CookState`, and those ended waiting on their records (`ending`), held flat
  * in the model and handed to core as `Cooks` (`cooksOf`, `withCooks`) with
- * each thing that happened. A cook that ends before its egg's record can be
- * made leaves the screen at once and waits there, stepped as each build
- * lands, until it is logged and forgotten; an event after the cook on screen
- * is too old comes after the tick that ends it. What is the web's own,
- * around it: the primary button reads the phase - the boil at Heating, the
- * egg out at Pull, "still in" while the plan asks, Start again at Done - and
- * the effects become the page's (`effectsOf`).
+ * each thing that happened.
  */
 
 import type { AlarmMoment, AlarmSound } from '../core/sounds.ts';
@@ -880,7 +872,7 @@ function updateCook(m: Model, msg: Msg, now_s: number): [Model, Effect[]] {
  * the group's choices, as the controls say them, over the cook's own, so a
  * field nobody touched keeps the cook's value to the bit and changing a
  * setting back gives back the old plan exactly. The same fields are written
- * to the settings, for the next cook (design section 7, 22).
+ * to the settings, for the next cook (UI.md section 3, Corrections).
  */
 
 /** The settings each group of the cook's choices is made from. */

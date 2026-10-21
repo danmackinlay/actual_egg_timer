@@ -125,7 +125,7 @@ test('altitude: Denver\'s hard-boiled penalty, and the boiling point\'s one-line
   const hardDenver = cookMinutes(REFERENCE_EGG, referenceSetup({ boiling_C: boilingPointAtAltitude(1609) }), 1.0);
   near('Denver 1609 m hard-boiled vs sea level', 100 * (hardDenver / hardSea - 1), 12.0, 3.0, '%');
 
-  // The 100 - h/300 one-liner holds to 0.03 C over 0-5000 m.
+  // The 100 - h/300 one-liner holds over 0-5000 m.
   const jammySea = cookMinutes(REFERENCE_EGG, referenceSetup({}), 0.41);
   let worstApproxError = 0;
   for (let h = 0; h <= 5000; h += 500) {

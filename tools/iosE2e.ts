@@ -1,23 +1,11 @@
-// `npm run ios:e2e`: what only a device shows, scripted: a cook relaunched
-// over the system's notifications and Live Activity, the alarms as the
-// system holds them, a notification delivered while the app is gone, the
-// app leaving the screen with a change in hand, and the layout at the
-// largest text size. What the app's logic decides is `swift test`'s
-// (ios/EggTimerCore/Tests/EggTimerAppTests); what its bundle holds,
-// `npm run ios:build`'s.
-//
-// The scenarios are UI tests (ios/UITests, `Scenarios`): a Debug build on a
-// simulator of the script's own, its buttons tapped as a finger would, the
-// app's clock frozen at each moment a scenario checks and stepped from one
-// to the next, and what happened read from the app's debug log
-// (ios/UITests/Harness.swift `Run`). All of them run in one `xcodebuild
-// test-without-building`: XCUITest cannot uninstall the app, so each
-// scenario's first launch resets it to what a fresh install has
-// (`-resetState`). Before it, the app is installed once, made to ask for
-// notifications and uninstalled, without which a new device never
-// authorizes them (`primeNotifications`); the tests check its alarms once,
-// before the first (`warmUp`). Nothing is timed against the host's clock but one notification
-// left to the system (`asleep`). The device is deleted at the end.
+// `npm run ios:e2e`: what only a device shows, scripted, as UI tests
+// (ios/UITests, `Scenarios`) on a simulator of the script's own, in one
+// `xcodebuild test-without-building`; ios/README.md, "The fast clock and the
+// scripted checks", says what they check and how. Before it, the app is
+// installed once, made to ask for notifications and uninstalled, without
+// which a new device never authorizes them (`primeNotifications`). Nothing
+// is timed against the host's clock but one notification left to the system
+// (`asleep`). The device is deleted at the end.
 //
 //   npm run ios:e2e                          every scenario
 //   npm run ios:e2e -- alarms asleep         those named

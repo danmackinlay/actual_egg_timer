@@ -6,28 +6,19 @@
  * same samples into the files the iOS app plays (`tools/sounds.ts`). No DOM
  * and no audio API here, so both can call it, and so can the tests.
  *
- * Two are made in code, as the owner first heard them on the auditions page
- * (October 2026), with Math.random replaced by a seeded generator so that a
- * render is the same every time:
- *
- * - The wind-up timer: a hammer striking a small steel dome 21 times a
- *   second, each strike four decaying sines (the dome's modes), fading as it
- *   runs down. It rings 1.2 s when cooled and 2 s at the pull.
- * - The cuckoo clock: two pipe notes a minor third apart, F5 then D5, each a
- *   sine with a little of its second and third harmonics and a breath of
- *   bandpassed noise, after a click of the door. Two calls when cooled and
- *   three, closer together, at the pull.
+ * Two are made in code, the wind-up timer (`timer`) and the cuckoo clock
+ * (`cuckoo`), with a seeded generator so that a render is the same every
+ * time.
  *
  * The hen is two recordings, CC0, from Freesound: the egg song, the cackle a
- * hen makes after laying, by Jofae (freesound.org/s/353252, trimmed to 3.4 s
- * from 3.9 s), when cooled, and an alarm call by Rudmer Rotteveel
+ * hen makes after laying, by Jofae (freesound.org/s/353252, trimmed), when
+ * cooled, and an alarm call by Rudmer Rotteveel
  * (freesound.org/s/316920), at the pull. Their files are `RECORDINGS`; the
  * caller decodes them, and `recordedPeriod` lays one in its period.
  *
- * Every period is levelled to the beeps the sounds replaced, at the same
+ * Every period is levelled to the beeps (`beepsPeriod`) at the same
  * moment: the loudest 400 ms of a looped period (momentary loudness, ITU-R
- * BS.1770) matches the beeps', so no sound is quieter than the alarm a cook
- * already relied on. A peak is never let past -1 dBFS; a sound that would
+ * BS.1770) matches the beeps', so no sound is quieter than they are. A peak is never let past -1 dBFS; a sound that would
  * need more is left that much quieter.
  */
 
@@ -83,8 +74,7 @@ export function recordedPeriod(samples: Float32Array, rate: number, moment: Alar
   return level(out, rate, moment);
 }
 
-/** The beeps both apps rang before these sounds, as one period: two 880 Hz
- *  beeps, and a third at 1175 Hz at the pull, every 1.6 s. The loudness every
+/** The beeps, as one period. The loudness every
  *  sound is levelled to, and the web's alarm when the hen's recordings could
  *  not be loaded. */
 export function beepsPeriod(moment: AlarmMoment, rate: number): Float32Array {
@@ -97,9 +87,9 @@ export function beepsPeriod(moment: AlarmMoment, rate: number): Float32Array {
 
 /* -------------------------------------------------------------- the sounds */
 
-/** The wind-up timer's bell: a hammer on a small steel dome, 21 strikes a
- *  second, each a little off the beat and of its own strength, fading to half
- *  as the spring runs down. */
+/** The wind-up timer's bell: a hammer on a small steel dome, each strike
+ *  four decaying sines (the dome's modes), a little off the beat and of its
+ *  own strength, fading to half as the spring runs down. */
 function timer(out: Float32Array, rate: number, t: number, urgent: boolean): void {
   const dome: [number, number, number][] = [[1760, 0.12, 0.3], [4083, 0.06, 0.18], [6790, 0.03, 0.08], [8980, 0.02, 0.05]];
   const random = seeded(3);
@@ -113,7 +103,9 @@ function timer(out: Float32Array, rate: number, t: number, urgent: boolean): voi
   }
 }
 
-/** The cuckoo clock: the door, then "cu-ckoo" on two wooden pipes. */
+/** The cuckoo clock: the door, then "cu-ckoo" on two wooden pipes a minor
+ *  third apart, each a sine with a little of its second and third harmonics
+ *  and a breath of bandpassed noise. */
 function cuckoo(out: Float32Array, rate: number, t: number, urgent: boolean): void {
   const random = seeded(5);
   const calls = urgent ? 3 : 2;

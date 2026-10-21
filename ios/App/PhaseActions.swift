@@ -74,19 +74,14 @@ struct PhaseSlot: View {
 /// Directly under the time, in every phase: the hint, and under it one row
 /// of buttons that move the cook on.
 ///
-/// The row is Cancel on the left, small, at its own width, and the phase's
-/// main button filling the rest, on the right where the thumb rests, with
-/// room between them; a phase with only the main button gives it the whole
-/// row, and one with only Cancel leaves the rest empty. The row is as tall
-/// in every phase, the main button's height, so nothing below it moves.
-/// Where the widest main button and Cancel do not fit side by side (at the
-/// accessibility text sizes, in 1750's longer words), they stack, the main
-/// button over Cancel, and the stack keeps the room of both in every phase.
-/// The choice is made on the widest words the row can hold, never on the
-/// phase's own, so it is the same in every phase. The hint keeps the room
-/// of the tallest hint, its own at its foot. Only "still in the water?",
-/// with its two answers and Cancel, and the heating hint's (i) opened go
-/// past the room.
+/// The main button is on the right, where the thumb rests. The row is as
+/// tall in every phase, so nothing below it moves. Where the widest main
+/// button and Cancel do not fit side by side, they stack, the main button
+/// over Cancel; the choice is made on the widest words the row can hold,
+/// never on the phase's own, so it is the same in every phase. The hint
+/// keeps the room of the tallest hint. Only "still in the water?", with its
+/// two answers and Cancel, and the heating hint's (i) opened go past the
+/// room.
 ///
 /// A function of the clock, like the readout: the egg screen's `TimelineView`
 /// hands over the date it drew for, and the phase at that date.
@@ -228,8 +223,8 @@ struct PhaseActions: View {
                 disabled: model.starting || planner.solution == nil || planner.solution?.whiteSets == false
             ) { model.eggsIn() }
         case .heating:
-            // Tapping at first bubbles under-measures the boil
-            // by 15-25%, so the button names the thing to wait for.
+            // Tapping at first bubbles under-measures the boil, so the
+            // button names the thing to wait for.
             return Main(title: tr(readout?.primary ?? .`action.fullBoil`), id: "action.boil") { model.boil() }
         case .pull:
             // The cook's tap is the nearest thing to when the egg left the

@@ -97,8 +97,7 @@ public struct LanguageState: Sendable, Equatable {
 
 /// A stored state, read defensively: anything malformed is the fresh one. A
 /// tag is kept only if it is one of `known`, so a catalogue that has gone
-/// cannot be asked for. Any other field, such as the retired `flippedFrom`,
-/// is ignored.
+/// cannot be asked for. Any other field is ignored.
 func readLanguageState(_ raw: Any?, known: [String]) -> LanguageState {
     guard let r = raw as? [String: Any] else { return .fresh }
     guard let chosen = r["chosen"] as? String, known.contains(chosen) else { return .fresh }

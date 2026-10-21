@@ -7,7 +7,7 @@
  * Every number the two cores must share is written once, in src/core/, and
  * this writes the Swift twin's copy of it, committed, since neither Xcode nor
  * SwiftPM runs node: EggTimerCore/Constants.generated.swift and, for the
- * formatter's two, EggTimerCopy/Constants.generated.swift. Each value is read
+ * catalogue's and the formatter's, EggTimerCopy/Constants.generated.swift. Each value is read
  * from the module's export, so a derived constant (480 / ln 1.5) is the
  * TypeScript's double, and is printed as JavaScript prints it, the shortest
  * decimal that reads back to the same double, which Swift's literal does

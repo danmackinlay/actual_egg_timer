@@ -22,7 +22,7 @@ export const storeScenarios: Record<string, Scenario> = {
       const asked = away.requests().filter((r) => r.url.includes('/bundle/dev-'));
       check(asked.length === 0, `eggs.test asked for ${asked.map((r) => r.url).join(', ')}`);
       // No Web Locks there (an insecure context): a second tab runs the app
-      // too, as before one tab owned it (owner.ts).
+      // too (owner.ts).
       const second = await h.ctx.open('/', `http://eggs.test:${h.port}`);
       for (const tab of [away, second]) {
         const owns = await tab.eval<{ locks: boolean; tab: string | undefined }>(

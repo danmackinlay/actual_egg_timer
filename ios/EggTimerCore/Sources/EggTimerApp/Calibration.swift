@@ -7,7 +7,6 @@ import EggTimerCore
 /// The model's constants come from the literature, and the carryover term has
 /// no published measurement behind it at all. Rather than pretend otherwise,
 /// the app asks how each egg turned out and folds the answer into a posterior.
-/// After about three eggs the suggested time stops moving.
 ///
 /// The answer is not thrown away once folded. Each egg is kept as a
 /// record (INFERENCE.md section 4) in a log beside the posterior, and the
@@ -34,8 +33,7 @@ public struct Kept: Sendable {
 
 public enum Calibrations {
     /// The posterior, the base under it, and the log: a particle of six
-    /// numbers, and records of today's shape only. The log started fresh in
-    /// 0.5, and 0.3's v4 is never read.
+    /// numbers, and records of today's shape only.
     private static let key = StoreRegistry.calibration.key
 
     /// Carried on every record: the web app deploys on push and this one ships

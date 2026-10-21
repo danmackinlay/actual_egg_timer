@@ -1,11 +1,9 @@
 /**
- * The web app driven end to end, in seconds: the checks that were done by
- * hand, each a named scenario with assertions on the page and on what
- * it stored. The scenarios are in tools/e2e/, a file for each area -
- * layout, the cook's flow, corrections, the record and sharing, the stores
- * and versions, tabs - over what they share (tools/e2e/helpers.ts); this
- * file runs them. CI runs them in shards, a job each (tools/e2e/shards.ts):
- * `--shard i/n` runs the ith of n, of the scenarios named or else of all.
+ * The web app driven end to end: each a named scenario with assertions on
+ * the page and on what it stored. The scenarios are in tools/e2e/, a file
+ * for each area, over what they share (tools/e2e/helpers.ts), on the
+ * harness (tools/harness.ts); this file runs them. `--shard i/n` runs the
+ * ith of n, of the scenarios named or else of all, as CI does.
  *
  *   npm run e2e                              # build the site, then every scenario
  *   npm run e2e -- reload one-tab-takeover   # only those named (after a build)
@@ -13,27 +11,9 @@
  *   npm run e2e -- --shard 2/4               # the second of four shards (e2e/shards.ts)
  *   node tools/e2e.ts --list
  *
- * The harness is tools/harness.ts: the site served, Chrome, a context per
- * scenario, and the page read through its test API (`window.aetTest`,
- * src/ui/dev/test.ts), never by importing the app's modules.
- *
- * Time is the development clock, stopped (`?clock=0`): a scenario steps it
- * to the moment it means (`aetClock.shift`, `.set`), tells the page to look
- * again with a `focus` event, as a tab coming back does, and asserts. So
- * what it sees does not depend on how fast the machine is: a step past the
- * pull lands where it was aimed whether the page took a millisecond or a
- * second to get there. The one span run is the last second before a pull at
- * the real clock's speed, to see the ring scheduled ahead sound as the tick
- * reaches the pull; the 20-s grace after it is that span's margin for a slow
- * machine. The timers that are a person's, not the cook's (a control's
- * settle, a held key), stay real: a scenario waits for the page to have
- * nothing in hand (`aetTest.whenIdle`: no such timer, no worker job, no
- * request) rather than for a fixed time. Sharing is checked on the real
- * clock, with the stored cook moved into the past, since nothing is sent
- * while the development clock is on.
- *
- * The alarm is checked by what was scheduled on the audio clock and for
- * when, never by waiting for it to play.
+ * Time is the development clock, stopped, and stepped by each scenario, so
+ * what it sees does not depend on how fast the machine is; DEVELOPING.md,
+ * "Checking the web app end to end", says how.
  */
 
 import { allScenarios } from './e2e/all.ts';

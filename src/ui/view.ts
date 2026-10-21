@@ -258,10 +258,7 @@ function sizerWords(c: Settings): string[] {
 function idleScreen(
   m: Model, now_ms: number, memo: ViewMemo, solved: IdleAnswer, learningOn: boolean, sentence: SetupFacts,
 ): Screen {
-  // The warning line carries a refusal or the level's low odds while idle.
-  // It is advice about the slider: popping "jammy isn't reachable" onto the
-  // screen while the egg is already in the water would be advice about a
-  // control the user cannot reach.
+  // The warning line carries a refusal or the level's low odds.
   const warning = warningText(solved.answer, m.settings);
   const sol = idleSolution(solved);
   const chosen = sol.whiteSets ? solved.chosen : null;
@@ -408,8 +405,7 @@ function readoutView(m: Model, now_ms: number, sol: Solution, warning: string): 
     probeWanted: wanted,
     probePending: pending,
   });
-  // The model is calibrated against the literature, not against this
-  // kitchen. Asking once per egg is what closes that gap. Both questions
+  // Both questions
   // stay on screen until the cook moves on, answered or not; a reload after
   // an answer puts them away, since the second could no longer be folded.
   const feedback = phase === 'DONE' && m.questions !== 'away' && !words.asking;

@@ -1,10 +1,10 @@
 /**
  * The web app's saved setup (`src/ui/store.ts`): what a reload comes back to.
  *
- * Only one rule is pinned here so far, the owner's: sous-vide is never
- * remembered. Its answer is a start time most of a day in the past, and an app
- * that reopened on it would open by telling the cook they are 22 hours late.
- * A reload returns to the last PAN method instead, or to cold.
+ * One rule is the owner's: sous-vide is never remembered. Its answer is a
+ * start time most of a day in the past, and an app that reopened on it would
+ * open by telling the cook they are 22 hours late. A reload returns to the
+ * last PAN method instead, or to cold.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -116,7 +116,7 @@ test('a stored sous-vide from an older build loads as cold', () => {
 });
 
 test('a measured egg saved before measuredBy existed is read as weighed', () => {
-  // The live site of 19 September saved a custom diameter with no word of
+  // The live site once saved a custom diameter with no word of
   // which box it came from; the scale is the first box and the likely one.
   freshPage();
   const old: Record<string, unknown> = { ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44 };

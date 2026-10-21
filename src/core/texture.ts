@@ -24,11 +24,9 @@ interface Texture {
   yolk: YolkWord;
 }
 
-/** The texture note's bands, which are a reading of the model rather than a
- *  turn of phrase - so they are decided here and worded in the apps. Each is
- *  read from a dose, never a peak temperature: two eggs with one peak can
- *  have spent very different times near it, and an egg cup's yolk, which
- *  stays near its peak until the egg is opened, peaks at 64 C at Soft.
+/** The texture note's bands. Each is read from a dose, never a peak
+ *  temperature: two eggs with one peak can have spent very different times
+ *  near it (an egg cup's yolk stays near its peak until the egg is opened).
  *
  *  The yolk is the slider's word for its dose: the level that dose sits at
  *  (`sliderFromYolkDose`), on the slider's grid, named as the slider names it
@@ -60,8 +58,8 @@ interface TextureNote {
 }
 
 /** Which words a texture is said in. A white that never sets is the whole
- *  note, "white stays runny" with no yolk after it, as the web has always said
- *  it; every other white is named with its yolk. The keys are written out
+ *  note, "white stays runny" with no yolk after it; every other white is
+ *  named with its yolk. The keys are written out
  *  whole so that the copy tests can find each one. */
 export function textureNoteKeys(t: Texture): TextureNote {
   if (t.white === 'runny') return { key: 'texture.white.runny', parts: {} };

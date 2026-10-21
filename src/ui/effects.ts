@@ -32,8 +32,8 @@ const pending = {
 
 /* -------------------------------------------------------------- solving */
 
-/** Coalesce solves: a solve is tens of milliseconds, which is too long to run
- *  on every pixel of a slider drag. */
+/** Coalesce solves: a solve (`npm run decide -- cost` times one) is too
+ *  long to run on every pixel of a slider drag. */
 export function solveSoon(): void {
   if (pending.solveHandle !== 0) return;
   pending.solveHandle = soon(() => {
@@ -45,8 +45,8 @@ export function solveSoon(): void {
 /* -------------------------------------------------------------- settings */
 
 /** Coalesce writes for the same reason. A drag fires `input` per pixel, and
- *  every one of those was a JSON.stringify and a localStorage write for a
- *  settings object nobody had finished changing. */
+ *  each would be a JSON.stringify and a localStorage write for a settings
+ *  object nobody has finished changing. */
 export function saveSoon(store: SettingsStore, settings: () => Settings): void {
   if (pending.saveHandle !== 0) return;
   pending.saveHandle = soon(() => {

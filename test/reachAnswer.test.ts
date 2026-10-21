@@ -72,7 +72,7 @@ test('the far left: the slider rests on the level the time and the bracket are f
 
 test('the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says what it will likely be', () => {
   // One egg: soft asked, the yolk soft and the white runny, as on the
-  // owner's phone (5 October 2026), where it put 3/10 at jammy. Soft is a
+  // owner's phone, where it put 3/10 at jammy. Soft is a
   // ballpark there and is not dotted: soft or a
   // neighbour 9 times in 10, and most likely jammy, which the line says.
   const egg = eggFromMass(0.058);

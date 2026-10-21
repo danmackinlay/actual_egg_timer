@@ -23,8 +23,7 @@ export interface Limit {
 
 /** Bounds on every number a user can type or drag, in one place. They go onto
  *  the input elements, onto what is typed, and onto what comes back out of
- *  storage, so the three cannot drift apart - and now they cannot drift
- *  between the two apps either. */
+ *  storage, so the three cannot drift apart, nor the two apps. */
 export const LIMITS = {
   // Hens' eggs: an EU XL is 73 g and up, most under 80; above 90 is a
   // double-yolker or another bird, which this model does not describe.
@@ -89,10 +88,7 @@ export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | nu
 /** The room the model is told about, C, or null to assume one: the cook's
  *  own, as they gave it in a panel where it changes the answer (beside "at
  *  room temperature", with the heat off, in the air), with or without a
- *  probe thermometer. It once counted only with the probe on; it moves the
- *  right time by about 5 s a degree for eggs left out, as much as a size
- *  class across a kitchen's 15-30 C, so it is offered where it is used.
- *  Clamped, like everything typed or stored. */
+ *  probe thermometer. Clamped, like everything typed or stored. */
 export function roomInUse(room_C: number | null): number | null {
   if (room_C === null || !Number.isFinite(room_C)) return null;
   return clamp(room_C, LIMITS.room_C);
@@ -118,9 +114,7 @@ export function ambientFor(eggStart_C: number, room_C: number | null): number {
  *  temperature; below it, it is a fridge egg and says nothing about the room. */
 export const ROOM_EGG_FROM_C = 15;
 
-/** The inputs a fresh install starts from. Both apps read these, because two
- *  apps that answer differently out of the box are two different answers to
- *  the same question. */
+/** The inputs a fresh install starts from, in both apps. */
 export const DEFAULTS = {
   /** Index into the region's size classes - 'Large' in both tables, 68 g in
    *  the EU one and 60.2 g on an American carton. */
@@ -129,7 +123,7 @@ export const DEFAULTS = {
   customStart_C: 12,
   altitude_m: 0,
   waterLitres: 2,
-  /** A mixing bowl: within 3 s of any other volume for one to six eggs
+  /** A mixing bowl: for one to six eggs the volume hardly matters
    *  (README.md section 2.4). */
   bowlLitres: 2,
   eggCount: 2,

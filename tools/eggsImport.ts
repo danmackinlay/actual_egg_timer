@@ -10,13 +10,11 @@
  * too firm against the level asked for, before the five words. The fit still
  * reads them (`readFitRecord`), here and not in core.
  *
- * THE TRUSTED LIST is the owner's own random IDs: results they cooked and
- * rated themselves, which the fit gives the attested tier's full weight
- * whatever tier they arrived in - an iPhone build from Xcode is open, and so
- * is the web. It is never committed: it would tie
- * the owner to their records in a public repository. It is read from
- * `fit/trusted.local.txt` (gitignored; `fit/trusted.example.txt` shows the
- * shape) and from `EGGFIT_TRUSTED`, and the two are pooled.
+ * THE TRUSTED LIST is the owner's own random IDs, whose results the fit
+ * gives the attested tier's full weight whatever tier they arrived in
+ * (fit/README.md, "The owner's own results, and the trusted list"). It is
+ * read from `fit/trusted.local.txt` (gitignored) and from `EGGFIT_TRUSTED`,
+ * and the two are pooled.
  *
  * What is trusted is a record from the owner's own results file under one of
  * those IDs, never a record in the live store because of its ID: an ID is

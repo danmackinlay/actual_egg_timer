@@ -34,7 +34,7 @@ export function catalogueTags(): string[] {
 }
 
 /** Every translation: a catalogue that is not English and not one of its
- *  regional overlays. Today the English of 1750. */
+ *  regional overlays. */
 export function translationTags(): string[] {
   return catalogueTags().filter((tag) => tag !== 'en' && !OVERLAYS.includes(tag));
 }

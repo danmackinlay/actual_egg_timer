@@ -1,7 +1,6 @@
 // The web app: the DOM, and not Node's types, since it runs in a browser.
 // Core is checked here too, as the app imports it, and on its own, without
-// the DOM, by tsconfig.core.json. One of the three type-checks `npm run
-// typecheck` runs; esbuild bundles the same sources for the site.
+// the DOM, by tsconfig.core.json.
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {

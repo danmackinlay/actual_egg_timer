@@ -1,16 +1,16 @@
 /**
  * The dose surfaces, built off the main thread.
  *
- * A surface is several hundred whole simulations, about a second, and a replay
- * of the log builds one per egg: on the page, twenty eggs would be forty
- * seconds of a page that does not scroll. So the arithmetic is here.
+ * A surface is several hundred whole simulations, and a replay of the log
+ * builds one per egg: on the page, a page that does not scroll until it is
+ * done. So the arithmetic is here.
  *
  * Two kinds are built. A fold's surface (`request`) is described in full by the
  * page. A decision's surface (`decision`) is described by the pot, the egg
  * and where the posterior stands, and its extent takes two solves to find, so
  * those run here too rather than on the page (`decisionGridRequest`). And the
  * odds at every level on a decision's surface (`oddsProfile`, reach.ts), a
- * solve and a decision per level: most of a second, and never on the page.
+ * solve and a decision per level, and never on the page.
  *
  * Zero dependencies: esbuild bundles this, with the core it imports, into a
  * file of its own beside the page's (tools/buildSite.ts), which offThread.ts

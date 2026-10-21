@@ -32,9 +32,6 @@ public final class AppModel {
     /// running, and start sharing.
     public func appear() {
         inHand.model = self
-        // The planner's own stored state, read here rather than in its
-        // init: @State evaluates its initial value on every construction of
-        // the view struct and keeps only the first.
         planner.load()
         #if DEBUG
         // The alarms read back three seconds on, to the debug log, for the UI

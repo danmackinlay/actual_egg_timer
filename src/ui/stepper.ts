@@ -1,18 +1,18 @@
 /**
- * The − and + beside every number the cook sets (the `steppers` draft):
- * typing numbers on a phone is a chore.
+ * The − and + beside every number the cook sets: typing numbers on a phone
+ * is a chore.
  *
  * Each `<input type="number" data-stepper>` gets a button either side of it.
  * A press steps the number once; held, it repeats, and speeds up. The step,
  * the bounds and the grid are the input's own `step`, `min` and `max`, which
- * `applyMeasure` sets from src/core/units.ts in the units on screen (and
+ * `drawForm` (controls.ts) sets from src/core/units.ts in the units on screen (and
  * `applyLimit` for the count), so a step lands on the grid and inside the
  * limits: `stepUp` from an off-grid 58.3 g goes to 58.5, never 58.8. The
  * stepped number is written as the cook would have typed it and announced as
  * an `input` event, so it takes the one path every typed number takes
  * (`readInputs`). The field stays typeable, and its own arrow keys still step.
- * A field given a rule of its own (`setStepRule`: the probe reading and the
- * room, the `feedback2` draft) steps by that instead, from its placeholder
+ * A field given a rule of its own (`setStepRule`: the probe reading, the
+ * room and the waters) steps by that instead, from its placeholder
  * when it is empty. Any other field, emptied, does not step at all.
  *
  * The glyphs are drawn in CSS, so the markup holds no words; each button's
@@ -32,16 +32,16 @@ const FAST_REPEAT_MS = 50;
 const FAST_AFTER = 10;
 
 /** A field whose − and + do not step on its own `step`: the probe reading,
- *  typed to a tenth and stepped in whole degrees, and the room, which starts
- *  empty. The rule is one press from a number in the field's units
+ *  typed to a tenth and stepped in whole degrees, and the room and the
+ *  waters, which start empty. The rule is one press from a number in the field's units
  *  (`stepPast` in src/core/units.ts). An empty field steps from its
  *  placeholder, the number it shows greyed; the browser's own `stepUp` would
  *  step an empty field from zero. */
 type StepRule = (value: number, up: boolean) => number;
 const rules = new WeakMap<HTMLInputElement, StepRule>();
 
-/** Give a field's − and + a rule of their own (`StepRule`). Again whenever
- *  the units change. */
+/** Give a field's − and + a rule of their own (`StepRule`). Once, at
+ *  boot. */
 export function setStepRule(input: HTMLInputElement, rule: StepRule): void {
   rules.set(input, rule);
 }

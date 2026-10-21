@@ -86,14 +86,13 @@ final class SolveLoop {
 
     /// Re-solve for the inputs as they stand.
     ///
-    /// A THROTTLE, as the web's `scheduleSolve` is, not a debounce. A debounce
+    /// A THROTTLE, as the web's `solveSoon` is, not a debounce. A debounce
     /// cancels the solve in flight and waits out 90 ms afresh on every change,
     /// so a stepper held down (a change every 100 ms) or a drag lands nothing
-    /// at all until the finger stops: measured on the simulator, the time on
-    /// screen froze for the whole two seconds of a hold. So one solve loop
-    /// runs at a time. A change while it solves is
-    /// picked up when it finishes; the answer it just got is shown meanwhile,
-    /// a step behind, without the snap (`applyInterim`).
+    /// at all until the finger stops. So one solve loop runs at a time. A
+    /// change while it solves is picked up when it finishes; the answer it
+    /// just got is shown meanwhile, a step behind, without the snap
+    /// (`applyInterim`).
     func recompute() {
         asked &+= 1
         // A pot's surface is built only once the inputs have sat still.
@@ -307,8 +306,8 @@ final class SolveLoop {
     /// "Eggs in" reads this rather than `solution`. The solve for an input
     /// change waits out the coalesce and then runs off the main actor, and for
     /// that whole time `solution` is still the answer to the previous inputs -
-    /// so a start mode changed and "Eggs in" tapped straight after started a
-    /// cold start's heating phase on the hot start's time. The web app solves
+    /// so a start mode changed and "Eggs in" tapped straight after would start
+    /// a cold start's heating phase on the hot start's time. The web app solves
     /// synchronously at start;
     /// this solves the same question, off the main actor, and only when the
     /// answer on screen is stale.

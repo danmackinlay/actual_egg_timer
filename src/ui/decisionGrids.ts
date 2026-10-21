@@ -123,8 +123,8 @@ export function cachedOddsProfile(inputs: DecisionInputs, c: Calibration): OddsP
 /**
  * The odds at every level for this pot and posterior, computed in the worker
  * on the pot's decision surface, which is built first if it has not been. A
- * profile is a couple of dozen solves and decisions, 0.3-1 s in the worker
- * (`npm run decide -- reach`). The posterior is copied as it stands now, so a
+ * profile is a couple of dozen solves and decisions, slow even in the worker
+ * (`npm run decide -- reach` times it). The posterior is copied as it stands now, so a
  * fold landing meanwhile cannot change what the profile is of.
  */
 export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<OddsProfile> {

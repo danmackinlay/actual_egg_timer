@@ -656,10 +656,6 @@ const S = START_S;
   plan({ note: 'the pull rang, then a correction: planned afresh', posterior: 'learned', cook: corrected(rang, { ...h0.choices, mass_kg: 0.076 }, iEnd + 4), leanHint_s: 0, now_s: iEnd + 4, surface: 'own' });
 }
 {
-  // A pot whose white never sets: the heat off under a quarter litre and
-  // twelve eggs. The longest this pan gives, and nothing to choose.
-  // Four eggs into a bowl of a litre and a half from a cold tap: the
-  // cooling counted to the yolk's peak in a bowl that warms.
   inStep('a bowl of water, its cooling counted to the peak', BOWL);
   inStep('the heat off, a white that never sets', NEVER_SETS);
   inStep('the same, before its surface', NEVER_SETS);
@@ -673,8 +669,8 @@ const S = START_S;
   plan({ note: 'a small runny egg on a slow hob: the guess creeps', posterior: 'learned', cook: creep, leanHint_s: 0, now_s: S + 1234.5, surface: 'none' });
   // The cap on lengthenings.
   inStep('heating for six hours: the guess at the most, nothing more to lengthen, abandoned', SLOW_HOB);
-  // Review 1.3's call: a cold start never tapped, twelve hours on; and just
-  // short of the most, where the guess reaches it.
+  // A cold start never tapped, twelve hours on; and just short of the most,
+  // where the guess reaches it.
   inStep('a cold start never tapped, twelve hours on: abandoned', SLOW_HOB);
   plan({ note: 'heating just short of two hours: the guess at the most, not yet abandoned', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 7170, surface: 'none' });
   inStep('heating a little before that: still lengthening', SLOW_HOB);
@@ -713,7 +709,7 @@ const S = START_S;
 }
 
 {
-  // Review 3's call: a question left open through the counted cooling. The
+  // A question left open through the counted cooling. The
   // clock writes nothing under it, the phase stays short of Done, and the
   // egg is not finished. Last, so no case before them moves.
   const learned = calibrationOf(named('learned'));

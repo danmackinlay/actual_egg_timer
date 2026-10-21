@@ -3,9 +3,10 @@ import EggTimerCore
 
 /// Persistence: UserDefaults in, UserDefaults out.
 ///
-/// The BOUNDS and the blending rules are EggTimerCore's Policy, so the two apps
-/// share one set, and one order: a Dictionary walked in whatever order it
-/// likes would let two equidistant pans give the two apps different answers.
+/// The bounds (`Limits`) and the blending rules (Boil.swift) are
+/// EggTimerCore's, so the two apps share one set, and one order: a
+/// Dictionary walked in whatever order it likes would let two equidistant
+/// pans give the two apps different answers.
 /// This file applies the rules; it does not decide them.
 
 /// What the app keeps, and the sweep at launch.

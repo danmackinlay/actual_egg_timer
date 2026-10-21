@@ -76,7 +76,7 @@ export function renderDonenessScale(
 /** The bare track, as iOS draws it in sous-vide (`OddsTrack`): no stripes,
  *  no odds, no dots, no bracket and no word struck through. There is no pan,
  *  and the bath delivers every level; without this the last pan's scale
- *  stayed on the track under the bath's answer. */
+ *  would stay on the track under the bath's answer. */
 export function renderBareScale(): void {
   page().donenessBlockedSoft.style.width = '0%';
   page().donenessBlockedHard.style.width = '0%';

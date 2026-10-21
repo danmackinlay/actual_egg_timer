@@ -67,7 +67,6 @@ try {
   const start = inClone('rev-parse', 'HEAD');
   step(`a scratch clone of ${start.slice(0, 8)} on main, with no remote, in ${root}`);
 
-  // The editor, in the clone.
   // This checkout's editor, as it is, on the clone's words.
   server = spawn(process.execPath, [join(import.meta.dirname, 'copyEdit', 'server.ts'), '--port', '0', '--no-open', '--scratch'],
     { cwd: clone, stdio: ['ignore', 'pipe', 'pipe'] });

@@ -162,10 +162,10 @@ extension View {
 
 /// The bar sets its buttons' words at one size, which Dynamic Type does not
 /// change. The period face is set at the text size's (`periodFace`), so in
-/// 1750 at the largest sizes the bar's words grew past the bar: the title
-/// was pushed out and Help folded into a menu. So in 1750 a bar button's
-/// words are the face at the default size, as the title's are (`BarTitle`);
-/// in modern English they are the system's, as before.
+/// 1750 at the largest sizes the bar's words would grow past the bar, push
+/// the title out and fold Help into a menu. So in 1750 a bar button's words
+/// are the face at the default size, as the title's are (`BarTitle`); in
+/// modern English they are the system's.
 private struct BarItem: ViewModifier {
     func body(content: Content) -> some View {
         if isPeriod(Copy.activeLocale) {
@@ -181,7 +181,7 @@ private struct BarItem: ViewModifier {
 /// title is a view of the app's own in the bar's middle, which the language
 /// redraws in place; the bar's own title stays beneath it, for what reads it
 /// (a back button's menu, the app switcher), and is the title in modern
-/// English, as before. At the bar's own size, which Dynamic Type does not
+/// English. At the bar's own size, which Dynamic Type does not
 /// change.
 private struct BarTitle: ViewModifier {
     let title: Words
@@ -208,7 +208,7 @@ private struct BarTitle: ViewModifier {
 /// and its list takes no other; so in 1750 the button is the app's own and
 /// its list a popover of the app's own, as the system's looks: the choices
 /// in a column, a tick at the one chosen, closed by a choice. In modern
-/// English it is the system's menu, as before, except at the accessibility
+/// English it is the system's menu, except at the accessibility
 /// sizes: there the system's button is as wide as its longest choice, wider
 /// than the screen for "Extra large — 76 g", and any narrower it wraps the
 /// choice and cuts off the second line. So there the button is the app's

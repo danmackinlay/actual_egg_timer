@@ -93,8 +93,7 @@ function start(over: Partial<CookChoices>, now_s = S, nudge_s = 0): StepDef {
   });
 }
 
-/** The surface (and whatever else) the last step needed, landed at `dt` s
- *  after `now`. */
+/** The surface (and whatever else) the last step needed, landed at `now`. */
 function land(now: (t: Seen) => number, profile = false): StepDef {
   return (t) => ({ event: at('surfaceLanded', now(t)), land: true, profile: profile });
 }

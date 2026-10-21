@@ -95,7 +95,7 @@ struct StepperValue: View {
     var body: some View {
         HStack(spacing: 10) {
             // One line, whatever the face: a value is never broken between
-            // its number and its unit, which the wider serif of 1750 did.
+            // its number and its unit, as the wider serif of 1750 would.
             Text(show(value))
                 .systemFigures()
                 .foregroundStyle(.secondary)
@@ -196,9 +196,9 @@ struct CountValue: View {
 /// rather than what was half typed.
 ///
 /// At the accessibility sizes the stepper keeps its size while the number
-/// grows, so beside the label the field was left too narrow for "68", which
-/// showed as "…". There the label goes above, as the egg size's does over
-/// its menu, and the field takes the width the unit and the stepper leave.
+/// grows, leaving the field beside the label too narrow for two digits.
+/// There the label goes above, as the egg size's does over its menu, and the
+/// field takes the width the unit and the stepper leave.
 struct MeasureField: View {
     let label: Words
     let measure: Measure
@@ -310,9 +310,8 @@ func fieldText(_ m: Measure, _ value: Double) -> String {
     return String(s)
 }
 
-/// A number that may be left empty, typed or stepped (the `feedback2` draft):
-/// the probe's reading after a cook, and the room in the panels. The empty
-/// field shows, greyed, where the − and + start: the peak the cook was
+/// A number that may be left empty, typed or stepped: the probe's reading
+/// after a cook, and the room in the panels. The empty field shows, greyed, where the − and + start: the peak the cook was
 /// started at, or the room assumed. A press steps on the measure's own grid
 /// for the − and + (`stepPast`: whole degrees for a probe that is typed to a
 /// tenth), from what is typed, or from the greyed number when nothing is, and

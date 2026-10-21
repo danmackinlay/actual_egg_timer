@@ -1,8 +1,8 @@
 /**
  * The web app's surface and odds builds (`src/ui/decisionGrids.ts`): the key an
  * odds profile is cached by, and what happens when a build throws. A build that throws must reject, not hang, and
- * must leave no trace, so the same pot can be asked again. Before 5005798 a
- * throw on the main thread left the promise pending and the key in
+ * must leave no trace, so the same pot can be asked again. A throw on the
+ * main thread once left the promise pending and the key in
  * `decisionBuilds` / `profileBuilds`, and that pot never got a direction.
  *
  * Node has no Web Worker, so these run the main-thread fallback, which is the

@@ -4,7 +4,6 @@ import EggTimerCopy
 import EggTimerApp
 import EggTimerShared
 
-/// A clause of the setup sentence: each opens its own choice.
 /// The setup as one line of prose, each clause of it tappable (UI.md section
 /// 5; the web's `renderSentence`):
 ///
@@ -329,8 +328,8 @@ struct ClausePanel: View {
     private var egg: some View {
         VStack(alignment: .leading, spacing: 10) {
             // At the accessibility sizes the size's name over its menu: side
-            // by side, the menu left the name a column a letter wide, or
-            // nothing. There the menu's button wraps its choice rather than
+            // by side, the menu would leave the name a column a letter wide,
+            // or nothing. There the menu's button wraps its choice rather than
             // run past the screen (`MenuChoice`).
             // The menu says its name, so the name beside it is drawn for the
             // eye alone and not read twice.

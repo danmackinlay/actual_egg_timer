@@ -3,10 +3,8 @@
  * a key and its arguments into a sentence.
  *
  * Both apps render every string through this, or through its Swift twin in
- * `EggTimerCopy`, and `fixtures/copy.json` holds the two to the same bytes.
- * Before this existed the same sentences were typed twice, once per app, and
- * nothing but care kept them together - the failure core's shared decisions
- * (`inputs.ts`, `slider.ts` and the rest) end for numbers (LANGUAGE.md §1).
+ * `EggTimerCopy`, and `fixtures/copy.json` holds the two to the same bytes
+ * (LANGUAGE.md §1).
  *
  * The format is deliberately small. A message is a template with named
  * placeholders, `{limit}`, and optionally one template per CLDR plural category

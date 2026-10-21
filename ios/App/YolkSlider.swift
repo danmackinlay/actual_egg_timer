@@ -93,18 +93,18 @@ struct YolkSlider: UIViewRepresentable {
             if next != parent.value { parent.value = next }
         }
 
-        /// The finger is off: put the thumb where the value is. A snap that
-        /// lands while the finger is still down (to the softest level the
-        /// white allows, say) moves the value but not the thumb, which
-        /// `updateUIView` leaves alone while tracking, and nothing need redraw
-        /// after the finger lifts. Without this, and `sent`, the thumb rested
-        /// on the stripes at the far left while the time and the bracket were
-        /// for the level the slider had been moved to. The web's thumb goes
-        /// there.
         @objc func pressed(_ slider: TracklessSlider) {
             parent.onTouch?(true)
         }
 
+        /// The finger is off: put the thumb where the value is. A snap that
+        /// lands while the finger is still down (to the softest level the
+        /// white allows, say) moves the value but not the thumb, which
+        /// `updateUIView` leaves alone while tracking, and nothing need redraw
+        /// after the finger lifts. Without this, and `sent`, the thumb would
+        /// rest on the stripes at the far left while the time and the bracket
+        /// are for the level the slider was moved to. The web's thumb goes
+        /// there.
         @objc func released(_ slider: TracklessSlider) {
             parent.onTouch?(false)
             sent = nil

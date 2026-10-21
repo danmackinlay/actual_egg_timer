@@ -7,7 +7,7 @@
  *
  * - model.ts: the page's model, and `update`, how a message moves it - the
  *   idle page, and the running cook over core's `step`;
- * - state.ts: the model's one instance, and the egg, the pot and the time to
+ * - state.ts: the model as it starts, and the egg, the pot and the time to
  *   boil it derives;
  * - answer.ts: the idle page's solve, its decided time and the advice,
  *   from what is built;
@@ -18,7 +18,7 @@
  *   for the modules under it;
  * - effects.ts: the page's own effects - the settings written, the solve
  *   coalesced, a new language, everything forgotten;
- * - render.ts: the egg page drawn from the state;
+ * - render.ts: the egg page drawn from the view (view.ts);
  * - controls.ts and input.ts: the controls written from the model, and read
  *   back as messages.
  */
