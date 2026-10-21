@@ -195,5 +195,5 @@ next is `PLAN.md`; the last section here says which document holds what.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
-| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
+| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, bowl), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
 | `fit/README.md` | the population fit: pulling the eggs, fitting, scoring, publishing |

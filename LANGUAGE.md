@@ -548,10 +548,3 @@ before another letter, so the catalogue keeps a plain s for screen readers,
 search and the length budgets. One weight, and old-style figures, except in
 a number the cook types or steps. On iOS what UIKit draws, and the Live
 Activity, keep the system face; `ios/App/PeriodFace.swift` has the rest.
-
-## 7. Order
-
-Czech (F5) waits for its reviewer, and wants English that will not move
-again. A new language adds its catalogue, its plural rule and a fixture row
-(§2) and an `OWN_CONVENTION` entry if it writes numbers one way everywhere
-(§2), and stays behind a build flag until it is read (§5).

@@ -387,7 +387,7 @@ Apple's servers rather than a file: adding the Time Sensitive Notifications
 capability to the App ID, and resolving a provisioning profile for a real
 device. Both are once-per-machine.
 
-The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 4,400 lines of DOM
+The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 9,800 lines of DOM
 wiring and web-specific workarounds — `clock.ts` in particular exists to fight
 exactly the backgrounding problem that a local notification solves properly.
 The behaviour came across; the mechanism did not.
