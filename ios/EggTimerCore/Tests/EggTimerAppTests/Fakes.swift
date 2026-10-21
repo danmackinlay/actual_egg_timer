@@ -363,43 +363,62 @@ final class Announced: @unchecked Sendable {
     func add(_ s: Words) { lock.withLock { said.append(s) } }
 }
 
-/// The planners a test made, held weakly. The app's globals - the store,
-/// the clock, the services - are the next test's once it begins, so a fold or
-/// a solve a test leaves under way would land in the next test's store.
+/// The planners a test made, held weakly. A world's globals - the store,
+/// the clock, the services - are the next world's of the same test once it
+/// is made, so a fold or a solve an earlier world leaves under way would land
+/// in the next one's store.
 @MainActor
-private enum Made {
+private final class Made {
     final class Held {
         weak var planner: Planner?
         init(_ planner: Planner) { self.planner = planner }
     }
-    static var planners: [Held] = []
+    var planners: [Held] = []
+
+    nonisolated init() {}
 
     /// Those still folding or solving.
-    static var busy: [Planner] { planners.compactMap(\.planner).filter { !World.idle($0) } }
+    var busy: [Planner] { planners.compactMap(\.planner).filter { !World.idle($0) } }
+
+    /// The test's own (`OwnWorld`), or one for a world made outside it.
+    static var here: Made { OwnWorld.made ?? unbound }
+    private static let unbound = Made()
 }
 
-/// Each test of the suite ends only once every planner it made has nothing
-/// left to fold and no solve under way (`World.idle`), so none of its work
-/// lands in the next test's store.
-struct LeftIdle: SuiteTrait, TestTrait, TestScoping {
+/// Each test of the suite, and each case of one, has globals of its own
+/// (`TestGlobals`): the services, the clock, the store, the debug log's
+/// output, the settings as saved and the language, so the tests run side by
+/// side. Each ends only once every planner it made has nothing left to fold
+/// and no solve under way (`World.idle`), so none of its work goes on after
+/// it.
+struct OwnWorld: SuiteTrait, TestTrait, TestScoping {
     var isRecursive: Bool { true }
+
+    @TaskLocal fileprivate static var made: Made?
 
     func provideScope(
         for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void
     ) async throws {
-        try await function()
-        guard !test.isSuite else { return }
-        await World.leftIdle()
+        guard !test.isSuite else { return try await function() }
+        let (globals, made) = await MainActor.run { (TestGlobals(), Made()) }
+        try await TestGlobals.$current.withValue(globals) {
+            try await Self.$made.withValue(made) {
+                try await Copy.withOwnLanguage {
+                    try await function()
+                    await World.leftIdle()
+                }
+            }
+        }
     }
 }
 
-extension Trait where Self == LeftIdle {
-    static var leftIdle: Self { Self() }
+extension Trait where Self == OwnWorld {
+    static var ownWorld: Self { Self() }
 }
 
 /// One test's world: every service a fake, the store empty, the clock at a fixed moment, and the words read from the
 /// repository's copy/. A test makes its models and planners here
-/// (`model()`, `planner()`), so that it ends once they are idle (`LeftIdle`);
+/// (`model()`, `planner()`), so that it ends once they are idle (`OwnWorld`);
 /// a world that still finds one busy, or a model made while another of the
 /// test's is busy, records an issue.
 @MainActor
@@ -418,11 +437,11 @@ struct World {
     static let grids = DecisionGrids(kept: .max, profilesKept: .max)
 
     init(store: MemoryStore = MemoryStore(), at nowS: Double = 1_791_234_567) {
-        let busy = Made.busy
+        let busy = Made.here.busy
         if !busy.isEmpty {
-            Issue.record("the last test left \(busy.count) planner(s) folding or solving, which write to this test's store")
+            Issue.record("an earlier world of this test left \(busy.count) planner(s) folding or solving, which write to this world's store")
         }
-        Made.planners = []
+        Made.here.planners = []
         self.store = store
         clock = TestClock(nowS)
         alarm = FakeAlarm(clock)
@@ -445,18 +464,18 @@ struct World {
     /// One made on the store while another is folding or solving, as a
     /// relaunch is, would read the store before that work lands in it.
     func model(sourceLocation: SourceLocation = #_sourceLocation) -> AppModel {
-        if !Made.busy.isEmpty {
+        if !Made.here.busy.isEmpty {
             Issue.record("a model made while another still folds or solves", sourceLocation: sourceLocation)
         }
         let model = AppModel()
-        Made.planners.append(Made.Held(model.planner))
+        Made.here.planners.append(Made.Held(model.planner))
         return model
     }
 
     /// A planner on its own, likewise.
     func planner() -> Planner {
         let planner = Planner()
-        Made.planners.append(Made.Held(planner))
+        Made.here.planners.append(Made.Held(planner))
         return planner
     }
 
@@ -471,7 +490,7 @@ struct World {
     /// one is not within a minute of the Mac's.
     static func leftIdle() async {
         let deadline = ContinuousClock.now + .seconds(60)
-        while !Made.busy.isEmpty {
+        while !Made.here.busy.isEmpty {
             if ContinuousClock.now > deadline {
                 Issue.record("a planner still folding or solving a minute after the test")
                 return

@@ -1,4 +1,5 @@
 import Foundation
+import os
 import EggTimerCore
 import EggTimerShared
 
@@ -19,16 +20,94 @@ import EggTimerShared
 /// Until the app fills it, each is one that does nothing: no alarm, no
 /// ring, no card, nothing shared.
 public enum Services {
-    @MainActor public static var alarm: any AlarmScheduling = Unwired()
-    @MainActor public static var ringer: any AlarmRinging = Unwired()
-    @MainActor public static var sharing: any ResultSharing = Unwired()
+    @MainActor public static var alarm: any AlarmScheduling {
+        get { held.alarm }
+        set { held.alarm = newValue }
+    }
+    @MainActor public static var ringer: any AlarmRinging {
+        get { held.ringer }
+        set { held.ringer = newValue }
+    }
+    @MainActor public static var sharing: any ResultSharing {
+        get { held.sharing }
+        set { held.sharing = newValue }
+    }
     /// Read on the main actor, called off it in the order the cook made its
     /// calls (`CookCard`).
-    @MainActor public static var card: any LockScreenCard = NoCard()
+    @MainActor public static var card: any LockScreenCard {
+        get { held.card }
+        set { held.card = newValue }
+    }
     /// Said to VoiceOver, at once: the start's limit reached (`InHand`).
-    @MainActor public static var announce: (Words) -> Void = { _ in }
-    @MainActor static var grids: any DecisionSurfaces = DecisionGrids.shared
+    @MainActor public static var announce: (Words) -> Void {
+        get { held.announce }
+        set { held.announce = newValue }
+    }
+    @MainActor static var grids: any DecisionSurfaces {
+        get { held.grids }
+        set { held.grids = newValue }
+    }
+
+    /// The services, as the launch holds them or a test does.
+    @MainActor final class Held {
+        var alarm: any AlarmScheduling = Unwired()
+        var ringer: any AlarmRinging = Unwired()
+        var sharing: any ResultSharing = Unwired()
+        var card: any LockScreenCard = NoCard()
+        var announce: (Words) -> Void = { _ in }
+        var grids: any DecisionSurfaces = DecisionGrids.shared
+
+        init() {}
+
+        /// Another holding the same services.
+        init(_ other: Held) {
+            (alarm, ringer, sharing, card, announce, grids) =
+                (other.alarm, other.ringer, other.sharing, other.card, other.announce, other.grids)
+        }
+    }
+
+    /// The launch's services; a test's own while it runs (`TestGlobals`).
+    @MainActor private static var held: Held {
+        #if DEBUG
+        if let test = TestGlobals.current { return test.services }
+        #endif
+        return launch
+    }
+    @MainActor static let launch = Held()
 }
+
+#if DEBUG
+/// One test's own globals: the services, the clock, the store, the debug
+/// log's output and the settings as last saved. Each of those globals reads
+/// and writes the test's own while one is bound (`$current`), and the
+/// launch's otherwise, so tests that each bind their own run side by side.
+/// A task made inside the binding inherits it; a detached one does not, and
+/// none reads these. Only a debug build has it: a release build reads the
+/// launch's, and nothing else.
+final class TestGlobals: @unchecked Sendable {
+    @TaskLocal static var current: TestGlobals?
+
+    let services: Services.Held
+    @MainActor var savedSettings: AppSettings
+    let clock: OSAllocatedUnfairLock<any CookClock>
+    let output: OSAllocatedUnfairLock<@Sendable (DebugLog.Event, Data) -> Void>
+    private let storeSet: OSAllocatedUnfairLock<any KeyValueStore>
+
+    var store: any KeyValueStore {
+        get { storeSet.withLockUnchecked { $0 } }
+        set { storeSet.withLockUnchecked { $0 = newValue } }
+    }
+
+    /// What the launch holds, until the test puts its own in place.
+    @MainActor init() {
+        services = Services.Held(Services.launch)
+        savedSettings = SettingsStore.launchSaved
+        clock = OSAllocatedUnfairLock(initialState: AppClock.launchSource.withLock { $0 })
+        output = OSAllocatedUnfairLock(initialState: DebugLog.launchOutput.withLock { $0 })
+        storeSet = OSAllocatedUnfairLock(uncheckedState: Stores.launchStore)
+    }
+}
+#endif
 
 /// The cook's alarms, with the system (`Alarm`, UserNotifications): set at
 /// absolute moments, and read back rather than assumed.

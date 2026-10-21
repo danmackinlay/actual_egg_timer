@@ -124,7 +124,11 @@ public enum DebugLog {
         get { outputSet.withLock { $0 } }
         set { outputSet.withLock { $0 = newValue } }
     }
-    private static let outputSet = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
+    private static var outputSet: OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void> {
+        if let test = TestGlobals.current { return test.output }
+        return launchOutput
+    }
+    static let launchOutput = OSAllocatedUnfairLock<@Sendable (Event, Data) -> Void>(initialState: { _, text in
         FileHandle.standardError.write(text)
         guard let dir = debugDir else { return }
         append(text, to: dir.appendingPathComponent("aet.log"))

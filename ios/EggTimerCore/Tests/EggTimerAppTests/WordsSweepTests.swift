@@ -131,72 +131,95 @@ extension AppTests {
     /// A cook to Done for each cooling, the four of start and heat among
     /// them, each drawn idle with its time decided and at every phase it
     /// passes through.
-    @Test func everyPhasesWordsForEachCooling() async throws {
-        let runs: [(StartChoice, Bool, Cooling, UnitSystem, Int, String, Bool)] = [
-            (.cold, false, .ice, .metric, 1, "en", false),
-            (.cold, true, .tap, .imperial, 4, "en-x-1750", false),
-            (.hot, true, .bowl, .imperial, 1, "en", true),
-            (.hot, false, .counter, .metric, 4, "en", false),
-            (.cold, false, .eggCup, .metric, 2, "en-x-1750", false),
+    @Test(arguments: CoolingRun.all)
+    func everyPhasesWordsForEachCooling(_ run: CoolingRun) async throws {
+        let (start, heatOff, cooling, units, count, lang, probe) =
+            (run.start, run.heatOff, run.cooling, run.units, run.count, run.lang, run.probe)
+        Copy.use(lang)
+        let world = World()
+        let model = world.model()
+        defer { model.cook.killed() }
+        let at = { "\(start) heatOff \(heatOff) \(cooling) \(units) \(count) \(lang): \(model.cook.phase)" }
+        // A hot start with the heat off never sets the white at the
+        // defaults, and a cook that never sets it never starts: its heat
+        // goes off as a correction, a minute in, as a cook turns it off.
+        let offAtStart = heatOff && start == .cold
+        model.appear()
+        model.planner.start = start
+        model.planner.settings.unitsChosen = units
+        model.planner.settings.eggCount = count
+        model.planner.settings.cooling = cooling
+        model.planner.heatOff = offAtStart
+        model.planner.setProbe(probe)
+        // Idle, the time decided: what pressing the certainty opens.
+        await decided(model, world)
+        expectDrawn(drawn(model, world), at())
+        #expect(!ReadoutWords(model, phase: .idle, nowS: world.clock.seconds).opened.isEmpty, "\(at())")
+        model.eggsIn()
+        await world.until("the cook to start") { model.cook.running != nil && !model.starting }
+        await world.settled(model.cook)
+        var seen: [Phase] = [model.cook.phase]
+        expectDrawn(drawn(model, world), at())
+        if model.cook.phase == .heating {
+            world.clock.advance(300)
+            model.boil()
+            await world.settled(model.cook)
+            seen.append(model.cook.phase)
+            expectDrawn(drawn(model, world), at())
+        }
+        if heatOff && !offAtStart {
+            await correct(at: world.clock.seconds + 60, model, world) { model.planner.heatOff = true }
+            #expect(model.cook.running?.choices.afterBoil == .off, "\(at())")
+            expectDrawn(drawn(model, world), at())
+        }
+        let pull = try pullS(model.cook)
+        await tick(at: pull + 1, model, world)
+        seen.append(model.cook.phase)
+        expectDrawn(drawn(model, world), at())
+        world.clock.set(pull + 2)
+        model.pulledOut()
+        await world.settled(model.cook)
+        seen.append(model.cook.phase)
+        expectDrawn(drawn(model, world), at())
+        // On the counter nothing is timed after the pull.
+        if let cooled = model.cook.plan?.deadlines.coolEndS {
+            await tick(at: cooled + 1, model, world)
+            seen.append(model.cook.phase)
+            expectDrawn(drawn(model, world), at())
+        }
+        #expect(seen == (start == .cold ? [.heating, .cooking] : [.cooking]) + [.pull]
+            + (cooling == .counter ? [.done] : [.cooling, .done]), "\(at())")
+        model.cook.killed()
+        await world.learned(model.planner)
+    }
+
+    /// One cook of `everyPhasesWordsForEachCooling`: its start, whether the
+    /// heat goes off, its cooling, units, count and language, and whether
+    /// the probe is asked for.
+    struct CoolingRun: Sendable, CustomTestStringConvertible {
+        let start: StartChoice
+        let heatOff: Bool
+        let cooling: Cooling
+        let units: UnitSystem
+        let count: Int
+        let lang: String
+        let probe: Bool
+
+        init(_ start: StartChoice, _ heatOff: Bool, _ cooling: Cooling, _ units: UnitSystem, _ count: Int, _ lang: String, _ probe: Bool) {
+            (self.start, self.heatOff, self.cooling, self.units, self.count, self.lang, self.probe) =
+                (start, heatOff, cooling, units, count, lang, probe)
+        }
+
+        static let all = [
+            CoolingRun(.cold, false, .ice, .metric, 1, "en", false),
+            CoolingRun(.cold, true, .tap, .imperial, 4, "en-x-1750", false),
+            CoolingRun(.hot, true, .bowl, .imperial, 1, "en", true),
+            CoolingRun(.hot, false, .counter, .metric, 4, "en", false),
+            CoolingRun(.cold, false, .eggCup, .metric, 2, "en-x-1750", false),
         ]
-        defer { Copy.use("en") }
-        for (start, heatOff, cooling, units, count, lang, probe) in runs {
-            Copy.use(lang)
-            let world = World()
-            let model = world.model()
-            defer { model.cook.killed() }
-            let at = { "\(start) heatOff \(heatOff) \(cooling) \(units) \(count) \(lang): \(model.cook.phase)" }
-            // A hot start with the heat off never sets the white at the
-            // defaults, and a cook that never sets it never starts: its heat
-            // goes off as a correction, a minute in, as a cook turns it off.
-            let offAtStart = heatOff && start == .cold
-            model.appear()
-            model.planner.start = start
-            model.planner.settings.unitsChosen = units
-            model.planner.settings.eggCount = count
-            model.planner.settings.cooling = cooling
-            model.planner.heatOff = offAtStart
-            model.planner.setProbe(probe)
-            // Idle, the time decided: what pressing the certainty opens.
-            await decided(model, world)
-            expectDrawn(drawn(model, world), at())
-            #expect(!ReadoutWords(model, phase: .idle, nowS: world.clock.seconds).opened.isEmpty, "\(at())")
-            model.eggsIn()
-            await world.until("the cook to start") { model.cook.running != nil && !model.starting }
-            await world.settled(model.cook)
-            var seen: [Phase] = [model.cook.phase]
-            expectDrawn(drawn(model, world), at())
-            if model.cook.phase == .heating {
-                world.clock.advance(300)
-                model.boil()
-                await world.settled(model.cook)
-                seen.append(model.cook.phase)
-                expectDrawn(drawn(model, world), at())
-            }
-            if heatOff && !offAtStart {
-                await correct(at: world.clock.seconds + 60, model, world) { model.planner.heatOff = true }
-                #expect(model.cook.running?.choices.afterBoil == .off, "\(at())")
-                expectDrawn(drawn(model, world), at())
-            }
-            let pull = try pullS(model.cook)
-            await tick(at: pull + 1, model, world)
-            seen.append(model.cook.phase)
-            expectDrawn(drawn(model, world), at())
-            world.clock.set(pull + 2)
-            model.pulledOut()
-            await world.settled(model.cook)
-            seen.append(model.cook.phase)
-            expectDrawn(drawn(model, world), at())
-            // On the counter nothing is timed after the pull.
-            if let cooled = model.cook.plan?.deadlines.coolEndS {
-                await tick(at: cooled + 1, model, world)
-                seen.append(model.cook.phase)
-                expectDrawn(drawn(model, world), at())
-            }
-            #expect(seen == (start == .cold ? [.heating, .cooking] : [.cooking]) + [.pull]
-                + (cooling == .counter ? [.done] : [.cooling, .done]), "\(at())")
-            model.cook.killed()
-            await world.learned(model.planner)
+
+        var testDescription: String {
+            "\(start) heatOff \(heatOff) \(cooling) \(units) \(count) \(lang)\(probe ? " probe" : "")"
         }
     }
 
