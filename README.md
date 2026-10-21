@@ -249,8 +249,7 @@ answers absorbs it for every water cooling alike. The room's exchange through th
 bowl's own heat capacity and the water standing unmixed round the eggs are each worth a
 second or less, and are left out. Two eggs in 2 L warm it by under 3 °C and cook within a
 second of running water at the same temperature; even twelve eggs in half a litre are
-within half a minute of a bowl that never warms. What a crowded bowl costs is the wait
-before the eggs can be handled, not the yolk.
+within half a minute of a bowl that never warms.
 
 What the bowl's inputs are worth, in the same study (68 g fridge eggs into boiling water,
 held, aimed at jammy, two eggs in 2 L at 20 °C unless said): the water's temperature moves
@@ -258,12 +257,10 @@ the cook about 0.8 s a degree, so a bowl from a cold tap 6 °C colder than the r
 is 4.5-6.5 s and 0.3-0.4 °C of peak, the size of running water's own unknown (mains at 5
 or 25 °C against the 15 °C assumed, `T_COLD_TAP_C`, is -8.5 to +6.5 s). The volume hardly
 moves the cook (3.5 s from 0.5 to 4 L), so 2 L is within 3 s of any other volume for one to
-six eggs; the egg count adds 5.5 s from 1 to 12 eggs in 2 L. The ratio of egg to water
-decides the handling instead: past about 0.5 kg of egg per kilogram of water (about seven
-large eggs a litre) the bowl settles near 40 °C and the eggs take ten minutes or more to
-be cool enough to peel, and past about 0.8 take from 25 minutes to over an hour, as the
-water itself settles above 40 °C and cools only through the bowl to the room. Below
-0.5 the warming is worth under 9 s. Nothing in the yolk's numbers asks for a warning
+six eggs; the egg count adds 5.5 s from 1 to 12 eggs in 2 L, and below about 0.5 kg of egg
+per kilogram of water (about seven large eggs a litre) the warming is worth under 9 s. A
+crowded bowl mostly lengthens the wait until the eggs are cool enough to peel, which is the
+cook's own call. Nothing in the yolk's numbers asks for a warning
 (there is none, `DECISIONS.md` 115): the softest yolk with the white set is 0.04 of the
 slider at the base and at most 0.20 across 1-12 eggs in 0.5-4 L, so soft (0.22) is always
 in reach, and the bowl's refusal is only ever at the runny end. Given its
