@@ -1,12 +1,17 @@
 # The gate, on every push of a branch. Separate jobs, so that each runs on
 # the runner it needs and all run side by side: web and the web e2e on Linux,
 # quick to start, the e2e in shards; apple and ios-e2e on macOS, for
-# Swift and the iOS app; fit on Linux under uv, with no node: its
-# likelihood held to the core's, and NUTS recovering a known population,
-# from fixtures npm run fixtures wrote into fit/tests/. x86 Linux differs from
-# arm64 macOS in the last bit of some numbers, so the fixture check holds
-# them to Swift's tolerance (tools/fixtureCompare.ts). The actions are @v5,
-# on Node 24. A run takes as long as ios-e2e, its longest job.
+# Swift and the iOS app; fit on Linux under uv, with no node, off for now.
+# x86 Linux differs from arm64 macOS in the last bit of some numbers, so the
+# fixture check holds them to Swift's tolerance (tools/fixtureCompare.ts).
+# The actions are @v5, on Node 24. A run takes as long as ios-e2e, its
+# longest job.
+#
+# A push that changes only documents runs nothing (paths-ignore). Otherwise
+# web always runs; the macOS jobs only when the branch changed something
+# they build, and the web e2e only when it changed something the web serves
+# or tests (changes, below); a push to main runs them all. A tag's push
+# always runs, since GitHub does not apply path filters to tags.
 #
 # A pull request runs it only from a fork: a branch of this repository has
 # had its run, on the same commit, when it was pushed. A release tag is
@@ -17,7 +22,9 @@ name: verify
 
 on:
   push:
+    paths-ignore: ['**.md', '.claude/**', 'LICENSE']
   pull_request:
+    paths-ignore: ['**.md', '.claude/**', 'LICENSE']
 
 # One run at a time for each branch: a newer push to a branch cancels the
 # run of the older one. On main a run in progress finishes and the newer
@@ -29,6 +36,53 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  # Which of the slow jobs this push needs. On a branch, every file the
+  # branch changed since it left main, not only this push's, so that a run
+  # cancelled by a newer push is never what decided; on main, all of them.
+  changes:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      apple: ${{ github.ref == 'refs/heads/main' || steps.filter.outputs.apple == 'true' }}
+      web: ${{ github.ref == 'refs/heads/main' || steps.filter.outputs.web == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v4.0.3
+        id: filter
+        with:
+          filters: |
+            apple:
+              - 'ios/**'
+              - 'src/core/**'
+              - 'fixtures/**'
+              - 'copy/**'
+              - 'tools/ios*.ts'
+              - 'tools/swiftConstants.ts'
+              - 'tools/copyKeys.ts'
+              - 'package*.json'
+              - '.node-version'
+              - '.github/workflows/verify.yml'
+            web:
+              - 'src/**'
+              - 'index.html'
+              - 'styles.css'
+              - 'site.webmanifest'
+              - 'assets/**'
+              - 'fixtures/population.json'
+              - 'copy/**'
+              - 'tools/e2e*'
+              - 'tools/e2e/**'
+              - 'tools/harness.ts'
+              - 'tools/chrome.ts'
+              - 'tools/buildSite.ts'
+              - 'tools/precache.ts'
+              - 'package*.json'
+              - '.node-version'
+              - '.github/workflows/verify.yml'
+
   tag:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
@@ -63,7 +117,8 @@ jobs:
   # in SwiftUI's text calls (tools/iosBuild.ts). Its Debug build, the other
   # half of `npm run ios:build`, is ios-e2e's.
   apple:
-    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -81,7 +136,8 @@ jobs:
   # One lane: the runner's three cores would keep two simulators' busy, and a
   # simulator's notifications stop answering when every core is (GOTCHAS.md).
   ios-e2e:
-    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     runs-on: macos-latest
     # Ample: the build is included, a hosted macOS runner is slow, and a new
     # simulator's first launches slower still.
@@ -115,10 +171,13 @@ jobs:
           retention-days: 7
 
   fit:
-    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
+    # Off until shared eggs arrive to fit (PLAN.md, next work 1).
+    if: false
     runs-on: ubuntu-latest
-    # The recovery check's four chains run side by side on the runner's four
-    # cores.
+    # Its likelihood held to the core's, and NUTS recovering a known
+    # population, from the samples `npm run fixtures -- fit` writes into
+    # fit/tests/. The recovery check's four chains run side by side on the
+    # runner's four cores.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -129,7 +188,8 @@ jobs:
   # 2-core runner takes one scenario at a time; the count is the matrix's
   # alone. Every shard runs to its end, and any that fails fails the run.
   e2e:
-    if: ${{ !startsWith(github.ref, 'refs/tags/') && (github.event_name == 'push' || github.event.pull_request.head.repo.fork) }}
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
