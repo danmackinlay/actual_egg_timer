@@ -229,10 +229,8 @@ cools change nothing, so the sentence leaves them out.
 
 ## 6. How wording is reviewed
 
-In place, on a phone (`DECISIONS.md` 25): a wording change goes into both
-apps, the owner uses it and says what to put back. What he has yet to read,
-the words changed since he last approved them, `npm run copy:review` lays
-out as one page beside the apps (`LANGUAGE.md` §3, `DECISIONS.md` 106).
+In place, in the apps (§1; `DECISIONS.md` 25, 106). How the owner reads,
+changes and approves the words is `DEVELOPING.md`'s "Reviewing the words".
 
 ## 7. Two tiers: the (i), and Help
 

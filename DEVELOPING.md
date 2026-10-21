@@ -86,10 +86,6 @@ cook in cross-section from core's `src/core/section.ts`, how set and how hot
 side by side, in the app's own colours (`src/ui/eggSection.ts`, styles.css;
 `DECISIONS.md` 52).
 
-`src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
-interfaces and top-level functions with explicit loops, which is deliberate: it is meant
-to port to Swift essentially unchanged.
-
 ## Reviewing the words
 
 Every word either app shows is a key in `copy/en.json`, and what the owner
@@ -107,10 +103,7 @@ the words are held to, and the machinery, are `LANGUAGE.md` §3.
    not only on the page (`UI.md` §6).
 3. **Change them.** The owner does it himself in `npm run copy:edit`
    (below), which checks and commits each save. By hand, or for whoever
-   he names it to: put it back in `copy/en.json`, and any
-   `copy/en-US.json` override with its `base` (the 1750 twin may lag); run
-   `npm test` and `npm run fixtures:check`, which writes any fixture the
-   words moved; commit the catalogue with them (CLAUDE.md, "Words").
+   he names it to, the steps are `CLAUDE.md`'s "To change wording".
 4. **Approve the rest**: the editor's Approve, which approves the commit
    its page shows and commits the record; or `npm run copy:approve --
    <commit>`, which records the commit the review page was made from, which
