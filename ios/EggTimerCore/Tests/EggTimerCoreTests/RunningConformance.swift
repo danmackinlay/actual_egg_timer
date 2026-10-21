@@ -138,6 +138,24 @@ struct RunningConformance {
         }
     }
 
+    /// Exactly: which water a cooling's temperature is, and the field it is
+    /// kept in, are core's, and do no arithmetic.
+    @Test("the cooling's water: the temperature given, set and cleared, for each cooling")
+    func coolingWaters() throws {
+        func row(_ w: CookChoices) -> [String: Any] {
+            ["cooling": w.cooling.rawValue, "tapWater_C": w.tapWaterC ?? NSNull(), "bowlWater_C": w.bowlWaterC ?? NSNull()]
+        }
+        let rows = try Fixtures.list("running.json", "coolingWaters")
+        #expect(rows.count == Cooling.allCases.count * 4)
+        for r in rows {
+            let ch = try cookChoices(r["waters"])
+            let what = "\(ch.cooling), tap \(String(describing: ch.tapWaterC)), bowl \(String(describing: ch.bowlWaterC))"
+            #expect(givenCoolingWaterC(ch) == (try r.optionalNum("given")), "\(what): given")
+            expectJSON(row(withCoolingWater(ch, try r.num("to_C"))), r["set"], "\(what): set")
+            expectJSON(row(withCoolingWater(ch, nil)), r["cleared"], "\(what): cleared")
+        }
+    }
+
     /// Exactly: a cook's fields are the values given, and a move does no
     /// arithmetic on them.
     @Test("the boil tap, a correction and a corrected start, taken and refused")

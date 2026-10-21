@@ -23,14 +23,15 @@ import type { GridSpec } from '../../src/core/doseGrid.ts';
 import type { WhiteReport, YolkWord } from '../../src/core/infer.ts';
 import { LITERATURE_POPULATION } from '../../src/core/infer.ts';
 import { EGG_CUP_OPENED_S } from '../../src/core/constants.ts';
+import { COOLINGS } from '../../src/core/protocol.ts';
 import type { BoilMemory } from '../../src/core/boil.ts';
 import { type Calibration, type ProbeReading, recordFor } from '../../src/core/record.ts';
 import {
   COOLING_SECONDS, type CookChoices, type CookPlan, type CookSurface, PULL_GRACE_SECONDS,
   type RunningCook, type SlowHobMemo, type SlowHobPlace, boilToRemember, cookSetupOf, corrected as correctedBy,
-  earliestStart_s, eventsDue, latestStart_s, openEggId, phaseAt, pullStands as pullStandsBy, replan, slowHobDue,
-  startCook as startCookBy, startCorrected as startCorrectedBy, stillIn as stillInBy, withBoil as withBoilBy, withOut,
-  writeEvents as writeEventsBy,
+  earliestStart_s, eventsDue, givenCoolingWater_C, latestStart_s, openEggId, phaseAt, pullStands as pullStandsBy, replan,
+  slowHobDue, startCook as startCookBy, startCorrected as startCorrectedBy, stillIn as stillInBy, withBoil as withBoilBy, withOut,
+  withCoolingWater, writeEvents as writeEventsBy,
 } from '../../src/core/running.ts';
 import {
   type RecordContext, asRanCorrected, asRanCurrent, asRanShown, cookEnding, cookFactsFor, keepAsRan, solutionAsRan,
@@ -203,6 +204,26 @@ const setups = setupChoices.map((choices, i) => {
   const pot = cookSetupOf(choices, timeToBoil_s);
   return { choices: choices, timeToBoil_s: timeToBoil_s, egg: pot.egg, setup: pot.setup };
 });
+
+/* -------------------------------------------------------- cooling water */
+
+/** The waters a cook's choices hold: the cooling, the tap's and the bowl's. */
+function watersOf(ch: CookChoices) {
+  return { cooling: ch.cooling, tapWater_C: ch.tapWater_C, bowlWater_C: ch.bowlWater_C };
+}
+
+/** Each cooling, with each of the tap's and the bowl's water given or not:
+ *  the temperature given of the water it cools in, and the choices with
+ *  `to` given and with it cleared. */
+const coolingWaters = COOLINGS.flatMap((cooling) =>
+  [[9, 13], [null, 13], [9, null], [null, null]].map(([tap, bowl]) => {
+    const ch: CookChoices = { ...BASE_CHOICES, cooling: cooling, tapWater_C: tap, bowlWater_C: bowl };
+    const to_C = 21.5;
+    return {
+      waters: watersOf(ch), given: givenCoolingWater_C(ch),
+      to_C: to_C, set: watersOf(withCoolingWater(ch, to_C)), cleared: watersOf(withCoolingWater(ch, null)),
+    };
+  }));
 
 /* ---------------------------------------------------------------- moves */
 
@@ -822,6 +843,7 @@ export const runningFixture = {
   about: 'A running cook: its egg and pot, the moves the cook makes, the plan derived from it, and the phase at every boundary. A cook is the moves that made it, from `start`, as core makes them. src/core/running.ts.',
   start: { at_s: START_S, choices: BASE_CHOICES, memory: MEMORY, units: 'metric', lang: 'en' },
   setups: setups,
+  coolingWaters: coolingWaters,
   moves: moves,
   plans: plans,
   remembers: rememberRows,

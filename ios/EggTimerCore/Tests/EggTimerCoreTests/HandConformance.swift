@@ -102,6 +102,17 @@ struct HandConformance {
         }
     }
 
+    @Test("the group each cooling's water makes")
+    func coolingWaterGroups() throws {
+        let rows = try Fixtures.list("hand.json", "coolingWaterGroups")
+        #expect(rows.count == Cooling.allCases.count)
+        for r in rows {
+            let cooling = try r.value(Cooling.self, "cooling")
+            let group = try r["group"] is NSNull ? nil : r.value(HandGroup.self, "group")
+            #expect(coolingWaterGroup(cooling) == group, "\(cooling)")
+        }
+    }
+
     @Test("the start's − and +, to each of the cook's limits")
     func starts() throws {
         let cooks = try cooks()

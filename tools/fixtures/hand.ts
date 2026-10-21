@@ -15,15 +15,18 @@
  *  - `previews`: the cook the aimed-for egg is planned on (`previewCook`).
  *  - `starts`: the start's − and + to each of the cook's limits
  *    (`startStepped`).
+ *  - `coolingWaterGroups`: the group a change to each cooling's water
+ *    makes (`coolingWaterGroup`).
  *
  * The cooks are written as the moves that made them, from `start`, as
  * running.json writes its own.
  */
 
 import {
-  type HandEvent, type HandGroup, type HandState, type HandStep, type HandTimer, handChoices, handStep, nothingInHand,
-  previewCook, startStepped,
+  type HandEvent, type HandGroup, type HandState, type HandStep, type HandTimer, coolingWaterGroup, handChoices, handStep,
+  nothingInHand, previewCook, startStepped,
 } from '../../src/core/hand.ts';
+import { COOLINGS } from '../../src/core/protocol.ts';
 import { type CookChoices, type RunningCook, startCook, withBoil, writeEvents } from '../../src/core/running.ts';
 
 import { BASE_CHOICES, MEMORY, START_S } from './shared.ts';
@@ -305,7 +308,7 @@ export function handFixture() {
     }
   }
   return {
-    about: 'The correction in hand (src/core/hand.ts): event sequences with every timer come round, what a commit of each group makes of a cook before and after the pull, the cook the aimed-for egg is planned on, and the start\'s − and + to each limit.',
+    about: 'The correction in hand (src/core/hand.ts): event sequences with every timer come round, what a commit of each group makes of a cook before and after the pull, the cook the aimed-for egg is planned on, the start\'s − and + to each limit, and the group each cooling\'s water makes.',
     start: { at_s: START_S, choices: BASE_CHOICES, memory: MEMORY, units: 'metric', lang: 'en' },
     cooks: Object.entries(RECIPES).map(([name, moves]) => ({ name: name, moves: moves })),
     said: SAID,
@@ -313,5 +316,6 @@ export function handFixture() {
     choices: choices,
     previews: previews,
     starts: starts,
+    coolingWaterGroups: COOLINGS.map((cooling) => ({ cooling: cooling, group: coolingWaterGroup(cooling) })),
   };
 }
