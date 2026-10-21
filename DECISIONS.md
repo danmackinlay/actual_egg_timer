@@ -1139,3 +1139,7 @@ Decided by the owner, 20 October 2026:
     only when the branch changed what they build or serve, and a push to
     main runs them all. CI's fit job is off, and its test samples are
     written only by `npm run fixtures -- fit`, until shared eggs arrive.
+NNN. **The web does not nudge.** The owner, 21 October 2026: the web's
+    results are the open tier, which the population fit gives no weight
+    (85), so the nudge's cost to the cook buys nothing there. iOS still
+    nudges; giving the open tier a weight turns the web's back on.
