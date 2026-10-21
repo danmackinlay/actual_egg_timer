@@ -140,17 +140,18 @@ next is `PLAN.md`; the last section here says which document holds what.
 - The boil button says **"Rolling boil"** (`action.fullBoil`), under the
   hint "wait for the whole surface to roll": tapping at first bubbles
   under-measures the time to boil by 15-25% (`DECISIONS.md` 112).
-- **The owner's rules** (`LANGUAGE.md` §3 has them whole):
+- **The rules for the words** (`LANGUAGE.md` §3 has them whole; the
+  numbers are `DECISIONS.md`'s):
   - plain words a cook uses, never a term only this repository uses;
-  - the app is "I" and the cook "you", in the active voice;
+  - the app is "I" and the cook "you", in the active voice (28);
   - say what to do, and a caveat's consequence, not its mechanism;
-  - never narrate what the interface visibly did;
-  - sous-vide is not "a bath"; "pan" only for the pot;
+  - never narrate what the interface visibly did (26);
+  - sous-vide is not "a bath"; "pan" only for the pot (29);
   - an inserted word stands alone after a colon, never inside running
-    grammar;
-  - an (i) is short enough to read at the hob; the rest goes to Help;
-  - say it as a person who cooks would, not as a model writes;
-  - curly ’ “ ”, never straight.
+    grammar, since a placeholder cannot decline (`LANGUAGE.md` §5);
+  - an (i) is short enough to read at the hob; the rest goes to Help (26);
+  - say it as a person who cooks would, not as a model writes (54);
+  - curly ’ “ ”, never straight (56).
 
 ## iOS gotchas
 

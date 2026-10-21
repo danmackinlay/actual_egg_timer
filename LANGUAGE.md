@@ -459,8 +459,7 @@ declares several localizations (`cs` in `CFBundleLocalizations`,
 `ios/project.yml`).
 
 **Quality bar.** A translation can be drafted by machine. It does not ship until
-someone who speaks the language, and cooks, has read it on the screen. An
-unreviewed language stays behind a build flag.
+someone who speaks the language, and cooks, has read it on the screen.
 
 **Not localised.** The README, PLAN, the other documents and code comments
 stay in English. The App Store description and screenshots are localised,
