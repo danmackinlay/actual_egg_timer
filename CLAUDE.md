@@ -28,13 +28,18 @@ next is `PLAN.md`; the last section here says which document holds what.
   | core, fixture generators | `npm test`, `fixtures:check`; `swift test` if the Swift twin moves |
   | Swift outside the twin | `swift test`, `ios:build` |
   | words in `copy/` that add no key and change no arguments | `npm test`, `fixtures:check`, which a save from `copy:edit` runs itself |
-  | the web's screens (`src/ui`, `index.html`, `styles.css`), or a key or its arguments in `copy/` | the rows above that apply, and `npm run e2e` |
-  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e` |
+  | the web's screens (`src/ui`, `index.html`, `styles.css`), or a key or its arguments in `copy/` | the rows above that apply, and `npm run e2e`, on CI |
+  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply, and `npm run ios:e2e`, on CI |
 
   Any merge that touched code runs the full `npm run verify` once; any
-  push runs the full gate in CI, and `verify` runs before a release. A slow
-  suite runs once, on the branch's final code, here or in CI on the pushed
-  branch; a later commit to documents alone needs no rerun.
+  push runs the full gate in CI, and `verify` runs before a release. **The
+  e2e suites run on CI, from the pushed branch** (`DECISIONS.md` 155): an
+  agent pushes its branch and takes `e2e` and `ios:e2e` from CI's run on
+  its final commit (`gh run watch`), and runs one here only to find why it
+  failed. A slow suite runs once, on the branch's final code; a later
+  commit to documents alone needs no rerun. **A merge whose e2e caught a
+  product bug says so in its message** ("e2e caught: …"), so the suites'
+  worth can be read from `git log`.
 - **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
   iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
   by `test/tools/version.test.ts`; `npm version <v> --no-git-tag-version` sets the

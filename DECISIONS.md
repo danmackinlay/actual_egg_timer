@@ -1124,3 +1124,12 @@ Decided by the owner, 20 October 2026:
     2026 with the cleanup tranche, whose line was: an agent rewrites no
     comment, test name or assertion message that it has no other reason to
     touch. `CLAUDE.md` says so under "Working here".
+155. **The e2e suites run on CI, from the pushed branch, and their catches
+    are recorded.** The owner, 21 October 2026, "approved": an agent pushes
+    its branch (124) and takes `npm run e2e` and `npm run ios:e2e` from
+    CI's run on its final commit, rather than running them on this machine,
+    where several at once loaded it until every suite ran two to three
+    times slower; it runs one here only to find why it failed. A merge
+    whose e2e caught a product bug says so in its message ("e2e caught:
+    …"), since no record said whether the suites had ever caught one. The
+    rest of 123's gate is unchanged.
