@@ -408,13 +408,4 @@ final class SolveLoop {
         /// yet: asked for once it is applied.
         var missing: [DecisionInputs] = []
     }
-
-    /// Re-solve for the inputs as they stand.
-    ///
-    /// Needed when a cook ends: a new nudge is drawn, and a pan timed by the
-    /// cook just ended is remembered, so the idle screen's time is not the
-    /// one it showed before the cook.
-    public func refresh() {
-        recompute()
-    }
 }
