@@ -16,7 +16,6 @@
  * the plan says something is next decided (`wakeAt_s`), and when looked at.
  */
 
-import { nudgeSeconds } from '../core/decide.ts';
 import type { BoilMemory } from '../core/boil.ts';
 import { answered } from '../core/running.ts';
 import { phaseNow } from './state.ts';
@@ -288,12 +287,6 @@ function perform(effects: Effect[]): void {
         break;
       case 'previewAlarm':
         previewAlarm();
-        break;
-      case 'drawNudge':
-        // A new page or a new cook, a new nudge: a whole number of seconds
-        // from -10 to +10, drawn when the page boots and again after each
-        // cook, so the time on screen holds still while the cook looks at it.
-        send({ kind: 'nudge', draw: nudgeSeconds(Math.random()) });
         break;
       case 'forgetAll':
         forgetAll(stores);

@@ -170,12 +170,6 @@ test('sharing: turned on forgets a deletion said; a deletion asked, done and con
   assert.equal(deleted.deletedHere, true);
 });
 
-test('nudge: a new draw, and the idle page solved again with it', () => {
-  const [m, effects] = go(idle(), { kind: 'nudge', draw: 7 }, S);
-  assert.equal(m.nudgeDraw, 7);
-  assert.ok(kinds(effects).includes('askSurface'));
-});
-
 test('persisted: whether a write of the cook reads back, as the runner found it', () => {
   assert.equal(go(running(), { kind: 'persisted', works: false }, S + 5)[0].works, false);
 });

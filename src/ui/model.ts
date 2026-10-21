@@ -61,7 +61,7 @@ import { surfaceFor } from '../core/step.ts';
 import type { UnitSystem } from '../core/units.ts';
 import { chooseUnits } from '../core/units.ts';
 import { effectiveLanguage, languageAfterFlip } from './settings.ts';
-import { type IdleAnswer, type PotOdds, nudgeNow, solveIdle } from './answer.ts';
+import { type IdleAnswer, type PotOdds, solveIdle } from './answer.ts';
 import { targetPeakYolk_C } from '../core/slider.ts';
 import { NO_NEED, choicesOf, controlsOf, idleChoices, isSousVide, settingsOfChoices, sizeClasses } from './state.ts';
 import type { KeptAnswers, Settings, StoredCook } from './store.ts';
@@ -146,8 +146,6 @@ export interface Model extends CookState {
   /** When the eggs went in, as the controls show it while a cook runs; null
    *  while idle. */
   controlsStart_s: number | null;
-  /** This page's nudge: drawn at boot and after each cook. */
-  nudgeDraw: number;
 
   /** What the running cook's plan last said of how sure, while it was on
    *  its pot's surface: held while a new pot's surface is on its way (the
@@ -257,8 +255,6 @@ export type Msg =
   | { kind: 'shareDelete' }
   | { kind: 'shareDeleted'; confirmed: boolean }
   | { kind: 'shared' }
-  /** A new nudge drawn (`nudgeSeconds`), after a cook. */
-  | { kind: 'nudge'; draw: number }
   /** The idle page solved again: the controls settled, a surface or a
    *  profile landed. */
   | { kind: 'solve' };
@@ -309,8 +305,7 @@ export type Effect =
   | { kind: 'language'; before: string }
   /** The alarm's sound, heard as it is picked. */
   | { kind: 'previewAlarm' }
-  /** A new nudge to draw; everything learned to forget. */
-  | { kind: 'drawNudge' }
+  /** Everything learned to forget. */
   | { kind: 'forgetAll' }
   /** The results file saved; sharing turned on or off; what was shared
    *  deleted. */
@@ -624,8 +619,7 @@ function copySection(s: EggSection): EggSection {
  * choices, never the settings, which describe the next cook, with nothing
  * in hand. Ended: by a button, whatever was in hand was committed first;
  * else it goes with the cook. They show the settings again, the alarm
- * stops, the questions start empty, a new cook gets a new nudge (and the
- * idle page is solved again with it), and the egg just finished is final
+ * stops, the questions start empty, and the egg just finished is final
  * once it is forgotten: no answer can be added to it.
  */
 function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
@@ -638,7 +632,7 @@ function around(was: Model, m: Model, effects: Effect[]): [Model, Effect[]] {
     const next: Model = { ...m, cookControls: null, controlsStart_s: null, aim: null, hand: null };
     return [next, [
       ...effects, ...handFresh(was), { kind: 'startLimit', limit: null }, { kind: 'silence' },
-      { kind: 'questionsReset' }, { kind: 'drawNudge' },
+      { kind: 'questionsReset' },
     ]];
   }
   return [m, effects];
@@ -690,7 +684,7 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
       const [at, effects] = solve(m);
       const chosen = at.solved?.chosen ?? null;
       const [next, more] = updateCook(at, {
-        kind: 'start', choices: idleChoices(at), nudge_s: nudgeNow(at), units: msg.units, lang: msg.lang,
+        kind: 'start', choices: idleChoices(at), nudge_s: 0, units: msg.units, lang: msg.lang,
         leanHint_s: chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s,
       }, now_s);
       return [next, [...effects, ...more]];
@@ -765,10 +759,8 @@ function updatePage(m: Model, msg: Msg, now_s: number): [Model, Effect[]] | null
     case 'shareDeleted':
       return solved({ ...m, deletedHere: msg.confirmed }, []);
     case 'shared':
-      // Turning sharing on or off moves the time by the nudge.
+      // Sharing on or off: the Learning mark follows it.
       return solve(m);
-    case 'nudge':
-      return solve({ ...m, nudgeDraw: msg.draw });
     case 'kept': {
       // The egg kept and learned from: if its cook is still on screen at
       // Done, thanked for, or, if it could not be kept, its questions put
