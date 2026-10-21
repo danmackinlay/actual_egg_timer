@@ -9,8 +9,8 @@
  *   idle page, and the running cook over core's `step`;
  * - state.ts: the model's one instance, and the egg, the pot and the time to
  *   boil it derives;
- * - answer.ts: the idle page's solve, its decided time, the nudge and the
- *   advice, from what is built;
+ * - answer.ts: the idle page's solve, its decided time and the advice,
+ *   from what is built;
  * - cook.ts: the runner - each message through `update`, its effects
  *   carried out (the cook written down, its alarms, its record; the
  *   settings written; what the page waits for built), the ticker, a cook
@@ -23,7 +23,6 @@
  *   back as messages.
  */
 
-import { nudgeSeconds } from '../core/decide.ts';
 import { stepPast } from '../core/units.ts';
 import { openLearner } from './calibration.ts';
 import { ROOM_INPUTS, applyConstantsToDom, applyLanguageToDom, buildSizeOptions, noteFocusOut } from './controls.ts';
@@ -120,11 +119,10 @@ function own(reloaded: boolean): void {
   };
   const settings = stores.settings.load();
   useUnits(settings.unitsChosen);
-  // This page's nudge, drawn at boot.
   // For the egg's record: this build, and the population of the prior.
   const initial: Model = {
     ...emptyModel(), settings: settings, boilMemory: stores.pans.load(),
-    calib: learner.calibration(), nudgeDraw: nudgeSeconds(Math.random()), appVersion: APP_VERSION,
+    calib: learner.calibration(), appVersion: APP_VERSION,
     prior: activePopulation().id,
   };
   if (!wired) wire();

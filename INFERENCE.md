@@ -663,7 +663,10 @@ answers; in short:
   all its data lies on one surface and the slopes off that surface are never
   seen. Moving the recommendation by up to +-10 s - inside "just right" - fixes
   that at no cost to the cook, and gives an estimate free of selection. Consent
-  in §7.
+  in §7. Only iOS nudges: the web's results are the open tier, which the fit
+  gives no weight (`DECISIONS.md` 85), and the nudge's measured cost (eggs
+  right 52.1% to 49.3%, `npm run decide -- nudge`) buys nothing there until
+  it has one.
 - **Say that it is learning.** The nudge is acceptable on one condition (`DECISIONS.md` 3):
   the app does not present itself as finished. A cook who has opted in sees, in
   plain words and wherever the time is shown, that the timer is still learning

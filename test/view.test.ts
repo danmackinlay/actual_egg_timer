@@ -21,7 +21,7 @@ import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.ts';
 import { formatClock } from '../src/ui/countdown.ts';
 import { type Model, type Msg, update } from '../src/ui/model.ts';
 import { emptyModel } from '../src/ui/state.ts';
-import { idleSolution, nudgeNow } from '../src/ui/answer.ts';
+import { idleSolution } from '../src/ui/answer.ts';
 import { DEFAULT_SETTINGS, type Settings } from '../src/ui/store.ts';
 import { useUnits } from '../src/ui/units.ts';
 import { type View, view, viewMemo } from '../src/ui/view.ts';
@@ -202,15 +202,13 @@ test('the controls and Settings: the form in the units on screen, the line over 
   assert.deepEqual(v, {
     on: true, note: `${t('share.sent', { eggs: 2 })} ${t('share.waiting', { eggs: 1 })}`, uid: 'u', deletable: true,
   });
-  // The Learning mark and the nudge follow sharing as the runner read it.
+  // The Learning mark follows sharing as the runner read it.
   const learning = (x: Model): boolean | null => {
     const shown = view(x, S * 1000, viewMemo());
     return 'learning' in shown ? shown.learning : null;
   };
   assert.equal(learning(m), false, 'no Learning mark before sharing is read');
   assert.equal(learning(sharing), true, 'the Learning mark while sharing is on');
-  assert.equal(nudgeNow({ ...m, nudgeDraw: 4 }), 0, 'no nudge while sharing is off');
-  assert.equal(nudgeNow({ ...sharing, nudgeDraw: 4 }), 4, 'the draw while it is on');
 });
 
 test('the row of buttons is sized on the start\'s action, Rolling boil, the chosen cooling\'s pull alone and Start again, the same in every phase', () => {

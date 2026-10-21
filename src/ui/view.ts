@@ -195,9 +195,8 @@ export function view(m: Model, now_ms: number, memo: ViewMemo): View {
       sentence: liveSetupFacts(shown, sizeClasses, currentEgg(m)),
     };
   }
-  // The Learning mark: on the time while sharing is
-  // on, since the time may then be nudged - and never in sous-vide, which
-  // has no time to nudge.
+  // The Learning mark: on the time while sharing is on - and never in
+  // sous-vide, which shows no time.
   const learningOn = sharingOn(m) && !isSousVide(m);
   // The sentence, in every phase: the controls' (the settings, or the
   // running cook's own choices).
