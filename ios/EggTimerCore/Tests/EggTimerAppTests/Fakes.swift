@@ -259,7 +259,6 @@ final class FakeCard: LockScreenCard, @unchecked Sendable {
     }
     func update(_ state: CookActivity.ContentState) async { lock.withLock { made.append(.update(Shown(state))) } }
     func endAll() async { lock.withLock { made.append(.endAll) } }
-    @MainActor func logAll(_ when: String) {}
 }
 
 /// The debug log's events, as the app wrote them.

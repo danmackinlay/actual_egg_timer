@@ -230,7 +230,6 @@ struct HelpView: View {
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .accessibilityIdentifier("help.source")
     }
 }
 
@@ -240,7 +239,7 @@ struct HelpSource: Decodable {
     let text: String
 
     /// help-sources.json from the repo root, bundled (ios/project.yml); none
-    /// if it is missing, which `npm run ios:e2e`'s help-sources fails.
+    /// if it is missing, which `npm run ios:build`'s check of the bundle fails.
     static let all: [HelpSource] = {
         struct File: Decodable { let sources: [HelpSource] }
         guard let url = Bundle.main.url(forResource: "help-sources", withExtension: "json"),

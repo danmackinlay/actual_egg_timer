@@ -32,9 +32,6 @@ struct ActualEggTimerApp: App {
         LanguageChoice.shared.start()
         // A clock a script steps from outside (`AppClock`).
         AppClock.listen()
-        // A debug build says what it found of the alarms' sound files: each
-        // there, under 30 s, playable.
-        Ringer.logFiles()
         #if DEBUG
         // `-alarmTest`: the alarms without a cook, to hear them.
         AlarmTest.start()

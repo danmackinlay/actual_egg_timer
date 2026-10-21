@@ -164,8 +164,6 @@ public protocol LockScreenCard: Sendable {
     func start(_ attributes: CookActivity, state: CookActivity.ContentState) async
     func update(_ state: CookActivity.ContentState) async
     func endAll() async
-    /// Every card the system holds, to the debug log.
-    @MainActor func logAll(_ when: String)
 }
 
 /// The decision surfaces and the odds at every level, built off the main
@@ -199,5 +197,4 @@ struct NoCard: LockScreenCard {
     func start(_ attributes: CookActivity, state: CookActivity.ContentState) async {}
     func update(_ state: CookActivity.ContentState) async {}
     func endAll() async {}
-    func logAll(_ when: String) {}
 }

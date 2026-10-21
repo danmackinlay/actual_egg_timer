@@ -87,14 +87,6 @@ struct ReadoutView: View {
                         .padding(.bottom, Self.underBaseline - Self.descender)
 
                     sublineLine(words)
-                        // One frame whole: the moment it was drawn for, to
-                        // the millisecond, with the time, the line under it
-                        // and the certainty's time range it drew, so a check
-                        // can see that all of them are of that one moment.
-                        .logged(.frame(
-                            at: now.timeIntervalSince1970, phase: phase.rawValue, big: words.big, sub: words.sub.string,
-                            range: words.range?.string
-                        ))
                     certaintyLine(words)
                 }
             }

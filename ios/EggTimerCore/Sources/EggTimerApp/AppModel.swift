@@ -37,10 +37,10 @@ public final class AppModel {
         // the view struct and keeps only the first.
         planner.load()
         #if DEBUG
-        Services.card.logAll("launch")
+        // The alarms read back three seconds on, to the debug log, for the UI
+        // tests: what the system holds once the launch has settled.
         Task {
             try? await Task.sleep(for: .seconds(3))
-            Services.card.logAll("launch+3s")
             _ = await Services.alarm.pendingDeadlines()
         }
         #endif
