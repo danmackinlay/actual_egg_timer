@@ -17,7 +17,8 @@ public enum RingDeadline: String, Sendable, Hashable, CaseIterable, Codable {
     case cooled
 }
 
-/// The sounds, in the order the picker lists them (`ALARM_SOUNDS`).
+/// The sounds, in the order the picker lists them (the web's `ALARM_SOUNDS`,
+/// src/ui/settings.ts).
 public enum AlarmSound: String, Sendable, Hashable, CaseIterable {
     case timer, cuckoo, hen
 }
