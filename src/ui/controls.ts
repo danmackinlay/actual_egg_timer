@@ -10,6 +10,8 @@
 
 import { eggFromMinorDiameter } from '../core/geometry.ts';
 import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C } from '../core/sousvide.ts';
+import { coolingMedium_C } from '../core/protocol.ts';
+import { givenCoolingWater_C } from '../core/running.ts';
 import { type Measure, type Quantity, type UnitSystem, displayText, nudgeFrom, sizeClassLabel } from '../core/units.ts';
 import { SLIDER_STEPS } from '../core/slider.ts';
 import { startTempPreset_C } from '../core/inputs.ts';
@@ -101,8 +103,8 @@ export function formView(m: Model): FormView {
   const room = room_C(m);
   // The water's temperature the model assumes when the field is empty:
   // mains water running, the room in a bowl (`coolingMedium_C`).
-  const assumedWater_C = c.cooling === 'tap' ? T_COLD_TAP_C : currentAmbient_C(m);
-  const givenWater_C = c.cooling === 'tap' ? c.tapWater_C : c.bowlWater_C;
+  const assumedWater_C = coolingMedium_C({ cooling: c.cooling, ambient_C: currentAmbient_C(m) });
+  const givenWater_C = givenCoolingWater_C(c);
   return {
     controls: c,
     alarm: m.settings.alarm,

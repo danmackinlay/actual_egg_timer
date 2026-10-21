@@ -6,22 +6,24 @@
  * what counts as another control or as leaving, is core's.
  */
 
-import type { HandControl, HandGroup } from '../core/hand.ts';
+import { type HandControl, type HandGroup, coolingWaterGroup } from '../core/hand.ts';
+import type { Cooling } from '../core/protocol.ts';
 import { page, radioValue } from './dom.ts';
 import { send } from './send.ts';
 import { pageModel } from './cook.ts';
 import { pressAndHold } from './stepper.ts';
 
 /** The group each field's change makes, by its id, or a radio's by its
- *  name. The cooling water's is the cooling's: running water or the bowl.
+ *  name. The cooling water's is the cooling's (core `coolingWaterGroup`):
+ *  running water or the bowl, and none for ice or the air, which hide it.
  *  A cold pan's water is the cold tap's, running water's. */
-export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup)>> = {
+export const FIELD_GROUPS: Readonly<Record<string, HandGroup | (() => HandGroup | null)>> = {
   size: 'mass', measureMass: 'mass', measureGirth: 'mass', measureMinor: 'mass', startTemp: 'eggFrom',
   customTemp: 'customStart', roomTempFrom: 'room', roomTempStart: 'room', roomTempCool: 'room', startMode: 'startMode',
   afterBoil: 'afterBoil', cooling: 'cooling', bowlLitres: 'bowlLitres', litres: 'waterLitres', eggCount: 'eggCount',
   altitude: 'altitude',
   doneness: 'level', startedAt: 'startedAt',
-  coolingWater: () => (radioValue('cooling', 'ice') === 'tap' ? 'tapWater' : 'bowlWater'),
+  coolingWater: () => coolingWaterGroup(radioValue('cooling', 'ice') as Cooling),
   panWater: 'tapWater',
 };
 
@@ -46,7 +48,8 @@ function keyOf(field: HTMLElement): string {
 }
 
 /** The group of the cook's choices a change to `field` makes; null for a
- *  field of none (`GROUPLESS`). */
+ *  field of none (`GROUPLESS`), and for the cooling water under a cooling
+ *  that takes none. */
 export function groupOf(field: EventTarget | null): HandGroup | null {
   if (!(field instanceof HTMLElement)) return null;
   const key = keyOf(field);
@@ -73,7 +76,9 @@ export function touchOf(target: EventTarget | null): { group: HandGroup } | { co
   const field = at.matches('input, select') ? at : at.querySelector('input, select, output');
   if (!(field instanceof HTMLElement)) throw new Error(`a control with no field: .${at.className}`);
   const group = groupOf(field);
-  return group !== null ? { group: group } : { control: GROUPLESS[keyOf(field)] };
+  if (group !== null) return { group: group };
+  const control = GROUPLESS[keyOf(field)];
+  return control === undefined ? null : { control: control };
 }
 
 /** The gestures' clock, s: the page's, which no clock change moves. */
