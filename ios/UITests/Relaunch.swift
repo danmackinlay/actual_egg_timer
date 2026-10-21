@@ -12,13 +12,13 @@ extension Scenarios {
             run.terminate()
             var r = try run.relaunched(at: start + 120)
             run.check(r.restore.event.restoredPhase == "HEATING", "\(r.restore.event)")
-            let deadlines = {
+            let deadlines = { (now: Plan, was: Plan) in
                 run.check(
-                    near(r.plan.pull, was.pull, replan) && near(r.plan.cooled, was.cooled, replan),
-                    "deadlines \(r.plan.pull), \(String(describing: r.plan.cooled)) for \(was.pull), \(String(describing: was.cooled))"
+                    near(now.pull, was.pull, replan) && near(now.cooled, was.cooled, replan),
+                    "deadlines \(now.pull), \(String(describing: now.cooled)) for \(was.pull), \(String(describing: was.cooled))"
                 )
             }
-            deadlines()
+            deadlines(r.plan, was)
             run.check(near(scheduled(r.lines)["cook.pull"], try planIn(r.lines).pull, exact), "the pull scheduled again, at the plan’s time")
             run.check(pending(r.lines) == ["cook.cool", "cook.pull"], "pending \(String(describing: pending(r.lines)))")
             run.check(r.lines.contains {
@@ -31,7 +31,7 @@ extension Scenarios {
             run.terminate()
             r = try run.relaunched(at: start + 360)
             run.check(r.restore.event.restoredPhase == "COOKING", "\(r.restore.event)")
-            deadlines()
+            deadlines(r.plan, was)
             run.check(lastStored(r.lines)??.cook.events.boilAtS == boil, "the boil kept to the bit")
             run.check(pending(r.lines) == ["cook.cool", "cook.pull"], "pending \(String(describing: pending(r.lines)))")
         }
