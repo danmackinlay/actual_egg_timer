@@ -17,6 +17,8 @@ next is `PLAN.md`; the last section here says which document holds what.
 - **Short-lived branches off `main`, named for what they do** (`DECISIONS.md`
   120); `0.3.x`, `0.4.x` and `0.5.x` are history. **One logical change per
   commit.**
+- **No style passes** (`DECISIONS.md` NNN): an agent rewrites no comment,
+  test name or assertion message it has no other reason to touch.
 - **The gate is what the change touched** (`DECISIONS.md` 123):
 
   | changed | before a merge |
@@ -72,9 +74,8 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 - What both apps must agree on lives in `src/core/`: the physics, the
   inference and the decisions; the record's wire schema (`parseRecord`);
-  the cook's `step` machine, and the cooks an app holds (`cooks.ts`: the
-  one on screen, those ended waiting on their records, which eggs are
-  still open); when a correction in hand is committed
+  the cook's `step` machine, and the cooks an app holds (`cooks.ts`,
+  `DECISIONS.md` 153); when a correction in hand is committed
   (`hand.ts`: its groups, which touches are another control, which moments
   are leaving; each app maps its own gestures onto it, `DECISIONS.md` 139);
   which words say what (`wording.ts`); the alarms' timing; the server's
@@ -110,23 +111,19 @@ next is `PLAN.md`; the last section here says which document holds what.
 
 ## Words
 
-- **Every word either app shows is a key in `copy/en.json`**; no literal
-  written into a call that puts text on screen is words. In Swift the
-  app's helpers take `Words`, which only `tr` makes, so the compiler
-  refuses one; one in SwiftUI's own calls is a `LocalizedStringKey`,
-  which `npm run ios:build` refuses. A literal made a `String` around
-  the type (`Text(verbatim:)`, `String(format:)`, UIKit's) is read by no
-  tool: no word goes that way, and one would be plain in a diff.
-  The web's is `test/uiLiterals.test.ts`, run by `npm test`. What is not
-  words is `Text(verbatim:)`. Read
-  `LANGUAGE.md` §3 before writing one. A key is a `CopyKey`, which
-  `npm test` makes from the catalogue and both compilers check
-  (`DECISIONS.md` 127); a Swift `tr` is given exactly its key's arguments,
-  which `npm test` reads (`tools/copyArgs.ts`) and a debug build asserts. A key's note and surface are in
-  `copy/en.notes.json`.
+- **Every word either app shows is a key in `copy/en.json`**
+  (`DECISIONS.md` 135). In Swift a word is a `Words`, which only `tr`
+  makes; `Text(verbatim:)`, `String(format:)` and UIKit's text, which no
+  tool reads, carry none. On the web no literal in `src/ui` is words
+  (`test/uiLiterals.test.ts`). `LANGUAGE.md` §3 has what holds it; read it
+  before writing one. A key is a `CopyKey`, which `npm test` makes from the
+  catalogue and both compilers check (`DECISIONS.md` 127); `npm test`
+  holds each Swift `tr` to its key's arguments (`tools/copyArgs.ts`). A
+  key's note and surface are in `copy/en.notes.json`.
 - **To change wording**: edit `copy/en.json`, and any `copy/en-US.json`
-  override with its `base`; run `npm test` and `npm run fixtures:check`;
-  commit. The owner does it himself in `npm run copy:edit`, which checks
+  override with its `base`; run `npm test` and `npm run fixtures:check`,
+  which writes any fixture the words moved; commit them with the
+  catalogue. The owner does it himself in `npm run copy:edit`, which checks
   and commits; its Approve is his button alone. A test reads the words
   from the catalogue, never quotes them (`english()` in
   `tools/copyNotes.ts`), so a change of wording moves none. A small surface has a length budget (`test/data/surfaces.json`;
@@ -143,17 +140,18 @@ next is `PLAN.md`; the last section here says which document holds what.
 - The boil button says **"Rolling boil"** (`action.fullBoil`), under the
   hint "wait for the whole surface to roll": tapping at first bubbles
   under-measures the time to boil by 15-25% (`DECISIONS.md` 112).
-- **The owner's rules** (`LANGUAGE.md` §3 has them whole):
+- **The rules for the words** (`LANGUAGE.md` §3 has them whole; the
+  numbers are `DECISIONS.md`'s):
   - plain words a cook uses, never a term only this repository uses;
-  - the app is "I" and the cook "you", in the active voice;
+  - the app is "I" and the cook "you", in the active voice (28);
   - say what to do, and a caveat's consequence, not its mechanism;
-  - never narrate what the interface visibly did;
-  - sous-vide is not "a bath"; "pan" only for the pot;
+  - never narrate what the interface visibly did (26);
+  - sous-vide is not "a bath"; "pan" only for the pot (29);
   - an inserted word stands alone after a colon, never inside running
-    grammar;
-  - an (i) is short enough to read at the hob; the rest goes to Help;
-  - say it as a person who cooks would, not as a model writes;
-  - curly ’ “ ”, never straight.
+    grammar, since a placeholder cannot decline (`LANGUAGE.md` §5);
+  - an (i) is short enough to read at the hob; the rest goes to Help (26);
+  - say it as a person who cooks would, not as a model writes (54);
+  - curly ’ “ ”, never straight (56).
 
 ## iOS gotchas
 
@@ -193,5 +191,5 @@ next is `PLAN.md`; the last section here says which document holds what.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `GOTCHAS.md` | things that cost an hour to find out, gathered |
-| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
+| `studies/` | one-off studies (identifiability, rank, probe, perturbed, decide, bowl), run by hand and type-checked with the tools; each names the document that quotes it. `npm run decide` takes about nine minutes, eleven sections of Monte Carlo one after another; `npm run decide -- odds` runs one |
 | `fit/README.md` | the population fit: pulling the eggs, fitting, scoring, publishing |

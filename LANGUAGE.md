@@ -45,7 +45,7 @@ review page and the twins' lag are §3.
 each shipped language. On the web this could be `Intl.PluralRules`, but
 Swift has no public equivalent outside `.stringsdict` and `.xcstrings`, so
 both cores carry the same few lines of rules, under conformance, as for
-everything else. A new language adds its rule and a fixture row.
+everything else (§5 says when a new language needs one).
 
 - **The rule sees the decimals a number is shown with**, as CLDR's `v`
   operand does: "2,00 l" is Czech `many`, not `few`, and "1.0" is English
@@ -263,8 +263,8 @@ cost in Czech (§5).
   says; "brought to the boil", "to the boil" and "Once it’s boiling" stay.
 - The (i) is short enough to read standing at the hob; the whole story goes to
   Help (`UI.md` §7).
-- Wording is judged in place on a phone, not approved row by row in a table
-  (`UI.md` §6).
+- Wording is judged in place, in the apps, not approved row by row in a
+  table (`DECISIONS.md` 25, 106; `UI.md` §1).
 
 **How a wording change is made, read and approved.** Every word is in
 `copy/*.json`. Literal words are kept out of the Swift calls that put text
@@ -275,37 +275,25 @@ read by no tool, and would be plain in a diff), and out of the web's by
 `npm test` (`test/uiLiterals.test.ts`; one passed through a name is not
 read), so what a change does to the words is the catalogue's diff.
 
-- **Made**: an edit to `copy/en.json`, in both apps, with each
-  `copy/en-US.json` entry it reaches and that entry's `base` (§2), then
-  `npm test` and `npm run fixtures:check` (`CLAUDE.md` has the gate).
+- **Made** by `CLAUDE.md`'s "To change wording", or by the owner in
+  `npm run copy:edit` (`DEVELOPING.md`, "Reviewing the words"), which
+  holds a draft to the same rules as he types, from the same code
+  (`tools/copyRules.ts`), and changes no key and no argument.
   What holds it: placeholder parity, curly quotes, the small surfaces'
   budgets, the overlays' `base`, keys and arguments checked by both
-  compilers, each Swift `tr` given exactly its key's arguments, which a
-  debug build stops on (`tools/copyArgs.ts`, and for the keys the core
-  computes `WordsSweepTests.swift`), and no raw key on screen
-  (`copy.test.ts`).
-  The owner makes it himself in `npm run copy:edit` (`DEVELOPING.md`,
-  "Reviewing the words"), which holds a draft to the same rules as he
-  types, from the same code (`tools/copyRules.ts`), changes no key and no
-  argument, and runs `npm test` and `fixtures:check`, in about half a
-  minute, before it commits (`DECISIONS.md` 123).
+  compilers, each Swift `tr` given exactly its key's arguments, which
+  `npm test` reads (`tools/copyArgs.ts`) and a debug build stops on (for
+  the keys the core computes, `WordsSweepTests.swift`), and no raw key on
+  screen (`copy.test.ts`).
 - **Approval is one commit.** `test/data/copy-approved.txt` holds the hash
   of the last commit whose words the owner approved. What he has yet to
   read is `copy/` at that commit against the working tree, key by key:
   changed (the English or an overlay), added or retired. It is generated,
   never typed, and never fails a build.
-- **Read**: `npm run copy:review` writes
-  `_dev/copy-review.html`, one file with no script and no network, light
-  or dark. For each key: the approved English against today's, word by
-  word; the en-US words; and its note. The words are still judged in
-  place, in the apps (`UI.md` §6).
-- **Approved** on the owner's word, never on an agent's judgement, and of
-  the whole catalogue: he puts back what he wants, and once that is
-  committed, the editor's Approve records the commit its page shows (it is
-  off in an agent's shell), or `npm run copy:approve` records HEAD (it
-  refuses while `copy/` has uncommitted changes), or `-- <commit>` the
-  commit the review page was made from, which the page prints. Nothing is
-  approved key by key.
+- **Read and approved** as `DEVELOPING.md`'s "Reviewing the words" says:
+  on `npm run copy:review`'s page, and in place in the apps (`UI.md` §6);
+  approved on the owner's word, never on an agent's judgement, and of the
+  whole catalogue, never key by key.
 
 A string the owner has approved (the `alarm.pull.*` bodies,
 `alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
@@ -471,8 +459,7 @@ declares several localizations (`cs` in `CFBundleLocalizations`,
 `ios/project.yml`).
 
 **Quality bar.** A translation can be drafted by machine. It does not ship until
-someone who speaks the language, and cooks, has read it on the screen. An
-unreviewed language stays behind a build flag.
+someone who speaks the language, and cooks, has read it on the screen.
 
 **Not localised.** The README, PLAN, the other documents and code comments
 stay in English. The App Store description and screenshots are localised,
@@ -548,10 +535,3 @@ before another letter, so the catalogue keeps a plain s for screen readers,
 search and the length budgets. One weight, and old-style figures, except in
 a number the cook types or steps. On iOS what UIKit draws, and the Live
 Activity, keep the system face; `ios/App/PeriodFace.swift` has the rest.
-
-## 7. Order
-
-Czech (F5) waits for its reviewer, and wants English that will not move
-again. A new language adds its catalogue, its plural rule and a fixture row
-(§2) and an `OWN_CONVENTION` entry if it writes numbers one way everywhere
-(§2), and stays behind a build flag until it is read (§5).

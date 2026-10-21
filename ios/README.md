@@ -271,10 +271,9 @@ freezes the app's clock at each moment it checks and steps it from one to the
 next, and reads what happened from the app's debug log. The clock's steps and
 the log go through a directory on the Mac (`-debugDir`), which a simulator's
 app and its tests both reach. A control a scenario presses needs an
-identifier: on the control itself, since one on a container replaces its
-children's, or on a group made with `.accessibilityElement(children:
-.contain)`, whose frame is that of what it shows; a stepper of a group of the
-cook's choices has `<group>.stepper` (`testID`, `Controls.swift`).
+identifier, on the control itself or on a group that keeps its children's
+(`GOTCHAS.md`, "XCUITest"); a stepper of a group of the cook's choices has
+`<group>.stepper` (`testID`, `Controls.swift`).
 
 The headers say the rest: `tools/iosE2e.ts` (the lanes, how to run some),
 `tools/iosHarness.ts` (the devices and a test's run on a fresh install),
@@ -387,7 +386,7 @@ Apple's servers rather than a file: adding the Time Sensitive Notifications
 capability to the App ID, and resolving a provisioning profile for a real
 device. Both are once-per-machine.
 
-The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 4,400 lines of DOM
+The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 9,800 lines of DOM
 wiring and web-specific workarounds — `clock.ts` in particular exists to fight
 exactly the backgrounding problem that a local notification solves properly.
 The behaviour came across; the mechanism did not.
