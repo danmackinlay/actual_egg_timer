@@ -59,7 +59,8 @@ from `netlify.toml` on every push and serves `origin/main`. The `og:` tags in
 commit. There is no second host: the Vercel config was deleted (the owner: "we
 can add vercel later if needed"), and git has it. CI
 (`.github/workflows/verify.yml`) runs `verify`'s steps and `swift test`
-and `ios:build`, `ios:e2e` and `e2e`, each a job of its own; the fit's
+and `ios:build`, `ios:e2e` and `e2e`, each a job of its own (`ios:e2e`
+only on `main` and on demand, `gh workflow run verify --ref <branch>`); the fit's
 tests are off until shared eggs arrive. A push that changes only documents
 (`*.md`, `.claude/`, `LICENSE`) runs nothing; otherwise `verify`'s steps
 always run, the macOS jobs only when the branch changed what they build,

@@ -4,14 +4,15 @@
 # Swift and the iOS app; fit on Linux under uv, with no node, off for now.
 # x86 Linux differs from arm64 macOS in the last bit of some numbers, so the
 # fixture check holds them to Swift's tolerance (tools/fixtureCompare.ts).
-# The actions are @v5, on Node 24. A run takes as long as ios-e2e, its
-# longest job.
+# The actions are @v5, on Node 24.
 #
 # A push that changes only documents runs nothing (paths-ignore). Otherwise
 # web always runs; the macOS jobs only when the branch changed something
 # they build, and the web e2e only when it changed something the web serves
 # or tests (changes, below); a push to main runs them all. A tag's push
-# always runs, since GitHub does not apply path filters to tags.
+# always runs, since GitHub does not apply path filters to tags. ios-e2e
+# runs only on main and on demand (`gh workflow run verify --ref <branch>`),
+# when it is the only job that runs.
 #
 # A pull request runs it only from a fork: a branch of this repository has
 # had its run, on the same commit, when it was pushed. A release tag is
@@ -25,6 +26,7 @@ on:
     paths-ignore: ['**.md', '.claude/**', 'LICENSE']
   pull_request:
     paths-ignore: ['**.md', '.claude/**', 'LICENSE']
+  workflow_dispatch:
 
 # One run at a time for each branch: a newer push to a branch cancels the
 # run of the older one. On main a run in progress finishes and the newer
@@ -135,9 +137,10 @@ jobs:
   # which drops the bundle's file modes, so it builds its own either way.
   # One lane: the runner's three cores would keep two simulators' busy, and a
   # simulator's notifications stop answering when every core is (GOTCHAS.md).
+  # Only on main and on demand: half an hour on a hosted runner, for what
+  # only a device shows.
   ios-e2e:
-    needs: changes
-    if: needs.changes.outputs.apple == 'true'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     # Ample: the build is included, a hosted macOS runner is slow, and a new
     # simulator's first launches slower still.

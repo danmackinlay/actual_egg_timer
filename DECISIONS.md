@@ -1143,3 +1143,9 @@ Decided by the owner, 20 October 2026:
     results are the open tier, which the population fit gives no weight
     (85), so the nudge's cost to the cook buys nothing there. iOS still
     nudges; giving the open tier a weight turns the web's back on.
+158. **The iOS e2e runs on `main` and on demand, not on every branch.** The
+    owner, 21 October 2026: its first CI run took 35 minutes, half of it
+    reinstalling the app for each scenario, and a branch whose change only
+    a device shows dispatches it (`gh workflow run verify --ref <branch>`).
+    The suite is cut to what only a device shows and run as one
+    `xcodebuild`.
