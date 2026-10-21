@@ -9,7 +9,7 @@
  * is not such a span - a request's timeout, a download's cleanup - is a
  * plain `setTimeout`.
  *
- * On the live site nothing reads it; it is two counters and a set.
+ * On the live site nothing reads it.
  */
 
 const timers = new Set<number>();

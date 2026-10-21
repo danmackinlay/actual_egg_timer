@@ -116,7 +116,7 @@ export function cookShown(cook: RunningCook | null, plan: CookPlan | null): Cook
 /** Whether this cook will ask for a probe reading when its cooling ends - the
  *  "have the probe ready" line and the spoken prompt: `probeOn` is the
  *  cook's setting. The field itself is there whatever the setting
- *  (`probeOffered`). */
+ *  (view.ts, `probeView`). */
 export function probeWanted(probeOn: boolean, shown: CookShown | null): boolean {
   return probeOn && shown !== null && shown.probeMoment;
 }

@@ -1,19 +1,15 @@
 /**
  * Bridges the particle filter in src/core/ to the app, and keeps the record.
  *
- * The model's constants come from the literature, and the carryover term has no
- * published measurement behind it at all. Rather than pretend otherwise, the app
- * asks how each egg turned out and folds the answer into a posterior. After
- * about three eggs the suggested time stops moving.
- *
- * The answer is not thrown away once folded. Each egg is kept as a
+ * The app asks how each egg turned out and folds the answer into a posterior
+ * (INFERENCE.md section 1). Each egg is kept as a
  * record (INFERENCE.md section 4) in a log beside the posterior, and the
  * posterior is what `replay` makes of that log - so a later change to the
  * likelihood replays the eggs instead of discarding what they taught. The
  * stored posterior is a cache of that replay: `folded` says how many records it
  * has absorbed, and anything past it is folded again on load.
  *
- * The dose surface costs about two seconds to build and is built once per
+ * The dose surface takes seconds to build and is built once per
  * logged egg, off the main thread (`offThread.ts`), so the page stays live
  * while it runs. What is kept, and its format in storage, is
  * calibrationStore.ts; the record of one egg is core's, made by `step`.
@@ -333,8 +329,7 @@ export function openLearner(likelihood = LIKELIHOOD_ID) {
   /** Forget every egg: the posterior, the base under it and the log - the cook
    *  asked for it, and confirmed. A run of
    *  wrong answers about how an egg was is otherwise undone only by clearing the
-   *  site's storage, and the honest thing is to let someone take it back. The iOS
-   *  app has the same. */
+   *  site's storage. */
   function clear(): Calibration {
     generation += 1;
     live = -1;
@@ -376,7 +371,7 @@ interface LiveFold {
   index: number;
   record: EggRecord;
   /** Not persisted: a reload drops the chance of a second answer rather than
-   *  rebuilding two seconds of arithmetic to offer it. */
+   *  rebuilding the surface to offer it. */
   grid: DoseGrid;
   before: Calibration;
 }

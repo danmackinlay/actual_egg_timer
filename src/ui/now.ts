@@ -7,7 +7,7 @@
  * A page served from localhost or 127.0.0.1 by the development server loads
  * the development tools before the app boots (main.ts, src/ui/dev/), which
  * `npm run build:site` leaves out of the site: the development clock (dev/clock.ts) puts its time
- * here with `useClock`, which cannot be reached from anywhere else.
+ * here with `useClock`, which nothing else in the app calls.
  *
  * What follows the clock: every countdown, deadline and record (they read
  * `nowMs()`), the tick (every 0.2 s of the cook's time, `tickMs`), and the

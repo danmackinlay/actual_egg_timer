@@ -2,10 +2,8 @@
  * The controls and the Settings form, as the view says them (`formView`,
  * plain data from the model) and written to the page whenever it is drawn,
  * after every change and when a field is left (`drawForm`), where it says
- * otherwise and never under the cook's typing (`noteInput`): the size menu,
- * every field with a unit (its step, bounds, unit and contents), the labels
- * that carry a temperature or a mass, and the radios; the language picker as
- * the words on screen change. Reading them back is input.ts's.
+ * otherwise and never under the cook's typing (`noteInput`). Reading them
+ * back is input.ts's.
  */
 
 import { eggFromMinorDiameter } from '../core/geometry.ts';

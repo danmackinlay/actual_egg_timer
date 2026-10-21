@@ -17,8 +17,7 @@ export function viewFromHash(address: string): { view: View; target: string | nu
 }
 
 /**
- * Show the view the address names. Settings and Help are hash routes, so
- * the phone's back button leaves them the way it came. Both are reachable
+ * Show the view the address names. Settings and Help are both reachable
  * while a cook runs.
  */
 function route(focus: boolean): void {

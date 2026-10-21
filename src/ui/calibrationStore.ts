@@ -55,8 +55,7 @@ export function startOf(base: Calibration | null, pop: Population = activePopula
 /** Column-wise, one column per particle field. The current posterior is
  *  written at full precision: it is a cache of a replay, and a cache that
  *  rounds is one a replay can never match. JSON.stringify writes the shortest
- *  string that reads back as the same double, so full precision is exact, and
- *  about 180 KB. */
+ *  string that reads back as the same double, so full precision is exact. */
 interface StoredPosterior {
   n: number;
   a: number[];
@@ -99,8 +98,7 @@ function storedPosterior(c: Calibration): StoredPosterior {
 
 /** Finite, the right length, and - where `floor` says so - above it.
  *
- *  Finiteness alone is not enough, which is what the iOS loader knew and this
- *  one did not. A stored `alpha_m2s` of zero or below is perfectly finite, and
+ *  Finiteness alone is not enough. A stored `alpha_m2s` of zero or below is perfectly finite, and
  *  it reaches `createSphere` as a Fourier number of zero: non-finite
  *  temperatures, hence non-finite doses, hence exactly the poisoned posterior
  *  the comment below promises to refuse. */
@@ -127,7 +125,7 @@ function readPosterior(raw: unknown): Calibration | null {
   // alpha, the noise scale and the firm gap are strictly positive - a zero
   // noise divides by zero in the probit; a weight may be zero but never
   // negative; the two offsets are log-dose shifts and may be anything finite.
-  // Same rules as ios/App/Calibration.swift.
+  // Same rules as ios/EggTimerCore/Sources/EggTimerApp/Calibration.swift.
   if (
     !numberArray(s.a, n, 0, true) || !numberArray(s.o, n, -Infinity, false)
     || !numberArray(s.sd, n, 0, true)
@@ -192,8 +190,6 @@ function parseJSON(raw: string | null): unknown {
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.
- *
- * Pure, so the tests can walk every path without a browser.
  */
 export function decodeKept(
   raw: string | null, pop: Population = activePopulation(), likelihood = LIKELIHOOD_ID,

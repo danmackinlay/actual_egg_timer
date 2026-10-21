@@ -158,7 +158,7 @@ export function primeAudio(): void {
 let sound: AlarmSound = DEFAULT_ALARM_SOUND;
 
 /** One period of each sound and moment, as the audio context's buffers, made
- *  once: the sounds made in code take tens of milliseconds to render, and the
+ *  once: the sounds made in code take time to render, and the
  *  hen's recordings must be fetched and decoded. */
 const periods = new Map<string, AudioBuffer>();
 /** The hen's recordings as fetched, before a context exists to decode them. */
@@ -296,7 +296,7 @@ function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: numbe
 
 /** The alarm from `base` on the audio clock: the chosen sound's period,
  *  looped for ~40 s (`alarmRepeats`). The hen's, while its recording is not
- *  yet decoded or could not be fetched, is the beeps the sounds replaced, so
+ *  yet decoded or could not be fetched, is the beeps, so
  *  that an alarm always rings. */
 function scheduleRing(ctx: AudioContext, base: number, urgent: boolean): AudioScheduledSourceNode[] {
   const moment: AlarmMoment = urgent ? 'pull' : 'cooled';

@@ -8,7 +8,7 @@
  * place. The posterior remembers which population it was drawn from
  * (calibrationStore.ts), so a page that fell back replays its eggs from the
  * literature, and the next page that reads the file replays them back: both
- * correct, and each a few seconds of the worker's time per egg.
+ * correct, and each costing the worker's time per egg.
  */
 
 import { LITERATURE_POPULATION, type Population } from '../core/infer.ts';

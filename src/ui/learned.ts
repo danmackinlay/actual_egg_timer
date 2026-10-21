@@ -86,10 +86,8 @@ function onForgetKept(): void {
 }
 
 /** Wire Forget and its confirmation, which takes it all back - the
- *  posterior and the pan - and redraws; a run of wrong answers about how the
- *  eggs were was otherwise undone only by clearing the site's storage - README
- *  11.5 listed that as a known gap from the day the iOS app got its own
- *  version of this button. */
+ *  posterior and the pan - and redraws; without it a run of wrong answers
+ *  about how the eggs were is undone only by clearing the site's storage. */
 export function wireForget(): void {
   page().forget.addEventListener('click', onForgetAsked);
   page().forgetYes.addEventListener('click', () => {

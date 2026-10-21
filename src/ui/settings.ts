@@ -129,8 +129,7 @@ export function languageAfterFlip(state: LanguageState, flip: UnitsFlip): Langua
 
 /** A stored state, read defensively: anything malformed is the fresh one. A
  *  tag is kept only if it is one of `known`, so a catalogue that has gone
- *  cannot be asked for. Any other field, such as the retired `flippedFrom`,
- *  is ignored. */
+ *  cannot be asked for. Any other field is ignored. */
 export function readLanguageState(raw: unknown, known: readonly string[]): LanguageState {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return FRESH_LANGUAGE;
   const chosen = (raw as Record<string, unknown>)['chosen'];
@@ -141,13 +140,11 @@ export function readLanguageState(raw: unknown, known: readonly string[]): Langu
  * A stored size index, read against the table in use now.
  *
  * An index means something only inside one table, and the table can change
- * underneath a stored record: the phone's region is changed, the browser's
- * language is, or - the case that matters - a record saved before there were
- * two tables is read by an American. The rule is that the index keeps its
+ * underneath a stored record: the phone's region is changed, or the browser's
+ * language is. The rule is that the index keeps its
  * NAME. A cook who picked Large picked the word on their carton, and the
  * region says whose carton it is, so a Large stays a Large and cooks at the
- * new table's mass. Keeping the mass instead would leave every American who
- * never touched the control on the EU Large this table exists to replace.
+ * new table's mass.
  *
  * Both tables hold the same names at the same indices as far as the shorter
  * goes, so keeping the name is keeping the index. A Jumbo read outside the US
@@ -220,8 +217,7 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
  * The settings as stored, read against `classes`, the size table in use now
  * (which need not be the one they were saved against): each field checked,
  * a number clamped to its bounds, and the default for anything missing or
- * not what it should be. A stored `'sous'`, from before a sous-vide stopped
- * being saved, is the default pan, since nothing recorded the pan before it.
+ * not what it should be.
  */
 export function readSettings(raw: unknown, classes: SizeClass[]): Settings {
   const d = DEFAULT_SETTINGS;

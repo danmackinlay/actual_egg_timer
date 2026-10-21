@@ -1,7 +1,7 @@
 /**
  * The idle page's answer for the pot the settings describe: the solve (core
  * `answerAt`), the time decided on the pot's decision surface (core
- * `decideAnswer`) with the nudge, and the advice priced on the odds of the
+ * `decideAnswer`), and the advice priced on the odds of the
  * changes it would make (`protocolAdvice`).
  *
  * Pure: the surfaces and the odds profiles built so far are in the model
@@ -100,9 +100,9 @@ interface IdleSolve extends IdleAnswer {
  * Once the pot's odds profile is in too, the time is held by it, so a softer
  * level never gets a later time than a firmer one (`envelopeBounds`).
  * Until then a level has its own choice, and the time can
- * move once more when the profile lands. The nudge moves the chosen time,
- * where one is chosen, for a cook who is sharing. The outcome is read on
- * the same surface: about 2 ms beside the decision's 13-16, so it runs here
+ * move once more when the profile lands. The outcome is read on
+ * the same surface, quick beside the decision (`npm run decide -- outcome`
+ * times both), so it runs here
  * with it rather than in the worker.
  */
 export function solveIdle(m: Model): IdleSolve {
