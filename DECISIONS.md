@@ -1120,3 +1120,7 @@ Decided by the owner, 20 October 2026:
     sharing missed an ending cook's egg), so it is core's, fixtured, and
     126 says so. The share queue's moves agreed in both apps and stay each
     app's, with their stored forms.
+NNN. **No unprompted style passes.** Approved by the owner on 20 October
+    2026 with the cleanup tranche, whose line was: an agent rewrites no
+    comment, test name or assertion message that it has no other reason to
+    touch. `CLAUDE.md` says so under "Working here".
