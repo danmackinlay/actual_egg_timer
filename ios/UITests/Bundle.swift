@@ -17,7 +17,8 @@ extension Scenarios {
             try run.launch()
             try run.tap("bar.help")
             _ = try? run.find("help.source")
-            let count = run.app.links.matching(identifier: "help.source").count
+            // Any element, not only links: on CI's iOS 26.5 the sources were found but none counted as a link.
+            let count = run.app.descendants(matching: .any).matching(identifier: "help.source").count
             run.check(count > 0, "\(count) sources: help-sources.json is not in the bundle (ios/project.yml)")
             run.note("\(count) sources")
         }
