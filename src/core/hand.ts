@@ -149,6 +149,7 @@ import {
   type CookChoices, type RunningCook, corrected, earliestStart_s, latestStart_s, levelPreview, sameValue,
   startCorrected,
 } from './running.ts';
+import type { Cooling } from './protocol.ts';
 import { correctable } from './step.ts';
 
 /** How long a tap's change settles before it is committed, and how long the
@@ -331,6 +332,16 @@ export function takeGroup(choices: CookChoices, said: CookChoices, group: HandGr
     case 'level': return { ...choices, level: said.level };
     case 'startedAt': return choices;
   }
+}
+
+/** The group a change to the temperature of the water this cooling cools in
+ *  makes (`givenCoolingWater_C`): running water's is the cold tap's, and the
+ *  bowl's its own. Null for ice or the air, which take no water of the
+ *  cook's. */
+export function coolingWaterGroup(cooling: Cooling): HandGroup | null {
+  if (cooling === 'tap') return 'tapWater';
+  if (cooling === 'bowl') return 'bowlWater';
+  return null;
 }
 
 /** The choices a commit of `group` makes of `cook`, the controls saying

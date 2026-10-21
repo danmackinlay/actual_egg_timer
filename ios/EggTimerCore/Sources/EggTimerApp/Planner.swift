@@ -178,14 +178,10 @@ public final class Planner {
     /// as the cook gave it: running water's or the bowl's; nil is "not
     /// given", and it is assumed (`coolingMediumC`). Clamped like anything
     /// typed. Nothing for ice or the air.
-    public var coolingWaterC: Double? {
-        settings.cooling == .tap ? settings.tapWaterC : settings.cooling == .bowl ? settings.bowlWaterC : nil
-    }
+    public var coolingWaterC: Double? { givenCoolingWaterC(settings) }
 
     public func setCoolingWater(_ c: Double?) {
-        let clamped = c.map { clamp($0, to: Limits.coolingWaterC) }
-        if settings.cooling == .tap { settings.tapWaterC = clamped }
-        if settings.cooling == .bowl { settings.bowlWaterC = clamped }
+        settings = withCoolingWater(settings, c.map { clamp($0, to: Limits.coolingWaterC) })
     }
 
     /// The cold tap's temperature, as the cook gave it, whatever the cooling:

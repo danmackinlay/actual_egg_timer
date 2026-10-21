@@ -576,17 +576,45 @@ function panStartFrom(ch: CookChoices): number {
   return ch.tapWater_C === null ? T_COLD_TAP_C : ch.tapWater_C;
 }
 
-/** What the setup says of the water the eggs cool in: for running water its
- *  temperature, if the cook gave one; for a bowl its volume, and its
- *  temperature if given. Nothing for ice or the air, and nothing assumed: an
- *  absent temperature is assumed where it is read (`coolingMedium_C`), so
- *  the pots that never had these fields keep the setups they had. */
+/** What the setup says of the water the eggs cool in: its temperature, if
+ *  the cook gave one (`givenCoolingWater_C`); for a bowl its volume. Nothing
+ *  for ice or the air, and nothing assumed: an absent temperature is assumed
+ *  where it is read (`coolingMedium_C`), so the pots that never had these
+ *  fields keep the setups they had. */
 function coolingWaterOf(ch: CookChoices): { coolingWater_C?: number; bowlLitres?: number } {
-  if (ch.cooling === 'tap') return ch.tapWater_C === null ? {} : { coolingWater_C: ch.tapWater_C };
-  if (ch.cooling !== 'bowl') return {};
-  return ch.bowlWater_C === null
-    ? { bowlLitres: ch.bowlLitres }
-    : { coolingWater_C: ch.bowlWater_C, bowlLitres: ch.bowlLitres };
+  const given = givenCoolingWater_C(ch);
+  const water = given === null ? {} : { coolingWater_C: given };
+  return ch.cooling === 'bowl' ? { ...water, bowlLitres: ch.bowlLitres } : water;
+}
+
+/* ------------------------------------------------------ the cooling water */
+
+/** What a cook's choices hold of the waters it may cool in: the cooling,
+ *  the cold tap's temperature and the bowl's, each null when not given.
+ *  `CookChoices` is one, and so are each app's settings. */
+export interface CoolingWaters {
+  cooling: Cooling;
+  tapWater_C: number | null;
+  bowlWater_C: number | null;
+}
+
+/** The temperature the cook gave of the water this cooling cools in, C:
+ *  running water's, the cold tap's, or the bowl's. Null when none was
+ *  given, when it is assumed (`coolingMedium_C`), and for ice or the air,
+ *  which take no water of the cook's. */
+export function givenCoolingWater_C(w: CoolingWaters): number | null {
+  if (w.cooling === 'tap') return w.tapWater_C;
+  if (w.cooling === 'bowl') return w.bowlWater_C;
+  return null;
+}
+
+/** `w` with the temperature of the water this cooling cools in given as
+ *  `c`, or cleared with null so it is assumed again: running water's is the
+ *  cold tap's, and the bowl's its own. For ice or the air, `w` as it was. */
+export function withCoolingWater<W extends CoolingWaters>(w: W, c: number | null): W {
+  if (w.cooling === 'tap') return { ...w, tapWater_C: c };
+  if (w.cooling === 'bowl') return { ...w, bowlWater_C: c };
+  return w;
 }
 
 /* ------------------------------------------------------- the transitions */

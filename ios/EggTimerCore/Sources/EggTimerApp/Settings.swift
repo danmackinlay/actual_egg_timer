@@ -57,6 +57,10 @@ public struct AppSettings: Sendable, Equatable {
     )
 }
 
+/// Which water the cooling's temperature is, and the field it is kept in,
+/// are core's (`givenCoolingWaterC`, `withCoolingWater`).
+extension AppSettings: CoolingWaters {}
+
 /// The egg's two pictures.
 public enum EggView: String, Codable, Sendable {
     case set, heat

@@ -246,6 +246,17 @@ public func takeGroup(_ choices: CookChoices, said: CookChoices, group: HandGrou
     return c
 }
 
+/// The group a change to the temperature of the water this cooling cools in
+/// makes: running water's is the cold tap's, and the bowl's its own; nil for
+/// ice or the air.
+public func coolingWaterGroup(_ cooling: Cooling) -> HandGroup? {
+    switch cooling {
+    case .tap: .tapWater
+    case .bowl: .bowlWater
+    case .ice, .counter, .eggCup: nil
+    }
+}
+
 /// The choices a commit of `group` makes of `cook`, the controls saying
 /// `said`; nil for a change a correction cannot make (`correctable`).
 public func handChoices(_ cook: RunningCook, said: CookChoices, group: HandGroup) -> CookChoices? {

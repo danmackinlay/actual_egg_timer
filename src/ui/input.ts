@@ -10,11 +10,14 @@ import { eggFromMass } from '../core/geometry.ts';
 import type { Cooling } from '../core/protocol.ts';
 import { type Quantity, parse } from '../core/units.ts';
 import { DEFAULTS } from '../core/inputs.ts';
+import { withCoolingWater } from '../core/running.ts';
 import { ALARM_SOUNDS, LANGUAGE_TAGS, readAlarmSound } from './settings.ts';
 import { ROOM_INPUTS, noteInput } from './controls.ts';
 import { page, radioValue } from './dom.ts';
 import { gestureNow_s, groupOf } from './edit.ts';
 import { send } from './send.ts';
+import { pageModel } from './cook.ts';
+import { controlsOf } from './state.ts';
 import { LIMITS, type Settings, type UiStartMode, clampNumber } from './store.ts';
 import { measure } from './units.ts';
 
@@ -93,14 +96,19 @@ function readInputs(source: EventTarget | null): Partial<Settings> {
   if (litres !== null) read.waterLitres = litres;
   const bowl = field(page().bowlLitres, 'bowl');
   if (bowl !== null) read.bowlLitres = bowl;
-  // The water's temperature, running or in the bowl, whichever is chosen:
-  // an emptied field is "not given", and the temperature is assumed again.
+  // The water's temperature, running or in the bowl, whichever is chosen
+  // (core `withCoolingWater`), over the waters the controls hold: an emptied
+  // field is "not given", and the temperature is assumed again.
   if (source === page().coolingWater) {
     const blank = page().coolingWater.value.trim() === '';
     const water = readField(page().coolingWater, 'coolingWater');
     if (blank || water !== null) {
-      if (read.cooling === 'tap') read.tapWater_C = water;
-      else if (read.cooling === 'bowl') read.bowlWater_C = water;
+      const held = controlsOf(pageModel());
+      const waters = withCoolingWater(
+        { cooling: read.cooling, tapWater_C: held.tapWater_C, bowlWater_C: held.bowlWater_C }, water,
+      );
+      read.tapWater_C = waters.tapWater_C;
+      read.bowlWater_C = waters.bowlWater_C;
     }
   }
   // A cold pan's water: the cold tap's, whatever the cooling, so running

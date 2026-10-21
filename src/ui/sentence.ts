@@ -10,6 +10,7 @@ import { SOUS_VIDE_BATH_C } from '../core/sousvide.ts';
 import { sizeClassLabel } from '../core/units.ts';
 import type { EggFrom } from '../core/record.ts';
 import { type Clause, type ClauseKeys, clauseKeys } from '../core/wording.ts';
+import { givenCoolingWater_C } from '../core/running.ts';
 import { t, tChosen } from './copy.ts';
 import { type ElementId, page } from './dom.ts';
 import type { Settings, UiStartMode } from './store.ts';
@@ -74,8 +75,7 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
     standing: settings.afterBoil === 'off',
     cooling: settings.cooling,
     water: show('bowl', settings.bowlLitres),
-    coolingWater_C: settings.cooling === 'tap' ? settings.tapWater_C
-      : settings.cooling === 'bowl' ? settings.bowlWater_C : null,
+    coolingWater_C: givenCoolingWater_C(settings),
   };
 }
 

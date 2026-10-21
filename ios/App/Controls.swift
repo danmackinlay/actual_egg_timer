@@ -448,7 +448,7 @@ struct WaterTemperatureField: View {
         NudgeField(
             label: tr(water == .pan ? .`controls.panWater` : .`controls.coolingWater`), measure: m, text: $text,
             startSI: assumed, endEditing: { text = shown },
-            field: water == .pan || planner.settings.cooling == .tap ? .tapWater : .bowlWater
+            field: water == .pan ? .tapWater : coolingWaterGroup(planner.settings.cooling)
         )
             .onAppear { text = shown }
             .onChange(of: text) {

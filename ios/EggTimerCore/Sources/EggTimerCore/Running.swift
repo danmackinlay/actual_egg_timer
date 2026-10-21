@@ -522,16 +522,51 @@ public func cookSetupOf(_ ch: CookChoices, timeToBoilS: Double) -> CookPot {
             waterLitres: ch.waterLitres,
             afterBoil: ch.afterBoil,
             eggCount: ch.eggCount,
-            // The water the eggs cool in: running water's temperature if
-            // given; a bowl's volume, and its temperature if given. An
-            // absent temperature is assumed where it is read (`coolingMediumC`).
-            coolingWaterC: ch.cooling == .tap ? ch.tapWaterC : ch.cooling == .bowl ? ch.bowlWaterC : nil,
+            // The water the eggs cool in: its temperature if given; a bowl's
+            // volume. An absent temperature is assumed where it is read
+            // (`coolingMediumC`).
+            coolingWaterC: givenCoolingWaterC(ch),
             bowlLitres: ch.cooling == .bowl ? ch.bowlLitres : nil,
             // A cold pan's water, the cold tap's, given or assumed: written
             // either way, so a record never leans on the default.
             panStartC: ch.startMode == .cold ? ch.tapWaterC ?? Constants.tColdTapC : nil
         )
     )
+}
+
+// MARK: - The cooling water
+
+/// The TypeScript's `CoolingWaters`: what a cook's choices hold of the waters
+/// it may cool in. `CookChoices` is one, and so are the app's settings.
+public protocol CoolingWaters {
+    var cooling: Cooling { get }
+    var tapWaterC: Double? { get set }
+    var bowlWaterC: Double? { get set }
+}
+
+extension CookChoices: CoolingWaters {}
+
+/// The temperature the cook gave of the water this cooling cools in: running
+/// water's, the cold tap's, or the bowl's; nil when none was given, and for
+/// ice or the air.
+public func givenCoolingWaterC(_ w: some CoolingWaters) -> Double? {
+    switch w.cooling {
+    case .tap: w.tapWaterC
+    case .bowl: w.bowlWaterC
+    case .ice, .counter, .eggCup: nil
+    }
+}
+
+/// `w` with the temperature of the water this cooling cools in given as `c`,
+/// or cleared with nil; for ice or the air, `w` as it was.
+public func withCoolingWater<W: CoolingWaters>(_ w: W, _ c: Double?) -> W {
+    var out = w
+    switch w.cooling {
+    case .tap: out.tapWaterC = c
+    case .bowl: out.bowlWaterC = c
+    case .ice, .counter, .eggCup: break
+    }
+    return out
 }
 
 // MARK: - The transitions
