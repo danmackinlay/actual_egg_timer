@@ -142,7 +142,6 @@ export function readoutAt(
     spoken = { say: 'pull', args: {} };
     hint = { seconds: coolingStartsIn_s(d, ch.cooling, now_s) ?? 0 };
   } else if (phase === 'COOLING') {
-    // Never past its end.
     const toCool = Math.max(0, (d.coolEnd_s ?? now_s) - now_s);
     clock = toCool;
     spoken = { say: 'cooling', args: { time: toCool } };

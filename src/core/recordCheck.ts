@@ -110,7 +110,8 @@ const ALWAYS_WRITTEN = ['uid', 'model', 'yolkWord', 'white', 'probe', 'forecast'
 /**
  * A record read back from storage, or null if it cannot be trusted.
  *
- * The rules are `loadCalibration`'s: finite, and positive where the physics
+ * The rules are the stored posterior's (`readPosterior`,
+ * src/ui/calibrationStore.ts): finite, and positive where the physics
  * needs it, because a record that passes here is folded into the posterior, and
  * a zero mass or a NaN cook time reaches a solve as a plausible wrong answer.
  * Ranges are physical rather than the UI's `LIMITS`, so a record never turns

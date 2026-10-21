@@ -14,8 +14,8 @@ import { type AppName, MODEL_ID } from './recordSchema.ts';
  * characters. Nothing here reads a clock: the moment of the export is handed
  * in. */
 
-/** The results file's own version. A reader refuses any other. A file of
- *  this version from before 0.5 also has `unread`, the stored copies its app
+/** The results file's own version. A reader refuses any other. An older
+ *  file of this version may also have `unread`, the stored copies its app
  *  could not read; the import tool still reads those. */
 export const RESULTS_FILE_VERSION = 1;
 

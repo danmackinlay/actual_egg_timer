@@ -195,8 +195,8 @@ export function sectionView(s: EggSection, whiteTarget_min: number): SectionView
  * shown at the end of the cooling, the egg as eaten: carried through the
  * whole carryover (`carryoverWindow_s`), as `simulate` counts it, so the yolk
  * reads the level the slider asked for. At the yolk centre's peak, which is
- * Done, the dose is not all in: a jammy (0.41) yolk read 0.34 there. About
- * 2,700 steps for a soft-boiled egg: once per solve, not per frame.
+ * Done, the dose is not all in. A whole cook's steps: once per solve, not per
+ * frame.
  */
 export function previewSection(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, whiteTarget_min: number,

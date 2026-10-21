@@ -3,8 +3,7 @@
  * cook. Both apps render these keys and fill in their own arguments (a clock,
  * a quantity in the cook's units); the CHOICE of key is here, so the two apps
  * cannot choose differently, and `fixtures/wording.json` holds it for Swift
- * (`Wording.swift`). Here, the choice is tested once for both apps; each
- * app's screens only render it.
+ * (`Wording.swift`).
  *
  * Nothing here renders text. A key's own arguments that core can answer (a
  * count) come back in a `CopyRef`; the rest the app supplies, and a template
@@ -35,7 +34,6 @@ const REFUSAL_KEYS: Record<Cooling, CopyKey> = {
  *
  * The DECISION (which refusal, where the slider goes, whether the gap is
  * worth a sentence) is `verdictFor`; this is only which words teach it.
- * A yolk too soft for the white is blamed on the cooling the cook chose.
  */
 export function refusalKey(v: Verdict, cooling: Cooling): CopyRef | null {
   if (!v.worthSaying) return null;
@@ -176,10 +174,9 @@ export function timeRangeWords(
  * THE WHITE. A line of its own when P(runny) is at least WHITE_RISK, one egg
  * in five. The chosen time already weighs a runny white three times a yolk
  * miss, so what is left above one in five is a white the time cannot fix
- * without overcooking the yolk: the softest levels, and the counter's softest
- * (0.36-0.45 on a fresh install, 0.21 at runny after three eggs just right).
- * Not 0.15: a fresh install at soft reads 0.17 on the reference pot, and that
- * is the width of the prior, which is wide so the filter can learn and not
+ * without overcooking the yolk: the softest levels, and the counter's softest.
+ * Not 0.15: a fresh install at soft reads just above it on the reference pot
+ * (`npm run decide -- outcome`), and that is the width of the prior, which is wide so the filter can learn and not
  * because anyone believes it (decide.ts, "not before the first egg").
  *
  * THE RANGE. The bracket under the slider, for a screen reader: it is
@@ -414,8 +411,7 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
  */
 
 /** 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
- *  numbers it needs. Minutes and seconds stop being a useful unit somewhere
- *  around the point this app stops being useful. */
+ *  numbers it needs. */
 export function longDuration(seconds: number): CopyRef {
   const minutes = Math.round(seconds / 60);
   if (minutes < 90) return { key: 'duration.minutes', args: { minutes: minutes } };

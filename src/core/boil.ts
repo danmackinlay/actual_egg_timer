@@ -38,9 +38,9 @@ export function rememberBoil(memory: BoilMemory, litres: number, seconds: number
  * (energy is roughly proportional to mass), else the default.
  *
  * The nearest volume is found over SORTED keys, and ties go to the smaller
- * volume. That is not fussiness: the web iterated insertion order and Swift
- * iterated a Dictionary's arbitrary order, so two equidistant pans could give
- * the two apps different answers.
+ * volume. That is not fussiness: in insertion order on the web and a
+ * Dictionary's arbitrary order in Swift, two equidistant pans could give the
+ * two apps different answers.
  */
 export function estimateTimeToBoil(memory: BoilMemory, litres: number): number {
   const exact = memory[volumeKey(litres)];

@@ -28,8 +28,7 @@ export const ALARM_PERIOD_S: Record<AlarmSound, Record<AlarmMoment, number>> = {
 
 /** How long an alarm the app sounds itself rings, s, unless the cook stops
  *  it first: long enough for a cook across the room to hear it and walk
- *  over, short enough not to ring for ever in an empty kitchen. The beeps
- *  before these sounds rang 25 periods of 1.6 s. */
+ *  over, short enough not to ring for ever in an empty kitchen. */
 export const ALARM_RING_S = 40;
 
 /** How many periods of the pattern an alarm the app sounds itself rings: as

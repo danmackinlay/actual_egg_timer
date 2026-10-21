@@ -1,65 +1,30 @@
 /**
- * Sequential Bayesian calibration from ordinal feedback.
+ * Sequential Bayesian calibration from ordinal feedback (INFERENCE.md
+ * sections 2 and 3).
  *
- * The model's constants are literature-derived, and the carryover term has no
- * published measurement behind it at all. Rather than guess better, make the
- * uncertainty explicit and let the cook's own eggs resolve it: after each cook
- * they may say how the yolk was (runny, soft, jammy, fudgy or hard) and how
- * the white next to it was (runny, tender or firm), and we update a posterior.
+ * After each cook the cook may say how the yolk was (runny, soft, jammy,
+ * fudgy or hard) and how the white next to it was (runny, tender or firm),
+ * and may give a probe reading; a particle filter folds them into a posterior
+ * over five scalars. Particles, not variational inference: with five scalars
+ * and a cached forward model they give the exact posterior predictive in
+ * array arithmetic that ports to Swift unchanged. Conditional on the
+ * parameters the modal field is exact, so all the uncertainty lives in them.
  *
- * METHOD: sequential Monte Carlo (a particle filter), NOT variational
- * inference. VI buys scalability in high dimensions at the cost of gradients,
- * an optimiser, and an approximation gap. There are five uncertain scalars
- * here and a cached forward model, so particles give the exact posterior
- * predictive with none of that machinery, in a few hundred lines of array
- * arithmetic that port to Swift unchanged.
+ * The likelihood is an ordered probit. The yolk's latent is the delivered
+ * log10 dose less the cook's taste offset, seen through a Gaussian of sd
+ * `noise`, against the cuts where the slider's word changes
+ * (`YOLK_WORD_CUTS`). The white, judged at YOLK_RADIUS_FRAC, has two
+ * cutpoints of its own: runny | tender at WHITE_DOSE_TARGET shifted by
+ * `whiteOffset`, and tender | firm `whiteFirmGap` above that. The white
+ * offset is learned because one cook cannot tell the white's lag from their
+ * idea of "runny", and because against a fixed target the H_EFF error README
+ * 11.2 records would be pushed into alpha. A small `UNRELATED` share of every
+ * answer is uniform over the answers.
  *
- * There is also a structural reason no approximation of the temperature FIELD
- * is needed: the modal scheme represents it as mode amplitudes whose dynamics
- * are linear, so conditional on the parameters the field is exact. All the
- * uncertainty lives in the parameters. The spread across particles is the
- * posterior over egg temperature.
- *
- * THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
- * yolk, the cook names the yolk they got in the
- * slider's own five words, and the latent is the delivered log10 dose less
- * the cook's taste offset; the answer says which of five bands it fell in,
- * cut where the slider's word changes (`YOLK_WORD_CUTS`). It is seen
- * through a Gaussian whose sd is the cook's own `noise`. A particle
- * just outside the band is then a little wrong rather than exactly as wrong as
- * one a decade away - more information per answer, and no cliff for the filter
- * to fall over. A small `UNRELATED` share of every answer is uniform over the
- * answers: somebody tapped the wrong button, or answered about yesterday's egg.
- *
- * TWO CHANNELS. The white is judged at YOLK_RADIUS_FRAC, the innermost white,
- * against two cutpoints of its own: runny | tender at WHITE_DOSE_TARGET shifted
- * by the particle's `whiteOffset`, and tender | firm a learned `whiteFirmGap`
- * above that. On one phone the white offset is the white's lag and the cook's
- * idea of "runny" together - a single cook cannot tell them apart (INFERENCE.md
- * section 2) - and it is the second-strongest direction in the data, so it is
- * learned rather than held constant.
- *
- * IDENTIFIABILITY - stated honestly:
- *  - Ordinal feedback is worth 1-2 bits per egg. The posterior on alpha
- *    plateaus around 3%: repeated "just right" answers are consistent with a
- *    range, so learning correctly stops rather than falsely converging.
- *  - alpha and the taste offset are confounded at a fixed protocol in the yolk
- *    channel, and alpha and the white offset in the white channel. Only the
- *    combinations are identified for one cook. What separates them is the
- *    geometry - alpha moves the yolk and the white together, in the physics
- *    ratio, where each offset moves one - and, once there is pooled data,
- *    other cooks.
- *  - The white is the channel most exposed to the H_EFF error README 11.2
- *    records. Scored against a FIXED target it would push that error into
- *    alpha; with the white offset, whatever the white does that alpha cannot
- *    explain has somewhere to go.
- *  - The counter's carryover (the egg's time constant in still air) is not
- *    learned. Only counter-rested cooks could inform it,
- *    and their answers mostly teach alpha and the taste offset.
- *  - The noise scale is learned from how consistent a cook's answers are, which
- *    takes many eggs. Until then it sits near its prior, which is chosen (see
- *    NOISE_MEDIAN) so that one answer near the band carries what a hard
- *    0.8 / 0.1 band would.
+ * Alpha and the taste offset are confounded at a fixed protocol, as are
+ * alpha and the white offset: one cook identifies only the combinations,
+ * which the geometry (alpha moves yolk and white together, each offset one)
+ * and other cooks' data separate. The counter's carryover is not learned.
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.ts';
@@ -156,11 +121,10 @@ export function withUnrelatedWord(p: number): number {
  * between two adjacent anchors (`anchorNear`). The slider is linear in log
  * dose, so that is also the midpoint of their log doses. Nothing new is
  * chosen here: the words, their places and the dose scale are the slider's
- * own (solve.ts). Soft and Jammy are each about 0.93 decades wide and Fudgy
- * 1.36, against the 0.56 of the old "just right".
+ * own (solve.ts).
  *
  * FROZEN, as literals: every stored yolk word is scored against these, so
- * they are what a word MEANT when the cook tapped it. They are today's
+ * they are what a word MEANT when the cook tapped it. They are the
  * anchors' midpoints to the last bit, and a test holds them there
  * (test/infer.test.ts), so moving an anchor in `DONENESS_ANCHORS`
  * fails it rather than silently rescoring every word already given. Whoever
@@ -175,26 +139,13 @@ export const YOLK_WORD_CUTS: number[] = [
 /**
  * The noise scale's prior: lognormal, median NOISE_MEDIAN decades of yolk dose.
  *
- * Chosen so that the probit is as confident as a hard band scoring 0.8 / 0.1
- * (the first filter's likelihood) where that band describes a typical egg - a
- * cook the model already roughly knows, whose particles sit around the band:
- *
- *                                         hard   probit, 0.20    at 0.207
- *   P(just right | delivered = wanted)    0.80        0.813        0.799
- *   P(just right | one band-width out)    0.10        0.093        0.100
- *   ratio                                 8.0         8.7          8.0
- *
- * 0.207 matches both exactly; 0.20 is the round number beside it, and the
- * difference is a tenth of a likelihood ratio. Where the two likelihoods
- * DISAGREE is far from the band: a particle a decade from what the cook said
- * now scores UNRELATED / 3 = 0.017, not 0.1. That is the point of the change,
- * not extra confidence, but it is worth stating what it costs. On the very
- * first egg from a fresh prior - where most particles are far from the band -
- * one yolk answer carries 0.96 bits against the hard band's 0.63. To carry only
- * 0.63 there the median would have to be about 0.48, which would make every
- * later egg, near the band, carry half of what it does. The recovery
- * experiment is the check that the first-egg sharpness does no harm
- * (test/infer.test.ts).
+ * Chosen so that, near the band, the probit is as confident as a hard band
+ * scoring 0.8 inside and 0.1 one band-width out: 0.207 matches both, and 0.20
+ * is the round number beside it. Far from the band a particle scores the
+ * unrelated floor, not 0.1, so the first egg from a fresh prior teaches more
+ * than the hard band would; a median wide enough to undo that would halve what
+ * every later egg teaches. The recovery experiment (test/infer.test.ts) is the
+ * check that the first-egg sharpness does no harm.
  *
  * The log sd is wide on purpose: a cook who answers at random should be able
  * to reach a scale of a decade in a few eggs, and one who can taste a degree
@@ -204,9 +155,8 @@ export const NOISE_MEDIAN = 0.2;
 export const NOISE_LOG_SD = 0.5;
 
 /** The white offset's prior sd, decades of white dose. Wide: half a decade is
- *  about 2.5 C of inner white, and both real eggs cooked so far, each aimed
- *  at soft, came out with the white runny: a constant white target was
- *  wrong. */
+ *  about 2.5 C of inner white, and a constant white target was wrong for the
+ *  real eggs cooked. */
 export const WHITE_OFFSET_SD = 0.5;
 
 /**
@@ -219,8 +169,7 @@ export const WHITE_OFFSET_SD = 0.5;
  * +0.06. The midpoint, -0.22, is 1.08 decades above the runny | tender cutpoint
  * (log10 0.05 = -1.30). So a Soft white sits a fifth of a decade under the cut,
  * "tender", and Jammy and above sit over it, "firm", which is where a cook would
- * put them. The same midpoint over a 58 g egg, a cold start, a tap and a
- * counter-warm egg lands between 0.98 and 1.14 decades.
+ * put them.
  *
  * Wide, because nobody has asked a cook yet: a log sd of 0.4 puts the 95%
  * range at 0.5 to 2.4 decades.
@@ -240,27 +189,18 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  * `e` is the thermometer: symmetric, about a degree for anything worth owning
  * (studies/probe.ts). `h` is the handling, and it is ONE-SIDED, and COLD. At the
  * moment the centre peaks it is the warmest point in the egg, in space and in
- * time: `npm run probe` has a probe 3 mm off reading 0.03 C low, 15 s late
- * 0.14 C low, 30 s late 0.6 C low, and a probe that has not finished
- * climbing from room temperature reads low by however far it has to go. The
- * stem, running out through a cold white into a cold room, draws heat off the
- * tip. There is no handling error that reads hot there. (At the PULL every
- * error reads hot, which is what INFERENCE.md section 3 first had in mind, and
- * why the reading is not taken at the pull.) So the sum is an exponentially
- * modified Gaussian with its tail on the cold side: a reading well under a
- * particle's peak costs it less than one the same distance over.
+ * time, so a probe off-centre or late reads low (`npm run probe` measures by
+ * how much), as does one that has not finished climbing from room
+ * temperature, and the stem, running out through a cold white into a cold
+ * room, draws heat off the tip. There is no handling error that reads hot
+ * there. (At the PULL every error reads hot, which is why the reading is not
+ * taken at the pull.) So the sum is an exponentially modified Gaussian with
+ * its tail on the cold side: a reading well under a particle's peak costs it
+ * less than one the same distance over.
  *
- * The handling mean is 0.4 C: a probe a few millimetres off and a reading a
- * quarter to half a minute late cost 0.2 to 0.8 C together. The total sd is
- * sqrt(1.0^2 + 0.4^2) = 1.08 C, where INFERENCE.md sketched "about 1.5": the
- * handling error at the peak is measured, and it is small, so the thermometer
- * is what is left. What one reading teaches, measured in test/probe.test.ts
- * on the default egg at jammy in ice: the time-scale's sd goes from the
- * prior's 12.5% to 2.7-2.8% in the weights (a 1.0 C Gaussian alone would give
- * 2.45%; the handling tail costs the rest), and the filter keeps 2.6-2.8%
- * once it has resampled, because the resample's kernel keeps the posterior's
- * spread (`resample`; a fixed 2% jitter on alpha kept 3.3-3.5%). A 1.5 C Gaussian
- * would give about 3.7% in the weights.
+ * The handling mean covers a probe a few millimetres off and a reading a
+ * quarter to half a minute late together; small, so the thermometer is most of
+ * the error. What one reading teaches is measured in test/probe.test.ts.
  *
  * A PROBE_UNRELATED share of readings has nothing to do with the egg - a probe
  * in the white, the wrong egg - and is uniform over PROBE_UNRELATED_SPAN_C, so
@@ -268,8 +208,7 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  * It is smaller than the answers' UNRELATED because the apps refuse, before it
  * is ever folded, a reading no believable kitchen could make
  * (`plausibleProbeRange_C` in running.ts), and because every per cent of it is
- * a fat tail that one reading has to fight: at 5% over 40 C the same reading
- * would leave about 3.1% in the weights rather than 2.8%.
+ * a fat tail that one reading has to fight.
  */
 export const PROBE_INSTRUMENT_SD_C = 1.0;
 export const PROBE_HANDLING_MEAN_C = 0.4;
@@ -356,8 +295,8 @@ export interface Normal {
  * the record names it (`prior`). A posterior drawn from one population is
  * replayed from the next when a release ships it.
  *
- * Independent dimensions, as the prior has always been: the fit's posterior
- * covariance is kept in the file for the record, and not used here.
+ * Independent dimensions: the fit's posterior covariance is kept in the file
+ * for the record, and not used here.
  */
 export interface Population {
   id: string;
@@ -368,9 +307,7 @@ export interface Population {
   whiteFirmGap: LogNormal;
 }
 
-/** The literature's population: the prior every cook drew from before the
- *  population fit, number for number, less the carryover, which is not a particle (a prior
- *  drawn from it is not the one drawn with it, and `LIKELIHOOD_ID` says so). '2026-09' is the id the first records gave it. */
+/** The literature's population. '2026-09' is the id the first records gave it. */
 export const LITERATURE_POPULATION: Population = {
   id: '2026-09',
   alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },
@@ -437,7 +374,7 @@ export function yolkWordProbit(grid: DoseGrid, p: Particle, cookTime_s: number):
 /** The ordered probit itself: the five yolk words' probabilities, runny to
  *  hard, for a latent log dose (delivered, less the taste offset) seen
  *  through a Gaussian of sd `noise`, against `YOLK_WORD_CUTS`. The filter
- *  scores with it, and the simulated cooks (tools/eggs.ts) answer with it. */
+ *  scores with it, and the simulated cooks (tools/eggsSimulate.ts) answer with it. */
 export function yolkWordBands(latent: number, noise: number): number[] {
   const out: number[] = new Array<number>(5);
   let below = 0.0;
@@ -470,8 +407,7 @@ export function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [n
  * anything else (INFERENCE.md section 3 says why a skip is still RECORDED).
  * The yolk and white are probabilities and the reading is a density, per
  * degree; each particle is scored on the same reading, so the units cancel in
- * the normalisation. The yolk is the yolk the cook got, in the slider's five
- * words.
+ * the normalisation.
  */
 export function answerLikelihood(
   grid: DoseGrid, p: Particle, cookTime_s: number,
@@ -508,7 +444,7 @@ export function effectiveSampleSize(post: Posterior): number {
  * what was said and not on the order it was tapped in, which is what lets a
  * replay of the log match the app bit for bit. An app that hears the second
  * answer after folding the first folds the egg again, from the posterior as it
- * stood before the egg (record.ts, `foldRecord`).
+ * stood before the egg (recordFold.ts, `foldRecord`).
  */
 export function updatePosterior(
   post: Posterior, grid: DoseGrid, cookTime_s: number,
@@ -587,17 +523,12 @@ export function whiteAnswerProbabilities(
  * The resample's kernel: Liu and West's shrinkage (2001), with discount
  * KERNEL_DISCOUNT.
  *
- * Why not a FIXED jitter - say 2% on alpha, 0.015 decades on the offsets, 3%
- * on the rest - whatever the posterior looks like? Every resample would then
- * add the same spread, in every direction independently, and three things
- * follow (they did, in this filter's first version). The time-scale cannot be
- * held tighter than about 3% (3.3% after one probe reading whose weights said
- * 2.7%). The one combination a cook's answers DO pin - the time-scale and the
- * taste together, which move a yolk in opposite directions - is pulled apart
- * at every resample, so the spread of the right cook time climbs back after
- * every second or third egg (a sawtooth: +-8 s at jammy, then +-15 s, then
- * +-8 s again, on a cook who never changed). And odds read off that inflated
- * posterior under-state the hits by 4-6 points from the fourth egg
+ * Why not a FIXED jitter, whatever the posterior looks like? Every resample
+ * would then add the same spread, in every direction independently: the
+ * time-scale could not be held tighter than the jitter, the one combination a
+ * cook's answers DO pin - the time-scale and the taste together, which move a
+ * yolk in opposite directions - would be pulled apart at every resample, and
+ * odds read off that inflated posterior would under-state the hits
  * (INFERENCE.md section 8).
  *
  * Liu and West's kernel keeps the posterior's mean and covariance through the
@@ -778,9 +709,8 @@ export interface CookTimePrediction {
  *
  * The spread comes from the posterior alone: the noise scale, which no number
  * of eggs narrows, plays no part. That makes the width the measure of what is
- * still being learned. No screen shows it; a deliberate nudge on the
- * recommendation, if one is built, would read it here (decide.ts). Times are
- * found on the grid, so they are clamped to its span.
+ * still being learned. Times are found on the grid, so they are clamped to
+ * its span.
  *
  * `lowQ` and `highQ` move the interval's ends: the certainty's likely time
  * range reads a 90% interval here (certainty.ts).

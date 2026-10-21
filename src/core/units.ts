@@ -156,11 +156,8 @@ interface QuantitySpec {
 }
 
 /**
- * LANGUAGE.md §4's table, which is the spec for Imperial. The metric steps are
- * what the web inputs already offered, rounded to what they already showed, so
- * a metric cook sees nothing move: 1 mm round the girth, 0.5 mm across,
- * 50 m, 0.25 L. The egg's mass steps in half grams, the owner's step for the
- * − and + beside it, and is shown without a ".0": 58 g, 58.5 g.
+ * LANGUAGE.md §4's table, which is the spec for Imperial. The egg's mass
+ * steps in half grams, the owner's step for the − and + beside it.
  */
 const SPECS: Record<Quantity, QuantitySpec> = {
   temperature: {
@@ -428,7 +425,7 @@ export function sizeClassLabel(c: SizeClass, system: UnitSystem): SizeLabel {
 /* ------------------------------------------------------------ the setting */
 
 /** What the platform says about the cook's preferences. The web knows only a
- *  region; iOS also knows the measurement system and, since iOS 16, the
+ *  region; iOS also knows the measurement system and the
  *  temperature unit the cook picked in Settings. */
 export interface PlatformUnits {
   region: string | null;

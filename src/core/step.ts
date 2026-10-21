@@ -22,7 +22,7 @@
  *    written (`eventsDue`) and the cook planned again with them; the plan as
  *    it ran is kept once the egg is out and a plan is on its surface
  *    (`keepAsRan`). A tick plans only when something is due: the slow hob's
- *    moment, an event, the cook too old. A plan costs tens of milliseconds.
+ *    moment, an event, the cook too old.
  * 3. THE RECORD. Once something has been said about the egg, its record is
  *    made (`cookFactsFor`) and logged, and made again when more is said or a
  *    correction after the pull changes it; an answer the record cannot yet
@@ -43,8 +43,8 @@
  * pull, not Done). The ring stops when the cook took the egg out, said the
  * pull stands, or a correction undid the ring.
  *
- * Pure, like the rest of `src/core/`: times are the events' own, epoch
- * seconds. `Step.swift` is held to it by the traces in `fixtures/step.json`.
+ * Times are the events' own, epoch seconds. `Step.swift` is held to it by
+ * the traces in `fixtures/step.json`.
  */
 
 import type { AlarmMoment } from './sounds.ts';

@@ -25,8 +25,8 @@
  * What is each app's: when and where the steps run, what is built for them,
  * what is stored and how, and carrying out the effects. The app gives each
  * cook's calibration before its egg and local day (`CookAt`), since core
- * has no time zone. Pure, like the rest of `src/core/`. `Cooks.swift` is
- * held to it by the traces in `fixtures/cooks.json`.
+ * has no time zone. `Cooks.swift` is held to it by the traces in
+ * `fixtures/cooks.json`.
  */
 
 import type { AppName, Calibration } from './record.ts';

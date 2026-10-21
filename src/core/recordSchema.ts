@@ -15,23 +15,14 @@ export const RECORD_VERSION = 1;
 
 /* WHICH PRIOR. A record's `prior` is the id of the population the cook's
  * prior was drawn from (population.ts): '2026-09', the literature's, until a
- * fit publishes another. Before sharing it named the policy too - '2026-09' a
- * three-number particle, '2026-09-e2' six numbers whose white offset moved
- * the recommendation, '2026-09-e5' the time chosen from the whole posterior -
- * and the policy is now `model`'s to say. */
+ * fit publishes another. Older ids, which named the policy too, are
+ * INFERENCE.md section 4's; the policy is `model`'s to say. */
 
 /** The code that made the record's forecast and chose its time: the
  *  likelihood, the decision and the nudge. Changed whenever any of
  *  them changes, so that the model as it SHIPPED can be scored after the code
  *  has moved on; a replay can only say what the current code
- *  would have said. '2026-10-e6' is the likelihood and the decision
- *  under uncertainty, with the forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
- *  sharing; '2026-10-e9' asks the cook which yolk they got, in five words,
- *  and forecasts those five; '2026-10-e10' holds the counter's carryover at
- *  1.0 instead of carrying it in the particle, which draws another prior from the same seed;
- *  '2026-10-e11' starts a cold pan at the cold tap's temperature, 15 C
- *  unless the cook gives theirs, not the room's.
- *  Records from before sharing carry none.
+ *  would have said.
  *
  *  It is the record's provenance (`model`, sent with each record, read by the
  *  fit) and never decides a replay: `LIKELIHOOD_ID` does. A new likelihood
@@ -51,8 +42,8 @@ export const MODEL_ID = '2026-10-e11';
  *  this moves. */
 export const LIKELIHOOD_ID = '2026-10-e10';
 
-/** Where the egg's mass came from. A size class is a 10 g bucket, worth about
- *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
+/** Where the egg's mass came from. A size class is a 10 g bucket; a scale is
+ *  a gram. The fit reads this as egg-level noise. */
 export type MassFrom = typeof MASS_FROMS[number];
 
 /** Every source of a mass, as a record may carry one. */
@@ -69,10 +60,10 @@ export const EGG_FROMS = ['fridge', 'room', 'custom'] as const;
  *  HEATING without it; but a tap after a late correction to cold is not
  *  trusted, and that cook runs on the `remembered` pan. A hot start never times the pan, so it cooks on the
  *  `remembered` pan, or on the `default` guess when no pan has ever been
- *  measured. With the heat off, records from before 27 September took the
- *  pan's whole cooling curve from this number (the standing method's pan
- *  constant now comes from the water volume, `panTimeConstant`), so this also
- *  says how hard those cooks leaned on it. */
+ *  measured. With the heat off, records from before the standing method's pan
+ *  constant came from the water volume (`panTimeConstant`) took the pan's
+ *  whole cooling curve from this number, so this also says how hard those
+ *  cooks leaned on it. */
 type TimeToBoilFrom = typeof TIME_TO_BOIL_FROMS[number];
 
 /** Every source of the time to boil, as a record may carry one. */
@@ -155,9 +146,8 @@ interface RecordEgg {
 }
 
 /** The pot, as the solver was told it. Every field `CookSetup` has, plus where
- *  the egg's temperature came from. `ambient_C` is here although the example in
- *  INFERENCE.md omits it: the app derives it from the egg's start temperature by
- *  a policy rule (`ambientFor`), and a record that relied on the rule could not
+ *  the egg's temperature came from. `ambient_C` is here because the app
+ *  derives it from the egg's start temperature by a policy rule (`ambientFor`), and a record that relied on the rule could not
  *  be replayed faithfully once the rule changed. */
 export interface RecordSetup {
   startMode: StartMode;
@@ -188,8 +178,9 @@ export interface RecordSetup {
 
 export interface EggRecord {
   v: 1;
-  /** The cook's random id, for opt-in collection, which is not built: nothing
-   *  mints one yet. Never derived from anything. */
+  /** The cook's random id (`isUid`, share.ts) on a record as sent
+   *  (`sharedRecord`); null in the log the device keeps. Never derived from
+   *  anything. */
   uid: string | null;
   /** The local date the cook started, YYYY-MM-DD. A day, not a timestamp. */
   day: string;
@@ -212,8 +203,9 @@ export interface EggRecord {
   level: number;
   /** What the solver said, s from egg-in to egg-out. */
   recommended_s: number;
-  /** What the app added to it on purpose, to learn from. Nothing adds any
-   *  yet, so it is zero. */
+  /** What the app added to it on purpose, to learn from: the nudge
+   *  (`nudgeSeconds`, decide.ts): zero on the web, and on iOS unless the
+   *  cook is sharing. */
   nudge_s: number;
   /** When the egg came out, s from egg-in. See `pulledBy`. */
   pulled_s: number;

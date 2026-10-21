@@ -32,9 +32,9 @@ export const DEFAULT_PARAMS: ModelParams = {
  *  constraint is at the yolk boundary - the innermost white is the last to
  *  set, which is exactly the radius Williams' 0.76 encodes.
  *
- *  Calibrated so the shortest white-setting cook is ~5.8 min for a fridge-cold
- *  large egg dropped into boiling water, giving a peak inner-white temperature
- *  near 74 C. That is genuinely set but still tender: ovotransferrin (62 C) and
+ *  Calibrated so the shortest white-setting cook, for a fridge-cold large egg
+ *  dropped into boiling water, leaves the inner white genuinely set but still
+ *  tender (README.md section 6): ovotransferrin (62 C) and
  *  lysozyme (~70 C) have denatured, ovalbumin (80 C) has not. Demanding full
  *  ovalbumin set instead would forbid the classic soft-boiled egg, which
  *  plainly exists. */
@@ -169,8 +169,7 @@ export function simulate(
 
     // Stop once the egg is past its peak and cooling, and the remaining dose
     // rate is a millionth of the peak rate - further integration cannot change
-    // the answer. Because z ~ 4.65 K the rate collapses fast, so this typically
-    // cuts an ice-bath simulation in half.
+    // the answer. Because z ~ 4.65 K the rate collapses fast.
     const rate = Math.pow(10.0, (yolkCentre - TREF_YOLK_C) / Z_YOLK);
     if (rate > peakDoseRate) peakDoseRate = rate;
     if (t > cookTime_s && yolkCentre < prevYolk && rate < 1e-6 * peakDoseRate) break;
@@ -341,9 +340,7 @@ function indexOfMax(values: number[]): number {
  * exact. With the heat off that is false: pulling later means pulling from
  * cooler water, so the carryover that follows is smaller, and past a certain
  * point the total dose FALLS with a longer cook. Bisection on a non-monotonic
- * function does not merely lose accuracy - it lands anywhere, which showed up
- * as cook times jumping between 3 and 13 minutes for a 5 C change in room
- * temperature.
+ * function does not merely lose accuracy - it lands anywhere.
  *
  * So: walk the samples until the target is first met, then bisect inside that
  * one step, where the function is still rising.

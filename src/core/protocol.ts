@@ -20,8 +20,9 @@ export type StartMode = typeof START_MODES[number];
 export const START_MODES = ['cold', 'hot'] as const;
 
 /** What happens after the egg comes out. This is not a detail: it changes the
- *  peak yolk temperature by ~20 C. 'bowl' is a bowl of still water the eggs
- *  are put into and left in, which they warm (`bowlTemperature`). 'counter'
+ *  peak yolk temperature (README.md section 5). 'bowl' is a bowl of still
+ *  water the eggs are put into and left in, which they warm
+ *  (`bowlTemperature`). 'counter'
  *  is the egg left whole in the air until it is cool; 'eggCup' is the same
  *  egg in the air, eaten warm from an egg cup, opened EGG_CUP_OPENED_S after
  *  the pull (`carryoverWindow_s`). */
@@ -98,16 +99,13 @@ export interface CookSetup {
   bowlLitres?: number;
   /** The water a cold pan starts at, C: what it was filled with, from the
    *  cold tap. Read only on a cold start, where the ramp starts at it.
-   *  Absent, the pan starts at `ambient_C`, as every setup did before the
-   *  field, so a record without it replays as it was cooked. */
+   *  Absent, the pan starts at `ambient_C`, so a record without it replays
+   *  as it was cooked. */
   panStart_C?: number;
 }
 
-/* The egg's MASS is not here. It was, and it duplicated `Egg.mass_kg` - so
- * `simulate(egg, setup, ...)` took the same number twice and every caller had
- * to keep the two in step by hand. The validation had to remember an
- * override in its size sweep or it would silently have modelled four different
- * eggs against one fixed water dip. The setup is the POT; the egg is the egg. */
+/* The egg's MASS is not here: it is `Egg.mass_kg`. The setup is the POT; the
+ * egg is the egg. */
 
 /**
  * Pan heating ramp. Constant power into a lumped water mass with Newtonian
@@ -119,10 +117,8 @@ export interface CookSetup {
  * T0 is the water the pan was filled with (`CookSetup.panStart_C`), or the
  * room. The losses are taken toward T0 rather than toward the room, so r
  * is the overshoot over the start's own gap to the boil. Losses toward the
- * room are as closed a form, and move the cook by under 2 s for a tap 5 C
- * below the room and by 4.4 s at most for one 15 C below (8.4 s with the
- * heat off near fudgy on a four-minute ramp): inside what r itself is
- * uncertain by, which is worth about 30 s on a ten-minute ramp.
+ * room are as closed a form, and move the cook by less than r itself is
+ * uncertain by (README.md section 2.4).
  *
  * The overshoot ratio r = P/(U*dT) has a directly observable meaning: 1/r is
  * the fraction of full burner power needed to HOLD a boil, which measured
@@ -132,7 +128,7 @@ export interface CookSetup {
  *   tau = t_boil / ln(r/(r-1))
  *
  * A linear ramp is the r -> infinity limit; at r = 3 the two differ by about
- * 4 C at the midpoint, worth ~30 s of cook time on a 10-minute ramp.
+ * 4 C at the midpoint.
  */
 function rampTemperature(
   t_s: number, timeToBoil_s: number, start_C: number, boiling_C: number,
@@ -167,12 +163,10 @@ function dipMagnitude(egg: Egg, setup: CookSetup): number {
  * through as V^(2/3) for similar-shaped pans. The reference is pinned to
  * Williams' 17-minute method in 2 L (see TAU_STANDING_REF_S).
  *
- * Why not the time to boil over ln(r/(r-1))? That is the same tau only if the
- * hob's overshoot ratio r is known, and r is the HOB, not the pan: a strong
- * hob would read as a pan that cooled about 2.2 times too fast. And a hot
- * start, which never times the boil, would cool at the rate of whatever pan
- * was remembered. So the time to boil shapes the cold-start ramp and nothing
- * else. See constants.ts for what is judgement.
+ * Not the time to boil over ln(r/(r-1)): that reads the hob's r as much as
+ * the pan (see TAU_STANDING_REF_S), and a hot start, which never times the
+ * boil, would cool at the rate of whatever pan was remembered. See
+ * constants.ts for what is judgement.
  */
 export function panTimeConstant(waterLitres: number): number {
   if (!(waterLitres > 0.0)) return 0.0;
@@ -252,11 +246,10 @@ export function coldestTouched_C(s: TouchedFacts): number {
  * state itself.
  *
  * Well mixed, with no heat to the room or into the bowl itself: over the few
- * minutes that decide the yolk, the room's exchange (a time constant near two
- * hours at 2 L) and a ceramic bowl's own heat capacity are each worth under a
- * second of cook, and eggs lying still in water that has not mixed are worth
- * one (README.md section 2.4). A bowl with no water given is no bowl: the
- * water never warms, as running water at its temperature.
+ * minutes that decide the yolk, the room's exchange, a ceramic bowl's own heat
+ * capacity and water standing unmixed round the eggs are each worth a second
+ * of cook or less (README.md section 2.4). A bowl with no water given is no
+ * bowl: the water never warms, as running water at its temperature.
  */
 export function bowlTemperature(egg: Egg, setup: CookSetup, meanAtPull_C: number, mean_C: number): number {
   const start = coolingMedium_C(setup);
@@ -268,9 +261,8 @@ export function bowlTemperature(egg: Egg, setup: CookSetup, meanAtPull_C: number
 
 /**
  * The egg's Newtonian cooling time constant on the counter, s: m*c/(h*A) over
- * the equal-volume sphere, with h = H_AIR. 1860 s for a 62 g egg; it goes as
- * the radius (heat held as R^3, shell as R^2), so a 76 g egg holds its heat
- * 7% longer and a 48 g one 8% shorter.
+ * the equal-volume sphere, with h = H_AIR. It goes as the radius (heat held
+ * as R^3, shell as R^2).
  */
 export function airTimeConstant(egg: Egg): number {
   return egg.mass_kg * C_EGG / (H_AIR * 4.0 * Math.PI * egg.radius_m * egg.radius_m);
@@ -306,8 +298,9 @@ export function wetShellDrop_C(egg: Egg): number {
  * first, while the heat of the outer white is still arriving, then below the
  * mean as the egg empties (robinSurface). The time constant is the egg's own (airTimeConstant), about
  * 5.5 times the slowest internal mode, so the egg evens out while it cools;
- * but by the time the yolk peaks, the counter has taken 7-9 C off what an
- * insulated egg would reach. It is cooling, slow beside water, not a lid.
+ * but by the time the yolk peaks, the counter has taken several degrees off
+ * what an insulated egg would reach (README.md section 5). It is cooling,
+ * slow beside water, not a lid.
  *
  * The water on the shell evaporates in seconds and takes its latent heat
  * (wetShellDrop_C) out of the egg on the way, withdrawn over TAU_PLUNGE so the

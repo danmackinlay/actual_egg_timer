@@ -2,8 +2,8 @@
  * Cached dose surface, so Bayesian calibration is fast enough to run in a UI.
  *
  * The particle filter needs the delivered dose for every particle at the cook
- * time actually used. Calling simulate() per particle costs ~1.9 ms, so 2000
- * particles is ~3.4 s - far too slow. Precomputing log10(dose) on a grid over
+ * time actually used, and a simulate() per particle is far too slow.
+ * Precomputing log10(dose) on a grid over
  * (alpha, cook time) and interpolating bilinearly turns each particle lookup
  * into a handful of flops.
  *
@@ -48,7 +48,7 @@ export interface GridSpec {
 }
 
 /** Where the dose surface goes, given its centre and the cook. Production is
- *  `calibrationGrid` (record.ts); the fixtures and tests pass a coarser one so
+ *  `calibrationGrid` (recordFold.ts); the fixtures and tests pass a coarser one so
  *  a replay of several eggs costs a fraction of a second rather than several. */
 export type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
 
@@ -66,9 +66,8 @@ function safeLog10(v: number): number {
   return v <= 1e-12 ? LOG_FLOOR : Math.log10(v);
 }
 
-/** Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
- *  the default 21 x 32. Rebuild only when the egg or setup change, never on
- *  every keystroke. */
+/** Build the surface. Cost is alphaCount * timeCount simulations: rebuild
+ *  only when the egg or setup change, never on every keystroke. */
 export function buildDoseGrid(egg: Egg, setup: CookSetup, spec: GridSpec): DoseGrid {
   const { alphaMin, alphaMax, alphaCount, timeMin_s, timeMax_s, timeCount } = spec;
   const logAlphaMin = Math.log(alphaMin);

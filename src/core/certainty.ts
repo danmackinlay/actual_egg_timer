@@ -2,8 +2,8 @@
  * How sure the timer is, in words (INFERENCE.md section 8,
  * "How sure, in words").
  *
- * The cook names the yolk they got in the slider's five
- * words, and the outcome already carries the posterior predictive of those
+ * The cook names the yolk they got in the slider's five words, and the
+ * outcome carries the posterior predictive of those
  * five words at the chosen time (`yolkWordProbabilities`, the record's
  * `forecast.yolkWord`). This reads that spread against the word the cook
  * asked for and says three things: a certainty class, the 90% interval in
@@ -60,15 +60,13 @@
  * taste, and could name other words than these.
  *
  * THE TIME RANGE. The 90% credible interval of the right cook time for the
- * level asked: `predictCookTime` at the 5% and 95% points, the same per-
+ * level asked: `predictCookTime` at the 5% and 95% points of the per-
  * particle right time (the later of the yolk's centre and the white's
- * cutpoint) that "still learning" reads at 80%. It says how sure the timer
+ * cutpoint). It says how sure the timer
  * is of the time itself, and narrows as it learns, as the words do. It is
  * not where a given yolk word comes out: see INFERENCE.md for the
  * alternatives and why not. Its own function and two constants, so the
  * owner's choice changes here and nowhere else.
- *
- * Pure, like the rest of `src/core/`.
  */
 
 import type { DoseGrid } from './doseGrid.ts';
