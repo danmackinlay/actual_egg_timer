@@ -1,59 +1,42 @@
-# The app is static: TypeScript bundled by esbuild into ES modules, no runtime
-# dependencies. `npm run build:site` (tools/buildSite.ts) builds the whole
-# site into _site/: the scripts under bundle/, each named for its contents,
-# which index.html's one module script loads, beside the page, the styles,
-# the artwork, the words in copy/, the privacy page (privacy/index.html, so
-# /privacy finds it on any host), the prior's population, and last the
-# service worker that lists all of it (sw.js, tools/precache.ts).
+# A static site: `npm run build:site` (tools/buildSite.ts) builds it into
+# _site/, with the service worker that lists all of it (sw.js,
+# tools/precache.ts) written last.
 
 [build]
   command = "npm run build:site"
   publish = "_site"
 
-# The one function: the collection endpoint for cooks who turn sharing on
-# (INFERENCE.md section 7). netlify/functions/
-# eggs.mts binds server/eggs.ts to the site's Blobs store; Netlify bundles it
-# from source with esbuild, imports of ../src/core included, so `build:site`
-# does not build it. Its routes (/api/eggs, /api/attest) and its per-address
-# rate limit are in the function's own `config`, which is the only place
-# Netlify reads a function's rate limit from. This is the directory Netlify
-# looks in anyway; it is written out so that nobody has to know that.
+# The collection endpoint for cooks who turn sharing on (INFERENCE.md
+# section 7): netlify/functions/eggs.mts binds server/eggs.ts to the site's
+# Blobs store. Netlify bundles it from source, so `build:site` does not. Its
+# routes and rate limit are in the function's own `config`, the only place
+# Netlify reads a function's rate limit from.
 [functions]
   directory = "netlify/functions"
 
-# Node version lives in .node-version, not here: one file, which nvm, fnm and
-# Netlify all read, so the deploy builds on the same Node the tests ran on.
-# Netlify's own default is 24 as of July 2026; NODE_VERSION set here would
-# silently override the file, so it deliberately is not set.
+# Node's version is in .node-version, which nvm, fnm and Netlify all read.
+# NODE_VERSION set here would silently override it, so it is not set.
 
 # The scripts are named for their contents (bundle/main-<hash>.js), so a
-# name never changes what it holds, and a browser may keep one for a year
-# without asking. index.html names this build's, and is revalidated (below).
-# bundle/ is a path no earlier build used: the scripts were app/ and, on the
-# 19 September site, dist/, under fixed names, and that site sent /dist/* as
-# immutable for a year. A browser may still hold those, so never mark /app/*
-# or /dist/* immutable.
+# browser may keep one for a year. Never mark /app/* or /dist/* immutable:
+# earlier builds served fixed-name scripts there, and a browser may still
+# hold them.
 [[headers]]
   for = "/bundle/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# The words are revalidated on every load, not cached for a year. They keep
-# their names across deploys, so "immutable" here would be a false promise:
-# a returning browser would run this month's scripts against last month's
-# words, and the catalogue's keys depend on both coming from one build.
-# Revalidating costs one conditional request per file, which Netlify's edge
-# answers with a 304 from its own cache; the edge copy is purged on every
-# deploy. Once the service worker has a build, it answers for these anyway
-# (below). This is also Netlify's default for a file with no rule; it is
-# written out so that nobody adds the year back.
+# The words keep their names across deploys, so they are revalidated on every
+# load: a year's cache would run this build's scripts against another build's
+# catalogue. Netlify's edge answers the revalidation with a 304. Netlify's
+# default too; written out so that nobody adds the year back.
 [[headers]]
   for = "/copy/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Icons and the social card change only when the artwork does, but they keep
-# their filenames when they do - so a day, not a year, and no immutable.
+# Icons and the social card keep their filenames when the artwork changes:
+# a day, not a year, and no immutable.
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -70,27 +53,20 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# The service worker (tools/precache.ts writes it at build). Once a browser
-# has it, the page and everything above come from the one build it keeps,
-# not from these headers, and this file is how the browser learns of the
-# next build. The page asks for it past the browser's cache anyway
-# (updateViaCache 'none', src/ui/offline.ts); this says the same to anything
-# in between. A change to any header in this file is a new build too, so
-# the pages the worker keeps get it (tools/precache.ts).
+# The service worker: how the browser learns of the next build. Once a
+# browser has it, the page and everything above come from the build it
+# keeps, not from these headers. A change to any header in this file is a new
+# build too (tools/precache.ts).
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Security headers, on everything. The page has no inline script, style or
-# event handler: one module script, one same-origin worker (the grid worker's
-# bundle) and the service worker (sw.js), same-origin fetches (copy/*.json, the
-# population, /api/* when sharing is on), styles.css, and the images, fonts
-# and sounds in assets/. The slider's shading is set through element.style
-# from script, which a CSP does not govern. So a strict policy costs nothing,
-# and anything it blocks is a regression worth hearing about. The wake lock
-# (the screen stays on while a cook runs) is the one powerful feature the page
-# uses.
+# The page has no inline script, style or event handler, and loads only
+# same-origin resources (the slider's shading is set through element.style,
+# which a CSP does not govern), so a strict policy costs nothing and anything
+# it blocks is a regression. The wake lock (the screen stays on while a cook
+# runs) is the one powerful feature it uses.
 [[headers]]
   for = "/*"
   [headers.values]

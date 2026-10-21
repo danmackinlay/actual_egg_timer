@@ -1,6 +1,5 @@
 // The tests, the tools, the server, the Netlify function and the studies, on
-// Node, over the app and core as they import them. One of the three
-// type-checks `npm run typecheck` runs; Node runs these from their sources.
+// Node, over the app and core as they import them.
 {
   "extends": "./tsconfig.base.json",
   "include": ["test/**/*.ts", "tools/**/*.ts", "server/**/*.ts", "netlify/**/*.mts", "studies/**/*.ts"]
