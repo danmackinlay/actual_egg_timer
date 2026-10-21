@@ -261,7 +261,8 @@ moves the cook (3.5 s from 0.5 to 4 L), so 2 L is within 3 s of any other volume
 six eggs; the egg count adds 5.5 s from 1 to 12 eggs in 2 L. The ratio of egg to water
 decides the handling instead: past about 0.5 kg of egg per kilogram of water (about seven
 large eggs a litre) the bowl settles near 40 °C and the eggs take ten minutes or more to
-be cool enough to peel, and past about 0.8 never are until the water is changed. Below
+be cool enough to peel, and past about 0.8 take from 25 minutes to over an hour, as the
+water itself settles above 40 °C and cools only through the bowl to the room. Below
 0.5 the warming is worth under 9 s. Nothing in the yolk's numbers asks for a warning
 (there is none, `DECISIONS.md` 115): the softest yolk with the white set is 0.04 of the
 slider at the base and at most 0.20 across 1-12 eggs in 0.5-4 L, so soft (0.22) is always
