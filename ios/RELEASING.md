@@ -254,11 +254,16 @@ again.
   "Manage version and build number"**, which would rewrite the build number
   (`ios/ExportOptions.plist` says why). Signing in again in Xcode's Accounts
   pane makes the script work next time.
-- **"Copy failed"**: Homebrew's rsync is ahead of Apple's on the PATH; the
-  distribution log
+- **"Copy failed"**: a second rsync on the PATH. Exporting copies with
+  Apple's `/usr/bin/rsync`, which starts its other half by name, and
+  Homebrew's rsync 3.x rejects its options; the distribution log
   (`$TMPDIR/ActualEggTimer_*.xcdistributionlogs/IDEDistributionPipeline.log`)
   shows `rsync: on remote machine: --extended-attributes: unknown option`.
-  `brew unlink rsync`, and upload again. Met 2 October 2026.
+  `ios:upload` runs `xcodebuild` with the system's default PATH (`getconf
+  PATH`), as Xcode's own window does, so a Homebrew rsync can stay installed
+  and linked; a hand-run `xcodebuild -exportArchive` needs `env
+  PATH=(getconf PATH)` in fish. `brew unlink` does not last: an upgrade
+  links the new version again.
 - **"App Store Connect access … is required" while signed in**: Xcode's App
   Store Connect helper (`com.apple.dt.Xcode.ITunesSoftwareService`) is
   crashing (`~/Library/Logs/DiagnosticReports`), and Xcode reports it as no
