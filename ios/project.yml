@@ -34,7 +34,7 @@ settings:
     # is one more than anybody can keep straight; test/tools/version.test.ts holds
     # them together.
     MARKETING_VERSION: "0.5.1"
-    CURRENT_PROJECT_VERSION: "4"
+    CURRENT_PROJECT_VERSION: "5"
     # The simulator needs no identity and must not wait on one: keeping it
     # unsigned is what keeps the build-run-screenshot loop fast. Device
     # builds sign normally, which is what the entitlement requires.
