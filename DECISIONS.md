@@ -1149,3 +1149,10 @@ Decided by the owner, 20 October 2026:
     a device shows dispatches it (`gh workflow run verify --ref <branch>`).
     The suite is cut to what only a device shows and run as one
     `xcodebuild`.
+
+Decided by the owner, 20 November 2026:
+
+159. **The version drops its "alpha" label** (`0.5.1`, not `0.5.1-alpha.1`).
+    The label only: storage formats may still change without a migration
+    (107) until the owner says the app is in real use ("I'll wait until our
+    download count looks > 0"). iOS already carried `0.5.1`.

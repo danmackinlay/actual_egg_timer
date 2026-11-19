@@ -41,8 +41,9 @@ next is `PLAN.md`; the last section here says which document holds what.
   commit to documents alone needs no rerun. **A merge whose e2e caught a
   product bug says so in its message** ("e2e caught: …"), so the suites'
   worth can be read from `git log`.
-- **One version**, `package.json`'s (`0.x.y-alpha.n`), held in step with
-  iOS's `MARKETING_VERSION` (without `-alpha.n`) and the web's `APP_VERSION`
+- **One version**, `package.json`'s (`x.y.z`, no pre-release label since
+  `DECISIONS.md` 159), held in step with iOS's `MARKETING_VERSION` (integers
+  only) and the web's `APP_VERSION`
   by `test/tools/version.test.ts`; `npm version <v> --no-git-tag-version` sets the
   first two. A release is a tagged commit on `main`, pushed by the owner: it
   bumps the version in its own commit, tags it `git tag -a v<version> -m
