@@ -44,8 +44,9 @@ you promise anything:
 
 - A **work- or school-managed Apple Account cannot test builds.** They need a
   personal one.
-- The deployment target is **iOS 17.0**. An older phone will not be offered the
-  build at all.
+- The deployment target is **iOS 26.1** (`DECISIONS.md` NNN): an iPhone 11 or
+  later, updated. An older iOS is not offered the build at all, so ask each
+  tester to update first.
 
 ---
 
@@ -64,11 +65,19 @@ developer.apple.com/account → **Identifiers** → **+** → App IDs → App �
 
 | identifier | capability |
 |---|---|
-| `name.danmackinlay.actualeggtimer` | tick **Time Sensitive Notifications** |
+| `name.danmackinlay.actualeggtimer` | none |
 | `name.danmackinlay.actualeggtimer.widget` | none |
 
-**Explicit, not wildcard.** A wildcard profile cannot carry the entitlement, and
-TestFlight refuses the build outright with a status that does not explain itself:
+The alarms are AlarmKit's, which needs no capability: only its usage string
+in the Info.plist (`NSAlarmKitUsageDescription`), which `npm run ios:archive`
+checks. The app ID registered before 0.6 has **Time Sensitive
+Notifications** ticked, for the notifications the alarms were until then;
+nothing asks for it now, and it can be unticked once no build that uses it is
+installable (90 days after the last 0.5 upload), or left: a capability
+nothing claims does nothing.
+
+**Explicit, not wildcard.** TestFlight refuses a build signed with a wildcard
+profile outright, with a status that does not explain itself:
 
 > **Not Available for Testing** — Your build can't be used with TestFlight
 > because the provisioning profile is missing an application identifier.
@@ -78,9 +87,8 @@ is each target's profile: one named for its own bundle ID is right,
 `iOS Team Provisioning Profile: *` is the wildcard. The widget falls back to the
 wildcard whenever its identifier is not registered, even with the app's right.
 
-Automatic signing will create the identifiers for you on demand, but it will not
-invent the **capability**: that is a server-side setting, and it is why
-`ios/README.md`'s signing step 3 exists.
+Automatic signing creates the identifiers on demand; registering them here
+first makes sure both are explicit.
 
 ### 3. Create the app record
 
@@ -240,10 +248,9 @@ A failed archive puts the build number back, so fix the cause and run it
 again.
 
 - **"has uncommitted changes"**: commit or discard `ios/project.yml` first.
-- **"the time-sensitive entitlement is missing"**: the App ID lacks Time
-  Sensitive Notifications (once, step 2). Signing drops the entitlement
-  rather than failing, so the app would install and lose the alarm's way
-  through a Focus mode.
+- **"the alarms' question (NSAlarmKitUsageDescription) is missing"**: the
+  key has gone from `ios/project.yml`'s `info` properties, or is empty.
+  Without it AlarmKit sets no alarm, and nothing else says so.
 - **"population.json does not read"**: the bundled population fit does not
   vouch for itself; `fit/README.md` says how to publish one. A forced one
   only warns.
@@ -318,11 +325,9 @@ lapses, the distribution certificate goes with it.
 
 ## What this is instead of
 
-**Free provisioning (a Personal Team) is not an option here**, and not merely
-because profiles expire after 7 days and it is capped at 3 devices. A Personal
-Team **cannot sign the Time Sensitive Notifications entitlement**. `project.yml`
-already records the consequence: without it "the alarm cannot cut through a Focus
-mode". Free provisioning silently deletes the feature the app exists for.
+**Free provisioning (a Personal Team) is not an option here**: profiles expire
+after 7 days and it is capped at 3 devices, so it reaches nobody else's phone.
+(It no longer costs the alarm: AlarmKit needs no entitlement.)
 
 **Ad-hoc distribution works and is worse.** It needs every device's UDID
 registered, and each registration permanently consumes one of your 100 iPhone
@@ -348,8 +353,8 @@ already has.
   unanswered questionnaire blocks internal TestFlight specifically, I could not
   confirm.* It is a two-minute form under App Information; fill it in while
   creating the record rather than finding out.
-- **Promising it to someone on iOS 16, or on a managed Apple Account.** Neither
-  can install it, and neither failure explains itself.
+- **Promising it to someone on an iOS before 26.1, or on a managed Apple
+  Account.** Neither can install it, and neither failure explains itself.
 
 ## App Review's information request (October 2026)
 

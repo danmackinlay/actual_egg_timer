@@ -8,26 +8,30 @@ releasing has its own in `ios/RELEASING.md`.
 
 - **Silent mode mutes every notification's sound, time-sensitive or
   not.** Only Critical Alerts (an entitlement Apple rarely grants) and
-  AlarmKit's alarms sound through it; an audio session in `.playback`
-  plays through it while the app runs. An app on screen that leaves its
-  alarm to the foreground notification's `.sound` is silent on a phone
-  set to silent, and a simulator, which has no silent switch, never shows
-  it. A debug build's `-alarmTest <s>` rings both paths in seconds
-  (`ios/README.md`).
-
-- **A new simulator's notification centre stops answering when every core
-  is busy.** With a CPU hog per core, `requestAuthorization` and
-  `pendingNotificationRequests` never return, relaunch or not; half the
-  cores busy is fine. Unloaded, a new device's first request comes back
-  "not authorized" after about 20 s.
-- **An app's first install on a new simulator never has its notifications
-  authorized**: every request fails "Source is not authorized", though the
-  settings say provisional, however long it waits or relaunches. Once that
-  install has asked, the next install's work at once. `npm run ios:e2e`
-  installs the app, launches it asking, and uninstalls it, before the tests
-  install it again (`primeNotifications`, tools/iosHarness.ts); the tests
-  check the alarms once, before the first (`warmUp`,
-  ios/UITests/Harness.swift).
+  AlarmKit's alarms sound through it, which is why the alarms are
+  AlarmKit's; an audio session in `.playback` plays through it while the
+  app runs.
+- **An iOS 27 simulator never asks for AlarmKit's alarms**:
+  `requestAuthorization()` answers denied at once, with no question, on a
+  new device and a fresh install (Apple's forums, thread 849449, November
+  2026), which reports that allowing it by hand in Settings works. An iOS
+  26 simulator asks, so
+  `npm run ios:e2e` runs on the newest iOS 26 runtime there is
+  (`createDevice`, tools/iosHarness.ts).
+- **A simulator's SpringBoard crashes when an AlarmKit alarm sounds** (iOS
+  26.5): `TLAlertQueuePlayerController` sends a selector it lacks as it
+  starts the tone, and every UI test running fails with "springboard
+  crashed". Alarms set and read back fine; one sounding is a phone's to
+  show. No test lets one come: under the tests' frozen clock each is a day
+  off (`AppClock`).
+- **AlarmKit's alert sounds over the app when it is on screen**: the
+  system presents it "interrupting", as the Clock's own. An app that rings
+  for a deadline AlarmKit holds rings it twice (`deadlineToRing`'s `held`).
+- **Cancelling an AlarmKit alarm that sounds stops it.** A plan re-set at
+  its own moment, which drops that moment, would silence it as it began;
+  `Alarm.schedule` leaves one sounding.
+- **A permission the system has refused stays refused across a reinstall
+  on the same simulator**; a new device asks again.
 - **A quick synthetic tap does not flip a SwiftUI `Toggle`; a held one
   (0.15 s) does.** Screenshots lag a tap by a frame or two, so look again
   before tapping twice.
@@ -44,7 +48,7 @@ releasing has its own in `ios/RELEASING.md`.
 - **XCUITest cannot uninstall the app**, so a test cannot start from a fresh
   install, and an uninstall and an `xcodebuild` a test cost 50-70 s each on
   CI's runner. A debug build's `-resetState` empties the stores, removes the
-  notifications and ends the card instead, at each test's first launch, and
+  alarms and ends the card instead, at each test's first launch, and
   the suite is one `xcodebuild` (tools/iosE2e.ts).
 - **A simulator's app and its UI tests share the Mac's files**: neither is
   held to its container, so a directory on the Mac (`-debugDir`) carries the
@@ -75,10 +79,14 @@ releasing has its own in `ios/RELEASING.md`.
 - **The Xcode project is generated** and gitignored, as is
   `ios/Widget/Info.plist`; don't look for either in the history.
   `ios/project.yml` is the source (`ios/README.md`, "The app").
-- **`INFOPLIST_KEY_*` build settings cannot express a nested dictionary.**
+- **`INFOPLIST_KEY_*` build settings cannot express a nested dictionary,
+  nor a key Xcode does not know.**
   `INFOPLIST_KEY_NSExtensionPointIdentifier` is accepted, silently dropped,
   and the widget builds, embeds and is never recognised. An extension needs
-  a real `Info.plist`.
+  a real `Info.plist`. `INFOPLIST_KEY_NSAlarmKitUsageDescription` is dropped
+  the same way (Xcode 27.2), and AlarmKit then answers every request with
+  `Error Domain=com.apple.AlarmKit.Alarm Code=1`: the key is in the app's
+  `info` properties.
 - **An app extension whose version does not match its host is refused at
   install.** Both read `$(MARKETING_VERSION)`.
 - **The Team ID is the certificate's `OU`, not the ID in its name.** Read
@@ -87,11 +95,12 @@ releasing has its own in `ios/RELEASING.md`.
 - **ActivityKit's `Activity` is a non-Sendable class with off-actor
   methods**, so a `@MainActor` object cannot hold one and await on it under
   Swift 6. Ask the system what is running instead of keeping the handle.
+  AlarmKit's `AlarmManager` is the same: its async calls are made from a
+  `nonisolated` function, on `AlarmManager.shared`, with Sendable values in
+  and out (`Alarm.swift`).
 - **`@Observable` creates no dependency on a property the view never
   reads.** A counter bumped to force a redraw does nothing; countdowns are
   `TimelineView`'s job.
-- **A foreground notification shows nothing by default**: no banner, no
-  sound. It needs `UNUserNotificationCenterDelegate.willPresent`.
 - **A notification's sound cannot be an mp3 or m4a.** Linear PCM, IMA4,
   µ-law or a-law, in aiff, wav or caf, under 30 s, or iOS plays its
   default. IMA4 at 22.05 kHz is about 330 KB for 28.6 s.

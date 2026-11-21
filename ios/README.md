@@ -175,43 +175,53 @@ go to the open tier too.
 
 `Alarm.swift` is the reason this is a native app rather than a bookmark. A
 home-screen web app's timers are suspended the moment the screen locks, and
-WebKit has never shipped a way to schedule a local notification, so the web
-version can only ring while you are looking at it. A native app hands the
-system **absolute fire dates** up front and lets it do the waiting. The app
-reads the pending count back from the system rather than assuming: an egg
-timer that claims an alarm it has not got is worse than one with no alarm at
-all. While the app is on screen, `Ringer.swift` rings at each deadline itself,
-whether or not a notification holds it, and a notification come in the
-foreground is shown without its sound: silent mode mutes a notification's
-sound, time-sensitive or not, and not the app's ring (`.playback`). With the
-app in the background or the phone locked, the notification is all there is,
-and on silent it only vibrates.
+WebKit has never shipped a way to schedule an alarm, so the web version can
+only ring while you are looking at it. A native app hands the system
+**absolute fire dates** up front and lets it do the waiting. The app reads its
+alarms back from the system rather than assuming: an egg timer that claims an
+alarm it has not got is worse than one with no alarm at all.
 
-Both fire at **`.timeSensitive`** interruption level, which is what gets them
-through a Focus mode. That level needs the
-`com.apple.developer.usernotifications.time-sensitive` entitlement, which needs
-signing, which needs the Apple Developer Program — see **Signing** below.
-Unsigned simulator builds carry no entitlement and fall back silently to the
-default level, which is the right failure: quieter, never wrong. A device
-build carries the entitlement, signed and verified, and the alarm fires at
-`.timeSensitive` in the foreground too.
+The alarms are **AlarmKit's** (`DECISIONS.md` NNN): they sound as the Clock
+app's do, through silent mode and any Focus, with a full-screen alert on the
+Lock Screen, a banner over whatever is open, the app included, and the alert
+on a paired watch. Each is a one-off alarm at a fixed date, with the cook's
+sound and its title alone, under which the system puts Stop (iOS 26.1). There
+is no AlarmKit countdown: the Live Activity below is the countdown, and one of
+AlarmKit's would be a second card for the same egg, drawn by a widget of its
+own. AlarmKit asks the cook once, the first time a cook starts, with the
+system's own words about what alarms may do and the catalogue's
+`alarm.permission` under them (`NSAlarmKitUsageDescription`, written into
+`project.yml` by `npm run swift:constants`). No entitlement or App ID
+capability: the usage string is all it needs.
+
+An alarm sounds until the cook stops it. The plan drops a moment once it has
+come, and cancelling an AlarmKit alarm that sounds stops it, so re-setting the
+alarms leaves a sounding one alone; taking the eggs out in the app stops the
+pull's, and Cancel, Start again or an answer stop both.
+
+`Ringer.swift` rings in the app only a deadline that comes while it is on
+screen and that no alarm of the system's holds, read back at the deadline
+(`deadlineToRing`): with alarms refused, or one not set, the line above Cancel
+says "keep the app open", and this is what makes it true. A deadline the
+system holds, its alarm rings, over the app too.
 
 The alarm sounds, `App/Sounds/alarm-<sound>-<moment>.caf`, are rendered from
 the web's sounds by `npm run sounds` (macOS; `tools/sounds.ts` says how), never
 edited by hand. `npm run ios:build` holds each file an alarm can name to
 being in the built app's bundle, under 30 s, in a format a notification
-plays, as `afinfo` reads it.
+plays, as `afinfo` reads it: Apple documents no limits for AlarmKit's named
+sounds, so these are the ones a notification's sound had.
 
 ### Hearing the alarms in seconds
 
 A debug build takes `-alarmTest <s>`: once the app is on screen and the
-notification question answered, the cook's two notifications are set through
-`Alarm.schedule`, the pull's `s` from now and the cooling's end `2s` from now,
-and at each moment, if the app is on screen, the app rings itself, as a cook's
-deadline does. `-alarmSound timer|cuckoo|hen` rings with that sound for the
-launch, nothing stored. Start from the idle screen: the test's alarms replace a
-running cook's. A ring lasts up to 40 s; a touch stops it, and the second
-replaces the first.
+alarms question answered, the cook's two alarms are set through
+`Alarm.schedule`, the pull's `s` from now and the cooling's end `2s` from now;
+with the alarms refused, the app rings each itself at its moment if it is on
+screen, as a cook's deadline does. `-alarmSound timer|cuckoo|hen` rings with
+that sound for the launch, nothing stored. Start from the idle screen: the
+test's alarms replace a running cook's. The app's ring lasts up to 40 s; a
+touch stops it, and the second replaces the first.
 
 - **On the phone**: in Xcode, Product > Scheme > Edit Scheme > Run >
   Arguments. `-alarmTest 10`, `-alarmTest 30` and the three `-alarmSound`
@@ -219,23 +229,22 @@ replaces the first.
   one `-alarmTest` and one `-alarmSound`, and run on the phone. Only a run from
   Xcode passes them, and `xcodegen` unticks them again. `-alarmTest 30` leaves
   time to lock the phone or leave the app before the pull.
-- **On a simulator** (a Debug build installed, from Xcode or `npm run ios:e2e`):
-  `xcrun simctl launch booted name.danmackinlay.actualeggtimer -alarmTest 10 -alarmSound hen`.
-  The simulator plays through the Mac's speakers; its build is unsigned, so the
-  time-sensitive level is not supported there.
+- **Not on a simulator.** An iOS 26 simulator asks and sets the alarms, but
+  its SpringBoard crashes the moment one sounds; an iOS 27 one never asks
+  (`GOTCHAS.md`). A simulator shows the question and the alarms read back,
+  never an alarm sounding.
 
 What each way should do, and what the debug log (`Library/Caches/aet.log`)
 says of it:
 
-| the app | silent mode | the pull and the cooling's end | the log |
+| the alarms | the app | the pull and the cooling's end | the log |
 |---|---|---|---|
-| on screen | off or on | the app's ring, looped up to 40 s, vibrating; a banner without a sound | `presented` with no `sound` among its options, `ring`, `ringing` with `playing` true and the media `volume` |
-| in the background, or the phone locked | off | the notification's sound, the chosen one, up to 30 s | `scheduled` with the `sound` it names and `bundled` true; `delivered` at the next read-back |
-| in the background, or the phone locked | on | a vibration and the banner, no sound: a notification's sound is muted by silent mode, time-sensitive or not, until the alarms are AlarmKit's (`DECISIONS.md` 142) | the same |
+| allowed | anywhere, silent mode on or off, in a Focus or not | the system's alarm, the chosen sound, until Stop; over the app if it is open | `alarmAuthorization` `authorized`, `scheduled` with the `sound` it names and `bundled` true, `pending` with each `scheduled`, then `alerting`; `ringSkipped` with "the system's alarm rings it" |
+| refused | on screen | the app's ring, looped up to 40 s, vibrating | `alarmAuthorization` `denied`, `ring`, `ringing` with `playing` true and the media `volume` |
+| refused | in the background, or the phone locked | nothing: the line above Cancel said to keep the app open | `ringSkipped` |
 
-The app's ring plays at the media volume, the notification's at the ringer's.
-`notificationSettings` says whether the notifications' sound is allowed for the
-app (Settings > Notifications), and whether they are time-sensitive.
+The system's alarm plays at the ringer's volume, the app's ring at the media
+volume.
 
 `Cook.swift` runs the cooks as core's state machine (`Cooks.swift`), and derives every phase
 from the plan's deadlines and the clock rather than counting down, so a ticker
@@ -248,8 +257,8 @@ was, in fact, correct.
 ## The Live Activity
 
 `Widget/CookLiveActivity.swift` puts the countdown on the Lock Screen and in
-the Dynamic Island: the notification says *when*, the card says *how long
-left* without unlocking anything. Every countdown is `Text(timerInterval:)`,
+the Dynamic Island: the alarm says *when*, the card says *how long left*
+without unlocking anything. Every countdown is `Text(timerInterval:)`,
 ticked by the system from two absolute dates, so nothing has to wake up to keep
 it honest. It has worked on the owner's phone, on the Lock Screen and in the
 Dynamic Island. Three things that cost time here — `Activity` is not Sendable, a
@@ -259,9 +268,9 @@ app's — are in `GOTCHAS.md`.
 ## The fast clock and the scripted checks
 
 `npm run ios:e2e` checks on a simulator what only a device can, in six
-scenarios: a cook relaunched in each phase over the system's notifications
-and Live Activity (`relaunch`), the alarms as the system holds them
-(`alarms`), a notification delivered while the app is gone (`asleep`), the
+scenarios: a cook relaunched in each phase over the system's alarms and Live
+Activity (`relaunch`), the alarms as the system holds them (`alarms`), a
+cook with the alarms refused that the app slept through (`asleep`), the
 app leaving the screen with a change in hand (`change-kept-on-hide`), and the
 layout at the largest text size (`one-layout-largest`, `idle-largest`). What
 the app's logic decides is `swift test`'s (`EggTimerAppTests`); what its
@@ -281,7 +290,10 @@ identifier, on the control itself or on a group that keeps its children's
 All of them run in one `xcodebuild` on one simulator: XCUITest cannot
 uninstall the app, so each scenario's first launch resets it to what a fresh
 install has (`-resetState`), and the device is warmed up once, before the
-first (`GOTCHAS.md`).
+first, its alarms allowed at the system's question (`GOTCHAS.md`). The
+device is an iOS 26 simulator: an iOS 27 one never asks. No alarm of the
+system's comes in a test: a simulator's SpringBoard crashes when one sounds,
+and under the tests' frozen clock each is a day off.
 
 The headers say the rest: `tools/iosE2e.ts` (the scenarios, how to run some),
 `tools/iosHarness.ts` (the device and the run of the tests),
@@ -312,9 +324,6 @@ This is **done** on this machine. The steps, once, for a new one:
    account that holds the membership.
 2. Select the **ActualEggTimer** target, **Signing & Capabilities**, and confirm
    automatic signing resolves the team. Check the same on **EggTimerWidget**.
-3. Add the **Time Sensitive Notifications** capability to the **app** target
-   only. The entitlements file already asks for it, but the App ID in the
-   developer portal has to agree, and that registration is what this step does.
 
 Note the Team ID is the certificate's `OU` field, not the ten characters in its
 common name — that is the certificate id, and using it silently produces a
@@ -325,21 +334,11 @@ security cms -D -i ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.m
   | plutil -extract TeamIdentifier.0 raw -
 ```
 
-To check the whole chain actually worked, build for a device and look at what
-came out — a build that merely succeeds proves nothing, because an entitlement
-the portal refused is dropped rather than fatal:
-
-```sh
-xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer \
-  -destination 'generic/platform=iOS' -derivedDataPath build-device build
-codesign -d --entitlements - --xml 'build-device/Build/Products/Debug-iphoneos/Actual Egg Timer.app' \
-  | plutil -p - | grep time-sensitive
-```
-
-Two things say it worked. The entitlement is present in the signed binary, and
-Xcode resolved a profile named for the bundle id rather than the wildcard
-`iOS Team Provisioning Profile: *` — a wildcard profile cannot carry an
-entitlement, so being given a specific one is the portal agreeing.
+The app carries no entitlement: AlarmKit needs only its usage string in the
+Info.plist, which `npm run ios:archive` checks. What says signing worked is
+that Xcode resolved a profile named for the bundle id rather than the wildcard
+`iOS Team Provisioning Profile: *`, which TestFlight refuses
+(`RELEASING.md`).
 
 A different team means one line in `project.yml` and a new bundle identifier
 prefix.
@@ -371,14 +370,13 @@ image mounts itself when the first build prepares the device.
 
 ### The Apple Watch
 
-Nothing to do. A paired watch already rings for the alarm, because iOS forwards
-notifications to the wrist whenever the phone is locked and the watch is on and
-unlocked — which is exactly the situation this app is built for. The
-`.timeSensitive` level carries across, so it breaks through a Focus on the watch
-too.
+Nothing to do. AlarmKit forwards a sounding alarm's alert to a paired watch
+(Apple's "Scheduling an alarm with AlarmKit"), which is exactly the situation
+this app is built for: the phone across the kitchen, the watch on the wrist.
+Not yet seen on a watch.
 
-The gap is the reverse case: with the phone unlocked and in your hand, the
-notification stays on the phone. Closing that needs a real watchOS target, and
+What a watch does not have is the countdown. Closing that needs a real watchOS
+target, and
 the honest cost is a second UI to keep in sync rather than the target itself —
 `EggTimerCore` is pure Swift with no UIKit and compiled for watchOS unchanged
 when this was written (not rebuilt since; `Package.swift` names only iOS and
@@ -390,12 +388,11 @@ Not much. `swift test` finishes the core in a terminal, and `xcodebuild` builds,
 installs and runs the app from one too — this whole app was built and driven
 without opening Xcode once.
 
-Xcode earns its place for the parts of signing that are a conversation with
-Apple's servers rather than a file: adding the Time Sensitive Notifications
-capability to the App ID, and resolving a provisioning profile for a real
-device. Both are once-per-machine.
+Xcode earns its place for the part of signing that is a conversation with
+Apple's servers rather than a file: resolving a provisioning profile for a
+real device, once per machine.
 
 The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 9,800 lines of DOM
 wiring and web-specific workarounds — `clock.ts` in particular exists to fight
-exactly the backgrounding problem that a local notification solves properly.
+exactly the backgrounding problem that a system alarm solves properly.
 The behaviour came across; the mechanism did not.

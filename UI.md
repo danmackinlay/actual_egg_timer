@@ -330,9 +330,10 @@ under the thumb that asks for it.
   only, so its record never says the mass came from a tape.
 - **Mute, and the reloaded cook.** The web plays its own sound, so it has
   mute; it can lose a cook to a reload, so it says so when it does. iOS has
-  neither: its alarm is the system's notification, and the app's own ring
-  while it is on screen, through silent mode; above Cancel a line says only
-  when there is no alarm (notifications off, or one not set).
+  neither: its alarm is the system's, through silent mode and any Focus,
+  and the app rings itself on screen only for a deadline the system holds
+  no alarm for; above Cancel a line says only when there is no alarm
+  (alarms off, or one not set).
 - **The units' (i)** says "phone" on iOS where the web says "browser".
 - **The − and +.** The web draws its own pair; iOS uses the system's
   `Stepper`. To VoiceOver the number and its − and + are one adjustable

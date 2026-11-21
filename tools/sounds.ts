@@ -6,9 +6,10 @@
  * One file per sound and moment, `ios/App/Sounds/alarm-<sound>-<moment>.caf`:
  * the period `src/ui/alarmSounds.ts` makes, the same samples the web plays,
  * repeated for as many whole periods as a notification's sound may hold
- * (`notificationRepeats`). The notification plays the file once; the in-app
- * ring (`Ringer.swift`) loops it. IMA4 in a CAF, because a notification's
- * sound must be linear PCM, IMA4, µ-law or a-law in an aiff, wav or caf, and
+ * (`notificationRepeats`), the limits kept for the system's alarm, whose
+ * named sounds Apple documents none for. The system's alarm (AlarmKit) and
+ * the in-app ring (`Ringer.swift`) play the file. IMA4 in a CAF, because a
+ * notification's sound must be linear PCM, IMA4, µ-law or a-law in an aiff, wav or caf, and
  * IMA4 is a quarter the size of linear PCM; at 22.05 kHz, which holds the
  * timer's highest mode, 8980 Hz.
  *

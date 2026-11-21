@@ -295,8 +295,8 @@ read), so what a change does to the words is the catalogue's diff.
   approved on the owner's word, never on an agent's judgement, and of the
   whole catalogue, never key by key.
 
-A string the owner has approved (the `alarm.pull.*` bodies,
-`alarm.cooled.body`, `idle.welcome`, `activity.note.estimate`) was approved
+A string the owner has approved (the `alarm.pull.*` bodies, `idle.welcome`,
+`activity.note.estimate`) was approved
 as good enough for now, not as final (`DECISIONS.md` 54): a style pass reads
 it like the rest, and a change puts it back on the review page.
 

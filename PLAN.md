@@ -59,22 +59,11 @@ and the map of the documents are `CLAUDE.md`.
     only at the peak. It needs a likelihood whose handling errors can read
     hot (`infer.ts`, its twin, the fit), and then `probeMomentFor` true for
     the egg cup.
-12. **iOS 26 the floor, and the alarms by AlarmKit** (`DECISIONS.md` 142).
-    Alarms the Clock app's way, through silent mode and any Focus, for the
-    pull and the cooling's end; the time-sensitive notifications, their
-    entitlement and what schedules them go, with every `#available` or
-    workaround kept for older iOS. With it: the Live Activity's countdown
-    beside AlarmKit's own, the authorisation asked once, and the in-app
-    ring (`Ringer.swift`) kept for the app on screen. With the app on
-    screen it now rings every deadline itself, and the foreground
-    notification is silent; if AlarmKit's alert also sounds in the
-    foreground, the app must not ring a deadline AlarmKit holds (the rule
-    `deadlineToRing` had before, in history at 868c7182).
-13. **INFERENCE.md §8's certainty table as `npm run decide -- certainty`
+12. **INFERENCE.md §8's certainty table as `npm run decide -- certainty`
     prints it today**: its fresh-install rows and simulated-cook figures
     have drifted from the study (Fudgy is now a wild guess, its
     neighbours 0.89).
-14. **The altitude from where the cook is**, offered in Settings beside the
+13. **The altitude from where the cook is**, offered in Settings beside the
     number, so a new install at height needn't know its altitude (unset,
     a cook at 1500 m starting at once is 39 s out). The phone's or
     browser's position may carry an altitude (iOS's `CLLocation.altitude`;
@@ -83,7 +72,7 @@ and the map of the documents are `CLAUDE.md`.
     tap, never at launch; the number stays the cook's to change. The
     privacy page says neither app asks for your location, so it changes
     with this, and any lookup's service is named there.
-15. **Forget this cook**, for one set up wrong (a wrong water volume, egg
+14. **Forget this cook**, for one set up wrong (a wrong water volume, egg
     temperature or start): offered at Done, or on Start again, it drops the
     egg from the log and from what is sent, and keeps its time to boil out
     of the pan's memory. Today an unanswered egg teaches the posterior
@@ -91,6 +80,15 @@ and the map of the documents are `CLAUDE.md`.
     logged and sent, and a cold start's tapped boil is remembered on any
     end, Cancel included (`boilToRemember`), so a wrong volume files a
     wrong time to boil under it.
+15. **The iPhone Duo's inner screen.** On the outer screen the app lays
+    out as on any iPhone (seen on a Duo simulator, closed). Open, the
+    screen is wider and the page's one column would stretch: it has no
+    widest width (`ContentView.swift`), where the web caps its column at
+    32rem and centres it (`styles.css`). Look at the open and half-open
+    poses on a Duo simulator (the simulator panel needs access to the
+    device), then cap the column at 512 pt (`.frame(maxWidth: 512)`), and
+    see whether Settings' and Help's forms need it. Portrait and
+    iPhone-only stay; one layout (UI.md).
 
 Not until the owner asks: the words in place from `copy:edit`, each key linked
 to the web screens that show it and a draft previewed there (a preview build
@@ -154,17 +152,22 @@ Start the QA pass here.
   tier has run); the web in Safari; an iPhone on a flaky network; Netlify's
   rate limit at work; a deletion asked offline and confirmed later.
 - **The Lock Screen and the Dynamic Island**: the card ending as the cooling
-  does, the 1750 alarms on a real notification, the Live Activity in 1750,
+  does, the 1750 alarms' titles on a real alert, the Live Activity in 1750,
   and "my guess until Rolling boil" against the island's width.
-- **Sound and touch, on a device** (a debug build's `-alarmTest` and
-  `-alarmSound` bring an alarm in seconds; `ios/README.md`): on screen, the
-  app's ring at the pull and the cooling's end through silent mode and at
-  zero media volume, and only one sound with silent mode off (the banner
-  silent); in the background, the chosen sound from the notification with
-  silent mode off, and vibration alone with it on, until AlarmKit (item
-  12, which must not ring twice with the app on screen); touch to stop;
-  the refused and failed notification states; and the slider's haptic
-  tick, and whether the owner wants it.
+- **The alarms, on a phone** (AlarmKit's since 0.6; a debug build's
+  `-alarmTest` and `-alarmSound` bring them in seconds, `ios/README.md`;
+  a simulator cannot sound one): the system's question and the line under
+  it; each alarm through silent mode and through a Focus, full-screen on
+  the Lock Screen, as a banner over another app and over this one, with the
+  chosen sound, looping, and how long it sounds if nobody stops it; one
+  sound only with the app on screen, the app's ring not as well; Stop;
+  taking the eggs out in the app stopping the pull's alarm; a force-quit
+  and a relaunch mid-cook keeping both; the alert on a paired watch; a
+  restored cook's alarms and card. With the alarms refused (Settings >
+  Actual Egg Timer): the line above Cancel, and the app's ring at the pull
+  and the cooling's end through silent mode and at zero media volume;
+  touch to stop. And the slider's haptic tick, and whether the owner
+  wants it.
 - **Screen readers.** VoiceOver: the sentence and its clauses, read on iOS as links where they are drawn and again as buttons (152), the (i)'s
   Expanded and Collapsed, the slider's and the steppers' adjustable swipes,
   the bracket's words, and focus after a press. Both apps' names were read
@@ -182,8 +185,7 @@ Start the QA pass here.
   viewport in desktop Chromium: no real thumb, no Safari (locales with non-ASCII
   digits), no alarm heard, no Home Screen opening
   offline, no new build taken after a deploy.
-- **The egg cup's countdown on a device**: the notification at the
-  opening, and the Lock Screen and Dynamic Island card counting down under
+- **The egg cup's countdown on a device**: the alarm at the opening, and the Lock Screen and Dynamic Island card counting down under
   "Eat them in".
 - **The egg cup's opening** (`EGG_CUP_OPENED_S`, 120 s) is the model's
   guess: a probe in the yolk's centre as the egg is topped, with the

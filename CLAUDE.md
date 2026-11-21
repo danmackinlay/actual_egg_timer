@@ -29,7 +29,7 @@ next is `PLAN.md`; the last section here says which document holds what.
   | Swift outside the twin | `swift test`, `ios:build` |
   | words in `copy/` that add no key and change no arguments | `npm test`, `fixtures:check`, which a save from `copy:edit` runs itself |
   | the web's screens (`src/ui`, `index.html`, `styles.css`), or a key or its arguments in `copy/` | the rows above that apply, and `npm run e2e`, on CI |
-  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply; `npm run ios:e2e` on CI only for what a device alone shows (alarms, notifications, the Live Activity, a relaunch, layout), dispatched: `gh workflow run verify --ref <branch>` |
+  | the iOS app (`ios/App`, `EggTimerApp`, `ios/Widget`) | the rows above that apply; `npm run ios:e2e` on CI only for what a device alone shows (alarms, the Live Activity, a relaunch, layout), dispatched: `gh workflow run verify --ref <branch>` |
 
   Any merge that touched code runs the full `npm run verify` once; any
   push runs the full gate in CI, and `verify` runs before a release. **The
