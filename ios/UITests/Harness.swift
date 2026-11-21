@@ -66,8 +66,8 @@ func settingsArg(_ over: [String: Any]) -> [String] {
     return ["-\(StoreRegistry.settings.key)", "<\(data.map { String(format: "%02x", $0) }.joined())>"]
 }
 
-/// How a launch is made: notifications granted quietly with no prompt or
-/// answered no, the clock's moment, and its speed (0 frozen).
+/// How a launch is made: the alarms as the device has them (allowed, by
+/// `warmUp`) or answered no, the clock's moment, and its speed (0 frozen).
 struct LaunchOptions {
     var alarms = true
     var at: Double?
@@ -125,15 +125,16 @@ final class Run {
     private var clockURL: URL { dir.appendingPathComponent("aet.clock") }
 
     /// Launch with the clock at `at`, cook time, frozen there unless `speed`
-    /// says otherwise; quiet notifications granted with no prompt unless asked
-    /// otherwise. Silent: the ring and the notifications' sound would
-    /// otherwise play on the Mac's speakers. The run's first launch resets
-    /// the app's stores, its notifications and its card (`-resetState`).
+    /// says otherwise; the alarms as the device has them unless asked
+    /// otherwise. Silent: the ring would otherwise play on the Mac's
+    /// speakers; the system's alarms, under a frozen clock, never come
+    /// (`AppClock`). The run's first launch resets the app's stores, its
+    /// alarms and its card (`-resetState`).
     func launch(_ args: [String] = [], _ opts: LaunchOptions = LaunchOptions()) throws {
         at = opts.at ?? at
         try? FileManager.default.removeItem(at: clockURL)
         launched = try lines().count
-        let prompt = opts.alarms ? ["-provisionalAlarms", "YES"] : ["-noAlarmPrompt", "YES"]
+        let prompt = opts.alarms ? [] : ["-noAlarmPrompt", "YES"]
         let reset = fresh ? ["-resetState", "YES"] : []
         fresh = false
         app.launchArguments = [
@@ -374,13 +375,11 @@ let bundleID = "name.danmackinlay.actualeggtimer"
 @MainActor private var warmed: Result<Void, Stop>?
 
 /// A new device's first launches are many seconds slow while the system
-/// settles, and an app's first install there never has its notifications
-/// authorized ("Source is not authorized"), which the npm script sees to
-/// before the tests install the app (`primeNotifications`, tools/
-/// iosHarness.ts; GOTCHAS.md). Before the first test of a run of them, the
-/// app launched once with a cook, until its alarms are pending, nothing else
-/// checked: a test that fails on the alarms says so, not something later.
-/// What it came to holds for every test after.
+/// settles. Before the first test of a run of them, the app launched once
+/// with a cook, the system's question about alarms answered Allow, as a
+/// cook would, until its alarms are held, nothing else checked: a test that
+/// fails on the alarms says so, not something later. The answer is the
+/// device's, and holds for every test after (`-resetState` leaves it).
 @MainActor
 func warmUp() throws {
     if let warmed { return try warmed.get() }
@@ -388,6 +387,10 @@ func warmUp() throws {
     defer { run.terminate() }
     do {
         try run.launch(["-uiScreen", "heating"])
+        // Asked only once on a device: a second run of the tests finds the
+        // alarms allowed already.
+        let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"]
+        if allow.waitForExistence(timeout: Env.waitS / 2) { allow.tap() }
         let hit = try run.until("the alarms") {
             switch $0 {
             case .pending(let alarms): alarms.contains { $0.id.hasPrefix("cook") }
@@ -398,7 +401,7 @@ func warmUp() throws {
         guard case .pending = hit.event else { throw Stop("\(hit.event)") }
         warmed = .success(())
     } catch {
-        let stop = Stop("the device's alarms not working: \(error) (GOTCHAS.md)")
+        let stop = Stop("the device's alarms not working: \(error) (an iOS 27 simulator never asks: GOTCHAS.md)")
         warmed = .failure(stop)
         throw stop
     }

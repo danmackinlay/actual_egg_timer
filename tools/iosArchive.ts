@@ -8,9 +8,9 @@
 // 2. xcodegen, then xcodebuild archive (Release, generic iOS device,
 //    -allowProvisioningUpdates) into ios/build/ActualEggTimer.xcarchive.
 // 3. Checks on the archive, not the source: the build number is the new one,
-//    the alarm's time-sensitive entitlement survived signing (if the App
-//    ID lacks the capability the entitlement is dropped, not refused), and
-//    the bundled population reads (parsePopulation: a fit needs its
+//    the alarms' question is in the Info.plist (without
+//    NSAlarmKitUsageDescription AlarmKit sets no alarm, and nothing says
+//    so), and the bundled population reads (parsePopulation: a fit needs its
 //    diagnostics, a forced one an id that says so), since the app would
 //    silently draw from the literature's instead.
 //
@@ -54,10 +54,8 @@ run('xcodebuild', [
 
 const archived = out('plutil', ['-extract', 'CFBundleVersion', 'raw', `${app}/Info.plist`]);
 if (archived !== String(build)) throw new Error(`the archive says build ${archived}, not ${build}`);
-const entitlements = out('codesign', ['-d', '--entitlements', '-', '--xml', app], { stdio: ['ignore', 'pipe', 'ignore'] });
-if (!entitlements.includes('time-sensitive')) {
-  throw new Error('the time-sensitive entitlement is missing: tick Time Sensitive Notifications on the App ID');
-}
+const usage = out('plutil', ['-extract', 'NSAlarmKitUsageDescription', 'raw', `${app}/Info.plist`], { stdio: ['ignore', 'pipe', 'ignore'] });
+if (usage === '') throw new Error('the alarms\' question (NSAlarmKitUsageDescription) is missing from the Info.plist: see ios/project.yml');
 const population = JSON.parse(readFileSync(`${app}/population.json`, 'utf8'));
 const drawn = parsePopulation(population);
 if (drawn === null) throw new Error('the archive\'s population.json does not read (src/core/population.ts)');
@@ -71,4 +69,4 @@ if (population.diagnostics?.forced === true) {
 
 run('git', ['add', yml]);
 run('git', ['commit', '-q', '-m', `iOS build ${build}, archived for TestFlight`]);
-console.log(`ios:archive: ios/${archive} is ${version} (${build}), signed with the time-sensitive entitlement; ${yml} committed`);
+console.log(`ios:archive: ios/${archive} is ${version} (${build}), with the alarms' question; ${yml} committed`);

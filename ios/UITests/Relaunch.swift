@@ -3,7 +3,7 @@ import EggTimerApp
 import EggTimerCore
 
 extension Scenarios {
-    /// a cook relaunched in each phase: the same deadlines, alarms and card, the boil kept to the bit; into the pull on screen, rung by the app though its notification is pending; killed 4 s in, relaunched 14 s in: not rung again, out after; at Done: nothing pending, no card, nothing rung
+    /// a cook relaunched in each phase: the same deadlines, alarms and card, the boil kept to the bit; into the pull on screen, not rung by the app, the system's alarm holding it; killed 4 s in, relaunched 14 s in: not rung again, out after; at Done: nothing pending, no card, nothing rung
     func test_relaunch() {
         scenario { run in
             let start = try run.started().cook.startedAtS
@@ -42,14 +42,16 @@ extension Scenarios {
             run.check(lastStored(r.lines)??.cook.events.boilAtS == boil, "the boil kept to the bit")
             run.check(pending(r.lines) == ["cook.cool", "cook.pull"], "cooking: pending \(String(describing: pending(r.lines)))")
 
-            // Into the pull on screen. The app rings, though a notification
-            // holds the pull: silent mode mutes a notification's sound, not
-            // the app's ring.
+            // Into the pull on screen. The system's alarm holds the pull and
+            // sounds over the app, so the app does not ring it too.
             var i = try run.step(was.pull + 1)
             try run.until("phase PULL", from: i, phaseIs("PULL"))
+            try run.until("the ring left to the system's alarm", from: i) {
+                $0 == .ringSkipped(deadline: "pull", reason: "the system's alarm rings it")
+            }
             try run.step(was.pull + 4)
             let rung = try run.sinceLaunch().compactMap(\.event.ring)
-            run.check(rung == ["pull"], "rung \(rung), not the pull once")
+            run.check(rung.isEmpty, "rung \(rung), not nothing")
 
             // Killed 4 s into the pull, relaunched 14 s in: not rung again,
             // and out at 15 s.
@@ -99,7 +101,7 @@ extension Scenarios {
         }
     }
 
-    /// the notifications as the system holds them: a cold cook's two pending at its plan's moments; relaunched past the guess, the pending pull moved to it; cancelled, none at the next launch
+    /// the alarms as the system holds them: a cold cook's two pending at its plan's moments; relaunched past the guess, the pending pull moved to it; cancelled, none at the next launch
     func test_alarms() {
         scenario { run in
             let start = try run.started().cook.startedAtS
@@ -123,7 +125,7 @@ extension Scenarios {
             run.terminate()
             try run.launch()
             // The launch's own read-back, three seconds on (AppModel.appear).
-            try run.until("the alarms read back", from: run.launched) { if case .delivered = $0 { true } else { false } }
+            try run.until("the alarms read back", from: run.launched) { if case .pending = $0 { true } else { false } }
             let next = pending(try run.sinceLaunch())
             run.check(next == [], "pending at the next launch \(String(describing: next))")
         }

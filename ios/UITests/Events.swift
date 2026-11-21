@@ -91,7 +91,7 @@ func storedIn(_ lines: [Line]) throws -> StoredCook {
     return cook
 }
 
-/// The notifications as last scheduled, cancelled and scheduled again:
+/// The alarms as last scheduled, cancelled and scheduled again:
 /// `["cook.pull": t, "cook.cool": t]` in cook time, exact.
 func scheduled(_ lines: [Line]) -> [String: Double] {
     var now: [String: Double] = [:]
@@ -102,7 +102,7 @@ func scheduled(_ lines: [Line]) -> [String: Double] {
     return now
 }
 
-/// The ids the last read-back found pending, sorted.
+/// The ids the last read-back found the system holding, sorted.
 func pending(_ lines: [Line]) -> [String]? {
     for l in lines.reversed() {
         if case .pending(let alarms) = l.event { return alarms.map(\.id).sorted() }
@@ -110,13 +110,6 @@ func pending(_ lines: [Line]) -> [String]? {
     return nil
 }
 
-/// The ids the last read-back found delivered and still shown.
-func delivered(_ lines: [Line]) -> [String]? {
-    for l in lines.reversed() {
-        if case .delivered(let ids) = l.event { return ids }
-    }
-    return nil
-}
 
 /// The lines before the first that `test` holds of, or all of them.
 func before(_ lines: [Line], _ test: (DebugLog.Event) -> Bool) -> [Line] {

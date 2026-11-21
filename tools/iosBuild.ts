@@ -16,7 +16,7 @@
 //
 // Then what the app finds in its own bundle, in the Release build's .app:
 // Help's sources (help-sources.json) there and not empty, and each file an
-// alarm can name there, in a format a notification plays and under 30 s, as
+// alarm can name there, in a format the system's alarm plays and under 30 s, as
 // `afinfo` reads it (`bundleProblems`).
 //
 //   npm run ios:build                 Debug, then Release and its checks
@@ -71,10 +71,11 @@ export function refused(dir: string): { files: number; entries: string[] } {
   return { files, entries: [...found].sort() };
 }
 
-/// The formats the system plays a notification's sound in, as afinfo names
-/// them (UNNotificationSound's documentation: linear PCM, IMA4, µ-law,
-/// a-law); a file it cannot find, cannot play, or of 30 s or more it
-/// replaces with its default sound.
+/// The formats the system plays an alarm's sound in, as afinfo names them.
+/// Apple documents none for AlarmKit's named sounds, so these are a
+/// notification's (UNNotificationSound's documentation: linear PCM, IMA4,
+/// µ-law, a-law), which a file it cannot find, cannot play, or of 30 s or
+/// more it replaces with its default sound.
 const NOTIFICATION_FORMATS = ['lpcm', 'ima4', 'ulaw', 'alaw'];
 
 /// Every file an alarm can name (`AlarmSoundChoice.file`): one for each
@@ -109,7 +110,7 @@ export function bundleProblems(app: string, afinfo: (path: string) => string | n
     const text = afinfo(path);
     const { format, seconds } = text === null ? { format: null, seconds: null } : afinfoRead(text);
     if (format === null || !NOTIFICATION_FORMATS.includes(format)) {
-      out.push(`${name}: format ${format ?? 'unreadable'}, not one a notification plays (${NOTIFICATION_FORMATS.join(', ')})`);
+      out.push(`${name}: format ${format ?? 'unreadable'}, not one the system's alarm plays (${NOTIFICATION_FORMATS.join(', ')})`);
     }
     if (seconds === null || !(seconds > 0 && seconds < NOTIFICATION_SOUND_MAX_S)) {
       out.push(`${name}: ${seconds ?? 'no length'} s, not under ${NOTIFICATION_SOUND_MAX_S}`);
@@ -151,5 +152,5 @@ if (process.argv[1]?.endsWith('iosBuild.ts')) {
     console.log(`ios:build: in ${RELEASE_APP}:\n${problems.join('\n')}`);
     process.exit(1);
   }
-  console.log(`ios:build: help-sources.json and ${SOUND_FILES.length} alarm sounds in the bundle, each one a notification plays`);
+  console.log(`ios:build: help-sources.json and ${SOUND_FILES.length} alarm sounds in the bundle, each one the system's alarm plays`);
 }

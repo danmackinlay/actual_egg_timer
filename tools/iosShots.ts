@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { join, resolve } from 'node:path';
 
 import { Cdp, launchChrome, sleep } from './chrome.ts';
-import { APP, build, createDevice, primeNotifications, quietly, simctl, uiEnv, uiTests } from './iosHarness.ts';
+import { APP, build, createDevice, quietly, simctl, uiEnv, uiTests } from './iosHarness.ts';
 
 const OUT = 'ios/appstore/shots';
 const CAPTIONS = 'ios/appstore/captions.en-AU.json';
@@ -170,7 +170,6 @@ async function main(): Promise<void> {
         twelveHourClock(udid);
         simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi', '--wifiBars', '3',
           '--cellularBars', '4', '--batteryState', 'charged', '--batteryLevel', '100');
-        await primeNotifications(udid);
         for (const dark of [false, true]) {
           const these = shots.filter((s) => (s.dark ?? false) === dark);
           if (these.length === 0) continue;

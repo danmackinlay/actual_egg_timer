@@ -1,15 +1,14 @@
 // The simulator `npm run ios:e2e` and `npm run ios:shots` drive
 // (tools/iosE2e.ts, tools/iosShots.ts): a Debug build of the app and its UI
-// tests, a device of the script's own, its notifications made to work, and
-// the UI tests run on it in one `xcodebuild`. What a test does with the app, its launches, its clock, its
+// tests, a device of the script's own, and the UI tests run on it in one
+// `xcodebuild`. What a test does with the app, its launches, its clock, its
 // debug log and the reset that starts it from a fresh install's state, is
 // the tests' own (ios/UITests/Harness.swift). The web's is tools/harness.ts.
 import { spawn, execFileSync, type ExecFileSyncOptions } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
-const BUNDLE = 'name.danmackinlay.actualeggtimer';
 const DERIVED = 'build/e2e';
 export const APP = `ios/${DERIVED}/Build/Products/Debug-iphonesimulator/Actual Egg Timer.app`;
 /// How long a wait for the app gives up after, the host's s: only how long
@@ -133,14 +132,19 @@ interface SimList {
 }
 
 /// A device of the script's own, booted, named `AET <tool> <pid>`: an
-/// iPhone 17 Pro if the newest runtime runs one, else its last iPhone; or,
-/// given `model`, that iPhone and no other.
+/// iPhone 17 Pro if the newest runtime that asks for the alarms runs one,
+/// else its last iPhone; or, given `model`, that iPhone and no other.
+///
+/// An iOS 27 simulator never asks: AlarmKit answers no at once, with no
+/// question (GOTCHAS.md), so the tests could allow no alarm. The newest iOS
+/// 26 runtime, then, while there is one; else the newest, whose warm-up says
+/// the alarms do not work.
 export function createDevice(model: string | null = null, tool = 'e2e'): string {
   const list = JSON.parse(simctl('list', '-j', 'runtimes', 'devicetypes')) as SimList;
-  const runtime = list.runtimes
+  const runtimes = list.runtimes
     .filter((r) => r.isAvailable && r.platform === 'iOS')
-    .sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true }))
-    .at(-1);
+    .sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true }));
+  const runtime = runtimes.filter((r) => Number(r.version.split('.')[0]) < 27).at(-1) ?? runtimes.at(-1);
   if (!runtime) throw new Error('no iOS simulator runtime installed');
   // The iPhones that runtime runs, where simctl says (a runner has device
   // types newer than its runtimes, or the other way round).
@@ -158,30 +162,6 @@ export function createDevice(model: string | null = null, tool = 'e2e'): string 
   simctl('boot', id);
   simctl('bootstatus', id, '-b');
   return id;
-}
-
-/// The device's notifications made to work for the app (GOTCHAS.md): an
-/// app's first install on a new simulator never has them authorized ("Source
-/// is not authorized"), however long it waits or relaunches, but once it has
-/// asked for them the next install has. So the app is installed, launched
-/// once asking for quiet notifications with a cook started, given until it
-/// hears back, and uninstalled; the tests' `xcodebuild` installs it again.
-export async function primeNotifications(udid: string): Promise<void> {
-  const dir = resolve(`ios/${DERIVED}/runs/prime`);
-  rmSync(dir, { recursive: true, force: true });
-  mkdirSync(dir, { recursive: true });
-  const log = `${dir}/aet.log`;
-  const answered = (): boolean => existsSync(log) && /"ev":"(notScheduled|pending)"/.test(readFileSync(log, 'utf8'));
-  simctl('install', udid, APP);
-  // A new device's first launch now and then says it failed, and runs.
-  quietly(() => simctl(
-    'launch', udid, BUNDLE, '-debugDir', dir, '-muteAudio', 'YES', '-provisionalAlarms', 'YES', '-uiScreen', 'heating',
-  ));
-  for (const end = Date.now() + WAIT_S * 1000; !answered() && Date.now() < end;) {
-    await new Promise((done) => setTimeout(done, 500));
-  }
-  quietly(() => simctl('terminate', udid, BUNDLE));
-  quietly(() => simctl('uninstall', udid, BUNDLE));
 }
 
 /// What the UI tests are given (ios/UITests/Harness.swift `Env`): where

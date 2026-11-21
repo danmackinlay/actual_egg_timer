@@ -2,30 +2,18 @@ import XCTest
 import EggTimerApp
 import EggTimerCore
 
-/// How long the system is given to deliver the one notification a scenario
-/// waits for, past its moment, the host's s.
-private let deliverySlackS = 15.0
-
 extension Scenarios {
-    /// killed before the pull, its notification delivered; relaunched past it: the pull not rung, the cooling’s end rung on screen
+    /// alarms refused: killed before the pull; relaunched past it: the pull not rung, out at the grace's end, the cooling’s end rung on screen by the app
     func test_asleep() {
         scenario { run in
-            try run.started()
+            // Refused, so the app rings itself, and no alarm of the system's
+            // is held: one sounding would crash a simulator's SpringBoard,
+            // and what one does while the app is gone only a phone shows.
+            let refused = ["-noAlarmPrompt", "YES"]
+            try run.started(refused)
             let was = try run.boiled()
             run.terminate()
-            // The one span on the system's clock, and the one wait for the
-            // system: launched 20 s of cook before the pull at ×1, so the
-            // restore schedules the pull at most 20 s ahead; killed; the
-            // notification left to the system, with `deliverySlackS` for it
-            // to arrive.
-            let lead = 20.0
-            let r = try run.relaunched(at: was.pull - lead, speed: 1)
-            let seen = Date()
-            run.check(r.restore.event.restoredPhase == "COOKING", "\(r.restore.event)")
-            run.check(scheduled(r.lines)["cook.pull"] != nil, "the pull scheduled")
-            run.terminate()
-            pause(max(0, lead + deliverySlackS - Date().timeIntervalSince(seen)))
-            let after = try run.relaunched(at: was.pull + 60)
+            let after = try run.relaunched(at: was.pull + 60, refused)
             let written: Bool = if case let .restore(phase, eventsWritten) = after.restore.event {
                 phase == "COOLING" && eventsWritten
             } else { false }
@@ -34,12 +22,11 @@ extension Scenarios {
             let plan = try planIn(after.lines)
             run.check(cook?.events.pulled?.by == .timeout, "pulled by \(String(describing: cook?.events.pulled?.by))")
             run.check(near(cook?.events.pulled?.outS, plan.pull + 20, exact), "out at the grace's end")
-            run.check(delivered(after.lines) == ["cook.pull"], "delivered \(String(describing: delivered(after.lines)))")
-            run.check(pending(after.lines) == ["cook.cool"], "pending \(String(describing: pending(after.lines)))")
+            run.check(pending(after.lines) == [], "pending \(String(describing: pending(after.lines)))")
             let i = try run.step(try plan.cooledAt() + 1)
             try run.settled(try run.until("phase DONE", from: i, phaseIs("DONE")).i)
-            // The pull came while the app was away, and its notification
-            // rang; the cooling's end comes on screen, and the app rings it too.
+            // The pull came while the app was away, and nobody heard it; the
+            // cooling's end comes on screen, and the app rings it.
             let rung = try run.sinceLaunch().compactMap(\.event.ring)
             run.check(rung == ["cooled"], "rung \(rung), not the cooling's end alone")
         }

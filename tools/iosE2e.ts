@@ -1,11 +1,12 @@
 // `npm run ios:e2e`: what only a device shows, scripted, as UI tests
 // (ios/UITests, `Scenarios`) on a simulator of the script's own, in one
 // `xcodebuild test-without-building`; ios/README.md, "The fast clock and the
-// scripted checks", says what they check and how. Before it, the app is
-// installed once, made to ask for notifications and uninstalled, without
-// which a new device never authorizes them (`primeNotifications`). Nothing
-// is timed against the host's clock but one notification left to the system
-// (`asleep`). The device is deleted at the end.
+// scripted checks", says what they check and how. The tests allow the alarms
+// once, at the system's question (`warmUp`), and no alarm of the system's
+// ever comes: a simulator's SpringBoard crashes when one sounds
+// (GOTCHAS.md), and under the tests' frozen clock each is a day off.
+// Nothing is timed against the host's clock. The device is deleted at the
+// end.
 //
 //   npm run ios:e2e                          every scenario
 //   npm run ios:e2e -- alarms asleep         those named
@@ -24,7 +25,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 import {
-  APP, build, createDevice, primeNotifications, quietly, simctl, uiEnv, uiTests, type UiResult,
+  APP, build, createDevice, quietly, simctl, uiEnv, uiTests, type UiResult,
 } from './iosHarness.ts';
 
 /// The scenarios: `Scenarios/test_<name>`, its hyphens as underscores
@@ -89,7 +90,6 @@ async function main(): Promise<void> {
   const udid = given ?? createDevice();
   let results: UiResult[] = [];
   try {
-    await primeNotifications(udid);
     results = await uiTests(udid, chosen.map(testOf), uiEnv(), 'e2e', report);
   } finally {
     if (!given && !keep) {

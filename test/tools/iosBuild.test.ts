@@ -68,7 +68,7 @@ test('afinfo’s format is its code, linear PCM’s, named by its samples, read 
   assert.deepEqual(afinfoRead('Fail: AudioFileOpenURL failed'), { format: null, seconds: null });
 });
 
-test('the bundle has Help’s sources and every alarm’s file, each one a notification plays', () => {
+test('the bundle has Help’s sources and every alarm’s file, each one the system’s alarm plays', () => {
   const app = mkdtempSync(join(tmpdir(), 'aet-iosbundle-'));
   try {
     const good = afinfoText('ima4 (0x00000000)', 28.8);
@@ -88,9 +88,9 @@ test('the bundle has Help’s sources and every alarm’s file, each one a notif
     writeFileSync(join(app, 'help-sources.json'), '');
     assert.deepEqual(bundleProblems(app, read), [
       'help-sources.json is not in the bundle, or is empty (ios/project.yml)',
-      `${first}: format aac, not one a notification plays (lpcm, ima4, ulaw, alaw)`,
+      `${first}: format aac, not one the system's alarm plays (lpcm, ima4, ulaw, alaw)`,
       `${second}: 30 s, not under 30`,
-      `${third}: format unreadable, not one a notification plays (lpcm, ima4, ulaw, alaw)`,
+      `${third}: format unreadable, not one the system's alarm plays (lpcm, ima4, ulaw, alaw)`,
       `${third}: no length s, not under 30`,
     ]);
   } finally {
