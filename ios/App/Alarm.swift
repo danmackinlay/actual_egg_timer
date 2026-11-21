@@ -37,6 +37,10 @@ final class Alarm {
     /// asynchronous, and a cancel or a read-back that overtook a schedule
     /// would cancel or count the alarms of the cook before.
     private var queue: Task<Void, Never>?
+    /// The moment in cook time each alarm was set for in this launch: under
+    /// a debug build's frozen clock the system's date is a day on
+    /// (`AppClock`), so the cook's moment is not to be had from it.
+    private var moments: [UUID: Double] = [:]
 
     private init() {}
 
@@ -115,19 +119,22 @@ final class Alarm {
         _ = enqueue { [self] in remove(sparing: []) }
     }
 
-    /// Whether an alarm sounds, or its moment has come in cook time: under a
-    /// debug build's frozen clock the system's moment is a day on
-    /// (`AppClock`), and the cook's is what the plan dropped.
+    /// Whether an alarm sounds, or its moment has come: the cook's moment
+    /// it was set for in this launch, else the system's date.
     private func hasCome(_ alarm: AlarmKit.Alarm) -> Bool {
         if alarm.state == .alerting { return true }
+        if let at = moments[alarm.id] { return at <= AppClock.nowS + 0.5 }
         guard case .fixed(let date) = alarm.schedule else { return false }
-        return AppClock.fromReal(date).timeIntervalSince1970 <= AppClock.nowS + 0.5
+        return date.timeIntervalSinceNow <= 0.5
     }
 
     private func remove(sparing keep: Set<UUID>) {
         DebugLog.log(.alarmsCancelled)
         // An alarm already gone, stopped or never set, throws; nothing to do.
-        for id in [pullID, coolID] where !keep.contains(id) { try? manager.cancel(id: id) }
+        for id in [pullID, coolID] where !keep.contains(id) {
+            try? manager.cancel(id: id)
+            moments[id] = nil
+        }
     }
 
     /// What the system says it is holding FOR THIS COOK: for the UI to show,
@@ -185,6 +192,8 @@ final class Alarm {
         )
         if let error = await Self.schedule(id: id, fires: fires, attributes: attributes, file: file) {
             DebugLog.log(.notScheduled(id: name(id), error: error))
+        } else {
+            moments[id] = atS
         }
     }
 
