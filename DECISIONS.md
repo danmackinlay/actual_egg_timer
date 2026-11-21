@@ -996,14 +996,8 @@ Decided by the owner, 19 October 2026:
     counted. The counter stays as it is: Done at the pull, nothing counted.
     The physics' question, whether the egg rests in the air, is
     `restsInAir`; whether the cook waits for an end is `countsDown`.
-142. **0.6 requires iOS 26, and its alarms are AlarmKit's** (the owner, 19
-    October 2026: "this is a toy app and we prioritise low maintenance
-    burden"). AlarmKit schedules an alarm as the Clock app does, through
-    silent mode and any Focus, with a full-screen alert. With iOS 26 the
-    floor there is no fallback: the time-sensitive notifications and what
-    keeps them go. Until 0.6 the alarms stay time-sensitive notifications,
-    which reach the cook through a Focus only where its Time Sensitive
-    Notifications are allowed.
+142. **0.6 requires iOS 26, and its alarms are AlarmKit's.** Superseded by
+    NNN.
 
 Decided by the owner, 20 October 2026:
 
@@ -1156,3 +1150,17 @@ Decided by the owner, 20 November 2026:
     The label only: storage formats may still change without a migration
     (107) until the owner says the app is in real use ("I'll wait until our
     download count looks > 0"). iOS already carried `0.5.1`.
+
+Decided by the owner, 21 November 2026:
+
+NNN. **0.6 requires iOS 26.1, and its alarms are AlarmKit's**; supersedes
+    142. The owner, 19 October 2026: "this is a toy app and we prioritise
+    low maintenance burden". AlarmKit schedules an alarm as the Clock app
+    does, through silent mode and any Focus, with a full-screen alert. 26.1
+    rather than 26.0 because the alert without a Stop button of the app's
+    own, which the system now supplies, is 26.1's; and rather than 27,
+    which the owner first asked for on 20 November, because iOS 27 adds
+    nothing the alarms use, drops no iPhone, and would take CI off GitHub's
+    stable runner. With 26.1 the floor there is no fallback: the
+    time-sensitive notifications, their entitlement and what keeps them go,
+    with any code kept for an older iOS.
