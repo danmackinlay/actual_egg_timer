@@ -7,7 +7,8 @@ import EggTimerCore
 /// (`Services.alarm`) once the cook may have them and read back rather than
 /// assumed; and the ring in the app (`Services.ringer`, core's `ring` and
 /// `silence`) for each deadline that comes while the app is on screen,
-/// where someone could hear it (`deadlineToRing`).
+/// where someone could hear it, and that no alarm of the system's holds
+/// (`deadlineToRing`).
 @Observable
 @MainActor
 public final class CookAlarms {
@@ -55,14 +56,19 @@ public final class CookAlarms {
 
     /// The alarms the plan sets, with the system: none for an end that has
     /// passed, and nothing while the plan asks whether the egg is still in.
+    /// An alarm sounding sounds on until the cook stops it, or takes the
+    /// eggs out in the app; with no cook on screen, every one goes.
     private func schedule() {
         let (pullS, cooledS) = at
         let (cook, probe) = onScreen()
-        guard pullS != nil || cooledS != nil, let cook else {
+        guard let cook else {
             Services.alarm.cancel()
             return
         }
-        Services.alarm.schedule(pullS: pullS, cooledS: cooledS, probe: probe, cooling: cook.choices.cooling)
+        Services.alarm.schedule(
+            pullS: pullS, cooledS: cooledS, probe: probe, cooling: cook.choices.cooling,
+            silencing: cook.events.pulled?.by == .cook ? [.pull] : []
+        )
         Task { await readBack() }
     }
 
@@ -81,18 +87,28 @@ public final class CookAlarms {
 
     /// A deadline the step says rings (core's `ring`), of a plan with these
     /// deadlines: rung in the app if it came while the app was on screen,
-    /// where someone could hear it in time (`deadlineToRing`), whether or
-    /// not a notification holds it: silent mode mutes the notification's
-    /// sound, and the app's ring sounds through it.
+    /// where someone could hear it in time, and the system holds no alarm
+    /// for it (`deadlineToRing`). The system's alarm sounds over the app
+    /// too, so the app ringing as well would ring the deadline twice. What
+    /// the system holds is read back at the deadline, not assumed.
     func ring(_ deadline: RingDeadline, _ d: Deadlines) {
-        guard deadlineToRing(
-            phase: deadline == .pull ? .pull : .done, nowS: AppClock.nowS, pullS: d.cookEndS, cooledS: d.coolEndS,
-            rung: [], onScreenSinceS: Services.ringer.onScreenSinceS
-        ) == deadline else {
-            return DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
+        readingBack += 1
+        Task {
+            defer {
+                readingBack -= 1
+                onSettled()
+            }
+            let held = await Services.alarm.pendingDeadlines()
+            guard deadlineToRing(
+                phase: deadline == .pull ? .pull : .done, nowS: AppClock.nowS, pullS: d.cookEndS,
+                cooledS: d.coolEndS, rung: [], held: held, onScreenSinceS: Services.ringer.onScreenSinceS
+            ) == deadline else {
+                let reason = held.contains(deadline) ? "the system's alarm rings it" : "not on screen at the deadline"
+                return DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: reason))
+            }
+            DebugLog.log(.ring(deadline: deadline.rawValue))
+            Services.ringer.ring(deadline)
         }
-        DebugLog.log(.ring(deadline: deadline.rawValue))
-        Services.ringer.ring(deadline)
     }
 
     /// The ring stopped (core's `silence`).

@@ -21,8 +21,7 @@ packages:
     path: EggTimerCore
 
 # Settings that both targets need, in one place. The team is the Apple
-# Developer Program membership; without it the time-sensitive entitlement
-# cannot be signed and the alarm cannot cut through a Focus mode.
+# Developer Program membership, which TestFlight needs.
 settings:
   base:
     DEVELOPMENT_TEAM: L4D3TWC3A4
@@ -37,7 +36,7 @@ settings:
     CURRENT_PROJECT_VERSION: "5"
     # The simulator needs no identity and must not wait on one: keeping it
     # unsigned is what keeps the build-run-screenshot loop fast. Device
-    # builds sign normally, which is what the entitlement requires.
+    # builds sign normally.
     CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
     CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
 
@@ -118,6 +117,10 @@ targets:
       properties:
         CFBundleLocalizations: [en]
         UIAppFonts: [IMFeENrm28P.ttf, IMFeENit28P.ttf]
+        # The line under the system's question when the app first asks to
+        # set alarms; without it AlarmKit sets none. The catalogue's
+        # `alarm.permission`, written here by `npm run swift:constants`.
+        NSAlarmKitUsageDescription: "I’ll ring when it’s time to take the eggs out, and when they’re ready."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer
@@ -149,7 +152,6 @@ targets:
         # Compliance" and has to be answered by hand before testers can install
         # it. Revisit if the app ever encrypts anything itself.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        CODE_SIGN_ENTITLEMENTS: App/ActualEggTimer.entitlements
 
   # WidgetKit extension. It exists only to draw the Live Activity: the Lock
   # Screen and Dynamic Island countdown. It deliberately does NOT depend on

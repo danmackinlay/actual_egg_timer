@@ -69,7 +69,7 @@
     "readout.sub.coolingEggCup": { "text": "then eat them" },
     "readout.sub.doneCold": { "text": "{boil} to boil + {cooking} cooking" },
     "readout.sub.doneHot": { "text": "total in the water" },
-    "readout.alarm.denied": { "text": "notifications are off, so keep the app open" },
+    "readout.alarm.denied": { "text": "alarms are off, so keep the app open" },
     "readout.alarm.failed": { "text": "I couldn’t set the alarm, so keep the app open" },
 
     "readout.stat.waterBoilsAt": { "text": "water boils at" },
@@ -380,6 +380,7 @@
     "controls.units.period": { "text": "I can also write Imperial units in the English of their day." },
     "app.titlePage": { "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their causes, and illustrated in their different degrees of hardness." },
 
+    "alarm.permission": { "text": "I’ll ring when it’s time to take the eggs out, and when they’re ready." },
     "alarm.pull.title": { "text": "Eggs out now" },
     "alarm.pull.bodyIce": { "text": "Straight into the ice bath, or the yolk keeps cooking." },
     "alarm.pull.bodyTap": { "text": "Straight under the cold running water, or the yolk keeps cooking." },
@@ -387,11 +388,8 @@
     "alarm.pull.bodyCounter": { "text": "Take them out and let them cool in the air." },
     "alarm.pull.bodyEggCup": { "text": "Straight into the egg cups. I’ll tell you when to eat them." },
     "alarm.cooled.title": { "text": "Cooling done" },
-    "alarm.cooled.body": { "text": "The yolk has stopped cooking. Your eggs are ready." },
     "alarm.opened.title": { "text": "Eat them now" },
-    "alarm.opened.body": { "text": "Your eggs are ready, and still warm." },
     "alarm.probe.title": { "text": "Probe it now" },
-    "alarm.probe.body": { "text": "Push the probe into the middle of the egg and tell me the highest number." },
 
     "activity.stage.heating": { "text": "Heating" },
     "activity.stage.cooking": { "text": "Cooking" },

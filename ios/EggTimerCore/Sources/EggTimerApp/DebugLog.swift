@@ -21,7 +21,7 @@ import os
 /// - `-uiScreen heating`: start a cook, as a tap on Start would.
 /// - `-uiScreen end`: hold the page scrolled to its foot as it grows, so the
 ///   questions at Done are in the picture (`npm run ios:shots`).
-/// - `-noAlarmPrompt YES`: answer the notification question with no, without
+/// - `-noAlarmPrompt YES`: answer the alarms question with no, without
 ///   asking, so the system's alert is not in the picture.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
@@ -39,19 +39,17 @@ import os
 ///   nothing under either.
 /// - `-settings <hex>`: the settings as stored, as JSON in hex
 ///   (`SettingsStore`), as UserDefaults reads a launch argument's data.
-/// - `-muteAudio YES`: the ring at no volume and notifications without
-///   sound, so a scripted run is silent.
-/// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
-///   grants with no prompt, so the alarms are scheduled and read back on a
-///   simulator nobody taps.
+/// - `-muteAudio YES`: the ring at no volume, so a scripted run is silent.
+///   The system's alarms keep their sound: under the frozen clock the tests
+///   run on they never come (`AppClock`).
 /// - `-debugDir <path>`: write the debug log there and read the clock's
 ///   steps from there, in place of `Library/Caches` in the container: a
 ///   directory on the Mac, which a simulator's app and its UI tests
 ///   (ios/UITests) both read and write, where the tests cannot see the
 ///   app's container.
 /// - `-resetState YES`: start from what a fresh install has, before anything
-///   is read: the stores and the standard domain emptied, every notification
-///   pending or shown removed, and any Live Activity ended
+///   is read: the stores and the standard domain emptied, every alarm the
+///   app holds cancelled, and any Live Activity ended
 ///   (ActualEggTimerApp.swift). A test's first launch, since XCUITest cannot
 ///   uninstall the app between tests.
 ///
@@ -61,12 +59,11 @@ import os
 /// To hear the alarms without waiting for a cook (ios/README.md says how,
 /// on a phone and on a simulator):
 ///
-/// - `-alarmTest 10`: once the app is on screen and the notification
-///   question answered (the real question, never `-provisionalAlarms`,
-///   whose notifications come without a sound), the pull's and the cooling's
-///   notifications set through the cook's own `Alarm.schedule`, 10 s and
-///   20 s from now; and at each moment, if the app has been on screen since
-///   before it, the app's own ring, as a cook's would (`deadlineToRing`).
+/// - `-alarmTest 10`: once the app is on screen and the alarms question
+///   answered, the pull's and the cooling's alarms set through the cook's
+///   own `Alarm.schedule`, 10 s and 20 s from now; and at each moment, if
+///   the alarms were refused and the app has been on screen since before
+///   it, the app's own ring, as a cook's would (`deadlineToRing`).
 ///   From the idle screen: they replace a running cook's alarms.
 /// - `-alarmSound hen` (`timer`, `cuckoo`): ring with that sound this launch,
 ///   as `-settings` gives the settings: the argument read over the stored
@@ -172,10 +169,9 @@ public enum DebugLog {
     /// (`idle(after:)`): UIApplication's, set by the app.
     @MainActor public static var appActive: () -> Bool = { true }
 
-    public static var provisionalAlarms: Bool { arguments?.bool(forKey: "provisionalAlarms") ?? false }
-    /// `-muteAudio YES`: the in-app ring plays at no volume and notifications
-    /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
-    /// Mac's speakers; everything else about the ring and the alarms is as is.
+    /// `-muteAudio YES`: the in-app ring plays at no volume, so a scripted run
+    /// (`npm run ios:e2e`) is silent on the Mac's speakers; everything else
+    /// about the ring and the alarms is as is.
     public static var muteAudio: Bool { arguments?.bool(forKey: "muteAudio") ?? false }
     public static var language: String? { arguments?.string(forKey: "uiLanguage") }
     public static var noAlarmPrompt: Bool { arguments?.bool(forKey: "noAlarmPrompt") ?? false }
@@ -247,21 +243,13 @@ extension DebugLog {
         case scheduled(id: String, at: Double, inS: Double, sound: String?, bundled: Bool)
         case notScheduled(id: String, error: String)
         case alarmsCancelled
-        /// The alarms a read-back found pending, each with its moment.
+        /// The alarms a read-back found the system holding, each with its
+        /// moment and its state (`scheduled`, or `alerting` while it sounds).
         case pending(alarms: [PendingAlarm])
-        /// Those it found delivered and still shown.
-        case delivered(ids: [String])
-        /// What the system allows this app's notifications, read as the
-        /// alarms are asked for: the permission (`status`), and whether its
-        /// sound, its banner, the Lock Screen and the time-sensitive level
-        /// are on (`enabled`, `disabled`, `notSupported`); and whether this
-        /// launch is muted (`-muteAudio`).
-        case notificationSettings(
-            status: String, sound: String, alert: String, lockScreen: String, timeSensitive: String, muted: Bool
-        )
-        /// A notification come while the app is on screen: whether it
-        /// carries a sound, and what the app has the system present of it.
-        case presented(id: String, sound: Bool, options: [String])
+        /// The cook's answer to the alarms, as the system has it, read as
+        /// the alarms are asked for (`notDetermined`, `denied`,
+        /// `authorized`).
+        case alarmAuthorization(status: String)
 
         // The sounds.
         /// The ring in the app begun: its file, how many frames it read
@@ -326,12 +314,15 @@ extension DebugLog {
 
     public struct PendingAlarm: Codable, Equatable {
         public let id: String
-        /// When it fires, cook time, whole s; none without an interval trigger.
+        /// When it fires, cook time, whole s; none without a fixed date.
         public let at: Int?
+        /// `scheduled`, or `alerting` while it sounds.
+        public let state: String
 
-        public init(id: String, at: Int?) {
+        public init(id: String, at: Int?, state: String) {
             self.id = id
             self.at = at
+            self.state = state
         }
     }
 }

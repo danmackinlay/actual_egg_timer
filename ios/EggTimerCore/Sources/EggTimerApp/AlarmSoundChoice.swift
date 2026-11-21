@@ -8,7 +8,7 @@ import Observation
 /// timer to sound like, and a stored value that is not a sound reads as it
 /// (`readAlarmSound`).
 ///
-/// The notification and the in-app ring both read it when they sound, so a
+/// The system's alarm and the in-app ring both read it when they are set, so a
 /// change reaches the next alarm scheduled. One already scheduled for a
 /// running cook keeps the sound it was scheduled with.
 @MainActor

@@ -7,14 +7,13 @@ import Foundation
 /// cook sets, `s` and twice `s` from now, without a cook to wait through, so
 /// each way the app sounds can be heard in seconds.
 ///
-/// The notifications are the cook's: asked for with the real question and
-/// set through `Alarm.schedule`, words, sound and interruption level as a
-/// cook's, so with the app in the background or the phone locked they sound
-/// as a cook's would. With the app on screen they are presented as a cook's
-/// are, without their sound, and the app rings itself through `Ringer`, as
-/// a cook's deadline does when it comes on screen (`deadlineToRing`): only
-/// if the app has been on screen since before the moment. A ring lasts up
-/// to 40 s, so the second replaces the first unless a touch has stopped it.
+/// The alarms are the cook's: asked for with the real question and set
+/// through `Alarm.schedule`, words and sound as a cook's, so they sound as a
+/// cook's would, on screen or not. Only with alarms refused does the app ring
+/// itself through `Ringer`, as a cook's deadline does when it comes on screen
+/// and the system holds no alarm for it (`deadlineToRing`): only if the app
+/// has been on screen since before the moment. A ring lasts up to 40 s, so
+/// the second replaces the first unless a touch has stopped it.
 @MainActor
 enum AlarmTest {
     static func start() {
@@ -25,11 +24,15 @@ enum AlarmTest {
             let allowed = await Alarm.shared.authorize()
             let pull = AppClock.nowS + lead, cooled = AppClock.nowS + 2 * lead
             if allowed {
-                Alarm.shared.schedule(pullS: pull, cooledS: cooled, probe: false, cooling: .ice)
+                Alarm.shared.schedule(pullS: pull, cooledS: cooled, probe: false, cooling: .ice, silencing: [])
                 _ = await Alarm.shared.pendingDeadlines()
             }
             for (deadline, at) in [(RingDeadline.pull, pull), (.cooled, cooled)] {
                 try? await AppClock.wait(until: at)
+                guard !allowed else {
+                    DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "the system's alarm rings it"))
+                    continue
+                }
                 guard let since = Ringer.shared.onScreenSinceS, since <= at else {
                     DebugLog.log(.ringSkipped(deadline: deadline.rawValue, reason: "not on screen at the deadline"))
                     continue

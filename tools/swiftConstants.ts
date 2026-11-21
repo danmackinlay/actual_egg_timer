@@ -27,6 +27,11 @@
  * them. A property set in one block and not the other, or not a #rrggbb
  * colour, fails this.
  *
+ * And the line under the system's question when the app first asks to set
+ * alarms, `alarm.permission` in copy/en.json, as ios/project.yml's
+ * NSAlarmKitUsageDescription, which the build writes into the app's
+ * Info.plist: the catalogue's English, so the words stay the catalogue's.
+ *
  * `npm test` runs this before it type-checks, as it does copy:keys, so the
  * Swift's constants are never a step to remember. `--check` is
  * `fixtures:check`'s rule for generated files, as in tools/copyKeys.ts: what
@@ -592,7 +597,20 @@ function paletteFiles(): [string, string][] {
   return [[PALETTE_SWIFT, swift], ...ACCENT_COLOURS.map((path): [string, string] => [path, accent])];
 }
 
-const stale = replaceChanged([...await swiftFiles(), ...paletteFiles()]);
+/** ios/project.yml with its NSAlarmKitUsageDescription the catalogue's
+ *  `alarm.permission`, as a YAML double-quoted string, which reads JSON's. */
+function alarmUsageFile(): [string, string] {
+  const path = 'ios/project.yml';
+  const catalogue = JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, { text: string }> };
+  const words = catalogue.messages['alarm.permission']?.text;
+  if (words === undefined) throw new Error('copy/en.json: no alarm.permission');
+  const yml = readFileSync(path, 'utf8');
+  const line = /^( +NSAlarmKitUsageDescription: ).*$/m;
+  if (!line.test(yml)) throw new Error(`${path}: no NSAlarmKitUsageDescription`);
+  return [path, yml.replace(line, (_, key: string) => key + JSON.stringify(words))];
+}
+
+const stale = replaceChanged([...await swiftFiles(), ...paletteFiles(), alarmUsageFile()]);
 
 if (process.argv.includes('--check')) {
   if (stale.length > 0) {
@@ -601,5 +619,5 @@ if (process.argv.includes('--check')) {
   }
   console.log(`swift:constants: the ${TWINS.length} constants agree with src/core/, and the colours with styles.css`);
 } else {
-  console.log(`swift:constants: ${TWINS.length} constants written to ${CORE_SWIFT} and ${COPY_SWIFT}; the colours to ${PALETTE_SWIFT} and the AccentColors`);
+  console.log(`swift:constants: ${TWINS.length} constants written to ${CORE_SWIFT} and ${COPY_SWIFT}; the colours to ${PALETTE_SWIFT} and the AccentColors; the alarms' question to ios/project.yml`);
 }

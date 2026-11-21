@@ -3,8 +3,8 @@ import os
 
 /// The app's clock: every read of the current time a cook depends on, and
 /// every wait measured in cook time, goes through here (`now`, `sleep`,
-/// `period`). What must stay on the system's clock says so: a notification's
-/// interval and the Lock Screen card's dates, which the system counts
+/// `period`). What must stay on the system's clock says so: an alarm's
+/// moment and the Lock Screen card's dates, which the system counts
 /// (`realInterval`, `real`), and sharing, which talks to a server
 /// (`system`).
 ///
@@ -30,7 +30,7 @@ import os
 /// debug log says `clock`, with `n`, `at` and `speed`, when it has). A script
 /// freezes the clock at each moment it checks, rather than racing it.
 ///
-/// Under a running clock the notifications are scheduled at the scaled
+/// Under a running clock the alarms are scheduled at the scaled
 /// interval, so a pull a minute of cook time away fires in a second at ×60;
 /// under a frozen one, which reaches no deadline by itself, a day later than
 /// that, so they stay pending (and cover their deadlines) until the check
@@ -188,7 +188,7 @@ enum LaunchClock {
     /// Now, in cook time.
     static var now: Date { app(Date()) }
 
-    /// A frozen clock's notifications wait this much longer (see above).
+    /// A frozen clock's alarms wait this much longer (see above).
     private static let frozenDelay: TimeInterval = 86400
 
     /// The system's seconds from now until a moment in cook time: a day more

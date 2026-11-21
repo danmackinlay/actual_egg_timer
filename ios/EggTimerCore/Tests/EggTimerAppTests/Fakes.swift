@@ -65,9 +65,10 @@ final class TestClock: CookClock, @unchecked Sendable {
 }
 
 /// The alarms, as the system would hold them (`Alarm`): each by its id and
-/// its moment, pending until the test clock reaches it and delivered after.
-/// A schedule replaces what is pending and asks for nothing already past; a
-/// cancel takes what is pending and leaves what was delivered.
+/// its moment, waiting until the test clock reaches it and sounding after,
+/// until cancelled. A schedule replaces what is waiting, asks for nothing
+/// already past, and leaves what sounds unless told to silence it; a cancel
+/// takes them all.
 @MainActor
 final class FakeAlarm: AlarmScheduling {
     var authorized = true
@@ -76,45 +77,33 @@ final class FakeAlarm: AlarmScheduling {
     private(set) var cancels = 0
     private let clock: TestClock
     private var requests: [String: Double] = [:]
-    private var shown: Set<String> = []
 
     init(_ clock: TestClock) { self.clock = clock }
 
     static let ids: [RingDeadline: String] = [.pull: "cook.pull", .cooled: "cook.cool"]
 
-    /// What is pending, by id, with its moment, epoch s.
-    var pending: [String: Double] {
-        deliver()
-        return requests
-    }
+    /// What the system holds, by id, with its moment, epoch s: an alarm
+    /// past its moment is sounding, and held until it is cancelled, as
+    /// AlarmKit's is until the cook stops it.
+    var pending: [String: Double] { requests }
 
-    /// The ids delivered and still shown.
-    var delivered: Set<String> {
-        deliver()
-        return shown
-    }
-
-    /// Those whose moment has come, delivered.
-    private func deliver() {
+    /// The ids held and past their moment: sounding.
+    var alerting: Set<String> {
         let now = clock.seconds
-        for (id, at) in requests where at <= now {
-            requests[id] = nil
-            shown.insert(id)
-        }
+        return Set(requests.filter { $0.value <= now }.keys)
     }
 
     func authorize() async -> Bool { authorized }
-    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling, silencing: Set<RingDeadline>) {
         scheduled.append((pullS, cooledS))
-        deliver()
-        requests = [:]
         let now = clock.seconds
-        if let p = pullS, p > now { requests["cook.pull"] = p }
-        if let c = cooledS, c > now { requests["cook.cool"] = c }
+        let kept = requests.filter { id, at in at <= now && !silencing.contains(id == "cook.pull" ? .pull : .cooled) }
+        requests = kept
+        if let p = pullS, p > now, kept["cook.pull"] == nil { requests["cook.pull"] = p }
+        if let c = cooledS, c > now, kept["cook.cool"] == nil { requests["cook.cool"] = c }
     }
     func cancel() {
         cancels += 1
-        deliver()
         requests = [:]
     }
     func pendingDeadlines() async -> Set<RingDeadline> {

@@ -9,8 +9,8 @@ import EggTimerShared
 /// non-Sendable class whose methods run off the main actor, so keeping one in a
 /// `@MainActor` object and awaiting on it is a data race that Swift 6 correctly
 /// refuses to compile. Every call therefore asks the SYSTEM what is running and
-/// acts on that - the same discipline `Alarm` uses when it reads its pending
-/// count back from `UNUserNotificationCenter` rather than assuming. An egg
+/// acts on that - the same discipline `Alarm` uses when it reads its alarms
+/// back from AlarmKit rather than assuming. An egg
 /// timer that claims a Lock Screen card it has not got is worse than one with
 /// no card at all.
 ///
@@ -39,9 +39,8 @@ enum LiveActivity {
     }
 
     /// End the cook's card at once: a card saying "Done" beside the alarm that
-    /// says the same is one message twice. The alarm stays in Notification
-    /// Centre for anyone who missed it; with notifications off, the app is on
-    /// screen ringing.
+    /// says the same is one message twice. The system's alarm sounds until the
+    /// cook stops it; with alarms off, the app is on screen ringing.
     ///
     /// It ends on the content it last showed, not on a done state: a card
     /// dismissed at once never draws its final content, so the widget has no

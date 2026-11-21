@@ -19,9 +19,9 @@ import PackageDescription
 // catalogue as the app loads it (`tr`) and the Live Activity's contract; the
 // widget links it and not the physics. EggTimerApp is the app's logic: the
 // cook, the planner, the stores, the clock, the decision surfaces, the
-// corrections, when to ring for a deadline no notification holds. It imports
+// corrections, when to ring for a deadline no alarm of the system's holds. It imports
 // Foundation, Observation, CryptoKit and the libraries here, and reaches what only an
-// iPhone has - notifications, sound, the Lock Screen, sharing, VoiceOver -
+// iPhone has - alarms, sound, the Lock Screen, sharing, VoiceOver -
 // through protocols the app fills at launch (`Services`), which the tests
 // fill with fakes.
 let package = Package(

@@ -83,6 +83,9 @@ export function sources(): Record<App, string[]> {
     ios: own([
       ...sourceFiles('ios/App', '.swift'), ...sourceFiles('ios/Widget', '.swift'),
       ...sourceFiles('ios/EggTimerCore/Sources', '.swift'),
+      // The alarms' question, which the system draws from the app's
+      // Info.plist (`alarm.permission`, written there by swift:constants).
+      'ios/project.yml',
     ]),
   };
 }

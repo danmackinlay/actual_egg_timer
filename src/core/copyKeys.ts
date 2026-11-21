@@ -360,6 +360,7 @@ export interface CopyKeyArgs {
   'controls.alarm.hen': never;
   'controls.units.period': never;
   'app.titlePage': never;
+  'alarm.permission': never;
   'alarm.pull.title': never;
   'alarm.pull.bodyIce': never;
   'alarm.pull.bodyTap': never;
@@ -367,11 +368,8 @@ export interface CopyKeyArgs {
   'alarm.pull.bodyCounter': never;
   'alarm.pull.bodyEggCup': never;
   'alarm.cooled.title': never;
-  'alarm.cooled.body': never;
   'alarm.opened.title': never;
-  'alarm.opened.body': never;
   'alarm.probe.title': never;
-  'alarm.probe.body': never;
   'activity.stage.heating': never;
   'activity.stage.cooking': never;
   'activity.stage.pull': never;

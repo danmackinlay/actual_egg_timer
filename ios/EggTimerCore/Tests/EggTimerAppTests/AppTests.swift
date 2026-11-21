@@ -61,15 +61,15 @@ struct AppTests {
         #expect(cook.phase == .cooking)
         #expect(world.alarm.scheduled.last?.pullS == (try pullS(cook)))
 
-        // The pull, with the app not on screen: the notification's alone,
-        // no ring from the app.
+        // The pull, with the app not on screen: the system's alarm alone,
+        // sounding until the cook stops it, and no ring from the app.
         world.clock.set(try pullS(cook) + 1)
         await world.ticked(cook)
         #expect(cook.phase == .pull)
         #expect(cook.running?.events.rangAtS != nil)
         #expect(world.ringer.rung.isEmpty)
-        #expect(world.alarm.delivered == ["cook.pull"])
-        #expect(world.alarm.pending.keys.sorted() == ["cook.cool"])
+        #expect(world.alarm.alerting == ["cook.pull"])
+        #expect(world.alarm.pending.keys.sorted() == ["cook.cool", "cook.pull"])
 
         // Out, three seconds into the pull: the cooling is timed from the tap.
         let pull = try pullS(cook)
@@ -101,7 +101,7 @@ struct AppTests {
         await world.learned(planner)
     }
 
-    /// With no notifications allowed, the app rings the pull itself, once.
+    /// With no alarms allowed, the app rings the pull itself, once.
     @Test func withoutAlarmsTheAppRingsThePull() async throws {
         let world = World()
         world.alarm.authorized = false
@@ -120,10 +120,9 @@ struct AppTests {
         #expect(world.ringer.rung == [.pull])
     }
 
-    /// With the pull's notification pending and the app on screen, the app
-    /// rings the pull itself as well, once: silent mode mutes the
-    /// notification's sound, which is presented on screen without it.
-    @Test func onScreenTheAppRingsThePullItsNotificationHolds() async throws {
+    /// With the pull's alarm held and the app on screen, the system's alarm
+    /// rings the pull, over the app, and the app does not ring it as well.
+    @Test func onScreenTheSystemRingsThePullItHolds() async throws {
         let world = World()
         world.ringer.onScreenSinceS = world.clock.seconds
         let planner = world.planner()
@@ -133,11 +132,11 @@ struct AppTests {
         #expect(world.alarm.pending["cook.pull"] == (try pullS(cook)))
         world.clock.set(try pullS(cook) + 1)
         await world.ticked(cook)
-        #expect(world.alarm.delivered == ["cook.pull"])
-        #expect(world.ringer.rung == [.pull])
+        #expect(world.alarm.alerting == ["cook.pull"])
+        #expect(world.ringer.rung.isEmpty)
         world.clock.advance(2)
         await world.ticked(cook)
-        #expect(world.ringer.rung == [.pull])
+        #expect(world.ringer.rung.isEmpty)
     }
 
     /// A relaunch: a new `Cook` picks the stored one back up, writes the pull
@@ -266,12 +265,12 @@ struct AppTests {
         #expect(cook.phase == .cooling)
         var choices = try #require(cook.running).choices
         choices.startMode = .cold
-        let cancels = world.alarm.cancels
+        let asked = world.alarm.scheduled.count
         cook.correct(choices: choices, startedAtS: nil)
         await world.settled(cook)
         #expect(cook.plan.map(asksIfStillIn) == true)
         #expect(cook.readout(atS: world.clock.seconds)?.asking == true)
-        #expect(world.alarm.cancels > cancels)
+        #expect(world.alarm.scheduled.dropFirst(asked).last.map { $0.pullS == nil && $0.cooledS == nil } == true)
         cook.stillIn()
         await world.settled(cook)
         #expect(cook.running?.events.pulled == nil)

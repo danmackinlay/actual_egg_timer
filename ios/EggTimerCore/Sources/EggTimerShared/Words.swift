@@ -1,4 +1,5 @@
 import EggTimerCopy
+import Foundation
 
 /// Words for a screen: a message rendered from the catalogue by `tr`, and
 /// nothing else. Only `tr` and `trChosen` make one, so a helper of the app's
@@ -6,8 +7,9 @@ import EggTimerCopy
 /// handed a literal: the compiler refuses it, and a wording change stays the
 /// catalogue's diff.
 ///
-/// `string` is the rendered text, for what takes a `String`: a notification, an
-/// announcement to VoiceOver, an attributed string, the Live Activity's card.
+/// `string` is the rendered text, for what takes a `String`: an announcement to
+/// VoiceOver, an attributed string, the Live Activity's card; `resource` is
+/// the same for what takes a `LocalizedStringResource`, an alarm's alert.
 /// A `String` never becomes `Words` again.
 public struct Words: Hashable, Sendable {
     public let string: String
@@ -15,6 +17,13 @@ public struct Words: Hashable, Sendable {
     init(rendered: String) { string = rendered }
 
     public var isEmpty: Bool { string.isEmpty }
+
+    /// The rendered text for what the system draws from a
+    /// `LocalizedStringResource`: the text as its own key, which the app's
+    /// bundle has no table to look up, so the system shows it as it is. Not
+    /// a literal, so the compiler writes no entry for it (`npm run
+    /// ios:build`).
+    public var resource: LocalizedStringResource { LocalizedStringResource(stringLiteral: string) }
 
     /// Nothing: a line left empty.
     public static let none = Words(rendered: "")

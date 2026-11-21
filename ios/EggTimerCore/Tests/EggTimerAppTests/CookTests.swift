@@ -18,9 +18,9 @@ extension AppTests {
     }
 
     /// A cold cook to Done: the boil at 5:00, out 3 s into the pull, each
-    /// phase in turn, the alarms the plan's and pending until their moments,
-    /// the app's own ring at each deadline as well, since it is on screen and
-    /// silent mode mutes a notification's sound, the card ended at Done;
+    /// phase in turn, the alarms the plan's and held, each sounding from its
+    /// moment, and no ring of the app's, since the system's alarm sounds over
+    /// it, the card ended at Done;
     /// Jammy, then Start again:
     /// one egg logged with its forecast, marked as made under a debug clock,
     /// and no cook stored.
@@ -52,7 +52,7 @@ extension AppTests {
         #expect(events.pulled?.by == .cook)
         #expect(events.pulled.map { abs($0.outS - $0.dueS - 3) <= 1e-6 } == true)
         #expect(events.cooledAtS != nil)
-        #expect(world.alarm.delivered == ["cook.pull", "cook.cool"])
+        #expect(world.alarm.alerting == ["cook.cool"])
         await world.until("the card ended at Done") { world.card.calls.last == .endAll }
         world.clock.set(cooled + 20)
         model.answer(yolk: .jammy, white: nil)
@@ -62,7 +62,7 @@ extension AppTests {
         await world.settled(model.cook)
         let heating = Phase.heating.rawValue, cooking = Phase.cooking.rawValue, pulling = Phase.pull.rawValue
         #expect(world.phases == [heating, cooking, pulling, Phase.cooling.rawValue, Phase.done.rawValue])
-        #expect(world.ringer.rung == [.pull, .cooled])
+        #expect(world.ringer.rung.isEmpty)
         #expect(world.stored == nil)
         #expect(model.planner.kept.log.count == 1)
         let egg = try #require(model.planner.kept.log.first)
@@ -256,7 +256,7 @@ extension AppTests {
         #expect(Set(swept) == Set(old))
         #expect(world.store.keys.isEmpty)
         let now = world.clock.seconds
-        world.alarm.schedule(pullS: now + 600, cooledS: now + 900, probe: false, cooling: .ice)
+        world.alarm.schedule(pullS: now + 600, cooledS: now + 900, probe: false, cooling: .ice, silencing: [])
         let model = world.model()
         defer { model.cook.killed() }
         model.appear()

@@ -3,7 +3,7 @@ import Testing
 import EggTimerCore
 
 /// The in-app alarm's decision: ring once per deadline, only while the app is
-/// on screen, whether or not a notification holds the deadline.
+/// on screen, and only a deadline no alarm of the system's holds.
 ///
 /// Driven the way the app drives it: a tick every quarter second across a whole
 /// cook, with the phase from the core's own `phaseAt`, and every deadline that
@@ -21,6 +21,7 @@ struct RingTests {
     private func run(
         cooled: Double? = 520,
         onScreenSinceS: Double? = 0,
+        held: Set<RingDeadline> = [],
         from: Double = 0,
         to: Double = 700
     ) -> [(RingDeadline, Double)] {
@@ -29,7 +30,7 @@ struct RingTests {
         var now = from
         while now <= to {
             if let d = deadlineToRing(
-                phase: phase(now, cooled: cooled), nowS: now, pullS: pullS, cooledS: cooled, rung: rung,
+                phase: phase(now, cooled: cooled), nowS: now, pullS: pullS, cooledS: cooled, rung: rung, held: held,
                 onScreenSinceS: onScreenSinceS
             ) {
                 rung.insert(d)
@@ -40,12 +41,18 @@ struct RingTests {
         return rang
     }
 
-    @Test("On screen, rings once at the pull and once when the cooling ends, notifications or not: silent mode mutes theirs")
+    @Test("On screen, with no alarm of the system's, rings once at the pull and once when the cooling ends")
     func onScreenRingsOncePerDeadline() {
         let rang = run()
         #expect(rang.map(\.0) == [.pull, .cooled])
         #expect(rang[0].1 == pullS)
         #expect(rang[1].1 == cooledS)
+    }
+
+    @Test("A deadline the system's alarm holds is not rung: it sounds over the app")
+    func heldIsTheSystems() {
+        #expect(run(held: [.pull]).map(\.0) == [.cooled])
+        #expect(run(held: [.pull, .cooled]).isEmpty)
     }
 
     @Test("A counter rest has only the pull")
@@ -71,14 +78,14 @@ struct RingTests {
     func quietPhases() {
         for p in [Phase.idle, .heating, .cooking, .cooling] {
             #expect(deadlineToRing(
-                phase: p, nowS: 1000, pullS: pullS, cooledS: cooledS, rung: [],
+                phase: p, nowS: 1000, pullS: pullS, cooledS: cooledS, rung: [], held: [],
                 onScreenSinceS: 0
             ) == nil)
         }
         // A phase that says PULL a moment early - the caller's clock and the
         // deadline's disagreeing - still waits for the deadline.
         #expect(deadlineToRing(
-            phase: .pull, nowS: pullS - 0.1, pullS: pullS, cooledS: cooledS, rung: [],
+            phase: .pull, nowS: pullS - 0.1, pullS: pullS, cooledS: cooledS, rung: [], held: [],
             onScreenSinceS: 0
         ) == nil)
     }
@@ -86,11 +93,11 @@ struct RingTests {
     @Test("Already rung is never rung again")
     func rungIsFinal() {
         #expect(deadlineToRing(
-            phase: .pull, nowS: pullS + 1, pullS: pullS, cooledS: cooledS, rung: [.pull],
+            phase: .pull, nowS: pullS + 1, pullS: pullS, cooledS: cooledS, rung: [.pull], held: [],
             onScreenSinceS: 0
         ) == nil)
         #expect(deadlineToRing(
-            phase: .done, nowS: cooledS + 1, pullS: pullS, cooledS: cooledS, rung: [.cooled],
+            phase: .done, nowS: cooledS + 1, pullS: pullS, cooledS: cooledS, rung: [.cooled], held: [],
             onScreenSinceS: 0
         ) == nil)
     }

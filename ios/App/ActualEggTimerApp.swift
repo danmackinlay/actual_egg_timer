@@ -1,6 +1,6 @@
 import SwiftUI
 import UIKit
-import UserNotifications
+import AlarmKit
 import EggTimerApp
 
 @main
@@ -46,16 +46,15 @@ struct ActualEggTimerApp: App {
 
     #if DEBUG
     /// What a fresh install has, without one (`-resetState`, DebugLog.swift):
-    /// the stores' suite and the standard domain emptied, every notification
-    /// pending or shown removed, and any Live Activity ended. Notification
-    /// permission is the system's, and stays as it was.
+    /// the stores' suite and the standard domain emptied, every alarm the app
+    /// holds cancelled, and any Live Activity ended. The alarms' permission is
+    /// the system's, and stays as it was.
     private static func resetState() {
         let defaults = UserDefaults.standard
         defaults.removePersistentDomain(forName: Stores.suite)
         if let id = Bundle.main.bundleIdentifier { defaults.removePersistentDomain(forName: id) }
-        let centre = UNUserNotificationCenter.current()
-        centre.removeAllPendingNotificationRequests()
-        centre.removeAllDeliveredNotifications()
+        let alarms = AlarmManager.shared
+        for alarm in (try? alarms.alarms) ?? [] { try? alarms.cancel(id: alarm.id) }
         Task { await LiveActivity.endAll() }
     }
     #endif

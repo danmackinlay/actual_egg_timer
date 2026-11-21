@@ -1,7 +1,8 @@
+import AlarmKit
 import EggTimerCore
 import EggTimerCopy
 import Foundation
-import UserNotifications
+import SwiftUI
 import EggTimerApp
 import EggTimerShared
 
@@ -9,60 +10,52 @@ import EggTimerShared
 ///
 /// A web page cannot do this. On iOS a home-screen web app's timers are
 /// suspended the moment the screen locks, and WebKit has never shipped a way to
-/// schedule a local notification, so the browser version can only ring while you
-/// are looking at it - which is exactly when you do not need it.
+/// schedule an alarm, so the browser version can only ring while you are
+/// looking at it - which is exactly when you do not need it.
 ///
 /// Nothing of ours runs in the background either. The difference is that we can
 /// hand the system ABSOLUTE fire dates up front and let it do the waiting.
+///
+/// The alarms are AlarmKit's: they sound as the Clock app's do, through silent
+/// mode and any Focus, with a full-screen alert on the Lock Screen and on a
+/// paired watch. Each is a one-off alarm at a fixed date, with no AlarmKit
+/// countdown: the cook's own Live Activity (`LiveActivity`) is the countdown,
+/// and a countdown of AlarmKit's would be a second card for the same egg, which
+/// AlarmKit would also need a widget of its own to draw. The alert is its title
+/// alone and the system's Stop.
 @MainActor
-final class Alarm: NSObject, UNUserNotificationCenterDelegate {
+final class Alarm {
     static let shared = Alarm()
 
-    private let centre = UNUserNotificationCenter.current()
-    private let pullID = "cook.pull"
-    private let coolID = "cook.cool"
+    private let manager = AlarmManager.shared
+    /// Fixed, so a relaunch, a new cook or a cancel finds the alarms a
+    /// previous launch set, without keeping their ids anywhere.
+    private let pullID = UUID(uuidString: "6A1D2C3E-0001-4E6F-9A11-5E6E0A1A2001")!
+    private let coolID = UUID(uuidString: "6A1D2C3E-0002-4E6F-9A11-5E6E0A1A2002")!
 
-    private override init() {
-        super.init()
-        centre.delegate = self
+    /// The work handed to AlarmKit, one call after another: scheduling is
+    /// asynchronous, and a cancel or a read-back that overtook a schedule
+    /// would cancel or count the alarms of the cook before.
+    private var queue: Task<Void, Never>?
+
+    private init() {}
+
+    private func enqueue(_ work: @escaping @MainActor () async -> Void) -> Task<Void, Never> {
+        let previous = queue
+        let task = Task { @MainActor in
+            await previous?.value
+            await work()
+        }
+        queue = task
+        return task
     }
 
-    /// Present the alarm even when the app is already open.
-    ///
-    /// Without this iOS hands a foreground notification straight to the app and
-    /// shows nothing: no banner, no sound, not even an entry on the Lock
-    /// Screen. For most apps that is the right default and for this one it is a
-    /// silent failure - watching the countdown is the case where the egg timer
-    /// must be loudest, not quietest.
-    ///
-    /// Its banner and its place in the list, but not its sound: with the app
-    /// on screen the app rings itself (`Ringer`, `deadlineToRing`), through
-    /// silent mode, which mutes a notification's sound, time-sensitive or not.
-    /// Its sound as well would ring the deadline twice.
-    /// Declared `nonisolated`, and the completion-handler form rather than the
-    /// async one, because both parameters are non-Sendable: the async version
-    /// cannot be satisfied by a main-actor method without sending them across
-    /// the boundary. Nothing here touches either, so there is nothing to send.
-    nonisolated func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
-        let options: UNNotificationPresentationOptions = [.banner, .list]
-        DebugLog.log(.presented(
-            id: notification.request.identifier,
-            sound: notification.request.content.sound != nil,
-            options: [(UNNotificationPresentationOptions.banner, "banner"), (.sound, "sound"), (.list, "list")]
-                .filter { options.contains($0.0) }.map(\.1)
-        ))
-        completionHandler(options)
-    }
-
-    /// Ask once. Returns false if the user has said no, in which case the cook
-    /// still runs - it just cannot shout.
+    /// Ask once. Returns false if the cook has said no, in which case the cook
+    /// still runs - it just cannot shout. AlarmKit asks once in the app's
+    /// life: after a no, only Settings changes it.
     func authorize() async -> Bool {
         let ok = await ask()
-        if DebugLog.logging { await logSettings() }
+        if DebugLog.logging { DebugLog.log(.alarmAuthorization(status: word(manager.authorizationState))) }
         return ok
     }
 
@@ -70,48 +63,25 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // Screenshots of a phase (DebugLog.swift) run on a fresh simulator,
         // where the system would ask, and its alert would be in the picture.
         if DebugLog.noAlarmPrompt { return false }
-        // Quiet notifications, granted with no prompt, so a simulator nobody
-        // taps still holds the alarms to read back.
-        if DebugLog.provisionalAlarms {
-            return (try? await centre.requestAuthorization(options: [.alert, .sound, .provisional])) ?? false
-        }
-        let settings = await centre.notificationSettings()
-        switch settings.authorizationStatus {
-        case .authorized, .provisional, .ephemeral:
+        switch manager.authorizationState {
+        case .authorized:
             return true
         case .denied:
             return false
-        default:
-            return (try? await centre.requestAuthorization(options: [.alert, .sound])) ?? false
+        case .notDetermined:
+            return (try? await Self.requestAuthorization()) == .authorized
+        @unknown default:
+            return false
         }
     }
 
-    /// What the system allows the alarms, to the debug log: a sound turned
-    /// off for the app in Settings, or a quiet (provisional) permission,
-    /// delivers every alarm without one.
-    private func logSettings() async {
-        let s = await centre.notificationSettings()
-        let status = switch s.authorizationStatus {
+    private func word(_ state: AlarmManager.AuthorizationState) -> String {
+        switch state {
         case .notDetermined: "notDetermined"
         case .denied: "denied"
         case .authorized: "authorized"
-        case .provisional: "provisional"
-        case .ephemeral: "ephemeral"
         @unknown default: "unknown"
         }
-        func word(_ setting: UNNotificationSetting) -> String {
-            switch setting {
-            case .enabled: "enabled"
-            case .disabled: "disabled"
-            case .notSupported: "notSupported"
-            @unknown default: "unknown"
-            }
-        }
-        DebugLog.log(.notificationSettings(
-            status: status, sound: word(s.soundSetting), alert: word(s.alertSetting),
-            lockScreen: word(s.lockScreenSetting), timeSensitive: word(s.timeSensitiveSetting),
-            muted: DebugLog.muteAudio
-        ))
     }
 
     /// Schedule the two moments that matter. Both are absolute: the system owns
@@ -123,96 +93,117 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// alarm asks for it instead of announcing the end. In an egg cup the
     /// countdown ends at the opening, and the second alarm says to eat them.
     ///
-    /// The pull alarm names the cooling the cook chose (`pullLineKey`).
-    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {
-        cancel()
-
-        if let pullAt = pullS.map(Date.init(timeIntervalSince1970:)) {
-            request(
-                id: pullID, moment: .pull, at: pullAt,
-                title: tr(.`alarm.pull.title`),
-                body: tr(pullLineKey(cooling: cooling.rawValue))
-            )
-        }
-
-        if let coolDoneAt = cooledS.map(Date.init(timeIntervalSince1970:)) {
-            let opened = cooling == .eggCup
-            request(
-                id: coolID, moment: .cooled, at: coolDoneAt,
-                title: tr(probe ? .`alarm.probe.title` : opened ? .`alarm.opened.title` : .`alarm.cooled.title`),
-                body: tr(probe ? .`alarm.probe.body` : opened ? .`alarm.opened.body` : .`alarm.cooled.body`)
-            )
+    /// An alarm already sounding is left to sound: the plan drops a moment
+    /// once it has come, and cancelling an alarm stops it. The cook stops it
+    /// with the system's Stop, or, for the pull, by taking the eggs out in
+    /// the app (`silencing`).
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling, silencing: Set<RingDeadline>) {
+        let cooledTitle: Words = tr(probe ? .`alarm.probe.title` : cooling == .eggCup ? .`alarm.opened.title` : .`alarm.cooled.title`)
+        let pullTitle: Words = tr(.`alarm.pull.title`)
+        _ = enqueue { [self] in
+            let sounding = Set(((try? manager.alarms) ?? []).filter { $0.state == .alerting }.map(\.id))
+            let keep = sounding.filter { !silencing.contains($0 == pullID ? .pull : .cooled) }
+            remove(sparing: keep)
+            if let pullS, !keep.contains(pullID) { await add(id: pullID, moment: .pull, atS: pullS, title: pullTitle) }
+            if let cooledS, !keep.contains(coolID) { await add(id: coolID, moment: .cooled, atS: cooledS, title: cooledTitle) }
         }
     }
 
     func cancel() {
+        _ = enqueue { [self] in remove(sparing: []) }
+    }
+
+    private func remove(sparing keep: Set<UUID>) {
         DebugLog.log(.alarmsCancelled)
-        centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
+        // An alarm already gone, stopped or never set, throws; nothing to do.
+        for id in [pullID, coolID] where !keep.contains(id) { try? manager.cancel(id: id) }
     }
 
     /// What the system says it is holding FOR THIS COOK: for the UI to show,
     /// and for the app to know which deadlines it must ring itself (Ringer).
     /// Claiming an alarm is set without asking is how an egg timer loses trust.
     ///
-    /// Reads our two identifiers rather than every pending request on the
-    /// device: an unfiltered count is a weak check that any other app's
-    /// notification could satisfy.
+    /// Reads our two ids rather than every alarm the app has, after any
+    /// scheduling still under way.
     func pendingDeadlines() async -> Set<RingDeadline> {
-        let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
-        let pending = await centre.pendingNotificationRequests()
+        await enqueue {}.value
+        let ours: [UUID: RingDeadline] = [pullID: .pull, coolID: .cooled]
+        let held = ((try? manager.alarms) ?? []).filter { ours[$0.id] != nil }
         if DebugLog.logging {
-        // Its moment in cook time, though a pending interval trigger's
-        // `nextTriggerDate()` is now plus the interval, so it drifts by the
-        // time since it was scheduled: `scheduled` says when it fires.
-        DebugLog.log(.pending(alarms: pending.map { r in
-            let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate().map(AppClock.app)
-            return DebugLog.PendingAlarm(id: r.identifier, at: at.map { Int($0.timeIntervalSince1970) })
-        }))
-        // And those the system has delivered and still shows, which the
-        // scripted checks read to see one fire.
-        let delivered = await centre.deliveredNotifications().map(\.request.identifier).filter { ours[$0] != nil }
-        DebugLog.log(.delivered(ids: delivered.sorted()))
+            DebugLog.log(.pending(alarms: held.map { alarm in
+                let at: Int? = if case .fixed(let date) = alarm.schedule {
+                    Int(AppClock.fromReal(date).timeIntervalSince1970)
+                } else { nil }
+                return DebugLog.PendingAlarm(id: name(alarm.id), at: at, state: state(alarm.state))
+            }.sorted { $0.id < $1.id }))
         }
-        return Set(pending.compactMap { ours[$0.identifier] })
+        return Set(held.compactMap { ours[$0.id] })
     }
 
-    private func request(id: String, moment: RingDeadline, at date: Date, title: Words, body: Words) {
+    private func name(_ id: UUID) -> String { id == pullID ? "cook.pull" : "cook.cool" }
+
+    private func state(_ state: AlarmKit.Alarm.State) -> String {
+        switch state {
+        case .scheduled: "scheduled"
+        case .countdown: "countdown"
+        case .paused: "paused"
+        case .alerting: "alerting"
+        @unknown default: "unknown"
+        }
+    }
+
+    private func add(id: UUID, moment: RingDeadline, atS: Double, title: Words) async {
         // The system's seconds to the moment: under a debug build's fast
         // clock, the cook's interval scaled (`AppClock`).
-        let seconds = AppClock.realInterval(until: date)
+        let seconds = AppClock.realInterval(until: Date(timeIntervalSince1970: atS))
         guard seconds > 0 else { return }
+        // A fixed date is an instant, not a time of day: a change of time
+        // zone, or the cook setting the clock, does not move it.
+        let fires = Date.now.addingTimeInterval(seconds)
 
-        let content = UNMutableNotificationContent()
-        content.title = title.string
-        content.body = body.string
-        // The cook's sound: whole periods of it, under the
-        // 30 s past which iOS plays its default instead (tools/sounds.ts).
+        // The cook's sound, from the files the in-app ring plays: whole
+        // periods of it (tools/sounds.ts).
         let file = AlarmSoundChoice.file(AlarmSoundChoice.shared.sound, moment)
-        content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
-        if DebugLog.muteAudio { content.sound = nil }
         DebugLog.log(.scheduled(
-            id: id, at: date.timeIntervalSince1970, inS: seconds, sound: DebugLog.muteAudio ? nil : file,
+            id: name(id), at: atS, inS: seconds, sound: file,
             bundled: Bundle.main.url(forResource: file, withExtension: nil) != nil
         ))
-        // An egg is time-sensitive in the literal sense the name was coined
-        // for: thirty seconds late is a different egg. This level is what lets
-        // the alarm through a Focus mode, and it is why the app carries the
-        // matching entitlement (see ActualEggTimer.entitlements). Unsigned
-        // simulator builds have no entitlement and silently fall back to the
-        // default level, which is the correct failure: quieter, never wrong.
-        content.interruptionLevel = .timeSensitive
-        // Sorts the alarm above whatever else has piled up on the Lock Screen.
-        content.relevanceScore = 1.0
+        let attributes = AlarmAttributes<CookAlarm>(
+            presentation: AlarmPresentation(alert: AlarmPresentation.Alert(title: title.resource)),
+            tintColor: Palette.accent
+        )
+        if let error = await Self.schedule(id: id, fires: fires, attributes: attributes, file: file) {
+            DebugLog.log(.notScheduled(id: name(id), error: error))
+        }
+    }
 
-        // An interval trigger rather than a calendar one: the cook is a
-        // duration, and a clock that changes underneath it - a timezone, a
-        // leap second, the user editing the time - must not move the egg.
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
-        centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
-            if let error { DebugLog.log(.notScheduled(id: id, error: error.localizedDescription)) }
+    // AlarmManager is not Sendable, so its asynchronous calls are made off
+    // the main actor, from the shared instance, with only Sendable values in
+    // and out.
+
+    nonisolated private static func requestAuthorization() async throws -> AlarmManager.AuthorizationState {
+        try await AlarmManager.shared.requestAuthorization()
+    }
+
+    /// Nil once scheduled, else why not.
+    nonisolated private static func schedule(
+        id: UUID, fires: Date, attributes: AlarmAttributes<CookAlarm>, file: String
+    ) async -> String? {
+        do {
+            _ = try await AlarmManager.shared.schedule(
+                id: id,
+                configuration: .alarm(schedule: .fixed(fires), attributes: attributes, sound: .named(file))
+            )
+            return nil
+        } catch {
+            return String(describing: error)
         }
     }
 }
+
+/// What an alarm carries for a widget to draw: nothing, since the alarms have
+/// no countdown of AlarmKit's to draw.
+struct CookAlarm: AlarmMetadata {}
 
 /// What the app's logic asks of the alarms (`Services`, in EggTimerApp).
 extension Alarm: AlarmScheduling {}

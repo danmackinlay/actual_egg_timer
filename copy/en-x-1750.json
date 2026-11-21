@@ -307,9 +307,7 @@
     "alarm.cooled.title": { "text": "Cooling ended" },
     "alarm.pull.bodyCounter": { "text": "Take them from the water, and let them cool in the open air." },
     "alarm.pull.bodyEggCup": { "text": "Commit them at once to their cups, and open them so soon as they are set upon the table." },
-    "alarm.cooled.body": { "text": "The heat has run its course; the egg is such as you desired." },
     "alarm.probe.title": { "text": "Now the probe" },
-    "alarm.probe.body": { "text": "Thrust it to the middle of the egg, and tell me the highest number." },
 
     "readout.alarm.denied": { "text": "notices are forbidden; keep the app open" },
     "readout.alarm.failed": { "text": "I could not set the alarm; keep the app open" },

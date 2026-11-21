@@ -6,7 +6,7 @@ import EggTimerShared
 
 /// The Lock Screen and Dynamic Island countdown.
 ///
-/// The notification says *when*; a Live Activity says *how long left*
+/// The alarm says *when*; a Live Activity says *how long left*
 /// without unlocking anything, which is the question you actually have while
 /// standing at the hob with wet hands.
 ///

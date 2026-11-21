@@ -8,15 +8,15 @@ import EggTimerApp
 
 /// The alarm the app sounds itself, while it is on screen.
 ///
-/// While the app is on screen it rings at each deadline itself, whether or
-/// not a notification holds it: silent mode mutes a notification's sound,
-/// and not this. With notifications refused, unanswered or not taken, the
-/// screen says "keep the app open", and this is what makes that true. `Cook`
+/// While the app is on screen it rings at each deadline no alarm of the
+/// system's holds: with alarms refused, unanswered or not set, the screen
+/// says "keep the app open", and this is what makes that true. A deadline
+/// the system holds, its alarm rings, over the app too. `Cook`
 /// decides WHEN, through the tested rule in EggTimerApp (`deadlineToRing`);
 /// this only makes the noise.
 ///
 /// The sound is the one the cook chose (`AlarmSoundChoice`), the web's
-/// (`src/ui/alarmSounds.ts`), from the file the notification plays: whole
+/// (`src/ui/alarmSounds.ts`), from the file the system's alarm plays: whole
 /// periods of its pattern, the urgent form at the pull, looped. It rings for
 /// up to 40 s (`alarmRingS`), as the web's does, and stops as soon as the cook
 /// does anything - touches the screen anywhere, taps the pull button or
@@ -118,9 +118,7 @@ final class Ringer {
         // .playback, so the alarm sounds with the silent switch on. The switch
         // is for sounds nobody asked for - ringtones, other apps' alerts - and
         // this is a timer the cook set; the system Clock's timer rings through
-        // it for the same reason. The cost is an asymmetry: with the app in the
-        // background or the phone locked, the notification is all there is, and
-        // silent mode mutes it to a vibration. Ducking rather than
+        // it for the same reason. Ducking rather than
         // stopping, so a podcast playing while the cook stands at the hob comes
         // back at full volume when the ring ends.
         let session = AVAudioSession.sharedInstance()

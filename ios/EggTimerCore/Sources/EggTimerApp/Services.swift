@@ -12,7 +12,7 @@ import EggTimerShared
 /// does `Sharing`, made in the app over its `ShareTransport` (`ShareNetwork`,
 /// URLSession and App Attest); the other two, and the card, need what only
 /// an iPhone has -
-/// notifications, sound, ActivityKit - and live in the app (ios/App), which
+/// AlarmKit, sound, ActivityKit - and live in the app (ios/App), which
 /// puts them here at launch, before anything else runs
 /// (`ActualEggTimerApp.init`). The tests put fakes here instead
 /// (ios/EggTimerCore/Tests/EggTimerAppTests).
@@ -109,21 +109,23 @@ final class TestGlobals: @unchecked Sendable {
 }
 #endif
 
-/// The cook's alarms, with the system (`Alarm`, UserNotifications): set at
-/// absolute moments, and read back rather than assumed.
+/// The cook's alarms, with the system (`Alarm`, AlarmKit): set at absolute
+/// moments, and read back rather than assumed.
 @MainActor
 public protocol AlarmScheduling: AnyObject {
     /// Whether alarms may be set, asking the cook the first time.
     func authorize() async -> Bool
     /// These alarms and no others, at these moments, epoch s in cook time:
-    /// none for a deadline that is nil.
-    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling)
+    /// none for a deadline that is nil. An alarm sounding is left to sound
+    /// until the cook stops it, unless its deadline is in `silencing`.
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling, silencing: Set<RingDeadline>)
+    /// Every alarm of the cook's gone, a sounding one stopped.
     func cancel()
-    /// The deadlines a notification holds, pending or delivered.
+    /// The deadlines the system holds an alarm for, waiting or sounding.
     func pendingDeadlines() async -> Set<RingDeadline>
 }
 
-/// The in-app ring, for a deadline no notification holds (`Ringer`).
+/// The in-app ring, for a deadline no alarm of the system's holds (`Ringer`).
 @MainActor
 public protocol AlarmRinging: AnyObject {
     /// Since when the app has been on screen, epoch s in cook time, or nil
@@ -179,7 +181,7 @@ public protocol DecisionSurfaces: Sendable {
 @MainActor
 final class Unwired: AlarmScheduling, AlarmRinging, ResultSharing {
     func authorize() async -> Bool { false }
-    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling) {}
+    func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling, silencing: Set<RingDeadline>) {}
     func cancel() {}
     func pendingDeadlines() async -> Set<RingDeadline> { [] }
     var onScreenSinceS: Double? { nil }
