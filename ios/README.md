@@ -196,8 +196,9 @@ capability: the usage string is all it needs.
 
 An alarm sounds until the cook stops it. The plan drops a moment once it has
 come, and cancelling an AlarmKit alarm that sounds stops it, so re-setting the
-alarms leaves a sounding one alone; taking the eggs out in the app stops the
-pull's, and Cancel, Start again or an answer stop both.
+alarms leaves one whose moment has come, sounding or about to (the app's tick
+can beat the system to it); taking the eggs out in the app stops the pull's,
+and the cook leaving the screen, by Cancel or Start again, stops both.
 
 `Ringer.swift` rings in the app only a deadline that comes while it is on
 screen and that no alarm of the system's holds, read back at the deadline

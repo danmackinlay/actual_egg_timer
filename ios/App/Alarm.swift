@@ -93,16 +93,18 @@ final class Alarm {
     /// alarm asks for it instead of announcing the end. In an egg cup the
     /// countdown ends at the opening, and the second alarm says to eat them.
     ///
-    /// An alarm already sounding is left to sound: the plan drops a moment
-    /// once it has come, and cancelling an alarm stops it. The cook stops it
-    /// with the system's Stop, or, for the pull, by taking the eggs out in
-    /// the app (`silencing`).
+    /// An alarm whose moment has come is left to sound: the plan drops a
+    /// moment once it has come, and cancelling an alarm stops it. Its moment,
+    /// not its state: the app's tick at the deadline can come a moment before
+    /// the system starts the alarm, which a cancel then would never sound.
+    /// The cook stops it with the system's Stop, or, for the pull, by taking
+    /// the eggs out in the app (`silencing`).
     func schedule(pullS: Double?, cooledS: Double?, probe: Bool, cooling: Cooling, silencing: Set<RingDeadline>) {
         let cooledTitle: Words = tr(probe ? .`alarm.probe.title` : cooling == .eggCup ? .`alarm.opened.title` : .`alarm.cooled.title`)
         let pullTitle: Words = tr(.`alarm.pull.title`)
         _ = enqueue { [self] in
-            let sounding = Set(((try? manager.alarms) ?? []).filter { $0.state == .alerting }.map(\.id))
-            let keep = sounding.filter { !silencing.contains($0 == pullID ? .pull : .cooled) }
+            let come = Set(((try? manager.alarms) ?? []).filter(hasCome).map(\.id))
+            let keep = come.filter { !silencing.contains($0 == pullID ? .pull : .cooled) }
             remove(sparing: keep)
             if let pullS, !keep.contains(pullID) { await add(id: pullID, moment: .pull, atS: pullS, title: pullTitle) }
             if let cooledS, !keep.contains(coolID) { await add(id: coolID, moment: .cooled, atS: cooledS, title: cooledTitle) }
@@ -111,6 +113,15 @@ final class Alarm {
 
     func cancel() {
         _ = enqueue { [self] in remove(sparing: []) }
+    }
+
+    /// Whether an alarm sounds, or its moment has come in cook time: under a
+    /// debug build's frozen clock the system's moment is a day on
+    /// (`AppClock`), and the cook's is what the plan dropped.
+    private func hasCome(_ alarm: AlarmKit.Alarm) -> Bool {
+        if alarm.state == .alerting { return true }
+        guard case .fixed(let date) = alarm.schedule else { return false }
+        return AppClock.fromReal(date).timeIntervalSince1970 <= AppClock.nowS + 0.5
     }
 
     private func remove(sparing keep: Set<UUID>) {

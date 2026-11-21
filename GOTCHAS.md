@@ -29,7 +29,10 @@ releasing has its own in `ios/RELEASING.md`.
   for a deadline AlarmKit holds rings it twice (`deadlineToRing`'s `held`).
 - **Cancelling an AlarmKit alarm that sounds stops it.** A plan re-set at
   its own moment, which drops that moment, would silence it as it began;
-  `Alarm.schedule` leaves one sounding.
+  and the app's tick at the deadline can come before the system starts the
+  alarm, when a cancel stops it ever sounding. `Alarm.schedule` leaves one
+  whose moment has come (`ios:e2e`'s `relaunch` caught the app ringing in
+  its place).
 - **A permission the system has refused stays refused across a reinstall
   on the same simulator**; a new device asks again.
 - **A quick synthetic tap does not flip a SwiftUI `Toggle`; a held one

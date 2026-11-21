@@ -67,8 +67,8 @@ final class TestClock: CookClock, @unchecked Sendable {
 /// The alarms, as the system would hold them (`Alarm`): each by its id and
 /// its moment, waiting until the test clock reaches it and sounding after,
 /// until cancelled. A schedule replaces what is waiting, asks for nothing
-/// already past, and leaves what sounds unless told to silence it; a cancel
-/// takes them all.
+/// already past, and leaves one whose moment has come unless told to silence
+/// it; a cancel takes them all.
 @MainActor
 final class FakeAlarm: AlarmScheduling {
     var authorized = true

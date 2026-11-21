@@ -3,7 +3,7 @@ import EggTimerApp
 import EggTimerCore
 
 extension Scenarios {
-    /// a cook relaunched in each phase: the same deadlines, alarms and card, the boil kept to the bit; into the pull on screen, not rung by the app, the system's alarm holding it; killed 4 s in, relaunched 14 s in: not rung again, out after; at Done: nothing pending, no card, nothing rung
+    /// a cook relaunched in each phase: the same deadlines, alarms and card, the boil kept to the bit; into the pull on screen, not rung by the app, the system's alarm holding it; killed 4 s in, relaunched 14 s in: not rung again, out after; at Done: the cooling's alarm held till the cook stops it, no card, nothing rung
     func test_relaunch() {
         scenario { run in
             let start = try run.started().cook.startedAtS
@@ -89,7 +89,8 @@ extension Scenarios {
             r = try run.relaunched(at: cooled + 30)
             run.check(r.restore.event.restoredPhase == "DONE", "\(r.restore.event)")
             run.check(near(r.plan.cooled, was.cooled, replan), "the cooling's end \(String(describing: r.plan.cooled)) for \(String(describing: was.cooled))")
-            run.check(pending(r.lines) == [], "done: pending \(String(describing: pending(r.lines)))")
+            // The cooling's alarm sounds until the cook stops it.
+            run.check(pending(r.lines) == ["cook.cool"], "done: pending \(String(describing: pending(r.lines)))")
             run.check(!r.lines.contains {
                 if case let .activity(what, _, _, _, _) = $0.event { what == "start" } else { false }
             }, "no card started")
