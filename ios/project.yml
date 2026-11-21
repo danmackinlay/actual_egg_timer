@@ -11,7 +11,7 @@ name: ActualEggTimer
 options:
   bundleIdPrefix: name.danmackinlay
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "26.1"
   createIntermediateGroups: true
   groupSortPosition: none
 

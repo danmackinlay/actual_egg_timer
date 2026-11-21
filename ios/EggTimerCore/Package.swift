@@ -26,7 +26,7 @@ import PackageDescription
 // fill with fakes.
 let package = Package(
     name: "EggTimerCore",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS("26.1"), .macOS(.v14)],
     products: [
         .library(name: "EggTimerCore", targets: ["EggTimerCore"]),
         .library(name: "EggTimerCopy", targets: ["EggTimerCopy"]),
